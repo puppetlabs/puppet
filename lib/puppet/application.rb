@@ -403,7 +403,7 @@ class Application
     # Create an option parser
     option_parser = OptionParser.new(self.class.banner)
 
-    # He're we're building up all of the options that the application may need to handle.  The main
+    # Here we're building up all of the options that the application may need to handle.  The main
     # puppet settings defined in "defaults.rb" have already been parsed once (in command_line.rb) by
     # the time we get here; however, our app may wish to handle some of them specially, so we need to
     # make the parser aware of them again.  We might be able to make this a bit more efficient by
