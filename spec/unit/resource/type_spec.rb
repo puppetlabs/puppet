@@ -134,6 +134,10 @@ describe Puppet::Resource::Type do
         Puppet::Resource::Type.new(:node, /\w/).match("foo").should be_true
       end
 
+      it "should return true when its regex matches the provided name" do
+        Puppet::Resource::Type.new(:node, /\w/).match("foo").should be_true
+      end
+
       it "should return false when its regex does not match the provided name" do
         (!!Puppet::Resource::Type.new(:node, /\d/).match("foo")).should be_false
       end
@@ -396,13 +400,29 @@ describe Puppet::Resource::Type do
       @resource.environment.known_resource_types.add @type
     end
 
-    it "should add hostclass names to the classes list" do
+    it "should add node regex captures to its scope" do
+      @type = Puppet::Resource::Type.new(:node, /f(\w)o(.*)$/)
+      match = @type.match('foo')
+
+      code = stub 'code'
+      @type.stubs(:code).returns code
+
+      subscope = stub 'subscope', :compiler => @compiler
+      @scope.expects(:newscope).with(:source => @type, :namespace => '', :resource => @resource).returns subscope
+
+      elevel = 876
+      subscope.expects(:ephemeral_level).returns elevel
+      subscope.expects(:ephemeral_from).with(match, nil, nil).returns subscope
+      code.expects(:safeevaluate).with(subscope)
+      subscope.expects(:unset_ephemeral_var).with(elevel)
+
+      # Just to keep the stub quiet about intermediate calls
+      @type.expects(:set_resource_parameters).with(@resource, subscope)
+
       @type.evaluate_code(@resource)
-      @compiler.catalog.classes.should be_include("foo")
     end
 
-    it "should add node names to the classes list" do
-      @type = Puppet::Resource::Type.new(:node, "foo")
+    it "should add hostclass names to the classes list" do
       @type.evaluate_code(@resource)
       @compiler.catalog.classes.should be_include("foo")
     end
