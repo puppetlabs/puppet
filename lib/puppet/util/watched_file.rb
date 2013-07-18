@@ -1,64 +1,37 @@
-# A simple class that tells us when a file has changed and thus whether we
-# should reload it
+require 'puppet/util/watcher'
 
-require 'puppet'
+# Monitor a given file for changes on a periodic interval. Changes are detected
+# by looking for a change in the file ctime.
+class Puppet::Util::WatchedFile
+  # @!attribute [r] filename
+  #   @return [String] The fully qualified path to the file.
+  attr_reader :filename
 
-module Puppet
-  class NoSuchFile < Puppet::Error; end
-  class Util::WatchedFile
-    attr_reader :filename, :statted
+  # @param filename [String] The fully qualified path to the file.
+  # @param file_timeout [Integer] The polling interval for checking for file
+  #   changes. Setting the timeout to a negative value will treat the file as
+  #   always changed. Defaults to `Puppet[:filetimeout]`
+  def initialize(filename, timer = Puppet::Util::Watcher::Timer.new(Puppet[:filetimeout]))
+    @filename = filename
+    @timer = timer
 
-    # Provide a hook for setting the timestamp during testing, so we don't
-    # have to depend on the granularity of the filesystem.
-    attr_writer :previous_timestamp
+    @info = Puppet::Util::Watcher::PeriodicWatcher.new(
+      Puppet::Util::Watcher::Common.file_ctime_change_watcher(@filename),
+      timer)
+  end
 
-    # Create the file.  Must be passed the file path.
-    def initialize(filename)
-      @filename = filename
-      @last_stat = 0
-      @current_timestamp = nil
-      @previous_timestamp = current_timestamp
-    end
+  # @return [true, false] If the file has changed since it was last checked.
+  def changed?
+    @info.changed?
+  end
 
-    # Determine whether the file has changed and thus whether it should
-    # be reparsed.
-    def changed?
-      # Allow the timeout to be disabled entirely.
-      return true if Puppet[:filetimeout] < 0
-      current_stamp = current_timestamp
+  # Allow this to be used as the name of the file being watched in various
+  # other methods (such as File.exist?)
+  def to_str
+    @filename
+  end
 
-      # We use a different internal variable than the stamp method
-      # because it doesn't keep historical state and we do -- that is,
-      # we will always be comparing two timestamps, whereas
-      # stamp just always wants the latest one.
-      if current_stamp == @previous_timestamp
-        false
-      else
-        @previous_timestamp = current_stamp
-        true
-      end
-    end
-
-    def to_str
-      @filename
-    end
-    alias_method :to_s, :to_str
-
-    private
-
-    # Retrieve the filestamp, but only refresh it if we're beyond our
-    # filetimeout
-    def current_timestamp
-      if @current_timestamp.nil? or (Time.now.to_i - @last_stat >= Puppet[:filetimeout])
-        @last_stat = Time.now.to_i
-        begin
-          @current_timestamp = File.stat(@filename).ctime
-        rescue Errno::ENOENT, Errno::ENOTDIR
-          @current_timestamp = Time.now
-        end
-      end
-      @current_timestamp
-    end
+  def to_s
+    "<WatchedFile: filename = #{@filename}, timeout = #{@timer.timeout}>"
   end
 end
-
