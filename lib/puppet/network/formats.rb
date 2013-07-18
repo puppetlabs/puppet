@@ -26,7 +26,6 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
     instances.to_yaml
   end
 
-  # Unlike core's yaml, ZAML should support 1.8.1 just fine
   def supported?(klass)
     true
   end
