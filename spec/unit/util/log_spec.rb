@@ -247,8 +247,10 @@ describe Puppet::Util::Log do
     end
 
     describe "when setting the source as a RAL object" do
+      let(:path) { File.expand_path('/foo/bar') }
+
       it "should tag itself with any tags the source has" do
-        source = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar")
+        source = Puppet::Type.type(:file).new :path => path
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
         source.tags.each do |tag|
           log.tags.should be_include(tag)
@@ -256,7 +258,7 @@ describe Puppet::Util::Log do
       end
 
       it "should set the source to 'path', when available" do
-        source = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar")
+        source = Puppet::Type.type(:file).new :path => path
         source.tags = ["tag", "tag2"]
 
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
@@ -266,11 +268,11 @@ describe Puppet::Util::Log do
 
         log.source = source
 
-        log.source.should == "/File[/foo/bar]"
+        log.source.should == "/File[#{path}]"
       end
 
       it "should copy over any file and line information" do
-        source = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar")
+        source = Puppet::Type.type(:file).new :path => path
         source.file = "/my/file"
         source.line = 50
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
