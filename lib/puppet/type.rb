@@ -7,7 +7,6 @@ require 'puppet/util'
 require 'puppet/util/autoload'
 require 'puppet/metatype/manager'
 require 'puppet/util/errors'
-require 'puppet/util/log_paths'
 require 'puppet/util/logging'
 require 'puppet/util/tagging'
 
@@ -77,7 +76,6 @@ module Puppet
 class Type
   include Puppet::Util
   include Puppet::Util::Errors
-  include Puppet::Util::LogPaths
   include Puppet::Util::Logging
   include Puppet::Util::Tagging
 
@@ -747,6 +745,13 @@ class Type
     @parameters[name] = klass.new(:resource => self)
   end
 
+  # Returns a string representation of the resource's containment path in
+  # the catalog.
+  # @return [String]
+  def path
+    @path ||= '/' + pathbuilder.join('/')
+  end
+
   # Returns the value of this object's parameter given by name
   # @param name [String] the name of the parameter
   # @return [Object] the value
@@ -1164,10 +1169,12 @@ class Type
     resource
   end
 
-  # Creates the path for logging and such.
-  # @todo "and such?", what?
-  # @api private
+
+  # Returns an array of strings representing the containment heirarchy
+  # (types/classes) that make up the path to the resource from the root
+  # of the catalog.  This is mostly used for logging purposes.
   #
+  # @api private
   def pathbuilder
     if p = parent
       [p.pathbuilder, self.ref].flatten

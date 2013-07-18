@@ -88,8 +88,9 @@ class Puppet::Transaction::Report
   #
   attr_reader :puppet_version
 
-  # @return [Integer] (3) a report format version number
-  # @todo Unclear what this is - a version?
+  # @return [Integer] report format version number.  This value is constant for
+  #    a given version of Puppet; it is incremented when a new release of Puppet
+  #    changes the API for the various objects that make up a report.
   #
   attr_reader :report_format
 
@@ -164,7 +165,7 @@ class Puppet::Transaction::Report
     @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
-    @report_format = 3
+    @report_format = 4
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
     @environment = environment
