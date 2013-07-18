@@ -460,7 +460,7 @@ class Puppet::Pops::Model::Factory
   # Returns symbolic information about a expected share of a resource expression given the LHS of a resource expr.
   #
   # * `name { }` => `:resource`,  create a resource of the given type
-  # * `Name { }` => ':defaults`, set defauls for the referenced type
+  # * `Name { }` => ':defaults`, set defaults for the referenced type
   # * `Name[] { }` => `:override`, overrides instances referenced by LHS
   # * _any other_ => ':error', all other are considered illegal
   #
