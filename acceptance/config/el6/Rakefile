@@ -13,7 +13,7 @@ CLEAN.include('*.repo', '*.tar', '*.rpm')
 
 file "pl-puppet-build.repo" do |task|
   sha = ENV['SHA']
-  fetch("http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/pl-puppet-#{sha}-el-6-x86_64-devel.repo",
+  fetch("http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/pl-puppet-#{sha}-el-6-x86_64-products.repo",
         task.name)
 end
 
@@ -26,7 +26,7 @@ task :repo_configs => ["pl-puppet-repos.rpm", "pl-puppet-build.repo"] do |task|
 end
 
 task :test => [:repo_configs] do
-  sh "systest --setup-dir setup -o options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
+  sh "systest --pre-suite setup/early -o options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
 end
 
 namespace :ci do
