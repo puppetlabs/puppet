@@ -1,6 +1,7 @@
 {
   :config => 'config.yaml',
-  :type => 'manual',
-  :helper => 'lib/helper.rb',
-  :debug => true
+  :type => 'git',
+  :helper => ['lib/helper.rb'],
+  :debug => true,
+  :root_keys => true,
 }

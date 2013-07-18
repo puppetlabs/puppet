@@ -1,18 +1,19 @@
 HOSTS:
-  'dhcp70.platform.backline.puppetlabs.net':
+  master:
     roles:
       - master
       - agent
     platform: el-6-i386
-    hypervisor: vsphere
-    vmname: platform.dhcp70
-    snapshot: foss
-  'dhcp71.platform.backline.puppetlabs.net':
+    hypervisor: vcloud
+    template: redhat-6-x86_64
+  agent:
     roles:
       - agent
     platform: el-6-i386
-    hypervisor: vsphere
-    vmname: platform.dhcp71
-    snapshot: foss
+    hypervisor: vcloud
+    template: redhat-6-x86_64
 CONFIG:
   filecount: 12
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic

@@ -1,7 +1,7 @@
 test_name "Validate Sign Cert"
 
 step "Master: Start Puppet Master"
-with_master_running_on(master, "--certname #{master} --verbose") do
+with_master_running_on(master, "--verbose") do
   hosts.each do |host|
     next if host['roles'].include? 'master'
 
