@@ -467,7 +467,7 @@ class Puppet::Pops::Model::Factory
   #
   # * `name { }` => `:resource`,  create a resource of the given type
   # * `Name { }` => ':defaults`, set defauls for the referenced type
-  # * `Name[] { }` => `:override`, ioverrides nstances referenced by LHS
+  # * `Name[] { }` => `:override`, overrides instances referenced by LHS
   # * _any other_ => ':error', all other are considered illegal
   #
   def self.resource_shape(expr)

@@ -366,7 +366,7 @@ module PSON
           # This method creates a raw object hash, that can be nested into
           # other data structures and will be unparsed as a raw string. This
           # method should be used, if you want to convert raw strings to PSON
-          # instead of UTF-8 strings, e. g. binary data.
+          # instead of UTF-8 strings, e.g. binary data.
           def to_pson_raw_object
             {
               PSON.create_id  => self.class.name,

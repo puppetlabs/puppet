@@ -246,7 +246,7 @@ module Puppet
       def parse_ip(value)
         @name = :ip
         @exact, @length, @pattern = *case value
-        when /^(?:#{IP})\/(\d+)$/                                   # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
+        when /^(?:#{IP})\/(\d+)$/                                 # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
           [:inexact, $1.to_i, IPAddr.new(value)]
         when /^(#{IP})$/                                          # 10.20.30.40,
           [:exact, nil, IPAddr.new(value)]
