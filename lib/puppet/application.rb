@@ -87,7 +87,7 @@ module Puppet
 #
 # === Setup
 # Applications can use the setup block to perform any initialization.
-# The defaul +setup+ behaviour is to: read Puppet configuration and manage log level and destination
+# The default +setup+ behaviour is to: read Puppet configuration and manage log level and destination
 #
 # === What and how to run
 # If the +dispatch+ block is defined it is called. This block should return the name of the registered command

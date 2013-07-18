@@ -323,7 +323,7 @@ module Puppet
       Requires that `puppet queue` be running.",
         :hook     => proc do |value|
           if value
-            # This reconfigures the terminii for Node, Facts, and Catalog
+            # This reconfigures the termini for Node, Facts, and Catalog
             Puppet.settings[:storeconfigs] = true
 
             # But then we modify the configuration
