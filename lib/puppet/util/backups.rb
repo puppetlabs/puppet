@@ -40,8 +40,6 @@ module Puppet::Util::Backups
     begin
       bfile = file + backup
 
-      # Ruby 1.8.1 requires the 'preserve' addition, but
-      # later versions do not appear to require it.
       # N.B. cp_r works on both files and directories
       FileUtils.cp_r(file, bfile, :preserve => true)
       return true
