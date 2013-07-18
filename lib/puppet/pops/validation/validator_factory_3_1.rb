@@ -31,8 +31,10 @@ class Puppet::Pops::Validation::ValidatorFactory_3_1
 
     # Configure each issue that should **not** be an error
     #
-    p[Issues::RT_NO_STORECONFIGS_EXPORT]    = :warning
-    p[Issues::RT_NO_STORECONFIGS]           = :warning
+    # Validate as per the current runtime configuration
+    p[Issues::RT_NO_STORECONFIGS_EXPORT]    = Puppet[:storeconfigs] ? :ignore : :warning
+    p[Issues::RT_NO_STORECONFIGS]           = Puppet[:storeconfigs] ? :ignore : :warning
+
     p[Issues::NAME_WITH_HYPHEN]             = :deprecation
     p[Issues::DEPRECATED_NAME_AS_TYPE]      = :deprecation
 
