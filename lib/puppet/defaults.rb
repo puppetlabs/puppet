@@ -393,7 +393,18 @@ module Puppet
     :module_working_dir => {
         :default  => '$vardir/puppet-module',
         :desc     => "The directory into which module tool data is stored",
+    },
+    :module_tool_skeleton => {
+      :default => "",
+      :type    => :path,
+      :desc    => "The directory where the custom skeleton resides",
+    },
+    :module_tool_config => {
+      :default => "$confdir/module-tool/config",
+      :type    => :path,
+      :desc    => "Config file used to fill in extra data for the skeleton",
     }
+     
   )
 
     Puppet.define_settings(
