@@ -175,7 +175,7 @@ module Puppet::ModuleTool
       # Check if a file is a vaild module package.
       # ---
       # FIXME: Checking for a valid module package should be more robust and
-      # use the acutal metadata contained in the package. 03132012 - Hightower
+      # use the actual metadata contained in the package. 03132012 - Hightower
       # +++
       #
       def is_module_package?(name)

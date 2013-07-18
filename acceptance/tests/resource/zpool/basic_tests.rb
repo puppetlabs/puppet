@@ -84,7 +84,7 @@ agents.each do |agent|
     assert_match( /raidz/ , result.stdout, "err: #{agent}")
   end
 
-  step "ZPool: raidz: ensure can create: verify (pupet)"
+  step "ZPool: raidz: ensure can create: verify (puppet)"
   on agent, "puppet resource zpool tstpool" do
     assert_match(/ensure => 'present'/, result.stdout, "err: #{agent}")
     assert_match(/raidz +=> .'.+dsk1 .+dsk2 .+dsk3'./, result.stdout, "err: #{agent}")

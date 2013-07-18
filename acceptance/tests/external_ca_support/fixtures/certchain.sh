@@ -1,7 +1,7 @@
 #! /bin/bash
 
 ## NOTE:
-## This script requires the follwing in /etc/hosts:
+## This script requires the following in /etc/hosts:
 ## 127.0.0.2   puppet master1.example.org
 
 # This will fail with a stock puppet 3.1.1, but will succeed if all of the
@@ -54,7 +54,7 @@ hash_crl() {
     ln -s "$crl" "${certdir}/${h}.r0"
 }
 
-# clean out any messes ths script has made
+# clean out any messes this script has made
 clean_up() {
     stop_apache
     rm -rf "$B"

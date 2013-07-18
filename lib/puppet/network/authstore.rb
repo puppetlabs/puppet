@@ -232,7 +232,7 @@ module Puppet
         name.downcase.split(".").reverse
       end
 
-      # Parse our input pattern and figure out what kind of allowal
+      # Parse our input pattern and figure out what kind of allowable
       # statement it is.  The output of this is used for later matching.
       Octet = '(\d|[1-9]\d|1\d\d|2[0-4]\d|25[0-5])'
       IPv4 = "#{Octet}\.#{Octet}\.#{Octet}\.#{Octet}"

@@ -336,7 +336,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     end
   end
 
-  # Determines if augeas acutally needs to run.
+  # Determines if augeas actually needs to run.
   def need_to_run?
     force = resource[:force]
     return_value = true
