@@ -448,28 +448,17 @@ describe Puppet::Provider do
 
     fields = %w{prop1 prop2 param1 param2}
 
-    # This is needed for Ruby 1.8.5, which throws an exception that the
-    # default rescue doesn't catch if the method isn't present.  Also, it has
-    # no convenient predicate for them, which equally hurts.
-    def has_method?(object, name)
-      begin
-        return true if object.instance_method(name)
-      rescue Exception
-        return false
-      end
-    end
-
     fields.each do |name|
       it "should add getter methods for #{name}" do
         expect { subject.mk_resource_methods }.
-          to change { has_method?(subject, name) }.
+          to change { subject.method_defined?(name) }.
           from(false).to(true)
       end
 
       it "should add setter methods for #{name}" do
         method = name + '='
         expect { subject.mk_resource_methods }.
-          to change { has_method?(subject, name) }.
+          to change { subject.method_defined?(name) }.
           from(false).to(true)
       end
     end

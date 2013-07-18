@@ -7,9 +7,6 @@ class Puppet::Interface
 
       # We need to identify an indent: the minimum number of whitespace
       # characters at the start of any line in the text.
-      #
-      # Using split rather than each_line is because the later only takes a
-      # block on Ruby 1.8.5 / Centos, and we support that. --daniel 2011-05-03
       indent = text.split(/\n/).map {|x| x.index(/[^\s]/) }.compact.min
 
       if indent > 0 then

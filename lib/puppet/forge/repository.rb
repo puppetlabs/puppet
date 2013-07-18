@@ -121,9 +121,7 @@ class Puppet::Forge
     private :user_agent
 
     def ruby_version
-      # the patchlevel is not available in ruby 1.8.5
-      patch = defined?(RUBY_PATCHLEVEL) ? "-p#{RUBY_PATCHLEVEL}" : ""
-      "Ruby/#{RUBY_VERSION}#{patch} (#{RUBY_RELEASE_DATE}; #{RUBY_PLATFORM})"
+      "Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_RELEASE_DATE}; #{RUBY_PLATFORM})"
     end
     private :ruby_version
   end
