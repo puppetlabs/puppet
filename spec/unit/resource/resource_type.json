@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "properties": {
+    "doc": {
+      "type": "string"
+    },
+    "line": {
+      "type": "integer"
+    },
+    "file": {
+      "type": "string"
+    },
+    "parent": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "required": "true"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "class",
+        "node",
+        "defined_type"
+      ],
+      "required": "true"
+    },
+    "parameters": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": false
+}

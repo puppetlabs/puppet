@@ -37,6 +37,8 @@ group(:development, :test) do
   gem "mocha", "~> 0.10.5", :require => false
 
   gem "yarjuf", "~> 1.0"
+
+  gem "json-schema", "~> 2.0", :require => false
 end
 
 group(:extra) do
