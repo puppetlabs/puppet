@@ -226,7 +226,8 @@ module Puppet::Pops::Binder::Producers
       class_name = options[:class_name]
       raise ArgumentError, "Option 'class_name' must be given for an InstantiatingProducer" unless class_name
       # get class by name
-      @the_class = injector.type_calculator.class_get(class_name)
+#      @the_class = injector.type_calculator.class_get(class_name)
+      @the_class = Puppet::Pops::Types::ClassLoader.provide(class_name)
       @init_args = options[:init_args] || []
     end
 

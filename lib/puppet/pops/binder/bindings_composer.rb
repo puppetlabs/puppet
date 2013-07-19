@@ -79,6 +79,12 @@ class Puppet::Pops::Binder::BindingsComposer
     # and error reporting).
     check_contribution_precedence(contributions)
 
+    # Add the two system layers; the final - highest ("can not be overridden" layer), and the lowest
+    # Everything here can be overridden 'default' layer.
+    #
+    configured_layers.insert(0, Puppet::Pops::Binder::SystemBindings.final_contribution)
+    configured_layers.insert(-1, Puppet::Pops::Binder::SystemBindings.default_contribution)
+
     # and finally... create the resulting structure
     factory.layered_bindings(*configured_layers)
   end

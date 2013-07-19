@@ -74,11 +74,7 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.array_of(o)
     type = Types::PArrayType.new()
-    type.element_type = if o.is_a?(Types::PObjectType)
-      o
-    else
-      @type_calculator.infer(o)
-    end
+    type.element_type = type_of(o)
     type
   end
 
@@ -87,12 +83,8 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.hash_of(value, key = literal())
     type = Types::PHashType.new()
-    type.key_type = key
-    type.element_type = if value.is_a?(Types::PObjectType)
-      value
-    else
-      @type_calculator.infer(value)
-    end
+    type.key_type = type_of(key)
+    type.element_type = type_of(value)
     type
   end
 
@@ -113,6 +105,23 @@ module Puppet::Pops::Types::TypeFactory
     type.key_type = literal()
     type.element_type = data()
     type
+  end
+
+  # Produce a type corresponding to the class of given unless given is a String, Class or a PObjectType.
+  # When a String is given this is taken as a classname.
+  #
+  def self.type_of(o)
+    if o.is_a?(Class)
+      @type_calculator.type(o)
+    elsif o.is_a?(Types::PObjectType)
+      o
+    elsif o.is_a?(String)
+      type = Types::PRubyType.new()
+      type.ruby_class = o
+      type
+    else
+      @type_calculator.infer(o)
+    end
   end
 
   # Produces a type for a class or infers a type for something that is not a class
