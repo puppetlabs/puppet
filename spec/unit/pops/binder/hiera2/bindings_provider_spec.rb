@@ -42,7 +42,8 @@ describe 'The hiera2 bindings provider' do
         cat.predicates[0].value.should() == node
         cat.bindings.each do |b|
           b.class.should() == _Bindings::Binding
-          ['a_number', 'a_string', 'an_eval', 'an_eval2', 'a_json_number', 'a_json_string', 'a_json_eval', 'a_json_eval2'].index(b.name).should() >= 0
+          ['a_number', 'a_string', 'an_eval', 'an_eval2', 'a_json_number', 'a_json_string', 'a_json_eval', 
+            'a_json_eval2', 'a_json_hash', 'a_json_array'].index(b.name).should() >= 0
           b.producer.class.should() == _Bindings::EvaluatingProducerDescriptor if b.name == 'an_eval'
         end
       end
@@ -56,6 +57,8 @@ describe 'The hiera2 bindings provider' do
       injector.lookup(scope, 'a_string').should == 'forty two'
       injector.lookup(scope, 'a_json_number').should == 142
       injector.lookup(scope, 'a_json_string').should == 'one hundred and forty two'
+      expect(injector.lookup(scope, "a_json_array")).to be == ["a", "b", 100]
+      expect(injector.lookup(scope, "a_json_hash")).to be == {"a"  => 1, "b" => 2}
     end
 
     it 'should make the injector lookup and evaluate expressions' do
