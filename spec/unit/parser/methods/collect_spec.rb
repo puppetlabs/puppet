@@ -65,6 +65,31 @@ describe 'the collect method' do
         catalog.resource(:file, "/file_0.false")['ensure'].should == 'present'
         catalog.resource(:file, "/file_1.false")['ensure'].should == 'present'
       end
+
+      it "collect gets values that are nil" do
+        Puppet::Parser::Functions.newfunction(:nil_array, :type => :rvalue) do |args|
+          [nil]
+        end
+        catalog = compile_to_catalog(<<-MANIFEST)
+          $a = nil_array()
+          $a.collect |$x| { $x }.each |$i, $v| {
+            file { "/file_$i.$v": ensure => present }
+          }
+        MANIFEST
+
+        catalog.resource(:file, "/file_0.")['ensure'].should == 'present'
+      end
+
+      it "collect gets values that are undef" do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          $a = [$does_not_exist]
+          $a.collect |$x = "something"| { $x }.each |$i, $v| {
+            file { "/file_$i.$v": ensure => present }
+          }
+        MANIFEST
+
+        catalog.resource(:file, "/file_0.")['ensure'].should == 'present'
+      end
     end
 
     context "in Java style should be callable as" do
