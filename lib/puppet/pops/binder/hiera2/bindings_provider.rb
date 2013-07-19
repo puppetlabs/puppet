@@ -91,17 +91,20 @@ module Puppet::Pops::Binder::Hiera2
     # @return [Model::Expression] The expression that corresponds to the value
     def build_expr(value)
       case value
+      when Symbol
+        value.to_s
       when String
         @parser.parse_string(StringEvaluator.quote(value)).current
       when Hash
         value.inject(Model::LiteralHash.new)  do |h,(k,v)|
           e = Model::KeyedEntry.new
-          e.key = parse(k)
-          e.value = parse(v)
+          e.key = build_expr(k)
+          e.value = build_expr(v)
           h.addEntries(e)
+          h
         end
       when Enumerable
-        value.inject(Model::LiteralList.new) {|a,v| a.addValues(parse(v)) }
+        value.inject(Model::LiteralList.new) {|a,v| a.addValues(build_expr(v)); a }
       when Numeric
         expr = Model::LiteralNumber.new
         expr.value = value;
