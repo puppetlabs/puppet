@@ -34,6 +34,7 @@ class Puppet::Parser::Compiler
  end
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
+  attr_accessor :injector
 
   # Add a collection to the global list.
   def_delegator :@collections,   :<<, :add_collection
