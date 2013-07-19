@@ -268,6 +268,14 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
         access2.evaluate(@scope)
       }.to raise_error(Puppet::ParseError, /not a hash or array/)
     end
+
+    it "should produce boolean values when value is a boolean" do
+      @scope["a"] = [true, false]
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => 0 )
+      expect(access.evaluate(@scope)).to be == true
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => 1 )
+      expect(access.evaluate(@scope)).to be == false
+    end
   end
 
   describe "when assigning" do
