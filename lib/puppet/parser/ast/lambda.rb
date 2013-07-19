@@ -47,15 +47,23 @@ class Puppet::Parser::AST
       end
 
       evaluated = merged.collect do |m|
-        # Ruby 1.8.7 zip seems to produce a different result than Ruby 1.9.3 in some situations
-        n = m[0].is_a?(Array) ? m[0][0] : m[0]
-        # given value or default expression value
-        v = if m[1].nil?
-          (m[0][1]).safeevaluate(scope)
+        # m can be one of
+        # m = [["name"], "given"]
+        #   | [["name", default_expr], "given"]
+        #
+        # "given" is always an optional entry. If a parameter was provided then
+        # the entry will be in the array, otherwise the m array will be a
+        # single element.
+        given_argument = m[1]
+        argument_name = m[0][0]
+        default_expression = m[0][1]
+
+        value = if m.size == 1
+          default_expression.safeevaluate(scope)
         else
-          m[1]
-        end 
-        [n, v]
+          given_argument
+        end
+        [argument_name, value]
       end
 
       # Store the evaluated name => value associations in a new inner/local/ephemeral scope
