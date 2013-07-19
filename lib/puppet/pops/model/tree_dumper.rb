@@ -27,7 +27,7 @@ class Puppet::Pops::Model::TreeDumper
         # separate with space unless previous ends with whitepsace or (
         result << ' ' if parts[i] != ")" && parts[i-1] !~ /.*(?:\s+|\()$/ && parts[i] !~ /^\s+/
       end
-      result << parts[i]
+      result << parts[i].to_s
     end
     result
   end

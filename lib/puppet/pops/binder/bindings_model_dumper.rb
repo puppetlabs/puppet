@@ -18,11 +18,21 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     do_dump(o.model)
   end
 
+  def dump_BindingsBuilder o
+    do_dump(o.model)
+  end
+
+  def dump_BindingsContainerBuilder o
+    do_dump(o.model)
+  end
+
   def dump_NamedLayer o
-    result = ['named-layer', o.name, :indent]
-    o.bindings.each do |b|
-      result << :break
-      result << do_dump(b)
+    result = ['named-layer', (o.name.nil? ? '<no-name>': o.name), :indent]
+    if o.bindings
+      o.bindings.each do |b|
+        result << :break
+        result << do_dump(b)
+      end
     end
     result << :dedent
     result

@@ -111,68 +111,62 @@ class Puppet::Pops::Binder::BindingsFactory
 
     # @api public
     def integer()
-      @model.type = Puppet::Pops::Types::TypeFactory.integer()
-      self
+      type(Puppet::Pops::Types::TypeFactory.integer())
     end
 
     # @api public
     def float()
-      @model.type = Puppet::Pops::Types::TypeFactory.float()
-      self
+      type(Puppet::Pops::Types::TypeFactory.float())
     end
 
     # @api public
     def boolean()
-      @model.type = Puppet::Pops::Types::TypeFactory.boolean()
-      self
+      type(Puppet::Pops::Types::TypeFactory.boolean())
     end
 
     # @api public
     def string()
-      @model.type = Puppet::Pops::Types::TypeFactory.string()
-      self
+      type(Puppet::Pops::Types::TypeFactory.string())
     end
 
     # @api public
     def pattern()
-      @model.type = Puppet::Pops::Types::TypeFactory.pattern()
-      self
+      type(Puppet::Pops::Types::TypeFactory.pattern())
     end
 
     # @api public
     def literal()
-      @model.type = Puppet::Pops::Types::TypeFactory.literal()
-      self
+      type(Puppet::Pops::Types::TypeFactory.literal())
     end
 
     # @api public
     def data()
-      @model.type = Puppet::Pops::Types::TypeFactory.data()
-      self
+      type(Puppet::Pops::Types::TypeFactory.data())
     end
 
     # @api public
     def array_of_data()
-      @model.type = Puppet::Pops::Types::TypeFactory.array_of_data()
-      self
+      type(Puppet::Pops::Types::TypeFactory.array_of_data())
     end
 
     # @api public
     def array_of(t)
-      @model.type = Puppet::Pops::Types::TypeFactory.array_of(t)
-      self
+      type(Puppet::Pops::Types::TypeFactory.array_of(t))
     end
 
     # @api public
     def hash_of_data()
-      @model.type = Puppet::Pops::Types::TypeFactory.hash_of_data()
-      self
+      type(Puppet::Pops::Types::TypeFactory.hash_of_data())
     end
 
     # @api public
     def hash_of(t)
-      @model.type = Puppet::Pops::Types::TypeFactory.hash_of(t)
-      self
+      type(Puppet::Pops::Types::TypeFactory.hash_of(t))
+    end
+
+    # @api public
+    def instance_of(t)
+      type(Puppet::Pops::Types::TypeFactory.type_of(t))
     end
 
     # to a singleton producer, if producer is a value, a producer is created for it
@@ -197,6 +191,26 @@ class Puppet::Pops::Binder::BindingsFactory
       end
       @model.producer = producer
       self
+    end
+
+    # To a producer of an instance of given class (a String class name, or a Class instance)
+    # @overload to_instance(class_name, *args)
+    #   @param class_name [String] the name of the class to instantiate
+    #   @param args [Object] optional arguments to the constructor
+    # @overload to_instance(a_class)
+    #   @param a_class [Class] the class to instantiate
+    #   @param args [Object] optional arguments to the constructor
+    #
+    def to_instance(type, *args)
+      class_name = case type
+      when Class
+        type.name
+      when String
+        type
+      else
+        raise ArgumentError, "to_instance accepts String (a class name), or a Class.*args got: #{type.class}."
+      end
+      @model.producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(class_name, *args)
     end
 
     # to a singleton producer
@@ -367,6 +381,13 @@ class Puppet::Pops::Binder::BindingsFactory
       end
       @model.type = type
       self
+    end
+
+    # Overrides the default implementation that will raise an exception as a multibind requires a hash type.
+    # Thus, if nothing else is requested, a multibind will be configured as Hash[Data].
+    #
+    def data()
+      hash_of_data()
     end
   end
 

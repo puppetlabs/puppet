@@ -60,7 +60,7 @@ class Puppet::Pops::Types::TypeCalculator
   def injectable_class(klazz)
     # Handle case when we get a PType instead of a class
     if klazz.is_a?(Types::PRubyType)
-      klazz = class_get(klazz.ruby_class)
+      klazz = Puppet::Pops::Types::ClassLoader.provide(klazz)
     end
 
     # data types can not be injected (check again, it is not safe to assume that given RubyType klazz arg was ok)
@@ -70,21 +70,6 @@ class Puppet::Pops::Types::TypeCalculator
     else
       nil
     end
-  end
-
-  # Returns a Class given a fully qualified class name.
-  # Lookup of class is never relative to the calling namespace.
-  # @return [Class, nil] the looked up class or nil if no such class is loaded
-  #
-  def class_get(name)
-    path = name.split('::')
-    # always from the root, so remove an empty first segment
-    if path[0].empty?
-      path = path[1..-1]
-    end
-    result = path.reduce(Object) { |ns, name| ns.const_get(name) }
-    return nil unless result.is_a?(Class)
-    result
   end
 
   # Answers 'can an instance of type t2 be assigned to a variable of type t'
@@ -455,6 +440,9 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def string_PStringType(t)  ; "String"  ; end
+
+    # @api private
+  def string_PRubyType(t)   ; "Ruby[#{t.ruby_class}]"  ; end
 
   # @api private
   def string_PArrayType(t)

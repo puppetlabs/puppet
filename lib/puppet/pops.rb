@@ -21,6 +21,7 @@ module Puppet
       require 'puppet/pops/types/types'
       require 'puppet/pops/types/type_calculator'
       require 'puppet/pops/types/type_factory'
+      require 'puppet/pops/types/class_loader'
     end
 
     module Model
@@ -50,6 +51,7 @@ module Puppet
       require 'puppet/pops/binder/hiera2'
       require 'puppet/pops/binder/bindings_composer'
       require 'puppet/pops/binder/bindings_model_dumper'
+      require 'puppet/pops/binder/system_bindings'
 
       module Config
         require 'puppet/pops/binder/config/binder_config'
