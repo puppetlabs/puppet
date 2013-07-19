@@ -44,7 +44,7 @@ class Puppet::Pops::Binder::Binder
     @next_anonymous_key = 0
   end
 
-  # Answers the question 'is this bindder configured?' to the point it can be used to instantiate an Injector
+  # Answers the question 'is this binder configured?' to the point it can be used to instantiate an Injector
   # @api public
   def configured?()
     configured()
@@ -109,7 +109,7 @@ class Puppet::Pops::Binder::Binder
     injector_entries.each  do |k,v|
       unless key_factory.is_contributions_key?(k) || v.is_resolved?()
         raise ArgumentError, "Binding with unresolved 'override' detected: #{k}"
-      end 
+      end
     end
     # and the fat lady has sung
     @configured = true

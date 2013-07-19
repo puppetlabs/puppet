@@ -1,8 +1,7 @@
 # A helper class that makes it easier to construct a Bindings model
 #
 # @example Usage of the factory
-#   factory = Puppet::Pops__Binder::BindingsFactory.new()
-#   result = factory.named_bindings("mymodule::mybindings")
+#   result = Puppet::Pops::Binder::BindingsFactory.named_bindings("mymodule::mybindings")
 #   result.bind().name("foo").to(42)
 #   result.when_in_category("node", "kermit.example.com").bind().name("foo").to(43)
 #   result.bind().string().name("site url").to("http://www.example.com")
