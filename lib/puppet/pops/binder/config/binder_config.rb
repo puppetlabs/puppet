@@ -16,13 +16,13 @@ module Puppet::Pops::Binder::Config
     #
     attr_reader :layering_config
 
-    # @return [Array<Array(String, String)>] Array of Category tuples
+    # @return [Array<Array(String, String)>] Array of Category tuples where Strings are not evaluated.
     # @api public
     #
     attr_reader :categorization
 
     def default_config()
-      # This is hardcoded now, but may be a user supplied configuration later
+      # This is hardcoded now, but may be a user supplied default configuration later
       {'layers' => [
         { 'name' => 'site',    'include' => 'confdir-hiera:/'  },
         { 'name' => 'modules', 'include' => 'module-hiera:/*/' },
