@@ -34,6 +34,13 @@ class Puppet::Parser::Compiler
  end
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
+
+  # The injector that provides lookup services, or nil if accessed before the compiler has started compiling and
+  # bootstrapped. The injector is initialized and available before any manifests are evaluated.
+  #
+  # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services for this compiler/environment
+  # @api public
+  #
   attr_accessor :injector
 
   # Add a collection to the global list.
@@ -462,10 +469,10 @@ class Puppet::Parser::Compiler
     resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
   end
 
-  def injector
-    @injector
-  end
-
+  # Creates the injector from bindings found in the current environment.
+  # @return [void]
+  # @api private
+  #
   def create_injector
     composer = Puppet::Pops::Binder::BindingsComposer.new()
     layered_bindings = composer.compose(topscope)
