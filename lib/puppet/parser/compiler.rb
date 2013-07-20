@@ -94,6 +94,8 @@ class Puppet::Parser::Compiler
 
     Puppet::Util::Profiler.profile("Compile: Created settings scope") { create_settings_scope }
 
+    Puppet::Util::Profiler.profile("Compile: Created injector") { create_injector }
+
     Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
 
     Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
@@ -458,5 +460,18 @@ class Puppet::Parser::Compiler
   def unevaluated_resources
     # The order of these is significant for speed due to short-circuting
     resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
+  end
+
+  def injector
+    @injector
+  end
+
+  def create_injector
+    composer = Puppet::Pops::Binder::BindingsComposer.new()
+    layered_bindings = composer.compose(topscope)
+    binder = Puppet::Pops::Binder::Binder.new()
+    binder.define_categories(composer.effective_categories(topscope))
+    binder.define_layers(layered_bindings)
+    @injector = Puppet::Pops::Binder::Injector.new(binder)
   end
 end

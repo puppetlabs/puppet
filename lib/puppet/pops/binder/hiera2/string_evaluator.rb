@@ -1,10 +1,20 @@
 module Puppet::Pops::Binder::Hiera2
 
+  # TODO: This class should use the real parser and evaluator but limit the available
+  # expressions (no top level things)
+  # It should remain as a wrapper to perform the validation, transformation and also
+  # data to string quoting (of binary values and escpaes)
+  #
+
   # Simple string evaluator used only when expanding values defined in the configuration.
   # This evaluator is not intended to be used when the bindings are evaluated
   class StringEvaluator
 
     # Initialize the instance
+    #
+    # TODO: Passing diagnostics is wrong; this class knows which issues it is emitting, that needs to be
+    # paired with a diagnostics producer of the right type; the caller does not know; it should pass
+    # an acceptor !
     #
     # @param scope [Hash<String,String>] The scope to use when performing variable interpolation
     # @param parser [Puppet::Pops::Parser::Parser] The parser that will parse the strings

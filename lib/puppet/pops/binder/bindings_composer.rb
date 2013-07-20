@@ -15,15 +15,21 @@
 #
 #
 class Puppet::Pops::Binder::BindingsComposer
-  # The BindingsConfig instance holding the read and parsed configuration
+
+  # The BindingsConfig instance holding the read and parsed, but not evaluated configuration
+  # @api public
+  #
   attr_reader :config
 
   # map of scheme name to handler
+  # @api private
   attr_reader :scheme_handlers
 
   # @return Hash<String, Puppet::Module> map of module name to module instance
+  # @api private
   attr_reader :name_to_module
 
+  # @api private
   attr_reader :confdir
 
   # @api private
@@ -88,6 +94,26 @@ class Puppet::Pops::Binder::BindingsComposer
     # and finally... create the resulting structure
     factory.layered_bindings(*configured_layers)
   end
+
+  # Evaluates configured categorization and returns the result.
+  # The result is not cached.
+  # @api public
+  #
+  def effective_categories(scope)
+    evaluated_categories = []
+    unevaluated_categories = @config.categorization
+    parser = Puppet::Pops::Parser::EvaluatingParser.new()
+    result = unevaluated_categories.collect do |category_tuple|
+      result = [ category_tuple[0], parser.evaluate_string( scope, parser.quote( category_tuple[1] )) ]
+      unless result[1].is_a?(String)
+        raise ArgumentError, "Categorization value must be a string, category #{result[0]} evaluation resulted in a: '#{result[1].class}'"
+      end
+      result
+    end
+    Puppet::Pops::Binder::BindingsFactory::categories(result)
+  end
+
+  private
 
   # Checks that contribution's effective categorization is in the same relative order as in the overall
   # categorization precedence.
@@ -155,6 +181,7 @@ class Puppet::Pops::Binder::BindingsComposer
     end
     result
   end
+
 end
 
 # @abstract
