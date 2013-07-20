@@ -8,23 +8,28 @@ describe 'The hiera2 string evaluator' do
 
   let(:acceptor) {  Puppet::Pops::Validation::Acceptor.new() }
   let(:diag) { Puppet::Pops::Binder::Hiera2::DiagnosticProducer.new(acceptor) }
+  let(:scope) { s = Puppet::Parser::Scope.new_for_test_harness(node); s }
+  let(:node) { 'node.example.com' }
 
   def quote(x)
-    Puppet::Pops::Binder::Hiera2::StringEvaluator.quote(x)
+    Puppet::Pops::Parser::EvaluatingParser.quote(x)
   end
 
-  def evaluator(scope)
-    Puppet::Pops::Binder::Hiera2::StringEvaluator.new(scope, Puppet::Pops::Parser::Parser.new(), acceptor)
+  def evaluator()
+    Puppet::Pops::Parser::EvaluatingParser.new()
+  end
+
+  def evaluate(s)
+    evaluator.evaluate(scope, quote(s))
   end
 
   def test(x)
-    evaluator({}).eval(x).should == x
-    acceptor.errors_or_warnings?.should == false
+    evaluator.evaluate_string(scope, quote(x)).should == x
   end
 
   def test_interpolate(x, y)
-    evaluator({'a' => 'expansion'}).eval(x).should == y
-    acceptor.errors_or_warnings?.should == false
+    scope['a'] = 'expansion'
+    evaluator.evaluate_string(scope, quote(x)).should == y
   end
 
   context 'when evaluating' do

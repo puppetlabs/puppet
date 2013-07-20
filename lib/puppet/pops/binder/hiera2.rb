@@ -6,7 +6,6 @@ module Puppet::Pops::Binder::Hiera2
   require 'puppet/pops/binder/hiera2/config'
   require 'puppet/pops/binder/hiera2/config_checker'
   require 'puppet/pops/binder/hiera2/diagnostic_producer'
-  require 'puppet/pops/binder/hiera2/string_evaluator'
   require 'puppet/pops/binder/hiera2/bindings_provider'
   require 'puppet/pops/binder/hiera2/issues'
   # specific backends are loaded dynamically, not here

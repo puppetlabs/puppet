@@ -16,7 +16,7 @@ module Puppet::Pops::Binder::Hiera2
     # @param acceptor [Puppet::Pops::Validation::Acceptor] Acceptor that will receive diagnostics
     def initialize(name, hiera_config_dir, acceptor)
       @name = name
-      @parser = Puppet::Pops::Parser::Parser.new()
+      @parser = Puppet::Pops::Parser::EvaluatingParser.new()
       @diagnostics = DiagnosticProducer.new(acceptor)
       @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
       @config = Config.new(hiera_config_dir, @diagnostics)
@@ -25,21 +25,23 @@ module Puppet::Pops::Binder::Hiera2
     # Loads a bindings model using the hierarchy and backends configured for this instance.
     # TODO: Should take a Scope as parameter
     #
-    # @param facts [Hash<String,String>] The hash used when expanding
+    # @param scope [Puppet::Parser::Scope] The hash used when expanding
     # @return [Puppet::Pops::Binder::Bindings::ContributedBindings] A bindings model with effective categories
-    def load_bindings(facts)
+    def load_bindings(scope)
       factory = Puppet::Pops::Binder::BindingsFactory
       result = factory.named_bindings(name)
-      evaluator = StringEvaluator.new(facts, @parser, @diagnostics)
 
       hierarchy = {}
       precedence = []
 
       @config.hierarchy.each do |key, value, path|
-        category_value = evaluator.eval(value)
+        # TODO: need to pass line information, errors will be reported for line 1
+        source_file = File.join(@config.module_dir, 'hiera.config.yaml')
+        category_value = @parser.evaluate_string(scope, @parser.quote(value), source_file)
+
         hierarchy[key] = {
-          :bindings    => result.when_in_category(key, category_value), 
-          :path        => evaluator.eval(path), 
+          :bindings    => result.when_in_category(key, category_value),
+          :path        => @parser.evaluate_string(scope, @parser.quote(path)),
           :unique_keys =>Set.new()}
 
         precedence << [key, category_value]
@@ -52,11 +54,12 @@ module Puppet::Pops::Binder::Hiera2
           bindings = hier_val[:bindings]
           unique_keys = hier_val[:unique_keys]
 
-          backend.read_data(@config.module_dir, hier_val[:path]).each_pair do |key, value|
+          hiera_data_file_path = hier_val[:path]
+          backend.read_data(@config.module_dir, hiera_data_file_path).each_pair do |key, value|
             if unique_keys.add?(key)
               b = bindings.bind().name(key)
               # Transform value into a Model::Expression
-              expr = build_expr(value)
+              expr = build_expr(value, hiera_data_file_path)
               if is_constant?(expr)
                 # The value is constant so toss the expression
                 b.type(@type_calculator.infer(value)).to(value)
@@ -88,23 +91,24 @@ module Puppet::Pops::Binder::Hiera2
     # the Pops::Parser::Parser to produce either Model::LiteralString or Model::ConcatenatedString
     #
     # @param value [Object] May be an String, Number, TrueClass, FalseClass, or NilClass nested to any depth using Hash or Array.
+    # @param hiera_data_file_path [String] The source_file used when reporting errors
     # @return [Model::Expression] The expression that corresponds to the value
-    def build_expr(value)
+    def build_expr(value, hiera_data_file_path)
       case value
       when Symbol
         value.to_s
       when String
-        @parser.parse_string(StringEvaluator.quote(value)).current
+        @parser.parse_string(@parser.quote(value)).current
       when Hash
         value.inject(Model::LiteralHash.new)  do |h,(k,v)|
           e = Model::KeyedEntry.new
-          e.key = build_expr(k)
-          e.value = build_expr(v)
+          e.key = build_expr(k, hiera_data_file_path)
+          e.value = build_expr(v, hiera_data_file_path)
           h.addEntries(e)
           h
         end
       when Enumerable
-        value.inject(Model::LiteralList.new) {|a,v| a.addValues(build_expr(v)); a }
+        value.inject(Model::LiteralList.new) {|a,v| a.addValues(build_expr(v, hiera_data_file_path)); a }
       when Numeric
         expr = Model::LiteralNumber.new
         expr.value = value;

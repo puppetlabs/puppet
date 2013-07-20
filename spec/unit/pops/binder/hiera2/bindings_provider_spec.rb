@@ -18,10 +18,10 @@ describe 'The hiera2 bindings provider' do
 
     let(:node) { 'node.example.com' }
     let(:acceptor) {  Puppet::Pops::Validation::Acceptor.new() }
-    let(:scope) { s = Puppet::Parser::Scope.new_for_test_harness(node); s['a'] = '42'; s }
+    let(:scope) { s = Puppet::Parser::Scope.new_for_test_harness(node); s['a'] = '42'; s['node'] = node; s }
     let(:module_dir) { config_dir('ok') }
     let(:node_binder) {  b = _Binder::Binder.new(); b.define_categories(_Binder::BindingsFactory.categories(['node', node])); b }
-    let(:bindings) { _Hiera2::BindingsProvider.new('test', module_dir, acceptor).load_bindings({'node' => node}) }
+    let(:bindings) { _Hiera2::BindingsProvider.new('test', module_dir, acceptor).load_bindings(scope) }
     let(:test_layer_with_bindings) { bindings }
 
     it 'should load and validate OK bindings' do
