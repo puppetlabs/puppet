@@ -74,9 +74,15 @@ class Puppet::Pops::Binder::Binder
     categories = effective_categories.categories
     raise ArgumentError, "Category limit (#{PRECEDENCE_MAX}) exceeded" unless categories.size <= PRECEDENCE_MAX
 
-    # Automatically add the 'common' category. (If added manually, a redefinition error is raised later)
+    # Automatically add the 'common' category with lowest precedence
     @category_precedences['common'] = 0
 
+    # if categories contains "common", it should be last - simply drop it if present
+    if last = categories[-1]
+      if last.categorization == 'common'
+        categories.delete_at(-1)
+      end
+    end
     # Process the given categories (highest precedence is first in the list)
     categories.each_with_index do |c, index|
       cname = c.categorization
