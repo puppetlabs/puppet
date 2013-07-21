@@ -35,7 +35,15 @@ class Puppet::Pops::Parser::EvaluatingParser
     return nil unless model
     ast = Puppet::Pops::Model::AstTransformer.new(@file_source, nil).transform(model)
     return nil unless ast
-    ast.safeevaluate(scope)
+
+    # Must evaluate as if future parser is in use to get more correct evaluation
+    saved_parser = Puppet[:parser]
+    Puppet[:parser] = 'future'
+    begin
+      ast.safeevaluate(scope)
+    ensure
+      Pupet[:parser] = saved_parser
+    end
   end
 
   def acceptor()

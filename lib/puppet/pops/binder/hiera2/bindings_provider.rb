@@ -23,7 +23,6 @@ module Puppet::Pops::Binder::Hiera2
     end
 
     # Loads a bindings model using the hierarchy and backends configured for this instance.
-    # TODO: Should take a Scope as parameter
     #
     # @param scope [Puppet::Parser::Scope] The hash used when expanding
     # @return [Puppet::Pops::Binder::Bindings::ContributedBindings] A bindings model with effective categories
