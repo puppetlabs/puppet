@@ -42,7 +42,7 @@ class Puppet::Pops::Parser::EvaluatingParser
     begin
       ast.safeevaluate(scope)
     ensure
-      Pupet[:parser] = saved_parser
+      Puppet[:parser] = saved_parser
     end
   end
 
