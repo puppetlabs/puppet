@@ -409,6 +409,10 @@ describe 'The type calculator' do
       calculator.string(Puppet::Pops::Types::PLiteralType.new()).should == 'Literal'
     end
 
+    it 'should yield \'Boolean\' for PBooleanType' do
+      calculator.string(Puppet::Pops::Types::PBooleanType.new()).should == 'Boolean'
+    end
+
     it 'should yield \'Data\' for PDataType' do
       calculator.string(Puppet::Pops::Types::PDataType.new()).should == 'Data'
     end

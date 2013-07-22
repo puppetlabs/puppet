@@ -421,6 +421,9 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PObjectType(t)  ; "Object"  ; end
 
   # @api private
+  def string_PBooleanType(t) ; "Boolean" ; end
+
+  # @api private
   def string_PLiteralType(t) ; "Literal" ; end
 
   # @api private
