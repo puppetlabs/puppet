@@ -88,13 +88,18 @@ class Puppet::Pops::Binder::Injector
 
   # An Injector is initialized with a configured {Puppet::Pops::Binder::Binder Binder}.
   #
-  # @param configured_binder [Puppet::Pops::Binder::Binder] the configured binder containing effective bindings
+  # @param configured_binder [Puppet::Pops::Binder::Binder,nil] The configured binder containing effective bindings. A given value
+  #   of nil creates an injector that returns or yields nil on all lookup requests.
   # @raise ArgumentError if the given binder is not fully configured
   #
   # @api public
   #
   def initialize(configured_binder)
-    @impl = Private::InjectorImpl.new(configured_binder)
+    if configured_binder.nil?
+      @impl = Private::NullInjectorImpl.new()
+    else
+      @impl = Private::InjectorImpl.new(configured_binder)
+    end
   end
 
   # The KeyFactory used to produce keys in this injector.
@@ -259,11 +264,75 @@ class Puppet::Pops::Binder::Injector
     @impl.get_contributions(scope, contributions_key)
   end
 
+  # Returns an Injector that returns (or yields) nil on all lookups, and produces an empty structure for contributions
+  # This method is intended for testing purposes.
+  #
+  def self.null_injector
+    self.new(nil)
+  end
+
 # The implementation of the Injector is private.
 # @see Puppet::Pops::Binder::Injector The public API this module implements.
 # @api private
 #
 module Private
+
+  # This is a mocking "Null" implementation of Injector. It never finds anything
+  # @api private
+  class NullInjectorImpl
+    attr_reader :entries
+    attr_reader :key_factory
+    attr_reader :type_calculator
+
+    def initialize
+      @entries = []
+      @key_factory = Puppet::Pops::Binder::KeyFactory.new()
+      @type_calculator = @key_factory.type_calculator
+    end
+
+    def lookup(scope, *args, &block)
+      raise ArgumentError, "lookup should be called with two or three arguments, got: #{args.size()+1}" unless args.size.between?(1,2)
+      # call block with result if given
+      if block
+        case block.arity
+        when 1
+          block.call(:undef)
+        when 2
+          block.call(scope, :undef)
+        else
+          raise ArgumentError, "The block should have arity 1 or 2"
+        end
+      else
+        val
+      end
+
+    end
+
+    # @api private
+    def lookup_key(scope, key)
+      nil
+    end
+
+    # @api private
+    def lookup_producer(scope, *args, &block)
+      lookup(scope, *args, &block)
+    end
+
+    # @api private
+    def lookup_producer_key(scope, key)
+      nil
+    end
+
+    # @api private
+    def lookup_producer_type(scope, type, name='')
+      nil
+    end
+
+    def get_contributions()
+      []
+    end
+  end
+
   # @api private
   #
   class InjectorImpl
