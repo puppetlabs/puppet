@@ -22,20 +22,33 @@ module Puppet::Network::HTTP
   class Connection
     include Puppet::Network::Authentication
 
-    MAX_HTTP_REDIRECTIONS = 10
+    OPTION_DEFAULTS = {
+      :use_ssl => true,
+      :verify_peer => true,
+      :redirect_limit => 10
+    }
 
     # Creates a new HTTP client connection to `host`:`port`. 
     # @param host [String] the host to which this client will connect to
     # @param port [Fixnum] the port to which this client will connect to
-    # @param use_ssl [Boolean] true to connect with SSL, false otherwise
-    # @param redirect_limit [Fixnum] the number of allowed redirections
+    # @param options [Hash] options influencing the properties of the created connection,
+    #   the following options are recognized:
+    #     :use_ssl [Boolean] true to connect with SSL, false otherwise, defaults to true
+    #     :verify_peer [Boolean] true to verify the peer's certificate, false otherwise, defaults to true
+    #     :redirect_limit [Fixnum] the number of allowed redirections, defaults to 10
+    #   passing any other option in the options hash results in a Puppet::Error exception
     # @note the HTTP connection itself happens lazily only when {#request}, or one of the {#get}, {#post}, {#delete}, {#head} or {#put} is called
     # @api private
-    def initialize(host, port, use_ssl = true, redirect_limit = MAX_HTTP_REDIRECTIONS)
+    def initialize(host, port, options = {})
       @host = host
       @port = port
-      @use_ssl = use_ssl
-      @redirect_limit = redirect_limit
+      options = options.clone
+      OPTION_DEFAULTS.each_pair do |k, v|
+        k_s = k.to_s
+        v = options.delete(k) { options.delete(k_s) { v } }
+        instance_variable_set(('@' << k_s).to_sym, v)
+      end
+      raise Puppet::Error, "Unrecognized option(s): #{options.keys.map { |k| k.inspect }.sort.join(', ')}" unless options.empty?
     end
 
     def get(*args)
@@ -167,7 +180,7 @@ module Puppet::Network::HTTP
 
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
-      if FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
+      if @verify_peer and FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
         @connection.cert_store  = ssl_host.ssl_store
         @connection.ca_file     = ssl_configuration.ca_auth_file
         @connection.cert        = ssl_host.certificate.content
