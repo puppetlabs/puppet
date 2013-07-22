@@ -318,13 +318,20 @@ class Puppet::Resource
   # We make a request to the backend for the key 'foo::port' not 'foo'
   #
   def lookup_external_default_for(param, scope)
-    if resource_type.type == :hostclass
-      Puppet::DataBinding.indirection.find(
-        "#{resource_type.name}::#{param}",
-        :environment => scope.environment.to_s,
-        :variables => Puppet::DataBinding::Variables.new(scope))
-    else
-      nil
+    # Only lookup parameters for host classes
+    return nil unless resource_type.type == :hostclass
+
+    # Lookup with injector, and if no value bound, lookup with "classic hiera"
+    name = "#{resource_type.name}::#{param}"
+    scope.compiler.injector.lookup(scope, name) do |result|
+      if result.nil?
+        Puppet::DataBinding.indirection.find(
+          name,
+          :environment => scope.environment.to_s,
+          :variables => Puppet::DataBinding::Variables.new(scope))
+      else
+        result
+      end
     end
   end
   private :lookup_external_default_for
