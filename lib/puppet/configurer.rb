@@ -129,6 +129,10 @@ class Puppet::Configurer
     report
   end
 
+  def get_transaction_uuid
+    { :transaction_uuid => @transaction_uuid }
+  end
+
   # The code that actually runs the catalog.
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
@@ -158,7 +162,9 @@ class Puppet::Configurer
       end
 
       query_options = get_facts(options) unless query_options
-      query_options[:transaction_uuid] = @transaction_uuid if query_options
+
+      # add the transaction uuid to the catalog query options hash
+      query_options.merge! get_transaction_uuid if query_options
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
         return nil
