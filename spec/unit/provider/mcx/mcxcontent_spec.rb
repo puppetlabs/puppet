@@ -64,6 +64,13 @@ describe provider_class do
       @provider.create
     end
 
+    it "deletes existing mcx prior to import from :create" do
+      @provider.stubs(:has_mcx?).returns(true)
+      @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
+      @provider.class.expects(:dscl).with('localhost', '-mcximport', @ds_path, anything()).once
+      @provider.create
+    end
+
     it "should execute external command dscl from :destroy" do
       @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path).returns('').once
       @provider.destroy
@@ -84,7 +91,8 @@ describe provider_class do
       @provider.class.expects(:dscl).returns('').once
       @provider.content=''
     end
-    it "should execute external command dscl twice from :content= with existing content" do
+
+    it "deletes existing mcx prior to import from :content=" do
       @provider.stubs(:has_mcx?).returns(true)
       @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
       @provider.class.expects(:dscl).with('localhost', '-mcximport', @ds_path, anything()).once
