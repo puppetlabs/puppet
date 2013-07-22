@@ -3,7 +3,7 @@ Puppet::Reports.register_report(:rrdgraph) do
     must have the Ruby RRDtool library installed to use this report, which
     you can get from
     [the RubyRRDTool RubyForge page](http://rubyforge.org/projects/rubyrrdtool/).
-    This package may also be available as `ruby-rrd` or `rrdtool-ruby` in your
+    This package may also be available as `librrd-ruby`, `ruby-rrd`, or `rrdtool-ruby` in your
     distribution's package management system.  The library and/or package will both
     require the binary `rrdtool` package from your distribution to be installed.
 
