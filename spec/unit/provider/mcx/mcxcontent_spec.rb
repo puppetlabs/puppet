@@ -53,7 +53,15 @@ describe provider_class do
 
   describe "when managing the resource" do
     it "should execute external command dscl from :create" do
+      @provider.stubs(:has_mcx?).returns(false)
       @provider.class.expects(:dscl).returns('').once
+      @provider.create
+    end
+
+    it "deletes existing mcx prior to import from :create" do
+      @provider.stubs(:has_mcx?).returns(true)
+      @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
+      @provider.class.expects(:dscl).with('localhost', '-mcximport', @ds_path, anything()).once
       @provider.create
     end
 
@@ -73,7 +81,15 @@ describe provider_class do
     end
 
     it "should execute external command dscl from :content=" do
-      @provider.class.expects(:dscl).returns('')
+      @provider.stubs(:has_mcx?).returns(false)
+      @provider.class.expects(:dscl).returns('').once
+      @provider.content=''
+    end
+
+    it "deletes existing mcx prior to import from :content=" do
+      @provider.stubs(:has_mcx?).returns(true)
+      @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
+      @provider.class.expects(:dscl).with('localhost', '-mcximport', @ds_path, anything()).once
       @provider.content=''
     end
   end
