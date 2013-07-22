@@ -39,8 +39,8 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "can set ssl using an option" do
-        Puppet::Network::HTTP::Connection.new(host, port, false).send(:connection).should_not be_use_ssl
-        Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection).should be_use_ssl
+        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false).send(:connection).should_not be_use_ssl
+        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection).should be_use_ssl
       end
 
       context "proxy and timeout settings should propagate" do
@@ -86,7 +86,7 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       shared_examples "HTTPS setup without all certificates" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection) }
+        subject { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection) }
 
         it                { should be_use_ssl }
         its(:cert)        { should be_nil }
@@ -123,7 +123,7 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       context "with both the host and CA cert" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection) }
+        subject { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection) }
 
         before :each do
           FileTest.expects(:exist?).with(Puppet[:hostcert]).returns(true)
@@ -148,7 +148,7 @@ describe Puppet::Network::HTTP::Connection do
   context "when methods that accept a block are called with a block" do
     let (:host) { "my_server" }
     let (:port) { 8140 }
-    let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, false) }
+    let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false) }
     let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
     before :each do
@@ -281,7 +281,7 @@ describe Puppet::Network::HTTP::Connection do
     let (:other_host) { "redirected" }
     let (:other_port) { 9292 }
     let (:other_path) { "other-path" }
-    let (:subject) { Puppet::Network::HTTP::Connection.new("my_server", 8140, false) }
+    let (:subject) { Puppet::Network::HTTP::Connection.new("my_server", 8140, :use_ssl => false) }
     let (:httpredirection) { Net::HTTPFound.new('1.1', 302, 'Moved Temporarily') }
     let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
