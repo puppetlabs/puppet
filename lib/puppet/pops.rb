@@ -21,6 +21,7 @@ module Puppet
       require 'puppet/pops/types/types'
       require 'puppet/pops/types/type_calculator'
       require 'puppet/pops/types/type_factory'
+      require 'puppet/pops/types/type_parser'
       require 'puppet/pops/types/class_loader'
     end
 

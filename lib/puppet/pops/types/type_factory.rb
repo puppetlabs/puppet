@@ -6,6 +6,13 @@ module Puppet::Pops::Types::TypeFactory
 
   Types = Puppet::Pops::Types
 
+  # Produces the Object type
+  # @api public
+  #
+  def self.object()
+    Types::PObjectType.new()
+  end
+
   # Produces the Integer type
   # @api public
   #
