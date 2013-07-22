@@ -267,42 +267,45 @@ describe Puppet::Resource do
   end
 
   describe "when setting default parameters" do
-    before do
-      @scope = mock "Scope"
-      @scope.stubs(:source).returns(nil)
+    let(:foo_node) { Puppet::Node.new('foo') }
+    let(:compiler) { Puppet::Parser::Compiler.new(foo_node) }
+    let(:scope)    { Puppet::Parser::Scope.new(compiler) }
+
+    def ast_string(value)
+      Puppet::Parser::AST::String.new({:value => value})
     end
 
     it "should fail when asked to set default values and it is not a parser resource" do
       Puppet::Node::Environment.new.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "default")})
+      Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("default")})
       )
       resource = Puppet::Resource.new("default_param", "name")
-      lambda { resource.set_default_parameters(@scope) }.should raise_error(Puppet::DevError)
+      lambda { resource.set_default_parameters(scope) }.should raise_error(Puppet::DevError)
     end
 
     it "should evaluate and set any default values when no value is provided" do
       Puppet::Node::Environment.new.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("a_default_value")})
       )
-      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
-      resource.set_default_parameters(@scope)
+      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
+      resource.set_default_parameters(scope)
       resource["a"].should == "a_default_value"
     end
 
     it "should skip attributes with no default value" do
       Puppet::Node::Environment.new.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => ast_string("a_default_value")})
       )
-      resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
-      lambda { resource.set_default_parameters(@scope) }.should_not raise_error
+      resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => scope)
+      lambda { resource.set_default_parameters(scope) }.should_not raise_error
     end
 
     it "should return the list of default parameters set" do
       Puppet::Node::Environment.new.known_resource_types.add(
-        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("a_default_value")})
       )
-      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))))
-      resource.set_default_parameters(@scope).should == ["a"]
+      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
+      resource.set_default_parameters(scope).should == ["a"]
     end
 
     describe "when the resource type is :hostclass" do
@@ -315,26 +318,26 @@ describe Puppet::Resource do
         environment = Puppet::Node::Environment.new(environment_name)
         environment.known_resource_types.add(apache)
 
-        @scope.stubs(:host).returns('host')
-        @scope.stubs(:environment).returns(Puppet::Node::Environment.new(environment_name))
-        @scope.stubs(:facts).returns(Puppet::Node::Facts.new("facts", fact_values))
+        scope.stubs(:host).returns('host')
+        scope.stubs(:environment).returns(Puppet::Node::Environment.new(environment_name))
+        scope.stubs(:facts).returns(Puppet::Node::Facts.new("facts", fact_values))
       end
 
       context "when no value is provided" do
         let(:resource) do
-          Puppet::Parser::Resource.new("class", "apache", :scope => @scope)
+          Puppet::Parser::Resource.new("class", "apache", :scope => scope)
         end
 
         it "should query the data_binding terminus using a namespaced key" do
           Puppet::DataBinding.indirection.expects(:find).with(
             'apache::port', all_of(has_key(:environment), has_key(:variables)))
-          resource.set_default_parameters(@scope)
+          resource.set_default_parameters(scope)
         end
 
         it "should use the value from the data_binding terminus" do
           Puppet::DataBinding.indirection.expects(:find).returns('443')
 
-          resource.set_default_parameters(@scope)
+          resource.set_default_parameters(scope)
 
           resource[:port].should == '443'
         end
@@ -342,7 +345,7 @@ describe Puppet::Resource do
         it "should use the default value if the data_binding terminus returns nil" do
           Puppet::DataBinding.indirection.expects(:find).returns(nil)
 
-          resource.set_default_parameters(@scope)
+          resource.set_default_parameters(scope)
 
           resource[:port].should == '80'
         end
@@ -356,18 +359,18 @@ describe Puppet::Resource do
         end
 
         let(:resource) do
-          Puppet::Parser::Resource.new("class", "apache", :scope => @scope,
+          Puppet::Parser::Resource.new("class", "apache", :scope => scope,
             :parameters => [port_parameter])
         end
 
         it "should not query the data_binding terminus" do
           Puppet::DataBinding.indirection.expects(:find).never
-          resource.set_default_parameters(@scope)
+          resource.set_default_parameters(scope)
         end
 
         it "should use the value provided" do
           Puppet::DataBinding.indirection.expects(:find).never
-          resource.set_default_parameters(@scope).should == []
+          resource.set_default_parameters(scope).should == []
           resource[:port].should == '8080'
         end
       end

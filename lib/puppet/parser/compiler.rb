@@ -206,6 +206,11 @@ class Puppet::Parser::Compiler
     @resource_overrides[resource.ref]
   end
 
+  def injector
+    create_injector if @injector.nil?
+    @injector
+  end
+
   private
 
   # If ast nodes are enabled, then see if we can find and evaluate one.
