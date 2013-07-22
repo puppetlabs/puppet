@@ -53,6 +53,12 @@ describe provider_class do
 
   describe "when managing the resource" do
     it "should execute external command dscl from :create" do
+      @provider.stubs(:has_mcx?).returns(false)
+      @provider.class.expects(:dscl).returns('').once
+      @provider.create
+    end
+    it "should execute external command dscl twice from :create with existing content" do
+      @provider.stubs(:has_mcx?).returns(true)
       @provider.class.expects(:dscl).returns('').twice
       @provider.create
     end
@@ -73,6 +79,12 @@ describe provider_class do
     end
 
     it "should execute external command dscl from :content=" do
+      @provider.stubs(:has_mcx?).returns(false)
+      @provider.class.expects(:dscl).returns('').once
+      @provider.content=''
+    end
+    it "should execute external command dscl twice from :content= with existing content" do
+      @provider.stubs(:has_mcx?).returns(true)
       @provider.class.expects(:dscl).returns('').twice
       @provider.content=''
     end
