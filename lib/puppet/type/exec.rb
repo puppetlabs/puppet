@@ -156,7 +156,10 @@ module Puppet
         use this then any error output is not currently captured.  This
         is because of a bug within Ruby.  If you are using Puppet to
         create this user, the exec will automatically require the user,
-        as long as it is specified by name."
+        as long as it is specified by name.
+
+        Please note that the $HOME environment variable is not automatically set
+        when using this attribute."
 
       # Most validation is handled by the SUIDManager class.
       validate do |user|
