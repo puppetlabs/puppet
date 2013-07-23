@@ -13,7 +13,7 @@ mkdir -p ${dir}
 mkdir -p ${dir}/manifests
 touch ${dir}/manifests/site.pp
  
-# work around a bug where the master generates a warning when if agent pluginsyncs
+# Work around Redmine #21908 where the master generates a warning if agent pluginsyncs
 # and there isn't at least one module with a libdir
 mkdir -p ${dir}/modules/foo/lib
  
