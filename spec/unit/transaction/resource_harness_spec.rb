@@ -54,6 +54,11 @@ describe Puppet::Transaction::ResourceHarness do
     it "should store the resource's evaluation time in the resource status" do
       @harness.evaluate(@resource).evaluation_time.should be_instance_of(Float)
     end
+
+    it "should call the 'applied' method if avaiable on the resource" do
+      @resource.expects(:applied).once
+      @harness.evaluate(@resource)
+    end
   end
 
   def events_to_hash(events)

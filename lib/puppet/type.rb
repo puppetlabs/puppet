@@ -963,6 +963,16 @@ class Type
     self.provider.flush if self.provider and self.provider.respond_to?(:flush)
   end
 
+  # Finalize the provider if supported by the provider, else no other action.
+  # This is done in a last ditch effort to allow providers to clean up resources
+  # created durring actions like prefetching. Unlike 'flushing', which is only
+  # called when the resource returns change events, finalize is always called.
+  #
+  # @return [void]
+  def applied
+    self.provider.finalize if self.provider and self.provider.respond_to?(:finalize)
+  end
+
   # Returns true if all contained objects are in sync.
   # @todo "contained in what?" in the given "in" parameter?
   #

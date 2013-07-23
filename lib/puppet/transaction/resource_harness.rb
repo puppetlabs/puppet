@@ -145,6 +145,8 @@ class Puppet::Transaction::ResourceHarness
       resource.flush if resource.respond_to?(:flush)
     end
 
+    resource.applied if resource.respond_to?(:applied)
+
     return status
   rescue => detail
     resource.fail "Could not create resource status: #{detail}" unless status
