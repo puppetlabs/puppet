@@ -12,6 +12,7 @@ require 'pathname'
 require 'ostruct'
 require 'puppet/util/platform'
 require 'puppet/util/symbolic_file_mode'
+require 'securerandom'
 
 module Puppet
 module Util
