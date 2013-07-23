@@ -5,6 +5,8 @@ require 'puppet/parameter'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
+#
+# @api public
 class Puppet::Resource
   # This stub class is only needed for serialization compatibility with 0.25.x.
   # Specifically, it exists to provide a compatibility API when using YAML
