@@ -1,5 +1,3 @@
-# Description of yum repositories
-
 require 'puppet/util/inifile'
 
 module Puppet
