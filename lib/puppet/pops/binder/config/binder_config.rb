@@ -64,7 +64,7 @@ module Puppet::Pops::Binder::Config
       rescue Errno::ENOENT
         diagnostics.accept(Issues::CONFIG_FILE_NOT_FOUND, config_file)
       rescue ::SyntaxError => e
-        diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, e)
+        diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, config_file, :detail => e.message)
       end
 
       unless diagnostics.errors?
