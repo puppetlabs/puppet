@@ -4,6 +4,10 @@ module Puppet::Pops::Binder::Config::Issues
     Puppet::Pops::Issues.issue(issue_code, *args, &block)
   end
 
+  CONFIG_FILE_SYNTAX_ERROR = issue :CONFIG_FILE_SYNTAX_ERROR, :detail do
+    "Syntax error in configuration file: #{detail}"
+  end
+
   CONFIG_IS_NOT_HASH = issue :CONFIG_IS_NOT_HASH do
     "The configuration file '#{semantic}' has no hash at the top level"
   end
