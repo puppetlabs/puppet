@@ -49,7 +49,7 @@ class Puppet::Pops::Binder::BindingsComposer
       # The EParserAdapter has general reporting logic - should be generalized and reused here
       # for reporting the problems and bailing out.
       #
-      raise Puppet::ParseError.new("Binding Composer: error while reading config. TODO: proper reporting")
+      raise Puppet::ParseError.new("Binding Composer: error while reading config. TODO: proper reporting. #{acceptor.errors}")
     end
   end
 
@@ -212,7 +212,7 @@ class SymbolicScheme < BindingsProviderScheme
   #
   def contributed_bindings(uri, scope, diagnostics)
     fqn = fqn_from_path(uri)[1]
-    bindings = Puppet::Binder::BindingsLoader.provide(fqn)
+    bindings = Puppet::Pops::Binder::BindingsLoader.provide(fqn)
     raise ArgumentError, "Cannot load bindings '#{uri}' - no bindings found." unless bindings
     # Must clone as the the rest mutates the model
     cloned_bindings = Marshal.load(Marshal.dump(bindings))
@@ -248,10 +248,10 @@ class ModuleScheme < SymbolicScheme
       # create new URIs, one per module name that has a corresponding .rb file relative to its
       # '<root>/lib/puppet/bindings/'
       #
-      composer.name_to_module.each_pair do | name, mod |
-        expanded_name_parts = [name] + split_name
+      composer.name_to_module.each_pair do | mod_name, mod |
+        expanded_name_parts = [mod_name] + split_name[1..-1]
         expanded_name = expanded_name_parts.join('::')
-        if Puppet::Binder::BindingsLoader.loadable?(mod.path, expanded_name)
+        if Puppet::Pops::Binder::BindingsLoader.loadable?(mod.path, expanded_name)
           result << URI.parse('module:/' + expanded_name)
         end
       end

@@ -68,6 +68,10 @@ class Puppet::Bindings
     adapter[name]
   end
 
+  def self.[](name)
+    get(name)
+  end
+
   # Supports Enumerable iteration (k,v) over the named bindings hash.
   def self.each
     adapter = NamedBindingsAdapter.adapt(Environment.current)

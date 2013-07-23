@@ -1,7 +1,7 @@
 ---
 layers:
   [{name: site, include: 'confdir-hiera:/'},
-   {name: modules, include: 'module-hiera:/*/', exclude: 'module-hiera:/bad/' }
+   {name: modules, include: ['module-hiera:/*/', 'module:/*::default'], exclude: 'module-hiera:/bad/' }
   ]
 categories:
   [['node', '$fqdn'],
