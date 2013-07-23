@@ -37,6 +37,14 @@ describe Puppet::Pops::Types::TypeParser do
     expect(the_type_parsed_from(types.data)).to be_the_type(types.data)
   end
 
+  it "interprets an unparameterized Array as an Array of Data" do
+    expect(parser.parse("Array")).to be_the_type(types.array_of_data)
+  end
+
+  it "interprets an unparameterized Hash as a Hash of Literal to Data" do
+    expect(parser.parse("Hash")).to be_the_type(types.hash_of_data)
+  end
+
   it "parses a parameterized type into the type object" do
     parameterized_array = types.array_of(types.integer)
     parameterized_hash = types.hash_of(types.integer, types.boolean)
