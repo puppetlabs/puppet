@@ -32,10 +32,20 @@ describe Puppet::Transaction::Report do
     Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").configuration_version.should == "some configuration version"
   end
 
+  it "should take a 'transaction_uuid' as an argument" do
+    Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment", "some transaction uuid").transaction_uuid.should == "some transaction uuid"
+  end
+
   it "should be able to set configuration_version" do
     report = Puppet::Transaction::Report.new("inspect")
     report.configuration_version = "some version"
     report.configuration_version.should == "some version"
+  end
+
+  it "should be able to set transaction_uuid" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.transaction_uuid = "some transaction uuid"
+    report.transaction_uuid.should == "some transaction uuid"
   end
 
   it "should take 'environment' as an argument" do
@@ -356,7 +366,7 @@ describe Puppet::Transaction::Report do
     status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
     status.changed = true
 
-    report = Puppet::Transaction::Report.new('testy', 1357986, 'test_environment')
+    report = Puppet::Transaction::Report.new('testy', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
     report.add_resource_status(status)
@@ -367,6 +377,7 @@ describe Puppet::Transaction::Report do
     tripped.host.should == report.host
     tripped.time.should == report.time
     tripped.configuration_version.should == report.configuration_version
+    tripped.transaction_uuid.should == report.transaction_uuid
     tripped.report_format.should == report.report_format
     tripped.puppet_version.should == report.puppet_version
     tripped.kind.should == report.kind

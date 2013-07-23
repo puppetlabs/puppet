@@ -3,6 +3,7 @@ require 'sync'
 require 'timeout'
 require 'puppet/network/http_pool'
 require 'puppet/util'
+require 'securerandom'
 
 class Puppet::Configurer
   require 'puppet/configurer/fact_handler'
@@ -58,18 +59,19 @@ class Puppet::Configurer
     @running = false
     @splayed = false
     @environment = Puppet[:environment]
+    @transaction_uuid = SecureRandom.uuid
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
-  def retrieve_catalog(fact_options)
-    fact_options ||= {}
+  def retrieve_catalog(query_options)
+    query_options ||= {}
     # First try it with no cache, then with the cache.
-    unless (Puppet[:use_cached_catalog] and result = retrieve_catalog_from_cache(fact_options)) or result = retrieve_new_catalog(fact_options)
+    unless (Puppet[:use_cached_catalog] and result = retrieve_catalog_from_cache(query_options)) or result = retrieve_new_catalog(query_options)
       if ! Puppet[:usecacheonfailure]
         Puppet.warning "Not using cache on failed catalog"
         return nil
       end
-      result = retrieve_catalog_from_cache(fact_options)
+      result = retrieve_catalog_from_cache(query_options)
     end
 
     return nil unless result
@@ -100,11 +102,11 @@ class Puppet::Configurer
     end
   end
 
-  def prepare_and_retrieve_catalog(options, fact_options)
+  def prepare_and_retrieve_catalog(options, query_options)
     # set report host name now that we have the fact
     options[:report].host = Puppet[:node_name_value]
 
-    unless catalog = (options.delete(:catalog) || retrieve_catalog(fact_options))
+    unless catalog = (options.delete(:catalog) || retrieve_catalog(query_options))
       Puppet.err "Could not retrieve catalog; skipping run"
       return
     end
@@ -116,6 +118,7 @@ class Puppet::Configurer
   def apply_catalog(catalog, options)
     report = options[:report]
     report.configuration_version = catalog.version
+    report.transaction_uuid = @transaction_uuid
     report.environment = @environment
 
     benchmark(:notice, "Finished catalog run") do
@@ -124,6 +127,10 @@ class Puppet::Configurer
 
     report.finalize_report
     report
+  end
+
+  def get_transaction_uuid
+    { :transaction_uuid => @transaction_uuid }
   end
 
   # The code that actually runs the catalog.
@@ -137,7 +144,7 @@ class Puppet::Configurer
     Puppet::Util::Log.newdestination(report)
     begin
       unless Puppet[:node_name_fact].empty?
-        fact_options = get_facts(options)
+        query_options = get_facts(options)
       end
 
       begin
@@ -146,7 +153,7 @@ class Puppet::Configurer
           if node.environment.to_s != @environment
             Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
             @environment = node.environment.to_s
-            fact_options = nil
+            query_options = nil
           end
         end
       rescue Puppet::Error, Net::HTTPError => detail
@@ -154,9 +161,12 @@ class Puppet::Configurer
         Puppet.warning(detail)
       end
 
-      fact_options = get_facts(options) unless fact_options
+      query_options = get_facts(options) unless query_options
 
-      unless catalog = prepare_and_retrieve_catalog(options, fact_options)
+      # add the transaction uuid to the catalog query options hash
+      query_options.merge! get_transaction_uuid if query_options
+
+      unless catalog = prepare_and_retrieve_catalog(options, query_options)
         return nil
       end
 
@@ -171,7 +181,7 @@ class Puppet::Configurer
         end
         Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
         @environment = catalog.environment
-        return nil unless catalog = prepare_and_retrieve_catalog(options, fact_options)
+        return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
         tries += 1
       end
 
@@ -225,10 +235,10 @@ class Puppet::Configurer
     end
   end
 
-  def retrieve_catalog_from_cache(fact_options)
+  def retrieve_catalog_from_cache(query_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true, :environment => @environment))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], query_options.merge(:ignore_terminus => true, :environment => @environment))
     end
     Puppet.notice "Using cached catalog"
     result
@@ -237,10 +247,10 @@ class Puppet::Configurer
     return nil
   end
 
-  def retrieve_new_catalog(fact_options)
+  def retrieve_new_catalog(query_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true, :environment => @environment))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], query_options.merge(:ignore_cache => true, :environment => @environment))
     end
     result
   rescue SystemExit,NoMemoryError
