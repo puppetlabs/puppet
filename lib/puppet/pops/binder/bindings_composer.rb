@@ -59,7 +59,12 @@ class Puppet::Pops::Binder::BindingsComposer
     # Do this now since there is a scope (which makes it possible to get to other information
     # TODO: Make it possible to register scheme handlers
     #
-    @scheme_handlers = { 'module-hiera' => ModuleHieraScheme.new(self), 'confdir-hiera' => ConfdirHieraScheme.new(self) }
+    @scheme_handlers = {
+      'module-hiera'  => ModuleHieraScheme.new(self),
+      'confdir-hiera' => ConfdirHieraScheme.new(self),
+      'module'        => ModuleScheme.new(self),
+      'confdir'       => ConfdirScheme.new(self)
+    }
 
     # get all existing modules and their root path
     @name_to_module = {}
@@ -190,6 +195,128 @@ class BindingsProviderScheme
   def initialize(composer)
     @composer = composer
   end
+
+  # @return [Boolean] whether the uri is an optional reference or not.
+  def is_optional?(uri)
+    (query = uri.query) && query == '' || query == 'optional'
+  end
+end
+
+class SymbolicScheme < BindingsProviderScheme
+
+  # Shared implementation for module: and confdir: since the distinction is only in checks if a symbolic name
+  # exists as a loadable file or not. Once this method is called it is assumed that the name is relativeized
+  # and that it should exist relative to all loadable ruby locations.
+  # 
+  # TODO: this needs to be changed once ARM-8 Puppet DSL concrete syntax is also supported.
+  #
+  def contributed_bindings(uri, scope, diagnostics)
+    fqn = fqn_from_path(uri)[1]
+    bindings = Puppet::Binder::BindingsLoader.provide(fqn)
+    raise ArgumentError, "Cannot load bindings '#{uri}' - no bindings found." unless bindings
+    # Must clone as the the rest mutates the model
+    cloned_bindings = Marshal.load(Marshal.dump(bindings))
+    # Give no effective categories (i.e. ok with whatever categories there is)
+    Puppet::Pops::Binder::BindingsFactory.contributed_bindings(fqn, cloned_bindings, nil)
+  end
+
+  # @api private
+  def fqn_from_path(uri)
+    split_path = uri.path.split('/')
+    if split_path.size > 1 && split_path[-1].empty?
+      split_path.delete_at(-1)
+    end
+
+    fqn = split_path[ 1 ]
+    raise ArgumentError, "Module scheme binding reference has no name." unless fqn
+    split_name = fqn.split('::')
+    # drop leading '::'
+    split_name.shift if split_name[0] && split_name[0].empty?
+    [split_name, split_name.join('::')]
+  end
+end
+
+# TODO: optional does not work with non modulepath located content - it assumes modulepath + name=> path
+class ModuleScheme < SymbolicScheme
+  def expand_included(uri)
+    result = []
+    split_name, fqn = fqn_from_path(uri)
+
+    # supports wild card in the module name
+    case split_name[0]
+    when '*'
+      # create new URIs, one per module name that has a corresponding .rb file relative to its
+      # '<root>/lib/puppet/bindings/'
+      #
+      composer.name_to_module.each_pair do | name, mod |
+        expanded_name_parts = [name] + split_name
+        expanded_name = expanded_name_parts.join('::')
+        if Puppet::Binder::BindingsLoader.loadable?(mod.path, expanded_name)
+          result << URI.parse('module:/' + expanded_name)
+        end
+      end
+    when nil
+      raise ArgumentError, "Bad bindings uri, the #{uri} has neither module name or wildcard '*' in its first path position"
+    else
+      joined_name = split_name.join('::')
+      # skip optional uri if it does not exist
+      if is_optional?(uri)
+        mod = composer.name_to_module[split_name[0]]
+        if mod && Puppet::Binder::BindingsLoader.loadable?(mod.path, joined_name)
+          result << URI.parse('module:/' + joined_name)
+        end
+      else
+        # assume it exists (do not give error if not, since it may be excluded later)
+        result << URI.parse('module:/' + joined_name)
+      end
+    end
+    result
+  end
+
+  def expand_excluded(uri)
+    result = []
+    split_name, fqn = fqn_from_path(uri)
+
+    case split_name[ 0 ]
+    when '*'
+      # create new URIs, one per module name
+      composer.name_to_module.each_pair do | name, mod |
+        result << URI.parse('module:/' + ([name] + split_name).join('::'))
+      end
+
+    when nil
+      raise ArgumentError, "Bad bindings uri, the #{uri} has neither module name or wildcard '*' in its first path position"
+    else
+      # create a clean copy (get rid of optional, fragments etc. and any trailing stuff
+      result << URI.parse('module:/' + split_name.join('::'))
+    end
+    result
+  end
+end
+
+class ConfdirScheme < SymbolicScheme
+
+  # Similar to ModuleScheme, but relative to the config root. Does not support wildcard expansion
+  # TODO: optional does not work with non confdir located files
+  #
+  def expand_included(uri)
+    fqn = fqn_from_path(uri)[1]
+    if is_optional?(uri)
+      if Puppet::Binder::BindingsLoader.loadable?(composer.confdir, fqn)
+        [URI.parse('module:/' + fqn)]
+      else
+        []
+      end
+    else
+      # assume it exists (do not give error if not, since it may be excluded later)
+      [URI.parse('module:/' + fqn)]
+    end
+  end
+
+  def expand_excluded(uri)
+    [URI.parse("confdir:/#{fqn_from_path(uri)[1]}")]
+  end
+
 end
 
 # @abstract
@@ -207,6 +334,7 @@ class ConfdirHieraScheme < HieraScheme
 
   # Similar to ModuleHieraScheme, but relative to the config root. Does not support wildcard expansion
   def expand_included(uri)
+    # TODO: handle optional
     [uri]
   end
 

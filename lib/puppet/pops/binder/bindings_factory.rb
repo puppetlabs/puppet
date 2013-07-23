@@ -21,24 +21,36 @@ class Puppet::Pops::Binder::BindingsFactory
       @model = binding
     end
 
+    # Provides convenient access to the Bindings Factory class methods. The intent is to provide access to the
+    # methods that return producers for the purpose of composing more elaborate things that the convenient methods
+    # directly supports.
+    #
+    def method_missing(meth, *args, &block)
+      Puppet::Pops::Binder::BindingsFactory.send(*args, &block)
+    end
+
     # Adds an empty binding to the container, and returns a builder for it for further detailing.
     # @api public
     #
-    def bind()
+    def bind(&block)
       binding = Puppet::Pops::Binder::Bindings::Binding.new()
       model.addBindings(binding)
-      BindingsBuilder.new(binding)
+      builder = BindingsBuilder.new(binding)
+      builder.instance_eval(&block) if block_given?
+      builder
     end
 
     # Binds an (almost) empty multibind where later, the looked up result contains all contributions to this key
     # @param id [String] the multibind's id used when adding contributions
     # @api public
     #
-    def multibind(id)
+    def multibind(id, &block)
       binding = Puppet::Pops::Binder::Bindings::Multibinding.new()
       binding.id = id
       model.addBindings(binding)
-      MultibindingsBuilder.new(binding)
+      builder = MultibindingsBuilder.new(binding)
+      builder.instance_eval(&block) if block_given?
+      builder
     end
 
     # Binds a type/name key in a multibind given by id.
@@ -47,11 +59,13 @@ class Puppet::Pops::Binder::BindingsFactory
     # @param id [String] the multibind id of the multibind where this binding should be made
     # @api public
     #
-    def bind_in_multibind(id)
+    def bind_in_multibind(id, &block)
       binding = Puppet::Pops::Binder::Bindings::MultibindContribution.new()
       binding.multibind_id = id
       model.addBindings(binding)
-      BindingsBuilder.new(binding)
+      builder = BindingsBuilder.new(binding)
+      builder.instance_eval(&block) if block_given?
+      builder
     end
 
     # Adds a categorized bindings to this container. Returns a BindingsContainerBuilder to allow adding
@@ -60,8 +74,8 @@ class Puppet::Pops::Binder::BindingsFactory
     # @param category_vale [String] the calue in that category e.g. 'kermit.example.com'
     # @api public
     #
-    def when_in_category(categorization, category_value)
-      when_in_categories({categorization => category_value})
+    def when_in_category(categorization, category_value, &block)
+      when_in_categories({categorization => category_value}, &block)
     end
 
     # Adds a categorized bindings to this container. Returns a BindingsContainerBuilder to allow adding
@@ -70,7 +84,7 @@ class Puppet::Pops::Binder::BindingsFactory
     # @param categories_hash Hash[String, String] a hash with categorization and categorization value entries
     # @api public
     #
-    def when_in_categories(categories_hash)
+    def when_in_categories(categories_hash, &block)
       binding = Puppet::Pops::Binder::Bindings::CategorizedBindings.new()
       categories_hash.each do |k,v|
           pred = Puppet::Pops::Binder::Bindings::Category.new()
@@ -79,11 +93,13 @@ class Puppet::Pops::Binder::BindingsFactory
           binding.addPredicates(pred)
         end
       model.addBindings(binding)
-      BindingsContainerBuilder.new(binding)
+      builder = BindingsContainerBuilder.new(binding)
+      builder.instance_eval(&block) if block_given?
+      builder
     end
   end
 
-  # Builds a Binding via cconvenience methods.
+  # Builds a Binding via convenience methods.
   #
   # @api public
   #
@@ -96,8 +112,17 @@ class Puppet::Pops::Binder::BindingsFactory
       data()
     end
 
+    # Sets the name of the binding.
+    # @param name [String] the name to bind.
     # @api public
     def name(name)
+      @model.name = name
+      self
+    end
+
+    # (#name)
+    # @api public
+    def named(name)
       @model.name = name
       self
     end
@@ -158,6 +183,8 @@ class Puppet::Pops::Binder::BindingsFactory
       type(Puppet::Pops::Types::TypeFactory.hash_of_data())
     end
 
+    # Sets type of binding to `Hash[Literal, t]`. To limit the key type, use {#type} and give it a fully specified
+    # hash using {#type_factory} and then `hash_of(value_type, key_type)`.
     # @api public
     def hash_of(t)
       type(Puppet::Pops::Types::TypeFactory.hash_of(t))
@@ -166,6 +193,14 @@ class Puppet::Pops::Binder::BindingsFactory
     # @api public
     def instance_of(t)
       type(Puppet::Pops::Types::TypeFactory.type_of(t))
+    end
+
+    # Provides convenient access to the type factory.
+    # This is intended to be used when methods taking a type as argument i.e. {#type}, #{array_of}, {#hash_of}, and {#instance_of}.
+    #
+    # @api public
+    def type_factory
+      Puppet::Pops::Types::TypeFactory
     end
 
     # to a singleton producer, if producer is a value, a producer is created for it
@@ -411,10 +446,12 @@ class Puppet::Pops::Binder::BindingsFactory
   # Unwrap the built result when done.
   # @api public
   #
-  def self.named_bindings(name)
+  def self.named_bindings(name, &block)
     binding = Puppet::Pops::Binder::Bindings::NamedBindings.new()
     binding.name = name
-    BindingsContainerBuilder.new(binding)
+    builder = BindingsContainerBuilder.new(binding)
+    builder.instance_eval(&block) if block_given?
+    builder
   end
 
   # Creates a literal producer
