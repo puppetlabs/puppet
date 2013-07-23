@@ -48,6 +48,10 @@ class Puppet::Pops::Types::TypeParser
       TYPES.pattern
     when "data"
       TYPES.data
+    when "array"
+      TYPES.array_of_data
+    when "hash"
+      TYPES.hash_of_data
     else
       raise_unknown_type_error(name_ast)
     end
