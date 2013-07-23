@@ -132,7 +132,7 @@ module Puppet::Pops::Binder::Config
       begin
         uri = URI.parse(value)
 
-        unless ['module-hiera', 'confdir-hiera', 'enc'].include?(uri.scheme)
+        unless ['module-hiera', 'confdir-hiera', 'module', 'confdir', 'enc'].include?(uri.scheme)
           accept(Issues::UNKNOWN_REF_SCHEME, config_file, :uri => uri, :kind => kind)
         end
         unless uri.path
