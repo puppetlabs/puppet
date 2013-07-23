@@ -7,6 +7,14 @@ describe Puppet::Pops::Types::TypeParser do
   let(:parser) { Puppet::Pops::Types::TypeParser.new }
   let(:types) { Puppet::Pops::Types::TypeFactory }
 
+  it "rejects a puppet expression" do
+    expect { parser.parse("1 + 1") }.to raise_error(Puppet::ParseError, /The expression <1 \+ 1> is not a valid type specification/)
+  end
+
+  it "rejects a empty type specification" do
+    expect { parser.parse("") }.to raise_error(Puppet::ParseError, /The expression <> is not a valid type specification/)
+  end
+
   it "rejects an invalid type simple type" do
     expect { parser.parse("NotAType") }.to raise_type_error_for("NotAType")
   end

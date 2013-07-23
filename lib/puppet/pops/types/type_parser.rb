@@ -15,13 +15,25 @@ class Puppet::Pops::Types::TypeParser
 
   def parse(string)
     @string = string
-    interpret(@parser.parse_string(@string).current)
+    model = @parser.parse_string(@string)
+    if model
+      interpret(model.current)
+    else
+      raise_invalid_type_specification_error
+    end
   end
 
+  # @api private
   def interpret(ast)
     @type_transformer.visit_this(self, ast)
   end
 
+  # @api private
+  def interpret_Object(anything)
+    raise_invalid_type_specification_error
+  end
+
+  # @api private
   def interpret_QualifiedReference(name_ast)
     case name_ast.value
     when "integer"
@@ -41,6 +53,7 @@ class Puppet::Pops::Types::TypeParser
     end
   end
 
+  # @api private
   def interpret_AccessExpression(parameterized_ast)
     parameters = parameterized_ast.keys.collect { |param| interpret(param) }
     case parameterized_ast.left_expr.value
@@ -61,13 +74,22 @@ class Puppet::Pops::Types::TypeParser
 
   private
 
+  def raise_invalid_type_specification_error
+    raise Puppet::ParseError,
+      "The expression <#{@string}> is not a valid type specification."
+  end
+
   def raise_invalid_parameters_error(type, required, given)
-    raise Puppet::ParseError, "Invalid number of type parameters specified: #{type} requires #{required}, #{given} provided"
+    raise Puppet::ParseError,
+      "Invalid number of type parameters specified: #{type} requires #{required}, #{given} provided"
   end
 
   def raise_unknown_type_error(ast)
+    raise Puppet::ParseError, "Unknown type <#{original_text_of(ast)}>"
+  end
+
+  def original_text_of(ast)
     position = Puppet::Pops::Adapters::SourcePosAdapter.adapt(ast)
-    original = position.extract_text_from_string(@string)
-    raise Puppet::ParseError, "Unknown type <#{original}>"
+    position.extract_text_from_string(@string)
   end
 end
