@@ -1,4 +1,5 @@
 module Puppet
+
   module Pops
     require 'puppet/pops/patterns'
     require 'puppet/pops/utils'
@@ -53,6 +54,7 @@ module Puppet
       require 'puppet/pops/binder/bindings_composer'
       require 'puppet/pops/binder/bindings_model_dumper'
       require 'puppet/pops/binder/system_bindings'
+      require 'puppet/pops/binder/bindings_loader'
 
       module Config
         require 'puppet/pops/binder/config/binder_config'
@@ -74,4 +76,6 @@ module Puppet
       require 'puppet/pops/validation/validator_factory_3_1'
     end
   end
+
+  require 'puppet/bindings'
 end

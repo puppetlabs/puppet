@@ -35,7 +35,7 @@ class Puppet::Pops::Binder::BindingsLoader
   def self.loadable?(basedir, name)
     # note, "lib" is added by the autoloader
     #
-    paths_for_name(name).find {|p| File.exists?(File.join(file, "lib/puppet/bindings", p)+'.rb') }
+    paths_for_name(name).find {|p| File.exists?(File.join(basedir, "lib/puppet/bindings", p)+'.rb') }
   end
 
   private
@@ -51,12 +51,12 @@ class Puppet::Pops::Binder::BindingsLoader
 
   def self.provide_from_name_path(name, name_path)
     # If bindings is already loaded, try this first
-    result = Puppet::Binder[name]
+    result = Puppet::Bindings[name]
 
     unless result
       # Attempt to load it using the auto loader
       paths_for_name(name).find {|path| @autoloader.load(path) }
-      result = Puppet::Binder[name]
+      result = Puppet::Bindings[name]
     end
     result
   end

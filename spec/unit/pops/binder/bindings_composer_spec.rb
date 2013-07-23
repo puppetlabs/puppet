@@ -49,6 +49,7 @@ describe 'BinderComposer' do
       expect(injector.lookup(scope, 'rotten_x')).to be == nil
       expect(injector.lookup(scope, 'the_meaning_of_life')).to be == 42
       expect(injector.lookup(scope, 'has_funny_hat')).to be == 'the pope'
+      expect(injector.lookup(scope, 'all your base')).to be == 'are belong to us'
 
     end
   end
