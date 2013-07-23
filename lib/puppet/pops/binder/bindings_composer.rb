@@ -2,17 +2,12 @@
 # It is directed by a {Puppet::Pops::Binder::Config::BinderConfig BinderConfig} that indicates how
 # the final composition should be layered, and what should be included/excluded in each layer
 #
-# TODO: Lookup and provide the confdir (needed by confdir-hiera scheme);
-# TODO: Also support envdir scheme / relative to environment root (== same as confdir if there is only one environment)
+# The bindings composer is intended to be used once per environment as the compiler starts its work.
+#
+# TODO: Also ? instead of confdir ? support envdir scheme / relative to environment root (== same as confdir if there is only one environment)
 # TODO: If same config is loaded in a higher layer, skip it in the lower (since it is meaningless to load it again with lower
 #       precedence
-# TODO: Hiera2 bindings provider changed API
-# TODO: Hiera2 bindings, ::fact vs fact
-# TODO: Combine layers
-# TODO: Driving the overall precedence of categories; configured or composed?
-#       If top layer is hiera2 - it defines all categories, but where are they otherwise stored?
-#       In bindings_config?
-#
+# TODO: BindingsConfig, and default BindingsConfig via settings
 #
 class Puppet::Pops::Binder::BindingsComposer
 
