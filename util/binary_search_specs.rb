@@ -11,19 +11,16 @@ suspects = specs
 
 while suspects.length > 1 do
   count = suspects.length
-  # Try the first half
   specs_to_run = suspects[0...(count/2)]
   puts "Trying #{specs_to_run.join(' ')}"
   start = Time.now
   system("bundle exec rspec #{specs_to_run.join(' ')} #{failing_spec}")
   puts "Finished in #{Time.now - start} seconds"
   if $? == 0
-    puts "Innocent!"
-    # This group is innocent. The culprit is in the other half.
+    puts "This group is innocent. The culprit is in the other half."
     suspects = suspects[(count/2)..-1]
   else
-    puts "Guilty!"
-    # One of these is guilty.
+    puts "One of these is guilty."
     suspects = specs_to_run
   end
 end
