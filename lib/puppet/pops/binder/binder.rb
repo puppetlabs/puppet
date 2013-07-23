@@ -183,8 +183,68 @@ class Puppet::Pops::Binder::Binder
         b2
       when 0
         # TODO: This is too crude for conflict errors
-        raise ArgumentError, "Conflicting binding (TODO: report this with rich information)"
+        raise_conflicting_binding(b1, b2)
       end
+    end
+
+    # Raises a conflicting bindings error given two InjectorEntry's with same precedence in the same layer
+    # (if they are in different layers, something is seriously wrong)
+    def raise_conflicting_binding(b1, b2)
+      formatter = lambda {|layer, name|  }
+      b1_layer_name, b1_bindings_name = get_named_binding_layer_and_name(b1.binding)
+      b2_layer_name, b2_bindings_name = get_named_binding_layer_and_name(b2.binding)
+
+      # The resolution is per layer, and if they differ something is serious wrong as a higher layer
+      # overrides a lower; so no such conflict should be possible:
+      unless b1_layer_name == b2_layer_name
+        raise ArgumentError, [
+          'Internal Error: Conflicting binding for',
+          "'#{b1.binding.name}'",
+          'being resolved across layers',
+          "'#{b1_layer_name}' and",
+          "'#{b2_layer_name}'"
+          ].join(' ')
+      end
+
+      # Conflicting bindings made from the same source
+      if b1_bindings_name == b2_bindings_name
+        raise ArgumentError, [
+          'Conflicting binding for name:',
+          "'#{b1.binding.name}'",
+          'in layer:',
+          "'#{b1_layer_name}', ",
+          'both from:',
+          "'#{b1_bindings_name}'"
+          ].join(' ')
+      end
+
+      # Conflicting bindings from different sources
+      raise ArgumentError, [
+        'Conflicting binding for name:',
+        "'#{b1.binding.name}'",
+        'in layer:',
+        "'#{b1_layer_name}',",
+        'from:',
+        "'#{b1_bindings_name}', and",
+        "'#{b2_bindings_name}'"
+        ].join(' ')
+    end
+
+    def format_contribution_source(b) 
+      layer_name, bindings_name = get_named_binding_layer_and_name(b)
+      "(layer: #{layer_name}, bindings: #{bindings_name})"
+    end
+
+    def get_named_binding_layer_and_name(b)
+      return ['<unknown>', '<unknown>'] if b.nil?
+      return [get_named_layer(b), b.name] if b.is_a?(Puppet::Pops::Binder::Bindings::NamedBindings)
+      get_named_binding_layer_and_name(b.eContainer)
+    end
+
+    def get_named_layer(b)
+      return '<unknown>' if b.nil?
+      return b.name if b.is_a?(Puppet::Pops::Binder::Bindings::NamedLayer)
+      get_named_layer(b.eContainer)
     end
 
     # Produces the key for the given Binding.
@@ -260,7 +320,6 @@ class Puppet::Pops::Binder::Binder
         return unless binder.category_values[p.categorization] == p.value || p.categorization == 'common'
         prec
       end
-
       push_precedences(precedences)
       o.bindings.each {|b| bind(b) }
       pop_precedences()
