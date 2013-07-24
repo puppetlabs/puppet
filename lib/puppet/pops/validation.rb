@@ -250,8 +250,11 @@ module Puppet::Pops::Validation
 
     def format_location diagnostic
       file = diagnostic.file
-      line = diagnostic.source_pos.line
-      pos = diagnostic.source_pos.pos
+      line = pos = nil
+      if diagnostic.source_pos
+        line = diagnostic.source_pos.line
+        pos = diagnostic.source_pos.pos
+      end
       if file && line && pos
         "#{file}:#{line}:#{pos}:"
       elsif file && line
@@ -280,8 +283,12 @@ module Puppet::Pops::Validation
     # have to be used here for backwards compatibility.
     def format_location diagnostic
       file = diagnostic.file
-      line = diagnostic.source_pos.line
-      pos = diagnostic.source_pos.pos
+      line = pos = nil
+      if diagnostic.source_pos
+        line = diagnostic.source_pos.line
+        pos = diagnostic.source_pos.pos
+      end
+
       if file && line && pos
         " at #{file}:#{line}:#{pos}"
       elsif file and line
