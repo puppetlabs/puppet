@@ -6,6 +6,8 @@ module Puppet::Pops::Binder::Hiera2
   # @api public
   #
   class Puppet::Pops::Binder::Hiera2::Config
+    DEFAULT_HIERARCHY = [ ['osfamily', '${osfamily}', '${osfamily}'], ['common', 'true', 'common']]
+    DEFAULT_BACKENDS = ['yaml', 'json']
 
     # Returns a list of configured backends.
     #
@@ -41,6 +43,7 @@ module Puppet::Pops::Binder::Hiera2
         data = YAML.load_file(config_file)
         validator.validate(data, config_file)
         unless diagnostics.errors?
+          # if these are missing the result is nil, and they get default values later
           @hierarchy = data['hierarchy']
           @backends = data['backends']
         end
@@ -51,15 +54,8 @@ module Puppet::Pops::Binder::Hiera2
       rescue ::SyntaxError => e
         diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, e)
       end
-      @hierarchy ||= []
-      @backends ||= []
-    end
-
-    # Returns the name of the module. This name will be used as the name
-    # for the bindings produced from this module.
-    # @return [String] the module name
-    def module_name
-      File.basename(module_dir)
+      @hierarchy ||= DEFAULT_HIERARCHY
+      @backends ||= DEFAULT_BACKENDS
     end
   end
 end

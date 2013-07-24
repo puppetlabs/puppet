@@ -34,17 +34,14 @@ class Puppet::Pops::Binder::BindingsComposer
   #
   # @api public
   attr_reader :acceptor
-  # TODO: consider giving it an acceptor (and report errors later)
-  #
+
   def initialize()
     @acceptor = Puppet::Pops::Validation::Acceptor.new()
     @diagnostics = Puppet::Pops::Binder::Config::DiagnosticProducer.new(acceptor)
     @config = Puppet::Pops::Binder::Config::BinderConfig.new(@diagnostics)
     if acceptor.errors?
-      # The EParserAdapter has general reporting logic - should be generalized and reused here
-      # for reporting the problems and bailing out.
-      #
-      raise Puppet::ParseError.new("Binding Composer: error while reading config. TODO: proper reporting. #{acceptor.errors}")
+      Puppet::Pops::IssueReporter.assert_and_report(acceptor, :message => 'Binding Composer: error while reading config.')
+      raise Puppet::DevError.new("Internal Error: IssueReporter did not raise exception for errors in bindings config.")
     end
   end
 
@@ -105,7 +102,10 @@ class Puppet::Pops::Binder::BindingsComposer
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
     result = unevaluated_categories.collect do |category_tuple|
       result = [ category_tuple[0], parser.evaluate_string( scope, parser.quote( category_tuple[1] )) ]
-      unless result[1].is_a?(String)
+      if result[1].is_a?(String)
+        # category values are always in lower case
+        result[1] = result[1].downcase
+      else
         raise ArgumentError, "Categorization value must be a string, category #{result[0]} evaluation resulted in a: '#{result[1].class}'"
       end
       result
@@ -318,6 +318,8 @@ end
 class HieraScheme < BindingsProviderScheme
 end
 
+# TODO: Handle the case when confdir points to a Hiera1 hiera_conf.yaml file
+# 
 class ConfdirHieraScheme < HieraScheme
   def contributed_bindings(uri, scope, diagnostics)
     split_path = uri.path.split('/')

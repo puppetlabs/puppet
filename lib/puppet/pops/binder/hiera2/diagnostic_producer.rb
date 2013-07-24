@@ -21,6 +21,15 @@ module Puppet::Pops::Binder::Hiera2
     def severity_producer
       p = @severity_producer
       p[Issues::UNRESOLVED_STRING_VARIABLE] = :warning
+
+      # Warning since if it does not blow up on anything else, a sane subset of later version was used
+      p[Issues::LATER_VERSION] = :warning
+
+      # Ignore MISSING_BACKENDS because a default will be provided
+      p[Issues::MISSING_BACKENDS] = :ignore
+
+      # Ignore MISSING_HIERARCHY because a default will be provided
+      p[Issues::MISSING_HIERARCHY] = :ignore
       p
     end
   end

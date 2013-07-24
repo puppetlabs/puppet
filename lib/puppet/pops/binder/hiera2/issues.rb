@@ -51,4 +51,17 @@ module Puppet::Pops::Binder::Hiera2::Issues
   UNRESOLVED_STRING_VARIABLE = issue :UNRESOLVED_STRING_VARIABLE, :key do
     "Variable '#{key}' found in string '#{semantic}' cannot be resolved"
   end
+
+  MISSING_VERSION = issue :MISSING_VERSION do
+    "The configuration file '#{semantic}' does not have a version."
+  end
+
+  WRONG_VERSION = issue :WRONG_VERSION do
+    "The configuration file '#{semantic}' has the wrong version, expected: #{expected}, actual: #{actual}"
+  end
+
+  LATER_VERSION = issue :LATER_VERSION do
+    "The configuration file '#{semantic}' has a version that is newer (features may not work), expected: #{expected}, actual: #{actual}"
+  end
+
 end

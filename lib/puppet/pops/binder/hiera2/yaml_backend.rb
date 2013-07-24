@@ -5,6 +5,9 @@ module Puppet::Pops::Binder::Hiera2
       begin
         source_file = File.join(module_dir, "#{source}.yaml")
         YAML.load_file(source_file)
+      rescue Errno::ENOTDIR
+        # This is OK, the file doesn't need to be present. Return an empty hash
+        {}
       rescue Errno::ENOENT
         # This is OK, the file doesn't need to be present. Return an empty hash
         {}

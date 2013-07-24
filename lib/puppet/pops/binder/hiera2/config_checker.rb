@@ -16,6 +16,8 @@ module Puppet::Pops::Binder::Hiera2
     # @param config_file [String] The full path of the file. Used in error messages
     def validate(data, config_file)
       if data.is_a?(Hash)
+        # If the version is missing, it is not meaningful to continue
+        return unless check_version(data['version'], config_file)
         check_hierarchy(data['hierarchy'], config_file)
         check_backends(data['backends'], config_file)
       else
@@ -24,6 +26,26 @@ module Puppet::Pops::Binder::Hiera2
     end
 
     private
+
+    # Version is required and must be >= 2. A warning is issued if version > 2 as this checker is
+    # for version 2 only.
+    # @return [Boolean] false if it is meaningless to continue checking
+    def check_version(version, config_file)
+      if version.nil?
+        # This is not hiera2 compatible
+        @diagnostics.accept(Issues::MISSING_VERSION, config_file)
+        return false
+      end
+      unless version >= 2
+        @diagnostics.accept(Issues::WRONG_VERSION, config_file, :expected => 2, :actual => version)
+        return false
+      end
+      unless version == 2
+        # it may have a sane subset, hence a different error (configured as warning)
+        @diagnostics.accept(Issues::LATER_VERSION, config_file, :expected => 2, :actual => version)
+      end
+      return true
+    end
 
     def check_hierarchy(hierarchy, config_file)
       if !hierarchy.is_a?(Array) || hierarchy.empty?

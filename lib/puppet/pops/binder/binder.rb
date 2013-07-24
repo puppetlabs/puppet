@@ -317,7 +317,7 @@ class Puppet::Pops::Binder::Binder
         # Ignore the value for the common category (it is not possible to state common 'false' etc.)
         #
         return unless prec
-        return unless binder.category_values[p.categorization] == p.value || p.categorization == 'common'
+        return unless binder.category_values[p.categorization] == p.value.downcase || p.categorization == 'common'
         prec
       end
       push_precedences(precedences)
