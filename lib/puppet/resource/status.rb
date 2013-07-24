@@ -90,7 +90,8 @@ module Puppet
         @change_count = data['change_count']
         @out_of_sync_count = data['out_of_sync_count']
         @tags = data['tags']
-        @time = Time.parse(data['time'])
+        @time = data['time']
+        @time = Time.parse(@time) if @time.is_a? String
         @out_of_sync = data['out_of_sync']
         @changed = data['changed']
         @skipped = data['skipped']
