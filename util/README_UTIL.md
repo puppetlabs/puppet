@@ -55,3 +55,16 @@ To check the puppetmaster's certs, you instead would need to specify the confdir
     jpartlow@percival:~/work/puppet$ bundler exec puppet cert list --all --confdir=~/test/master/default --vardir= ~/test/master/default/
     + "percival.corp.puppetlabs.net" (SHA256) 0D:8D:A4:F1:19:E3:7A:62:ED:ED:21:B4:76:FE:04:47:50:01:20:4A:04:48:09:3A:1A:98:86:4A:08:8D:46:F0
     + "puppetmaster"                 (SHA256) B9:F5:06:F4:74:3B:15:CE:7C:7B:A6:38:83:0E:30:6A:6F:DC:F4:FD:FF:B1:A9:8A:35:12:90:10:26:46:C2:A6 (alt names: "DNS:percival.corp.puppetlabs.net", "DNS:puppet", "DNS:puppet.corp.puppetlabs.net", "DNS:puppetmaster")
+
+### Curl
+
+For simple cases of testing REST API via curl:
+
+* edit ~/tests/master/:confdir/auth.conf and add `"allow *"` to `"path /"`
+
+Now you should be able to:
+
+```bash
+jpartlow@percival:~/work/puppet$ curl -k -H 'Accept: text/pson' https://puppetmaster:8140/main/resource/user/nobody
+{"type":"User","title":"nobody","tags":["user","nobody"],"exported":false,"parameters":{"ensure":"present","home":"/nonexistent","uid":65534,"gid":65534,"comment":"nobody","shell":"/bin/sh","groups":[],"expiry":"absent","provider":"useradd","membership":"minimum","role_membership":"minimum","auth_membership":"minimum","profile_membership":"minimum","key_membership":"minimum","attribute_membership":"minimum","loglevel":"notice"}}
+```
