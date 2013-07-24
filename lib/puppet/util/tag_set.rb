@@ -9,18 +9,6 @@ class Puppet::Util::TagSet < Set
     @hash.keys.to_yaml
   end
 
-  # XXX delete me
-  def ==(other)
-    case other
-    when self.class
-      super
-    when Enumerable
-      super(self.class.new(other))
-    else
-      super
-    end
-  end
-
   def self.from_pson(data)
     self.new(data)
   end

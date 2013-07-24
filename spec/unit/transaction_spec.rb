@@ -635,32 +635,37 @@ describe Puppet::Transaction, " when determining tags" do
 
   it "should default to the tags specified in the :tags setting" do
     Puppet[:tags] = "one"
-    @transaction.tags.should == %w{one}
+    @transaction.should be_tagged("one")
   end
 
   it "should split tags based on ','" do
     Puppet[:tags] = "one,two"
-    @transaction.tags.should == %w{one two}
+    @transaction.should be_tagged("one")
+    @transaction.should be_tagged("two")
   end
 
   it "should use any tags set after creation" do
     Puppet[:tags] = ""
     @transaction.tags = %w{one two}
-    @transaction.tags.should == %w{one two}
+    @transaction.should be_tagged("one")
+    @transaction.should be_tagged("two")
   end
 
   it "should always convert assigned tags to an array" do
     @transaction.tags = "one::two"
-    @transaction.tags.should == %w{one::two}
+    @transaction.should be_tagged("one::two")
   end
 
   it "should accept a comma-delimited string" do
     @transaction.tags = "one, two"
-    @transaction.tags.should == %w{one two}
+    @transaction.should be_tagged("one")
+    @transaction.should be_tagged("two")
   end
 
   it "should accept an empty string" do
+    @transaction.tags = "one, two"
+    @transaction.should be_tagged("one")
     @transaction.tags = ""
-    @transaction.tags.should == []
+    @transaction.should_not be_tagged("one")
   end
 end

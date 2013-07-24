@@ -15,12 +15,6 @@ end
 
 describe Puppet::Util::TagSet do
   let(:set) { Puppet::Util::TagSet.new }
-  it "compares as equal to an array with the same elements" do
-    set << 'a'
-    set << 'b'
-    set << 'c'
-    set.should == ['a', 'b', 'c']
-  end
 
   it 'serializes to yaml as an array' do
     array = ['a', :b, 1, 5.4]

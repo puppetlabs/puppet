@@ -11,12 +11,6 @@ describe Puppet::Util::Tagging do
     expect(tagger.tags).to include("one")
   end
 
-  it "should not add duplicate tags to the returned tag list" do
-    tagger.tag("one")
-    tagger.tag("one")
-    expect(tagger.tags).to eq ["one"]
-  end
-
   it "should return a duplicate of the tag list, rather than the original" do
     tagger.tag("one")
     tags = tagger.tags
