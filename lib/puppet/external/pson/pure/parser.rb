@@ -61,7 +61,7 @@ module PSON
       #   defiance of RFC 4627 to be parsed by the Parser. This option defaults
       #   to false.
       # * *create_additions*: If set to false, the Parser doesn't create
-      #   additions even if a matchin class and create_id was found. This option
+      #   additions even if a matching class and create_id was found. This option
       #   defaults to true.
       # * *object_class*: Defaults to Hash
       # * *array_class*: Defaults to Array
