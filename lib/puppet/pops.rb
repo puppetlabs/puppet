@@ -15,6 +15,7 @@ module Puppet
     require 'puppet/pops/issues'
     require 'puppet/pops/label_provider'
     require 'puppet/pops/validation'
+    require 'puppet/pops/issue_reporter'
 
     require 'puppet/pops/model/model'
 
