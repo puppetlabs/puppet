@@ -67,9 +67,17 @@ class Puppet::Parser::Compiler
     # manifest.
     return if resource.stage?
 
+    resource_stage = resource[:stage] || (scope.resource && scope.resource[:stage]) || :main
+    scope_stage = (scope.resource && scope.resource[:stage]) || :main
+
     # This adds a resource to the class it lexically appears in in the
-    # manifest.
-    unless resource.class?
+    # manifest.  If the resource is a top-level class, or the class belongs
+    # to a different stage than its surrounding class, then don't do anything
+    # yet.
+    if not scope.resource or (scope.resource && scope.resource.path == 'Class[main]') or resource_stage != scope_stage
+      # This resource will eventually be added by:
+      # Puppet::Parser::Resource.add_edge_to_stage
+    else
       return @catalog.add_edge(scope.resource, resource)
     end
   end

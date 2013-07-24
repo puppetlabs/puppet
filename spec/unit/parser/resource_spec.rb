@@ -218,8 +218,8 @@ describe Puppet::Parser::Resource do
       edges = catalog.edges.map {|e| [e.source.ref, e.target.ref]}
 
       edges.should include(["Stage[before]", "Class[Alpha]"])
-      edges.should include(["Stage[before]", "Class[Beta]"])
-      edges.should include(["Stage[before]", "Class[Gamma]"])
+      edges.should include(["Class[Alpha]", "Class[Beta]"])
+      edges.should include(["Class[Beta]", "Class[Gamma]"])
     end
 
     it "should use the specified stage even if the parent scope specifies one" do
