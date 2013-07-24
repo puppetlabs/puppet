@@ -5,6 +5,7 @@ layers:
   ]
 categories:
   [['node', '$fqdn'],
-  ['environment', '$environment'],
-  ['common', 'true']
+   ['environment', '${environment}'],
+   ['osfamily', '${osfamily}'],
+   ['common', 'true']
   ]

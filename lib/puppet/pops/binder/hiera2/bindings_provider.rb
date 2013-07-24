@@ -34,7 +34,6 @@ module Puppet::Pops::Binder::Hiera2
       precedence = []
 
       @config.hierarchy.each do |key, value, path|
-        # TODO: need to pass line information, errors will be reported for line 1
         source_file = File.join(@config.module_dir, 'hiera.config.yaml')
         category_value = @parser.evaluate_string(scope, @parser.quote(value), source_file)
 

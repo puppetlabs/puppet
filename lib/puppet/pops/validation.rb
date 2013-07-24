@@ -314,7 +314,7 @@ module Puppet::Pops::Validation
   #
   class Acceptor
 
-    # All diagnstic in the order they were issued
+    # All diagnostic in the order they were issued
     attr_reader :diagnostics
 
     # The number of :warning severity issues + number of :deprecation severity issues
@@ -361,7 +361,7 @@ module Puppet::Pops::Validation
     end
 
     def errors_and_warnings
-      @diagnostics.select {|d| d.severity != :ignored}
+      @diagnostics.select {|d| d.severity != :ignore }
     end
 
     # Returns the ignored diagnostics in the order thwy were reported (if reported at all)
@@ -369,9 +369,38 @@ module Puppet::Pops::Validation
       @diagnostics.select {|d| d.severity == :ignore }
     end
 
-    # Add a diagnostic to the set of diagnostics
+    # Add a diagnostic, or all diagnostics from another acceptor to the set of diagnostics
+    # @param diagnostic [Puppet::Pops::Validation::Diagnostic, Puppet::Pops::Validation::Acceptor] diagnostic(s) that should be accepted
     def accept(diagnostic)
-      self.send(diagnostic.severity, diagnostic)
+      if diagnostic.is_a?(Acceptor)
+        diagnostic.diagnostics.each {|d| self.send(d.severity, d)}
+      else
+        self.send(diagnostic.severity, diagnostic)
+      end
+    end
+
+    # Prunes the contain diagnostics by removing those for which the given block returns true.
+    # The internal statistics is updated as a consequence of removing.
+    # @return [Array<Puppet::Pops::Validation::Diagnostic, nil] the removed set of diagnostics or nil if nothing was removed
+    #
+    def prune(&block)
+      removed = []
+      @diagnostics.delete_if do |d|
+        if should_remove = yield(d)
+          removed << d
+        end
+        should_remove
+      end
+      removed.each do |d|
+        case d.severity
+        when :error
+          @error_count -= 1
+        when :warning
+          @warning_count -= 1
+        # there is not ignore_count
+        end
+      end
+      removed.empty? ? nil : removed
     end
 
     private

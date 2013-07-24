@@ -1,6 +1,9 @@
 ---
+version: 2
+
 hierarchy:
   [ ['node', '${fqdn}', '${fqdn}' ],
+#    ['osfamily', '${osfamily}', 'osfamily' ]
     ['common', 'true', 'common' ]
   ]
 

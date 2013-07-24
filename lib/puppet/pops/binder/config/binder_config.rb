@@ -30,6 +30,7 @@ module Puppet::Pops::Binder::Config
       'categories' => [
         ['node',        "${::fqdn}"],
         ['environment', "${environment}"],
+        ['osfamily',    "${osfamily}"],
         ['common',      "true"]
         ]
       }
