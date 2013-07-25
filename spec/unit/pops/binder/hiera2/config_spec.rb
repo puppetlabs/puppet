@@ -17,7 +17,7 @@ describe 'The hiera2 config' do
   let(:diag) {  _Hiera2::DiagnosticProducer.new(acceptor) }
 
   def config_dir(config_name)
-    File.dirname(my_fixture("#{config_name}/hiera_config.yaml"))
+    File.dirname(my_fixture("#{config_name}/hiera.yaml"))
   end
 
   def test_config_issue(config_name, issue)

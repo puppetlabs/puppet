@@ -1,6 +1,6 @@
 # The Hiera2 Module contains the classes needed to configure a bindings producer
 # to read module specific data. The configuration is expected to be found in
-# a hiera_config.yaml file in the root of each module
+# a hiera.yaml file in the root of each module
 module Puppet::Pops::Binder::Hiera2
   require 'puppet/pops/binder/hiera2/backend'
   require 'puppet/pops/binder/hiera2/config_checker'

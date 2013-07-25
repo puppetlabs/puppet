@@ -1,12 +1,12 @@
 module Puppet::Pops::Binder::Hiera2
 
   # Class holding the Hiera2 Configuration
-  # The configuration is obtained from the file 'hiera_config.yaml'
+  # The configuration is obtained from the file 'hiera.yaml'
   # that must reside in the root directory of the module
   # @api public
   #
   class Puppet::Pops::Binder::Hiera2::Config
-    DEFAULT_HIERARCHY = [ ['osfamily', '${osfamily}', '${osfamily}'], ['common', 'true', 'common']]
+    DEFAULT_HIERARCHY = [ ['osfamily', '${osfamily}', 'data/osfamily/${osfamily}'], ['common', 'true', 'data/common']]
     DEFAULT_BACKENDS = ['yaml', 'json']
 
     # Returns a list of configured backends.
@@ -28,7 +28,7 @@ module Puppet::Pops::Binder::Hiera2
     # @api public
     attr_reader :hierarchy
 
-    # Creates a new Config. The configuration is loaded from the file 'hiera_config.yaml' which
+    # Creates a new Config. The configuration is loaded from the file 'hiera.yaml' which
     # is expected to be found in the given module_dir.
     #
     # @param module_dir [String] The module directory
@@ -37,7 +37,7 @@ module Puppet::Pops::Binder::Hiera2
     #
     def initialize(module_dir, diagnostics)
       @module_dir = module_dir
-      config_file = File.join(module_dir, 'hiera_config.yaml')
+      config_file = File.join(module_dir, 'hiera.yaml')
       validator = ConfigChecker.new(diagnostics)
       begin
         data = YAML.load_file(config_file)
