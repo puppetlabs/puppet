@@ -39,6 +39,24 @@ describe "lookup function" do
     expect(scope.function_lookup(['a_value', 'Data'])).to eq("something")
   end
 
+  it "yields to a given lambda and returns the result" do
+    scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
+
+    expect(scope.function_lookup(['a_value', ast_lambda('|$x|{something_else}')])).to eq('something_else')
+  end
+
+  it "yields to a given lambda and returns the result when giving name and type" do
+    scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
+
+    expect(scope.function_lookup(['a_value', 'String', ast_lambda('|$x|{something_else}')])).to eq('something_else')
+  end
+
+  it "yields :undef when value is not found and using a lambda" do
+    scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
+
+    expect(scope.function_lookup(['not_bound_value', ast_lambda('|$x|{ if $x == undef {good} else {bad}}')])).to eq('good')
+  end
+
   def scope_with_injections_from(binder)
     injector = Puppet::Pops::Binder::Injector.new(binder)
     scope = Puppet::Parser::Scope.new_for_test_harness('testing')
@@ -63,5 +81,12 @@ describe "lookup function" do
     binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(Puppet::Pops::Binder::BindingsFactory.named_layer('test layer', local_bindings.model)))
 
     binder
+  end
+
+  def ast_lambda(puppet_source)
+    puppet_source = "fake_func() " + puppet_source
+    model = Puppet::Pops::Parser::EvaluatingParser.new().parse_string(puppet_source, __FILE__).current
+    model = model.lambda
+    Puppet::Pops::Model::AstTransformer.new(@file_source, nil).transform(model)
   end
 end
