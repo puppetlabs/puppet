@@ -1,0 +1,57 @@
+# == Class: <%= metadata.name %>::package
+#
+# This class exists to coordinate all software package management related
+# actions, functionality and logical units in a central place.
+#
+#
+# === Parameters
+#
+# This class does not provide any parameters.
+#
+#
+# === Examples
+#
+# This class may be imported by other classes to use its functionality:
+#   class { '<%= metadata.name %>::package': }
+#
+# It is not intended to be used directly by external resources like node
+# definitions or other modules.
+#
+#
+# === Authors
+#
+# * Your name <mailto:you@email.com>
+#
+class <%= metadata.name %>::package {
+
+  #### Package management
+
+  # set params: in operation
+  if $<%= metadata.name %>::ensure == 'present' {
+
+    # Check if we want to install a specific version or not
+    if $<%= metadata.name %>::version == false {
+
+      $package_ensure = $<%= metadata.name %>::autoupgrade ? {
+        true  => 'latest',
+        false => 'present',
+      }
+
+    } else {
+
+      # install specific version
+      $package_ensure = $<%= metadata.name %>::version
+
+    }
+
+  # set params: removal
+  } else {
+    $package_ensure = 'purged'
+  }
+
+  # action
+  package { $<%= metadata.name %>::params::package:
+    ensure => $package_ensure,
+  }
+
+}

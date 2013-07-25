@@ -1,0 +1,100 @@
+#<%= metadata.name %>
+
+####Table of Contents
+
+1. [Overview - What is the <%= metadata.name %> module?](#overview)
+2. [Module Description - What does the module do?](#module-description)
+3. [Setup - The basics of getting started with <%= metadata.name %>](#setup)
+    * [Beginning with <%= metadata.name %> - Installation](#beginning-with-<%= metadata.name %>)
+4. [Usage - The classes, defined types, and their parameters available for configuration](#usage)
+    * [Classes and Defined Types](#classes-and-defined-types)
+        * [Class: <%= metadata.name %>](#class-<%= metadata.name %>)
+5. [Implementation - An under-the-hood peek at what the module is doing](#implementation)
+    * [Classes and Defined Types](#classes-and-defined-types)
+    * [Templates](#templates)
+6. [Limitations - OS compatibility, etc.](#limitations)
+7. [Development - Guide for contributing to the module](#development)
+
+
+##Overview
+
+##Module Description
+
+##Setup
+
+###Beginning with <%= metadata.name %>
+
+Installation, make sure service is running and will be started at boot time:
+
+     class { '<%= metadata.name %>': }
+
+Removal/decommissioning:
+
+     class { '<%= metadata.name %>':
+       ensure => 'absent',
+     }
+
+Install everything but disable service(s) afterwards:
+
+     class { '<%= metadata.name %>':
+       status => 'disabled',
+     }
+
+Disable automated restart of <%= metadata.name %> on config file change:
+
+     class { '<%= metadata.name %>':
+       restart_on_change => false
+     }
+
+
+##Usage
+
+###Classes and Defined Types
+
+####Class: `<%= metadata.name %>`
+
+##Implementation
+
+###Classes and Defined Types
+
+####Class: `<%= metadata.name %>::config`
+
+This class exists to coordinate all configuration related actions, functionality and logical units in a central place.
+
+####Class: `<%= metadata.name %>::service`
+
+This class exists to coordinate all service management related actions, functionality and logical units in a central place.
+
+####Class: `<%= metadata.name %>::package`
+
+This class exists to coordinate all software package management related actions, functionality and logical units in a central place.
+
+####Class: `<%= metadata.name %>::params`
+
+This class exists to
+1. Declutter the default value assignment for class parameters.
+2. Manage internally used module variables in a central place.
+
+Therefore, many operating system dependent differences (names, paths, ...) are addressed in here.
+
+###Templates
+
+##Limitations
+
+##Development
+
+##Copyright and License
+
+Copyright (C) <%= Time.now.year %> Your name
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
