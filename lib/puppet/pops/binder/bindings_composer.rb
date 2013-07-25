@@ -130,12 +130,13 @@ class Puppet::Pops::Binder::BindingsComposer
       prev_prec = -1
       categories.each do |c|
         prec = cat_prec[c.categorization]
+        issues = Puppet::Pops::Binder::BinderIssues
         unless prec
-          acceptor.accept(Issues::MISSING_CATEGORY_PRECEDENCE, c, :categorization => c.categorization)
+          diagnostics.accept(issues::MISSING_CATEGORY_PRECEDENCE, c, :categorization => c.categorization)
           next
         end
         unless prec > prev_prec
-          acceptor.accept(Issues::PRECEDENCE_MISMATCH_IN_CONTRIBUTION, c, :categorization => c.categorization)
+          diagnostics.accept(issues::PRECEDENCE_MISMATCH_IN_CONTRIBUTION, c, :categorization => c.categorization)
         end
         prev_prec = prec
       end
