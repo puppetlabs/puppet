@@ -14,7 +14,13 @@ GET /:environment/resource_type/:name
 
 None
 
-### Response
+### Responses
+
+#### Resource type found
+
+```http
+GET /env/resource_type/athing
+```
 
 ```http
 HTTP 200 OK
@@ -28,6 +34,36 @@ Content-Type: text/pson
   "name":"athing",
   "kind":"class"
 }
+```
+
+#### Resource type not found
+
+```http
+GET /env/resource_type/resource_type_does_not_exist
+```
+
+```http
+HTTP 404 Not Found: Could not find resource_type resource_type_does_not_exist
+Content-Type: text/plain
+```
+
+```
+Not Found: Could not find resource_type resource_type_does_not_exist
+```
+
+#### No resource type name given
+
+```http
+GET /env/resource_type/
+```
+
+```http
+HTTP/1.1 400 No request key specified in /env/resource_type/
+Content-Type: text/plain
+```
+
+```
+No request key specified in /env/resource_type/
 ```
 
 Search
@@ -48,7 +84,13 @@ resource types. It is required.
 * `kind`: Filter the returned resource types by the `kind` field.
   Valid values are `class`, `node`, and `defined_type`.
 
-### Response
+### Responses
+
+#### Search with results
+
+```http
+GET /env/resource_types/*
+```
 
 ```http
 HTTP 200 OK
@@ -85,6 +127,53 @@ Content-Type: text/pson
 ]
 ```
 
+#### Search not found
+
+```http
+GET /env/resource_types/pattern.that.finds.no.resources
+```
+
+```http
+HTTP/1.1 404 Not Found: Could not find instances in resource_type with 'pattern.that.finds.no.resources'
+Content-Type: text/plain
+```
+
+```
+Not Found: Could not find instances in resource_type with 'pattern.that.finds.no.resources'
+```
+
+#### No search term given
+
+```http
+GET /env/resource_types/
+```
+
+```http
+HTTP/1.1 400 No request key specified in /env/resource_types/ 
+Content-Type: text/plain
+```
+
+```
+No request key specified in /env/resource_types/
+```
+
+#### Search term is an invalid regular expression
+
+Searching on `[-` for instance.
+
+```http
+GET /env/resource_types/%5b-
+```
+
+```http
+HTTP/1.1 400 Invalid regex '[-': premature end of char-class: /[-/ 
+Content-Type: text/plain
+```
+
+```
+Invalid regex '[-': premature end of char-class: /[-/
+```
+
 ### Examples
 
 List all classes:
@@ -93,11 +182,17 @@ List all classes:
 GET /:environment/resource_types/*?kind=class
 ```
 
+List matching a regular expression
+
+```http
+GET /:environment/resource_types/foo.*bar
+```
+
 Schema
 ------
 
-It has the following fields, of which only name and kind are guaranteed
-to be present:
+A resource_type response body has has the following fields, of which only name
+and kind are guaranteed to be present:
 
     doc: string
         Any documentation comment from the type definition
