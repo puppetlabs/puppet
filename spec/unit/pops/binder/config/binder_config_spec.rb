@@ -21,8 +21,8 @@ describe 'BinderConfig' do
     expect(config.categorization.is_a?(Array)).to be == true
     expect(config.categorization.size).to be == 4
     expect(config.categorization[0][0]).to be == 'node'
-    expect(config.categorization[1][0]).to be == 'environment'
-    expect(config.categorization[2][0]).to be == 'osfamily'
+    expect(config.categorization[1][0]).to be == 'osfamily'
+    expect(config.categorization[2][0]).to be == 'environment'
     expect(config.categorization[3][0]).to be == 'common'
   end
 
