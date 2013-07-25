@@ -9,10 +9,21 @@
 #
 # @api public
 #
-class Puppet::Pops::Binder::BindingsFactory
+module Puppet::Pops::Binder::BindingsFactory
+
+  class AbstractBuilder
+    # Provides convenient access to the Bindings Factory class methods. The intent is to provide access to the
+    # methods that return producers for the purpose of composing more elaborate things that the convenient methods
+    # directly supports.
+    #
+    def method_missing(meth, *args, &block)
+      Puppet::Pops::Binder::BindingsFactory.send(meth, *args, &block)
+    end
+  end
 
   # @api public
-  class BindingsContainerBuilder
+  class BindingsContainerBuilder < AbstractBuilder
+
     # The built model object.
     attr_reader :model
 
@@ -21,13 +32,6 @@ class Puppet::Pops::Binder::BindingsFactory
       @model = binding
     end
 
-    # Provides convenient access to the Bindings Factory class methods. The intent is to provide access to the
-    # methods that return producers for the purpose of composing more elaborate things that the convenient methods
-    # directly supports.
-    #
-    def method_missing(meth, *args, &block)
-      Puppet::Pops::Binder::BindingsFactory.send(*args, &block)
-    end
 
     # Adds an empty binding to the container, and returns a builder for it for further detailing.
     # @api public
@@ -103,7 +107,7 @@ class Puppet::Pops::Binder::BindingsFactory
   #
   # @api public
   #
-  class BindingsBuilder
+  class BindingsBuilder < AbstractBuilder
     attr_reader :model
 
     # @api public
@@ -135,64 +139,64 @@ class Puppet::Pops::Binder::BindingsFactory
 
     # @api public
     def integer()
-      type(Puppet::Pops::Types::TypeFactory.integer())
+      type(type_factory.integer())
     end
 
     # @api public
     def float()
-      type(Puppet::Pops::Types::TypeFactory.float())
+      type(type_factory.float())
     end
 
     # @api public
     def boolean()
-      type(Puppet::Pops::Types::TypeFactory.boolean())
+      type(type_factory.boolean())
     end
 
     # @api public
     def string()
-      type(Puppet::Pops::Types::TypeFactory.string())
+      type(type_factory.string())
     end
 
     # @api public
     def pattern()
-      type(Puppet::Pops::Types::TypeFactory.pattern())
+      type(type_factory.pattern())
     end
 
     # @api public
     def literal()
-      type(Puppet::Pops::Types::TypeFactory.literal())
+      type(type_factory.literal())
     end
 
     # @api public
     def data()
-      type(Puppet::Pops::Types::TypeFactory.data())
+      type(type_factory.data())
     end
 
     # @api public
     def array_of_data()
-      type(Puppet::Pops::Types::TypeFactory.array_of_data())
+      type(type_factory.array_of_data())
     end
 
     # @api public
     def array_of(t)
-      type(Puppet::Pops::Types::TypeFactory.array_of(t))
+      type(type_factory.array_of(t))
     end
 
     # @api public
     def hash_of_data()
-      type(Puppet::Pops::Types::TypeFactory.hash_of_data())
+      type(type_factory.hash_of_data())
     end
 
     # Sets type of binding to `Hash[Literal, t]`. To limit the key type, use {#type} and give it a fully specified
     # hash using {#type_factory} and then `hash_of(value_type, key_type)`.
     # @api public
     def hash_of(t)
-      type(Puppet::Pops::Types::TypeFactory.hash_of(t))
+      type(type_factory.hash_of(t))
     end
 
     # @api public
     def instance_of(t)
-      type(Puppet::Pops::Types::TypeFactory.type_of(t))
+      type(type_factory.type_of(t))
     end
 
     # Provides convenient access to the type factory.
@@ -203,7 +207,7 @@ class Puppet::Pops::Binder::BindingsFactory
       Puppet::Pops::Types::TypeFactory
     end
 
-    # to a singleton producer, if producer is a value, a producer is created for it
+    # to a singleton producer, if producer is a value, a literal producer is created for it
     # @overload to(a_literal)
     #   a constant producer
     # @overload to(a_class, *args)
@@ -454,6 +458,29 @@ class Puppet::Pops::Binder::BindingsFactory
     builder
   end
 
+  # This variant of named_binding evaluates the given block as a method on an anonymous class,
+  # thus, if the block defines methods or do something with the class itself, this does not pollute
+  # the base class (BindingsContainerBuilder).
+  #
+  def self.safe_named_bindings(name, scope, &block)
+    binding = Puppet::Pops::Binder::Bindings::NamedBindings.new()
+    binding.name = name
+    anon = Class.new(BindingsContainerBuilder) do
+      def initialize(b)
+        super b
+      end
+    end
+    anon.send(:define_method, :_produce, block)
+    builder = anon.new(binding)
+    case block.arity
+    when 0
+      builder._produce()
+    when 1
+      builder._produce(scope)
+    end
+    builder
+  end
+
   # Creates a literal producer
   # @api public
   #
@@ -548,5 +575,34 @@ class Puppet::Pops::Binder::BindingsFactory
     result = Puppet::Pops::Binder::Bindings::LayeredBindings.new()
     named_layers.each {|b| result.addLayers(b) }
     result
+  end
+
+  def self.parser
+    @parser ||= Puppet::Pops::Parser::EvaluatingParser.new()
+  end
+
+  # Parses and produces a puppet expression from the given string.
+  # @param string [String] puppet source e.g. "1 + 2"
+  # @param source_file [String] the source location, typically `__File__`
+  # @return [Puppet::Pops::Model::Expression] an expression (that can be bound)
+  # @api public
+  #
+  def self.puppet_expression(string, source_file)
+    parser.parse_string(string, source_file).current
+  end
+
+  # Parses and produces a puppet string expression from the given string.
+  # The string will automatically be quoted and special characters escaped.
+  # As an example if given the (ruby) string "Hi\nMary" it is transformed to
+  # the puppet string (illustrated with a ruby string) "\"Hi\\nMary\”" before being
+  # parsed.
+  #
+  # @param string [String] puppet source e.g. "On node ${fqdn}"
+  # @param source_file [String] the source location, typically `__File__`
+  # @return [Puppet::Pops::Model::Expression] an expression (that can be bound)
+  # @api public
+  #
+  def self.puppet_string(string, source_file)
+    parser.parse_string(parser.quote(string), source_file).current
   end
 end

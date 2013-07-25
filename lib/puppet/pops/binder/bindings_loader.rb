@@ -16,13 +16,13 @@ class Puppet::Pops::Binder::BindingsLoader
   # @raise ArgumentError If the given argument has the wrong type
   # @api public
   #
-  def self.provide(name)
+  def self.provide(scope, name)
     case name
     when String
-      provide_from_string(name)
+      provide_from_string(scope, name)
 
     when Array
-      provide_from_name_path(name.join('::'), name)
+      provide_from_name_path(scope, name.join('::'), name)
 
     else
       raise ArgumentError, "Cannot provide a bindings from a '#{name.class.name}'"
@@ -40,23 +40,23 @@ class Puppet::Pops::Binder::BindingsLoader
 
   private
 
-  def self.provide_from_string(name)
+  def self.provide_from_string(scope, name)
     name_path = name.split('::')
     # always from the root, so remove an empty first segment
     if name_path[0].empty?
       name_path = name_path[1..-1]
     end
-    provide_from_name_path(name, name_path)
+    provide_from_name_path(scope, name, name_path)
   end
 
-  def self.provide_from_name_path(name, name_path)
+  def self.provide_from_name_path(scope, name, name_path)
     # If bindings is already loaded, try this first
-    result = Puppet::Bindings[name]
+    result = Puppet::Bindings.resolve(scope, name)
 
     unless result
       # Attempt to load it using the auto loader
       paths_for_name(name).find {|path| @autoloader.load(path) }
-      result = Puppet::Bindings[name]
+      result = Puppet::Bindings.resolve(scope, name)
     end
     result
   end

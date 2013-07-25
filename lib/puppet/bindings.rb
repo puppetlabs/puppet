@@ -21,6 +21,28 @@
 #     end
 #   end
 #
+# If access is needed to the scope, this can be declared as a block parameter.
+# @example MyModule's lib/bindings/mymodule/default.rb with scope
+#   Puppet::Bindings.newbindings('mymodule::default') do |scope|
+#     bind.integer.named('meaning of life').to("#{scope['::fqdn']} also think it is 42")
+#   end
+#
+# If late evaluation is wanted, this can be achieved by binding a puppet expression.
+# @example binding a puppet expression
+#   Puppet::Bindings.newbindings('mymodule::default') do |scope|
+#     bind.integer.named('meaning of life').to(puppet_string("${::fqdn} also think it is 42")
+#   end
+#
+# It is allowed to define methods in the block given to `newbindings`, these can be used when
+# producing bindings. (Care should naturally be taken to not override any of the already defined methods).
+# @example defining method to be used while creating bindings
+#   Puppet::Bindings.newbindings('mymodule::default') do
+#     def square(x)
+#       x * x
+#     end
+#     bind.integer.named('meaning of life squared').to(square(42))
+#   end
+#
 # For all details see {Puppet::Pops::Binder::BindingsFactory}, which is used behind the scenes.
 #
 class Puppet::Bindings
@@ -47,7 +69,12 @@ class Puppet::Bindings
   # The block form is more suitable for longer, more complex forms of bindings.
   #
   def self.newbindings(name, &block)
-    register(Puppet::Pops::Binder::BindingsFactory.named_bindings(name, &block).model)
+    register_proc(name, block)
+  end
+
+  def self.register_proc(name, block)
+    adapter = NamedBindingsAdapter.adapt(Environment.current)
+    adapter[name] = block
   end
 
   # Registers a named_binding under its name
@@ -59,8 +86,18 @@ class Puppet::Bindings
     adapter[named_bindings.name] = named_bindings
   end
 
+  def self.resolve(scope, name)
+    entry = get(name)
+    return entry unless entry.is_a?(Proc)
+    named_bindings = Puppet::Pops::Binder::BindingsFactory.safe_named_bindings(name, scope, &entry).model
+    adapter = NamedBindingsAdapter.adapt(Environment.current)
+    adapter[named_bindings.name] = named_bindings
+    named_bindings
+  end
+
   # Returns the named bindings with the given name, or nil if no such bindings have been registered.
   # @param name [String] The fully qualified name of a binding to get
+  # @return [Proc, Puppet::Pops::Binder::Bindings::NamedBindings] a Proc producing named bindings, or a named bindings directly
   # @api public
   #
   def self.get(name)
@@ -95,8 +132,8 @@ class Puppet::Bindings
     end
 
     def []=(name, value)
-      unless value.is_a?(Puppet::Pops::Binder::Bindings::NamedBindings)
-        raise ArgumentError, "Given value must be a NamedBindings, got: #{value.class}."
+      unless value.is_a?(Puppet::Pops::Binder::Bindings::NamedBindings) || value.is_a?(Proc)
+        raise ArgumentError, "Given value must be a NamedBindings, or a Proc producing one, got: #{value.class}."
       end
       @named_bindings[name] = value
     end
