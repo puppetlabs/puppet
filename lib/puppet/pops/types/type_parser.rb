@@ -67,10 +67,13 @@ class Puppet::Pops::Types::TypeParser
       end
       TYPES.array_of(parameters[0])
     when "hash"
-      if parameters.size != 2
-        raise_invalid_parameters_error("Hash", 2, parameters.size)
+      if parameters.size == 1
+        TYPES.hash_of(parameters[0])
+      elsif parameters.size != 2
+        raise_invalid_parameters_error("Hash", "1 or 2", parameters.size)
+      else
+        TYPES.hash_of(parameters[1], parameters[0])
       end
-      TYPES.hash_of(parameters[1], parameters[0])
     else
       raise_unknown_type_error(parameterized_ast.left_expr)
     end
