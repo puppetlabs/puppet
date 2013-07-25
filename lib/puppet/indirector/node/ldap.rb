@@ -16,7 +16,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   # process instead of name2hash() here, but it ends up being
   # difficult to test because all exceptions get caught by ldapsearch.
   # LAK:NOTE Unfortunately, the ldap support is too stupid to throw anything
-  # but LDAP::ResultError, even on bad connections, so we are rough handed
+  # but LDAP::ResultError, even on bad connections, so we are rough-handed
   # with our error handling.
   def name2hash(name)
     info = nil

@@ -7,7 +7,7 @@ test_name "Puppet manages its own configuration in a robust manner"
 
 # when owner/group works on windows for settings, this confine should be removed.
 confine :except, :platform => 'windows'
-# when managhome roundtrips for solaris, this confine should be removed
+# when managehome roundtrips for solaris, this confine should be removed
 confine :except, :platform => 'solaris'
 
 step "Clear out yaml directory because of a bug in the indirector/yaml. (See #21145)"

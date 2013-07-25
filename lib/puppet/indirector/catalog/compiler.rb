@@ -23,7 +23,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       if text_facts.is_a?(Puppet::Node::Facts)
         facts = text_facts
       else
-        # We unescape here because the corrosponding code in Puppet::Configurer::FactHandler escapes
+        # We unescape here because the corresponding code in Puppet::Configurer::FactHandler escapes
         facts = Puppet::Node::Facts.convert_from(format, CGI.unescape(text_facts))
       end
 
