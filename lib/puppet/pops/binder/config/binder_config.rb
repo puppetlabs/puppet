@@ -24,8 +24,8 @@ module Puppet::Pops::Binder::Config
     def default_config()
       # This is hardcoded now, but may be a user supplied default configuration later
       {'layers' => [
-        { 'name' => 'site',    'include' => 'confdir-hiera:/'  },
-        { 'name' => 'modules', 'include' => 'module-hiera:/*/' },
+        { 'name' => 'site',    'include' => ['confdir-hiera:/', 'confdir:/default?optional']  },
+        { 'name' => 'modules', 'include' => ['module-hiera:/*/', 'module:/*::default'] },
       ],
       'categories' => [
         ['node',        "${::fqdn}"],

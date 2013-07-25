@@ -230,6 +230,14 @@ class SymbolicScheme < BindingsProviderScheme
     split_name.shift if split_name[0] && split_name[0].empty?
     [split_name, split_name.join('::')]
   end
+
+  def is_optional?(uri)
+    super(uri) || has_wildcard?(uri)
+  end
+
+  def has_wildcard?(uri)
+    (path = uri.path) && path.split('/')[1].start_with?('*::')
+  end
 end
 
 # TODO: optional does not work with non modulepath located content - it assumes modulepath + name=> path
@@ -298,14 +306,14 @@ class ConfdirScheme < SymbolicScheme
   def expand_included(uri)
     fqn = fqn_from_path(uri)[1]
     if is_optional?(uri)
-      if Puppet::Binder::BindingsLoader.loadable?(composer.confdir, fqn)
-        [URI.parse('module:/' + fqn)]
+      if Puppet::Pops::Binder::BindingsLoader.loadable?(composer.confdir, fqn)
+        [URI.parse('confdir:/' + fqn)]
       else
         []
       end
     else
       # assume it exists (do not give error if not, since it may be excluded later)
-      [URI.parse('module:/' + fqn)]
+      [URI.parse('confdir:/' + fqn)]
     end
   end
 
