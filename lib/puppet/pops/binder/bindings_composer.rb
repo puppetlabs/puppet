@@ -345,9 +345,9 @@ end
 
 # The module hiera scheme uses the path to denote a directory relative to a module root
 # The path starts with the name of the module, or '*' to denote *any module*.
-# @example All root hiera_config.yaml from all modules
+# @example All root hiera.yaml from all modules
 #   module-hiera:/*
-# @example The hiera_config.yaml from the module `foo`'s relative path `<foo root>/bar`
+# @example The hiera.yaml from the module `foo`'s relative path `<foo root>/bar`
 #   module-hiera:/foo/bar
 #
 class ModuleHieraScheme < HieraScheme
@@ -371,9 +371,9 @@ class ModuleHieraScheme < HieraScheme
     # 1 = '*' or the module name
     case split_path[ 1 ]
     when '*'
-      # create new URIs, one per module name that has a hiera_config.yaml file relative to its root
+      # create new URIs, one per module name that has a hiera.yaml file relative to its root
       composer.name_to_module.each_pair do | name, mod |
-        if File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera_config.yaml' ))
+        if File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera.yaml' ))
           path_parts =["", name] + split_path[2..-1]
           result << URI.parse('module-hiera:'+File.join(path_parts))
         end
@@ -384,7 +384,7 @@ class ModuleHieraScheme < HieraScheme
       # If uri has query that is empty, or the text 'optional' skip this uri if it does not exist
       if query = uri.query()
         if query == '' || query == 'optional'
-          if File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera_config.yaml' ))
+          if File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera.yaml' ))
             result << URI.parse('module-hiera:' + uri.path)
           end
         end
@@ -407,7 +407,7 @@ class ModuleHieraScheme < HieraScheme
     # 1 = '*' or the module name
     case split_path[ 1 ]
     when '*'
-      # create new URIs, one per module name that has a hiera_config.yaml file relative to its root
+      # create new URIs, one per module name that has a hiera.yaml file relative to its root
       composer.name_to_module.each_pair do | name, mod |
         path_parts =["", mod.name] + split_path[2..-1]
         result << URI.parse('module-hiera:'+File.join(path_parts))

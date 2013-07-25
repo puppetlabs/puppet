@@ -7,7 +7,7 @@ describe 'The hiera2 bindings provider' do
   include PuppetSpec::Pops
 
   def config_dir(config_name)
-    File.dirname(my_fixture("#{config_name}/hiera_config.yaml"))
+    File.dirname(my_fixture("#{config_name}/hiera.yaml"))
   end
 
   let(:_Binder) { Puppet::Pops::Binder }
