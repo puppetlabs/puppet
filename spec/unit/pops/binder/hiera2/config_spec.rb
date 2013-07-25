@@ -59,7 +59,7 @@ describe 'The hiera2 config' do
     test_config_issue('missing_backend', _Issues::CANNOT_LOAD_BACKEND)
   end
 
-  it 'should report backends that doesn not respond to needed methods' do
+  it 'should report backends that does not respond to needed methods' do
     test_config_issue('not_a_backend', _Issues::NOT_A_BACKEND_CLASS)
   end
 end

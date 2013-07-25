@@ -207,7 +207,7 @@ class SymbolicScheme < BindingsProviderScheme
   #
   def contributed_bindings(uri, scope, diagnostics)
     fqn = fqn_from_path(uri)[1]
-    bindings = Puppet::Pops::Binder::BindingsLoader.provide(fqn)
+    bindings = Puppet::Pops::Binder::BindingsLoader.provide(scope, fqn)
     raise ArgumentError, "Cannot load bindings '#{uri}' - no bindings found." unless bindings
     # Must clone as the the rest mutates the model
     cloned_bindings = Marshal.load(Marshal.dump(bindings))
@@ -331,6 +331,9 @@ class ConfdirHieraScheme < HieraScheme
 
   # Similar to ModuleHieraScheme, but relative to the config root. Does not support wildcard expansion
   def expand_included(uri)
+    # Skip if optional and does not exist
+    # Skip if a hiera 1
+    #
     # TODO: handle optional
     [uri]
   end
