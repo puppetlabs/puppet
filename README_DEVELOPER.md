@@ -13,7 +13,7 @@ this difference while working on the static compiler and types and providers.
 
 The two different types of catalog becomes relevant when writing spec tests
 because we frequently need to wire up a fake catalog so that we can exercise
-types, providers, or terminii that filter the catalog.
+types, providers, or termini that filter the catalog.
 
 The two different types of catalogs are so-called "resource" catalogs and "RAL"
 (resource abstraction layer) catalogs.  At a high level, the resource catalog
