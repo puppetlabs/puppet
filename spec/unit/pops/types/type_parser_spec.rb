@@ -45,6 +45,10 @@ describe Puppet::Pops::Types::TypeParser do
     expect(parser.parse("Hash")).to be_the_type(types.hash_of_data)
   end
 
+  it "interprets a parameterized Hash[t] as a Hash of Literal to t" do
+    expect(parser.parse("Hash[Integer]")).to be_the_type(types.hash_of(types.integer))
+  end
+
   it "parses a parameterized type into the type object" do
     parameterized_array = types.array_of(types.integer)
     parameterized_hash = types.hash_of(types.integer, types.boolean)
@@ -55,7 +59,7 @@ describe Puppet::Pops::Types::TypeParser do
 
   it "rejects an array spec with the wrong number of parameters" do
     expect { parser.parse("Array[Integer, Integer]") }.to raise_the_parameter_error("Array", 1, 2)
-    expect { parser.parse("Hash[Integer]") }.to raise_the_parameter_error("Hash", 2, 1)
+    expect { parser.parse("Hash[Integer, Integer, Integer]") }.to raise_the_parameter_error("Hash", "1 or 2", 3)
   end
 
   matcher :be_the_type do |type|
