@@ -51,7 +51,6 @@ class Puppet::Parser::Compiler
     end
   end
 
-  # Store a resource in our resource table.
   def add_resource(scope, resource)
     @resources << resource
 

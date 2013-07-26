@@ -2,11 +2,11 @@ require 'spec_helper'
 require 'matchers/include_in_order'
 require 'puppet_spec/compiler'
 
-describe "a resource in the catalog" do
+describe "Transmission of the catalog to the agent" do
   include PuppetSpec::Compiler
 
-  it "is in the order that the resource is added to the catalog" do
-    catalog = compile_to_catalog(<<-EOM)
+  it "preserves the order in which the resources are added to the catalog" do
+    master_catalog = compile_to_catalog(<<-EOM)
       define fourth() { }
       class third { }
 
@@ -22,7 +22,16 @@ describe "a resource in the catalog" do
       include first
     EOM
 
-    expect(catalog.resources.map(&:ref)).to include_in_order(
+    expect(master_catalog.resources.map(&:ref)).to include_in_order(
+      "Class[First]",
+      "Second[position]",
+      "Class[Third]",
+      "Fourth[position]"
+    )
+
+    agent_catalog = Puppet::Resource::Catalog.convert_from(:pson, master_catalog.render(:pson))
+
+    expect(agent_catalog.resources.map(&:ref)).to include_in_order(
       "Class[First]",
       "Second[position]",
       "Class[Third]",
