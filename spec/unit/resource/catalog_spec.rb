@@ -311,10 +311,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       end
     end
 
-    it "should not store objects that do not respond to :ref" do
-      proc { @catalog.add_resource("thing") }.should raise_error(ArgumentError)
-    end
-
     it "should remove all resources when asked" do
       @catalog.add_resource @one
       @catalog.add_resource @two
