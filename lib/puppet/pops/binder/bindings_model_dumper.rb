@@ -8,10 +8,12 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
   Bindings = Puppet::Pops::Binder::Bindings
 
   attr_reader :type_calculator
+  attr_reader :expression_dumper
 
   def initialize
     super
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
+    @expression_dumper = Puppet::Pops::model::ModelTreeDumper.new()
   end
 
   def dump_BindingsFactory o
@@ -64,26 +66,6 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     "()"
   end
 
-#  def dump_Hostclass o
-#    # ok, this is kind of crazy stuff in the AST, information in a context instead of in AST, and
-#    # parameters are in a Ruby Array with each parameter being an Array...
-#    #
-#    context = o.context
-#    args = context[:arguments]
-#    parent = context[:parent]
-#    result = ["class", o.name]
-#    result << ["inherits", parent] if parent
-#    result << ["parameters"] + args.collect {|p| _dump_ParameterArray(p) } if args && args.size() > 0
-#    if is_nop?(o.code)
-#      result << []
-#    else
-#      result << do_dump(o.code)
-#    end
-#    result
-#  end
-
-
-
   def dump_Object o
     ['dev-error-no-polymorph-dump-for:', o.class.to_s, o.to_s]
   end
@@ -93,9 +75,9 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
   end
 
   def dump_ProducerDescriptor o
-    # TODO: delegate to Pops Model Tree dumper and dump the transformer if it exists
-    # o.transformer
-     [o.class.name ]
+     result = [o.class.name]
+     result << expression_dumper.dump(o.transformer) if o.transformer
+     result
   end
 
   def dump_NonCachingProducerDescriptor o
@@ -107,8 +89,8 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
   end
 
   def dump_EvaluatingProducerDescriptor o
-    # TODO: puppet pops model transformer dump o.expression
-    dump_ProducerDescriptor(o)
+    result = dump_ProducerDescriptor(o)
+    result << expression_dumper.dump(o.expression)
   end
 
   def dump_InstanceProducerDescriptor
@@ -118,7 +100,9 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
 
   def dump_ProducerProducerDescriptor o
     # skip the transformer lambda...
-    ['producer-producer', do_dump(o.producer)]
+    result = ['producer-producer', do_dump(o.producer)]
+    result << expression_dumper.dump(o.transformer) if o.transformer
+    result
   end
 
   def dump_LookupProducerDescriptor o
@@ -131,7 +115,9 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
 
   def dump_HashLookupProducerDescriptor o
     # TODO: transformer lambda
-    ['hash-lookup', do_dump(o.type), o.name, "[#{do_dump(o.key)}]"]
+    result = ['hash-lookup', do_dump(o.type), o.name, "[#{do_dump(o.key)}]"]
+    result << expression_dumper.dump(o.transformer) if o.transformer
+    result
   end
 
   def dump_FirstFoundProducerDescriptor o
@@ -156,6 +142,7 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     result << 'override' if o.override
     result << 'abstract' if o.abstract
     result.concat([do_dump(o.type), o.name])
+    result << "(in #{o.multibind_id})" if o.multibind_id
     result << ['to', do_dump(o.producer)] + do_dump(o.producer_args)
     result
   end
@@ -165,15 +152,7 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     result << 'override' if o.override
     result << 'abstract' if o.abstract
     result.concat([do_dump(o.type), o.name])
-    result << ['to', do_dump(o.producer)] + do_dump(o.producer_args)
-    result
-  end
-
-  def dump_MultibindContribution o
-    result = ['contribute-to', o.multibind_id]
-    result << 'override' if o.override
-    result << 'abstract' if o.abstract
-    result.concat([do_dump(o.type), o.name])
+    result << "(in #{o.multibind_id})" if o.multibind_id
     result << ['to', do_dump(o.producer)] + do_dump(o.producer_args)
     result
   end

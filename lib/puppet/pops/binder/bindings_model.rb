@@ -133,6 +133,8 @@ module Puppet::Pops::Binder::Bindings
     has_attr 'name', String
     has_attr 'override', Boolean
     has_attr 'abstract', Boolean
+    # If set is a contribution in a multibind
+    has_attr 'multibind_id', String, :lowerBound => 0
     # Invariant: Only multibinds may have lowerBound 0, all regular Binding must have a producer.
     contains_one_uni 'producer', ProducerDescriptor, :lowerBound => 0
     contains_many_uni 'producer_args', NamedArgument, :lowerBound => 0
@@ -144,13 +146,6 @@ module Puppet::Pops::Binder::Bindings
   # @api public
   class Multibinding < Binding
     has_attr 'id', String
-  end
-
-  # A binding in a multibind
-  # @api public
-  #
-  class MultibindContribution < Binding
-    has_attr 'multibind_id', String, :lowerBound => 1
   end
 
   # A container of Binding instances

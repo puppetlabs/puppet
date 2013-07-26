@@ -248,17 +248,22 @@ class Puppet::Pops::Binder::Binder
     end
 
     # Produces the key for the given Binding.
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding] they binding to get a key for
+    # @param binding [Puppet::Pops::Binder::Bindings::Binding] the binding to get a key for
     # @returns [Object] an opaque key
     # @api private
     #
     def key(binding)
-      k = unless binding.is_a?(Puppet::Pops::Binder::Bindings::MultibindContribution)
-        key_factory.binding_key(binding)
-      else
-        # contributions get a unique (sequencial) key
+      k = if is_contribution?(binding)
+        # contributions get a unique (sequential) key
         binder.next_anonymous_key()
+      else
+        key_factory.binding_key(binding)
       end
+    end
+
+    # @api private
+    def is_contribution?(binding)
+      ! binding.multibind_id.nil?
     end
 
     # @api private
@@ -290,7 +295,11 @@ class Puppet::Pops::Binder::Binder
 
     # @api private
     def bind_Binding(o)
-      add(o)
+      if is_contribution?(o)
+        add_contribution(o)
+      else
+        add(o)
+      end
     end
 
     # @api private
@@ -344,12 +353,6 @@ class Puppet::Pops::Binder::Binder
           end
         end
       end
-    end
-
-    # @api private
-    #
-    def bind_MultibindContribution(o)
-      add_contribution(o)
     end
 
     # Processes one named ("top level") layer consisting of a list of NamedBindings

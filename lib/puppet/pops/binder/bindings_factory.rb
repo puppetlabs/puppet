@@ -12,18 +12,6 @@
 module Puppet::Pops::Binder::BindingsFactory
 
   class AbstractBuilder
-    # Provides convenient access to the Bindings Factory class methods. The intent is to provide access to the
-    # methods that return producers for the purpose of composing more elaborate things that the convenient methods
-    # directly supports.
-    #
-    def method_missing(meth, *args, &block)
-      Puppet::Pops::Binder::BindingsFactory.send(meth, *args, &block)
-    end
-  end
-
-  # @api public
-  class BindingsContainerBuilder < AbstractBuilder
-
     # The built model object.
     attr_reader :model
 
@@ -32,6 +20,22 @@ module Puppet::Pops::Binder::BindingsFactory
       @model = binding
     end
 
+    # Provides convenient access to the Bindings Factory class methods. The intent is to provide access to the
+    # methods that return producers for the purpose of composing more elaborate things that the convenient methods
+    # directly supports.
+    #
+    def method_missing(meth, *args, &block)
+      factory = Puppet::Pops::Binder::BindingsFactory
+      if factory.respond_to?(meth)
+        factory.send(meth, *args, &block)
+      else
+        super
+      end
+    end
+  end
+
+  # @api public
+  class BindingsContainerBuilder < AbstractBuilder
 
     # Adds an empty binding to the container, and returns a builder for it for further detailing.
     # @api public
@@ -53,21 +57,6 @@ module Puppet::Pops::Binder::BindingsFactory
       binding.id = id
       model.addBindings(binding)
       builder = MultibindingsBuilder.new(binding)
-      builder.instance_eval(&block) if block_given?
-      builder
-    end
-
-    # Binds a type/name key in a multibind given by id.
-    # @param type [Puppet::Pops::Types::PObjectType] the type (must be compatible with the multibind type argument)
-    # @param name [String] the name of the binding (appears as key in a Hash multibind, ignored in an Array multibind
-    # @param id [String] the multibind id of the multibind where this binding should be made
-    # @api public
-    #
-    def bind_in_multibind(id, &block)
-      binding = Puppet::Pops::Binder::Bindings::MultibindContribution.new()
-      binding.multibind_id = id
-      model.addBindings(binding)
-      builder = BindingsBuilder.new(binding)
       builder.instance_eval(&block) if block_given?
       builder
     end
@@ -108,11 +97,10 @@ module Puppet::Pops::Binder::BindingsFactory
   # @api public
   #
   class BindingsBuilder < AbstractBuilder
-    attr_reader :model
 
     # @api public
     def initialize(binding)
-      @model = binding
+      super binding
       data()
     end
 
@@ -120,20 +108,27 @@ module Puppet::Pops::Binder::BindingsFactory
     # @param name [String] the name to bind.
     # @api public
     def name(name)
-      @model.name = name
+      model.name = name
+      self
+    end
+
+    # Makes the binding a multibind contribution to the given multibind id
+    # @api public
+    def in_multibind(id)
+      model.multibind_id = id
       self
     end
 
     # (#name)
     # @api public
     def named(name)
-      @model.name = name
+      model.name = name
       self
     end
 
     # @api public
     def type(type)
-      @model.type = type
+      model.type = type
       self
     end
 
@@ -227,7 +222,7 @@ module Puppet::Pops::Binder::BindingsFactory
       # If given producer is not a producer, create a literal producer
         producer = Puppet::Pops::Binder::BindingsFactory.literal_producer(producer)
       end
-      @model.producer = producer
+      model.producer = producer
       self
     end
 
@@ -248,7 +243,7 @@ module Puppet::Pops::Binder::BindingsFactory
       else
         raise ArgumentError, "to_instance accepts String (a class name), or a Class.*args got: #{type.class}."
       end
-      @model.producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(class_name, *args)
+      model.producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(class_name, *args)
     end
 
     # to a singleton producer
@@ -277,7 +272,7 @@ module Puppet::Pops::Binder::BindingsFactory
         raise ArgumentError, "Given producer argument is neither a producer descriptor, a class, nor a producer"
       end
       metaproducer = Puppet::Pops::Binder::BindingsFactory.producer_producer(producer)
-      @model.producer = metaproducer
+      model.producer = metaproducer
       self
     end
 
@@ -313,7 +308,7 @@ module Puppet::Pops::Binder::BindingsFactory
       non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
       non_caching.producer = metaproducer
 
-      @model.producer = non_caching
+      model.producer = non_caching
       self
     end
 
@@ -338,10 +333,9 @@ module Puppet::Pops::Binder::BindingsFactory
       end
       non_caching = Puppet::Pops::Binder::Bindings::NonCachingProducerDescriptor.new()
       non_caching.producer = producer
-      @model.producer = non_caching
+      model.producer = non_caching
       self
     end
-
 
     # to a lookup of another key
     # @overload to_lookup_of(type, name)
@@ -353,7 +347,7 @@ module Puppet::Pops::Binder::BindingsFactory
         name = type
         type = Puppet::Pops::Types::TypeFactory.data()
       end
-      @model.producer = Puppet::Pops::Binder::BindingsFactory.lookup_producer(type, name)
+      model.producer = Puppet::Pops::Binder::BindingsFactory.lookup_producer(type, name)
       self
     end
 
@@ -363,7 +357,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @api public
     #
     def to_hash_lookup_of(type, name, key)
-      @model.producer = Puppet::Pops::Binder::BindingsFactory.hash_lookup_producer(type, name, key)
+      model.producer = Puppet::Pops::Binder::BindingsFactory.hash_lookup_producer(type, name, key)
       self
     end
 
@@ -392,7 +386,7 @@ module Puppet::Pops::Binder::BindingsFactory
           Puppet::Pops::Binder::BindingsFactory.lookup_producer(Puppet::Pops::Types::TypeFactory.data(), entry)
         end
       end
-      @model.producer = Puppet::Pops::Binder::BindingsFactory.first_found_producer(producers)
+      model.producer = Puppet::Pops::Binder::BindingsFactory.first_found_producer(producers)
       self
     end
 
@@ -402,7 +396,7 @@ module Puppet::Pops::Binder::BindingsFactory
         arg = Puppet::Pops::Binder::Bindings::NamedArgument.new()
         arg.name = k.to_s
         arg.value = v
-        @model.addProducer_args(arg)
+        model.addProducer_args(arg)
       end
       self
     end
@@ -417,7 +411,7 @@ module Puppet::Pops::Binder::BindingsFactory
       unless type.class == Puppet::Pops::Types::PArrayType || type.class == Puppet::Pops::Types::PHashType
         raise ArgumentError, "Wrong type; only PArrayType, or PHashType allowed, got '#{type.to_s}'"
       end
-      @model.type = type
+      model.type = type
       self
     end
 
