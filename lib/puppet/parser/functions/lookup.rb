@@ -37,5 +37,5 @@ ENDHEREDOC
   if pblock
     result = pblock.call(self, result.nil? ? :undef : result)
   end
-  result
+  result.nil? ? :undef : result
 end
