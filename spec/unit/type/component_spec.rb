@@ -21,15 +21,6 @@ describe component do
     comp.title.should == comp.ref
   end
 
-  it "should alias itself to its reference if it has a catalog and the catalog does not already have a resource with the same reference" do
-    catalog = mock 'catalog'
-    catalog.expects(:resource).with("Foo[bar]").returns nil
-
-    catalog.expects(:alias).with { |resource, name| resource.is_a?(component) and name == "Foo[bar]" }
-
-    component.new(:name => "Foo[bar]", :catalog => catalog)
-  end
-
   it "should not fail when provided an invalid value" do
     comp = component.new(:name => "Foo[bar]")
     lambda { comp[:yayness] = "ey" }.should_not raise_error
