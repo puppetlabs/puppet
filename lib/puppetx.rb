@@ -36,10 +36,11 @@ module Puppetx
       # -------------------
       system_bindings = ::Puppet::Pops::Binder::SystemBindings
       bindings = system_bindings.default_bindings()
-      bindings.
-        bind_in_multibind(SYNTAX_CHECKERS ).name('json').
-        instance_of(SYNTAX_CHECKERS_TYPE).
-        to_instance('Puppetx::Puppetlabs::SyntaxCheckers::Json')
+      bindings.bind.
+          name('json').
+          instance_of(SYNTAX_CHECKERS_TYPE).
+          in_multibind(SYNTAX_CHECKERS).
+          to_instance('Puppetx::Puppetlabs::SyntaxCheckers::Json')
     end
   end
 end

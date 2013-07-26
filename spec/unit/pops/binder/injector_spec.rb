@@ -471,9 +471,9 @@ describe 'Injector' do
         multibind_id = "ducks"
 
         bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
-        bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
-        bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew2').to(InjectorSpecModule::NamedDuck, 'Dewey')
-        bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew3').to(InjectorSpecModule::NamedDuck, 'Louie')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).name('nephew2').to(InjectorSpecModule::NamedDuck, 'Dewey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).name('nephew3').to(InjectorSpecModule::NamedDuck, 'Louie')
 
         injector = injector(lbinder)
         the_ducks = injector.lookup(scope, hash_of_duck, "donalds_nephews")
@@ -489,8 +489,8 @@ describe 'Injector' do
 
         bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
         # missing name
-        bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Huey')
-        bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
 
         expect {
           the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
@@ -503,8 +503,8 @@ describe 'Injector' do
 
         bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
         # missing name
-        bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
-        bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
 
         expect {
           the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
@@ -516,8 +516,8 @@ describe 'Injector' do
         multibind_id = "ducks"
 
         bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews').producer_options(:conflict_resolution => :ignore)
-        bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
-        bindings.bind_in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).name('foo').to(InjectorSpecModule::NamedDuck, 'Dewey')
 
         expect {
           the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
@@ -529,7 +529,7 @@ describe 'Injector' do
 
         multibind_id = "ints"
         mb = bindings.multibind(multibind_id).type(hash_of_integer).name('donalds_family')
-        bindings.bind_in_multibind(multibind_id).name('nephew').to('Huey')
+        bindings.bind.in_multibind(multibind_id).name('nephew').to('Huey')
 
         expect { ducks = injector(lbinder).lookup(scope, 'donalds_family')
         }.to raise_error(%r{expected: Integer, got: String})
@@ -546,11 +546,11 @@ describe 'Injector' do
         mb = bindings.multibind(multibind_id).type(hash_of_data).name('donalds_family')
         mb.producer_options(:conflict_resolution => :append)
 
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie')
-        bindings.bind_in_multibind(multibind_id).name('uncles').to('Scrooge McDuck')
-        bindings.bind_in_multibind(multibind_id).name('uncles').to('Ludwig Von Drake')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Dewey')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Louie')
+        bindings.bind.in_multibind(multibind_id).name('uncles').to('Scrooge McDuck')
+        bindings.bind.in_multibind(multibind_id).name('uncles').to('Ludwig Von Drake')
 
         ducks = injector(lbinder).lookup(scope, 'donalds_family')
 
@@ -569,12 +569,12 @@ describe 'Injector' do
         mb = bindings.multibind(multibind_id).type(hash_of_data).name('donalds_family')
         mb.producer_options(:conflict_resolution => :append, :flatten => true, :uniq => true)
 
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to(['Huey', ['Louie'], 'Dewey'])
-        bindings.bind_in_multibind(multibind_id).name('uncles').to('Scrooge McDuck')
-        bindings.bind_in_multibind(multibind_id).name('uncles').to('Ludwig Von Drake')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Dewey')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to(['Huey', ['Louie'], 'Dewey'])
+        bindings.bind.in_multibind(multibind_id).name('uncles').to('Scrooge McDuck')
+        bindings.bind.in_multibind(multibind_id).name('uncles').to('Ludwig Von Drake')
 
         ducks = injector(lbinder).lookup(scope, 'donalds_family')
 
@@ -607,10 +607,10 @@ describe 'Injector' do
 
         bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
 
-        mb1 = bindings.when_in_category("highest", "test").bind_in_multibind(multibind_id)
+        mb1 = bindings.when_in_category("highest", "test").bind.in_multibind(multibind_id)
         mb1.type(duck_type).name('nephew').to(InjectorSpecModule::NamedDuck, 'Huey')
 
-        mb2 = bindings.bind_in_multibind(multibind_id)
+        mb2 = bindings.bind.in_multibind(multibind_id)
         mb2.type(duck_type).name('nephew').to(InjectorSpecModule::NamedDuck, 'Dewey')
 
         binder.define_categories(factory.categories(['highest', 'test']))
@@ -625,10 +625,10 @@ describe 'Injector' do
 
         bindings.multibind(multibind_id).type(hash_of_data).name('donalds_nephews').producer_options(:conflict_resolution => :merge)
 
-        mb1 = bindings.when_in_category("highest", "test").bind_in_multibind(multibind_id)
+        mb1 = bindings.when_in_category("highest", "test").bind.in_multibind(multibind_id)
         mb1.name('nephew').to({'name' => 'Huey', 'is' => 'winner'})
 
-        mb2 = bindings.bind_in_multibind(multibind_id)
+        mb2 = bindings.bind.in_multibind(multibind_id)
         mb2.name('nephew').to({'name' => 'Dewey', 'is' => 'looser', 'has' => 'cap'})
 
         binder.define_categories(factory.categories(['highest', 'test']))
@@ -648,10 +648,10 @@ describe 'Injector' do
 
         bindings.multibind(multibind_id).type(array_of_duck).name('donalds_nephews')
         # one with name (ignored, expect no error)
-        bindings.bind_in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).name('nephew1').to(InjectorSpecModule::NamedDuck, 'Huey')
         # two without name
-        bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
-        bindings.bind_in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Louie')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Dewey')
+        bindings.bind.in_multibind(multibind_id).type(duck_type).to(InjectorSpecModule::NamedDuck, 'Louie')
 
         the_ducks = injector(lbinder).lookup(scope, array_of_duck, "donalds_nephews")
         the_ducks.size.should == 3
@@ -669,12 +669,12 @@ describe 'Injector' do
         # (could have used the default for unnamed and add unnamed entries).
         mb.producer_options(:priority_on_named => false, :uniq => true)
 
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Huey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Dewey') # duplicate
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie')
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
-        bindings.bind_in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Huey')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Dewey')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Dewey') # duplicate
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Louie')
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
+        bindings.bind.in_multibind(multibind_id).name('nephews').to('Louie') # duplicate
 
         ducks = injector(lbinder).lookup(scope, 'donalds_family')
         ducks.should == ['Huey', 'Dewey', 'Louie']
@@ -691,10 +691,10 @@ describe 'Injector' do
         # flatten one level
         mb.producer_options(:flatten => 1)
 
-        bindings.bind_in_multibind(multibind_id).to('Huey')
-        bindings.bind_in_multibind(multibind_id).to('Dewey')
-        bindings.bind_in_multibind(multibind_id).to('Louie') # duplicate
-        bindings.bind_in_multibind(multibind_id).to(['Huey', 'Dewey', 'Louie'])
+        bindings.bind.in_multibind(multibind_id).to('Huey')
+        bindings.bind.in_multibind(multibind_id).to('Dewey')
+        bindings.bind.in_multibind(multibind_id).to('Louie') # duplicate
+        bindings.bind.in_multibind(multibind_id).to(['Huey', 'Dewey', 'Louie'])
 
         ducks = injector(lbinder).lookup(scope, 'donalds_family')
         ducks.should == ['Huey', 'Dewey', 'Louie', 'Huey', 'Dewey', 'Louie']
@@ -705,10 +705,26 @@ describe 'Injector' do
 
         multibind_id = "ints"
         mb = bindings.multibind(multibind_id).type(array_of_integer).name('donalds_family')
-        bindings.bind_in_multibind(multibind_id).to('Huey')
+        bindings.bind.in_multibind(multibind_id).to('Huey')
 
         expect { ducks = injector(lbinder).lookup(scope, 'donalds_family')
         }.to raise_error(%r{expected: Integer, or Array\[Integer\], got: String})
+      end
+    end
+
+    context "When using multibind in multibind" do
+      it "a hash multibind can be contributed to another" do
+        hash_of_data = type_factory.hash_of_data()
+        mb1_id = 'data1'
+        mb2_id = 'data2'
+        top = bindings.multibind(mb1_id).type(hash_of_data).name("top")
+        detail = bindings.multibind(mb2_id).type(hash_of_data).name("detail").in_multibind(mb1_id)
+
+        bindings.bind.in_multibind(mb1_id).name('a').to(10)
+        bindings.bind.in_multibind(mb1_id).name('b').to(20)
+        bindings.bind.in_multibind(mb2_id).name('a').to(30)
+        bindings.bind.in_multibind(mb2_id).name('b').to(40)
+        expect( injector(lbinder).lookup(scope, "top") ).to eql({'detail' => {'a' => 30, 'b' => 40}, 'a' => 10, 'b' => 20})
       end
     end
 

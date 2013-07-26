@@ -26,9 +26,6 @@ class Puppet::Pops::Binder::BindingsLabelProvider < Puppet::Pops::LabelProvider
   def label_MultibindProducerDescriptor o       ; "Multibind Producer"                           end
   def label_ArrayMultibindProducerDescriptor o  ; "Array Multibind Producer"                     end
   def label_HashMultibindProducerDescriptor o   ; "Hash Multibind Producer"                      end
-  def label_Binding o                           ; "Binding"                                      end
-  def label_Multibinding o                      ; "Multibinding"                                 end
-  def label_MultibindContribution o             ; "Multibind Contribution"                       end
   def label_Bindings o                          ; "Bindings"                                     end
   def label_NamedBindings o                     ; "Named Bindings"                               end
   def label_Category o                          ; "Category '#{o.categorization}/#{o.value}'"    end
@@ -38,5 +35,12 @@ class Puppet::Pops::Binder::BindingsLabelProvider < Puppet::Pops::LabelProvider
   def label_EffectiveCategories o               ; "Effective Categories"                         end
   def label_ContributedBindings o               ; "Contributed Bindings"                         end
   def label_NamedArgument o                     ; "Named Argument"                               end
+
+  def label_Binding(o)
+    'Binding' + (o.multibind_id.nil? ? '' : ' In Multibind')
+  end
+  def label_Multibinding(o)
+    'Multibinding' + (o.multibind_id.nil? ? '' : ' In Multibind')
+  end
 
 end
