@@ -26,12 +26,12 @@ task :repo_configs => ["pl-puppet-repos.rpm", "pl-puppet-build.repo"] do |task|
 end
 
 task :test => [:repo_configs] do
-  sh "systest --pre-suite setup/jenkins/pre-suite -o options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
+  sh "systest --pre-suite setup/jenkins/pre-suite -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
 end
 
 namespace :ci do
   task :test do
-    ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + " --no-color --xml"
+    ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + "--xml"
     Rake::Task['test'].invoke
   end
 end
