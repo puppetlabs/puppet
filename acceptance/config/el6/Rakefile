@@ -27,8 +27,31 @@ namespace :ci do
   end
 
   desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test)"
-  task :test => [:repo_configs] do
+  task :test => [:repo_configs, :qa_ssh_key] do
     ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + "--xml"
-    sh "systest --pre-suite setup/jenkins/pre-suite -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
+    ENV['TESTING_MODE'] = 'jenkins'
+    sh "systest -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
+  end
+end
+
+namespace :standalone do
+  desc "Bring up the vagrant environment.  Includes pre-puppet environment packages installation and cross node networking support (/etc/hosts munging)"
+  task :up do
+    sh "vagrant up"
+  end
+
+  desc "Completely destroy the vagrant instances."
+  task :clean do
+    sh "vagrant destroy -f"
+  end
+
+  task :ensure_good_private_key do
+    sh "chmod 600 acceptance.priv"
+  end
+
+  desc "Bring up vagrant boxes and run the tests through the puppet-acceptance systest harness.  Specify TEST='../../tests/foo' to customize which tests are to be run, and/or OPTIONS='bar' to pass options to systest."
+  task :test => [:up, :ensure_good_private_key] do
+    ENV['TESTING_MODE'] = 'local'
+    sh "systest -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
   end
 end
