@@ -677,6 +677,41 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  describe "#applied" do
+    before :each do
+   end
+    after :each do Puppet::Type.rmtype(:type_spec_fake_type) end
+
+    before :each do
+      Puppet::Type.newtype(:test_applied_method_type) do
+        newparam(:name) do
+          isnamevar
+        end
+      end
+      Puppet::Type.type(:test_applied_method_type).provide(:provider) do
+        mk_resource_methods
+      end
+
+      @type = Puppet::Type.type(:test_applied_method_type)
+    end
+
+    it "should not call 'finalize' if the provider dose not support it" do
+      instance = @type.new(:name => :no_finalize)
+      instance.provider.stubs(:respond_to?).with(:finalize).returns false
+
+      instance.provider.expects(:finalize).never
+      instance.applied
+    end
+
+    it "should call 'finalize' on providers with a 'finalize' method" do
+      instance = @type.new(:name => :finalize)
+      instance.provider.stubs(:finalize).returns nil
+
+      instance.provider.expects(:finalize).once
+      instance.applied
+    end
+  end
+
   describe "::instances" do
     after :each do Puppet::Type.rmtype(:type_spec_fake_type) end
     let :type do
