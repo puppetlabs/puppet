@@ -1,4 +1,5 @@
 ---
+version: 1
 layers:
   [{name: site, include: 'confdir-hiera:/'},
    {name: modules, include: ['module-hiera:/*/', 'module:/*::default'], exclude: 'module-hiera:/bad/' }

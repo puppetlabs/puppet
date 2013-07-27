@@ -41,10 +41,17 @@ module Puppet::Pops::Binder::Config
       else
         accept(Issues::CONFIG_LAYERS_MISSING, config_file)
       end
+
       if categories = (data['categories'] || data[:categories])
         check_categories(categories, config_file)
       else
         accept(Issues::CONFIG_CATEGORIES_MISSING, config_file)
+      end
+
+      if version = (data['version'] or data[:version])
+        accept(Issues::CONFIG_WRONG_VERSION, config_file, {:expected => 1, :actual => version}) unless version == 1
+      else
+        accept(Issues::CONFIG_VERSION_MISSING, config_file)
       end
     end
 
