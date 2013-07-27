@@ -419,11 +419,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
 
     if resources = data['resources']
-      resources = PSON.parse(resources) if resources.is_a?(String)
-      resources.each do |res|
-        puts res
-        resource_from_pson(result, res)
-      end
+      result.add_resource(*resources.collect do |res|
+        Puppet::Resource.from_pson(res)
+      end)
     end
 
     if edges = data['edges']
@@ -455,11 +453,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     edge.target = target
 
     result.add_edge(edge)
-  end
-
-  def self.resource_from_pson(result, res)
-    res = Puppet::Resource.from_pson(res) if res.is_a? Hash
-    result.add_resource(res)
   end
 
   PSON.register_document_type('Catalog',self)
@@ -563,7 +556,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     result.environment = self.environment
 
     map = {}
-    vertices.each do |resource|
+    resources.each do |resource|
       next if virtual_not_exported?(resource)
       next if block_given? and yield resource
 
