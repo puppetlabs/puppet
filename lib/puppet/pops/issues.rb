@@ -44,8 +44,12 @@ module Puppet::Pops::Issues
       # Create a Message Data where all hash keys become methods for convenient interpolation
       # in issue text.
       msgdata = MessageData.new(*arg_names)
-      # Evaluate the message block in the msg data's binding
-      msgdata.format(hash, &message_block)
+      begin
+        # Evaluate the message block in the msg data's binding
+        msgdata.format(hash, &message_block)
+      rescue StandardError => e
+        raise RuntimeError, "Error while reporting issue: #{issue_code}. #{e.message}", caller
+      end
     end
   end
 
