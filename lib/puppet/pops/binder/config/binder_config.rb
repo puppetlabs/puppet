@@ -21,19 +21,21 @@ module Puppet::Pops::Binder::Config
     #
     attr_reader :categorization
 
+    DEFAULT_LAYERS = [
+      { 'name' => 'site',    'include' => ['confdir-hiera:/', 'confdir:/default?optional']  },
+      { 'name' => 'modules', 'include' => ['module-hiera:/*/', 'module:/*::default'] },
+    ]
+
+    DEFAULT_CATEGORIES = [
+      ['node',        "${::fqdn}"],
+      ['osfamily',    "${osfamily}"],
+      ['environment', "${environment}"],
+      ['common',      "true"]
+    ]
+
     def default_config()
       # This is hardcoded now, but may be a user supplied default configuration later
-      {'layers' => [
-        { 'name' => 'site',    'include' => ['confdir-hiera:/', 'confdir:/default?optional']  },
-        { 'name' => 'modules', 'include' => ['module-hiera:/*/', 'module:/*::default'] },
-      ],
-      'categories' => [
-        ['node',        "${::fqdn}"],
-        ['osfamily',    "${osfamily}"],
-        ['environment', "${environment}"],
-        ['common',      "true"]
-        ]
-      }
+      {'version' => 1, 'layers' => DEFAULT_LAYERS, 'categories' => DEFAULT_CATEGORIES}
     end
 
     def confdir()
@@ -69,8 +71,8 @@ module Puppet::Pops::Binder::Config
       end
 
       unless diagnostics.errors?
-        @layering_config = data['layers']
-        @categorization = data['categories']
+        @layering_config = data['layers'] or DEFAULT_LAYERS
+        @categorization = data['categories'] or DEFAULT_CATEGORIES
       else
         @layering_config = []
         @categorization = {}

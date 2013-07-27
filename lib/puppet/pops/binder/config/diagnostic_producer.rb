@@ -20,6 +20,12 @@ module Puppet::Pops::Binder::Config
       p = @severity_producer
       # All are errors, if there is need to mark some as warnings...
       # p[Issues::XXX] = :warning
+
+      # ignored because there is a default
+      p[Puppet::Pops::Binder::Config::Issues::CONFIG_LAYERS_MISSING] = :ignore
+
+      # ignored because there is a default
+      p[Puppet::Pops::Binder::Config::Issues::CONFIG_CATEGORIES_MISSING] = :ignore
       p
     end
   end

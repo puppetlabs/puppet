@@ -16,6 +16,10 @@ module Puppet::Pops::Binder::Config::Issues
     "The configuration file '#{semantic}' has no 'layers' entry in the top level hash"
   end
 
+  CONFIG_VERSION_MISSING = issue :CONFIG_VERSION_MISSING do
+    "The configuration file '#{semantic}' has no 'version' entry in the top level hash"
+  end
+
   CONFIG_CATEGORIES_MISSING = issue :CONFIG_CATEGORIES_MISSING do
     "The configuration file '#{semantic}' has no 'categories' entry in the top level hash"
   end
@@ -74,6 +78,10 @@ module Puppet::Pops::Binder::Config::Issues
 
   LAYER_NAME_NOT_STRING = issue :LAYER_NAME_NOT_STRING, :class_name do
     "Configuration file #{semantic} contains a layer name that is not a String, got a: '#{class_name}'"
+  end
+
+  CONFIG_WRONG_VERSION = issue :CONFIG_WRONG_VERSION, :expected, :actual do
+    "The configuration file '#{semantic}' has unsupported 'version', expected: #{expected}, but got: #{actual}."
   end
 
 end
