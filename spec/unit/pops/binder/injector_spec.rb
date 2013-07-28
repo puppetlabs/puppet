@@ -405,8 +405,15 @@ describe 'Injector' do
   end
 
   context "When using the first found producer" do
-    it "should lookup until it finds a value, but no further" do
-      bindings.bind().name('a_string').to_first_found(['b_string', 'c_string', 'g_string'])
+    it "should lookup until it finds a value, but not further" do
+      bindings.bind().name('a_string').to_first_found('b_string', 'c_string', 'g_string')
+      bindings.bind().name('c_string').to('hello')
+      bindings.bind().name('g_string').to('Oh, mrs. Smith...')
+      injector(lbinder).lookup(scope, 'a_string').should == 'hello'
+    end
+
+    it "should lookup until it finds a value using mix of type and name, but not further" do
+      bindings.bind().name('a_string').to_first_found('b_string', [type_factory.string, 'c_string'], 'g_string')
       bindings.bind().name('c_string').to('hello')
       bindings.bind().name('g_string').to('Oh, mrs. Smith...')
       injector(lbinder).lookup(scope, 'a_string').should == 'hello'
@@ -744,6 +751,12 @@ describe 'Injector' do
       it "should be possible to post process lookup with a puppet lambda" do
         model = parser.parse_string('fake() |$value| {$value + 1 }').current
         bindings.bind.name('an_int').to(42).producer_options( :transformer => model.lambda)
+        injector(lbinder).lookup(scope, 'an_int').should == 43
+      end
+
+      it "should be possible to post process lookup with a ruby proc" do
+        transformer = lambda {|scope, value| value + 1 }
+        bindings.bind.name('an_int').to(42).producer_options( :transformer => transformer)
         injector(lbinder).lookup(scope, 'an_int').should == 43
       end
     end
