@@ -56,11 +56,15 @@ module Puppet::Pops::Binder::Producers
     #
     def initialize(injector, binding, scope, options)
       if transformer_lambda = options[:transformer]
-        raise ArgumentError, "Transformer must be a LambdaExpression" unless transformer_lambda.is_a?(Puppet::Pops::Model::LambdaExpression)
-        raise ArgumentError, "Transformer lambda must take one argument; scope." unless transformer_lambda.parameters.size() == 1
-        # NOTE: This depends on Puppet 3 AST Lambda
-        # TODO: validate the lambda
-        @transformer = Puppet::Pops::Model::AstTransformer.new().transform(transformer_lambda)
+        if transformer_lambda.is_a?(Proc)
+          raise ArgumentError, "Transformer Proc must take two arguments; scope, value." unless transformer_lambda.arity == 2
+          @transformer = transformer_lambda
+        else
+          raise ArgumentError, "Transformer must be a LambdaExpression" unless transformer_lambda.is_a?(Puppet::Pops::Model::LambdaExpression)
+          raise ArgumentError, "Transformer lambda must take one argument; value." unless transformer_lambda.parameters.size() == 1
+          # NOTE: This depends on Puppet 3 AST Lambda
+          @transformer = Puppet::Pops::Model::AstTransformer.new().transform(transformer_lambda)
+        end
       end
     end
 
@@ -704,10 +708,10 @@ module Puppet::Pops::Binder::Producers
     #   <li>`error` any duplicate key is an error</li>
     #   <li>`append` element type must be compatible with Array, makes elements be arrays and appends all found</li>
     #   <li>`merge` element type must be compatible with hash, merges hashes with retention of highest priority hash content</li>
-    #   <li>`priority` the first found highet priority contribution is used, duplicates with same priority raises and error, the rest are
+    #   <li>`priority` the first found highest priority contribution is used, duplicates with same priority raises and error, the rest are
     #     ignored.</li></ul>
     # @option options [Boolean, Integer] :flatten (false) If appended should be flattened. Also see {#flatten}.
-    # @option options [Boolean] :uniq (false) If appended result should be flattened
+    # @option options [Boolean] :uniq (false) If appended result should be made unique.
     #
     # @api public
     #
@@ -783,7 +787,7 @@ module Puppet::Pops::Binder::Producers
           seen[name] = entry
         end
         included_entries << [key, entry]
-      end 
+      end
       result = {}
       included_entries.each do |element|
         k = element[ 0 ]

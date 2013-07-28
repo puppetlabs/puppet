@@ -11,6 +11,8 @@ class Puppet::Pops::Model::Factory
 
   attr_accessor :current
 
+  alias_method :model, :current
+
   # Shared build_visitor, since there are many instances of Factory being used
   @@build_visitor = Puppet::Pops::Visitor.new(self, "build")
   # Initialize a factory with a single object, or a class with arguments applied to build of
