@@ -42,13 +42,14 @@ module Puppet::Network::HTTP
     def initialize(host, port, options = {})
       @host = host
       @port = port
-      options = options.clone
-      OPTION_DEFAULTS.each_pair do |k, v|
-        k_s = k.to_s
-        v = options.delete(k) { options.delete(k_s) { v } }
-        instance_variable_set(('@' << k_s).to_sym, v)
-      end
-      raise Puppet::Error, "Unrecognized option(s): #{options.keys.map { |k| k.inspect }.sort.join(', ')}" unless options.empty?
+
+      unknown_options = options.keys - OPTION_DEFAULTS.keys
+      raise Puppet::Error, "Unrecognized option(s): #{unknown_options.map(&:inspect).sort.join(', ')}" unless unknown_options.empty?
+
+      options = OPTION_DEFAULTS.merge(options)
+      @use_ssl = options[:use_ssl]
+      @verify_peer = options[:verify_peer]
+      @redirect_limit = options[:redirect_limit]
     end
 
     def get(*args)
