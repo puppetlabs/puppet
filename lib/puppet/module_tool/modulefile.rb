@@ -57,18 +57,18 @@ module Puppet::ModuleTool
       @metadata.license = license
     end
 
-   # Set the summary
-   def summary(summary)
+    # Set the summary
+    def summary(summary)
       @metadata.summary = summary
     end
 
-   # Set the description
-   def description(description)
+    # Set the description
+    def description(description)
       @metadata.description = description
-   end
+    end
 
-   # Set the project page
-   def project_page(project_page)
+    # Set the project page
+    def project_page(project_page)
       @metadata.project_page = project_page
     end
   end
