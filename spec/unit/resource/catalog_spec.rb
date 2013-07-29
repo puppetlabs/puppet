@@ -898,8 +898,9 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
   it 'should convert the resources list into resources and add each of them' do
     @data['resources'] = [Puppet::Resource.new(:file, "/foo"), Puppet::Resource.new(:file, "/bar")]
 
-    @catalog.expects(:add_resource).times(2).with { |res| res.type == "File" }
-    PSON.parse @pson.to_pson
+    catalog = PSON.parse @pson.to_pson
+
+    catalog.resources.collect(&:ref) == ["File[/foo]", "File[/bar]"]
   end
 
   it 'should convert resources even if they do not include "type" information' do
