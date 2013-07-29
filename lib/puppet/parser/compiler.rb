@@ -43,6 +43,14 @@ class Puppet::Parser::Compiler
   #
   attr_accessor :injector
 
+  # The injector that provides lookup services during the creation of the {#injector}.
+  # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services during injector creation
+  #   for this compiler/environment
+  #
+  # @api private
+  #
+  attr_accessor :boot_injector
+
   # Add a collection to the global list.
   def_delegator :@collections,   :<<, :add_collection
   def_delegator :@relationships, :<<, :add_relationship
@@ -209,6 +217,19 @@ class Puppet::Parser::Compiler
   def injector
     create_injector if @injector.nil?
     @injector
+  end
+
+  # Creates the boot injector from registered system, default, and injector config.
+  # @return [Puppet::Pops::Binder::Injector] the created boot injector
+  # @api private Cannot be 'private' since it is called from the BindingsComposer.
+  #
+  def create_boot_injector
+    boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution
+    final_contribution = Puppet::Pops::Binder::SystemBindings.final_contribution
+    binder = Puppet::Pops::Binder::Binder.new()
+    binder.define_categories(boot_contribution.effective_categories)
+    binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
+    @boot_injector = Puppet::Pops::Binder::Injector.new(binder)
   end
 
   private
@@ -486,4 +507,5 @@ class Puppet::Parser::Compiler
     binder.define_layers(layered_bindings)
     @injector = Puppet::Pops::Binder::Injector.new(binder)
   end
+
 end
