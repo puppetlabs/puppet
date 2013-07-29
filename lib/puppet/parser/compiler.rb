@@ -51,7 +51,6 @@ class Puppet::Parser::Compiler
     end
   end
 
-  # Store a resource in our resource table.
   def add_resource(scope, resource)
     @resources << resource
 
@@ -303,16 +302,11 @@ class Puppet::Parser::Compiler
   # not find the resource they were supposed to override, so we
   # want to throw an exception.
   def fail_on_unevaluated_overrides
-    remaining = []
-    @resource_overrides.each do |name, overrides|
-      remaining.concat overrides
-    end
+    remaining = @resource_overrides.values.flatten.collect(&:ref)
 
-    unless remaining.empty?
+    if !remaining.empty?
       fail Puppet::ParseError,
-        "Could not find resource(s) %s for overriding" % remaining.collect { |o|
-          o.ref
-        }.join(", ")
+        "Could not find resource(s) #{remaining.join(', ')} for overriding"
     end
   end
 
@@ -320,22 +314,11 @@ class Puppet::Parser::Compiler
   # look for resources, because we want to consider those to be
   # parse errors.
   def fail_on_unevaluated_resource_collections
-    remaining = []
-    @collections.each do |coll|
-      # We're only interested in the 'resource' collections,
-      # which result from direct calls of 'realize'.  Anything
-      # else is allowed not to return resources.
-      # Collect all of them, so we have a useful error.
-      if r = coll.resources
-        if r.is_a?(Array)
-          remaining += r
-        else
-          remaining << r
-        end
-      end
-    end
+    remaining = @collections.collect(&:resources).flatten.compact
 
-    raise Puppet::ParseError, "Failed to realize virtual resources #{remaining.join(', ')}" unless remaining.empty?
+    if !remaining.empty?
+      raise Puppet::ParseError, "Failed to realize virtual resources #{remaining.join(', ')}"
+    end
   end
 
   # Make sure all of our resources and such have done any last work
@@ -366,10 +349,8 @@ class Puppet::Parser::Compiler
       raise "Couldn't find main"
     end
 
-    names = []
-    Puppet::Type.eachmetaparam do |name|
-      next if Puppet::Parser::Resource.relationship_parameter?(name)
-      names << name
+    names = Puppet::Type.metaparams.select do |name|
+      !Puppet::Parser::Resource.relationship_parameter?(name)
     end
 
     data = {}
@@ -405,9 +386,6 @@ class Puppet::Parser::Compiler
 
   # Set up all of our internal variables.
   def initvars
-    # The list of objects that will available for export.
-    @exported_resources = {}
-
     # The list of overrides.  This is used to cache overrides on objects
     # that don't exist yet.  We store an array of each override.
     @resource_overrides = Hash.new do |overs, ref|
@@ -430,8 +408,7 @@ class Puppet::Parser::Compiler
     # Create our initial scope and a resource that will evaluate main.
     @topscope = Puppet::Parser::Scope.new(self)
 
-    @main_stage_resource = Puppet::Parser::Resource.new("stage", :main, :scope => @topscope)
-    @catalog.add_resource(@main_stage_resource)
+    @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))
 
     # local resource array to maintain resource ordering
     @resources = []

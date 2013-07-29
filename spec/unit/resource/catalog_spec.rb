@@ -311,10 +311,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       end
     end
 
-    it "should not store objects that do not respond to :ref" do
-      proc { @catalog.add_resource("thing") }.should raise_error(ArgumentError)
-    end
-
     it "should remove all resources when asked" do
       @catalog.add_resource @one
       @catalog.add_resource @two
@@ -902,8 +898,9 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
   it 'should convert the resources list into resources and add each of them' do
     @data['resources'] = [Puppet::Resource.new(:file, "/foo"), Puppet::Resource.new(:file, "/bar")]
 
-    @catalog.expects(:add_resource).times(2).with { |res| res.type == "File" }
-    PSON.parse @pson.to_pson
+    catalog = PSON.parse @pson.to_pson
+
+    catalog.resources.collect(&:ref) == ["File[/foo]", "File[/bar]"]
   end
 
   it 'should convert resources even if they do not include "type" information' do

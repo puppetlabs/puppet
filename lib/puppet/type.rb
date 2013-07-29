@@ -1156,12 +1156,7 @@ class Type
 
     # Now create our resource.
     resource = Puppet::Resource.new(self.name, title)
-    [:catalog].each do |attribute|
-      if value = hash[attribute]
-        hash.delete(attribute)
-        resource.send(attribute.to_s + "=", value)
-      end
-    end
+    resource.catalog = hash.delete(:catalog)
 
     hash.each do |param, value|
       resource[param] = value
