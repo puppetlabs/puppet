@@ -89,38 +89,6 @@ class Puppet::Forge
     end
   end
 
-  def get_release_packages_from_repository(install_list)
-    install_list.map do |release|
-      modname, version, file = release
-      cache_path = nil
-      if file
-        begin
-          cache_path = repository.retrieve(file)
-        rescue OpenURI::HTTPError => e
-          raise HttpResponseError.new(:uri => uri.to_s, :input => modname, :message => e.message)
-        end
-      else
-        raise RuntimeError, "Malformed response from module repository."
-      end
-      cache_path
-    end
-  end
-
-  # Locate a module release package on the local filesystem and move it
-  # into the `Puppet.settings[:module_working_dir]`. Do not unpack it, just
-  # return the location of the package on disk.
-  def get_release_package_from_filesystem(filename)
-    if File.exist?(File.expand_path(filename))
-      repository = Repository.new('file:///')
-      uri = URI.parse("file://#{URI.escape(File.expand_path(filename))}")
-      cache_path = repository.retrieve(uri)
-    else
-      raise ArgumentError, "File does not exists: #{filename}"
-    end
-
-    cache_path
-  end
-
   def retrieve(release)
     repository.retrieve(release)
   end
