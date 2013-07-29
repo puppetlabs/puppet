@@ -64,33 +64,42 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     [$1, $2]
   end
 
-  # Add a resource to our graph and to our resource table.
-  # This is actually a relatively complicated method, because it handles multiple
-  # aspects of Catalog behaviour:
-  # * Add the resource to the resource table
-  # * Add the resource to the resource graph
-  # * Add the resource to the relationship graph
-  # * Add any aliases that make sense for the resource (e.g., name != title)
-  def add_resource(*resource)
-    add_resource(*resource[0..-2]) if resource.length > 1
-    resource = resource.pop
-    raise ArgumentError, "Can only add objects that respond to :ref, not instances of #{resource.class}" unless resource.respond_to?(:ref)
-    fail_on_duplicate_type_and_title(resource)
-    title_key = title_key_for_ref(resource.ref)
-
-    @transient_resources << resource if applying?
-    @resource_table[title_key] = resource
-
-    # If the name and title differ, set up an alias
-
-    if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
-      self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
+  def add_resource(*resources)
+    resources.each do |resource|
+      add_one_resource(resource)
     end
+  end
+
+  def add_one_resource(resource)
+    fail_on_duplicate_type_and_title(resource)
+
+    add_resource_to_table(resource)
+    create_resource_aliases(resource)
 
     resource.catalog = self if resource.respond_to?(:catalog=)
+    add_resource_to_graph(resource)
+  end
+  private :add_one_resource
+
+  def add_resource_to_table(resource)
+    title_key = title_key_for_ref(resource.ref)
+    @resource_table[title_key] = resource
+    @resources << title_key
+  end
+  private :add_resource_to_table
+
+  def add_resource_to_graph(resource)
     add_vertex(resource)
     @relationship_graph.add_vertex(resource) if @relationship_graph
   end
+  private :add_resource_to_graph
+
+  def create_resource_aliases(resource)
+    if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
+      self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
+    end
+  end
+  private :create_resource_aliases
 
   # Create an alias for a resource.
   def alias(resource, key)
@@ -174,6 +183,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # We have to do this so that the resources clean themselves up.
     @resource_table.values.each { |resource| resource.remove } if remove_resources
     @resource_table.clear
+    @resources = []
 
     if @relationship_graph
       @relationship_graph.clear
@@ -214,7 +224,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @name = name if name
     @classes = []
     @resource_table = {}
-    @transient_resources = []
+    @resources = []
     @applying = false
     @relationship_graph = nil
 
@@ -364,14 +374,14 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
   # Look a resource up by its reference (e.g., File[/etc/passwd]).
   def resource(type, title = nil)
-    # Always create a resource reference, so that it always canonizes how we
-    # are referring to them.
+    # Always create a resource reference, so that it always
+    # canonicalizes how we are referring to them.
     if title
       res = Puppet::Resource.new(type, title)
     else
       # If they didn't provide a title, then we expect the first
       # argument to be of the form 'Class[name]', which our
-      # Reference class canonizes for us.
+      # Reference class canonicalizes for us.
       res = Puppet::Resource.new(nil, type)
     end
     title_key      = [res.type, res.title.to_s]
@@ -388,7 +398,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   end
 
   def resources
-    @resource_table.values.uniq
+    @resources.collect do |key|
+      @resource_table[key]
+    end
   end
 
   def self.from_pson(data)
@@ -407,10 +419,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
 
     if resources = data['resources']
-      resources = PSON.parse(resources) if resources.is_a?(String)
-      resources.each do |res|
-        resource_from_pson(result, res)
-      end
+      result.add_resource(*resources.collect do |res|
+        Puppet::Resource.from_pson(res)
+      end)
     end
 
     if edges = data['edges']
@@ -444,11 +455,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     result.add_edge(edge)
   end
 
-  def self.resource_from_pson(result, res)
-    res = Puppet::Resource.from_pson(res) if res.is_a? Hash
-    result.add_resource(res)
-  end
-
   PSON.register_document_type('Catalog',self)
   def to_pson_data_hash
     {
@@ -458,7 +464,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         'name'      => name,
         'version'   => version,
         'environment' => environment.to_s,
-        'resources' => vertices.collect { |v| v.to_pson_data_hash },
+        'resources' => @resources.collect { |v| @resource_table[v].to_pson_data_hash },
         'edges'     => edges.   collect { |e| e.to_pson_data_hash },
         'classes'   => classes
         },
@@ -550,7 +556,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     result.environment = self.environment
 
     map = {}
-    vertices.each do |resource|
+    resources.each do |resource|
       next if virtual_not_exported?(resource)
       next if block_given? and yield resource
 

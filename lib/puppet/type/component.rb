@@ -29,8 +29,6 @@ Puppet::Type.newtype(:component) do
   def initialize(*args)
     @extra_parameters = {}
     super
-
-    catalog.alias(self, ref) if catalog and ! catalog.resource(ref)
   end
 
   # Component paths are special because they function as containers.
