@@ -37,6 +37,9 @@ module Puppet
     end
 
     module Binder
+      module SchemeHandler
+        # the handlers are auto loaded via bindings
+      end
       module Producers
         require 'puppet/pops/binder/producers'
       end

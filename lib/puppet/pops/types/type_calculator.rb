@@ -209,6 +209,26 @@ class Puppet::Pops::Types::TypeCalculator
       return Types::PDataType.new()
     end
 
+    if t1.is_a?(Types::PRubyType) && t2.is_a?(Types::PRubyType)
+      if t1.ruby_class == t2.ruby_class
+        return t1
+      end
+      # finding the common super class requires that names are resolved to class
+      c1 = Types::ClassLoader.provide_from_type(t1)
+      c2 = Types::ClassLoader.provide_from_type(t2)
+      if c1 && c2
+        c2_superclasses = superclasses(c2)
+        superclasses(c1).each do|c1_super|
+          c2_superclasses.each do |c2_super|
+            if c1_super == c2_super
+              result = Types::PRubyType.new()
+              result.ruby_class = c1_super.name
+              return result
+            end
+          end
+        end
+      end
+    end
     # If both are RubyObjects
 
     if common_pobject?(t1, t2)
@@ -216,6 +236,15 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # Produces the superclasses of the given class, including the class
+  def superclasses(c)
+    result = [c]
+    while s = c.superclass
+      result << s
+      c = s
+    end
+    result
+  end
   # Produces a string representing the type
   # @api public
   #

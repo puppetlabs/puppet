@@ -18,6 +18,19 @@ module Puppet::Pops::Types
   # Base type for all types except {Puppet::Pops::Types::PType PType}, the type of types.
   # @api public
   class PObjectType < Puppet::Pops::Model::PopsObject
+
+    module ClassModule
+      def hash
+        self.class.hash
+      end
+
+      def ==(o)
+        self.class == o.class
+      end
+
+      alias eql? ==
+    end
+
   end
 
   # @api public
@@ -62,19 +75,56 @@ module Puppet::Pops::Types
   # @api public
   class PCollectionType < PObjectType
     contains_one_uni 'element_type', PObjectType
+    module ClassModule
+      def hash
+        [self.class, element_type].hash
+      end
+
+      def ==(o)
+        self.class == o.class && element_type == o.element_type
+      end
+    end
   end
 
   # @api public
   class PArrayType < PCollectionType
+    module ClassModule
+      def hash
+        [self.class, element_type].hash
+      end
+
+      def ==(o)
+        self.class == o.class && element_type == o.element_type
+      end
+    end
   end
 
   # @api public
   class PHashType < PCollectionType
     contains_one_uni 'key_type', PObjectType
+    module ClassModule
+      def hash
+        [self.class, key_type, element_type].hash
+      end
+
+      def ==(o)
+        self.class == o.class && key_type == o.key_type && element_type == o.element_type
+      end
+    end
   end
 
   # @api public
   class PRubyType < PObjectType
     has_attr 'ruby_class', String
+    module ClassModule
+      def hash
+        [self.class, ruby_class].hash
+      end
+
+      def ==(o)
+        self.class == o.class && ruby_class == o.ruby_class
+      end
+    end
+
   end
 end

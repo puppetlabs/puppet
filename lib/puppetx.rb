@@ -4,8 +4,11 @@
 #
 module Puppetx
 
-  SYNTAX_CHECKERS = 'puppetx::puppet::syntaxcheckers'
-  SYNTAX_CHECKERS_TYPE = 'Puppetx::Puppet::SyntaxChecker'
+  SYNTAX_CHECKERS       = 'puppetx::puppet::syntaxcheckers'
+  SYNTAX_CHECKERS_TYPE  = 'Puppetx::Puppet::SyntaxChecker'
+
+  BINDINGS_SCHEMES      = 'puppetx::puppet::bindings::schemes'
+  BINDINGS_SCHEMES_TYPE = 'Puppetx::Puppet::BindingsSchemeHandler'
 
   module Puppet
 
@@ -21,6 +24,21 @@ module Puppetx
     system_bindings = ::Puppet::Pops::Binder::SystemBindings
     extensions = system_bindings.extensions()
     extensions.multibind(SYNTAX_CHECKERS).name(SYNTAX_CHECKERS).hash_of(SYNTAX_CHECKERS_TYPE)
+    extensions.multibind(BINDINGS_SCHEMES).name(BINDINGS_SCHEMES).hash_of(BINDINGS_SCHEMES_TYPE)
+
+    # Register injector boot bindings
+    # ---------------------------------
+    require 'puppetx/puppet/bindings_scheme_handler'
+    boot_bindings = system_bindings.injector_boot_bindings()
+    # Register the default bindings scheme handlers
+    { 'module' => 'ModuleScheme', 
+      'confdir' => 'ConfdirScheme',
+      'module-hiera' => 'ModuleHieraScheme',
+      'confdir-hiera' => 'ConfdirHieraScheme'
+    }.each do |scheme, class_name|
+      boot_bindings.bind.name(scheme).instance_of(BINDINGS_SCHEMES_TYPE).in_multibind(BINDINGS_SCHEMES).
+        to_instance("Puppet::Pops::Binder::SchemeHandler::#{class_name}")
+    end
   end
 
   # Module with implementations of various extensions
@@ -36,11 +54,12 @@ module Puppetx
       # -------------------
       system_bindings = ::Puppet::Pops::Binder::SystemBindings
       bindings = system_bindings.default_bindings()
-      bindings.bind.
-          name('json').
-          instance_of(SYNTAX_CHECKERS_TYPE).
-          in_multibind(SYNTAX_CHECKERS).
-          to_instance('Puppetx::Puppetlabs::SyntaxCheckers::Json')
+      bindings.bind do
+        name('json')
+        instance_of(SYNTAX_CHECKERS_TYPE)
+        in_multibind(SYNTAX_CHECKERS)
+        to_instance('Puppetx::Puppetlabs::SyntaxCheckers::Json')
+      end
     end
   end
 end

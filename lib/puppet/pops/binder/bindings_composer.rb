@@ -45,18 +45,28 @@ class Puppet::Pops::Binder::BindingsComposer
     end
   end
 
+  def configure_and_create_injector(scope)
+    # get extensions from the config
+    # turn them into bindings
+    # create the injector (which will pick up the bindings registered above)
+    @scheme_handlers = SchemeHandlerHelper.new(scope)
+    @injector = scope.compiler.create_boot_injector()
+  end
+
   # @return [Puppet::Pops::Binder::Bindings::LayeredBindings]
   def compose(scope)
-    # Configure the scheme handlers.
-    # Do this now since there is a scope (which makes it possible to get to other information
-    # TODO: Make it possible to register scheme handlers
-    #
-    @scheme_handlers = {
-      'module-hiera'  => ModuleHieraScheme.new(self),
-      'confdir-hiera' => ConfdirHieraScheme.new(self),
-      'module'        => ModuleScheme.new(self),
-      'confdir'       => ConfdirScheme.new(self)
-    }
+    configure_and_create_injector(scope)
+
+#    # Configure the scheme handlers.
+#    # Do this now since there is a scope (which makes it possible to get to other information
+#    # TODO: Make it possible to register scheme handlers
+#    #
+#    @scheme_handlers = {
+#      'module-hiera'  => ModuleHieraScheme.new(self),
+#      'confdir-hiera' => ConfdirHieraScheme.new(self),
+#      'module'        => ModuleScheme.new(self),
+#      'confdir'       => ConfdirScheme.new(self)
+#    }
 
     # get all existing modules and their root path
     @name_to_module = {}
@@ -152,7 +162,7 @@ class Puppet::Pops::Binder::BindingsComposer
     effective_uris = Set.new(expand_included_uris(included_uris)).subtract(Set.new(expand_excluded_uris(excluded_uris)))
 
     # Each URI should result in a ContributedBindings
-    effective_uris.collect { |uri| scheme_handlers[uri.scheme].contributed_bindings(uri, scope, diagnostics) }
+    effective_uris.collect { |uri| scheme_handlers[uri.scheme].contributed_bindings(uri, scope, self) }
   end
 
   def array_of_uris(descriptions)
@@ -167,7 +177,7 @@ class Puppet::Pops::Binder::BindingsComposer
       unless handler = scheme_handlers[uri.scheme]
         raise ArgumentError, "Unknown bindings provider scheme: '#{uri.scheme}'"
       end
-      result.concat(handler.expand_included(uri))
+      result.concat(handler.expand_included(uri, self))
     end
     result
   end
@@ -178,257 +188,26 @@ class Puppet::Pops::Binder::BindingsComposer
       unless handler = scheme_handlers[uri.scheme]
         raise ArgumentError, "Unknown bindings provider scheme: '#{uri.scheme}'"
       end
-      result.concat(handler.expand_excluded(uri))
+      result.concat(handler.expand_excluded(uri, self))
     end
     result
   end
 
-end
-
-# @abstract
-class BindingsProviderScheme
-  attr_reader :composer
-  def initialize(composer)
-    @composer = composer
-  end
-
-  # @return [Boolean] whether the uri is an optional reference or not.
-  def is_optional?(uri)
-    (query = uri.query) && query == '' || query == 'optional'
-  end
-end
-
-class SymbolicScheme < BindingsProviderScheme
-
-  # Shared implementation for module: and confdir: since the distinction is only in checks if a symbolic name
-  # exists as a loadable file or not. Once this method is called it is assumed that the name is relativeized
-  # and that it should exist relative to all loadable ruby locations.
-  # 
-  # TODO: this needs to be changed once ARM-8 Puppet DSL concrete syntax is also supported.
-  #
-  def contributed_bindings(uri, scope, diagnostics)
-    fqn = fqn_from_path(uri)[1]
-    bindings = Puppet::Pops::Binder::BindingsLoader.provide(scope, fqn)
-    raise ArgumentError, "Cannot load bindings '#{uri}' - no bindings found." unless bindings
-    # Must clone as the the rest mutates the model
-    cloned_bindings = Marshal.load(Marshal.dump(bindings))
-    # Give no effective categories (i.e. ok with whatever categories there is)
-    Puppet::Pops::Binder::BindingsFactory.contributed_bindings(fqn, cloned_bindings, nil)
-  end
-
-  # @api private
-  def fqn_from_path(uri)
-    split_path = uri.path.split('/')
-    if split_path.size > 1 && split_path[-1].empty?
-      split_path.delete_at(-1)
+  class SchemeHandlerHelper
+    T = Puppet::Pops::Types::TypeFactory
+    HASH_OF_HANDLER = T.hash_of(T.type_of('Puppetx::Puppet::BindingsSchemeHandler'))
+    def initialize(scope)
+      @scope = scope
+      @cache = nil
+    end
+    def [] (scheme)
+      load_schemes unless @cache
+      @cache[scheme]
     end
 
-    fqn = split_path[ 1 ]
-    raise ArgumentError, "Module scheme binding reference has no name." unless fqn
-    split_name = fqn.split('::')
-    # drop leading '::'
-    split_name.shift if split_name[0] && split_name[0].empty?
-    [split_name, split_name.join('::')]
-  end
-
-  def is_optional?(uri)
-    super(uri) || has_wildcard?(uri)
-  end
-
-  def has_wildcard?(uri)
-    (path = uri.path) && path.split('/')[1].start_with?('*::')
-  end
-end
-
-# TODO: optional does not work with non modulepath located content - it assumes modulepath + name=> path
-class ModuleScheme < SymbolicScheme
-  def expand_included(uri)
-    result = []
-    split_name, fqn = fqn_from_path(uri)
-
-    # supports wild card in the module name
-    case split_name[0]
-    when '*'
-      # create new URIs, one per module name that has a corresponding .rb file relative to its
-      # '<root>/lib/puppet/bindings/'
-      #
-      composer.name_to_module.each_pair do | mod_name, mod |
-        expanded_name_parts = [mod_name] + split_name[1..-1]
-        expanded_name = expanded_name_parts.join('::')
-        if Puppet::Pops::Binder::BindingsLoader.loadable?(mod.path, expanded_name)
-          result << URI.parse('module:/' + expanded_name)
-        end
-      end
-    when nil
-      raise ArgumentError, "Bad bindings uri, the #{uri} has neither module name or wildcard '*' in its first path position"
-    else
-      joined_name = split_name.join('::')
-      # skip optional uri if it does not exist
-      if is_optional?(uri)
-        mod = composer.name_to_module[split_name[0]]
-        if mod && Puppet::Binder::BindingsLoader.loadable?(mod.path, joined_name)
-          result << URI.parse('module:/' + joined_name)
-        end
-      else
-        # assume it exists (do not give error if not, since it may be excluded later)
-        result << URI.parse('module:/' + joined_name)
-      end
-    end
-    result
-  end
-
-  def expand_excluded(uri)
-    result = []
-    split_name, fqn = fqn_from_path(uri)
-
-    case split_name[ 0 ]
-    when '*'
-      # create new URIs, one per module name
-      composer.name_to_module.each_pair do | name, mod |
-        result << URI.parse('module:/' + ([name] + split_name).join('::'))
-      end
-
-    when nil
-      raise ArgumentError, "Bad bindings uri, the #{uri} has neither module name or wildcard '*' in its first path position"
-    else
-      # create a clean copy (get rid of optional, fragments etc. and any trailing stuff
-      result << URI.parse('module:/' + split_name.join('::'))
-    end
-    result
-  end
-end
-
-class ConfdirScheme < SymbolicScheme
-
-  # Similar to ModuleScheme, but relative to the config root. Does not support wildcard expansion
-  # TODO: optional does not work with non confdir located files
-  #
-  def expand_included(uri)
-    fqn = fqn_from_path(uri)[1]
-    if is_optional?(uri)
-      if Puppet::Pops::Binder::BindingsLoader.loadable?(composer.confdir, fqn)
-        [URI.parse('confdir:/' + fqn)]
-      else
-        []
-      end
-    else
-      # assume it exists (do not give error if not, since it may be excluded later)
-      [URI.parse('confdir:/' + fqn)]
+    def load_schemes
+      @cache = @scope.compiler.boot_injector.lookup(@scope, HASH_OF_HANDLER, Puppetx::BINDINGS_SCHEMES) || {}
     end
   end
 
-  def expand_excluded(uri)
-    [URI.parse("confdir:/#{fqn_from_path(uri)[1]}")]
-  end
-
 end
-
-# @abstract
-class HieraScheme < BindingsProviderScheme
-end
-
-# TODO: Handle the case when confdir points to a Hiera1 hiera_conf.yaml file
-# 
-class ConfdirHieraScheme < HieraScheme
-  def contributed_bindings(uri, scope, diagnostics)
-    split_path = uri.path.split('/')
-    name = split_path[1]
-    confdir = composer.confdir
-    provider = Puppet::Pops::Binder::Hiera2::BindingsProvider.new(uri.to_s, File.join(confdir, uri.path), composer.acceptor)
-    provider.load_bindings(scope)
-  end
-
-  # Similar to ModuleHieraScheme, but relative to the config root. Does not support wildcard expansion
-  def expand_included(uri)
-    # Skip if optional and does not exist
-    # Skip if a hiera 1
-    #
-    # TODO: handle optional
-    [uri]
-  end
-
-  def expand_excluded(uri)
-    [uri]
-  end
-end
-
-# The module hiera scheme uses the path to denote a directory relative to a module root
-# The path starts with the name of the module, or '*' to denote *any module*.
-# @example All root hiera.yaml from all modules
-#   module-hiera:/*
-# @example The hiera.yaml from the module `foo`'s relative path `<foo root>/bar`
-#   module-hiera:/foo/bar
-#
-class ModuleHieraScheme < HieraScheme
-  # @return [Puppet::Pops::Binder::Bindings::ContributedBindings] the bindings contributed from the config
-  def contributed_bindings(uri, scope, diagnostics)
-    split_path = uri.path.split('/')
-    name = split_path[1]
-    mod = composer.name_to_module[name]
-    provider = Puppet::Pops::Binder::Hiera2::BindingsProvider.new(uri.to_s, File.join(mod.path, split_path[ 2..-1 ]), composer.acceptor)
-    provider.load_bindings(scope)
-  end
-
-  def expand_included(uri)
-    result = []
-    split_path = uri.path.split('/')
-    if split_path.size > 1 && split_path[-1].empty?
-      split_path.delete_at(-1)
-    end
-
-    # 0 = "", since a URI with a path must start with '/'
-    # 1 = '*' or the module name
-    case split_path[ 1 ]
-    when '*'
-      # create new URIs, one per module name that has a hiera.yaml file relative to its root
-      composer.name_to_module.each_pair do | name, mod |
-        if File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera.yaml' ))
-          path_parts =["", name] + split_path[2..-1]
-          result << URI.parse('module-hiera:'+File.join(path_parts))
-        end
-      end
-    when nil
-      raise ArgumentError, "Bad bindings uri, the #{uri} has neither module name or wildcard '*' in its first path position"
-    else
-      # If uri has query that is empty, or the text 'optional' skip this uri if it does not exist
-      if query = uri.query()
-        if query == '' || query == 'optional'
-          if File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera.yaml' ))
-            result << URI.parse('module-hiera:' + uri.path)
-          end
-        end
-      else
-        # assume it exists (do not give error since it may be excluded later)
-        result << URI.parse('module-hiera:' + File.join(split_path))
-      end
-    end
-    result
-  end
-
-  def expand_excluded(uri)
-    result = []
-    split_path = uri.path.split('/')
-    if split_path.size > 1 && split_path[-1].empty?
-      split_path.delete_at(-1)
-    end
-
-    # 0 = "", since a URI with a path must start with '/'
-    # 1 = '*' or the module name
-    case split_path[ 1 ]
-    when '*'
-      # create new URIs, one per module name that has a hiera.yaml file relative to its root
-      composer.name_to_module.each_pair do | name, mod |
-        path_parts =["", mod.name] + split_path[2..-1]
-        result << URI.parse('module-hiera:'+File.join(path_parts))
-      end
-
-    when nil
-      raise ArgumentError, "Bad bindings uri, the #{uri} has neither module name or wildcard '*' in its first path position"
-    else
-      # create a clean copy (get rid of optional, fragments etc. and a trailing "/")
-      result << URI.parse('module-hiera:' + File.join(split_path))
-    end
-    result
-  end
-end
-
