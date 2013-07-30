@@ -47,6 +47,16 @@ module Puppet::ModuleTool
           elsif require_modulefile
             raise ArgumentError, "No Modulefile found."
           end
+          extra_metadata_path = File.join(@path, 'metadata.json')
+          if File.file?(extra_metadata_path)
+            File.open(extra_metadata_path) do |f|
+              begin
+                @metadata.extra_metadata = PSON.load(f)
+              rescue PSON::ParserError
+                raise ArgumentError, "Could not parse JSON #{extra_metadata_path}"
+              end
+            end
+          end
         end
         @metadata
       end
