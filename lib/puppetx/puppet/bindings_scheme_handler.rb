@@ -97,7 +97,7 @@ module Puppetx::Puppet
     # @api public
     #
     def expand_included(uri, composer)
-      raise NotImplementedError, "The BindingsProviderScheme for uri: '#{uri}' must implement 'expand_included'"
+      [uri]
     end
 
     # Expands the given URI for the purpose of excluding the bindings it refers to. The input may contain
@@ -113,7 +113,7 @@ module Puppetx::Puppet
     # @api public
     #
     def expand_excluded(uri, composer)
-      raise NotImplementedError, "The BindingsProviderScheme for uri: '#{uri}' must implement 'expand_excluded'"
+      [uri]
     end
 
     # Returns whether the uri is optional or not. A scheme handler does not have to use this method

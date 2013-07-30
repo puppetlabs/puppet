@@ -8,6 +8,6 @@ module Puppet::Pops::Binder::Hiera2
   require 'puppet/pops/binder/hiera2/diagnostic_producer'
   require 'puppet/pops/binder/hiera2/bindings_provider'
   require 'puppet/pops/binder/hiera2/issues'
-  require 'puppet/pops/binder/hiera2/json_backend'
-  require 'puppet/pops/binder/hiera2/yaml_backend'
+#  require 'puppet/pops/binder/hiera2/json_backend'
+#  require 'puppet/pops/binder/hiera2/yaml_backend'
 end

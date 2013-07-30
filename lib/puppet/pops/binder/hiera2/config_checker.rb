@@ -62,10 +62,6 @@ module Puppet::Pops::Binder::Hiera2
     def check_backends(backends, config_file)
       if !backends.is_a?(Array) || backends.empty?
         @diagnostics.accept(Issues::MISSING_BACKENDS, config_file)
-      else
-        backends.each do |key|
-          Backend.check_key(key, config_file, @diagnostics)
-        end
       end
     end
   end

@@ -77,8 +77,13 @@ class Puppet::Pops::Types::ClassLoader
 
     unless result.is_a?(Class)
       # Attempt to load it using the auto loader
-      paths_for_name(name).find {|path| @autoloader.load(path) }
-      result = find_class(name_path)
+      loaded_path = nil
+      if paths_for_name(name).find {|path| loaded_path = path; @autoloader.load(path) }
+        result = find_class(name_path)
+        unless result.is_a?(Class)
+          raise RuntimeError, "Loading of #{name} using relative path: '#{loaded_path}' did not create expected class"
+        end
+      end
     end
     return nil unless result.is_a?(Class)
     result

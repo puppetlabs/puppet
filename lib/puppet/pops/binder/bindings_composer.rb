@@ -35,6 +35,7 @@ class Puppet::Pops::Binder::BindingsComposer
   # @api public
   attr_reader :acceptor
 
+  # @api public
   def initialize()
     @acceptor = Puppet::Pops::Validation::Acceptor.new()
     @diagnostics = Puppet::Pops::Binder::Config::DiagnosticProducer.new(acceptor)
@@ -45,28 +46,51 @@ class Puppet::Pops::Binder::BindingsComposer
     end
   end
 
+  # Configures and creates the boot injector.
+  # The read config may optionally contain mapping of bindings scheme handler name to handler class, and
+  # mapping of biera2 backend symbolic name to backend class.
+  # If present, these are turned into bindings in the category 'extension' (which is only used in the boot injector) which
+  # has higher precedence than 'default'. This is done to allow users to override the default bindings for
+  # schemes and backends.
+  # @param scope [Puppet::Parser:Scope] the scope (used to find compiler and injector for the environment)
+  # @api private
+  #
   def configure_and_create_injector(scope)
-    # get extensions from the config
-    # turn them into bindings
     # create the injector (which will pick up the bindings registered above)
     @scheme_handlers = SchemeHandlerHelper.new(scope)
+
+    # get extensions from the config
+    # ------------------------------
+    boot_bindings = Puppet::Pops::Binder::SystemBindings.injector_boot_bindings()
+
+    @config.scheme_extensions.each_pair do |scheme, class_name|
+      # turn each scheme => class_name into a binding (contribute to the buildings-schemes multibind).
+      # do this in category 'extensions' to allow them to override the 'default'
+      boot_bindings.when_in_category('extension', 'true').bind do
+        name(scheme)
+        instance_of(Puppetx::BINDINGS_SCHEMES_TYPE)
+        in_multibind(Puppetx::BINDINGS_SCHEMES)
+        to_instance(class_name)
+      end
+    end
+
+    @config.hiera_backends.each_pair do |symbolic, class_name|
+      # turn each symbolic => class_name into a binding (contribute to the hiera backends multibind).
+      # do this in category 'extensions' to allow them to override the 'default'
+      boot_bindings.when_in_category('extension', 'true').bind do
+        name(symbolic)
+        instance_of(Puppetx::HIERA2_BACKENDS_TYPE)
+        in_multibind(Puppetx::HIERA2_BACKENDS)
+        to_instance(class_name)
+      end
+    end
     @injector = scope.compiler.create_boot_injector()
   end
 
   # @return [Puppet::Pops::Binder::Bindings::LayeredBindings]
   def compose(scope)
+    # The boot injector is used to lookup scheme-handlers
     configure_and_create_injector(scope)
-
-#    # Configure the scheme handlers.
-#    # Do this now since there is a scope (which makes it possible to get to other information
-#    # TODO: Make it possible to register scheme handlers
-#    #
-#    @scheme_handlers = {
-#      'module-hiera'  => ModuleHieraScheme.new(self),
-#      'confdir-hiera' => ConfdirHieraScheme.new(self),
-#      'module'        => ModuleScheme.new(self),
-#      'confdir'       => ConfdirScheme.new(self)
-#    }
 
     # get all existing modules and their root path
     @name_to_module = {}

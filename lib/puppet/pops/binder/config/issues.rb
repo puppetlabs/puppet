@@ -60,6 +60,10 @@ module Puppet::Pops::Binder::Config::Issues
     "Configuration file #{semantic} has bindings reference in '#{kind}' that is neither a String nor an Array."
   end
 
+  MISSING_SCHEME = issue :MISSING_SCHEME, :uri do
+    "Configuration file #{semantic} contains a bindings reference: '#{uri}' without scheme."
+  end
+
   UNKNOWN_REF_SCHEME = issue :UNKNOWN_REF_SCHEME, :uri, :kind do
     "Configuration file #{semantic} contains a bindings reference: '#{kind}' => '#{uri}' with unknown scheme"
   end
@@ -84,4 +88,15 @@ module Puppet::Pops::Binder::Config::Issues
     "The configuration file '#{semantic}' has unsupported 'version', expected: #{expected}, but got: #{actual}."
   end
 
+  EXTENSIONS_NOT_HASH = issue :EXTENSIONS_NOT_HASH, :actual do
+    "The configuration file '#{semantic}' contains 'extensions', expected: Hash, but got: #{actual}."
+  end
+
+  EXTENSION_BINDING_NOT_HASH = issue :EXTENSION_BINDING_NOT_HASH, :extension, :actual do
+    "The configuration file '#{semantic}' contains '#{extension}', expected: Hash, but got: #{actual}."
+  end
+
+  UNKNOWN_EXTENSION = issue :UNKNOWN_EXTENSION, :actual do
+    "The configuration file '#{semantic}' contains the unknown extension: #{extension}."
+  end
 end

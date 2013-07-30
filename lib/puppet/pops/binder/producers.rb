@@ -232,6 +232,7 @@ module Puppet::Pops::Binder::Producers
       # get class by name
       @the_class = Puppet::Pops::Types::ClassLoader.provide(class_name)
       @init_args = options[:init_args] || []
+      raise ArgumentError, "Can not load the class #{class_name} specified in binding named: '#{binding.name}'" unless @the_class
     end
 
     protected

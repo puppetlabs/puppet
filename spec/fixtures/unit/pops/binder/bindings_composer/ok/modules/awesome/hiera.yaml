@@ -10,3 +10,4 @@ hierarchy:
 backends:
   - yaml
   - json
+  - echo

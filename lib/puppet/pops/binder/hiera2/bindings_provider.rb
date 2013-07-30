@@ -27,6 +27,7 @@ module Puppet::Pops::Binder::Hiera2
     # @param scope [Puppet::Parser::Scope] The hash used when expanding
     # @return [Puppet::Pops::Binder::Bindings::ContributedBindings] A bindings model with effective categories
     def load_bindings(scope)
+      backends = BackendHelper.new(scope)
       factory = Puppet::Pops::Binder::BindingsFactory
       result = factory.named_bindings(name)
 
@@ -46,7 +47,7 @@ module Puppet::Pops::Binder::Hiera2
       end
 
       @config.backends.each do |backend_key|
-        backend = Backend.new_backend(backend_key)
+        backend = backends[backend_key]
 
         hierarchy.each_pair do |hier_key, hier_val|
           bindings = hier_val[:bindings]
@@ -123,5 +124,25 @@ module Puppet::Pops::Binder::Hiera2
       end
     end
   end
+
+  # @api private
+  class BackendHelper
+    T = Puppet::Pops::Types::TypeFactory
+    HASH_OF_BACKENDS = T.hash_of(T.type_of('Puppetx::Puppet::Hiera2Backend'))
+    def initialize(scope)
+      @scope = scope
+      @cache = nil
+    end
+
+    def [] (backend_key)
+      load_backends unless @cache
+      @cache[backend_key]
+    end
+
+    def load_backends
+      @cache = @scope.compiler.boot_injector.lookup(@scope, HASH_OF_BACKENDS, Puppetx::HIERA2_BACKENDS) || {}
+    end
+  end
+
 end
 

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'puppet/pops'
 require 'puppet_spec/pops'
 
 describe 'BinderComposer' do
@@ -51,7 +50,9 @@ describe 'BinderComposer' do
       expect(injector.lookup(scope, 'has_funny_hat')).to be == 'the pope'
       expect(injector.lookup(scope, 'all your base')).to be == 'are belong to us'
       expect(injector.lookup(scope, 'env_meaning_of_life')).to be == 'production thinks it is 42'
-
+      expect(injector.lookup(scope, '::quick::brown::fox')).to be == 'echo: quick brown fox'
+      expect(injector.lookup(scope, 'echo::common')).to be == 'echo... awesome/common'
+      expect(injector.lookup(scope, 'echo::localhost')).to be == 'echo... awesome/localhost'
     end
   end
 
