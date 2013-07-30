@@ -4,6 +4,10 @@ module Puppet::Pops::Binder::Config::Issues
     Puppet::Pops::Issues.issue(issue_code, *args, &block)
   end
 
+  CONFIG_FILE_NOT_FOUND = issue :CONFIG_FILE_NOT_FOUND do
+    "The binder configuration file: #{semantic} can not be found."
+  end
+
   CONFIG_FILE_SYNTAX_ERROR = issue :CONFIG_FILE_SYNTAX_ERROR, :detail do
     "Syntax error in configuration file: #{detail}"
   end
