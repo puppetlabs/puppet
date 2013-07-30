@@ -17,10 +17,10 @@ describe "lookup function" do
     expect(scope.function_lookup(['a_value'])).to eq('something')
   end
 
-  it "returns nil when the requested value is not bound" do
+  it "returns :undef when the requested value is not bound" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
 
-    expect(scope.function_lookup(['not_bound_value'])).to be_nil
+    expect(scope.function_lookup(['not_bound_value'])).to eq(:undef)
   end
 
   it "raises an error when the bound type is not assignable to the requested type" do
