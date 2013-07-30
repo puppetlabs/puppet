@@ -53,6 +53,9 @@ module Puppet::Pops::Binder::Config
       else
         accept(Issues::CONFIG_VERSION_MISSING, config_file)
       end
+      if extensions = data['extensions']
+        check_extensions(extensions, config_file)
+      end
     end
 
     def check_layers(layers, config_file)
@@ -139,8 +142,8 @@ module Puppet::Pops::Binder::Config
       begin
         uri = URI.parse(value)
 
-        unless ['module-hiera', 'confdir-hiera', 'module', 'confdir', 'enc'].include?(uri.scheme)
-          accept(Issues::UNKNOWN_REF_SCHEME, config_file, :uri => uri, :kind => kind)
+        unless uri.scheme
+          accept(Issues::MISSING_SCHEME, config_file, :uri => uri)
         end
         unless uri.path
           accept(Issues::REF_WITHOUT_PATH, config_file, :uri => uri, :kind => kind)
@@ -149,6 +152,32 @@ module Puppet::Pops::Binder::Config
       rescue InvalidURIError => e
         accept(Issues::BINDINGS_REF_INVALID_URI, config_file, :msg => e.message)
       end
+    end
+
+    def check_extensions(extensions, config_file)
+      unless extensions.is_a?(Hash)
+        accept(Issues::EXTENSIONS_NOT_HASH, config_file, :actual => extensions.class.name)
+        return
+      end
+      # check known extensions
+      extensions.each_key do |key|
+        unless ['scheme_handlers', 'hiera_backends'].include? key
+          accept(Issues::UNKNOWN_EXTENSION, config_file, :extension => key)
+        end
+      end
+
+      if binding_schemes = extensions['scheme_handlers']
+        unless binding_schemes.is_a?(Hash)
+          accept(Issues::EXTENSION_BINDING_NOT_HASH, config_file, :extension => 'scheme_handlers', :actual => binding_schemes.class.name)
+        end
+      end
+
+      if hiera_backends = extensions['hiera_backends']
+        unless hiera_backends.is_a?(Hash)
+          accept(Issues::EXTENSION_BINDING_NOT_HASH, config_file, :extension => 'hiera_backends', :actual => hiera_backends.class.name)
+        end
+      end
+
     end
   end
 end

@@ -54,12 +54,4 @@ describe 'The hiera2 config' do
   it 'should report when config hierarchy is malformed' do
     test_config_issue('malformed_hierarchy', _Issues::CATEGORY_MUST_BE_THREE_ELEMENT_ARRAY)
   end
-
-  it 'should report when backends cannot be loaded' do
-    test_config_issue('missing_backend', _Issues::CANNOT_LOAD_BACKEND)
-  end
-
-  it 'should report backends that does not respond to needed methods' do
-    test_config_issue('not_a_backend', _Issues::NOT_A_BACKEND_CLASS)
-  end
 end

@@ -28,7 +28,10 @@ class Puppet::Pops::Binder::SystemBindings
   end
 
   def self.injector_boot_contribution
-    effective_categories = Factory.categories([['common', 'true']])
+    # Use an 'extension' category for extension bindings to allow them to override the default
+    # bindings.
+    #
+    effective_categories = Factory.categories([['extension', 'true'],['common', 'true']])
     Factory.contributed_bindings("puppet-injector-boot",
       [deep_clone(@injector_boot_bindings.model), deep_clone(@injector_default_bindings)],
       effective_categories)

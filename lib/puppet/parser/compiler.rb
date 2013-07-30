@@ -219,6 +219,11 @@ class Puppet::Parser::Compiler
     @injector
   end
 
+  def boot_injector
+    create_boot_injector if @boot_injector.nil?
+    @boot_injector
+  end
+
   # Creates the boot injector from registered system, default, and injector config.
   # @return [Puppet::Pops::Binder::Injector] the created boot injector
   # @api private Cannot be 'private' since it is called from the BindingsComposer.
