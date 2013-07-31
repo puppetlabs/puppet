@@ -1,18 +1,42 @@
-# The Puppet Extensions Module
+# The Puppet Extensions Module.
+#
 # Submodules of this module should be named after the publisher (e.g. 'user' part of a Puppet Module name).
-# The submodule `Puppetx::Puppet` contains the puppet extension points.
+# The submodule {Puppetx::Puppet} contains the puppet extension points.
+#
+# This module also contains constants that are used when defining extensions.
+#
+# @api public
 #
 module Puppetx
 
+  # The lookup **key** for the multibind containing syntax checkers used to syntax check embedded string in non
+  # puppet DSL syntax.
+  # @api public
   SYNTAX_CHECKERS       = 'puppetx::puppet::syntaxcheckers'
+
+  # The lookup **type** for the multibind containing syntax checkers used to syntax check embedded string in non
+  # puppet DSL syntax.
+  # @api public
   SYNTAX_CHECKERS_TYPE  = 'Puppetx::Puppet::SyntaxChecker'
 
+  # The lookup **key** for the multibind containing a map from scheme name to scheme handler class for bindings schemes.
+  # @api public
   BINDINGS_SCHEMES      = 'puppetx::puppet::bindings::schemes'
+
+  # The lookup **type** for the multibind containing a map from scheme name to scheme handler class for bindings schemes.
+  # @api public
   BINDINGS_SCHEMES_TYPE = 'Puppetx::Puppet::BindingsSchemeHandler'
 
+  # The lookup **key** for the multibind containing a map from hiera-2 backend name to class implementing the backend.
+  # @api public
   HIERA2_BACKENDS      = 'puppetx::puppet::hiera2::backends'
+
+  # The lookup **type** for the multibind containing a map from hiera-2 backend name to class implementing the backend.
+  # @api public
   HIERA2_BACKENDS_TYPE = 'Puppetx::Puppet::Hiera2Backend'
 
+  # This module is the name space for extension points
+  # @api public
   module Puppet
 
     # Extension-points are registered here:
@@ -56,9 +80,11 @@ module Puppetx
   end
 
   # Module with implementations of various extensions
+  # @api public
   module Puppetlabs
     # Default extensions delivered in Puppet Core are included here
 
+    # @api public
     module SyntaxCheckers
 
       # Classes in this name-space are lazily loaded as they may be overridden and/or never used

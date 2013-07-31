@@ -1,18 +1,68 @@
 # The TypeCalculator can answer questions about puppet types.
 #
+# The Puppet type system is primarily based on sub-classing. When asking the type calculator to infer types from Ruby in general, it
+# may not provide the wanted answer; it does not for instance take module inclusions and extensions into account. In general the type
+# system should be unsurprising for anyone being exposed to the notion of type. The type `Data` may require a bit more explanation; this
+# is an abstract type that includes all literal types, as well as Array with an element type compatible with Data, and Hash with key
+# compatible with Literal and elements compatible with Data. Expressed differently; Data is what you typically express using JSON (with
+# the exception that the Puppet type system also includes Patter (regular expression) as a literal.
+#
 # Inference
 # ---------
-# The `infer(o)` method infers a puppet type for literal ruby objects, and for Arrays and Hashes.
-# It can easily be extended to also infer the result of Expression objects.
+# The `infer(o)` method infers a Puppet type for literal Ruby objects, and for Arrays and Hashes.
 #
 # Assignability
 # -------------
 # The `assignable?(t1, t2)` method answers if t2 conforms to t1. The type t2 may be an instance, in which case
 # its type is inferred, or a type.
 #
+# Instance?
+# ---------
+# The `instance?(t, o)` method answers if the given object (instance) is an instance that is assignable to the given type.
+#
 # String
 # ------
 # Creates a string representation of a type.
+#
+# Creation of Type instances
+# --------------------------
+# Instance of the classes in the {Puppet::Pops::Types type model} are used to denote a specific type. It is most convenient
+# to use the {Puppet::Pops::Types::TypeFacory TypeFactory} when creating instances. 
+# 
+# @note
+#   In general, new instances of the wanted type should be created as they are assigned to models using containment, and a
+#   contained object can only be in one container at a time. Also, the type system may include more details in each type
+#   instance, such as if it may be nil, be empty, contain a certain count etc. Or put differently, the puppet types are not
+#   singletons.
+#
+# Equality and Hash
+# -----------------
+# Type instances are equal in terms of Ruby eql? and `==` if they describe the same type, but they are not `equal?` if they are not
+# the same type instance. Two types that describe the same type have identical hash - this makes them usable as hash keys.
+#
+# Types and Subclasses
+# --------------------
+# In general, the type calculator should be used to answer questions if a type is a subtype of another (using {#assignable?}, or
+# {#instance?} if the question is if a given object is an instance of a given type (or is a subtype thereof).
+# Many of the types also have a Ruby subtype relationship; e.g. PHashType and PArrayType are both subtypes of PCollectionType, and 
+# PIntegerType, PFloatType, PStringType,... are subtypes of PLiteralType. Even if it is possible to answer certain questions about
+# type by looking at the Ruby class of the types this is concidered an implementation detail, and such checks should in general
+# be performed by the type_calculator which implements the type system semantics.
+#
+# The PRubyType
+# -------------
+# The PRubyType corresponds to a Ruby Class, except for the puppet types that are specialized (i.e. PRubyType should not be
+# used for Integer, String, etc. since there are specialized types for those.
+# When the type calculator deals with PRubyTypes and checks for assignability, it determines the "common ancestor class" of two classes.
+# This check is made based on the superclasses of the two classes being compared. In order to perform this, the classes must be present
+# (i.e. they are resolved from the string form in the PRubyType to a loaded, instantiated Ruby Class). In general this is not a problem,
+# since the question to produce the common super type for two objects means that the classes must be present or there would have been
+# no instances present in the first place. If however the classes are not present (the type calculator will fall back and state that
+# the two types at least have Object in common.
+#
+# @see Puppet::Pops::Types::TypeFactory TypeFactory for how to create instances of types
+# @see Puppet::Pops::Types::TypeParser TypeParser how to construct a type instance from a String
+# @see Puppet::Pops::Types Types for details about the type model
 #
 # @api public
 #

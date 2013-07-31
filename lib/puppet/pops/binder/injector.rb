@@ -2,15 +2,15 @@
 #
 # Initialization
 # --------------
-# The injector is initialized with a configured Binder. The Binder instance contains a resolved set of
-# key => "binding information" that is used to setup the injector.
+# The injector is initialized with a configured {Puppet::Pops::Binder::Binder Binder}. The Binder instance contains a resolved set of
+# `key => "binding information"` that is used to setup the injector.
 #
 # Lookup
 # ------
-# It is possible to lookup the value, or a producer of the value. The {#lookup} method looks up a value, and the
+# It is possible to lookup either the value, or a producer of the value. The {#lookup} method looks up a value, and the
 # {#lookup_producer} looks up a producer.
 # Both of these methods can be called with three different signatures; `lookup(key)`, `lookup(type, name)`, and `lookup(name)`,
-# and `lookup_producer(key)`, `lookup_producer(type, name)`, and `lookup_producer(name)`.
+# with the corresponding calls to obtain a producer; `lookup_producer(key)`, `lookup_producer(type, name)`, and `lookup_producer(name)`.
 #
 # It is possible to pass a block to {#lookup} and {#lookup_producer}, the block is passed the result of the lookup
 # and the result of the block is returned as the value of the lookup. This is useful in order to provide a default value.
@@ -20,10 +20,10 @@
 #
 # Singleton or Not
 # ----------------
-# The lookup of a value is based on the lookup of a producer. For singleton producers this means that the value is
-# determined by the first value lookup. Subsequent lookups via either method will produce the same instance.
+# The lookup of a value is always based on the lookup of a producer. For *singleton producers* this means that the value is
+# determined by the first value lookup. Subsequent lookups via `lookup` or `lookup_producer` will produce the same instance.
 #
-# Non singleton producers will produce a new instance on each request for a value. For constant value producers this
+# *Non singleton producers* will produce a new instance on each request for a value. For constant value producers this
 # means that a new deep-clone is produced for mutable objects (but not for immutable objects as this is not needed).
 # Custom producers should have non singleton behavior, or if this is not possible ensure that the produced result is
 # immutable. (The behavior if a custom producer hands out a mutable value and this is mutated is undefined).
@@ -34,12 +34,12 @@
 # recreate the producer on each call to `produce`; i.e. each `lookup_producer` returns a producer capable of returning
 # a series of objects.
 #
-# @see Puppet::Pops::Binder::Binder for details about how to bind keys to producers
-# @see Puppet::Pops::Binder::BindingsFactory for a convenient way to create a Binder and bindings
+# @see Puppet::Pops::Binder::Binder Binder, for details about how to bind keys to producers
+# @see Puppet::Pops::Binder::BindingsFactory BindingsFactory, for a convenient way to create a Binder and bindings
 #
 # Assisted Inject
 # ---------------
-# The injector supports lookup of instances of classes even if the requested class is not explicitly bound.
+# The injector supports lookup of instances of classes *even if the requested class is not explicitly bound*.
 # This is possible for classes that have a zero argument `initialize` method, or that has a class method called
 # `inject` that takes two arguments; `injector`, and `scope`.
 # This is useful in ruby logic as a class can then use the given injector to inject details.
@@ -66,12 +66,12 @@
 #   injector.lookup(scope, Duck)
 #   # Produces a Duck named 'Donald Duck' or named after the binding 'default-duck-name' (and with similar treatment of
 #   # year_of_birth).
-# @see Puppet::Pops::Binder::Producers::AssistedInjectProducer for more details on assisted injection
+# @see Puppet::Pops::Binder::Producers::AssistedInjectProducer AssistedInjectProducer, for more details on assisted injection
 #
 # Access to key factory and type calculator
 # -----------------------------------------
 # It is important to use the same key factory, and type calculator as the binder. It is therefor possible to obtaint
-# these with the methods {#key_factory}, and #{type_calculator}.
+# these with the methods {#key_factory}, and {#type_calculator}.
 #
 # Special support for producers
 # -----------------------------
@@ -105,7 +105,7 @@ class Puppet::Pops::Binder::Injector
   # The KeyFactory used to produce keys in this injector.
   # The factory is shared with the Binder to ensure consistent translation to keys.
   # A compatible type calculator can also be obtained from the key factory.
-  # @returns [Puppet::Pops::Binder::KeyFactory] the key factory in use
+  # @return [Puppet::Pops::Binder::KeyFactory] the key factory in use
   #
   # @api public
   #
@@ -233,7 +233,7 @@ class Puppet::Pops::Binder::Injector
   end
 
   # Looks up a Producer given an opaque binder key.
-  # @returns [Puppet::Pops::Binder::Producers::Producer, nil] the bound producer, or nil if no such producer was found.
+  # @return [Puppet::Pops::Binder::Producers::Producer, nil] the bound producer, or nil if no such producer was found.
   #
   # @api public
   #
@@ -243,7 +243,7 @@ class Puppet::Pops::Binder::Injector
 
   # Looks up a Producer given a type/name key.
   # @note The result is not type checked (it cannot be until the producer has produced an instance).
-  # @returns [Puppet::Pops::Binder::Producers::Producer, nil] the bound producer, or nil if no such producer was found
+  # @return [Puppet::Pops::Binder::Producers::Producer, nil] the bound producer, or nil if no such producer was found
   #
   # @api public
   #

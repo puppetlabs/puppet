@@ -44,6 +44,7 @@
 #   end
 #
 # For all details see {Puppet::Pops::Binder::BindingsFactory}, which is used behind the scenes.
+# @api public
 #
 class Puppet::Bindings
   extend Enumerable

@@ -13,7 +13,7 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
   def initialize
     super
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
-    @expression_dumper = Puppet::Pops::model::ModelTreeDumper.new()
+    @expression_dumper = Puppet::Pops::Model::ModelTreeDumper.new()
   end
 
   def dump_BindingsFactory o

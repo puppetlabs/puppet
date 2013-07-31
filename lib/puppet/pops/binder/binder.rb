@@ -1,9 +1,10 @@
 # The Binder is responsible for processing layered bindings that can be used to setup an Injector.
 #
-# An instance should be created, and calls should then be made to #define_categories to define the available categories, and
-# their precedence. This should be followed by a call to #define_layers which will match the layered bindings against the
+# An instance should be created, and calls should then be made to {#define_categories} to define the available categories, and
+# their precedence. This should be followed by a call to {#define_layers} which will match the layered bindings against the
 # effective categories (filtering out everything that does not apply, handle overrides, abstract entries etc.).
-# The constructed hash with key => InjectorEntry mappings is obtained as #injector_entries, and is used to initialize an Injector.
+# The constructed hash with `key => InjectorEntry` mappings is obtained as {#injector_entries}, and is used to initialize an
+# {Puppet::Pops::Binder::Injector Injector}.
 #
 # @api public
 #
@@ -58,9 +59,9 @@ class Puppet::Pops::Binder::Binder
   # an instance of Puppet::Pops::Binder::Bindings::EffectiveCategories.
   #
   # @param effective_categories [Puppet::Pops::Binder::Bindings::EffectiveCategories] effective categories (i.e. with evaluated values)
-  # @raises ArgumentError if this binder is already configured
-  # @raises ArgumentError if the argument is not an EffectiveCategories
-  # @raises ArgumentError if there is an attempt to redefine a category (non unique, or 'common').
+  # @raise ArgumentError if this binder is already configured
+  # @raise ArgumentError if the argument is not an EffectiveCategories
+  # @raise ArgumentError if there is an attempt to redefine a category (non unique, or 'common').
   # @return [Puppet::Pops::Binder::Binder] self
   # @api public
   #
@@ -100,10 +101,10 @@ class Puppet::Pops::Binder::Binder
   #   to be valid, and any errors raised will be more technical runtime errors.
   #
   # @param layered_bindings [Puppet::Pops::Binder::Bindings::LayeredBindings] the named and ordered layers
-  # @raises ArgumentError if categories have not been defined
-  # @raises ArgumentError if this binder is already configured
-  # @raises ArgumentError if bindings with unresolved 'override' surfaces as an effective binding
-  # @raises ArgumentError if the given argument has the wrong type, or if model is invalid in some way
+  # @raise ArgumentError if categories have not been defined
+  # @raise ArgumentError if this binder is already configured
+  # @raise ArgumentError if bindings with unresolved 'override' surfaces as an effective binding
+  # @raise ArgumentError if the given argument has the wrong type, or if model is invalid in some way
   # @return [Puppet::Pops::Binder::Binder] self
   # @api public
   #
@@ -173,7 +174,7 @@ class Puppet::Pops::Binder::Binder
       @@bind_visitor.visit_this(self, binding)
     end
 
-    # @returns [Puppet::Pops::Binder::InjectorEntry] the entry with the highest (category) precedence
+    # @return [Puppet::Pops::Binder::InjectorEntry] the entry with the highest (category) precedence
     # @api private
     def highest(b1, b2)
       case b1.precedence <=> b2.precedence
@@ -249,7 +250,7 @@ class Puppet::Pops::Binder::Binder
 
     # Produces the key for the given Binding.
     # @param binding [Puppet::Pops::Binder::Bindings::Binding] the binding to get a key for
-    # @returns [Object] an opaque key
+    # @return [Object] an opaque key
     # @api private
     #
     def key(binding)

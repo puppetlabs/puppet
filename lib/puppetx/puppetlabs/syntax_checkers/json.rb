@@ -1,4 +1,6 @@
-class Puppetx::Puppetlabs::SyntaxCheckers::Json
+# A syntax checker for JSON.
+# @api public
+class Puppetx::Puppetlabs::SyntaxCheckers::Json < Puppetx::Puppet::SyntaxChecker
 
   # Checks the text for JSON syntax issues and reports them to the given acceptor.
   # This implementation is abstract, it raises {NotImplementedError} since a subclass should have implemented the
