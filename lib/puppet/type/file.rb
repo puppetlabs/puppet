@@ -373,12 +373,6 @@ Puppet::Type.newtype(:file) do
     return [] unless self.recurse?
 
     recurse
-    #recurse.reject do |resource|
-    #    catalog.resource(:file, resource[:path])
-    #end.each do |child|
-    #    catalog.add_resource child
-    #    catalog.relationship_graph.add_edge self, child
-    #end
   end
 
   def ancestors
