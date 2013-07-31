@@ -104,6 +104,10 @@ class Puppet::Transaction::Report
     obj
   end
 
+  def as_logging_destination(&block)
+    Puppet::Util::Log.with_destination(self, &block)
+  end
+
   # @api private
   def <<(msg)
     @logs << msg

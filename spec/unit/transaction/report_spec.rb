@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+require 'puppet'
 require 'puppet/transaction/report'
 
 describe Puppet::Transaction::Report do
@@ -89,6 +90,18 @@ describe Puppet::Transaction::Report do
     it "should return self" do
       r = @report << "log"
       r.should equal(@report)
+    end
+  end
+
+  describe "#as_logging_destination" do
+    it "makes the report collect logs during the block " do
+      log_string = 'Hello test report!'
+      report = Puppet::Transaction::Report.new('test')
+      report.as_logging_destination do
+        Puppet.err(log_string)
+      end
+
+      expect(report.logs.collect(&:message)).to include(log_string)
     end
   end
 

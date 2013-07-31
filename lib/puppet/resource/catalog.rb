@@ -152,16 +152,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   def apply(options = {})
     Puppet::Util::Storage.load if host_config?
 
-    register_report = options[:report].nil?
-
     transaction = create_transaction(options)
 
     begin
-      Puppet::Util::Log.newdestination(transaction.report) if register_report
-      begin
+      transaction.report.as_logging_destination do
         transaction.evaluate
-      ensure
-        Puppet::Util::Log.close(transaction.report) if register_report
       end
     rescue Puppet::Error => detail
       Puppet.log_exception(detail, "Could not apply complete catalog: #{detail}")
