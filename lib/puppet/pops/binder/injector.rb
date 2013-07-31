@@ -547,7 +547,9 @@ module Private
       unless entry.cached_producer
         entry.cached_producer = transform(entry.binding.producer, scope, entry)
       end
-      raise ArgumentError, "Injector entry without a producer TODO: detail" unless entry.cached_producer
+      unless entry.cached_producer
+        raise ArgumentError, "Injector entry without a producer #{format_binding(entry.binding)}"
+      end
       entry.cached_producer.producer(scope)
     end
 
@@ -578,12 +580,17 @@ module Private
       named_arguments_to_hash(binding.producer_args).merge(options)
     end
 
+    # @api private
+    def format_binding(b)
+      Puppet::Pops::Binder::Binder.format_binding(b)
+    end
+
     # Handles a  missing producer (which is valid for a Multibinding where one is selected automatically)
     # @api private
     #
     def transform_NilClass(descriptor, scope, entry)
       unless entry.binding.is_a?(Puppet::Pops::Binder::Bindings::Multibinding)
-        raise ArgumentError, "Binding without producer detected (TODO: details)"
+        raise ArgumentError, "Binding without producer detected, #{format_binding(entry.binding)}"
       end
       case entry.binding.type
       when Puppet::Pops::Types::PArrayType
@@ -591,7 +598,7 @@ module Private
       when Puppet::Pops::Types::PHashType
         transform(Puppet::Pops::Binder::Bindings::HashMultibindProducerDescriptor.new(), scope, entry)
       else
-        raise ArgumentError, "Unsupported multibind type, must be an array or hash type, but got: '#{entry.binding.type}"
+        raise ArgumentError, "Unsupported multibind type, must be an array or hash type, #{format_binding(entry.binding)}"
       end
     end
 

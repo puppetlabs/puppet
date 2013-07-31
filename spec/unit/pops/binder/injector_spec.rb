@@ -118,7 +118,7 @@ describe 'Injector' do
 
 
   let(:layered_bindings) { factory.layered_bindings(test_layer_with_bindings(bindings.model)) }
-  let(:xinjector)  { Puppet::Pops::Binder::Injector.new(lbinder) }
+  #let(:xinjector)  { Puppet::Pops::Binder::Injector.new(lbinder) }
 
   context 'When created' do
     it 'should raise an error when given binder is not configured at all' do
@@ -759,6 +759,31 @@ describe 'Injector' do
         bindings.bind.name('an_int').to(42).producer_options( :transformer => transformer)
         injector(lbinder).lookup(scope, 'an_int').should == 43
       end
+    end
+  end
+  context "When there are problems with configuration" do
+    let(:binder) { binder_with_categories()}
+    let(:lbinder) { binder.define_layers(layered_bindings) }
+
+    it "reports error for surfacing abstract bindings" do
+      bindings.bind.abstract.name('an_int')
+      expect{injector(lbinder).lookup(scope, 'an_int') }.to raise_error(/The abstract binding .* was not overridden/)
+    end
+
+    it "does not report error for abstract binding that is ovrridden" do
+      bindings.bind.abstract.name('an_int')
+      bindings.when_in_category('highest', 'test').bind.override.name('an_int').to(142)
+      expect{injector(lbinder).lookup(scope, 'an_int') }.to_not raise_error
+    end
+
+    it "reports error for overriding binding that does not override" do
+      bindings.bind.override.name('an_int').to(42)
+      expect{injector(lbinder).lookup(scope, 'an_int') }.to raise_error(/Binding with unresolved 'override' detected/)
+    end
+
+    it "reports error for binding  without producer" do
+      bindings.bind.name('an_int')
+      expect{injector(lbinder).lookup(scope, 'an_int') }.to raise_error(/Binding without producer/)
     end
   end
 end

@@ -214,6 +214,20 @@ module Puppet::Pops::Binder::BindingsFactory
     # @api public
     alias_method :named, :name
 
+    # Sets the binding to be abstract (it must be overridden)
+    # @api public
+    def abstract
+      model.abstract = true
+      self
+    end
+
+    # Sets the binding to be override (it must override something)
+    # @api public
+    def override
+      model.override = true
+      self
+    end
+
     # Makes the binding a multibind contribution to the given multibind id
     # @param id [String] the multibind id to contribute this binding to
     # @api public
