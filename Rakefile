@@ -10,8 +10,6 @@ $LOAD_PATH << File.join(RAKE_ROOT, 'tasks')
 begin
   require 'rubygems'
   require 'rubygems/package_task'
-  require 'rspec'
-  require 'rspec/core/rake_task'
 rescue LoadError
   # Users of older versions of Rake (0.8.7 for example) will not necessarily
   # have rubygems installed, or the newer rubygems package_task for that
