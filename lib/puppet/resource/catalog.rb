@@ -138,12 +138,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   def apply(options = {})
     Puppet::Util::Storage.load if host_config?
 
-    transaction = Puppet::Transaction.new(self, options[:report])
     register_report = options[:report].nil?
 
-    transaction.tags = options[:tags] if options[:tags]
-    transaction.ignoreschedules = true if options[:ignoreschedules]
-    transaction.for_network_device = options[:network_device]
+    transaction = create_transaction(options)
 
     transaction.add_times :config_retrieval => self.retrieval_duration || 0
 
@@ -520,6 +517,15 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   end
 
   private
+
+  def create_transaction(options)
+    transaction = Puppet::Transaction.new(self, options[:report])
+    transaction.tags = options[:tags] if options[:tags]
+    transaction.ignoreschedules = true if options[:ignoreschedules]
+    transaction.for_network_device = options[:network_device]
+
+    transaction
+  end
 
   # Verify that the given resource isn't declared elsewhere.
   def fail_on_duplicate_type_and_title(resource)
