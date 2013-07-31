@@ -2,9 +2,26 @@ require 'puppet/resource/type'
 require 'puppet/indirector/code'
 require 'puppet/indirector/resource_type'
 
+# The main terminus for Puppet::Resource::Type
+#
+# This exposes the known resource types from within Puppet. Only find
+# and search are supported. When a request is received, Puppet will
+# attempt to load all resource types (by parsing manifests and modules) and
+# returns a description of the resource types found. The format of these
+# objects is documented at {Puppet::Resource::Type}.
+#
+# @api public
 class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   desc "Return the data-form of a resource type."
 
+  # Find will return the first resource_type with the given name. It is
+  # not possible to specify the kind of the resource type.
+  #
+  # @param request [Puppet::Indirector::Request] The request object.
+  #   The only parameters used from the request are `environment` and
+  #   `key`, which corresponds to the resource type's `name` field.
+  # @return [Puppet::Resource::Type, nil]
+  # @api public
   def find(request)
     krt = request.environment.known_resource_types
 
@@ -20,19 +37,21 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
     nil
   end
 
-  # This is the "search" indirection method for resource types.  It searches
-  #  through a specified environment for all custom declared classes
-  #  (a.k.a 'hostclasses'), defined types (a.k.a. 'definitions'), and nodes.
+  # Search for resource types using a regular expression. Unlike `find`, this
+  # allows you to filter the results by the "kind" of the resource type
+  # ("class", "defined_type", or "node"). All three are searched if no
+  # `kind` filter is given. This also accepts the special string "`*`"
+  # to return all resource type objects.
   #
-  # @param [Puppet::Indirector::Request] request
-  #   Important properties of the request parameter:
-  #   1. request.environment : The environment in which to look for types.
-  #   2. request.key : A String that will be treated as a regular expression to
-  #         be matched against the names of the available types.  You may also
-  #         pass a "*", which will match all available types.
-  #   3. request.options[:kind] : a String that can be used to filter the output
-  #         to only return the desired kinds.  The current supported values are
-  #         'class', 'defined_type', and 'node'.
+  # @param request [Puppet::Indirector::Request] The request object. The
+  #   `key` field holds the regular expression used to search, and
+  #   `options[:kind]` holds the kind query parameter to filter the
+  #   result as described above. The `environment` field specifies the
+  #   environment used to load resources.
+  #
+  # @return [Array<Puppet::Resource::Type>, nil]
+  #
+  # @api public
   def search(request)
     krt = request.environment.known_resource_types
     # Make sure we've got all of the types loaded.
