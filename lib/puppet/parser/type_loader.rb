@@ -62,47 +62,43 @@ class Puppet::Parser::TypeLoader
     end
   end
 
-  # Import our files.
-  def import(file, current_file = nil)
+  # Import manifest files that match a given file glob pattern.
+  #
+  # @param pattern [String] the file glob to apply when determining which files
+  #   to load
+  # @param dir [String] base directory to use when the file is not
+  #   found in a module
+  # @api private
+  def import(pattern, dir)
     return if Puppet[:ignoreimport]
 
-    # use a path relative to the file doing the importing
-    if current_file
-      dir = File.dirname(current_file)
-    else
-      dir = "."
-    end
+    modname, files = Puppet::Parser::Files.find_manifests_in_modules(pattern, environment)
+    if files.empty?
+      abspat = File.expand_path(pattern, dir)
+      file_pattern = abspat + (File.extname(abspat).empty? ? '{.pp,.rb}' : '' )
 
-    pat = file
-    modname, files = Puppet::Parser::Files.find_manifests(pat, :cwd => dir, :environment => environment)
-    if files.size == 0
-      raise Puppet::ImportError.new("No file(s) found for import of '#{pat}'")
-    end
+      files = Dir.glob(file_pattern).uniq.reject { |f| FileTest.directory?(f) }
+      modname = nil
 
-    loaded_asts = []
-    files.each do |file|
-      unless Puppet::Util.absolute_path?(file)
-        file = File.join(dir, file)
-      end
-      @loading_helper.do_once(file) do
-        loaded_asts << parse_file(file)
+      if files.empty?
+        raise_no_files_found(pattern)
       end
     end
-    loaded_asts.inject([]) do |loaded_types, ast|
-      loaded_types + known_resource_types.import_ast(ast, modname)
-    end
+
+    load_files(modname, files)
   end
 
+  # Load all of the manifest files in all known modules.
+  # @api private
   def import_all
     # And then load all files from each module, but (relying on system
     # behavior) only load files from the first module of a given name.  E.g.,
     # given first/foo and second/foo, only files from first/foo will be loaded.
     environment.modules.each do |mod|
-      Find.find(mod.manifests) do |path|
-        if path =~ /\.pp$/ or path =~ /\.rb$/
-          import(path)
-        end
+      manifest_files = Find.find(mod.manifests).select do |path|
+        path.end_with?(".pp") || path.end_with?(".rb")
       end
+      load_files(mod.name, manifest_files)
     end
   end
 
@@ -118,7 +114,7 @@ class Puppet::Parser::TypeLoader
     return nil if fqname == "" # special-case main.
     name2files(fqname).each do |filename|
       begin
-        imported_types = import(filename)
+        imported_types = import_from_modules(filename)
         if result = imported_types.find { |t| t.type == type and t.name == fqname }
           Puppet.debug "Automatically imported #{fqname} from #{filename} into #{environment}"
           return result
@@ -135,13 +131,38 @@ class Puppet::Parser::TypeLoader
 
   def parse_file(file)
     Puppet.debug("importing '#{file}' in environment #{environment}")
-#    parser = Puppet::Parser::Parser.new(environment)
     parser = Puppet::Parser::ParserFactory.parser(environment)
     parser.file = file
     return parser.parse
   end
 
   private
+
+  def import_from_modules(pattern)
+    modname, files = Puppet::Parser::Files.find_manifests_in_modules(pattern, environment)
+    if files.empty?
+      raise_no_files_found(pattern)
+    end
+
+    load_files(modname, files)
+  end
+
+  def raise_no_files_found(pattern)
+    raise Puppet::ImportError, "No file(s) found for import of '#{pattern}'"
+  end
+
+  def load_files(modname, files)
+    loaded_asts = []
+    files.each do |file|
+      @loading_helper.do_once(file) do
+        loaded_asts << parse_file(file)
+      end
+    end
+
+    loaded_asts.collect do |ast|
+      known_resource_types.import_ast(ast, modname)
+    end.flatten
+  end
 
   # Return a list of all file basenames that should be tried in order
   # to load the object with the given fully qualified name.
