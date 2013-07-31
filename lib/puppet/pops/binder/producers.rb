@@ -70,7 +70,7 @@ module Puppet::Pops::Binder::Producers
 
     # Produces an instance.
     # @param scope [Puppet::Parser:Scope] the scope to use for evaluation
-    # @param *args [Object] arguments to custom producers, always empty for implicit productions
+    # @param args [Object] arguments to custom producers, always empty for implicit productions
     # @return [Object] the produced instance (should never be nil).
     # @api public
     #
@@ -95,7 +95,7 @@ module Puppet::Pops::Binder::Producers
 
     # Derived classes should implement this method to do the production of a value
     # @param scope [Puppet::Parser::Scope] the scope to use when performing lookup and evaluation
-    # @raises [NotImplementedError] this implementation always raises an error
+    # @raise [NotImplementedError] this implementation always raises an error
     # @abstract
     # @api private
     #

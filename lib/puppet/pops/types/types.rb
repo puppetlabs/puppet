@@ -4,8 +4,10 @@ require 'rgen/metamodel_builder'
 #
 # The exact relationship between types is not visible in this model wrt. the PDataType which is an abstraction
 # of Literal, Array[Data], and Hash[Literal, Data] nested to any depth. This means it is not possible to
-# infer the type by simply looking at the inheritance hierarchy. The `Puppet::Pops::Types::TypeCalculator` should
-# be used to answer questions about types.
+# infer the type by simply looking at the inheritance hierarchy. The {Puppet::Pops::Types::TypeCalculator} should
+# be used to answer questions about types. The {Puppet::Pops::Types::TypeFactory} should be used to create an instance
+# of a type whenever one is needed.
+#
 # @api public
 #
 module Puppet::Pops::Types

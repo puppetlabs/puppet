@@ -1,10 +1,86 @@
 # A helper class that makes it easier to construct a Bindings model.
 #
+# The Bindings Model
+# ------------------
+# The BindingsModel (defined in {Puppet::Pops::Binder::Bindings} is a model that is intended to be generally free from Ruby concerns.
+# This means that it is possible for system integrators to create and serialize such models using other technoligies than
+# Ruby. This manifests itself in the model in that producers are described using instances of a `ProducerDescriptor` rather than
+# describing Ruby classes directly. This is also true of the type system where type is expressed using the {Puppet::Pops::Types} model
+# to describe all types.
+#
+# This class, the `BindingsFactory` is a concrete Ruby API to constructing instances of classes in the model.
+#
+# Named Bindings
+# --------------
+# The typical usage of the factory is to call {named_bindings} which creates a container of bindings wrapped in a *build object*
+# equipped with convenience methods to define the details of the just created named bindings.
+# The returned builder is an instance of {Puppet::Pops::Binder::BindingsFactory::BindingsContainerBuilder BindingsContainerBuilder}.
+#
+# Binding
+# -------
+# A Binding binds a type/name key to a producer of a value. A binding is conveniently created by calling `bind` on a 
+# `BindingsContainerBuilder`. The call to bind, produces a binding wrapped in a build object equipped with convenience methods
+# to define the details of the just created binding. The returned builder is an instance of
+# {Puppet::Pops::Binder::BindingsFactory::BindingsBuilder BindingsBuilder}.
+#
+# Multibinding
+# ------------
+# A multibinding works like a binding, but it requires an additional ID. It also places constraints on the type of the binding;
+# it must be a collection type (Hash or Array).
+#
+# Constructing and Contributing Bindings from Ruby
+# ------------------------------------------------
+# The bindings system is used by referencing bindings symbolically; these are then specified in a Ruby file which is autoloaded
+# by Puppet. The entry point for user code that creates bindings is described in {Puppet::Bindings Bindings}.
+# That class makes use of a
+# BindingsFactory, and the builder objects to make it easy to construct bindings.
+#
+# It is intended that a user defining bindings in Ruby should be able to use the builder object methods for the majority of tasks.
+# If something advanced is wanted, use of one of the helper class methods on the BuildingsFactory, and/or the
+# {Puppet::Pops::Types::TypeCalculator TypeCalculator} will be required to create and configure objects that are not handled by
+# the methods in the builder objects.
+#
+# Chaining of calls
+# ------------------
+# Since all the build methods return the build object it is easy to stack on additional calls. The intention is to
+# do this in an order that is readable from left to right: `bind.string.name('thename').to(42)`, but there is nothing preventing
+# making the calls in some other order e.g. `bind.to(42).name('thename').string`, the second is quite unreadable but produces
+# the same result.
+#
+# For sake of human readability, the method `name` is alsp available as `named`, with the intention that it is used after a type,
+# e.g. `bind.integer.named('the meaning of life').to(42)`
+#
+# Methods taking blocks
+# ----------------------
+# Several methods take an optional block. The block evaluates with the builder object as `self`. This means that there is no
+# need to chain the methods calls, they can instead be made in sequence - e.g.
+#
+#     bind do
+#       integer
+#       named 'the meaning of life'
+#       to 42
+#     end
+#
+# or mix the two styles
+#
+#     bind do
+#       integer.named 'the meaning of life'
+#       to 42
+#     end
+#
+# Unwrapping the result
+# ---------------------
+# The result from all methods is a builder object. Call the method `model` to unwrap the constructed bindings model object.
+#
+#     bindings = BindingsFactory.named_bindings('my named bindings') do
+#       # bind things
+#     end.model
+#
 # @example Create a NamedBinding with content
 #   result = Puppet::Pops::Binder::BindingsFactory.named_bindings("mymodule::mybindings") do
 #     bind.name("foo").to(42)
 #     when_in_category("node", "kermit.example.com").bind.name("foo").to(43)
-#     bind.string().name("site url").to("http://www.example.com")
+#     bind.string.name("site url").to("http://www.example.com")
 #   end
 #   result.model()
 #
@@ -82,8 +158,8 @@ module Puppet::Pops::Binder::BindingsFactory
 
     # Adds a categorized bindings to this container. Returns a BindingsContainerBuilder to allow adding
     # bindings in the newly created container. An optional block may be given which is evaluated using `instance_eval`.
-    # @param categorixation [String] the name of the categorization e.g. 'node'
-    # @param category_vale [String] the calue in that category e.g. 'kermit.example.com'
+    # @param categorization [String] the name of the categorization e.g. 'node'
+    # @param category_value [String] the calue in that category e.g. 'kermit.example.com'
     # @return [BindingsContainerBuilder] the builder for the created categorized bindings container
     # @api public
     #
@@ -150,7 +226,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @note
     #   This is only needed if something other than the default type `Data` is wanted, or if the wanted type is
     #   not provided by one of the convenience methods {#array_of_data}, {#boolean}, {#float}, {#hash_of_data},
-    #   {#integer}, {#literal}, {#pattern}, {#string}, or one of the collection methods #{array_of}, or #{hash_of}.
+    #   {#integer}, {#literal}, {#pattern}, {#string}, or one of the collection methods {#array_of}, or {#hash_of}.
     #
     # To create a type, use the method {#type_factory}, to obtain the type.
     # @example creating a Hash with Integer key and Array[Integer] element type
@@ -244,7 +320,7 @@ module Puppet::Pops::Binder::BindingsFactory
       type(T.hash_of(t))
     end
 
-    # Sets the type of the binding based on the given t.
+    # Sets the type of the binding based on the given argument.
     # @overload instance_of(t)
     #   The same as calling {#type} with `t`.
     #   @param t [Puppet::Pops::Types::PObjectType] the type
@@ -253,6 +329,7 @@ module Puppet::Pops::Binder::BindingsFactory
     #   of the binding to be that of the given data object".
     #   @param o [Object] the object to infert the type from
     # @overload instance_of(c)
+    #   @param c [Class] the Class to base the type on.
     #   Sets the type based on the given ruby class. The result is one of the specific puppet types
     #   if the class can be represented by a specific type, or the open ended PRubyType otherwise.
     # @overload instance_of(s)
@@ -268,7 +345,7 @@ module Puppet::Pops::Binder::BindingsFactory
     end
 
     # Provides convenient access to the type factory.
-    # This is intended to be used when methods taking a type as argument i.e. {#type}, #{array_of}, {#hash_of}, and {#instance_of}.
+    # This is intended to be used when methods taking a type as argument i.e. {#type}, {#array_of}, {#hash_of}, and {#instance_of}.
     # @note
     #   The type factory is also available via the constant {T}.
     # @api public
@@ -503,7 +580,7 @@ module Puppet::Pops::Binder::BindingsFactory
   #
   # @api public
   class MultibindingsBuilder < BindingsBuilder
-    # Constraints type to be one of {Puppet::Pops::Types::PArrayType PArrayType}, or {Puppet::Pops::Types:PHashType PHashType}.
+    # Constraints type to be one of {Puppet::Pops::Types::PArrayType PArrayType}, or {Puppet::Pops::Types::PHashType PHashType}.
     # @raise [ArgumentError] if type constraint is not met.
     # @api public
     def type(type)
@@ -528,7 +605,7 @@ module Puppet::Pops::Binder::BindingsFactory
   # @param name [String] the name of the contributed bindings (for human use in messages/logs only)
   # @param named_bindings [Puppet::Pops::Binder::Bindings::NamedBindings, Array<Puppet::Pops::Binder::Bindings::NamedBindings>] the
   #   named bindings to include
-  # @parm effective_categories [Puppet::Pops::Binder::Bindings::EffectiveCategories] the contributors opinion about categorization
+  # @param effective_categories [Puppet::Pops::Binder::Bindings::EffectiveCategories] the contributors opinion about categorization
   #   this is used to ensure consistent use of categories.
   #
   def self.contributed_bindings(name, named_bindings, effective_categories)
@@ -555,7 +632,7 @@ module Puppet::Pops::Binder::BindingsFactory
     builder
   end
 
-  # This variant of {#named_bindings} evaluates the given block as a method on an anonymous class,
+  # This variant of {named_bindings} evaluates the given block as a method on an anonymous class,
   # thus, if the block defines methods or do something with the class itself, this does not pollute
   # the base class (BindingsContainerBuilder).
   # @api private
@@ -580,7 +657,7 @@ module Puppet::Pops::Binder::BindingsFactory
   end
 
   # Creates a literal/constant producer
-  # @param [Object] the value to produce
+  # @param value [Object] the value to produce
   # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer description
   # @api public
   #
@@ -619,7 +696,7 @@ module Puppet::Pops::Binder::BindingsFactory
   # is called.
   #
   # @param class_name [String] the name of the class
-  # @param *args[Object] arguments to the class' `new` method.
+  # @param args[Object] arguments to the class' `new` method.
   # @return [Puppet::Pops::Binder::Bindings::ProducerDescriptor] a producer description
   # @api public
   #
@@ -672,7 +749,7 @@ module Puppet::Pops::Binder::BindingsFactory
   # Creates an evaluating producer that evaluates a puppet expression.
   # A puppet expression is most conveniently created by using the {Puppet::Pops::Parser::EvaluatingParser EvaluatingParser} as it performs
   # all set up and validation of the parsed source. Two convenience methods are used to parse an expression, or parse a ruby string
-  # as a puppet string. See methods {#puppet_expression}, {#puppet_string} and {#parser} for more information.
+  # as a puppet string. See methods {puppet_expression}, {puppet_string} and {parser} for more information.
   #
   # @example producing a puppet expression
   #     expr = puppet_string("Interpolated $fqdn", __FILE__)
@@ -687,7 +764,7 @@ module Puppet::Pops::Binder::BindingsFactory
     p
   end
 
-  # Creates an EffectiveCategories from a list of tuples `[categorizxation category ...]`, or ´[[categorization category] ...]`
+  # Creates an EffectiveCategories from a list of tuples `[categorization category ...]`, or `[[categorization category] ...]`
   # This method is used by backends to create a model of the effective categories.
   # @api public
   #
@@ -713,8 +790,9 @@ module Puppet::Pops::Binder::BindingsFactory
     result
   end
 
-  # Create a LayeredBindings. This is used by the bindings system to create a model of all LayeredBindings.
-  #
+  # Create a LayeredBindings. This is used by the bindings system to create a model of all given layers.
+  # @param named_layers [Puppet::Pops::Binder::Bindings::NamedLayer] one or more named layers
+  # @return [Puppet::Pops::Binder::Bindings::LayeredBindings] the constructed layered bindings.
   # @api public
   #
   def self.layered_bindings(*named_layers)
@@ -744,7 +822,7 @@ module Puppet::Pops::Binder::BindingsFactory
   # the puppet string (illustrated with a ruby string) "\"Hi\\nMary\”" before being
   # parsed.
   #
-  # @param string [String] puppet source e.g. "On node ${fqdn}"
+  # @param string [String] puppet source e.g. "On node $!{fqdn}"
   # @param source_file [String] the source location, typically `__File__`
   # @return [Puppet::Pops::Model::Expression] an expression (that can be bound)
   # @api public
