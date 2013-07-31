@@ -25,6 +25,11 @@ describe Puppet::Node::Facts, "when indirecting" do
       @facts.values["clientversion"].should == Puppet.version.to_s
     end
 
+    it "adds the agent side noop setting as 'clientnoop'" do
+      @facts.add_local_facts
+      @facts.values["clientnoop"].should == Puppet.settings[:noop]
+    end
+
     it "doesn't add the current environment" do
       @facts.add_local_facts
       @facts.values.should_not include("environment")
