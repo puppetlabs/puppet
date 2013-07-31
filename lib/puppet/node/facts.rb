@@ -28,6 +28,7 @@ class Puppet::Node::Facts
   def add_local_facts
     values["clientcert"] = Puppet.settings[:certname]
     values["clientversion"] = Puppet.version.to_s
+    values["clientnoop"] = Puppet.settings[:noop]
   end
 
   def initialize(name, values = {})
