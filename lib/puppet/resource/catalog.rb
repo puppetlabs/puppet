@@ -136,8 +136,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   #   :ignoreschedules - tell the transaction to ignore schedules
   #       when determining the resources to run
   def apply(options = {})
-    @applying = true
-
     Puppet::Util::Storage.load if host_config?
 
     transaction = Puppet::Transaction.new(self, options[:report])
@@ -168,14 +166,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     yield transaction if block_given?
 
-    return transaction
-  ensure
-    @applying = false
-  end
-
-  # Are we in the middle of applying the catalog?
-  def applying?
-    @applying
+    transaction
   end
 
   def clear(remove_resources = true)
@@ -225,7 +216,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @classes = []
     @resource_table = {}
     @resources = []
-    @applying = false
     @relationship_graph = nil
 
     @host_config = true
