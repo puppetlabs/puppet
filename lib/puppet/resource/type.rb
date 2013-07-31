@@ -10,7 +10,7 @@ require 'puppet/dsl'
 #
 # It has a standard format for external consumption, usable from the
 # resource_type indirection via rest and the resource_type face. See the
-# {file:api_docs/ResourceType.md#Schema resource type schema
+# {file:api_docs/http_resource_type.md#Schema resource type schema
 # description}.
 #
 # @api public
