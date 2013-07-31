@@ -522,7 +522,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @transaction = Puppet::Transaction.new(@catalog)
       Puppet::Transaction.stubs(:new).returns(@transaction)
       @transaction.stubs(:evaluate)
-      @transaction.stubs(:add_times)
       @transaction.stubs(:for_network_device=)
 
       Puppet.settings.stubs(:use)
@@ -530,18 +529,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should create and evaluate a transaction" do
       @transaction.expects(:evaluate)
-      @catalog.apply
-    end
-
-    it "should provide the catalog retrieval time to the transaction" do
-      @catalog.retrieval_duration = 5
-      @transaction.expects(:add_times).with(:config_retrieval => 5)
-      @catalog.apply
-    end
-
-    it "should use a retrieval time of 0 if none is set in the catalog" do
-      @catalog.retrieval_duration = nil
-      @transaction.expects(:add_times).with(:config_retrieval => 0)
       @catalog.apply
     end
 

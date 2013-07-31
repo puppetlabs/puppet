@@ -117,6 +117,16 @@ describe Puppet::Transaction do
       @transaction.resource_harness.should be_instance_of(Puppet::Transaction::ResourceHarness)
       @transaction.resource_harness.transaction.should equal(@transaction)
     end
+
+    it "should set retrieval time on the report" do
+      catalog = Puppet::Resource::Catalog.new
+      report = Puppet::Transaction::Report.new("apply")
+      catalog.retrieval_duration = 5
+
+      report.expects(:add_times).with(:config_retrieval, 5)
+
+      transaction = Puppet::Transaction.new(catalog, report)
+    end
   end
 
   describe "when evaluating a resource" do
