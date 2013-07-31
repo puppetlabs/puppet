@@ -14,25 +14,32 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts.values["one"].should == "1"
   end
 
-  it "should add the node's certificate name as the 'clientcert' fact when adding local facts" do
-    @facts.add_local_facts
-    @facts.values["clientcert"].should == Puppet.settings[:certname]
-  end
+  describe "adding local facts" do
+    it "should add the node's certificate name as the 'clientcert' fact" do
+      @facts.add_local_facts
+      @facts.values["clientcert"].should == Puppet.settings[:certname]
+    end
 
-  it "should add the Puppet version as a 'clientversion' fact when adding local facts" do
-    @facts.add_local_facts
-    @facts.values["clientversion"].should == Puppet.version.to_s
-  end
+    it "adds the Puppet version as a 'clientversion' fact" do
+      @facts.add_local_facts
+      @facts.values["clientversion"].should == Puppet.version.to_s
+    end
 
-  it "should not add the current environment" do
-    @facts.add_local_facts
-    @facts.values.should_not include("environment")
-  end
+    it "adds the agent side noop setting as 'clientnoop'" do
+      @facts.add_local_facts
+      @facts.values["clientnoop"].should == Puppet.settings[:noop]
+    end
 
-  it "should not replace any existing environment fact when adding local facts" do
-    @facts.values["environment"] = "foo"
-    @facts.add_local_facts
-    @facts.values["environment"].should == "foo"
+    it "doesn't add the current environment" do
+      @facts.add_local_facts
+      @facts.values.should_not include("environment")
+    end
+
+    it "doesn't replace any existing environment fact when adding local facts" do
+      @facts.values["environment"] = "foo"
+      @facts.add_local_facts
+      @facts.values["environment"].should == "foo"
+    end
   end
 
   describe "when sanitizing facts" do
