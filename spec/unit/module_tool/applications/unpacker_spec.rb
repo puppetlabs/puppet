@@ -36,6 +36,9 @@ describe Puppet::ModuleTool::Applications::Unpacker, :fails_on_windows => true d
     context "on linux" do
       it "should attempt to untar file to temporary location using system tar" do
         Puppet::Util.expects(:execute).with("tar xzf #{filename} -C #{build_dir}").returns(true)
+        Puppet::Util.expects(:execute).with("find #{build_dir} -type d -exec chmod 755 {} +").returns(true)
+        Puppet::Util.expects(:execute).with("find #{build_dir} -type f -exec chmod 644 {} +").returns(true)
+        Puppet::Util.expects(:execute).with("chown -R #{build_dir.stat.uid} #{build_dir}").returns(true)
         unpacker.run
       end
     end
@@ -48,6 +51,9 @@ describe Puppet::ModuleTool::Applications::Unpacker, :fails_on_windows => true d
       it "should attempt to untar file to temporary location using gnu tar" do
         Puppet::Util.stubs(:which).with('gtar').returns('/usr/sfw/bin/gtar')
         Puppet::Util.expects(:execute).with("gtar xzf #{filename} -C #{build_dir}").returns(true)
+        Puppet::Util.expects(:execute).with("find #{build_dir} -type d -exec chmod 755 {} +").returns(true)
+        Puppet::Util.expects(:execute).with("find #{build_dir} -type f -exec chmod 644 {} +").returns(true)
+        Puppet::Util.expects(:execute).with("chown -R #{build_dir.stat.uid} #{build_dir}").returns(true)
         unpacker.run
       end
 
