@@ -59,19 +59,19 @@ describe Puppet::Configurer::FactHandler do
     end
   end
 
-  it "should serialize and CGI escape the fact values for uploading" do
+  it "should serialize the fact values for uploading" do
     facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
     Puppet::Node::Facts.indirection.save(facts)
-    text = CGI.escape(@facthandler.find_facts.render(:pson))
+    text = @facthandler.find_facts.render(:pson)
 
-    @facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts => text}
+    @facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts_data => text}
   end
 
   it "should properly accept facts containing a '+'" do
     facts = Puppet::Node::Facts.new('foo', 'afact' => 'a+b')
     Puppet::Node::Facts.indirection.save(facts)
-    text = CGI.escape(@facthandler.find_facts.render(:pson))
+    text = @facthandler.find_facts.render(:pson)
 
-    @facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts => text}
+    @facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts_data => text}
   end
 end
