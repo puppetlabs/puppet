@@ -4,10 +4,10 @@
 #
 # The bindings composer is intended to be used once per environment as the compiler starts its work.
 #
-# TODO: Also ? instead of confdir ? support envdir scheme / relative to environment root (== same as confdir if there is only one environment)
+# TODO: Possibly support envdir: scheme / relative to environment root (== same as confdir if there is only one environment).
+#       This is probably easier to do after ENC changes described in ARM-8 have been implemented.
 # TODO: If same config is loaded in a higher layer, skip it in the lower (since it is meaningless to load it again with lower
-#       precedence
-# TODO: BindingsConfig, and default BindingsConfig via settings
+#       precedence. (Optimization, or possibly an error, should produce a warning).
 #
 class Puppet::Pops::Binder::BindingsComposer
 

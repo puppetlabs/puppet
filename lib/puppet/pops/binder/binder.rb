@@ -115,7 +115,7 @@ class Puppet::Pops::Binder::Binder
     LayerProcessor.new(self, key_factory).bind(layered_bindings)
     injector_entries.each  do |k,v|
       unless key_factory.is_contributions_key?(k) || v.is_resolved?()
-        raise ArgumentError, "Binding with unresolved 'override' detected: #{k}"
+        raise ArgumentError, "Binding with unresolved 'override' detected: #{self.class.format_binding(v.binding)}}"
       end
     end
     # and the fat lady has sung
@@ -128,6 +128,33 @@ class Puppet::Pops::Binder::Binder
     tmp = @next_anonymous_key
     @next_anonymous_key += 1
     tmp
+  end
+
+  # @api private
+  def self.format_binding(b)
+    type_name = Puppet::Pops::Types::TypeCalculator.new().string(b.type)
+    layer_name, bindings_name = get_named_binding_layer_and_name(b)
+    "binding: '#{type_name}/#{b.name}' in: '#{bindings_name}' in layer: '#{layer_name}'"
+  end
+
+  # @api private
+  def self.format_contribution_source(b) 
+    layer_name, bindings_name = get_named_binding_layer_and_name(b)
+    "(layer: #{layer_name}, bindings: #{bindings_name})"
+  end
+
+  # @api private
+  def self.get_named_binding_layer_and_name(b)
+    return ['<unknown>', '<unknown>'] if b.nil?
+    return [get_named_layer(b), b.name] if b.is_a?(Puppet::Pops::Binder::Bindings::NamedBindings)
+    get_named_binding_layer_and_name(b.eContainer)
+  end
+
+  # @api private
+  def self.get_named_layer(b)
+    return '<unknown>' if b.nil?
+    return b.name if b.is_a?(Puppet::Pops::Binder::Bindings::NamedLayer)
+    get_named_layer(b.eContainer)
   end
 
   # Processes the information in a layer, aggregating it to the injector_entries hash in its parent binder.
@@ -183,7 +210,6 @@ class Puppet::Pops::Binder::Binder
       when -1
         b2
       when 0
-        # TODO: This is too crude for conflict errors
         raise_conflicting_binding(b1, b2)
       end
     end
@@ -191,9 +217,8 @@ class Puppet::Pops::Binder::Binder
     # Raises a conflicting bindings error given two InjectorEntry's with same precedence in the same layer
     # (if they are in different layers, something is seriously wrong)
     def raise_conflicting_binding(b1, b2)
-      formatter = lambda {|layer, name|  }
-      b1_layer_name, b1_bindings_name = get_named_binding_layer_and_name(b1.binding)
-      b2_layer_name, b2_bindings_name = get_named_binding_layer_and_name(b2.binding)
+      b1_layer_name, b1_bindings_name = Puppet::Pops::Binder::Binder.get_named_binding_layer_and_name(b1.binding)
+      b2_layer_name, b2_bindings_name = Puppet::Pops::Binder::Binder.get_named_binding_layer_and_name(b2.binding)
 
       # The resolution is per layer, and if they differ something is serious wrong as a higher layer
       # overrides a lower; so no such conflict should be possible:
@@ -231,22 +256,6 @@ class Puppet::Pops::Binder::Binder
         ].join(' ')
     end
 
-    def format_contribution_source(b) 
-      layer_name, bindings_name = get_named_binding_layer_and_name(b)
-      "(layer: #{layer_name}, bindings: #{bindings_name})"
-    end
-
-    def get_named_binding_layer_and_name(b)
-      return ['<unknown>', '<unknown>'] if b.nil?
-      return [get_named_layer(b), b.name] if b.is_a?(Puppet::Pops::Binder::Bindings::NamedBindings)
-      get_named_binding_layer_and_name(b.eContainer)
-    end
-
-    def get_named_layer(b)
-      return '<unknown>' if b.nil?
-      return b.name if b.is_a?(Puppet::Pops::Binder::Bindings::NamedLayer)
-      get_named_layer(b.eContainer)
-    end
 
     # Produces the key for the given Binding.
     # @param binding [Puppet::Pops::Binder::Bindings::Binding] the binding to get a key for
@@ -346,7 +355,11 @@ class Puppet::Pops::Binder::Binder
         processor.bind(layer).each do |k, v|
           entry = binder.injector_entries[k]
           unless key_factory.is_contributions_key?(k)
-            raise ArgumentError, "The abstract binding TODO: was not overridden" unless !v.is_abstract?()
+            if v.is_abstract?()
+              layer_name, bindings_name = Puppet::Pops::Binder::Binder.get_named_binding_layer_and_name(v.binding)
+              type_name = key_factory.type_calculator.string(v.binding.type)
+              raise ArgumentError, "The abstract binding '#{type_name}/#{v.binding.name}' in '#{bindings_name}' in layer '#{layer_name}' was not overridden"
+            end
             raise ArgumentError, "Internal Error - redefinition of key: #{k}, (should never happen)" if entry
             binder.injector_entries[k] = v
           else
