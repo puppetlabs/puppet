@@ -111,7 +111,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
     ds_t = TypeMap[ds_type]
     ds_path = "/Local/Default/#{ds_t}/#{ds_name}"
 
-    if has_mcx?:
+    if has_mcx?
       Puppet.debug "Removing MCX from #{ds_path}"
       dscl 'localhost', '-mcxdelete', ds_path
     end
