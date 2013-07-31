@@ -200,14 +200,6 @@ describe Puppet::Network::HTTP::WEBrickREST do
         result[:foo].should == %w{one two}
       end
 
-      it "should YAML-load that are YAML-encoded" do
-        request = a_request_querying('foo' => YAML.dump(%w{one two}))
-
-        result = @handler.params(request)
-
-        result[:foo].should == %w{one two}
-      end
-
       it "should not allow clients to set the node via the request parameters" do
         request = a_request_querying("node" => "foo")
         @handler.stubs(:resolve_node)
