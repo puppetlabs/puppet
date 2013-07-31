@@ -7,10 +7,12 @@ require 'puppet/util/pson'
 
 require 'puppet/util/tagging'
 
-# This class models a node catalog.  It is the thing
-# meant to be passed from server to client, and it contains all
-# of the information in the catalog, including the resources
-# and the relationships between them.
+# This class models a node catalog.  It is the thing meant to be passed
+# from server to client, and it contains all of the information in the
+# catalog, including the resources and the relationships between them.
+#
+# @api public
+
 class Puppet::Resource::Catalog < Puppet::SimpleGraph
   class DuplicateResourceError < Puppet::Error
     include Puppet::ExternalFileError
@@ -129,12 +131,24 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @aliases[resource.ref] << newref
   end
 
-  # Apply our catalog to the local host.  Valid options
-  # are:
-  #   :tags - set the tags that restrict what resources run
-  #       during the transaction
-  #   :ignoreschedules - tell the transaction to ignore schedules
-  #       when determining the resources to run
+  # Apply our catalog to the local host.
+  # @param options [Hash{Symbol => Object}] a hash of options
+  # @option options [Puppet::Transaction::Report] :report
+  #   The report object to log this transaction to. This is optional,
+  #   and the resulting transaction will create a report if not
+  #   supplied.
+  # @option options [Array[String]] :tags
+  #   Tags used to filter the transaction. If supplied then only
+  #   resources tagged with any of these tags will be evaluated.
+  # @option options [Boolean] :ignoreschedules
+  #   Ignore schedules when evaluating resources
+  # @option options [Boolean] :for_network_device
+  #   Whether this catalog is for a network device
+  #
+  # @return [Puppet::Transaction] the transaction created for this
+  #   application
+  #
+  # @api public
   def apply(options = {})
     Puppet::Util::Storage.load if host_config?
 
