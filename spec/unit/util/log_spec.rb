@@ -6,6 +6,10 @@ require 'puppet/util/log'
 describe Puppet::Util::Log do
   include PuppetSpec::Files
 
+  def log_notice(message)
+    Puppet::Util::Log.new(:level => :notice, :message => message)
+  end
+
   it "should write a given message to the specified destination" do
     arraydest = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(arraydest))
@@ -39,6 +43,57 @@ describe Puppet::Util::Log do
     end
   end
 
+  describe "#with_destination" do
+    it "does nothing when nested" do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+      Puppet::Util::Log.with_destination(destination) do
+        Puppet::Util::Log.with_destination(destination) do
+          log_notice("Inner block")
+        end
+
+        log_notice("Outer block")
+      end
+
+      log_notice("Outside")
+
+      expect(logs.collect(&:message)).to include("Inner block", "Outer block")
+      expect(logs.collect(&:message)).not_to include("Outside")
+    end
+
+    it "logs when called a second time" do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.with_destination(destination) do
+        log_notice("First block")
+      end
+
+      log_notice("Between blocks")
+
+      Puppet::Util::Log.with_destination(destination) do
+        log_notice("Second block")
+      end
+
+      expect(logs.collect(&:message)).to include("First block", "Second block")
+      expect(logs.collect(&:message)).not_to include("Between blocks")
+    end
+
+    it "doesn't close the destination if already set manually" do
+      logs = []
+      destination = Puppet::Test::LogCollector.new(logs)
+
+      Puppet::Util::Log.newdestination(destination)
+      Puppet::Util::Log.with_destination(destination) do
+        log_notice "Inner block"
+      end
+
+      log_notice "Outer block"
+      Puppet::Util::Log.close(destination)
+
+      expect(logs.collect(&:message)).to include("Inner block", "Outer block")
+    end
+  end
   describe Puppet::Util::Log::DestConsole do
     before do
       @console = Puppet::Util::Log::DestConsole.new

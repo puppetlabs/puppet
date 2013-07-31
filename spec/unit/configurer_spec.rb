@@ -137,20 +137,17 @@ describe Puppet::Configurer do
 
     it "should use the provided report if it was passed one" do
       report = Puppet::Transaction::Report.new("apply")
-      Puppet::Transaction::Report.expects(:new).never
-      @catalog.expects(:apply).with{|options| options[:report] == report}
+      @catalog.expects(:apply).with {|options| options[:report] == report}
 
       @agent.run(:report => report)
     end
 
     it "should set the report as a log destination" do
       report = Puppet::Transaction::Report.new("apply")
-      Puppet::Transaction::Report.expects(:new).returns report
 
-      Puppet::Util::Log.expects(:newdestination).with(report)
-      Puppet::Util::Log.expects(:close).with(report)
+      report.expects(:<<).with(instance_of(Puppet::Util::Log)).at_least_once
 
-      @agent.run
+      @agent.run(:report => report)
     end
 
     it "should retrieve the catalog" do
