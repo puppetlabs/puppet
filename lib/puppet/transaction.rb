@@ -235,6 +235,8 @@ class Puppet::Transaction
 
     @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
 
+    @report.add_times(:config_retrieval, @catalog.retrieval_duration || 0)
+
     @event_manager = Puppet::Transaction::EventManager.new(self)
 
     @resource_harness = Puppet::Transaction::ResourceHarness.new(self)

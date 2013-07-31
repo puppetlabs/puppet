@@ -156,8 +156,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     transaction = create_transaction(options)
 
-    transaction.add_times :config_retrieval => self.retrieval_duration || 0
-
     begin
       Puppet::Util::Log.newdestination(transaction.report) if register_report
       begin
