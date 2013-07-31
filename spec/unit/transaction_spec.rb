@@ -782,13 +782,8 @@ describe Puppet::Transaction do
 
   describe 'when checking application run state' do
     before do
-      without_warnings { Puppet::Application = Class.new(Puppet::Application) }
       @catalog = Puppet::Resource::Catalog.new
       @transaction = Puppet::Transaction.new(@catalog)
-    end
-
-    after do
-      without_warnings { Puppet::Application = Puppet::Application.superclass }
     end
 
     it 'should return true for :stop_processing? if Puppet::Application.stop_requested? is true' do
