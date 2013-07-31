@@ -1,7 +1,7 @@
 Services
 --------
 
-* {file:api_docs/ResourceType.md Resource Type}
+* {file:api_docs/http_resource_type.md Resource Type}
 
 To be documented:
 

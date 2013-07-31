@@ -52,6 +52,6 @@ list](https://groups.google.com/forum/?fromgroups#!forum/puppet-users) is
 available for asking questions and getting help from others. In addition there
 is an active #puppet channel on Freenode.
 
-REST API
+HTTP API
 --------
-{file:api_docs/RestAPIIndex.md REST API Index}
+{file:api_docs/http_api_index.md HTTP API Index}
