@@ -62,6 +62,16 @@ describe provider_class do
       provider_class.instances.map(&:name).sort.should ==
         %w{bash bzip2 expat gettext libiconv lzo openvpn python vim wget}.sort
     end
+
+    it "should return all flavors if set" do
+      fixture = File.read(my_fixture('pkginfo_flavors.list'))
+      provider_class.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(fixture)
+      instances = provider_class.instances.map {|p| {:name => p.get(:name),
+        :ensure => p.get(:ensure), :flavor => p.get(:flavor)}}
+      instances.size.should == 2
+      instances[0].should == {:name => 'bash', :ensure => '3.1.17',  :flavor => 'static'}
+      instances[1].should == {:name => 'vim',  :ensure => '7.0.42', :flavor => 'no_x11'}
+    end
   end
 
   context "#install" do
