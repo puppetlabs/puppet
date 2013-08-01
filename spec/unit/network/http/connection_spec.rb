@@ -43,6 +43,27 @@ describe Puppet::Network::HTTP::Connection do
         Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection).should be_use_ssl
       end
 
+      it "can enforce/suppress peer certificate verification using an option" do
+        ca_cert_file = '/path/to/ssl/certs/ca_cert.pem'
+        host_cert_file = '/path/to/ssl/certs/host_cert.pem'
+
+        ssl_configuration = stub('ssl_configuration', :ca_auth_file => ca_cert_file)
+        Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_configuration).returns(ssl_configuration)
+
+        cert = stub('cert', :content => 'real_cert')
+        key = stub('key',  :content => 'real_key')
+        host = stub('host', :certificate => cert, :key => key, :ssl_store => stub('store'))
+        Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_host).returns(host)
+
+        Puppet[:hostcert] = host_cert_file
+
+        FileTest.expects(:exist?).with(ca_cert_file).returns(true)
+        FileTest.expects(:exist?).with(host_cert_file).returns(true)
+
+        Puppet::Network::HTTP::Connection.new(host, port, :verify_peer => true).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_PEER
+        Puppet::Network::HTTP::Connection.new(host, port, :verify_peer => false).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_NONE
+      end
+
       context "proxy and timeout settings should propagate" do
         subject { Puppet::Network::HTTP::Connection.new(host, port).send(:connection) }
         before :each do
@@ -60,6 +81,10 @@ describe Puppet::Network::HTTP::Connection do
       it "should not set a proxy if the value is 'none'" do
         Puppet[:http_proxy_host] = 'none'
         subject.send(:connection).proxy_address.should be_nil
+      end
+
+      it "should raise Puppet::Error when invalid options are specified" do
+        expect { Puppet::Network::HTTP::Connection.new(host, port, :invalid_option => nil) }.to raise_error(Puppet::Error, 'Unrecognized option(s): :invalid_option')
       end
 
     end
