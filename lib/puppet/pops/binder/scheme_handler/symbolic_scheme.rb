@@ -11,7 +11,7 @@ class Puppet::Pops::Binder::SchemeHandler::SymbolicScheme < Puppetx::Puppet::Bin
   # Shared implementation for module: and confdir: since the distinction is only in checks if a symbolic name
   # exists as a loadable file or not. Once this method is called it is assumed that the name is relative
   # and that it should exist relative to some loadable ruby location.
-  # 
+  #
   # TODO: this needs to be changed once ARM-8 Puppet DSL concrete syntax is also supported.
   # @api public
   #
