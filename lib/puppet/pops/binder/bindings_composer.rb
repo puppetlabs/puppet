@@ -61,30 +61,36 @@ class Puppet::Pops::Binder::BindingsComposer
 
     # get extensions from the config
     # ------------------------------
-    boot_bindings = Puppet::Pops::Binder::SystemBindings.injector_boot_bindings()
+    scheme_extensions = @config.scheme_extensions
+    hiera_backends = @config.hiera_backends
 
-    @config.scheme_extensions.each_pair do |scheme, class_name|
-      # turn each scheme => class_name into a binding (contribute to the buildings-schemes multibind).
-      # do this in category 'extensions' to allow them to override the 'default'
-      boot_bindings.when_in_category('extension', 'true').bind do
-        name(scheme)
-        instance_of(Puppetx::BINDINGS_SCHEMES_TYPE)
-        in_multibind(Puppetx::BINDINGS_SCHEMES)
-        to_instance(class_name)
+    # Define a named bindings that are known by the SystemBindings
+    boot_bindings = Puppet::Pops::Binder::BindingsFactory.named_bindings(Puppet::Pops::Binder::SystemBindings::ENVIRONMENT_BOOT_BINDINGS_NAME) do
+      scheme_extensions.each_pair do |scheme, class_name|
+        # turn each scheme => class_name into a binding (contribute to the buildings-schemes multibind).
+        # do this in category 'extensions' to allow them to override the 'default'
+        when_in_category('extension', 'true').bind do
+          name(scheme)
+          instance_of(Puppetx::BINDINGS_SCHEMES_TYPE)
+          in_multibind(Puppetx::BINDINGS_SCHEMES)
+          to_instance(class_name)
+          end
+      end
+      hiera_backends.each_pair do |symbolic, class_name|
+        # turn each symbolic => class_name into a binding (contribute to the hiera backends multibind).
+        # do this in category 'extensions' to allow them to override the 'default'
+        when_in_category('extension', 'true').bind do
+          name(symbolic)
+          instance_of(Puppetx::HIERA2_BACKENDS_TYPE)
+          in_multibind(Puppetx::HIERA2_BACKENDS)
+          to_instance(class_name)
+        end
       end
     end
+#    # Register the just created bindings, the creation of the boot injector will pick them up
+#    Puppet::Bindings.register(boot_bindings.model)
 
-    @config.hiera_backends.each_pair do |symbolic, class_name|
-      # turn each symbolic => class_name into a binding (contribute to the hiera backends multibind).
-      # do this in category 'extensions' to allow them to override the 'default'
-      boot_bindings.when_in_category('extension', 'true').bind do
-        name(symbolic)
-        instance_of(Puppetx::HIERA2_BACKENDS_TYPE)
-        in_multibind(Puppetx::HIERA2_BACKENDS)
-        to_instance(class_name)
-      end
-    end
-    @injector = scope.compiler.create_boot_injector()
+    @injector = scope.compiler.create_boot_injector(boot_bindings.model)
   end
 
   # @return [Puppet::Pops::Binder::Bindings::LayeredBindings]

@@ -220,7 +220,7 @@ class Puppet::Parser::Compiler
   end
 
   def boot_injector
-    create_boot_injector if @boot_injector.nil?
+    create_boot_injector(nil) if @boot_injector.nil?
     @boot_injector
   end
 
@@ -228,8 +228,8 @@ class Puppet::Parser::Compiler
   # @return [Puppet::Pops::Binder::Injector] the created boot injector
   # @api private Cannot be 'private' since it is called from the BindingsComposer.
   #
-  def create_boot_injector
-    boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution
+  def create_boot_injector(env_boot_bindings)
+    boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution(env_boot_bindings)
     final_contribution = Puppet::Pops::Binder::SystemBindings.final_contribution
     binder = Puppet::Pops::Binder::Binder.new()
     binder.define_categories(boot_contribution.effective_categories)

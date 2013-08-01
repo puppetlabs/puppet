@@ -23,11 +23,13 @@ class Puppet::Pops::Binder::SchemeHandler::ConfdirHieraScheme < Puppetx::Puppet:
   # @api public
   #
   def expand_included(uri, composer)
-    # Skip if optional and does not exist
-    # Skip if a hiera 1
-    #
-    # TODO: handle optional
-    [uri]
+    result = []
+    if config_exist?(uri, composer)
+      result << uri unless is_ignored_hiera_version?(uri, composer)
+    else
+      result << uri unless is_optional?(uri)
+    end
+    result
   end
 
   # This handler does not support wildcards.
@@ -38,5 +40,28 @@ class Puppet::Pops::Binder::SchemeHandler::ConfdirHieraScheme < Puppetx::Puppet:
   #
   def expand_excluded(uri, composer)
     [uri]
+  end
+
+  def config_exist?(uri, composer)
+    File.exist?(File.join(composer.confdir, uri.path, 'hiera.yaml'))
+  end
+
+  # A hiera.yaml that exists, is readable, can be loaded, and does not have version >= 2 set is ignored.
+  # All other conditions are reported as 'not ignored' even if there are errors; these will be handled later
+  # as if the hiera.yaml is a hiera-2 file.
+  # @api private
+  def is_ignored_hiera_version?(uri, composer)
+    config_file = File.join(composer.confdir, uri.path, 'hiera.yaml')
+    begin
+      data = YAML.load_file(config_file)
+      if data.is_a?(Hash)
+        ver = data[:version] || data['version']
+        return ver.nil? || ver < 2
+      end
+    rescue Errno::ENOENT
+    rescue Errno::ENOTDIR
+    rescue ::SyntaxError => e
+    end
+    return false
   end
 end
