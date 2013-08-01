@@ -19,9 +19,3 @@ To be documented:
 * resource
 * key
 * status
-
-
-Formats
--------
-
-Accept: pson, text/pson

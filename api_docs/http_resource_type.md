@@ -33,6 +33,11 @@ single resource_type response object (see "Schema" below).
 > instead of the node definition. The order in which kinds of objects are
 > searched is classes, then defined types, then node definitions.
 
+
+### Supported Formats
+
+Accept: pson, text/pson
+
 ### Parameters
 
 None
