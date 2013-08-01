@@ -40,7 +40,14 @@ describe 'The hiera2 config' do
   end
 
   it 'should report when config has syntax problems' do
-    test_config_issue('bad_syntax', _Issues::CONFIG_FILE_SYNTAX_ERROR)
+    if RUBY_VERSION.start_with?("1.8")
+      # Yes, it is a lobotomy or 2 short of a full brain...
+      # if a hash key is not in quotes it continues on the next line and gobbles what is there instead
+      # of reporting an error
+      test_config_issue('bad_syntax', _Issues::MISSING_HIERARCHY)
+    else
+      test_config_issue('bad_syntax', _Issues::CONFIG_FILE_SYNTAX_ERROR)
+    end
   end
 
   it 'should report when config has no hierarchy defined' do
