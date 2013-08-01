@@ -226,4 +226,13 @@ describe provider_class do
       provider.query.should be_nil
     end
   end
+  
+  context "#uninstall" do
+    describe 'when uninstalling' do
+      it 'should use erase to purge' do
+        provider.expects(:pkgdelete).with('-c', '-q', 'bash')
+        provider.purge
+      end
+    end
+  end
 end
