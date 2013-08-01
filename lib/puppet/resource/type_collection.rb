@@ -197,8 +197,6 @@ class Puppet::Resource::TypeCollection
   def find_or_load(namespaces, name, type, options = {})
     searchspace = options[:assume_fqname] ? [name].flatten : resolve_namespaces(namespaces, name)
     searchspace.each do |fqname|
-      raise(Puppet::ParseError, %Q{Illegal class named "#{fqname}"}) if fqname.include?('.')
-
       result = send(type, fqname)
       unless result
         if @notfound[fqname] and Puppet[:ignoremissingtypes]
