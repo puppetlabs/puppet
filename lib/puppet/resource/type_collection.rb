@@ -194,7 +194,6 @@ class Puppet::Resource::TypeCollection
   # necessary.
   def find_or_load(namespaces, name, type)
     resolve_namespaces(namespaces, name).each do |fqname|
-      raise(Puppet::ParseError, %Q{Illegal class named "#{fqname}"}) if fqname.include?('.')
       if result = send(type, fqname) || loader.try_load_fqname(type, fqname)
         return result
       end

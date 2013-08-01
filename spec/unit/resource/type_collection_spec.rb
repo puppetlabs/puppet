@@ -183,18 +183,6 @@ describe Puppet::Resource::TypeCollection do
         @code.loader.expects(:try_load_fqname).with(:hostclass, "foo::bar").returns(:foobar)
         @code.find_hostclass("foo", "bar").should == :foobar
       end
-
-      it "refuses to load an invalid class name" do
-        expect do
-          @code.find_hostclass('', '..::unwanted')
-        end.to raise_error(Puppet::ParseError, /Illegal class named "\.\.::unwanted"/)
-      end
-
-      it "refuses to load a valid class from an invalid namespace" do
-        expect do
-          @code.find_hostclass('..', 'unwanted')
-        end.to raise_error(Puppet::ParseError, /Illegal class named "\.\.::unwanted"/)
-      end
     end
   end
 
