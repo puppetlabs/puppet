@@ -159,7 +159,7 @@ class Puppet::Transaction::ResourceHarness
     @transaction = transaction
   end
 
-  def scheduled?(status, resource)
+  def scheduled?(resource)
     return true if Puppet[:ignoreschedules]
     return true unless schedule = schedule(resource)
 
