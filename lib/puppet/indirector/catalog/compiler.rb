@@ -12,7 +12,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   attr_accessor :code
 
   def extract_facts_from_request(request)
-    return unless text_facts = request.options[:facts]
+    # Older puppet agent sends :facts, which is double-escaped (for no good reason).
+    # Newer puppet agent sends :facts_data, which is (sanely) not.
+    # Keep the :facts support for older agents.
+    return unless text_facts = request.options[:facts_data] or text_facts = request.options[:facts]
     unless format = request.options[:facts_format]
       raise ArgumentError, "Facts but no fact format provided for #{request.key}"
     end
@@ -23,8 +26,11 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       if text_facts.is_a?(Puppet::Node::Facts)
         facts = text_facts
       else
-        # We unescape here because the corrosponding code in Puppet::Configurer::FactHandler escapes
-        facts = Puppet::Node::Facts.convert_from(format, CGI.unescape(text_facts))
+        # Normalize to facts_data (unescaped)
+        request.options[:facts_data] ? facts_data = text_facts :
+                                       facts_data = CGI.unescape(text_facts)
+
+        facts = Puppet::Node::Facts.convert_from(format, facts_data)
       end
 
       unless facts.name == request.key

@@ -32,6 +32,6 @@ module Puppet::Configurer::FactHandler
 
     text = facts.render(:pson)
 
-    {:facts_format => :pson, :facts => CGI.escape(text)}
+    {:facts_format => :pson, :facts_data => text}
   end
 end
