@@ -97,8 +97,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   private :add_resource_to_graph
 
   def create_resource_aliases(resource)
-    if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
-      self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
+    if resource.respond_to?(:isomorphic?) and resource.isomorphic? and resource.name != resource.title
+      self.alias(resource, resource.uniqueness_key)
     end
   end
   private :create_resource_aliases
