@@ -172,6 +172,12 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
 
       # I think this is safe since it's a URL, not an actual file
       children[meta.relative_path][:source] = source + "/" + meta.relative_path
+      resource.each do |param, value|
+        # These should never be passed to our children.
+        unless [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].include? param
+          children[meta.relative_path][param] = value
+        end
+      end
       replace_metadata(host, children[meta.relative_path], meta)
     end
 
