@@ -111,16 +111,8 @@ module Puppet::Pops::Binder::Producers
     #
     def do_transformation(scope, produced_value)
       return produced_value unless transformer
-      begin
-        # CHEATING as the expressions should have access to array/hash concat/merge in array/hash
-        current_parser = Puppet[:parser]
-        Puppet[:parser] = 'future'
-        produced_value = :undef if produced_value.nil?
-        transformer.call(scope, produced_value)
-      ensure
-        # Stop CHEATING
-        Puppet[:parser] = current_parser
-      end
+      produced_value = :undef if produced_value.nil?
+      transformer.call(scope, produced_value)
     end
   end
 
@@ -314,15 +306,7 @@ module Puppet::Pops::Binder::Producers
 
     # @api private
     def internal_produce(scope)
-      begin
-        # Must CHEAT as the expressions must have access to array/hash concat/merge
-        current_parser = Puppet[:parser]
-        Puppet[:parser] = 'future'
-        expression.evaluate(scope)
-      ensure
-        # Stop cheating
-        Puppet[:parser] = current_parser
-      end
+      expression.evaluate(scope)
     end
   end
 
