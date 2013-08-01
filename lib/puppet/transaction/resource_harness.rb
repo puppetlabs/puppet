@@ -31,7 +31,7 @@ class Puppet::Transaction::ResourceHarness
   def perform_changes(resource)
     current = resource.retrieve_resource
 
-    cache resource, :checked, Time.now
+    cache(resource, :checked, Time.now)
 
     return [] if ! allow_changes?(resource)
 
