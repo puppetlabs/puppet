@@ -664,7 +664,7 @@ describe Puppet::Transaction do
     end
 
     it "should let the resource harness determine whether the resource should be scheduled" do
-      @transaction.resource_harness.expects(:scheduled?).with(@transaction.resource_status(@resource), @resource).returns "feh"
+      @transaction.resource_harness.expects(:scheduled?).with(@resource).returns "feh"
 
       @transaction.evaluate
     end
