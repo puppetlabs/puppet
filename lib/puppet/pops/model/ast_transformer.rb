@@ -93,7 +93,7 @@ class Puppet::Pops::Model::AstTransformer
   end
 
   def transform_ArithmeticExpression(o)
-    ast o, AST::ArithmeticOperator, :lval => transform(o.left_expr), :rval=>transform(o.right_expr),
+    ast o, AST::ArithmeticOperator2, :lval => transform(o.left_expr), :rval=>transform(o.right_expr),
     :operator => o.operator.to_s
   end
 
