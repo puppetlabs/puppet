@@ -14,6 +14,10 @@ describe 'The hiera2 bindings provider' do
   let(:_Bindings) { _Binder::Bindings }
   let(:_Hiera2) { _Binder::Hiera2 }
 
+  before(:each) do
+    Puppet[:binder] = true
+  end
+
   context 'when loading ok bindings' do
 
     let(:node) { 'node.example.com' }

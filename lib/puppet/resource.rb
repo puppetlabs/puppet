@@ -321,19 +321,22 @@ class Puppet::Resource
     # Only lookup parameters for host classes
     return nil unless resource_type.type == :hostclass
 
-    # Lookup with injector, and if no value bound, lookup with "classic hiera"
     name = "#{resource_type.name}::#{param}"
-    scope.compiler.injector.lookup(scope, name) do |result|
-      if result.nil?
-        Puppet::DataBinding.indirection.find(
-          name,
-          :environment => scope.environment.to_s,
-          :variables => Puppet::DataBinding::Variables.new(scope))
-      else
-        result
-      end
+    # Lookup with injector (optionally), and if no value bound, lookup with "classic hiera"
+    result = nil
+    if scope.compiler.is_binder_active?
+      result = scope.compiler.injector.lookup(scope, name)
+    end
+    if result.nil?
+      Puppet::DataBinding.indirection.find(
+        name,
+        :environment => scope.environment.to_s,
+        :variables => Puppet::DataBinding::Variables.new(scope))
+    else
+      result
     end
   end
+
   private :lookup_external_default_for
 
   def set_default_parameters(scope)

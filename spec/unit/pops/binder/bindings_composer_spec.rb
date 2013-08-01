@@ -17,6 +17,10 @@ describe 'BinderComposer' do
   let(:parser)      { Puppet::Pops::Parser::Parser.new() }
   let(:factory)     { Puppet::Pops::Binder::BindingsFactory }
 
+  before(:each) do
+    Puppet[:binder] = true
+  end
+
   it 'should load default config if no config file exists' do
     diagnostics = diag
     composer = Puppet::Pops::Binder::BindingsComposer.new()
