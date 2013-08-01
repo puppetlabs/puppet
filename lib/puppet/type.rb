@@ -1007,7 +1007,7 @@ class Type
   # Parameters and meta-parameters are not included in the result.
   # @todo As oposed to all non contained properties? How is this different than any of the other
   #   methods that also "gets" properties/parameters/etc. ?
-  # @return [Array<Object>] array of all property values (mix of types)
+  # @return [Puppet::Resource] array of all property values (mix of types)
   # @raise [fail???] if there is a provider and it is not suitable for the host this is evaluated for.
   def retrieve
     fail "Provider #{provider.class.name} is not functional on this host" if self.provider.is_a?(Puppet::Provider) and ! provider.class.suitable?
@@ -1035,12 +1035,16 @@ class Type
     result
   end
 
-  # ???
-  # @todo what does this do? It seems to create a new Resource based on the result of calling #retrieve
-  #  and if that is a Hash, else this method produces nil.
-  # @return [Puppet::Resource, nil] a new Resource, or nil, if this object did not produce a Hash as the
-  #   result from #retrieve
+  # Retrieve the current state of the system as a Puppet::Resource. For
+  # the base Puppet::Type this does the same thing as #retrieve, but
+  # specific types are free to implement #retrieve as returning a hash,
+  # and this will call #retrieve and convert the hash to a resource.
+  # This is used when determining when syncing a resource.
   #
+  # @return [Puppet::Resource] A resource representing the current state
+  #   of the system.
+  #
+  # @api private
   def retrieve_resource
     resource = retrieve
     resource = Resource.new(type, title, :parameters => resource) if resource.is_a? Hash
@@ -1943,8 +1947,9 @@ class Type
   # Adds dependencies to the catalog from added autorequirements.
   # See {autorequire} for how to add an auto-requirement.
   # @todo needs details - see the param rel_catalog, and type of this param
-  # @param rel_catalog [Puppet::Catalog, nil] the catalog to add dependencies to. Defaults to the
-  #   catalog (TODO: what is the type of the catalog).
+  # @param rel_catalog [Puppet::Resource::Catalog, nil] the catalog to
+  #   add dependencies to. Defaults to the current catalog (set when the
+  #   type instance was added to a catalog)
   # @raise [Puppet::DevError] if there is no catalog
   #
   def autorequire(rel_catalog = nil)
