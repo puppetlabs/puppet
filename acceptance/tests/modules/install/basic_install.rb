@@ -1,5 +1,5 @@
 test_name "puppet module install (agent)"
-require 'puppet/acceptance/module_utils'
+require File.join(File.dirname(__FILE__), '..', '..', 'module_utils')
 extend Puppet::Acceptance::ModuleUtils
 
 agents.each do |agent|
