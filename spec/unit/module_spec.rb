@@ -403,14 +403,14 @@ describe Puppet::Module, "when finding matching manifests" do
   end
 
   it "should return all manifests matching the glob pattern" do
-    Dir.expects(:glob).with(Pathname.new(@fq_glob_with_extension)).returns(%w{foo bar})
+    Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{foo bar})
     FileTest.stubs(:directory?).returns false
 
     @mod.match_manifests(@pq_glob_with_extension).should == %w{foo bar}
   end
 
   it "should not return directories" do
-    Dir.expects(:glob).with(Pathname.new(@fq_glob_with_extension)).returns(%w{foo bar})
+    Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{foo bar})
 
     FileTest.expects(:directory?).with("foo").returns false
     FileTest.expects(:directory?).with("bar").returns true
@@ -418,25 +418,25 @@ describe Puppet::Module, "when finding matching manifests" do
   end
 
   it "should default to the 'init' file if no glob pattern is specified" do
-    Dir.expects(:glob).with(Pathname.new("/a/manifests/init.{pp,rb}")).returns(%w{/a/manifests/init.pp})
+    Dir.expects(:glob).with("/a/manifests/init.{pp,rb}").returns(%w{/a/manifests/init.pp})
 
     @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
   end
 
   it "should return all manifests matching the glob pattern in all existing paths" do
-    Dir.expects(:glob).with(Pathname.new(@fq_glob_with_extension)).returns(%w{a b})
+    Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{a b})
 
     @mod.match_manifests(@pq_glob_with_extension).should == %w{a b}
   end
 
   it "should match the glob pattern plus '.{pp,rb}' if no extention is specified" do
-    Dir.expects(:glob).with(Pathname.new("/a/manifests/yay/foo.{pp,rb}")).returns(%w{yay})
+    Dir.expects(:glob).with("/a/manifests/yay/foo.{pp,rb}").returns(%w{yay})
 
     @mod.match_manifests("yay/foo").should == %w{yay}
   end
 
   it "should return an empty array if no manifests matched" do
-    Dir.expects(:glob).with(Pathname.new(@fq_glob_with_extension)).returns([])
+    Dir.expects(:glob).with(@fq_glob_with_extension).returns([])
 
     @mod.match_manifests(@pq_glob_with_extension).should == []
   end
