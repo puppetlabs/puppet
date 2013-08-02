@@ -96,9 +96,11 @@ class Puppet::Parser::TypeLoader
     # given first/foo and second/foo, only files from first/foo will be loaded.
     environment.modules.each do |mod|
       manifest_files = []
-      Find.find(mod.manifests) do |path|
-        if path.end_with?(".pp") || path.end_with?(".rb")
-          manifest_files << path
+      if File.exists?(mod.manifests)
+        Find.find(mod.manifests) do |path|
+          if path.end_with?(".pp") || path.end_with?(".rb")
+            manifest_files << path
+          end
         end
       end
       load_files(mod.name, manifest_files)
