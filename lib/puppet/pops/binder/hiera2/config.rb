@@ -9,6 +9,12 @@ module Puppet::Pops::Binder::Hiera2
     DEFAULT_HIERARCHY = [ ['osfamily', '${osfamily}', 'data/osfamily/${osfamily}'], ['common', 'true', 'data/common']]
     DEFAULT_BACKENDS = ['yaml', 'json']
 
+    if defined?(::Psych::SyntaxError)
+      YamlLoadExceptions = [::StandardError, ::ArgumentError, ::Psych::SyntaxError]
+    else
+      YamlLoadExceptions = [::StandardError, ::ArgumentError]
+    end
+
     # Returns a list of configured backends.
     #
     # @return [Array<String>] backend names
@@ -52,6 +58,8 @@ module Puppet::Pops::Binder::Hiera2
       rescue Errno::ENOTDIR
         diagnostics.accept(Issues::CONFIG_FILE_NOT_FOUND, config_file)
       rescue ::SyntaxError => e
+        diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, e)
+      rescue *YamlLoadExceptions => e
         diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, e)
       end
       @hierarchy ||= DEFAULT_HIERARCHY
