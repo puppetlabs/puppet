@@ -107,7 +107,7 @@ class Puppet::Parser::TypeLoader
       mod = Puppet::Module.new(name, :environment => environment)
       Find.find(File.join(mod.path, "manifests")) do |path|
         if path =~ /\.pp$/ or path =~ /\.rb$/
-          load_files(mod.name, path)
+          load_files(mod.name, [path])
         end
       end
     end
