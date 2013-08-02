@@ -626,6 +626,12 @@ describe Puppet::Module, "when finding matching manifests" do
 
     @mod.match_manifests(@pq_glob_with_extension).should == []
   end
+
+  it "should raise an error if the pattern tries to leave the manifest directory" do
+    expect do
+      @mod.match_manifests("something/../../*")
+    end.to raise_error(Puppet::Module::InvalidFilePattern, /The pattern "something\/\.\.\/\.\.\/\*" to find manifests in the module "mymod" is invalid and potentially unsafe./)
+  end
 end
 
 describe Puppet::Module do

@@ -101,7 +101,16 @@ class Puppet::Parser::Parser
   end
 
   def import(file)
-    known_resource_types.loader.import(file, @lexer.file)
+    if @lexer.file
+      # use a path relative to the file doing the importing
+      dir = File.dirname(@lexer.file)
+    else
+      # otherwise assume that everything needs to be from where the user is
+      # executing this command. Normally, this would be in a "puppet apply -e"
+      dir = Dir.pwd
+    end
+
+    known_resource_types.loader.import(file, dir)
   end
 
   def initialize(env)

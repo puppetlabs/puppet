@@ -55,11 +55,29 @@ describe Puppet::Resource::TypeCollection do
     @code.node("foo").should equal(node)
   end
 
+  it "should fail if a duplicate node is added" do
+    @code.add(Puppet::Resource::Type.new(:node, "foo"))
+
+    expect do
+      @code.add(Puppet::Resource::Type.new(:node, "foo"))
+    end.to raise_error(Puppet::ParseError, /cannot redefine/)
+  end
+
   it "should store hostclasses as hostclasses" do
     klass = Puppet::Resource::Type.new(:hostclass, "foo")
 
     @code.add(klass)
     @code.hostclass("foo").should equal(klass)
+  end
+
+  it "merge together hostclasses of the same name" do
+    klass1 = Puppet::Resource::Type.new(:hostclass, "foo", :doc => "first")
+    klass2 = Puppet::Resource::Type.new(:hostclass, "foo", :doc => "second")
+
+    @code.add(klass1)
+    @code.add(klass2)
+
+    @code.hostclass("foo").doc.should == "firstsecond"
   end
 
   it "should store definitions as definitions" do
@@ -69,13 +87,12 @@ describe Puppet::Resource::TypeCollection do
     @code.definition("foo").should equal(define)
   end
 
-  it "should merge new classes with existing classes of the same name" do
-    loader = Puppet::Resource::TypeCollection.new("env")
-    first = Puppet::Resource::Type.new(:hostclass, "foo")
-    second = Puppet::Resource::Type.new(:hostclass, "foo")
-    loader.add first
-    first.expects(:merge).with(second)
-    loader.add(second)
+  it "should fail if a duplicate definition is added" do
+    @code.add(Puppet::Resource::Type.new(:definition, "foo"))
+
+    expect do
+      @code.add(Puppet::Resource::Type.new(:definition, "foo"))
+    end.to raise_error(Puppet::ParseError, /cannot be redefined/)
   end
 
   it "should remove all nodes, classes, and definitions when cleared" do
@@ -170,58 +187,27 @@ describe Puppet::Resource::TypeCollection do
   end
 
   %w{hostclass node definition}.each do |data|
-    before do
-      @instance = Puppet::Resource::Type.new(data, "foo")
-    end
+    describe "behavior of add for #{data}" do
 
-    it "should have a method for adding a #{data}" do
-      Puppet::Resource::TypeCollection.new("env").should respond_to("add_#{data}")
-    end
-
-    it "should use the name of the instance to add it" do
-      loader = Puppet::Resource::TypeCollection.new("env")
-      loader.send("add_#{data}", @instance)
-      loader.send(data, @instance.name).should equal(@instance)
-    end
-
-    unless data == "hostclass"
-      it "should fail to add a #{data} when one already exists" do
+      it "should return the added #{data}" do
         loader = Puppet::Resource::TypeCollection.new("env")
-        loader.add @instance
-        lambda { loader.add(@instance) }.should raise_error(Puppet::ParseError)
+        instance = Puppet::Resource::Type.new(data, "foo")
+
+        loader.add(instance).should equal(instance)
       end
-    end
 
-    it "should return the added #{data}" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      it "should retrieve #{data} insensitive to case" do
+        loader = Puppet::Resource::TypeCollection.new("env")
+        instance = Puppet::Resource::Type.new(data, "Bar")
 
-      loader.add(@instance).should equal(@instance)
-    end
+        loader.add instance
 
-    it "should be able to retrieve #{data} by name" do
-      loader = Puppet::Resource::TypeCollection.new("env")
-      instance = Puppet::Resource::Type.new(data, "bar")
-      loader.add instance
-      loader.send(data, "bar").should equal(instance)
-    end
+        loader.send(data, "bAr").should equal(instance)
+      end
 
-    it "should retrieve #{data} insensitive to case" do
-      loader = Puppet::Resource::TypeCollection.new("env")
-      instance = Puppet::Resource::Type.new(data, "Bar")
-      loader.add instance
-      loader.send(data, "bAr").should equal(instance)
-    end
-
-    it "should return nil when asked for a #{data} that has not been added" do
-      Puppet::Resource::TypeCollection.new("env").send(data, "foo").should be_nil
-    end
-
-    it "should be able to retrieve all #{data}s" do
-      plurals = { "hostclass" => "hostclasses", "node" => "nodes", "definition" => "definitions" }
-      loader = Puppet::Resource::TypeCollection.new("env")
-      instance = Puppet::Resource::Type.new(data, "foo")
-      loader.add instance
-      loader.send(plurals[data]).should == { "foo" => instance }
+      it "should return nil when asked for a #{data} that has not been added" do
+        Puppet::Resource::TypeCollection.new("env").send(data, "foo").should be_nil
+      end
     end
   end
 
@@ -311,7 +297,7 @@ describe Puppet::Resource::TypeCollection do
       end
 
     end
-    
+
     it "should not look in the local scope for classes when the name is qualified" do
         @loader = Puppet::Resource::TypeCollection.new("env")
         @loader.add Puppet::Resource::Type.new(:hostclass, "foo::bar")
@@ -445,7 +431,5 @@ describe Puppet::Resource::TypeCollection do
 
       lambda { @code.version }.should raise_error(Puppet::ParseError)
     end
-
   end
-
 end
