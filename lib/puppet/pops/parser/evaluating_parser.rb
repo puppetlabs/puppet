@@ -10,7 +10,18 @@ class Puppet::Pops::Parser::EvaluatingParser
   def parse_string(s, file_source = 'unknown')
     @file_source = file_source
     clear()
-    assert_and_report(@parser.parse_string(s))
+    # Handling of syntax error can be much improved (in general), now it bails out of the parser
+    # and does not have as rich information (when parsing a string), need to update it with the file source
+    # (ideally, a syntax error should be entered as an issue, and not just thrown - but that is a general problem
+    # and an improvement that can be made in the eparser (rather than here).
+    # Also a possible improvement (if the YAML parser returns positions) is to provide correct output of position.
+    #
+    begin
+      assert_and_report(@parser.parse_string(s))
+    rescue Puppet::ParseError => e
+      e.file = @file_source unless e.file
+      raise e
+    end
   end
 
   def parse_file(file)
@@ -49,6 +60,10 @@ class Puppet::Pops::Parser::EvaluatingParser
 
   def assert_and_report(parse_result)
     return nil unless parse_result
+    # make sure the result has an origin (if parsed from a string)
+    unless Puppet::Pops::Adapters::OriginAdapter.get(parse_result.model)
+      Puppet::Pops::Adapters::OriginAdapter.adapt(parse_result.model).origin = @file_source
+    end
     validator.validate(parse_result)
 
     max_errors = Puppet[:max_errors]
@@ -83,6 +98,7 @@ class Puppet::Pops::Parser::EvaluatingParser
       formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
       if errors.size == 1 || max_errors <= 1
         # raise immediately
+        require 'debugger'; debugger
         raise Puppet::ParseError.new(formatter.format(errors[0]))
       end
       emitted = 0

@@ -137,8 +137,9 @@ class Puppet::Pops::Binder::BindingsComposer
   def effective_categories(scope)
     unevaluated_categories = @config.categorization
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
+    file_source = @config.config_file or "defaults in: #{__FILE__}"
     evaluated_categories = unevaluated_categories.collect do |category_tuple|
-      evaluated_categories = [ category_tuple[0], parser.evaluate_string( scope, parser.quote( category_tuple[1] )) ]
+      evaluated_categories = [ category_tuple[0], parser.evaluate_string( scope, parser.quote( category_tuple[1] ), file_source ) ]
       if evaluated_categories[1].is_a?(String)
         # category values are always in lower case
         evaluated_categories[1] = evaluated_categories[1].downcase
