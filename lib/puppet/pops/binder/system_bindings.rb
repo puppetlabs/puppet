@@ -35,12 +35,24 @@ class Puppet::Pops::Binder::SystemBindings
   end
 
   def self.injector_boot_contribution(env_boot_bindings)
-    # Use an 'extension' category for extension bindings to allow them to override the default
-    # bindings since they are placed in the same layer (to avoid having a separate layer).
+    # Compose the injector_boot_bindings contributed from the puppet runtime book (i.e. defaults for
+    # extensions that should be active in the boot injector - see Puppetx initialization.
     #
     bindings = [deep_clone(@injector_boot_bindings.model), deep_clone(@injector_default_bindings)]
+
+    # Add the bindings that come from the bindings_composer as it may define custom extensions added in the bindings
+    # configuration. (i.e. bindings required to be able to lookup using bindings schemes and backends when
+    # configuring the real injector).
+    #
     bindings << env_boot_bindings unless env_boot_bindings.nil?
+
+    # Use an 'extension' category for extension bindings to allow them to override the default
+    # bindings since they are placed in the same layer (this is done to avoid having a separate layer).
+    # The purpose for allowing overrides is that someone may want to replace say 'yaml' with a different version,
+    # (say one that uses a YAML implementation that actually works ok in ruby 1.8.7 ;-)), an encrypted parser, etc.
     effective_categories = Factory.categories([['extension', 'true'],['common', 'true']])
+
+    # return the composition and the cateogires.
     Factory.contributed_bindings("puppet-injector-boot", bindings, effective_categories)
   end
 

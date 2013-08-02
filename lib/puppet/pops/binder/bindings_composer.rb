@@ -87,8 +87,6 @@ class Puppet::Pops::Binder::BindingsComposer
         end
       end
     end
-#    # Register the just created bindings, the creation of the boot injector will pick them up
-#    Puppet::Bindings.register(boot_bindings.model)
 
     @injector = scope.compiler.create_boot_injector(boot_bindings.model)
   end
@@ -137,20 +135,19 @@ class Puppet::Pops::Binder::BindingsComposer
   # @api public
   #
   def effective_categories(scope)
-    evaluated_categories = []
     unevaluated_categories = @config.categorization
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
-    result = unevaluated_categories.collect do |category_tuple|
-      result = [ category_tuple[0], parser.evaluate_string( scope, parser.quote( category_tuple[1] )) ]
-      if result[1].is_a?(String)
+    evaluated_categories = unevaluated_categories.collect do |category_tuple|
+      evaluated_categories = [ category_tuple[0], parser.evaluate_string( scope, parser.quote( category_tuple[1] )) ]
+      if evaluated_categories[1].is_a?(String)
         # category values are always in lower case
-        result[1] = result[1].downcase
+        evaluated_categories[1] = evaluated_categories[1].downcase
       else
-        raise ArgumentError, "Categorization value must be a string, category #{result[0]} evaluation resulted in a: '#{result[1].class}'"
+        raise ArgumentError, "Categorization value must be a string, category #{evaluated_categories[0]} evaluation resulted in a: '#{result[1].class}'"
       end
-      result
+      evaluated_categories
     end
-    Puppet::Pops::Binder::BindingsFactory::categories(result)
+    Puppet::Pops::Binder::BindingsFactory::categories(evaluated_categories)
   end
 
   private
