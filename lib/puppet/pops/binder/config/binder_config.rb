@@ -33,7 +33,7 @@ module Puppet::Pops::Binder::Config
     ]
 
     DEFAULT_CATEGORIES = [
-      ['node',        "${::fqdn}"],
+      ['node',        "${fqdn}"],
       ['osfamily',    "${osfamily}"],
       ['environment', "${environment}"],
       ['common',      "true"]
