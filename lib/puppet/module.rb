@@ -11,6 +11,7 @@ class Puppet::Module
   class IncompatiblePlatform < Error; end
   class MissingMetadata < Error; end
   class InvalidName < Error; end
+  class InvalidFilePattern < Error; end
 
   include Puppet::Util::Logging
 
@@ -132,10 +133,24 @@ class Puppet::Module
   # Return the list of manifests matching the given glob pattern,
   # defaulting to 'init.{pp,rb}' for empty modules.
   def match_manifests(rest)
-    pat = File.join(path, "manifests", rest || 'init')
-    [manifest("init.pp"),manifest("init.rb")].compact + Dir.
-      glob(pat + (File.extname(pat).empty? ? '.{pp,rb}' : '')).
-      reject { |f| FileTest.directory?(f) }
+    relative_pattern = if rest
+        File.extname(rest).empty? ? "#{rest}.{pp,rb}" : rest
+      else
+        'init.{pp,rb}'
+      end
+    pattern = Puppet::FileSystem::PathPattern.relative(relative_pattern)
+    manifests = Puppet::FileSystem::PathPattern.absolute(File.join(path, "manifests"))
+
+    wanted_manifests = pattern.prefix_with(manifests)
+
+    init_manifests = [manifest("init.pp"), manifest("init.rb")].compact
+    searched_manifests = wanted_manifests.glob.reject { |f| FileTest.directory?(f) }
+
+    init_manifests + searched_manifests
+  rescue Puppet::FileSystem::PathPattern::InvalidPattern => error
+    raise Puppet::Module::InvalidFilePattern.new(
+      "The pattern \"#{rest}\" to find manifests in the module \"#{name}\" " +
+      "is invalid and potentially unsafe.", error)
   end
 
   def metadata_file
