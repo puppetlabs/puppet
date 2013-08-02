@@ -3,6 +3,10 @@ require 'puppet/pops'
 require 'stringio'
 
 describe "lookup function" do
+  before(:each) do
+    Puppet[:binder] = true
+  end
+
   it "must be called with at least a name to lookup" do
     scope = scope_with_injections_from(bound(bindings))
 
