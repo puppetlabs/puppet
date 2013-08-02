@@ -29,13 +29,12 @@ class Puppet::Transaction::ResourceHarness
   end
 
   def perform_changes(resource)
-    current = resource.retrieve_resource
+    current_values = resource.retrieve_resource.to_hash
 
     cache(resource, :checked, Time.now)
 
     return [] if ! allow_changes?(resource)
 
-    current_values = current.to_hash
     historical_values = Puppet::Util::Storage.cache(resource).dup
     desired_values = {}
     resource.properties.each do |property|

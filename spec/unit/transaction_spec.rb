@@ -681,32 +681,6 @@ describe Puppet::Transaction do
       catalog.add_resource resource2
     end
 
-    #XXX provider_class.expects(:prefetch).with(resources)
-    #where resources is all resources in the catalog with that provider
-
-    describe "#resources_by_provider" do
-      it "should fetch resources by their type and provider" do
-        transaction.resources_by_provider(:sshkey, :parsed).should == {
-          resource.name => resource,
-        }
-
-        transaction.resources_by_provider(:package, :apt).should == {
-          resource2.name => resource2,
-        }
-      end
-
-      it "should omit resources whose types don't use providers" do
-        # faking the sshkey type not to have a provider
-        resource.class.stubs(:attrclass).returns nil
-
-        transaction.resources_by_provider(:sshkey, :parsed).should == {}
-      end
-
-      it "should return empty hash for providers with no resources" do
-        transaction.resources_by_provider(:package, :yum).should == {}
-      end
-    end
-
     it "should match resources by name, not title" do
       resource.provider.class.expects(:prefetch).with("bar" => resource)
 
@@ -740,24 +714,6 @@ describe Puppet::Transaction do
 
       transaction.prefetch_if_necessary(resource)
     end
-  end
-
-  #XXX maybe mock the resources here -- have to figure out how
-  it "should return all resources for which the resource status indicates the resource has changed when determinig changed resources" do
-    @catalog = Puppet::Resource::Catalog.new
-    @transaction = Puppet::Transaction.new(@catalog)
-    names = []
-    2.times do |i|
-      name = File.join(@basepath, "file#{i}")
-      resource = Puppet::Type.type(:file).new :path => name
-      names << resource.to_s
-      @catalog.add_resource resource
-      @transaction.add_resource_status Puppet::Resource::Status.new(resource)
-    end
-
-    @transaction.resource_status(names[0]).changed = true
-
-    @transaction.changed?.should == [@catalog.resource(names[0])]
   end
 
   describe 'when checking application run state' do
