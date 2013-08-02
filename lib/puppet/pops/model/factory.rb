@@ -661,14 +661,20 @@ class Puppet::Pops::Model::Factory
           memo[-1] = Puppet::Pops::Model::Factory.IMPORT(expr.is_a?(Array) ? expr : [expr])
         else
           memo[-1] = Puppet::Pops::Model::Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
+          if expr.is_a?(Model::CallNamedFunctionExpression)
+            # Patch statement function call to expression style
+            # This is needed because it is first parsed as a "statement" and the requirement changes as it becomes
+            # an argument to the name to call transform above.
+            expr.rval_required = true
+          end
         end
       else
         memo << expr
-      end
-      if expr.is_a?(Model::CallNamedFunctionExpression)
-        # patch expression function call to statement style
-        # TODO: This is kind of meaningless, but to make it compatible...
-        expr.rval_required = false
+        if expr.is_a?(Model::CallNamedFunctionExpression)
+          # Patch rvalue expression function call to statement style.
+          # This is not really required but done to be AST model compliant
+          expr.rval_required = false
+        end
       end
       memo
     end
