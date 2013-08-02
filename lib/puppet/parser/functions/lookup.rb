@@ -29,6 +29,9 @@ The type specification is one of:
 
 ENDHEREDOC
 
+  unless Puppet[:binder] || Puppet[:parser] == 'future'
+    raise Puppet::ParseError, "The lookup function is only available with settings --binder true, or --parser future" 
+  end
   type_parser = Puppet::Pops::Types::TypeParser.new
   pblock    = args[-1] if args[-1].is_a?(Puppet::Parser::AST::Lambda)
   type_name = args[1] unless args[1].is_a?(Puppet::Parser::AST::Lambda)
