@@ -29,6 +29,10 @@ describe "egrammar parsing function calls" do
       it "foo(bar, fum,)" do
         dump(parse("foo(bar,fum,)")).should == "(invoke foo bar fum)"
       end
+
+      it "foo fqdn_rand(30)" do
+        dump(parse("foo fqdn_rand(30)")).should == '(invoke foo (call fqdn_rand 30))'
+      end
     end
 
     context "in nested scopes" do
