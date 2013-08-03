@@ -2,6 +2,8 @@ test_name "puppet module install (agent)"
 require File.join(File.dirname(__FILE__), '..', '..', 'module_utils')
 extend Puppet::Acceptance::ModuleUtils
 
+confine :except, :platform => 'windows'
+
 agents.each do |agent|
   step 'setup'
   stub_forge_on(agent)
