@@ -1,11 +1,8 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'uri'
 require 'json-schema'
 
 require 'puppet/resource/type'
-
-RESOURCE_TYPE_SCHEMA = File.join(File.dirname(__FILE__), 'resource_type.json')
 
 describe Puppet::Resource::Type do
   it "should have a 'name' attribute" do
@@ -36,7 +33,7 @@ describe Puppet::Resource::Type do
 
   describe "when converting to json" do
     def validate_as_json(type)
-      JSON::Validator.validate!(URI.encode(RESOURCE_TYPE_SCHEMA), type.to_pson)
+      JSON::Validator.validate!(File.dirname(__FILE__) + '/resource_type.json', type.to_pson)
     end
 
     before do
