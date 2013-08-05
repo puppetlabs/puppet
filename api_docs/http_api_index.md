@@ -2,6 +2,7 @@ Services
 --------
 
 * {file:api_docs/http_resource_type.md Resource Type}
+* {file:api_docs/http_certificate.md Certificate}
 
 To be documented:
 
@@ -19,9 +20,3 @@ To be documented:
 * resource
 * key
 * status
-
-
-Formats
--------
-
-Accept: pson, text/pson
