@@ -7,7 +7,7 @@ describe Puppet::Util::Warnings do
     @msg2 = "more booness"
   end
 
-  {:notice => "notice_once", :warning => "warnonce"}.each do |log, method|
+  {:notice => "notice_once", :warning => "warnonce", :debug => "debug_once"}.each do |log, method|
     describe "when registring '#{log}' messages" do
       it "should always return nil" do
         Puppet::Util::Warnings.send(method, @msg1).should be(nil)
