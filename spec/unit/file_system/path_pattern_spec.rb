@@ -13,6 +13,22 @@ describe Puppet::FileSystem::PathPattern do
       end.to raise_error(InvalidPattern, "PathPatterns cannot be created with directory traversals.")
     end
 
+    it "can be created with a '..' prefixing a filename" do
+      expect(Puppet::FileSystem::PathPattern.relative("my/..other").to_s).to eq("my/..other")
+    end
+
+    it "can be created with a '..' suffixing a filename" do
+      expect(Puppet::FileSystem::PathPattern.relative("my/other..").to_s).to eq("my/other..")
+    end
+
+    it "can be created with a '..' embedded in a filename" do
+      expect(Puppet::FileSystem::PathPattern.relative("my/ot..her").to_s).to eq("my/ot..her")
+    end
+
+    it "can be created with a '..' embedded in a filename on windows", :if => Puppet.features.microsoft_windows? do
+      expect(Puppet::FileSystem::PathPattern.relative("c:\..my\ot..her\one..").to_s).to eq("c:\..my\ot..her\one..")
+    end
+
     it "can not be created with a \\0 byte embedded" do
       expect do
         Puppet::FileSystem::PathPattern.relative("my/\0/other")

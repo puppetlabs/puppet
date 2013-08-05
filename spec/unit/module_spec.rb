@@ -604,7 +604,8 @@ describe Puppet::Module, "when finding matching manifests" do
   end
 
   it "should default to the 'init' file if no glob pattern is specified" do
-    Dir.expects(:glob).with("/a/manifests/init.{pp,rb}").returns(%w{/a/manifests/init.pp})
+    FileTest.expects(:exist?).with("/a/manifests/init.pp").returns(true)
+    FileTest.expects(:exist?).with("/a/manifests/init.rb").returns(false)
 
     @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
   end
