@@ -145,30 +145,25 @@ module Puppet
         # module directory should exist
         on host, "[ -d #{moduledir}/#{module_name} ]"
 
-        # module directory should have a mode of 755
-        on host, "ls -ld #{moduledir}/#{module_name}" do
+        owner = ''
+        group = ''
+        on host, "ls -ld #{moduledir}" do
           listing = stdout.split(' ')
-          assert_match /drwxr-xr-x/, listing[0], "file permissions are not set to 644"
+          owner = listing[2]
+          group = listing[3]
         end
 
-        # module files should have:
-        #     * a mode of 644
+        # A module's files should have:
+        #     * a mode of 644 (755, if they're a directory)
         #     * owner == owner of moduledir
         #     * group == group of moduledir
-        on host, "ls -l #{moduledir}/#{module_name}/Modulefile" do
-          listing = stdout.split(' ')
+        on host, "ls -alR #{moduledir}/#{module_name}" do
+          listings = stdout.split('\n').grep(/[^bcdlsp-]/)
 
-          moddir_owner = ''
-          moddir_group = ''
-          on host, "ls -ld #{moduledir}" do
-            moddir_listing = stdout.split(' ')
-            moddir_owner = moddir_listing[2]
-            moddir_group = moddir_listing[3]
+          listings.each do |line|
+            assert_match /(drwxr-xr-x|-rw-r--r--)\s+\d+\s+#{owner}\s+#{group}/, line,
+              "bad permissions for #{line[/\S+$/]} - expected 644/755, #{owner}, #{group}"
           end
-
-          assert_match /-rw-r--r--/, listing[0], "file permissions are not set to 644"
-          assert_match /#{moddir_owner}/, listing[2], "user not set to #{moddir_owner}"
-          assert_match /#{moddir_group}/, listing[3], "group not set to #{moddir_group}"
         end
       end
 

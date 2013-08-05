@@ -9,6 +9,11 @@ agents.each do |agent|
   stub_forge_on(agent)
 
   modulesdir = agent.tmpdir('puppet_module_build')
+
+  on(agent, 'groups') do
+    on(agent, "chgrp #{stdout.split(' ').pop} #{modulesdir}")
+  end
+
   teardown do
     on agent, "rm -rf #{modulesdir}"
   end
