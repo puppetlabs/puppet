@@ -91,6 +91,15 @@ The environment field is ignored.
 
     No request key specified in /env/certificate/
 
+#### Master is not a CA
+
+    GET /env/certificate/valid_certificate
+
+    HTTP/1.1 400 this master is not a CA
+    Content-Type: text/plain
+
+    this master is not a CA
+
 
 Schema
 ------
