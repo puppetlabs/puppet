@@ -11,8 +11,8 @@ describe Puppet::ModuleTool::Tar::Gnu do
     Puppet::Util::Execution.expects(:execute).with("tar xzf #{sourcefile} --no-same-permissions --no-same-owner -C #{destdir}")
     Puppet::Util::Execution.expects(:execute).with("find #{destdir} -type d -exec chmod 755 {} +")
     Puppet::Util::Execution.expects(:execute).with("find #{destdir} -type f -exec chmod 644 {} +")
-    Puppet::Util::Execution.expects(:execute).with("chown -R myuid #{destdir}")
-    subject.unpack(sourcefile, destdir, 'myuid')
+    Puppet::Util::Execution.expects(:execute).with("chown -R <owner:group> #{destdir}")
+    subject.unpack(sourcefile, destdir, '<owner:group>')
   end
 
   it "packs a tar file" do
