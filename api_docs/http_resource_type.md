@@ -34,6 +34,10 @@ single resource_type response object (see "Schema" below).
 > searched is classes, then defined types, then node definitions.
 
 
+### Supported HTTP Methods
+
+GET
+
 ### Supported Formats
 
 Accept: pson, text/pson
@@ -88,6 +92,14 @@ The `search_string` is required. It must be either a Ruby regular expression or
 the string `*` (which will match all resource types). Surrounding slashes are
 stripped. Note that if you want to use the `?` character in a regular
 expression, it must be escaped as `%3F`.
+
+### Supported HTTP Methods
+
+GET
+
+### Supported Formats
+
+Accept: pson, text/pson
 
 ### Parameters
 

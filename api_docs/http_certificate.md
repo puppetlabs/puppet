@@ -14,6 +14,10 @@ Get a certificate.
     GET /:environment/certificate/:name
 
 
+### Supported HTTP Methods
+
+GET
+
 ### Supported Format
 
 Accept: s
