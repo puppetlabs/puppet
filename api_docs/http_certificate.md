@@ -4,6 +4,8 @@ Certificate
 The `certificate` endpoint returns the certificate for the specified name,
 which might be either a standard certname or `ca`.
 
+The returned certificate is always in the `.pem` format.
+
 Find
 ----
 
