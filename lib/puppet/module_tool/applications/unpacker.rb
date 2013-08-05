@@ -49,7 +49,7 @@ module Puppet::ModuleTool
             end
             Puppet::Util.execute("find #{build_dir} -type d -exec chmod 755 {} +")
             Puppet::Util.execute("find #{build_dir} -type f -exec chmod 644 {} +")
-            Puppet::Util.execute("chown -R #{@module_path.stat.uid} #{build_dir}")
+            Puppet::Util.execute("chown -R #{@module_path.stat.uid}:#{@module_path.stat.gid} #{build_dir}")
           rescue Puppet::ExecutionFailure => e
             raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
           end
