@@ -15,16 +15,15 @@ require 'puppet/rb_tree_map'
 # this information, and nothing outside the transaction can see it
 # except via the Transaction#relationship_graph
 class Puppet::Transaction::RelationshipGraphWrapper
-  attr_reader :blockers, :ready, :done, :unguessable_deterministic_key
+  attr_reader :blockers, :ready, :done
 
-  def initialize(real_graph, transaction)
+  def initialize(real_graph, _, transaction)
     @real_graph = real_graph
     @transaction = transaction
     @ready = Puppet::RbTreeMap.new
     @generated = {}
     @done = {}
     @blockers = {}
-    @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.ref}") }
     @providerless_types = []
   end
 
@@ -37,7 +36,7 @@ class Puppet::Transaction::RelationshipGraphWrapper
   end
 
   def add_edge(f, t, label=nil)
-    key = @unguessable_deterministic_key[t]
+    key = @real_graph.resource_priority(t)
 
     @ready.delete(key)
 
@@ -66,7 +65,7 @@ class Puppet::Transaction::RelationshipGraphWrapper
 
   def enqueue(*resources)
     resources.each do |resource|
-      key = @unguessable_deterministic_key[resource]
+      key = @real_graph.resource_priority(resource)
       @ready[key] = resource
     end
   end

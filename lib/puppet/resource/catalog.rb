@@ -2,10 +2,9 @@ require 'puppet/node'
 require 'puppet/indirector'
 require 'puppet/simple_graph'
 require 'puppet/transaction'
-
 require 'puppet/util/pson'
-
 require 'puppet/util/tagging'
+require 'puppet/relationship_graph'
 
 # This class models a node catalog.  It is the thing meant to be passed
 # from server to client, and it contains all of the information in the
@@ -254,10 +253,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       # relationship graph to determine the path to the resources
       # spitting out the messages.  If this is not set,
       # then we get into an infinite loop.
-      @relationship_graph = Puppet::SimpleGraph.new
+      @relationship_graph = Puppet::RelationshipGraph.new
 
       # First create the dependency graph
-      self.vertices.each do |vertex|
+      self.resources.each do |vertex|
         @relationship_graph.add_vertex vertex
         vertex.builddepends.each do |edge|
           @relationship_graph.add_edge(edge)
@@ -362,6 +361,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       end
       remove_vertex!(resource) if vertex?(resource)
       @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
+      @resources.delete(title_key)
       resource.remove
     end
   end

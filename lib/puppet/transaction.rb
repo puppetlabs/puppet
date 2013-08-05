@@ -80,7 +80,16 @@ class Puppet::Transaction
   end
 
   def relationship_graph
-    @relationship_graph ||= RelationshipGraphWrapper.new(catalog.relationship_graph,self)
+    if @relationship_graph.nil?
+      fundamental_order = {}
+      catalog.resources.each_with_index do |resource, index|
+        fundamental_order[resource.ref] = index
+      end
+      @relationship_graph = RelationshipGraphWrapper.new(catalog.relationship_graph,
+                                                         fundamental_order,
+                                                         self)
+    end
+    @relationship_graph
   end
 
   def resource_status(resource)

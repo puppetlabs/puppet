@@ -625,45 +625,39 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @four = @file.new :path => @basepath+"/four", :require => "File[#{@basepath}/three]"
       @five = @file.new :path => @basepath+"/five"
       @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five, @sub
-
-      @relationships = @catalog.relationship_graph
-    end
-
-    it "should be able to create a relationship graph" do
-      @relationships.should be_instance_of(Puppet::SimpleGraph)
     end
 
     it "should not have any components" do
-      @relationships.vertices.find { |r| r.instance_of?(Puppet::Type::Component) }.should be_nil
+      @catalog.relationship_graph.vertices.find { |r| r.instance_of?(Puppet::Type::Component) }.should be_nil
     end
 
     it "should have all non-component resources from the catalog" do
       # The failures print out too much info, so i just do a class comparison
-      @relationships.vertex?(@five).should be_true
+      @catalog.relationship_graph.vertex?(@five).should be_true
     end
 
     it "should have all resource relationships set as edges" do
-      @relationships.edge?(@three, @four).should be_true
+      @catalog.relationship_graph.edge?(@three, @four).should be_true
     end
 
     it "should copy component relationships to all contained resources" do
-      @relationships.path_between(@one, @two).should be
+      @catalog.relationship_graph.path_between(@one, @two).should be
     end
 
     it "should add automatic relationships to the relationship graph" do
-      @relationships.edge?(@two, @sub).should be_true
+      @catalog.relationship_graph.edge?(@two, @sub).should be_true
     end
 
     it "should get removed when the catalog is cleaned up" do
-      @relationships.expects(:clear)
+      @catalog.relationship_graph.expects(:clear)
       @catalog.clear
       @catalog.instance_variable_get("@relationship_graph").should be_nil
     end
 
     it "should write :relationships and :expanded_relationships graph files if the catalog is a host catalog" do
       @catalog.clear
-      graph = Puppet::SimpleGraph.new
-      Puppet::SimpleGraph.expects(:new).returns graph
+      graph = Puppet::RelationshipGraph.new
+      Puppet::RelationshipGraph.expects(:new).returns graph
 
       graph.expects(:write_graph).with(:relationships)
       graph.expects(:write_graph).with(:expanded_relationships)
@@ -675,8 +669,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should not write graph files if the catalog is not a host catalog" do
       @catalog.clear
-      graph = Puppet::SimpleGraph.new
-      Puppet::SimpleGraph.expects(:new).returns graph
+      graph = Puppet::RelationshipGraph.new
+      Puppet::RelationshipGraph.expects(:new).returns graph
 
       graph.expects(:write_graph).never
 
@@ -686,14 +680,36 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should create a new relationship graph after clearing the old one" do
-      @relationships.expects(:clear)
+      @catalog.relationship_graph.expects(:clear)
       @catalog.clear
-      @catalog.relationship_graph.should be_instance_of(Puppet::SimpleGraph)
+      @catalog.relationship_graph.should be_instance_of(Puppet::RelationshipGraph)
     end
 
     it "should remove removed resources from the relationship graph if it exists" do
       @catalog.remove_resource(@one)
       @catalog.relationship_graph.vertex?(@one).should be_false
+    end
+
+    it "should add resources in the same order they are added to the catalog" do
+      add_order = sequence('add order')
+      graph = mock('relationship graph')
+      Puppet::RelationshipGraph.expects(:new).returns(graph)
+
+      graph.expects(:add_vertex).with(@compone).in_sequence(add_order)
+      graph.expects(:add_vertex).with(@comptwo).in_sequence(add_order)
+      graph.expects(:add_vertex).with(@one).in_sequence(add_order)
+      graph.expects(:add_vertex).with(@two).in_sequence(add_order)
+      graph.expects(:add_vertex).with(@three).in_sequence(add_order)
+      graph.expects(:add_vertex).with(@four).in_sequence(add_order)
+      graph.expects(:add_vertex).with(@five).in_sequence(add_order)
+      graph.expects(:add_vertex).with(@sub).in_sequence(add_order)
+
+      graph.stubs(:add_edge)
+      graph.stubs(:vertices).returns([])
+      graph.stubs(:write_graph)
+      @catalog.stubs(:splice!)
+
+      @catalog.relationship_graph
     end
   end
 

@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'matchers/include_in_order'
 require 'puppet_spec/compiler'
 
 require 'puppet/transaction'
@@ -331,39 +332,6 @@ describe Puppet::Transaction do
     end
   end
 
-  describe "#finish" do
-    let(:graph) { @transaction.relationship_graph }
-    let(:path) { tmpdir('eval_generate') }
-    let(:resource) { Puppet::Type.type(:file).new(:path => path, :recurse => true) }
-
-    before :each do
-      @transaction.catalog.add_resource(resource)
-    end
-
-    it "should unblock the resource's dependents and queue them if ready" do
-      dependent = Puppet::Type.type(:file).new(:path => tmpfile('dependent'), :require => resource)
-      more_dependent = Puppet::Type.type(:file).new(:path => tmpfile('more_dependent'), :require => [resource, dependent])
-      @transaction.catalog.add_resource(dependent, more_dependent)
-
-      graph.finish(resource)
-
-      graph.blockers[dependent].should == 0
-      graph.blockers[more_dependent].should == 1
-
-      key = graph.unguessable_deterministic_key[dependent]
-
-      graph.ready[key].must == dependent
-
-      graph.ready.should_not be_has_key(graph.unguessable_deterministic_key[more_dependent])
-    end
-
-    it "should mark the resource as done" do
-      graph.finish(resource)
-
-      graph.done[resource].should == true
-    end
-  end
-
   describe "when traversing" do
     let(:graph) { @transaction.relationship_graph }
     let(:path) { tmpdir('eval_generate') }
@@ -373,22 +341,7 @@ describe Puppet::Transaction do
       @transaction.catalog.add_resource(resource)
     end
 
-    it "should clear blockers if resources are added" do
-      graph.blockers['foo'] = 3
-      graph.blockers['bar'] = 4
-
-      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
-
-      @transaction.expects(:eval_generate).with(resource).returns true
-
-      graph.traverse {}
-
-      graph.blockers.should be_empty
-    end
-
     it "should yield the resource even if eval_generate is called" do
-      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
-
       @transaction.expects(:eval_generate).with(resource).returns true
 
       yielded = false
@@ -405,11 +358,20 @@ describe Puppet::Transaction do
       graph.traverse {}
     end
 
-    it "should not clear blockers if resources aren't added" do
+    it "should clear blockers if resources are added" do
       graph.blockers['foo'] = 3
       graph.blockers['bar'] = 4
 
-      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
+      @transaction.expects(:eval_generate).with(resource).returns true
+
+      graph.traverse {}
+
+      graph.blockers.should be_empty
+    end
+
+    it "should not clear blockers if resources aren't added" do
+      graph.blockers['foo'] = 3
+      graph.blockers['bar'] = 4
 
       @transaction.expects(:eval_generate).with(resource).returns false
 
@@ -418,73 +380,34 @@ describe Puppet::Transaction do
       graph.blockers.should == {'foo' => 3, 'bar' => 4, resource => 0}
     end
 
-    it "should unblock all dependents of the resource" do
+    it "traverses independent resources before dependent resources" do
       dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
-      dependent2 = Puppet::Type.type(:notify).new(:name => "goodbye", :require => resource)
-
-      @transaction.catalog.add_resource(dependent, dependent2)
-
-      # We enqueue them here just so we can check their blockers. This is done
-      # again in traverse.
-      graph.enqueue_roots
-
-      graph.blockers[dependent].should == 1
-      graph.blockers[dependent2].should == 1
-
-      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
-
-      graph.traverse {}
-
-      graph.blockers[dependent].should == 0
-      graph.blockers[dependent2].should == 0
-    end
-
-    it "should enqueue any unblocked dependents" do
-      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
-      dependent2 = Puppet::Type.type(:notify).new(:name => "goodbye", :require => resource)
-
-      @transaction.catalog.add_resource(dependent, dependent2)
-
-      graph.enqueue_roots
-
-      graph.blockers[dependent].should == 1
-      graph.blockers[dependent2].should == 1
-
-      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
+      @transaction.catalog.add_resource(dependent)
 
       seen = []
-
       graph.traverse do |res|
         seen << res
       end
 
-      seen.should =~ [resource, dependent, dependent2]
+      expect(seen).to include_in_order(resource, dependent)
+    end
+
+    it "traverses completely independent resources in the order they appear in the catalog" do
+      independent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
+      @transaction.catalog.add_resource(independent)
+
+      seen = []
+      graph.traverse do |res|
+        seen << res
+      end
+
+      expect(seen).to include_in_order(resource, independent)
     end
 
     it "should mark the resource done" do
-      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
-
       graph.traverse {}
 
       graph.done[resource].should == true
-    end
-
-    it "should not evaluate the resource if it's not suitable" do
-      resource.stubs(:suitable?).returns false
-
-      graph.traverse do |resource|
-        raise "evaluated a resource"
-      end
-    end
-
-    it "should defer an unsuitable resource unless it can't go on" do
-      other = Puppet::Type.type(:notify).new(:name => "hello")
-      @transaction.catalog.add_resource(other)
-
-      # Show that we check once, then get the resource back and check again
-      resource.expects(:suitable?).twice.returns(false).then.returns(true)
-
-      graph.traverse {}
     end
 
     it "should fail unsuitable resources and go on if it gets blocked" do
