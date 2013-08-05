@@ -46,6 +46,8 @@ class Puppet::Module
     load_metadata if has_metadata?
 
     validate_puppet_version
+
+    @absolute_path_to_manifests = Puppet::FileSystem::PathPattern.absolute(manifests)
   end
 
   def has_metadata?
@@ -133,24 +135,16 @@ class Puppet::Module
   # Return the list of manifests matching the given glob pattern,
   # defaulting to 'init.{pp,rb}' for empty modules.
   def match_manifests(rest)
-    relative_pattern = if rest
-        File.extname(rest).empty? ? "#{rest}.{pp,rb}" : rest
-      else
-        'init.{pp,rb}'
-      end
-    pattern = Puppet::FileSystem::PathPattern.relative(relative_pattern)
-    manifests = Puppet::FileSystem::PathPattern.absolute(File.join(path, "manifests"))
+    if rest
+      wanted_manifests = wanted_manifests_from(rest)
+      searched_manifests = wanted_manifests.glob.reject { |f| FileTest.directory?(f) }
+    else
+      searched_manifests = []
+    end
 
-    wanted_manifests = pattern.prefix_with(manifests)
-
+    # (#4220) Always ensure init.pp in case class is defined there.
     init_manifests = [manifest("init.pp"), manifest("init.rb")].compact
-    searched_manifests = wanted_manifests.glob.reject { |f| FileTest.directory?(f) }
-
     init_manifests + searched_manifests
-  rescue Puppet::FileSystem::PathPattern::InvalidPattern => error
-    raise Puppet::Module::InvalidFilePattern.new(
-      "The pattern \"#{rest}\" to find manifests in the module \"#{name}\" " +
-      "is invalid and potentially unsafe.", error)
   end
 
   def metadata_file
@@ -289,6 +283,19 @@ class Puppet::Module
   end
 
   private
+
+  def wanted_manifests_from(pattern)
+    begin
+      extended = File.extname(pattern).empty? ? "#{pattern}.{pp,rb}" : pattern
+      relative_pattern = Puppet::FileSystem::PathPattern.relative(extended)
+    rescue Puppet::FileSystem::PathPattern::InvalidPattern => error
+      raise Puppet::Module::InvalidFilePattern.new(
+        "The pattern \"#{pattern}\" to find manifests in the module \"#{name}\" " +
+        "is invalid and potentially unsafe.", error)
+    end
+
+    relative_pattern.prefix_with(@absolute_path_to_manifests)
+  end
 
   def subpath(type)
     File.join(path, type)

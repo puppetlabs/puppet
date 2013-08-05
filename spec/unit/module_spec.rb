@@ -8,7 +8,7 @@ describe Puppet::Module do
   include PuppetSpec::Files
 
   let(:env) { mock("environment") }
-  let(:path) { "path" }
+  let(:path) { "/path" }
   let(:name) { "mymod" }
   let(:mod) { Puppet::Module.new(name, path, env) }
 
@@ -339,7 +339,7 @@ describe Puppet::Module do
   end
 
   it "should fail if its name is not alphanumeric" do
-    lambda { Puppet::Module.new(".something", "path", env) }.should raise_error(Puppet::Module::InvalidName)
+    lambda { Puppet::Module.new(".something", "/path", env) }.should raise_error(Puppet::Module::InvalidName)
   end
 
   it "should require a name at initialization" do
@@ -347,7 +347,7 @@ describe Puppet::Module do
   end
 
   it "should accept an environment at initialization" do
-    Puppet::Module.new("foo", "path", env).environment.should == env
+    Puppet::Module.new("foo", "/path", env).environment.should == env
   end
 
   describe '#modulepath' do
@@ -418,7 +418,8 @@ describe Puppet::Module, "when finding matching manifests" do
   end
 
   it "should default to the 'init' file if no glob pattern is specified" do
-    Dir.expects(:glob).with("/a/manifests/init.{pp,rb}").returns(%w{/a/manifests/init.pp})
+    FileTest.expects(:exist?).with("/a/manifests/init.pp").returns(true)
+    FileTest.expects(:exist?).with("/a/manifests/init.rb").returns(false)
 
     @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
   end
@@ -515,13 +516,13 @@ describe Puppet::Module do
     Puppet::Module.any_instance.expects(:has_metadata?).returns true
     Puppet::Module.any_instance.expects(:load_metadata)
 
-    Puppet::Module.new("yay", "path", mock("env"))
+    Puppet::Module.new("yay", "/path", mock("env"))
   end
 
   def a_module_with_metadata(data)
     text = data.to_pson
 
-    mod = Puppet::Module.new("foo", "path", mock("env"))
+    mod = Puppet::Module.new("foo", "/path", mock("env"))
     mod.stubs(:metadata_file).returns "/my/file"
     File.stubs(:read).with("/my/file").returns text
     mod
