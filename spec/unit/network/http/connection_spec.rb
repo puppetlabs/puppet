@@ -43,25 +43,43 @@ describe Puppet::Network::HTTP::Connection do
         Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection).should be_use_ssl
       end
 
-      it "can enforce/suppress peer certificate verification using an option" do
-        ca_cert_file = '/path/to/ssl/certs/ca_cert.pem'
-        host_cert_file = '/path/to/ssl/certs/host_cert.pem'
+      describe "peer verification" do
+        def setup_standard_ssl_configuration
+          ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
+          FileTest.stubs(:exist?).with(ca_cert_file).returns(true)
 
-        ssl_configuration = stub('ssl_configuration', :ca_auth_file => ca_cert_file)
-        Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_configuration).returns(ssl_configuration)
+          ssl_configuration = stub('ssl_configuration', :ca_auth_file => ca_cert_file)
+          Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_configuration).returns(ssl_configuration)
+        end
 
-        cert = stub('cert', :content => 'real_cert')
-        key = stub('key',  :content => 'real_key')
-        host = stub('host', :certificate => cert, :key => key, :ssl_store => stub('store'))
-        Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_host).returns(host)
+        def setup_standard_hostcert
+          host_cert_file = File.expand_path('/path/to/ssl/certs/host_cert.pem')
+          FileTest.stubs(:exist?).with(host_cert_file).returns(true)
 
-        Puppet[:hostcert] = host_cert_file
+          Puppet[:hostcert] = host_cert_file
+        end
 
-        FileTest.expects(:exist?).with(ca_cert_file).returns(true)
-        FileTest.expects(:exist?).with(host_cert_file).returns(true)
+        def setup_standard_ssl_host
+          cert = stub('cert', :content => 'real_cert')
+          key  = stub('key',  :content => 'real_key')
+          host = stub('host', :certificate => cert, :key => key, :ssl_store => stub('store'))
 
-        Puppet::Network::HTTP::Connection.new(host, port, :verify_peer => true).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_PEER
-        Puppet::Network::HTTP::Connection.new(host, port, :verify_peer => false).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_NONE
+          Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_host).returns(host)
+        end
+
+        before do
+          setup_standard_ssl_configuration
+          setup_standard_hostcert
+          setup_standard_ssl_host
+        end
+
+        it "can enable peer verification" do
+          Puppet::Network::HTTP::Connection.new(host, port, :verify_peer => true).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_PEER
+        end
+
+        it "can disable peer verification" do
+          Puppet::Network::HTTP::Connection.new(host, port, :verify_peer => false).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_NONE
+        end
       end
 
       context "proxy and timeout settings should propagate" do
