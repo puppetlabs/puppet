@@ -5,9 +5,9 @@ require 'rgen/metamodel_builder'
 # A top level Bindings should be a NamedBindings (the name is used primarily
 # in error messages). A Key is a Type/Name combination.
 #
-# TODO: In this version, references to "any object" uses the class Object.
-#       this is only temporarily. The intent is to use specific Puppet Objects
-#       that are typed using the Puppet Type System. (This to enable serialization)
+# TODO: In this version, references to "any object" uses the class Object,
+#       but this is only temporary. The intent is to use specific Puppet Objects
+#       that are typed using the Puppet Type System (to enable serialization).
 #
 # @see Puppet::Pops::Binder::BindingsFactory The BindingsFactory for more details on how to create model instances.
 # @api public
