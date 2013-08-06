@@ -45,7 +45,7 @@ describe Puppet::Network::HTTP::Connection do
 
       describe "peer verification" do
         def setup_standard_ssl_configuration
-          ca_cert_file = '/path/to/ssl/certs/ca_cert.pem'
+          ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
           FileTest.stubs(:exist?).with(ca_cert_file).returns(true)
 
           ssl_configuration = stub('ssl_configuration', :ca_auth_file => ca_cert_file)
@@ -53,7 +53,7 @@ describe Puppet::Network::HTTP::Connection do
         end
 
         def setup_standard_hostcert
-          host_cert_file = '/path/to/ssl/certs/host_cert.pem'
+          host_cert_file = File.expand_path('/path/to/ssl/certs/host_cert.pem')
           FileTest.stubs(:exist?).with(host_cert_file).returns(true)
 
           Puppet[:hostcert] = host_cert_file
