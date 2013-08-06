@@ -419,11 +419,6 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def assignable_PDataType(t, t2)
-    t2.is_a?(Types::PDataType)
-  end
-
-  # @api private
   def assignable_PLiteralType(t, t2)
     t2.is_a?(Types::PLiteralType)
   end
