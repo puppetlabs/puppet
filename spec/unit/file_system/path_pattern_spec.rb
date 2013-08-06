@@ -25,10 +25,6 @@ describe Puppet::FileSystem::PathPattern do
       expect(Puppet::FileSystem::PathPattern.relative("my/ot..her").to_s).to eq("my/ot..her")
     end
 
-    it "can be created with a '..' embedded in a filename on windows", :if => Puppet.features.microsoft_windows? do
-      expect(Puppet::FileSystem::PathPattern.relative("c:\..my\ot..her\one..").to_s).to eq("c:\..my\ot..her\one..")
-    end
-
     it "can not be created with a \\0 byte embedded" do
       expect do
         Puppet::FileSystem::PathPattern.relative("my/\0/other")
@@ -93,6 +89,10 @@ describe Puppet::FileSystem::PathPattern do
 
     it "creates an absolute PathPattern from a valid Windows absolute path" do
       expect(Puppet::FileSystem::PathPattern.absolute("c:/absolute/windows/path").to_s).to eq("c:/absolute/windows/path")
+    end
+
+    it "can be created with a '..' embedded in a filename on windows", :if => Puppet.features.microsoft_windows? do
+      expect(Puppet::FileSystem::PathPattern.absolute(%q{c:\..my\ot..her\one..}).to_s).to eq(%q{c:\..my\ot..her\one..})
     end
 
     it "is absolute" do
