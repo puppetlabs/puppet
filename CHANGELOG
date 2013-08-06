@@ -1,3 +1,24 @@
+2.7.23
+===
+4295e3d (maint) Fix module_utils regex tests for module file perms
+a322f34 (Maint) Update test to reflect chown using the gid too
+28bda0f (Maint) Update expectations for older rspec
+be2d182 Improving testing around PMT module install permissions.
+7114934 Ensure that PMT uses the correct group membership.
+64d2637 (#21971) Allow paths that contain .. as part of a name
+d88dd3f (Maint) Confine module tool tests off of windows
+9e5ef53 Fixing broken requires in the acceptance tests.
+878c420 (#21971) Fixes PathPattern's usage of Dir.glob for Windows
+2455fac (#21971) Fix how import_all loads files
+7a13291 (#21971) Create system for safely dealing with path patterns
+3c8dc4a (#21971) Split import and autoloading code paths
+0a35ef4 (#21971) Check for possible directory traversal
+30a72ce (Maint) Clean up specs
+c3d1703 (Maint) Use dirname instead of regexes
+f02f186 Backporting acceptance tests.
+90d4180 (#14333) Ensure module permissions are sane.
+
+
 2.7.22
 ===
 ba8c021 [packaging] Update mocks for rpmbuilder mock format
