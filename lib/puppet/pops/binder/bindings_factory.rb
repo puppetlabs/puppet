@@ -3,12 +3,12 @@
 # The Bindings Model
 # ------------------
 # The BindingsModel (defined in {Puppet::Pops::Binder::Bindings} is a model that is intended to be generally free from Ruby concerns.
-# This means that it is possible for system integrators to create and serialize such models using other technoligies than
+# This means that it is possible for system integrators to create and serialize such models using other technologies than
 # Ruby. This manifests itself in the model in that producers are described using instances of a `ProducerDescriptor` rather than
 # describing Ruby classes directly. This is also true of the type system where type is expressed using the {Puppet::Pops::Types} model
 # to describe all types.
 #
-# This class, the `BindingsFactory` is a concrete Ruby API to constructing instances of classes in the model.
+# This class, the `BindingsFactory` is a concrete Ruby API for constructing instances of classes in the model.
 #
 # Named Bindings
 # --------------
@@ -18,7 +18,7 @@
 #
 # Binding
 # -------
-# A Binding binds a type/name key to a producer of a value. A binding is conveniently created by calling `bind` on a 
+# A Binding binds a type/name key to a producer of a value. A binding is conveniently created by calling `bind` on a
 # `BindingsContainerBuilder`. The call to bind, produces a binding wrapped in a build object equipped with convenience methods
 # to define the details of the just created binding. The returned builder is an instance of
 # {Puppet::Pops::Binder::BindingsFactory::BindingsBuilder BindingsBuilder}.
@@ -32,8 +32,7 @@
 # ------------------------------------------------
 # The bindings system is used by referencing bindings symbolically; these are then specified in a Ruby file which is autoloaded
 # by Puppet. The entry point for user code that creates bindings is described in {Puppet::Bindings Bindings}.
-# That class makes use of a
-# BindingsFactory, and the builder objects to make it easy to construct bindings.
+# That class makes use of a BindingsFactory, and the builder objects to make it easy to construct bindings.
 #
 # It is intended that a user defining bindings in Ruby should be able to use the builder object methods for the majority of tasks.
 # If something advanced is wanted, use of one of the helper class methods on the BuildingsFactory, and/or the
@@ -141,10 +140,10 @@ module Puppet::Pops::Binder::BindingsFactory
       builder
     end
 
-    # Binds an multibind with the given identity where later, the looked up result contains all
+    # Binds a multibind with the given identity where later, the looked up result contains all
     # contributions to this key. An optional block may be given which is evaluated using `instance_eval`.
     # @param id [String] the multibind's id used when adding contributions
-    # @return [MutibindingBuilder] the builder for the created multibinding
+    # @return [MultibindingsBuilder] the builder for the created multibinding
     # @api public
     #
     def multibind(id, &block)
@@ -159,7 +158,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # Adds a categorized bindings to this container. Returns a BindingsContainerBuilder to allow adding
     # bindings in the newly created container. An optional block may be given which is evaluated using `instance_eval`.
     # @param categorization [String] the name of the categorization e.g. 'node'
-    # @param category_value [String] the calue in that category e.g. 'kermit.example.com'
+    # @param category_value [String] the value in that category e.g. 'kermit.example.com'
     # @return [BindingsContainerBuilder] the builder for the created categorized bindings container
     # @api public
     #
@@ -172,6 +171,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # The result is that a processed request must match all the given categorizations
     # with the given values. An optional block may be given which is evaluated using `instance_eval`.
     # @param categories_hash Hash[String, String] a hash with categorization and categorization value entries
+    # @return [BindingsContainerBuilder] the builder for the created categorized bindings container
     # @api public
     #
     def when_in_categories(categories_hash, &block)
@@ -341,7 +341,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @overload instance_of(o)
     #   Infers the type from the given Ruby object and sets that as the type - i.e. "set the type
     #   of the binding to be that of the given data object".
-    #   @param o [Object] the object to infert the type from
+    #   @param o [Object] the object to infer the type from
     # @overload instance_of(c)
     #   @param c [Class] the Class to base the type on.
     #   Sets the type based on the given ruby class. The result is one of the specific puppet types
