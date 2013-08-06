@@ -158,11 +158,13 @@ module Puppet
         #     * owner == owner of moduledir
         #     * group == group of moduledir
         on host, "ls -alR #{moduledir}/#{module_name}" do
-          listings = stdout.split('\n').grep(/[^bcdlsp-]/)
+          listings = stdout.split("\n")
+          listings = listings.grep(/^[bcdlsp-]/)
+          listings = listings.reject { |l| l =~ /\.\.$/ }
 
           listings.each do |line|
-            assert_match /(drwxr-xr-x|-rw-r--r--)\s+\d+\s+#{owner}\s+#{group}/, line,
-              "bad permissions for #{line[/\S+$/]} - expected 644/755, #{owner}, #{group}"
+            assert_match /(drwxr-xr-x|[^d]rw-r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
+              "bad permissions for '#{line[/\S+$/]}' - expected 644/755, #{owner}, #{group}"
           end
         end
       end
