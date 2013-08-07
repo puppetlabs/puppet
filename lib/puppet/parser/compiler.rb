@@ -35,6 +35,22 @@ class Puppet::Parser::Compiler
 
   attr_reader :node, :facts, :collections, :catalog, :resources, :relationships, :topscope
 
+  # The injector that provides lookup services, or nil if accessed before the compiler has started compiling and
+  # bootstrapped. The injector is initialized and available before any manifests are evaluated.
+  #
+  # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services for this compiler/environment
+  # @api public
+  #
+  attr_accessor :injector
+
+  # The injector that provides lookup services during the creation of the {#injector}.
+  # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services during injector creation
+  #   for this compiler/environment
+  #
+  # @api private
+  #
+  attr_accessor :boot_injector
+
   # Add a collection to the global list.
   def_delegator :@collections,   :<<, :add_collection
   def_delegator :@relationships, :<<, :add_relationship
@@ -92,6 +108,10 @@ class Puppet::Parser::Compiler
     Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
 
     Puppet::Util::Profiler.profile("Compile: Created settings scope") { create_settings_scope }
+
+    if is_binder_active?
+      Puppet::Util::Profiler.profile("Compile: Created injector") { create_injector }
+    end
 
     Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
 
@@ -194,6 +214,47 @@ class Puppet::Parser::Compiler
   # Return any overrides for the given resource.
   def resource_overrides(resource)
     @resource_overrides[resource.ref]
+  end
+
+  def injector
+    create_injector if @injector.nil?
+    @injector
+  end
+
+  def boot_injector
+    create_boot_injector(nil) if @boot_injector.nil?
+    @boot_injector
+  end
+
+  # Creates the boot injector from registered system, default, and injector config.
+  # @return [Puppet::Pops::Binder::Injector] the created boot injector
+  # @api private Cannot be 'private' since it is called from the BindingsComposer.
+  #
+  def create_boot_injector(env_boot_bindings)
+    assert_binder_active()
+    boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution(env_boot_bindings)
+    final_contribution = Puppet::Pops::Binder::SystemBindings.final_contribution
+    binder = Puppet::Pops::Binder::Binder.new()
+    binder.define_categories(boot_contribution.effective_categories)
+    binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
+    @boot_injector = Puppet::Pops::Binder::Injector.new(binder)
+  end
+
+  # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
+  # @return [Boolean] true if the Puppet Binder should be activated
+  def is_binder_active?
+    should_be_active = Puppet[:binder] || Puppet[:parser] == 'future'
+    if should_be_active
+      # TODO: this should be in a central place, not just for ParserFactory anymore...
+      Puppet::Parser::ParserFactory.assert_rgen_installed()
+      @@binder_loaded ||= false
+      unless @@binder_loaded
+        require 'puppet/pops'
+        require 'puppetx'
+        @@binder_loaded = true
+      end
+    end
+    should_be_active
   end
 
   private
@@ -457,5 +518,25 @@ class Puppet::Parser::Compiler
   def unevaluated_resources
     # The order of these is significant for speed due to short-circuting
     resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
+  end
+
+  # Creates the injector from bindings found in the current environment.
+  # @return [void]
+  # @api private
+  #
+  def create_injector
+    assert_binder_active()
+    composer = Puppet::Pops::Binder::BindingsComposer.new()
+    layered_bindings = composer.compose(topscope)
+    binder = Puppet::Pops::Binder::Binder.new()
+    binder.define_categories(composer.effective_categories(topscope))
+    binder.define_layers(layered_bindings)
+    @injector = Puppet::Pops::Binder::Injector.new(binder)
+  end
+
+  def assert_binder_active
+    unless is_binder_active?
+      raise ArgumentError, "The Puppet Binder is only available when either '--binder true' or '--parser future' is used"
+    end
   end
 end

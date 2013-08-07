@@ -577,7 +577,7 @@ describe Puppet::Parser::Compiler do
     it "should raise an error when it can't find class" do
       klasses = {'foo'=>nil}
       @node.classes = klasses
-      @compiler.topscope.stubs(:find_hostclass).with('foo', {:assume_fqname => false}).returns(nil)
+      @compiler.topscope.expects(:find_hostclass).with('foo', {:assume_fqname => false}).returns(nil)
       lambda{ @compiler.compile }.should raise_error(Puppet::Error, /Could not find class foo for testnode/)
     end
   end

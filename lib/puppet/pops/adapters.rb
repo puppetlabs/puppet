@@ -47,6 +47,10 @@ module Puppet::Pops::Adapters
     #   representing the adapted object from the origin. Not including any
     #   trailing whitespace.
     attr_accessor :length
+
+    def extract_text_from_string(string)
+      string.slice(offset, length)
+    end
   end
 
   # A LoaderAdapter adapts an object with a {Puppet::Pops::Loader}. This is used to make further loading from the
