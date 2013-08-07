@@ -363,7 +363,11 @@ class Puppet::Parser::Scope
 
   def lookup_qualified_variable(class_name, variable_name, position)
     begin
-      qualified_scope(class_name).lookupvar(variable_name, position)
+      if lookup_as_local_name?(class_name, variable_name)
+        self[variable_name]
+      else
+        qualified_scope(class_name).lookupvar(variable_name, position)
+      end
     rescue RuntimeError => e
       location = if position[:lineproc]
                    " at #{position[:lineproc].call}"
@@ -375,6 +379,21 @@ class Puppet::Parser::Scope
       warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{e.message}#{location}"
       nil
     end
+  end
+
+  # Handles the special case of looking up fully qualified variable in not yet evaluated top scope
+  # This is ok if the lookup request originated in topscope (this happens when evaluating
+  # bindings; using the top scope to provide the values for facts.
+  # @param class_name [String] the classname part of a variable name, may be special ""
+  # @param variable_name [String] the variable name without the absolute leading '::'
+  # @return [Boolean] true if the given variable name should be looked up directly in this scope
+  #
+  def lookup_as_local_name?(class_name, variable_name)
+    # not a local if name has more than one segment
+    return nil if variable_name =~ /::/
+    # partial only if the class for "" cannot be found
+    return nil unless class_name == "" && klass = find_hostclass(class_name) && class_scope(klass).nil?
+    is_topscope?
   end
 
   def has_inherited_class?

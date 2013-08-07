@@ -1,0 +1,8 @@
+---
+hierarchy:
+  - '%fqdn'
+  - 'common'
+
+backends:
+  - yaml
+  - json
