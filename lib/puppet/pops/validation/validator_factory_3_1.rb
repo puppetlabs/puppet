@@ -1,19 +1,7 @@
 # Configures validation suitable for 3.1 + iteration
 #
-class Puppet::Pops::Validation::ValidatorFactory_3_1
+class Puppet::Pops::Validation::ValidatorFactory_3_1 < Puppet::Pops::Validation::Factory
   Issues = Puppet::Pops::Issues
-
-  # Produces a validator with the given acceptor as the recipient of produced diagnostics.
-  #
-  def validator acceptor
-    checker(diagnostic_producer(acceptor))
-  end
-
-  # Produces the diagnostics producer to use given an acceptor as the recipient of produced diagnostics
-  #
-  def diagnostic_producer acceptor
-    Puppet::Pops::Validation::DiagnosticProducer.new(acceptor, severity_producer(), label_provider())
-  end
 
   # Produces the checker to use
   def checker diagnostic_producer
@@ -27,7 +15,7 @@ class Puppet::Pops::Validation::ValidatorFactory_3_1
 
   # Produces the severity producer to use
   def severity_producer
-    p = Puppet::Pops::Validation::SeverityProducer.new
+    p = super
 
     # Configure each issue that should **not** be an error
     #

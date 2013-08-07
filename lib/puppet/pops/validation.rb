@@ -1,18 +1,98 @@
 # A module with base functionality for validation of a model.
 #
-# * SeverityProducer - produces a severity (:error, :warning, :ignore) for a given Issue
-# * DiagnosticProducer - produces a Diagnostic which binds an Issue to an occurrence of that issue
-# * Acceptor - the receiver/sink/collector of computed diagnostics
-# * DiagnosticFormatter - produces human readable output for a Diagnostic
+# * **Factory** - an abstract factory implementation that makes it easier to create a new validation factory.
+# * **SeverityProducer** - produces a severity (:error, :warning, :ignore) for a given Issue
+# * **DiagnosticProducer** - produces a Diagnostic which binds an Issue to an occurrence of that issue
+# * **Acceptor** - the receiver/sink/collector of computed diagnostics
+# * **DiagnosticFormatter** - produces human readable output for a Diagnostic
 #
 module Puppet::Pops::Validation
+
+  # This class is an abstract base implementation of a _model validation factory_ that creates a validator instance
+  # and associates it with a fully configured DiagnosticProducer.
+  #
+  # A _validator_ is responsible for validating a model. There may be different versions of validation available
+  # for one and the same model; e.g. different semantics for different puppet versions, or different types of
+  # validation configuration depending on the context/type of validation that should be performed (static, vs. runtime, etc.).
+  #
+  # This class is abstract and must be subclassed. The subclass must implement the methods
+  # {#label_provider} and {#checker}. It is also expected that the sublcass will override
+  # the severity_producer and configure the issues that should be reported as errors (i.e. if they should be ignored, produce
+  # a warning, or a deprecation warning).
+  #
+  # @abstract Subclass must implement {#checker}, and {#label_provider}
+  # @api public
+  #
+  class Factory
+
+    # Produces a validator with the given acceptor as the recipient of produced diagnostics.
+    # The acceptor is where detected issues are received (and typically collected).
+    #
+    # @param acceptor [Acceptor] the acceptor is the receiver of all detected issues
+    # @return [#validate] a validator responding to `validate(model)`
+    #
+    # @api public
+    #
+    def validator(acceptor)
+      checker(diagnostic_producer(acceptor))
+    end
+
+    # Produces the diagnostics producer to use given an acceptor of issues.
+    #
+    # @param acceptor [Acceptor] the acceptor is the receiver of all detected issues
+    # @return [DiagnosticProducer] a detector of issues
+    #
+    # @api public
+    #
+    def diagnostic_producer(acceptor)
+      Puppet::Pops::Validation::DiagnosticProducer.new(acceptor, severity_producer(), label_provider())
+    end
+
+    # Produces the SeverityProducer to use
+    # Subclasses should implement and add specific overrides
+    #
+    # @return [SeverityProducer] a severity producer producing error, warning or ignore per issue
+    #
+    # @api public
+    #
+    def severity_producer
+      Puppet::Pops::Validation::SeverityProducer.new
+    end
+
+    # Produces the checker to use.
+    #
+    # @abstract
+    #
+    # @api public
+    #
+    def checker(diagnostic_producer)
+      raise NoMethodError, "checker"
+    end
+
+    # Produces the label provider to use.
+    #
+    # @abstract
+    #
+    # @api public
+    #
+    def label_provider
+      raise NoMethodError, "label_provider"
+    end
+  end
+
   # Decides on the severity of a given issue.
   # The produced severity is one of `:error`, `:warning`, or `:ignore`.
   # By default, a severity of `:error` is produced for all issues. To configure the severity
   # of an issue call `#severity=(issue, level)`.
   #
+  # @return [Symbol] a symbol representing the severity `:error`, `:warning`, or `:ignore`
+  #
+  # @api public
+  #
   class SeverityProducer
+
     # Creates a new instance where all issues are diagnosed as :error unless overridden.
+    # @api public
     #
     def initialize
       # If diagnose is not set, the default is returned by the block
@@ -21,12 +101,16 @@ module Puppet::Pops::Validation
 
     # Returns the severity of the given issue.
     # @return [Symbol] severity level :error, :warning, or :ignore
+    # @api public
     #
-    def severity issue
+    def severity(issue)
       assert_issue(issue)
       @severities[issue]
     end
 
+    # @see {#severity}
+    # @api public
+    #
     def [] issue
       severity issue
     end
@@ -35,26 +119,35 @@ module Puppet::Pops::Validation
     #
     # @param issue [Puppet::Pops::Issues::Issue] the issue for which to set severity
     # @param level [Symbol] the severity level (:error, :warning, or :ignore).
+    # @api public
     #
-    def []= issue, level
+    def []=(issue, level)
       assert_issue(issue)
       assert_severity(level)
       raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
       @severities[issue] = level
     end
 
-    # Returns true if the issue should be reported or not.
+    # Returns `true` if the issue should be reported or not.
     # @return [Boolean] this implementation returns true for errors and warnings
+    #
+    # @api public
     #
     def should_report? issue
       diagnose = self[issue]
       diagnose == :error || diagnose == :warning || diagnose == :deprecation
     end
 
+    # Checks if the given issue is valid.
+    # @api private
+    #
     def assert_issue issue
       raise Puppet::DevError.new("Attempt to get validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Puppet::Pops::Issues::Issue
     end
 
+    # Checks if the given severity level is valid.
+    # @api private
+    #
     def assert_severity level
       raise Puppet::DevError.new("Illegal severity level: #{option}") unless [:ignore, :warning, :error, :deprecation].include? level
     end
@@ -157,8 +250,11 @@ module Puppet::Pops::Validation
 
     def format_location diagnostic
       file = diagnostic.file
-      line = diagnostic.source_pos.line
-      pos = diagnostic.source_pos.pos
+      line = pos = nil
+      if diagnostic.source_pos
+        line = diagnostic.source_pos.line
+        pos = diagnostic.source_pos.pos
+      end
       if file && line && pos
         "#{file}:#{line}:#{pos}:"
       elsif file && line
@@ -187,8 +283,12 @@ module Puppet::Pops::Validation
     # have to be used here for backwards compatibility.
     def format_location diagnostic
       file = diagnostic.file
-      line = diagnostic.source_pos.line
-      pos = diagnostic.source_pos.pos
+      line = pos = nil
+      if diagnostic.source_pos
+        line = diagnostic.source_pos.line
+        pos = diagnostic.source_pos.pos
+      end
+
       if file && line && pos
         " at #{file}:#{line}:#{pos}"
       elsif file and line
@@ -214,7 +314,7 @@ module Puppet::Pops::Validation
   #
   class Acceptor
 
-    # All diagnstic in the order they were issued
+    # All diagnostic in the order they were issued
     attr_reader :diagnostics
 
     # The number of :warning severity issues + number of :deprecation severity issues
@@ -261,7 +361,7 @@ module Puppet::Pops::Validation
     end
 
     def errors_and_warnings
-      @diagnostics.select {|d| d.severity != :ignored}
+      @diagnostics.select {|d| d.severity != :ignore }
     end
 
     # Returns the ignored diagnostics in the order thwy were reported (if reported at all)
@@ -269,9 +369,38 @@ module Puppet::Pops::Validation
       @diagnostics.select {|d| d.severity == :ignore }
     end
 
-    # Add a diagnostic to the set of diagnostics
+    # Add a diagnostic, or all diagnostics from another acceptor to the set of diagnostics
+    # @param diagnostic [Puppet::Pops::Validation::Diagnostic, Puppet::Pops::Validation::Acceptor] diagnostic(s) that should be accepted
     def accept(diagnostic)
-      self.send(diagnostic.severity, diagnostic)
+      if diagnostic.is_a?(Acceptor)
+        diagnostic.diagnostics.each {|d| self.send(d.severity, d)}
+      else
+        self.send(diagnostic.severity, diagnostic)
+      end
+    end
+
+    # Prunes the contain diagnostics by removing those for which the given block returns true.
+    # The internal statistics is updated as a consequence of removing.
+    # @return [Array<Puppet::Pops::Validation::Diagnostic, nil] the removed set of diagnostics or nil if nothing was removed
+    #
+    def prune(&block)
+      removed = []
+      @diagnostics.delete_if do |d|
+        if should_remove = yield(d)
+          removed << d
+        end
+        should_remove
+      end
+      removed.each do |d|
+        case d.severity
+        when :error
+          @error_count -= 1
+        when :warning
+          @warning_count -= 1
+        # there is not ignore_count
+        end
+      end
+      removed.empty? ? nil : removed
     end
 
     private
