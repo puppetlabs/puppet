@@ -336,7 +336,7 @@ module Puppet
       Requires that `puppet queue` be running.",
         :hook     => proc do |value|
           if value
-            # This reconfigures the terminii for Node, Facts, and Catalog
+            # This reconfigures the termini for Node, Facts, and Catalog
             Puppet.settings[:storeconfigs] = true
 
             # But then we modify the configuration
@@ -557,7 +557,7 @@ EOT
     #   :type  => :file,
     #   :mode  => 0644,
     #   :owner => "service",
-    #   :desc  => "The list of CA certificate to complete the chain of trust to CA certificates \n" <<
+    #   :desc  => "The list of CA certificates to complete the chain of trust to CA certificates \n" <<
     #             "listed in the ssl_client_ca_auth file."
     # },
     :ssl_client_ca_auth => {
@@ -576,7 +576,7 @@ EOT
     #   :type  => :file,
     #   :mode  => 0644,
     #   :owner => "service",
-    #   :desc  => "The list of CA certificate to complete the chain of trust to CA certificates \n" <<
+    #   :desc  => "The list of CA certificates to complete the chain of trust to CA certificates \n" <<
     #             "listed in the ssl_server_ca_auth file."
     # },
     :ssl_server_ca_auth => {

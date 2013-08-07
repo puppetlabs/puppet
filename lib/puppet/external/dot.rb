@@ -39,9 +39,9 @@ module DOT
     'height',      # default: .5; height in inches
     'label',       # default: node name; any string
     'layer',       # default: overlay range; all, id or id:id
-    'orientation', # dafault: 0.0; node rotation angle
+    'orientation', # default: 0.0; node rotation angle
     'peripheries', # shape-dependent number of node boundaries
-    'regular',     # default:  false; force polygon to be regular
+    'regular',     # default: false; force polygon to be regular
     'shape',       # default: ellipse; node shape; see Section 2.1 and Appendix E
     'shapefile',   # external EPSF or SVG custom shape file
     'sides',       # default: 4; number of sides for shape=polygon

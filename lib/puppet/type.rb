@@ -1285,43 +1285,43 @@ class Type
   end
 
   newmetaparam(:alias) do
-    desc "Creates an alias for the object.  Puppet uses this internally when you
-      provide a symbolic title:
+    desc %q{Creates an alias for the resource.  Puppet uses this internally when you
+      provide a symbolic title and an explicit namevar value:
 
           file { 'sshdconfig':
             path => $operatingsystem ? {
-              solaris => \"/usr/local/etc/ssh/sshd_config\",
-              default => \"/etc/ssh/sshd_config\"
+              solaris => '/usr/local/etc/ssh/sshd_config',
+              default => '/etc/ssh/sshd_config',
             },
-            source => \"...\"
+            source => '...'
           }
 
           service { 'sshd':
-            subscribe => File['sshdconfig']
+            subscribe => File['sshdconfig'],
           }
 
       When you use this feature, the parser sets `sshdconfig` as the title,
       and the library sets that as an alias for the file so the dependency
       lookup in `Service['sshd']` works.  You can use this metaparameter yourself,
-      but note that only the library can use these aliases; for instance,
-      the following code will not work:
+      but note that aliases generally only work for creating relationships; anything
+      else that refers to an existing resource (such as amending or overriding
+      resource attributes in an inherited class) must use the resource's exact
+      title. For example, the following code will not work:
 
-          file { \"/etc/ssh/sshd_config\":
+          file { '/etc/ssh/sshd_config':
             owner => root,
             group => root,
-            alias => 'sshdconfig'
+            alias => 'sshdconfig',
           }
 
-          file { 'sshdconfig':
-            mode => 644
+          File['sshdconfig'] {
+            mode => 644,
           }
 
       There's no way here for the Puppet parser to know that these two stanzas
       should be affecting the same file.
 
-      See the [Language Guide](http://docs.puppetlabs.com/guides/language_guide.html) for more information.
-
-      "
+      }
 
     munge do |aliases|
       aliases = [aliases] unless aliases.is_a?(Array)
