@@ -33,7 +33,7 @@ Generally, you need the following things installed:
 
 Contributions
 ------
-Please see our [Contibution
+Please see our [Contribution
 Documents](https://github.com/puppetlabs/puppet/blob/master/CONTRIBUTING.md)
 and our [Developer
 Documentation](https://github.com/puppetlabs/puppet/blob/master/README_DEVELOPER.md).
