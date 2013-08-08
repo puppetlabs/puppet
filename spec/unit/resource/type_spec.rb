@@ -1,11 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'json'
-require 'json-schema'
 
 require 'puppet/resource/type'
-
-RESOURCE_TYPE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), 'resource_type.json')))
 
 describe Puppet::Resource::Type do
   it "should have a 'name' attribute" do
@@ -35,10 +31,6 @@ describe Puppet::Resource::Type do
   end
 
   describe "when converting to json" do
-    def validate_as_json(type)
-      JSON::Validator.validate!(RESOURCE_TYPE_SCHEMA, type.to_pson)
-    end
-
     before do
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
     end
@@ -54,20 +46,6 @@ describe Puppet::Resource::Type do
     it "should include the name and type" do
       double_convert.name.should == @type.name
       double_convert.type.should == @type.type
-    end
-
-    it "should validate with only name and kind" do
-      validate_as_json(@type)
-    end
-
-    it "should validate with all fields set" do
-      @type.set_arguments("one" => nil, "two" => "foo")
-      @type.line = 100
-      @type.doc = "A weird type"
-      @type.file = "/etc/manifests/thing.pp"
-      @type.parent = "one::two"
-
-      validate_as_json(@type)
     end
 
     it "should include any arguments" do
