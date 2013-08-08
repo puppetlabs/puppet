@@ -27,7 +27,7 @@ namespace :ci do
   end
 
   desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test)"
-  task :test => [:repo_configs, :qa_ssh_key] do
+  task :test => [:repo_configs] do
     ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + "--xml"
     ENV['TESTING_MODE'] = 'jenkins'
     sh "systest -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
