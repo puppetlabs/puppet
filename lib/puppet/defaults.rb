@@ -403,6 +403,10 @@ module Puppet
     :module_working_dir => {
         :default  => '$vardir/puppet-module',
         :desc     => "The directory into which module tool data is stored",
+    },
+    :module_skeleton_dir => {
+        :default  => '$module_working_dir/skeleton',
+        :desc     => "The directory which the skeleton for module tool generate is stored.",
     }
   )
 
