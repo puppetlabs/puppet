@@ -26,7 +26,7 @@ namespace :ci do
     sh "tar -cvf repos.tar #{task.prerequisites.join(' ')}"
   end
 
-  desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test)"
+  desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test as environment variable: SHA='<sha>')"
   task :test => [:repo_configs] do
     ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + "--xml"
     ENV['TESTING_MODE'] = 'jenkins'
