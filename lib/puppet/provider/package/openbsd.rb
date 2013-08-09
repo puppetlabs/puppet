@@ -50,13 +50,18 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     [command(:pkginfo), "-a"]
   end
 
-  def install
+  def parse_pkgconf
     unless @resource[:source]
       if File.exist?("/etc/pkg.conf")
         File.open("/etc/pkg.conf", "rb").readlines.each do |line|
           if matchdata = line.match(/^installpath\s*=\s*(.+)\s*$/i)
             @resource[:source] = matchdata[1]
-            break
+          elsif matchdata = line.match(/^installpath\s*\+=\s*(.+)\s*$/i)
+            if @resource[:source].nil?
+              @resource[:source] = matchdata[1]
+            else
+              @resource[:source] += ":" + matchdata[1]
+            end
           end
         end
 
@@ -69,6 +74,10 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         "You must specify a package source or configure an installpath in /etc/pkg.conf"
       end
     end
+  end
+
+  def install
+    parse_pkgconf
 
     if @resource[:source][-1,1] == ::File::SEPARATOR
       e_vars = { 'PKG_PATH' => @resource[:source] }
