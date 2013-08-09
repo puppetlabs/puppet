@@ -40,7 +40,7 @@ class Puppet::Forge
 
     # Return a Net::HTTPResponse read for this +request_path+.
     def make_http_request(request_path)
-      request = Net::HTTP::Get.new(URI.escape(request_path), { "User-Agent" => user_agent })
+      request = Net::HTTP::Get.new(URI.escape(@uri.path + request_path), { "User-Agent" => user_agent })
       if ! @uri.user.nil? && ! @uri.password.nil?
         request.basic_auth(@uri.user, @uri.password)
       end
@@ -98,7 +98,9 @@ class Puppet::Forge
     # Return the local file name containing the data downloaded from the
     # repository at +release+ (e.g. "myuser-mymodule").
     def retrieve(release)
-      return cache.retrieve(@uri + release)
+      uri = @uri.dup
+      uri.path = uri.path.chomp('/') + release
+      return cache.retrieve(uri)
     end
 
     # Return the URI string for this repository.
