@@ -689,28 +689,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.remove_resource(@one)
       @catalog.relationship_graph.vertex?(@one).should be_false
     end
-
-    it "should add resources in the same order they are added to the catalog" do
-      add_order = sequence('add order')
-      graph = mock('relationship graph')
-      Puppet::RelationshipGraph.expects(:new).returns(graph)
-
-      graph.expects(:add_vertex).with(@compone).in_sequence(add_order)
-      graph.expects(:add_vertex).with(@comptwo).in_sequence(add_order)
-      graph.expects(:add_vertex).with(@one).in_sequence(add_order)
-      graph.expects(:add_vertex).with(@two).in_sequence(add_order)
-      graph.expects(:add_vertex).with(@three).in_sequence(add_order)
-      graph.expects(:add_vertex).with(@four).in_sequence(add_order)
-      graph.expects(:add_vertex).with(@five).in_sequence(add_order)
-      graph.expects(:add_vertex).with(@sub).in_sequence(add_order)
-
-      graph.stubs(:add_edge)
-      graph.stubs(:vertices).returns([])
-      graph.stubs(:write_graph)
-      @catalog.stubs(:splice!)
-
-      @catalog.relationship_graph
-    end
   end
 
   describe "when writing dot files" do

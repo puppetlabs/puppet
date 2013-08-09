@@ -159,7 +159,7 @@ class Puppet::Transaction
       relationship_graph.remove_edge! e
     }
 
-    default_label = Puppet::Resource::Catalog::Default_label
+    default_label = Puppet::RelationshipGraph::Default_label
     made.values.each do |res|
       # Depend on the nearest ancestor we generated, falling back to the
       # resource if we have none

@@ -5,6 +5,8 @@ require 'puppet_spec/compiler'
 require 'matchers/include_in_order'
 
 describe Puppet::RelationshipGraph do
+  include PuppetSpec::Compiler
+
   def stub_vertex(name)
     stub "vertex #{name}", :ref => name
   end
@@ -72,8 +74,6 @@ describe Puppet::RelationshipGraph do
   end
 
   context "order of traversal" do
-    include PuppetSpec::Compiler
-
     it "traverses independent resources in the order they are added" do
       relationships = compile_to_relationship_graph(<<-MANIFEST)
         notify { "first": }
@@ -165,6 +165,157 @@ describe Puppet::RelationshipGraph do
       order_seen = []
       relationships.traverse { |resource| order_seen << resource.ref }
       order_seen
+    end
+  end
+
+  describe "when reconstruction containment relationships" do
+    def vertex_called(graph, name)
+      graph.vertices.find { |v| v.ref =~ /#{Regexp.escape(name)}/ }
+    end
+
+    def admissible_sentinel_of(graph, ref)
+      vertex_called(graph, "Admissible_#{ref}")
+    end
+
+    def completed_sentinel_of(graph, ref)
+      vertex_called(graph, "Completed_#{ref}")
+    end
+
+    it "an empty container's completed sentinel should depend on its admissible sentinel" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a { }
+
+        include a
+      MANIFEST
+
+      relationship_graph.
+        should be_edge(
+          admissible_sentinel_of(relationship_graph, "class[A]"),
+          completed_sentinel_of(relationship_graph, "class[A]"))
+    end
+
+    it "a container with children does not connect the completed sentinel to its admissible sentinel" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a { notify { "a": } }
+
+        include a
+      MANIFEST
+
+      relationship_graph.
+        should_not be_edge(
+          admissible_sentinel_of(relationship_graph, "class[A]"),
+          completed_sentinel_of(relationship_graph, "class[A]"))
+    end
+
+    it "all contained objects should depend on their container's admissible sentinel" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a {
+          notify { "class a": }
+        }
+
+        include a
+      MANIFEST
+
+      relationship_graph.
+        should be_edge(
+          admissible_sentinel_of(relationship_graph, "class[A]"),
+          vertex_called(relationship_graph, "Notify[class a]"))
+    end
+
+    it "completed sentinels should depend on their container's contents" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a {
+          notify { "class a": }
+        }
+
+        include a
+      MANIFEST
+
+      relationship_graph.
+        should be_edge(
+          vertex_called(relationship_graph, "Notify[class a]"),
+          completed_sentinel_of(relationship_graph, "class[A]"))
+    end
+
+    it "should remove all Component objects from the dependency graph" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a {
+          notify { "class a": }
+        }
+        define b() {
+          notify { "define b": }
+        }
+
+        include a
+        b { "testing": }
+      MANIFEST
+
+      relationship_graph.vertices.find_all { |v| v.is_a?(Puppet::Type.type(:component)) }.should be_empty
+    end
+
+    it "should remove all Stage resources from the dependency graph" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        notify { "class a": }
+      MANIFEST
+
+      relationship_graph.vertices.find_all { |v| v.is_a?(Puppet::Type.type(:stage)) }.should be_empty
+    end
+
+    it "should retain labels on non-containment edges" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a {
+          notify { "class a": }
+        }
+        define b() {
+          notify { "define b": }
+        }
+
+        include a
+        Class[a] ~> b { "testing": }
+      MANIFEST
+
+      relationship_graph.edges_between(
+        completed_sentinel_of(relationship_graph, "class[A]"),
+        admissible_sentinel_of(relationship_graph, "b[testing]"))[0].label.
+        should == {:callback => :refresh, :event => :ALL_EVENTS}
+    end
+
+    it "should not add labels to edges that have none" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a {
+          notify { "class a": }
+        }
+        define b() {
+          notify { "define b": }
+        }
+
+        include a
+        Class[a] -> b { "testing": }
+      MANIFEST
+
+      relationship_graph.edges_between(
+        completed_sentinel_of(relationship_graph, "class[A]"),
+        admissible_sentinel_of(relationship_graph, "b[testing]"))[0].label.
+        should be_empty
+    end
+
+    it "should copy notification labels to all created edges" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        class a {
+          notify { "class a": }
+        }
+        define b() {
+          notify { "define b": }
+        }
+
+        include a
+        Class[a] ~> b { "testing": }
+      MANIFEST
+
+      relationship_graph.edges_between(
+        admissible_sentinel_of(relationship_graph, "b[testing]"),
+        vertex_called(relationship_graph, "Notify[define b]"))[0].label.
+        should == {:callback => :refresh, :event => :ALL_EVENTS}
     end
   end
 end
