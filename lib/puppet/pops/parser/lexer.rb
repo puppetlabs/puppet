@@ -292,6 +292,8 @@ class Puppet::Pops::Parser::Lexer
     [TOKENS[:STRING], lexer.slurp_sqstring()]
   end
 
+  # Different interpolation rules are needed for Double- (DQ), and Un-quoted (UQ) strings
+
   DQ_initial_token_types      = {'$' => :DQPRE,'"' => :STRING}
   DQ_continuation_token_types = {'$' => :DQMID,'"' => :DQPOST}
   UQ_initial_token_types      = {'$' => :DQPRE,'' => :STRING}
@@ -488,8 +490,11 @@ class Puppet::Pops::Parser::Lexer
   # without the delimiting double quotes.
   #
   def auto_token
-    return [TOKENS[:AUTO_DQUOTE], ''] if mode == :dqstring && @scanner.pos == 0
-    nil
+    if mode == :dqstring && @scanner.pos == 0
+      [TOKENS[:AUTO_DQUOTE], '']
+    else
+      nil
+    end
   end
 
   # Find the next token, returning the string and the token.
@@ -634,7 +639,11 @@ class Puppet::Pops::Parser::Lexer
     #Puppet.debug("entering scan")
     lex_error "Internal Error: No string or file given to lexer to process." unless @scanner
 
-    # Skip any initial whitespace.
+    # Skip any insignificant initial whitespace.
+    # When doing regular lexing, initial whitespace is always "between tokens" and is insignificant.
+    # When mode is :dqstring (when parsing heredoc text with dq string semantics) leading whitespace is significant.
+    # Avoiding this skip is essential as it takes place before a specific token rule gets a chance to veto skipping initial whitespace.
+    #
     skip unless mode == :dqstring && @scanner.pos == 0
 
     until token_queue.empty? and @scanner.eos? do
@@ -724,10 +733,12 @@ class Puppet::Pops::Parser::Lexer
   # tokens that need it.
   def_delegator :@scanner, :scan_until
 
+  # Different slurp and escape patterns are needed for Single- (SQ), Double- (DQ), and Un-quoted (UQ) strings
+
   SLURP_SQ_PATTERN = /(?:[^\\]|^|[^\\])(?:[\\]{2})*[']/
   SLURP_DQ_PATTERN = /(?:[^\\]|^|[^\\])(?:[\\]{2})*(["$])/
   SLURP_UQ_PATTERN = /(?:[^\\]|^|[^\\])(?:[\\]{2})*([$]|\z)/
-  SQ_ESCAPES = ["'"]
+  SQ_ESCAPES = %w{ ' }
   DQ_ESCAPES = %w{ \\  $ ' " r n t s }+["\r\n", "\n"]
   UQ_ESCAPES = %w{ \\  $ r n t s }+["\r\n", "\n"]
 
@@ -750,6 +761,14 @@ class Puppet::Pops::Parser::Lexer
       ignore = false
     end
     str = slurp(@scanner, pattern, escapes, ignore) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
+
+    # Special handling is required here to deal with strings that does not have a terminating character.
+    # This happens when the pattern given to slurpstring allows the string to end with \z (end of input) as is the case when
+    # lexing a heredoc text.
+    # The exceptional case is found by looking at the subgroup 1 of the most recent match made by the scanner (i.e. @scanner[1]).
+    # This is the last match made by the slurp method (having called scan_until on the scanner).
+    # If there is a terminating character is must be stripped and returned separately.
+    #
     if @scanner[1] != ''
       [str [0..-2], str[-1,1]] # strip closing terminating char from result, and return it
     else
@@ -786,7 +805,8 @@ class Puppet::Pops::Parser::Lexer
   end
 
   # Slurps a string from the lexer's scanner with the possibility to define, terminators and escapes.
-  # @deprecated use the specialized slurp_sqstring, slurp_dqstring instead
+  # @deprecated use the specialized slurp_sqstring, slurp_dqstring instead.
+  # @todo remove this when tests are no longer running against pre "future" parser
   #
   def slurpstring(terminators,escapes=%w{ \\  $ ' " r n t s }+["\n", "\r\n"],ignore_invalid_escapes=false)
     last = @scanner.matched
@@ -873,6 +893,15 @@ class Puppet::Pops::Parser::Lexer
     end
   end
 
+  # Returns the pattern for the heredoc `@(endtag[:syntax][/escapes])` syntax (at position when the leading '@' has been seen)
+  # Produces groups for endtag (group 1), syntax (group 2), and escapes (group 3)
+  #
+  def heredoc_tagparts_pattern()
+    # Note: pattern needs access to @blank pattern
+    @heredoc_pattern_cache ||= %r{([^:/\r\n\)]+)(?::#{@blank}*([a-z][a-zA-Z0-9_+]+)#{@blank}*)?(?:/((?:\w|[$])*)#{@blank}*)?\)}
+    @heredoc_pattern_cache
+  end
+
   def heredoc
     # scanner is at position after opening @(
     skip
@@ -882,7 +911,7 @@ class Puppet::Pops::Parser::Lexer
     lexing_context[:end_offset] = @scanner.pos
 
     # Note: allows '+' as separator in syntax, but this needs validation as empty segments are not allowed
-    unless md = str.match(%r{([^:/\r\n\)]+)(?::#{@blank}*([a-z][a-zA-Z0-9_+]+)#{@blank}*)?(?:/((?:\w|[$])*)#{@blank}*)?\)})
+    unless md = str.match(heredoc_tagparts_pattern())
       lex_error(positioned_message("Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])"))
     end
     endtag = md[1]
@@ -908,7 +937,7 @@ class Puppet::Pops::Parser::Lexer
       escapes = escapes.split('')
       lex_error(positioned_message("An escape char for @() may only appear once. Got '#{escapes.join(', ')}")) unless escapes.length == escapes.uniq.length
       resulting_escapes = ["\\"]
-      escapes.each {|e|
+      escapes.each do |e|
         case e
         when "t", "r", "n", "s", "$"
           resulting_escapes << e
@@ -917,7 +946,7 @@ class Puppet::Pops::Parser::Lexer
         else
           lex_error(positioned_message("Invalid heredoc escape char. Only t, r, n, s, L, $ allowed. Got '#{e}'")) 
         end
-      }
+      end
     end
 
     # Produce a heredoc token to make the syntax available to the grammar
@@ -962,9 +991,7 @@ class Puppet::Pops::Parser::Lexer
           # with offsets to make it report errors correctly and it is given the escapes to use
           sublexer = self.class.new({:mode => :dqstring, :escapes => resulting_escapes})
           sublexer.lex_string(str, @file, heredoc_line, heredoc_offset, leading.length())
-          sublexer.fullscan[0..-2].each {|token|
-            token_queue << [TOKENS[token[0]], token[1]]
-          }
+          sublexer.fullscan[0..-2].each {|token| token_queue << [TOKENS[token[0]], token[1]] }
         elsif resulting_escapes.length > 0
           # this is only needed to process escapes, if there are none the string can be used as is...
           subscanner = StringScanner.new(str)
