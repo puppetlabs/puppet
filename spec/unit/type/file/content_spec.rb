@@ -84,6 +84,15 @@ describe content do
 
       @content.should.must == string
     end
+
+    if "".respond_to? :encode then
+      it "should convert the value to ASCII-8BIT" do
+        @content = content.new(:resource => @resource)
+        @content.should= "Let's make a \u{2603}"
+
+        @content.actual_content.should == "Let's make a \xE2\x98\x83"
+      end
+    end
   end
 
   describe "when retrieving the current content" do
