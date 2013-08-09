@@ -1,6 +1,8 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/relationship_graph'
+require 'puppet_spec/compiler'
+require 'matchers/include_in_order'
 
 describe Puppet::RelationshipGraph do
   def stub_vertex(name)
@@ -58,5 +60,78 @@ describe Puppet::RelationshipGraph do
     graph.add_vertex(third)
 
     expect(graph.resource_priority(second)).to be < graph.resource_priority(third)
+  end
+
+  context "order of traversal" do
+    include PuppetSpec::Compiler
+
+    it "traverses all independent resources before traversing dependent ones" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+        notify { "first": require => Notify[third] }
+        notify { "second": }
+        notify { "third": }
+      MANIFEST
+
+      expect(order_resources_traversed_in(relationships)).to(
+        include_in_order("Notify[second]", "Notify[third]", "Notify[first]"))
+    end
+
+    it "traverses independent resources in the order they are added" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+        notify { "first": }
+        notify { "second": }
+      MANIFEST
+
+      expect(order_resources_traversed_in(relationships)).to(
+        include_in_order("Notify[first]", "Notify[second]"))
+    end
+
+    it "traverses resources in classes in the order they are added" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+        class c1 {
+            notify { "a": }
+            notify { "b": }
+        }
+        class c2 {
+            notify { "c": require => Notify[b] }
+        }
+        class c3 {
+            notify { "d": }
+        }
+        include c2
+        include c1
+        include c3
+      MANIFEST
+
+      expect(order_resources_traversed_in(relationships)).to(
+        include_in_order("Notify[a]", "Notify[b]", "Notify[d]", "Notify[c]"))
+    end
+
+    it "traverses resources in classes in the order they are added" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+        define d1() {
+          notify { "a": }
+          notify { "b": }
+        }
+        define d2() {
+          notify { "c": require => Notify[b]}
+        }
+        define d3() {
+            notify { "d": }
+        }
+        d2 { "c": }
+        d1 { "d": }
+        d3 { "e": }
+      MANIFEST
+
+      expect(order_resources_traversed_in(relationships)).to(
+        include_in_order("Notify[a]", "Notify[b]", "Notify[d]", "Notify[c]"))
+    end
+
+    def order_resources_traversed_in(relationships)
+      order_seen = []
+      relationships.traverse { |resource| order_seen << resource.ref }
+      order_seen
+    end
   end
 end

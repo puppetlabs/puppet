@@ -255,24 +255,24 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       # then we get into an infinite loop.
       @relationship_graph = Puppet::RelationshipGraph.new
 
-      # First create the dependency graph
       self.resources.each do |vertex|
         @relationship_graph.add_vertex vertex
+      end
+
+      @relationship_graph.vertices.each do |vertex|
         vertex.builddepends.each do |edge|
           @relationship_graph.add_edge(edge)
         end
-      end
 
-      # Lastly, add in any autorequires
-      @relationship_graph.vertices.each do |vertex|
         vertex.autorequire(self).each do |edge|
-          unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
-            unless @relationship_graph.edge?(edge.target, edge.source)
-              vertex.debug "Autorequiring #{edge.source}"
-              @relationship_graph.add_edge(edge)
-            else
-              vertex.debug "Skipping automatic relationship with #{(edge.source == vertex ? edge.target : edge.source)}"
-            end
+          # don't let automatic relationships conflict with manual ones.
+          next if @relationship_graph.edge?(edge.source, edge.target)
+
+          if @relationship_graph.edge?(edge.target, edge.source)
+            vertex.debug "Skipping automatic relationship with #{(edge.source == vertex ? edge.target : edge.source)}"
+          else
+            vertex.debug "Autorequiring #{edge.source}"
+            @relationship_graph.add_edge(edge)
           end
         end
       end

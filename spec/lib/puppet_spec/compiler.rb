@@ -4,12 +4,19 @@ module PuppetSpec::Compiler
     Puppet::Parser::Compiler.compile(node)
   end
 
-  def apply_compiled_manifest(manifest)
+  def compile_to_ral(manifest)
     catalog = compile_to_catalog(manifest)
     ral = catalog.to_ral
     ral.finalize
+    ral
+  end
 
-    transaction = Puppet::Transaction.new(ral)
+  def compile_to_relationship_graph(manifest)
+    compile_to_ral(manifest).relationship_graph
+  end
+
+  def apply_compiled_manifest(manifest)
+    transaction = Puppet::Transaction.new(compile_to_ral(manifest))
     transaction.evaluate
     transaction.report.finalize_report
 
