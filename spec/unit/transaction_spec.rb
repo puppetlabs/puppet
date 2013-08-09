@@ -333,7 +333,6 @@ describe Puppet::Transaction do
   end
 
   describe "when traversing" do
-    let(:graph) { @transaction.relationship_graph }
     let(:path) { tmpdir('eval_generate') }
     let(:resource) { Puppet::Type.type(:file).new(:path => path, :recurse => true) }
 
@@ -345,7 +344,7 @@ describe Puppet::Transaction do
       @transaction.expects(:eval_generate).with(resource).returns true
 
       yielded = false
-      graph.traverse do |res|
+      @transaction.evaluate do |res|
         yielded = true if res == resource
       end
 
@@ -355,29 +354,7 @@ describe Puppet::Transaction do
     it "should prefetch the provider if necessary" do
       @transaction.expects(:prefetch_if_necessary).with(resource)
 
-      graph.traverse {}
-    end
-
-    it "should clear blockers if resources are added" do
-      graph.blockers['foo'] = 3
-      graph.blockers['bar'] = 4
-
-      @transaction.expects(:eval_generate).with(resource).returns true
-
-      graph.traverse {}
-
-      graph.blockers.should be_empty
-    end
-
-    it "should not clear blockers if resources aren't added" do
-      graph.blockers['foo'] = 3
-      graph.blockers['bar'] = 4
-
-      @transaction.expects(:eval_generate).with(resource).returns false
-
-      graph.traverse {}
-
-      graph.blockers.should == {'foo' => 3, 'bar' => 4, resource => 0}
+      @transaction.evaluate {}
     end
 
     it "traverses independent resources before dependent resources" do
@@ -385,7 +362,7 @@ describe Puppet::Transaction do
       @transaction.catalog.add_resource(dependent)
 
       seen = []
-      graph.traverse do |res|
+      @transaction.evaluate do |res|
         seen << res
       end
 
@@ -397,17 +374,11 @@ describe Puppet::Transaction do
       @transaction.catalog.add_resource(independent)
 
       seen = []
-      graph.traverse do |res|
+      @transaction.evaluate do |res|
         seen << res
       end
 
       expect(seen).to include_in_order(resource, independent)
-    end
-
-    it "should mark the resource done" do
-      graph.traverse {}
-
-      graph.done[resource].should == true
     end
 
     it "should fail unsuitable resources and go on if it gets blocked" do
@@ -417,7 +388,7 @@ describe Puppet::Transaction do
       resource.stubs(:suitable?).returns false
 
       evaluated = []
-      graph.traverse do |res|
+      @transaction.evaluate do |res|
         evaluated << res
       end
 
