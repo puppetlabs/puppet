@@ -87,14 +87,14 @@ describe "egrammar parsing heredoc expressions" do
     it "with interpolation and no escapes" do
       dump(parse("$x = foo $a =@(\"one\")\n$x \\$yay\n-one\n")).should == [
         "(block (= $x foo) (= $a (@()", 
-        "  (cat '' (str $x)' \\$yay')",
+        "  (cat '' (str $x) ' \\$yay')",
         ")))"
         ].join("\n")
     end
     it "with interpolation and all escapes" do
       dump(parse("$x = foo $a =@(\"one\"/)\n$x \\$yay\n-one\n")).should == [
         "(block (= $x foo) (= $a (@()", 
-        "  (cat '' (str $x)' $yay')",
+        "  (cat '' (str $x) ' $yay')",
         ")))"
         ].join("\n")
     end
