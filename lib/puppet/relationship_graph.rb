@@ -23,6 +23,36 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
     @providerless_types = []
   end
 
+  def populate_from(catalog)
+    catalog.resources.each do |vertex|
+      add_vertex vertex
+    end
+
+    vertices.each do |vertex|
+      vertex.builddepends.each do |edge|
+        add_edge(edge)
+      end
+
+      vertex.autorequire(catalog).each do |edge|
+        # don't let automatic relationships conflict with manual ones.
+        next if edge?(edge.source, edge.target)
+
+        if edge?(edge.target, edge.source)
+          vertex.debug "Skipping automatic relationship with #{edge.source}"
+        else
+          vertex.debug "Autorequiring #{edge.source}"
+          add_edge(edge)
+        end
+      end
+    end
+    write_graph(:relationships) if catalog.host_config?
+
+    # Then splice in the container information
+    splice!(catalog)
+
+    write_graph(:expanded_relationships) if catalog.host_config?
+  end
+
   def add_vertex(vertex, priority = @priority[vertex])
     super(vertex)
 
@@ -130,5 +160,69 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
     end
 
     teardown.call()
+  end
+
+  # Impose our container information on another graph by using it
+  # to replace any container vertices X with a pair of verticies
+  # { admissible_X and completed_X } such that that
+  #
+  #    0) completed_X depends on admissible_X
+  #    1) contents of X each depend on admissible_X
+  #    2) completed_X depends on each on the contents of X
+  #    3) everything which depended on X depens on completed_X
+  #    4) admissible_X depends on everything X depended on
+  #    5) the containers and their edges must be removed
+  #
+  # Note that this requires attention to the possible case of containers
+  # which contain or depend on other containers, but has the advantage
+  # that the number of new edges created scales linearly with the number
+  # of contained verticies regardless of how containers are related;
+  # alternatives such as replacing container-edges with content-edges
+  # scale as the product of the number of external dependences, which is
+  # to say geometrically in the case of nested / chained containers.
+  #
+  Default_label = { :callback => :refresh, :event => :ALL_EVENTS }
+  def splice!(catalog)
+    stage_class      = Puppet::Type.type(:stage)
+    whit_class       = Puppet::Type.type(:whit)
+    component_class  = Puppet::Type.type(:component)
+    containers = catalog.resources.find_all { |v| (v.is_a?(component_class) or v.is_a?(stage_class)) and vertex?(v) }
+    #
+    # These two hashes comprise the aforementioned attention to the possible
+    #   case of containers that contain / depend on other containers; they map
+    #   containers to their sentinels but pass other verticies through.  Thus we
+    #   can "do the right thing" for references to other verticies that may or
+    #   may not be containers.
+    #
+    admissible = Hash.new { |h,k| k }
+    completed  = Hash.new { |h,k| k }
+    containers.each { |x|
+      admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => catalog)
+      completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => catalog)
+      add_vertex(admissible[x], resource_priority(x))
+      add_vertex(completed[x], resource_priority(x))
+    }
+    #
+    # Implement the six requirements listed above
+    #
+    containers.each { |x|
+      contents = catalog.adjacent(x, :direction => :out)
+      add_edge(admissible[x],completed[x]) if contents.empty? # (0)
+      contents.each { |v|
+        add_edge(admissible[x],admissible[v],Default_label) # (1)
+        add_edge(completed[v], completed[x], Default_label) # (2)
+      }
+      # (3) & (5)
+      adjacent(x,:direction => :in,:type => :edges).each { |e|
+        add_edge(completed[e.source],admissible[x],e.label)
+        remove_edge! e
+      }
+      # (4) & (5)
+      adjacent(x,:direction => :out,:type => :edges).each { |e|
+        add_edge(completed[x],admissible[e.target],e.label)
+        remove_edge! e
+      }
+    }
+    containers.each { |x| remove_vertex! x } # (5)
   end
 end

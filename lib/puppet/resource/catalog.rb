@@ -248,106 +248,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   # Create a graph of all of the relationships in our catalog.
   def relationship_graph
     unless @relationship_graph
-      # It's important that we assign the graph immediately, because
-      # the debug messages below use the relationships in the
-      # relationship graph to determine the path to the resources
-      # spitting out the messages.  If this is not set,
-      # then we get into an infinite loop.
       @relationship_graph = Puppet::RelationshipGraph.new
-
-      self.resources.each do |vertex|
-        @relationship_graph.add_vertex vertex
-      end
-
-      @relationship_graph.vertices.each do |vertex|
-        vertex.builddepends.each do |edge|
-          @relationship_graph.add_edge(edge)
-        end
-
-        vertex.autorequire(self).each do |edge|
-          # don't let automatic relationships conflict with manual ones.
-          next if @relationship_graph.edge?(edge.source, edge.target)
-
-          if @relationship_graph.edge?(edge.target, edge.source)
-            vertex.debug "Skipping automatic relationship with #{(edge.source == vertex ? edge.target : edge.source)}"
-          else
-            vertex.debug "Autorequiring #{edge.source}"
-            @relationship_graph.add_edge(edge)
-          end
-        end
-      end
-      @relationship_graph.write_graph(:relationships) if host_config?
-
-      # Then splice in the container information
-      splice!(@relationship_graph)
-
-      @relationship_graph.write_graph(:expanded_relationships) if host_config?
+      @relationship_graph.populate_from(self)
     end
     @relationship_graph
-  end
-
-  # Impose our container information on another graph by using it
-  # to replace any container vertices X with a pair of verticies
-  # { admissible_X and completed_X } such that that
-  #
-  #    0) completed_X depends on admissible_X
-  #    1) contents of X each depend on admissible_X
-  #    2) completed_X depends on each on the contents of X
-  #    3) everything which depended on X depens on completed_X
-  #    4) admissible_X depends on everything X depended on
-  #    5) the containers and their edges must be removed
-  #
-  # Note that this requires attention to the possible case of containers
-  # which contain or depend on other containers, but has the advantage
-  # that the number of new edges created scales linearly with the number
-  # of contained verticies regardless of how containers are related;
-  # alternatives such as replacing container-edges with content-edges
-  # scale as the product of the number of external dependences, which is
-  # to say geometrically in the case of nested / chained containers.
-  #
-  Default_label = { :callback => :refresh, :event => :ALL_EVENTS }
-  def splice!(other)
-    stage_class      = Puppet::Type.type(:stage)
-    whit_class       = Puppet::Type.type(:whit)
-    component_class  = Puppet::Type.type(:component)
-    containers = resources.find_all { |v| (v.is_a?(component_class) or v.is_a?(stage_class)) and vertex?(v) }
-    #
-    # These two hashes comprise the aforementioned attention to the possible
-    #   case of containers that contain / depend on other containers; they map
-    #   containers to their sentinels but pass other verticies through.  Thus we
-    #   can "do the right thing" for references to other verticies that may or
-    #   may not be containers.
-    #
-    admissible = Hash.new { |h,k| k }
-    completed  = Hash.new { |h,k| k }
-    containers.each { |x|
-      admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => self)
-      completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => self)
-      other.add_vertex(admissible[x], other.resource_priority(x))
-      other.add_vertex(completed[x], other.resource_priority(x))
-    }
-    #
-    # Implement the six requirements listed above
-    #
-    containers.each { |x|
-      contents = adjacent(x, :direction => :out)
-      other.add_edge(admissible[x],completed[x]) if contents.empty? # (0)
-      contents.each { |v|
-        other.add_edge(admissible[x],admissible[v],Default_label) # (1)
-        other.add_edge(completed[v], completed[x], Default_label) # (2)
-      }
-      # (3) & (5)
-      other.adjacent(x,:direction => :in,:type => :edges).each { |e|
-        other.add_edge(completed[e.source],admissible[x],e.label)
-        other.remove_edge! e
-      }
-      # (4) & (5)
-      other.adjacent(x,:direction => :out,:type => :edges).each { |e|
-        other.add_edge(completed[x],admissible[e.target],e.label)
-        other.remove_edge! e
-      }
-    }
-    containers.each { |x| other.remove_vertex! x } # (5)
   end
 
   # Remove the resource from our catalog.  Notice that we also call
