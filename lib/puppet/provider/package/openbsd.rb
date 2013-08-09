@@ -127,4 +127,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   def uninstall
     pkgdelete @resource[:name]
   end
+
+  def purge
+    pkgdelete "-c", "-q", @resource[:name]
+  end
 end
