@@ -30,6 +30,8 @@ class Puppet::Parser::AST
       super
       # Laziliy initialize puppet pops when heredoc is used
       require 'puppet/pops'
+      @@T ||= Puppet::Pops::Types::TypeFactory
+      @@HASH_OF_SYNTAX_CHECKERS ||= tf.hash_of(tf.type_of(Puppetx::SYNTAX_CHECKERS_TYPE))
     end
 
     def evaluate(scope)
@@ -43,15 +45,19 @@ class Puppet::Parser::AST
       return unless syntax || syntax == ''
       func_name = nil # "check_#{syntax}_syntax"
 
-      function_names_for_syntax(syntax()).each do |name|
-        break if func_name = Puppet::Parser::Functions.function(name)
-      end
-      return unless func_name
+      checker = checker_for_syntax(scope, syntax())
+      return unless checker
 
+#      function_names_for_syntax(syntax()).each do |name|
+#        break if func_name = Puppet::Parser::Functions.function(name)
+#      end
+#      return unless func_name
+
+      # Call validator and give it the location information from the expression
+      # (as opposed to where the heredoc tag is).
       acceptor = Puppet::Pops::Validation::Acceptor.new()
-      # Call validator and give it the location information from the expression (as opposed to where the heredoc
-      # tag is).
-      scope.send(func_name, [result, syntax(), acceptor, {:file=> expr.file(), :line => expr.line(), :pos => expr.pos()}])
+      checker.check(result, syntax(), acceptor, {:file=> expr.file(), :line => expr.line(), :pos => expr.pos()})
+#      scope.send(func_name, [result, syntax(), acceptor, {:file=> expr.file(), :line => expr.line(), :pos => expr.pos()}])
 
       # This logic is a variation on error output also found in e_parser_adapter.rb. Can possibly be refactored
       # into common utility.
@@ -102,12 +108,17 @@ class Puppet::Parser::AST
       end
     end
 
-    def function_names_for_syntax(syntax)
-      syntax = syntax.gsub(/\./, "_")
+
+    def checker_for_syntax(scope, syntax)
+      checkers_hash = scope.compiler.injector.lookup(scope, HASH_OF_SYNTAX_CHECKERS, Puppetx::SYNTAX_CHECKERS) || {}
+      checkers_hash[lookup_keys_for_syntax.find {|x| checkers_hash[x] }]
+    end
+
+    def lookup_keys_for_syntax(syntax)
       segments = syntax.split(/\+/)
       result = []
       begin
-        result << "check_#{segments.join("__")}_syntax"
+        result << segments.join("+")
         segments.shift
       end until segments.empty?
       result
