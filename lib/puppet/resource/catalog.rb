@@ -310,7 +310,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     stage_class      = Puppet::Type.type(:stage)
     whit_class       = Puppet::Type.type(:whit)
     component_class  = Puppet::Type.type(:component)
-    containers = vertices.find_all { |v| (v.is_a?(component_class) or v.is_a?(stage_class)) and vertex?(v) }
+    containers = resources.find_all { |v| (v.is_a?(component_class) or v.is_a?(stage_class)) and vertex?(v) }
     #
     # These two hashes comprise the aforementioned attention to the possible
     #   case of containers that contain / depend on other containers; they map
@@ -323,9 +323,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     containers.each { |x|
       admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => self)
       completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => self)
+      other.add_vertex(admissible[x], other.resource_priority(x))
+      other.add_vertex(completed[x], other.resource_priority(x))
     }
     #
-    # Implement the six requierments listed above
+    # Implement the six requirements listed above
     #
     containers.each { |x|
       contents = adjacent(x, :direction => :out)

@@ -9,6 +9,15 @@ describe Puppet::RelationshipGraph do
     stub "vertex #{name}", :ref => name
   end
 
+  it "allows adding a new vertex with a specific priority" do
+    graph = Puppet::RelationshipGraph.new
+    vertex = stub_vertex('something')
+
+    graph.add_vertex(vertex, 2)
+
+    expect(graph.resource_priority(vertex)).to eq(2)
+  end
+
   it "returns resource priority based on the order added" do
     graph = Puppet::RelationshipGraph.new
 
@@ -65,6 +74,40 @@ describe Puppet::RelationshipGraph do
   context "order of traversal" do
     include PuppetSpec::Compiler
 
+    it "traverses independent resources in the order they are added" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+        notify { "first": }
+        notify { "second": }
+        notify { "third": }
+        notify { "fourth": }
+        notify { "fifth": }
+      MANIFEST
+
+      expect(order_resources_traversed_in(relationships)).to(
+        include_in_order("Notify[first]",
+                         "Notify[second]",
+                         "Notify[third]",
+                         "Notify[fourth]",
+                         "Notify[fifth]"))
+    end
+
+    it "traverses resources generated during catalog creation in the order inserted" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+        create_resources(notify, { "first" => {} })
+        create_resources(notify, { "second" => {} })
+        notify{ "third": }
+        create_resources(notify, { "fourth" => {} })
+        create_resources(notify, { "fifth" => {} })
+      MANIFEST
+
+      expect(order_resources_traversed_in(relationships)).to(
+        include_in_order("Notify[first]",
+                         "Notify[second]",
+                         "Notify[third]",
+                         "Notify[fourth]",
+                         "Notify[fifth]"))
+    end
+
     it "traverses all independent resources before traversing dependent ones" do
       relationships = compile_to_relationship_graph(<<-MANIFEST)
         notify { "first": require => Notify[third] }
@@ -74,16 +117,6 @@ describe Puppet::RelationshipGraph do
 
       expect(order_resources_traversed_in(relationships)).to(
         include_in_order("Notify[second]", "Notify[third]", "Notify[first]"))
-    end
-
-    it "traverses independent resources in the order they are added" do
-      relationships = compile_to_relationship_graph(<<-MANIFEST)
-        notify { "first": }
-        notify { "second": }
-      MANIFEST
-
-      expect(order_resources_traversed_in(relationships)).to(
-        include_in_order("Notify[first]", "Notify[second]"))
     end
 
     it "traverses resources in classes in the order they are added" do
@@ -104,10 +137,10 @@ describe Puppet::RelationshipGraph do
       MANIFEST
 
       expect(order_resources_traversed_in(relationships)).to(
-        include_in_order("Notify[a]", "Notify[b]", "Notify[d]", "Notify[c]"))
+        include_in_order("Notify[a]", "Notify[b]", "Notify[c]", "Notify[d]"))
     end
 
-    it "traverses resources in classes in the order they are added" do
+    it "traverses resources in defines in the order they are added" do
       relationships = compile_to_relationship_graph(<<-MANIFEST)
         define d1() {
           notify { "a": }
@@ -125,7 +158,7 @@ describe Puppet::RelationshipGraph do
       MANIFEST
 
       expect(order_resources_traversed_in(relationships)).to(
-        include_in_order("Notify[a]", "Notify[b]", "Notify[d]", "Notify[c]"))
+        include_in_order("Notify[a]", "Notify[b]", "Notify[c]", "Notify[d]"))
     end
 
     def order_resources_traversed_in(relationships)
