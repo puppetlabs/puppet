@@ -69,7 +69,7 @@ class Puppet::Parser::AST
         formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
         emitted_w = 0
         emitted_dw = 0
-        acceptor.warnings.each {|w|
+        acceptor.warnings.each do |w|
           if w.severity == :deprecation
             # Do *not* call Puppet.deprecation_warning it is for internal deprecation, not
             # deprecation of constructs in manifests! (It is not designed for that purpose even if
@@ -82,7 +82,7 @@ class Puppet::Parser::AST
             emitted_w += 1
           end
           break if emitted_w > max_warnings && emitted_dw > max_deprecations # but only then
-        }
+        end
       end
 
       # If there were errors, report all up to cap. Use Puppet formatter
