@@ -23,13 +23,14 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
     @providerless_types = []
   end
 
-  def add_vertex(vertex)
-    super
+  def add_vertex(vertex, priority = @priority[vertex])
+    super(vertex)
 
-    unless @priority.include?(vertex)
-      @priority[vertex] = @count
-      @count += 1
-    end
+    @priority[vertex] = if priority.nil?
+                          @count += 1
+                        else
+                          priority
+                        end
   end
 
   def add_relationship(f, t, label=nil)
