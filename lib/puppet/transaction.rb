@@ -10,7 +10,6 @@ class Puppet::Transaction
   require 'puppet/transaction/event'
   require 'puppet/transaction/event_manager'
   require 'puppet/transaction/resource_harness'
-  require 'puppet/transaction/relationship_graph_wrapper'
   require 'puppet/resource/status'
 
   attr_accessor :catalog, :ignoreschedules, :for_network_device
@@ -46,17 +45,52 @@ class Puppet::Transaction
   # This method does all the actual work of running a transaction.  It
   # collects all of the changes, executes them, and responds to any
   # necessary events.
-  def evaluate
+  def evaluate(&block)
+    block ||= method(:eval_resource)
     add_dynamically_generated_resources
 
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
-    relationship_graph.traverse do |resource|
+    continue_while = lambda { !stop_processing? }
+
+    pre_process = lambda do |resource|
+      prefetch_if_necessary(resource)
+
+      # If we generated resources, we don't know what they are now
+      # blocking, so we opt to recompute it, rather than try to track every
+      # change that would affect the number.
+      relationship_graph.clear_blockers if eval_generate(resource)
+    end
+
+    providerless_types = []
+    overly_deferred_resource_handler = lambda do |resource|
+      # We don't automatically assign unsuitable providers, so if there
+      # is one, it must have been selected by the user.
+      if resource.provider
+        resource.err "Provider #{resource.provider.class.name} is not functional on this host"
+      else
+        providerless_types << resource.type
+      end
+
+      resource_status(resource).failed = true
+    end
+
+    teardown = lambda do
+      # Just once per type. No need to punish the user.
+      providerless_types.uniq.each do |type|
+        Puppet.err "Could not find a suitable provider for #{type}"
+      end
+    end
+
+    relationship_graph.traverse(:while => continue_while,
+                                :pre_process => pre_process,
+                                :overly_deferred_resource_handler => overly_deferred_resource_handler,
+                                :teardown => teardown) do |resource|
       if resource.is_a?(Puppet::Type::Component)
         Puppet.warning "Somehow left a component in the relationship graph"
       else
         resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
-        seconds = thinmark { eval_resource(resource) }
+        seconds = thinmark { block.call(resource) }
         resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
       end
     end
@@ -80,16 +114,7 @@ class Puppet::Transaction
   end
 
   def relationship_graph
-    if @relationship_graph.nil?
-      fundamental_order = {}
-      catalog.resources.each_with_index do |resource, index|
-        fundamental_order[resource.ref] = index
-      end
-      @relationship_graph = RelationshipGraphWrapper.new(catalog.relationship_graph,
-                                                         fundamental_order,
-                                                         self)
-    end
-    @relationship_graph
+    @relationship_graph ||= catalog.relationship_graph
   end
 
   def resource_status(resource)
@@ -187,7 +212,7 @@ class Puppet::Transaction
     if relationship_graph.edge?(*edge.reverse)
       parent.debug "Skipping automatic relationship to #{child}"
     else
-      relationship_graph.add_edge(edge[0],edge[1],label)
+      relationship_graph.add_relationship(edge[0],edge[1],label)
     end
   end
 
