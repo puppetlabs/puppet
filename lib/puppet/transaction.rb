@@ -23,25 +23,177 @@ class Puppet::Transaction
   # Handles most of the actual interacting with resources
   attr_reader :resource_harness
 
+  attr_reader :prefetched_providers
+
   include Puppet::Util
   include Puppet::Util::Tagging
+
+  def initialize(catalog, report = nil)
+    @catalog = catalog
+
+    @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
+
+    @report.add_times(:config_retrieval, @catalog.retrieval_duration || 0)
+
+    @event_manager = Puppet::Transaction::EventManager.new(self)
+
+    @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
+
+    @prefetched_providers = Hash.new { |h,k| h[k] = {} }
+  end
+
+  # This method does all the actual work of running a transaction.  It
+  # collects all of the changes, executes them, and responds to any
+  # necessary events.
+  def evaluate(&block)
+    block ||= method(:eval_resource)
+    add_dynamically_generated_resources
+
+    Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
+
+    continue_while = lambda { !stop_processing? }
+
+    pre_process = lambda do |resource|
+      prefetch_if_necessary(resource)
+
+      # If we generated resources, we don't know what they are now
+      # blocking, so we opt to recompute it, rather than try to track every
+      # change that would affect the number.
+      relationship_graph.clear_blockers if eval_generate(resource)
+    end
+
+    providerless_types = []
+    overly_deferred_resource_handler = lambda do |resource|
+      # We don't automatically assign unsuitable providers, so if there
+      # is one, it must have been selected by the user.
+      if resource.provider
+        resource.err "Provider #{resource.provider.class.name} is not functional on this host"
+      else
+        providerless_types << resource.type
+      end
+
+      resource_status(resource).failed = true
+    end
+
+    teardown = lambda do
+      # Just once per type. No need to punish the user.
+      providerless_types.uniq.each do |type|
+        Puppet.err "Could not find a suitable provider for #{type}"
+      end
+    end
+
+    relationship_graph.traverse(:while => continue_while,
+                                :pre_process => pre_process,
+                                :overly_deferred_resource_handler => overly_deferred_resource_handler,
+                                :teardown => teardown) do |resource|
+      if resource.is_a?(Puppet::Type::Component)
+        Puppet.warning "Somehow left a component in the relationship graph"
+      else
+        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
+        seconds = thinmark { block.call(resource) }
+        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
+      end
+    end
+
+    Puppet.debug "Finishing transaction #{object_id}"
+  end
 
   # Wraps application run state check to flag need to interrupt processing
   def stop_processing?
     Puppet::Application.stop_requested?
   end
 
-  # Add some additional times for reporting
-  def add_times(hash)
-    hash.each do |name, num|
-      report.add_times(name, num)
-    end
-  end
-
   # Are there any failed resources in this transaction?
   def any_failed?
     report.resource_statuses.values.detect { |status| status.failed? }
   end
+
+  # Find all of the changed resources.
+  def changed?
+    report.resource_statuses.values.find_all { |status| status.changed }.collect { |status| catalog.resource(status.resource) }
+  end
+
+  def relationship_graph
+    @relationship_graph ||= catalog.relationship_graph
+  end
+
+  def resource_status(resource)
+    report.resource_statuses[resource.to_s] || add_resource_status(Puppet::Resource::Status.new(resource))
+  end
+
+  # The tags we should be checking.
+  def tags
+    self.tags = Puppet[:tags] unless defined?(@tags)
+
+    super
+  end
+
+  def eval_generate(resource)
+    return false unless resource.respond_to?(:eval_generate)
+    raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
+    begin
+      made = resource.eval_generate.uniq
+      return false if made.empty?
+      made = Hash[made.map(&:name).zip(made)]
+    rescue => detail
+      resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
+      return false
+    end
+    made.values.each do |res|
+      begin
+        res.tag(*resource.tags)
+        @catalog.add_resource(res)
+        res.finish
+      rescue Puppet::Resource::Catalog::DuplicateResourceError
+        res.info "Duplicate generated resource; skipping"
+      end
+    end
+    sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+
+    # The completed whit is now the thing that represents the resource is done
+    relationship_graph.adjacent(resource,:direction => :out,:type => :edges).each { |e|
+      # But children run as part of the resource, not after it
+      next if made[e.target.name]
+
+      add_conditional_directed_dependency(sentinel, e.target, e.label)
+      relationship_graph.remove_edge! e
+    }
+
+    default_label = Puppet::RelationshipGraph::Default_label
+    made.values.each do |res|
+      # Depend on the nearest ancestor we generated, falling back to the
+      # resource if we have none
+      parent_name = res.ancestors.find { |a| made[a] and made[a] != res }
+      parent = made[parent_name] || resource
+
+      add_conditional_directed_dependency(parent, res)
+
+      # This resource isn't 'completed' until each child has run
+      add_conditional_directed_dependency(res, sentinel, default_label)
+    end
+
+    # This edge allows the resource's events to propagate, though it isn't
+    # strictly necessary for ordering purposes
+    add_conditional_directed_dependency(resource, sentinel, default_label)
+    true
+  end
+
+  def prefetch_if_necessary(resource)
+    provider_class = resource.provider.class
+    return unless provider_class.respond_to?(:prefetch) and !prefetched_providers[resource.type][provider_class.name]
+
+    resources = resources_by_provider(resource.type, provider_class.name)
+
+    if provider_class == resource.class.defaultprovider
+      providerless_resources = resources_by_provider(resource.type, nil)
+      providerless_resources.values.each {|res| res.provider = provider_class.name}
+      resources.merge! providerless_resources
+    end
+
+    prefetch(provider_class, resources)
+  end
+
+  private
 
   # Apply all changes for a resource
   def apply(resource, ancestor = nil)
@@ -52,16 +204,6 @@ class Puppet::Transaction
     resource.err "Could not evaluate: #{detail}"
   end
 
-  # Find all of the changed resources.
-  def changed?
-    report.resource_statuses.values.find_all { |status| status.changed }.collect { |status| catalog.resource(status.resource) }
-  end
-
-  # Find all of the applied resources (including failed attempts).
-  def applied_resources
-    report.resource_statuses.values.collect { |status| catalog.resource(status.resource) }
-  end
-
   # Copy an important relationships from the parent to the newly-generated
   # child resource.
   def add_conditional_directed_dependency(parent, child, label=nil)
@@ -70,7 +212,7 @@ class Puppet::Transaction
     if relationship_graph.edge?(*edge.reverse)
       parent.debug "Skipping automatic relationship to #{child}"
     else
-      relationship_graph.add_edge(edge[0],edge[1],label)
+      relationship_graph.add_relationship(edge[0],edge[1],label)
     end
   end
 
@@ -85,31 +227,6 @@ class Puppet::Transaction
 
     # Check to see if there are any events queued for this resource
     event_manager.process_events(resource)
-  end
-
-  # This method does all the actual work of running a transaction.  It
-  # collects all of the changes, executes them, and responds to any
-  # necessary events.
-  def evaluate
-    add_dynamically_generated_resources
-
-    Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
-
-    relationship_graph.traverse do |resource|
-      if resource.is_a?(Puppet::Type::Component)
-        Puppet.warning "Somehow left a component in the relationship graph"
-      else
-        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
-        seconds = thinmark { eval_resource(resource) }
-        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
-      end
-    end
-
-    Puppet.debug "Finishing transaction #{object_id}"
-  end
-
-  def events
-    event_manager.events
   end
 
   def failed?(resource)
@@ -144,54 +261,8 @@ class Puppet::Transaction
     found_failed
   end
 
-  def eval_generate(resource)
-    return false unless resource.respond_to?(:eval_generate)
-    raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
-    begin
-      made = resource.eval_generate.uniq
-      return false if made.empty?
-      made = Hash[made.map(&:name).zip(made)]
-    rescue => detail
-      resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
-      return false
-    end
-    made.values.each do |res|
-      begin
-        res.tag(*resource.tags)
-        @catalog.add_resource(res)
-        res.finish
-      rescue Puppet::Resource::Catalog::DuplicateResourceError
-        res.info "Duplicate generated resource; skipping"
-      end
-    end
-    sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
-
-    # The completed whit is now the thing that represents the resource is done
-    relationship_graph.adjacent(resource,:direction => :out,:type => :edges).each { |e|
-      # But children run as part of the resource, not after it
-      next if made[e.target.name]
-
-      add_conditional_directed_dependency(sentinel, e.target, e.label)
-      relationship_graph.remove_edge! e
-    }
-
-    default_label = Puppet::Resource::Catalog::Default_label
-    made.values.each do |res|
-      # Depend on the nearest ancestor we generated, falling back to the
-      # resource if we have none
-      parent_name = res.ancestors.find { |a| made[a] and made[a] != res }
-      parent = made[parent_name] || resource
-
-      add_conditional_directed_dependency(parent, res)
-
-      # This resource isn't 'completed' until each child has run
-      add_conditional_directed_dependency(res, sentinel, default_label)
-    end
-
-    # This edge allows the resource's events to propagate, though it isn't
-    # strictly necessary for ordering purposes
-    add_conditional_directed_dependency(resource, sentinel, default_label)
-    true
+  def add_dynamically_generated_resources
+    @catalog.vertices.each { |resource| generate_additional_resources(resource) }
   end
 
   # A general method for recursively generating new resources from a
@@ -218,27 +289,9 @@ class Puppet::Transaction
     end
   end
 
-  def add_dynamically_generated_resources
-    @catalog.vertices.each { |resource| generate_additional_resources(resource) }
-  end
-
   # Should we ignore tags?
   def ignore_tags?
     ! @catalog.host_config?
-  end
-
-  # this should only be called by a Puppet::Type::Component resource now
-  # and it should only receive an array
-  def initialize(catalog, report = nil)
-    @catalog = catalog
-
-    @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
-
-    @event_manager = Puppet::Transaction::EventManager.new(self)
-
-    @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
-
-    @prefetched_providers = Hash.new { |h,k| h[k] = {} }
   end
 
   def resources_by_provider(type_name, provider_name)
@@ -256,23 +309,6 @@ class Puppet::Transaction
     @resources_by_provider[type_name][provider_name] || {}
   end
 
-  def prefetch_if_necessary(resource)
-    provider_class = resource.provider.class
-    return unless provider_class.respond_to?(:prefetch) and !prefetched_providers[resource.type][provider_class.name]
-
-    resources = resources_by_provider(resource.type, provider_class.name)
-
-    if provider_class == resource.class.defaultprovider
-      providerless_resources = resources_by_provider(resource.type, nil)
-      providerless_resources.values.each {|res| res.provider = provider_class.name}
-      resources.merge! providerless_resources
-    end
-
-    prefetch(provider_class, resources)
-  end
-
-  attr_reader :prefetched_providers
-
   # Prefetch any providers that support it, yo.  We don't support prefetching
   # types, just providers.
   def prefetch(provider_class, resources)
@@ -287,155 +323,13 @@ class Puppet::Transaction
     @prefetched_providers[type_name][provider_class.name] = true
   end
 
-  # We want to monitor changes in the relationship graph of our
-  # catalog but this is complicated by the fact that the catalog
-  # both is_a graph and has_a graph, by the fact that changes to
-  # the structure of the object can have adverse serialization
-  # effects, by threading issues, by order-of-initialization issues,
-  # etc.
-  #
-  # Since the proper lifetime/scope of the monitoring is a transaction
-  # and the transaction is already commiting a mild law-of-demeter
-  # transgression, we cut the Gordian knot here by simply wrapping the
-  # transaction's view of the resource graph to capture and maintain
-  # the information we need.  Nothing outside the transaction needs
-  # this information, and nothing outside the transaction can see it
-  # except via the Transaction#relationship_graph
-
-  class Relationship_graph_wrapper
-    require 'puppet/rb_tree_map'
-    attr_reader :real_graph,:transaction,:ready,:generated,:done,:blockers,:unguessable_deterministic_key
-    def initialize(real_graph,transaction)
-      @real_graph = real_graph
-      @transaction = transaction
-      @ready = Puppet::RbTreeMap.new
-      @generated = {}
-      @done = {}
-      @blockers = {}
-      @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.ref}") }
-      @providerless_types = []
-    end
-    def method_missing(*args,&block)
-      real_graph.send(*args,&block)
-    end
-    def add_vertex(v)
-      real_graph.add_vertex(v)
-    end
-    def add_edge(f,t,label=nil)
-      key = unguessable_deterministic_key[t]
-
-      ready.delete(key)
-
-      real_graph.add_edge(f,t,label)
-    end
-    # Enqueue the initial set of resources, those with no dependencies.
-    def enqueue_roots
-      vertices.each do |v|
-        blockers[v] = direct_dependencies_of(v).length
-        enqueue(v) if blockers[v] == 0
-      end
-    end
-    # Decrement the blocker count for the resource by 1. If the number of
-    # blockers is unknown, count them and THEN decrement by 1.
-    def unblock(resource)
-      blockers[resource] ||= direct_dependencies_of(resource).select { |r2| !done[r2] }.length
-      if blockers[resource] > 0
-        blockers[resource] -= 1
-      else
-        resource.warning "appears to have a negative number of dependencies"
-      end
-      blockers[resource] <= 0
-    end
-    def enqueue(*resources)
-      resources.each do |resource|
-        key = unguessable_deterministic_key[resource]
-        ready[key] = resource
-      end
-    end
-    def finish(resource)
-      direct_dependents_of(resource).each do |v|
-        enqueue(v) if unblock(v)
-      end
-      done[resource] = true
-    end
-    def next_resource
-      ready.delete_min
-    end
-    def traverse(&block)
-      real_graph.report_cycles_in_graph
-
-      enqueue_roots
-
-      deferred_resources = []
-
-      while (resource = next_resource) && !transaction.stop_processing?
-        if resource.suitable?
-          made_progress = true
-
-          transaction.prefetch_if_necessary(resource)
-
-          # If we generated resources, we don't know what they are now
-          # blocking, so we opt to recompute it, rather than try to track every
-          # change that would affect the number.
-          blockers.clear if transaction.eval_generate(resource)
-
-          yield resource
-
-          finish(resource)
-        else
-          deferred_resources << resource
-        end
-
-        if ready.empty? and deferred_resources.any?
-          if made_progress
-            enqueue(*deferred_resources)
-          else
-            fail_unsuitable_resources(deferred_resources)
-          end
-
-          made_progress = false
-          deferred_resources = []
-        end
-      end
-
-      # Just once per type. No need to punish the user.
-      @providerless_types.uniq.each do |type|
-        Puppet.err "Could not find a suitable provider for #{type}"
-      end
-    end
-
-    def fail_unsuitable_resources(resources)
-      resources.each do |resource|
-        # We don't automatically assign unsuitable providers, so if there
-        # is one, it must have been selected by the user.
-        if resource.provider
-          resource.err "Provider #{resource.provider.class.name} is not functional on this host"
-        else
-          @providerless_types << resource.type
-        end
-
-        transaction.resource_status(resource).failed = true
-
-        finish(resource)
-      end
-    end
-  end
-
-  def relationship_graph
-    @relationship_graph ||= Relationship_graph_wrapper.new(catalog.relationship_graph,self)
-  end
-
   def add_resource_status(status)
-    report.add_resource_status status
-  end
-
-  def resource_status(resource)
-    report.resource_statuses[resource.to_s] || add_resource_status(Puppet::Resource::Status.new(resource))
+    report.add_resource_status(status)
   end
 
   # Is the resource currently scheduled?
   def scheduled?(resource)
-    self.ignoreschedules or resource_harness.scheduled?(resource_status(resource), resource)
+    self.ignoreschedules or resource_harness.scheduled?(resource)
   end
 
   # Should this resource be skipped?
@@ -466,14 +360,6 @@ class Puppet::Transaction
 
   def host_and_device_resource?(resource)
     resource.appliable_to_host? && resource.appliable_to_device?
-  end
-  private :host_and_device_resource?
-
-  # The tags we should be checking.
-  def tags
-    self.tags = Puppet[:tags] unless defined?(@tags)
-
-    super
   end
 
   def handle_qualified_tags( qualified )

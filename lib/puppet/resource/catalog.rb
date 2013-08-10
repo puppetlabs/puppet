@@ -2,15 +2,16 @@ require 'puppet/node'
 require 'puppet/indirector'
 require 'puppet/simple_graph'
 require 'puppet/transaction'
-
 require 'puppet/util/pson'
-
 require 'puppet/util/tagging'
+require 'puppet/relationship_graph'
 
-# This class models a node catalog.  It is the thing
-# meant to be passed from server to client, and it contains all
-# of the information in the catalog, including the resources
-# and the relationships between them.
+# This class models a node catalog.  It is the thing meant to be passed
+# from server to client, and it contains all of the information in the
+# catalog, including the resources and the relationships between them.
+#
+# @api public
+
 class Puppet::Resource::Catalog < Puppet::SimpleGraph
   class DuplicateResourceError < Puppet::Error
     include Puppet::ExternalFileError
@@ -95,8 +96,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   private :add_resource_to_graph
 
   def create_resource_aliases(resource)
-    if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
-      self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
+    if resource.respond_to?(:isomorphic?) and resource.isomorphic? and resource.name != resource.title
+      self.alias(resource, resource.uniqueness_key)
     end
   end
   private :create_resource_aliases
@@ -129,32 +130,32 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @aliases[resource.ref] << newref
   end
 
-  # Apply our catalog to the local host.  Valid options
-  # are:
-  #   :tags - set the tags that restrict what resources run
-  #       during the transaction
-  #   :ignoreschedules - tell the transaction to ignore schedules
-  #       when determining the resources to run
+  # Apply our catalog to the local host.
+  # @param options [Hash{Symbol => Object}] a hash of options
+  # @option options [Puppet::Transaction::Report] :report
+  #   The report object to log this transaction to. This is optional,
+  #   and the resulting transaction will create a report if not
+  #   supplied.
+  # @option options [Array[String]] :tags
+  #   Tags used to filter the transaction. If supplied then only
+  #   resources tagged with any of these tags will be evaluated.
+  # @option options [Boolean] :ignoreschedules
+  #   Ignore schedules when evaluating resources
+  # @option options [Boolean] :for_network_device
+  #   Whether this catalog is for a network device
+  #
+  # @return [Puppet::Transaction] the transaction created for this
+  #   application
+  #
+  # @api public
   def apply(options = {})
-    @applying = true
-
     Puppet::Util::Storage.load if host_config?
 
-    transaction = Puppet::Transaction.new(self, options[:report])
-    register_report = options[:report].nil?
-
-    transaction.tags = options[:tags] if options[:tags]
-    transaction.ignoreschedules = true if options[:ignoreschedules]
-    transaction.for_network_device = options[:network_device]
-
-    transaction.add_times :config_retrieval => self.retrieval_duration || 0
+    transaction = create_transaction(options)
 
     begin
-      Puppet::Util::Log.newdestination(transaction.report) if register_report
-      begin
+      transaction.report.as_logging_destination do
         transaction.evaluate
-      ensure
-        Puppet::Util::Log.close(transaction.report) if register_report
       end
     rescue Puppet::Error => detail
       Puppet.log_exception(detail, "Could not apply complete catalog: #{detail}")
@@ -168,14 +169,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     yield transaction if block_given?
 
-    return transaction
-  ensure
-    @applying = false
-  end
-
-  # Are we in the middle of applying the catalog?
-  def applying?
-    @applying
+    transaction
   end
 
   def clear(remove_resources = true)
@@ -225,7 +219,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @classes = []
     @resource_table = {}
     @resources = []
-    @applying = false
     @relationship_graph = nil
 
     @host_config = true
@@ -255,104 +248,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   # Create a graph of all of the relationships in our catalog.
   def relationship_graph
     unless @relationship_graph
-      # It's important that we assign the graph immediately, because
-      # the debug messages below use the relationships in the
-      # relationship graph to determine the path to the resources
-      # spitting out the messages.  If this is not set,
-      # then we get into an infinite loop.
-      @relationship_graph = Puppet::SimpleGraph.new
-
-      # First create the dependency graph
-      self.vertices.each do |vertex|
-        @relationship_graph.add_vertex vertex
-        vertex.builddepends.each do |edge|
-          @relationship_graph.add_edge(edge)
-        end
-      end
-
-      # Lastly, add in any autorequires
-      @relationship_graph.vertices.each do |vertex|
-        vertex.autorequire(self).each do |edge|
-          unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
-            unless @relationship_graph.edge?(edge.target, edge.source)
-              vertex.debug "Autorequiring #{edge.source}"
-              @relationship_graph.add_edge(edge)
-            else
-              vertex.debug "Skipping automatic relationship with #{(edge.source == vertex ? edge.target : edge.source)}"
-            end
-          end
-        end
-      end
-      @relationship_graph.write_graph(:relationships) if host_config?
-
-      # Then splice in the container information
-      splice!(@relationship_graph)
-
-      @relationship_graph.write_graph(:expanded_relationships) if host_config?
+      @relationship_graph = Puppet::RelationshipGraph.new
+      @relationship_graph.populate_from(self)
     end
     @relationship_graph
-  end
-
-  # Impose our container information on another graph by using it
-  # to replace any container vertices X with a pair of verticies
-  # { admissible_X and completed_X } such that that
-  #
-  #    0) completed_X depends on admissible_X
-  #    1) contents of X each depend on admissible_X
-  #    2) completed_X depends on each on the contents of X
-  #    3) everything which depended on X depens on completed_X
-  #    4) admissible_X depends on everything X depended on
-  #    5) the containers and their edges must be removed
-  #
-  # Note that this requires attention to the possible case of containers
-  # which contain or depend on other containers, but has the advantage
-  # that the number of new edges created scales linearly with the number
-  # of contained verticies regardless of how containers are related;
-  # alternatives such as replacing container-edges with content-edges
-  # scale as the product of the number of external dependences, which is
-  # to say geometrically in the case of nested / chained containers.
-  #
-  Default_label = { :callback => :refresh, :event => :ALL_EVENTS }
-  def splice!(other)
-    stage_class      = Puppet::Type.type(:stage)
-    whit_class       = Puppet::Type.type(:whit)
-    component_class  = Puppet::Type.type(:component)
-    containers = vertices.find_all { |v| (v.is_a?(component_class) or v.is_a?(stage_class)) and vertex?(v) }
-    #
-    # These two hashes comprise the aforementioned attention to the possible
-    #   case of containers that contain / depend on other containers; they map
-    #   containers to their sentinels but pass other verticies through.  Thus we
-    #   can "do the right thing" for references to other verticies that may or
-    #   may not be containers.
-    #
-    admissible = Hash.new { |h,k| k }
-    completed  = Hash.new { |h,k| k }
-    containers.each { |x|
-      admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => self)
-      completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => self)
-    }
-    #
-    # Implement the six requierments listed above
-    #
-    containers.each { |x|
-      contents = adjacent(x, :direction => :out)
-      other.add_edge(admissible[x],completed[x]) if contents.empty? # (0)
-      contents.each { |v|
-        other.add_edge(admissible[x],admissible[v],Default_label) # (1)
-        other.add_edge(completed[v], completed[x], Default_label) # (2)
-      }
-      # (3) & (5)
-      other.adjacent(x,:direction => :in,:type => :edges).each { |e|
-        other.add_edge(completed[e.source],admissible[x],e.label)
-        other.remove_edge! e
-      }
-      # (4) & (5)
-      other.adjacent(x,:direction => :out,:type => :edges).each { |e|
-        other.add_edge(completed[x],admissible[e.target],e.label)
-        other.remove_edge! e
-      }
-    }
-    containers.each { |x| other.remove_vertex! x } # (5)
   end
 
   # Remove the resource from our catalog.  Notice that we also call
@@ -368,6 +267,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       end
       remove_vertex!(resource) if vertex?(resource)
       @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
+      @resources.delete(title_key)
       resource.remove
     end
   end
@@ -530,6 +430,15 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   end
 
   private
+
+  def create_transaction(options)
+    transaction = Puppet::Transaction.new(self, options[:report])
+    transaction.tags = options[:tags] if options[:tags]
+    transaction.ignoreschedules = true if options[:ignoreschedules]
+    transaction.for_network_device = options[:network_device]
+
+    transaction
+  end
 
   # Verify that the given resource isn't declared elsewhere.
   def fail_on_duplicate_type_and_title(resource)
