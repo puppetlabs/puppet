@@ -522,7 +522,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @transaction = Puppet::Transaction.new(@catalog)
       Puppet::Transaction.stubs(:new).returns(@transaction)
       @transaction.stubs(:evaluate)
-      @transaction.stubs(:add_times)
       @transaction.stubs(:for_network_device=)
 
       Puppet.settings.stubs(:use)
@@ -530,18 +529,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should create and evaluate a transaction" do
       @transaction.expects(:evaluate)
-      @catalog.apply
-    end
-
-    it "should provide the catalog retrieval time to the transaction" do
-      @catalog.retrieval_duration = 5
-      @transaction.expects(:add_times).with(:config_retrieval => 5)
-      @catalog.apply
-    end
-
-    it "should use a retrieval time of 0 if none is set in the catalog" do
-      @catalog.retrieval_duration = nil
-      @transaction.expects(:add_times).with(:config_retrieval => 0)
       @catalog.apply
     end
 
@@ -638,45 +625,39 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @four = @file.new :path => @basepath+"/four", :require => "File[#{@basepath}/three]"
       @five = @file.new :path => @basepath+"/five"
       @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five, @sub
-
-      @relationships = @catalog.relationship_graph
-    end
-
-    it "should be able to create a relationship graph" do
-      @relationships.should be_instance_of(Puppet::SimpleGraph)
     end
 
     it "should not have any components" do
-      @relationships.vertices.find { |r| r.instance_of?(Puppet::Type::Component) }.should be_nil
+      @catalog.relationship_graph.vertices.find { |r| r.instance_of?(Puppet::Type::Component) }.should be_nil
     end
 
     it "should have all non-component resources from the catalog" do
       # The failures print out too much info, so i just do a class comparison
-      @relationships.vertex?(@five).should be_true
+      @catalog.relationship_graph.vertex?(@five).should be_true
     end
 
     it "should have all resource relationships set as edges" do
-      @relationships.edge?(@three, @four).should be_true
+      @catalog.relationship_graph.edge?(@three, @four).should be_true
     end
 
     it "should copy component relationships to all contained resources" do
-      @relationships.path_between(@one, @two).should be
+      @catalog.relationship_graph.path_between(@one, @two).should be
     end
 
     it "should add automatic relationships to the relationship graph" do
-      @relationships.edge?(@two, @sub).should be_true
+      @catalog.relationship_graph.edge?(@two, @sub).should be_true
     end
 
     it "should get removed when the catalog is cleaned up" do
-      @relationships.expects(:clear)
+      @catalog.relationship_graph.expects(:clear)
       @catalog.clear
       @catalog.instance_variable_get("@relationship_graph").should be_nil
     end
 
     it "should write :relationships and :expanded_relationships graph files if the catalog is a host catalog" do
       @catalog.clear
-      graph = Puppet::SimpleGraph.new
-      Puppet::SimpleGraph.expects(:new).returns graph
+      graph = Puppet::RelationshipGraph.new
+      Puppet::RelationshipGraph.expects(:new).returns graph
 
       graph.expects(:write_graph).with(:relationships)
       graph.expects(:write_graph).with(:expanded_relationships)
@@ -688,8 +669,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should not write graph files if the catalog is not a host catalog" do
       @catalog.clear
-      graph = Puppet::SimpleGraph.new
-      Puppet::SimpleGraph.expects(:new).returns graph
+      graph = Puppet::RelationshipGraph.new
+      Puppet::RelationshipGraph.expects(:new).returns graph
 
       graph.expects(:write_graph).never
 
@@ -699,9 +680,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should create a new relationship graph after clearing the old one" do
-      @relationships.expects(:clear)
+      @catalog.relationship_graph.expects(:clear)
       @catalog.clear
-      @catalog.relationship_graph.should be_instance_of(Puppet::SimpleGraph)
+      @catalog.relationship_graph.should be_instance_of(Puppet::RelationshipGraph)
     end
 
     it "should remove removed resources from the relationship graph if it exists" do

@@ -142,6 +142,19 @@ class Puppet::Util::Log
     end
   end
 
+  def Log.with_destination(destination, &block)
+    if @destinations.include?(destination)
+      yield
+    else
+      newdestination(destination)
+      begin
+        yield
+      ensure
+        close(destination)
+      end
+    end
+  end
+
   # Route the actual message. FIXME There are lots of things this method
   # should do, like caching and a bit more.  It's worth noting that there's
   # a potential for a loop here, if the machine somehow gets the destination set as
