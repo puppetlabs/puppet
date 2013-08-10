@@ -14,7 +14,10 @@ notify { "seventh": }
 notify { "eighth": }
 PP
 
-with_master_running_on(master, "--manifest #{testdir}/site.pp") do
+on master, "chown -R root:puppet #{testdir}"
+on master, "chmod -R g+rwX #{testdir}"
+
+with_master_running_on(master, "--manifest #{testdir}/site.pp --daemonize --autosign true") do
   agents.each do |agent|
     run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master}")
     if stdout !~ /Notice: first.*Notice: second.*Notice: third.*Notice: fourth.*Notice: fifth.*Notice: sixth.*Notice: seventh.*Notice: eighth/m
