@@ -3,10 +3,12 @@ require 'puppet/parser/ast/branch'
 class Puppet::Parser::AST
   # Evaluates its single text expression.
   # In addition to producing a string Heredoc also validates the produced string if
-  # syntax has been set and there is a function available for validation.
-  # If no function is available validation is silently skipped. (TODO: Decide if this is ok
+  # syntax has been set and there is an extension binding available for the given syntax.
+  # If no checker is available validation is silently skipped. (TODO: Decide if this is ok
   # or needs a setting).
   #
+  # Caveats
+  # -------
   # Unfortunately it is not possible to validate all strings at parse time (they may contain
   # interpolated expressions) and thus a scope is required. This means validation errors go
   # undetected until the string is evaluated. (It is at least validated before it is placed
@@ -28,10 +30,13 @@ class Puppet::Parser::AST
 
     def initialize(hash)
       super
-      # Laziliy initialize puppet pops when heredoc is used
+      # Laziliy initialize puppet pops when heredoc is used (mainly for testing as Heredoc parsing requires future parser)
       require 'puppet/pops'
-      @@T ||= Puppet::Pops::Types::TypeFactory
-      @@HASH_OF_SYNTAX_CHECKERS ||= tf.hash_of(tf.type_of(Puppetx::SYNTAX_CHECKERS_TYPE))
+      require 'puppetx'
+      tf = Puppet::Pops::Types::TypeFactory
+      # Due to lazy initialization, HASH_OF_SYNTAX_CHECKERS is a class instance variable
+      # TODO: can be simplified when Pops/Binder are no longer experimental
+      @@HASH_OF_SYNTAX_CHECKERS ||= tf.hash_of(tf.type_of(::Puppetx::SYNTAX_CHECKERS_TYPE))
     end
 
     def evaluate(scope)
@@ -46,74 +51,27 @@ class Puppet::Parser::AST
       func_name = nil # "check_#{syntax}_syntax"
 
       checker = checker_for_syntax(scope, syntax())
+      # ignore syntax with no matching checker
       return unless checker
 
-#      function_names_for_syntax(syntax()).each do |name|
-#        break if func_name = Puppet::Parser::Functions.function(name)
-#      end
-#      return unless func_name
-
-      # Call validator and give it the location information from the expression
-      # (as opposed to where the heredoc tag is).
+      # Call checker and give it the location information from the expression
+      # (as opposed to where the heredoc tag is (somewhere on the line above)).
       acceptor = Puppet::Pops::Validation::Acceptor.new()
       checker.check(result, syntax(), acceptor, {:file=> expr.file(), :line => expr.line(), :pos => expr.pos()})
-#      scope.send(func_name, [result, syntax(), acceptor, {:file=> expr.file(), :line => expr.line(), :pos => expr.pos()}])
 
-      # This logic is a variation on error output also found in e_parser_adapter.rb. Can possibly be refactored
-      # into common utility.
-      warnings = acceptor.warnings
-      errors = acceptor.errors
-
-      return if warnings.size == 0 && errors.size == 0
-
-      max_errors = Puppet[:max_errors]
-      max_warnings = Puppet[:max_warnings] + 1
-      max_deprecations = Puppet[:max_deprecations] + 1
-
-      # If there are warnings output them
-      if warnings.size > 0
-        formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
-        emitted_w = 0
-        emitted_dw = 0
-        acceptor.warnings.each do |w|
-          if w.severity == :deprecation
-            # Do *not* call Puppet.deprecation_warning it is for internal deprecation, not
-            # deprecation of constructs in manifests! (It is not designed for that purpose even if
-            # used throughout the code base).
-            #
-            Puppet.warning(formatter.format(w)) if emitted_dw < max_deprecations
-            emitted_dw += 1
-          else
-            Puppet.warning(formatter.format(w)) if emitted_w < max_warnings
-            emitted_w += 1
-          end
-          break if emitted_w > max_warnings && emitted_dw > max_deprecations # but only then
-        end
-      end
-
-      # If there were errors, report all up to cap. Use Puppet formatter
-      if errors.size > 0
-        formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
-        emitted = 0
-        errors.each do |e|
-          Puppet.err(formatter.format(e))
-          emitted += 1
-          break if emitted >= max_errors
-        end
-        warnings_message = warnings.size > 0 ? ", and #{warnings.size} warnings" : ""
-        giving_up_message = "Found #{errors.size} errors#{warnings_message} when validating '#{syntax()}' heredoc text. Giving up"
-        # Locate the exception where the heredoc is (detailed messages have reference to positions in the text).
-        exception = Puppet::ParseError.new(giving_up_message, file(), line(), pos())
-        raise exception
-      end
+      checker_message = "Invalid heredoc text having syntax: '#{syntax()}."
+      Puppet::Pops::IssueReporter.assert_and_report(acceptor, :message => checker_message)
     end
 
-
+    # Finds the most significant checker for the given syntax (most significant is to the right).
+    # Returns nil if there is no registered checker.
+    #
     def checker_for_syntax(scope, syntax)
-      checkers_hash = scope.compiler.injector.lookup(scope, HASH_OF_SYNTAX_CHECKERS, Puppetx::SYNTAX_CHECKERS) || {}
-      checkers_hash[lookup_keys_for_syntax.find {|x| checkers_hash[x] }]
+      checkers_hash = scope.compiler.injector.lookup(scope, @@HASH_OF_SYNTAX_CHECKERS, ::Puppetx::SYNTAX_CHECKERS) || {}
+      checkers_hash[lookup_keys_for_syntax(syntax).find {|x| checkers_hash[x] }]
     end
 
+    # Returns an array of possible syntax names
     def lookup_keys_for_syntax(syntax)
       segments = syntax.split(/\+/)
       result = []
