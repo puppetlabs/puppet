@@ -5,11 +5,9 @@ require 'puppetx/puppet/syntax_checker'
 class Puppetx::Puppetlabs::SyntaxCheckers::Json < Puppetx::Puppet::SyntaxChecker
 
   # Checks the text for JSON syntax issues and reports them to the given acceptor.
-  # This implementation is abstract, it raises {NotImplementedError} since a subclass should have implemented the
-  # method.
   #
   # @param text [String] The text to check
-  # @param syntax [String] The syntax identifier in mime style (e.g. 'json', 'json-patch+json', 'myapp+xml')
+  # @param syntax [String] The syntax identifier in mime style (e.g. 'json', 'json-patch+json', 'myapp+json')
   # @option location_info [String] :file The filename where the string originates
   # @option location_info [Integer] :line The line number identifying the location where the string is being used/checked
   # @option location_info [Integer] :position The position on the line identifying the location where the string is being used/checked
