@@ -37,6 +37,12 @@ describe 'Puppet::Parser::AST::Heredoc' do
     expect {heredoc.evaluate(scope) }.to raise_error(/Json syntax checker: Cannot parse invalid JSON string/)
   end
 
+  it "validates Yaml containing errors" do
+    expr = Puppet::Parser::AST::FlatString.new(:value => '%yuck')
+    heredoc = Puppet::Parser::AST::Heredoc.new({:expr => expr, :syntax => 'yaml'})
+    expect {heredoc.evaluate(scope) }.to raise_error(/Yaml syntax checker: Cannot parse invalid YAML string/)
+  end
+
   it "validates using first found checker" do
     expr = Puppet::Parser::AST::FlatString.new(:value => ']')
     heredoc = Puppet::Parser::AST::Heredoc.new({:expr => expr, :syntax => 'myapp+json'})
