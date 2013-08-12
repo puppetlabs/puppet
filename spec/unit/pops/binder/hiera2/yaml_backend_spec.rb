@@ -9,6 +9,16 @@ describe "Hiera2 YAML backend" do
     my_fixture("#{config_name}")
   end
 
+  before(:all) do
+    Puppet[:binder] = true
+    require 'puppetx'
+    require 'puppet/pops/binder/hiera2/yaml_backend'
+  end
+
+  after(:all) do
+    Puppet[:binder] = false
+  end
+
   it "returns the expected hash from a valid yaml file" do
     Puppet::Pops::Binder::Hiera2::YamlBackend.new().read_data(fixture_dir("ok"), "common").should == {'brillig' => 'slithy'}
   end

@@ -12,7 +12,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   self::RPM_DESCRIPTION_DELIMITER = ':DESC:'
   # The query format by which we identify installed packages
   self::NEVRA_FORMAT = %Q{'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} #{self::RPM_DESCRIPTION_DELIMITER} %{SUMMARY}\\n'}
-  self::NEVRA_REGEX  = %r{^(\S+) (\S+) (\S+) (\S+) (\S+) #{self::RPM_DESCRIPTION_DELIMITER} ?(.*)$}
+  self::NEVRA_REGEX  = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)(?: #{self::RPM_DESCRIPTION_DELIMITER} ?(.*))?$}
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch, :description]
 
   commands :rpm => "rpm"
