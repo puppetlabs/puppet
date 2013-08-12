@@ -59,7 +59,8 @@ describe provider_class do
     end
     it "should execute external command dscl twice from :create with existing content" do
       @provider.stubs(:has_mcx?).returns(true)
-      @provider.class.expects(:dscl).returns('').twice
+      @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
+      @provider.class.expects(:dscl).with('localhost', '-mcximport', @ds_path, anything()).once
       @provider.create
     end
 
@@ -85,7 +86,8 @@ describe provider_class do
     end
     it "should execute external command dscl twice from :content= with existing content" do
       @provider.stubs(:has_mcx?).returns(true)
-      @provider.class.expects(:dscl).returns('').twice
+      @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
+      @provider.class.expects(:dscl).with('localhost', '-mcximport', @ds_path, anything()).once
       @provider.content=''
     end
   end
