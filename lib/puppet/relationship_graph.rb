@@ -24,31 +24,13 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
   end
 
   def populate_from(catalog)
-    catalog.resources.each do |vertex|
-      add_vertex vertex
-    end
+    add_all_resources_as_vertices(catalog)
+    build_manual_dependencies
+    build_autorequire_dependencies(catalog)
 
-    vertices.each do |vertex|
-      vertex.builddepends.each do |edge|
-        add_edge(edge)
-      end
-
-      vertex.autorequire(catalog).each do |edge|
-        # don't let automatic relationships conflict with manual ones.
-        next if edge?(edge.source, edge.target)
-
-        if edge?(edge.target, edge.source)
-          vertex.debug "Skipping automatic relationship with #{edge.source}"
-        else
-          vertex.debug "Autorequiring #{edge.source}"
-          add_edge(edge)
-        end
-      end
-    end
     write_graph(:relationships) if catalog.host_config?
 
-    # Then splice in the container information
-    splice!(catalog)
+    replace_containers_with_anchors(catalog)
 
     write_graph(:expanded_relationships) if catalog.host_config?
   end
@@ -162,6 +144,38 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
     teardown.call()
   end
 
+  private
+
+  def add_all_resources_as_vertices(catalog)
+    catalog.resources.each do |vertex|
+      add_vertex(vertex)
+    end
+  end
+
+  def build_manual_dependencies
+    vertices.each do |vertex|
+      vertex.builddepends.each do |edge|
+        add_edge(edge)
+      end
+    end
+  end
+
+  def build_autorequire_dependencies(catalog)
+    vertices.each do |vertex|
+      vertex.autorequire(catalog).each do |edge|
+        # don't let automatic relationships conflict with manual ones.
+        next if edge?(edge.source, edge.target)
+
+        if edge?(edge.target, edge.source)
+          vertex.debug "Skipping automatic relationship with #{edge.source}"
+        else
+          vertex.debug "Autorequiring #{edge.source}"
+          add_edge(edge)
+        end
+      end
+    end
+  end
+
   # Impose our container information on another graph by using it
   # to replace any container vertices X with a pair of verticies
   # { admissible_X and completed_X } such that that
@@ -182,7 +196,7 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
   # to say geometrically in the case of nested / chained containers.
   #
   Default_label = { :callback => :refresh, :event => :ALL_EVENTS }
-  def splice!(catalog)
+  def replace_containers_with_anchors(catalog)
     stage_class      = Puppet::Type.type(:stage)
     whit_class       = Puppet::Type.type(:whit)
     component_class  = Puppet::Type.type(:component)

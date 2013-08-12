@@ -7,10 +7,6 @@ require 'matchers/include_in_order'
 describe Puppet::RelationshipGraph do
   include PuppetSpec::Compiler
 
-  def stub_vertex(name)
-    stub "vertex #{name}", :ref => name
-  end
-
   it "allows adding a new vertex with a specific priority" do
     graph = Puppet::RelationshipGraph.new
     vertex = stub_vertex('something')
@@ -168,17 +164,35 @@ describe Puppet::RelationshipGraph do
     end
   end
 
-  describe "when reconstruction containment relationships" do
-    def vertex_called(graph, name)
-      graph.vertices.find { |v| v.ref =~ /#{Regexp.escape(name)}/ }
+  describe "when constructing dependencies" do
+    it "does not create an automatic relationship that would interfere with a manual relationship" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        file { "/a/b": }
+
+        file { "/a": require => File["/a/b"] }
+      MANIFEST
+
+      relationship_graph.should enforce_order_with_edge("File[/a/b]", "File[/a]")
     end
 
-    def admissible_sentinel_of(graph, ref)
-      vertex_called(graph, "Admissible_#{ref}")
+    it "creates automatic relationships defined by the type" do
+      relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
+        file { "/a/b": }
+
+        file { "/a": }
+      MANIFEST
+
+      relationship_graph.should enforce_order_with_edge("File[/a]", "File[/a/b]")
+    end
+  end
+
+  describe "when reconstructing containment relationships" do
+    def admissible_sentinel_of(ref)
+      "Admissible_#{ref}"
     end
 
-    def completed_sentinel_of(graph, ref)
-      vertex_called(graph, "Completed_#{ref}")
+    def completed_sentinel_of(ref)
+      "Completed_#{ref}"
     end
 
     it "an empty container's completed sentinel should depend on its admissible sentinel" do
@@ -188,23 +202,21 @@ describe Puppet::RelationshipGraph do
         include a
       MANIFEST
 
-      relationship_graph.
-        should be_edge(
-          admissible_sentinel_of(relationship_graph, "class[A]"),
-          completed_sentinel_of(relationship_graph, "class[A]"))
+      relationship_graph.should enforce_order_with_edge(
+        admissible_sentinel_of("class[A]"),
+        completed_sentinel_of("class[A]"))
     end
 
-    it "a container with children does not connect the completed sentinel to its admissible sentinel" do
+    it "a container with children does not directly connect the completed sentinel to its admissible sentinel" do
       relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
         class a { notify { "a": } }
 
         include a
       MANIFEST
 
-      relationship_graph.
-        should_not be_edge(
-          admissible_sentinel_of(relationship_graph, "class[A]"),
-          completed_sentinel_of(relationship_graph, "class[A]"))
+      relationship_graph.should_not enforce_order_with_edge(
+        admissible_sentinel_of("class[A]"),
+        completed_sentinel_of("class[A]"))
     end
 
     it "all contained objects should depend on their container's admissible sentinel" do
@@ -216,10 +228,9 @@ describe Puppet::RelationshipGraph do
         include a
       MANIFEST
 
-      relationship_graph.
-        should be_edge(
-          admissible_sentinel_of(relationship_graph, "class[A]"),
-          vertex_called(relationship_graph, "Notify[class a]"))
+      relationship_graph.should enforce_order_with_edge(
+        admissible_sentinel_of("class[A]"),
+        "Notify[class a]")
     end
 
     it "completed sentinels should depend on their container's contents" do
@@ -231,10 +242,9 @@ describe Puppet::RelationshipGraph do
         include a
       MANIFEST
 
-      relationship_graph.
-        should be_edge(
-          vertex_called(relationship_graph, "Notify[class a]"),
-          completed_sentinel_of(relationship_graph, "class[A]"))
+      relationship_graph.should enforce_order_with_edge(
+          "Notify[class a]",
+          completed_sentinel_of("class[A]"))
     end
 
     it "should remove all Component objects from the dependency graph" do
@@ -275,8 +285,8 @@ describe Puppet::RelationshipGraph do
       MANIFEST
 
       relationship_graph.edges_between(
-        completed_sentinel_of(relationship_graph, "class[A]"),
-        admissible_sentinel_of(relationship_graph, "b[testing]"))[0].label.
+        vertex_called(relationship_graph, completed_sentinel_of("class[A]")),
+        vertex_called(relationship_graph, admissible_sentinel_of("b[testing]")))[0].label.
         should == {:callback => :refresh, :event => :ALL_EVENTS}
     end
 
@@ -294,8 +304,8 @@ describe Puppet::RelationshipGraph do
       MANIFEST
 
       relationship_graph.edges_between(
-        completed_sentinel_of(relationship_graph, "class[A]"),
-        admissible_sentinel_of(relationship_graph, "b[testing]"))[0].label.
+        vertex_called(relationship_graph, completed_sentinel_of("class[A]")),
+        vertex_called(relationship_graph, admissible_sentinel_of("b[testing]")))[0].label.
         should be_empty
     end
 
@@ -313,9 +323,50 @@ describe Puppet::RelationshipGraph do
       MANIFEST
 
       relationship_graph.edges_between(
-        admissible_sentinel_of(relationship_graph, "b[testing]"),
+        vertex_called(relationship_graph, admissible_sentinel_of("b[testing]")),
         vertex_called(relationship_graph, "Notify[define b]"))[0].label.
         should == {:callback => :refresh, :event => :ALL_EVENTS}
+    end
+  end
+
+  def vertex_called(graph, name)
+    graph.vertices.find { |v| v.ref =~ /#{Regexp.escape(name)}/ }
+  end
+
+  def stub_vertex(name)
+    stub "vertex #{name}", :ref => name
+  end
+
+  RSpec::Matchers.define :enforce_order_with_edge do |before, after|
+    match do |actual_graph|
+      @before = before
+      @after = after
+
+      @reverse_edge = actual_graph.edge?(
+          vertex_called(actual_graph, after),
+          vertex_called(actual_graph, before))
+
+      @forward_edge = actual_graph.edge?(
+          vertex_called(actual_graph, before),
+          vertex_called(actual_graph, after))
+
+      @forward_edge && !@reverse_edge
+    end
+
+    def failure_message_for_should
+      "expect #{@actual.to_dot_graph} to only contain an edge from #{@before} to #{@after} but #{[forward_failure_message, reverse_failure_message].compact.join(' and ')}"
+    end
+
+    def forward_failure_message
+      if !@forward_edge
+        "did not contain an edge from #{@before} to #{@after}"
+      end
+    end
+
+    def reverse_failure_message
+      if @reverse_edge
+        "contained an edge from #{@after} to #{@before}"
+      end
     end
   end
 end
