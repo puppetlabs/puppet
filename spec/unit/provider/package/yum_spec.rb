@@ -109,7 +109,7 @@ describe provider do
     end
   end
 
-  describe 'prefetching' do
+  describe 'prefetching', :unless => Puppet.features.microsoft_windows? do
     let(:nevra_format) { Puppet::Type::Package::ProviderRpm::NEVRA_FORMAT }
 
     let(:packages) do
