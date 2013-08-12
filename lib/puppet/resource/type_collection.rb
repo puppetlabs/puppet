@@ -1,9 +1,12 @@
 require 'puppet/parser/type_loader'
 require 'puppet/util/file_watcher'
+require 'puppet/util/warnings'
 
 class Puppet::Resource::TypeCollection
   attr_reader :environment
   attr_accessor :parse_failed
+
+  include Puppet::Util::Warnings
 
   def clear
     @hostclasses.clear
@@ -203,7 +206,7 @@ class Puppet::Resource::TypeCollection
         if @notfound[fqname] and Puppet[:ignoremissingtypes]
           # do not try to autoload if we already tried and it wasn't conclusive
           # as this is a time consuming operation. Warn the user.
-          Puppet.warning "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"
+          debug_once "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"
         else
           result = loader.try_load_fqname(type, fqname)
           @notfound[fqname] = result.nil?
