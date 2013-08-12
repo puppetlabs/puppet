@@ -3,10 +3,12 @@ require 'spec_helper'
 require 'puppet/relationship_graph'
 require 'puppet_spec/compiler'
 require 'matchers/include_in_order'
+require 'matchers/relationship_graph_matchers'
 
 describe Puppet::RelationshipGraph do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
+  include RelationshipGraphMatchers
 
   it "allows adding a new vertex with a specific priority" do
     graph = Puppet::RelationshipGraph.new
@@ -339,38 +341,5 @@ describe Puppet::RelationshipGraph do
 
   def stub_vertex(name)
     stub "vertex #{name}", :ref => name
-  end
-
-  RSpec::Matchers.define :enforce_order_with_edge do |before, after|
-    match do |actual_graph|
-      @before = before
-      @after = after
-
-      @reverse_edge = actual_graph.edge?(
-          vertex_called(actual_graph, after),
-          vertex_called(actual_graph, before))
-
-      @forward_edge = actual_graph.edge?(
-          vertex_called(actual_graph, before),
-          vertex_called(actual_graph, after))
-
-      @forward_edge && !@reverse_edge
-    end
-
-    def failure_message_for_should
-      "expect #{@actual.to_dot_graph} to only contain an edge from #{@before} to #{@after} but #{[forward_failure_message, reverse_failure_message].compact.join(' and ')}"
-    end
-
-    def forward_failure_message
-      if !@forward_edge
-        "did not contain an edge from #{@before} to #{@after}"
-      end
-    end
-
-    def reverse_failure_message
-      if @reverse_edge
-        "contained an edge from #{@after} to #{@before}"
-      end
-    end
   end
 end
