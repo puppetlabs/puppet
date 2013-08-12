@@ -102,11 +102,11 @@ class Puppet::Node::Facts
   end
 
   def timestamp=(time)
-    self.values[:_timestamp] = time
+    self.values['_timestamp'] = time
   end
 
   def timestamp
-    self.values[:_timestamp]
+    self.values['_timestamp']
   end
 
   private

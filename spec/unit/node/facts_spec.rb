@@ -118,7 +118,7 @@ describe Puppet::Node::Facts, "when indirecting" do
   describe "when storing and retrieving" do
     it "should add metadata to the facts" do
       facts = Puppet::Node::Facts.new("me", "one" => "two", "three" => "four")
-      facts.values[:_timestamp].should be_instance_of(Time)
+      facts.values['_timestamp'].should be_instance_of(Time)
     end
 
     describe "using pson" do
@@ -133,7 +133,7 @@ describe Puppet::Node::Facts, "when indirecting" do
         facts = format.intern(Puppet::Node::Facts,pson)
         facts.name.should == 'foo'
         facts.expiration.should == @expiration
-        facts.values.should == {'a' => '1', 'b' => '2', 'c' => '3', :_timestamp => @timestamp}
+        facts.values.should == {'a' => '1', 'b' => '2', 'c' => '3', '_timestamp' => @timestamp}
       end
 
       it "should generate properly formatted pson" do
