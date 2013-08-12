@@ -198,29 +198,29 @@ describe provider_class do
   end
 
   describe "parsing" do
-    let(:resource_name) { 'name' }
-
     def parser_test(rpm_output_string, gold_hash, number_of_warnings = 0)
       Puppet.expects(:warning).times(number_of_warnings)
       Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format], execute_options).returns(rpm_output_string)
       provider.query.should == gold_hash
     end
 
+    let(:resource_name) { 'name' }
+    let('delimiter') { ':DESC:' }
+    let(:package_hash) do
+      {
+        :name => 'name',
+        :epoch => 'epoch',
+        :version => 'version',
+        :release => 'release',
+        :arch => 'arch',
+        :description => 'a description',
+        :provider => :rpm,
+        :ensure => 'version-release',
+      }
+    end
+    let(:line) { 'name epoch version release arch :DESC: a description' }
+
     ['name', 'epoch', 'version', 'release', 'arch'].each do |field|
-      let('delimiter') { ':DESC:' }
-      let(:package_hash) do
-        {
-          :name => 'name',
-          :epoch => 'epoch',
-          :version => 'version',
-          :release => 'release',
-          :arch => 'arch',
-          :description => 'a description',
-          :provider => :rpm,
-          :ensure => 'version-release',
-        }
-      end
-      let(:line) { 'name epoch version release arch :DESC: a description' }
 
       it "should still parse if #{field} is replaced by delimiter" do
         parser_test(
@@ -238,6 +238,13 @@ describe provider_class do
       parser_test(
         line.gsub(/#{delimiter} .+$/, delimiter),
         package_hash.merge(:description => '')
+      )
+    end
+
+    it "should still parse if missing delimeter and description entirely" do
+      parser_test(
+        line.gsub(/ #{delimiter} .+$/, ''),
+        package_hash.merge(:description => nil)
       )
     end
 
