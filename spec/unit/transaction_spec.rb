@@ -302,17 +302,6 @@ describe Puppet::Transaction do
       transaction.evaluate
     end
 
-    it "should skip generated resources that conflict with existing resources" do
-      duplicate = generated.first
-      catalog.add_resource(duplicate)
-
-      duplicate.expects(:finish).never
-
-      duplicate.expects(:info).with { |msg| msg =~ /Duplicate generated resource/ }
-
-      transaction.evaluate
-    end
-
     it "should copy all tags to the newly generated resources" do
       generator.tag('one', 'two')
 

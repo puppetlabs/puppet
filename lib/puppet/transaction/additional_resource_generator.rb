@@ -13,16 +13,13 @@ class Puppet::Transaction::AdditionalResourceGenerator
     end
     return unless made
     made = [made] unless made.is_a?(Array)
-    made.uniq.each do |res|
-      begin
-        res.tag(*resource.tags)
-        @catalog.add_resource(res)
-        res.finish
-        add_conditional_directed_dependency(resource, res)
-        generate_additional_resources(res)
-      rescue Puppet::Resource::Catalog::DuplicateResourceError
-        res.info "Duplicate generated resource; skipping"
-      end
+    priority = @relationship_graph.resource_priority(resource)
+    made.uniq.collect do |res|
+      @catalog.resource(res.ref) || res
+    end.each do |res|
+      add_resource(res, resource, priority)
+      add_conditional_directed_dependency(resource, res)
+      generate_additional_resources(res)
     end
   end
 
@@ -37,29 +34,49 @@ class Puppet::Transaction::AdditionalResourceGenerator
       resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
       return false
     end
-    priority = @relationship_graph.resource_priority(resource)
-    made.values.each do |res|
-      begin
-        res.tag(*resource.tags)
-        @catalog.add_resource(res)
-        @relationship_graph.add_vertex(res, priority)
-        res.finish
-      rescue Puppet::Resource::Catalog::DuplicateResourceError
-        res.info "Duplicate generated resource; skipping"
-      end
-    end
-    sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+    made = replace_duplicates_with_catalog_resources(made)
+    add_resources(made.values, resource)
 
-    # The completed whit is now the thing that represents the resource is done
-    @relationship_graph.adjacent(resource,:direction => :out,:type => :edges).each { |e|
-      # But children run as part of the resource, not after it
+    contain_generated_resources_in(resource, made)
+    connect_resources_to_ancestors(resource, made)
+
+    true
+  end
+
+  private
+
+  def replace_duplicates_with_catalog_resources(made)
+    Hash[made.collect do |name, generated_resource|
+      [name, @catalog.resource(generated_resource.ref) || generated_resource]
+    end]
+  end
+
+  def contain_generated_resources_in(resource, made)
+    sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+    @relationship_graph.add_vertex(sentinel, @relationship_graph.resource_priority(resource))
+
+    redirect_edges_to_sentinel(resource, sentinel, made)
+
+    made.values.each do |res|
+      # This resource isn't 'completed' until each child has run
+      add_conditional_directed_dependency(res, sentinel, Puppet::RelationshipGraph::Default_label)
+    end
+
+    # This edge allows the resource's events to propagate, though it isn't
+    # strictly necessary for ordering purposes
+    add_conditional_directed_dependency(resource, sentinel, Puppet::RelationshipGraph::Default_label)
+  end
+
+  def redirect_edges_to_sentinel(resource, sentinel, made)
+    @relationship_graph.adjacent(resource, :direction => :out, :type => :edges).each do |e|
       next if made[e.target.name]
 
-      add_conditional_directed_dependency(sentinel, e.target, e.label)
+      @relationship_graph.add_relationship(sentinel, e.target, e.label)
       @relationship_graph.remove_edge! e
-    }
+    end
+  end
 
-    default_label = Puppet::RelationshipGraph::Default_label
+  def connect_resources_to_ancestors(resource, made)
     made.values.each do |res|
       # Depend on the nearest ancestor we generated, falling back to the
       # resource if we have none
@@ -67,15 +84,23 @@ class Puppet::Transaction::AdditionalResourceGenerator
       parent = made[parent_name] || resource
 
       add_conditional_directed_dependency(parent, res)
-
-      # This resource isn't 'completed' until each child has run
-      add_conditional_directed_dependency(res, sentinel, default_label)
     end
+  end
 
-    # This edge allows the resource's events to propagate, though it isn't
-    # strictly necessary for ordering purposes
-    add_conditional_directed_dependency(resource, sentinel, default_label)
-    true
+  def add_resources(generated, resource)
+    priority = @relationship_graph.resource_priority(resource)
+    generated.each do |res|
+      add_resource(res, resource, priority)
+    end
+  end
+
+  def add_resource(res, parent_resource, priority)
+    if @catalog.resource(res.ref).nil?
+      res.tag(*parent_resource.tags)
+      @catalog.add_resource(res)
+      @relationship_graph.add_vertex(res, priority)
+      res.finish
+    end
   end
 
   # Copy an important relationships from the parent to the newly-generated

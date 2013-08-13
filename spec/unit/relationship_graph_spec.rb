@@ -118,6 +118,18 @@ describe Puppet::RelationshipGraph do
         include_in_order("Notify[second]", "Notify[third]", "Notify[first]"))
     end
 
+    it "traverses all independent resources before traversing dependent ones (with a backwards require)" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+        notify { "first": }
+        notify { "second": }
+        notify { "third": require => Notify[second] }
+        notify { "fourth": }
+      MANIFEST
+
+      expect(order_resources_traversed_in(relationships)).to(
+        include_in_order("Notify[first]", "Notify[second]", "Notify[third]", "Notify[fourth]"))
+    end
+
     it "traverses resources in classes in the order they are added" do
       relationships = compile_to_relationship_graph(<<-MANIFEST)
         class c1 {
