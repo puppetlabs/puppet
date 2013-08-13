@@ -10,13 +10,14 @@ gpg_key: '4BD6EC30'
 sign_tar: FALSE
 # a space separated list of mock configs
 final_mocks: 'pl-el-5-i386 pl-el-6-i386 pl-fedora-17-i386 pl-fedora-18-i386 pl-fedora-19-i386'
-yum_host: 'burji.puppetlabs.com'
+yum_host: 'yum.puppetlabs.com'
 yum_repo_path: '/opt/repository/yum/'
 build_gem: TRUE
 build_dmg: TRUE
-apt_host: 'burji.puppetlabs.com'
+apt_host: 'apt.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
 apt_repo_path: '/opt/repository/incoming'
 ips_repo: '/var/pkgrepo'
 ips_store: '/opt/repository'
 ips_host: 'solaris-11-ips-repo.acctest.dc1.puppetlabs.net'
+tar_host: 'downloads.puppetlabs.com'
