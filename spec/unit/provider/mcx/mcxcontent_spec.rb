@@ -85,7 +85,6 @@ describe provider_class do
       @provider.class.expects(:dscl).returns('').once
       @provider.content=''
     end
-
     it "deletes existing mcx prior to import from :content=" do
       @provider.stubs(:has_mcx?).returns(true)
       @provider.class.expects(:dscl).with('localhost', '-mcxdelete', @ds_path, anything()).once
