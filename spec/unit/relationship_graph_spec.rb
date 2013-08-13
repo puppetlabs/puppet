@@ -5,6 +5,7 @@ require 'puppet_spec/compiler'
 require 'matchers/include_in_order'
 
 describe Puppet::RelationshipGraph do
+  include PuppetSpec::Files
   include PuppetSpec::Compiler
 
   it "allows adding a new vertex with a specific priority" do
@@ -165,24 +166,27 @@ describe Puppet::RelationshipGraph do
   end
 
   describe "when constructing dependencies" do
+    let(:child) { make_absolute('/a/b') }
+    let(:parent) { make_absolute('/a') }
+
     it "does not create an automatic relationship that would interfere with a manual relationship" do
       relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
-        file { "/a/b": }
+        file { "#{child}": }
 
-        file { "/a": require => File["/a/b"] }
+        file { "#{parent}": require => File["#{child}"] }
       MANIFEST
 
-      relationship_graph.should enforce_order_with_edge("File[/a/b]", "File[/a]")
+      relationship_graph.should enforce_order_with_edge("File[#{child}]", "File[#{parent}]")
     end
 
     it "creates automatic relationships defined by the type" do
       relationship_graph = compile_to_relationship_graph(<<-MANIFEST)
-        file { "/a/b": }
+        file { "#{child}": }
 
-        file { "/a": }
+        file { "#{parent}": }
       MANIFEST
 
-      relationship_graph.should enforce_order_with_edge("File[/a]", "File[/a/b]")
+      relationship_graph.should enforce_order_with_edge("File[#{parent}]", "File[#{child}]")
     end
   end
 
