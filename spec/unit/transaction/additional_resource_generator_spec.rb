@@ -2,6 +2,7 @@ require 'spec_helper'
 require 'puppet/transaction'
 require 'puppet_spec/compiler'
 require 'matchers/relationship_graph_matchers'
+require 'matchers/include_in_order'
 
 describe Puppet::Transaction::AdditionalResourceGenerator do
   include PuppetSpec::Compiler
@@ -145,6 +146,25 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     generator.eval_generate(catalog.resource(resource_to_generate))
 
     catalog
+  end
+
+  it "orders generated resources with the generator" do
+    catalog = catalog_after_generating(<<-MANIFEST, 'Generator[thing]')
+      notify { before: }
+      generator { thing:
+        code => 'notify { hello: }'
+      }
+      notify { after: }
+    MANIFEST
+
+    expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      include_in_order("Notify[before]", "Generator[thing]", "Notify[hello]", "Notify[after]"))
+  end
+
+  def order_resources_traversed_in(relationships)
+    order_seen = []
+    relationships.traverse { |resource| order_seen << resource.ref }
+    order_seen
   end
 end
 

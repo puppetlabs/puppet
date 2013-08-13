@@ -37,10 +37,12 @@ class Puppet::Transaction::AdditionalResourceGenerator
       resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
       return false
     end
+    priority = @relationship_graph.resource_priority(resource)
     made.values.each do |res|
       begin
         res.tag(*resource.tags)
         @catalog.add_resource(res)
+        @relationship_graph.add_vertex(res, priority)
         res.finish
       rescue Puppet::Resource::Catalog::DuplicateResourceError
         res.info "Duplicate generated resource; skipping"
