@@ -109,7 +109,7 @@ describe provider do
     end
   end
 
-  describe 'prefetching', :unless => Puppet.features.microsoft_windows? do
+  describe 'prefetching' do
     let(:nevra_format) { Puppet::Type::Package::ProviderRpm::NEVRA_FORMAT }
 
     let(:packages) do
@@ -141,6 +141,7 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
     let(:rpm_version) { "RPM version 4.8.0\n" }
 
     let(:package_type) { Puppet::Type.type(:package) }
+    let(:yum_provider) { provider }
 
     def pretend_we_are_root_for_yum_provider
       Process.stubs(:euid).returns(0)
@@ -159,6 +160,13 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
       Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/)).returns(yumhelper_output)
     end
 
+    def a_package_type_instance_with_yum_provider_and_ensure_latest(name)
+      type_instance = package_type.new(:name => name)
+      type_instance.provider = yum_provider.new
+      type_instance[:ensure] = :latest
+      return type_instance
+    end
+
     before do
       pretend_we_are_root_for_yum_provider
       expect_yum_provider_to_provide_rpm
@@ -167,10 +175,10 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
     end
 
     it "injects latest provider info into passed resources when prefetching" do
-      myresource = package_type.new(:name => "myresource", :ensure => :latest)
-      mysummaryless = package_type.new(:name => "mysummaryless", :ensure => :lateset)
+      myresource = a_package_type_instance_with_yum_provider_and_ensure_latest('myresource')
+      mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
 
-      provider.prefetch({ "myresource" => myresource, "mysummaryless" => mysummaryless })
+      yum_provider.prefetch({ "myresource" => myresource, "mysummaryless" => mysummaryless })
 
       expect(@logs.map(&:message).grep(/^Failed to match rpm line/)).to be_empty
       expect(myresource.provider.latest_info).to eq({
