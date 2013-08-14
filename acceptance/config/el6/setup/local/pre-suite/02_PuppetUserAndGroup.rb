@@ -1,8 +1,8 @@
-test_name 'work arounds for bugs' do
+test_name 'Puppet User and Group' do
   hosts.each do |host|
-    next if host['platform'].include? 'windows'
+    next if !host['roles'].include?('master')
 
-    step "REVISIT: see #9862, this step should not be required for agents" do
+    step "ensure puppet user and group added to master nodes" do
       on host, "getent group puppet || groupadd puppet"
 
       if host['platform'].include? 'solaris'
@@ -14,8 +14,5 @@ test_name 'work arounds for bugs' do
       on host, "getent passwd puppet || useradd #{useradd_opts}"
     end
 
-    step "REVISIT: Work around bug #5794 not creating reports as required" do
-      on host, "mkdir -p /tmp/reports && chown puppet:puppet /tmp/reports"
-    end
   end
 end
