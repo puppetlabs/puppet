@@ -29,7 +29,8 @@ test_name "Install packages and repositories on target machines..." do
         on host, "test -d #{SourcePath} || mkdir -p #{SourcePath}"
         source_dir = $1
         checkout_dir = "#{SourcePath}/#{repository[:name]}"
-        on host, "rsync -a -i --delete --exclude .bundle --exclude '.*.sw?' --exclude 'acceptance/config/linux/log' #{$1}/** #{checkout_dir}"
+        on host, "rm -f #{checkout_dir}" # just the symlink, do not rm -rf !
+        on host, "ln -s #{source_dir} #{checkout_dir}"
         on host, "cd #{checkout_dir} && if [ -f install.rb ]; then ruby ./install.rb ; else true; fi"
       else
         install_from_git host, SourcePath, repository
