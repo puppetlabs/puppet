@@ -2,9 +2,9 @@
 
 require 'spec_helper'
 
-require 'puppet/rb_tree_map'
+require 'puppet/graph'
 
-describe Puppet::RbTreeMap do
+describe Puppet::Graph::RbTreeMap do
   describe "#push" do
     it "should allow a new element to be added" do
       subject[5] = 'foo'
@@ -32,7 +32,7 @@ describe Puppet::RbTreeMap do
 
       subject[5] = 'foo'
 
-      subject.instance_variable_get(:@root).should be_a(Puppet::RbTreeMap::Node)
+      subject.instance_variable_get(:@root).should be_a(Puppet::Graph::RbTreeMap::Node)
     end
   end
 
@@ -395,14 +395,14 @@ describe Puppet::RbTreeMap do
 
   describe "#isred" do
     it "should return true if the node is red" do
-      node = Puppet::RbTreeMap::Node.new(1,2)
+      node = Puppet::Graph::RbTreeMap::Node.new(1,2)
       node.color = :red
 
       subject.send(:isred, node).should == true
     end
 
     it "should return false if the node is black" do
-      node = Puppet::RbTreeMap::Node.new(1,2)
+      node = Puppet::Graph::RbTreeMap::Node.new(1,2)
       node.color = :black
 
       subject.send(:isred, node).should == false
@@ -414,8 +414,8 @@ describe Puppet::RbTreeMap do
   end
 end
 
-describe Puppet::RbTreeMap::Node do
-  let(:tree) { Puppet::RbTreeMap.new }
+describe Puppet::Graph::RbTreeMap::Node do
+  let(:tree) { Puppet::Graph::RbTreeMap.new }
   let(:subject) { tree.instance_variable_get(:@root) }
 
   before :each do

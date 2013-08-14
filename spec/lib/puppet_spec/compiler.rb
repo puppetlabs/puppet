@@ -16,6 +16,7 @@ module PuppetSpec::Compiler
   end
 
   def apply_compiled_manifest(manifest)
+    ral = compile_to_ral(manifest)
     transaction = Puppet::Transaction.new(compile_to_ral(manifest))
     transaction.evaluate
     transaction.report.finalize_report

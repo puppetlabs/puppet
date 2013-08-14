@@ -30,7 +30,7 @@
 #
 # Most methods have O(log n) complexity.
 
-class Puppet::RbTreeMap
+class Puppet::Graph::RbTreeMap
   include Enumerable
 
   attr_reader :size
