@@ -3,7 +3,7 @@ require 'puppet/relationship'
 require 'set'
 
 # A hopefully-faster graph class to replace the use of GRATR.
-class Puppet::SimpleGraph
+class Puppet::Graph::SimpleGraph
   #
   # All public methods of this class must maintain (assume ^ ensure) the following invariants, where "=~=" means
   # equiv. up to order:
@@ -520,7 +520,7 @@ class Puppet::SimpleGraph
               (adjacencies[direction][other_vertex] ||= Set.new).add(edge)
             end
           end
-          result[vertex] = Puppet::SimpleGraph::VertexWrapper.new(vertex, adjacencies)
+          result[vertex] = Puppet::Graph::SimpleGraph::VertexWrapper.new(vertex, adjacencies)
         end
         result
       end

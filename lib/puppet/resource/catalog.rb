@@ -1,10 +1,9 @@
 require 'puppet/node'
 require 'puppet/indirector'
-require 'puppet/simple_graph'
 require 'puppet/transaction'
 require 'puppet/util/pson'
 require 'puppet/util/tagging'
-require 'puppet/relationship_graph'
+require 'puppet/graph'
 
 # This class models a node catalog.  It is the thing meant to be passed
 # from server to client, and it contains all of the information in the
@@ -12,7 +11,7 @@ require 'puppet/relationship_graph'
 #
 # @api public
 
-class Puppet::Resource::Catalog < Puppet::SimpleGraph
+class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   class DuplicateResourceError < Puppet::Error
     include Puppet::ExternalFileError
   end
@@ -248,7 +247,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   # Create a graph of all of the relationships in our catalog.
   def relationship_graph
     unless @relationship_graph
-      @relationship_graph = Puppet::RelationshipGraph.new
+      @relationship_graph = Puppet::Graph::RelationshipGraph.new
       @relationship_graph.populate_from(self)
     end
     @relationship_graph

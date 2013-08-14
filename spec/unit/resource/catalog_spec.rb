@@ -656,8 +656,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should write :relationships and :expanded_relationships graph files if the catalog is a host catalog" do
       @catalog.clear
-      graph = Puppet::RelationshipGraph.new
-      Puppet::RelationshipGraph.expects(:new).returns graph
+      graph = Puppet::Graph::RelationshipGraph.new
+      Puppet::Graph::RelationshipGraph.expects(:new).returns graph
 
       graph.expects(:write_graph).with(:relationships)
       graph.expects(:write_graph).with(:expanded_relationships)
@@ -669,8 +669,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should not write graph files if the catalog is not a host catalog" do
       @catalog.clear
-      graph = Puppet::RelationshipGraph.new
-      Puppet::RelationshipGraph.expects(:new).returns graph
+      graph = Puppet::Graph::RelationshipGraph.new
+      Puppet::Graph::RelationshipGraph.expects(:new).returns graph
 
       graph.expects(:write_graph).never
 
@@ -682,7 +682,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should create a new relationship graph after clearing the old one" do
       @catalog.relationship_graph.expects(:clear)
       @catalog.clear
-      @catalog.relationship_graph.should be_instance_of(Puppet::RelationshipGraph)
+      @catalog.relationship_graph.should be_instance_of(Puppet::Graph::RelationshipGraph)
     end
 
     it "should remove removed resources from the relationship graph if it exists" do

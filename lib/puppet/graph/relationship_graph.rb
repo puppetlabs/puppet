@@ -1,14 +1,10 @@
-require 'puppet/simple_graph'
-require 'puppet/rb_tree_map'
-require 'puppet/graph'
-
 # The relationship graph is the final form of a puppet catalog in
 # which all dependency edges are explicitly in the graph. This form of the
 # catalog is used to traverse the graph in the order in which resources are
 # managed.
 #
 # @api private
-class Puppet::RelationshipGraph < Puppet::SimpleGraph
+class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
   attr_reader :blockers
 
   def initialize
@@ -17,7 +13,7 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
     @priority = {}
     @count = Puppet::Graph::Key.new
 
-    @ready = Puppet::RbTreeMap.new
+    @ready = Puppet::Graph::RbTreeMap.new
     @generated = {}
     @done = {}
     @blockers = {}

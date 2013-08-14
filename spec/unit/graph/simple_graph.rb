@@ -1,27 +1,27 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/simple_graph'
+require 'puppet/graph'
 
-describe Puppet::SimpleGraph do
+describe Puppet::Graph::SimpleGraph do
   it "should return the number of its vertices as its length" do
-    @graph = Puppet::SimpleGraph.new
+    @graph = Puppet::Graph::SimpleGraph.new
     @graph.add_vertex("one")
     @graph.add_vertex("two")
     @graph.size.should == 2
   end
 
   it "should consider itself a directed graph" do
-    Puppet::SimpleGraph.new.directed?.should be_true
+    Puppet::Graph::SimpleGraph.new.directed?.should be_true
   end
 
   it "should provide a method for reversing the graph" do
-    @graph = Puppet::SimpleGraph.new
+    @graph = Puppet::Graph::SimpleGraph.new
     @graph.add_edge(:one, :two)
     @graph.reversal.edge?(:two, :one).should be_true
   end
 
   it "should be able to produce a dot graph" do
-    @graph = Puppet::SimpleGraph.new
+    @graph = Puppet::Graph::SimpleGraph.new
     @graph.add_edge(:one, :two)
 
     expect { @graph.to_dot_graph }.to_not raise_error
@@ -29,7 +29,7 @@ describe Puppet::SimpleGraph do
 
   describe "when managing vertices" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
     end
 
     it "should provide a method to add a vertex" do
@@ -78,7 +78,7 @@ describe Puppet::SimpleGraph do
 
   describe "when managing edges" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
     end
 
     it "should provide a method to test whether a given vertex pair is an edge" do
@@ -179,7 +179,7 @@ describe Puppet::SimpleGraph do
 
   describe "when finding adjacent vertices" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
       @one_two = Puppet::Relationship.new(:one, :two)
       @two_three = Puppet::Relationship.new(:two, :three)
       @one_three = Puppet::Relationship.new(:one, :three)
@@ -212,7 +212,7 @@ describe Puppet::SimpleGraph do
 
     # Bug #2111
     it "should not consider a vertex adjacent just because it was asked about previously" do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
       @graph.add_vertex("a")
       @graph.add_vertex("b")
       @graph.edge?("a", "b")
@@ -222,7 +222,7 @@ describe Puppet::SimpleGraph do
 
   describe "when clearing" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
       one = Puppet::Relationship.new(:one, :two)
       two = Puppet::Relationship.new(:two, :three)
       @graph.add_edge(one)
@@ -242,7 +242,7 @@ describe Puppet::SimpleGraph do
 
   describe "when reversing graphs" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
     end
 
     it "should provide a method for reversing the graph" do
@@ -265,7 +265,7 @@ describe Puppet::SimpleGraph do
 
   describe "when reporting cycles in the graph" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
     end
 
     # This works with `add_edges` to auto-vivify the resource instances.
@@ -411,7 +411,7 @@ describe Puppet::SimpleGraph do
 
   describe "when writing dot files" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
       @name = :test
       @file = File.join(Puppet[:graphdir], @name.to_s + ".dot")
     end
@@ -430,9 +430,9 @@ describe Puppet::SimpleGraph do
     end
   end
 
-  describe Puppet::SimpleGraph do
+  describe Puppet::Graph::SimpleGraph do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
     end
 
     it "should correctly clear vertices and edges when asked" do
@@ -446,7 +446,7 @@ describe Puppet::SimpleGraph do
 
   describe "when matching edges" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
 
       # The Ruby 1.8 semantics for String#[] are that treating it like an
       # array and asking for `"a"[:whatever]` returns `nil`.  Ruby 1.9
@@ -488,7 +488,7 @@ describe Puppet::SimpleGraph do
 
   describe "when determining dependencies" do
     before do
-      @graph = Puppet::SimpleGraph.new
+      @graph = Puppet::Graph::SimpleGraph.new
 
       @graph.add_edge("a", "b")
       @graph.add_edge("a", "c")
@@ -521,7 +521,7 @@ describe Puppet::SimpleGraph do
   end
 
   it "should serialize to YAML using the old format by default" do
-    Puppet::SimpleGraph.use_new_yaml_format.should == false
+    Puppet::Graph::SimpleGraph.use_new_yaml_format.should == false
   end
 
   describe "(yaml tests)" do
@@ -568,18 +568,18 @@ describe Puppet::SimpleGraph do
     end
 
     def graph_to_yaml(graph, which_format)
-      previous_use_new_yaml_format = Puppet::SimpleGraph.use_new_yaml_format
-      Puppet::SimpleGraph.use_new_yaml_format = (which_format == :new)
+      previous_use_new_yaml_format = Puppet::Graph::SimpleGraph.use_new_yaml_format
+      Puppet::Graph::SimpleGraph.use_new_yaml_format = (which_format == :new)
       ZAML.dump(graph)
     ensure
-      Puppet::SimpleGraph.use_new_yaml_format = previous_use_new_yaml_format
+      Puppet::Graph::SimpleGraph.use_new_yaml_format = previous_use_new_yaml_format
     end
 
     # Test serialization of graph to YAML.
     [:old, :new].each do |which_format|
       all_test_graphs.each do |graph_to_test|
         it "should be able to serialize #{graph_to_test} to YAML (#{which_format} format)", :if => (RUBY_VERSION[0,3] == '1.8' or YAML::ENGINE.syck?) do
-          graph = Puppet::SimpleGraph.new
+          graph = Puppet::Graph::SimpleGraph.new
           send(graph_to_test, graph)
           yaml_form = graph_to_yaml(graph, which_format)
 
@@ -593,7 +593,7 @@ describe Puppet::SimpleGraph do
           # Check that the object contains instance variables @edges and
           # @vertices only.  @reversal is also permitted, but we don't
           # check it, because it is going to be phased out.
-          serialized_object.type_id.should == 'object:Puppet::SimpleGraph'
+          serialized_object.type_id.should == 'object:Puppet::Graph::SimpleGraph'
           serialized_object.value.keys.reject { |x| x == 'reversal' }.sort.should == ['edges', 'vertices']
 
           # Check edges by forming a set of tuples (source, target,
@@ -617,7 +617,7 @@ describe Puppet::SimpleGraph do
             vertices.should be_a(Hash)
             Set.new(vertices.keys).should == Set.new(graph.vertices)
             vertices.each do |key, value|
-              value.type_id.should == 'object:Puppet::SimpleGraph::VertexWrapper'
+              value.type_id.should == 'object:Puppet::Graph::SimpleGraph::VertexWrapper'
               value.value.keys.sort.should == %w{adjacencies vertex}
               value.value['vertex'].should equal(key)
               adjacencies = value.value['adjacencies']
@@ -655,7 +655,7 @@ describe Puppet::SimpleGraph do
       # tested.
       all_test_graphs.each do |graph_to_test|
         it "should be able to deserialize #{graph_to_test} from YAML (#{which_format} format)" do
-          reference_graph = Puppet::SimpleGraph.new
+          reference_graph = Puppet::Graph::SimpleGraph.new
           send(graph_to_test, reference_graph)
           yaml_form = graph_to_yaml(reference_graph, which_format)
           recovered_graph = YAML.load(yaml_form)
@@ -685,7 +685,7 @@ describe Puppet::SimpleGraph do
       end
 
       it "should be able to serialize a graph where the vertices contain backreferences to the graph (#{which_format} format)" do
-        reference_graph = Puppet::SimpleGraph.new
+        reference_graph = Puppet::Graph::SimpleGraph.new
         vertex = Object.new
         vertex.instance_eval { @graph = reference_graph }
         reference_graph.add_edge(vertex, :other_vertex)
@@ -703,7 +703,7 @@ describe Puppet::SimpleGraph do
     end
 
     it "should serialize properly when used as a base class" do
-      class Puppet::TestDerivedClass < Puppet::SimpleGraph
+      class Puppet::TestDerivedClass < Puppet::Graph::SimpleGraph
         attr_accessor :foo
       end
       derived = Puppet::TestDerivedClass.new
