@@ -1,15 +1,18 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/relationship_graph'
+require 'puppet/graph'
+
 require 'puppet_spec/compiler'
 require 'matchers/include_in_order'
+require 'matchers/relationship_graph_matchers'
 
-describe Puppet::RelationshipGraph do
+describe Puppet::Graph::RelationshipGraph do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
+  include RelationshipGraphMatchers
 
   it "allows adding a new vertex with a specific priority" do
-    graph = Puppet::RelationshipGraph.new
+    graph = Puppet::Graph::RelationshipGraph.new
     vertex = stub_vertex('something')
 
     graph.add_vertex(vertex, 2)
@@ -18,7 +21,7 @@ describe Puppet::RelationshipGraph do
   end
 
   it "returns resource priority based on the order added" do
-    graph = Puppet::RelationshipGraph.new
+    graph = Puppet::Graph::RelationshipGraph.new
 
     # strings chosen so the old hex digest method would put these in the
     # wrong order
@@ -32,7 +35,7 @@ describe Puppet::RelationshipGraph do
   end
 
   it "retains the first priority when a resource is added more than once" do
-    graph = Puppet::RelationshipGraph.new
+    graph = Puppet::Graph::RelationshipGraph.new
 
     first = stub_vertex(1)
     second = stub_vertex(2)
@@ -45,7 +48,7 @@ describe Puppet::RelationshipGraph do
   end
 
   it "forgets the priority of a removed resource" do
-    graph = Puppet::RelationshipGraph.new
+    graph = Puppet::Graph::RelationshipGraph.new
 
     vertex = stub_vertex(1)
 
@@ -56,7 +59,7 @@ describe Puppet::RelationshipGraph do
   end
 
   it "does not give two resources the same priority" do
-    graph = Puppet::RelationshipGraph.new
+    graph = Puppet::Graph::RelationshipGraph.new
 
     first = stub_vertex(1)
     second = stub_vertex(2)
@@ -114,6 +117,18 @@ describe Puppet::RelationshipGraph do
 
       expect(order_resources_traversed_in(relationships)).to(
         include_in_order("Notify[second]", "Notify[third]", "Notify[first]"))
+    end
+
+    it "traverses all independent resources before traversing dependent ones (with a backwards require)" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+        notify { "first": }
+        notify { "second": }
+        notify { "third": require => Notify[second] }
+        notify { "fourth": }
+      MANIFEST
+
+      expect(order_resources_traversed_in(relationships)).to(
+        include_in_order("Notify[first]", "Notify[second]", "Notify[third]", "Notify[fourth]"))
     end
 
     it "traverses resources in classes in the order they are added" do
@@ -339,38 +354,5 @@ describe Puppet::RelationshipGraph do
 
   def stub_vertex(name)
     stub "vertex #{name}", :ref => name
-  end
-
-  RSpec::Matchers.define :enforce_order_with_edge do |before, after|
-    match do |actual_graph|
-      @before = before
-      @after = after
-
-      @reverse_edge = actual_graph.edge?(
-          vertex_called(actual_graph, after),
-          vertex_called(actual_graph, before))
-
-      @forward_edge = actual_graph.edge?(
-          vertex_called(actual_graph, before),
-          vertex_called(actual_graph, after))
-
-      @forward_edge && !@reverse_edge
-    end
-
-    def failure_message_for_should
-      "expect #{@actual.to_dot_graph} to only contain an edge from #{@before} to #{@after} but #{[forward_failure_message, reverse_failure_message].compact.join(' and ')}"
-    end
-
-    def forward_failure_message
-      if !@forward_edge
-        "did not contain an edge from #{@before} to #{@after}"
-      end
-    end
-
-    def reverse_failure_message
-      if @reverse_edge
-        "contained an edge from #{@after} to #{@before}"
-      end
-    end
   end
 end

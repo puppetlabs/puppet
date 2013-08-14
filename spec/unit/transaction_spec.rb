@@ -6,13 +6,6 @@ require 'puppet_spec/compiler'
 require 'puppet/transaction'
 require 'fileutils'
 
-def without_warnings
-  flag = $VERBOSE
-  $VERBOSE = nil
-  yield
-  $VERBOSE = flag
-end
-
 describe Puppet::Transaction do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
@@ -172,120 +165,6 @@ describe Puppet::Transaction do
     end
   end
 
-  describe "#eval_generate" do
-    let(:path) { tmpdir('eval_generate') }
-    let(:resource) { Puppet::Type.type(:file).new(:path => path, :recurse => true) }
-    let(:graph) { @transaction.relationship_graph }
-
-    def find_vertex(type, title)
-      graph.vertices.find {|v| v.type == type and v.title == title}
-    end
-
-    before :each do
-      @filenames = []
-
-      'a'.upto('c') do |x|
-        @filenames << File.join(path,x)
-
-        'a'.upto('c') do |y|
-          @filenames << File.join(path,x,y)
-          FileUtils.mkdir_p(File.join(path,x,y))
-
-          'a'.upto('c') do |z|
-            @filenames << File.join(path,x,y,z)
-            FileUtils.touch(File.join(path,x,y,z))
-          end
-        end
-      end
-
-      @transaction.catalog.add_resource(resource)
-    end
-
-    it "should add the generated resources to the catalog" do
-      @transaction.eval_generate(resource)
-
-      @filenames.each do |file|
-        @transaction.catalog.resource(:file, file).must be_a(Puppet::Type.type(:file))
-      end
-    end
-
-    it "should add a sentinel whit for the resource" do
-      @transaction.eval_generate(resource)
-
-      find_vertex(:whit, "completed_#{path}").must be_a(Puppet::Type.type(:whit))
-    end
-
-    it "should replace dependencies on the resource with dependencies on the sentinel" do
-      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
-
-      @transaction.catalog.add_resource(dependent)
-
-      res = find_vertex(resource.type, resource.title)
-      generated = find_vertex(dependent.type, dependent.title)
-
-      graph.should be_edge(res, generated)
-
-      @transaction.eval_generate(resource)
-
-      sentinel = find_vertex(:whit, "completed_#{path}")
-
-      graph.should be_edge(sentinel, generated)
-      graph.should_not be_edge(res, generated)
-    end
-
-    it "should add an edge from the nearest ancestor to the generated resource" do
-      @transaction.eval_generate(resource)
-
-      @filenames.each do |file|
-        v = find_vertex(:file, file)
-        p = find_vertex(:file, File.dirname(file))
-
-        graph.should be_edge(p, v)
-      end
-    end
-
-    it "should add an edge from each generated resource to the sentinel" do
-      @transaction.eval_generate(resource)
-
-      sentinel = find_vertex(:whit, "completed_#{path}")
-      @filenames.each do |file|
-        v = find_vertex(:file, file)
-
-        graph.should be_edge(v, sentinel)
-      end
-    end
-
-    it "should add an edge from the resource to the sentinel" do
-      @transaction.eval_generate(resource)
-
-      res = find_vertex(:file, path)
-      sentinel = find_vertex(:whit, "completed_#{path}")
-
-      graph.should be_edge(res, sentinel)
-    end
-
-    it "should return false if an error occured when generating resources" do
-      resource.stubs(:eval_generate).raises(Puppet::Error)
-
-      @transaction.eval_generate(resource).should == false
-    end
-
-    it "should return true if resources were generated" do
-      @transaction.eval_generate(resource).should == true
-    end
-
-    it "should not add a sentinel if no resources are generated" do
-      path2 = tmpfile('empty')
-      other_file = Puppet::Type.type(:file).new(:path => path2)
-
-      @transaction.catalog.add_resource(other_file)
-
-      @transaction.eval_generate(other_file).should == false
-
-      find_vertex(:whit, "completed_#{path2}").should be_nil
-    end
-  end
-
   describe "#unblock" do
     let(:graph) { @transaction.relationship_graph }
     let(:resource) { Puppet::Type.type(:notify).new(:name => 'foo') }
@@ -341,7 +220,7 @@ describe Puppet::Transaction do
     end
 
     it "should yield the resource even if eval_generate is called" do
-      @transaction.expects(:eval_generate).with(resource).returns true
+      Puppet::Transaction::AdditionalResourceGenerator.any_instance.expects(:eval_generate).with(resource).returns true
 
       yielded = false
       @transaction.evaluate do |res|
@@ -419,17 +298,6 @@ describe Puppet::Transaction do
 
     it "should finish all resources" do
       generated.each { |res| res.expects(:finish) }
-
-      transaction.evaluate
-    end
-
-    it "should skip generated resources that conflict with existing resources" do
-      duplicate = generated.first
-      catalog.add_resource(duplicate)
-
-      duplicate.expects(:finish).never
-
-      duplicate.expects(:info).with { |msg| msg =~ /Duplicate generated resource/ }
 
       transaction.evaluate
     end
