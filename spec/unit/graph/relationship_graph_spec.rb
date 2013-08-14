@@ -180,6 +180,48 @@ describe Puppet::Graph::RelationshipGraph do
     end
   end
 
+  describe "when interrupting traversal" do
+    def collect_cancelled_resources(relationships, trigger_on)
+      continue = true
+      continue_while = lambda { continue }
+
+      cancelled_resources = []
+      cancelled_resource_handler = lambda { |resource| cancelled_resources << resource.ref }
+
+      relationships.traverse(:while => continue_while,
+                             :cancelled_resource_handler => cancelled_resource_handler) do |resource|
+        if resource.ref == trigger_on
+          continue = false
+        end
+      end
+
+      cancelled_resources
+    end
+
+    it "enumerates the remaining resources" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+      notify { "a": }
+      notify { "b": }
+      notify { "c": }
+    MANIFEST
+      resources = collect_cancelled_resources(relationships, 'Notify[b]')
+
+      expect(resources).to include('Notify[c]')
+    end
+
+    it "enumerates the remaining blocked resources" do
+      relationships = compile_to_relationship_graph(<<-MANIFEST)
+      notify { "a": }
+      notify { "b": }
+      notify { "c": }
+      notify { "d": require => Notify["c"] }
+    MANIFEST
+      resources = collect_cancelled_resources(relationships, 'Notify[b]')
+
+      expect(resources).to include('Notify[d]')
+    end
+  end
+
   describe "when constructing dependencies" do
     let(:child) { make_absolute('/a/b') }
     let(:parent) { make_absolute('/a') }
