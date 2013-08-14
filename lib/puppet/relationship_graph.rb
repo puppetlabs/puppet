@@ -1,5 +1,6 @@
 require 'puppet/simple_graph'
 require 'puppet/rb_tree_map'
+require 'puppet/graph'
 
 # The relationship graph is the final form of a puppet catalog in
 # which all dependency edges are explicitly in the graph. This form of the
@@ -14,7 +15,7 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
     super
 
     @priority = {}
-    @count = 0
+    @count = Puppet::Graph::Key.new
 
     @ready = Puppet::RbTreeMap.new
     @generated = {}
@@ -39,7 +40,7 @@ class Puppet::RelationshipGraph < Puppet::SimpleGraph
     super(vertex)
 
     @priority[vertex] = if priority.nil?
-                          @count += 1
+                          @count = @count.next
                         else
                           priority
                         end

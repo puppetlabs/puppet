@@ -7,19 +7,20 @@ class Puppet::Transaction::AdditionalResourceGenerator
   def generate_additional_resources(resource)
     return unless resource.respond_to?(:generate)
     begin
-      made = resource.generate
+      generated = resource.generate
     rescue => detail
       resource.log_exception(detail, "Failed to generate additional resources using 'generate': #{detail}")
     end
-    return unless made
-    made = [made] unless made.is_a?(Array)
-    priority = @relationship_graph.resource_priority(resource)
-    made.uniq.collect do |res|
+    return unless generated
+    generated = [generated] unless generated.is_a?(Array)
+    priority = @relationship_graph.resource_priority(resource).down
+    generated.collect do |res|
       @catalog.resource(res.ref) || res
     end.each do |res|
       add_resource(res, resource, priority)
       add_conditional_directed_dependency(resource, res)
       generate_additional_resources(res)
+      priority = priority.next
     end
   end
 
@@ -27,17 +28,17 @@ class Puppet::Transaction::AdditionalResourceGenerator
     return false unless resource.respond_to?(:eval_generate)
     raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
     begin
-      made = resource.eval_generate.uniq
-      return false if made.empty?
-      made = Hash[made.map(&:name).zip(made)]
+      generated = replace_duplicates_with_catalog_resources(resource.eval_generate)
+      return false if generated.empty?
     rescue => detail
       resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
       return false
     end
-    made = replace_duplicates_with_catalog_resources(made)
-    add_resources(made.values, resource)
+    priority = @relationship_graph.resource_priority(resource).down
+    add_resources(generated, resource, priority.down)
 
-    contain_generated_resources_in(resource, made)
+    made = Hash[generated.map(&:name).zip(generated)]
+    contain_generated_resources_in(resource, made, priority.next)
     connect_resources_to_ancestors(resource, made)
 
     true
@@ -45,15 +46,15 @@ class Puppet::Transaction::AdditionalResourceGenerator
 
   private
 
-  def replace_duplicates_with_catalog_resources(made)
-    Hash[made.collect do |name, generated_resource|
-      [name, @catalog.resource(generated_resource.ref) || generated_resource]
-    end]
+  def replace_duplicates_with_catalog_resources(generated)
+    generated.collect do |generated_resource|
+      @catalog.resource(generated_resource.ref) || generated_resource
+    end
   end
 
-  def contain_generated_resources_in(resource, made)
+  def contain_generated_resources_in(resource, made, priority)
     sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
-    @relationship_graph.add_vertex(sentinel, @relationship_graph.resource_priority(resource))
+    @relationship_graph.add_vertex(sentinel, priority)
 
     redirect_edges_to_sentinel(resource, sentinel, made)
 
@@ -87,10 +88,10 @@ class Puppet::Transaction::AdditionalResourceGenerator
     end
   end
 
-  def add_resources(generated, resource)
-    priority = @relationship_graph.resource_priority(resource)
+  def add_resources(generated, resource, priority)
     generated.each do |res|
       add_resource(res, resource, priority)
+      priority = priority.next
     end
   end
 

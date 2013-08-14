@@ -174,14 +174,19 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
       catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         generator { thing:
-          code => 'notify { hello: }'
+          code => 'notify { hello: } notify { goodbye: }'
         }
         notify { third: require => Generator['thing'] }
         notify { after: }
       MANIFEST
 
       expect(order_resources_traversed_in(catalog.relationship_graph)).to(
-        include_in_order("Notify[before]", "Generator[thing]", "Notify[hello]", "Notify[third]", "Notify[after]"))
+        include_in_order("Notify[before]",
+                         "Generator[thing]",
+                         "Notify[hello]",
+                         "Notify[goodbye]",
+                         "Notify[third]",
+                         "Notify[after]"))
     end
 
     it "duplicate generated resources are made dependent on the generator" do
@@ -294,6 +299,26 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
 
       expect(order_resources_traversed_in(catalog.relationship_graph)).to(
         include_in_order("Notify[before]", "Generator[thing]", "Notify[hello]", "Notify[third]", "Notify[after]"))
+    end
+
+    it "orders the generator in manifest order with dependencies" do
+      catalog = catalog_after_generating(<<-MANIFEST, 'Generator[thing]')
+        notify { before: }
+        generator { thing:
+          kind => generate,
+          code => 'notify { hello: } notify { goodbye: }'
+        }
+        notify { third: require => Generator['thing'] }
+        notify { after: }
+      MANIFEST
+
+      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+        include_in_order("Notify[before]",
+                         "Generator[thing]",
+                         "Notify[hello]",
+                         "Notify[goodbye]",
+                         "Notify[third]",
+                         "Notify[after]"))
     end
 
     def catalog_after_generating(manifest, resource_to_generate)
