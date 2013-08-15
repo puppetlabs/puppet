@@ -77,6 +77,11 @@ class Puppet::Transaction
       resource_status(resource).failed = true
     end
 
+    canceled_resource_handler = lambda do |resource|
+      resource_status(resource).skipped = true
+      resource.debug "Transaction canceled, skipping"
+    end
+
     teardown = lambda do
       # Just once per type. No need to punish the user.
       providerless_types.uniq.each do |type|
@@ -87,6 +92,7 @@ class Puppet::Transaction
     relationship_graph.traverse(:while => continue_while,
                                 :pre_process => pre_process,
                                 :overly_deferred_resource_handler => overly_deferred_resource_handler,
+                                :canceled_resource_handler => canceled_resource_handler,
                                 :teardown => teardown) do |resource|
       if resource.is_a?(Puppet::Type::Component)
         Puppet.warning "Somehow left a component in the relationship graph"
@@ -102,7 +108,7 @@ class Puppet::Transaction
 
   # Wraps application run state check to flag need to interrupt processing
   def stop_processing?
-    Puppet::Application.stop_requested?
+    Puppet::Application.stop_requested? && catalog.host_config?
   end
 
   # Are there any failed resources in this transaction?
