@@ -11,6 +11,7 @@ class Puppet::Settings
   require 'puppet/settings/errors'
   require 'puppet/settings/base_setting'
   require 'puppet/settings/string_setting'
+  require 'puppet/settings/enum_setting'
   require 'puppet/settings/file_setting'
   require 'puppet/settings/directory_setting'
   require 'puppet/settings/path_setting'
@@ -634,6 +635,7 @@ class Puppet::Settings
       :boolean    => BooleanSetting,
       :terminus   => TerminusSetting,
       :duration   => DurationSetting,
+      :enum       => EnumSetting,
   }
 
   # Create a new setting.  The value is passed in because it's used to determine
