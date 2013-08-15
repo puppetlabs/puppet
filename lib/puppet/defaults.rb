@@ -1229,6 +1229,16 @@ EOT
       turn off waiting for certificates by specifying a time of 0, in which case
       puppet agent will exit if it cannot get a cert.
       #{AS_DURATION}",
+    },
+    :ordering => {
+      :type => :enum,
+      :values => ["manifest", "title-hash"],
+      :default => "title-hash",
+      :desc => "Controls the default ordering to use in the absence of any
+      dependency information. By default this is 'title-hash', which is an
+      opaque, stable, random order. The other value of 'manifest' will use the
+      order in which the resources were added to the catalog, which matches the
+      order that the puppet language executes."
     }
   )
 
