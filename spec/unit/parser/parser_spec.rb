@@ -35,16 +35,18 @@ describe Puppet::Parser do
   end
 
   context "when importing" do
-    it "should delegate importing to the known resource type loader" do
-      parser = Puppet::Parser::Parser.new "development"
-      parser.known_resource_types.loader.expects(:import).with("newfile", "current_file")
-      parser.lexer.expects(:file).returns "current_file"
-      parser.import("newfile")
+    it "uses the directory of the currently parsed file" do
+      @parser.lexer.stubs(:file).returns "/tmp/current_file"
+
+      @parser.known_resource_types.loader.expects(:import).with("newfile", "/tmp")
+
+      @parser.import("newfile")
     end
 
-    it "should import multiple files on one line" do
-      @parser.known_resource_types.loader.expects(:import).with('one', nil)
-      @parser.known_resource_types.loader.expects(:import).with('two', nil)
+    it "uses the current working directory, when there is no file being parsed" do
+      @parser.known_resource_types.loader.expects(:import).with('one', Dir.pwd)
+      @parser.known_resource_types.loader.expects(:import).with('two', Dir.pwd)
+
       @parser.parse("import 'one', 'two'")
     end
   end

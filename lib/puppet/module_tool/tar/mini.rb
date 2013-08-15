@@ -3,7 +3,7 @@ class Puppet::ModuleTool::Tar::Mini
     @module_name = module_name
   end
 
-  def unpack(sourcefile, destdir)
+  def unpack(sourcefile, destdir, _)
     Zlib::GzipReader.open(sourcefile) do |reader|
       Archive::Tar::Minitar.unpack(reader, destdir) do |action, name, stats|
         case action
