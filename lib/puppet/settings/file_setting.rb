@@ -1,5 +1,3 @@
-require 'puppet/settings/string_setting'
-
 # A file.
 class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   class SettingError < StandardError; end
