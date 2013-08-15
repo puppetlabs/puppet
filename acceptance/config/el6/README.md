@@ -4,6 +4,8 @@ Local Use
 Both Modes
 ----------
 
+ci:test is principally for running in Jenkins, but can also be used locally if a SHA is provided.  If you have local changes to puppet code (outside of acceptance/) that you don't want to repackage for time reasons, you can use standalone:tests instead, which will test against a symlinked copy of your repository in local vagrant instances.
+
 ### Options
 
 There are two ways to set options.
@@ -23,6 +25,8 @@ Runs against local vagrant instances according to config/local/config.yaml.
 
     be rake standalone:test
 
+TODO use Adrien's vagrant-hosts and vagrant-auto_network to handle the host/ip configuration which is currently hard set.
+
 Jenkins
 -------
 
@@ -36,9 +40,5 @@ If running this on your laptop, you will need this ssh private key in order for 
 
 https://github.com/puppetlabs/puppetlabs-modules/blob/qa/secure/jenkins/id_rsa-acceptance
 https://github.com/puppetlabs/puppetlabs-modules/blob/qa/secure/jenkins/id_rsa-acceptance.pub
-
-And you will have to pass it as a systest --keyfile parameter in the OPTIONS environment to rake:
-
-    be rake ci:test OPTIONS='--keyfile=~/.ssh/id_rsa-acceptance'
 
 TODO fetch these files directly from github, but am running into rate limits and then would also have to cross the issue of authentication.
