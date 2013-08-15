@@ -258,6 +258,48 @@ describe provider_class do
       provider.query.should be_nil
     end
   end
+
+  context "#install_options" do
+    it "should return nill by default" do
+      provider.install_options.should be_nil
+    end
+
+    it "should return install_options when set" do
+      provider.resource[:install_options] = ['-n']
+      provider.resource[:install_options].should == ['-n']
+    end
+
+    it "should return multiple install_options when set" do
+      provider.resource[:install_options] = ['-L', '/opt/puppet']
+      provider.resource[:install_options].should == ['-L', '/opt/puppet']
+    end
+
+    it 'should return install_options when set as hash' do
+      provider.resource[:install_options] = { '-Darch' => 'vax' }
+      provider.install_options.should == ['-Darch=vax']
+    end
+  end
+  
+  context "#uninstall_options" do
+    it "should return nill by default" do
+      provider.uninstall_options.should be_nil
+    end
+
+    it "should return uninstall_options when set" do
+      provider.resource[:uninstall_options] = ['-n']
+      provider.resource[:uninstall_options].should == ['-n']
+    end
+
+    it "should return multiple uninstall_options when set" do
+      provider.resource[:uninstall_options] = ['-q', '-c']
+      provider.resource[:uninstall_options].should == ['-q', '-c']
+    end
+
+    it 'should return uninstall_options when set as hash' do
+      provider.resource[:uninstall_options] = { '-Dbaddepend' => '1' }
+      provider.uninstall_options.should == ['-Dbaddepend=1']
+    end
+  end
   
   context "#uninstall" do
     describe 'when uninstalling' do
