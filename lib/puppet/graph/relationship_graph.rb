@@ -100,7 +100,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     continue_while = options[:while] || lambda { true }
     pre_process = options[:pre_process] || lambda { |resource| }
     overly_deferred_resource_handler = options[:overly_deferred_resource_handler] || lambda { |resource| }
-    cancelled_resource_handler = options[:cancelled_resource_handler] || lambda { |resource| }
+    canceled_resource_handler = options[:canceled_resource_handler] || lambda { |resource| }
     teardown = options[:teardown] || lambda {}
 
     report_cycles_in_graph
@@ -139,7 +139,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
 
     if !continue_while.call()
       while (resource = next_resource)
-        cancelled_resource_handler.call(resource)
+        canceled_resource_handler.call(resource)
         finish(resource)
       end
     end
