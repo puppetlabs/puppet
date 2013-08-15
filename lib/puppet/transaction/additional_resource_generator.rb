@@ -2,6 +2,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
   def initialize(catalog, relationship_graph)
     @catalog = catalog
     @relationship_graph = relationship_graph
+    @prioritizer = relationship_graph.prioritizer
   end
 
   def generate_additional_resources(resource)
@@ -13,14 +14,14 @@ class Puppet::Transaction::AdditionalResourceGenerator
     end
     return unless generated
     generated = [generated] unless generated.is_a?(Array)
-    priority = @relationship_graph.resource_priority(resource).down
     generated.collect do |res|
       @catalog.resource(res.ref) || res
     end.each do |res|
+      priority = @prioritizer.generate_priority_contained_in(resource, res)
       add_resource(res, resource, priority)
+
       add_conditional_directed_dependency(resource, res)
       generate_additional_resources(res)
-      priority = priority.next
     end
   end
 
@@ -34,11 +35,10 @@ class Puppet::Transaction::AdditionalResourceGenerator
       resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
       return false
     end
-    priority = @relationship_graph.resource_priority(resource).down
-    add_resources(generated, resource, priority.down)
+    add_resources(generated, resource)
 
     made = Hash[generated.map(&:name).zip(generated)]
-    contain_generated_resources_in(resource, made, priority.next)
+    contain_generated_resources_in(resource, made)
     connect_resources_to_ancestors(resource, made)
 
     true
@@ -52,8 +52,9 @@ class Puppet::Transaction::AdditionalResourceGenerator
     end
   end
 
-  def contain_generated_resources_in(resource, made, priority)
+  def contain_generated_resources_in(resource, made)
     sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+    priority = @prioritizer.generate_priority_contained_in(resource, sentinel)
     @relationship_graph.add_vertex(sentinel, priority)
 
     redirect_edges_to_sentinel(resource, sentinel, made)
@@ -88,10 +89,10 @@ class Puppet::Transaction::AdditionalResourceGenerator
     end
   end
 
-  def add_resources(generated, resource, priority)
+  def add_resources(generated, resource)
     generated.each do |res|
+      priority = @prioritizer.generate_priority_contained_in(resource, res)
       add_resource(res, resource, priority)
-      priority = priority.next
     end
   end
 

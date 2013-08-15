@@ -247,7 +247,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Create a graph of all of the relationships in our catalog.
   def relationship_graph
     unless @relationship_graph
-      @relationship_graph = Puppet::Graph::RelationshipGraph.new
+      @relationship_graph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::SequentialPrioritizer.new)
       @relationship_graph.populate_from(self)
     end
     @relationship_graph

@@ -656,7 +656,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should write :relationships and :expanded_relationships graph files if the catalog is a host catalog" do
       @catalog.clear
-      graph = Puppet::Graph::RelationshipGraph.new
+      graph = Puppet::Graph::RelationshipGraph.new(nil)
       Puppet::Graph::RelationshipGraph.expects(:new).returns graph
 
       graph.expects(:write_graph).with(:relationships)
@@ -669,7 +669,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     it "should not write graph files if the catalog is not a host catalog" do
       @catalog.clear
-      graph = Puppet::Graph::RelationshipGraph.new
+      graph = Puppet::Graph::RelationshipGraph.new(nil)
       Puppet::Graph::RelationshipGraph.expects(:new).returns graph
 
       graph.expects(:write_graph).never
