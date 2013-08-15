@@ -181,21 +181,21 @@ describe Puppet::Graph::RelationshipGraph do
   end
 
   describe "when interrupting traversal" do
-    def collect_cancelled_resources(relationships, trigger_on)
+    def collect_canceled_resources(relationships, trigger_on)
       continue = true
       continue_while = lambda { continue }
 
-      cancelled_resources = []
-      cancelled_resource_handler = lambda { |resource| cancelled_resources << resource.ref }
+      canceled_resources = []
+      canceled_resource_handler = lambda { |resource| canceled_resources << resource.ref }
 
       relationships.traverse(:while => continue_while,
-                             :cancelled_resource_handler => cancelled_resource_handler) do |resource|
+                             :canceled_resource_handler => canceled_resource_handler) do |resource|
         if resource.ref == trigger_on
           continue = false
         end
       end
 
-      cancelled_resources
+      canceled_resources
     end
 
     it "enumerates the remaining resources" do
@@ -204,7 +204,7 @@ describe Puppet::Graph::RelationshipGraph do
       notify { "b": }
       notify { "c": }
     MANIFEST
-      resources = collect_cancelled_resources(relationships, 'Notify[b]')
+      resources = collect_canceled_resources(relationships, 'Notify[b]')
 
       expect(resources).to include('Notify[c]')
     end
@@ -216,7 +216,7 @@ describe Puppet::Graph::RelationshipGraph do
       notify { "c": }
       notify { "d": require => Notify["c"] }
     MANIFEST
-      resources = collect_cancelled_resources(relationships, 'Notify[b]')
+      resources = collect_canceled_resources(relationships, 'Notify[b]')
 
       expect(resources).to include('Notify[d]')
     end
