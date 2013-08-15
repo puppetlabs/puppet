@@ -108,7 +108,7 @@ class Puppet::Transaction
 
   # Wraps application run state check to flag need to interrupt processing
   def stop_processing?
-    Puppet::Application.stop_requested?
+    Puppet::Application.stop_requested? && catalog.host_config?
   end
 
   # Are there any failed resources in this transaction?
