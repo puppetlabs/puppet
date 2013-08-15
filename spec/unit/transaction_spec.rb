@@ -560,6 +560,20 @@ describe Puppet::Transaction do
     transaction.report.status.should == 'changed'
     transaction.report.resource_statuses['Notify[one]'].should be_changed
   end
+
+  describe "when interrupted" do
+    it "marks unprocessed resources as skipped" do
+      Puppet::Application.stop!
+
+      transaction = apply_compiled_manifest(<<-MANIFEST)
+        notify { a: } ->
+        notify { b: }
+      MANIFEST
+
+      transaction.report.resource_statuses['Notify[a]'].should be_skipped
+      transaction.report.resource_statuses['Notify[b]'].should be_skipped
+    end
+  end
 end
 
 describe Puppet::Transaction, " when determining tags" do
