@@ -484,9 +484,19 @@ describe Puppet::Transaction do
       @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
     end
 
-    it 'should return true for :stop_processing? if Puppet::Application.stop_requested? is true' do
-      Puppet::Application.stubs(:stop_requested?).returns(true)
-      @transaction.stop_processing?.should be_true
+    context "when stop is requested" do
+      before :each do
+        Puppet::Application.stubs(:stop_requested?).returns(true)
+      end
+
+      it 'should return true for :stop_processing?' do
+        @transaction.should be_stop_processing
+      end
+
+      it 'always evaluates non-host_config catalogs' do
+        @catalog.host_config = false
+        @transaction.should_not be_stop_processing
+      end
     end
 
     it 'should return false for :stop_processing? if Puppet::Application.stop_requested? is false' do
