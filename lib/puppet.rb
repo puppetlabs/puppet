@@ -28,6 +28,8 @@ require 'puppet/util/run_mode'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
+  require 'puppet/file_system'
+
   class << self
     include Puppet::Util
     attr_reader :features

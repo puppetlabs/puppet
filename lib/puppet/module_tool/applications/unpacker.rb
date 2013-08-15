@@ -9,7 +9,8 @@ module Puppet::ModuleTool
         @filename = Pathname.new(filename)
         parsed = parse_filename(filename)
         super(options)
-        @module_dir = Pathname.new(options[:target_dir]) + parsed[:dir_name]
+        @module_path = Pathname(options[:target_dir])
+        @module_dir = @module_path + parsed[:dir_name]
       end
 
       def run
@@ -46,6 +47,9 @@ module Puppet::ModuleTool
             else
               Puppet::Util.execute("tar xzf #{@filename} -C #{build_dir}")
             end
+            Puppet::Util.execute("find #{build_dir} -type d -exec chmod 755 {} +")
+            Puppet::Util.execute("find #{build_dir} -type f -exec chmod 644 {} +")
+            Puppet::Util.execute("chown -R #{@module_path.stat.uid}:#{@module_path.stat.gid} #{build_dir}")
           rescue Puppet::ExecutionFailure => e
             raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
           end

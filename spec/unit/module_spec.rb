@@ -604,7 +604,8 @@ describe Puppet::Module, "when finding matching manifests" do
   end
 
   it "should default to the 'init' file if no glob pattern is specified" do
-    Dir.expects(:glob).with("/a/manifests/init.{pp,rb}").returns(%w{/a/manifests/init.pp})
+    FileTest.expects(:exist?).with("/a/manifests/init.pp").returns(true)
+    FileTest.expects(:exist?).with("/a/manifests/init.rb").returns(false)
 
     @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
   end
@@ -625,6 +626,12 @@ describe Puppet::Module, "when finding matching manifests" do
     Dir.expects(:glob).with(@fq_glob_with_extension).returns([])
 
     @mod.match_manifests(@pq_glob_with_extension).should == []
+  end
+
+  it "should raise an error if the pattern tries to leave the manifest directory" do
+    expect do
+      @mod.match_manifests("something/../../*")
+    end.to raise_error(Puppet::Module::InvalidFilePattern, /The pattern "something\/\.\.\/\.\.\/\*" to find manifests in the module "mymod" is invalid and potentially unsafe./)
   end
 end
 

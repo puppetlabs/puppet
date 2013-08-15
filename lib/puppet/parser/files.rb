@@ -8,23 +8,25 @@ require 'puppet/parser/parser'
 module Puppet::Parser::Files
   module_function
 
-  # Return a list of manifests (as absolute filenames) that match +pat+
-  # with the current directory set to +cwd+. If the first component of
-  # +pat+ does not contain any wildcards and is an existing module, return
-  # a list of manifests in that module matching the rest of +pat+
-  # Otherwise, try to find manifests matching +pat+ relative to +cwd+
-  def find_manifests(start, options = {})
-    cwd = options[:cwd] || Dir.getwd
-    module_name, pattern = split_file_path(start)
+  # Return a list of manifests as absolute filenames matching the given 
+  # pattern.
+  #
+  # @param pattern [String] A reference for a file in a module. It is the format "<modulename>/<file glob>"
+  # @param environment [Puppet::Node::Environment] the environment of modules
+  #
+  # @return [Array(String, Array<String>)] the module name and the list of files found
+  # @api private
+  def find_manifests_in_modules(pattern, environment)
+    module_name, file_pattern = split_file_path(pattern)
     begin
-      if mod = Puppet::Module.find(module_name, options[:environment])
-        return [mod.name, mod.match_manifests(pattern)]
+      if mod = Puppet::Module.find(module_name, environment)
+        return [mod.name, mod.match_manifests(file_pattern)]
       end
     rescue Puppet::Module::InvalidName
-      # Than that would be a "no."
+      # one of the modules being loaded might have an invalid name and so
+      # looking for one might blow up since we load them lazily.
     end
-    abspat = File::expand_path(start, cwd)
-    [nil, Dir.glob(abspat + (File.extname(abspat).empty? ? '{.pp,.rb}' : '' )).uniq.reject { |f| FileTest.directory?(f) }]
+    [nil, []]
   end
 
   # Find the concrete file denoted by +file+. If +file+ is absolute,
@@ -80,9 +82,12 @@ module Puppet::Parser::Files
 
   # Split the path into the module and the rest of the path, or return
   # nil if the path is empty or absolute (starts with a /).
-  # This method can return nil & anyone calling it needs to handle that.
   def split_file_path(path)
-    path.split(File::SEPARATOR, 2) unless path == "" or Puppet::Util.absolute_path?(path)
+    if path == "" or Puppet::Util.absolute_path?(path)
+      nil
+    else
+      path.split(File::SEPARATOR, 2)
+    end
   end
 
 end
