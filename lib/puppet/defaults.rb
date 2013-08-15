@@ -554,16 +554,6 @@ EOT
       :owner => "service",
       :desc => "Where each client stores the CA certificate."
     },
-    ## JJM - The ssl_client_ca_chain setting is commented out because it is
-    # intended for (#3143) and is not expected to be used until CA chaining is
-    # supported.
-    # :ssl_client_ca_chain => {
-    #   :type  => :file,
-    #   :mode  => 0644,
-    #   :owner => "service",
-    #   :desc  => "The list of CA certificates to complete the chain of trust to CA certificates \n" <<
-    #             "listed in the ssl_client_ca_auth file."
-    # },
     :ssl_client_ca_auth => {
       :type  => :file,
       :mode  => 0644,
@@ -573,16 +563,6 @@ EOT
                 "listed in this file.  If this setting has no value then the Puppet master's CA \n" <<
                 "certificate (localcacert) will be used."
     },
-    ## JJM - The ssl_server_ca_chain setting is commented out because it is
-    # intended for (#3143) and is not expected to be used until CA chaining is
-    # supported.
-    # :ssl_server_ca_chain => {
-    #   :type  => :file,
-    #   :mode  => 0644,
-    #   :owner => "service",
-    #   :desc  => "The list of CA certificates to complete the chain of trust to CA certificates \n" <<
-    #             "listed in the ssl_server_ca_auth file."
-    # },
     :ssl_server_ca_auth => {
       :type  => :file,
       :mode  => 0644,
