@@ -33,15 +33,15 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should attempt to import each generated name" do
-      loader.expects(:import).with("foo/bar",nil).returns([])
-      loader.expects(:import).with("foo",nil).returns([])
+      loader.expects(:import_from_modules).with("foo/bar").returns([])
+      loader.expects(:import_from_modules).with("foo").returns([])
       loader.try_load_fqname(:hostclass, "foo::bar")
     end
 
     it "should attempt to load each possible name going from most to least specific" do
       path_order = sequence('path')
       ['foo/bar/baz', 'foo/bar', 'foo'].each do |path|
-        Puppet::Parser::Files.expects(:find_manifests).with(path, anything).returns([nil, []]).in_sequence(path_order)
+        Puppet::Parser::Files.expects(:find_manifests_in_modules).with(path, anything).returns([nil, []]).in_sequence(path_order)
       end
 
       loader.try_load_fqname(:hostclass, 'foo::bar::baz')
@@ -56,48 +56,39 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should return immediately when imports are being ignored" do
-      Puppet::Parser::Files.expects(:find_manifests).never
+      Puppet::Parser::Files.expects(:find_manifests_in_modules).never
       Puppet[:ignoreimport] = true
-      loader.import("foo").should be_nil
+      loader.import("foo", "/path").should be_nil
     end
 
-    it "should use the directory of the current file if one is set" do
-      base_dir = make_absolute("/current")
-      Puppet::Parser::Files.expects(:find_manifests).with(anything, has_entry(:cwd => base_dir)).returns ["modname", %w{one}]
-
-      loader.import("myfile", File.join(base_dir, 'file'))
+    it "should find all manifests matching the file or pattern" do
+      Puppet::Parser::Files.expects(:find_manifests_in_modules).with("myfile", anything).returns ["modname", %w{one}]
+      loader.import("myfile", "/path")
     end
 
     it "should pass the environment when looking for files" do
-      Puppet::Parser::Files.expects(:find_manifests).with(anything, has_entry(:environment => loader.environment)).returns ["modname", %w{one}]
-
-      loader.import("myfile")
+      Puppet::Parser::Files.expects(:find_manifests_in_modules).with(anything, loader.environment).returns ["modname", %w{one}]
+      loader.import("myfile", "/path")
     end
 
     it "should fail if no files are found" do
-      Puppet::Parser::Files.expects(:find_manifests).returns [nil, []]
-      lambda { loader.import("myfile") }.should raise_error(Puppet::ImportError)
+      Puppet::Parser::Files.expects(:find_manifests_in_modules).returns [nil, []]
+      lambda { loader.import("myfile", "/path") }.should raise_error(Puppet::ImportError)
     end
 
     it "should parse each found file" do
-      Puppet::Parser::Files.expects(:find_manifests).returns ["modname", [make_absolute("/one")]]
+      Puppet::Parser::Files.expects(:find_manifests_in_modules).returns ["modname", [make_absolute("/one")]]
       loader.expects(:parse_file).with(make_absolute("/one")).returns(Puppet::Parser::AST::Hostclass.new(''))
-      loader.import("myfile")
-    end
-
-    it "should make each file qualified before attempting to parse it" do
-      Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{one}]
-      loader.expects(:parse_file).with(make_absolute("/current/one")).returns(Puppet::Parser::AST::Hostclass.new(''))
-      loader.import("myfile", make_absolute("/current/file"))
+      loader.import("myfile", "/path")
     end
 
     it "should not attempt to import files that have already been imported" do
       loader = Puppet::Parser::TypeLoader.new(:myenv)
 
-      Puppet::Parser::Files.expects(:find_manifests).twice.returns ["modname", %w{/one}]
-      loader.import("myfile").should_not be_empty
+      Puppet::Parser::Files.expects(:find_manifests_in_modules).twice.returns ["modname", %w{/one}]
+      loader.import("myfile", "/path").should_not be_empty
 
-      loader.import("myfile").should be_empty
+      loader.import("myfile", "/path").should be_empty
     end
   end
 
@@ -231,7 +222,7 @@ describe Puppet::Parser::TypeLoader do
   it "should be able to add classes to the current resource type collection" do
     file = tmpfile("simple_file.pp")
     File.open(file, "w") { |f| f.puts "class foo {}" }
-    loader.import(file)
+    loader.import(File.basename(file), File.dirname(file))
 
     loader.known_resource_types.hostclass("foo").should be_instance_of(Puppet::Resource::Type)
   end

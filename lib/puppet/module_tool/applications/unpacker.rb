@@ -10,7 +10,8 @@ module Puppet::ModuleTool
         parsed = parse_filename(filename)
         @module_name = parsed[:module_name]
         super(options)
-        @module_dir = Pathname.new(options[:target_dir]) + parsed[:dir_name]
+        @module_path = Pathname(options[:target_dir])
+        @module_dir = @module_path + parsed[:dir_name]
       end
 
       def run
@@ -37,7 +38,7 @@ module Puppet::ModuleTool
         build_dir.mkpath
         begin
           begin
-            Puppet::ModuleTool::Tar.instance(@module_name).unpack(@filename.to_s, build_dir.to_s)
+            Puppet::ModuleTool::Tar.instance(@module_name).unpack(@filename.to_s, build_dir.to_s, [@module_path.stat.uid, @module_path.stat.gid].join(':'))
           rescue Puppet::ExecutionFailure => e
             raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
           end

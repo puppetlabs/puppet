@@ -11,14 +11,14 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
   it "unpacks a tar file" do
     unpacks_the_entry(:file_start, 'thefile')
 
-    minitar.unpack(sourcefile, destdir)
+    minitar.unpack(sourcefile, destdir, 'uid')
   end
 
   it "does not allow an absolute path" do
     unpacks_the_entry(:file_start, '/thefile')
 
     expect {
-      minitar.unpack(sourcefile, destdir)
+      minitar.unpack(sourcefile, destdir, 'uid')
     }.to raise_error(Puppet::ModuleTool::Errors::InvalidPathInPackageError,
                      "Attempt to install file into \"/thefile\" under \"#{destdir}\"")
   end
@@ -27,7 +27,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     unpacks_the_entry(:file_start, '../../thefile')
 
     expect {
-      minitar.unpack(sourcefile, destdir)
+      minitar.unpack(sourcefile, destdir, 'uid')
     }.to raise_error(Puppet::ModuleTool::Errors::InvalidPathInPackageError,
                      "Attempt to install file into \"#{File.expand_path('/the/thefile')}\" under \"#{destdir}\"")
   end
@@ -36,7 +36,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     unpacks_the_entry(:dir, '../../thedir')
 
     expect {
-      minitar.unpack(sourcefile, destdir)
+      minitar.unpack(sourcefile, destdir, 'uid')
     }.to raise_error(Puppet::ModuleTool::Errors::InvalidPathInPackageError,
                      "Attempt to install file into \"#{File.expand_path('/the/thedir')}\" under \"#{destdir}\"")
   end
