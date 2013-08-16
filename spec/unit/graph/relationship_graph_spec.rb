@@ -11,8 +11,9 @@ describe Puppet::Graph::RelationshipGraph do
   include PuppetSpec::Compiler
   include RelationshipGraphMatchers
 
+  let(:graph) { Puppet::Graph::RelationshipGraph.new(Puppet::Graph::SequentialPrioritizer.new) }
+
   it "allows adding a new vertex with a specific priority" do
-    graph = Puppet::Graph::RelationshipGraph.new
     vertex = stub_vertex('something')
 
     graph.add_vertex(vertex, 2)
@@ -21,8 +22,6 @@ describe Puppet::Graph::RelationshipGraph do
   end
 
   it "returns resource priority based on the order added" do
-    graph = Puppet::Graph::RelationshipGraph.new
-
     # strings chosen so the old hex digest method would put these in the
     # wrong order
     first = stub_vertex('aa')
@@ -35,8 +34,6 @@ describe Puppet::Graph::RelationshipGraph do
   end
 
   it "retains the first priority when a resource is added more than once" do
-    graph = Puppet::Graph::RelationshipGraph.new
-
     first = stub_vertex(1)
     second = stub_vertex(2)
 
@@ -48,8 +45,6 @@ describe Puppet::Graph::RelationshipGraph do
   end
 
   it "forgets the priority of a removed resource" do
-    graph = Puppet::Graph::RelationshipGraph.new
-
     vertex = stub_vertex(1)
 
     graph.add_vertex(vertex)
@@ -59,8 +54,6 @@ describe Puppet::Graph::RelationshipGraph do
   end
 
   it "does not give two resources the same priority" do
-    graph = Puppet::Graph::RelationshipGraph.new
-
     first = stub_vertex(1)
     second = stub_vertex(2)
     third = stub_vertex(3)

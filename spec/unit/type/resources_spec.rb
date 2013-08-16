@@ -55,7 +55,6 @@ describe resources do
     before do
       @host1 = Puppet::Type.type(:host).new(:name => 'localhost', :ip => '127.0.0.1')
       @catalog = Puppet::Resource::Catalog.new
-      @context = Puppet::Transaction.new(@catalog)
     end
 
       describe "when dealing with non-purging resources" do

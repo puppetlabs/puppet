@@ -1,5 +1,3 @@
-require 'puppet/settings/errors'
-
 ##
 # @api private
 #

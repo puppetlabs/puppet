@@ -1,11 +1,12 @@
-# the class that actually walks our resource/property tree, collects the changes,
-# and performs them
-
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/application'
 require 'digest/sha1'
 
+# the class that actually walks our resource/property tree, collects the changes,
+# and performs them
+#
+# @api private
 class Puppet::Transaction
   require 'puppet/transaction/additional_resource_generator'
   require 'puppet/transaction/event'
@@ -29,10 +30,12 @@ class Puppet::Transaction
   include Puppet::Util
   include Puppet::Util::Tagging
 
-  def initialize(catalog, report = nil)
+  def initialize(catalog, report, prioritizer)
     @catalog = catalog
 
     @report = report || Puppet::Transaction::Report.new("apply", catalog.version, catalog.environment)
+
+    @prioritizer = prioritizer
 
     @report.add_times(:config_retrieval, @catalog.retrieval_duration || 0)
 
@@ -116,7 +119,12 @@ class Puppet::Transaction
   end
 
   def relationship_graph
-    @relationship_graph ||= catalog.relationship_graph
+    if @relationship_graph.nil?
+      @relationship_graph = Puppet::Graph::RelationshipGraph.new(@prioritizer)
+      @relationship_graph.populate_from(catalog)
+      catalog.relationship_graph = @relationship_graph
+    end
+    @relationship_graph
   end
 
   def resource_status(resource)
