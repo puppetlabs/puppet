@@ -11,7 +11,7 @@ describe Puppet::Transaction::ResourceHarness do
     @mode_755 = Puppet.features.microsoft_windows? ? '644' : '755'
     path = make_absolute("/my/file")
 
-    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
     @resource = Puppet::Type.type(:file).new :path => path
     @harness = Puppet::Transaction::ResourceHarness.new(@transaction)
     @current_state = Puppet::Resource.new(:file, path)

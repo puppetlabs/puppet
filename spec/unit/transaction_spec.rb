@@ -17,13 +17,13 @@ describe Puppet::Transaction do
   end
 
   def transaction_with_resource(resource)
-    transaction = Puppet::Transaction.new(catalog_with_resource(resource))
+    transaction = Puppet::Transaction.new(catalog_with_resource(resource), nil, Puppet::Graph::RandomPrioritizer.new)
     transaction
   end
 
   before do
     @basepath = make_absolute("/what/ever")
-    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, Puppet::Graph::RandomPrioritizer.new)
   end
 
   it "should be able to look resource status up by resource reference" do
@@ -59,26 +59,26 @@ describe Puppet::Transaction do
 
   it "should use the provided report object" do
     report = Puppet::Transaction::Report.new("apply")
-    transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, report)
+    transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, report, nil)
 
     transaction.report.should == report
   end
 
   it "should create a report if none is provided" do
-    transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+    transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
 
     transaction.report.should be_kind_of Puppet::Transaction::Report
   end
 
   describe "when initializing" do
     it "should create an event manager" do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
       @transaction.event_manager.should be_instance_of(Puppet::Transaction::EventManager)
       @transaction.event_manager.transaction.should equal(@transaction)
     end
 
     it "should create a resource harness" do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
       @transaction.resource_harness.should be_instance_of(Puppet::Transaction::ResourceHarness)
       @transaction.resource_harness.transaction.should equal(@transaction)
     end
@@ -90,7 +90,7 @@ describe Puppet::Transaction do
 
       report.expects(:add_times).with(:config_retrieval, 5)
 
-      transaction = Puppet::Transaction.new(catalog, report)
+      transaction = Puppet::Transaction.new(catalog, report, nil)
     end
   end
 
@@ -100,7 +100,7 @@ describe Puppet::Transaction do
       @resource = Puppet::Type.type(:file).new :path => @basepath
       @catalog.add_resource(@resource)
 
-      @transaction = Puppet::Transaction.new(@catalog)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
       @transaction.stubs(:skip?).returns false
     end
 
@@ -129,7 +129,7 @@ describe Puppet::Transaction do
       @catalog.add_resource(@resource)
       @status = Puppet::Resource::Status.new(@resource)
 
-      @transaction = Puppet::Transaction.new(@catalog)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
       @transaction.event_manager.stubs(:queue_events)
     end
 
@@ -279,7 +279,7 @@ describe Puppet::Transaction do
 
   describe "when generating resources before traversal" do
     let(:catalog) { Puppet::Resource::Catalog.new }
-    let(:transaction) { Puppet::Transaction.new(catalog) }
+    let(:transaction) { Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new) }
     let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
     let(:generated) do
       %w[a b c].map { |name| Puppet::Type.type(:notify).new(:name => name) }
@@ -318,7 +318,7 @@ describe Puppet::Transaction do
       @resource = Puppet::Type.type(:notify).new :name => "foo"
       @catalog = Puppet::Resource::Catalog.new
       @resource.catalog = @catalog
-      @transaction = Puppet::Transaction.new(@catalog)
+      @transaction = Puppet::Transaction.new(@catalog, nil, nil)
     end
 
     it "should skip resource with missing tags" do
@@ -382,7 +382,7 @@ describe Puppet::Transaction do
       @resource = Puppet::Type.type(:notify).new :name => "foo"
       @catalog = Puppet::Resource::Catalog.new
       @resource.catalog = @catalog
-      @transaction = Puppet::Transaction.new(@catalog)
+      @transaction = Puppet::Transaction.new(@catalog, nil, nil)
 
       @transaction.stubs(:ignore_tags?).returns false
     end
@@ -414,7 +414,7 @@ describe Puppet::Transaction do
       @resource = Puppet::Type.type(:notify).new :name => "foo"
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource(@resource)
-      @transaction = Puppet::Transaction.new(@catalog)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
     end
 
     it "should always schedule resources if 'ignoreschedules' is set" do
@@ -434,7 +434,7 @@ describe Puppet::Transaction do
 
   describe "when prefetching" do
     let(:catalog) { Puppet::Resource::Catalog.new }
-    let(:transaction) { Puppet::Transaction.new(catalog) }
+    let(:transaction) { Puppet::Transaction.new(catalog, nil, nil) }
     let(:resource) { Puppet::Type.type(:sshkey).new :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed }
     let(:resource2) { Puppet::Type.type(:package).new :title => "blah", :provider => "apt" }
 
@@ -481,7 +481,7 @@ describe Puppet::Transaction do
   describe 'when checking application run state' do
     before do
       @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
     end
 
     it 'should return true for :stop_processing? if Puppet::Application.stop_requested? is true' do
@@ -565,7 +565,7 @@ end
 describe Puppet::Transaction, " when determining tags" do
   before do
     @config = Puppet::Resource::Catalog.new
-    @transaction = Puppet::Transaction.new(@config)
+    @transaction = Puppet::Transaction.new(@config, nil, nil)
   end
 
   it "should default to the tags specified in the :tags setting" do

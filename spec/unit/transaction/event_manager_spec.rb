@@ -147,7 +147,7 @@ describe Puppet::Transaction::EventManager do
 
   describe "when processing events for a given resource" do
     before do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
       @manager = Puppet::Transaction::EventManager.new(@transaction)
       @manager.stubs(:queue_events)
 
@@ -271,7 +271,7 @@ describe Puppet::Transaction::EventManager do
 
   describe "when queueing then processing events for a given resource" do
     before do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
       @manager = Puppet::Transaction::EventManager.new(@transaction)
 
       @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")

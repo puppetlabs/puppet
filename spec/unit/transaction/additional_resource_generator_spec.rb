@@ -50,27 +50,29 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
 
   context "when applying eval_generate" do
     it "should add the generated resources to the catalog" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      catalog = compile_to_ral(<<-MANIFEST)
         generator { thing:
           code => 'notify { hello: }'
         }
       MANIFEST
+
+      eval_generate_resources_in(catalog, relationship_graph_for(catalog), 'Generator[thing]')
 
       expect(catalog).to have_resource('Notify[hello]')
     end
 
     it "should add a sentinel whit for the resource" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         generator { thing:
           code => 'notify { hello: }'
         }
       MANIFEST
 
-      find_vertex(catalog.relationship_graph, :whit, "completed_thing").must be_a(Puppet::Type.type(:whit))
+      find_vertex(graph, :whit, "completed_thing").must be_a(Puppet::Type.type(:whit))
     end
 
     it "should replace dependencies on the resource with dependencies on the sentinel" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         generator { thing:
           code => 'notify { hello: }'
         }
@@ -78,44 +80,44 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { last: require => Generator['thing'] }
       MANIFEST
 
-      expect(catalog.relationship_graph).to enforce_order_with_edge(
+      expect(graph).to enforce_order_with_edge(
         'Whit[completed_thing]', 'Notify[last]')
     end
 
     it "should add an edge from the nearest ancestor to the generated resource" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         generator { thing:
           code => 'notify { hello: } notify { goodbye: }'
         }
       MANIFEST
 
-      expect(catalog.relationship_graph).to enforce_order_with_edge(
+      expect(graph).to enforce_order_with_edge(
         'Generator[thing]', 'Notify[hello]')
-      expect(catalog.relationship_graph).to enforce_order_with_edge(
+      expect(graph).to enforce_order_with_edge(
         'Generator[thing]', 'Notify[goodbye]')
     end
 
     it "should add an edge from each generated resource to the sentinel" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         generator { thing:
           code => 'notify { hello: } notify { goodbye: }'
         }
       MANIFEST
 
-      expect(catalog.relationship_graph).to enforce_order_with_edge(
+      expect(graph).to enforce_order_with_edge(
         'Notify[hello]', 'Whit[completed_thing]')
-      expect(catalog.relationship_graph).to enforce_order_with_edge(
+      expect(graph).to enforce_order_with_edge(
         'Notify[goodbye]', 'Whit[completed_thing]')
     end
 
     it "should add an edge from the resource to the sentinel" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         generator { thing:
           code => 'notify { hello: }'
         }
       MANIFEST
 
-      expect(catalog.relationship_graph).to enforce_order_with_edge(
+      expect(graph).to enforce_order_with_edge(
         'Generator[thing]', 'Whit[completed_thing]')
     end
 
@@ -126,7 +128,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         }
       MANIFEST
 
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, catalog.relationship_graph)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph_for(catalog))
 
       expect(generator.eval_generate(catalog.resource('Generator[thing]'))).
         to eq(false)
@@ -139,7 +141,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         }
       MANIFEST
 
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, catalog.relationship_graph)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph_for(catalog))
 
       expect(generator.eval_generate(catalog.resource('Generator[thing]'))).
         to eq(true)
@@ -149,16 +151,17 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
       catalog = compile_to_ral(<<-MANIFEST)
         generator { thing: }
       MANIFEST
+      relationship_graph = relationship_graph_for(catalog)
 
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, catalog.relationship_graph)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph)
 
       expect(generator.eval_generate(catalog.resource('Generator[thing]'))).
         to eq(false)
-      expect(find_vertex(catalog.relationship_graph, :whit, "completed_thing")).to be_nil
+      expect(find_vertex(relationship_graph, :whit, "completed_thing")).to be_nil
     end
 
     it "orders generated resources with the generator" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         generator { thing:
           code => 'notify { hello: }'
@@ -166,12 +169,12 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { after: }
       MANIFEST
 
-      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      expect(order_resources_traversed_in(graph)).to(
         include_in_order("Notify[before]", "Generator[thing]", "Notify[hello]", "Notify[after]"))
     end
 
     it "orders the generator in manifest order with dependencies" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         generator { thing:
           code => 'notify { hello: } notify { goodbye: }'
@@ -180,7 +183,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { after: }
       MANIFEST
 
-      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      expect(order_resources_traversed_in(graph)).to(
         include_in_order("Notify[before]",
                          "Generator[thing]",
                          "Notify[hello]",
@@ -190,7 +193,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     it "duplicate generated resources are made dependent on the generator" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         notify { hello: }
         generator { thing:
@@ -200,12 +203,12 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { after: }
       MANIFEST
 
-      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      expect(order_resources_traversed_in(graph)).to(
         include_in_order("Notify[hello]", "Generator[thing]", "Notify[before]", "Notify[third]", "Notify[after]"))
     end
 
     it "preserves dependencies on duplicate generated resources" do
-      catalog = catalog_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_eval_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         generator { thing:
           code => 'notify { hello: } notify { before: }',
@@ -215,48 +218,55 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { after: }
       MANIFEST
 
-      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      expect(order_resources_traversed_in(graph)).to(
         include_in_order("Notify[before]", "Generator[thing]", "Notify[hello]", "Notify[third]", "Notify[after]"))
     end
 
-    def catalog_after_eval_generating(manifest, resource_to_generate)
+    def relationships_after_eval_generating(manifest, resource_to_generate)
       catalog = compile_to_ral(manifest)
+      relationship_graph = relationship_graph_for(catalog)
 
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, catalog.relationship_graph)
+      eval_generate_resources_in(catalog, relationship_graph, resource_to_generate)
+
+      relationship_graph
+    end
+
+    def eval_generate_resources_in(catalog, relationship_graph, resource_to_generate)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph)
       generator.eval_generate(catalog.resource(resource_to_generate))
-
-      catalog
     end
   end
 
   context "when applying generate" do
     it "should add the generated resources to the catalog" do
-      catalog = catalog_after_generating(<<-MANIFEST, 'Generator[thing]')
+      catalog = compile_to_ral(<<-MANIFEST)
         generator { thing:
           kind => generate,
           code => 'notify { hello: }'
         }
       MANIFEST
 
+      generate_resources_in(catalog, relationship_graph_for(catalog), 'Generator[thing]')
+
       expect(catalog).to have_resource('Notify[hello]')
     end
 
     it "should add an edge from the nearest ancestor to the generated resource" do
-      catalog = catalog_after_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_generating(<<-MANIFEST, 'Generator[thing]')
         generator { thing:
           kind => generate,
           code => 'notify { hello: } notify { goodbye: }'
         }
       MANIFEST
 
-      expect(catalog.relationship_graph).to enforce_order_with_edge(
+      expect(graph).to enforce_order_with_edge(
         'Generator[thing]', 'Notify[hello]')
-      expect(catalog.relationship_graph).to enforce_order_with_edge(
+      expect(graph).to enforce_order_with_edge(
         'Generator[thing]', 'Notify[goodbye]')
     end
 
     it "orders generated resources with the generator" do
-      catalog = catalog_after_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         generator { thing:
           kind => generate,
@@ -265,12 +275,12 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { after: }
       MANIFEST
 
-      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      expect(order_resources_traversed_in(graph)).to(
         include_in_order("Notify[before]", "Generator[thing]", "Notify[hello]", "Notify[after]"))
     end
 
     it "duplicate generated resources are made dependent on the generator" do
-      catalog = catalog_after_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         notify { hello: }
         generator { thing:
@@ -281,12 +291,12 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { after: }
       MANIFEST
 
-      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      expect(order_resources_traversed_in(graph)).to(
         include_in_order("Notify[hello]", "Generator[thing]", "Notify[before]", "Notify[third]", "Notify[after]"))
     end
 
     it "preserves dependencies on duplicate generated resources" do
-      catalog = catalog_after_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         generator { thing:
           kind => generate,
@@ -297,12 +307,12 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { after: }
       MANIFEST
 
-      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      expect(order_resources_traversed_in(graph)).to(
         include_in_order("Notify[before]", "Generator[thing]", "Notify[hello]", "Notify[third]", "Notify[after]"))
     end
 
     it "orders the generator in manifest order with dependencies" do
-      catalog = catalog_after_generating(<<-MANIFEST, 'Generator[thing]')
+      graph = relationships_after_generating(<<-MANIFEST, 'Generator[thing]')
         notify { before: }
         generator { thing:
           kind => generate,
@@ -312,7 +322,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         notify { after: }
       MANIFEST
 
-      expect(order_resources_traversed_in(catalog.relationship_graph)).to(
+      expect(order_resources_traversed_in(graph)).to(
         include_in_order("Notify[before]",
                          "Generator[thing]",
                          "Notify[hello]",
@@ -321,14 +331,25 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
                          "Notify[after]"))
     end
 
-    def catalog_after_generating(manifest, resource_to_generate)
+    def relationships_after_generating(manifest, resource_to_generate)
       catalog = compile_to_ral(manifest)
+      relationship_graph = relationship_graph_for(catalog)
 
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, catalog.relationship_graph)
-      generator.generate_additional_resources(catalog.resource(resource_to_generate))
+      generate_resources_in(catalog, relationship_graph, resource_to_generate)
 
-      catalog
+      relationship_graph
     end
+
+    def generate_resources_in(catalog, relationship_graph, resource_to_generate)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph)
+      generator.generate_additional_resources(catalog.resource(resource_to_generate))
+    end
+  end
+
+  def relationship_graph_for(catalog)
+    relationship_graph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::SequentialPrioritizer.new)
+    relationship_graph.populate_from(catalog)
+    relationship_graph
   end
 
   def order_resources_traversed_in(relationships)

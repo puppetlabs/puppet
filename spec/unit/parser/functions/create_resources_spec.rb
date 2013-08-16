@@ -72,8 +72,7 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'should be able to add edges' do
-      catalog = compile_to_catalog("notify { test: }\n create_resources('notify', {'foo'=>{'require'=>'Notify[test]'}})")
-      rg = catalog.to_ral.relationship_graph
+      rg = compile_to_relationship_graph("notify { test: }\n create_resources('notify', {'foo'=>{'require'=>'Notify[test]'}})")
       test  = rg.vertices.find { |v| v.title == 'test' }
       foo   = rg.vertices.find { |v| v.title == 'foo' }
       test.must be
@@ -125,7 +124,7 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'should be able to add edges' do
-      catalog = compile_to_catalog(<<-MANIFEST)
+      rg = compile_to_relationship_graph(<<-MANIFEST)
         define foocreateresource($one) {
           notify { $name: message => $one }
         }
@@ -135,13 +134,11 @@ describe 'function for dynamically creating resources' do
         create_resources('foocreateresource', {'blah'=>{'one'=>'two', 'require' => 'Notify[test]'}})
       MANIFEST
 
-      rg = catalog.to_ral.relationship_graph
       test = rg.vertices.find { |v| v.title == 'test' }
       blah = rg.vertices.find { |v| v.title == 'blah' }
       test.must be
       blah.must be
       rg.path_between(test,blah).should be
-      catalog.resource(:notify, "blah")['message'].should == 'two'
     end
 
     it 'should account for default values' do
@@ -180,7 +177,7 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'should be able to add edges' do
-      catalog = compile_to_catalog(<<-MANIFEST)
+      rg = compile_to_relationship_graph(<<-MANIFEST)
         class bar($one) {
           notify { test: message => $one }
         }
@@ -190,7 +187,6 @@ describe 'function for dynamically creating resources' do
         create_resources('class', {'bar'=>{'one'=>'two', 'require' => 'Notify[tester]'}})
       MANIFEST
 
-      rg = catalog.to_ral.relationship_graph
       test   = rg.vertices.find { |v| v.title == 'test' }
       tester = rg.vertices.find { |v| v.title == 'tester' }
       test.must be

@@ -1232,13 +1232,15 @@ EOT
     },
     :ordering => {
       :type => :enum,
-      :values => ["manifest", "title-hash"],
+      :values => ["manifest", "title-hash", "random"],
       :default => "title-hash",
       :desc => "Controls the default ordering to use in the absence of any
       dependency information. By default this is 'title-hash', which is an
-      opaque, stable, random order. The other value of 'manifest' will use the
-      order in which the resources were added to the catalog, which matches the
-      order that the puppet language executes."
+      opaque, stable, random order. The value of 'manifest' will use the order
+      in which the resources were added to the catalog, which matches the order
+      that the puppet language executes. The final value of 'random' causes
+      resources to be assigned a random order, while still obeying declared
+      dependencies."
     }
   )
 
