@@ -484,9 +484,19 @@ describe Puppet::Transaction do
       @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
     end
 
-    it 'should return true for :stop_processing? if Puppet::Application.stop_requested? is true' do
-      Puppet::Application.stubs(:stop_requested?).returns(true)
-      @transaction.stop_processing?.should be_true
+    context "when stop is requested" do
+      before :each do
+        Puppet::Application.stubs(:stop_requested?).returns(true)
+      end
+
+      it 'should return true for :stop_processing?' do
+        @transaction.should be_stop_processing
+      end
+
+      it 'always evaluates non-host_config catalogs' do
+        @catalog.host_config = false
+        @transaction.should_not be_stop_processing
+      end
     end
 
     it 'should return false for :stop_processing? if Puppet::Application.stop_requested? is false' do
@@ -559,6 +569,20 @@ describe Puppet::Transaction do
 
     transaction.report.status.should == 'changed'
     transaction.report.resource_statuses['Notify[one]'].should be_changed
+  end
+
+  describe "when interrupted" do
+    it "marks unprocessed resources as skipped" do
+      Puppet::Application.stop!
+
+      transaction = apply_compiled_manifest(<<-MANIFEST)
+        notify { a: } ->
+        notify { b: }
+      MANIFEST
+
+      transaction.report.resource_statuses['Notify[a]'].should be_skipped
+      transaction.report.resource_statuses['Notify[b]'].should be_skipped
+    end
   end
 end
 
