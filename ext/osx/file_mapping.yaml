@@ -1,6 +1,7 @@
 directories:
   lib:
-    path: 'usr/lib/ruby/site_ruby/1.8'
+    # this will be substituted during the build process
+    path: 'SITELIBDIR'
     owner: 'root'
     group: 'wheel'
     perms: '0644'
