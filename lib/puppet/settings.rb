@@ -3,20 +3,23 @@ require 'sync'
 require 'getoptlong'
 require 'puppet/util/watched_file'
 require 'puppet/util/command_line/puppet_option_parser'
-require 'puppet/settings/errors'
-require 'puppet/settings/string_setting'
-require 'puppet/settings/file_setting'
-require 'puppet/settings/directory_setting'
-require 'puppet/settings/path_setting'
-require 'puppet/settings/boolean_setting'
-require 'puppet/settings/terminus_setting'
-require 'puppet/settings/duration_setting'
-require 'puppet/settings/config_file'
-require 'puppet/settings/value_translator'
 
 # The class for handling configuration files.
 class Puppet::Settings
   include Enumerable
+
+  require 'puppet/settings/errors'
+  require 'puppet/settings/base_setting'
+  require 'puppet/settings/string_setting'
+  require 'puppet/settings/enum_setting'
+  require 'puppet/settings/file_setting'
+  require 'puppet/settings/directory_setting'
+  require 'puppet/settings/path_setting'
+  require 'puppet/settings/boolean_setting'
+  require 'puppet/settings/terminus_setting'
+  require 'puppet/settings/duration_setting'
+  require 'puppet/settings/config_file'
+  require 'puppet/settings/value_translator'
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
@@ -632,6 +635,7 @@ class Puppet::Settings
       :boolean    => BooleanSetting,
       :terminus   => TerminusSetting,
       :duration   => DurationSetting,
+      :enum       => EnumSetting,
   }
 
   # Create a new setting.  The value is passed in because it's used to determine

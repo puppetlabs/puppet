@@ -5,13 +5,12 @@
 #
 # @api private
 class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
-  attr_reader :blockers
+  attr_reader :blockers, :prioritizer
 
-  def initialize
-    super
+  def initialize(prioritizer)
+    super()
 
-    @priority = {}
-    @count = Puppet::Graph::Key.new
+    @prioritizer = prioritizer
 
     @ready = Puppet::Graph::RbTreeMap.new
     @generated = {}
@@ -32,28 +31,28 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     write_graph(:expanded_relationships) if catalog.host_config?
   end
 
-  def add_vertex(vertex, priority = @priority[vertex])
+  def add_vertex(vertex, priority = nil)
     super(vertex)
 
-    @priority[vertex] = if priority.nil?
-                          @count = @count.next
-                        else
-                          priority
-                        end
+    if priority
+      @prioritizer.record_priority_for(vertex, priority)
+    else
+      @prioritizer.generate_priority_for(vertex)
+    end
   end
 
   def add_relationship(f, t, label=nil)
     super(f, t, label)
-    @ready.delete(resource_priority(t))
+    @ready.delete(@prioritizer.priority_of(t))
   end
 
   def remove_vertex!(vertex)
     super
-    @priority.delete(vertex)
+    @prioritizer.forget(vertex)
   end
 
   def resource_priority(resource)
-    @priority[resource]
+    @prioritizer.priority_of(resource)
   end
 
   # Enqueue the initial set of resources, those with no dependencies.
@@ -82,8 +81,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
 
   def enqueue(*resources)
     resources.each do |resource|
-      key = resource_priority(resource)
-      @ready[key] = resource
+      @ready[@prioritizer.priority_of(resource)] = resource
     end
   end
 
@@ -210,8 +208,9 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     containers.each { |x|
       admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => catalog)
       completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => catalog)
-      add_vertex(admissible[x], resource_priority(x))
-      add_vertex(completed[x], resource_priority(x))
+      priority = @prioritizer.priority_of(x)
+      add_vertex(admissible[x], priority)
+      add_vertex(completed[x], priority)
     }
     #
     # Implement the six requirements listed above

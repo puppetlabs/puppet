@@ -148,7 +148,7 @@ describe Puppet::Application::Apply do
 
         STDIN.stubs(:read)
 
-        @transaction = Puppet::Transaction.new(@catalog)
+        @transaction = stub('transaction')
         @catalog.stubs(:apply).returns(@transaction)
 
         Puppet::Util::Storage.stubs(:load)

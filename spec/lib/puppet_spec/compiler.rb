@@ -11,13 +11,17 @@ module PuppetSpec::Compiler
     ral
   end
 
-  def compile_to_relationship_graph(manifest)
-    compile_to_ral(manifest).relationship_graph
+  def compile_to_relationship_graph(manifest, prioritizer = Puppet::Graph::SequentialPrioritizer.new)
+    ral = compile_to_ral(manifest)
+    graph = Puppet::Graph::RelationshipGraph.new(prioritizer)
+    graph.populate_from(ral)
+    graph
   end
 
-  def apply_compiled_manifest(manifest)
-    ral = compile_to_ral(manifest)
-    transaction = Puppet::Transaction.new(compile_to_ral(manifest))
+  def apply_compiled_manifest(manifest, prioritizer = Puppet::Graph::SequentialPrioritizer.new)
+    transaction = Puppet::Transaction.new(compile_to_ral(manifest),
+                                         Puppet::Transaction::Report.new("apply"),
+                                         prioritizer)
     transaction.evaluate
     transaction.report.finalize_report
 

@@ -554,16 +554,6 @@ EOT
       :owner => "service",
       :desc => "Where each client stores the CA certificate."
     },
-    ## JJM - The ssl_client_ca_chain setting is commented out because it is
-    # intended for (#3143) and is not expected to be used until CA chaining is
-    # supported.
-    # :ssl_client_ca_chain => {
-    #   :type  => :file,
-    #   :mode  => 0644,
-    #   :owner => "service",
-    #   :desc  => "The list of CA certificates to complete the chain of trust to CA certificates \n" <<
-    #             "listed in the ssl_client_ca_auth file."
-    # },
     :ssl_client_ca_auth => {
       :type  => :file,
       :mode  => 0644,
@@ -573,16 +563,6 @@ EOT
                 "listed in this file.  If this setting has no value then the Puppet master's CA \n" <<
                 "certificate (localcacert) will be used."
     },
-    ## JJM - The ssl_server_ca_chain setting is commented out because it is
-    # intended for (#3143) and is not expected to be used until CA chaining is
-    # supported.
-    # :ssl_server_ca_chain => {
-    #   :type  => :file,
-    #   :mode  => 0644,
-    #   :owner => "service",
-    #   :desc  => "The list of CA certificates to complete the chain of trust to CA certificates \n" <<
-    #             "listed in the ssl_server_ca_auth file."
-    # },
     :ssl_server_ca_auth => {
       :type  => :file,
       :mode  => 0644,
@@ -1249,6 +1229,18 @@ EOT
       turn off waiting for certificates by specifying a time of 0, in which case
       puppet agent will exit if it cannot get a cert.
       #{AS_DURATION}",
+    },
+    :ordering => {
+      :type => :enum,
+      :values => ["manifest", "title-hash", "random"],
+      :default => "title-hash",
+      :desc => "Controls the default ordering to use in the absence of any
+      dependency information. By default this is 'title-hash', which is an
+      opaque, stable, random order. The value of 'manifest' will use the order
+      in which the resources were added to the catalog, which matches the order
+      that the puppet language executes. The final value of 'random' causes
+      resources to be assigned a random order, while still obeying declared
+      dependencies."
     }
   )
 

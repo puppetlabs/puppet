@@ -49,6 +49,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # The environment for this catalog
   attr_accessor :environment
 
+  # The catalog in the form of a Puppet::Graph::RelationshipGraph
+  attr_accessor :relationship_graph
+
   # Add classes to our class list.
   def add_class(*classes)
     classes.each do |klass|
@@ -244,15 +247,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
   end
 
-  # Create a graph of all of the relationships in our catalog.
-  def relationship_graph
-    unless @relationship_graph
-      @relationship_graph = Puppet::Graph::RelationshipGraph.new
-      @relationship_graph.populate_from(self)
-    end
-    @relationship_graph
-  end
-
   # Remove the resource from our catalog.  Notice that we also call
   # 'remove' on the resource, at least until resource classes no longer maintain
   # references to the resource instances.
@@ -431,7 +425,18 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   private
 
   def create_transaction(options)
-    transaction = Puppet::Transaction.new(self, options[:report])
+    prioritizer = case Puppet[:ordering]
+                  when "title-hash"
+                    Puppet::Graph::TitleHashPrioritizer.new
+                  when "manifest"
+                    Puppet::Graph::SequentialPrioritizer.new
+                  when "random"
+                    Puppet::Graph::RandomPrioritizer.new
+                  else
+                    raise Puppet::DevError, "Unknown ordering type #{Puppet[:ordering]}"
+                  end
+
+    transaction = Puppet::Transaction.new(self, options[:report], prioritizer)
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
     transaction.for_network_device = options[:network_device]

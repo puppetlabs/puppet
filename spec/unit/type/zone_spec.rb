@@ -59,6 +59,7 @@ describe Puppet::Type.type(:zone) do
     fs = 'random-pool/some-zfs'
 
     catalog = Puppet::Resource::Catalog.new
+    relationship_graph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::RandomPrioritizer.new)
     zfs = Puppet::Type.type(:zfs).new(:name => fs)
     catalog.add_resource zfs
 
@@ -69,7 +70,9 @@ describe Puppet::Type.type(:zone) do
                                :provider => :solaris)
     catalog.add_resource zone
 
-    catalog.relationship_graph.dependencies(zone).should == [zfs]
+
+    relationship_graph.populate_from(catalog)
+    relationship_graph.dependencies(zone).should == [zfs]
   end
   describe StateMachine do
     let (:sm) { StateMachine.new }

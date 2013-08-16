@@ -259,8 +259,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should add resources to the relationship graph if it exists" do
-      relgraph = @catalog.relationship_graph
+      relgraph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::RandomPrioritizer.new)
+      @catalog.relationship_graph = relgraph
+
       @catalog.add_resource @one
+
       relgraph.should be_vertex(@one)
     end
 
@@ -519,7 +522,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     before :each do
       @catalog = Puppet::Resource::Catalog.new("host")
 
-      @transaction = Puppet::Transaction.new(@catalog)
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
       Puppet::Transaction.stubs(:new).returns(@transaction)
       @transaction.stubs(:evaluate)
       @transaction.stubs(:for_network_device=)
@@ -610,84 +613,16 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
   describe "when creating a relationship graph" do
     before do
-      Puppet::Type.type(:component)
       @catalog = Puppet::Resource::Catalog.new("host")
-      @compone = Puppet::Type::Component.new :name => "one"
-      @comptwo = Puppet::Type::Component.new :name => "two", :require => "Class[one]"
-      @file = Puppet::Type.type(:file)
-      @one = @file.new :path => @basepath+"/one"
-      @two = @file.new :path => @basepath+"/two"
-      @sub = @file.new :path => @basepath+"/two/subdir"
-      @catalog.add_edge @compone, @one
-      @catalog.add_edge @comptwo, @two
-
-      @three = @file.new :path => @basepath+"/three"
-      @four = @file.new :path => @basepath+"/four", :require => "File[#{@basepath}/three]"
-      @five = @file.new :path => @basepath+"/five"
-      @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five, @sub
-    end
-
-    it "should not have any components" do
-      @catalog.relationship_graph.vertices.find { |r| r.instance_of?(Puppet::Type::Component) }.should be_nil
-    end
-
-    it "should have all non-component resources from the catalog" do
-      # The failures print out too much info, so i just do a class comparison
-      @catalog.relationship_graph.vertex?(@five).should be_true
-    end
-
-    it "should have all resource relationships set as edges" do
-      @catalog.relationship_graph.edge?(@three, @four).should be_true
-    end
-
-    it "should copy component relationships to all contained resources" do
-      @catalog.relationship_graph.path_between(@one, @two).should be
-    end
-
-    it "should add automatic relationships to the relationship graph" do
-      @catalog.relationship_graph.edge?(@two, @sub).should be_true
     end
 
     it "should get removed when the catalog is cleaned up" do
+      @catalog.relationship_graph = mock('graph')
       @catalog.relationship_graph.expects(:clear)
+
       @catalog.clear
+
       @catalog.instance_variable_get("@relationship_graph").should be_nil
-    end
-
-    it "should write :relationships and :expanded_relationships graph files if the catalog is a host catalog" do
-      @catalog.clear
-      graph = Puppet::Graph::RelationshipGraph.new
-      Puppet::Graph::RelationshipGraph.expects(:new).returns graph
-
-      graph.expects(:write_graph).with(:relationships)
-      graph.expects(:write_graph).with(:expanded_relationships)
-
-      @catalog.host_config = true
-
-      @catalog.relationship_graph
-    end
-
-    it "should not write graph files if the catalog is not a host catalog" do
-      @catalog.clear
-      graph = Puppet::Graph::RelationshipGraph.new
-      Puppet::Graph::RelationshipGraph.expects(:new).returns graph
-
-      graph.expects(:write_graph).never
-
-      @catalog.host_config = false
-
-      @catalog.relationship_graph
-    end
-
-    it "should create a new relationship graph after clearing the old one" do
-      @catalog.relationship_graph.expects(:clear)
-      @catalog.clear
-      @catalog.relationship_graph.should be_instance_of(Puppet::Graph::RelationshipGraph)
-    end
-
-    it "should remove removed resources from the relationship graph if it exists" do
-      @catalog.remove_resource(@one)
-      @catalog.relationship_graph.vertex?(@one).should be_false
     end
   end
 
