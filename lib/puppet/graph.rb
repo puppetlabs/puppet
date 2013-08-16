@@ -1,4 +1,5 @@
 module Puppet::Graph
+  require 'puppet/graph/prioritizer'
   require 'puppet/graph/sequential_prioritizer'
   require 'puppet/graph/title_hash_prioritizer'
   require 'puppet/graph/random_prioritizer'

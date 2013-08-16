@@ -5,19 +5,11 @@
 # key after the parent.
 #
 # @api private
-class Puppet::Graph::SequentialPrioritizer
+class Puppet::Graph::SequentialPrioritizer < Puppet::Graph::Prioritizer
   def initialize
-    @priority = {}
+    super
     @container = {}
     @count = Puppet::Graph::Key.new
-  end
-
-  def forget(key)
-    @priority.delete(key)
-  end
-
-  def record_priority_for(key, priority)
-    @priority[key] = priority
   end
 
   def generate_priority_for(key)
@@ -35,9 +27,5 @@ class Puppet::Graph::SequentialPrioritizer
     record_priority_for(key, priority)
     @container[container] = priority
     priority
-  end
-
-  def priority_of(key)
-    @priority[key]
   end
 end

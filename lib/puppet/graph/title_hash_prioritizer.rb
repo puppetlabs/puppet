@@ -4,19 +4,7 @@
 # @api private
 require 'digest/sha1'
 
-class Puppet::Graph::TitleHashPrioritizer
-  def initialize
-    @priority = {}
-  end
-
-  def forget(resource)
-    @priority.delete(resource)
-  end
-
-  def record_priority_for(resource, priority)
-    @priority[resource] = priority
-  end
-
+class Puppet::Graph::TitleHashPrioritizer < Puppet::Graph::Prioritizer
   def generate_priority_for(resource)
     record_priority_for(resource,
                         Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{resource.ref}"))
@@ -24,9 +12,5 @@ class Puppet::Graph::TitleHashPrioritizer
 
   def generate_priority_contained_in(container, resource)
     generate_priority_for(resource)
-  end
-
-  def priority_of(resource)
-    @priority[resource]
   end
 end
