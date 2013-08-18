@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
-require File.join(File.dirname(__FILE__), '/factory_rspec_helper')
+require 'puppet_spec/factory_rspec_helper'
 
 # This file contains testing of the pops model factory
 #
