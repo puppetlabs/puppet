@@ -48,6 +48,4 @@ describe 'Puppet::Parser::AST::Heredoc' do
     heredoc = Puppet::Parser::AST::Heredoc.new({:expr => expr, :syntax => 'myapp+json'})
     expect {heredoc.evaluate(scope) }.to raise_error(/Json syntax checker: Cannot parse invalid JSON string/)
   end
-
 end
-
