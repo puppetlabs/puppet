@@ -1,8 +1,8 @@
 class Puppet::Transaction::AdditionalResourceGenerator
-  def initialize(catalog, relationship_graph)
+  def initialize(catalog, relationship_graph, prioritizer)
     @catalog = catalog
     @relationship_graph = relationship_graph
-    @prioritizer = relationship_graph.prioritizer
+    @prioritizer = prioritizer
   end
 
   def generate_additional_resources(resource)
