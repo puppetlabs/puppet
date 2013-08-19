@@ -38,7 +38,7 @@ describe 'Puppet::Parser::AST::Heredoc' do
   end
 
   it "validates Yaml containing errors" do
-    expr = Puppet::Parser::AST::FlatString.new(:value => '%yuck')
+    expr = Puppet::Parser::AST::FlatString.new(:value => "---\n}")
     heredoc = Puppet::Parser::AST::Heredoc.new({:expr => expr, :syntax => 'yaml'})
     expect {heredoc.evaluate(scope) }.to raise_error(/Yaml syntax checker: Cannot parse invalid YAML string/)
   end
