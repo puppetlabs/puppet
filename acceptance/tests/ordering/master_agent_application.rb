@@ -19,7 +19,7 @@ on master, "chmod -R g+rwX #{testdir}"
 
 with_master_running_on(master, "--manifest #{testdir}/site.pp --daemonize --autosign true") do
   agents.each do |agent|
-    run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master}")
+    run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master} --ordering manifest")
     if stdout !~ /Notice: first.*Notice: second.*Notice: third.*Notice: fourth.*Notice: fifth.*Notice: sixth.*Notice: seventh.*Notice: eighth/m
       fail_test "Output did not include the notify resources in the correct order"
     end
