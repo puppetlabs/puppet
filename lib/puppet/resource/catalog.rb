@@ -171,6 +171,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     transaction
   end
 
+  # The relationship_graph form of the catalog. This contains all of the
+  # dependency edges that are used for determining order.
+  #
+  # @return [Puppet::Graph::RelationshipGraph]
+  # @api public
   def relationship_graph
     if @relationship_graph.nil?
       @relationship_graph = Puppet::Graph::RelationshipGraph.new(prioritizer)
