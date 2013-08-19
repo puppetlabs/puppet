@@ -19,11 +19,11 @@ class Puppet::Parser::EParserAdapter
   end
 
   def parse(string = nil)
-    if @file =~ /\.rb$/
+    if parse_ruby?(@file)
       return parse_ruby_file
     else
       self.string= string if string
-      parser = Puppet::Pops::Parser::Parser.new()
+      parser = create_parser() 
       parse_result = if @use == :string
         parser.parse_string(@string)
       else
@@ -46,7 +46,7 @@ class Puppet::Parser::EParserAdapter
       end
     end
 
-    Puppet::Parser::AST::Hostclass.new('', :code => parse_result)
+    wrap_result(parse_result)
   end
 
   def validate(parse_result)
@@ -114,7 +114,22 @@ class Puppet::Parser::EParserAdapter
     @use = :string
   end
 
+  # Returns true if the given file should be parsed by a Ruby parser.
+  def parse_ruby?(f)
+    f =~ /\.rb$/
+  end
+
   def parse_ruby_file
     @classic_parser.parse
+  end
+
+  # Creates the parser to use
+  def create_parser()
+    Puppet::Pops::Parser::Parser.new()
+  end
+
+  # Wraps the result of parsing. This version wraps the result in a Hostclass with empty name.
+  def wrap_result(parse_result)
+    Puppet::Parser::AST::Hostclass.new('', :code => parse_result)
   end
 end

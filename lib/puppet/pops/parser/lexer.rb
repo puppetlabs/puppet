@@ -198,7 +198,9 @@ class Puppet::Pops::Parser::Lexer
   "<dqstring after final interpolation>" => :DQPOST,
   "<boolean>" => :BOOLEAN,
   "<lambda start>" => :LAMBDA, # A LBRACE followed by '|'
-  "<select start>" => :SELBRACE # A QMARK followed by '{'
+  "<select start>" => :SELBRACE, # A QMARK followed by '{'
+  "<render string>" => :RENDER_STRING, # EPP text that is not embedded puppet logic
+  "<render expr>" => :RENDER_EXPR # EPP <%= %> embedded logic
   )
 
   module Contextual
@@ -227,6 +229,10 @@ class Puppet::Pops::Parser::Lexer
 
     VARIABLE_AND_DASHES_ALLOWED = Proc.new do |context|
       Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
+    end
+
+    SWITCH_TO_EPP_TEXT_ALLOWED = Proc.new do |context|
+      [:epp, :expr].include?(context[:epp_mode]) and Contextual::NOT_INSIDE_QUOTES.call(context)
     end
 
     NEVER = Proc.new do |context|
@@ -372,6 +378,30 @@ class Puppet::Pops::Parser::Lexer
   end
   TOKENS[:VARIABLE].acceptable_when Contextual::INSIDE_QUOTES
 
+  # This token is used "automatically" when mode is :epp (text with embedded epp puppet logic).
+  # See #find_token and #auto_token.
+  #
+  TOKENS.add_token :EPP_START, "<epp start>" do |lexer, value|
+    lexer.token_queue << [TOKENS[:EPP_START], lexer.position_in_source()]
+    lexer.tokenize_epp()
+  end
+  # Always automatically triggered when IN_TEXT_MODE and at start of scan
+  TOKENS[:EPP_START].acceptable_when Contextual::NEVER
+
+  TOKENS.add_token :REPP, '%>' do |lexer, value|
+    # Ends the current mode :epp or :expr, no trimming of leading whitespace in text that follows
+    lexer.lexing_context[:epp_mode] = :text
+    lexer.tokenize_epp()
+  end
+  TOKENS[:REPP].acceptable_when Contextual::SWITCH_TO_EPP_TEXT_ALLOWED
+
+  TOKENS.add_token :REPP_TRIM, '-%>' do |lexer, value|
+    # Ends the current mode :epp or :expr, do trimming of leading whitespace in text that follows
+    lexer.lexing_context[:epp_mode] = :text
+    lexer.tokenize_epp(true) # skip leading whitespace
+  end
+  TOKENS[:REPP_TRIM].acceptable_when Contextual::SWITCH_TO_EPP_TEXT_ALLOWED
+
   TOKENS.sort_tokens
 
   @@pairs = {
@@ -471,14 +501,18 @@ class Puppet::Pops::Parser::Lexer
 
   # Produces an automatic implicit token at the start of lexing if a mode requires this.
   # This is used when a lexer is used as a sublexer and is given the content of a double quoted string
-  # without the delimiting double quotes.
+  # without the delimiting double quotes. It is also used when parsing EPP (which needs to start in epp text mode).
   #
   def auto_token
-    if mode == :dqstring && @scanner.pos == 0
-      [TOKENS[:AUTO_DQUOTE], '']
-    else
-      nil
+    if @scanner.pos == 0
+      case mode
+      when :dqstring
+        return [TOKENS[:AUTO_DQUOTE], '']
+      when :epp
+        return [TOKENS[:EPP_START], '']
+      end
     end
+    nil
   end
 
   # Find the next token, returning the string and the token.
@@ -558,8 +592,12 @@ class Puppet::Pops::Parser::Lexer
       :start_of_line => true,
       :offset => 0,      # byte offset before where token starts
       :end_offset => 0,  # byte offset after scanned token
-      :string_interpolation_depth => 0
+      :string_interpolation_depth => 0,
     }
+    # Epp starts scanning in its text mode
+    if mode == :epp
+      @lexing_context[:epp_mode] = :text
+    end
   end
 
   # Make any necessary changes to the token and/or value.
@@ -622,12 +660,10 @@ class Puppet::Pops::Parser::Lexer
     #Puppet.debug("entering scan")
     lex_error "Internal Error: No string or file given to lexer to process." unless @scanner
 
-    # Skip any insignificant initial whitespace.
-    # When doing regular lexing, initial whitespace is always "between tokens" and is insignificant.
-    # When mode is :dqstring (when parsing heredoc text with dq string semantics) leading whitespace is significant.
-    # Avoiding this skip is essential as it takes place before a specific token rule gets a chance to veto skipping initial whitespace.
-    #
-    skip unless mode == :dqstring && @scanner.pos == 0
+    # Skip any initial whitespace when doing regular lexing
+    if mode == :pp || mode == :epp && lexing_context[:epp_mode] != :text || mode == :dqstring && @scanner.pos != 0
+      skip
+    end
 
     until token_queue.empty? and @scanner.eos? do
       offset = @scanner.pos
@@ -696,6 +732,9 @@ class Puppet::Pops::Parser::Lexer
     # Seems meaningless to do this. Everything will be gc anyway.
     #@scanner = nil
 
+    if mode == :epp && lexing_context[:epp_mode] != :text
+      lex_error(positioned_message("Unbalanced epp tag, reached <eof> without closing tag.", lexing_context[:epp_position]))
+    end
     # This indicates that we're done parsing.
     yield [false,false]
   end
@@ -796,10 +835,14 @@ class Puppet::Pops::Parser::Lexer
   end
 
   # Formats given message by appending file, line and position if available.
-  def positioned_message msg
+  def positioned_message(msg, pos_hash = nil)
     result = [msg]
     result << "in file #{file}" if file
-    result << "at line #{line}:#{pos}" if line
+    if pos_hash
+      result << "at line #{pos_hash[:line]}:#{pos_hash[:pos]}"
+    else
+      result << "at line #{line}:#{pos}" if line
+    end
     result.join(" ")
   end
 
@@ -861,6 +904,55 @@ class Puppet::Pops::Parser::Lexer
     else
       tokenize_interpolated_string(token_type, replace_false_start_with_text(terminator))
     end
+  end
+
+  def tokenize_epp(skip_leading=false)
+    eppscanner = Puppet::Pops::Parser::EppScanner.new(@scanner)
+    s = eppscanner.scan(skip_leading)
+    # Record where we are now
+    lexing_context[:end_offset] = @scanner.pos
+
+    case eppscanner.mode
+    when :text
+      # Should be at end of scan, or something is terribly wrong
+      lex_error("Internal error: template scanner returns text mode and is not and end of input") unless @scanner.eos?
+      if s
+        # s may be nil if scanned text ends with an epp tag (i.e. no trailing text).
+        token_queue << [TOKENS[:RENDER_STRING], position_in_source().merge!({:value => s})]
+      end
+      # do nothing else, we are at the end
+
+    when :error
+      lex_error(positioned_message(eppscanner.message()))
+
+    when :epp
+      # It is meaningless to render empty string segments, and it is harmful to do this at
+      # the start of the scan as it prevents specification of parameters with <%- ($x, $y) -%>
+      #
+      if s && s.length > 0
+        token_queue << [TOKENS[:RENDER_STRING], position_in_source().merge!({:value => s})]
+      end
+      # switch epp_mode to general (embedded) pp logic
+      lexing_context[:epp_mode] = :epp
+
+    when :expr
+      # It is meaningless to render an empty string segment
+      if s && s.length > 0
+        token_queue << [TOKENS[:RENDER_STRING], position_in_source().merge!({:value => s})]
+      end
+      # Do this here to make next token have correct offset and 0 length
+      lexing_context[:offset] = @scanner.pos
+      token_queue << [TOKENS[:RENDER_EXPR], position_in_source().merge!({:value => ''})]
+      # switch mode to "epp expr interpolation"
+      lexing_context[:epp_mode] = :expr
+
+    else
+      lex_error("Unknown mode #{eppscanner.mode} returned by template scanner")
+    end
+    lexing_context[:offset] = @scanner.pos
+    # Record where the epp part started (to be used if tags are unbalanced)
+    lexing_context[:epp_position] = position_in_source()
+    token_queue.shift
   end
 
   def replace_false_start_with_text(appendix)

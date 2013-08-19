@@ -411,6 +411,15 @@ module Puppet::Pops::Model
     contains_many_uni 'names', Expression, :lowerBound => 1
   end
 
+  class EppExpression < Definition
+  end
+
+  class RenderStringExpression < LiteralString
+  end
+
+  class RenderExpression < UnaryExpression
+  end
+
   # A resource body describes one resource instance
   #
   class ResourceBody < PopsObject

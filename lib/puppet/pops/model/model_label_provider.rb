@@ -19,6 +19,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_AccessExpression o            ; "'[]' expression"                   end
   def label_MatchExpression o             ; "'#{o.operator}' expression"        end
   def label_CollectExpression o           ; label(o.query)                      end
+  def label_EppExpression o               ; "Epp Template"                      end
   def label_ExportedQuery o               ; "Exported Query"                    end
   def label_VirtualQuery o                ; "Virtual Query"                     end
   def label_QueryExpression o             ; "Collect Query"                     end
@@ -62,6 +63,8 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_CallMethodExpression o        ; "Method call"                       end
   def label_CaseExpression o              ; "'case' statement"                  end
   def label_CaseOption o                  ; "Case Option"                       end
+  def label_RenderStringExpression o      ; "Epp Text"                          end
+  def label_RenderExpression o            ; "Epp Interpolated Expression"       end
   def label_RelationshipExpression o      ; "'#{o.operator}' expression"        end
   def label_ResourceBody o                ; "Resource Instance Definition"      end
   def label_ResourceDefaultsExpression o  ; "Resource Defaults Expression"      end

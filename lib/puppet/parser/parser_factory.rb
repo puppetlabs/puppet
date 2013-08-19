@@ -6,6 +6,8 @@ module Puppet::Parser
   # * classic_parser, the parser in 3.1
   # * eparser, the Expression Based Parser
   #
+  # The factory also supports creating a parser for EPP (Embedded Puppet) template parser.
+  #
   class ParserFactory
     # Produces a parser instance for the given environment
     def self.parser(environment)
@@ -34,6 +36,20 @@ module Puppet::Parser
       require 'puppet/parser'
       require 'puppet/parser/e_parser_adapter'
       EParserAdapter.new(Puppet::Parser::Parser.new(environment))
+    end
+
+    # Creates an instance of an Embedded Puppet Parser (epp)
+    #
+    def self.epp_parser(environment)
+      unless Puppet[:parser] == "future"
+        raise ParseError.new("Unsupported Operation: EPP parsing is available with '--parser future' setting only.")
+      end
+      # Since RGen is optional, test that it is installed
+      @@asserted ||= false
+      assert_rgen_installed() unless @asserted
+      require 'puppet/parser'
+      require 'puppet/parser/epp_parser_adapter'
+      EppParserAdapter.new(Puppet::Parser::Parser.new(environment))
     end
 
     private
