@@ -5,7 +5,7 @@
 #
 # @api private
 class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
-  attr_reader :blockers, :prioritizer
+  attr_reader :blockers
 
   def initialize(prioritizer)
     super()

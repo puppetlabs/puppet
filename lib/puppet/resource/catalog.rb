@@ -49,9 +49,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # The environment for this catalog
   attr_accessor :environment
 
-  # The catalog in the form of a Puppet::Graph::RelationshipGraph
-  attr_accessor :relationship_graph
-
   # Add classes to our class list.
   def add_class(*classes)
     classes.each do |klass|
@@ -172,6 +169,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     yield transaction if block_given?
 
     transaction
+  end
+
+  def relationship_graph
+    if @relationship_graph.nil?
+      @relationship_graph = Puppet::Graph::RelationshipGraph.new(prioritizer)
+      @relationship_graph.populate_from(self)
+    end
+    @relationship_graph
   end
 
   def clear(remove_resources = true)
@@ -424,18 +429,20 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   private
 
-  def create_transaction(options)
-    prioritizer = case Puppet[:ordering]
-                  when "title-hash"
-                    Puppet::Graph::TitleHashPrioritizer.new
-                  when "manifest"
-                    Puppet::Graph::SequentialPrioritizer.new
-                  when "random"
-                    Puppet::Graph::RandomPrioritizer.new
-                  else
-                    raise Puppet::DevError, "Unknown ordering type #{Puppet[:ordering]}"
-                  end
+  def prioritizer
+    @prioritizer ||= case Puppet[:ordering]
+                     when "title-hash"
+                       Puppet::Graph::TitleHashPrioritizer.new
+                     when "manifest"
+                       Puppet::Graph::SequentialPrioritizer.new
+                     when "random"
+                       Puppet::Graph::RandomPrioritizer.new
+                     else
+                       raise Puppet::DevError, "Unknown ordering type #{Puppet[:ordering]}"
+                     end
+  end
 
+  def create_transaction(options)
     transaction = Puppet::Transaction.new(self, options[:report], prioritizer)
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
