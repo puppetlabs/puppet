@@ -51,7 +51,7 @@ class Puppet::Transaction
   # necessary events.
   def evaluate(&block)
     block ||= method(:eval_resource)
-    generator = AdditionalResourceGenerator.new(@catalog, relationship_graph)
+    generator = AdditionalResourceGenerator.new(@catalog, relationship_graph, @prioritizer)
     @catalog.vertices.each { |resource| generator.generate_additional_resources(resource) }
 
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
@@ -125,12 +125,7 @@ class Puppet::Transaction
   end
 
   def relationship_graph
-    if @relationship_graph.nil?
-      @relationship_graph = Puppet::Graph::RelationshipGraph.new(@prioritizer)
-      @relationship_graph.populate_from(catalog)
-      catalog.relationship_graph = @relationship_graph
-    end
-    @relationship_graph
+    catalog.relationship_graph
   end
 
   def resource_status(resource)

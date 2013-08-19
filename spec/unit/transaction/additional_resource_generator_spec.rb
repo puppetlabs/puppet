@@ -9,6 +9,8 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
   include PuppetSpec::Files
   include RelationshipGraphMatchers
 
+  let(:prioritizer) { Puppet::Graph::SequentialPrioritizer.new }
+
   def find_vertex(graph, type, title)
     graph.vertices.find {|v| v.type == type and v.title == title}
   end
@@ -128,7 +130,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         }
       MANIFEST
 
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph_for(catalog))
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph_for(catalog), prioritizer)
 
       expect(generator.eval_generate(catalog.resource('Generator[thing]'))).
         to eq(false)
@@ -141,7 +143,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         }
       MANIFEST
 
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph_for(catalog))
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph_for(catalog), prioritizer)
 
       expect(generator.eval_generate(catalog.resource('Generator[thing]'))).
         to eq(true)
@@ -153,7 +155,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
       MANIFEST
       relationship_graph = relationship_graph_for(catalog)
 
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
 
       expect(generator.eval_generate(catalog.resource('Generator[thing]'))).
         to eq(false)
@@ -232,7 +234,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     def eval_generate_resources_in(catalog, relationship_graph, resource_to_generate)
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
       generator.eval_generate(catalog.resource(resource_to_generate))
     end
   end
@@ -341,13 +343,13 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     end
 
     def generate_resources_in(catalog, relationship_graph, resource_to_generate)
-      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph)
+      generator = Puppet::Transaction::AdditionalResourceGenerator.new(catalog, relationship_graph, prioritizer)
       generator.generate_additional_resources(catalog.resource(resource_to_generate))
     end
   end
 
   def relationship_graph_for(catalog)
-    relationship_graph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::SequentialPrioritizer.new)
+    relationship_graph = Puppet::Graph::RelationshipGraph.new(prioritizer)
     relationship_graph.populate_from(catalog)
     relationship_graph
   end

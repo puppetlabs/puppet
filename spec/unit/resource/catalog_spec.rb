@@ -259,8 +259,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should add resources to the relationship graph if it exists" do
-      relgraph = Puppet::Graph::RelationshipGraph.new(Puppet::Graph::RandomPrioritizer.new)
-      @catalog.relationship_graph = relgraph
+      relgraph = @catalog.relationship_graph
 
       @catalog.add_resource @one
 
@@ -617,7 +616,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should get removed when the catalog is cleaned up" do
-      @catalog.relationship_graph = mock('graph')
       @catalog.relationship_graph.expects(:clear)
 
       @catalog.clear
