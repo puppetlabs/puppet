@@ -9,7 +9,7 @@
 # when being installed to volumes other than the current OS.
 
 <%- ["@apple_libdir", "@apple_sbindir", "@apple_bindir", "@apple_docdir", "@package_name"].each do |i| -%>
-  <%- val = eval(i) -%>
+  <%- val = instance_variable_get(i) -%>
   <%- raise "Critical variable #{i} is unset!" if val.nil? or val.empty? -%>
 <%- end -%>
 
