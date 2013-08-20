@@ -51,7 +51,7 @@ describe Puppet::Node::Environment do
       before do
         @collection = Puppet::Resource::TypeCollection.new(env)
         env.stubs(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
-        Thread.current[:known_resource_types] = nil
+        $known_resource_types = nil
       end
 
       it "should create a resource type collection if none exists" do
@@ -76,29 +76,15 @@ describe Puppet::Node::Environment do
       end
 
       it "should return the current thread associated collection if there is one" do
-        Thread.current[:known_resource_types] = @collection
+        $known_resource_types = @collection
 
         env.known_resource_types.should equal(@collection)
-      end
-
-      it "should give to all threads using the same environment the same collection if the collection isn't stale" do
-        @original_thread_type_collection = Puppet::Resource::TypeCollection.new(env)
-        Puppet::Resource::TypeCollection.expects(:new).with(env).returns @original_thread_type_collection
-        env.known_resource_types.should equal(@original_thread_type_collection)
-
-        @original_thread_type_collection.expects(:require_reparse?).returns(false)
-        Puppet::Resource::TypeCollection.stubs(:new).with(env).returns @collection
-
-        t = Thread.new {
-          env.known_resource_types.should equal(@original_thread_type_collection)
-        }
-        t.join
       end
 
       it "should generate a new TypeCollection if the current one requires reparsing" do
         old_type_collection = env.known_resource_types
         old_type_collection.stubs(:require_reparse?).returns true
-        Thread.current[:known_resource_types] = nil
+        $known_resource_types = nil
         new_type_collection = env.known_resource_types
 
         new_type_collection.should be_a Puppet::Resource::TypeCollection

@@ -12,12 +12,12 @@ module Puppet::Util::Profiler
 
   # @return This thread's configured profiler
   def self.current
-    Thread.current[:profiler] || NONE
+    @profiler || NONE
   end
 
   # @param profiler [#profile] A profiler for the current thread
   def self.current=(profiler)
-    Thread.current[:profiler] = profiler
+    @profiler = profiler
   end
 
   # @param message [String] A description of the profiled event

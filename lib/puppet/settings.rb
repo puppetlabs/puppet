@@ -1,5 +1,4 @@
 require 'puppet'
-require 'sync'
 require 'getoptlong'
 require 'puppet/util/watched_file'
 require 'puppet/util/command_line/puppet_option_parser'
@@ -74,9 +73,6 @@ class Puppet::Settings
     @created = []
     @searchpath = nil
 
-    # Mutex-like thing to protect @values
-    @sync = Sync.new
-
     # Keep track of set values.
     @values = Hash.new { |hash, key| hash[key] = {} }
 
@@ -135,9 +131,7 @@ class Puppet::Settings
 
   # Remove all set values, potentially skipping cli values.
   def clear
-    @sync.synchronize do
-      unsafe_clear
-    end
+    unsafe_clear
   end
 
   # Remove all set values, potentially skipping cli values.
@@ -170,9 +164,7 @@ class Puppet::Settings
   # this method must be called to clear out the caches so that updated
   # objects will be returned.
   def flush_cache
-    @sync.synchronize do
-      unsafe_flush_cache
-    end
+    unsafe_flush_cache
   end
 
   def unsafe_flush_cache
@@ -507,9 +499,7 @@ class Puppet::Settings
 
   # Parse the configuration file.  Just provides thread safety.
   def parse_config_files
-    @sync.synchronize do
-      unsafe_parse(which_configuration_file)
-    end
+    unsafe_parse(which_configuration_file)
 
     call_hooks_deferred_to_application_initialization :ignore_interpolation_dependency_errors => true
   end
@@ -712,11 +702,9 @@ class Puppet::Settings
 
   def reuse
     return unless defined?(@used)
-    @sync.synchronize do # yay, thread-safe
-      new = @used
-      @used = []
-      self.use(*new)
-    end
+    new = @used
+    @used = []
+    self.use(*new)
   end
 
   # The order in which to search for values.
@@ -787,12 +775,8 @@ class Puppet::Settings
 
     setting.handle(value) if setting.has_hook? and not options[:dont_trigger_handles]
 
-    @sync.synchronize do # yay, thread-safe
-
-      @values[type][param] = value
-      unsafe_flush_cache
-
-    end
+    @values[type][param] = value
+    unsafe_flush_cache
 
     value
   end
@@ -926,29 +910,27 @@ Generated on #{Time.now}.
   # you can 'use' a section as many times as you want.
   def use(*sections)
     sections = sections.collect { |s| s.to_sym }
-    @sync.synchronize do # yay, thread-safe
-      sections = sections.reject { |s| @used.include?(s) }
+    sections = sections.reject { |s| @used.include?(s) }
 
-      return if sections.empty?
+    return if sections.empty?
 
-      begin
-        catalog = to_catalog(*sections).to_ral
-      rescue => detail
-        Puppet.log_and_raise(detail, "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}")
-      end
-
-      catalog.host_config = false
-      catalog.apply do |transaction|
-        if transaction.any_failed?
-          report = transaction.report
-          failures = report.logs.find_all { |log| log.level == :err }
-          raise "Got #{failures.length} failure(s) while initializing: #{failures.collect { |l| l.to_s }.join("; ")}"
-        end
-      end
-
-      sections.each { |s| @used << s }
-      @used.uniq!
+    begin
+      catalog = to_catalog(*sections).to_ral
+    rescue => detail
+      Puppet.log_and_raise(detail, "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}")
     end
+
+    catalog.host_config = false
+    catalog.apply do |transaction|
+      if transaction.any_failed?
+        report = transaction.report
+        failures = report.logs.find_all { |log| log.level == :err }
+        raise "Got #{failures.length} failure(s) while initializing: #{failures.collect { |l| l.to_s }.join("; ")}"
+      end
+    end
+
+    sections.each { |s| @used << s }
+    @used.uniq!
   end
 
   def valid?(param)
@@ -973,9 +955,7 @@ Generated on #{Time.now}.
       each_source(environment) do |source|
         # Look for the value.  We have to test the hash for whether
         # it exists, because the value might be false.
-        @sync.synchronize do
-          return @values[source][param] if @values[source].include?(param)
-        end
+        return @values[source][param] if @values[source].include?(param)
       end
       return nil
   end
@@ -1067,30 +1047,27 @@ Generated on #{Time.now}.
   def readwritelock(default, *args, &bloc)
     file = value(get_config_file_default(default).name)
     tmpfile = file + ".tmp"
-    sync = Sync.new
     raise Puppet::DevError, "Cannot create #{file}; directory #{File.dirname(file)} does not exist" unless FileTest.directory?(File.dirname(tmpfile))
 
-    sync.synchronize(Sync::EX) do
-      File.open(file, ::File::CREAT|::File::RDWR, 0600) do |rf|
-        rf.lock_exclusive do
-          if File.exist?(tmpfile)
-            raise Puppet::Error, ".tmp file already exists for #{file}; Aborting locked write. Check the .tmp file and delete if appropriate"
-          end
+    File.open(file, ::File::CREAT|::File::RDWR, 0600) do |rf|
+      rf.lock_exclusive do
+        if File.exist?(tmpfile)
+          raise Puppet::Error, ".tmp file already exists for #{file}; Aborting locked write. Check the .tmp file and delete if appropriate"
+        end
 
-          # If there's a failure, remove our tmpfile
-          begin
-            writesub(default, tmpfile, *args, &bloc)
-          rescue
-            File.unlink(tmpfile) if FileTest.exist?(tmpfile)
-            raise
-          end
+        # If there's a failure, remove our tmpfile
+        begin
+          writesub(default, tmpfile, *args, &bloc)
+        rescue
+          File.unlink(tmpfile) if FileTest.exist?(tmpfile)
+          raise
+        end
 
-          begin
-            File.rename(tmpfile, file)
-          rescue => detail
-            Puppet.err "Could not rename #{file} to #{tmpfile}: #{detail}"
-            File.unlink(tmpfile) if FileTest.exist?(tmpfile)
-          end
+        begin
+          File.rename(tmpfile, file)
+        rescue => detail
+          Puppet.err "Could not rename #{file} to #{tmpfile}: #{detail}"
+          File.unlink(tmpfile) if FileTest.exist?(tmpfile)
         end
       end
     end
@@ -1165,9 +1142,7 @@ Generated on #{Time.now}.
   def set_metadata(meta)
     meta.each do |var, values|
       values.each do |param, value|
-        @sync.synchronize do # yay, thread-safe
-          @config[var].send(param.to_s + "=", value)
-        end
+        @config[var].send(param.to_s + "=", value)
       end
     end
   end
@@ -1176,11 +1151,9 @@ Generated on #{Time.now}.
   #
   # @return nil
   def clear_everything_for_tests()
-    @sync.synchronize do
-      unsafe_clear(true, true)
-      @global_defaults_initialized = false
-      @app_defaults_initialized = false
-    end
+    unsafe_clear(true, true)
+    @global_defaults_initialized = false
+    @app_defaults_initialized = false
   end
   private :clear_everything_for_tests
 

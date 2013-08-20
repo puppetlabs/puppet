@@ -112,7 +112,7 @@ class Puppet::Util::Autoload
       # We're using a per-thread cache of module directories so that we don't
       # scan the filesystem each time we try to load something. This is reset
       # at the beginning of compilation and at the end of an agent run.
-      Thread.current[:env_module_directories] ||= {}
+      $env_module_directories ||= {}
 
 
       # This is a little bit of a hack.  Basically, the autoloader is being
@@ -136,7 +136,7 @@ class Puppet::Util::Autoload
       # --cprice 2012-03-16
       if Puppet.settings.app_defaults_initialized?
         # if the app defaults have been initialized then it should be safe to access the module path setting.
-        Thread.current[:env_module_directories][real_env] ||= real_env.modulepath.collect do |dir|
+        $env_module_directories[real_env] ||= real_env.modulepath.collect do |dir|
           Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
         end.flatten.collect { |d| File.join(d, "lib") }.find_all do |d|
           FileTest.directory?(d)
