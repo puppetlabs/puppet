@@ -56,6 +56,7 @@ group(:extra) do
   gem "sqlite3", :require => false
   gem "stomp", :require => false
   gem "tzinfo", :require => false
+  gem "msgpack", :require => false
 end
 
 platforms :mswin, :mingw do
