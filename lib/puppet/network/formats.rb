@@ -1,5 +1,27 @@
 require 'puppet/network/format_handler'
 
+Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20, :mime => "application/x-msgpack", :required_methods => [:render_method, :intern_method]) do
+  def intern(klass, text)
+    data = MessagePack.unpack(text)
+    return data if data.is_a?(klass)
+    klass.from_pson(data)
+  end
+
+  def intern_multiple(klass, text)
+    MessagePack.unpack(text).collect do |data|
+      klass.from_hash(data)
+    end
+  end
+
+  def render(instance)
+    instance.to_data_hash.to_msgpack
+  end
+
+  def supported?(klass)
+    Puppet.features.msgpack? && klass.method_defined?(:to_data_hash)
+  end
+end
+
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   def intern(klass, text)
     data = YAML.load(text, :safe => true, :deserialize_symbols => true)
