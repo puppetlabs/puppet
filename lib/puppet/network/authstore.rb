@@ -261,7 +261,7 @@ module Puppet
 
       def parse(value)
         @name,@exact,@length,@pattern = *case value
-        when /^(\w[-\w]*\.)+[-\w]+$/                              # a full hostname
+        when /^(\w[-@\w]*\.)+[-\w]+$/                             # a full hostname with '@'s
           # Change to /^(\w[-\w]*\.)+[-\w]+\.?$/ for FQDN support
           [:domain,:exact,nil,munge_name(value)]
         when /^\*(\.(\w[-\w]*)){1,}$/                             # *.domain.com
@@ -269,7 +269,7 @@ module Puppet
           [:domain,:inexact,host_sans_star.length,host_sans_star]
         when /\$\d+/                                              # a backreference pattern ala $1.reductivelabs.com or 192.168.0.$1 or $1.$2
           [:dynamic,:exact,nil,munge_name(value)]
-        when /^\w[-.@\w]*$/                                       # ? Just like a host name but allow '@'s and ending '.'s
+        when /^\w[-\.@\w]*$/                                      # ? Just like a host name but allow '@'s and ending '.'s
           [:opaque,:exact,nil,[value]]
         when /^\/.*\/$/                                           # a regular expression
           [:regex,:inexact,nil,value]

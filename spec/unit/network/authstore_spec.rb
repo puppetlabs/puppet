@@ -314,6 +314,7 @@ describe Puppet::Network::AuthStore::Declaration do
 
   {
   'spirit.mars.nasa.gov' => 'a PQDN',
+  'rover@spirit.mars.nasa.gov' => 'a user@PQDN name',
   'ratchet.2ndsiteinc.com' => 'a PQDN with digits',
   'a.c.ru' => 'a PQDN with short segments',
   }.each {|pqdn,desc|

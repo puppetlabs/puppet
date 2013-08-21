@@ -89,7 +89,7 @@ class Puppet::Parser::AST
       # Note that this is an AST::Regex, not a Regexp
       unless @value.is_a?(Regex)
         @value = @value.to_s.downcase
-        @value =~ /[^-\w.]/ and
+        @value =~ /[^-\w.@]/ and
           raise Puppet::DevError, "'#{@value}' is not a valid hostname"
       end
     end
