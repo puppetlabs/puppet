@@ -84,7 +84,7 @@ class Puppet::Node::Facts
     new_facts
   end
 
-  def to_pson(*args)
+  def to_data_hash
     result = {
       'name' => name,
       'values' => strip_internal,
@@ -99,7 +99,11 @@ class Puppet::Node::Facts
     end
     result['expiration'] = expiration if expiration
 
-    result.to_pson(*args)
+    result
+  end
+
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   # Add internal data to the facts for storage.

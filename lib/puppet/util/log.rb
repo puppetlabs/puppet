@@ -273,6 +273,10 @@ class Puppet::Util::Log
   end
 
   def to_hash
+    self.to_data_hash
+  end
+
+  def to_data_hash
     {
       'level' => @level,
       'message' => @message,
@@ -284,8 +288,8 @@ class Puppet::Util::Log
     }
   end
 
-  def to_pson
-    self.to_hash.to_pson
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   def message=(msg)

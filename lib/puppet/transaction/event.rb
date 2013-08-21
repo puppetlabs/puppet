@@ -44,7 +44,7 @@ class Puppet::Transaction::Event
     @time = Time.parse(@time) if @time.is_a? String
   end
 
-  def to_pson
+  def to_data_hash
     {
       'audited' => @audited,
       'property' => @property,
@@ -55,7 +55,11 @@ class Puppet::Transaction::Event
       'name' => @name,
       'status' => @status,
       'time' => @time.iso8601(9),
-    }.to_pson
+    }
+  end
+
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   def property=(prop)

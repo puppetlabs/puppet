@@ -20,12 +20,19 @@ class Puppet::Util::Instrumentation::Data
     @listener.name
   end
 
-  def to_pson(*args)
-    result = {
+  def to_data_hash
+    { :name => name }.merge(@listener.respond_to?(:data) ? @listener.data : {})
+  end
+
+  def to_pson_data_hash
+    {
       'document_type' => "Puppet::Util::Instrumentation::Data",
-      'data' => { :name => name }.merge(@listener.respond_to?(:data) ? @listener.data : {})
+      'data' => to_data_hash,
     }
-    result.to_pson(*args)
+  end
+
+  def to_pson(*args)
+    to_pson_data_hash.to_pson(*args)
   end
 
   def self.from_pson(data)

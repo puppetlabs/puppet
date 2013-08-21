@@ -365,19 +365,23 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     result.add_edge(edge)
   end
 
+  def to_data_hash
+    {
+      'tags'      => tags,
+      'name'      => name,
+      'version'   => version,
+      'environment' => environment.to_s,
+      'resources' => @resources.collect { |v| @resource_table[v].to_pson_data_hash },
+      'edges'     => edges.   collect { |e| e.to_pson_data_hash },
+      'classes'   => classes
+    }
+  end
+
   PSON.register_document_type('Catalog',self)
   def to_pson_data_hash
     {
       'document_type' => 'Catalog',
-      'data'       => {
-        'tags'      => tags,
-        'name'      => name,
-        'version'   => version,
-        'environment' => environment.to_s,
-        'resources' => @resources.collect { |v| @resource_table[v].to_pson_data_hash },
-        'edges'     => edges.   collect { |e| e.to_pson_data_hash },
-        'classes'   => classes
-        },
+      'data'       => to_data_hash,
       'metadata' => {
         'api_version' => 1
         }
