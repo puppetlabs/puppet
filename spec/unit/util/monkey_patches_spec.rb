@@ -292,3 +292,9 @@ describe OpenSSL::SSL::SSLContext do
     ciphers.should be_empty
   end
 end
+
+describe SecureRandom do
+  it 'generates a properly formatted uuid' do
+    SecureRandom.uuid.should =~ /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+  end
+end

@@ -9,12 +9,13 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
     When detecting the service directory it will check, in order of preference:
 
     * `/service`
-    * `/var/service`
     * `/etc/service`
+    * `/var/service`
 
     The daemon directory should be in one of the following locations:
 
     * `/etc/sv`
+    * `/var/lib/service`
 
     or this can be overriden in the service resource parameters::
 
@@ -46,7 +47,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
             break
           end
         end
-        raise "Could not find the daemon directory (tested [/var/lib/service,/etc])" unless @defpath
+        raise "Could not find the daemon directory (tested [/etc/sv,/var/lib/service])" unless @defpath
       end
       @defpath
     end

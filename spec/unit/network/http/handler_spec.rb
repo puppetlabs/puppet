@@ -4,8 +4,126 @@ require 'puppet/network/http'
 require 'puppet/network/http/handler'
 require 'puppet/network/authorization'
 require 'puppet/network/authentication'
+require 'puppet/indirector/memory'
 
 describe Puppet::Network::HTTP::Handler do
+  before :each do
+    class Puppet::TestModel
+      extend Puppet::Indirector
+      indirects :test_model
+      attr_accessor :name, :data
+      def initialize(name = "name", data = '')
+        @name = name
+        @data = data
+      end
+
+      def self.from_pson(pson)
+        new(pson["name"], pson["data"])
+      end
+
+      def to_pson
+        {
+          "name" => @name,
+          "data" => @data
+        }.to_pson
+      end
+
+      def ==(other)
+        other.is_a? Puppet::TestModel and other.name == name and other.data == data
+      end
+    end
+
+    # The subclass must not be all caps even though the superclass is
+    class Puppet::TestModel::Memory < Puppet::Indirector::Memory
+    end
+
+    Puppet::TestModel.indirection.terminus_class = :memory
+  end
+
+  after :each do
+    Puppet::TestModel.indirection.delete
+    # Remove the class, unlinking it from the rest of the system.
+    Puppet.send(:remove_const, :TestModel)
+  end
+
+  let(:terminus_class) { Puppet::TestModel::Memory }
+  let(:terminus) { Puppet::TestModel.indirection.terminus(:memory) }
+  let(:indirection) { Puppet::TestModel.indirection }
+  let(:model) { Puppet::TestModel }
+
+  def a_request
+    {
+      :accept_header => "pson",
+      :content_type_header => "text/yaml",
+      :http_method => "HEAD",
+      :path => "/production/#{indirection.name}/unknown",
+      :params => {},
+      :client_cert => nil,
+      :headers => {},
+      :body => nil
+    }
+  end
+
+  def a_request_that_heads(data, request = {})
+    {
+      :accept_header => request[:accept_header],
+      :content_type_header => "text/yaml",
+      :http_method => "HEAD",
+      :path => "/production/#{indirection.name}/#{data.name}",
+      :params => {},
+      :client_cert => nil,
+      :body => nil
+    }
+  end
+
+  def a_request_that_submits(data, request = {})
+    {
+      :accept_header => request[:accept_header],
+      :content_type_header => "text/yaml",
+      :http_method => "PUT",
+      :path => "/production/#{indirection.name}/#{data.name}",
+      :params => {},
+      :client_cert => nil,
+      :body => data.render("text/yaml")
+    }
+  end
+
+  def a_request_that_destroys(data, request = {})
+    {
+      :accept_header => request[:accept_header],
+      :content_type_header => "text/yaml",
+      :http_method => "DELETE",
+      :path => "/production/#{indirection.name}/#{data.name}",
+      :params => {},
+      :client_cert => nil,
+      :body => ''
+    }
+  end
+
+  def a_request_that_finds(data, request = {})
+    {
+      :accept_header => request[:accept_header],
+      :content_type_header => "text/yaml",
+      :http_method => "GET",
+      :path => "/production/#{indirection.name}/#{data.name}",
+      :params => {},
+      :client_cert => nil,
+      :body => ''
+    }
+  end
+
+  def a_request_that_searches(key, request = {})
+    {
+      :accept_header => request[:accept_header],
+      :content_type_header => "text/yaml",
+      :http_method => "GET",
+      :path => "/production/#{indirection.name}s/#{key}",
+      :params => {},
+      :client_cert => nil,
+      :body => ''
+    }
+  end
+
   let(:handler) { TestingHandler.new }
 
   it "should include the v1 REST API" do
@@ -28,37 +146,15 @@ describe Puppet::Network::HTTP::Handler do
   end
 
   describe "when processing a request" do
-    let(:request) do
-      {
-        :accept_header => "format_one,format_two",
-        :content_type_header => "text/yaml",
-        :http_method => "GET",
-        :path => "/my_handler/my_result",
-        :params => {},
-        :client_cert => nil
-      }
-    end
-
     let(:response) { mock('http response') }
 
     before do
-      @model_class = stub('indirected model class')
-      @indirection = stub('indirection')
-      @model_class.stubs(:indirection).returns(@indirection)
-
-      @result = stub 'result', :render => "mytext"
-
-      request[:headers] = {
-          "Content-Type"  => request[:content_type_header],
-          "Accept"        => request[:accept_header]
-      }
-
       handler.stubs(:check_authorization)
       handler.stubs(:warn_if_near_expiration)
-      handler.stubs(:headers).returns(request[:headers])
     end
 
     it "should check the client certificate for upcoming expiration" do
+      request = a_request
       cert = mock 'cert'
       handler.stubs(:uri2indirection).returns(["facts", :mymethod, "key", {:node => "name"}])
       handler.expects(:client_cert).returns(cert).with(request)
@@ -68,6 +164,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should setup a profiler when the puppet-profiling header exists" do
+      request = a_request
       request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase] = "true"
 
       handler.process(request, response)
@@ -76,6 +173,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should not setup profiler when the profile parameter is missing" do
+      request = a_request
       request[:params] = { }
 
       handler.process(request, response)
@@ -84,6 +182,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should create an indirection request from the path, parameters, and http method" do
+      request = a_request
       request[:path] = "mypath"
       request[:http_method] = "mymethod"
       request[:params] = { :params => "mine" }
@@ -96,6 +195,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should call the 'do' method and delegate authorization to the authorization layer" do
+      request = a_request
       handler.expects(:uri2indirection).returns(["facts", :mymethod, "key", {:node => "name"}])
 
       handler.expects(:do_mymethod).with("facts", "key", {:node => "name"}, request, response)
@@ -106,6 +206,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should return 403 if the request is not authorized" do
+      request = a_request
       handler.expects(:uri2indirection).returns(["facts", :mymethod, "key", {:node => "name"}])
 
       handler.expects(:do_mymethod).never
@@ -118,6 +219,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should serialize a controller exception when an exception is thrown while finding the model instance" do
+      request = a_request
       handler.expects(:uri2indirection).returns(["facts", :find, "key", {:node => "name"}])
 
       handler.expects(:do_find).raises(ArgumentError, "The exception")
@@ -127,7 +229,24 @@ describe Puppet::Network::HTTP::Handler do
 
     it "should set the format to text/plain when serializing an exception" do
       handler.expects(:set_content_type).with(response, "text/plain")
+
       handler.do_exception(response, "A test", 404)
+    end
+
+    it "sends an exception string with the given status" do
+      handler.expects(:set_response).with(response, "A test", 404)
+
+      handler.do_exception(response, "A test", 404)
+    end
+
+    it "sends an exception error with the exception's status" do
+      data = Puppet::TestModel.new("not_found", "not found")
+      request = a_request_that_finds(data, :accept_header => "pson")
+
+      error = Puppet::Network::HTTP::Handler::HTTPNotFoundError.new("Could not find test_model not_found")
+      handler.expects(:set_response).with(response, error.to_s, error.status)
+
+      handler.process(request, response)
     end
 
     it "should raise an error if the request is formatted in an unknown format" do
@@ -136,6 +255,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should still find the correct format if content type contains charset information" do
+      request = a_request
       handler.stubs(:content_type_header).returns "text/plain; charset=UTF-8"
       handler.request_format(request).should == "s"
     end
@@ -157,310 +277,204 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     describe "when finding a model instance" do
-      before do
-        @indirection.stubs(:find).returns @result
-        Puppet::Indirector::Indirection.expects(:instance).with(:my_handler).returns( stub "indirection", :model => @model_class )
+      it "uses the first supported format for the response" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_finds(data, :accept_header => "unknown, pson, yaml")
 
-        @format = stub 'format', :suitable? => true, :mime => "text/format", :name => "format"
-        Puppet::Network::FormatHandler.stubs(:format).returns @format
+        handler.expects(:set_response).with(response, data.render(:pson))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        @oneformat = stub 'one', :suitable? => true, :mime => "text/one", :name => "one"
-        Puppet::Network::FormatHandler.stubs(:format).with("one").returns @oneformat
+        handler.do_find(indirection.name, "my data", {}, request, response)
       end
 
-      it "should use the indirection request to find the model class" do
-        handler.do_find("my_handler", "my_result", {}, request, response)
+      it "responds with a 406 error when no accept header is provided" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_finds(data, :accept_header => nil)
+
+        expect do
+          handler.do_find(indirection.name, "my data", {}, request, response)
+        end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
       end
 
-      it "should use the escaped request key" do
-        @indirection.expects(:find).with("my_result", anything).returns @result
-        handler.do_find("my_handler", "my_result", {}, request, response)
-      end
+      it "raises an error when no accepted formats are known" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_finds(data, :accept_header => "unknown, also/unknown")
 
-      it "should use a common method for determining the request parameters" do
-        @indirection.expects(:find).with(anything, has_entries(:foo => :baz, :bar => :xyzzy)).returns @result
-
-        handler.do_find("my_handler", "my_result", {:foo => :baz, :bar => :xyzzy}, request, response)
-      end
-
-      it "should set the content type to the first format specified in the accept header" do
-        handler.expects(:accept_header).with(request).returns "one,two"
-        handler.expects(:set_content_type).with(response, @oneformat)
-        handler.do_find("my_handler", "my_result", {}, request, response)
-      end
-
-      it "should fail if no accept header is provided" do
-        handler.expects(:accept_header).with(request).returns nil
-        lambda { handler.do_find("my_handler", "my_result", {}, request, response) }.should raise_error(ArgumentError)
-      end
-
-      it "should fail if the accept header does not contain a valid format" do
-        handler.expects(:accept_header).with(request).returns ""
-        lambda { handler.do_find("my_handler", "my_result", {}, request, response) }.should raise_error(RuntimeError)
-      end
-
-      it "should not use an unsuitable format" do
-        handler.expects(:accept_header).with(request).returns "foo,bar"
-        foo = mock 'foo', :suitable? => false
-        bar = mock 'bar', :suitable? => true
-        Puppet::Network::FormatHandler.expects(:format).with("foo").returns foo
-        Puppet::Network::FormatHandler.expects(:format).with("bar").returns bar
-
-        handler.expects(:set_content_type).with(response, bar) # the suitable one
-
-        handler.do_find("my_handler", "my_result", {}, request, response)
-      end
-
-      it "should render the result using the first format specified in the accept header" do
-
-        handler.expects(:accept_header).with(request).returns "one,two"
-        @result.expects(:render).with(@oneformat)
-
-        handler.do_find("my_handler", "my_result", {}, request, response)
+        expect do
+          handler.do_find(indirection.name, "my data", {}, request, response)
+        end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
       end
 
       it "should pass the result through without rendering it if the result is a string" do
-        @indirection.stubs(:find).returns "foo"
-        handler.expects(:set_response).with(response, "foo")
-        handler.do_find("my_handler", "my_result", {}, request, response)
-      end
+        data = Puppet::TestModel.new("my data", "some data")
+        data_string = "my data string"
+        request = a_request_that_finds(data, :accept_header => "pson")
+        indirection.expects(:find).returns(data_string)
 
-      it "should use the default status when a model find call succeeds" do
-        handler.expects(:set_response).with(anything, anything, nil)
-        handler.do_find("my_handler", "my_result", {}, request, response)
-      end
+        handler.expects(:set_response).with(response, data_string)
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-      it "should return a serialized object when a model find call succeeds" do
-        @model_instance = stub('model instance')
-        @model_instance.expects(:render).returns "my_rendered_object"
-
-        handler.expects(:set_response).with(anything, "my_rendered_object", anything)
-        @indirection.stubs(:find).returns(@model_instance)
-        handler.do_find("my_handler", "my_result", {}, request, response)
+        handler.do_find(indirection.name, "my data", {}, request, response)
       end
 
       it "should return a 404 when no model instance can be found" do
-        @model_class.stubs(:name).returns "my name"
-        handler.expects(:set_response).with(anything, anything, 404)
-        @indirection.stubs(:find).returns(nil)
-        handler.do_find("my_handler", "my_result", {}, request, response)
-      end
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_finds(data, :accept_header => "unknown, pson, yaml")
 
-      it "should write a log message when no model instance can be found" do
-        @model_class.stubs(:name).returns "my name"
-        @indirection.stubs(:find).returns(nil)
-
-        Puppet.expects(:info).with("Could not find my_handler for 'my_result'")
-
-        handler.do_find("my_handler", "my_result", {}, request, response)
-      end
-
-
-      it "should serialize the result in with the appropriate format" do
-        @model_instance = stub('model instance')
-
-        handler.expects(:format_to_use).returns(@oneformat)
-        @model_instance.expects(:render).with(@oneformat).returns "my_rendered_object"
-        @indirection.stubs(:find).returns(@model_instance)
-        handler.do_find("my_handler", "my_result", {}, request, response)
+        expect do
+          handler.do_find(indirection.name, "my data", {}, request, response)
+        end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotFoundError)
       end
     end
 
     describe "when performing head operation" do
-      before do
-        handler.stubs(:model).with("my_handler").returns(stub 'model', :indirection => @model_class)
-        request[:http_method] = "HEAD"
-        request[:path] = "/production/my_handler/my_result"
-        request[:params] = {}
-
-        @model_class.stubs(:head).returns true
-      end
-
-      it "should use the escaped request key" do
-        @model_class.expects(:head).with("my_result", anything).returns true
-        handler.process(request, response)
-      end
-
       it "should not generate a response when a model head call succeeds" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_heads(data)
+
         handler.expects(:set_response).never
+
         handler.process(request, response)
       end
 
       it "should return a 404 when the model head call returns false" do
-        handler.expects(:set_response).with(anything, anything, 404)
-        @model_class.stubs(:head).returns(false)
+        data = Puppet::TestModel.new("my data", "data not there")
+        request = a_request_that_heads(data)
+
+        handler.expects(:set_response).with(response, "Not Found: Could not find test_model my data", 404)
+
         handler.process(request, response)
       end
     end
 
     describe "when searching for model instances" do
-      before do
-        Puppet::Indirector::Indirection.expects(:instance).with(:my_handler).returns( stub "indirection", :model => @model_class )
+      it "uses the first supported format for the response" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_searches("my", :accept_header => "unknown, pson, yaml")
 
-        result1 = mock 'result1'
-        result2 = mock 'results'
+        handler.expects(:set_response).with(response, Puppet::TestModel.render_multiple(:pson, [data]))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        @result = [result1, result2]
-        @model_class.stubs(:render_multiple).returns "my rendered instances"
-        @indirection.stubs(:search).returns(@result)
-
-        @format = stub 'format', :suitable? => true, :mime => "text/format", :name => "format"
-        Puppet::Network::FormatHandler.stubs(:format).returns @format
-
-        @oneformat = stub 'one', :suitable? => true, :mime => "text/one", :name => "one"
-        Puppet::Network::FormatHandler.stubs(:format).with("one").returns @oneformat
-      end
-
-      it "should use the indirection request to find the model" do
-        handler.do_search("my_handler", "my_result", {}, request, response)
-      end
-
-      it "should use a common method for determining the request parameters" do
-        @indirection.expects(:search).with(anything, has_entries(:foo => :baz, :bar => :xyzzy)).returns @result
-        handler.do_search("my_handler", "my_result", {:foo => :baz, :bar => :xyzzy}, request, response)
-      end
-
-      it "should use the default status when a model search call succeeds" do
-        @indirection.stubs(:search).returns(@result)
-        handler.do_search("my_handler", "my_result", {}, request, response)
-      end
-
-      it "should set the content type to the first format returned by the accept header" do
-        handler.expects(:accept_header).with(request).returns "one,two"
-        handler.expects(:set_content_type).with(response, @oneformat)
-
-        handler.do_search("my_handler", "my_result", {}, request, response)
-      end
-
-      it "should return a list of serialized objects when a model search call succeeds" do
-        handler.expects(:accept_header).with(request).returns "one,two"
-
-        @indirection.stubs(:search).returns(@result)
-
-        @model_class.expects(:render_multiple).with(@oneformat, @result).returns "my rendered instances"
-
-        handler.expects(:set_response).with(anything, "my rendered instances")
-        handler.do_search("my_handler", "my_result", {}, request, response)
+        handler.do_search(indirection.name, "my", {}, request, response)
       end
 
       it "should return [] when searching returns an empty array" do
-        handler.expects(:accept_header).with(request).returns "one,two"
-        @indirection.stubs(:search).returns([])
-        @model_class.expects(:render_multiple).with(@oneformat, []).returns "[]"
+        request = a_request_that_searches("nothing", :accept_header => "unknown, pson, yaml")
 
+        handler.expects(:set_response).with(response, Puppet::TestModel.render_multiple(:pson, []))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        handler.expects(:set_response).with(anything, "[]")
-        handler.do_search("my_handler", "my_result", {}, request, response)
+        handler.do_search(indirection.name, "nothing", {}, request, response)
       end
 
       it "should return a 404 when searching returns nil" do
-        @model_class.stubs(:name).returns "my name"
-        handler.expects(:set_response).with(anything, anything, 404)
-        @indirection.stubs(:search).returns(nil)
-        handler.do_search("my_handler", "my_result", {}, request, response)
+        request = a_request_that_searches("nothing", :accept_header => "unknown, pson, yaml")
+        indirection.expects(:search).returns(nil)
+
+        expect do
+          handler.do_search(indirection.name, "nothing", {}, request, response)
+        end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotFoundError)
       end
     end
 
     describe "when destroying a model instance" do
-      before do
-        Puppet::Indirector::Indirection.expects(:instance).with(:my_handler).returns( stub "indirection", :model => @model_class )
+      it "destroys the data indicated in the request" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_destroys(data)
 
-        @result = stub 'result', :render => "the result"
-        @indirection.stubs(:destroy).returns @result
+        handler.do_destroy(indirection.name, "my data", {}, request, response)
+
+        Puppet::TestModel.indirection.find("my data").should be_nil
       end
 
-      it "should use the indirection request to find the model" do
-        handler.do_destroy("my_handler", "my_result", {}, request, response)
+      it "responds with yaml when no Accept header is given" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_destroys(data, :accept_header => nil)
+
+        handler.expects(:set_response).with(response, data.render(:yaml))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:yaml))
+
+        handler.do_destroy(indirection.name, "my data", {}, request, response)
       end
 
-      it "should use the escaped request key to destroy the instance in the model" do
-        @indirection.expects(:destroy).with("foo bar", anything)
-        handler.do_destroy("my_handler", "foo bar", {}, request, response)
+      it "uses the first supported format for the response" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_destroys(data, :accept_header => "unknown, pson, yaml")
+
+        handler.expects(:set_response).with(response, data.render(:pson))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
+
+        handler.do_destroy(indirection.name, "my data", {}, request, response)
       end
 
-      it "should use a common method for determining the request parameters" do
-        @indirection.expects(:destroy).with(anything, has_entries(:foo => :baz, :bar => :xyzzy))
-        handler.do_destroy("my_handler", "my_result", {:foo => :baz, :bar => :xyzzy}, request, response)
-      end
+      it "raises an error and does not destory when no accepted formats are known" do
+        data = Puppet::TestModel.new("my data", "some data")
+        indirection.save(data, "my data")
+        request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
 
-      it "should use the default status code a model destroy call succeeds" do
-        handler.expects(:set_response).with(anything, anything, nil)
-        handler.do_destroy("my_handler", "my_result", {}, request, response)
-      end
+        expect do
+          handler.do_destroy(indirection.name, "my data", {}, request, response)
+        end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
 
-      it "should return a yaml-encoded result when a model destroy call succeeds" do
-        @result = stub 'result', :to_yaml => "the result"
-        @indirection.expects(:destroy).returns(@result)
-
-        handler.expects(:set_response).with(anything, "the result", anything)
-
-        handler.do_destroy("my_handler", "my_result", {}, request, response)
+        Puppet::TestModel.indirection.find("my data").should_not be_nil
       end
     end
 
     describe "when saving a model instance" do
-      before do
-        Puppet::Indirector::Indirection.stubs(:instance).with(:my_handler).returns( stub "indirection", :model => @model_class )
-        handler.stubs(:body).returns('my stuff')
-        handler.stubs(:content_type_header).returns("text/yaml")
-
-        @result = stub 'result', :render => "the result"
-
-        @model_instance = stub('indirected model instance')
-        @model_class.stubs(:convert_from).returns(@model_instance)
-        @indirection.stubs(:save)
-
-        @format = stub 'format', :suitable? => true, :name => "format", :mime => "text/format"
-        Puppet::Network::FormatHandler.stubs(:format).returns @format
-        @yamlformat = stub 'yaml', :suitable? => true, :name => "yaml", :mime => "text/yaml"
-        Puppet::Network::FormatHandler.stubs(:format).with("yaml").returns @yamlformat
-      end
-
-      it "should use the indirection request to find the model" do
-        handler.do_save("my_handler", "my_result", {}, request, response)
-      end
-
-      it "should use the 'body' hook to retrieve the body of the request" do
-        handler.expects(:body).returns "my body"
-        @model_class.expects(:convert_from).with(anything, "my body").returns @model_instance
-
-        handler.do_save("my_handler", "my_result", {}, request, response)
-      end
-
       it "should fail to save model if data is not specified" do
-        handler.stubs(:body).returns('')
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data)
+        request[:body] = ''
 
-        lambda { handler.do_save("my_handler", "my_result", {}, request, response) }.should raise_error(ArgumentError)
+        expect { handler.do_save("my_handler", "my_result", {}, request, response) }.to raise_error(ArgumentError)
       end
 
-      it "should use a common method for determining the request parameters" do
-        @indirection.expects(:save).with(@model_instance, 'key').once
-        handler.do_save("my_handler", "key", {}, request, response)
+      it "saves the data sent in the request" do
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data)
+
+        handler.do_save(indirection.name, "my data", {}, request, response)
+
+        Puppet::TestModel.indirection.find("my data").should == data
       end
 
-      it "should use the default status when a model save call succeeds" do
-        handler.expects(:set_response).with(anything, anything, nil)
-        handler.do_save("my_handler", "my_result", {}, request, response)
+      it "responds with yaml when no Accept header is given" do
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data, :accept_header => nil)
+
+        handler.expects(:set_response).with(response, data.render(:yaml))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:yaml))
+
+        handler.do_save(indirection.name, "my data", {}, request, response)
       end
 
-      it "should return the yaml-serialized result when a model save call succeeds" do
-        @indirection.stubs(:save).returns(@model_instance)
-        @model_instance.expects(:to_yaml).returns('foo')
-        handler.do_save("my_handler", "my_result", {}, request, response)
+      it "uses the first supported format for the response" do
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data, :accept_header => "unknown, pson, yaml")
+
+        handler.expects(:set_response).with(response, data.render(:pson))
+        handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
+
+        handler.do_save(indirection.name, "my data", {}, request, response)
       end
 
-      it "should set the content to yaml" do
-        handler.expects(:set_content_type).with(response, @yamlformat)
-        handler.do_save("my_handler", "my_result", {}, request, response)
-      end
+      it "raises an error and does not save when no accepted formats are known" do
+        data = Puppet::TestModel.new("my data", "some data")
+        request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
 
-      it "should use the content-type header to know the body format" do
-        handler.expects(:content_type_header).returns("text/format")
-        Puppet::Network::FormatHandler.stubs(:mime).with("text/format").returns @format
+        expect do
+          handler.do_save(indirection.name, "my data", {}, request, response)
+        end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
 
-        @model_class.expects(:convert_from).with("format", anything).returns @model_instance
-
-        handler.do_save("my_handler", "my_result", {}, request, response)
+        Puppet::TestModel.indirection.find("my data").should be_nil
       end
     end
   end
@@ -518,6 +532,14 @@ describe Puppet::Network::HTTP::Handler do
 
     def client_cert(request)
       request[:client_cert]
+    end
+
+    def body(request)
+      request[:body]
+    end
+
+    def headers(request)
+      request[:headers] || {}
     end
   end
 end

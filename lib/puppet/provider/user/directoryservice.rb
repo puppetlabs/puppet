@@ -188,7 +188,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def self.convert_xml_to_binary(plist_data)
     Puppet.debug('Converting XML plist to binary')
     Puppet.debug('Executing: \'plutil -convert binary1 -o - -\'')
-    IO.popen('plutil -convert binary1 -o - -', mode='r+') do |io|
+    IO.popen('plutil -convert binary1 -o - -', 'r+') do |io|
       io.write Plist::Emit.dump(plist_data)
       io.close_write
       @converted_plist = io.read
@@ -201,7 +201,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def self.convert_binary_to_xml(plist_data)
     Puppet.debug('Converting binary plist to XML')
     Puppet.debug('Executing: \'plutil -convert xml1 -o - -\'')
-    IO.popen('plutil -convert xml1 -o - -', mode='r+') do |io|
+    IO.popen('plutil -convert xml1 -o - -', 'r+') do |io|
       io.write plist_data
       io.close_write
       @converted_plist = io.read
@@ -297,11 +297,8 @@ Puppet::Type.type(:user).provide :directoryservice do
                 end
       end
 
-      # If a non-numerical gid value is passed, assume it is a group name and
-      # lookup that group's GID value to use when setting the GID
-      if (attribute == :gid) and value.class == 'Fixnum'
-        value = self.class.get_attribute_from_dscl('Groups', value, 'PrimaryGroupID')['dsAttrTypeStandard:PrimaryGroupID'][0]
-      end
+      # Ensure group names are converted to integers.
+      value = Puppet::Util.gid(value) if attribute == :gid
 
       ## Set values ##
       # For the :password and :groups properties, call the setter methods

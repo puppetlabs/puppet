@@ -37,11 +37,8 @@ describe Puppet::Parameter do
     @parameter.tags.should == %w{one two foo}
   end
 
-  it "should provide source_descriptors" do
-    @resource.expects(:line).returns 10
-    @resource.expects(:file).returns "file"
-    @resource.expects(:tags).returns %w{one two}
-    @parameter.source_descriptors.should == {:tags=>["one", "two", "foo"], :path=>"//foo", :file => "file", :line => 10}
+  it "should have a path" do
+    @parameter.path.should == "//foo"
   end
 
   describe "when returning the value" do
@@ -83,38 +80,38 @@ describe Puppet::Parameter do
 
     it "should catch abnormal failures thrown during validation" do
       @class.validate { |v| raise "This is broken" }
-      lambda { @parameter.validate("eh") }.should raise_error(Puppet::DevError)
+      expect { @parameter.validate("eh") }.to raise_error(Puppet::DevError)
     end
 
     it "should fail if the value is not a defined value or alias and does not match a regex" do
       @class.newvalues :foo
-      lambda { @parameter.validate("bar") }.should raise_error(Puppet::Error)
+      expect { @parameter.validate("bar") }.to raise_error(Puppet::Error)
     end
 
     it "should succeed if the value is one of the defined values" do
       @class.newvalues :foo
-      lambda { @parameter.validate(:foo) }.should_not raise_error(ArgumentError)
+      expect { @parameter.validate(:foo) }.to_not raise_error
     end
 
     it "should succeed if the value is one of the defined values even if the definition uses a symbol and the validation uses a string" do
       @class.newvalues :foo
-      lambda { @parameter.validate("foo") }.should_not raise_error(ArgumentError)
+      expect { @parameter.validate("foo") }.to_not raise_error
     end
 
     it "should succeed if the value is one of the defined values even if the definition uses a string and the validation uses a symbol" do
       @class.newvalues "foo"
-      lambda { @parameter.validate(:foo) }.should_not raise_error(ArgumentError)
+      expect { @parameter.validate(:foo) }.to_not raise_error
     end
 
     it "should succeed if the value is one of the defined aliases" do
       @class.newvalues :foo
       @class.aliasvalue :bar, :foo
-      lambda { @parameter.validate("bar") }.should_not raise_error(ArgumentError)
+      expect { @parameter.validate("bar") }.to_not raise_error
     end
 
     it "should succeed if the value matches one of the regexes" do
       @class.newvalues %r{\d}
-      lambda { @parameter.validate("10") }.should_not raise_error(ArgumentError)
+      expect { @parameter.validate("10") }.to_not raise_error
     end
   end
 
@@ -125,7 +122,7 @@ describe Puppet::Parameter do
 
     it "should catch abnormal failures thrown during munging" do
       @class.munge { |v| raise "This is broken" }
-      lambda { @parameter.munge("eh") }.should raise_error(Puppet::DevError)
+      expect { @parameter.munge("eh") }.to raise_error(Puppet::DevError)
     end
 
     it "should return return any matching defined values" do

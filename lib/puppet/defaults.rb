@@ -1,7 +1,12 @@
-# The majority of Puppet's configuration settings are set in this file.
-
-
 module Puppet
+
+  def self.default_diffargs
+    if (Facter.value(:kernel) == "AIX" && Facter.value(:kernelmajversion) == "5300")
+      ""
+    else
+      "-u"
+    end
+  end
 
   ############################################################################################
   # NOTE: For information about the available values for the ":type" property of settings,
@@ -80,7 +85,9 @@ module Puppet
     :rundir => {
       :default  => nil,
       :type     => :directory,
-      :mode     => 01777,
+      :mode     => 0755,
+      :owner    => "service",
+      :group    => "service",
       :desc     => "Where Puppet PID files are kept."
     },
     :genconfig => {
@@ -173,7 +180,7 @@ module Puppet
             "this provides the default environment for nodes we know nothing about."
     },
     :diff_args => {
-        :default  => "-u",
+        :default  => default_diffargs,
         :desc     => "Which arguments to pass to the diff command when printing differences between\n" +
             "files. The command to use can be chosen with the `diff` setting.",
     },
@@ -234,6 +241,19 @@ module Puppet
     :hiera_config => {
       :default => "$confdir/hiera.yaml",
       :desc    => "The hiera configuration file. Puppet only reads this file on startup, so you must restart the puppet master every time you edit it.",
+      :type    => :file,
+    },
+    :binder => {
+      :default => false,
+      :desc    => "Turns the binding system on or off. This includes hiera-2 and data in modules.  The binding system aggregates data from
+      modules and other locations and makes them available for lookup.  The binding system is experimental and any or all of it may change.",
+      :type    => :boolean,
+    },
+    :binder_config => {
+      :default => nil,
+      :desc    => "The binder configuration file. Puppet reads this file on each request to configure the bindings system.
+      If set to nil (the default), a $confdir/binder_config.yaml is optionally loaded. If it does not exists, a default configuration
+      is used. If the setting :binding_config is specified, it must reference a valid and existing yaml file.",
       :type    => :file,
     },
     :catalog_terminus => {
@@ -368,6 +388,11 @@ module Puppet
         :desc     => "Freezes the 'main' class, disallowing any code to be added to it.  This\n" +
             "essentially means that you can't have any code outside of a node, class, or definition other\n" +
             "than in the site manifest.",
+    },
+    :stringify_facts => {
+      :default => true,
+      :type    => :boolean,
+      :desc    => "Flatten fact values to strings using #to_s. Means you can't have arrays or hashes as fact values.",
     }
   )
   Puppet.define_settings(:module_tool,
@@ -378,6 +403,10 @@ module Puppet
     :module_working_dir => {
         :default  => '$vardir/puppet-module',
         :desc     => "The directory into which module tool data is stored",
+    },
+    :module_skeleton_dir => {
+        :default  => '$module_working_dir/skeleton',
+        :desc     => "The directory which the skeleton for module tool generate is stored.",
     }
   )
 
@@ -525,16 +554,6 @@ EOT
       :owner => "service",
       :desc => "Where each client stores the CA certificate."
     },
-    ## JJM - The ssl_client_ca_chain setting is commented out because it is
-    # intended for (#3143) and is not expected to be used until CA chaining is
-    # supported.
-    # :ssl_client_ca_chain => {
-    #   :type  => :file,
-    #   :mode  => 0644,
-    #   :owner => "service",
-    #   :desc  => "The list of CA certificates to complete the chain of trust to CA certificates \n" <<
-    #             "listed in the ssl_client_ca_auth file."
-    # },
     :ssl_client_ca_auth => {
       :type  => :file,
       :mode  => 0644,
@@ -544,16 +563,6 @@ EOT
                 "listed in this file.  If this setting has no value then the Puppet master's CA \n" <<
                 "certificate (localcacert) will be used."
     },
-    ## JJM - The ssl_server_ca_chain setting is commented out because it is
-    # intended for (#3143) and is not expected to be used until CA chaining is
-    # supported.
-    # :ssl_server_ca_chain => {
-    #   :type  => :file,
-    #   :mode  => 0644,
-    #   :owner => "service",
-    #   :desc  => "The list of CA certificates to complete the chain of trust to CA certificates \n" <<
-    #             "listed in the ssl_server_ca_auth file."
-    # },
     :ssl_server_ca_auth => {
       :type  => :file,
       :mode  => 0644,
@@ -1220,6 +1229,18 @@ EOT
       turn off waiting for certificates by specifying a time of 0, in which case
       puppet agent will exit if it cannot get a cert.
       #{AS_DURATION}",
+    },
+    :ordering => {
+      :type => :enum,
+      :values => ["manifest", "title-hash", "random"],
+      :default => "title-hash",
+      :desc => "Controls the default ordering to use in the absence of any
+      dependency information. By default this is 'title-hash', which is an
+      opaque, stable, random order. The value of 'manifest' will use the order
+      in which the resources were added to the catalog, which matches the order
+      that the puppet language executes. The final value of 'random' causes
+      resources to be assigned a random order, while still obeying declared
+      dependencies."
     }
   )
 
@@ -1297,6 +1318,16 @@ EOT
     :smtpserver => {
         :default  => "none",
         :desc     => "The server through which to send email reports.",
+    },
+    :smtpport => {
+        :default  => 25,
+        :desc     => "The TCP port through which to send email reports.",
+    },
+    :smtphelo => {
+        :default  => Facter["fqdn"].value,
+        :desc     => "The name by which we identify ourselves in SMTP HELO for reports.
+          If you send to a smtpserver which does strict HELO checking (as with Postfix's
+          `smtpd_helo_restrictions` access controls), you may need to ensure this resolves.",
     }
   )
 

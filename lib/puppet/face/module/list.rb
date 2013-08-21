@@ -237,8 +237,8 @@ Puppet::Face.define(:module, '1.0.0') do
   #    { :text => "puppetlabs-mysql (v1.0.0)" }
   #
   # The value of a module's :text is affected by three (3) factors: the format
-  # of the tree, it's dependency status, and the location in the modulepath
-  # relative to it's parent.
+  # of the tree, its dependency status, and the location in the modulepath
+  # relative to its parent.
   #
   # Returns a Hash
   #

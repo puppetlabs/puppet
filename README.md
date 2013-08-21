@@ -33,7 +33,7 @@ Generally, you need the following things installed:
 
 Contributions
 ------
-Please see our [Contibution
+Please see our [Contribution
 Documents](https://github.com/puppetlabs/puppet/blob/master/CONTRIBUTING.md)
 and our [Developer
 Documentation](https://github.com/puppetlabs/puppet/blob/master/README_DEVELOPER.md).
@@ -51,3 +51,7 @@ site](http://projects.puppetlabs.com). A [mailing
 list](https://groups.google.com/forum/?fromgroups#!forum/puppet-users) is
 available for asking questions and getting help from others. In addition there
 is an active #puppet channel on Freenode.
+
+HTTP API
+--------
+{file:api_docs/http_api_index.md HTTP API Index}

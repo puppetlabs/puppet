@@ -31,10 +31,14 @@ class Puppet::Pops::Parser::Lexer
     attr_accessor :regex, :name, :string, :skip, :skip_text
     alias skip? skip
 
-    # @param string_or_regex[String] a literal string token matcher
-    # @param string_or_regex[Regexp] a regular expression token text matcher
-    # @param name [String] the token name (what it is known as in the grammar)
-    # @param options [Hash] see {#set_options}
+    # @overload initialize(string)
+    #   @param string [String] a literal string token matcher
+    #   @param name [String] the token name (what it is known as in the grammar)
+    #   @param options [Hash] see {#set_options}
+    # @overload initialize(regex)
+    #   @param regex [Regexp] a regular expression token text matcher
+    #   @param name [String] the token name (what it is known as in the grammar)
+    #   @param options [Hash] see {#set_options}
     #
     def initialize(string_or_regex, name, options = {})
       if string_or_regex.is_a?(String)
@@ -565,7 +569,6 @@ class Puppet::Pops::Parser::Lexer
     skip
 
     until token_queue.empty? and @scanner.eos? do
-      yielded = false
       offset = @scanner.pos
       matched_token, value = find_token
       end_offset = @scanner.pos
@@ -646,7 +649,6 @@ class Puppet::Pops::Parser::Lexer
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
     last = @scanner.matched
-    tmp_offset = @scanner.pos
     str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
     str.gsub!(/\\(.)/m) {
       ch = $1

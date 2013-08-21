@@ -104,7 +104,7 @@ describe Puppet::Configurer do
       @agent.run(:pluginsync => false)
     end
 
-    it "should carry on when it can't fetch it's node definition" do
+    it "should carry on when it can't fetch its node definition" do
       error = Net::HTTPError.new(400, 'dummy server communication error')
       Puppet::Node.indirection.expects(:find).raises(error)
       @agent.run.should == 0
@@ -137,20 +137,17 @@ describe Puppet::Configurer do
 
     it "should use the provided report if it was passed one" do
       report = Puppet::Transaction::Report.new("apply")
-      Puppet::Transaction::Report.expects(:new).never
-      @catalog.expects(:apply).with{|options| options[:report] == report}
+      @catalog.expects(:apply).with {|options| options[:report] == report}
 
       @agent.run(:report => report)
     end
 
     it "should set the report as a log destination" do
       report = Puppet::Transaction::Report.new("apply")
-      Puppet::Transaction::Report.expects(:new).returns report
 
-      Puppet::Util::Log.expects(:newdestination).with(report)
-      Puppet::Util::Log.expects(:close).with(report)
+      report.expects(:<<).with(instance_of(Puppet::Util::Log)).at_least_once
 
-      @agent.run
+      @agent.run(:report => report)
     end
 
     it "should retrieve the catalog" do
@@ -479,6 +476,25 @@ describe Puppet::Configurer do
 
       Puppet.expects(:err)
       expect { @configurer.save_last_run_summary(@report) }.to_not raise_error
+    end
+
+    it "should create the last run file with the correct mode" do
+      Puppet.settings.setting(:lastrunfile).expects(:mode).returns('664')
+      @configurer.save_last_run_summary(@report)
+
+      if Puppet::Util::Platform.windows?
+        require 'puppet/util/windows/security'
+        mode = Puppet::Util::Windows::Security.get_mode(Puppet[:lastrunfile])
+      else
+        mode = File.stat(Puppet[:lastrunfile]).mode
+      end
+      (mode & 0777).should == 0664
+    end
+
+    it "should report invalid last run file permissions" do
+      Puppet.settings.setting(:lastrunfile).expects(:mode).returns('892')
+      Puppet.expects(:err).with(regexp_matches(/Could not save last run local report.*892 is invalid/))
+      @configurer.save_last_run_summary(@report)
     end
   end
 

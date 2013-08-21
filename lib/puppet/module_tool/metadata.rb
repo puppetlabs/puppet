@@ -79,6 +79,14 @@ module Puppet::ModuleTool
       @description = description
     end
 
+    def extra_metadata
+      @extra_metadata || {}
+    end
+
+    def extra_metadata=(extra_metadata)
+      @extra_metadata = extra_metadata
+    end
+
     def project_page
       @project_page || 'UNKNOWN'
     end
@@ -121,21 +129,25 @@ module Puppet::ModuleTool
       end
     end
 
+    def to_hash()
+      return extra_metadata.merge({
+        'name'         => @full_module_name,
+        'version'      => @version,
+        'source'       => source,
+        'author'       => author,
+        'license'      => license,
+        'summary'      => summary,
+        'description'  => description,
+        'project_page' => project_page,
+        'dependencies' => dependencies,
+        'types'        => types,
+        'checksums'    => checksums
+      })
+    end
+
     # Return the PSON record representing this instance.
     def to_pson(*args)
-      return {
-        :name         => @full_module_name,
-        :version      => @version,
-        :source       => source,
-        :author       => author,
-        :license      => license,
-        :summary      => summary,
-        :description  => description,
-        :project_page => project_page,
-        :dependencies => dependencies,
-        :types        => types,
-        :checksums    => checksums
-      }.to_pson(*args)
+      return to_hash.to_pson(*args)
     end
   end
 end

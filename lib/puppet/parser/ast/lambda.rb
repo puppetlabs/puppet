@@ -36,31 +36,50 @@ class Puppet::Parser::AST
     #
     def call(scope, *args)
       raise Puppet::ParseError, "Too many arguments: #{args.size} for #{parameters.size}" unless args.size <= parameters.size
+
+      # associate values with parameters
       merged = parameters.zip(args)
-      missing = merged.select { |e| !e[1] && e[0].size == 1 }
+      # calculate missing arguments
+      missing = parameters.slice(args.size, parameters.size - args.size).select {|e| e.size == 1}
       unless missing.empty?
         optional = parameters.count { |p| p.size == 2 }
         raise Puppet::ParseError, "Too few arguments; #{args.size} for #{optional > 0 ? ' min ' : ''}#{parameters.size - optional}"
       end
 
       evaluated = merged.collect do |m|
-        # Ruby 1.8.7 zip seems to produce a different result than Ruby 1.9.3 in some situations
-        n = m[0].is_a?(Array) ? m[0][0] : m[0]
-        v = m[1] || (m[0][1]).safeevaluate(scope) # given value or default expression value
-        [n, v]
+        # m can be one of
+        # m = [["name"], "given"]
+        #   | [["name", default_expr], "given"]
+        #
+        # "given" is always an optional entry. If a parameter was provided then
+        # the entry will be in the array, otherwise the m array will be a
+        # single element.
+        given_argument = m[1]
+        argument_name = m[0][0]
+        default_expression = m[0][1]
+
+        value = if m.size == 1
+          default_expression.safeevaluate(scope)
+        else
+          given_argument
+        end
+        [argument_name, value]
       end
 
       # Store the evaluated name => value associations in a new inner/local/ephemeral scope
       # (This is made complicated due to the fact that the implementation of scope is overloaded with
       # functionality and an inner ephemeral scope must be used (as opposed to just pushing a local scope
       # on a scope "stack").
+
+      # Ensure variable exists with nil value if error occurs. 
+      # Some ruby implementations does not like creating variable on return
+      result = nil
       begin
         elevel = scope.ephemeral_level
         scope.ephemeral_from(Hash[evaluated], file, line)
         result = safeevaluate(scope)
       ensure
         scope.unset_ephemeral_var(elevel)
-        result ||= nil
       end
       result
     end

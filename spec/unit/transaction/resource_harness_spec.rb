@@ -11,7 +11,7 @@ describe Puppet::Transaction::ResourceHarness do
     @mode_755 = Puppet.features.microsoft_windows? ? '644' : '755'
     path = make_absolute("/my/file")
 
-    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
     @resource = Puppet::Type.type(:file).new :path => path
     @harness = Puppet::Transaction::ResourceHarness.new(@transaction)
     @current_state = Puppet::Resource.new(:file, path)
@@ -470,17 +470,16 @@ describe Puppet::Transaction::ResourceHarness do
     before do
       @catalog = Puppet::Resource::Catalog.new
       @resource.catalog = @catalog
-      @status = Puppet::Resource::Status.new(@resource)
     end
 
     it "should return true if 'ignoreschedules' is set" do
       Puppet[:ignoreschedules] = true
       @resource[:schedule] = "meh"
-      @harness.should be_scheduled(@status, @resource)
+      @harness.should be_scheduled(@resource)
     end
 
     it "should return true if the resource has no schedule set" do
-      @harness.should be_scheduled(@status, @resource)
+      @harness.should be_scheduled(@resource)
     end
 
     it "should return the result of matching the schedule with the cached 'checked' time if a schedule is set" do
@@ -493,7 +492,7 @@ describe Puppet::Transaction::ResourceHarness do
 
       sched.expects(:match?).with(t.to_i).returns "feh"
 
-      @harness.scheduled?(@status, @resource).should == "feh"
+      @harness.scheduled?(@resource).should == "feh"
     end
   end
 

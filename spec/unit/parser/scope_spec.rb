@@ -142,8 +142,8 @@ describe Puppet::Parser::Scope do
     end
 
     it "should fail if invoked with a non-string name" do
-      expect { @scope[:foo] }.to raise_error Puppet::DevError
-      expect { @scope[:foo] = 12 }.to raise_error Puppet::DevError
+      expect { @scope[:foo] }.to raise_error(Puppet::ParseError, /Scope variable name .* not a string/)
+      expect { @scope[:foo] = 12 }.to raise_error(Puppet::ParseError, /Scope variable name .* not a string/)
     end
 
     it "should return nil for unset variables" do
@@ -610,6 +610,49 @@ describe Puppet::Parser::Scope do
       it "should treat #{input.inspect} as #{output}" do
         Puppet::Parser::Scope.true?(input).should == output
       end
+    end
+  end
+
+  context "when producing a hash of all variables (as used in templates)" do
+    it "should contain all defined variables in the scope" do
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green }
+    end
+
+    it "should contain variables in all local scopes (#21508)" do
+      @scope.new_ephemeral true
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :red)
+      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green, 'apple' => :red }
+    end
+
+    it "should contain all defined variables in the scope and all local scopes" do
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :red)
+      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green, 'apple' => :red }
+    end
+
+    it "should not contain varaibles in match scopes (non local emphemeral)" do
+      @scope.new_ephemeral true
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.ephemeral_from(/(f)(o)(o)/.match('foo'))
+      @scope.to_hash.should == {'orange' => :tangerine, 'pear' => :green }
+    end
+
+    it "should delete values that are :undef in inner scope" do
+      @scope.new_ephemeral true
+      @scope.setvar("orange", :tangerine)
+      @scope.setvar("pear", :green)
+      @scope.new_ephemeral true
+      @scope.setvar("apple", :red)
+      @scope.setvar("orange", :undef)
+      @scope.to_hash.should == {'pear' => :green, 'apple' => :red }
     end
   end
 end

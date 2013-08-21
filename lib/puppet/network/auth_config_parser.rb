@@ -27,6 +27,9 @@ class AuthConfigParser
         name = $1.chomp
         right = rights.newright(name, count, @file)
       when /^\s*(allow(?:_ip)?|deny(?:_ip)?|method|environment|auth(?:enticated)?)\s+(.+?)(\s*#.*)?$/
+        if right.nil?
+          raise Puppet::ConfigurationError, "Missing or invalid 'path' before right directive at line #{count} of #{@file}"
+        end
         parse_right_directive(right, $1, $2, count)
       else
         raise Puppet::ConfigurationError, "Invalid line #{count}: #{line}"

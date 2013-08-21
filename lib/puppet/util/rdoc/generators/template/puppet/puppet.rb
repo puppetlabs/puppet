@@ -25,21 +25,37 @@ module RDoc
     FONTS = "Verdana,Arial,Helvetica,sans-serif"
 
 STYLE = %{
+/* Reset */
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;}
+:focus{outline:0;}
+body{line-height:1;color:#282828;background:#fff;}
+ol,ul{list-style:none;}
+table{border-collapse:separate;border-spacing:0;}
+caption,th,td{text-align:left;font-weight:normal;}
+blockquote:before,blockquote:after,q:before,q:after{content:"";}
+blockquote,q{quotes:"""";}
+
 body {
     font-family: Verdana,Arial,Helvetica,sans-serif;
-    font-size:   90%;
-    margin: 0;
-    margin-left: 40px;
-    padding: 0;
-    background: white;
+    font-size: 0.9em;
 }
 
-h1,h2,h3,h4 { margin: 0; color: #efefef; background: transparent; }
-h1 { font-size: 150%; }
-h2,h3,h4 { margin-top: 1em; }
+pre {
+    background: none repeat scroll 0 0 #F7F7F7;
+    border: 1px dashed #DDDDDD;
+    color: #555555;
+    font-family: courier;
+    margin: 10px 19px;
+    padding: 10px;
+ }
 
-a { background: #eef; color: #039; text-decoration: none; }
-a:hover { background: #039; color: #eef; }
+h1,h2,h3,h4 { margin: 0; color: #efefef; background: transparent; }
+h1 { font-size: 1.2em; }
+h2,h3,h4 { margin-top: 1em; color:#558; }
+h2,h3 { font-size: 1.1em; }
+
+a { color: #037; text-decoration: none; }
+a:hover { color: #04d; }
 
 /* Override the base stylesheet's Anchor inside a table cell */
 td > a {
@@ -58,32 +74,26 @@ td > a {
 /* === Structural elements =================================== */
 
 div#index {
-    margin: 0;
-    margin-left: -40px;
     padding: 0;
-    font-size: 90%;
 }
 
 
 div#index a {
-    margin-left: 0.7em;
+	display:inline-block;
+	padding:2px 10px;
 }
 
+
 div#index .section-bar {
-   margin-left: 0px;
-   padding-left: 0.7em;
-   background: #ccc;
-   font-size: small;
+	background: #ffe;
+	padding:10px;
 }
 
 
 div#classHeader, div#fileHeader {
-    width: auto;
-    color: white;
-    padding: 0.5em 1.5em 0.5em 1.5em;
-    margin: 0;
-    margin-left: -40px;
-    border-bottom: 3px solid #006;
+    border-bottom: 1px solid #ddd;
+	padding:10px;
+	font-size:0.9em;
 }
 
 div#classHeader a, div#fileHeader a {
@@ -92,8 +102,9 @@ div#classHeader a, div#fileHeader a {
 }
 
 div#classHeader td, div#fileHeader td {
-    background: inherit;
     color: white;
+	padding:3px;
+	font-size:0.9em;
 }
 
 
@@ -110,19 +121,19 @@ div#nodeHeader {
 }
 
 .class-name-in-header {
-  font-size:  180%;
   font-weight: bold;
 }
 
 
 div#bodyContent {
-    padding: 0 1.5em 0 1.5em;
+    padding: 10px;
 }
 
 div#description {
-    padding: 0.5em 1.5em;
-    background: #efefef;
-    border: 1px dotted #999;
+    padding: 10px;
+    background: #f5f5f5;
+    border: 1px dotted #ddd;
+	line-height:1.2em;
 }
 
 div#description h1,h2,h3,h4,h5,h6 {
@@ -165,17 +176,18 @@ table.header-table {
 
 .section-bar {
    color: #333;
-   border-bottom: 1px solid #999;
-    margin-left: -20px;
+   border-bottom: 1px solid #ddd;
+   padding:10px 0;
+   margin:5px 0 10px 0;
 }
 
+div#class-list, div#methods, div#includes, div#resources, div#requires, div#realizes, div#attribute-list { padding:10px; }
 
 .section-title {
     background: #79a;
     color: #eee;
     padding: 3px;
     margin-top: 2em;
-    margin-left: -30px;
     border: 1px solid #999;
 }
 
@@ -191,22 +203,18 @@ table.header-table {
 
 /* --- Method classes -------------------------- */
 .method-detail {
-    background: #efefef;
-    padding: 0;
-    margin-top: 0.5em;
-    margin-bottom: 1em;
-    border: 1px dotted #ccc;
+    background: #f5f5f5;
 }
 .method-heading {
-  color: black;
-  background: #ccc;
-  border-bottom: 1px solid #666;
-  padding: 0.2em 0.5em 0 0.5em;
+  color: #333;
+  font-style:italic;
+  background: #ddd;
+  padding:5px 10px;
 }
 .method-signature { color: black; background: inherit; }
 .method-name { font-weight: bold; }
 .method-args { font-style: italic; }
-.method-description { padding: 0 0.5em 0 0.5em; }
+.method-description { padding: 10px 10px 20px 10px; }
 
 /* --- Source code sections -------------------- */
 

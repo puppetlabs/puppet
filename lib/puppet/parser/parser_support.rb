@@ -69,7 +69,7 @@ class Puppet::Parser::Parser
 
   # Raise a Parse error.
   def error(message, options = {})
-    if brace = @lexer.expected
+    if @lexer.expected
       message += "; expected '%s'"
     end
     except = Puppet::ParseError.new(message)

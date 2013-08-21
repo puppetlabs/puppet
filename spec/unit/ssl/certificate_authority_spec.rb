@@ -333,7 +333,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect do
           @ca.sign(@name, false, @request)
-        end.not_to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
+        end.not_to raise_error
       end
 
       it "should save the resulting certificate" do
@@ -748,6 +748,13 @@ describe Puppet::SSL::CertificateAuthority do
       @ca.list.should == %w{cert1 cert2}
     end
 
+    it "should list the full certificates" do
+      cert1 = stub 'cert1', :name => "cert1"
+      cert2 = stub 'cert2', :name => "cert2"
+      Puppet::SSL::Certificate.indirection.expects(:search).with("*").returns [cert1, cert2]
+      @ca.list_certificates.should == [cert1, cert2]
+    end
+
     describe "and printing certificates" do
       it "should return nil if the certificate cannot be found" do
         Puppet::SSL::Certificate.indirection.expects(:find).with("myhost").returns nil
@@ -860,6 +867,35 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect { @ca.verify("me") }.to raise_error
       end
+
+      describe "certificate_is_alive?" do
+        it "should return false if verification fails" do
+          @cert.expects(:content).returns "mycert"
+
+          @store.expects(:verify).with("mycert").returns false
+
+          @ca.certificate_is_alive?(@cert).should be_false
+        end
+
+        it "should return true if verification passes" do
+          @cert.expects(:content).returns "mycert"
+
+          @store.expects(:verify).with("mycert").returns true
+
+          @ca.certificate_is_alive?(@cert).should be_true
+        end
+
+        it "should used a cached instance of the x509 store" do
+          OpenSSL::X509::Store.stubs(:new).returns(@store).once
+
+          @cert.expects(:content).returns "mycert"
+
+          @store.expects(:verify).with("mycert").returns true
+
+          @ca.certificate_is_alive?(@cert)
+          @ca.certificate_is_alive?(@cert)
+        end
+      end
     end
 
     describe "and revoking certificates" do
@@ -935,37 +971,137 @@ describe Puppet::SSL::CertificateAuthority do
     it "should be able to generate a complete new SSL host" do
       @ca.should respond_to(:generate)
     end
+  end
+end
 
-    describe "and generating certificates" do
+require 'puppet/indirector/memory'
+
+describe "CertificateAuthority.generate" do
+
+  def expect_to_increment_serial_file
+    Puppet.settings.expects(:readwritelock).with(:serial)
+  end
+
+  def expect_to_sign_a_cert
+    expect_to_increment_serial_file
+    Puppet.settings.expects(:write).with(:cert_inventory, "a")
+  end
+
+  def expect_to_write_the_ca_password
+    Puppet.settings.expects(:write).with(:capass)
+  end
+
+  def expect_ca_initialization
+    expect_to_write_the_ca_password
+    expect_to_sign_a_cert
+  end
+
+  def avoid_rebuilding_inventory_for_every_cert
+    Puppet::SSL::Inventory.any_instance.stubs(:rebuild)
+  end
+
+  INDIRECTED_CLASSES = [
+    Puppet::SSL::Certificate,
+    Puppet::SSL::CertificateRequest,
+    Puppet::SSL::CertificateRevocationList,
+    Puppet::SSL::Key,
+  ]
+
+  INDIRECTED_CLASSES.each do |const|
+    class const::Memory < Puppet::Indirector::Memory
+
+      # @return Array of all the indirector's values
+      #
+      # This mirrors Puppet::Indirector::SslFile#search which returns all files
+      # in the directory.
+      def search(request)
+        return @instances.values
+      end
+    end
+  end
+
+  before do
+    avoid_rebuilding_inventory_for_every_cert
+    INDIRECTED_CLASSES.each { |const| const.indirection.terminus_class = :memory }
+  end
+
+  after do
+    INDIRECTED_CLASSES.each do |const|
+      const.indirection.terminus_class = :file
+      const.indirection.termini.clear
+    end
+  end
+
+  describe "when generating certificates" do
+    let(:ca) { Puppet::SSL::CertificateAuthority.new }
+
+    before do
+      expect_ca_initialization 
+    end
+
+    it "should fail if a certificate already exists for the host" do
+      cert = Puppet::SSL::Certificate.new('pre.existing')
+      Puppet::SSL::Certificate.indirection.save(cert)
+      expect { ca.generate(cert.name) }.to raise_error(ArgumentError, /a certificate already exists/i)
+    end
+
+    describe "that do not yet exist" do
+      let(:cn) { "new.host" }
+
+      def expect_cert_does_not_exist(cn)
+        expect( Puppet::SSL::Certificate.indirection.find(cn) ).to be_nil
+      end
+
       before do
-        @host = stub 'host', :generate_certificate_request => nil
-        Puppet::SSL::Host.stubs(:new).returns @host
-        Puppet::SSL::Certificate.indirection.stubs(:find).returns nil
-
-        @ca.stubs(:sign)
+        expect_to_sign_a_cert
+        expect_cert_does_not_exist(cn)
       end
 
-      it "should fail if a certificate already exists for the host" do
-        Puppet::SSL::Certificate.indirection.expects(:find).with("him").returns "something"
-
-        expect { @ca.generate("him") }.to raise_error(ArgumentError)
+      it "should return the created certificate" do
+        cert = ca.generate(cn)
+        expect( cert ).to be_kind_of(Puppet::SSL::Certificate)
+        expect( cert.name ).to eq(cn)
       end
 
-      it "should create a new Host instance with the correct name" do
-        Puppet::SSL::Host.expects(:new).with("him").returns @host
-
-        @ca.generate("him")
+      it "should not have any subject_alt_names by default" do
+        cert = ca.generate(cn)
+        expect( cert.subject_alt_names ).to be_empty
       end
 
-      it "should use the Host to generate the certificate request" do
-        @host.expects :generate_certificate_request
-
-        @ca.generate("him")
+      it "should have subject_alt_names if passed dns_alt_names" do
+        cert = ca.generate(cn, :dns_alt_names => 'foo,bar')
+        expect( cert.subject_alt_names ).to match_array(["DNS:#{cn}",'DNS:foo','DNS:bar'])
       end
 
-      it "should sign the generated request" do
-        @ca.expects(:sign).with("him", false)
-        @ca.generate("him")
+      context "if autosign is false" do
+        before do
+          Puppet[:autosign] = false
+        end
+
+        it "should still generate and explicitly sign the request" do
+          cert = nil
+          cert = ca.generate(cn)
+          expect(cert.name).to eq(cn)
+        end
+      end
+
+      context "if autosign is true (Redmine #6112)" do
+
+        def run_mode_must_be_master_for_autosign_to_be_attempted
+          Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:master])
+        end
+
+        before do
+          Puppet[:autosign] = true
+          run_mode_must_be_master_for_autosign_to_be_attempted
+          Puppet::Util::Log.level = :info
+        end
+
+        it "should generate a cert without attempting to sign again" do
+          cert = ca.generate(cn)
+          expect(cert.name).to eq(cn)
+          expect(@logs.map(&:message)).to include("Autosigning #{cn}")
+        end
       end
     end
   end

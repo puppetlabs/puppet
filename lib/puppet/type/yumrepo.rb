@@ -1,5 +1,3 @@
-# Description of yum repositories
-
 require 'puppet/util/inifile'
 
 module Puppet
@@ -232,7 +230,7 @@ module Puppet
       desc "Whether this repository is enabled, as represented by a
         `0` or `1`. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
-      newvalue(%r{(0|1)}) { }
+      newvalue(/^(0|1)$/) { }
     end
 
     newproperty(:gpgcheck, :parent => Puppet::IniProperty) do
@@ -240,7 +238,7 @@ module Puppet
         from this repository, as represented by a `0` or `1`.
         #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
-      newvalue(%r{(0|1)}) { }
+      newvalue(/^(0|1)$/) { }
     end
 
     newproperty(:gpgkey, :parent => Puppet::IniProperty) do
@@ -280,7 +278,7 @@ module Puppet
       desc "Whether yum will allow the use of package groups for this
         repository, as represented by a `0` or `1`. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
-      newvalue(%r{(0|1)}) { }
+      newvalue(/^(0|1)$/) { }
     end
 
     newproperty(:failovermethod, :parent => Puppet::IniProperty) do
@@ -294,7 +292,7 @@ module Puppet
       desc "Whether HTTP/1.1 keepalive should be used with this repository, as
         represented by a `0` or `1`. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
-      newvalue(%r{(0|1)}) { }
+      newvalue(/^(0|1)$/) { }
     end
 
      newproperty(:http_caching, :parent => Puppet::IniProperty) do
@@ -322,7 +320,7 @@ module Puppet
         that the `protectbase` plugin is installed and enabled.
         #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
-      newvalue(%r{(0|1)}) { }
+      newvalue(/^(0|1)$/) { }
     end
 
     newproperty(:priority, :parent => Puppet::IniProperty) do
@@ -356,6 +354,12 @@ module Puppet
       desc "Password for this proxy. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
+    end
+
+    newproperty(:s3_enabled, :parent => Puppet::IniProperty) do
+      desc "Access the repo via S3. #{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(/^(0|1)$/) { }
     end
 
     newproperty(:sslcacert, :parent => Puppet::IniProperty) do

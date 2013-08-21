@@ -7,9 +7,6 @@ class Puppet::Interface
 
       # We need to identify an indent: the minimum number of whitespace
       # characters at the start of any line in the text.
-      #
-      # Using split rather than each_line is because the later only takes a
-      # block on Ruby 1.8.5 / Centos, and we support that. --daniel 2011-05-03
       indent = text.split(/\n/).map {|x| x.index(/[^\s]/) }.compact.min
 
       if indent > 0 then
@@ -79,7 +76,7 @@ class Puppet::Interface
 
     # @api private
     def build_synopsis(face, action = nil, arguments = nil)
-      output = PrettyPrint.format do |s|
+      PrettyPrint.format do |s|
         s.text("puppet #{face}")
         s.text(" #{action}") unless action.nil?
         s.text(" ")
@@ -105,7 +102,6 @@ class Puppet::Interface
         display_global_options.sort.each do |option|
           wrap = %w{ [ ] }
           s.group(0, *wrap) do
-            desc = Puppet.settings.setting(option).desc
             type = Puppet.settings.setting(option).default
             type ||= Puppet.settings.setting(option).type.to_s.upcase
             s.text "--#{option} #{type}"
@@ -134,11 +130,11 @@ class Puppet::Interface
     #   Sets examples.
     #   @param text [String] Example text
     #   @api public
-    #   @returns [void]
+    #   @return [void]
     #   @dsl Faces
     # @overload examples
     #   Returns documentation of examples
-    #   @returns [String] The examples
+    #   @return [String] The examples
     #   @api private
     attr_doc :examples
 
@@ -147,11 +143,11 @@ class Puppet::Interface
     #   Sets optional notes.
     #   @param text [String] The notes
     #   @api public
-    #   @returns [void]
+    #   @return [void]
     #   @dsl Faces
     # @overload notes
     #   Returns any optional notes
-    #   @returns [String] The notes
+    #   @return [String] The notes
     #   @api private
     attr_doc :notes
 
@@ -160,11 +156,11 @@ class Puppet::Interface
     #   Sets the license text
     #   @param text [String] the license text
     #   @api public
-    #   @returns [void]
+    #   @return [void]
     #   @dsl Faces
     # @overload license
     #   Returns the license
-    #   @returns [String] The license
+    #   @return [String] The license
     #   @api private
     attr_doc :license
 

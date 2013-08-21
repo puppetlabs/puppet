@@ -26,6 +26,7 @@ class Puppet::Transaction::Event
 
   def initialize(options = {})
     @audited = false
+
     set_options(options)
     @time = Time.now
   end
@@ -37,10 +38,24 @@ class Puppet::Transaction::Event
     @desired_value = data['desired_value']
     @historical_value = data['historical_value']
     @message = data['message']
-    @name = data['name'].intern
+    @name = data['name'].intern if data['name']
     @status = data['status']
     @time = data['time']
     @time = Time.parse(@time) if @time.is_a? String
+  end
+
+  def to_pson
+    {
+      'audited' => @audited,
+      'property' => @property,
+      'previous_value' => @previous_value,
+      'desired_value' => @desired_value,
+      'historical_value' => @historical_value,
+      'message' => @message,
+      'name' => @name,
+      'status' => @status,
+      'time' => @time.iso8601(9),
+    }.to_pson
   end
 
   def property=(prop)

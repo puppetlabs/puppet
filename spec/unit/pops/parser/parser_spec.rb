@@ -10,6 +10,6 @@ describe Puppet::Pops::Parser::Parser do
   it "should parse a code string and return a model" do
     parser = Puppet::Pops::Parser::Parser.new()
     model = parser.parse_string("$a = 10").current
-    model.class.should == Model::AssignmentExpression
+    model.class.should == Puppet::Pops::Model::AssignmentExpression
   end
 end

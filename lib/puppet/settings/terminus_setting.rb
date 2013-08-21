@@ -1,5 +1,3 @@
-require 'puppet/settings/base_setting'
-
 class Puppet::Settings::TerminusSetting < Puppet::Settings::BaseSetting
   def munge(value)
     case value

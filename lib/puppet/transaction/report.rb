@@ -44,6 +44,10 @@ class Puppet::Transaction::Report
   # @return [???] the configuration version
   attr_accessor :configuration_version
 
+  # An agent generated transaction uuid, useful for connecting catalog and report
+  # @return [String] uuid
+  attr_accessor :transaction_uuid
+
   # The host name for which the report is generated
   # @return [String] the host name
   attr_accessor :host
@@ -58,7 +62,7 @@ class Puppet::Transaction::Report
   attr_reader :resource_statuses
 
   # A list of log messages.
-  # @return [Array<String>] logged messages
+  # @return [Array<Puppet::Util::Log>] logged messages
   attr_reader :logs
 
   # A hash of metric name to metric value.
@@ -88,24 +92,20 @@ class Puppet::Transaction::Report
   #
   attr_reader :puppet_version
 
-  # @return [Integer] (3) a report format version number
-  # @todo Unclear what this is - a version?
+  # @return [Integer] report format version number.  This value is constant for
+  #    a given version of Puppet; it is incremented when a new release of Puppet
+  #    changes the API for the various objects that make up a report.
   #
   attr_reader :report_format
-
-  # This is necessary since Marshal doesn't know how to
-  # dump hash with default proc (see below "@records") ?
-  # @todo there is no "@records" to see below, uncertain what this is for.
-  # @api private
-  #
-  def self.default_format
-    :yaml
-  end
 
   def self.from_pson(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
     obj
+  end
+
+  def as_logging_destination(&block)
+    Puppet::Util::Log.with_destination(self, &block)
   end
 
   # @api private
@@ -165,7 +165,7 @@ class Puppet::Transaction::Report
   end
 
   # @api private
-  def initialize(kind, configuration_version=nil, environment=nil)
+  def initialize(kind, configuration_version=nil, environment=nil, transaction_uuid=nil)
     @metrics = {}
     @logs = []
     @resource_statuses = {}
@@ -173,9 +173,10 @@ class Puppet::Transaction::Report
     @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
-    @report_format = 3
+    @report_format = 4
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
+    @transaction_uuid = transaction_uuid
     @environment = environment
     @status = 'failed' # assume failed until the report is finalized
   end
@@ -185,6 +186,7 @@ class Puppet::Transaction::Report
     @puppet_version = data['puppet_version']
     @report_format = data['report_format']
     @configuration_version = data['configuration_version']
+    @transaction_uuid = data['transaction_uuid']
     @environment = data['environment']
     @status = data['status']
     @host = data['host']
@@ -212,6 +214,24 @@ class Puppet::Transaction::Report
       end
       @resource_statuses[record[0]] = status
     end
+  end
+
+  def to_pson
+    {
+      'host' => @host,
+      'time' => @time.iso8601(9),
+      'configuration_version' => @configuration_version,
+      'transaction_uuid' => @transaction_uuid,
+      'report_format' => @report_format,
+      'puppet_version' => @puppet_version,
+      'kind' => @kind,
+      'status' => @status,
+      'environment' => @environment,
+
+      'logs' => @logs,
+      'metrics' => @metrics,
+      'resource_statuses' => @resource_statuses,
+    }.to_pson
   end
 
   # @return [String] the host name

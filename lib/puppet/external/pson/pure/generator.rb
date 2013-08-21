@@ -58,7 +58,7 @@ module PSON
   module Pure
     module Generator
       # This class is used to create State instances, that are use to hold data
-      # while generating a PSON text from a a Ruby data structure.
+      # while generating a PSON text from a Ruby data structure.
       class State
         # Creates a State object from _opts_, which ought to be Hash to create
         # a new State instance configured by _opts_, something else to create

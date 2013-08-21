@@ -195,7 +195,7 @@ Licensed under the Apache 2.0 License
 
         require 'puppet/configurer'
         configurer = Puppet::Configurer.new
-        report = configurer.run(:network_device => true, :pluginsync => Puppet[:pluginsync])
+        configurer.run(:network_device => true, :pluginsync => Puppet[:pluginsync])
       rescue => detail
         Puppet.log_exception(detail)
       ensure
@@ -210,7 +210,7 @@ Licensed under the Apache 2.0 License
   def setup_host
     @host = Puppet::SSL::Host.new
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    cert = @host.wait_for_cert(waitforcert)
+    @host.wait_for_cert(waitforcert)
   end
 
   def setup

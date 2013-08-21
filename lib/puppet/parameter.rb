@@ -1,5 +1,4 @@
 require 'puppet/util/methodhelper'
-require 'puppet/util/log_paths'
 require 'puppet/util/logging'
 require 'puppet/util/docs'
 
@@ -22,7 +21,6 @@ require 'puppet/util/docs'
 class Puppet::Parameter
   include Puppet::Util
   include Puppet::Util::Errors
-  include Puppet::Util::LogPaths
   include Puppet::Util::Logging
   include Puppet::Util::MethodHelper
 
@@ -241,10 +239,11 @@ class Puppet::Parameter
     end
 
     # @overload validate {|| ... }
-    # Defines an optional method that is used to validate the parameter's value.
+    # Defines an optional method that is used to validate the parameter's DSL/string value.
     # Validation should raise appropriate exceptions, the return value of the given block is ignored.
     # The easiest way to raise an appropriate exception is to call the method {Puppet::Util::Errors.fail} with
     # the message as an argument.
+    # To validate the munged value instead, just munge the value (`munge(value)`).
     #
     # @return [void]
     # @dsl type
@@ -306,18 +305,28 @@ class Puppet::Parameter
   #
   attr_accessor :parent
 
-  # @!method line()
-  #   @return [Integer] Returns the result of calling the same method on the associated resource.
-  # @!method file
-  #   @return [Integer] Returns the result of calling the same method on the associated resource.
-  # @!method version
-  #   @return [Integer] Returns the result of calling the same method on the associated resource.
-  #
-  [:line, :file, :version].each do |param|
-    define_method(param) do
-      resource.send(param)
-    end
+  # Returns a string representation of the resource's containment path in
+  # the catalog.
+  # @return [String]
+  def path
+    @path ||= '/' + pathbuilder.join('/')
   end
+
+  # @return [Integer] Returns the result of calling the same method on the associated resource.
+  def line
+    resource.line
+  end
+
+  # @return [Integer] Returns the result of calling the same method on the associated resource.
+  def file
+    resource.file
+  end
+
+  # @return [Integer] Returns the result of calling the same method on the associated resource.
+  def version
+    resource.version
+  end
+
 
   # Initializes the parameter with a required resource reference and optional attribute settings.
   # The option `:resource` must be specified or an exception is raised. Any additional options passed
@@ -377,9 +386,9 @@ class Puppet::Parameter
     tmp
   end
 
-  # @todo Original comment = _return the full path to us, for logging and rollback; not currently
-  #   used_ This is difficult to figure out (if it is used or not as calls are certainly made to "pathbuilder"
-  #   method is several places, not just sure if it is this implementation or not.
+  # Returns an array of strings representing the containment heirarchy
+  # (types/classes) that make up the path to the resource from the root
+  # of the catalog.  This is mostly used for logging purposes.
   #
   # @api private
   def pathbuilder
@@ -477,7 +486,7 @@ class Puppet::Parameter
   # @todo This original comment _"All of the checking should possibly be
   #   late-binding (e.g., users might not exist when the value is assigned
   #   but might when it is asked for)."_ does not seem to be correct, the implementation
-  #   calls both validate an munge on the given value, so no late binding.
+  #   calls both validate and munge on the given value, so no late binding.
   #
   # The given value is validated and then munged (if munging has been specified). The result is store
   # as the value of this arameter.

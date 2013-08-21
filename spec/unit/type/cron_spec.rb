@@ -457,13 +457,13 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       it "should accept empty environment variables that do not contain '='" do
         expect do
           described_class.new(:name => 'foo',:environment => 'MAILTO=')
-        end.to_not raise_error(Puppet::Error)
+        end.to_not raise_error
       end
 
       it "should accept 'absent'" do
         expect do
           described_class.new(:name => 'foo',:environment => 'absent')
-        end.to_not raise_error(Puppet::Error)
+        end.to_not raise_error
       end
 
     end

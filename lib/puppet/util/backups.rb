@@ -19,7 +19,7 @@ module Puppet::Util::Backups
 
   def perform_backup_with_bucket(fileobj)
     file = (fileobj.class == String) ? fileobj : fileobj.name
-    case File.stat(file).ftype
+    case File.lstat(file).ftype
     when "directory"
       # we don't need to backup directories when recurse is on
       return true if self[:recurse]
@@ -40,8 +40,6 @@ module Puppet::Util::Backups
     begin
       bfile = file + backup
 
-      # Ruby 1.8.1 requires the 'preserve' addition, but
-      # later versions do not appear to require it.
       # N.B. cp_r works on both files and directories
       FileUtils.cp_r(file, bfile, :preserve => true)
       return true

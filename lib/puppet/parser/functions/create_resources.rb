@@ -45,52 +45,29 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
   ENDHEREDOC
   raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be 2 or 3)") if args.length > 3
 
-  # figure out what kind of resource we are
-  type_of_resource = nil
-  type_name = args[0].downcase
-  type_exported, type_virtual = false
-  if type_name.start_with? '@@'
-    type_name = type_name[2..-1]
-    type_exported = true
-  elsif type_name.start_with? '@'
-    type_name = type_name[1..-1]
-    type_virtual = true
+  type, instances, defaults = args
+  defaults ||= {}
+
+  resource = Puppet::Parser::AST::Resource.new(:type => type.sub(/^@{1,2}/, '').downcase, :instances =>
+    instances.collect do |title, params|
+      Puppet::Parser::AST::ResourceInstance.new(
+        :title => Puppet::Parser::AST::Leaf.new(:value => title),
+        :parameters => defaults.merge(params).collect do |name, value|
+          Puppet::Parser::AST::ResourceParam.new(
+            :param => name,
+            :value => Puppet::Parser::AST::Leaf.new(:value => value))
+        end)
+    end)
+
+  if type.start_with? '@@'
+    resource.exported = true
+  elsif type.start_with? '@'
+    resource.virtual = true
   end
-  if type_name == 'class'
-    type_of_resource = :class
-  else
-    if resource = Puppet::Type.type(type_name.to_sym)
-      type_of_resource = :type
-    elsif resource = find_definition(type_name.downcase)
-      type_of_resource = :define
-    else
-      raise ArgumentError, "could not create resource of unknown type #{type_name}"
-    end
-  end
-  # iterate through the resources to create
-  defaults = args[2] || {}
-  args[1].each do |title, params|
-    params = Puppet::Util.symbolizehash(defaults.merge(params))
-    raise ArgumentError, 'params should not contain title' if(params[:title])
-    case type_of_resource
-    # JJM The only difference between a type and a define is the call to instantiate_resource
-    # for a defined type.
-    when :type, :define
-      p_resource = Puppet::Parser::Resource.new(type_name, title, :scope => self, :source => resource)
-      p_resource.virtual = type_virtual
-      p_resource.exported = type_exported
-      {:name => title}.merge(params).each do |k,v|
-        p_resource.set_parameter(k,v)
-      end
-      if type_of_resource == :define then
-        resource.instantiate_resource(self, p_resource)
-      end
-      compiler.add_resource(self, p_resource)
-    when :class
-      klass = find_hostclass(title)
-      raise ArgumentError, "could not find hostclass #{title}" unless klass
-      klass.ensure_in_catalog(self, params)
-      compiler.catalog.add_class(title)
-    end
+
+  begin
+    resource.safeevaluate(self)
+  rescue Puppet::ParseError => internal_error
+    raise internal_error.original
   end
 end

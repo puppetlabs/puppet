@@ -108,4 +108,89 @@ describe provider do
       end
     end
   end
+
+  describe 'prefetching' do
+    let(:nevra_format) { Puppet::Type::Package::ProviderRpm::NEVRA_FORMAT }
+
+    let(:packages) do
+      <<-RPM_OUTPUT
+      cracklib-dicts 0 2.8.9 3.3 x86_64 :DESC: The standard CrackLib dictionaries
+      basesystem 0 8.0 5.1.1.el5.centos noarch :DESC: The skeleton package which defines a simple Red Hat Enterprise Linux system
+      chkconfig 0 1.3.30.2 2.el5 x86_64 :DESC: A system tool for maintaining the /etc/rc*.d hierarchy
+      myresource 0 1.2.3.4 5.el4 noarch :DESC: Now with summary
+      mysummaryless 0 1.2.3.4 5.el4 noarch :DESC:
+      RPM_OUTPUT
+    end
+
+    let(:yumhelper_output) do
+      <<-YUMHELPER_OUTPUT
+ * base: centos.tcpdiag.net
+ * extras: centos.mirrors.hoobly.com
+ * updates: mirrors.arsc.edu
+_pkg nss-tools 0 3.14.3 4.el6_4 x86_64
+_pkg pixman 0 0.26.2 5.el6_4 x86_64
+_pkg myresource 0 1.2.3.4 5.el4 noarch
+_pkg mysummaryless 0 1.2.3.4 5.el4 noarch
+     YUMHELPER_OUTPUT
+    end
+
+    let(:execute_options) do
+      {:failonfail => true, :combine => true, :custom_environment => {}}
+    end
+
+    let(:rpm_version) { "RPM version 4.8.0\n" }
+
+    let(:package_type) { Puppet::Type.type(:package) }
+    let(:yum_provider) { provider }
+
+    def pretend_we_are_root_for_yum_provider
+      Process.stubs(:euid).returns(0)
+    end
+
+    def expect_yum_provider_to_provide_rpm
+      Puppet::Type::Package::ProviderYum.stubs(:rpm).with('--version').returns(rpm_version)
+      Puppet::Type::Package::ProviderYum.expects(:command).with(:rpm).returns("/bin/rpm")
+    end
+
+    def expect_execpipe_to_provide_package_info_for_an_rpm_query
+      Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf #{nevra_format}").yields(packages)
+    end
+
+    def expect_python_yumhelper_call_to_return_latest_info
+      Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/)).returns(yumhelper_output)
+    end
+
+    def a_package_type_instance_with_yum_provider_and_ensure_latest(name)
+      type_instance = package_type.new(:name => name)
+      type_instance.provider = yum_provider.new
+      type_instance[:ensure] = :latest
+      return type_instance
+    end
+
+    before do
+      pretend_we_are_root_for_yum_provider
+      expect_yum_provider_to_provide_rpm
+      expect_execpipe_to_provide_package_info_for_an_rpm_query
+      expect_python_yumhelper_call_to_return_latest_info
+    end
+
+    it "injects latest provider info into passed resources when prefetching" do
+      myresource = a_package_type_instance_with_yum_provider_and_ensure_latest('myresource')
+      mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
+
+      yum_provider.prefetch({ "myresource" => myresource, "mysummaryless" => mysummaryless })
+
+      expect(@logs.map(&:message).grep(/^Failed to match rpm line/)).to be_empty
+      expect(myresource.provider.latest_info).to eq({
+        :name=>"myresource",
+        :epoch=>"0",
+        :version=>"1.2.3.4",
+        :release=>"5.el4",
+        :arch=>"noarch",
+        :description=>nil,
+        :provider=>:yum,
+        :ensure=>"1.2.3.4-5.el4"
+      })
+    end
+  end
 end

@@ -18,6 +18,7 @@ module Puppet::Network::Resolver
       when :ca     then service = '_x-puppet-ca'
       when :report then service = '_x-puppet-report'
       when :file   then service = '_x-puppet-fileserver'
+      else              service = "_x-puppet-#{service_name.to_s}"
     end
     srv_record = "#{service}._tcp.#{domain}"
 

@@ -50,7 +50,7 @@ class Puppet::Parser::Relationship
     unless source_resource = catalog.resource(source)
       raise ArgumentError, "Could not find resource '#{source}' for relationship on '#{target}'"
     end
-    unless target_resource = catalog.resource(target)
+    unless catalog.resource(target)
       raise ArgumentError, "Could not find resource '#{target}' for relationship from '#{source}'"
     end
     Puppet.debug "Adding relationship from #{source} to #{target} with '#{param_name}'"

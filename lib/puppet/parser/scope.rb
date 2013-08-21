@@ -74,6 +74,22 @@ class Puppet::Parser::Scope
     def parent
       @parent
     end
+
+    def add_entries_to(target = {})
+      @parent.add_entries_to(target) unless @parent.nil?
+      # do not return pure ephemeral ($0-$n)
+      if is_local_scope?
+        @symbols.each do |k, v|
+          if v == :undef
+            target.delete(k)
+          else
+            target[ k ] = v
+          end
+        end
+      end
+      target
+    end
+
   end
 
   # Initialize a new scope suitable for parser function testing.  This method
@@ -182,7 +198,7 @@ class Puppet::Parser::Scope
     @tags = []
 
     # The symbol table for this scope.  This is where we store variables.
-    @symtable = Ephemeral.new
+    @symtable = Ephemeral.new(nil, true)
 
     @ephemeral = [ Ephemeral.new(@symtable) ]
 
@@ -267,7 +283,7 @@ class Puppet::Parser::Scope
   # @api public
   def lookupvar(name, options = {})
     unless name.is_a? String
-      raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
+      raise Puppet::ParseError, "Scope variable name #{name.inspect} is a #{name.class}, not a string"
     end
 
     table = @ephemeral.last
@@ -305,7 +321,7 @@ class Puppet::Parser::Scope
   # The scope of the inherited thing of this scope's resource. This could
   # either be a node that was inherited or the class.
   #
-  # @returns [Puppet::Parser::Scope] The scope or nil if there is not an inherited scope
+  # @return [Puppet::Parser::Scope] The scope or nil if there is not an inherited scope
   def inherited_scope
     if has_inherited_class?
       qualified_scope(resource.resource_type.parent)
@@ -320,7 +336,7 @@ class Puppet::Parser::Scope
   # scope in which it was included. The chain of parent scopes is followed
   # until a node scope or the topscope is found
   #
-  # @returns [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
+  # @return [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
   def enclosing_scope
     if has_enclosing_scope?
       if parent.is_topscope? or parent.is_nodescope?
@@ -347,7 +363,11 @@ class Puppet::Parser::Scope
 
   def lookup_qualified_variable(class_name, variable_name, position)
     begin
-      qualified_scope(class_name).lookupvar(variable_name, position)
+      if lookup_as_local_name?(class_name, variable_name)
+        self[variable_name]
+      else
+        qualified_scope(class_name).lookupvar(variable_name, position)
+      end
     rescue RuntimeError => e
       location = if position[:lineproc]
                    " at #{position[:lineproc].call}"
@@ -359,6 +379,21 @@ class Puppet::Parser::Scope
       warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{e.message}#{location}"
       nil
     end
+  end
+
+  # Handles the special case of looking up fully qualified variable in not yet evaluated top scope
+  # This is ok if the lookup request originated in topscope (this happens when evaluating
+  # bindings; using the top scope to provide the values for facts.
+  # @param class_name [String] the classname part of a variable name, may be special ""
+  # @param variable_name [String] the variable name without the absolute leading '::'
+  # @return [Boolean] true if the given variable name should be looked up directly in this scope
+  #
+  def lookup_as_local_name?(class_name, variable_name)
+    # not a local if name has more than one segment
+    return nil if variable_name =~ /::/
+    # partial only if the class for "" cannot be found
+    return nil unless class_name == "" && klass = find_hostclass(class_name) && class_scope(klass).nil?
+    is_topscope?
   end
 
   def has_inherited_class?
@@ -378,9 +413,10 @@ class Puppet::Parser::Scope
   end
   private :qualified_scope
 
-  # Return a hash containing our variables and their values, optionally (and
-  # by default) including the values defined in our parent.  Local values
-  # shadow parent values.
+  # Returns a Hash containing all variables and their values, optionally (and
+  # by default) including the values defined in parent. Local values
+  # shadow parent values. Ephemeral scopes for match results ($0 - $n) are not included.
+  #
   def to_hash(recursive = true)
     if recursive and parent
       target = parent.to_hash(recursive)
@@ -388,14 +424,8 @@ class Puppet::Parser::Scope
       target = Hash.new
     end
 
-    @symtable.each do |name, value|
-      if value == :undef
-        target.delete(name)
-      else
-        target[name] = value
-      end
-    end
-
+    # add all local scopes
+    @ephemeral.last.add_entries_to(target)
     target
   end
 
@@ -441,7 +471,7 @@ class Puppet::Parser::Scope
       raise Puppet::ParseError.new("Cannot assign to a numeric match result variable '$#{name}'") unless options[:ephemeral]
     end
     unless name.is_a? String
-      raise Puppet::DevError, "Scope variable name is a #{name.class}, not a string"
+      raise Puppet::ParseError, "Scope variable name #{name.inspect} is a #{name.class}, not a string"
     end
 
     table = effective_symtable options[:ephemeral]
@@ -469,7 +499,7 @@ class Puppet::Parser::Scope
   # scope's symtable. If the parameter `use_ephemeral` is true, the "top most" ephemeral "table"
   # will be returned (irrespective of it being a match scope or a local scope).
   #
-  # @param [Boolean] whether the top most ephemeral (of any kind) should be used or not
+  # @param use_ephemeral [Boolean] whether the top most ephemeral (of any kind) should be used or not
   def effective_symtable use_ephemeral
     s = @ephemeral.last
     return s if use_ephemeral
@@ -523,12 +553,7 @@ class Puppet::Parser::Scope
     if level == :all
       @ephemeral = [ Ephemeral.new(@symtable)]
     else
-      # If we ever drop 1.8.6 and lower, this should be replaced by a single
-      # pop-with-a-count - or if someone more ambitious wants to monkey-patch
-      # that feature into older rubies. --daniel 2012-07-16
-      (@ephemeral.size - level).times do
-        @ephemeral.pop
-      end
+      @ephemeral.pop(@ephemeral.size - level)
     end
   end
 

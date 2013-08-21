@@ -1,22 +1,25 @@
 require 'puppet'
 require 'sync'
 require 'getoptlong'
-require 'puppet/util/loadedfile'
+require 'puppet/util/watched_file'
 require 'puppet/util/command_line/puppet_option_parser'
-require 'puppet/settings/errors'
-require 'puppet/settings/string_setting'
-require 'puppet/settings/file_setting'
-require 'puppet/settings/directory_setting'
-require 'puppet/settings/path_setting'
-require 'puppet/settings/boolean_setting'
-require 'puppet/settings/terminus_setting'
-require 'puppet/settings/duration_setting'
-require 'puppet/settings/config_file'
-require 'puppet/settings/value_translator'
 
 # The class for handling configuration files.
 class Puppet::Settings
   include Enumerable
+
+  require 'puppet/settings/errors'
+  require 'puppet/settings/base_setting'
+  require 'puppet/settings/string_setting'
+  require 'puppet/settings/enum_setting'
+  require 'puppet/settings/file_setting'
+  require 'puppet/settings/directory_setting'
+  require 'puppet/settings/path_setting'
+  require 'puppet/settings/boolean_setting'
+  require 'puppet/settings/terminus_setting'
+  require 'puppet/settings/duration_setting'
+  require 'puppet/settings/config_file'
+  require 'puppet/settings/value_translator'
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
@@ -156,7 +159,34 @@ class Puppet::Settings
   end
   private :unsafe_clear
 
-  # This is mostly just used for testing.
+  # Clear @cache, @used and the Environment.
+  #
+  # Whenever an object is returned by Settings, a copy is stored in @cache.
+  # As long as Setting attributes that determine the content of returned
+  # objects remain unchanged, Settings can keep returning objects from @cache
+  # without re-fetching or re-generating them.
+  #
+  # Whenever a Settings attribute changes, such as @values or @preferred_run_mode,
+  # this method must be called to clear out the caches so that updated
+  # objects will be returned.
+  def flush_cache
+    @sync.synchronize do
+      unsafe_flush_cache
+    end
+  end
+
+  def unsafe_flush_cache
+    clearused
+
+    # Clear the list of environments, because they cache, at least, the module path.
+    # We *could* preferentially just clear them if the modulepath is changed,
+    # but we don't really know if, say, the vardir is changed and the modulepath
+    # is defined relative to it. We need the defined?(stuff) because of loading
+    # order issues.
+    Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
+  end
+  private :unsafe_flush_cache
+
   def clearused
     @cache.clear
     @used = []
@@ -222,7 +252,7 @@ class Puppet::Settings
   # "no-" prefix on flag/boolean options).
   #
   # @param [String] opt the command line option that we are munging
-  # @param [String, TrueClass, FalseClass] the value for the setting (as determined by the OptionParser)
+  # @param [String, TrueClass, FalseClass] val the value for the setting (as determined by the OptionParser)
   def self.clean_opt(opt, val)
     # rewrite --[no-]option to --no-option if that's what was given
     if opt =~ /\[no-\]/ and !val
@@ -455,6 +485,10 @@ class Puppet::Settings
     mode = mode.to_s.downcase.intern
     raise ValidationError, "Invalid run mode '#{mode}'" unless [:master, :agent, :user].include?(mode)
     @preferred_run_mode_name = mode
+    # Changing the run mode has far-reaching consequences. Flush any cached
+    # settings so they will be re-generated.
+    flush_cache
+    mode
   end
 
   # Return all of the parameters associated with a given section.
@@ -506,7 +540,7 @@ class Puppet::Settings
   def config_file_name
     begin
       return self[:config_file_name] if self[:config_file_name]
-    rescue SettingsError => err
+    rescue SettingsError
       # This just means that the setting wasn't explicitly set on the command line, so we will ignore it and
       #  fall through to the default name.
     end
@@ -562,7 +596,7 @@ class Puppet::Settings
     # Call any hooks we should be calling.
     settings_with_hooks.each do |setting|
       each_source(env) do |source|
-        if value = @values[source][setting.name]
+        if @values[source][setting.name]
           # We still have to use value to retrieve the value, since
           # we want the fully interpolated value, not $vardir/lib or whatever.
           # This results in extra work, but so few of the settings
@@ -593,6 +627,17 @@ class Puppet::Settings
   end
   private :apply_metadata
 
+  SETTING_TYPES = {
+      :string     => StringSetting,
+      :file       => FileSetting,
+      :directory  => DirectorySetting,
+      :path       => PathSetting,
+      :boolean    => BooleanSetting,
+      :terminus   => TerminusSetting,
+      :duration   => DurationSetting,
+      :enum       => EnumSetting,
+  }
+
   # Create a new setting.  The value is passed in because it's used to determine
   # what kind of setting we're creating, but the value itself might be either
   # a default or a value, so we can't actually assign it.
@@ -603,15 +648,7 @@ class Puppet::Settings
     hash[:section] = hash[:section].to_sym if hash[:section]
 
     if type = hash[:type]
-      unless klass = {
-          :string     => StringSetting,
-          :file       => FileSetting,
-          :directory  => DirectorySetting,
-          :path       => PathSetting,
-          :boolean    => BooleanSetting,
-          :terminus   => TerminusSetting,
-          :duration   => DurationSetting,
-      } [type]
+      unless klass = SETTING_TYPES[type]
         raise ArgumentError, "Invalid setting type '#{type}'"
       end
       hash.delete(:type)
@@ -656,7 +693,7 @@ class Puppet::Settings
     @files = []
     [main_config_file, user_config_file].each do |path|
       if FileTest.exist?(path)
-        @files << Puppet::Util::LoadedFile.new(path)
+        @files << Puppet::Util::WatchedFile.new(path)
       end
     end
     @files
@@ -753,16 +790,8 @@ class Puppet::Settings
     @sync.synchronize do # yay, thread-safe
 
       @values[type][param] = value
-      @cache.clear
+      unsafe_flush_cache
 
-      clearused
-
-      # Clear the list of environments, because they cache, at least, the module path.
-      # We *could* preferentially just clear them if the modulepath is changed,
-      # but we don't really know if, say, the vardir is changed and the modulepath
-      # is defined relative to it. We need the defined?(stuff) because of loading
-      # order issues.
-      Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
     end
 
     value
@@ -952,8 +981,15 @@ Generated on #{Time.now}.
   end
   private :find_value
 
-  # Find the correct value using our search path.  Optionally accept an environment
-  # in which to search before the other configuration sections.
+  # Find the correct value using our search path.
+  #
+  # @param param [String, Symbol] The value to look up
+  # @param environment [String, Symbol] The environment to check for the value
+  # @param bypass_interpolation [true, false] Whether to skip interpolation
+  #
+  # @return [Object] The looked up value
+  #
+  # @raise [InterpolationError]
   def value(param, environment = nil, bypass_interpolation = false)
     param = param.to_sym
     environment &&= environment.to_sym
@@ -969,8 +1005,8 @@ Generated on #{Time.now}.
     # Check the cache first.  It needs to be a per-environment
     # cache so that we don't spread values from one env
     # to another.
-    if cached = @cache[environment||"none"][param]
-      return cached
+    if @cache[environment||"none"].has_key?(param)
+      return @cache[environment||"none"][param]
     end
 
     val = uninterpolated_value(param, environment)
@@ -1183,7 +1219,7 @@ Generated on #{Time.now}.
     #
     begin
       return true if self[:config]
-    rescue InterpolationError => err
+    rescue InterpolationError
       # This means we failed to interpolate, which means that they didn't
       #  explicitly specify either :config or :confdir... so we'll fall out to
       #  the default value.

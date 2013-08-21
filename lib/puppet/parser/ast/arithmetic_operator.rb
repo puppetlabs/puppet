@@ -80,4 +80,12 @@ class Puppet::Parser::AST
       raise ArgumentError, "Invalid arithmetic operator #{@operator}" unless %w{+ - * / % << >>}.include?(@operator)
     end
   end
+
+  # Used by future parser instead of ArithmeticOperator to enable concatenation
+  class ArithmeticOperator2 < ArithmeticOperator
+    # Overrides the arithmetic operator to allow concatenation
+    def assert_concatenation_supported
+    end
+  end
+
 end

@@ -39,8 +39,47 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "can set ssl using an option" do
-        Puppet::Network::HTTP::Connection.new(host, port, false).send(:connection).should_not be_use_ssl
-        Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection).should be_use_ssl
+        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false).send(:connection).should_not be_use_ssl
+        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection).should be_use_ssl
+      end
+
+      describe "peer verification" do
+        def setup_standard_ssl_configuration
+          ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
+          FileTest.stubs(:exist?).with(ca_cert_file).returns(true)
+
+          ssl_configuration = stub('ssl_configuration', :ca_auth_file => ca_cert_file)
+          Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_configuration).returns(ssl_configuration)
+        end
+
+        def setup_standard_hostcert
+          host_cert_file = File.expand_path('/path/to/ssl/certs/host_cert.pem')
+          FileTest.stubs(:exist?).with(host_cert_file).returns(true)
+
+          Puppet[:hostcert] = host_cert_file
+        end
+
+        def setup_standard_ssl_host
+          cert = stub('cert', :content => 'real_cert')
+          key  = stub('key',  :content => 'real_key')
+          host = stub('host', :certificate => cert, :key => key, :ssl_store => stub('store'))
+
+          Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_host).returns(host)
+        end
+
+        before do
+          setup_standard_ssl_configuration
+          setup_standard_hostcert
+          setup_standard_ssl_host
+        end
+
+        it "can enable peer verification" do
+          Puppet::Network::HTTP::Connection.new(host, port, :verify_peer => true).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_PEER
+        end
+
+        it "can disable peer verification" do
+          Puppet::Network::HTTP::Connection.new(host, port, :verify_peer => false).send(:connection).verify_mode.should == OpenSSL::SSL::VERIFY_NONE
+        end
       end
 
       context "proxy and timeout settings should propagate" do
@@ -60,6 +99,10 @@ describe Puppet::Network::HTTP::Connection do
       it "should not set a proxy if the value is 'none'" do
         Puppet[:http_proxy_host] = 'none'
         subject.send(:connection).proxy_address.should be_nil
+      end
+
+      it "should raise Puppet::Error when invalid options are specified" do
+        expect { Puppet::Network::HTTP::Connection.new(host, port, :invalid_option => nil) }.to raise_error(Puppet::Error, 'Unrecognized option(s): :invalid_option')
       end
 
     end
@@ -86,7 +129,7 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       shared_examples "HTTPS setup without all certificates" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection) }
+        subject { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection) }
 
         it                { should be_use_ssl }
         its(:cert)        { should be_nil }
@@ -123,7 +166,7 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       context "with both the host and CA cert" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port, true).send(:connection) }
+        subject { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection) }
 
         before :each do
           FileTest.expects(:exist?).with(Puppet[:hostcert]).returns(true)
@@ -145,11 +188,10 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
-
   context "when methods that accept a block are called with a block" do
     let (:host) { "my_server" }
     let (:port) { 8140 }
-    let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, false) }
+    let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false) }
     let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
     before :each do
@@ -185,6 +227,7 @@ describe Puppet::Network::HTTP::Connection do
 
     let (:host) { "my_server" }
     let (:port) { 8140 }
+    let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
     let (:subject) { Puppet::Network::HTTP::Connection.new(host, port) }
 
     def a_connection_that_verifies(args)
@@ -269,11 +312,49 @@ describe Puppet::Network::HTTP::Connection do
         connection.verify_callback.call(true, context)
         connection.verify_callback.call(true, context)
         true
-      end
+      end.returns(httpok)
 
       subject.expects(:warn_if_near_expiration).with(cert, cert)
 
       subject.request(:get, stubs('request'))
     end
   end
+
+  context "when response is a redirect" do
+    let (:other_host) { "redirected" }
+    let (:other_port) { 9292 }
+    let (:other_path) { "other-path" }
+    let (:subject) { Puppet::Network::HTTP::Connection.new("my_server", 8140, :use_ssl => false) }
+    let (:httpredirection) { Net::HTTPFound.new('1.1', 302, 'Moved Temporarily') }
+    let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
+
+    before :each do
+      httpredirection['location'] = "http://#{other_host}:#{other_port}/#{other_path}"
+      httpredirection.stubs(:read_body).returns("This resource has moved")
+
+      socket = stub_everything("socket")
+      TCPSocket.stubs(:open).returns(socket)
+
+      Net::HTTP::Get.any_instance.stubs(:exec).returns("")
+      Net::HTTP::Post.any_instance.stubs(:exec).returns("")
+    end
+
+    it "should redirect to the final resource location" do
+      httpok.stubs(:read_body).returns(:body)
+      Net::HTTPResponse.stubs(:read_new).returns(httpredirection).then.returns(httpok)
+
+      subject.get("/foo").body.should == :body
+      subject.port.should == other_port
+      subject.address.should == other_host
+    end
+
+    it "should raise an error after too many redirections" do
+      Net::HTTPResponse.stubs(:read_new).returns(httpredirection)
+
+      expect {
+        subject.get("/foo")
+      }.to raise_error(Puppet::Network::HTTP::RedirectionLimitExceededException)
+    end
+  end
+
 end

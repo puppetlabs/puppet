@@ -70,7 +70,7 @@ module Puppet
         ";"
       end
 
-      # Retrieves the key-hash from the provider by invoking it's method named the same as this property.
+      # Retrieves the key-hash from the provider by invoking its method named the same as this property.
       # @return [Hash] the hash from the provider, or `:absent`
       #
       def retrieve

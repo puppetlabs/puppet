@@ -497,6 +497,22 @@ describe Puppet::Util do
       # ...and check the replacement was complete.
       File.read(target.path).should == "hello, world\n"
     end
+
+    {:string => '664', :number => 0664, :symbolic => "ug=rw-,o=r--" }.each do |label,mode|
+      it "should support #{label} format permissions" do
+        new_target = target.path + "#{mode}.foo"
+        File.should_not be_exist(new_target)
+
+        begin
+          subject.replace_file(new_target, mode) {|fh| fh.puts "this is an interesting content" }
+
+          get_mode(new_target).should == 0664
+        ensure
+          File.unlink(new_target) if File.exists?(new_target)
+        end
+      end
+    end
+
   end
 
   describe "#pretty_backtrace" do

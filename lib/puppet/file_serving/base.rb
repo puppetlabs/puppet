@@ -15,7 +15,7 @@ class Puppet::FileServing::Base
   def exist?
       stat
       return true
-  rescue => detail
+  rescue
       return false
   end
 

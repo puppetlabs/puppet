@@ -45,7 +45,6 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     checkforcdrom
     cmd = %w{-q -y}
 
-    keep = ""
     if config = @resource[:configfiles]
       if config == :keep
         cmd << "-o" << 'DPkg::Options::=--force-confold'

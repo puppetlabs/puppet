@@ -43,6 +43,10 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     excludes += %w{wait-for-state portmap-wait}
     # these excludes were found with grep -r -L start /etc/init.d
     excludes += %w{rcS module-init-tools}
+    # Prevent puppet failing to get status of the new service introduced
+    # by the fix for this (bug https://bugs.launchpad.net/ubuntu/+source/lightdm/+bug/982889)
+    # due to puppet's inability to deal with upstart services with instances.
+    excludes += %w{plymouth-ready}
   end
 
   # List all services of this type.
@@ -106,33 +110,23 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   end
 
   def search(name)
-    paths.each { |path|
+    paths.each do |path|
       fqname = File.join(path,name)
-      begin
-        stat = File.stat(fqname)
-      rescue
-        # should probably rescue specific errors...
+      if File.exist? fqname
+        return fqname
+      else
         self.debug("Could not find #{name} in #{path}")
-        next
       end
+    end
 
-      # if we've gotten this far, we found a valid script
-      return fqname
-    }
-
-    paths.each { |path|
+    paths.each do |path|
       fqname_sh = File.join(path,"#{name}.sh")
-      begin
-        stat = File.stat(fqname_sh)
-      rescue
-        # should probably rescue specific errors...
+      if File.exist? fqname_sh
+        return fqname_sh
+      else
         self.debug("Could not find #{name}.sh in #{path}")
-        next
       end
-
-      # if we've gotten this far, we found a valid script
-      return fqname_sh
-    }
+    end
     raise Puppet::Error, "Could not find init script for '#{name}'"
   end
 

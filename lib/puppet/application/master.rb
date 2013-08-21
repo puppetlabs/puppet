@@ -1,4 +1,6 @@
 require 'puppet/application'
+require 'puppet/daemon'
+require 'puppet/util/pidlock'
 
 class Puppet::Application::Master < Puppet::Application
 
@@ -152,10 +154,8 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
       exit(0)
     end
 
-    # Create this first-off, so we have ARGV
-    require 'puppet/daemon'
-    @daemon = Puppet::Daemon.new
-    @daemon.argv = ARGV.dup
+    # save ARGV to protect us from it being smashed later by something
+    @argv = ARGV.dup
   end
 
   def run_command
@@ -183,7 +183,6 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     require 'etc'
-
     # Make sure we've got a localhost ssl cert
     Puppet::SSL::Host.localhost
 
@@ -200,21 +199,10 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
     end
 
-    unless options[:rack]
-      require 'puppet/network/server'
-      @daemon.server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:masterport])
-      @daemon.daemonize if Puppet[:daemonize]
+    if options[:rack]
+      start_rack_master
     else
-      require 'puppet/network/http/rack'
-      @app = Puppet::Network::HTTP::Rack.new()
-    end
-
-    Puppet.notice "Starting Puppet master version #{Puppet.version}"
-
-    unless options[:rack]
-      @daemon.start
-    else
-      return @app
+      start_webrick_master
     end
   end
 
@@ -281,5 +269,39 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
     setup_node_cache
 
     setup_ssl
+  end
+
+  private
+
+  # Start a master that will be using WeBrick.
+  #
+  # This method will block until the master exits.
+  def start_webrick_master
+    require 'puppet/network/server'
+    daemon = Puppet::Daemon.new(Puppet::Util::Pidlock.new(Puppet[:pidfile]))
+
+    daemon.argv = @argv
+    daemon.server = Puppet::Network::Server.new(Puppet[:bindaddress], Puppet[:masterport])
+    daemon.daemonize if Puppet[:daemonize]
+
+    announce_start_of_master
+
+    daemon.start
+  end
+
+  # Start a master that will be used for a Rack container.
+  #
+  # This method immediately returns the Rack handler that must be returned to
+  # the calling Rack container
+  def start_rack_master
+    require 'puppet/network/http/rack'
+
+    announce_start_of_master
+
+    return Puppet::Network::HTTP::Rack.new()
+  end
+
+  def announce_start_of_master
+    Puppet.notice "Starting Puppet master version #{Puppet.version}"
   end
 end

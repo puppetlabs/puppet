@@ -10,6 +10,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   confine :operatingsystem => :openbsd
 
   has_feature :versionable
+  has_feature :install_options
+  has_feature :uninstall_options
 
   def self.instances
     packages = []
@@ -17,7 +19,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     begin
       execpipe(listcmd) do |process|
         # our regex for matching pkg_info output
-        regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
+        regex = /^(.*)-(\d[^-]*)[-]?(\w*)(.*)$/
         fields = [:name, :ensure, :flavor ]
         hash = {}
 
@@ -27,8 +29,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
             fields.zip(match.captures) { |field,value|
               hash[field] = value
             }
-            yup = nil
-            name = hash[:name]
 
             hash[:provider] = self.name
 
@@ -52,15 +52,18 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     [command(:pkginfo), "-a"]
   end
 
-  def install
-    should = @resource.should(:ensure)
-
+  def parse_pkgconf
     unless @resource[:source]
       if File.exist?("/etc/pkg.conf")
         File.open("/etc/pkg.conf", "rb").readlines.each do |line|
           if matchdata = line.match(/^installpath\s*=\s*(.+)\s*$/i)
             @resource[:source] = matchdata[1]
-            break
+          elsif matchdata = line.match(/^installpath\s*\+=\s*(.+)\s*$/i)
+            if @resource[:source].nil?
+              @resource[:source] = matchdata[1]
+            else
+              @resource[:source] += ":" + matchdata[1]
+            end
           end
         end
 
@@ -73,6 +76,12 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         "You must specify a package source or configure an installpath in /etc/pkg.conf"
       end
     end
+  end
+
+  def install
+    cmd = []
+
+    parse_pkgconf
 
     if @resource[:source][-1,1] == ::File::SEPARATOR
       e_vars = { 'PKG_PATH' => @resource[:source] }
@@ -82,14 +91,16 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       full_name = @resource[:source]
     end
 
-     Puppet::Util.withenv(e_vars) { pkgadd full_name }
+    cmd << install_options
+    cmd << full_name
+
+    Puppet::Util.withenv(e_vars) { pkgadd cmd.flatten.compact.join(' ') }
   end
 
   def get_version
     execpipe([command(:pkginfo), "-I", @resource[:name]]) do |process|
       # our regex for matching pkg_info output
       regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
-      fields = [ :name, :version, :flavor ]
       master_version = 0
       version = -1
 
@@ -120,7 +131,43 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     end
   end
 
+  def install_options
+    join_options(resource[:install_options])
+  end
+
+  def uninstall_options
+    join_options(resource[:uninstall_options])
+  end
+
+  # Turns a array of options into flags to be passed to pkg_add(8) and
+  # pkg_delete(8). The options can be passed as a string or hash. Note
+  # that passing a hash should only be used in case -Dfoo=bar must be passed,
+  # which can be accomplished with:
+  #     install_options => [ { '-Dfoo' => 'bar' } ]
+  # Regular flags like '-L' must be passed as a string.
+  # @param options [Array]
+  # @return Concatenated list of options
+  # @api private
+  def join_options(options)
+    return unless options
+
+    options.collect do |val|
+      case val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k}=#{val[k]}"
+        end.join(' ')
+      else
+        val
+      end
+    end
+  end
+
   def uninstall
-    pkgdelete @resource[:name]
+    pkgdelete uninstall_options.flatten.compact.join(' '), @resource[:name]
+  end
+
+  def purge
+    pkgdelete "-c", "-q", @resource[:name]
   end
 end

@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+require 'puppet'
 require 'puppet/transaction/report'
 
 describe Puppet::Transaction::Report do
@@ -32,10 +33,20 @@ describe Puppet::Transaction::Report do
     Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").configuration_version.should == "some configuration version"
   end
 
+  it "should take a 'transaction_uuid' as an argument" do
+    Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment", "some transaction uuid").transaction_uuid.should == "some transaction uuid"
+  end
+
   it "should be able to set configuration_version" do
     report = Puppet::Transaction::Report.new("inspect")
     report.configuration_version = "some version"
     report.configuration_version.should == "some version"
+  end
+
+  it "should be able to set transaction_uuid" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.transaction_uuid = "some transaction uuid"
+    report.transaction_uuid.should == "some transaction uuid"
   end
 
   it "should take 'environment' as an argument" do
@@ -79,6 +90,18 @@ describe Puppet::Transaction::Report do
     it "should return self" do
       r = @report << "log"
       r.should equal(@report)
+    end
+  end
+
+  describe "#as_logging_destination" do
+    it "makes the report collect logs during the block " do
+      log_string = 'Hello test report!'
+      report = Puppet::Transaction::Report.new('test')
+      report.as_logging_destination do
+        Puppet.err(log_string)
+      end
+
+      expect(report.logs.collect(&:message)).to include(log_string)
     end
   end
 
@@ -350,5 +373,48 @@ describe Puppet::Transaction::Report do
       report.add_times('config_retrieval', 1.0)
       report.to_yaml_properties.should_not include('@external_times')
     end
+  end
+
+  it "can make a round trip through pson" do
+    status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
+    status.changed = true
+
+    report = Puppet::Transaction::Report.new('testy', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
+    report.add_times("timing", 4)
+    report.add_resource_status(status)
+    report.finalize_report
+
+    tripped = Puppet::Transaction::Report.convert_from(:pson, report.render(:pson))
+
+    tripped.host.should == report.host
+    tripped.time.should == report.time
+    tripped.configuration_version.should == report.configuration_version
+    tripped.transaction_uuid.should == report.transaction_uuid
+    tripped.report_format.should == report.report_format
+    tripped.puppet_version.should == report.puppet_version
+    tripped.kind.should == report.kind
+    tripped.status.should == report.status
+    tripped.environment.should == report.environment
+
+    logs_as_strings(tripped).should == logs_as_strings(report)
+    metrics_as_hashes(tripped).should == metrics_as_hashes(report)
+    resource_statuses_as_hashes(tripped).should == resource_statuses_as_hashes(report)
+  end
+
+  def logs_as_strings(report)
+    report.logs.map(&:to_report)
+  end
+
+  def metrics_as_hashes(report)
+    Hash[*report.metrics.collect do |name, m|
+      [name, { :name => m.name, :label => m.label, :value => m.value }]
+    end.flatten]
+  end
+
+  def resource_statuses_as_hashes(report)
+    Hash[*report.resource_statuses.collect do |name, s|
+      [name, PSON.parse(s.to_pson)]
+    end.flatten]
   end
 end

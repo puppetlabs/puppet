@@ -67,8 +67,8 @@ describe Puppet::Face[:node, '0.0.1'] do
 
     it "should accept the option --unexport" do
       expect {
-        subject.help('hostname', :unexport => true)
-      }.to_not raise_error(ArgumentError)
+        subject.clean('hostname', :unexport => true)
+      }.to_not raise_error
     end
 
     context "clean action" do

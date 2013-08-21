@@ -1,3 +1,5 @@
+require 'puppet/parameter/boolean'
+
 Puppet::Type.newtype(:tidy) do
   require 'puppet/file_serving/fileset'
   require 'puppet/file_bucket/dipper'
@@ -185,13 +187,11 @@ Puppet::Type.newtype(:tidy) do
     defaultto :atime
   end
 
-  newparam(:rmdirs, :boolean => true) do
+  newparam(:rmdirs, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Tidy directories in addition to files; that is, remove
       directories whose age is older than the specified criteria.
       This will only remove empty directories, so all contained
       files must also be tidied before a directory gets removed."
-
-    newvalues :true, :false
   end
 
   # Erase PFile's validate method

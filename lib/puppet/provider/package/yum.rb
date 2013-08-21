@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    output = yum "-d", "0", "-e", "0", "-y", operation, wanted
+    yum "-d", "0", "-e", "0", "-y", operation, wanted
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is

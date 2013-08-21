@@ -15,17 +15,17 @@ describe augeas do
   end
 
   describe "basic structure" do
-    it "should be able to create a instance" do
+    it "should be able to create an instance" do
       provider_class = Puppet::Type::Augeas.provider(Puppet::Type::Augeas.providers[0])
       Puppet::Type::Augeas.expects(:defaultprovider).returns provider_class
       augeas.new(:name => "bar").should_not be_nil
     end
 
-    it "should have an parse_commands feature" do
+    it "should have a parse_commands feature" do
       augeas.provider_feature(:parse_commands).should_not be_nil
     end
 
-    it "should have an need_to_run? feature" do
+    it "should have a need_to_run? feature" do
       augeas.provider_feature(:need_to_run?).should_not be_nil
     end
 

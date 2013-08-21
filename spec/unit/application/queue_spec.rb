@@ -8,7 +8,6 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
   before :each do
     @queue = Puppet::Application[:queue]
     @queue.stubs(:puts)
-    @daemon = stub_everything 'daemon'
     Puppet::Util::Log.stubs(:newdestination)
 
     Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
@@ -40,14 +39,6 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
 
       @queue.options[:debug].should be_false
     end
-
-    it "should create a Daemon instance and copy ARGV to it" do
-      ARGV.expects(:dup).returns "eh"
-      daemon = mock("daemon")
-      daemon.expects(:argv=).with("eh")
-      Puppet::Daemon.expects(:new).returns daemon
-      @queue.preinit
-    end
   end
 
   describe "when handling options" do
@@ -65,10 +56,13 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
   end
 
   describe "during setup" do
+    let(:daemon) { stub("Daemon", :daemonize => nil, :argv= => []) }
+
     before :each do
+      Puppet::Daemon.stubs(:new).returns(daemon)
+
       @queue.preinit
       @queue.options.stubs(:[])
-      @queue.daemon.stubs(:daemonize)
       Puppet.stubs(:info)
       Puppet.features.stubs(:stomp?).returns true
       Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
@@ -79,7 +73,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
 
     it "should fail if the stomp feature is missing" do
       Puppet.features.expects(:stomp?).returns false
-      lambda { @queue.setup }.should raise_error(ArgumentError)
+      expect { @queue.setup }.to raise_error(ArgumentError)
     end
 
     it "should issue a warning that queue is deprecated" do
@@ -139,7 +133,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
     it "should daemonize if needed" do
       Puppet[:daemonize] = true
 
-      @queue.daemon.expects(:daemonize)
+      daemon.expects(:daemonize)
 
       @queue.setup
     end

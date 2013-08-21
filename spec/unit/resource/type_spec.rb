@@ -80,7 +80,7 @@ describe Puppet::Resource::Type do
       lambda { Puppet::Resource::Type.new(:node, /foo/) }.should_not raise_error
     end
 
-    it "should allow a AST::HostName instance as its name" do
+    it "should allow an AST::HostName instance as its name" do
       regex = Puppet::Parser::AST::Regex.new(:value => /foo/)
       name = Puppet::Parser::AST::HostName.new(:value => regex)
       lambda { Puppet::Resource::Type.new(:node, name) }.should_not raise_error
@@ -128,6 +128,10 @@ describe Puppet::Resource::Type do
 
       it "should have a method for matching its regex name against a provided name" do
         Puppet::Resource::Type.new(:node, /.ww/).should respond_to(:match)
+      end
+
+      it "should return true when its regex matches the provided name" do
+        Puppet::Resource::Type.new(:node, /\w/).match("foo").should be_true
       end
 
       it "should return true when its regex matches the provided name" do
@@ -396,13 +400,29 @@ describe Puppet::Resource::Type do
       @resource.environment.known_resource_types.add @type
     end
 
-    it "should add hostclass names to the classes list" do
+    it "should add node regex captures to its scope" do
+      @type = Puppet::Resource::Type.new(:node, /f(\w)o(.*)$/)
+      match = @type.match('foo')
+
+      code = stub 'code'
+      @type.stubs(:code).returns code
+
+      subscope = stub 'subscope', :compiler => @compiler
+      @scope.expects(:newscope).with(:source => @type, :namespace => '', :resource => @resource).returns subscope
+
+      elevel = 876
+      subscope.expects(:ephemeral_level).returns elevel
+      subscope.expects(:ephemeral_from).with(match, nil, nil).returns subscope
+      code.expects(:safeevaluate).with(subscope)
+      subscope.expects(:unset_ephemeral_var).with(elevel)
+
+      # Just to keep the stub quiet about intermediate calls
+      @type.expects(:set_resource_parameters).with(@resource, subscope)
+
       @type.evaluate_code(@resource)
-      @compiler.catalog.classes.should be_include("foo")
     end
 
-    it "should add node names to the classes list" do
-      @type = Puppet::Resource::Type.new(:node, "foo")
+    it "should add hostclass names to the classes list" do
       @type.evaluate_code(@resource)
       @compiler.catalog.classes.should be_include("foo")
     end

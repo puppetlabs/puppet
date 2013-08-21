@@ -19,24 +19,29 @@ end
 describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
+  class RecordingScheduler
+    attr_reader :jobs
+
+    def run_loop(jobs)
+      @jobs = jobs
+    end
+  end
+
+  let(:server) { stub("Server", :start => nil, :wait_for_shutdown => nil) }
+  let(:agent) { Puppet::Agent.new(TestClient.new, false) }
+
+  let(:pidfile) { stub("PidFile", :lock => true, :unlock => true, :file_path => 'fake.pid') }
+  let(:scheduler) { RecordingScheduler.new }
+
+  let(:daemon) { Puppet::Daemon.new(pidfile, scheduler) }
+
   before do
-    # Forking agent not needed here
-    @agent = Puppet::Agent.new(TestClient.new, false)
-    @daemon = Puppet::Daemon.new
-    @daemon.stubs(:close_streams).returns nil
-  end
-
-  it "should be able to manage an agent" do
-    @daemon.should respond_to(:agent)
-  end
-
-  it "should be able to manage a network server" do
-    @daemon.should respond_to(:server)
+    daemon.stubs(:close_streams).returns nil
   end
 
   it "should reopen the Log logs when told to reopen logs" do
     Puppet::Util::Log.expects(:reopen)
-    @daemon.reopen_logs
+    daemon.reopen_logs
   end
 
   let(:server) { stub("Server", :start => nil, :wait_for_shutdown => nil) }
@@ -50,52 +55,81 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
         Puppet.expects(:notice)
 
-        @daemon.expects(method)
+        daemon.expects(method)
 
-        @daemon.set_signal_traps
+        daemon.set_signal_traps
       end
     end
   end
 
   describe "when starting" do
     before do
-      @daemon.stubs(:create_pidfile)
-      @daemon.stubs(:set_signal_traps)
-      @daemon.stubs(:run_event_loop)
+      daemon.stubs(:set_signal_traps)
     end
 
     it "should fail if it has neither agent nor server" do
-      lambda { @daemon.start }.should raise_error(Puppet::DevError)
+      expect { daemon.start }.to raise_error(Puppet::DevError)
     end
 
     it "should create its pidfile" do
-      @daemon.agent = @agent
+      pidfile.expects(:lock).returns(true)
 
-      @daemon.expects(:create_pidfile)
-      @daemon.start
+      daemon.agent = agent
+      daemon.start
+    end
+
+    it "should fail if it cannot lock" do
+      pidfile.expects(:lock).returns(false)
+      daemon.agent = agent
+
+      expect { daemon.start }.to raise_error(RuntimeError, "Could not create PID file: #{pidfile.file_path}")
     end
 
     it "should start its server if one is configured" do
-      @daemon.server = server
+      daemon.server = server
 
       server.expects(:start)
-      @daemon.stubs(:server).returns server
 
-      @daemon.start
+      daemon.start
+    end
+
+    it "disables the reparse of configs if the filetimeout is 0" do
+      Puppet[:filetimeout] = 0
+      daemon.agent = agent
+
+      daemon.start
+
+      scheduler.jobs[0].should_not be_enabled
+    end
+
+    it "disables the agent run when there is no agent" do
+      Puppet[:filetimeout] = 0
+      daemon.server = server
+
+      daemon.start
+
+      scheduler.jobs[1].should_not be_enabled
     end
 
     it "waits for the server to shutdown when there is one" do
-      @daemon.server = server
+      daemon.server = server
 
       server.expects(:wait_for_shutdown)
 
-      @daemon.start
+      daemon.start
+    end
+
+    it "waits for the server to shutdown when there is one" do
+      daemon.server = server
+
+      server.expects(:wait_for_shutdown)
+
+      daemon.start
     end
   end
 
   describe "when stopping" do
     before do
-      @daemon.stubs(:remove_pidfile)
       Puppet::Util::Log.stubs(:close_all)
       # to make the global safe to mock, set it to a subclass of itself,
       # then restore it in an after pass
@@ -109,115 +143,57 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
     it "should stop its server if one is configured" do
       server.expects(:stop)
-      @daemon.stubs(:server).returns server
-      expect { @daemon.stop }.to exit_with 0
+
+      daemon.server = server
+
+      expect { daemon.stop }.to exit_with 0
     end
 
     it 'should request a stop from Puppet::Application' do
       Puppet::Application.expects(:stop!)
-      expect { @daemon.stop }.to exit_with 0
+      expect { daemon.stop }.to exit_with 0
     end
 
     it "should remove its pidfile" do
-      @daemon.expects(:remove_pidfile)
-      expect { @daemon.stop }.to exit_with 0
+      pidfile.expects(:unlock)
+
+      expect { daemon.stop }.to exit_with 0
     end
 
     it "should close all logs" do
       Puppet::Util::Log.expects(:close_all)
-      expect { @daemon.stop }.to exit_with 0
+      expect { daemon.stop }.to exit_with 0
     end
 
     it "should exit unless called with ':exit => false'" do
-      expect { @daemon.stop }.to exit_with 0
+      expect { daemon.stop }.to exit_with 0
     end
 
     it "should not exit if called with ':exit => false'" do
-      @daemon.stop :exit => false
-    end
-  end
-
-  describe "when creating its pidfile" do
-    it "should use an exclusive mutex" do
-      Puppet.run_mode.expects(:name).returns "me"
-      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
-      @daemon.create_pidfile
-    end
-
-    it "should lock the pidfile using the Pidlock class" do
-      pidfile = mock 'pidfile'
-
-      Puppet.run_mode.expects(:name).returns "eh"
-      Puppet[:pidfile] = make_absolute("/my/file")
-
-      Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
-
-      pidfile.expects(:lock).returns true
-      @daemon.create_pidfile
-    end
-
-    it "should fail if it cannot lock" do
-      pidfile = mock 'pidfile'
-
-      Puppet.run_mode.expects(:name).returns "eh"
-      Puppet[:pidfile] = make_absolute("/my/file")
-
-      Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
-
-      pidfile.expects(:lock).returns false
-
-      lambda { @daemon.create_pidfile }.should raise_error
-    end
-  end
-
-  describe "when removing its pidfile" do
-    it "should use an exclusive mutex" do
-      Puppet.run_mode.expects(:name).returns "me"
-
-      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
-
-      @daemon.remove_pidfile
-    end
-
-    it "should do nothing if the pidfile is not present" do
-      pidfile = mock 'pidfile', :unlock => false
-
-      Puppet[:pidfile] = make_absolute("/my/file")
-      Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
-
-      @daemon.remove_pidfile
-    end
-
-    it "should unlock the pidfile using the Pidlock class" do
-      pidfile = mock 'pidfile', :unlock => true
-
-      Puppet[:pidfile] = make_absolute("/my/file")
-      Puppet::Util::Pidlock.expects(:new).with(make_absolute("/my/file")).returns pidfile
-
-      @daemon.remove_pidfile
+      daemon.stop :exit => false
     end
   end
 
   describe "when reloading" do
     it "should do nothing if no agent is configured" do
-      @daemon.reload
+      daemon.reload
     end
 
     it "should do nothing if the agent is running" do
-      @agent.expects(:running?).returns true
+      agent.expects(:running?).returns true
 
-      @daemon.agent = @agent
+      daemon.agent = agent
 
-      @daemon.reload
+      daemon.reload
     end
 
     it "should run the agent if one is available and it is not running" do
-      @agent.expects(:running?).returns false
-      @agent.expects(:run).with({:splay => false})
+      agent.expects(:running?).returns false
+      agent.expects(:run).with({:splay => false})
 
-      @daemon.agent = @agent
+      daemon.agent = agent
 
-      @daemon.reload
+      daemon.reload
     end
   end
 
@@ -232,48 +208,48 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
 
     it 'should set Puppet::Application.restart!' do
       Puppet::Application.expects(:restart!)
-      @daemon.stubs(:reexec)
-      @daemon.restart
+      daemon.stubs(:reexec)
+      daemon.restart
     end
 
     it "should reexec itself if no agent is available" do
-      @daemon.expects(:reexec)
+      daemon.expects(:reexec)
 
-      @daemon.restart
+      daemon.restart
     end
 
     it "should reexec itself if the agent is not running" do
-      @agent.expects(:running?).returns false
-      @daemon.agent = @agent
-      @daemon.expects(:reexec)
+      agent.expects(:running?).returns false
+      daemon.agent = agent
+      daemon.expects(:reexec)
 
-      @daemon.restart
+      daemon.restart
     end
   end
 
   describe "when reexecing it self" do
     before do
-      @daemon.stubs(:exec)
-      @daemon.stubs(:stop)
+      daemon.stubs(:exec)
+      daemon.stubs(:stop)
     end
 
     it "should fail if no argv values are available" do
-      @daemon.expects(:argv).returns nil
-      lambda { @daemon.reexec }.should raise_error(Puppet::DevError)
+      daemon.expects(:argv).returns nil
+      lambda { daemon.reexec }.should raise_error(Puppet::DevError)
     end
 
     it "should shut down without exiting" do
-      @daemon.argv = %w{foo}
-      @daemon.expects(:stop).with(:exit => false)
+      daemon.argv = %w{foo}
+      daemon.expects(:stop).with(:exit => false)
 
-      @daemon.reexec
+      daemon.reexec
     end
 
     it "should call 'exec' with the original executable and arguments" do
-      @daemon.argv = %w{foo}
-      @daemon.expects(:exec).with($0 + " foo")
+      daemon.argv = %w{foo}
+      daemon.expects(:exec).with($0 + " foo")
 
-      @daemon.reexec
+      daemon.reexec
     end
   end
 end

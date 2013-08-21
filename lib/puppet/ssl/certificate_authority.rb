@@ -84,7 +84,10 @@ class Puppet::SSL::CertificateAuthority
     store = autosign_store(auto) if auto != true
 
     Puppet::SSL::CertificateRequest.indirection.search("*").each do |csr|
-      sign(csr.name) if auto == true or store.allowed?(csr.name, "127.1.1.1")
+      if auto == true or store.allowed?(csr.name, "127.1.1.1")
+        Puppet.info "Autosigning #{csr.name}"
+        sign(csr.name)
+      end
     end
   end
 
@@ -128,16 +131,18 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # Generate a new certificate.
+  # @return Puppet::SSL::Certificate
   def generate(name, options = {})
     raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.indirection.find(name)
-    host = Puppet::SSL::Host.new(name)
 
     # Pass on any requested subjectAltName field.
     san = options[:dns_alt_names]
 
     host = Puppet::SSL::Host.new(name)
     host.generate_certificate_request(:dns_alt_names => san)
-    sign(name, !!san)
+    # CSR may have been implicitly autosigned, generating a certificate
+    # Or sign explicitly
+    host.certificate || sign(name, !!san)
   end
 
   # Generate our CA certificate.
@@ -192,9 +197,26 @@ class Puppet::SSL::CertificateAuthority
     pass
   end
 
-  # List all signed certificates.
+  # Lists the names of all signed certificates.
+  #
+  # @return [Array<String>]
   def list
-    Puppet::SSL::Certificate.indirection.search("*").collect { |c| c.name }
+    list_certificates.collect { |c| c.name }
+  end
+
+  # Return all the certificate objects as found by the indirector
+  # API for PE license checking.
+  #
+  # Created to prevent the case of reading all certs from disk, getting
+  # just their names and verifying the cert for each name, which then
+  # causes the cert to again be read from disk.
+  #
+  # @author Jeff Weiss <jeff.weiss@puppetlabs.com>
+  # @api Puppet Enterprise Licensing
+  #
+  # @return [Array<Puppet::SSL::Certificate>]
+  def list_certificates
+    Puppet::SSL::Certificate.indirection.search("*")
   end
 
   # Read the next serial from the serial file, and increment the
@@ -354,16 +376,87 @@ class Puppet::SSL::CertificateAuthority
     return true                 # good enough for us!
   end
 
-  # Verify a given host's certificate.
-  def verify(name)
-    unless cert = Puppet::SSL::Certificate.indirection.find(name)
-      raise ArgumentError, "Could not find a certificate for #{name}"
+  # Utility method for optionally caching the X509 Store for verifying a
+  # large number of certificates in a short amount of time--exactly the
+  # case we have during PE license checking.
+  #
+  # @example Use the cached X509 store
+  #   x509store(:cache => true)
+  #
+  # @example Use a freshly create X509 store
+  #   x509store
+  #   x509store(:cache => false)
+  #
+  # @param [Hash] options the options used for retrieving the X509 Store
+  # @option options [Boolean] :cache whether or not to use a cached version
+  #   of the X509 Store
+  #
+  # @return [OpenSSL::X509::Store]
+  def x509_store(options = {})
+    if (options[:cache]) 
+      return @x509store unless @x509store.nil?
+      @x509store = create_x509_store
+    else
+      create_x509_store
     end
+  end
+  private :x509_store
+
+  # Creates a brand new OpenSSL::X509::Store with the appropriate
+  # Certificate Revocation List and flags
+  #
+  # @return [OpenSSL::X509::Store]
+  def create_x509_store
     store = OpenSSL::X509::Store.new
     store.add_file Puppet[:cacert]
     store.add_crl crl.content if self.crl
     store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
     store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
+    store
+  end
+  private :create_x509_store
+
+  # Utility method which is API for PE license checking.
+  # This is used rather than `verify` because 
+  #  1) We have already read the certificate from disk into memory.
+  #     To read the certificate from disk again is just wasteful.
+  #  2) Because we're checking a large number of certificates against
+  #     a transient CertificateAuthority, we can relatively safely cache
+  #     the X509 Store that actually does the verification.
+  #
+  # Long running instances of CertificateAuthority will certainly
+  # want to use `verify` because it will recreate the X509 Store with
+  # the absolutely latest CRL.
+  #
+  # Additionally, this method explicitly returns a boolean whereas
+  # `verify` will raise an error if the certificate has been revoked.
+  #
+  # @author Jeff Weiss <jeff.weiss@puppetlabs.com>
+  # @api Puppet Enterprise Licensing
+  #
+  # @param cert [Puppet::SSL::Certificate] the certificate to check validity of
+  #
+  # @return [Boolean] true if signed, false if unsigned or revoked
+  def certificate_is_alive?(cert)
+    x509_store(:cache => true).verify(cert.content)
+  end
+
+  # Verify a given host's certificate. The certname is passed in, and
+  # the indirector will be used to locate the actual contents of the
+  # certificate with that name.
+  #
+  # @param name [String] certificate name to verify
+  #
+  # @raise [ArgumentError] if the certificate name cannot be found
+  #   (i.e. doesn't exist or is unsigned)
+  # @raise [CertificateVerficationError] if the certificate has been revoked
+  #
+  # @return [Boolean] true if signed, there are no cases where false is returned
+  def verify(name)
+    unless cert = Puppet::SSL::Certificate.indirection.find(name)
+      raise ArgumentError, "Could not find a certificate for #{name}"
+    end
+    store = x509_store
 
     raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
   end

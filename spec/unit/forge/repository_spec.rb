@@ -11,39 +11,19 @@ describe Puppet::Forge::Repository do
   let(:ssl_repository) { Puppet::Forge::Repository.new('https://fake.com', consumer_version) }
 
   it "retrieve accesses the cache" do
-    uri = URI.parse('http://some.url.com')
-    repository.cache.expects(:retrieve).with(uri)
+    path = '/module/foo.tar.gz'
+    repository.cache.expects(:retrieve)
 
-    repository.retrieve(uri)
+    repository.retrieve(path)
   end
 
-  describe 'http_proxy support' do
-    after :each do
-      ENV["http_proxy"] = nil
-    end
+  it "retrieve merges forge URI and path specified" do
+    path = '/module/foo.tar.gz'
+    repo_uri = 'http://fake.com/test'
+    repository = Puppet::Forge::Repository.new(repo_uri, consumer_version)
+    repository.cache.expects(:retrieve).with(URI.parse(repo_uri+path))
 
-    it "supports environment variable for port and host" do
-      ENV["http_proxy"] = "http://test.com:8011"
-
-      repository.http_proxy_host.should == "test.com"
-      repository.http_proxy_port.should == 8011
-    end
-
-    it "supports puppet configuration for port and host" do
-      ENV["http_proxy"] = nil
-      proxy_settings_of('test.com', 7456)
-
-      repository.http_proxy_port.should == 7456
-      repository.http_proxy_host.should == "test.com"
-    end
-
-    it "uses environment variable before puppet settings" do
-      ENV["http_proxy"] = "http://test1.com:8011"
-      proxy_settings_of('test2.com', 7456)
-
-      repository.http_proxy_host.should == "test1.com"
-      repository.http_proxy_port.should == 8011
-    end
+    repository.retrieve(path)
   end
 
   describe "making a request" do

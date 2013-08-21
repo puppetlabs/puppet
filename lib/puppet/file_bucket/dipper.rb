@@ -77,7 +77,6 @@ class Puppet::FileBucket::Dipper
 
     if restore
       if newcontents = getfile(sum)
-        tmp = ""
         newsum = Digest::MD5.hexdigest(newcontents)
         changed = nil
         if FileTest.exists?(file) and ! FileTest.writable?(file)

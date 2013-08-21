@@ -55,3 +55,11 @@ describe Puppet::Provider::Naginator do
     @class.should_not be_skip_record("foo")
   end
 end
+
+describe Nagios::Base do
+  it "should not turn set parameters into arrays #17871" do
+    obj = Nagios::Base.create('host')
+    obj.host_name = "my_hostname"
+    obj.host_name.should == "my_hostname"
+  end
+end
