@@ -90,7 +90,13 @@ class Puppet::Node::Facts
       'values' => strip_internal,
     }
 
-    result['timestamp'] = timestamp if timestamp
+    if timestamp
+      if timestamp.is_a? Time
+        result['timestamp'] = timestamp.iso8601(9)
+      else
+        result['timestamp'] = timestamp
+      end
+    end
     result['expiration'] = expiration if expiration
 
     result.to_pson(*args)
