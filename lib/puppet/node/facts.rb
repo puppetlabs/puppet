@@ -97,7 +97,14 @@ class Puppet::Node::Facts
         result['timestamp'] = timestamp
       end
     end
-    result['expiration'] = expiration if expiration
+
+    if expiration
+      if expiration.is_a? Time
+        result['expiration'] = expiration.iso8601(9)
+      else
+        result['expiration'] = expiration
+      end
+    end
 
     result
   end
@@ -119,14 +126,14 @@ class Puppet::Node::Facts
     self.values['_timestamp']
   end
 
-  private
-
   # Strip out that internal data.
   def strip_internal
     newvals = values.dup
     newvals.find_all { |name, value| name.to_s =~ /^_/ }.each { |name, value| newvals.delete(name) }
     newvals
   end
+
+  private
 
   def sanitize_fact(fact)
     if fact.is_a? Hash then

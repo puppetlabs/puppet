@@ -1,10 +1,12 @@
 require 'time'
+require 'puppet/network/format_support'
 
 module Puppet
   class Resource
     class Status
       include Puppet::Util::Tagging
       include Puppet::Util::Logging
+      include Puppet::Network::FormatSupport
 
       attr_accessor :resource, :node, :file, :line, :current_values, :status, :evaluation_time
 

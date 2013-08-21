@@ -9,16 +9,20 @@ Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20
 
   def intern_multiple(klass, text)
     MessagePack.unpack(text).collect do |data|
-      klass.from_hash(data)
+      klass.from_pson(data)
     end
   end
 
   def render(instance)
-    instance.to_data_hash.to_msgpack
+    instance.to_msgpack
+  end
+
+  def render_multiple(instances)
+    instances.to_msgpack
   end
 
   def supported?(klass)
-    Puppet.features.msgpack? && klass.method_defined?(:to_data_hash)
+    Puppet.features.msgpack? && klass.method_defined?(:to_msgpack)
   end
 end
 
