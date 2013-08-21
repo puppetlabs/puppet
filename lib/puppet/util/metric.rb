@@ -15,12 +15,16 @@ class Puppet::Util::Metric
     metric
   end
 
-  def to_pson
+  def to_data_hash
     {
       'name' => @name,
       'label' => @label,
       'values' => @values
-    }.to_pson
+    }
+  end
+
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   # Return a specific value

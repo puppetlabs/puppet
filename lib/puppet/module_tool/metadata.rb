@@ -129,7 +129,7 @@ module Puppet::ModuleTool
       end
     end
 
-    def to_hash()
+    def to_data_hash()
       return extra_metadata.merge({
         'name'         => @full_module_name,
         'version'      => @version,
@@ -145,9 +145,13 @@ module Puppet::ModuleTool
       })
     end
 
+    def to_hash()
+      to_data_hash
+    end
+
     # Return the PSON record representing this instance.
     def to_pson(*args)
-      return to_hash.to_pson(*args)
+      return to_data_hash.to_pson(*args)
     end
   end
 end
