@@ -1,22 +1,22 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/provider/confine/false'
+require 'puppet/confine/false'
 
-describe Puppet::Provider::Confine::False do
+describe Puppet::Confine::False do
   it "should be named :false" do
-    Puppet::Provider::Confine::False.name.should == :false
+    Puppet::Confine::False.name.should == :false
   end
 
   it "should require a value" do
-    lambda { Puppet::Provider::Confine.new }.should raise_error(ArgumentError)
+    lambda { Puppet::Confine.new }.should raise_error(ArgumentError)
   end
 
   describe "when testing values" do
-    before { @confine = Puppet::Provider::Confine::False.new("foo") }
+    before { @confine = Puppet::Confine::False.new("foo") }
 
     it "should use the 'pass?' method to test validity" do
-      @confine = Puppet::Provider::Confine::False.new("foo")
+      @confine = Puppet::Confine::False.new("foo")
       @confine.label = "eh"
       @confine.expects(:pass?).with("foo")
       @confine.valid?
@@ -31,13 +31,13 @@ describe Puppet::Provider::Confine::False do
     end
 
     it "should produce a message that a value is true" do
-      @confine = Puppet::Provider::Confine::False.new("foo")
+      @confine = Puppet::Confine::False.new("foo")
       @confine.message("eh").should be_include("true")
     end
   end
 
   it "should be able to produce a summary with the number of incorrectly true values" do
-    confine = Puppet::Provider::Confine::False.new %w{one two three four}
+    confine = Puppet::Confine::False.new %w{one two three four}
     confine.expects(:pass?).times(4).returns(true).returns(false).returns(true).returns(false)
     confine.summary.should == 2
   end
@@ -47,6 +47,6 @@ describe Puppet::Provider::Confine::False do
     c2 = mock '2', :summary => 2
     c3 = mock '3', :summary => 3
 
-    Puppet::Provider::Confine::False.summarize([c1, c2, c3]).should == 6
+    Puppet::Confine::False.summarize([c1, c2, c3]).should == 6
   end
 end

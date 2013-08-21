@@ -1,10 +1,10 @@
-require 'puppet/provider/confine'
+require 'puppet/confine'
 
 # Require a specific value for a variable, either a Puppet setting
 # or a Facter value.  This class is a bit weird because the name
 # is set explicitly by the ConfineCollection class -- from this class,
 # it's not obvious how the name would ever get set.
-class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
+class Puppet::Confine::Variable < Puppet::Confine
   # Provide a hash summary of failing confines -- the key of the hash
   # is the name of the confine, and the value is the missing yet required values.
   # Only returns failed values, not all required values.

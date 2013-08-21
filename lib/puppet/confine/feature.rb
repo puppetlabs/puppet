@@ -1,6 +1,6 @@
-require 'puppet/provider/confine'
+require 'puppet/confine'
 
-class Puppet::Provider::Confine::Feature < Puppet::Provider::Confine
+class Puppet::Confine::Feature < Puppet::Confine
   def self.summarize(confines)
     confines.collect { |c| c.values }.flatten.uniq.find_all { |value| ! confines[0].pass?(value) }
   end

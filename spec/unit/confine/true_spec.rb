@@ -1,20 +1,20 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/provider/confine/true'
+require 'puppet/confine/true'
 
-describe Puppet::Provider::Confine::True do
+describe Puppet::Confine::True do
   it "should be named :true" do
-    Puppet::Provider::Confine::True.name.should == :true
+    Puppet::Confine::True.name.should == :true
   end
 
   it "should require a value" do
-    lambda { Puppet::Provider::Confine::True.new }.should raise_error(ArgumentError)
+    lambda { Puppet::Confine::True.new }.should raise_error(ArgumentError)
   end
 
   describe "when testing values" do
     before do
-      @confine = Puppet::Provider::Confine::True.new("foo")
+      @confine = Puppet::Confine::True.new("foo")
       @confine.label = "eh"
     end
 
@@ -37,7 +37,7 @@ describe Puppet::Provider::Confine::True do
   end
 
   it "should produce the number of false values when asked for a summary" do
-    @confine = Puppet::Provider::Confine::True.new %w{one two three four}
+    @confine = Puppet::Confine::True.new %w{one two three four}
     @confine.expects(:pass?).times(4).returns(true).returns(false).returns(true).returns(false)
     @confine.summary.should == 2
   end
@@ -47,6 +47,6 @@ describe Puppet::Provider::Confine::True do
     c2 = mock '2', :summary => 2
     c3 = mock '3', :summary => 3
 
-    Puppet::Provider::Confine::True.summarize([c1, c2, c3]).should == 6
+    Puppet::Confine::True.summarize([c1, c2, c3]).should == 6
   end
 end

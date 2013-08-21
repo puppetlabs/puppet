@@ -1,8 +1,8 @@
 # Manage a collection of confines, returning a boolean or
 # helpful information.
-require 'puppet/provider/confine'
+require 'puppet/confine'
 
-class Puppet::Provider::ConfineCollection
+class Puppet::ConfineCollection
   def confine(hash)
     if hash.include?(:for_binary)
       for_binary = true
@@ -11,11 +11,11 @@ class Puppet::Provider::ConfineCollection
       for_binary = false
     end
     hash.each do |test, values|
-      if klass = Puppet::Provider::Confine.test(test)
+      if klass = Puppet::Confine.test(test)
         @confines << klass.new(values)
         @confines[-1].for_binary = true if for_binary
       else
-        confine = Puppet::Provider::Confine.test(:variable).new(values)
+        confine = Puppet::Confine.test(:variable).new(values)
         confine.name = test
         @confines << confine
       end
