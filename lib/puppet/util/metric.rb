@@ -1,8 +1,10 @@
 # included so we can test object types
 require 'puppet'
+require 'puppet/network/format_support'
 
 # A class for handling metrics.  This is currently ridiculously hackish.
 class Puppet::Util::Metric
+  include Puppet::Network::FormatSupport
 
   attr_accessor :type, :name, :value, :label
   attr_writer :values

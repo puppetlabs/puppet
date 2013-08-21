@@ -1,5 +1,6 @@
 require 'puppet/util/tagging'
 require 'puppet/util/classgen'
+require 'puppet/network/format_support'
 
 # Pass feedback to the user.  Log levels are modeled after syslog's, and it is
 # expected that that will be the most common log destination.  Supports
@@ -8,6 +9,7 @@ class Puppet::Util::Log
   include Puppet::Util
   extend Puppet::Util::ClassGen
   include Puppet::Util::Tagging
+  include Puppet::Network::FormatSupport
 
   @levels = [:debug,:info,:notice,:warning,:err,:alert,:emerg,:crit]
   @loglevel = 2
