@@ -2,7 +2,7 @@
 # actually work or not.
 require 'puppet/util'
 
-class Puppet::Provider::Confine
+class Puppet::Confine
   include Puppet::Util
 
   @tests = {}
@@ -23,7 +23,7 @@ class Puppet::Provider::Confine
   def self.test(name)
     unless @tests[name]
       begin
-        require "puppet/provider/confine/#{name}"
+        require "puppet/confine/#{name}"
       rescue LoadError => detail
         unless detail.to_s =~ /No such file|cannot load such file/i
           warn "Could not load confine test '#{name}': #{detail}"
