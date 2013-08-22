@@ -268,5 +268,15 @@ module Puppet
         return property.value
       end
     end
+
+    # Ensure that mounts higher up in the filesystem are mounted first
+    autorequire(:mount) do
+      dependencies = []
+      Pathname.new(@parameters[:name].value).ascend do |parent|
+        dependencies.unshift parent.to_s
+      end
+      dependencies[0..-2]
+    end
+
   end
 end
