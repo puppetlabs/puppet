@@ -259,5 +259,16 @@ module Puppet
         return property.value
       end
     end
+
+    autorequire(:mount) do
+      # Taken from zfs type. Make sure mounts higher up the Filesystem are mounted first
+      names = @parameters[:name].value.split('/')
+      dependencies = []
+      if names.length > 0
+        dependencies = names.slice(1..-2).inject([]) { |a,v| a << "#{a.last}/#{v}" }.collect { |fs| names[0] + fs }
+      end
+      dependencies
+    end
+
   end
 end
