@@ -22,6 +22,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   has_feature :uninstallable
   has_feature :install_options
   has_feature :uninstall_options
+  has_feature :versionable
 
   attr_accessor :package
 
@@ -37,9 +38,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   def self.to_hash(pkg)
     {
       :name     => pkg.name,
-      # we're not versionable, so we can't set the ensure
-      # parameter to the currently installed version
-      :ensure   => :installed,
+      :ensure   => pkg.version || :installed,
       :provider => :windows
     }
   end
