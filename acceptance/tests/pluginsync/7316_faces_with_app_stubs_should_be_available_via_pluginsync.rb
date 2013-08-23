@@ -58,19 +58,17 @@ end
 
 HERE
 
-
-
-# this begin block is here for handling temp file cleanup via an "ensure" block at the very end of the
-# test.
+# this begin block is here for handling temp file cleanup via an "ensure" block
+# at the very end of the test.
 begin
 
-  # here we create a custom app, which basically doesn't do anything except for print a hello-world message
+  # here we create a custom app, which basically doesn't do anything except for
+  # print a hello-world message
   agent_module_face_file = "#{agent_lib_dir}/puppet/face/#{app_name}.rb"
   master_module_face_file = "#{master_module_dir}/#{app_name}/lib/puppet/face/#{app_name}.rb"
 
   agent_module_app_file = "#{agent_lib_dir}/puppet/application/#{app_name}.rb"
   master_module_app_file = "#{master_module_dir}/#{app_name}/lib/puppet/application/#{app_name}.rb"
-
 
   # copy all the files to the master
   step "write our simple module out to the master" do

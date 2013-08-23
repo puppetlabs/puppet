@@ -1,10 +1,11 @@
 test_name "the pluginsync functionality should sync feature definitions"
 
 #
-# This test is intended to ensure that pluginsync syncs feature definitions to the agents.  It checks the feature
-# twice; once to make sure that it gets loaded successfully during the run in which it was synced, and once to
-# ensure that it still gets loaded successfully during the subsequent run (in which it should not be synced because
-# the files haven't changed.)
+# This test is intended to ensure that pluginsync syncs feature definitions to
+# the agents.  It checks the feature twice; once to make sure that it gets
+# loaded successfully during the run in which it was synced, and once to ensure
+# that it still gets loaded successfully during the subsequent run (in which it
+# should not be synced because the files haven't changed.)
 #
 
 

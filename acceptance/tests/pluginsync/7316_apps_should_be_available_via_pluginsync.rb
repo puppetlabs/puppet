@@ -47,15 +47,16 @@ end
 HERE
 
 
-# this begin block is here for handling temp file cleanup via an "ensure" block at the very end of the
-# test.
+# this begin block is here for handling temp file cleanup via an "ensure" block
+# at the very end of the test.
 begin
 
   modes = ["application"]
 
   modes.each do |mode|
 
-    # here we create a custom app, which basically doesn't do anything except for print a hello-world message
+    # here we create a custom app, which basically doesn't do anything except
+    # for print a hello-world message
     agent_module_app_file = "#{agent_lib_dir}/puppet/#{mode}/#{app_name}.rb"
     master_module_app_file = "#{master_module_dir}/#{app_name}/lib/puppet/#{mode}/#{app_name}.rb"
 
