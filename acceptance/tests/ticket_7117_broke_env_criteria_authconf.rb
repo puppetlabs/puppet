@@ -24,12 +24,13 @@ with_puppet_running_on master, {'master' => {'rest_authconfig' => "#{testdir}/au
     # Run test on Agents
     step "Run agent to upload facts"
     on agent, puppet_agent("--test --server #{master}")
-    # this is used in place of agent below, the issue is that PE forces certnames to be the short name
-    # while foss by default uses fqdn... this needs to be reconsiliated before this test will be portable
-    # fqdn = on(agent, facter('fqdn')).stdout.chomp
+
+    certname = master.is_pe? ?
+       agent.to_s :
+       on(agent, facter('fqdn')).stdout.chomp
 
     step "Fetch agent facts from Puppet Master"
-    on(agent, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/#{agent}") do
+    on(agent, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/#{certname}") do
       assert_match(/--- !ruby\/object:Puppet::Node::Facts/, stdout, "Agent Facts not returned for #{agent}")
     end
   end
