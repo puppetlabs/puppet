@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "Agent should use environment given by ENC for pluginsync"
 
 testdir = master.tmpdir('respect_enc_test')

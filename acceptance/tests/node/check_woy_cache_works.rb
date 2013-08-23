@@ -1,9 +1,7 @@
-require 'puppet/acceptance/config_utils'
 require 'securerandom'
 require 'puppet/acceptance/temp_file_utils'
 require 'yaml'
 extend Puppet::Acceptance::TempFileUtils
-extend Puppet::Acceptance::ConfigUtils
 
 test_name "ticket #16753 node data should be cached in yaml to allow it to be queried"
 

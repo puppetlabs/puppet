@@ -1,10 +1,8 @@
 test_name "the $libdir setting hook is called on startup"
 
 require 'puppet/acceptance/temp_file_utils'
-require 'puppet/acceptance/config_utils'
 
 extend Puppet::Acceptance::TempFileUtils
-extend Puppet::Acceptance::ConfigUtils
 
 initialize_temp_dirs()
 all_tests_passed = false

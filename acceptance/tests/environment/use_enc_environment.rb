@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "Agent should environment given by ENC"
 
 testdir = master.tmpdir('use_enc_env')

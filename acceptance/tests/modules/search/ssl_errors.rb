@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 begin test_name 'puppet module search should print a reasonable message on ssl errors'
 
 step "Search against a website where the certificate is not signed by a public authority"

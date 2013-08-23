@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "#15717: puppet kick"
 step "verify puppet kick actually triggers an agent run"
 

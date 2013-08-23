@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "The source attribute"
 
 step "when using a puppet:/// URI with a master/agent setup"

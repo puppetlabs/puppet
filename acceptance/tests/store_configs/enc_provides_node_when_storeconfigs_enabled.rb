@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "ENC node information is used when store configs enabled (#16698)"
 
 confine :except, :platform => 'solaris'

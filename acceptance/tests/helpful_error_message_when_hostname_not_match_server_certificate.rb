@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "generate a helpful error message when hostname doesn't match server certificate"
 
 skip_test( 'Changing certnames of the master will break PE' )if master.is_pe?

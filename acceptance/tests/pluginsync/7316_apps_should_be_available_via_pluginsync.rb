@@ -6,10 +6,8 @@ test_name "the pluginsync functionality should sync app definitions, and they sh
 #
 
 require 'puppet/acceptance/temp_file_utils'
-require 'puppet/acceptance/config_utils'
 
 extend Puppet::Acceptance::TempFileUtils
-extend Puppet::Acceptance::ConfigUtils
 
 initialize_temp_dirs()
 

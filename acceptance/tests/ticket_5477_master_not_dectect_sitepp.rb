@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 # In 2.6, compile does not fail when site.pp does not exist.
 #
 # However, if a catalog is compiled when site.pp does not exist,

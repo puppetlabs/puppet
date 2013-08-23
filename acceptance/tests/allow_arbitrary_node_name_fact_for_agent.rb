@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "node_name_fact should be used to determine the node name for puppet agent"
 
 success_message = "node_name_fact setting was correctly used to determine the node name"

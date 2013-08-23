@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 confine :except, :platform => 'solaris'
 begin test_name "Auto lookup for class parameters"
 

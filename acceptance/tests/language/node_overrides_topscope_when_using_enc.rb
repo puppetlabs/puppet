@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "ENC still allows a node to override a topscope var"
 
 testdir = master.tmpdir('scoping_deprecation')

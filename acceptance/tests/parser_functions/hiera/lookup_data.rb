@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 begin test_name "Lookup data using the hiera parser function"
 
 testdir = master.tmpdir('hiera')

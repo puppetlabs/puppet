@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 # Windows doesn't suppoert Facter fqdn properly
 confine :except, :platform => 'windows'
 

@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "puppet module uninstall (with multiple modules installed)"
 
 step 'Setup'

@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 # Puppet master fails to start due to impropper
 # permissons on the puppet/ dir.  Specially, the rrd
 # sub dir is not created when puppet master starts

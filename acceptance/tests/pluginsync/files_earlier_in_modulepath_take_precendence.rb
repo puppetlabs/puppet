@@ -1,6 +1,3 @@
-require 'puppet/acceptance/config_utils'
-extend Puppet::Acceptance::ConfigUtils
-
 test_name "earlier modules take precendence over later modules in the modulepath"
 
 step "Create some modules in the modulepath"
