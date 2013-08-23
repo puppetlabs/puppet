@@ -35,8 +35,8 @@ on master, "chmod 777 #{in_testdir}"
 with_these_opts = {
   'master' => {
     'rest_authconfig' => "#{in_testdir}/auth.conf",
-    'node_terminus'   => nil,
-    'manifest'        => manifest_file
+    'node_terminus'   => 'plain',
+    'manifest'        => manifest_file,
   }
 }
 

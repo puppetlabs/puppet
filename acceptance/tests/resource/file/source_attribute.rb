@@ -42,7 +42,7 @@ on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 master_opts = {
   'master' => {
     'manifest' => manifest,
-    'node_terminus' => nil,
+    'node_terminus' => 'plain',
     'modulepath' => "#{testdir}/modules"
   }
 }

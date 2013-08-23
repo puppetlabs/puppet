@@ -47,9 +47,9 @@ puppetconf_file = "#{testdir}/puppet.conf"
 with_these_opts = {
   'master' => {
     'rest_authconfig' => "#{testdir}/auth.conf",
-    'node_terminus'   => nil,
-    'manifest'        => manifest_file
-  }
+    'node_terminus'   => 'plain',
+    'manifest'        => manifest_file,
+  },
 }
 
 create_remote_file master, authfile, authconf

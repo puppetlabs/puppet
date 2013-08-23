@@ -74,7 +74,7 @@ begin
     master_opts = {
       'master' => {
         'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
-        'node_terminus' => nil
+        'node_terminus' => 'plain',
       }
     }
     step "start the master" do

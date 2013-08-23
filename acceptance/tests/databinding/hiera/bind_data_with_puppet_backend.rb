@@ -61,7 +61,7 @@ master_opts = {
     'data_binding_terminus' => 'hiera',
     'manifest' => "#{testdir}/site.pp",
     'modulepath' => "#{testdir}/modules",
-    'node_terminus' => nil
+    'node_terminus'   => 'plain',
   }
 }
 

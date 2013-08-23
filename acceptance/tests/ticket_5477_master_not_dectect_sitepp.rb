@@ -14,7 +14,7 @@ on master, "rm -f #{manifest_file}"
 master_opts = {
   'master' => {
     'manifest' => manifest_file,
-    'node_terminus' => nil,
+    'node_terminus' => 'plain',
     'filetimeout' => 1
   }
 }

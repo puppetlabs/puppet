@@ -120,7 +120,7 @@ begin
       'master' => {
         'manifest' => "#{get_test_file_path(master, master_manifest_file)}",
         'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
-        'node_terminus' => nil
+        'node_terminus' => 'plain',
       }
     }
 

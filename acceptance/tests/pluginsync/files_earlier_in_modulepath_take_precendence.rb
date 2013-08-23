@@ -35,7 +35,7 @@ MANIFEST
 master_opts = {
   'master' => {
     'modulepath' => "#{module1libdir}:#{module2libdir}",
-    'node_terminus' => nil
+    'node_terminus' => 'plain',
   }
 }
 

@@ -61,10 +61,10 @@ step "Try to lookup string data"
 master_opts = {
   'main' => {
     'manifest' => "#{testdir}/site.pp",
-    'modulepath' => "#{testdir}/modules"
+    'modulepath' => "#{testdir}/modules",
   },
   'master' => {
-    'node_terminus' => nil
+    'node_terminus' => 'plain',
   }
 }
 
