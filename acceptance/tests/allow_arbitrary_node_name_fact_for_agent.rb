@@ -43,7 +43,6 @@ manifest << node_names.map do |node_name|
   ]
 end.join("\n")
 
-puppetconf_file = "#{testdir}/puppet.conf"
 with_these_opts = {
   'master' => {
     'rest_authconfig' => "#{testdir}/auth.conf",
