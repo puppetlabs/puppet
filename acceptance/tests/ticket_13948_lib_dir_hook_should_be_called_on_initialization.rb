@@ -92,7 +92,7 @@ begin
             if test_file_exists?(agent, agent_module_app_file) then
               fail_test("app file already exists on agent: '#{get_test_file_path(agent, agent_module_app_file)}'")
             end
-            if test_file_exists?(agent, agent_module_app_file) then
+            if test_file_exists?(agent, agent_module_face_file) then
               fail_test("face file already exists on agent: '#{get_test_file_path(agent, agent_module_face_file)}'")
             end
         end
