@@ -60,7 +60,7 @@ on master, "chmod 777 #{testdir}"
 
 with_puppet_running_on master, with_these_opts, testdir do
 
-  run_agent_on(agents, "--no-daemonize --verbose --onetime --node_name_fact kernel --server #{master}") do
+  on(agents, puppet('agent', "--no-daemonize --verbose --onetime --node_name_fact kernel --server #{master}")) do
     assert_match(/defined 'message'.*#{success_message}/, stdout)
   end
 

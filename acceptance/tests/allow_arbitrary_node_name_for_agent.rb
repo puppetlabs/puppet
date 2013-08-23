@@ -42,7 +42,7 @@ with_these_opts = {
 
 with_puppet_running_on master, with_these_opts, in_testdir do
 
-  run_agent_on(agents, "-t --node_name_value specified_node_name", :acceptable_exit_codes => [0,2]) do
+  on(agents, puppet('agent', "-t --node_name_value specified_node_name --server #{master}"), :acceptable_exit_codes => [0,2]) do
     assert_match(/defined 'message'.*#{success_message}/, stdout)
   end
 

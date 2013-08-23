@@ -140,7 +140,7 @@ begin
 
       step "run the agent and verify that it loaded the feature" do
         agents.each do |agent|
-          run_agent_on(agent, agent_args % get_test_file_path(agent, agent_lib_dir),
+          on(agent, puppet('agent', agent_args % get_test_file_path(agent, agent_lib_dir)),
                        :acceptable_exit_codes => agent_exit_codes) do
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
               "Expected agent stdout to include confirmation that the feature was 'true'")
@@ -160,7 +160,7 @@ begin
 
       step "run the agent again" do
         agents.each do |agent|
-          run_agent_on(agent, agent_args % get_test_file_path(agent, agent_lib_dir),
+          on(agent, puppet('agent', agent_args % get_test_file_path(agent, agent_lib_dir)),
                           :acceptable_exit_codes => agent_exit_codes) do
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
                          "Expected agent stdout to include confirmation that the feature was 'true'")

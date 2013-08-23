@@ -48,7 +48,7 @@ master_opts = {
 }
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    run_agent_on agent, "--test --server #{master}", :acceptable_exit_codes => [2] do
+    on(agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [2]) do
       file_to_check = agent['platform'] =~ /windows/ ? target_file_on_windows : target_file_on_nix
       on agent, "cat #{file_to_check}" do
         assert_match(/the content is present/, stdout, "Result file not created")

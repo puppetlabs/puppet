@@ -86,7 +86,7 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    run_agent_on(agent, '-t', :acceptable_exit_codes => [0,2]) do |res|
+    on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [0,2]) do |res|
 
       assert_match("SSH server port: 22", res.stdout)
       assert_match("SSH server UsePam: yes", res.stdout)

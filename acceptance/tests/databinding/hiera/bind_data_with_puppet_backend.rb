@@ -67,12 +67,11 @@ master_opts = {
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
-    run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master}")
+    on(agent, puppet('agent', "--no-daemonize --onetime --verbose --server #{master}"))
 
     assert_match("apache server port: 8080", stdout)
   end
 end
-
 
 ensure step "Teardown"
 

@@ -91,8 +91,10 @@ begin
 
         step "run the agent" do
           agents.each do |agent|
-            run_agent_on(agent, "--trace --libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\" " +
-                                "--no-daemonize --verbose --onetime --test --server #{master}")
+            on(agent, puppet('agent',
+                             "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\" ",
+                             "--test --trace --server #{master}")
+            )
           end
         end
 
