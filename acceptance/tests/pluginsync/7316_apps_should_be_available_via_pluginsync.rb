@@ -6,8 +6,10 @@ test_name "the pluginsync functionality should sync app definitions, and they sh
 #
 
 require 'puppet/acceptance/temp_file_utils'
+require 'puppet/acceptance/config_utils'
 
 extend Puppet::Acceptance::TempFileUtils
+extend Puppet::Acceptance::ConfigUtils
 
 initialize_temp_dirs()
 
@@ -71,10 +73,14 @@ begin
       end
     end
 
+    master_opts = {
+      'master' => {
+        'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
+        'node_terminus' => nil
+      }
+    }
     step "start the master" do
-      with_master_running_on(master,
-             "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
-             "--autosign true") do
+      with_puppet_running_on master, master_opts do
 
         # the module files shouldn't exist on the agent yet because they haven't been synced
         step "verify that the module files don't exist on the agent path" do
@@ -98,7 +104,7 @@ begin
     step "verify that the module files were synced down to the agent" do
       agents.each do |agent|
         unless test_file_exists?(agent, agent_module_app_file) then
-          fail_test("Expected app file not synced to agent: '#{get_test_file_path(agent, agent_module_app_file)}'")
+          fail_test("The app file we expect was not not synced to agent: '#{get_test_file_path(agent, agent_module_app_file)}'")
         end
       end
     end

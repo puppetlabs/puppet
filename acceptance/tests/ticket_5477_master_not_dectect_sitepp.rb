@@ -1,16 +1,28 @@
+require 'puppet/acceptance/config_utils'
+extend Puppet::Acceptance::ConfigUtils
+
 # In 2.6, compile does not fail when site.pp does not exist.
 #
-# However, if a catalog is compiled when site.pp does not exist, 
+# However, if a catalog is compiled when site.pp does not exist,
 # puppetmaster does not detect when site.pp is created. This requires a restart
-# 
- 
+#
 test_name "Ticket 5477, Puppet Master does not detect newly created site.pp file"
 
-manifest_file = "/tmp/missing_site-5477-#{$$}.pp"
+testdir = master.tmpdir('missing_site_pp')
+manifest_file = "#{testdir}/site.pp"
 
+on master, "chmod 777 #{testdir}"
 on master, "rm -f #{manifest_file}"
 
-with_master_running_on(master, "--manifest #{manifest_file} --dns_alt_names=\"puppet, $(facter hostname), $(facter fqdn)\" --verbose --filetimeout 1 --autosign true") do
+master_opts = {
+  'master' => {
+    'manifest' => manifest_file,
+    'node_terminus' => nil,
+    'filetimeout' => 1
+  }
+}
+
+with_puppet_running_on master, master_opts, testdir do
   # Run test on Agents
   step "Agent: agent --test"
   on agents, puppet_agent("--test --server #{master}")

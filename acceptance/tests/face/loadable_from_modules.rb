@@ -68,7 +68,9 @@ end
 EOM
 
   on agent, puppet('module', 'build', 'puppetlabs-helloworld')
-  on agent, puppet('module', 'install', '--ignore-dependencies', '--target-dir', dev_modulepath, 'puppetlabs-helloworld/pkg/puppetlabs-helloworld-0.0.1.tar.gz')
+  # Why from 3.1.1 -> 3.2.0 did the version of this module change from 0.0.1
+  # to 0.1.0 but the api within the face didn't?
+  on agent, puppet('module', 'install', '--ignore-dependencies', '--target-dir', dev_modulepath, 'puppetlabs-helloworld/pkg/puppetlabs-helloworld-0.1.0.tar.gz')
 
   on(agent, puppet('help', '--config', puppetconf)) do
     assert_match(/helloworld\s*Hello world face/, stdout, "Face missing from list of available subcommands")
