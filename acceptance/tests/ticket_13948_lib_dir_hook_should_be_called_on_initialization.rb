@@ -100,8 +100,15 @@ begin
 
       step "run the agent" do
         agents.each do |agent|
-          run_agent_on(agent, "--trace --vardir=\"#{get_test_file_path(agent, agent_var_dir)}\" " +
-                              "--no-daemonize --verbose --onetime --test --server #{master}")
+
+          step "capture the existing ssldir, in case the default package puppet.conf sets it within vardir (rhel...)"
+          agent_ssldir = on(agent, puppet('agent --configprint ssldir')).stdout.chomp
+
+          on(agent, puppet('agent',
+                           "--vardir=\"#{get_test_file_path(agent, agent_var_dir)}\" ",
+                           "--ssldir=\"#{agent_ssldir}\" ",
+                           "--trace  --test --server #{master}")
+          )
         end
       end
 
