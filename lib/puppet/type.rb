@@ -692,6 +692,20 @@ class Type
     }
   end
 
+  # Return the parameters, metaparams, and properties that have a value or were set by a default. Properties are
+  # included since they are a subclass of parameter.
+  # @return [Array<Puppet::Parameter>] Array of parameter objects ( or subclass thereof )
+  def parameters_with_value
+    self.class.allattrs.collect { |attr| parameter(attr) }.compact
+  end
+
+  # Iterates over all parameters with value currently set.
+  # @yieldparam parameter [Puppet::Parameter] or a subclass thereof
+  # @return [void]
+  def eachparameter
+    parameters_with_value.each { |parameter| yield parameter }
+  end
+
   # Creates a transaction event.
   # Called by Transaction or by a property.
   # Merges the given options with the options `:resource`, `:file`, `:line`, and `:tags`, initialized from
