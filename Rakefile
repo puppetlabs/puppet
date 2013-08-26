@@ -76,6 +76,6 @@ namespace "ci" do
   end
 
   task :el6tests do
-    sh "cd acceptance; rm -f el6.tar.gz; tar -czvf el6.tar.gz *"
+    sh "cd acceptance; rm -f el6.tar.gz; tar -czv --exclude .bundle -f el6.tar.gz *"
   end
 end

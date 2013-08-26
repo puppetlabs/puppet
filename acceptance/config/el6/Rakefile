@@ -12,10 +12,28 @@ end
 CLEAN.include('*.repo', '*.tar', '*.rpm')
 
 namespace :ci do
+
+  def sha
+    ENV['SHA']
+  end
+
   file "pl-puppet-build.repo" do |task|
-    sha = ENV['SHA']
-    fetch("http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/pl-puppet-#{sha}-el-6-x86_64-products.repo",
-          task.name)
+    uri = "http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/pl-puppet-#{sha}-el-6-x86_64-products.repo"
+    begin
+      fetch(uri, task.name)
+    rescue OpenURI::HTTPError => e
+      if e.message =~ /404/
+        # We may be tagged as an rc, and the packaging tasks change the name to devel
+        fetch(uri.sub(/products\.repo/, 'devel.repo'), task.name)
+        # this is icky, but injecting git describe info so that we can test it
+        # when these tasks are run from the build artifact tarred on jenkins is
+        # worse.  Moses has stated that this change in pathing should go away,
+        # though we don't know when.  The change in pathing is determined here:
+        # https://github.com/puppetlabs/packaging/blob/master/tasks/mock.rake#L125
+      else
+        raise e
+      end
+    end
   end
 
   file "pl-puppet-repos.rpm" do |task|
