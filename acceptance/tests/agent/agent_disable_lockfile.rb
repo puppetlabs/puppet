@@ -32,7 +32,7 @@ tuples = [
 
 tuples.each do |expected_message, explicitly_specify_message|
 
-  with_puppet_running_on(master) do
+  with_puppet_running_on(master, {}) do
 
     step "disable the agent; specify message? '#{explicitly_specify_message}', message: '#{expected_message}'" do
       agents.each do |agent|
