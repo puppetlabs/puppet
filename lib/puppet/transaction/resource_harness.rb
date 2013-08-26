@@ -132,35 +132,24 @@ class Puppet::Transaction::ResourceHarness
   end
 
   def evaluate(resource)
-    start = Time.now
     status = Puppet::Resource::Status.new(resource)
 
-    perform_changes(resource).each do |event|
-      status << event
+    begin
+      perform_changes(resource).each do |event|
+        status << event
+      end
+
+      if status.changed? && ! resource.noop?
+        cache(resource, :synced, Time.now)
+        resource.flush if resource.respond_to?(:flush)
+      end
+    rescue => detail
+      status.failed_because(detail)
+    ensure
+      status.evaluation_time = Time.now - status.time
     end
 
-    if status.changed? && ! resource.noop?
-      cache(resource, :synced, Time.now)
-      resource.flush if resource.respond_to?(:flush)
-    end
-
-    return status
-  rescue => detail
-    resource.fail "Could not create resource status: #{detail}" unless status
-    resource.log_exception(detail, "Could not evaluate: #{detail}")
-    status.failed = true
-    # There's a contract (implicit unfortunately) that a status of failed
-    # will always be accompanied by an event with some explanatory power.  This
-    # is useful for reporting/diagnostics/etc.  So synthesize an event here
-    # with the exception detail as the message.
-    event = resource.event
-    event.status = "failure"
-    event.message = detail.to_s
-    status << event
-
-    return status
-  ensure
-    (status.evaluation_time = Time.now - start) if status
+    status
   end
 
   def initialize(transaction)
