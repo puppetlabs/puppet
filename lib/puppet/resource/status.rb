@@ -58,7 +58,18 @@ module Puppet
         @events
       end
 
+      def failed_because(detail)
+        @real_resource.log_exception(detail, "Could not evaluate: #{detail}")
+        failed = true
+        # There's a contract (implicit unfortunately) that a status of failed
+        # will always be accompanied by an event with some explanatory power.  This
+        # is useful for reporting/diagnostics/etc.  So synthesize an event here
+        # with the exception detail as the message.
+        add_event(@real_resource.event(:status => "failure", :message => detail.to_s))
+      end
+
       def initialize(resource)
+        @real_resource = resource
         @source_description = resource.path
         @containment_path = resource.pathbuilder
         @resource = resource.to_s
