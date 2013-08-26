@@ -2,7 +2,7 @@ module HarnessOptions
 
   DEFAULTS = {
     :type => 'git',
-    :helper => ['lib/helper.rb'],
+    :helper => ['../../lib/helper.rb'],
     :debug => true,
     :root_keys => true,
   }
