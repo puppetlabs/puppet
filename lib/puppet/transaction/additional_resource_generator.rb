@@ -107,8 +107,13 @@ class Puppet::Transaction::AdditionalResourceGenerator
       res.tag(*parent_resource.tags)
       @catalog.add_resource(res)
       @relationship_graph.add_vertex(res, priority)
+      @catalog.add_edge(container_of(parent_resource), res)
       res.finish
     end
+  end
+
+  def container_of(resource)
+    @catalog.adjacent(resource, :direction => :in)[0]
   end
 
   # Copy an important relationships from the parent to the newly-generated
