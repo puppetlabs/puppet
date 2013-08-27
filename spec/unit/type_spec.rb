@@ -492,6 +492,28 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  describe "when #finish is called on a type" do
+    let(:post_hook_type) do
+      Puppet::Type.newtype(:finish_test) do
+        newparam(:name) { isnamevar }
+
+        newparam(:post) do
+          def post_compile_hook
+            raise "post_compile hook ran"
+          end
+        end
+      end
+    end
+
+    let(:post_hook_resource) do 
+      post_hook_type.new(:name => 'foo',:post => 'fake_value')
+    end
+
+    it "should call #post_compile_hook on parameters that implement it" do
+      expect { post_hook_resource.finish }.to raise_exception(RuntimeError ,"post_compile hook ran")
+    end
+  end
+
   it "should have a class method for converting a hash into a Puppet::Resource instance" do
     Puppet::Type.type(:mount).must respond_to(:hash2resource)
   end
