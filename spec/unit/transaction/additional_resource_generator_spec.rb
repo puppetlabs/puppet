@@ -393,10 +393,10 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     order_seen
   end
 
-  RSpec::Matchers.define :contain_resources_equally do |*resources|
+  RSpec::Matchers.define :contain_resources_equally do |*resource_refs|
     match do |catalog|
-      @containers = resources.collect do |resource|
-        catalog.adjacent(catalog.resource(resource), :direction => :in)[0].ref
+      @containers = resource_refs.collect do |resource_ref|
+        catalog.container_of(catalog.resource(resource_ref)).ref
       end
 
       @containers.all? { |resource_ref| resource_ref == @containers[0] }

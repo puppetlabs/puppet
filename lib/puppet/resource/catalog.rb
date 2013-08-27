@@ -70,6 +70,13 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
   end
 
+  # @param resource [A Resource] a resource in the catalog
+  # @return [A Resource, nil] the resource that contains the given resource
+  # @api public
+  def container_of(resource)
+    adjacent(resource, :direction => :in)[0]
+  end
+
   def add_one_resource(resource)
     fail_on_duplicate_type_and_title(resource)
 
