@@ -8,22 +8,26 @@
 # ${3} is the destination volume so that this works correctly
 # when being installed to volumes other than the current OS.
 
-<% begin %>
-<% require 'rubygems' %>
-<% rescue LoadError %>
-<% end %>
-<% require 'rake' %>
+<%- ["@apple_libdir", "@apple_sbindir", "@apple_bindir", "@apple_docdir", "@package_name"].each do |i| -%>
+  <%- val = instance_variable_get(i) -%>
+  <%- raise "Critical variable #{i} is unset!" if val.nil? or val.empty? -%>
+<%- end -%>
 
-<% Dir.chdir("lib") %>
-<% FileList["**/*"].select {|i| File.file?(i)}.each do |file| %>
-/bin/rm -Rf "${3}<%= @apple_libdir %>/<%=file%>"
-<% end %>
+# remove ruby library files
+<%- Dir.chdir("lib") do -%>
+  <%- [@apple_old_libdir, @apple_libdir].compact.each do |libdir| -%>
+    <%- Dir.glob("*").each do |file| -%>
+/bin/rm -Rf "${3}<%= libdir %>/<%= file %>"
+    <%- end -%>
+  <%- end -%>
+<%- end -%>
 
-<% Dir.chdir("../bin") %>
-<% FileList["**/*"].select {|i| File.file?(i)}.each do |file| %>
-/bin/rm -Rf "${3}<%= @apple_bindir %>/<%=file%>"
-<% end %>
-<% Dir.chdir("..") %>
+# remove bin files
+<%- Dir.chdir("bin") do -%>
+    <%- Dir.glob("*").each do |file| -%>
+/bin/rm -Rf "${3}<%= @apple_bindir %>/<%= file %>"
+  <%- end -%>
+<%- end -%>
 
 # remove old doc files
 /bin/rm -Rf "${3}<%= @apple_docdir %>/<%= @package_name %>"
