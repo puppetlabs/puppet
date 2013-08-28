@@ -123,6 +123,22 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
         'Generator[thing]', 'Whit[completed_thing]')
     end
 
+    it "should contain the generated resources in the same container as the generator" do
+      catalog = compile_to_ral(<<-MANIFEST)
+        class container {
+          generator { thing:
+            code => 'notify { hello: }'
+          }
+        }
+
+        include container
+      MANIFEST
+
+      eval_generate_resources_in(catalog, relationship_graph_for(catalog), 'Generator[thing]')
+
+      expect(catalog).to contain_resources_equally('Generator[thing]', 'Notify[hello]')
+    end
+
     it "should return false if an error occured when generating resources" do
       catalog = compile_to_ral(<<-MANIFEST)
         generator { thing:
@@ -253,6 +269,23 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
       expect(catalog).to have_resource('Notify[hello]')
     end
 
+    it "should contain the generated resources in the same container as the generator" do
+      catalog = compile_to_ral(<<-MANIFEST)
+        class container {
+          generator { thing:
+            kind => generate,
+            code => 'notify { hello: }'
+          }
+        }
+
+        include container
+      MANIFEST
+
+      generate_resources_in(catalog, relationship_graph_for(catalog), 'Generator[thing]')
+
+      expect(catalog).to contain_resources_equally('Generator[thing]', 'Notify[hello]')
+    end
+
     it "should add an edge from the nearest ancestor to the generated resource" do
       graph = relationships_after_generating(<<-MANIFEST, 'Generator[thing]')
         generator { thing:
@@ -358,6 +391,20 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     order_seen = []
     relationships.traverse { |resource| order_seen << resource.ref }
     order_seen
+  end
+
+  RSpec::Matchers.define :contain_resources_equally do |*resource_refs|
+    match do |catalog|
+      @containers = resource_refs.collect do |resource_ref|
+        catalog.container_of(catalog.resource(resource_ref)).ref
+      end
+
+      @containers.all? { |resource_ref| resource_ref == @containers[0] }
+    end
+
+    def failure_message_for_should
+      "expected #{@expected.join(', ')} to all be contained in the same resource but the containment was #{@expected.zip(@containers).collect { |(res, container)| res + ' => ' + container }.join(', ')}"
+    end
   end
 end
 

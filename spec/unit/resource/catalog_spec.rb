@@ -277,6 +277,21 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.vertices.find { |r| r.ref == @one.ref }.must equal(@one)
     end
 
+    it "tracks the container through edges" do
+      @catalog.add_resource(@two)
+      @catalog.add_resource(@one)
+
+      @catalog.add_edge(@one, @two)
+
+      @catalog.container_of(@two).must == @one
+    end
+
+    it "a resource without a container is contained in nil" do
+      @catalog.add_resource(@one)
+
+      @catalog.container_of(@one).must be_nil
+    end
+
     it "should canonize how resources are referred to during retrieval when both type and title are provided" do
       @catalog.add_resource(@one)
       @catalog.resource("notify", "one").must equal(@one)
