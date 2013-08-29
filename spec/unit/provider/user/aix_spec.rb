@@ -128,4 +128,35 @@ guest id=100 pgrp=usr groups=usr home=/home/guest
       @provider.should_include?(:rlogin, managed_keys).should be_true
     end
   end
+  describe "when handling passwords" do
+    let(:passwd_without_spaces) do
+        # from http://pic.dhe.ibm.com/infocenter/aix/v7r1/index.jsp?topic=%2Fcom.ibm.aix.files%2Fdoc%2Faixfiles%2Fpasswd_security.htm
+        <<-OUTPUT
+smith:
+  password = MGURSj.F056Dj
+  lastupdate = 623078865
+  flags = ADMIN,NOCHECK
+        OUTPUT
+    end
+
+    let(:passwd_with_spaces) do
+        # add trailing space to the password
+        passwd_without_spaces.gsub(/password = (.*)/, 'password = \1   ')
+    end
+
+
+    it "should be able to read the hashed password" do
+      @provider.stubs(:open_security_passwd).returns(StringIO.new(passwd_without_spaces))
+      @resource.stubs(:[]).returns('smith')
+
+      @provider.password.should == 'MGURSj.F056Dj'
+    end
+
+    it "should be able to read the hashed password, even with trailing spaces" do
+      @provider.stubs(:open_security_passwd).returns(StringIO.new(passwd_with_spaces))
+      @resource.stubs(:[]).returns('smith')
+
+      @provider.password.should == 'MGURSj.F056Dj'
+    end
+  end
 end
