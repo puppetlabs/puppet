@@ -701,10 +701,11 @@ class Puppet::Settings
   private :files
 
   # Checks to see if any of the config files have been modified
-  # @return the filename of the first file that is found to have changed, or nil if no files have changed
+  # @return the filename of the first file that is found to have changed, or
+  #   nil if no files have changed
   def any_files_changed?
     files.each do |file|
-      return file.file if file.changed?
+      return file.to_str if file.changed?
     end
     nil
   end
