@@ -1025,6 +1025,12 @@ EOT
     :desc         => "Boolean; whether puppet agent should ignore schedules.  This is useful
       for initial puppet agent runs.",
     },
+    :default_schedules => {
+      :default    => true,
+      :type       => :boolean,
+      :desc       => "Boolean; whether to generate the default schedule resources. Setting this to
+      false is useful for keeping external report processors clean of skipped schedule resources.",
+    },
     :puppetport => {
       :default    => 8139,
       :desc       => "Which port puppet agent listens on.",
