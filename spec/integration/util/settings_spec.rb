@@ -44,7 +44,7 @@ describe Puppet::Settings do
     expect(File.stat(settings[:maindir]).mode & 007777).to eq(Puppet.features.microsoft_windows? ? 0755 : 0750)
   end
 
-  it "reparses configuration if configuration file is touched" do
+  it "reparses configuration if configuration file is touched", :if => !Puppet.features.microsoft_windows? do
     config = tmpfile("config")
     define_settings(:main,
       :config => {
