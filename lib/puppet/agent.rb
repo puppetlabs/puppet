@@ -1,4 +1,3 @@
-require 'sync'
 require 'puppet/application'
 
 # A general class for triggering a run of another
@@ -42,7 +41,7 @@ class Puppet::Agent
         with_client do |client|
           begin
             client_args = client_options.merge(:pluginsync => Puppet[:pluginsync])
-            sync.synchronize { lock { client.run(client_args) } }
+            lock { client.run(client_args) }
           rescue SystemExit,NoMemoryError
             raise
           rescue Exception => detail
@@ -74,10 +73,6 @@ class Puppet::Agent
     Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
     sleep(time)
     @splayed = true
-  end
-
-  def sync
-    @sync ||= Sync.new
   end
 
   def run_in_fork(forking = true)

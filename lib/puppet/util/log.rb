@@ -165,9 +165,7 @@ class Puppet::Util::Log
     queuemessage(msg) if @destinations.length == 0
 
     @destinations.each do |name, dest|
-      threadlock(dest) do
-        dest.handle(msg)
-      end
+      dest.handle(msg)
     end
   end
 

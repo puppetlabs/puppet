@@ -149,16 +149,12 @@ class Puppet::Daemon
   # Create a pidfile for our daemon, so we can be stopped and others
   # don't try to start.
   def create_pidfile
-    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
-      raise "Could not create PID file: #{@pidfile.file_path}" unless @pidfile.lock
-    end
+    raise "Could not create PID file: #{@pidfile.file_path}" unless @pidfile.lock
   end
 
   # Remove the pid file for our daemon.
   def remove_pidfile
-    Puppet::Util.synchronize_on(Puppet.run_mode.name,Sync::EX) do
-      @pidfile.unlock
-    end
+    @pidfile.unlock
   end
 
   def run_event_loop
