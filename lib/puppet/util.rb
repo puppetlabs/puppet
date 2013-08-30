@@ -5,8 +5,6 @@ require 'puppet/external/lock'
 require 'puppet/error'
 require 'puppet/util/execution_stub'
 require 'uri'
-require 'sync'
-require 'monitor'
 require 'tempfile'
 require 'pathname'
 require 'ostruct'
@@ -25,9 +23,6 @@ module Util
   extend Puppet::Util::POSIX
 
   extend Puppet::Util::SymbolicFileMode
-
-  @@sync_objects = {}.extend MonitorMixin
-
 
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
@@ -66,20 +61,6 @@ module Util
     end
   end
 
-
-  def self.synchronize_on(x,type)
-    sync_object,users = 0,1
-    begin
-      @@sync_objects.synchronize {
-        (@@sync_objects[x] ||= [Sync.new,0])[users] += 1
-      }
-      @@sync_objects[x][sync_object].synchronize(type) { yield }
-    ensure
-      @@sync_objects.synchronize {
-        @@sync_objects.delete(x) unless (@@sync_objects[x][users] -= 1) > 0
-      }
-    end
-  end
 
   # Change the process to a different user
   def self.chuser
@@ -154,7 +135,6 @@ module Util
     end
   end
 
-
   def benchmark(*args)
     msg = args.pop
     level = args.pop
@@ -187,6 +167,7 @@ module Util
       yield
     end
   end
+  module_function :benchmark
 
   # Resolve a path for an executable to the absolute path. This tries to behave
   # in the same manner as the unix `which` command and uses the `PATH`
@@ -319,13 +300,6 @@ module Util
     child_pid
   end
   module_function :safe_posix_fork
-
-  # Create an exclusive lock.
-  def threadlock(resource, type = Sync::EX)
-    Puppet::Util.synchronize_on(resource,type) { yield }
-  end
-
-  module_function :benchmark
 
   def memory
     unless defined?(@pmap)

@@ -17,13 +17,8 @@ class Puppet::Parser::Compiler
   include Puppet::Resource::TypeCollectionHelper
 
   def self.compile(node)
-    # We get these from the environment and only cache them in a thread
-    # variable for the duration of the compilation.  If nothing else is using
-    # the thread, though, we can leave 'em hanging round with no ill effects,
-    # and this is safer than cleaning them at the end and assuming that will
-    # stick until the next entry to this function.
-    Thread.current[:known_resource_types] = nil
-    Thread.current[:env_module_directories] = nil
+    $known_resource_types = nil
+    $env_module_directories = nil
 
     # ...and we actually do the compile now we have caching ready.
     new(node).compile.to_resource

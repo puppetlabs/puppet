@@ -341,12 +341,12 @@ describe Puppet::Configurer do
       @agent.environment.should == "second_env"
     end
 
-    it "should clear the thread local caches" do
-      Thread.current[:env_module_directories] = false
+    it "should clear the global caches" do
+      $env_module_directories = false
 
       @agent.run
 
-      Thread.current[:env_module_directories].should == nil
+      $env_module_directories.should == nil
     end
 
     describe "when not using a REST terminus for catalogs" do

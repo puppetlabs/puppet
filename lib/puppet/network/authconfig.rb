@@ -3,8 +3,6 @@ require 'puppet/network/rights'
 module Puppet
   class ConfigurationError < Puppet::Error; end
   class Network::AuthConfig
-
-    extend MonitorMixin
     attr_accessor :rights
 
     DEFAULT_ACL = [
