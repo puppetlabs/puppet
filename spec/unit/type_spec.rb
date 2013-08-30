@@ -505,12 +505,12 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       end
     end
 
-    let(:post_hook_resource) do 
+    let(:post_hook_resource) do
       post_hook_type.new(:name => 'foo',:post => 'fake_value')
     end
 
     it "should call #post_compile_hook on parameters that implement it" do
-      expect { post_hook_resource.finish }.to raise_exception(RuntimeError ,"post_compile hook ran")
+      expect { post_hook_resource.finish }.to raise_error(RuntimeError, "post_compile hook ran")
     end
   end
 

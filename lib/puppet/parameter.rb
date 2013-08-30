@@ -570,9 +570,11 @@ class Puppet::Parameter
 
   # @comment Document post_compile_hook here as it does not exist anywhere (called from type if implemented)
   # @!method post_compile_hook()
-  # @abstract A subclass may impliment this - it is not implemented in the Parameter class
-  # This method may be implemented by a parameter in order to perform final validations and actions in situations
-  # where the catalog needs to be fully completed but before the catalog is sent to the agent.
+  #   @abstract A subclass may implement this - it is not implemented in the Parameter class
+  #   This method may be implemented by a parameter in order to perform actions during compilation
+  #   after all resources have been added to the catalog.
+  #   @see Puppet::Type#finish
+  #   @see Puppet::Parser::Compiler#finish
 end
 
 require 'puppet/parameter/path'
