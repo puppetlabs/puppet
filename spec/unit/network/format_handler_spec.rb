@@ -53,7 +53,7 @@ describe Puppet::Network::FormatHandler do
   describe "#most_suitable_format_for" do
     before :each do
       Puppet::Network::FormatHandler.create(:one, :extension => "foo", :mime => "text/one")
-      Puppet::Network::FormatHandler.create(:two, :extension => "bar", :mime => "text/two")
+      Puppet::Network::FormatHandler.create(:two, :extension => "bar", :mime => "application/two")
     end
 
     let(:format_one) { Puppet::Network::FormatHandler.format(:one) }
@@ -61,6 +61,10 @@ describe Puppet::Network::FormatHandler do
 
     def suitable_in_setup_formats(accepted)
       Puppet::Network::FormatHandler.most_suitable_format_for(accepted, [:one, :two])
+    end
+
+    it "finds either format when anything is accepted" do
+      [format_one, format_two].should include(suitable_in_setup_formats(["*/*"]))
     end
 
     it "finds no format when none are acceptable" do
@@ -77,6 +81,10 @@ describe Puppet::Network::FormatHandler do
 
     it "allows specifying acceptable formats by mime type" do
       suitable_in_setup_formats(["text/one"]).should == format_one
+    end
+
+    it "ignores quality specifiers" do
+      suitable_in_setup_formats(["two;q=0.8", "text/one;q=0.9"]).should == format_two
     end
 
     it "allows specifying acceptable formats by canonical name" do

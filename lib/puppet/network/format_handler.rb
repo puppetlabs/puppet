@@ -67,20 +67,28 @@ module Puppet::Network::FormatHandler
   # Determine which of the accepted formats should be used given what is supported.
   #
   # @param accepted [Array<String, Symbol>] the accepted formats in a form a
-  #   that can be understood by #format_to_canonical_name and is in order of
-  #   preference (most preferred is first)
+  #   that generally conforms to an HTTP Accept header. Any quality specifiers
+  #   are ignored and instead the formats are simply in strict preference order
+  #   (most preferred is first)
   # @param supported [Array<Symbol>] the names of the supported formats (order
   #   does not matter)
   # @return [Puppet::Network::Format, nil] the most suitable format
   # @api private
   def self.most_suitable_format_for(accepted, supported)
-    format_name = accepted.find do |accepted|
+    format_name = accepted.collect do |accepted|
+      accepted.to_s.sub(/;q=.*$/, '')
+    end.collect do |accepted|
       begin
-        format_name = format_to_canonical_name(accepted)
-        supported.include?(format_name)
+        if accepted == '*/*'
+          formats
+        else
+          format_to_canonical_name(accepted)
+        end
       rescue ArgumentError
-        false
+        nil
       end
+    end.flatten.find do |accepted|
+      supported.include?(accepted)
     end
 
     if format_name
