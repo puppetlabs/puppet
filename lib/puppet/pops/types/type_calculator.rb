@@ -246,6 +246,20 @@ class Puppet::Pops::Types::TypeCalculator
       return type
     end
 
+    # when both are hot-classes, reduce to PHostClass[] (since one was not assignable to the other)
+    if t1.is_a?(Types::PHostClassType) && t2.is_a?(Types::PHostClassType)
+      return Types::PHostClassType.new()
+    end
+
+    # when both are resources, reduce to Resource[T] or Resource[] (since one was not assignable to the other)
+    if t1.is_a?(Types::PResourceType) && t2.is_a?(Types::PResourceType)
+      result = Types::PResourceType.new()
+      # only Resource[] unless the type name is the same
+      if t1.type_name == t2.type_name then result.type_name = t1.type_name end
+      # the cross assignability test above has already determined that they do not have the same type and title
+      return result
+    end
+
     # Common abstract types, from most specific to most general
     if common_numeric?(t1, t2)
       return Types::PNumericType.new()
@@ -472,6 +486,22 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
   end
 
+  def assignable_PHostClassType(t1, t2)
+    return false unless t2.is_a?(Types::PHostClassType)
+    # Class = Class[name}, Class[name] != Class
+    return true if t1.class_name.nil?
+    # Class[name] = Class[name]
+    return t1.class_name == t2.class_name
+  end
+
+  def assignable_PResourceType(t1, t2)
+    return false unless t2.is_a?(Types::PResourceType)
+    return true if t1.type_name.nil?
+    return false if t1.type_name != t2.type_name
+    return true if t1.title.nil?
+    return t1.title == t2.title
+  end
+
   # Data is assignable by other Data and by Array[Data] and Hash[Literal, Data]
   # @api private
   def assignable_PDataType(t, t2)
@@ -529,6 +559,28 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def string_PHashType(t)
     "Hash[#{string(t.key_type)}, #{string(t.element_type)}]"
+  end
+
+  # @api private
+  def string_PHostClassType(t)
+    if t.class_name
+      "Class[#{t.class_name}]"
+    else
+      "Class"
+    end
+  end
+
+  # @api private
+  def string_PResourceType(t)
+    if t.type_name
+      if t.title
+        "#{t.type_name.capitalize}['#{t.title}']"
+      else
+        "#{t.type_name.capitalize}"
+      end
+    else
+      "Resource"
+    end
   end
 
   private

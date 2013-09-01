@@ -150,6 +150,55 @@ describe 'The type calculator' do
     end
   end
 
+  # Deal with cases not covered by infer computing common type
+  context 'when computing common type' do
+    it 'computes given resource type commonality' do
+      r1 = Puppet::Pops::Types::PResourceType.new()
+      r1.type_name = 'File'
+      r2 = Puppet::Pops::Types::PResourceType.new()
+      r2.type_name = 'File'
+      calculator.string(calculator.common_type(r1, r2)).should == "File"
+
+      r2 = Puppet::Pops::Types::PResourceType.new()
+      r2.type_name = 'File'
+      r2.title = '/tmp/foo'
+      calculator.string(calculator.common_type(r1, r2)).should == "File"
+
+      r1 = Puppet::Pops::Types::PResourceType.new()
+      r1.type_name = 'File'
+      r1.title = '/tmp/foo'
+      calculator.string(calculator.common_type(r1, r2)).should == "File['/tmp/foo']"
+
+      r1 = Puppet::Pops::Types::PResourceType.new()
+      r1.type_name = 'File'
+      r1.title = '/tmp/bar'
+      calculator.string(calculator.common_type(r1, r2)).should == "File"
+
+      r2 = Puppet::Pops::Types::PResourceType.new()
+      r2.type_name = 'Package'
+      r2.title = 'apache'
+      calculator.string(calculator.common_type(r1, r2)).should == "Resource"
+    end
+
+    it 'computes given hostclass type commonality' do
+      r1 = Puppet::Pops::Types::PHostClassType.new()
+      r1.class_name = 'foo'
+      r2 = Puppet::Pops::Types::PHostClassType.new()
+      r2.class_name = 'foo'
+      calculator.string(calculator.common_type(r1, r2)).should == "Class[foo]"
+
+      r2 = Puppet::Pops::Types::PHostClassType.new()
+      r2.class_name = 'bar'
+      calculator.string(calculator.common_type(r1, r2)).should == "Class"
+
+      r2 = Puppet::Pops::Types::PHostClassType.new()
+      calculator.string(calculator.common_type(r1, r2)).should == "Class"
+
+      r1 = Puppet::Pops::Types::PHostClassType.new()
+      calculator.string(calculator.common_type(r1, r2)).should == "Class"
+    end
+  end
+
   context 'when testing if x is assignable to y' do
     it 'should allow all object types to PObjectType' do
       t = Puppet::Pops::Types::PObjectType.new()
@@ -167,6 +216,8 @@ describe 'The type calculator' do
       calculator.assignable?(t,Puppet::Pops::Types::PArrayType.new()).should() == true
       calculator.assignable?(t,Puppet::Pops::Types::PHashType.new()).should() == true
       calculator.assignable?(t,Puppet::Pops::Types::PRubyType.new()).should() == true
+      calculator.assignable?(t,Puppet::Pops::Types::PHostClassType.new()).should() == true
+      calculator.assignable?(t,Puppet::Pops::Types::PResourceType.new()).should() == true
     end
 
     it 'should reject PObjectType to less generic types' do
@@ -183,6 +234,8 @@ describe 'The type calculator' do
       calculator.assignable?(Puppet::Pops::Types::PArrayType.new(), t).should() == false
       calculator.assignable?(Puppet::Pops::Types::PHashType.new(), t).should() == false
       calculator.assignable?(Puppet::Pops::Types::PRubyType.new(), t).should() == false
+      calculator.assignable?(Puppet::Pops::Types::PHostClassType.new(), t).should() == false
+      calculator.assignable?(Puppet::Pops::Types::PResourceType.new(), t).should() == false
     end
 
     it 'should allow all data types, array, and hash to PDataType' do
@@ -295,6 +348,8 @@ describe 'The type calculator' do
       calculator.assignable?(Puppet::Pops::Types::PPatternType.new(), t).should() == false
       calculator.assignable?(Puppet::Pops::Types::PBooleanType.new(), t).should() == false
       calculator.assignable?(Puppet::Pops::Types::PRubyType.new(), t).should() == false
+      calculator.assignable?(Puppet::Pops::Types::PHostClassType.new(), t).should() == false
+      calculator.assignable?(Puppet::Pops::Types::PResourceType.new(), t).should() == false
     end
 
     it 'should reject PArrayType to non array type collections' do
@@ -341,6 +396,55 @@ describe 'The type calculator' do
       calculator.assignable?(barType, fooType).should == false
       calculator.assignable?(Bar, fooType).should == false
     end
+
+    it "should allow host class with same name" do
+      hc1 = Puppet::Pops::Types::TypeFactory.host_class('the_name')
+      hc2 = Puppet::Pops::Types::TypeFactory.host_class('the_name')
+      calculator.assignable?(hc1, hc2).should == true
+    end
+
+    it "should allow host class with name assigned to hostclass without name" do
+      hc1 = Puppet::Pops::Types::TypeFactory.host_class()
+      hc2 = Puppet::Pops::Types::TypeFactory.host_class('the_name')
+      calculator.assignable?(hc1, hc2).should == true
+    end
+
+    it "should reject host classes with different names" do
+      hc1 = Puppet::Pops::Types::TypeFactory.host_class('the_name')
+      hc2 = Puppet::Pops::Types::TypeFactory.host_class('another_name')
+      calculator.assignable?(hc1, hc2).should == false
+    end
+
+    it "should reject host classes without name assigned to host class with name" do
+      hc1 = Puppet::Pops::Types::TypeFactory.host_class('the_name')
+      hc2 = Puppet::Pops::Types::TypeFactory.host_class()
+      calculator.assignable?(hc1, hc2).should == false
+    end
+
+    it "should allow resource with same type_name and title" do
+      r1 = Puppet::Pops::Types::TypeFactory.resource('file', 'foo')
+      r2 = Puppet::Pops::Types::TypeFactory.resource('file', 'foo')
+      calculator.assignable?(r1, r2).should == true
+    end
+
+    it "should allow more specific resource assignment" do
+      r1 = Puppet::Pops::Types::TypeFactory.resource()
+      r2 = Puppet::Pops::Types::TypeFactory.resource('file')
+      calculator.assignable?(r1, r2).should == true
+      r2 = Puppet::Pops::Types::TypeFactory.resource('file', '/tmp/foo')
+      calculator.assignable?(r1, r2).should == true
+      r1 = Puppet::Pops::Types::TypeFactory.resource('file')
+      calculator.assignable?(r1, r2).should == true
+    end
+
+    it "should reject less specific resource assignment" do
+      r1 = Puppet::Pops::Types::TypeFactory.resource('file', '/tmp/foo')
+      r2 = Puppet::Pops::Types::TypeFactory.resource('file')
+      calculator.assignable?(r1, r2).should == false
+      r2 = Puppet::Pops::Types::TypeFactory.resource()
+      calculator.assignable?(r1, r2).should == false
+    end
+
   end
 
   context 'when testing if x is instance of type t' do
@@ -449,6 +553,35 @@ describe 'The type calculator' do
       t.element_type = Puppet::Pops::Types::PIntegerType.new()
       calculator.string(t).should == 'Hash[String, Integer]'
     end
+
+    it "should yield 'Class' for a PHostClassType" do
+      t = Puppet::Pops::Types::PHostClassType.new()
+      calculator.string(t).should == 'Class'
+    end
+
+    it "should yield 'Class[x]' for a PHostClassType[x]" do
+      t = Puppet::Pops::Types::PHostClassType.new()
+      t.class_name = 'x'
+      calculator.string(t).should == 'Class[x]'
+    end
+
+    it "should yield 'Resource' for a PResourceType" do
+      t = Puppet::Pops::Types::PResourceType.new()
+      calculator.string(t).should == 'Resource'
+    end
+
+    it 'should yield \'File\' for a PResourceType[\'File\']' do
+      t = Puppet::Pops::Types::PResourceType.new()
+      t.type_name = 'File'
+      calculator.string(t).should == 'File'
+    end
+
+    it "should yield 'File['/tmp/foo']' for a PResourceType['File', '/tmp/foo']" do
+      t = Puppet::Pops::Types::PResourceType.new()
+      t.type_name = 'File'
+      t.title = '/tmp/foo'
+      calculator.string(t).should == "File['/tmp/foo']"
+    end
   end
 
   context 'when processing meta type' do
@@ -467,6 +600,8 @@ describe 'The type calculator' do
       calculator.infer(Puppet::Pops::Types::PArrayType.new()     ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PHashType.new()      ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PRubyType.new()      ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PHostClassType.new() ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PResourceType.new()  ).is_a?(ptype).should() == true
     end
 
     it 'should infer PType as the type of ruby classes' do

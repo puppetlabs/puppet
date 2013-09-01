@@ -40,12 +40,27 @@ class Puppet::Pops::Types::TypeParser
 
   # @api private
   def interpret(ast)
+    result = @type_transformer.visit_this(self, ast)
+    raise_invalid_type_specification_error unless result.is_a?(Puppet::Pops::Types::PObjectType)
+    result
+  end
+
+  # @api private
+  def interpret_any(ast)
     @type_transformer.visit_this(self, ast)
   end
 
   # @api private
   def interpret_Object(anything)
     raise_invalid_type_specification_error
+  end
+
+  def interpret_QualifiedName(name_ast)
+    name_ast.value
+  end
+
+  def interpret_LiteralString(string_ast)
+    string_ast.value
   end
 
   # @api private
@@ -67,34 +82,80 @@ class Puppet::Pops::Types::TypeParser
       TYPES.array_of_data
     when "hash"
       TYPES.hash_of_data
-    else
+    when "class"
+      TYPES.host_class()
+    when "resource"
+      TYPES.resource()
+    when "object", "collection", "ruby", "type"
+      # should not be interpreted as Resource type
       raise_unknown_type_error(name_ast)
+    else
+      TYPES.resource(name_ast.value)
     end
   end
 
   # @api private
   def interpret_AccessExpression(parameterized_ast)
-    parameters = parameterized_ast.keys.collect { |param| interpret(param) }
+    parameters = parameterized_ast.keys.collect { |param| interpret_any(param) }
+
+    unless parameterized_ast.left_expr.is_a?(Puppet::Pops::Model::QualifiedReference)
+      raise_invalid_type_specification_error
+    end
+
     case parameterized_ast.left_expr.value
     when "array"
       if parameters.size != 1
         raise_invalid_parameters_error("Array", 1, parameters.size)
       end
+      assert_type(parameters[0])
       TYPES.array_of(parameters[0])
+
     when "hash"
       if parameters.size == 1
+        assert_type(parameters[0])
         TYPES.hash_of(parameters[0])
       elsif parameters.size != 2
         raise_invalid_parameters_error("Hash", "1 or 2", parameters.size)
       else
+        assert_type(parameters[0])
+        assert_type(parameters[1])
         TYPES.hash_of(parameters[1], parameters[0])
       end
-    else
+
+    when "class"
+      if parameters.size != 1
+        raise_invalid_parameters_error("Class", 1, parameters.size)
+      end
+      TYPES.host_class(parameters[0])
+
+    when "resource"
+      if parameters.size == 1
+        TYPES.resource(parameters[0])
+      elsif parameters.size != 2
+        raise_invalid_parameters_error("Resource", "1 or 2", parameters.size)
+      else
+        TYPES.resource(parameters[0], parameters[1])
+      end
+
+    when "object", "collection", "ruby", "type"
+      # should not be interpreted as Resource type
       raise_unknown_type_error(parameterized_ast.left_expr)
+
+    else
+      # It is a resource such a File['/tmp/foo']
+      type_name = parameterized_ast.left_expr.value
+      if parameters.size != 1
+        raise_invalid_parameters_error(type_name.capitalize, 1, parameters.size)
+      end
+      TYPES.resource(type_name, parameters[0])
     end
   end
 
   private
+
+  def assert_type(t)
+    raise_invalid_type_specification_error unless t.is_a?(Puppet::Pops::Types::PObjectType)
+  end
 
   def raise_invalid_type_specification_error
     raise Puppet::ParseError,

@@ -31,6 +31,38 @@ describe 'The type factory' do
       Puppet::Pops::Types::TypeFactory.data().class().should == Puppet::Pops::Types::PDataType
     end
 
+    it 'resource() creates a generic PResourceType' do
+      pr = Puppet::Pops::Types::TypeFactory.resource()
+      pr.class().should == Puppet::Pops::Types::PResourceType
+      pr.type_name.should == nil
+    end
+
+    it 'resource(x) creates a PResourceType[x]' do
+      pr = Puppet::Pops::Types::TypeFactory.resource('x')
+      pr.class().should == Puppet::Pops::Types::PResourceType
+      pr.type_name.should == 'x'
+    end
+
+    it 'host_class() creates a generic PHostClassType' do
+      hc = Puppet::Pops::Types::TypeFactory.host_class()
+      hc.class().should == Puppet::Pops::Types::PHostClassType
+      hc.class_name.should == nil
+    end
+
+    it 'host_class(x) creates a PHostClassType[x]' do
+      hc = Puppet::Pops::Types::TypeFactory.host_class('x')
+      hc.class().should == Puppet::Pops::Types::PHostClassType
+      hc.class_name.should == 'x'
+    end
+
+    it 'host_class(x, HostClassType) creates a PHostClassType[x]' do
+      hc_super = Puppet::Pops::Types::TypeFactory.host_class('base_type')
+      hc = Puppet::Pops::Types::TypeFactory.host_class('x', hc_super)
+      hc.class().should == Puppet::Pops::Types::PHostClassType
+      hc.class_name.should == 'x'
+      hc.super_type.should == hc_super
+    end
+
     it 'array_of(fixnum) returns PArrayType[PIntegerType]' do
       at = Puppet::Pops::Types::TypeFactory.array_of(1)
       at.class().should == Puppet::Pops::Types::PArrayType

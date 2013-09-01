@@ -132,6 +132,36 @@ module Puppet::Pops::Types
         self.class == o.class && ruby_class == o.ruby_class
       end
     end
-
   end
+
+  # Represents a (host-) class in the Puppet Language.
+  # @api public
+  class PHostClassType < PObjectType
+    has_attr 'class_name', String
+    contains_one_uni 'super_type', PHostClassType
+    module ClassModule
+      def hash
+        [self.class, host_class].hash
+      end
+      def ==(o)
+        self.class == o.class && class_name == o.class_name
+      end
+    end
+  end
+
+  # Represents a Resource Type in the Puppet Language
+  # @api public
+  class PResourceType < PObjectType
+    has_attr 'type_name', String
+    has_attr 'title', String
+    module ClassModule
+      def hash
+        [self.class, type_name, title].hash
+      end
+      def ==(o)
+        self.class == o.class && type_name == o.type_name && title == o.title
+      end
+    end
+  end
+
 end

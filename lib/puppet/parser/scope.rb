@@ -123,8 +123,21 @@ class Puppet::Parser::Scope
     compiler.node.facts
   end
 
+  # Returns true if the variable of the given name has a non nil value.
+  #
   def include?(name)
     ! self[name].nil?
+  end
+
+  # Returns true if the variable of the given name is set to any value (including nil)
+  #
+  def exist?(name)
+    effective.symtable(true).include?(name)
+  end
+
+  # Returns true if the given name is bound in the current (most nested) scope.
+  def bound?(name)
+    effective.symtable(true).bound?(name)
   end
 
   # Is the value true?  This allows us to control the definition of truth

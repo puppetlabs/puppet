@@ -69,6 +69,30 @@ module Puppet::Pops::Types::TypeFactory
     Types::PDataType.new()
   end
 
+  # Produces a PResourceType with a String type_name
+  # A PResourceType with a nil or empty name is compatible with any other PResourceType.
+  # A PResourceType with a given name is only compatible with a PResourceType with the same name.
+  # (There is no resource-type subtyping in Puppet (yet)).
+  #
+  def self.resource(type_name = nil, title = nil)
+    type = Types::PResourceType.new()
+    type_name = type_name.type_name if type_name.is_a?(Types::PResourceType)
+    type.type_name = type_name
+    type.title = title
+    type
+  end
+
+  # Produces PHostClassType with a string class_name, and an optional super type.
+  # A PHostClassType with nil or empty name is compatible with any other PHostClassType.
+  # A PHostClassType with a given name is only compatible with a PHostClassType with the same name.
+  #
+  def self.host_class(class_name = nil, super_type = nil)
+    type = Types::PHostClassType.new()
+    type.class_name = class_name
+    type.super_type = super_type
+    type
+  end
+
   # Produces a type for Array[o] where o is either a type, or an instance for which a type is inferred.
   # @api public
   #
