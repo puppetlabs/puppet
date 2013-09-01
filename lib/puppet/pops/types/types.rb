@@ -68,6 +68,11 @@ module Puppet::Pops::Types
 
   # @api public
   class PPatternType < PLiteralType
+    module ClassModule
+      def [](pattern)
+        Regexp.new(pattern)
+      end
+    end
   end
 
   # @api public
