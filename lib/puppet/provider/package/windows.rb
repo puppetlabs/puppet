@@ -76,9 +76,9 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   end
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa368542(v=vs.85).aspx
-  ERROR_SUCCESS                  = 0
-  ERROR_SUCCESS_REBOOT_INITIATED = 1641
-  ERROR_SUCCESS_REBOOT_REQUIRED  = 3010
+  self::ERROR_SUCCESS                  = 0
+  self::ERROR_SUCCESS_REBOOT_INITIATED = 1641
+  self::ERROR_SUCCESS_REBOOT_REQUIRED  = 3010
 
   # (Un)install may "fail" because the package requested a reboot, the system requested a
   # reboot, or something else entirely. Reboot requests mean the package was installed
@@ -87,13 +87,13 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     operation = resource[:ensure] == :absent ? 'uninstall' : 'install'
 
     case hr
-    when ERROR_SUCCESS
+    when self.class::ERROR_SUCCESS
       # yeah
     when 194
       warning("The package requested a reboot to finish the operation.")
-    when ERROR_SUCCESS_REBOOT_INITIATED
+    when self.class::ERROR_SUCCESS_REBOOT_INITIATED
       warning("The package #{operation}ed successfully and the system is rebooting now.")
-    when ERROR_SUCCESS_REBOOT_REQUIRED
+    when self.class::ERROR_SUCCESS_REBOOT_REQUIRED
       warning("The package #{operation}ed successfully, but the system must be rebooted.")
     else
       raise Puppet::Util::Windows::Error.new("Failed to #{operation}", hr)

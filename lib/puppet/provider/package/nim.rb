@@ -151,10 +151,10 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   # I spent a lot of time trying to figure out a solution that didn't
   # require parsing the `nimclient -o showres` output and was unable to
   # do so.
-  HEADER_LINE_REGEX      = /^([^\s]+)\s+[^@]+@@(I|R):(\1)\s+[^\s]+$/
-  PACKAGE_LINE_REGEX     = /^.*@@(I|R):(.*)$/
-  RPM_PACKAGE_REGEX      = /^(.*)-(.*-\d+) \2$/
-  INSTALLP_PACKAGE_REGEX = /^(.*) (.*)$/
+  self::HEADER_LINE_REGEX      = /^([^\s]+)\s+[^@]+@@(I|R):(\1)\s+[^\s]+$/
+  self::PACKAGE_LINE_REGEX     = /^.*@@(I|R):(.*)$/
+  self::RPM_PACKAGE_REGEX      = /^(.*)-(.*-\d+) \2$/
+  self::INSTALLP_PACKAGE_REGEX = /^(.*) (.*)$/
 
   # Here is some sample output that shows what the above regexes will be up
   # against:
@@ -205,13 +205,13 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     # meant to validate that the header line for the package listing output
     # looks sane, so we know we're dealing with the kind of output that we
     # are capable of handling.
-    unless line.match(HEADER_LINE_REGEX)
+    unless line.match(self.class::HEADER_LINE_REGEX)
       self.fail "Unable to parse output from nimclient showres: line does not match expected package header format:\n'#{line}'"
     end
   end
 
   def parse_installp_package_string(package_string)
-    unless match = package_string.match(INSTALLP_PACKAGE_REGEX)
+    unless match = package_string.match(self.class::INSTALLP_PACKAGE_REGEX)
       self.fail "Unable to parse output from nimclient showres: package string does not match expected installp package string format:\n'#{package_string}'"
     end
     package_name = match.captures[0]
@@ -220,7 +220,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   end
 
   def parse_rpm_package_string(package_string)
-    unless match = package_string.match(RPM_PACKAGE_REGEX)
+    unless match = package_string.match(self.class::RPM_PACKAGE_REGEX)
       self.fail "Unable to parse output from nimclient showres: package string does not match expected rpm package string format:\n'#{package_string}'"
     end
     package_name = match.captures[0]
@@ -229,7 +229,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
   end
 
   def parse_showres_package_line(line)
-    unless match = line.match(PACKAGE_LINE_REGEX)
+    unless match = line.match(self.class::PACKAGE_LINE_REGEX)
       self.fail "Unable to parse output from nimclient showres: line does not match expected package line format:\n'#{line}'"
     end
 

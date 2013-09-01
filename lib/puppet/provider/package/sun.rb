@@ -15,7 +15,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
   has_feature :install_options
 
-  Namemap = {
+  self::Namemap = {
     "PKGINST"  => :name,
     "CATEGORY" => :category,
     "ARCH"     => :platform,
@@ -26,8 +26,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   }
 
   def self.namemap(hash)
-    Namemap.keys.inject({}) do |hsh,k|
-      hsh.merge(Namemap[k] => hash[k])
+    self::Namemap.keys.inject({}) do |hsh,k|
+      hsh.merge(self::Namemap[k] => hash[k])
     end
   end
 
