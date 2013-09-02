@@ -11,27 +11,65 @@ end
 
 CLEAN.include('*.repo', '*.tar', '*.rpm')
 
-file "pl-puppet-build.repo" do |task|
-  sha = ENV['SHA']
-  fetch("http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/pl-puppet-#{sha}-el-6-x86_64-products.repo",
-        task.name)
-end
-
-file "pl-puppet-repos.rpm" do |task|
-  fetch("http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm", task.name)
-end
-
-task :repo_configs => ["pl-puppet-repos.rpm", "pl-puppet-build.repo"] do |task|
-  sh "tar -cvf repos.tar #{task.prerequisites.join(' ')}"
-end
-
-task :test => [:repo_configs] do
-  sh "systest --pre-suite setup/early -o options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || 'tests'}"
-end
-
 namespace :ci do
-  task :test do
-    ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + " --no-color --xml"
-    Rake::Task['test'].invoke
+
+  def sha
+    ENV['SHA']
+  end
+
+  file "pl-puppet-build.repo" do |task|
+    uri = "http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/pl-puppet-#{sha}-el-6-x86_64-products.repo"
+    begin
+      fetch(uri, task.name)
+    rescue OpenURI::HTTPError => e
+      if e.message =~ /404/
+        # We may be tagged as an rc, and the packaging tasks change the name to devel
+        fetch(uri.sub(/products\.repo/, 'devel.repo'), task.name)
+        # this is icky, but injecting git describe info so that we can test it
+        # when these tasks are run from the build artifact tarred on jenkins is
+        # worse.  Moses has stated that this change in pathing should go away,
+        # though we don't know when.  The change in pathing is determined here:
+        # https://github.com/puppetlabs/packaging/blob/master/tasks/mock.rake#L125
+      else
+        raise e
+      end
+    end
+  end
+
+  file "pl-puppet-repos.rpm" do |task|
+    fetch("http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm", task.name)
+  end
+
+  task :repo_configs => ["pl-puppet-repos.rpm", "pl-puppet-build.repo"] do |task|
+    sh "tar -cvf repos.tar #{task.prerequisites.join(' ')}"
+  end
+
+  desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test as environment variable: SHA='<sha>')"
+  task :test => [:repo_configs] do
+    ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + " --xml"
+    ENV['TESTING_MODE'] = 'jenkins'
+    sh "systest -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
+  end
+end
+
+namespace :standalone do
+  desc "Bring up the vagrant environment.  Includes pre-puppet environment packages installation and cross node networking support (/etc/hosts munging)"
+  task :up do
+    sh "vagrant up"
+  end
+
+  desc "Completely destroy the vagrant instances."
+  task :clean do
+    sh "vagrant destroy -f"
+  end
+
+  task :ensure_good_private_key do
+    sh "chmod 600 acceptance.priv"
+  end
+
+  desc "Bring up vagrant boxes and run the tests through the puppet-acceptance systest harness.  Specify TEST='../../tests/foo' to customize which tests are to be run, and/or OPTIONS='bar' to pass options to systest."
+  task :test => [:up, :ensure_good_private_key] do
+    ENV['TESTING_MODE'] = 'local'
+    sh "systest -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
   end
 end
