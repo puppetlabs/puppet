@@ -12,16 +12,14 @@ require 'rgen/metamodel_builder'
 #
 module Puppet::Pops::Types
 
-  # The type of types.
-  # @api public
-  class PType < Puppet::Pops::Model::PopsObject
-  end
-
-  # Base type for all types except {Puppet::Pops::Types::PType PType}, the type of types.
-  # @api public
-  class PObjectType < Puppet::Pops::Model::PopsObject
-
+  class PAbstractType < Puppet::Pops::Model::PopsObject
+    abstract
     module ClassModule
+      # Produce a deep copy of the type
+      def copy
+        Marshal.load(Marshal.dump(self))
+      end
+
       def hash
         self.class.hash
       end
@@ -31,6 +29,30 @@ module Puppet::Pops::Types
       end
 
       alias eql? ==
+
+    end
+  end
+
+  # The type of types.
+  # @api public
+  class PType < PAbstractType
+    contains_one_uni 'type', PAbstractType
+    module ClassModule
+      def hash
+        [self.class, type].hash
+      end
+
+      def ==(o)
+        self.class == o.class && type == o.type
+      end
+    end
+  end
+
+  # Base type for all types except {Puppet::Pops::Types::PType PType}, the type of types.
+  # @api public
+  class PObjectType < PAbstractType
+
+    module ClassModule
     end
 
   end
@@ -81,7 +103,7 @@ module Puppet::Pops::Types
 
   # @api public
   class PCollectionType < PObjectType
-    contains_one_uni 'element_type', PObjectType
+    contains_one_uni 'element_type', PAbstractType
     module ClassModule
       def hash
         [self.class, element_type].hash
@@ -108,7 +130,7 @@ module Puppet::Pops::Types
 
   # @api public
   class PHashType < PCollectionType
-    contains_one_uni 'key_type', PObjectType
+    contains_one_uni 'key_type', PAbstractType
     module ClassModule
       def hash
         [self.class, key_type, element_type].hash

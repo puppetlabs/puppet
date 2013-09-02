@@ -201,7 +201,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def is_ptype?(t)
-    return t.is_a?(Types::PObjectType)
+    return t.is_a?(Types::PAbstractType)
   end
 
   # Answers if t represents the puppet type PNilType
@@ -271,6 +271,13 @@ class Puppet::Pops::Types::TypeCalculator
 
     if common_data?(t1,t2)
       return Types::PDataType.new()
+    end
+
+    # Meta types Type[Integer] + Type[String] => Type[Data]
+    if t1.is_a?(Types::PType) && t2.is_a?(Types::PType)
+      type = Types::PType.new()
+      type.type = common_type(t1.type, t2.type)
+      return type
     end
 
     if t1.is_a?(Types::PRubyType) && t2.is_a?(Types::PRubyType)
@@ -349,7 +356,9 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   #
   def infer_PObjectType(o)
-    Types::PType.new()
+    type = Types::PType.new()
+    type.type = o.copy
+    type
   end
 
   # The type of all types is PType
@@ -357,7 +366,9 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   #
   def infer_PType(o)
-    Types::PType.new()
+    type = Types::PType.new()
+    type.type = o.copy
+    type
   end
 
   # @api private
@@ -472,6 +483,12 @@ class Puppet::Pops::Types::TypeCalculator
     t2.is_a?(Types::PCollectionType)
   end
 
+  # @api private
+  def assignable_PType(t, t2)
+    return false unless t2.is_a?(Types::PType)
+    assignable?(t.type, t2.type)
+  end
+
   # Array is assignable if t2 is an Array and t2's element type is assignable
   # @api private
   def assignable_PArrayType(t, t2)
@@ -519,7 +536,19 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def string_PType(t)        ; "Type"    ; end
+  def string_PType(t)
+    if t.type.nil?
+      "Type"
+    else
+      "Type[#{string(t.type)}]"
+    end
+  end
+
+  # @api private
+  def string_NilClass(t)     ; '?'       ; end
+
+  # @api private
+  def string_String(t)       ; t         ; end
 
   # @api private
   def string_PObjectType(t)  ; "Object"  ; end
@@ -549,7 +578,10 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PStringType(t)  ; "String"  ; end
 
   # @api private
-  def string_PRubyType(t)   ; "Ruby[#{t.ruby_class}]"  ; end
+  def string_PCollectionType(t)  ; "Collection"  ; end
+
+  # @api private
+  def string_PRubyType(t)   ; "Ruby[#{string(t.ruby_class)}]"  ; end
 
   # @api private
   def string_PArrayType(t)

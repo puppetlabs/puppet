@@ -602,6 +602,33 @@ describe 'The type calculator' do
       calculator.infer(Puppet::Pops::Types::PRubyType.new()      ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PHostClassType.new() ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PResourceType.new()  ).is_a?(ptype).should() == true
+      calculator.string(calculator.infer(Puppet::Pops::Types::PIntegerType.new())).should == "Type[Integer]"
+    end
+
+    it 'should infer PType as the type of all other types' do
+      ptype = Puppet::Pops::Types::PType
+      calculator.string(calculator.infer(Puppet::Pops::Types::PNilType.new()       )).should == "Type[Object]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PDataType.new()      )).should == "Type[Data]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PLiteralType.new()   )).should == "Type[Literal]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PStringType.new()    )).should == "Type[String]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PNumericType.new()   )).should == "Type[Numeric]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PIntegerType.new()   )).should == "Type[Integer]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PFloatType.new()     )).should == "Type[Float]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PPatternType.new()   )).should == "Type[Pattern]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PBooleanType.new()   )).should == "Type[Boolean]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PCollectionType.new())).should == "Type[Collection]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PArrayType.new()     )).should == "Type[Array[?]]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PHashType.new()      )).should == "Type[Hash[?, ?]]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PRubyType.new()      )).should == "Type[Ruby[?]]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PHostClassType.new() )).should == "Type[Class]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PResourceType.new()  )).should == "Type[Resource]"
+    end
+
+    it "computes the common type of PType's type parameter" do
+      int_t    = Puppet::Pops::Types::PIntegerType.new()
+      string_t = Puppet::Pops::Types::PStringType.new()
+      calculator.string(calculator.infer([int_t])).should == "Array[Type[Integer]]"
+      calculator.string(calculator.infer([int_t, string_t])).should == "Array[Type[Literal]]"
     end
 
     it 'should infer PType as the type of ruby classes' do
