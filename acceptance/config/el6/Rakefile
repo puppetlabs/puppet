@@ -48,7 +48,7 @@ namespace :ci do
   task :test => [:repo_configs] do
     ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + " --xml"
     ENV['TESTING_MODE'] = 'jenkins'
-    sh "systest -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
+    sh "beaker -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
   end
 end
 
@@ -67,9 +67,9 @@ namespace :standalone do
     sh "chmod 600 acceptance.priv"
   end
 
-  desc "Bring up vagrant boxes and run the tests through the puppet-acceptance systest harness.  Specify TEST='../../tests/foo' to customize which tests are to be run, and/or OPTIONS='bar' to pass options to systest."
+  desc "Bring up vagrant boxes and run the tests through the puppet-acceptance beaker harness.  Specify TEST='../../tests/foo' to customize which tests are to be run, and/or OPTIONS='bar' to pass options to beaker."
   task :test => [:up, :ensure_good_private_key] do
     ENV['TESTING_MODE'] = 'local'
-    sh "systest -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
+    sh "beaker -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
   end
 end

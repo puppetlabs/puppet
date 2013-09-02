@@ -1,15 +1,13 @@
 begin
-  require 'puppet_acceptance/dsl/install_utils'
-rescue LoadError
-  require File.expand_path(File.join(__FILE__, '..', '..', '..', 'lib', 'puppet_acceptance', 'dsl', 'install_utils'))
+  require 'beaker/dsl/install_utils'
 end
 
 test_name "Install packages and repositories on target machines..." do
-  extend PuppetAcceptance::DSL::InstallUtils
+  extend Beaker::DSL::InstallUtils
 
-  SourcePath  = PuppetAcceptance::DSL::InstallUtils::SourcePath
-  GitURI      = PuppetAcceptance::DSL::InstallUtils::GitURI
-  GitHubSig   = PuppetAcceptance::DSL::InstallUtils::GitHubSig
+  SourcePath  = Beaker::DSL::InstallUtils::SourcePath
+  GitURI      = Beaker::DSL::InstallUtils::GitURI
+  GitHubSig   = Beaker::DSL::InstallUtils::GitHubSig
 
   tmp_repositories = []
   options[:install].each do |uri|
