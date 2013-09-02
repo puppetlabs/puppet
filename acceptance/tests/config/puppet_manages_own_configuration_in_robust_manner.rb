@@ -13,29 +13,11 @@ confine :except, :platform => 'solaris'
 step "Clear out yaml directory because of a bug in the indirector/yaml. (See #21145)"
 on master, 'rm -rf $(puppet master --configprint yamldir)'
 
-step "Record original state of system users"
 original_state = {}
-hosts.each do |host|
-  original_state[host] = on(host, puppet('resource', 'user', 'puppet')).output
-  original_state[host] += on(host, puppet('resource', 'group', 'puppet')).output
-end
-
-step "Remove system users"
-hosts.each do |host|
-  on host, puppet('resource', 'user', 'puppet', 'ensure=absent')
-  on host, puppet('resource', 'group', 'puppet', 'ensure=absent')
-end
-
-step "Ensure master fails to start when missing system user"
-on master, puppet('master'), :acceptable_exit_codes => [74] do
-  assert_match(/could not change to group "puppet"/, result.output)
-  assert_match(/Could not change to user puppet/, result.output)
-end
-
-step "Ensure master starts when making users after having previously failed startup"
-with_master_running_on(master, '--mkusers --autosign true') do
-  agents.each do |agent|
-    on agent, puppet_agent('-t', '--server', master)
+step "Record original state of system users" do
+  hosts.each do |host|
+    original_state[host] = on(host, puppet('resource', 'user', 'puppet')).output
+    original_state[host] += on(host, puppet('resource', 'group', 'puppet')).output
   end
 end
 
@@ -49,5 +31,33 @@ teardown do
       #{original_state[host]}
       Group['puppet'] -> User['puppet']
     ORIG
+  end
+end
+
+step "Remove system users" do
+  hosts.each do |host|
+    on host, puppet('resource', 'user', 'puppet', 'ensure=absent')
+    on host, puppet('resource', 'group', 'puppet', 'ensure=absent')
+  end
+end
+
+step "Ensure master fails to start when missing system user" do
+  on master, puppet('master'), :acceptable_exit_codes => [74] do
+    assert_match(/could not change to group "puppet"/, result.output)
+    assert_match(/Could not change to user puppet/, result.output)
+  end
+end
+
+step "Ensure master starts when making users after having previously failed startup" do
+
+  step "Failing here on RHEL6 packages -- Redmine #22273"
+  confine :except, :platform => 'el-6'
+
+  with_puppet_running_on(master,
+                         :__commandline_args__ => '--debug --trace',
+                         :master => { :mkusers => true }) do
+    agents.each do |agent|
+      on agent, puppet('agent', '-t', '--server', master)
+    end
   end
 end

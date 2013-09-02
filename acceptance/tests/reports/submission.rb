@@ -2,7 +2,7 @@ test_name "Report submission"
 
 testdir = master.tmpdir('report_submission')
 
-with_master_running_on(master, "--reportdir #{testdir} --reports store --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
+with_puppet_running_on(master, :main => { :reportdir => testdir, :reports => 'store', :daemonize => true, :autosign => true }) do
   agents.each do |agent|
     run_agent_on(agent, "-t --server #{master}")
 

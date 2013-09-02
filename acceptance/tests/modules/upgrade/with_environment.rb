@@ -1,10 +1,10 @@
-test_name 'puppet module install (with environment)'
+test_name "puppet module upgrade (with environment)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
-module_name   = "nginx"
-module_dependencies = []
+module_name   = "java"
+module_dependencies = ["stdlib"]
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do
@@ -18,7 +18,6 @@ step 'Setup'
 stub_forge_on(master)
 
 # Configure a non-default environment
-on master, "rm -rf #{master['puppetpath']}/testenv"
 apply_manifest_on master, %Q{
   file {
     [
@@ -34,10 +33,13 @@ apply_manifest_on master, %Q{
 }
 on master, "{ echo '[testenv]'; echo 'modulepath=#{master['puppetpath']}/testenv/modules'; } >> #{master['puppetpath']}/puppet2.conf"
 
-step 'Install a module into a non default environment'
-on master, "puppet module install #{module_author}-#{module_name} --config=#{master['puppetpath']}/puppet2.conf --environment=testenv" do
+on master, puppet("module install #{module_author}-#{module_name} --config=#{master['puppetpath']}/puppet2.conf --version 1.6.0 --environment=testenv") do
   assert_module_installed_ui(stdout, module_author, module_name)
-  assert_match(/#{master['puppetpath']}\/testenv\/modules/, stdout,
-        "Notice of non default install path was not displayed")
 end
-assert_module_installed_on_disk(master, "#{master['puppetpath']}/testenv/modules", module_name)
+
+step "Upgrade a module that has a more recent version published"
+on master, puppet("module upgrade #{module_author}-#{module_name} --config=#{master['puppetpath']}/puppet2.conf --environment=testenv") do
+  assert_module_installed_ui(stdout, module_author, module_name)
+  on master, "[ -f #{master['puppetpath']}/testenv/modules/#{module_name}/Modulefile ]"
+  on master, "grep 1.7.1 #{master['puppetpath']}/testenv/modules/#{module_name}/Modulefile"
+end

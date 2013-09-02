@@ -80,14 +80,25 @@ test_name "Puppet cert generate behavior (#6112)" do
 
   def clear_all_hosts_ssl
     step "All: Clear ssl settings"
-    on( hosts, host_command('rm -rf #{host["puppetpath"]}/ssl') )
+    hosts.each do |host|
+      ssldir = on(host, puppet('agent --configprint ssldir')).stdout.chomp
+      on( host, host_command("rm -rf #{ssldir}") )
+    end
   end
 
   def reset_master_and_agent_ssl
     clear_all_hosts_ssl
 
+    hostname = on(master, 'facter hostname').stdout.strip
+    fqdn = on(master, 'facter fqdn').stdout.strip
+
     step "Master: Ensure the master bootstraps CA"
-    with_master_running_on(master, "--certname #{master} --autosign true") do
+    with_puppet_running_on(master,
+                            :master => {
+                              :dns_alt_names => "puppet,#{hostname},#{fqdn}",
+                              :autosign => true,
+                            },
+                          ) do
       step "Agents: Run agent --test once to obtained auto-signed cert"
       on agents, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]
     end
@@ -184,9 +195,9 @@ test_name "Puppet cert generate behavior (#6112)" do
 #
 # Redmine (#21739) captures this.
 #
-#    with_master_running_on(master, "--certname #{master} --autosign true", :preserve_ssl => true) do
+#    with_puppet_running_on(master, :master => { :certname => master, :autosign => true }) do
 #      step "but now unable to authenticate normally as an agent"
-# 
+#
 #      on(host, puppet('agent', '-t'), :acceptable_exit_codes => [1])
 #
 #    end

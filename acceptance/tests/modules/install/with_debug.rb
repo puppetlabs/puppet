@@ -1,9 +1,9 @@
-test_name "puppet module install (with no dependencies)"
+test_name "puppet module install (with debug)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
-module_name   = "nginx"
+module_name   = "java"
 module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
@@ -15,8 +15,8 @@ step 'Setup'
 
 stub_forge_on(master)
 
-step "Install a module with no dependencies"
-on master, puppet("module install #{module_author}-#{module_name}") do
-  assert_module_installed_ui(stdout, module_author, module_name)
+step "Install a module with debug output"
+on master, puppet("module install #{module_author}-#{module_name} --debug") do
+  assert_match(/Debug: Executing/, stdout,
+          "No 'Debug' output displayed!")
 end
-assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
