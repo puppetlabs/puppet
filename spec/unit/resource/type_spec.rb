@@ -7,7 +7,7 @@ if not Puppet.features.microsoft_windows?
   require 'json'
   require 'json-schema'
 
-  RESOURCE_TYPE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), 'resource_type.json')))
+  RESOURCE_TYPE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/resource_type.json')))
 end
 
 describe Puppet::Resource::Type do
