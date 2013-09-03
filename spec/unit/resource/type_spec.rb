@@ -1,11 +1,14 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'json'
-require 'json-schema'
-
 require 'puppet/resource/type'
 
-RESOURCE_TYPE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), 'resource_type.json')))
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  require 'json'
+  require 'json-schema'
+
+  RESOURCE_TYPE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), 'resource_type.json')))
+end
 
 describe Puppet::Resource::Type do
   it "should have a 'name' attribute" do
@@ -56,11 +59,11 @@ describe Puppet::Resource::Type do
       double_convert.type.should == @type.type
     end
 
-    it "should validate with only name and kind" do
+    it "should validate with only name and kind", :unless => Puppet.features.microsoft_windows? do
       validate_as_json(@type)
     end
 
-    it "should validate with all fields set" do
+    it "should validate with all fields set", :unless => Puppet.features.microsoft_windows? do
       @type.set_arguments("one" => nil, "two" => "foo")
       @type.line = 100
       @type.doc = "A weird type"
