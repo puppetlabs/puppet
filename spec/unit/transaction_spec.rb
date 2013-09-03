@@ -110,6 +110,12 @@ describe Puppet::Transaction do
       @transaction.evaluate
     end
 
+    it "should check whether siginfo is available" do
+      @transaction.expects(:siginfo_available?).returns false
+
+      @transaction.eval_resource(@resource)
+    end
+
     describe "and the resource should be skipped" do
       before do
         @transaction.expects(:skip?).with(@resource).returns true
@@ -118,6 +124,15 @@ describe Puppet::Transaction do
       it "should mark the resource's status as skipped" do
         @transaction.evaluate
         @transaction.resource_status(@resource).should be_skipped
+      end
+    end
+
+    describe "and siginfo is available" do
+      it "should output a resource debug level message" do
+        @transaction.expects(:siginfo_available?).returns true
+        Kernel.expects(:puts).with(/Currently evaluating/)
+
+        @transaction.eval_resource(@resource)
       end
     end
   end
