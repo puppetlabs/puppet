@@ -97,7 +97,7 @@ test_name "Puppet cert generate behavior (#6112)" do
                             :master => {
                               :dns_alt_names => "puppet,#{hostname},#{fqdn}",
                               :autosign => true,
-                            },
+                            }
                           ) do
       step "Agents: Run agent --test once to obtained auto-signed cert"
       on agents, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]
