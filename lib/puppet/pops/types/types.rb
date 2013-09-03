@@ -156,9 +156,16 @@ module Puppet::Pops::Types
     end
   end
 
+  # Abstract representation of a type that can be placed in a Catalog.
+  # @api public
+  #
+  class PCatalogEntryType < PObjectType
+  end
+
   # Represents a (host-) class in the Puppet Language.
   # @api public
-  class PHostClassType < PObjectType
+  #
+  class PHostClassType < PCatalogEntryType
     has_attr 'class_name', String
     contains_one_uni 'super_type', PHostClassType
     module ClassModule
@@ -173,7 +180,8 @@ module Puppet::Pops::Types
 
   # Represents a Resource Type in the Puppet Language
   # @api public
-  class PResourceType < PObjectType
+  #
+  class PResourceType < PCatalogEntryType
     has_attr 'type_name', String
     has_attr 'title', String
     module ClassModule

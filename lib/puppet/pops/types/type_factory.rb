@@ -69,6 +69,11 @@ module Puppet::Pops::Types::TypeFactory
     Types::PDataType.new()
   end
 
+  # Produces an instance of the abstract type PCatalogEntryType
+  def self.catalog_entry()
+    Types::PCatalogEntryType.new()
+  end
+
   # Produces a PResourceType with a String type_name
   # A PResourceType with a nil or empty name is compatible with any other PResourceType.
   # A PResourceType with a given name is only compatible with a PResourceType with the same name.

@@ -503,6 +503,10 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
   end
 
+  def assignable_PCatalogEntryType(t1, t2)
+    t2.is_a?(Types::PCatalogEntryType)
+  end
+
   def assignable_PHostClassType(t1, t2)
     return false unless t2.is_a?(Types::PHostClassType)
     # Class = Class[name}, Class[name] != Class
@@ -591,6 +595,11 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def string_PHashType(t)
     "Hash[#{string(t.key_type)}, #{string(t.element_type)}]"
+  end
+
+  # @api private
+  def string_PCatalogEntryType(t)
+    "CatalogEntry"
   end
 
   # @api private

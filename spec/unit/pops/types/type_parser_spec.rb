@@ -44,6 +44,8 @@ describe Puppet::Pops::Types::TypeParser do
     expect(the_type_parsed_from(types.boolean)).to be_the_type(types.boolean)
     expect(the_type_parsed_from(types.pattern)).to be_the_type(types.pattern)
     expect(the_type_parsed_from(types.data)).to be_the_type(types.data)
+    expect(the_type_parsed_from(types.catalog_entry)).to be_the_type(types.catalog_entry)
+    expect(the_type_parsed_from(types.collection)).to be_the_type(types.collection)
   end
 
   it "interprets an unparameterized Array as an Array of Data" do

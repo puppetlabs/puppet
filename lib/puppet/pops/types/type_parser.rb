@@ -41,7 +41,7 @@ class Puppet::Pops::Types::TypeParser
   # @api private
   def interpret(ast)
     result = @type_transformer.visit_this(self, ast)
-    raise_invalid_type_specification_error unless result.is_a?(Puppet::Pops::Types::PObjectType)
+    raise_invalid_type_specification_error unless result.is_a?(Puppet::Pops::Types::PAbstractType)
     result
   end
 
@@ -55,12 +55,19 @@ class Puppet::Pops::Types::TypeParser
     raise_invalid_type_specification_error
   end
 
+  # @api private
   def interpret_QualifiedName(name_ast)
     name_ast.value
   end
 
+  # @api private
   def interpret_LiteralString(string_ast)
     string_ast.value
+  end
+
+  # @api private
+  def interpret_String(string_object)
+    string_object
   end
 
   # @api private
@@ -86,8 +93,13 @@ class Puppet::Pops::Types::TypeParser
       TYPES.host_class()
     when "resource"
       TYPES.resource()
-    when "object", "collection", "ruby", "type"
+    when "collection"
+      TYPES.collection()
+    when "catalogentry"
+      TYPES.catalog_entry()
+    when "object", "ruby", "type"
       # should not be interpreted as Resource type
+      # TODO: these should not be errors
       raise_unknown_type_error(name_ast)
     else
       TYPES.resource(name_ast.value)
