@@ -5,13 +5,13 @@ HOSTS:
       - agent
     platform: el-6-i386
     hypervisor: vcloud
-    template: redhat-6-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/redhat-6-i386
   agent:
     roles:
       - agent
     platform: windows-2003r2-32
     hypervisor: vcloud
-    template: win-2003r2-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2003r2-i386
 CONFIG:
   filecount: 12
   datastore: instance0

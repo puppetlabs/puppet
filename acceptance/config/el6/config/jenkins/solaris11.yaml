@@ -5,13 +5,13 @@ HOSTS:
       - agent
     platform: solaris-11-x86_64
     hypervisor: vcloud
-    template: solaris-11-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/solaris-11-x86_64
   agent:
     roles:
       - agent
     platform: solaris-11-x86_64
     hypervisor: vcloud
-    template: solaris-11-x86_64 
+    template: Delivery/Quality Assurance/Templates/vCloud/solaris-11-x86_64 
 CONFIG:
   filecount: 12
   datastore: instance0
