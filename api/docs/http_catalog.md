@@ -29,8 +29,6 @@ Three parameters to the post:
            escaping is still used/supported.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
 
-### Notes
-
 ### Responses
 
 #### Catalog found
