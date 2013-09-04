@@ -44,7 +44,9 @@ module Puppet::FileBucketFile
       checksum, files_original_path = request_to_checksum_and_path(request)
 
       save_to_disk(instance, files_original_path)
-      instance.to_s
+
+      # don't echo the request content back to the agent
+      model.new('')
     end
 
     def validate_key(request)
