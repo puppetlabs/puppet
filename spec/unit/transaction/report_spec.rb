@@ -412,7 +412,7 @@ describe Puppet::Transaction::Report do
 
     logs_as_strings(tripped).should == logs_as_strings(report)
     metrics_as_hashes(tripped).should == metrics_as_hashes(report)
-    resource_statuses_as_hashes(tripped).should == resource_statuses_as_hashes(report)
+    expect_equivalent_resource_statuses(tripped.resource_statuses, report.resource_statuses)
   end
 
   def logs_as_strings(report)
@@ -425,10 +425,29 @@ describe Puppet::Transaction::Report do
     end.flatten]
   end
 
-  def resource_statuses_as_hashes(report)
-    Hash[*report.resource_statuses.collect do |name, s|
-      [name, PSON.parse(s.to_pson)]
-    end.flatten]
+  def expect_equivalent_resource_statuses(tripped, report)
+    tripped.keys.sort.should == report.keys.sort
+
+    tripped.each_pair do |name, status|
+      expected = report[name]
+
+      status.title.should == expected.title
+      status.file.should == expected.file
+      status.line.should == expected.line
+      status.resource.should == expected.resource
+      status.resource_type.should == expected.resource_type
+      status.containment_path.should == expected.containment_path
+      status.evaluation_time.should == expected.evaluation_time
+      status.tags.should == expected.tags
+      status.time.to_i.should == expected.time.to_i
+      status.failed.should == expected.failed
+      status.changed.should == expected.changed
+      status.out_of_sync.should == expected.out_of_sync
+      status.skipped.should == expected.skipped
+      status.change_count.should == expected.change_count
+      status.out_of_sync_count.should == expected.out_of_sync_count
+      status.events.should == expected.events
+    end
   end
 
   def generate_report
