@@ -375,20 +375,33 @@ describe Puppet::Transaction::Report do
     end
   end
 
+  it "defaults to serializing to pson" do
+    expect(Puppet::Transaction::Report.supported_formats).to eq(["pson"])
+  end
+
   it "can make a round trip through pson" do
-    status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
-    status.changed = true
+    Puppet[:report_serialization_format] = "pson"
+    report = generate_report
 
-    report = Puppet::Transaction::Report.new('testy', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
-    report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
-    report.add_times("timing", 4)
-    report.add_resource_status(status)
-    report.finalize_report
+    tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)
 
-    tripped = Puppet::Transaction::Report.convert_from(:pson, report.render(:pson))
+    expect_equivalent_reports(tripped, report)
+  end
 
+  it "can make a round trip through yaml" do
+    Puppet[:report_serialization_format] = "yaml"
+    report = generate_report
+
+    yaml_output = report.render
+    tripped = Puppet::Transaction::Report.convert_from(:yaml, yaml_output)
+
+    yaml_output.should =~ /^--- /
+    expect_equivalent_reports(tripped, report)
+  end
+
+  def expect_equivalent_reports(tripped, report)
     tripped.host.should == report.host
-    tripped.time.should == report.time
+    tripped.time.to_i.should == report.time.to_i
     tripped.configuration_version.should == report.configuration_version
     tripped.transaction_uuid.should == report.transaction_uuid
     tripped.report_format.should == report.report_format
@@ -417,4 +430,17 @@ describe Puppet::Transaction::Report do
       [name, PSON.parse(s.to_pson)]
     end.flatten]
   end
+
+  def generate_report
+    status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
+    status.changed = true
+
+    report = Puppet::Transaction::Report.new('testy', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
+    report.add_times("timing", 4)
+    report.add_resource_status(status)
+    report.finalize_report
+    report
+  end
+
 end
