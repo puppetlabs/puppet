@@ -1087,6 +1087,19 @@ EOT
       can be guaranteed to support this format, but it will be used for all
       classes that support it.",
     },
+    :report_serialization_format => {
+      :default => "pson",
+      :type => :enum,
+      :values => ["pson", "yaml"],
+      :desc => "The serialization format to use when sending reports to the
+      'report_server'. Possible values are pson and yaml. PSON should be
+      preferred, but masters before 3.3.0 only understand yaml.",
+      :hook => proc do |value|
+        if value == "yaml"
+          Puppet.deprecation_warning("Sending reports in 'yaml' is deprecated; use 'pson' instead.")
+        end
+      end
+    },
     :agent_catalog_run_lockfile => {
       :default    => "$statedir/agent_catalog_run.lock",
       :type       => :string, # (#2888) Ensure this file is not added to the settings catalog.

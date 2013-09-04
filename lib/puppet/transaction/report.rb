@@ -315,6 +315,10 @@ class Puppet::Transaction::Report
     instance_variables - [:@external_times]
   end
 
+  def self.supported_formats
+    [Puppet[:report_serialization_format]]
+  end
+
   private
 
   def calculate_change_metric

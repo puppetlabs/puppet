@@ -214,6 +214,11 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     expiry_date
   end
 
+  def open_security_passwd
+    # helper method for tests
+    File.open("/etc/security/passwd", 'r')
+  end
+
   #--------------------------------
   # Getter and Setter
   # When the provider is initialized, create getter/setter methods for each
@@ -229,15 +234,15 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def password
     password = :absent
     user = @resource[:name]
-    f = File.open("/etc/security/passwd", 'r')
+    f = open_security_passwd
     # Skip to the user
     f.each_line { |l| break if l  =~ /^#{user}:\s*$/ }
     if ! f.eof?
       f.each_line { |l|
         # If there is a new user stanza, stop
         break if l  =~ /^\S*:\s*$/
-        # If the password= entry is found, return it
-        if l  =~ /^\s*password\s*=\s*(.*)$/
+        # If the password= entry is found, return it, stripping trailing space
+        if l  =~ /^\s*password\s*=\s*(\S*)\s*$/
           password = $1; break;
         end
       }
