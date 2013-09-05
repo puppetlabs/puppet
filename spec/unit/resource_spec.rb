@@ -189,6 +189,16 @@ describe Puppet::Resource do
         it "should be able to find the resource type" do
           Puppet::Resource.new("class", "foo::bar").resource_type.should equal(@type)
         end
+
+        it "should not contain the resource type in any attribute value that might get serialized" do
+          rsrc = Puppet::Resource.new("class", "foo::bar")
+
+          # twice, an optimization to cache this value in resource_type has
+          # been introduced, so call that and verify no instance vars contain
+          # @type.  See http://projects.puppetlabs.com/issues/4506
+          rsrc.resource_type
+          rsrc.instance_variables.select { |v| rsrc.instance_variable_get(v) == @type }.should eq([])
+        end
       end
 
       describe "that does not exist" do
