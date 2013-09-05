@@ -1092,8 +1092,13 @@ EOT
       :type => :enum,
       :values => ["pson", "yaml"],
       :desc => "The serialization format to use when sending reports to the
-      'report_server'. Possible values are pson and yaml. PSON should be
-      preferred, but masters before 3.3.0 only understand yaml.",
+      `report_server`. Possible values are `pson` and `yaml`. This setting
+      affects puppet agent, but not puppet apply (which processes its own
+      reports).
+
+      This should almost always be set to `pson`. It can be temporarily set to
+      `yaml` to let agents using this Puppet version connect to a puppet master
+      running Puppet 3.0.0 through 3.2.4.",
       :hook => proc do |value|
         if value == "yaml"
           Puppet.deprecation_warning("Sending reports in 'yaml' is deprecated; use 'pson' instead.")
@@ -1253,13 +1258,21 @@ EOT
       :type => :enum,
       :values => ["manifest", "title-hash", "random"],
       :default => "title-hash",
-      :desc => "Controls the default ordering to use in the absence of any
-      dependency information. By default this is 'title-hash', which is an
-      opaque, stable, random order. The value of 'manifest' will use the order
-      in which the resources were added to the catalog, which matches the order
-      that the puppet language executes. The final value of 'random' causes
-      resources to be assigned a random order, while still obeying declared
-      dependencies."
+      :desc => "How unrelated resources should be ordered when applying a catalog.
+      Allowed values are `title-hash`, `manifest`, and `random`. This
+      setting affects puppet agent and puppet apply, but not puppet master.
+
+      * `title-hash` (the default) will order resources randomly, but will use
+        the same order across runs and across nodes.
+      * `manifest` will use the order in which the resources were declared in
+        their manifest files.
+      * `random` will order resources randomly and change their order with each
+        run. This can work like a fuzzer for shaking out undeclared dependencies.
+
+      Regardless of this setting's value, Puppet will always obey explicit
+      dependencies set with the before/require/notify/subscribe metaparameters
+      and the `->`/`~>` chaining arrows; this setting only affects the relative
+      ordering of _unrelated_ resources."
     }
   )
 
