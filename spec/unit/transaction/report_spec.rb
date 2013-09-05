@@ -376,7 +376,7 @@ describe Puppet::Transaction::Report do
   end
 
   it "defaults to serializing to pson" do
-    expect(Puppet::Transaction::Report.supported_formats).to eq(["pson"])
+    expect(Puppet::Transaction::Report.supported_formats).to eq([:pson])
   end
 
   it "can make a round trip through pson" do
