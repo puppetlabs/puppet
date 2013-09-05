@@ -75,6 +75,12 @@ module Puppet::Network::FormatHandler
   # @return [Puppet::Network::Format, nil] the most suitable format
   # @api private
   def self.most_suitable_format_for(accepted, supported)
+    # canonicalize the supported array, since the include? test below
+    # will use a canonicalized format
+    supported = supported.collect do |supported_format|
+      format_to_canonical_name(supported_format)
+    end
+
     format_name = accepted.collect do |accepted|
       accepted.to_s.sub(/;q=.*$/, '')
     end.collect do |accepted|
