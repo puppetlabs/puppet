@@ -63,6 +63,7 @@ module Puppet::Util::Docs
     str + "\n"
   end
 
+  # There is nothing that would ever set this. It gets read in reference/type.rb, but will never have any value but nil.
   attr_reader :nodoc
   def nodoc?
     nodoc
