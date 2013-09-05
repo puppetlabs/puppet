@@ -15,8 +15,18 @@ describe Puppet::FileBucket::File do
   let(:bucketdir) { Puppet[:bucketdir] = tmpdir('bucket') }
   let(:destdir) { File.join(bucketdir, "8/b/3/7/0/2/a/d/#{digest}") }
 
-  it "should have a to_s method to return the contents" do
-    Puppet::FileBucket::File.new(contents).to_s.should == contents
+  it "defines its supported format to be `:s`" do
+    expect(Puppet::FileBucket::File.supported_formats).to eq([:s])
+  end
+
+  it "serializes to `:s`" do
+    expect(Puppet::FileBucket::File.new(contents).to_s).to eq(contents)
+  end
+
+  it "deserializes from `:s`" do
+    file = Puppet::FileBucket::File.from_s(contents)
+
+    expect(file.contents).to eq(contents)
   end
 
   it "should raise an error if changing content" do
@@ -66,10 +76,16 @@ describe Puppet::FileBucket::File do
   end
 
   it "should convert the contents to PSON" do
-    Puppet::FileBucket::File.new("file contents").to_pson.should == '{"contents":"file contents"}'
+    # The model class no longer defines to_pson and it is not a supported
+    # format, but pson monkey patches Object#to_pson to return
+    # Object#to_s.to_pson, and it monkey patches String#to_pson to wrap the
+    # returned string in quotes. So it works in a way that is completely
+    # unexpected, and it doesn't round-trip correctly, awesome.
+    Puppet::FileBucket::File.new("file contents").to_pson.should == '"file contents"'
   end
 
   it "should load from PSON" do
+    Puppet.expects(:deprecation_warning).with('Deserializing Puppet::FileBucket::File objects from pson is deprecated. Upgrade to a newer version.')
     Puppet::FileBucket::File.from_pson({"contents"=>"file contents"}).contents.should == "file contents"
   end
 
