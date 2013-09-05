@@ -167,7 +167,7 @@ module Puppet::Pops::Types
   #
   class PHostClassType < PCatalogEntryType
     has_attr 'class_name', String
-    contains_one_uni 'super_type', PHostClassType
+    # contains_one_uni 'super_type', PHostClassType
     module ClassModule
       def hash
         [self.class, host_class].hash

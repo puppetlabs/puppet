@@ -87,14 +87,13 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
-  # Produces PHostClassType with a string class_name, and an optional super type.
+  # Produces PHostClassType with a string class_name.
   # A PHostClassType with nil or empty name is compatible with any other PHostClassType.
   # A PHostClassType with a given name is only compatible with a PHostClassType with the same name.
   #
-  def self.host_class(class_name = nil, super_type = nil)
+  def self.host_class(class_name = nil)
     type = Types::PHostClassType.new()
     type.class_name = class_name
-    type.super_type = super_type
     type
   end
 
