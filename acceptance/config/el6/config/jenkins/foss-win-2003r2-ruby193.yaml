@@ -1,0 +1,22 @@
+HOSTS:
+  master:
+    roles:
+      - master
+      - database
+      - agent
+      - dashboard
+    platform: el-6-i386
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/redhat-6-i386
+  win2003r2-ruby193-2:
+    roles:
+      - agent
+    platform: windows-2003r2-32
+    hypervisor: vsphere
+    snapshot: git
+CONFIG:
+  nfs_server: NONE
+  consoleport: 443
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
