@@ -1,8 +1,7 @@
 Catalog
 =============
 
-The `catalog` endpoint returns a catalog for the specified node name,
-given the specifies post parameters.
+The `catalog` endpoint returns a catalog for the specified node name given the provided facts.
 
 Find
 ----
@@ -10,39 +9,45 @@ Find
 Retrieve a catalog.
 
     POST /:environment/catalog/:name
-
+    GET /:environment/catalog/:name
 
 ### Supported HTTP Methods
 
-POST
+POST, GET
 
 ### Supported Format
 
-Accept: pson
+Accept: pson, text/pson
+
+### Notes
+
+The POST and GET methods are functionally equivalent. Both provide the 3 parameters specified below: the POST in the
+request body, the GET in the query string.
+
+Puppet originally used GET; POST was added because some web servers have a maximum URI length of
+1024 bytes (which is easily exceeded with the `facts` parameter).
+
+The examples below use the POST method.
 
 ### Parameters
 
-Three parameters to the post:
+Three parameters should be provided to the POST or GET:
 - `facts_format`: must be `pson`
 - `facts`: serialized pson of the facts hash.  One odd note: due to a long-ago misunderstanding in the code, this is
            doubly-escaped (it should just be singly-escaped).  To keep backward compatibility, the extraneous
            escaping is still used/supported.
 - `transaction_uuid`: a transaction uuid identifying the entire transaction (shows up in the report as well)
 
-### Responses
+### Example Response
 
 #### Catalog found
 
     POST /env/catalog/elmo.mydomain.com
 
+    facts_format=pson&facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D&transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
+
     HTTP 200 OK
     Content-Type: text/pson
-
-    Parameters:(truncated for legibility):
-
-    facts_format=pson
-    facts=%7B%22name%22%3A%22elmo.mydomain.com%22%2C%22values%22%3A%7B%22architecture%22%3A%22x86_64%22%7D
-    transaction_uuid=aff261a2-1a34-4647-8c20-ff662ec11c4c
 
     {
       "document_type": "Catalog",
@@ -148,5 +153,7 @@ Three parameters to the post:
 Schema
 ------
 
-In the POST request, the facts parameter should ahdere to the api/schemas/catalog_facts.json schema.
+In the POST request body (or the GET query), the facts parameter should adhere to the
+api/schemas/catalog_facts.json schema.
+
 A catalog response body should adhere to the api/schemas/catalog.json schema.
