@@ -175,6 +175,12 @@ module Puppet::Pops::Types
       def ==(o)
         self.class == o.class && class_name == o.class_name
       end
+      def [](*class_names)
+        raise ArgumentError, "Cannot create new Class references from a specific Class reference" unless class_name.nil?
+        return self if class_names.size == 0
+        result = class_names.collect {|n| x = self.class.new; x.class_name = n; x}
+        result.size == 1 ? result.pop : result
+      end
     end
   end
 
@@ -190,6 +196,13 @@ module Puppet::Pops::Types
       end
       def ==(o)
         self.class == o.class && type_name == o.type_name && title == o.title
+      end
+      def [](*titles)
+        raise ArgumentError, "Cannot create new Resource references from a specific Resource reference" unless title.nil?
+        return self if titles.size == 0
+        raise ArgumentError, "A Resource reference without type name can not produce Resource references." if type_name.nil?
+        result = titles.collect {|t| x = self.class.new; x.type_name = type_name; x.title = t; x}
+        result.size == 1 ? result.pop : result
       end
     end
   end
