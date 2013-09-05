@@ -263,16 +263,32 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
     end
 
     describe "for atboot" do
-      it "should support yes as a value for atboot" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => :yes) }.to_not raise_error
+      it "does not allow non-boolean values" do
+        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => 'unknown') }.to raise_error Puppet::Error, /expected a boolean value/
       end
 
-      it "should support no as a value for atboot" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => :no) }.to_not raise_error
+      it "interprets yes as yes" do
+        resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => :yes)
+
+        expect(resource[:atboot]).to eq(:yes)
       end
 
-      it "should not support other values for atboot" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => :true) }.to raise_error Puppet::Error, /Invalid value/
+      it "interprets true as yes" do
+        resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => :true)
+
+        expect(resource[:atboot]).to eq(:yes)
+      end
+
+      it "interprets no as no" do
+        resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => :no)
+
+        expect(resource[:atboot]).to eq(:no)
+      end
+
+      it "interprets false as no" do
+        resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => false)
+
+        expect(resource[:atboot]).to eq(:no)
       end
     end
   end
