@@ -75,12 +75,12 @@ describe 'function for dynamically creating resources' do
   end
 
   describe 'when dynamically creating resource types' do
-    it 'should be able to create defined resoure types' do
+    it 'should be able to create defined resource types' do
       catalog = compile_to_catalog(<<-MANIFEST)
         define foocreateresource($one) {
           notify { $name: message => $one }
         }
-        
+
         create_resources('foocreateresource', {'blah'=>{'one'=>'two'}})
       MANIFEST
       catalog.resource(:notify, "blah")['message'].should == 'two'
@@ -92,7 +92,7 @@ describe 'function for dynamically creating resources' do
           define foocreateresource($one) {
             notify { $name: message => $one }
           }
-          
+
           create_resources('foocreateresource', {'blah'=>{}})
         MANIFEST
       }.to raise_error(Puppet::Error, 'Must pass one to Foocreateresource[blah] on node foonode')
@@ -103,7 +103,7 @@ describe 'function for dynamically creating resources' do
         define foocreateresource($one) {
           notify { $name: message => $one }
         }
-        
+
         create_resources('foocreateresource', {'blah'=>{'one'=>'two'}, 'blaz'=>{'one'=>'three'}})
       MANIFEST
 
@@ -118,7 +118,7 @@ describe 'function for dynamically creating resources' do
         }
 
         notify { test: }
-        
+
         create_resources('foocreateresource', {'blah'=>{'one'=>'two', 'require' => 'Notify[test]'}})
       MANIFEST
 
