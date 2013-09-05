@@ -28,6 +28,12 @@ describe Puppet::FileBucketFile::File do
     end
 
     describe "when servicing a save request" do
+      it "should return a result whose content is empty" do
+        bucket_file = Puppet::FileBucket::File.new('stuff')
+        result = Puppet::FileBucket::File.indirection.save(bucket_file, "md5/c13d88cb4cb02003daedb8a84e5d272a")
+        result.contents.should be_empty
+      end
+
       describe "when supplying a path" do
         it "should store the path if not already stored" do
           checksum = save_bucket_file("stuff\r\n", "/foo/bar")
