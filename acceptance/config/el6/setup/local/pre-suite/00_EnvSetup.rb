@@ -2,6 +2,8 @@ test_name "Setup environment"
 
 step "Ensure Git and Ruby"
 
+require 'puppet/acceptance/install_utils'
+
 PACKAGES = {
   /fedora|el|centos/ => [
     'git',
@@ -21,23 +23,7 @@ PACKAGES = {
   ],
 }
 
-hosts.each do |host|
-  PACKAGES.each do |regex,package_list|
-    if regex.match(host['platform'])
-      package_list.each do |cmd_pkg|
-        if cmd_pkg.kind_of?(Array)
-          command, package = cmd_pkg
-        else
-          command = package = cmd_pkg
-        end
-        if !host.check_for_package(command)
-          step "Installing #{package}"
-          host.install_package(package)
-        end
-      end
-    end
-  end
-end
+Puppet::Acceptance::InstallUtils.install_packages_on(hosts, PACKAGES, :check_if_exists => true)
 
 step "Add Gems"
 
