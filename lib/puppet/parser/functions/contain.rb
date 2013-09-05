@@ -16,6 +16,11 @@ containing class."
 
   args.each do |class_name|
     class_resource = scope.catalog.resource("Class", class_name)
+
+    if scope.catalog.edge?(scope.resource, class_resource)
+      raise ParseError, "Cannot create duplicate containment relationship; #{scope.resource} already contains #{class_resource}"
+    end
+
     scope.catalog.add_edge(scope.resource, class_resource)
   end
 end

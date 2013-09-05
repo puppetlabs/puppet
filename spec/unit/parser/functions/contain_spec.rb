@@ -110,4 +110,21 @@ describe 'The "contain" function' do
       /Found 1 dependency cycle/
     )
   end
+
+  it "something when called twice from within the same class" do
+    expect do
+      compile_to_catalog(<<-MANIFEST)
+        class contained {
+          notify { "contained": }
+        }
+
+        class container {
+          contain contained
+          contain contained
+        }
+
+        include container
+      MANIFEST
+    end.to raise_error(Puppet::Error, /duplicate containment/)
+  end
 end
