@@ -33,6 +33,24 @@ describe 'operations on types' do
       expect(x['a']).to be_the_type(Puppet::Pops::Types::TypeFactory.resource('File', 'a'))
     end
 
+    it 'can create an Array of class references' do
+      x = Puppet::Pops::Types::TypeFactory.host_class()
+      result = x['a', 'b', 'c']
+      expect(result.class).to eql(Array)
+      expect(result[0]).to be_the_type(Puppet::Pops::Types::TypeFactory.host_class('a'))
+      expect(result[1]).to be_the_type(Puppet::Pops::Types::TypeFactory.host_class('b'))
+      expect(result[2]).to be_the_type(Puppet::Pops::Types::TypeFactory.host_class('c'))
+    end
+
+    it 'can create an Array of Resource references' do
+      x = Puppet::Pops::Types::TypeFactory.resource('F')
+      result = x['a', 'b', 'c']
+      expect(result.class).to eql(Array)
+      expect(result[0]).to be_the_type(Puppet::Pops::Types::TypeFactory.resource('F', 'a'))
+      expect(result[1]).to be_the_type(Puppet::Pops::Types::TypeFactory.resource('F', 'b'))
+      expect(result[2]).to be_the_type(Puppet::Pops::Types::TypeFactory.resource('F', 'c'))
+    end
+
     it 'checks error conditions' do
       x = Puppet::Pops::Types::TypeFactory.host_class('a')
       expect{x['b']}.to raise_error(/Cannot create new Class references from a specific Class reference/)
