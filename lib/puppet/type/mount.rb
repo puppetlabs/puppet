@@ -1,3 +1,5 @@
+require 'puppet/property/boolean'
+
 module Puppet
   # We want the mount to refresh when it changes.
   newtype(:mount, :self_refresh => true) do
@@ -182,11 +184,18 @@ module Puppet
       }
     end
 
-    newproperty(:atboot) do
+    newproperty(:atboot, :parent => Puppet::Property::Boolean) do
       desc "Whether to mount the mount at boot.  Not all platforms
         support this."
 
-      newvalues :yes, :no
+      def munge(value)
+        munged = super
+        if munged
+          :yes
+        else
+          :no
+        end
+      end
     end
 
     newproperty(:dump) do
