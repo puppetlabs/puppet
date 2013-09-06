@@ -143,7 +143,7 @@ describe Puppet::Node::Environment do
       it "should use the current working directory to fully-qualify unqualified paths" do
         FileTest.stubs(:directory?).returns true
   
-        two = File.expand_path(File.join(Dir.getwd, "two"))
+        two = File.expand_path("two")
         env.validate_dirs([@path_one, 'two']).should == [@path_one, two]
       end
     end

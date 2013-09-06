@@ -70,9 +70,8 @@ describe Puppet::Parser::Files do
     it "should accept relative templatedirs" do
       FileTest.stubs(:exist?).returns true
       Puppet[:templatedir] = "my/templates"
-      # We expand_path to normalize backslashes and slashes on Windows
-      File.expects(:directory?).with(File.expand_path(File.join(Dir.getwd,"my/templates"))).returns(true)
-      Puppet::Parser::Files.find_template("mytemplate").should == File.expand_path(File.join(Dir.getwd,"my/templates/mytemplate"))
+      File.expects(:directory?).with(File.expand_path("my/templates")).returns(true)
+      Puppet::Parser::Files.find_template("mytemplate").should == File.expand_path("my/templates/mytemplate")
     end
 
     it "should use the environment templatedir if no module is found and an environment is specified" do
