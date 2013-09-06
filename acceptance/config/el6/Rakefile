@@ -2,50 +2,89 @@ require 'open-uri'
 require 'rake/clean'
 
 def fetch(url, dst)
+  puts "Fetching: #{url}"
+  puts "  and saving to #{dst}"
   open(url) do |repo|
     File.open(dst, "w") do |file|
-      IO.copy_stream(repo, file)
+      FileUtils.copy_stream(repo, file)
     end
   end
 end
 
-CLEAN.include('*.repo', '*.tar', '*.rpm')
+def fetch_via_templates_to(versions, template_url, template_file, to_dir)
+  versions.each do |version|
+    match_result = /(\d+)-\d+/.match(version)
+    distro_version = match_result[1]
+    url = template_url % distro_version
+    file = template_file % version
+    fetch("#{url}#{file}", "#{to_dir}/#{file}")
+  end
+end
+
+def wget_url_contents_matching_pattern_to(url, pattern, to_dir)
+  sh("cd #{to_dir}; wget -nd --level=1 -np -A #{pattern} -r #{url}")
+end
+
+REPO_CONFIGS_DIR = "repo-configs"
+CLEAN.include('*.tar', REPO_CONFIGS_DIR)
 
 namespace :ci do
+
+  APT_CONFIGS_DIR = "#{REPO_CONFIGS_DIR}/apt-configs"
+  YUM_CONFIGS_DIR = "#{REPO_CONFIGS_DIR}/yum-configs"
+  PL_PUPPET_DEPENDENCIES_DIR = "#{REPO_CONFIGS_DIR}/pl-puppet-dependencies"
 
   def sha
     ENV['SHA']
   end
 
-  file "pl-puppet-build.repo" do |task|
-    uri = "http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/pl-puppet-#{sha}-el-6-x86_64-products.repo"
-    begin
-      fetch(uri, task.name)
-    rescue OpenURI::HTTPError => e
-      if e.message =~ /404/
-        # We may be tagged as an rc, and the packaging tasks change the name to devel
-        fetch(uri.sub(/products\.repo/, 'devel.repo'), task.name)
-        # this is icky, but injecting git describe info so that we can test it
-        # when these tasks are run from the build artifact tarred on jenkins is
-        # worse.  Moses has stated that this change in pathing should go away,
-        # though we don't know when.  The change in pathing is determined here:
-        # https://github.com/puppetlabs/packaging/blob/master/tasks/mock.rake#L125
-      else
-        raise e
-      end
-    end
+  directory REPO_CONFIGS_DIR
+
+  directory YUM_CONFIGS_DIR => REPO_CONFIGS_DIR do
+    sh("mkdir -p #{YUM_CONFIGS_DIR}")
+    wget_url_contents_matching_pattern_to(
+      "http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/",
+      "*.repo",
+      YUM_CONFIGS_DIR
+    )
   end
 
-  file "pl-puppet-repos.rpm" do |task|
-    fetch("http://yum.puppetlabs.com/el/6/products/i386/puppetlabs-release-6-7.noarch.rpm", task.name)
+  directory APT_CONFIGS_DIR => REPO_CONFIGS_DIR do
+    sh("mkdir -p #{APT_CONFIGS_DIR}")
+    wget_url_contents_matching_pattern_to(
+      "http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/deb/",
+      "*.list",
+      APT_CONFIGS_DIR
+    )
   end
 
-  task :repo_configs => ["pl-puppet-repos.rpm", "pl-puppet-build.repo"] do |task|
-    sh "tar -cvf repos.tar #{task.prerequisites.join(' ')}"
+  directory PL_PUPPET_DEPENDENCIES_DIR => REPO_CONFIGS_DIR do |task|
+    sh("mkdir -p #{PL_PUPPET_DEPENDENCIES_DIR}")
+    fetch_via_templates_to(
+      ["5-7","6-7"], 
+      "http://yum.puppetlabs.com/el/%s/products/i386/",
+      "puppetlabs-release-%s.noarch.rpm",
+      "./#{PL_PUPPET_DEPENDENCIES_DIR}"
+    )
+    fetch_via_templates_to(
+      ["17-7","18-7","19-2"],
+      "http://yum.puppetlabs.com/fedora/f%s/products/i386/",
+      "puppetlabs-release-%s.noarch.rpm",
+      "./#{PL_PUPPET_DEPENDENCIES_DIR}"
+    )
+    wget_url_contents_matching_pattern_to(
+      "http://apt.puppetlabs.com/",
+      "puppetlabs-release-*.deb",
+      PL_PUPPET_DEPENDENCIES_DIR
+    )
+  end
+
+  file 'repos.tar' => [PL_PUPPET_DEPENDENCIES_DIR, YUM_CONFIGS_DIR, APT_CONFIGS_DIR] do |task|
+    sh "tar -cvf #{task.name} #{REPO_CONFIGS_DIR}"
   end
 
   desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test as environment variable: SHA='<sha>')"
-  task :test => [:repo_configs] do
+  task :test => 'repos.tar' do
     ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + " --xml"
     ENV['TESTING_MODE'] = 'jenkins'
     sh "beaker -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
@@ -72,4 +111,8 @@ namespace :standalone do
     ENV['TESTING_MODE'] = 'local'
     sh "beaker -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
   end
+end
+
+task :default do
+  sh('rake -T')
 end

@@ -73,7 +73,12 @@ namespace "ci" do
     sh %{rspec -r yarjuf -f JUnit -o result.xml -fd spec}
   end
 
-  task :el6tests do
-    sh "cd acceptance; rm -f el6.tar.gz; tar -czv --exclude .bundle -f el6.tar.gz *"
+  task :prebuild_repos_tar do
+    sha = ENV['SHA'] || `git rev-parse HEAD`
+    sh "cd acceptance/config/el6; rake repos.tar SHA=#{sha}"
+  end
+
+  task :acceptance_artifacts => :prebuild_repos_tar do
+    sh "cd acceptance; rm -f acceptance-artifacts.tar.gz; tar -czv --exclude .bundle -f acceptance-artifacts.tar.gz *"
   end
 end
