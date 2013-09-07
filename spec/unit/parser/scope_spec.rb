@@ -420,14 +420,6 @@ describe Puppet::Parser::Scope do
       }.to raise_error(Puppet::ParseError, /Cannot reassign variable 1/)
     end
 
-    it "should declare ephemeral number only variable names" do
-      @scope.ephemeral?("0").should be_true
-    end
-
-    it "should not declare ephemeral other variable names" do
-      @scope.ephemeral?("abc0").should be_nil
-    end
-
     describe "with more than one level" do
       it "should prefer latest ephemeral scopes" do
         @scope.setvar("0", :earliest, :ephemeral => true)

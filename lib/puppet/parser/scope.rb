@@ -626,14 +626,6 @@ class Puppet::Parser::Scope
     @ephemeral.any? {|eph| eph.include?(name) }
   end
 
-  # Checks whether the variable should be processed in the ephemeral (non local) scope or not.
-  # All numerical variables are processed in ephemeral scope at all times, and all other
-  # variables when the ephemeral scope is a local scope.
-  #
-  def ephemeral?(name)
-    @ephemeral.last.is_local_scope? || name =~ /^\d+$/
-  end
-
   def ephemeral_level
     @ephemeral.size
   end
