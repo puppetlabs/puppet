@@ -91,6 +91,26 @@ class Puppet::Parser::Scope
     end
 
   end
+  class MatchScope < Ephemeral
+
+    def initialize(parent, match_data)
+      super(parent, false)
+      @match_data = match_data
+    end
+
+    def [](name)
+      if bound?(name)
+        @match_data[name.to_i]
+      else
+        super
+      end
+    end
+
+    def bound?(name)
+      # A "match variables" scope reports all numeric variables to be bound
+      name =~ /^\d+$/
+    end
+  end
 
   # Initialize a new scope suitable for parser function testing.  This method
   # should be considered a public API for external modules.  A shared spec
@@ -132,12 +152,12 @@ class Puppet::Parser::Scope
   # Returns true if the variable of the given name is set to any value (including nil)
   #
   def exist?(name)
-    effective.symtable(true).include?(name)
+    effective_symtable(true).include?(name)
   end
 
   # Returns true if the given name is bound in the current (most nested) scope.
   def bound?(name)
-    effective.symtable(true).bound?(name)
+    effective_symtable(true).bound?(name)
   end
 
   # Is the value true?  This allows us to control the definition of truth
@@ -606,7 +626,7 @@ class Puppet::Parser::Scope
     @ephemeral.any? {|eph| eph.include?(name) }
   end
 
-  # Checks whether the variable should be processed in the ephemeral scope or not.
+  # Checks whether the variable should be processed in the ephemeral (non local) scope or not.
   # All numerical variables are processed in ephemeral scope at all times, and all other
   # variables when the ephemeral scope is a local scope.
   #
@@ -622,6 +642,10 @@ class Puppet::Parser::Scope
     @ephemeral.push(Ephemeral.new(@ephemeral.last, local_scope))
   end
 
+  def new_match_scope(match_data)
+    @ephemeral.push(MatchScope.new(@ephemeral.last, match_data))
+  end
+
   def ephemeral_from(match, file = nil, line = nil)
     case match
     when Hash
@@ -631,11 +655,7 @@ class Puppet::Parser::Scope
     else
       raise(ArgumentError,"Invalid regex match data. Got a #{match.class}") unless match.is_a?(MatchData)
       # Create a match ephemeral and set values from match data
-      new_ephemeral false
-      setvar("0", match[0], :file => file, :line => line, :ephemeral => true)
-      match.captures.each_with_index do |m,i|
-        setvar("#{i+1}", m, :file => file, :line => line, :ephemeral => true)
-      end
+      new_match_scope(match)
     end
   end
 

@@ -531,22 +531,37 @@ describe Puppet::Parser::Scope do
     end
 
     it "should set $0 with the full match" do
-      @scope.expects(:setvar).with { |*arg| arg[0] == "0" and arg[1] == "this is a string" and arg[2][:ephemeral] }
-
+      # This is an internal impl detail test
+      @scope.expects(:new_match_scope).with { |*arg| arg[0][0] == "this is a string" }
       @scope.ephemeral_from(@match)
     end
 
     it "should set every capture as ephemeral var" do
-      @match.stubs(:captures).returns([:capture1,:capture2])
-      @scope.expects(:setvar).with { |*arg| arg[0] == "1" and arg[1] == :capture1 and arg[2][:ephemeral] }
-      @scope.expects(:setvar).with { |*arg| arg[0] == "2" and arg[1] == :capture2 and arg[2][:ephemeral] }
+      # This is an internal impl detail test
+      @match.stubs(:[]).with(1).returns(:capture1)
+      @match.stubs(:[]).with(2).returns(:capture2)
+      @scope.expects(:new_match_scope).with { |*arg| arg[0][1] == :capture1 && arg[0][2] == :capture2 }
 
       @scope.ephemeral_from(@match)
     end
 
-    it "should create a new ephemeral level" do
-      @scope.expects(:new_ephemeral)
+    it "should shadow previous match variables" do
+      # This is an internal impl detail test
+      @match.stubs(:[]).with(1).returns(:capture1)
+      @match.stubs(:[]).with(2).returns(:capture2)
+
+      @match2 = stub 'match', :is_a? => true
+      @match2.stubs(:[]).with(1).returns(:capture2_1)
+      @match2.stubs(:[]).with(2).returns(nil)
       @scope.ephemeral_from(@match)
+      @scope.ephemeral_from(@match2)
+      @scope.lookupvar('2').should == nil
+    end
+
+    it "should create a new ephemeral level" do
+      level_before = @scope.ephemeral_level
+      @scope.ephemeral_from(@match)
+      expect(level_before < @scope.ephemeral_level)
     end
   end
 
