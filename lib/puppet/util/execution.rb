@@ -32,12 +32,6 @@ module Util::Execution
   # @return [String] a string with the output from the subprocess executed by the given block
   #
   def self.execpipe(command, failonfail = true)
-    if respond_to? :debug
-      debug "Executing '#{command}'"
-    else
-      Puppet.debug "Executing '#{command}'"
-    end
-
     # Paste together an array with spaces.  We used to paste directly
     # together, no spaces, which made for odd invocations; the user had to
     # include whitespace between arguments.
@@ -46,6 +40,13 @@ module Util::Execution
     # shell anyhow, while no spaces makes for a small developer cost every
     # time this is invoked. --daniel 2012-02-13
     command_str = command.respond_to?(:join) ? command.join(' ') : command
+
+    if respond_to? :debug
+      debug "Executing '#{command_str}'"
+    else
+      Puppet.debug "Executing '#{command_str}'"
+    end
+
     output = open("| #{command_str} 2>&1") do |pipe|
       yield pipe
     end
