@@ -124,10 +124,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
           job = read_plist(filepath)
           next if job.nil?
           if job.has_key?("Label")
+            @label_to_path_map[job["Label"]] = filepath
             if job["Label"] == label
               return { label => filepath }
-            else
-              @label_to_path_map[job["Label"]] = filepath
             end
           else
             Puppet.warning("The #{filepath} plist does not contain a 'label' key; " +
