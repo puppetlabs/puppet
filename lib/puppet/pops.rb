@@ -79,6 +79,11 @@ module Puppet
       require 'puppet/pops/validation/checker3_1'
       require 'puppet/pops/validation/validator_factory_3_1'
     end
+
+    module Evaluator
+      require 'puppet/pops/evaluator/runtime3_support'
+      require 'puppet/pops/evaluator/evaluator_impl'
+    end
   end
 
   require 'puppet/bindings'

@@ -8,6 +8,10 @@ require 'rgen/metamodel_builder'
 # be used to answer questions about types. The {Puppet::Pops::Types::TypeFactory} should be used to create an instance
 # of a type whenever one is needed.
 #
+# The implementation of the Types model contains methods that are required for the type objects to behave as
+# expected when comparing them and using them as keys in hashes. (No other logic is, or should be included directly in
+# the model's classes).
+#
 # @api public
 #
 module Puppet::Pops::Types
@@ -90,11 +94,6 @@ module Puppet::Pops::Types
 
   # @api public
   class PPatternType < PLiteralType
-    module ClassModule
-      def [](pattern)
-        Regexp.new(pattern)
-      end
-    end
   end
 
   # @api public
@@ -119,11 +118,11 @@ module Puppet::Pops::Types
   class PArrayType < PCollectionType
     module ClassModule
       def hash
-        [self.class, element_type].hash
+        [self.class, self.element_type].hash
       end
 
       def ==(o)
-        self.class == o.class && element_type == o.element_type
+        self.class == o.class && self.element_type == o.element_type
       end
     end
   end
@@ -133,11 +132,11 @@ module Puppet::Pops::Types
     contains_one_uni 'key_type', PAbstractType
     module ClassModule
       def hash
-        [self.class, key_type, element_type].hash
+        [self.class, key_type, self.element_type].hash
       end
 
       def ==(o)
-        self.class == o.class && key_type == o.key_type && element_type == o.element_type
+        self.class == o.class && key_type == o.key_type && self.element_type == o.element_type
       end
     end
   end
@@ -175,12 +174,6 @@ module Puppet::Pops::Types
       def ==(o)
         self.class == o.class && class_name == o.class_name
       end
-      def [](*class_names)
-        raise ArgumentError, "Cannot create new Class references from a specific Class reference" unless class_name.nil?
-        return self if class_names.size == 0
-        result = class_names.collect {|n| x = self.class.new; x.class_name = n; x}
-        result.size == 1 ? result.pop : result
-      end
     end
   end
 
@@ -196,13 +189,6 @@ module Puppet::Pops::Types
       end
       def ==(o)
         self.class == o.class && type_name == o.type_name && title == o.title
-      end
-      def [](*titles)
-        raise ArgumentError, "Cannot create new Resource references from a specific Resource reference" unless title.nil?
-        return self if titles.size == 0
-        raise ArgumentError, "A Resource reference without type name can not produce Resource references." if type_name.nil?
-        result = titles.collect {|t| x = self.class.new; x.type_name = type_name; x.title = t; x}
-        result.size == 1 ? result.pop : result
       end
     end
   end
