@@ -15,6 +15,7 @@ test.pp
 ext/packaging/
 pkg/
 Gemfile.lock
+Gemfile.local
 .bundle/
 puppet-acceptance/
 /.project
