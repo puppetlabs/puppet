@@ -27,4 +27,10 @@ module PuppetSpec::Compiler
 
     transaction
   end
+
+  def order_resources_traversed_in(relationships)
+    order_seen = []
+    relationships.traverse { |resource| order_seen << resource.ref }
+    order_seen
+  end
 end

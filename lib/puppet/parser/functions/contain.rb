@@ -6,21 +6,17 @@ Puppet::Parser::Functions::newfunction(
   :arity => -2,
   :doc => "Contain one or more classes inside the current class. Any
 given undeclared classes will be declared as if called with 'include'.
-Contained classes will be evaluated during the evaluation of the
-containing class."
-) do |args|
+
+A contained class will not be applied before the containing class is
+begun, and will be finished before the containing class is finished.
+"
+) do |classes|
   scope = self
 
-  include_function = Puppet::Parser::Functions.function("include")
-  scope.send(include_function, args)
+  scope.function_include(classes)
 
-  args.each do |class_name|
+  classes.each do |class_name|
     class_resource = scope.catalog.resource("Class", class_name)
-
-    if scope.catalog.edge?(scope.resource, class_resource)
-      raise ParseError, "Cannot create duplicate containment relationship; #{scope.resource} already contains #{class_resource}"
-    end
-
     scope.catalog.add_edge(scope.resource, class_resource)
   end
 end

@@ -3,6 +3,7 @@ require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'puppet/parser/functions'
 require 'matchers/containment_matchers'
+require 'matchers/include_in_order'
 
 describe 'The "contain" function' do
   include PuppetSpec::Compiler
@@ -111,20 +112,33 @@ describe 'The "contain" function' do
     )
   end
 
-  it "something when called twice from within the same class" do
-    expect do
-      compile_to_catalog(<<-MANIFEST)
+  context "when a containing class has a dependency order" do
+    it "the contained class is applied in that order" do
+      catalog = compile_to_relationship_graph(<<-MANIFEST)
         class contained {
           notify { "contained": }
         }
 
         class container {
           contain contained
-          contain contained
         }
 
-        include container
+        class first {
+          notify { "first": }
+        }
+
+        class last {
+          notify { "last": }
+        }
+
+        include container, first, last
+
+        Class["first"] -> Class["container"] -> Class["last"]
       MANIFEST
-    end.to raise_error(Puppet::Error, /duplicate containment/)
+
+      expect(order_resources_traversed_in(catalog)).to include_in_order(
+        "Notify[first]", "Notify[contained]", "Notify[last]"
+      )
+    end
   end
 end
