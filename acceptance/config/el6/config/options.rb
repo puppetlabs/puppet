@@ -1,3 +1,5 @@
+require 'pp'
+
 module HarnessOptions
 
   DEFAULTS = {

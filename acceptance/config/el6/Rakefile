@@ -1,90 +1,11 @@
-require 'open-uri'
 require 'rake/clean'
-
-def fetch(url, dst)
-  puts "Fetching: #{url}"
-  puts "  and saving to #{dst}"
-  open(url) do |repo|
-    File.open(dst, "w") do |file|
-      FileUtils.copy_stream(repo, file)
-    end
-  end
-end
-
-def fetch_via_templates_to(versions, template_url, template_file, to_dir)
-  versions.each do |version|
-    match_result = /(\d+)-\d+/.match(version)
-    distro_version = match_result[1]
-    url = template_url % distro_version
-    file = template_file % version
-    fetch("#{url}#{file}", "#{to_dir}/#{file}")
-  end
-end
-
-def wget_url_contents_matching_pattern_to(url, pattern, to_dir)
-  sh("cd #{to_dir}; wget -nd --level=1 -np -A #{pattern} -r #{url}")
-end
 
 REPO_CONFIGS_DIR = "repo-configs"
 CLEAN.include('*.tar', REPO_CONFIGS_DIR)
 
 namespace :ci do
-
-  APT_CONFIGS_DIR = "#{REPO_CONFIGS_DIR}/apt-configs"
-  YUM_CONFIGS_DIR = "#{REPO_CONFIGS_DIR}/yum-configs"
-  PL_PUPPET_DEPENDENCIES_DIR = "#{REPO_CONFIGS_DIR}/pl-puppet-dependencies"
-
-  def sha
-    ENV['SHA']
-  end
-
-  directory REPO_CONFIGS_DIR
-
-  directory YUM_CONFIGS_DIR => REPO_CONFIGS_DIR do
-    sh("mkdir -p #{YUM_CONFIGS_DIR}")
-    wget_url_contents_matching_pattern_to(
-      "http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/rpm/",
-      "*.repo",
-      YUM_CONFIGS_DIR
-    )
-  end
-
-  directory APT_CONFIGS_DIR => REPO_CONFIGS_DIR do
-    sh("mkdir -p #{APT_CONFIGS_DIR}")
-    wget_url_contents_matching_pattern_to(
-      "http://builds.puppetlabs.lan/puppet/#{sha}/repo_configs/deb/",
-      "*.list",
-      APT_CONFIGS_DIR
-    )
-  end
-
-  directory PL_PUPPET_DEPENDENCIES_DIR => REPO_CONFIGS_DIR do |task|
-    sh("mkdir -p #{PL_PUPPET_DEPENDENCIES_DIR}")
-    fetch_via_templates_to(
-      ["5-7","6-7"], 
-      "http://yum.puppetlabs.com/el/%s/products/i386/",
-      "puppetlabs-release-%s.noarch.rpm",
-      "./#{PL_PUPPET_DEPENDENCIES_DIR}"
-    )
-    fetch_via_templates_to(
-      ["17-7","18-7","19-2"],
-      "http://yum.puppetlabs.com/fedora/f%s/products/i386/",
-      "puppetlabs-release-%s.noarch.rpm",
-      "./#{PL_PUPPET_DEPENDENCIES_DIR}"
-    )
-    wget_url_contents_matching_pattern_to(
-      "http://apt.puppetlabs.com/",
-      "puppetlabs-release-*.deb",
-      PL_PUPPET_DEPENDENCIES_DIR
-    )
-  end
-
-  file 'repos.tar' => [PL_PUPPET_DEPENDENCIES_DIR, YUM_CONFIGS_DIR, APT_CONFIGS_DIR] do |task|
-    sh "tar -cvf #{task.name} #{REPO_CONFIGS_DIR}"
-  end
-
   desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test as environment variable: SHA='<sha>')"
-  task :test => 'repos.tar' do
+  task :test do
     ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + " --xml"
     ENV['TESTING_MODE'] = 'jenkins'
     sh "beaker -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"

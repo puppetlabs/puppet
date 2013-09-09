@@ -3,27 +3,28 @@ test_name "Setup environment"
 step "Ensure Git and Ruby"
 
 require 'puppet/acceptance/install_utils'
+extend Puppet::Acceptance::InstallUtils
 
 PACKAGES = {
-  /fedora|el|centos/ => [
+  :redhat => [
     'git',
     'ruby',
   ],
-  /debian|ubuntu/ => [
+  :debian => [
     ['git', 'git-core'],
     'ruby',
   ],
-  /solaris/ => [
+  :solaris => [
     ['git', 'developer/versioning/git'],
     ['ruby', 'runtime/ruby-18'],
   ],
-  /windows/ => [
+  :windows => [
     'git',
     'ruby',
   ],
 }
 
-Puppet::Acceptance::InstallUtils.install_packages_on(hosts, PACKAGES, :check_if_exists => true)
+install_packages_on(hosts, PACKAGES, :check_if_exists => true)
 
 step "Add Gems"
 
@@ -43,4 +44,3 @@ hosts.each do |host|
     step "No gems to add"
   end
 end
-

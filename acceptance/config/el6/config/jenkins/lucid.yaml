@@ -3,13 +3,13 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: ubuntu-10.04-x86_64
+    platform: ubuntu-lucid-x86_64
     hypervisor: vcloud
     template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-x86_64
   agent:
     roles:
       - agent
-    platform: ubuntu-10.04-i386
+    platform: ubuntu-lucid-i386
     hypervisor: vcloud
     template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-i386
 CONFIG:

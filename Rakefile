@@ -73,12 +73,33 @@ namespace "ci" do
     sh %{rspec -r yarjuf -f JUnit -o result.xml -fd spec}
   end
 
-  task :prebuild_repos_tar do
-    sha = ENV['SHA'] || `git rev-parse HEAD`
-    sh "cd acceptance/config/el6; rake repos.tar SHA=#{sha}"
+  desc <<-EOS
+    Check to see if the job at the url given in DOWNSTREAM_JOB has begun a build including the given BUILD_SELECTOR parameter.  An example `rake ci:check_for_downstream DOWNSTREAM_JOB='http://jenkins-foss.delivery.puppetlabs.net/job/Puppet-Package-Acceptance-master' BUILD_SELECTOR=123`
+  EOS
+  task :check_for_downstream do
+    downstream_url = ENV['DOWNSTREAM_JOB'] || raise('No ENV DOWNSTREAM_JOB set!')
+    downstream_url += '/api/json?depth=1'
+    expected_selector = ENV['BUILD_SELECTOR'] || raise('No ENV BUILD_SELECTOR set!')
+    puts "Waiting for a downstream job calling for BUILD_SELECTOR #{expected_selector}"
+    success = false
+    require 'json'
+    require 'timeout'
+    Timeout.timeout(15 * 60) do
+      loop do
+        status = `curl '#{downstream_url}'`
+        json = JSON.parse(status)
+        actions = json['builds'].first['actions']
+        parameters = actions.select { |h| h.key?('parameters') }.first["parameters"]
+        build_selector = parameters.select { |h| h['name'] == 'BUILD_SELECTOR' }.first['value']
+        puts " * downstream job's last build selector: #{build_selector}"
+        break if build_selector >= expected_selector
+        sleep 60
+      end
+    end
   end
 
-  task :acceptance_artifacts => :prebuild_repos_tar do
+  desc "Tar up the acceptance/ directory so that package test runs have tests to run against."
+  task :acceptance_artifacts do
     sh "cd acceptance; rm -f acceptance-artifacts.tar.gz; tar -czv --exclude .bundle -f acceptance-artifacts.tar.gz *"
   end
 end
