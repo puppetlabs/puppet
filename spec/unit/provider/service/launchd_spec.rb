@@ -234,4 +234,24 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       provider.read_plist(busted_plist_path)
     end
   end
+
+  describe "when searching for jobs" do
+    it "should store the launchd job in the label_to_map" do
+      provider.instance_variable_set(:@label_to_path_map, nil)
+      provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
+      provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns(['/Library/LaunchAgents/foo.bar.service.plist'])
+      provider.expects(:read_plist).with('/Library/LaunchAgents/foo.bar.service.plist').returns({'Label'=>'foo.bar.service'})
+      provider.jobsearch()
+      provider.instance_variable_get(:@label_to_path_map).should eq({"foo.bar.service"=>"/Library/LaunchAgents/foo.bar.service.plist"})
+    end
+
+    it "should store the launchd job in the label_to_map even if the specified job is returned" do
+      provider.instance_variable_set(:@label_to_path_map, nil)
+      provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
+      provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns(['/Library/LaunchAgents/foo.bar.service.plist'])
+      provider.expects(:read_plist).with('/Library/LaunchAgents/foo.bar.service.plist').returns({'Label'=>'foo.bar.service'})
+      provider.jobsearch('foo.bar.service').should eq({"foo.bar.service"=>"/Library/LaunchAgents/foo.bar.service.plist"})
+      provider.instance_variable_get(:@label_to_path_map).should eq({"foo.bar.service"=>"/Library/LaunchAgents/foo.bar.service.plist"})
+    end
+  end
 end
