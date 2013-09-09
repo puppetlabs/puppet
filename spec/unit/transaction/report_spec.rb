@@ -4,6 +4,14 @@ require 'spec_helper'
 require 'puppet'
 require 'puppet/transaction/report'
 
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  require 'json'
+  require 'json-schema'
+
+  REPORT_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/report.json')))
+end
+
 describe Puppet::Transaction::Report do
   include PuppetSpec::Files
   before do
@@ -386,6 +394,16 @@ describe Puppet::Transaction::Report do
     tripped = Puppet::Transaction::Report.convert_from(:pson, report.render)
 
     expect_equivalent_reports(tripped, report)
+  end
+
+  def validate_as_json(report)
+    JSON::Validator.validate!(REPORT_SCHEMA, report)
+  end
+
+  it "generates pson which validates against the report schema" do
+    Puppet[:report_serialization_format] = "pson"
+    report = generate_report
+    validate_as_json(report.render)
   end
 
   it "can make a round trip through yaml" do
