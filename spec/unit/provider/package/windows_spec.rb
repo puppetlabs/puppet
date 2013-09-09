@@ -23,6 +23,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
     it { should be_uninstallable }
     it { should be_install_options }
     it { should be_uninstall_options }
+    it { should be_versionable }
   end
 
   describe 'on Windows', :if => Puppet.features.microsoft_windows? do
@@ -36,17 +37,19 @@ describe Puppet::Type.type(:package).provider(:windows) do
       pkg1 = stub('pkg1')
       pkg2 = stub('pkg2')
 
-      prov1 = stub('prov1', :name => 'pkg1', :package => pkg1)
-      prov2 = stub('prov2', :name => 'pkg2', :package => pkg2)
+      prov1 = stub('prov1', :name => 'pkg1', :version => '1.0.0', :package => pkg1)
+      prov2 = stub('prov2', :name => 'pkg2', :version => nil, :package => pkg2)
 
       Puppet::Provider::Package::Windows::Package.expects(:map).multiple_yields([prov1], [prov2]).returns([prov1, prov2])
 
       providers = provider.class.instances
       providers.count.should == 2
       providers[0].name.should == 'pkg1'
+      providers[0].version.should == '1.0.0'
       providers[0].package.should == pkg1
 
       providers[1].name.should == 'pkg2'
+      providers[1].version.should be_nil
       providers[1].package.should == pkg2
     end
 
@@ -59,11 +62,19 @@ describe Puppet::Type.type(:package).provider(:windows) do
 
   context '#query' do
     it 'should return the hash of the matched packaged' do
-      pkg = mock(:name => 'pkg1')
+      pkg = mock(:name => 'pkg1', :version => nil)
       pkg.expects(:match?).returns(true)
       Puppet::Provider::Package::Windows::Package.expects(:find).yields(pkg)
 
       provider.query.should == { :name => 'pkg1', :ensure => :installed, :provider => :windows }
+    end
+
+    it 'should include the version string when present' do
+      pkg = mock(:name => 'pkg1', :version => '1.0.0')
+      pkg.expects(:match?).returns(true)
+      Puppet::Provider::Package::Windows::Package.expects(:find).yields(pkg)
+
+      provider.query.should == { :name => 'pkg1', :ensure => '1.0.0', :provider => :windows }
     end
 
     it 'should return nil if no package was found' do
