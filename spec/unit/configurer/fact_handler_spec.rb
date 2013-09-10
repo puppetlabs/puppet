@@ -3,13 +3,20 @@ require 'spec_helper'
 require 'puppet/configurer'
 require 'puppet/configurer/fact_handler'
 
-
 # the json-schema gem doesn't support windows
 if not Puppet.features.microsoft_windows?
   require 'json'
   require 'json-schema'
 
-   CATALOG_FACTS_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/catalog_facts.json')))
+  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/json-meta-schema.json')))
+  CATALOG_FACTS_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/catalog_facts.json')))
+
+  describe "catalog facts schema" do
+    it "should validate against the json meta-schema" do
+      JSON::Validator.validate!(JSON_META_SCHEMA, CATALOG_FACTS_SCHEMA)
+    end
+  end
+
  end
 
 class FactHandlerTester
@@ -96,3 +103,4 @@ describe Puppet::Configurer::FactHandler do
   end
 
 end
+

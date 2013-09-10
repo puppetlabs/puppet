@@ -1,5 +1,8 @@
 {
-  "type": "object",
+  "$schema":     "http://json-schema.org/draft-04/schema#",
+  "title":       "Resource Type",
+  "description": "A puppet resource type",
+  "type":        "object",
   "properties": {
     "doc": {
       "type": "string"
@@ -14,8 +17,7 @@
       "type": "string"
     },
     "name": {
-      "type": "string",
-      "required": "true"
+      "type": "string"
     },
     "kind": {
       "type": "string",
@@ -23,12 +25,12 @@
         "class",
         "node",
         "defined_type"
-      ],
-      "required": "true"
+      ]
     },
     "parameters": {
       "type": "object"
     }
   },
+  "required": ["name", "kind"],
   "additionalProperties": false
 }
