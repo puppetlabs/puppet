@@ -89,7 +89,7 @@ describe content do
       @content = content.new(:resource => @resource)
       @content.should= "Let's make a \u{2603}"
 
-      @content.actual_content.should == "Let's make a \xE2\x98\x83"
+      @content.actual_content.should == "Let's make a \xE2\x98\x83".force_encoding(Encoding::ASCII_8BIT)
     end
   end
 
