@@ -1,14 +1,74 @@
 require 'rake/clean'
+require 'pp'
 
 REPO_CONFIGS_DIR = "repo-configs"
-CLEAN.include('*.tar', REPO_CONFIGS_DIR)
+CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'preserved_config.yaml')
 
 namespace :ci do
-  desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test as environment variable: SHA='<sha>')"
-  task :test do
-    ENV['OPTIONS'] = (ENV['OPTIONS'] || "") + " --xml"
+  def test(option_hash = {})
+    passed_options = option_hash[:options] || ''
     ENV['TESTING_MODE'] = 'jenkins'
-    sh "beaker -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
+    options = (ENV['OPTIONS'] || '') + " --xml "
+    options << passed_options
+    tests = ENV['TEST'] || option_hash[:test] || '../../tests'
+    begin
+      sh "beaker -o config/options.rb #{options} -t #{tests}"
+    rescue RuntimeError => e
+      puts "Beaker Failed: #{e}"
+    end
+  end
+
+  task :_test do
+    test
+  end
+
+  task :_test_and_preserve do
+    test(:options => '--preserve-hosts')
+  end
+
+  desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test as environment variable: SHA='<sha>')"
+  task :test => 'ci:_test'
+
+  desc "Capture the master and agent hostname from the latest log and construct a preserved_config.yaml for re-running against preserved hosts without provisioning."
+  task :extract_preserved_config do
+    nodes = { :master => {}, :agent => {} }
+    File.open('log/latest/config.yml', 'r') do |file|
+      config = file.read
+      config =~ /master:.*?platform: ([\w-]+)\s*$/m
+      nodes[:master][:platform] = $1
+      config =~ /agent:.*?platform: ([\w-]+)\s*$/m
+      nodes[:agent][:platform] = $1
+    end
+    File.open('log/latest/pre-suite-run.log', 'r') do |log_file|
+      while nodes.values.detect { |h| h[:hostname].nil? }
+        if log_file.readline =~ /^(\w+) \((master|agent)\)/
+          nodes[$2.to_sym][:hostname] = $1
+        end
+      end
+    end
+    pp nodes
+    File.open('preserved_config.yaml', 'w') do |config_file|
+      config_file.puts <<-EOF
+HOSTS:
+  #{nodes[:master][:hostname]}.delivery.puppetlabs.net:
+    roles:
+      - master
+      - agent
+    platform: #{nodes[:master][:platform]} 
+  #{nodes[:agent][:hostname]}.delivery.puppetlabs.net:
+    roles:
+      - agent
+    platform: #{nodes[:agent][:platform]}
+      EOF
+    end
+  end
+
+  desc "Run an acceptance test for a given node configuration and preserve the hosts.  Writes a local preserved_config.yaml with the hostnames so that we can rerun."
+  task :test_and_preserve_hosts => ['ci:_test_and_preserve', 'ci:extract_preserved_config']
+
+  desc "Rerun an acceptance test using the last captured preserved_config.yaml to skip provisioning. Uses the setup/rsync/pre-suite to rsync the local puppet source onto master and agent."
+  task :test_against_preserved_hosts do
+    test(:options => '--config=preserved_config.yaml --no-provision --preserve-hosts --pre-suite=setup/rsync/pre-suite')
   end
 end
 
