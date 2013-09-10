@@ -7,7 +7,15 @@ if not Puppet.features.microsoft_windows?
   require 'json'
   require 'json-schema'
 
+  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/json-meta-schema.json')))
   CATALOG_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/catalog.json')))
+
+  describe "catalog schema" do
+    it "should validate against the json meta-schema" do
+      JSON::Validator.validate!(JSON_META_SCHEMA, CATALOG_SCHEMA)
+    end
+  end
+
 end
 
 describe Puppet::Resource::Catalog, "when compiling" do
