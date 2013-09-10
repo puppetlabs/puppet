@@ -27,20 +27,23 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Returns the value of the variable (nil is returned if variable has no value, or if variable does not exist)
   #
   def get_variable_value(name, o, scope)
-    scope.lookupvar(name)
+    # Puppet 3x stores all variables as strings (then converts them back to numeric with a regexp... to see if it is a match variable)
+    # Not ideal, scope should support numeric lookup directly instead.
+    # TODO: consider fixing scope
+    scope.lookupvar(name.to_s)
   end
 
   # Returns true if the variable of the given name is set in the given most nested scope. True is returned even if
   # variable is bound to nil.
   #
   def variable_bound?(name, scope)
-    scope.bound?(name)
+    scope.bound?(name.to_s)
   end
 
   # Returns true of the variable is bound to a value or nil, in the scope or it's parent scopes.
   #
   def variable_exists?(name, scope)
-    scope.exist?(name)
+    scope.exist?(name.to_s)
   end
 
   def set_match_data(match_data, o, scope)

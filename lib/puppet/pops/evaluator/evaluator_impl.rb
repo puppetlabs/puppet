@@ -103,6 +103,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @return [value<Object>]
   #
   def assign_String(name, value, o, scope)
+    if name =~ /::/
+      # Issues::CROSS_SCOPE_ASSIGNMENT
+      fail("Cross-namespace assignment is not allowed, cannot assign to $#{name}", o.left_expr, scope)
+    end
     set_variable(name, value, o, scope)
     value
   end
@@ -205,7 +209,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @example Puppet DSL
   #   $a = 1
   #   $a += 1
-  # @todo support for -= ('without' to remove from array) not yet implemented
+  # @todo support for -= ('without' to remove from array) concrete syntax not yet implemented
   #
   def eval_AssignmentExpression(o, scope)
     name, value = eval_BinaryExpression(o, scope)
@@ -215,23 +219,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
       assign(name, value, o, scope)
 
     when :'+='
-      # Typecheck RHS
-      case value
-      when String
-      when Array
-      when Hash
-      else
-        # Note, Numeric is illegal since it is impossible to determine radix, better to fail and let user enter the string, or
-        # use numeric to string conversion with formatting.
-        fail("Illegal += right hand side type. Cannot append an instance of #{value.class}", o, scope)
-      end
       # if value does not exist, return RHS (note that type check has already been made so correct type is ensured)
-      if !variable_exists?(scope, name)
+      if !variable_exists?(name, scope)
         return value
       end
       begin
-        # Delegate to concatenate function to deal with check of LHS, and perform concatenation
-        assign(name, concatenate(get_variable_value(scope, name), value), o, scope)
+        # Delegate to calculate function to deal with check of LHS, and perform ´+´ as arithmetic or concatenation the
+        # same way as ArithmeticExpression performs `+`.
+        assign(name, calculate(get_variable_value(name, o, scope), value, :'+', o.left_expr, o.right_expr, scope), o, scope)
       rescue ArgumentError => e
         fail("Append assignment += failed with error: #{e.message}", o, scope)
       end
@@ -267,10 +262,25 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
       fail("Unknown arithmetic operator #{o.operator}", o, scope)
     end
     left, right = eval_BinaryExpression(o, scope)
+    begin
+      result = calculate(left, right, o.operator, o.left_expr, o.right_expr, scope)
+    rescue ArgumentError => e
+      fail(e.message, o, scope)
+    end
+    result
+  end
 
-    if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(o.operator)
+
+  # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
+  #
+  def calculate(left, right, operator, left_o, right_o, scope)
+    unless ARITHMETIC_OPERATORS.include?(operator)
+      raise ArgumentError, "Unknown arithmetic operator #{o.operator}"
+    end
+
+    if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
       # Handle operation on collections
-      case o.operator
+      case operator
       when :'+'
         concatenate(left, right)
       when :'-'
@@ -278,22 +288,19 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
       when :'<<'
         unless left.is_a?(Array)
           # TODO: when improving fail, pass o.left_expr
-          fail("Left operand in '<<' expression is not an Array", o, scope)
+          raise ArgumentError, "Left operand in '<<' expression is not an Array"
         end
         left + [right]
       end
     else
       # Handle operation on numeric
-      left = box_numeric(left, o, scope)
-      right = box_numeric(right, o, scope)
+      left = box_numeric(left, left_o, scope)
+      right = box_numeric(right, right_o, scope)
       begin
-        result = left.send(o.operator, right)
+        result = left.send(operator, right)
       rescue NoMethodError => e
-        fail("Operator #{o.operator} not applicable to a value of type #{left.class}", o, scope)
+        raise ArgumentError, "Operator #{operator} not applicable to a value of type #{left.class}"
       end
-      #      puts "Arithmetic returns '#{left}' #{o.operator} '#{right}' => #{result}"
-      #      puts "left = #{o.left_expr.class}, #{o.left_expr.value}"
-      #      puts "right = #{o.right_expr.class}, #{o.right_expr.value}"
       result
     end
   end
@@ -575,12 +582,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
       fail "Internal error: a variable name should result in a String when evaluated. Got expression of #{o.expr.class} type.", o, scope
     end
     # TODO: Check for valid variable name
-    if variable_exists?(name, scope)
-      get_variable_value(name, o, scope)
-    else
-      # TODO: semantics of undefined variable in scope, this just returns what scope does == value or nil
-      nil
-    end
+    # TODO: semantics of undefined variable in scope, this just returns what scope does == value or nil
+    get_variable_value(name, o, scope)
   end
 
   # Evaluates double quoted strings that may contain interpolation
@@ -716,8 +719,16 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # * Hash => a merge, where entries in `y` overrides
   # * any other => error
   #
+  # When x is something else, wrap it in an array first.
+  #
+  # When x is nil, an empty array is used instead.
+  #
   # @note to concatenate an Array, nest the array - i.e. `[1,2], [[2,3]]`
   #
+  # @overload concatenate(obj_x, obj_y)
+  #   @param obj_x [Object] object to wrap in an array and concatenate to; see other overloaded methods for return type
+  #   @param ary_y [Object] array to concatenate at end of `ary_x`
+  #   @return [Object] wraps obj_x in array before using other overloaded option based on type of obj_y
   # @overload concatenate(ary_x, ary_y)
   #   @param ary_x [Array] array to concatenate to
   #   @param ary_y [Array] array to concatenate at end of `ary_x`
@@ -742,6 +753,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @raise [ArgumentError] when `xxx_x` is a Hash, and `xxx_y` is neither Array nor Hash.
   #
   def concatenate(x, y)
+    x = [] if x.nil?
+    x = [x] unless x.is_a?(Array) || x.is_a?(Hash)
     case x
     when Array
       y = case y

@@ -35,37 +35,37 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
       end
 
       it "access to global names works in top scope" do
-        top_scope_block   = block( fqn('::a').set(literal(2)+literal(2)), var('::a'))
+        top_scope_block   = block( fqn('a').set(literal(2)+literal(2)), var('::a'))
         evaluate_l(top_scope_block).should == 4
       end
 
       it "access to global names works in local scope" do
-        top_scope_block     = block( fqn('::a').set(literal(2)+literal(2)), var('::a'))
+        top_scope_block     = block( fqn('a').set(literal(2)+literal(2)))
         local_scope_block   = block( fqn('a').set(var('::a')+literal(2)), var('::a'))
-        evaluate_l(top_scope_block, local_scope_block).should == 4
+        evaluate_l(top_scope_block, local_scope_block).should == 6
       end
 
       it "can not change a variable value in same scope" do
-        expect { evaluate_l(block(fqn('a').set(10), fqn('a').set(20))) }.to raise_error(Puppet::Pops::ImmutableError)
+        expect { evaluate_l(block(fqn('a').set(10), fqn('a').set(20))) }.to raise_error(/Cannot reassign variable a/)
       end
 
       context "+= operations" do
         it "appending to non existing value, nil += []" do
           top_scope_block = fqn('b').set([1,2,3])
           local_scope_block = fqn('a').plus_set([4])
-          expect {evaluate_l(top_scope_block, local_scope_block)}.to raise_error(Puppet::Pops::EvaluationError)
+          evaluate_l(top_scope_block, local_scope_block).should == [4]
         end
 
         context "appending to list" do
           it "from list, [] += []" do
             top_scope_block = fqn('a').set([1,2,3])
-            local_scope_block = fqn('a').plus_set([4])
+            local_scope_block = block(fqn('a').plus_set([4]), fqn('a').var())
             evaluate_l(top_scope_block, local_scope_block).should == [1,2,3,4]
           end
 
           it "from hash, [] += {a=>b}" do
             top_scope_block = fqn('a').set([1,2,3])
-            local_scope_block = fqn('a').plus_set({'a' => 1, 'b'=>2})
+            local_scope_block = block(fqn('a').plus_set({'a' => 1, 'b'=>2}), fqn('a').var())
             evaluate_l(top_scope_block, local_scope_block).should satisfy {|result|
               # hash in 1.8.7 is not insertion order preserving, hence this hoop
              result == [1,2,3,['a',1],['b',2]] || result == [1,2,3,['b',2],['a',1]]
@@ -74,13 +74,13 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
 
           it "from single value, [] += x" do
             top_scope_block = fqn('a').set([1,2,3])
-            local_scope_block = fqn('a').plus_set(4)
+            local_scope_block = block(fqn('a').plus_set(4), fqn('a').var())
             evaluate_l(top_scope_block, local_scope_block).should == [1,2,3,4]
           end
 
           it "from embedded list, [] += [[x]]" do
             top_scope_block = fqn('a').set([1,2,3])
-            local_scope_block = fqn('a').plus_set([[4,5]])
+            local_scope_block = block(fqn('a').plus_set([[4,5]]), fqn('a').var())
             evaluate_l(top_scope_block, local_scope_block).should == [1,2,3,[4,5]]
           end
         end
@@ -88,44 +88,44 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
         context "appending to hash" do
           it "from hash, {a=>b} += {x=>y}" do
             top_scope_block = fqn('a').set({'a' => 1, 'b' => 2})
-            local_scope_block = fqn('a').plus_set({'c' => 3})
+            local_scope_block = block(fqn('a').plus_set({'c' => 3}), fqn('a').var())
             evaluate_l(top_scope_block, local_scope_block) do |scope|
               # Assert no change to top scope hash
-              scope.get_variable_entry('a').value.should == {'a' =>1, 'b'=> 2}
+              scope['a'].should == {'a' =>1, 'b'=> 2}
             end.should == {'a' => 1, 'b' => 2, 'c' => 3}
           end
 
           it "from list, {a=>b} += ['x', y]" do
             top_scope_block = fqn('a').set({'a' => 1, 'b' => 2})
-            local_scope_block = fqn('a').plus_set(['c', 3])
+            local_scope_block = block(fqn('a').plus_set(['c', 3]), fqn('a').var())
             evaluate_l(top_scope_block, local_scope_block) do |scope|
               # Assert no change to top scope hash
-              scope.get_variable_entry('a').value.should == {'a' =>1, 'b'=> 2}
+              scope['a'].should == {'a' =>1, 'b'=> 2}
             end.should == {'a' => 1, 'b' => 2, 'c' => 3}
           end
 
           it "with overwrite from hash, {a=>b} += {a=>c}" do
             top_scope_block = fqn('a').set({'a' => 1, 'b' => 2})
-            local_scope_block = fqn('a').plus_set({'b' => 4, 'c' => 3})
+            local_scope_block = block(fqn('a').plus_set({'b' => 4, 'c' => 3}),fqn('a').var())
             evaluate_l(top_scope_block, local_scope_block) do |scope|
               # Assert no change to top scope hash
-              scope.get_variable_entry('a').value.should == {'a' =>1, 'b'=> 2}
+              scope['a'].should == {'a' =>1, 'b'=> 2}
             end.should == {'a' => 1, 'b' => 4, 'c' => 3}
           end
 
           it "with overwrite from list, {a=>b} += ['a', c]" do
             top_scope_block = fqn('a').set({'a' => 1, 'b' => 2})
-            local_scope_block = fqn('a').plus_set(['b', 4, 'c', 3])
+            local_scope_block = block(fqn('a').plus_set(['b', 4, 'c', 3]), fqn('a').var())
             evaluate_l(top_scope_block, local_scope_block) do |scope|
               # Assert no change to topscope hash
-              scope.get_variable_entry('a').value.should == {'a' =>1, 'b'=> 2}
+              scope['a'].should == {'a' =>1, 'b'=> 2}
             end.should == {'a' => 1, 'b' => 4, 'c' => 3}
           end
 
           it "from odd length array - error" do
             top_scope_block = fqn('a').set({'a' => 1, 'b' => 2})
             local_scope_block = fqn('a').plus_set(['b', 4, 'c'])
-            expect { evaluate_l(top_scope_block, local_scope_block) }.to raise_error(Puppet::Pops::EvaluationError)
+            expect { evaluate_l(top_scope_block, local_scope_block) }.to raise_error(/Append assignment \+= failed with error: odd number of arguments for Hash/)
           end
         end
       end
