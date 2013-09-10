@@ -7,16 +7,16 @@
     "properties": {
         "host": {
             "description": "The host that generated the report",
-            "type": "string",
+            "type": "string"
         },
 
         "time": {
             "description": "When the run began",
-            "type": "string", # TODO: DateTime serialization in pson- type ?
+            "type": "string"    //  TODO: DateTime serialization in pson- type ?
         },
 
         "logs": {
-            "description": "Zero or more occurances of Log objects",
+            "description": "Zero or more occurrences of Log objects",
             "type": "array",
             "items": {
                  "$ref": "#/report/log"
@@ -46,34 +46,34 @@
                 "changes": {
                     "type": "object",
                     "$ref": "#/report/changes_metrics"
-                },
-            }
+                }
+            },
 
-            "additionalProperties": false
+            "additionalProperties": false,
 
             "minProperties": 1
         },
 
         "resource_statuses": {
-            "description": "Object with one property per resource name of #report/status.json schema type"
+            "description": "Object with one property per resource name of #report/status.json schema type",
             "type": "object",
             "additionalProperties": true
         },
 
         "configuration_version": {
-            "description": "The configuration version of the Puppet run.
-                            This is a String if the user has specified their own
-                            versioning scheme, otherwise an Integer representing seconds since the epoch.
+            "description": "The configuration version of the Puppet run.                                     \
+                            This is a String if the user has specified their own                             \
+                            versioning scheme, otherwise an Integer representing seconds since the epoch.    \
                            ",
             "anyOf": [
                 { "type": "integer", "description": "seconds since the epoch" },
-                { "type": "string", "description"; "custom versioning scheme" }
+                { "type": "string", "description": "custom versioning scheme" }
             ]
         },
 
         "transaction_uuid": {
-            "description": "A UUID covering the transaction.
-                            The query parameters for the catalog retrieval will have included the same UUID.
+            "description": "A UUID covering the transaction.                                                     \
+                            The query parameters for the catalog retrieval will have included the same UUID.     \
                            ",
             "type": "string"
         },
@@ -90,31 +90,31 @@
         },
 
         "kind": {
-            "description": "Report kind, enumerator with one of the values:
-                            * `inspect`, if this report came from a puppet inspect run
-                            * `apply`, if this report came from a puppet apply or puppet agent run
+            "description": "Report kind, enumerator with one of the values:                         \
+                            * `inspect`, if this report came from a puppet inspect run              \
+                            * `apply`, if this report came from a puppet apply or puppet agent run  \
                            ",
             "enum": ["inspect", "apply"]
         },
 
         "status": {
-            "description": "Report status, enumerator with one of the values:
-                            * `failed`, if run failed
-                            * `changed`, if something changed
-                            * `unchanged`, if nothing changed from the previous run
+            "description": "Report status, enumerator with one of the values:             \
+                            * `failed`, if run failed                                     \
+                            * `changed`, if something changed                             \
+                            * `unchanged`, if nothing changed from the previous run       \
                            ",
             "enum": ["failed", "changed", "unchanged"]
         },
 
         "environment": {
-            "description": "The name of the environment that was used for the puppet run (e.g. "production").",
+            "description": "The name of the environment that was used for the puppet run (e.g. \"production\").",
             "type": "string"
-        },
+        }
     },
     "additionalProperties": false,
 
     "required": [
-        "host", "time", "resource_statuses", 
+        "host", "time", "resource_statuses",
         "configuration_version", "report_format", "puppet_version",
         "kind", "status", "environment"
     ]
