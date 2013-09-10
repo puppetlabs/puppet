@@ -17,6 +17,8 @@ begun, and will be finished before the containing class is finished.
 
   classes.each do |class_name|
     class_resource = scope.catalog.resource("Class", class_name)
-    scope.catalog.add_edge(scope.resource, class_resource)
+    if ! scope.catalog.edge?(scope.resource, class_resource)
+      scope.catalog.add_edge(scope.resource, class_resource)
+    end
   end
 end

@@ -112,6 +112,26 @@ describe 'The "contain" function' do
     )
   end
 
+  it "does not create duplicate edges" do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      class contained {
+        notify { "contained": }
+      }
+
+      class container {
+        contain contained
+        contain contained
+      }
+
+      include container
+    MANIFEST
+
+    contained = catalog.resource("Class", "contained")
+    container = catalog.resource("Class", "container")
+
+    expect(catalog.edges_between(container, contained)).to have(1).item
+  end
+
   context "when a containing class has a dependency order" do
     it "the contained class is applied in that order" do
       catalog = compile_to_relationship_graph(<<-MANIFEST)
