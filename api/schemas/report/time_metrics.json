@@ -1,0 +1,49 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "TimeMetric",
+    "description": "A Metric in the `time` category",
+    "type":        "object",
+    "properties": {
+
+        "name": {
+            "description": "The name of the metric category ('time')",
+            "enum": ["time"]
+        },
+
+        "label": {
+            "description": "The name in title form",
+            "enum": ["Time"]
+        },
+
+        "values": {
+            "description": "The metric values in the 'time' category contains one entry per resource type in the catalog for
+                            which there is at least one resource and the values named:
+
+                            * `config_retrieval`
+                            * `total`
+                            * `inspect` (only present if the report is of `inspect`-kind)
+                           ",
+            "type": "array",
+            "items": {
+                "description": Each entry in `values` is an array with 3 slots for `name`, `label` and `value`"
+                "type": "array"
+                "items": [
+                    {
+                        "description": "The name of the value (the name of a resource type, `config_retrieval`, or `total`"
+                        "type": "string"
+                    },
+                    {
+                        "description": "The name in title form"
+                        "type": "string"
+                    },
+                    {
+                        "description": "The value"
+                        "type": "float"
+                    },
+                ]
+            }
+        }
+    }
+    "required": [ "name", "label", "values"],
+    "additionalProperties": false
+}

@@ -1,0 +1,44 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "ResourcesMetric",
+    "description": "A Metric in the `resources` category",
+    "type":        "object",
+    "properties": {
+
+        "name": {
+            "description": "The name of the metric category ('resources')",
+            "enum": ["resources"]
+        },
+
+        "label": {
+            "description": "The name in title form",
+            "enum": ["Resources"]
+        },
+
+        "values": {
+            "description": "The metric values in the 'resources' category",
+            "type": "array",
+            "items": {
+                "description": Each entry in `values` is an array with 3 slots for `name`, `label` and `value`"
+                "type": "array"
+                "items": [
+                    {
+                        "description": "The name of the value"
+                        "enum": ["failed", "out_of_sync", "changed", "total" ]
+                    },
+                    {
+                        "description": "The name in title form"
+                        "enum": ["Failed", "Out of sync", "Changed", "Total" ]
+                    },
+                    {
+                        "description": "The value"
+                        "type": "integer"
+                    },
+                ]
+            }
+        }
+    }
+    "required": [ "name", "label", "values"],
+    "additionalProperties": false
+    
+}

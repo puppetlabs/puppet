@@ -1,0 +1,43 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "ChangesMetric",
+    "description": "A Metric in the `changes` category",
+    "type":        "object",
+    "properties": {
+
+        "name": {
+            "description": "The name of the metric category ('changes')",
+            "enum": ["changes"]
+        },
+
+        "label": {
+            "description": "The name in title form",
+            "enum": ["Changes"]
+        },
+
+        "values": {
+            "description": "The metric value in the 'changes' category is called `total` - there is only one total.",
+            "type": "array",
+            "items": {
+                "description": "Each entry in `values` is an array with 3 slots for `name`, `label` and `value`."
+                "type": "array"
+                "items": [
+                    {
+                        "description": "The name of the value"
+                        "enum": ["total" ]
+                    },
+                    {
+                        "description": "The name in title form"
+                        "enum": ["Total"]
+                    },
+                    {
+                        "description": "The value"
+                        "type": "integer"
+                    },
+                ]
+            }
+        }
+    }
+    "required": [ "name", "label", "values"],
+    "additionalProperties": false
+}
