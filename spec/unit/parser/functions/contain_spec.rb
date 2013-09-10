@@ -62,54 +62,75 @@ describe 'The "contain" function' do
     expect(catalog).to contain_class("b").in("container")
   end
 
-  it "can contain a class in multiple classes" do
-    catalog = compile_to_catalog(<<-MANIFEST)
-      class contained {
-        notify { "contained": }
-      }
+  context "when containing a class in multiple classes" do
+    it "creates a catalog with all containment edges" do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        class contained {
+          notify { "contained": }
+        }
 
-      class container {
-        contain contained
-      }
+        class container {
+          contain contained
+        }
 
-      class another {
-        contain contained
-      }
+        class another {
+          contain contained
+        }
 
-      include container
-      include another
+        include container
+        include another
+      MANIFEST
 
-      Class["container"] -> Class["another"]
-    MANIFEST
+      expect(catalog).to contain_class("contained").in("container")
+      expect(catalog).to contain_class("contained").in("another")
+    end
 
-    expect(catalog).to contain_class("contained").in("container")
-    expect(catalog).to contain_class("contained").in("another")
-  end
+    it "and there are no dependencies applies successfully" do
+      manifest = <<-MANIFEST
+        class contained {
+          notify { "contained": }
+        }
 
-  it "causes a dependency cycle when multiple containment is combined with explicit dependencies" do
-    manifest = <<-MANIFEST
-      class contained {
-        notify { "contained": }
-      }
+        class container {
+          contain contained
+        }
 
-      class container {
-        contain contained
-      }
+        class another {
+          contain contained
+        }
 
-      class another {
-        contain contained
-      }
+        include container
+        include another
+      MANIFEST
 
-      include container
-      include another
+      expect { apply_compiled_manifest(manifest) }.not_to raise_error
+    end
 
-      Class["container"] -> Class["another"]
-    MANIFEST
+    it "and there are explicit dependencies on the containing class causes a dependency cycle" do
+      manifest = <<-MANIFEST
+        class contained {
+          notify { "contained": }
+        }
 
-    expect { apply_compiled_manifest(manifest) }.to raise_error(
-      Puppet::Error,
-      /Found 1 dependency cycle/
-    )
+        class container {
+          contain contained
+        }
+
+        class another {
+          contain contained
+        }
+
+        include container
+        include another
+
+        Class["container"] -> Class["another"]
+      MANIFEST
+
+      expect { apply_compiled_manifest(manifest) }.to raise_error(
+        Puppet::Error,
+        /Found 1 dependency cycle/
+      )
+    end
   end
 
   it "does not create duplicate edges" do
