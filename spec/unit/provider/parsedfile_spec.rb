@@ -2,7 +2,13 @@
 require 'spec_helper'
 require 'puppet_spec/files'
 
+require 'puppet'
 require 'puppet/provider/parsedfile'
+
+Puppet::Type.newtype(:parsedfile_type) do
+  newparam(:name)
+  newproperty(:target)
+end
 
 # Most of the tests for this are still in test/ral/provider/parsedfile.rb.
 describe Puppet::Provider::ParsedFile do
@@ -11,8 +17,11 @@ describe Puppet::Provider::ParsedFile do
   # sharing data between classes we construct an anonymous class that inherits
   # the ParsedFile provider instead of directly working with the ParsedFile
   # provider itself.
-  let(:parsed_type) { Puppet::Type.newtype(:parsedfile_type) }
-  let(:provider) { parsed_type.provide(:parsedfile_provider, :parent => described_class) }
+  let(:parsed_type) do
+    Puppet::Type.type(:parsedfile_type)
+  end
+
+  let!(:provider) { parsed_type.provide(:parsedfile_provider, :parent => described_class) }
 
   describe "when looking up records loaded from disk" do
     it "should return nil if no records have been loaded" do
@@ -132,6 +141,35 @@ describe Puppet::Provider::ParsedFile do
       provider.flush_target("/my/file")
       provider.prefetch
       provider.flush_target("/my/file")
+    end
+  end
+
+  describe "when flushing multiple files" do
+    describe "and an error is encountered" do
+      it "the other file does not fail" do
+        provider.stubs(:backup_target)
+
+        bad_file = 'broken'
+        good_file = 'writable'
+
+        bad_writer = mock 'bad'
+        bad_writer.expects(:write).raises(Exception, "Failed to write to bad file")
+
+        good_writer = mock 'good'
+        good_writer.expects(:write).returns(nil)
+
+        provider.stubs(:target_object).with(bad_file).returns(bad_writer)
+        provider.stubs(:target_object).with(good_file).returns(good_writer)
+
+        bad_resource = parsed_type.new(:name => 'one', :target => bad_file)
+        good_resource = parsed_type.new(:name => 'two', :target => good_file)
+
+        expect {
+          bad_resource.flush
+        }.to raise_error(Exception, "Failed to write to bad file")
+
+        good_resource.flush
+      end
     end
   end
 end
