@@ -753,7 +753,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @raise [ArgumentError] when `xxx_x` is a Hash, and `xxx_y` is neither Array nor Hash.
   #
   def concatenate(x, y)
-    x = [] if x.nil?
     x = [x] unless x.is_a?(Array) || x.is_a?(Hash)
     case x
     when Array

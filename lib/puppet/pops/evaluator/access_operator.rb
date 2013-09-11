@@ -75,6 +75,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
+
   # Evaluates <hsh>[] with support for one or more arguments. If more than one argument is used, the result
   # is an array with each lookup.
   #
@@ -91,6 +92,25 @@ class Puppet::Pops::Evaluator::AccessOperator
       result.compact!
       result
     end
+  end
+
+  # An integer type provides a way to create an Array of integers from, to (inclusive) (must be given), and an
+  # optional step at the 3d position which defaults to 1
+  def access_PIntegerType(o, scope, keys)
+    if keys.size == 0
+      return o
+    end
+
+    unless keys.size.between?(2, 3)
+      fail("Integer[] only accepts two or three parameters (from, to, step). Got #{keys.size}", @semantic.keys, scope)
+    end
+    keys.each {|x| fail("Integer[] requires all keys to be integers", @semantic.keys, scope) unless x.is_a?(Numeric) }
+    from, to, step = keys
+    fail("Integer[] cannot step with increment of 0", @semantic.keys, scope) if step == 0
+    step ||= 1
+
+    # Ok, so this is quite bad for very large arrays...
+    from.step(to, step).collect {|x| x}
   end
 
   # A Hash can create a new Hash type, one arg sets value type, two args sets key and value type in new type

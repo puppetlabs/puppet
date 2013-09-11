@@ -91,6 +91,38 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
   context "When applied to a type it" do
     let(:types) { Puppet::Pops::Types::TypeFactory }
 
+    # Integer
+    #
+    it 'produces an Array of ascending values in range from Integer[from, to]' do
+      expr = fqr('Integer')[1, 3]
+      expect(evaluate(expr)).to eql([1,2,3])
+    end
+
+    it 'produces an Array of one values in range from Integer[from, from]' do
+      expr = fqr('Integer')[1,1]
+      expect(evaluate(expr)).to eql([1])
+    end
+
+    it 'produces an Array of one values in range from Integer[from, <from]' do
+      expr = fqr('Integer')[1,0]
+      expect(evaluate(expr)).to eql([])
+    end
+
+    it 'produces an Array of ascending values in range from Integer[from, to, step]' do
+      expr = fqr('Integer')[1, 6, 2]
+      expect(evaluate(expr)).to eql([1,3,5])
+    end
+
+    it 'produces an Array of descending values in range from Integer[from, to, step]' do
+      expr = fqr('Integer')[6, 1, -2]
+      expect(evaluate(expr)).to eql([6,4,2])
+    end
+
+    it 'cannot step Integer sequence with a step of 0' do
+      expr = fqr('Integer')[6, 1, 0]
+      expect { evaluate(expr)}.to raise_error(/Integer\[\] cannot step with increment of 0/)
+    end
+
     # Hash
     #
     it 'produces a Hash[Literal,String] from the expression Hash[String]' do
