@@ -28,6 +28,8 @@ module Puppet
     :vardir   => {
         :default  => nil,
         :type     => :directory,
+        :owner    => "service",
+        :group    => "service",
         :desc     => "Where Puppet stores dynamic and growing data.  The default for this setting is calculated specially, like `confdir`_.",
     },
 
