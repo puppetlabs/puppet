@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   has_feature :versionable
 
   # Note: self:: is required here to keep these constants in the context of what will
-  # eventually become this Puppet:Type::Package::ProviderRpm class.
+  # eventually become this Puppet::Type::Package::ProviderRpm class.
   self::RPM_DESCRIPTION_DELIMITER = ':DESC:'
   # The query format by which we identify installed packages
   self::NEVRA_FORMAT = %Q{'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} #{self::RPM_DESCRIPTION_DELIMITER} %{SUMMARY}\\n'}

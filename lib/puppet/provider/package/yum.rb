@@ -11,7 +11,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   commands :yum => "yum", :rpm => "rpm", :python => "python"
 
-  YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
+  self::YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
 
   attr_accessor :latest_info
 
@@ -34,7 +34,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # collect our 'latest' info
     updates = {}
-    python(YUMHELPER).each_line do |l|
+    python(self::YUMHELPER).each_line do |l|
       l.chomp!
       next if l.empty?
       if l[0,4] == "_pkg"

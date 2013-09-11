@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   private
 
   # Note: self:: is required here to keep these constants in the context of what will
-  # eventually become this Puppet:Type::Package::ProviderDpkg class.
+  # eventually become this Puppet::Type::Package::ProviderDpkg class.
   self::DPKG_DESCRIPTION_DELIMITER = ':DESC:'
   self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} #{self::DPKG_DESCRIPTION_DELIMITER} ${Description}\\n#{self::DPKG_DESCRIPTION_DELIMITER}\\n'}
   self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*) #{self::DPKG_DESCRIPTION_DELIMITER} (.*)$}
