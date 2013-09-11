@@ -1,9 +1,12 @@
 require 'net/https'
-require 'zlib'
 require 'digest/sha1'
 require 'uri'
 require 'puppet/util/http_proxy'
 require 'puppet/forge/errors'
+
+if Puppet.features.zlib? && Puppet[:zlib]
+  require 'zlib'
+end
 
 class Puppet::Forge
   # = Repository
@@ -26,8 +29,11 @@ class Puppet::Forge
       Net::HTTPHeaderSyntaxError,
       Net::ProtocolError,
       SocketError,
-      Zlib::GzipFile::Error,
     ]
+
+    if Puppet.features.zlib? && Puppet[:zlib]
+      NET_HTTP_EXCEPTIONS << Zlib::GzipFile::Error
+    end
 
     # Instantiate a new repository instance rooted at the +url+.
     # The agent will report +consumer_version+ in the User-Agent to
