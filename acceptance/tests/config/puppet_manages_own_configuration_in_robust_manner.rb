@@ -32,6 +32,12 @@ teardown do
       Group['puppet'] -> User['puppet']
     ORIG
   end
+
+  with_puppet_running_on(master, {}) do
+    agents.each do |agent|
+      on agent, puppet('agent', '-t', '--server', master)
+    end
+  end
 end
 
 step "Remove system users" do
@@ -49,10 +55,6 @@ step "Ensure master fails to start when missing system user" do
 end
 
 step "Ensure master starts when making users after having previously failed startup" do
-
-  step "Failing here on RHEL6 packages -- Redmine #22273"
-  confine :except, :platform => 'el-6'
-
   with_puppet_running_on(master,
                          :__commandline_args__ => '--debug --trace',
                          :master => { :mkusers => true }) do

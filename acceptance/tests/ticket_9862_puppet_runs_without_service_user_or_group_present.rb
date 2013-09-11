@@ -19,6 +19,18 @@ def missing_directory_for(agent, dir)
   agent_dir
 end
 
+teardown do
+  agents.each do |agent|
+    step "ensure puppet resets it's user/group settings"
+    on agent, puppet('apply', '-e', '"notify { puppet_run: }"')
+    on agent, "find #{agent['puppetvardir']} -user existinguser" do
+      assert_equal('',stdout)
+    end
+    on agent, puppet('resource', 'user', 'existinguser', 'ensure=absent')
+    on agent, puppet('resource', 'group', 'existinggroup', 'ensure=absent')
+  end
+end
+
 step "when the user and group are missing"
 agents.each do |agent|
   logdir = missing_directory_for(agent, 'log')
