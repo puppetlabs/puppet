@@ -315,6 +315,12 @@ module Puppet
       newvalue(%r{[0-9]+}) { }
     end
 
+    newproperty(:metalink, :parent => Puppet::IniProperty) do
+      desc "The metalink URL. #{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(/.*/) { }
+    end
+
     newproperty(:protect, :parent => Puppet::IniProperty) do
       desc "Enable or disable protection for this repository. Requires
         that the `protectbase` plugin is installed and enabled.
