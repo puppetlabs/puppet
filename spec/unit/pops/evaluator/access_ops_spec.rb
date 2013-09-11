@@ -98,12 +98,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to eql([1,2,3])
     end
 
-    it 'produces an Array of one values in range from Integer[from, from]' do
+    it 'produces an Array of one value in range from Integer[from, from]' do
       expr = fqr('Integer')[1,1]
       expect(evaluate(expr)).to eql([1])
     end
 
-    it 'produces an Array of one values in range from Integer[from, <from]' do
+    it 'produces an empty Array from Integer[from, <from]' do
       expr = fqr('Integer')[1,0]
       expect(evaluate(expr)).to eql([])
     end
