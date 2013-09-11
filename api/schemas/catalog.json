@@ -27,9 +27,11 @@
             "type": "object",
             "properties": {
                 "tags": {
+                    "description": "Tags: regex is from http://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
                     "type": "array",
                     "items": {
-                        "type": "string"
+                        "type": "string",
+                        "pattern": "^[a-z0-9_][a-z0-9_:\.\-]*$"
                     }
                 },
                 "name": {
