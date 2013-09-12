@@ -6,6 +6,11 @@ require 'singleton'
 class Puppet::Util::Storage
   include Singleton
   include Puppet::Util
+  if defined?(::Psych::SyntaxError)
+    YamlLoadExceptions = [::StandardError, ::ArgumentError, ::Psych::SyntaxError]
+  else
+    YamlLoadExceptions = [::StandardError, ::ArgumentError]
+  end
 
   def self.state
     @@state
@@ -56,8 +61,8 @@ class Puppet::Util::Storage
     end
     Puppet::Util.benchmark(:debug, "Loaded state") do
       begin
-        @@state = YAML.load(::File.read(filename))
-      rescue => detail
+        @@state = YAML.load_file(filename)
+      rescue *YamlLoadExceptions => detail
         Puppet.err "Checksumfile #{filename} is corrupt (#{detail}); replacing"
 
         begin

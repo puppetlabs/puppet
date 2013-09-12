@@ -125,14 +125,24 @@ describe Puppet::Util::Storage do
 
       it "should restore its internal state if the state file contains valid YAML" do
         test_yaml = {'File["/yayness"]'=>{"name"=>{:a=>:b,:c=>:d}}}
-        YAML.expects(:load).returns(test_yaml)
+        @state_file.write(test_yaml.to_yaml)
+        @state_file.flush
 
         expect { Puppet::Util::Storage.load }.to_not raise_error
         Puppet::Util::Storage.state.should == test_yaml
       end
 
       it "should initialize with a clear internal state if the state file does not contain valid YAML" do
-        @state_file.write(:booness)
+        @state_file.write('{ invalid')
+        @state_file.flush
+
+        Puppet::Util::Storage.load
+
+        Puppet::Util::Storage.state.should == {}
+      end
+
+      it "should initialize with a clear internal state if the state file does not contain a hash of data" do
+        @state_file.write("not_a_hash")
         @state_file.flush
 
         expect { Puppet::Util::Storage.load }.to_not raise_error
@@ -140,17 +150,18 @@ describe Puppet::Util::Storage do
       end
 
       it "should raise an error if the state file does not contain valid YAML and cannot be renamed" do
-        @state_file.write(:booness)
+        @state_file.write('{ invalid')
         @state_file.flush
-        YAML.expects(:load).raises(Puppet::Error)
+
         File.expects(:rename).raises(SystemCallError)
 
         expect { Puppet::Util::Storage.load }.to raise_error
       end
 
       it "should attempt to rename the state file if the file is corrupted" do
-        # We fake corruption by causing YAML.load to raise an exception
-        YAML.expects(:load).raises(Puppet::Error)
+        @state_file.write('{ invalid')
+        @state_file.flush
+
         File.expects(:rename).at_least_once
 
         expect { Puppet::Util::Storage.load }.to_not raise_error
