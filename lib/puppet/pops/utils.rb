@@ -35,7 +35,7 @@ module Puppet::Pops::Utils
           radix = 10
           if match[1].to_s.length > 0
             radix = 16
-          elsif match[2].to_s.length > 0 && match[2][0] == '0'
+          elsif match[2].to_s.length > 1 && match[2][0] == '0'
             radix = 8
           end
           [Integer(match[0], radix), radix]

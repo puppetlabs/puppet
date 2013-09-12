@@ -17,6 +17,20 @@ describe Puppet::Pops::Model::AstTransformer do
       ast.value.should == "10"
     end
 
+    it "converts a 0 to a decimal 0" do
+      ast = transform(QNAME_OR_NUMBER("0"))
+
+      ast.should be_kind_of(Puppet::Parser::AST::Name)
+      ast.value.should == "0"
+    end
+
+    it "converts a 00 to an octal 00" do
+      ast = transform(QNAME_OR_NUMBER("0"))
+
+      ast.should be_kind_of(Puppet::Parser::AST::Name)
+      ast.value.should == "0"
+    end
+
     it "converts an octal number to a string Name" do
       ast = transform(QNAME_OR_NUMBER("020"))
 
