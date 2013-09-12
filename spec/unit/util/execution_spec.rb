@@ -591,6 +591,20 @@ describe Puppet::Util::Execution do
       Puppet::Util::Execution.execpipe('echo hello').should == 'hello'
     end
 
+    it "should print meaningful debug message for string argument" do
+      Puppet::Util::Execution.expects(:debug).with("Executing 'echo hello'")
+      Puppet::Util::Execution.expects(:open).with('| echo hello 2>&1').returns('hello')
+      $CHILD_STATUS.expects(:==).with(0).returns(true)
+      Puppet::Util::Execution.execpipe('echo hello')
+    end
+
+    it "should print meaningful debug message for array argument" do
+      Puppet::Util::Execution.expects(:debug).with("Executing 'echo hello'")
+      Puppet::Util::Execution.expects(:open).with('| echo hello 2>&1').returns('hello')
+      $CHILD_STATUS.expects(:==).with(0).returns(true)
+      Puppet::Util::Execution.execpipe(['echo','hello'])
+    end
+
     it "should execute an array by pasting together with spaces" do
       Puppet::Util::Execution.expects(:open).with('| echo hello 2>&1').returns('hello')
       $CHILD_STATUS.expects(:==).with(0).returns(true)
