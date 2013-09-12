@@ -20,7 +20,7 @@ class Puppet::Pops::Validation::Checker3_1
   def initialize(diagnostics_producer)
     @@check_visitor       ||= Puppet::Pops::Visitor.new(nil, "check", 0, 0)
     @@rvalue_visitor      ||= Puppet::Pops::Visitor.new(nil, "rvalue", 0, 0)
-    @@hostname_visitor    ||= Puppet::Pops::Visitor.new(nil, "hostname", 1, 1)
+    @@hostname_visitor    ||= Puppet::Pops::Visitor.new(nil, "hostname", 1, 2)
     @@assignment_visitor  ||= Puppet::Pops::Visitor.new(nil, "assign", 0, 1)
     @@query_visitor       ||= Puppet::Pops::Visitor.new(nil, "query", 0, 0)
     @@top_visitor         ||= Puppet::Pops::Visitor.new(nil, "top", 1, 1)
@@ -45,8 +45,9 @@ class Puppet::Pops::Validation::Checker3_1
   end
 
   # Performs check if this is a vaid hostname expression
-  def hostname(o, semantic)
-    @@hostname_visitor.visit_this(self, o, semantic)
+  # @param single_feature_name [String, nil] the name of a single valued hostname feature of the value's container. e.g. 'parent'
+  def hostname(o, semantic, single_feature_name = nil)
+    @@hostname_visitor.visit_this(self, o, semantic, single_feature_name)
   end
 
   # Performs check if this is valid as a query
@@ -255,6 +256,7 @@ class Puppet::Pops::Validation::Checker3_1
   def check_NodeDefinition(o)
     # Check that hostnames are valid hostnames (or regular expressons)
     hostname(o.host_matches, o)
+    hostname(o.parent, o, 'parent') unless o.parent.nil?
     top(o.eContainer, o)
   end
 
@@ -385,11 +387,14 @@ class Puppet::Pops::Validation::Checker3_1
   #--- HOSTNAME CHECKS
 
   # Transforms Array of host matching expressions into a (Ruby) array of AST::HostName
-  def hostname_Array(o, semantic)
-    o.each {|x| hostname x, semantic }
+  def hostname_Array(o, semantic, single_feature_name)
+    if single_feature_name
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature=>single_feature_name, :container=>semantic})
+    end
+    o.each {|x| hostname(x, semantic, false) }
   end
 
-  def hostname_String(o, semantic)
+  def hostname_String(o, semantic, single_feature_name)
     # The 3.x checker only checks for illegal characters - if matching /[^-\w.]/ the name is invalid,
     # but this allows pathological names like "a..b......c", "----"
     # TODO: Investigate if more illegal hostnames should be flagged.
@@ -399,11 +404,11 @@ class Puppet::Pops::Validation::Checker3_1
     end
   end
 
-  def hostname_LiteralValue(o, semantic)
-    hostname_String(o.value.to_s, o)
+  def hostname_LiteralValue(o, semantic, single_feature_name)
+    hostname_String(o.value.to_s, o, single_feature_name)
   end
 
-  def hostname_ConcatenatedString(o, semantic)
+  def hostname_ConcatenatedString(o, semantic, single_feature_name)
     # Puppet 3.1. only accepts a concatenated string without interpolated expressions
     if the_expr = o.segments.index {|s| s.is_a?(Model::TextExpression) }
       acceptor.accept(Issues::ILLEGAL_HOSTNAME_INTERPOLATION, o.segments[the_expr].expr)
@@ -413,32 +418,32 @@ class Puppet::Pops::Validation::Checker3_1
     else
       # corner case, may be ok, but lexer may have replaced with plain string, this is
       # here if it does not
-      hostname_String(o.segments[0], o.segments[0])
+      hostname_String(o.segments[0], o.segments[0], false)
     end
   end
 
-  def hostname_QualifiedName(o, semantic)
-    hostname_String(o.value.to_s, o)
+  def hostname_QualifiedName(o, semantic, single_feature_name)
+    hostname_String(o.value.to_s, o, single_feature_name)
   end
 
-  def hostname_QualifiedReference(o, semantic)
-    hostname_String(o.value.to_s, o)
+  def hostname_QualifiedReference(o, semantic, single_feature_name)
+    hostname_String(o.value.to_s, o, single_feature_name)
   end
 
-  def hostname_LiteralNumber(o, semantic)
+  def hostname_LiteralNumber(o, semantic, single_feature_name)
     # always ok
   end
 
-  def hostname_LiteralDefault(o, semantic)
+  def hostname_LiteralDefault(o, semantic, single_feature_name)
     # always ok
   end
 
-  def hostname_LiteralRegularExpression(o, semantic)
+  def hostname_LiteralRegularExpression(o, semantic, single_feature_name)
     # always ok
   end
 
-  def hostname_Object(o, semantic)
-    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature=>'hostname', :container=>semantic})
+  def hostname_Object(o, semantic, single_feature_name)
+    acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, {:feature=> single_feature_name || 'hostname', :container=>semantic})
   end
 
   #---QUERY CHECKS
