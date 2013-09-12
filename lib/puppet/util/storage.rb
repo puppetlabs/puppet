@@ -1,6 +1,7 @@
 require 'yaml'
 require 'sync'
 require 'singleton'
+require 'puppet/util/yaml'
 
 # a class for storing state
 class Puppet::Util::Storage
@@ -59,8 +60,8 @@ class Puppet::Util::Storage
     end
     Puppet::Util.benchmark(:debug, "Loaded state") do
       begin
-        @@state = YAML.load_file(filename)
-      rescue *YamlLoadExceptions => detail
+        @@state = Puppet::Util::Yaml.load_file(filename)
+      rescue Puppet::Util::Yaml::YamlLoadError => detail
         Puppet.err "Checksumfile #{filename} is corrupt (#{detail}); replacing"
 
         begin
@@ -87,9 +88,7 @@ class Puppet::Util::Storage
     Puppet.info "Creating state file #{Puppet[:statefile]}" unless FileTest.exist?(Puppet[:statefile])
 
     Puppet::Util.benchmark(:debug, "Stored state") do
-      Puppet::Util.replace_file(Puppet[:statefile], 0660) do |fh|
-        YAML.dump(@@state, fh)
-      end
+      Puppet::Util::Yaml.dump(@@state, Puppet[:statefile])
     end
   end
 end
