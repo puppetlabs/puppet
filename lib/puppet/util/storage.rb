@@ -37,12 +37,10 @@ class Puppet::Util::Storage
 
   def self.clear
     @@state.clear
-    Storage.init
   end
 
   def self.init
     @@state = {}
-    @@splitchar = "\t"
   end
 
   self.init
@@ -52,7 +50,7 @@ class Puppet::Util::Storage
     filename = Puppet[:statefile]
 
     unless File.exists?(filename)
-      self.init unless !@@state.nil?
+      self.init if @@state.nil?
       return
     end
     unless File.file?(filename)
@@ -90,7 +88,7 @@ class Puppet::Util::Storage
 
     Puppet::Util.benchmark(:debug, "Stored state") do
       Puppet::Util.replace_file(Puppet[:statefile], 0660) do |fh|
-        fh.print YAML.dump(@@state)
+        YAML.dump(@@state, fh)
       end
     end
   end
