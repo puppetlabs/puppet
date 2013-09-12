@@ -101,7 +101,7 @@ describe Puppet::Util::Storage do
         Puppet::Util::Storage.state.should == {:yayness=>{}}
 
         Puppet[:statefile] = @path
-        expect { Puppet::Util::Storage.load }.to_not raise_error
+        Puppet::Util::Storage.load
 
         Puppet::Util::Storage.state.should == {:yayness=>{}}
       end
@@ -119,7 +119,8 @@ describe Puppet::Util::Storage do
         Puppet::Util::Storage.cache(:yayness)
         Puppet::Util::Storage.state.should == {:yayness=>{}}
 
-        expect { Puppet::Util::Storage.load }.to_not raise_error
+        Puppet::Util::Storage.load
+
         Puppet::Util::Storage.state.should == {}
       end
 
@@ -128,7 +129,8 @@ describe Puppet::Util::Storage do
         @state_file.write(test_yaml.to_yaml)
         @state_file.flush
 
-        expect { Puppet::Util::Storage.load }.to_not raise_error
+        Puppet::Util::Storage.load
+
         Puppet::Util::Storage.state.should == test_yaml
       end
 
@@ -145,7 +147,8 @@ describe Puppet::Util::Storage do
         @state_file.write("not_a_hash")
         @state_file.flush
 
-        expect { Puppet::Util::Storage.load }.to_not raise_error
+        Puppet::Util::Storage.load
+
         Puppet::Util::Storage.state.should == {}
       end
 
@@ -155,7 +158,7 @@ describe Puppet::Util::Storage do
 
         File.expects(:rename).raises(SystemCallError)
 
-        expect { Puppet::Util::Storage.load }.to raise_error
+        expect { Puppet::Util::Storage.load }.to raise_error(Puppet::Error, /Could not rename/)
       end
 
       it "should attempt to rename the state file if the file is corrupted" do
@@ -164,14 +167,14 @@ describe Puppet::Util::Storage do
 
         File.expects(:rename).at_least_once
 
-        expect { Puppet::Util::Storage.load }.to_not raise_error
+        Puppet::Util::Storage.load
       end
 
       it "should fail gracefully on load() if the state file is not a regular file" do
         @state_file.close!()
         Dir.mkdir(Puppet[:statefile])
 
-        expect { Puppet::Util::Storage.load }.to_not raise_error
+        Puppet::Util::Storage.load
 
         Dir.rmdir(Puppet[:statefile])
       end
@@ -194,7 +197,8 @@ describe Puppet::Util::Storage do
       FileTest.exists?(Puppet[:statefile]).should be_false
       Puppet::Util::Storage.cache(:yayness)
 
-      expect { Puppet::Util::Storage.store }.to_not raise_error
+      Puppet::Util::Storage.store
+
       FileTest.exists?(Puppet[:statefile]).should be_true
     end
 
@@ -209,12 +213,15 @@ describe Puppet::Util::Storage do
 
     it "should load() the same information that it store()s" do
       Puppet::Util::Storage.cache(:yayness)
-
       Puppet::Util::Storage.state.should == {:yayness=>{}}
-      expect { Puppet::Util::Storage.store }.to_not raise_error
+
+      Puppet::Util::Storage.store
       Puppet::Util::Storage.clear
+
       Puppet::Util::Storage.state.should == {}
-      expect { Puppet::Util::Storage.load }.to_not raise_error
+
+      Puppet::Util::Storage.load
+
       Puppet::Util::Storage.state.should == {:yayness=>{}}
     end
   end
