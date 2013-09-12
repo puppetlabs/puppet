@@ -2,32 +2,120 @@ require 'rake/clean'
 require 'pp'
 
 REPO_CONFIGS_DIR = "repo-configs"
-CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'preserved_config.yaml')
+CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb', 'preserved_config.yaml')
 
-namespace :ci do
-  def test(option_hash = {})
-    passed_options = option_hash[:options] || ''
-    ENV['TESTING_MODE'] = 'jenkins'
-    options = (ENV['OPTIONS'] || '') + " --xml "
-    options << passed_options
-    tests = ENV['TEST'] || option_hash[:test] || '../../tests'
-    begin
-      sh "beaker -o config/options.rb #{options} -t #{tests}"
-    rescue RuntimeError => e
-      puts "Beaker Failed: #{e}"
+module HarnessOptions
+
+  DEFAULTS = {
+    :type => 'git',
+    :helper => ['../../lib/helper.rb'],
+    :tests  => ['../../tests'],
+    :debug => true,
+    :root_keys => true,
+    :keyfile => "id_rsa-acceptance",
+  }
+
+  class Aggregator
+    attr_reader :mode
+
+    def initialize(mode)
+      @mode = mode
+    end
+
+    def get_options(file_path)
+      puts file_path
+      if File.exists? file_path
+        options = eval(File.read(file_path), binding)
+      else
+        puts "No options file found at #{File.expand_path(file_path)}"
+      end
+      options || {}
+    end
+
+    def get_mode_options
+      get_options("./config/#{mode}/options.rb")
+    end
+
+    def get_local_options
+      get_options("./local_options.rb")
+    end
+
+    def final_options(intermediary_options = {})
+      mode_options = get_mode_options
+      local_overrides = get_local_options
+      final_options = DEFAULTS.merge(mode_options)
+      final_options.merge!(intermediary_options)
+      final_options.merge(local_overrides)
     end
   end
 
-  task :_test do
-    test
+  def self.options(mode, options)
+
+    final_options = Aggregator.new(mode).final_options(options)
+    final_options
   end
+end
+
+def beaker_test(mode = :packages, options = {})
+  continue_on_error = options.delete(:__continue_on_error)
+
+  final_options = HarnessOptions.options(mode, options)
+  options_file = 'merged_options.rb'
+  File.open(options_file, 'w') do |merged|
+    merged.puts <<-EOS
+# Copy this file to local_options.rb and adjust as needed if you wish to run
+# with some local overrides.
+EOS
+    merged.puts(final_options.pretty_inspect)
+  end
+
+  overriding_options = (ENV['OPTIONS'])
+
+  tests = ENV['TEST']
+  tests = "--tests #{tests}" if tests
+
+  config = ENV['CONFIG']
+  config = "--config #{config}" if config
+
+  begin
+    sh "beaker -o #{options_file} #{config} #{tests} #{overriding_options}"
+  rescue RuntimeError => e
+    raise e if !continue_on_error
+    puts "Beaker Failed: #{e}"
+  end
+end
+
+namespace :ci do
 
   task :_test_and_preserve do
-    test(:options => '--preserve-hosts')
+    beaker_test(:package, :preserve_hosts => true, :__continue_on_error => true)
   end
 
-  desc "Run the acceptance tests through the Jenkins CI system.  (Requires commit SHA to be put under test as environment variable: SHA='<sha>')"
-  task :test => 'ci:_test'
+  namespace :test do
+
+    USAGE = <<-EOS
+Also must set CONFIG=config/nodes/foo.yaml or path to some other Beaker configuration.
+You may set TESTS=path/to/test,and/more/tests.
+You may set additional Beakre OPTIONS='--more --options'
+EOS
+
+    desc <<-EOS
+Run the acceptance tests through Beaker and install packages on the configuration targets.
+Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
+#{USAGE}
+EOS
+    task :packages do
+      beaker_test
+    end
+
+    desc <<-EOS
+Run the acceptance tests through Beaker and install from git on the configuration targets.
+#{USAGE}
+EOS
+    task :git do
+      beaker_test(:git)
+    end
+  end
 
   desc "Capture the master and agent hostname from the latest log and construct a preserved_config.yaml for re-running against preserved hosts without provisioning."
   task :extract_preserved_config do
@@ -68,7 +156,12 @@ HOSTS:
 
   desc "Rerun an acceptance test using the last captured preserved_config.yaml to skip provisioning. Uses the setup/rsync/pre-suite to rsync the local puppet source onto master and agent."
   task :test_against_preserved_hosts do
-    test(:options => '--config=preserved_config.yaml --no-provision --preserve-hosts --pre-suite=setup/rsync/pre-suite')
+    beaker_test(
+      :config => 'preserved_config.yaml',
+      :no_provision => true,
+      :preserve_hosts => true,
+      :pre_suite => 'setup/rsync/pre-suite'
+    )
   end
 end
 
@@ -89,8 +182,14 @@ namespace :standalone do
 
   desc "Bring up vagrant boxes and run the tests through the puppet-acceptance beaker harness.  Specify TEST='../../tests/foo' to customize which tests are to be run, and/or OPTIONS='bar' to pass options to beaker."
   task :test => [:up, :ensure_good_private_key] do
-    ENV['TESTING_MODE'] = 'local'
-    sh "beaker -o config/options.rb #{ENV['OPTIONS'] || ''} -t #{ENV['TEST'] || '../../tests'}"
+    beaker_test(:git,
+      :keyfile => 'acceptance.priv',
+      :install => [
+        'git://github.com/puppetlabs/facter.git#stable',
+        'git://github.com/puppetlabs/hiera.git#stable',
+        'file:///vagrant-puppet',
+      ]
+    )
   end
 end
 
