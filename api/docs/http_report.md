@@ -19,12 +19,12 @@ Endpoint
 --------
 The http(s) endpoint for sending reports to the master is:
 
-    POST /:environment/report/:nodename
+    PUT /:environment/report/:nodename
     
 
 ### Supported HTTP Methods
 
-    POST
+    PUT
 
 ### Supported Format(s)
 
@@ -56,14 +56,14 @@ This pson-serialization is compliant with the endpoint's report jsonschema.
 
 The report schema (`api/schemas/report.json`) is expressed using json-schema draft 4, ["http://json-schema.org/draft-04/schema#"](http://json-schema.org/draft-04/schema#).
 
-The body of the POST to the report endpoint should be compliant with this schema.
+The body of the PUT to the report endpoint should be compliant with this schema.
 
 Example
 -------
-Here is an example of a POST request. (Note that the content-length is not correct as the
+Here is an example of a PUT request. (Note that the content-length is not correct as the
 example is formatted for readability)
 
-    POST /production/report/kermit.com HTTP/1.0
+    PUT /production/report/kermit.com HTTP/1.0
     ContentType: text/pson
     Content-Length: 1428
     

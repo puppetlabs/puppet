@@ -9,7 +9,7 @@ if not Puppet.features.microsoft_windows?
   require 'json'
   require 'json-schema'
 
-  REPORT_SCHEMA_URI = File.absolute_path(File.join(File.dirname(__FILE__),    '../../../api/schemas/report.json'))
+  REPORT_SCHEMA_URI = File.join(File.dirname(__FILE__),    '../../../api/schemas/report.json')
   REPORT_SCHEMA = JSON.parse(File.read(REPORT_SCHEMA_URI))
   JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/json-meta-schema.json')))
 
@@ -409,7 +409,7 @@ describe Puppet::Transaction::Report do
     JSON::Validator.validate!(REPORT_SCHEMA, report)
   end
 
-  it "generates pson which validates against the report schema" do
+  it "generates pson which validates against the report schema", :unless => Puppet.features.microsoft_windows? do
     Puppet[:report_serialization_format] = "pson"
     report = generate_report
     validate_as_json(report.render)
