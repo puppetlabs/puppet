@@ -39,6 +39,22 @@ describe Puppet::Indirector::Exec do
     @searcher.find(@request)
   end
 
+  it "should execute the command with the object name and environment as the only arguments" do
+    @searcher.expects(:execute).with([path, 'foo', 'bar'], arguments)
+    GoodEnv = Struct.new(:name)
+    env = GoodEnv.new('bar')
+    request = stub 'request', :key => "foo", :environment => env
+    @searcher.find(request)
+  end
+
+  it "should execute the command with the object name and a malformed environment" do
+    @searcher.expects(:execute).with([path, 'foo'], arguments)
+    BadEnv = Struct.new(:title)
+    env = BadEnv.new('bar')
+    request = stub 'request', :key => "foo", :environment => env
+    @searcher.find(request)
+  end
+
   it "should return the output of the script" do
     @searcher.expects(:execute).with([path, 'foo'], arguments).returns("whatever")
     @searcher.find(@request).should == "whatever"
