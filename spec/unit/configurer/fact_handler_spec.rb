@@ -9,11 +9,11 @@ if not Puppet.features.microsoft_windows?
   require 'json-schema'
 
   JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/json-meta-schema.json')))
-  CATALOG_FACTS_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/catalog_facts.json')))
+  FACTS_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/facts.json')))
 
   describe "catalog facts schema" do
     it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, CATALOG_FACTS_SCHEMA)
+      JSON::Validator.validate!(JSON_META_SCHEMA, FACTS_SCHEMA)
     end
   end
 
@@ -92,7 +92,7 @@ describe Puppet::Configurer::FactHandler do
   end
 
   def validate_as_json(catalog_facts)
-    JSON::Validator.validate!(CATALOG_FACTS_SCHEMA, catalog_facts)
+    JSON::Validator.validate!(FACTS_SCHEMA, catalog_facts)
   end
 
   it "should generate valid facts data against the facts schema", :unless => Puppet.features.microsoft_windows? do
