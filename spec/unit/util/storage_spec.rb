@@ -89,9 +89,9 @@ describe Puppet::Util::Storage do
       it "should not fail to load()" do
         FileTest.exists?(@path).should be_false
         Puppet[:statedir] = @path
-        proc { Puppet::Util::Storage.load }.should_not raise_error
+        expect { Puppet::Util::Storage.load }.to_not raise_error
         Puppet[:statefile] = @path
-        proc { Puppet::Util::Storage.load }.should_not raise_error
+        expect { Puppet::Util::Storage.load }.to_not raise_error
       end
 
       it "should not lose its internal state when load() is called" do
@@ -101,7 +101,7 @@ describe Puppet::Util::Storage do
         Puppet::Util::Storage.state.should == {:yayness=>{}}
 
         Puppet[:statefile] = @path
-        proc { Puppet::Util::Storage.load }.should_not raise_error
+        expect { Puppet::Util::Storage.load }.to_not raise_error
 
         Puppet::Util::Storage.state.should == {:yayness=>{}}
       end
@@ -119,7 +119,7 @@ describe Puppet::Util::Storage do
         Puppet::Util::Storage.cache(:yayness)
         Puppet::Util::Storage.state.should == {:yayness=>{}}
 
-        proc { Puppet::Util::Storage.load }.should_not raise_error
+        expect { Puppet::Util::Storage.load }.to_not raise_error
         Puppet::Util::Storage.state.should == {}
       end
 
@@ -127,7 +127,7 @@ describe Puppet::Util::Storage do
         test_yaml = {'File["/yayness"]'=>{"name"=>{:a=>:b,:c=>:d}}}
         YAML.expects(:load).returns(test_yaml)
 
-        proc { Puppet::Util::Storage.load }.should_not raise_error
+        expect { Puppet::Util::Storage.load }.to_not raise_error
         Puppet::Util::Storage.state.should == test_yaml
       end
 
@@ -135,7 +135,7 @@ describe Puppet::Util::Storage do
         @state_file.write(:booness)
         @state_file.flush
 
-        proc { Puppet::Util::Storage.load }.should_not raise_error
+        expect { Puppet::Util::Storage.load }.to_not raise_error
         Puppet::Util::Storage.state.should == {}
       end
 
@@ -145,7 +145,7 @@ describe Puppet::Util::Storage do
         YAML.expects(:load).raises(Puppet::Error)
         File.expects(:rename).raises(SystemCallError)
 
-        proc { Puppet::Util::Storage.load }.should raise_error
+        expect { Puppet::Util::Storage.load }.to raise_error
       end
 
       it "should attempt to rename the state file if the file is corrupted" do
@@ -153,14 +153,14 @@ describe Puppet::Util::Storage do
         YAML.expects(:load).raises(Puppet::Error)
         File.expects(:rename).at_least_once
 
-        proc { Puppet::Util::Storage.load }.should_not raise_error
+        expect { Puppet::Util::Storage.load }.to_not raise_error
       end
 
       it "should fail gracefully on load() if the state file is not a regular file" do
         @state_file.close!()
         Dir.mkdir(Puppet[:statefile])
 
-        proc { Puppet::Util::Storage.load }.should_not raise_error
+        expect { Puppet::Util::Storage.load }.to_not raise_error
 
         Dir.rmdir(Puppet[:statefile])
       end
@@ -183,7 +183,7 @@ describe Puppet::Util::Storage do
       FileTest.exists?(Puppet[:statefile]).should be_false
       Puppet::Util::Storage.cache(:yayness)
 
-      proc { Puppet::Util::Storage.store }.should_not raise_error
+      expect { Puppet::Util::Storage.store }.to_not raise_error
       FileTest.exists?(Puppet[:statefile]).should be_true
     end
 
@@ -191,7 +191,7 @@ describe Puppet::Util::Storage do
       Dir.mkdir(Puppet[:statefile])
       Puppet::Util::Storage.cache(:yayness)
 
-      proc { Puppet::Util::Storage.store }.should raise_error
+      expect { Puppet::Util::Storage.store }.to raise_error
 
       Dir.rmdir(Puppet[:statefile])
     end
@@ -200,10 +200,10 @@ describe Puppet::Util::Storage do
       Puppet::Util::Storage.cache(:yayness)
 
       Puppet::Util::Storage.state.should == {:yayness=>{}}
-      proc { Puppet::Util::Storage.store }.should_not raise_error
+      expect { Puppet::Util::Storage.store }.to_not raise_error
       Puppet::Util::Storage.clear
       Puppet::Util::Storage.state.should == {}
-      proc { Puppet::Util::Storage.load }.should_not raise_error
+      expect { Puppet::Util::Storage.load }.to_not raise_error
       Puppet::Util::Storage.state.should == {:yayness=>{}}
     end
   end
