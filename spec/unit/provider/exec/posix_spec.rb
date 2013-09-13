@@ -115,6 +115,11 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end
 
+    it "should set umask before execution if umask parameter is in use" do
+      provider.resource[:umask] = '0027'
+      Puppet::Util.expects(:withumask).with(0027)
+      provider.run(provider.resource[:command])
+    end
 
     describe "posix locale settings", :unless => Puppet.features.microsoft_windows? do
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
