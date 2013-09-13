@@ -316,7 +316,11 @@ class Puppet::Transaction::Report
   end
 
   def self.supported_formats
-    [Puppet[:report_serialization_format].intern]
+    [:pson, :yaml]
+  end
+
+  def self.default_format
+    Puppet[:report_serialization_format].intern
   end
 
   private
