@@ -397,7 +397,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     end
 
     matched = pattern.match(left) # nil, or MatchData
-    set_match_data(matched, o, scope) # creates or clears ephemeral
+    set_match_data(matched, o, scope) # creates ephemeral
 
     # convert match result to Boolean true, or false
     o.operator == :'=~' ? !!matched : !matched
@@ -456,23 +456,28 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # If an option matches, the result of evaluating that option is returned.
   # @return [Object, nil] what a matched option returns, or nil if nothing matched.
   #
-  def eval_CaseExpression o, scope
-    test = evaluate(o.test, scope)
-    result = nil
-    the_default = nil
-    if o.options.find do |co|
-      # the first case option that matches
-      if co.values.find do |c|
-        the_default = co.then_expr if c.is_a? Puppet::Pops::Model::LiteralDefault
-        is_match?(test, evaluate(c, scope), scope)
+  def eval_CaseExpression(o, scope)
+    # memo scope level before evaluating test - don't want a match in the case test to leak $n match vars
+    # to expressions after the case expression.
+    #
+    with_guarded_scope(scope) do
+      test = evaluate(o.test, scope)
+      result = nil
+      the_default = nil
+      if o.options.find do |co|
+        # the first case option that matches
+        if co.values.find do |c|
+          the_default = co.then_expr if c.is_a? Puppet::Pops::Model::LiteralDefault
+          is_match?(test, evaluate(c, scope), c, scope)
+        end
+        result = evaluate(co.then_expr, scope)
+        true # the option was picked
+        end
       end
-      result = evaluate(co.then_expr, scope)
-      true # the option was picked
+        result # an option was picked, and produced a result
+      else
+        evaluate(the_default, scope) # evaluate the default (should be a nop/nil) if there is no default).
       end
-    end
-      result # an option was picked, and produced a result
-    else
-      evaluate(the_default, scope) # evaluate the default (should be a nop/nil) if there is no default).
     end
   end
 
@@ -532,34 +537,43 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   #   $x ? { 10 => true, 20 => false, default => 0 }
   #
   def eval_SelectorExpression o, scope
-    test = evaluate(o.left_expr, scope)
-    selected = o.selectors.find {|s|
-      evaluate(s.matching_expr, scope) {|candidate|
-        candidate == :default || is_match?(test, candidate, scope)
+    # memo scope level before evaluating test - don't want a match in the case test to leak $n match vars
+    # to expressions after the selector expression.
+    #
+    with_guarded_scope(scope) do
+      test = evaluate(o.left_expr, scope)
+      selected = o.selectors.find {|s|
+        evaluate(s.matching_expr, scope) {|candidate|
+          candidate == :default || is_match?(test, candidate, s.matching_expr, scope)
+        }
       }
-    }
-    if selected
-      evaluate(selected.value_expr, scope)
-    else
-      nil
+      if selected
+        evaluate(selected.value_expr, scope)
+      else
+        nil
+      end
     end
   end
 
   # Evaluates Puppet DSL `if`
   def eval_IfExpression o, scope
-    if is_true?(evaluate(o.test, scope))
-      evaluate(o.then_expr, scope)
-    else
-      evaluate(o.else_expr, scope)
+    with_guarded_scope(scope) do
+      if is_true?(evaluate(o.test, scope))
+        evaluate(o.then_expr, scope)
+      else
+        evaluate(o.else_expr, scope)
+      end
     end
   end
 
   # Evaluates Puppet DSL `unless`
   def eval_UnlessExpression o, scope
-    unless is_true?(evaluate(o.test, scope))
-      evaluate(o.then_expr, scope)
-    else
-      evaluate(o.else_expr, scope)
+    with_guarded_scope(scope) do
+      unless is_true?(evaluate(o.test, scope))
+        evaluate(o.then_expr, scope)
+      else
+        evaluate(o.else_expr, scope)
+      end
     end
   end
 
@@ -813,16 +827,25 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # of value except regular expression where a match is performed.
   # @todo there are implementation issues left to deal with (see source)
   #
-  def is_match? left, right, scope
+  def is_match? left, right, o, scope
     # TODO: deal with TypeError
     # TODO: match when left is a Number, or something strange
     # TODO: solution should be used in MatchExpression
     if right.is_a?(Regexp)
       matched = right.match(left)
-      scope.set_match_data(matched)
-      !!matched
+      set_match_data(matched, o, scope) # creates or clears ephemeral
+      !!matched # convert to boolean
     else
       left == right
+    end
+  end
+
+  def with_guarded_scope(scope)
+    scope_memo = get_scope_nesting_level(scope)
+    begin
+      yield
+    ensure
+      set_scope_nesting_level(scope, scope_memo)
     end
   end
 
