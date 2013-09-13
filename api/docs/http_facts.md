@@ -25,8 +25,8 @@ None
 
 ### Example Response
 
-Note: list of facts was shortened for readability.
-Note: pson was formatted for readability.
+* Note: list of facts was shortened for readability.
+* Note: pson was formatted for readability.
 
 #### Facts found
 
@@ -72,8 +72,8 @@ None
 
 ### Example Response
 
-Note: list of facts was shortened for readability.
-Note: pson was formatted for readability.
+* Note: list of facts was shortened for readability.
+* Note: pson was formatted for readability.
 
 #### Facts found
 
@@ -141,5 +141,4 @@ Schema
 ------
 
 The representation of facts, whether returned from a GET or contained in a PUT body, should adhere to the
-api/schemas/facts.json schema. The representation of a node list returned from fact_search should adhere to
-the api/schemas/nodelist.json schema.
+api/schemas/facts.json schema.

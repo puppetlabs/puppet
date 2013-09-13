@@ -174,7 +174,6 @@ describe Puppet::Node::Facts, "when indirecting" do
         validate_as_json(facts.to_pson)
       end
 
-
       it "should not include nil values" do
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         pson = PSON.parse(facts.to_pson)
