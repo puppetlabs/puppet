@@ -49,7 +49,31 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
         expect { evaluate_l(block(fqn('a').set(10), fqn('a').set(20))) }.to raise_error(/Cannot reassign variable a/)
       end
 
+      context "-= operations" do
+        # Also see collections_ops_spec.rb where delete via - is fully tested, here only the
+        # the -= operation itself is tested (there are many combinations)
+        #
+        it 'deleting from non existing value produces nil, nil -= ?' do
+          top_scope_block = fqn('b').set([1,2,3])
+          local_scope_block = fqn('a').minus_set([4])
+          evaluate_l(top_scope_block, local_scope_block).should == nil
+        end
+
+        it 'deletes from a list' do
+          top_scope_block = fqn('a').set([1,2,3])
+          local_scope_block = block(fqn('a').minus_set([2]), fqn('a').var())
+          evaluate_l(top_scope_block, local_scope_block).should == [1,3]
+        end
+
+        it 'deletes from a hash' do
+          top_scope_block = fqn('a').set({'a'=>1,'b'=>2,'c'=>3})
+          local_scope_block = block(fqn('a').minus_set('b'), fqn('a').var())
+          evaluate_l(top_scope_block, local_scope_block).should == {'a'=>1,'c'=>3}
+        end
+      end
+
       context "+= operations" do
+        # Also see collections_ops_spec.rb where concatenation via + is fully tested
         it "appending to non existing value, nil += []" do
           top_scope_block = fqn('b').set([1,2,3])
           local_scope_block = fqn('a').plus_set([4])

@@ -219,7 +219,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     name, value = eval_BinaryExpression(o, scope)
 
     case o.operator
-    when :'=' # normal assignment
+    when :'=' # regular assignment
       assign(name, value, o, scope)
 
     when :'+='
@@ -235,20 +235,18 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
         fail("Append assignment += failed with error: #{e.message}", o, scope)
       end
 
-    # TODO: Add concrete syntax for this in lexer and parser
-    #
     when :'-='
       # If an attempt is made to delete values from something that does not exists, the value is :undef (it is guaranteed to not
       # include any values the user wants deleted anyway :-)
       #
-      if !variable_exists?(scope, name)
+      if !variable_exists?(name, scope)
         return nil
       end
       begin
         # Delegate to delete function to deal with check of LHS, and perform deletion
-        assign(name, delete(get_variable_value(scope, name), value), o, scope)
+        assign(name, delete(get_variable_value(name, o, scope), value), o, scope)
       rescue ArgumentError => e
-        fail("Without assignment -= failed with error: #{e.message}", o, scope)
+        fail("'Without' assignment -= failed with error: #{e.message}", o, scope)
       end
     else
       fail("Unknown assignment operator: '#{o.operator}'.", o, scope)

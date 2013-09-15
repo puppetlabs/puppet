@@ -179,6 +179,7 @@ describe Puppet::Pops::Parser::Lexer::TOKENS do
     :FARROW => '=>',
     :PARROW => '+>',
     :APPENDS => '+=',
+    :DELETES => '-=',
     :PLUS => '+',
     :MINUS => '-',
     :DIV => '/',

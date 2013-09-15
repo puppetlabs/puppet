@@ -179,6 +179,14 @@ describe "egrammar parsing basic expressions" do
       dump(parse("$a = 10")).should == "(= $a 10)"
     end
 
+    it "Should allow append assignment" do
+      dump(parse("$a += 10")).should == "(+= $a 10)"
+    end
+
+    it "Should allow without assignment" do
+      dump(parse("$a -= 10")).should == "(-= $a 10)"
+    end
+
     it "Should allow chained assignment" do
       dump(parse("$a = $b = 10")).should == "(= $a (= $b 10))"
     end
