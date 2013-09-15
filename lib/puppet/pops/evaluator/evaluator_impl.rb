@@ -780,7 +780,19 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     when Hash
       y = case y
       when Hash then y
-      when Array then Hash[*y]
+      when Array
+        # Hash[[a, 1, b, 2]] => {}
+        # Hash[a,1,b,2] => {a => 1, b => 2}
+        # Hash[[a,1], [b,2]] => {[a,1] => [b,2]}
+        # Hash[[[a,1], [b,2]]] => {a => 1, b => 2}
+        # Use type calcultor to determine if array is Array[Array[?]], and if so use second form
+        # of call
+        t = @@type_calculator.infer(y)
+        if t.element_type.is_a? Puppet::Pops::Types::PArrayType
+          Hash[y]
+        else
+          Hash[*y]
+        end
       else
         raise ArgumentError.new("Can only append Array or Hash to a Hash")
       end

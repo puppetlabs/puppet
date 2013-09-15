@@ -90,4 +90,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       evaluate(literal({:a => 1, :b => 2})[:b]).should == 2
     end
   end
+
+  context 'When the evaluator evaluates a Block' do
+    it 'an empty block evaluates to nil' do
+      evaluate(block()).should == nil
+    end
+
+    it 'a block evaluates to its last expression' do
+      evaluate(block(literal(1), literal(2))).should == 2
+    end
+  end
 end
