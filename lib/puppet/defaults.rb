@@ -1092,7 +1092,7 @@ EOT
 
       This should almost always be set to `pson`. It can be temporarily set to
       `yaml` to let agents using this Puppet version connect to a puppet master
-      running Puppet 3.0.0 through 3.2.4.",
+      running Puppet 3.0.0 through 3.2.1.",
       :hook => proc do |value|
         if value == "yaml"
           Puppet.deprecation_warning("Sending reports in 'yaml' is deprecated; use 'pson' instead.")
