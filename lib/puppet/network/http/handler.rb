@@ -217,6 +217,12 @@ module Puppet::Network::HTTP::Handler
     result[:ip]
   end
 
+  def set_response_header_version(response)
+    # How should we report the "protocol version"?
+    # Puppet.version has some charms, though it will bump when protocol doesn't.
+    response["X-Puppet-Protocol-Version"] = Puppet.version
+  end
+
   private
 
   def report_if_deprecated(format)
