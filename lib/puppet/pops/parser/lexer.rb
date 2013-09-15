@@ -154,6 +154,7 @@ class Puppet::Pops::Parser::Lexer
   ')'   => :RPAREN,
   '='   => :EQUALS,
   '+='  => :APPENDS,
+  '-='  => :DELETES,
   '=='  => :ISEQUAL,
   '>='  => :GREATEREQUAL,
   '>'   => :GREATERTHAN,

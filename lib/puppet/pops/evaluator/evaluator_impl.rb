@@ -97,7 +97,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @example In Puppet DSL
   #   $name = value
   # @param name [String] name of variable without $
-  # @param value [Object] value to assign to the varible
+  # @param value [Object] value to assign to the variable
   # @param o [Puppet::Pops::Model::PopsObject] originating instruction
   # @param scope [Object] the runtime specific scope where evaluation should take place
   # @return [value<Object>]
@@ -109,6 +109,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     end
     set_variable(name, value, o, scope)
     value
+  end
+
+  def assign_Number(n, value, o, scope)
+    fail("Cannot assign to the numeric (match result) variable: $#{name}", o.left_expr, scope)
   end
 
   # Assign values to named variables in an array.

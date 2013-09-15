@@ -142,6 +142,7 @@ class Puppet::Pops::Validation::Checker3_1
   end
 
   def check_AssignmentExpression(o)
+    acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator}) unless [:'=', :'+='].include? o.operator
     assign(o.left_expr)
     rvalue(o.right_expr)
   end

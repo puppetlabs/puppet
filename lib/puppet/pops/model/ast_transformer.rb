@@ -277,7 +277,13 @@ class Puppet::Pops::Model::AstTransformer
   # Assignment in AST 3.1 is to variable or hasharray accesses !!! See Bug #16116
   def transform_AssignmentExpression(o)
     args = {:value => transform(o.right_expr) }
-    args[:append] = true if o.operator == :'+='
+    case o.operator
+    when :'+='
+      args[:append] = true
+    when :'='
+    else
+      raise "The operator #{o.operator} is not supported by Puppet 3."
+    end
 
     args[:name] = case o.left_expr
     when Model::VariableExpression

@@ -182,6 +182,12 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to #{label.a_an(semantic)} via [index/key]. Not an assignable reference"
   end
 
+  # For unsupported operators (e.g. -= in puppet 3).
+  #
+  UNSUPPORTED_OPERATOR = hard_issue :UNSUPPORTED_OPERATOR, :operator do
+    "The operator #{operator} in #{label.a_an(semantic)} is not supported in this version of the puppet language."
+  end
+
   # Some expressions/statements may not produce a value (known as right-value, or rvalue).
   # This may vary between puppet versions.
   #

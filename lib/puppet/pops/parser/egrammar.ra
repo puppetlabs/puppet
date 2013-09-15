@@ -40,7 +40,7 @@ prechigh
   left  GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL
   left  AND
   left  OR
-  right APPENDS EQUALS
+  right APPENDS DELETES EQUALS
   left  LBRACE
   left  SELBRACE
   left  RBRACE
@@ -113,6 +113,7 @@ expression
   | expression OR           expression                 { result = val[0].or  val[2]       ; loc result, val[1] }
   | expression EQUALS       expression                 { result = val[0].set(val[2])      ; loc result, val[1] }
   | expression APPENDS      expression                 { result = val[0].plus_set(val[2]) ; loc result, val[1] }
+  | expression DELETES      expression                 { result = val[0].minus_set(val[2]); loc result, val[1] }
   | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
   |            LPAREN       expression RPAREN          { result = val[1].paren()          ; loc result, val[0] }
 

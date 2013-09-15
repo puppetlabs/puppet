@@ -398,6 +398,11 @@ class Puppet::Pops::Model::Factory
     f_build_binary_op(Model::AssignmentExpression, :'+=', current, r)
   end
 
+  # Assignment -=
+  def minus_set(r)
+    f_build_binary_op(Model::AssignmentExpression, :'-=', current, r)
+  end
+
   def attributes(*args)
     args.each {|a| current.addAttributes(build(a)) }
     self
