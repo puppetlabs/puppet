@@ -1,7 +1,10 @@
 require 'spec_helper'
 require 'hiera_puppet'
+require 'puppet_spec/scope'
 
 describe 'HieraPuppet' do
+  include PuppetSpec::Scope
+
   describe 'HieraPuppet#hiera_config' do
     let(:hiera_config_data) do
       { :backend => 'yaml' }
@@ -71,7 +74,7 @@ describe 'HieraPuppet' do
   end
 
   describe 'HieraPuppet#lookup' do
-    let :scope do Puppet::Parser::Scope.new_for_test_harness('foo') end
+    let :scope do create_test_scope_for_node('foo') end
 
     before :each do
       Puppet[:hiera_config] = PuppetSpec::Files.tmpfile('hiera_config')

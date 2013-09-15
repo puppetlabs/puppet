@@ -1,7 +1,10 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/scope'
 
 describe "the fqdn_rand function" do
+  include PuppetSpec::Scope
+  
   it "provides a random number strictly less than the given max" do
     fqdn_rand(3).should satisfy {|n| n.to_i < 3 }
   end
@@ -35,7 +38,7 @@ describe "the fqdn_rand function" do
     host = args[:host] || '127.0.0.1'
     extra = args[:extra_identifier] || []
 
-    scope = Puppet::Parser::Scope.new_for_test_harness('localhost')
+    scope = create_test_scope_for_node('localhost')
     scope.stubs(:[]).with("::fqdn").returns(host)
 
     scope.function_fqdn_rand([max] + extra)

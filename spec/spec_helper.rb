@@ -90,9 +90,22 @@ RSpec.configure do |config|
 
   config.before :all do
     Puppet::Test::TestHelper.before_all_tests()
+    if ENV['PROFILE'] == 'all'
+      require 'ruby-prof'
+      RubyProf.start
+    end
   end
 
   config.after :all do
+    if ENV['PROFILE'] == 'all'
+      require 'ruby-prof'
+      result = RubyProf.stop
+      printer = RubyProf::CallTreePrinter.new(result)
+      open(File.join(ENV['PROFILEOUT'],"callgrind.all.#{Time.now.to_i}.trace"), "w") do |f|
+        printer.print(f)
+      end
+    end
+
     Puppet::Test::TestHelper.after_all_tests()
   end
 
@@ -159,5 +172,26 @@ RSpec.configure do |config|
     # to old before removing it
     ENV['TMPDIR'] = oldtmpdir
     FileUtils.rm_rf(tmpdir) if Puppet::FileSystem::File.exist?(tmpdir) && tmpdir.to_s.start_with?(oldtmpdir)
+  end
+
+  if ENV['PROFILE']
+    require 'ruby-prof'
+
+    def profile
+      result = RubyProf.profile { yield }
+      name = example.metadata[:full_description].downcase.gsub(/[^a-z0-9_-]/, "-").gsub(/-+/, "-")
+      printer = RubyProf::CallTreePrinter.new(result)
+      open(File.join(ENV['PROFILEOUT'],"callgrind.#{name}.#{Time.now.to_i}.trace"), "w") do |f|
+        printer.print(f)
+      end
+    end
+
+    config.around(:each) do |example|
+      if ENV['PROFILE'] == 'each' or (example.metadata[:profile] and ENV['PROFILE'])
+        profile { example.run }
+      else
+        example.run
+      end
+    end
   end
 end
