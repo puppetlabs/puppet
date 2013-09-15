@@ -146,6 +146,20 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
             [var(0), var(1), var(2), var(3)])).should == [nil, nil, nil, nil]
         end
 
+        it "a failed match does not alter previous match" do
+          evaluate_l(block(
+            literal('abc') =~ literal(/(a)(b)(c)/),
+            literal('abc') =~ literal(/(x)(y)(z)/),
+            [var(0), var(1), var(2), var(3)])).should == ['abc', 'a', 'b', 'c']
+        end
+
+        it "a new match completely shadows previous match" do
+          evaluate_l(block(
+            literal('abc') =~ literal(/(a)(b)(c)/),
+            literal('abc') =~ literal(/(a)bc/),
+            [var(0), var(1), var(2), var(3)])).should == ['abc', 'a', nil, nil]
+        end
+
         it "after a match with variable referencing a non existing group" do
           evaluate_l(block(literal('abc') =~ literal(/(a)(b)(c)/),
             [var(0), var(1), var(2), var(3), var(4)])).should == ['abc', 'a', 'b', 'c', nil]
