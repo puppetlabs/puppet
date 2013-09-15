@@ -28,4 +28,8 @@ describe "validating 3x" do
     expect(validate(fqn('AAA').var())).to have_issue(Puppet::Pops::Issues::ILLEGAL_NAME)
   end
 
+  it 'should raise error for -= assignment' do
+    expect(validate(fqn('aaa').minus_set(2))).to have_issue(Puppet::Pops::Issues::UNSUPPORTED_OPERATOR)
+  end
+
 end
