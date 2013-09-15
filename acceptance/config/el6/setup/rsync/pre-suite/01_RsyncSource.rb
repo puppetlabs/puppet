@@ -2,10 +2,13 @@ test_name "Rsync Source" do
 
   hosts.each do |host|
     step "rsyncing local puppet source to #{host}" do
+      host.install_package('rsync') if !host.check_for_package('rsync')
       filter_opt = "--filter='merge #{ENV['RSYNC_FILTER_FILE']}'" if ENV['RSYNC_FILTER_FILE']
       destination_dir = case host['platform']
       when /debian|ubuntu/
         then '/usr/lib/ruby/vendor_ruby'
+      when /el|centos/
+        then '/usr/lib/ruby/site_ruby/1.8'
       else
         raise "We should actually do some #{host['platform']} platform specific rsyncing here..."
       end
