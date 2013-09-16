@@ -82,7 +82,7 @@ test_name "Puppet cert generate behavior (#6112)" do
     step "All: Clear ssl settings"
     hosts.each do |host|
       ssldir = on(host, puppet('agent --configprint ssldir')).stdout.chomp
-      on( host, host_command("rm -rf #{ssldir}") )
+      on( host, host_command("rm -rf '#{ssldir}'") )
     end
   end
 
@@ -174,33 +174,35 @@ test_name "Puppet cert generate behavior (#6112)" do
   # attempting to set the ssl/ca/serial file.  Fails inside
   # Puppet::Settings#readwritelock because we can't overwrite the lock file in
   # Windows.
-  confine :except, :platform => 'windows'
 
-  step "Case 3: A host with no ssl infrastructure makes a `puppet cert generate` call"
+  step "Case 3: A host with no ssl infrastructure makes a `puppet cert generate` call" do
+    confine_block :except, :platform => 'windows' do
 
-  clear_all_hosts_ssl
+      clear_all_hosts_ssl
 
-  step "puppet cert generate"
+      step "puppet cert generate"
 
-  hosts.each do |host|
-    generate_and_clean_cert(host, cn, false)
+      hosts.each do |host|
+        generate_and_clean_cert(host, cn, false)
 
-# Commenting this out until we can figure out whether this behavior is a bug or
-# not, and what the platform issues are.
-#
-# Need to figure out exactly why this fails, where it fails, and document or
-# fix.  Can reproduce a failure locally in Ubuntu, and the attempt fails
-# 'as expected' in Jenkins acceptance jobs on Lucid and Fedora, but succeeds
-# on RHEL and Centos...
-#
-# Redmine (#21739) captures this.
-#
-#    with_puppet_running_on(master, :master => { :certname => master, :autosign => true }) do
-#      step "but now unable to authenticate normally as an agent"
-#
-#      on(host, puppet('agent', '-t'), :acceptable_exit_codes => [1])
-#
-#    end
+    # Commenting this out until we can figure out whether this behavior is a bug or
+    # not, and what the platform issues are.
+    #
+    # Need to figure out exactly why this fails, where it fails, and document or
+    # fix.  Can reproduce a failure locally in Ubuntu, and the attempt fails
+    # 'as expected' in Jenkins acceptance jobs on Lucid and Fedora, but succeeds
+    # on RHEL and Centos...
+    #
+    # Redmine (#21739) captures this.
+    #
+    #    with_puppet_running_on(master, :master => { :certname => master, :autosign => true }) do
+    #      step "but now unable to authenticate normally as an agent"
+    #
+    #      on(host, puppet('agent', '-t'), :acceptable_exit_codes => [1])
+    #
+    #    end
+      end
+    end
   end
 
   ##########
