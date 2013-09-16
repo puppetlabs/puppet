@@ -92,8 +92,6 @@ describe Puppet::Pops::Adaptable::Adapter do
     a.value = 10
     b = Farm::FarmAdapter.get(d)
     b.value.should == 10
-    # Test implementation detail
-    d.instance_variables.include?(:@Farm_FarmAdapter).should == true
   end
 
   it "should be able to clear the adapter" do

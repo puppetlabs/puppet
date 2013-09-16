@@ -64,13 +64,15 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     return unless defined?(@modified) and ! @modified.empty?
 
     flushed = []
-    @modified.sort { |a,b| a.to_s <=> b.to_s }.uniq.each do |target|
-      Puppet.debug "Flushing #{@resource_type.name} provider target #{target}"
-      flush_target(target)
-      flushed << target
+    begin
+      @modified.sort { |a,b| a.to_s <=> b.to_s }.uniq.each do |target|
+        Puppet.debug "Flushing #{@resource_type.name} provider target #{target}"
+        flushed << target
+        flush_target(target)
+      end
+    ensure
+      @modified.reject! { |t| flushed.include?(t) }
     end
-
-    @modified.reject! { |t| flushed.include?(t) }
   end
 
   # Make sure our file is backed up, but only back it up once per transaction.
@@ -92,6 +94,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     records = target_records(target).reject { |r|
       r[:ensure] == :absent
     }
+
     target_object(target).write(to_file(records))
   end
 

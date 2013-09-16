@@ -230,13 +230,13 @@ describe Puppet::Network::HTTP::Handler do
     it "should set the format to text/plain when serializing an exception" do
       handler.expects(:set_content_type).with(response, "text/plain")
 
-      handler.do_exception(response, "A test", 404)
+      handler.do_exception(response, Exception.new("A test"), 404)
     end
 
     it "sends an exception string with the given status" do
       handler.expects(:set_response).with(response, "A test", 404)
 
-      handler.do_exception(response, "A test", 404)
+      handler.do_exception(response, Exception.new("A test"), 404)
     end
 
     it "sends an exception error with the exception's status" do
@@ -245,6 +245,16 @@ describe Puppet::Network::HTTP::Handler do
 
       error = Puppet::Network::HTTP::Handler::HTTPNotFoundError.new("Could not find test_model not_found")
       handler.expects(:set_response).with(response, error.to_s, error.status)
+
+      handler.process(request, response)
+    end
+
+    it "logs an HTTP response exception at info level (most are harmless)" do
+      data = Puppet::TestModel.new("not_found", "not found")
+      error = Puppet::Network::HTTP::Handler::HTTPNotFoundError.new("Could not find test_model not_found")
+
+      request = a_request_that_finds(data, :accept_header => "pson")
+      Puppet.expects(:info).with(error.message)
 
       handler.process(request, response)
     end
