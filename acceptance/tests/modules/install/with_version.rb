@@ -19,7 +19,12 @@ agents.each do |agent|
   distmoduledir = on(agent, puppet("agent", "--configprint", "confdir")).stdout.chomp + "/modules"
 
   step "  install module '#{module_author}-#{module_name}'"
-  on(agent, puppet("module install --version \"<#{module_version}\" #{module_author}-#{module_name}")) do
+
+  command = agent['platform'] =~ /windows/ ?
+    Command.new("cmd.exe /c 'puppet module install --version \"<#{module_version}\" #{module_author}-#{module_name}'") :
+    puppet("module install --version \"<#{module_version}\" #{module_author}-#{module_name}")
+
+  on(agent, command) do
     assert_module_installed_ui(stdout, module_author, module_name, module_version, '<')
   end
   assert_module_installed_on_disk(agent, distmoduledir, module_name)
