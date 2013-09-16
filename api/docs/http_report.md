@@ -1,14 +1,6 @@
 Report
 ======
-This describes Report Format 4.
-
-Documentation
--------------
-The ()human readable) documentation for Report Format 4 is found at [THIS PLACE NEEDS TO BE UPDATED](https://github.com/puppetlabs/puppet-docs/blob/master/source/_includes/reportformat/4.markdown)
-
-    NOTE: ?? The link above is to puppet-docs at github, should be to where the docs will
-    end up. Also note that the text is not fully up to par with what is actually in the
-    report/schema (additional enumerators - see schema)
+This document describes the Puppet master's report endpoint and the schema for Report Format 4 in technical term. Also see the [documentation](http://docs.puppetlabs.com/puppet/latest/reference/format_report.html).
 
 The `report` endpoint allows clients to send reports to the master via `http` or `https`.
 Once received by the master they are processed by the *report processors* configured to be 
@@ -20,7 +12,6 @@ Endpoint
 The http(s) endpoint for sending reports to the master is:
 
     PUT /:environment/report/:nodename
-    
 
 ### Supported HTTP Methods
 
@@ -29,13 +20,6 @@ The http(s) endpoint for sending reports to the master is:
 ### Supported Format(s)
 
     Accept: pson, text/pson
-    
-### Deprecated Format
-
-    Accept: application/x-yaml
-
-Historically reports have been sent using yaml serialization. This format should not be used.
-It is not documented. If you need the details of the old yaml format, see the implementation of the classes mentioned under [Content](#Content)
 
 ### Parameters
 
