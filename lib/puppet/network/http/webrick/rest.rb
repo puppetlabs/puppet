@@ -69,6 +69,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
   end
 
   def set_response(response, result, status = 200)
+    set_response_header_version(response)
     response.status = status
     if status >= 200 and status != 304
       response.body = result

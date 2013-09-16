@@ -159,7 +159,34 @@ class Puppet::Indirector::Request
   # Create the query string, if options are present.
   def query_string
     return "" if options.nil? || options.empty?
-    "?" + encode_params(expand_into_parameters(options.to_a))
+
+    # For backward compatibility with older (pre-3.3) masters,
+    # this puppet options allows serialization of query parameter
+    # arrays as yaml.  This can be removed when we remove yaml
+    # support entirely.
+    if Puppet.settings[:legacy_query_parameter_serialization]
+      "?" + query_string_with_yaml
+    else
+      "?" + encode_params(expand_into_parameters(options.to_a))
+    end
+  end
+
+  # Create the query string, if options are present.
+  def query_string_with_yaml
+    options.collect do |key, value|
+      case value
+        when nil; next
+        when true, false; value = value.to_s
+        when Fixnum, Bignum, Float; value = value # nothing
+        when String; value = CGI.escape(value)
+        when Symbol; value = CGI.escape(value.to_s)
+        when Array; value = CGI.escape(YAML.dump(value))
+        else
+          raise ArgumentError, "HTTP REST queries cannot handle values of type '#{value.class}'"
+      end
+
+      "#{key}=#{value}"
+    end.join("&")
   end
 
   def expand_into_parameters(data)
@@ -239,6 +266,17 @@ class Puppet::Indirector::Request
 
   def remote?
     self.node or self.ip
+  end
+
+  def supports_protocol_version?(version)
+    # This method was introduced for redmine #22535, where we want to issue a deprecation warning
+    # if three conditions hold:
+    # 1) talking to an older master (response returned no protocol version header)
+    # 2) agent hasn't enable legacy query parameter serialization
+    # 3) there is an array in the query parameters (which would be serialized as yaml)
+    !version.nil? ||
+        Puppet.settings[:legacy_query_parameter_serialization] ||
+        options.none? { | key, value | value.class == Array }
   end
 
   private

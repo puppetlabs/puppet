@@ -38,7 +38,7 @@ class Puppet::Transaction::AdditionalResourceGenerator
       generated = replace_duplicates_with_catalog_resources(resource.eval_generate)
       return false if generated.empty?
     rescue => detail
-      resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate: #{detail}")
+      resource.log_exception(detail, "Failed to generate additional resources using 'eval_generate': #{detail}")
       return false
     end
     add_resources(generated, resource)

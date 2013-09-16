@@ -39,6 +39,7 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   # produce the body of the response
   def set_response(response, result, status = 200)
+    set_response_header_version(response)
     response.status = status
     unless result.is_a?(File)
       response.write result
