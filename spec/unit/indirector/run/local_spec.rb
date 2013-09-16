@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/indirector/run/local'
 
 describe Puppet::Run::Local do
-  it "should be a sublcass of Puppet::Indirector::Code" do
+  it "should be a subclass of Puppet::Indirector::Code" do
     Puppet::Run::Local.superclass.should equal(Puppet::Indirector::Code)
   end
 
