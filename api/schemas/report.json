@@ -1,0 +1,586 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "Report",
+    "description": "A Puppet Report",
+    "type":        "object",
+
+    "additionalProperties": false,
+
+    "required": [
+        "host",
+        "time",
+        "resource_statuses",
+        "configuration_version",
+        "report_format",
+        "puppet_version",
+        "kind",
+        "status",
+        "environment"
+    ],
+
+    "properties": {
+        "host": {
+            "description": "The host that generated the report",
+            "type":        "string"
+        },
+
+        "time": {
+            "description": "When the run began. In ISO 8601 format with 9 characters second-fragment",
+            "type":        "string"
+        },
+
+        "logs": {
+            "description": "Zero or more occurrences of Log objects",
+            "type":        "array",
+            "items": {
+                 "type": "object",
+                 "$ref": "#/definitions/log"
+            }
+        },
+
+        "metrics": {
+            "description": "Hash of metric category to data for that category",
+            "type":        "object",
+
+            "properties": {
+                "time": {
+                    "type": "object",
+                    "$ref": "#/definitions/time_metrics"
+                },
+
+                "resources": {
+                    "type": "object",
+                    "$ref": "#/definitions/resources_metrics"
+                },
+
+                "events": {
+                    "type": "object",
+                    "$ref": "#/definitions/events_metrics"
+                },
+
+                "changes": {
+                    "type": "object",
+                    "$ref": "#/definitions/changes_metrics"
+                }
+            },
+
+            "additionalProperties": false,
+            "minProperties":        1
+        },
+
+        "resource_statuses": {
+            "description":       "Object with one property per resource-name having type as described by #report/status.json schema type",
+            "type": "object",
+            "patternProperties": {
+                ".*": {
+                    "type": "object",
+                    "$ref": "#/definitions/status"
+                }
+            },
+            "additionalProperties": false
+        },
+
+        "configuration_version": {
+            "description": "The configuration version of the Puppet run. This is a String if the user has specified their own versioning scheme, otherwise an Integer representing seconds since the epoch.",
+            "anyOf":       [
+                { "type": "integer", "description": "seconds since the epoch" },
+                { "type": "string",  "description": "custom versioning scheme" }
+            ]
+        },
+
+        "transaction_uuid": {
+            "description": "A UUID covering the transaction. The query parameters for the catalog retrieval will have included the same UUID.",
+            "type":        "string"
+        },
+
+        "report_format": {
+            "description": "The report format version documented by this schema",
+            "type":        "integer",
+            "enum":        ["4", 4]
+        },
+
+        "puppet_version": {
+            "description": "The version of the Puppet Agent the report is for.",
+            "type":        "string"
+        },
+
+        "kind": {
+            "description": "Report kind, enumerator with one of the values:\n\n* `inspect`, if this report came from a puppet inspect run.\n* `apply`, if this report came from a puppet apply or puppet agent run",
+            "enum": [
+                "inspect",
+                "apply"
+            ]
+        },
+
+        "status": {
+            "description": "Report status, enumerator with one of the values:\n\n* `failed`, if run failed\n* `changed`, if something changed\n* `unchanged`, if nothing changed from the previous run\n",
+            "enum": [
+                "failed",
+                "changed",
+                "unchanged"
+            ]
+        },
+
+        "environment": {
+            "description": "The name of the environment that was used for the puppet run (e.g. \"production\").",
+            "type":        "string"
+        }
+    },
+
+    "definitions" : {
+        "log" : {
+            "properties": {
+
+                "file": {
+                    "description": "The pathname of the manifest file which triggered the log message.",
+                    "oneOf":       [
+                        {"type": "string"},
+                        {"type": "null"}
+                    ]
+                },
+
+                "line": {
+                    "description": "The line number in the manifest file which triggered the log message.",
+                    "oneOf":       [
+                        {"type": "string"},
+                        {"type": "null"}
+                    ]
+                },
+
+                "level": {
+                    "description": "The severity of the message.",
+                    "enum": [
+                        "debug",
+                        "info",
+                        "notice",
+                        "warning",
+                        "err",
+                        "alert",
+                        "emerg",
+                        "crit"
+                    ]
+                },
+
+                "message": {
+                    "description": "The message itself.",
+                    "type":        "string"
+                },
+
+                "source": {
+                    "description": "The origin of the log message. This could be a resource, a property of a resource, or the string 'Puppet'.",
+                    "type":        "string"
+                },
+
+                "tags": {
+                    "description": "The strings with which the source is tagged",
+                    "type":        "array",
+                    "items":       { "type": "string" }
+                },
+
+                "time": {
+                    "description": "When the message was sent. In ISO 8601 format with 9 characters second-fragment",
+                    "type":        "string"
+                }
+            },
+
+            "required": [
+                "level",
+                "message",
+                "source",
+                "tags",
+                "time"
+            ],
+            "additionalProperties": false
+        },
+
+        "time_metrics":    {
+             "description": "A Metric in the `time` category",
+             "type":        "object",
+             "properties": {
+
+                "name": {
+                    "description": "The name of the metric category ('time')",
+                    "enum":        ["time"]
+                },
+
+                "label": {
+                    "description": "The name in title form",
+                    "enum":        ["Time"]
+                },
+
+                "values": {
+                    "description": "The metric values in the 'time' category contains one entry per resource type in the catalog for\nwhich there is at least one resource and the values named:\n\n* `config_retrieval`\n* `total`\n* `inspect` (only present if the report is of `inspect`-kind)\n",
+                    "type":        "array",
+                    "items": {
+                        "description": "Each entry in `values` is an array with 3 slots for `name`, `label` and `value`",
+                        "type":        "array",
+                        "items": [
+                            {
+                                "description": "The name of the value (the name of a resource type, `config_retrieval`, or `total`",
+                                "type":        "string"
+                            },
+                            {
+                                "description": "The name in title form",
+                                "type":        "string"
+                            },
+                            {
+                                "description": "The value",
+                                "type":        "number"
+                            }
+                        ]
+                    }
+                }
+            },
+
+            "required":             [ "name", "label", "values"],
+            "additionalProperties": false
+        },
+
+        "resources_metrics": {
+            "description": "A Metric in the `resources` category",
+            "type":        "object",
+            "properties": {
+
+                "name": {
+                    "description": "The name of the metric category ('resources')",
+                    "enum":        ["resources"]
+                },
+
+                "label": {
+                    "description": "The name in title form",
+                    "enum":        ["Resources"]
+                },
+
+                "values": {
+                    "description": "The metric values in the 'resources' category",
+                    "type":        "array",
+                    "items": {
+                        "description": "Each entry in `values` is an array with 3 slots for `name`, `label` and `value`",
+                        "type":        "array",
+                        "items": [
+                            {
+                                "description": "The name of the value",
+                                "enum": [
+                                    "failed",
+                                    "out_of_sync",
+                                    "changed",
+                                    "total",
+                                    "skipped",
+                                    "failed_to_restart", 
+                                    "restarted",
+                                    "scheduled"
+                                ]
+                            },
+                            {
+                                "description": "The name in title form",
+                                "enum": [
+                                    "Failed",
+                                    "Out of sync",
+                                    "Changed",
+                                    "Total",
+                                    "Skipped",
+                                    "Failed to restart", 
+                                    "Restarted",
+                                    "Scheduled"
+                                ]
+                            },
+                            {
+                                "description": "The value",
+                                "type":        "integer"
+                            }
+                        ]
+                    }
+                }
+            },
+            "required":             [ "name", "label", "values"],
+            "additionalProperties": false
+        },
+
+        "events_metrics": {
+            "description": "A Metric in the `events` category",
+            "type":        "object",
+            "properties": {
+
+                "name": {
+                    "description": "The name of the metric category ('events')",
+                    "enum":        ["events"]
+                },
+
+                "label": {
+                    "description": "The name in title form",
+                    "enum":        ["Events"]
+                },
+
+                "values": {
+                    "description": "The metric values in the 'events' category. The entry named `total` is always present, the others are present only if their value is non zero.",
+                    "type":        "array",
+                    "items": {
+                        "description": "Each entry in `values` is an array with 3 slots for `name`, `label` and `value`.",
+                        "type":        "array",
+                        "items": [
+                            {
+                                "description": "The name of the value",
+                                "enum": [
+                                    "success",
+                                    "failure",
+                                    "audit",
+                                    "noop",
+                                    "total"
+                                ]
+                            },
+                            {
+                                "description": "The name in title form",
+                                "enum":  [
+                                    "Success",
+                                    "Failure",
+                                    "Audit",
+                                    "Noop",
+                                    "Total"
+                                ]
+                            },
+                            {
+                                "description": "The value",
+                                "type":        "integer"
+                            }
+                        ]
+                    }
+                }
+           },
+
+            "required":             [ "name", "label", "values"],
+            "additionalProperties": false
+        },
+
+        "changes_metrics": {
+            "description": "A Metric in the `changes` category",
+            "type":        "object",
+            "properties": {
+
+                "name": {
+                    "description": "The name of the metric category ('changes')",
+                    "enum":        ["changes"]
+                },
+
+                "label": {
+                    "description": "The name in title form",
+                    "enum":        ["Changes"]
+                },
+
+                "values": {
+                    "description": "The metric value in the 'changes' category is called `total` - there is only one total.",
+                    "type":        "array",
+                    "items": {
+                        "description": "Each entry in `values` is an array with 3 slots for `name`, `label` and `value`.",
+                        "type":        "array",
+                        "items": [
+                            {
+                                "description": "The name of the value",
+                                "enum":        ["total" ]
+                            },
+                            {
+                                "description": "The name in title form",
+                                "enum":        ["Total"]
+                            },
+                            {
+                                "description": "The value",
+                                "type":        "integer"
+                            }
+                        ]
+                    }
+                }
+            },
+            "required":             [ "name", "label", "values"],
+            "additionalProperties": false
+        },
+
+        "status": {
+            "description": "A Status entry for a resource in a report",
+            "type":        "object",
+
+            "properties": {
+
+                "resource_type": {
+                    "description": "The type name of the resource, capitalized",
+                    "type":        "string",
+                    "pattern":     "^[A-Z].*$"
+                },
+
+                "title": {
+                    "description": "The title of the resource.",
+                    "type":        "string"
+                },
+
+                "resource": {
+                    "description": "The resource name, in the form Type[title]. **Deprecated**. This is always the same string as the name of the property where this Status object is the value.",
+                    "type":        "string"
+                },
+
+                "file": {
+                    "description": "The pathname of the manifest file which declared the resource.",
+                    "oneOf":       [
+                        {"type": "string"},
+                        {"type": "null"}
+                    ]
+                },
+
+                "line": {
+                    "description": "The line number in the manifest file which declared the resource.",
+                    "oneOf":       [
+                        {"type": "string"},
+                        {"type": "null"}
+                    ]
+                },
+
+                "evaluation_time": {
+                    "description": "The amount of time, in seconds, taken to evaluate the resource. Not present in reports of `inspect` kind.",
+                    "oneOf":       [
+                        {"type": "number"},
+                        {"type": "null"}
+                    ]
+                },
+
+                "change_count": {
+                    "description": "The number of properties which changed. Always 0 in reports of `inspect` kind.",
+                    "type":        "integer"
+                },
+
+                "out_of_sync_count": {
+                    "description": "The number of properties which were out of sync. Always 0 in reports of `inspect` kind.",
+                    "type":        "integer"
+                },
+
+                "tags": {
+                    "description": "The strings with which the resource is tagged",
+                    "type":        "array",
+                    "items":      { "type": "string" }
+                },
+
+                "time": {
+                    "description": "The time the resource was evaluated. In ISO 8601 format with 9 characters second-fragment",
+                    "type":        "string"
+                },
+
+                "events": {
+                    "description": "the Puppet::Transaction::Event objects for the resource",
+                    "type":        "array",
+                    "items":       { "$ref": "#/definitions/event" }
+                },
+
+                "out_of_sync": {
+                    "description": "True if out_of_sync_count > 0, otherwise false. **Deprecated**",
+                    "type":        "boolean"
+                },
+
+                "changed": {
+                    "description": "True if change_count > 0, otherwise false. **Deprecated**",
+                    "type":        "boolean"
+                },
+
+                "skipped": {
+                    "description": "True if the resource was skipped, otherwise false.",
+                    "type":        "boolean"
+                },
+
+                "failed": {
+                    "description": "True if Puppet experienced an error while evaluating this resource, otherwise false. **Deprecated**",
+                    "type":        "boolean"
+                },
+
+                "containment_path": {
+                    "description": "An array of strings; each element represents a container (type or class) that, together, make up the path of the resource in the catalog.",
+                    "type":        "array",
+                    "items":       { "type": "string" }
+                }
+            },
+
+            "required": [
+                "resource_type",
+                "title",
+                "change_count", 
+                "out_of_sync_count",
+                "tags",
+                "events",
+                "skipped",
+                "containment_path"
+            ],
+            "additionalProperties":   false
+        },
+        "event": {
+            "description": "An Event in a Report",
+            "type":        "object",
+            "properties": {
+
+                "audited": {
+                    "description": "True if this property is being audited, otherwise false. True in report of `inspect` kind.",
+                    "type":        "boolean"
+                },
+
+                "property": {
+                    "description": "The property for which the event occurred.",
+                    "type":        "string"
+                },
+
+                "previous_value": {
+                    "description": "The value of the property before the change (if any) was applied.",
+                    "oneOf": [
+                        { "type": "string" },
+                        { "type": "array" },
+                        { "type": "object" }
+                    ]
+                },
+
+                "desired_value": {
+                    "description": "the value specified in the manifest. Absent in reports of `inspect` kind.",
+                    "oneOf": [
+                        { "type": "string" },
+                        { "type": "array" },
+                        { "type": "object" }
+                    ]
+                },
+
+                "historical_value": {
+                    "description": "The audited value from a previous run of Puppet, if known. Absent in reports of `inspect` kind.",
+                    "oneOf": [
+                        { "type": "string" },
+                        { "type": "array" },
+                        { "type": "object" }
+                    ]
+                },
+
+                "message": {
+                    "description": "The log message generated by this event.",
+                    "type":        "string"
+                },
+
+                "name": {
+                    "description": "The name of the event. Absent in reports of `inspect` kind.",
+                    "type":        "string"
+                },
+
+                "status": {
+                    "description": "One of the following strings:\n\n* `success` - property was out of sync, and was successfully changed to be in sync.\n* `failure`- property was out of sync, and couldn't be changed to be in sync due to an error.\n* `noop` - property was out of sync, and wasn't changed due to noop mode.\n* `audit` - property was in sync, and was being audited.\n\ndepending on the type of the event. Always `audit` in reports of `inspect` kind.\n",
+                    "enum": [
+                        "success",
+                        "failure",
+                        "noop",
+                        "audit"
+                    ]
+                },
+                "time": {
+                    "description": "The time at which the property was evaluated. In ISO 8601 format with 9 characters second-fragment",
+                    "type":        "string"
+                }
+            },
+            "required": [
+                "audited",
+                "property",
+                "message",
+                "name",
+                "status",
+                "time"
+            ],
+
+            "additionalProperties": false
+        }
+    }
+}

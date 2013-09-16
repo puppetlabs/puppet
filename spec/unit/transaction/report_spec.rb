@@ -4,6 +4,23 @@ require 'spec_helper'
 require 'puppet'
 require 'puppet/transaction/report'
 
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  require 'json'
+  require 'json-schema'
+
+  REPORT_SCHEMA_URI = File.join(File.dirname(__FILE__),    '../../../api/schemas/report.json')
+  REPORT_SCHEMA = JSON.parse(File.read(REPORT_SCHEMA_URI))
+  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/json-meta-schema.json')))
+
+  describe "report schema" do
+    it "should validate against the json meta-schema" do
+      JSON::Validator.validate!(JSON_META_SCHEMA, REPORT_SCHEMA)
+    end
+  end
+
+end
+
 describe Puppet::Transaction::Report do
   include PuppetSpec::Files
   before do
@@ -392,6 +409,16 @@ describe Puppet::Transaction::Report do
     expect_equivalent_reports(tripped, report)
   end
 
+  def validate_as_json(report)
+    JSON::Validator.validate!(REPORT_SCHEMA, report)
+  end
+
+  it "generates pson which validates against the report schema", :unless => Puppet.features.microsoft_windows? do
+    Puppet[:report_serialization_format] = "pson"
+    report = generate_report
+    validate_as_json(report.render)
+  end
+
   it "can make a round trip through yaml" do
     Puppet[:report_serialization_format] = "yaml"
     report = generate_report
@@ -458,7 +485,7 @@ describe Puppet::Transaction::Report do
     status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
     status.changed = true
 
-    report = Puppet::Transaction::Report.new('testy', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
     report.add_times("timing", 4)
     report.add_resource_status(status)
