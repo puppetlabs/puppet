@@ -530,7 +530,7 @@ class Puppet::Graph::SimpleGraph
   end
 
   def to_yaml_properties
-    (instance_variables + [:@vertices, :@edges] -
+    (super + [:@vertices, :@edges] -
      [:@in_to, :@out_from, :@upstream_from, :@downstream_from]).uniq
   end
 

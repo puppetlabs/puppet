@@ -68,7 +68,7 @@ describe Puppet::Transaction::ResourceHarness do
     events.map do |event|
       hash = {}
       event.instance_variables.each do |varname|
-        hash[varname] = event.instance_variable_get(varname)
+        hash[varname.to_sym] = event.instance_variable_get(varname)
       end
       hash
     end

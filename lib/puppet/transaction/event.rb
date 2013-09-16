@@ -83,7 +83,7 @@ class Puppet::Transaction::Event
   end
 
   def to_yaml_properties
-    YAML_ATTRIBUTES & instance_variables
+    YAML_ATTRIBUTES & super
   end
 
   private
