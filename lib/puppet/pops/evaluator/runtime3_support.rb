@@ -58,6 +58,23 @@ module Puppet::Pops::Evaluator::Runtime3Support
     end
   end
 
+  # Creates a local scope with vairalbes set from a hash of variable name to value
+  #
+  def create_local_scope_from(hash, scope)
+    # two dummy values are needed since the scope tries to give an error message (can not happen in this
+    # case - it is just wrong, the error should be reported by the caller who knows in more detail where it
+    # is in the source.
+    #
+    raise ArgumentError, "Internal error - attempt to create a local scope without a hash" unless hash.is_a?(Hash)
+    scope.ephemeral_from(hash)
+  end
+
+  # Creates a nested match scope
+  def create_match_scope_from(scope)
+    # Create a transparent match scope (for future matches)
+    scope.new_match_scope(nil)
+  end
+
   def get_scope_nesting_level(scope)
     scope.ephemeral_level
   end
@@ -144,6 +161,24 @@ module Puppet::Pops::Evaluator::Runtime3Support
       fail("Value '#{v}' can not be converted to Numeric.", o, scope)
     end
     n
+  end
+
+  # Asserts that the given function name resolves to an available function. The function is loaded
+  # as a side effect. Fails if the function does not exist.
+  #
+  def assert_function_available(name, o, scope)
+    fail("Unknown function #{name}", o, scope) unless Puppet::Parser::Functions.function(name)
+  end
+
+  def call_function(name, args, o, scope)
+    # Should arguments be mapped from :undef to '' (3x functions expects this - but it is bad)
+    mapped_args = args.map {|a| a == :undef ? '' : a }
+    scope.send("function_#{name}", mapped_args)
+  end
+
+  # Returns true if the function produces a value
+  def rvalue_function?(name, o, scope)
+    Puppet::Parser::Functions.rvalue?(name)
   end
 
   # This is the same type of "truth" as used in the current Puppet DSL.

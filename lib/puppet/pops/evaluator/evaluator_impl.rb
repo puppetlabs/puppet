@@ -33,12 +33,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     # TODO: Change these to class variables to get caching.
     @@eval_visitor     ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
     @@assign_visitor   ||= Puppet::Pops::Visitor.new(self, "assign", 3, 3)
+    @@call_visitor     ||= Puppet::Pops::Visitor.new(self, "call", 3, 3)
 
     @@type_calculator  ||= Puppet::Pops::Types::TypeCalculator.new()
     @@type_parser      ||= Puppet::Pops::Types::TypeParser.new()
 
     @@compare_operator     ||= Puppet::Pops::Evaluator::CompareOperator.new()
-    @@call_operator         ||= Puppet::Pops::Evaluator::CallOperator.new()
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
   end
 
@@ -88,6 +88,74 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   def assign(target, value, o, scope)
     @@assign_visitor.visit_this(self, target, value, o, scope)
+  end
+
+  # Call a closure - Can only be called with a closure (for now), may be refactored later
+  # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
+  # could create similar objects to Closure, wait until other types of defines are instantiated - they may bhave
+  # as special cases of calls - i.e. 'new')
+  #
+  # @raise ArgumentError, if there are to many or too few arguments
+  # @raise ArgumentError, if given closure is not a Puppet::Pops::Evaluator::Closure
+  #
+  def call(closure, args, scope, &block)
+    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Closure)
+    pblock = closure.model
+    parameters = pblock.parameters || []
+
+    raise ArgumentError, "Too many arguments: #{args.size} for #{parameters.size}" unless args.size <= parameters.size
+
+    # associate values with parameters
+    merged = parameters.zip(args)
+    # calculate missing arguments
+    missing = parameters.slice(args.size, parameters.size - args.size).select {|p| e.value.nil? }
+    unless missing.empty?
+      optional = parameters.count { |p| !p.value.nil? }
+      raise ArgumentError, "Too few arguments; #{args.size} for #{optional > 0 ? ' min ' : ''}#{parameters.size - optional}"
+    end
+
+    evaluated = merged.collect do |m|
+      # m can be one of
+      # m = [Parameter{name => "name", value => nil], "given"]
+      #   | [Parameter{name => "name", value => Expression}, "given"]
+      #
+      # "given" is always an optional entry. If a parameter was provided then
+      # the entry will be in the array, otherwise the m array will be a
+      # single element.a = []
+      given_argument = m[1]
+      argument_name = m[0].name
+      default_expression = m[0].value
+
+      value = if default_expression
+        evaluate(default_expression, scope)
+      else
+        given_argument
+      end
+      [argument_name, value]
+    end
+
+    # Store the evaluated name => value associations in a new inner/local/ephemeral scope
+    # (This is made complicated due to the fact that the implementation of scope is overloaded with
+    # functionality and an inner ephemeral scope must be used (as opposed to just pushing a local scope
+    # on a scope "stack").
+
+    # Ensure variable exists with nil value if error occurs. 
+    # Some ruby implementations does not like creating variable on return
+    result = nil
+    begin
+      scope_memo = get_scope_nesting_level(scope)
+      # change to create local scope_from - cannot give it file and line - that is the place of the call, not
+      # "here"
+      create_local_scope_from(Hash[evaluated], scope)
+      result = evaluate(pblock.body, scope)
+    ensure
+      set_scope_nesting_level(scope, scope_memo)
+    end
+    if block_given
+      block.call(result)
+    else
+      result
+    end
   end
 
   protected
@@ -525,8 +593,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   # NodeDefinition < Expression
   # HostClassDefinition < NamedDefinition
-  # CallExpression < Expression
-  # CallNamedFunctionExpression < CallExpression
   # TypeReference < Expression
   # InstanceReferences < TypeReference
   # ResourceExpression < Expression
@@ -534,6 +600,47 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # ResourceDefaultsExpression < Expression
   # ResourceOverrideExpression < Expression
   # NamedAccessExpression < Expression
+
+  # Puppet 3.1 AST only supports calling a function by name (it is not possible to produce a function
+  # that is then called). TODO- should puppet 4 accept this? It is very powerful in combiantion with
+  # custom functions in puppet language.
+  #
+  # rval_required (for an expression)
+  # functor_expr (lhs - the "name" expression)
+  # arguments - list of arguments
+  #
+  def eval_CallNamedFunctionExpression(o, scope)
+    # The functor expression is not evaluated, it is not possible to select the function to call
+    # via an expression like $a()
+    fail("Unacceptable expression for name of function", o, scope) unless o.functor_expr.is_a? Puppet::Pops::Model::QualifiedName
+    name = o.functor_expr.value
+    assert_function_available(name, o, scope)
+    evaluated_arguments = o.arguments.collect {|arg| evaluate(arg, scope) }
+    # rval_required = o.rval_required # TODO: is this really needed - it can just return nil for a function that is not rval
+    # wrap lambda in a callable block if it is present
+    evaluated_arguments << Puppet::Evaluator::Lambda.new(self, o.lambda) if o.lambda
+    call_function(name, evaluated_arguments, o, scope) do |result|
+      # prevent functions that are not r-value from leaking its return value
+      rvalue_function?(name, o, scope) ? result : nil
+    end
+  end
+
+  # Evaluation of CallMethodExpression handles a NamedAccessExpression functor (receiver.function_name)
+  #
+  def eval_CallMethodExpression(o, scope)
+    fail("Unacceptable expression for name of function", o.functor_expr, scope) unless o.functor_expr.is_a? Puppet::Pops::Model::NamedAccessExpression
+    receiver = evaluate(o.functor_expr.left_expr, scope)
+    name = o.right_expr
+    fail("Unacceptable expression for name of function/method", name, scope) unless name.is_a? Puppet::Pops::Model::QualifiedName
+    name = name.value # the string function name
+    assert_function_available(name, o, scope)
+    evaluated_arguments = [receiver] + (o.arguments || []).collect {|arg| evaluate(arg, scope) }
+    evaluated_arguments << Puppet::Evaluator::Lambda.new(self, o.lambda) if o.lambda
+    call_function(name, evaluated_arguments, o, scope) do |result|
+      # prevent functions that are not r-value from leaking its return value
+      rvalue_function?(name, o, scope) ? result : nil
+    end
+  end
 
   # @example
   #   $x ? { 10 => true, 20 => false, default => 0 }

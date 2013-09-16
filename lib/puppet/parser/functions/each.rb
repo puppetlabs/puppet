@@ -82,7 +82,7 @@ Puppet::Parser::Functions::newfunction(
   raise ArgumentError, ("each(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
   receiver = args[0]
   pblock = args[1]
-  raise ArgumentError, ("each(): wrong argument type (#{args[1].class}; must be a parameterized block.") unless pblock.is_a? Puppet::Parser::AST::Lambda
+  raise ArgumentError, ("each(): wrong argument type (#{args[1].class}; must be a parameterized block.") unless pblock.respond_to?(:puppet_lambda)
 
   case receiver
   when Array
