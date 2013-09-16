@@ -312,7 +312,7 @@ class Puppet::Transaction::Report
   # @api private
   #
   def to_yaml_properties
-    instance_variables - [:@external_times]
+    super - [:@external_times]
   end
 
   def self.supported_formats

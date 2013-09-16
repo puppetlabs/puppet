@@ -171,16 +171,28 @@ end
 ################################################################
 
 class Object
-  def to_yaml_properties
-    instance_variables          # default YAML behaviour.
+  # Users of this method need to do set math consistently with the
+  # result. Since #instance_variables returns strings in 1.8 and symbols
+  # on 1.9, standardize on symbols
+  if RUBY_VERSION[0,3] == '1.8'
+    def to_yaml_properties
+      instance_variables.map(&:to_sym)
+    end
+  else
+    def to_yaml_properties
+      instance_variables
+    end
   end
+
   def yaml_property_munge(x)
     x
   end
+
   def zamlized_class_name(root)
     cls = self.class
     "!ruby/#{root.name.downcase}#{cls == root ? '' : ":#{cls.respond_to?(:name) ? cls.name : cls}"}"
   end
+
   def to_zaml(z)
     z.first_time_only(self) {
       z.emit(zamlized_class_name(Object))
