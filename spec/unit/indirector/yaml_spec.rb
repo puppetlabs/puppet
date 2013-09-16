@@ -4,6 +4,12 @@ require 'spec_helper'
 require 'puppet/indirector/yaml'
 
 describe Puppet::Indirector::Yaml do
+  include PuppetSpec::Files
+
+  class TestSubject
+    attr_accessor :name
+  end
+
   before :all do
     @indirection = stub 'indirection', :name => :my_yaml, :register_terminus_type => nil
     Puppet::Indirector::Indirection.expects(:instance).with(:my_yaml).returns(@indirection)
@@ -16,11 +22,10 @@ describe Puppet::Indirector::Yaml do
   before :each do
     @store = @store_class.new
 
-    @subject = Object.new
-    @subject.singleton_class.send(:attr_accessor, :name)
+    @subject = TestSubject.new
     @subject.name = :me
 
-    @dir = File.expand_path("/what/ever")
+    @dir = tmpdir("yaml_indirector")
     Puppet[:clientyamldir] = @dir
     Puppet.run_mode.stubs(:master?).returns false
 
@@ -87,54 +92,25 @@ describe Puppet::Indirector::Yaml do
       @request.stubs(:instance).returns Object.new
       proc { @store.save(@request) }.should raise_error(ArgumentError)
     end
-
-    it "should convert Ruby objects to YAML and write them to disk using a write lock" do
-      yaml = @subject.to_yaml
-      file = mock 'file'
-      path = @store.send(:path, @subject.name)
-      FileTest.expects(:exist?).with(File.dirname(path)).returns(true)
-      Puppet::Util.expects(:replace_file).with(path, 0660).yields(file)
-      file.expects(:print).with(yaml)
-
-      @store.save(@request)
-    end
-
-    it "should create the indirection subdirectory if it does not exist" do
-      yaml = @subject.to_yaml
-      file = mock 'file'
-      path = @store.send(:path, @subject.name)
-      dir = File.dirname(path)
-
-      FileTest.expects(:exist?).with(dir).returns(false)
-      Dir.expects(:mkdir).with(dir)
-
-      Puppet::Util.expects(:replace_file).yields(file)
-      file.expects(:print).with(yaml)
-
-      @store.save(@request)
-    end
   end
 
   describe "when retrieving YAML" do
     it "should read YAML in from disk and convert it to Ruby objects" do
-      path = @store.send(:path, @subject.name)
-      yaml = @subject.to_yaml
+      @store.save(Puppet::Indirector::Request.new(:my_yaml, :save, "testing", @subject))
 
-      FileTest.expects(:exist?).with(path).returns true
-      File.expects(:read).with(path).returns yaml
-
-      @store.find(@request).instance_variable_get("@name").should == :me
+      @store.find(Puppet::Indirector::Request.new(:my_yaml, :find, "testing", nil)).name.should == :me
     end
 
     it "should fail coherently when the stored YAML is invalid" do
-      path = @store.send(:path, @subject.name)
-      FileTest.expects(:exist?).with(path).returns(true)
+      saved_structure = Struct.new(:name).new("testing")
 
-      # Something that will fail in yaml
-      File.expects(:read).returns "--- foo:\n  1,2,3\nargh"
+      @store.save(Puppet::Indirector::Request.new(:my_yaml, :save, "testing", saved_structure))
+      File.open(@store.path(saved_structure.name), "w") do |file|
+        file.puts "{ invalid"
+      end
 
       expect {
-        @store.find(@request)
+        @store.find(Puppet::Indirector::Request.new(:my_yaml, :find, "testing", nil))
       }.to raise_error(Puppet::Error, /Could not parse YAML data/)
     end
   end
