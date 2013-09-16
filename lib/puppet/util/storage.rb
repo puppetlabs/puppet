@@ -7,11 +7,6 @@ require 'puppet/util/yaml'
 class Puppet::Util::Storage
   include Singleton
   include Puppet::Util
-  if defined?(::Psych::SyntaxError)
-    YamlLoadExceptions = [::StandardError, ::ArgumentError, ::Psych::SyntaxError]
-  else
-    YamlLoadExceptions = [::StandardError, ::ArgumentError]
-  end
 
   def self.state
     @@state
