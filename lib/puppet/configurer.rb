@@ -143,7 +143,6 @@ class Puppet::Configurer
 
     Puppet::Util::Log.newdestination(report)
 
-    Puppet::Status.indirection.terminus_class = :rest
     master_version = Puppet::Status.indirection.find('*').version
 
     if !master_version

@@ -2,7 +2,7 @@ require 'puppet/indirector'
 
 class Puppet::Status
   extend Puppet::Indirector
-  indirects :status, :terminus_class => :local
+  indirects :status, :terminus_setting => :status_terminus
 
   attr :status, true
 

@@ -295,6 +295,12 @@ module Puppet
       retrieved using the `server` setting. When running `apply` the default
       is `file_server`, causing requests to be filled locally."
     },
+    :status_terminus => {
+        :type       => :terminus,
+        :default    => "local",
+        :desc       => "Where to get status information.  Defaults to local, but overriden to
+        rest for the agent."
+    },
     :httplog => {
         :default  => "$logdir/http.log",
         :type     => :file,
