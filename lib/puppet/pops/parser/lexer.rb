@@ -148,8 +148,8 @@ class Puppet::Pops::Parser::Lexer
   TOKENS.add_tokens(
   '['   => :LBRACK,
   ']'   => :RBRACK,
-  #    '{'   => :LBRACE, # Specialized to handle lambda
-  '}'   => :RBRACE,
+  #    '{'   => :LBRACE, # Specialized to handle lambda and brace count
+  #    '}'   => :RBRACE, # Specialized to handle brace count
   '('   => :LPAREN,
   ')'   => :RPAREN,
   '='   => :EQUALS,
@@ -215,7 +215,12 @@ class Puppet::Pops::Parser::Lexer
     end
 
     IN_STRING_INTERPOLATION = Proc.new do |context|
-      context[:string_interpolation_depth] > 0
+      context[:string_interpolation_depth] > 0 && context[:brace_count] == context[:bracestack][-1]
+    end
+
+    NOT_IN_STRING_INTERPOLATION = Proc.new do |context|
+      depth = context[:string_interpolation_depth]
+      depth == 0 || depth > 0 && context[:brace_count] != context[:bracestack][-1]
     end
 
     DASHED_VARIABLES_ALLOWED = Proc.new do |context|
@@ -232,6 +237,7 @@ class Puppet::Pops::Parser::Lexer
   # token lookahead.
   #
   TOKENS.add_token :LBRACE, /\{/ do | lexer, value |
+    lexer.lexing_context[:brace_count] += 1
     if lexer.match?(/[ \t\r]*\|/)
       [TOKENS[:LAMBDA], value]
     elsif lexer.lexing_context[:after] == :QMARK
@@ -240,6 +246,12 @@ class Puppet::Pops::Parser::Lexer
       [TOKENS[:LBRACE], value]
     end
   end
+
+  TOKENS.add_token :RBRACE, /\}/ do | lexer, value |
+    lexer.lexing_context[:brace_count] -= 1
+    [TOKENS[:RBRACE], value]
+  end
+  TOKENS[:RBRACE].acceptable_when Contextual::NOT_IN_STRING_INTERPOLATION
 
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
@@ -339,9 +351,21 @@ class Puppet::Pops::Parser::Lexer
     # reference.
     #
     if lexer.match?(%r{[ \t\r]*\(})
-      [TOKENS[:NAME],value]
+      # followed by ( is a function call
+      [TOKENS[:NAME], value]
+
+    elsif kwd_token = KEYWORDS.lookup(value)
+      # true, false, if, unless, case, and undef are keywords that cannot be used as variables
+      # but node, and several others are variables
+      if [ :TRUE, :FALSE ].include?(kwd_token.name)
+        [ TOKENS[:BOOLEAN], eval(value) ]
+      elsif [ :IF, :UNLESS, :CASE, :UNDEF ].include?(kwd_token.name)
+        [kwd_token, value]
+      else
+        [TOKENS[:VARIABLE], value]
+      end
     else
-      [TOKENS[:VARIABLE],value]
+      [TOKENS[:VARIABLE], value]
     end
 
   end
@@ -501,7 +525,9 @@ class Puppet::Pops::Parser::Lexer
       :start_of_line => true,
       :offset => 0,      # byte offset before where token starts
       :end_offset => 0,  # byte offset after scanned token
-      :string_interpolation_depth => 0
+      :string_interpolation_depth => 0,
+      :brace_count => 0,  # nested depth of braces
+      :bracestack => []   # matching interpolation brace level
     }
   end
 
@@ -592,8 +618,13 @@ class Puppet::Pops::Parser::Lexer
       end
 
       lexing_context[:after] = final_token.name unless newline
-      lexing_context[:string_interpolation_depth] += 1 if final_token.name == :DQPRE
-      lexing_context[:string_interpolation_depth] -= 1 if final_token.name == :DQPOST
+      if final_token.name == :DQPRE
+          lexing_context[:string_interpolation_depth] += 1
+          lexing_context[:bracestack] << lexing_context[:brace_count]
+      elsif final_token.name == :DQPOST
+          lexing_context[:string_interpolation_depth] -= 1
+          lexing_context[:bracestack].pop
+      end
 
       value = token_value[:value]
 
