@@ -54,7 +54,12 @@ Puppet::Type.newtype(:file) do
     end
 
     munge do |value|
-      ::File.join(::File.split(::File.expand_path(value)))
+      if value.start_with?('//') and ::File.basename(value) == "/"
+        # This is a UNC path pointing to a share, so don't add a trailing slash
+        ::File.expand_path(value)
+      else
+        ::File.join(::File.split(::File.expand_path(value)))
+      end
     end
   end
 

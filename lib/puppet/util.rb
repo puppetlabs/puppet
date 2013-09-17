@@ -251,7 +251,7 @@ module Util
     if Puppet.features.microsoft_windows?
       path = path.gsub(/\\/, '/')
 
-      if unc = /^\/\/([^\/]+)(\/[^\/]+)/.match(path)
+      if unc = /^\/\/([^\/]+)(\/.+)/.match(path)
         params[:host] = unc[1]
         path = unc[2]
       elsif path =~ /^[a-z]:\//i
