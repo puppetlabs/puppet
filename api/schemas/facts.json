@@ -24,5 +24,6 @@
             "type": "string"
         }
     },
+    "required": ["name", "values", "timestamp", "expiration"],
     "additionalProperties": false
 }
