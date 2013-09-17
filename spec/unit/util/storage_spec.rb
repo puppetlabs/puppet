@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'yaml'
+require 'fileutils'
 require 'puppet/util/storage'
 
 describe Puppet::Util::Storage do
@@ -100,9 +101,13 @@ describe Puppet::Util::Storage do
 
     describe "when the state file/directory exists" do
       before(:each) do
-        @state_file = Tempfile.new('storage_test')
-        @saved_statefile = Puppet[:statefile]
-        Puppet[:statefile] = @state_file.path
+        @state_file = tmpfile('storage_test')
+        FileUtils.touch(@state_file)
+        Puppet[:statefile] = @state_file
+      end
+
+      def write_state_file(contents)
+        File.open(@state_file, 'w') { |f| f.write(contents) }
       end
 
       it "should overwrite its internal state if load() is called" do
@@ -117,8 +122,7 @@ describe Puppet::Util::Storage do
 
       it "should restore its internal state if the state file contains valid YAML" do
         test_yaml = {'File["/yayness"]'=>{"name"=>{:a=>:b,:c=>:d}}}
-        @state_file.write(test_yaml.to_yaml)
-        @state_file.flush
+        write_state_file(test_yaml.to_yaml)
 
         Puppet::Util::Storage.load
 
@@ -126,8 +130,7 @@ describe Puppet::Util::Storage do
       end
 
       it "should initialize with a clear internal state if the state file does not contain valid YAML" do
-        @state_file.write('{ invalid')
-        @state_file.flush
+        write_state_file('{ invalid')
 
         Puppet::Util::Storage.load
 
@@ -135,8 +138,7 @@ describe Puppet::Util::Storage do
       end
 
       it "should initialize with a clear internal state if the state file does not contain a hash of data" do
-        @state_file.write("not_a_hash")
-        @state_file.flush
+        write_state_file("not_a_hash")
 
         Puppet::Util::Storage.load
 
@@ -144,8 +146,7 @@ describe Puppet::Util::Storage do
       end
 
       it "should raise an error if the state file does not contain valid YAML and cannot be renamed" do
-        @state_file.write('{ invalid')
-        @state_file.flush
+        write_state_file('{ invalid')
 
         File.expects(:rename).raises(SystemCallError)
 
@@ -153,8 +154,7 @@ describe Puppet::Util::Storage do
       end
 
       it "should attempt to rename the state file if the file is corrupted" do
-        @state_file.write('{ invalid')
-        @state_file.flush
+        write_state_file('{ invalid')
 
         File.expects(:rename).at_least_once
 
@@ -162,17 +162,10 @@ describe Puppet::Util::Storage do
       end
 
       it "should fail gracefully on load() if the state file is not a regular file" do
-        @state_file.close!()
-        Dir.mkdir(Puppet[:statefile])
+        FileUtils.rm_f(@state_file)
+        Dir.mkdir(@state_file)
 
         Puppet::Util::Storage.load
-
-        Dir.rmdir(Puppet[:statefile])
-      end
-
-      after(:each) do
-        @state_file.close!()
-        Puppet[:statefile] = @saved_statefile
       end
     end
   end
