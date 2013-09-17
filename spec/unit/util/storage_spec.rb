@@ -7,17 +7,8 @@ require 'puppet/util/storage'
 describe Puppet::Util::Storage do
   include PuppetSpec::Files
 
-  before(:all) do
-    @basepath = make_absolute("/somepath")
-    Puppet[:statedir] = tmpdir("statedir")
-  end
-
-  after(:all) do
-    Puppet.settings.clear
-  end
-
   before(:each) do
-    Puppet::Util::Storage.clear
+    @basepath = File.expand_path("/somepath")
   end
 
   describe "when caching a symbol" do
@@ -40,7 +31,7 @@ describe Puppet::Util::Storage do
   end
 
   describe "when caching a Puppet::Type" do
-    before(:all) do
+    before(:each) do
       @file_test = Puppet::Type.type(:file).new(:name => @basepath+"/yayness", :audit => %w{checksum type})
       @exec_test = Puppet::Type.type(:exec).new(:name => @basepath+"/bin/ls /yayness")
     end
