@@ -146,9 +146,9 @@ class Puppet::Configurer
     master_version = Puppet::Status.indirection.find('*').version
 
     if !master_version
-      Puppet.notice "Master is running puppet version < 3.3, so dropping back to"
-      Puppet.notice "yaml serialization for 1) arrays in query parameters, and 2) reports."
-      Puppet.notice "To remove this notice please upgrade your puppet master."
+      Puppet.notice "Using less secure serialization of reports and query parameters for compatibility"
+      Puppet.notice "with older puppet master. To remove this notice, please upgrade your master(s) "
+      Puppet.notice "to Puppet 3.3 or newer."
       Puppet.notice "See http://links.puppetlabs.com/deprecate_yaml_on_network for more information."
       Puppet[:legacy_query_parameter_serialization] = true
       Puppet[:report_serialization_format] = "yaml"
