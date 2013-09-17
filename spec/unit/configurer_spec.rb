@@ -94,6 +94,19 @@ describe Puppet::Configurer do
       @agent.run
     end
 
+    it "should set backward compatibility settings when talking to an older master" do
+      Puppet::Status.indirection.expects(:find).returns Puppet::Status.new
+      @agent.run()
+      Puppet[:report_serialization_format].should == 'yaml'
+      Puppet[:legacy_query_parameter_serialization].should == true
+    end
+
+    it "should not set backward compatibility settings when talking to a current-version master" do
+      @agent.run()
+      Puppet[:report_serialization_format].should == 'pson'
+      Puppet[:legacy_query_parameter_serialization].should == false
+    end
+
     it "downloads plugins when told" do
       @agent.expects(:download_plugins)
       @agent.run(:pluginsync => true)
