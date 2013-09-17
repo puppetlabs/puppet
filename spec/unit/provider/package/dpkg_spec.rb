@@ -289,6 +289,14 @@ desired ok status name ensure :DESC: summary text
       no_description = "desired ok status name ensure :DESC: \n:DESC:"
       parser_test(no_description, package_hash.merge(:description => ''))
     end
+
+    it "parses dpkg reporting that package does not exist without warning about a failed match (#22529)" do
+      Puppet.expects(:warning).never
+      pipe = StringIO.new("No packages found matching non-existent-package")
+      Puppet::Util::Execution.expects(:execpipe).with(query_args).yields(pipe).raises(Puppet::ExecutionFailure.new('no package found'))
+
+      expect(provider.query).to eq({:ensure=>:purged, :status=>"missing", :name=>"name", :error=>"ok"})
+    end
   end
 
   it "should be able to install" do
