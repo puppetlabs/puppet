@@ -73,17 +73,15 @@ describe Puppet::Util::Storage do
 
     describe "when the state file/directory does not exist" do
       before(:each) do
-        transient = Tempfile.new('storage_test')
-        @path = transient.path()
-        transient.close!()
+        @path = tmpfile('storage_test')
       end
 
-      it "should not fail to load()" do
+      it "should not fail to load" do
         FileTest.exists?(@path).should be_false
         Puppet[:statedir] = @path
-        expect { Puppet::Util::Storage.load }.to_not raise_error
+        Puppet::Util::Storage.load
         Puppet[:statefile] = @path
-        expect { Puppet::Util::Storage.load }.to_not raise_error
+        Puppet::Util::Storage.load
       end
 
       it "should not lose its internal state when load() is called" do
