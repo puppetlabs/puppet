@@ -10,6 +10,11 @@ module Puppet::Util::Profiler
 
   NONE = Puppet::Util::Profiler::None.new
 
+  # Reset the profiling system to the original state
+  def self.clear
+    @profiler = nil
+  end
+
   # @return This thread's configured profiler
   def self.current
     @profiler || NONE
