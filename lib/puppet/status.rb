@@ -29,4 +29,12 @@ class Puppet::Status
   def name=(name)
     # NOOP
   end
+
+  def version
+    @status['version']
+  end
+
+  def version=(version)
+    @status['version'] = version
+  end
 end
