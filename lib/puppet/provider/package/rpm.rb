@@ -13,6 +13,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   # The query format by which we identify installed packages
   self::NEVRA_FORMAT = %Q{'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} #{self::RPM_DESCRIPTION_DELIMITER} %{SUMMARY}\\n'}
   self::NEVRA_REGEX  = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)(?: #{self::RPM_DESCRIPTION_DELIMITER} ?(.*))?$}
+  self::RPM_PACKAGE_NOT_FOUND_REGEX = /package .+ is not installed/
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch, :description]
 
   commands :rpm => "rpm"
@@ -76,7 +77,6 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     rescue Puppet::ExecutionFailure
       return nil
     end
-
     # FIXME: We could actually be getting back multiple packages
     # for multilib and this will only return the first such package
     @property_hash.update(self.class.nevra_to_hash(output))
@@ -150,7 +150,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     line.strip!
     hash = {}
 
-    if match = self::NEVRA_REGEX.match(line)
+    if self::RPM_PACKAGE_NOT_FOUND_REGEX.match(line)
+      # pass through, package was not found
+    elsif match = self::NEVRA_REGEX.match(line)
       self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
       hash[:provider] = self.name
       hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"

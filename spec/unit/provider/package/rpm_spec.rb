@@ -258,6 +258,10 @@ describe provider_class do
     it "should warn but not fail if line is unparseable" do
       parser_test('bad data', {}, 1)
     end
+
+    it "should not warn and not fail if rpm returns package not found" do
+      parser_test('package foo is not installed', {}, 0)
+    end
   end
 
   describe ".nodigest" do
