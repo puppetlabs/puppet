@@ -334,6 +334,15 @@ describe Puppet::Indirector::Request do
       }
     end
 
+    it "should convert an array of values into a single yaml entry when in legacy mode" do
+      Puppet[:legacy_query_parameter_serialization] = true
+      request = a_request_with_options(:one => %w{one two})
+
+      the_parsed_query_string_from(request).should == {
+          "one" => ["--- \n  - one\n  - two"]
+      }
+    end
+
     it "should stringify simple data types inside an array" do
       request = a_request_with_options(:one => ['one', nil])
 
