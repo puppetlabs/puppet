@@ -18,8 +18,8 @@ describe 'InstallUtils' do
     end
   end
 
-  let(:testcase) { ATestCase.new }
   let(:host) { TestHost.new }
+  let(:testcase) { ATestCase.new }
 
   describe "install_packages_on" do
     it "raises an error if package_hash has unknown platform keys" do
@@ -30,12 +30,13 @@ describe 'InstallUtils' do
 
     shared_examples_for(:install_packages_on) do |platform,command,package|
 
-       let(:package_hash) do
-         {
-           :redhat => ['rh_package'],
-           :debian => [['db_command', 'db_package']],
-         }
-       end
+      let(:package_hash) do
+        {
+          :redhat => ['rh_package'],
+          :debian => [['db_command', 'db_package']],
+        }
+      end
+      let(:additional_switches) { platform == 'debian' ? '--allow-unauthenticated' : nil }
 
       before do
         logger = mock('logger', :notify => nil)
@@ -45,13 +46,13 @@ describe 'InstallUtils' do
 
       it "installs packages on a host" do
         host.expects(:check_for_package).never
-        host.expects(:install_package).with(package).once
+        host.expects(:install_package).with(package, additional_switches).once
         testcase.install_packages_on(host, package_hash)
       end
 
       it "checks and installs packages on a host" do
         host.expects(:check_for_package).with(command).once
-        host.expects(:install_package).with(package).once
+        host.expects(:install_package).with(package, additional_switches).once
         testcase.install_packages_on(host, package_hash, :check_if_exists => true)
       end
     end
@@ -132,7 +133,7 @@ describe 'InstallUtils' do
         ],
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
-          "pl-puppet-abcdef10-el-6-i386-product.repo",
+          "pl-puppet-abcdef10-el-6-i386.repo",
         ],
       },
     )
@@ -147,7 +148,7 @@ describe 'InstallUtils' do
         ],
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
-          "pl-puppet-abcdef10-fedora-f18-x86_64-product.repo",
+          "pl-puppet-abcdef10-fedora-f18-x86_64.repo",
         ],
       },
     )
@@ -162,7 +163,7 @@ describe 'InstallUtils' do
         ],
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
-          "pl-puppet-abcdef10-el-5-x86_64-product.repo",
+          "pl-puppet-abcdef10-el-5-x86_64.repo",
         ],
       },
     )
