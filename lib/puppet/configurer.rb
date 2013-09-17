@@ -213,7 +213,7 @@ class Puppet::Configurer
     if detail.message =~ /Could not intern from pson.*Puppet::Transaction::Report/
       Puppet.notice("There was an error sending the report.")
       Puppet.notice("This error is possibly caused by sending the report in a format the master can not handle.")
-      Puppet.notice("A puppet master older than 3.2.2 can not handle pson reports.")
+      Puppet.notice("A puppet master older than 3.3.0 can not handle pson reports.")
       Puppet.notice("Set report_serialization_format=yaml on the agent to send reports to older masters.")
       Puppet.notice("See http://links.puppetlabs.com/deprecate_yaml_on_network for more information.")
     end
