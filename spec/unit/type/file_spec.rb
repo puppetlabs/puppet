@@ -78,10 +78,6 @@ describe Puppet::Type.type(:file) do
       end
 
       describe "when using UNC filenames", :if => Puppet.features.microsoft_windows? do
-        before :each do
-          pending("UNC file paths not yet supported")
-        end
-
         it "should remove trailing slashes" do
           file[:path] = "//server/foo/bar/baz/"
           file[:path].should == "//server/foo/bar/baz"
