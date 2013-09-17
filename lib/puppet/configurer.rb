@@ -143,17 +143,6 @@ class Puppet::Configurer
 
     Puppet::Util::Log.newdestination(report)
 
-    master_version = Puppet::Status.indirection.find('*').version
-
-    if !master_version
-      Puppet.notice "Using less secure serialization of reports and query parameters for compatibility"
-      Puppet.notice "with older puppet master. To remove this notice, please upgrade your master(s) "
-      Puppet.notice "to Puppet 3.3 or newer."
-      Puppet.notice "See http://links.puppetlabs.com/deprecate_yaml_on_network for more information."
-      Puppet[:legacy_query_parameter_serialization] = true
-      Puppet[:report_serialization_format] = "yaml"
-    end
-
     begin
       unless Puppet[:node_name_fact].empty?
         query_options = get_facts(options)

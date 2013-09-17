@@ -9,7 +9,6 @@ class Puppet::Application::Agent < Puppet::Application
 
   def app_defaults
     super.merge({
-      :status_terminus => :rest,
       :catalog_terminus => :rest,
       :catalog_cache_terminus => :json,
       :node_terminus => :rest,

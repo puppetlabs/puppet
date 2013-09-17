@@ -20,6 +20,8 @@ end
 
 describe Puppet::Agent do
   before do
+    Puppet::Status.indirection.stubs(:find).returns Puppet::Status.new
+
     @agent = Puppet::Agent.new(AgentTestClient, false)
 
     # So we don't actually try to hit the filesystem.
@@ -75,6 +77,20 @@ describe Puppet::Agent do
       AgentTestClient.stubs(:lockfile_path).returns "/my/lock"
       @agent.stubs(:running?).returns false
       @agent.stubs(:disabled?).returns false
+    end
+
+    it "should set backward compatibility settings when talking to an older master" do
+      @agent.run()
+      Puppet[:report_serialization_format].should == 'yaml'
+      Puppet[:legacy_query_parameter_serialization].should == true
+    end
+
+    it "should not set backward compatibility settings when talking to a current-version master" do
+      Puppet::Status.indirection.expects(:find).returns Puppet::Status.new("version" => "3.3.1")
+
+      @agent.run()
+      Puppet[:report_serialization_format].should == 'pson'
+      Puppet[:legacy_query_parameter_serialization].should == false
     end
 
     it "should splay" do

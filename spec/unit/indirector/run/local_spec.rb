@@ -9,6 +9,8 @@ describe Puppet::Run::Local do
   end
 
   it "should call runner.run on save and return the runner" do
+    Puppet::Status.indirection.stubs(:find).returns Puppet::Status.new
+
     runner  = Puppet::Run.new
     runner.stubs(:run).returns(runner)
 
