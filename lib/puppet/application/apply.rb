@@ -253,6 +253,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     elsif options[:verbose]
       Puppet::Util::Log.level = :info
     end
+
+    if Puppet[:profile]
+      Puppet::Util::Profiler.current = Puppet::Util::Profiler::WallClock.new(Puppet.method(:debug), "apply")
+    end
   end
 
   private
