@@ -49,7 +49,7 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
   end
 
   it "should have documentation" do
-    provider_class.doc.should be_instance_of(String)
+    expect(provider_class.doc).to be_instance_of(String)
   end
 
   describe "when listing all instances" do
@@ -66,7 +66,7 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
       installed = mock 'bash'
       provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :description => "GNU Bourne Again SHell", :provider => :dpkg).returns installed
 
-      provider_class.instances.should == [installed]
+      expect(provider_class.instances).to eq([installed])
     end
 
     it "should parse multiple dpkg-query multi-line entries in the output" do
@@ -77,7 +77,7 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
       vim = mock 'vim'
       provider_class.expects(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :description => "Vi IMproved - enhanced vi editor", :provider => :dpkg).returns vim
 
-      provider_class.instances.should == [bash, vim]
+      expect(provider_class.instances).to eq([bash, vim])
     end
 
     it "should warn on and ignore any lines it does not understand" do
@@ -86,7 +86,7 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
       Puppet.expects(:warning)
       provider_class.expects(:new).never
 
-      provider_class.instances.should == []
+      expect(provider_class.instances).to eq([])
     end
 
     it "should not warn on extra multiline description lines which we are ignoring" do
@@ -105,7 +105,7 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
       vim = mock 'vim'
       provider_class.expects(:new).twice.returns(bash, vim)
 
-      provider_class.instances.should == [bash, vim]
+      expect(provider_class.instances).to eq([bash, vim])
     end
 
     it "should warn on a broken entry while still parsing a good one" do
@@ -122,7 +122,7 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
       saved = mock('saved')
       provider_class.expects(:new).twice.returns(bash, vim)
 
-      provider_class.instances.should == [bash, vim]
+      expect(provider_class.instances).to eq([bash, vim])
     end
   end
 
@@ -148,25 +148,25 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
     it "should consider the package purged if dpkg-query fails" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).raises Puppet::ExecutionFailure.new("eh")
 
-      provider.query[:ensure].should == :purged
+      expect(provider.query[:ensure]).to eq(:purged)
     end
 
     it "should return a hash of the found package status for an installed package" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields bash_installed_io
 
-      provider.query.should == {:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg, :description => "GNU Bourne Again SHell"}
+      expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg, :description => "GNU Bourne Again SHell"})
     end
 
     it "should consider the package absent if the dpkg-query result cannot be interpreted" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields StringIO.new("somebaddata")
 
-      provider.query[:ensure].should == :absent
+      expect(provider.query[:ensure]).to eq(:absent)
     end
 
     it "should fail if an error is discovered" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields replace_in_bash_output("ok", "error")
 
-      lambda { provider.query }.should raise_error(Puppet::Error)
+      expect { provider.query }.to raise_error(Puppet::Error)
     end
 
     it "should consider the package purged if it is marked 'not-installed'" do
@@ -174,32 +174,32 @@ install ok installed vim 2:7.3.547-6ubuntu5 :DESC: Vi IMproved - enhanced vi edi
       not_installed_bash.gsub!(bash_version, "")
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields StringIO.new(not_installed_bash)
 
-      provider.query[:ensure].should == :purged
+      expect(provider.query[:ensure]).to eq(:purged)
     end
 
     it "should consider the package absent if it is marked 'config-files'" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields replace_in_bash_output("installed", "config-files")
-      provider.query[:ensure].should == :absent
+      expect(provider.query[:ensure]).to eq(:absent)
     end
 
     it "should consider the package absent if it is marked 'half-installed'" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields replace_in_bash_output("installed", "half-installed")
-      provider.query[:ensure].should == :absent
+      expect(provider.query[:ensure]).to eq(:absent)
     end
 
     it "should consider the package absent if it is marked 'unpacked'" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields replace_in_bash_output("installed", "unpacked")
-      provider.query[:ensure].should == :absent
+      expect(provider.query[:ensure]).to eq(:absent)
     end
 
     it "should consider the package absent if it is marked 'half-configured'" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields replace_in_bash_output("installed", "half-configured")
-      provider.query[:ensure].should == :absent
+      expect(provider.query[:ensure]).to eq(:absent)
     end
 
     it "should consider the package held if its state is 'hold'" do
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields replace_in_bash_output("install", "hold")
-      provider.query[:ensure].should == :held
+      expect(provider.query[:ensure]).to eq(:held)
     end
   end
 
@@ -233,12 +233,12 @@ desired ok status next-pkg ensure :DESC: next summary
       Puppet.expects(:warning).times(4)
 
       pipe = StringIO.new(broken_description)
-      provider_class.parse_multi_line(pipe).should == package_hash
+      expect(provider_class.parse_multi_line(pipe)).to eq(package_hash)
 
       next_package = package_hash.merge(:name => 'next-pkg', :description => 'next summary')
 
       hash = provider_class.parse_multi_line(pipe) until hash # warn about bad lines
-      hash.should == next_package
+      expect(hash).to eq(next_package)
     end
 
     def parser_test(dpkg_output_string, gold_hash)
@@ -246,7 +246,7 @@ desired ok status next-pkg ensure :DESC: next summary
       Puppet::Util::Execution.expects(:execpipe).with(query_args).yields pipe
       Puppet.expects(:warning).never
 
-      provider.query.should == gold_hash
+      expect(provider.query).to eq(gold_hash)
     end
 
     it "should parse properly even if delimiter is in version" do
@@ -289,10 +289,18 @@ desired ok status name ensure :DESC: summary text
       no_description = "desired ok status name ensure :DESC: \n:DESC:"
       parser_test(no_description, package_hash.merge(:description => ''))
     end
+
+    it "parses dpkg reporting that package does not exist without warning about a failed match (#22529)" do
+      Puppet.expects(:warning).never
+      pipe = StringIO.new("No packages found matching non-existent-package")
+      Puppet::Util::Execution.expects(:execpipe).with(query_args).yields(pipe).raises(Puppet::ExecutionFailure.new('no package found'))
+
+      expect(provider.query).to eq({:ensure=>:purged, :status=>"missing", :name=>"name", :error=>"ok"})
+    end
   end
 
   it "should be able to install" do
-    provider.should respond_to(:install)
+    expect(provider).to respond_to(:install)
   end
 
   describe "when installing" do
@@ -303,7 +311,7 @@ desired ok status name ensure :DESC: summary text
     it "should fail to install if no source is specified in the resource" do
       resource.expects(:[]).with(:source).returns nil
 
-      lambda { provider.install }.should raise_error(ArgumentError)
+      expect { provider.install }.to raise_error(ArgumentError)
     end
 
     it "should use 'dpkg -i' to install the package" do
@@ -373,7 +381,7 @@ desired ok status name ensure :DESC: summary text
     it "should return the version found by dpkg-deb" do
       resource.expects(:[]).with(:source).returns "myfile"
       provider.expects(:dpkg_deb).with { |*command| command[-1] == "myfile" }.returns "package\t1.0"
-      provider.latest.should == "1.0"
+      expect(provider.latest).to eq("1.0")
     end
 
     it "should warn if the package file contains a different package" do
@@ -386,7 +394,7 @@ desired ok status name ensure :DESC: summary text
       resource = stub 'resource', :[] => "package++"
       provider = provider_class.new(resource)
       provider.expects(:dpkg_deb).returns "package++\t1.0"
-      provider.latest.should == "1.0"
+      expect(provider.latest).to eq("1.0")
     end
   end
 
