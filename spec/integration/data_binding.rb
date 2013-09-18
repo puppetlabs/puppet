@@ -35,6 +35,27 @@ describe "Data binding" do
     expect(resource[:calling_module]).to eq("testing")
   end
 
+  it "works with the puppet backend configured, although it can't use it for lookup" do
+    configure_hiera_for_puppet
+    create_manifest_in_module("testing", "binding.pp",
+                              <<-MANIFEST)
+    # lookup via the puppet backend to ensure it works
+    class testing::binding($value = hiera('variable')) {}
+    MANIFEST
+
+    create_manifest_in_module("testing", "data.pp",
+                              <<-MANIFEST)
+    class testing::data {
+      $variable = "the value"
+    }
+    MANIFEST
+
+    catalog = compile_to_catalog("include testing::binding")
+    resource = catalog.resource('Class[testing::binding]')
+
+    expect(resource[:value]).to eq("the value")
+  end
+
   def configure_hiera_for(data)
     hiera_config_file = tmpfile("hiera.yaml")
 
@@ -50,6 +71,19 @@ describe "Data binding" do
 
     File.open(File.join(dir, 'global.yaml'), 'w') do |f|
       f.write(YAML.dump(data))
+    end
+
+    Puppet[:hiera_config] = hiera_config_file
+  end
+
+  def configure_hiera_for_puppet
+    hiera_config_file = tmpfile("hiera.yaml")
+
+    File.open(hiera_config_file, 'w') do |f|
+      f.write("---
+        :logger: 'noop'
+        :backends: ['puppet']
+      ")
     end
 
     Puppet[:hiera_config] = hiera_config_file
