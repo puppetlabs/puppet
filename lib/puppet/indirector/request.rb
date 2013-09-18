@@ -159,7 +159,25 @@ class Puppet::Indirector::Request
   # Create the query string, if options are present.
   def query_string
     return "" if options.nil? || options.empty?
+
+    # For backward compatibility with older (pre-3.3) masters,
+    # this puppet option allows serialization of query parameter
+    # arrays as yaml.  This can be removed when we remove yaml
+    # support entirely.
+    if Puppet.settings[:legacy_query_parameter_serialization]
+      replace_arrays_with_yaml
+    end
+
     "?" + encode_params(expand_into_parameters(options.to_a))
+  end
+
+  def replace_arrays_with_yaml
+    options.each do |key, value|
+      case value
+        when Array
+          options[key] = YAML.dump(value)
+      end
+    end
   end
 
   def expand_into_parameters(data)

@@ -20,6 +20,8 @@ end
 
 describe Puppet::Agent do
   before do
+    Puppet::Status.indirection.stubs(:find).returns Puppet::Status.new("version" => Puppet.version)
+
     @agent = Puppet::Agent.new(AgentTestClient, false)
 
     # So we don't actually try to hit the filesystem.
@@ -75,6 +77,25 @@ describe Puppet::Agent do
       AgentTestClient.stubs(:lockfile_path).returns "/my/lock"
       @agent.stubs(:running?).returns false
       @agent.stubs(:disabled?).returns false
+    end
+
+    it "should set backward compatibility settings when talking to an older master" do
+      # Override the stub above to return a bare status object, i.e. without a version in the hash
+      Puppet::Status.indirection.expects(:find).returns Puppet::Status.new
+
+      @agent.run()
+      Puppet[:report_serialization_format].should == 'yaml'
+      Puppet[:legacy_query_parameter_serialization].should == true
+    end
+
+    it "should not set backward compatibility settings when talking to a 3.3.1 master" do
+      # Override the stub above to return a status object with the first reported version to
+      # support yaml deprecation
+      Puppet::Status.indirection.expects(:find).returns Puppet::Status.new("version" => "3.3.1")
+
+      @agent.run()
+      Puppet[:report_serialization_format].should == 'pson'
+      Puppet[:legacy_query_parameter_serialization].should == false
     end
 
     it "should splay" do

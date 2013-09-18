@@ -142,6 +142,7 @@ class Puppet::Configurer
     init_storage
 
     Puppet::Util::Log.newdestination(report)
+
     begin
       unless Puppet[:node_name_fact].empty?
         query_options = get_facts(options)
@@ -210,13 +211,6 @@ class Puppet::Configurer
     Puppet::Transaction::Report.indirection.save(report, nil, :environment => @environment) if Puppet[:report]
   rescue => detail
     Puppet.log_exception(detail, "Could not send report: #{detail}")
-    if detail.message =~ /Could not intern from pson.*Puppet::Transaction::Report/
-      Puppet.notice("There was an error sending the report.")
-      Puppet.notice("This error is possibly caused by sending the report in a format the master can not handle.")
-      Puppet.notice("A puppet master older than 3.2.2 can not handle pson reports.")
-      Puppet.notice("Set report_serialization_format=yaml on the agent to send reports to older masters.")
-      Puppet.notice("See http://links.puppetlabs.com/deprecate_yaml_on_network for more information.")
-    end
   end
 
   def save_last_run_summary(report)
