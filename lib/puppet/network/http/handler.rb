@@ -84,6 +84,8 @@ module Puppet::Network::HTTP::Handler
     request_method = http_method(request)
     request_path = path(request)
 
+    response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
+
     configure_profiler(request_headers, request_params)
 
     Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do

@@ -5,8 +5,28 @@ require 'puppet/indirector/errors'
 require 'puppet/indirector/rest'
 
 # Just one from each category since the code makes no real distinctions
-HTTP_ERROR_CODES = [300, 400, 500]
 shared_examples_for "a REST terminus method" do |terminus_method|
+  describe "when talking to an older master" do
+    it "should set backward compatibility settings" do
+      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns nil
+
+      terminus.send(terminus_method, request)
+      Puppet[:report_serialization_format].should == 'yaml'
+      Puppet[:legacy_query_parameter_serialization].should == true
+    end
+  end
+
+  describe "when talking to a 3.3.1 master" do
+    it "should not set backward compatibility settings" do
+      response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns "3.3.1"
+
+      terminus.send(terminus_method, request)
+      Puppet[:report_serialization_format].should == 'pson'
+      Puppet[:legacy_query_parameter_serialization].should == false
+    end
+  end
+
+  HTTP_ERROR_CODES = [300, 400, 500]
   HTTP_ERROR_CODES.each do |code|
     describe "when the response code is #{code}" do
       let(:response) { mock_response(code, 'error messaged!!!') }
@@ -115,6 +135,7 @@ describe Puppet::Indirector::REST do
     obj = stub('http 200 ok', :code => code.to_s, :body => body)
     obj.stubs(:[]).with('content-type').returns(content_type)
     obj.stubs(:[]).with('content-encoding').returns(encoding)
+    obj.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns(Puppet.version)
     obj
   end
 
@@ -173,7 +194,6 @@ describe Puppet::Indirector::REST do
     Puppet[:masterport] = "543"
     terminus_class.port.should == 543
   end
-
 
   it 'should default to :puppet for the srv_service' do
     Puppet::Indirector::REST.srv_service.should == :puppet

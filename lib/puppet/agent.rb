@@ -105,27 +105,9 @@ class Puppet::Agent
 
   private
 
-  def check_master_version
-
-    prev_terminus = Puppet::Status.indirection.terminus_class
-    Puppet::Status.indirection.terminus_class = :rest
-    master_version = Puppet::Status.indirection.find('*').version
-    Puppet::Status.indirection.terminus_class = prev_terminus
-
-    if !master_version
-      Puppet.notice "Using less secure serialization of reports and query parameters for compatibility"
-      Puppet.notice "with older puppet master. To remove this notice, please upgrade your master(s) "
-      Puppet.notice "to Puppet 3.3 or newer."
-      Puppet.notice "See http://links.puppetlabs.com/deprecate_yaml_on_network for more information."
-      Puppet[:legacy_query_parameter_serialization] = true
-      Puppet[:report_serialization_format] = "yaml"
-    end
-  end
-
   # Create and yield a client instance, keeping a reference
   # to it during the yield.
   def with_client
-    check_master_version
     begin
       @client = client_class.new
     rescue SystemExit,NoMemoryError
