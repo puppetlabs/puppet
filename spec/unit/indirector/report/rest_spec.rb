@@ -36,6 +36,7 @@ describe Puppet::Transaction::Report::Rest do
     obj = stub('http 200 ok', :code => code.to_s, :body => body)
     obj.stubs(:[]).with('content-type').returns(content_type)
     obj.stubs(:[]).with('content-encoding').returns(encoding)
+    obj.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns(Puppet.version)
     obj
   end
 
