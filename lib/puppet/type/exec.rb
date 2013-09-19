@@ -220,6 +220,18 @@ module Puppet
       end
     end
 
+    newparam(:umask, :required_feature => :umask) do
+      desc "Sets the umask to be used while executing this command"
+
+      munge do |value|
+        if value =~ /^0?[0-7]{1,4}$/
+          return value.to_i(8)
+        else
+          raise Puppet::Error, "The umask specification is invalid: #{value.inspect}"
+        end
+      end
+    end
+
     newparam(:timeout) do
       desc "The maximum time the command should take.  If the command takes
         longer than the timeout, the command is considered to have failed
