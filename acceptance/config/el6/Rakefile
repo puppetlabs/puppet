@@ -13,7 +13,9 @@ module HarnessOptions
     :debug => true,
     :color => false,
     :root_keys => true,
-    :keyfile => "id_rsa-acceptance",
+    :ssh => {
+      :keys => ["id_rsa-acceptance"],
+    },
   }
 
   class Aggregator
@@ -236,7 +238,9 @@ namespace :standalone do
   desc "Bring up vagrant boxes and run the tests through the puppet-acceptance beaker harness.  Specify TEST='../../tests/foo' to customize which tests are to be run, and/or OPTIONS='bar' to pass options to beaker."
   task :test => [:up, :ensure_good_private_key] do
     beaker_test(:git,
-      :keyfile => 'acceptance.priv',
+      :ssh => {
+        :keys => ['acceptance.priv'],
+      },
       :install => [
         'git://github.com/puppetlabs/facter.git#stable',
         'git://github.com/puppetlabs/hiera.git#stable',
