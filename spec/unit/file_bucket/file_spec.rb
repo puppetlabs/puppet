@@ -15,18 +15,28 @@ describe Puppet::FileBucket::File do
   let(:bucketdir) { Puppet[:bucketdir] = tmpdir('bucket') }
   let(:destdir) { File.join(bucketdir, "8/b/3/7/0/2/a/d/#{digest}") }
 
-  it "defines its supported format to be `:s`" do
-    expect(Puppet::FileBucket::File.supported_formats).to eq([:s])
+  it "defaults to serializing to `:s`" do
+    expect(Puppet::FileBucket::File.default_format).to eq(:s)
   end
 
-  it "serializes to `:s`" do
-    expect(Puppet::FileBucket::File.new(contents).to_s).to eq(contents)
+  it "accepts s and pson" do
+   expect(Puppet::FileBucket::File.supported_formats).to include(:s, :pson)
   end
 
-  it "deserializes from `:s`" do
-    file = Puppet::FileBucket::File.from_s(contents)
+  it "can make a round trip through `s`" do
+    file = Puppet::FileBucket::File.new(contents)
 
-    expect(file.contents).to eq(contents)
+    tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
+
+    expect(tripped.contents).to eq(contents)
+  end
+
+  it "can make a round trip through `pson`" do
+    file = Puppet::FileBucket::File.new(contents)
+
+    tripped = Puppet::FileBucket::File.convert_from(:pson, file.render(:pson))
+
+    expect(tripped.contents).to eq(contents)
   end
 
   it "should raise an error if changing content" do
@@ -76,12 +86,8 @@ describe Puppet::FileBucket::File do
   end
 
   it "should convert the contents to PSON" do
-    # The model class no longer defines to_pson and it is not a supported
-    # format, but pson monkey patches Object#to_pson to return
-    # Object#to_s.to_pson, and it monkey patches String#to_pson to wrap the
-    # returned string in quotes. So it works in a way that is completely
-    # unexpected, and it doesn't round-trip correctly, awesome.
-    Puppet::FileBucket::File.new("file contents").to_pson.should == '"file contents"'
+    Puppet.expects(:deprecation_warning).with('Serializing Puppet::FileBucket::File objects to pson is deprecated.')
+    Puppet::FileBucket::File.new("file contents").to_pson.should == '{"contents":"file contents"}'
   end
 
   it "should load from PSON" do
