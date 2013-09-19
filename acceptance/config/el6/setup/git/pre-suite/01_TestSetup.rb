@@ -42,8 +42,6 @@ test_name "Install packages and repositories on target machines..." do
     end
   end
 
-  config[:version] = versions
-
   step "Agents: create basic puppet.conf" do
     agents.each do |agent|
       puppetconf = File.join(agent['puppetpath'], 'puppet.conf')
