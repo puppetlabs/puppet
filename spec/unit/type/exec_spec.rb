@@ -753,4 +753,11 @@ describe Puppet::Type.type(:exec) do
       type.new(:command => abs, :path => path).must be
     end
   end
+  describe "when providing a umask" do
+    it "should fail if an invalid umask is used" do
+      resource = Puppet::Type.type(:exec).new :command => "/bin/true"
+      expect { resource[:umask] = '0028'}.to raise_error(Puppet::ResourceError, /umask specification is invalid/)
+      expect { resource[:umask] = '28' }.to raise_error(Puppet::ResourceError, /umask specification is invalid/)
+    end
+  end
 end
