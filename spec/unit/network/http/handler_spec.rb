@@ -146,7 +146,11 @@ describe Puppet::Network::HTTP::Handler do
   end
 
   describe "when processing a request" do
-    let(:response) { mock('http response') }
+    let(:response) do
+      obj = stub "http 200 ok"
+      obj.stubs(:[]=).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION, Puppet.version)
+      obj
+    end
 
     before do
       handler.stubs(:check_authorization)

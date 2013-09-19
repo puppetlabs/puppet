@@ -51,6 +51,7 @@ rn/G
     response = stub 'response', :code => "200", :body => cert_string
     response.stubs(:[]).with('content-type').returns "text/plain"
     response.stubs(:[]).with('content-encoding')
+    response.stubs(:[]).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION).returns(Puppet.version)
     network.stubs(:verify_callback=)
     network.expects(:get).returns response
 
