@@ -61,6 +61,9 @@ end
 
 def beaker_test(mode = :packages, options = {})
   final_options = HarnessOptions.options(mode, options)
+
+  final_options[:install] << "git://github.com/puppetlabs/puppet.git##{sha}" if mode == :git
+
   options_file = 'merged_options.rb'
   File.open(options_file, 'w') do |merged|
     merged.puts <<-EOS
@@ -75,13 +78,12 @@ EOS
   tests = ENV['TEST']
   tests = "--tests #{tests}" if tests
 
-  config = ENV['CONFIG']
-  config = "--hosts #{config}" if config
+  config_opt = "--hosts #{config}" if config
 
   preserve_config = options.key?(:preserve_hosts) || overriding_options =~ /--preserve-hosts/
 
   begin
-    sh "beaker --options-file #{options_file} #{config} #{tests} #{overriding_options}"
+    sh "beaker --options-file #{options_file} #{config_opt} #{tests} #{overriding_options}"
   ensure
     generate_config_for_latest_hosts
     sh "mv #{options_file} log/latest"
@@ -91,10 +93,10 @@ end
 def generate_config_for_latest_hosts
   nodes = { :master => {}, :agent => {} }
   File.open('log/latest/config.yml', 'r') do |file|
-    config = file.read
-    config =~ /master:.*?platform: ([\w-]+)\s*$/m
+    config_yml = file.read
+    config_yml =~ /master:.*?platform: ([\w-]+)\s*$/m
     nodes[:master][:platform] = $1
-    config =~ /agent:.*?platform: ([\w-]+)\s*$/m
+    config_yml =~ /agent:.*?platform: ([\w-]+)\s*$/m
     nodes[:agent][:platform] = $1
   end
   File.open('log/latest/pre-suite-run.log', 'r') do |log_file|
@@ -113,7 +115,7 @@ HOSTS:
     roles:
       - master
       - agent
-    platform: #{nodes[:master][:platform]} 
+    platform: #{nodes[:master][:platform]}
   #{nodes[:agent][:hostname]}.delivery.puppetlabs.net:
     roles:
       - agent
@@ -133,7 +135,7 @@ def list_preserved_configurations
     if preserved_config = File.exists?(preserved_config_path)
       directory = File.new(dir)
       if directory.ctime > yesterday
-        hosts = [] 
+        hosts = []
         preserved_config = YAML.load_file(preserved_config_path).to_hash
         preserved_config['HOSTS'].each do |hostname,values|
           hosts << "#{hostname}: #{values['platform']}, #{values['roles']}"
@@ -157,11 +159,24 @@ def beaker_run_type
   type = type.to_sym
 end
 
+def sha
+  ENV['SHA']
+end
+
+def config
+  ENV['CONFIG']
+end
+
 namespace :ci do
+
+  task :check_env do
+    raise(USAGE) unless sha && config
+  end
 
   namespace :test do
 
     USAGE = <<-EOS
+Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
 Also must set CONFIG=config/nodes/foo.yaml or path to some other Beaker configuration.
 You may set TESTS=path/to/test,and/more/tests.
 You may set additional Beaker OPTIONS='--more --options'
@@ -169,11 +184,9 @@ EOS
 
     desc <<-EOS
 Run the acceptance tests through Beaker and install packages on the configuration targets.
-Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
 #{USAGE}
 EOS
-    task :packages do
-      raise("You must set ENV['SHA'] to a puppet commit.") unless ENV['SHA']
+    task :packages => 'ci:check_env' do
       beaker_test
     end
 
@@ -181,7 +194,7 @@ EOS
 Run the acceptance tests through Beaker and install from git on the configuration targets.
 #{USAGE}
 EOS
-    task :git do
+    task :git => 'ci:check_env' do
       beaker_test(:git)
     end
   end
@@ -194,8 +207,9 @@ EOS
   desc <<-EOS
 Run an acceptance test for a given node configuration and preserve the hosts.
 Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
+#{USAGE}
   EOS
-  task :test_and_preserve_hosts  do
+  task :test_and_preserve_hosts => 'ci:check_env'  do
     beaker_test(beaker_run_type, :preserve_hosts => true)
   end
 
