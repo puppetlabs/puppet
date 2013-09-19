@@ -152,6 +152,11 @@ def print_preserved(preserved)
   end
 end
 
+def beaker_run_type
+  type = ENV['TYPE'] || :packages
+  type = type.to_sym
+end
+
 namespace :ci do
 
   namespace :test do
@@ -186,9 +191,12 @@ EOS
     generate_config_for_latest_hosts
   end
 
-  desc "Run an acceptance test for a given node configuration and preserve the hosts."
+  desc <<-EOS
+Run an acceptance test for a given node configuration and preserve the hosts.
+Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
+  EOS
   task :test_and_preserve_hosts  do
-    beaker_test(:packages, :preserve_hosts => true)
+    beaker_test(beaker_run_type, :preserve_hosts => true)
   end
 
   desc "List acceptance runs from the past day which had hosts preserved."
@@ -204,6 +212,7 @@ Uses the setup/rsync/pre-suite to rsync the local puppet source onto master and 
 You may specify an RSYNC_FILTER_FILE as well.
 You may skip purgeing and reinstalling puppet packages by including SKIP_PACKAGE_REINSTALL.
 You may skip rsyncing local puppet files over to the tests hosts by including SKIP_RSYNC.
+Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
   EOS
   task :test_against_preserved_hosts do
     config_number = ENV['CONFIG_NUMBER'] || 0
@@ -211,7 +220,7 @@ You may skip rsyncing local puppet files over to the tests hosts by including SK
     print_preserved(preserved)
     config_path = preserved[config_number][0]
     puts "Using ##{config_number}: #{config_path}"
-    beaker_test(:packages,
+    beaker_test(beaker_run_type,
       :hosts_file => "#{config_path}/preserved_config.yaml",
       :no_provision => true,
       :preserve_hosts => true,
