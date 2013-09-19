@@ -62,7 +62,10 @@ end
 def beaker_test(mode = :packages, options = {})
   final_options = HarnessOptions.options(mode, options)
 
-  final_options[:install] << "git://github.com/puppetlabs/puppet.git##{sha}" if mode == :git
+  if mode == :git
+    puppet_fork = ENV['FORK'] || 'puppetlabs'
+    final_options[:install] << "git://github.com/#{puppet_fork}/puppet.git##{sha}"
+  end
 
   options_file = 'merged_options.rb'
   File.open(options_file, 'w') do |merged|
@@ -180,7 +183,9 @@ Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
 Also must set CONFIG=config/nodes/foo.yaml or path to some other Beaker configuration.
 You may set TESTS=path/to/test,and/more/tests.
 You may set additional Beaker OPTIONS='--more --options'
+If testing from git checkouts, you may optional set the github fork to checkout from using FORK='other-puppet-fork'.
 EOS
+
 
     desc <<-EOS
 Run the acceptance tests through Beaker and install packages on the configuration targets.
