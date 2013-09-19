@@ -485,7 +485,7 @@ describe Puppet::Transaction do
     end
 
     it "should call ::post_resource_eval on provider classes that support it" do
-      @resource = Puppet::Type.type(:sshkey).new :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed
+      @resource = Puppet::Type.type(:notify).new :title => "foo"
       @catalog.add_resource @resource
 
       # 'expects' will cause 'respond_to?(:post_resource_eval)' to return true
@@ -496,7 +496,7 @@ describe Puppet::Transaction do
     it "should call ::post_resource_eval even if other providers' ::post_resource_eval fails" do
       @resource3 = Puppet::Type.type(:user).new :title => "bloo"
       @resource3.provider.class.stubs(:post_resource_eval).raises
-      @resource4 = Puppet::Type.type(:mount).new :title => "blob"
+      @resource4 = Puppet::Type.type(:notify).new :title => "blob"
       @resource4.provider.class.stubs(:post_resource_eval).raises
       @catalog.add_resource @resource3
       @catalog.add_resource @resource4
@@ -510,7 +510,7 @@ describe Puppet::Transaction do
     end
 
     it "should call ::post_resource_eval even if one of the resources fails" do
-      @resource3 = Puppet::Type.type(:mount).new :title => "bloo"
+      @resource3 = Puppet::Type.type(:notify).new :title => "bloo"
       @resource3.stubs(:retrieve_resource).raises
       @catalog.add_resource @resource3
 
