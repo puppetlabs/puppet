@@ -569,7 +569,7 @@ class Puppet::Parameter
   end
 
   # @comment Document post_compile_hook here as it does not exist anywhere (called from type if implemented)
-  # @!method post_compile_hook()
+  # @!method post_compile()
   #   @abstract A subclass may implement this - it is not implemented in the Parameter class
   #   This method may be implemented by a parameter in order to perform actions during compilation
   #   after all resources have been added to the catalog.
