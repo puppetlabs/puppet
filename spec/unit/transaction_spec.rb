@@ -478,6 +478,48 @@ describe Puppet::Transaction do
     end
   end
 
+  describe "during teardown" do
+    before :each do
+      @catalog = Puppet::Resource::Catalog.new
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    end
+
+    it "should call ::post_resource_eval on provider classes that support it" do
+      @resource = Puppet::Type.type(:sshkey).new :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed
+      @catalog.add_resource @resource
+
+      # 'expects' will cause 'respond_to?(:post_resource_eval)' to return true
+      @resource.provider.class.expects(:post_resource_eval)
+      @transaction.evaluate
+    end
+
+    it "should call ::post_resource_eval even if other providers' ::post_resource_eval fails" do
+      @resource3 = Puppet::Type.type(:user).new :title => "bloo"
+      @resource3.provider.class.stubs(:post_resource_eval).raises
+      @resource4 = Puppet::Type.type(:mount).new :title => "blob"
+      @resource4.provider.class.stubs(:post_resource_eval).raises
+      @catalog.add_resource @resource3
+      @catalog.add_resource @resource4
+
+      # ruby's Set does not guarantee ordering, so both resource3 and resource4
+      # need to expect post_resource_eval, rather than just the 'first' one.
+      @resource3.provider.class.expects(:post_resource_eval)
+      @resource4.provider.class.expects(:post_resource_eval)
+
+      @transaction.evaluate
+    end
+
+    it "should call ::post_resource_eval even if one of the resources fails" do
+      @resource3 = Puppet::Type.type(:mount).new :title => "bloo"
+      @resource3.stubs(:retrieve_resource).raises
+      @catalog.add_resource @resource3
+
+      @resource3.provider.class.expects(:post_resource_eval)
+
+      @transaction.evaluate
+    end
+  end
+
   describe 'when checking application run state' do
     before do
       @catalog = Puppet::Resource::Catalog.new

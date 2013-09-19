@@ -603,6 +603,17 @@ class Puppet::Provider
   # @param resources_hash [Hash<{String => Puppet::Resource}>] map from name to resource of resources to prefetch
   # @return [void]
 
+  # @comment Document post_resource_eval here as it does not exist anywhere else (called from transaction if implemented)
+  # @!method self.post_resource_eval()
+  # @since 3.4.0
+  # @api public
+  # @abstract A subclass may implement this - it is not implemented in the Provider class
+  # This method may be implemented by a provider in order to perform any
+  # cleanup actions needed.  It will be called at the end of the transaction if
+  # any resources in the catalog make use of the provider, regardless of
+  # whether the resources are changed or not and even if resource failures occur.
+  # @return [void]
+
   # @comment Document flush here as it does not exist anywhere (called from transaction if implemented)
   # @!method flush()
   # @abstract A subclass may implement this - it is not implemented in the Provider class
