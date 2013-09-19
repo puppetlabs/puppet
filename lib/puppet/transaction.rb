@@ -2,6 +2,7 @@ require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/application'
 require 'digest/sha1'
+require 'set'
 
 # the class that actually walks our resource/property tree, collects the changes,
 # and performs them
@@ -58,7 +59,11 @@ class Puppet::Transaction
 
     continue_while = lambda { !stop_processing? }
 
+    post_evalable_providers = Set.new
     pre_process = lambda do |resource|
+      prov_class = resource.provider.class
+      post_evalable_providers << prov_class if prov_class.respond_to?(:post_resource_eval)
+
       prefetch_if_necessary(resource)
 
       # If we generated resources, we don't know what they are now
@@ -89,6 +94,14 @@ class Puppet::Transaction
       # Just once per type. No need to punish the user.
       providerless_types.uniq.each do |type|
         Puppet.err "Could not find a suitable provider for #{type}"
+      end
+
+      post_evalable_providers.each do |provider|
+        begin
+          provider.post_resource_eval
+        rescue => detail
+          Puppet.log_exception(detail, "post_resource_eval failed for provider #{provider}")
+        end
       end
     end
 
