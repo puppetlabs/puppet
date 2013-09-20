@@ -8,7 +8,7 @@ agents.each do |agent|
   on(agent, "rm -f #{target}")
 
   step "create UNIX domain socket"
-  on(agent, %Q{ruby -e "require 'socket'; UNIXServer::new('#{target}').close"})
+  on(agent, %Q{#{agent['puppetbindir']}/ruby -e "require 'socket'; UNIXServer::new('#{target}').close"})
 
   step "query for all files, which should return nothing"
   on(agent, puppet_resource('file'), :acceptable_exit_codes => [1]) do
