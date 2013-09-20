@@ -9,7 +9,7 @@ Find
 
 Get facts for a node.
 
-    GET /:environment/facts/:name
+    GET /:environment/facts/:nodename
 
 ### Supported HTTP Methods
 
@@ -56,7 +56,7 @@ Save
 
 Store facts for a node.  The request body should contain pson-formatted facts.
 
-    PUT /:environment/facts/:name
+    PUT /:environment/facts/:nodename
 
 ### Supported HTTP Methods
 

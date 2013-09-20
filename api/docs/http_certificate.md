@@ -11,7 +11,7 @@ Find
 
 Get a certificate.
 
-    GET /:environment/certificate/:name
+    GET /:environment/certificate/:nodename
 
 
 ### Supported HTTP Methods

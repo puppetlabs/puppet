@@ -8,8 +8,8 @@ Find
 
 Retrieve a catalog.
 
-    POST /:environment/catalog/:name
-    GET /:environment/catalog/:name
+    POST /:environment/catalog/:nodename
+    GET /:environment/catalog/:nodename
 
 ### Supported HTTP Methods
 
