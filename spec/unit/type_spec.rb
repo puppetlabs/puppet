@@ -498,7 +498,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
         newparam(:name) { isnamevar }
 
         newparam(:post) do
-          def post_compile_hook
+          def post_compile
             raise "post_compile hook ran"
           end
         end
@@ -509,7 +509,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       post_hook_type.new(:name => 'foo',:post => 'fake_value')
     end
 
-    it "should call #post_compile_hook on parameters that implement it" do
+    it "should call #post_compile on parameters that implement it" do
       expect { post_hook_resource.finish }.to raise_error(RuntimeError, "post_compile hook ran")
     end
   end
