@@ -8,6 +8,8 @@ require 'fileutils'
 class Puppet::Util::FileType
   attr_accessor :loaded, :path, :synced
 
+  class FileReadError < Puppet::Error; end
+
   include Puppet::Util::SELinux
 
   class << self
@@ -166,7 +168,7 @@ class Puppet::Util::FileType
       begin
         @uid = Puppet::Util.uid(user)
       rescue Puppet::Error => detail
-        raise Puppet::Error, "Could not retrieve user #{user}: #{detail}", detail.backtrace
+        raise FileReadError, "Could not retrieve user #{user}: #{detail}", detail.backtrace
       end
 
       # XXX We have to have the user name, not the uid, because some
@@ -201,7 +203,6 @@ class Puppet::Util::FileType
     # Only add the -u flag when the @path is different.  Fedora apparently
     # does not think I should be allowed to set the @path to my own user name
     def cmdbase
-      cmd = nil
       if @uid == Puppet::Util::SUIDManager.uid || Facter.value(:operatingsystem) == "HP-UX"
         return "crontab"
       else
@@ -221,9 +222,9 @@ class Puppet::Util::FileType
       when /can't open your crontab/
         return ""
       when /you are not authorized to use cron/
-        raise Puppet::Error, "User #{@path} not authorized to use cron", detail.backtrace
+        raise FileReadError, "User #{@path} not authorized to use cron", detail.backtrace
       else
-        raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}", detail.backtrace
+        raise FileReadError, "Could not read crontab for #{@path}: #{detail}", detail.backtrace
       end
     end
 
@@ -231,7 +232,7 @@ class Puppet::Util::FileType
     def remove
       Puppet::Util::Execution.execute(%w{crontab -r}, cronargs)
     rescue => detail
-      raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}", detail.backtrace
+      raise FileReadError, "Could not remove crontab for #{@path}: #{detail}", detail.backtrace
     end
 
     # Overwrite a specific @path's cron tab; must be passed the @path name
@@ -245,7 +246,7 @@ class Puppet::Util::FileType
         File.chown(Puppet::Util.uid(@path), nil, output_file.path)
         Puppet::Util::Execution.execute(["crontab", output_file.path], cronargs)
       rescue => detail
-        raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}", detail.backtrace
+        raise FileReadError, "Could not write crontab for #{@path}: #{detail}", detail.backtrace
       ensure
         output_file.close
         output_file.unlink
@@ -263,9 +264,9 @@ class Puppet::Util::FileType
       when /Cannot open a file in the .* directory/
         return ""
       when /You are not authorized to use the cron command/
-        raise Puppet::Error, "User #{@path} not authorized to use cron", detail.backtrace
+        raise FileReadError, "User #{@path} not authorized to use cron", detail.backtrace
       else
-        raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}", detail.backtrace
+        raise FileReadError, "Could not read crontab for #{@path}: #{detail}", detail.backtrace
       end
     end
 
@@ -273,7 +274,7 @@ class Puppet::Util::FileType
     def remove
       Puppet::Util::Execution.execute(%w{crontab -r}, cronargs)
     rescue => detail
-      raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}", detail.backtrace
+      raise FileReadError, "Could not remove crontab for #{@path}: #{detail}", detail.backtrace
     end
 
     # Overwrite a specific @path's cron tab; must be passed the @path name
@@ -288,7 +289,7 @@ class Puppet::Util::FileType
         File.chown(Puppet::Util.uid(@path), nil, output_file.path)
         Puppet::Util::Execution.execute(["crontab", output_file.path], cronargs)
       rescue => detail
-        raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}", detail.backtrace
+        raise FileReadError, "Could not write crontab for #{@path}: #{detail}", detail.backtrace
       ensure
         output_file.close
         output_file.unlink

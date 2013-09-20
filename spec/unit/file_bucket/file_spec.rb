@@ -15,8 +15,28 @@ describe Puppet::FileBucket::File do
   let(:bucketdir) { Puppet[:bucketdir] = tmpdir('bucket') }
   let(:destdir) { File.join(bucketdir, "8/b/3/7/0/2/a/d/#{digest}") }
 
-  it "should have a to_s method to return the contents" do
-    Puppet::FileBucket::File.new(contents).to_s.should == contents
+  it "defaults to serializing to `:s`" do
+    expect(Puppet::FileBucket::File.default_format).to eq(:s)
+  end
+
+  it "accepts s and pson" do
+   expect(Puppet::FileBucket::File.supported_formats).to include(:s, :pson)
+  end
+
+  it "can make a round trip through `s`" do
+    file = Puppet::FileBucket::File.new(contents)
+
+    tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
+
+    expect(tripped.contents).to eq(contents)
+  end
+
+  it "can make a round trip through `pson`" do
+    file = Puppet::FileBucket::File.new(contents)
+
+    tripped = Puppet::FileBucket::File.convert_from(:pson, file.render(:pson))
+
+    expect(tripped.contents).to eq(contents)
   end
 
   it "should raise an error if changing content" do
@@ -66,10 +86,12 @@ describe Puppet::FileBucket::File do
   end
 
   it "should convert the contents to PSON" do
+    Puppet.expects(:deprecation_warning).with('Serializing Puppet::FileBucket::File objects to pson is deprecated.')
     Puppet::FileBucket::File.new("file contents").to_pson.should == '{"contents":"file contents"}'
   end
 
   it "should load from PSON" do
+    Puppet.expects(:deprecation_warning).with('Deserializing Puppet::FileBucket::File objects from pson is deprecated. Upgrade to a newer version.')
     Puppet::FileBucket::File.from_pson({"contents"=>"file contents"}).contents.should == "file contents"
   end
 

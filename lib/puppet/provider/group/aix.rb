@@ -116,7 +116,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   end
 
   def attributes
-    filter_attributes(getosinfo(refresh = false))
+    filter_attributes(getosinfo(false))
   end
 
   def attributes=(attr_hash)

@@ -4,6 +4,7 @@
 # can only be managed through the interface of an init script
 # which is why they have a search path for initscripts and such
 
+
 module Puppet
 
   newtype(:service) do
@@ -70,7 +71,7 @@ module Puppet
         provider.stop
       end
 
-      newvalue(:running, :event => :service_started) do
+      newvalue(:running, :event => :service_started, :invalidate_refreshes => true) do
         provider.start
       end
 
@@ -141,9 +142,7 @@ module Puppet
 
       munge do |value|
         value = [value] unless value.is_a?(Array)
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-        # It affects stand-alone blocks, too.
-        paths = value.flatten.collect { |p| x = p.split(File::PATH_SEPARATOR) }.flatten
+        value.flatten.collect { |p| p.split(File::PATH_SEPARATOR) }.flatten
       end
 
       defaultto { provider.class.defpath if provider.class.respond_to?(:defpath) }
@@ -198,8 +197,9 @@ module Puppet
     newparam :hasrestart do
       desc "Specify that an init script has a `restart` command.  If this is
         false and you do not specify a command in the `restart` attribute,
-        the init script's `stop` and `start` commands will be used. Defaults
-        to true; note that this is a change from earlier versions of Puppet."
+        the init script's `stop` and `start` commands will be used.
+
+        Defaults to false."
       newvalues(:true, :false)
     end
 

@@ -1,7 +1,10 @@
 require 'optparse'
+require 'puppet/util/command_line'
 require 'puppet/util/plugins'
 require 'puppet/util/constant_inflector'
 require 'puppet/error'
+
+module Puppet
 
 # This class handles all the aspects of a Puppet application/executable
 # * setting up options
@@ -84,7 +87,7 @@ require 'puppet/error'
 #
 # === Setup
 # Applications can use the setup block to perform any initialization.
-# The defaul +setup+ behaviour is to: read Puppet configuration and manage log level and destination
+# The default +setup+ behaviour is to: read Puppet configuration and manage log level and destination
 #
 # === What and how to run
 # If the +dispatch+ block is defined it is called. This block should return the name of the registered command
@@ -94,7 +97,7 @@ require 'puppet/error'
 # === Execution state
 # The class attributes/methods of Puppet::Application serve as a global place to set and query the execution
 # status of the application: stopping, restarting, etc.  The setting of the application status does not directly
-# aftect its running status; it's assumed that the various components within the application will consult these
+# affect its running status; it's assumed that the various components within the application will consult these
 # settings appropriately and affect their own processing accordingly.  Control operations (signal handlers and
 # the like) should set the status appropriately to indicate to the overall system that it's the process of
 # stopping or restarting (or just running as usual).
@@ -116,13 +119,14 @@ require 'puppet/error'
 #          process_member(member)
 #      end
 #  end
-module Puppet
 class Application
   require 'puppet/util'
   include Puppet::Util
 
   DOCPATTERN = ::File.expand_path(::File.dirname(__FILE__) + "/util/command_line/*" )
+  CommandLineArgs = Struct.new(:subcommand_name, :args)
 
+  @loader = Puppet::Util::Autoload.new(self, 'puppet/application')
 
   class << self
     include Puppet::Util
@@ -219,17 +223,32 @@ class Application
       @option_parser_commands
     end
 
-    def find(file_name)
-      # This should probably be using the autoloader, but due to concerns about the fact that
-      #  the autoloader currently considers the modulepath when looking for things to load,
-      #  we're delaying that for now.
+    # @return [Array<String>] the names of available applications
+    # @api public
+    def available_application_names
+      @loader.files_to_load.map do |fn|
+        ::File.basename(fn, '.rb')
+      end.uniq
+    end
+
+    # Finds the class for a given application and loads the class. This does
+    # not create an instance of the application, it only gets a handle to the
+    # class. The code for the application is expected to live in a ruby file
+    # `puppet/application/#{name}.rb` that is available on the `$LOAD_PATH`.
+    #
+    # @param application_name [String] the name of the application to find (eg. "apply").
+    # @return [Class] the Class instance of the application that was found.
+    # @raise [Puppet::Error] if the application class was not found.
+    # @raise [LoadError] if there was a problem loading the application file.
+    # @api public
+    def find(application_name)
       begin
-        require ::File.join('puppet', 'application', file_name.to_s.downcase)
+        require @loader.expand(application_name.to_s.downcase)
       rescue LoadError => e
-        Puppet.log_and_raise(e, "Unable to find application '#{file_name}'.  #{e}")
+        Puppet.log_and_raise(e, "Unable to find application '#{application_name}'. #{e}")
       end
 
-      class_name = Puppet::Util::ConstantInflector.file2constant(file_name.to_s)
+      class_name = Puppet::Util::ConstantInflector.file2constant(application_name.to_s)
 
       clazz = try_load_class(class_name)
 
@@ -239,7 +258,7 @@ class Application
       ####  and then get rid of this stanza in a subsequent release.
       ################################################################
       if (clazz.nil?)
-        class_name = file_name.capitalize
+        class_name = application_name.capitalize
         clazz = try_load_class(class_name)
       end
       ################################################################
@@ -247,7 +266,7 @@ class Application
       ################################################################
 
       if clazz.nil?
-        raise Puppet::Error.new("Unable to load application class '#{class_name}' from file 'puppet/application/#{file_name}.rb'")
+        raise Puppet::Error.new("Unable to load application class '#{class_name}' from file 'puppet/application/#{application_name}.rb'")
       end
 
       return clazz
@@ -315,15 +334,14 @@ class Application
   def preinit
   end
 
-  def initialize(command_line = nil)
-
-    require 'puppet/util/command_line'
-    @command_line = command_line || Puppet::Util::CommandLine.new
+  def initialize(command_line = Puppet::Util::CommandLine.new)
+    @command_line = CommandLineArgs.new(command_line.subcommand_name, command_line.args.dup)
     @options = {}
-
   end
 
-  # This is the main application entry point
+  # Execute the application.
+  # @api public
+  # @return [void]
   def run
 
     # I don't really like the names of these lifecycle phases.  It would be nice to change them to some more meaningful
@@ -359,13 +377,14 @@ class Application
   end
 
   def setup_logs
-    if options[:debug] or options[:verbose]
+    if options[:debug] || options[:verbose]
       Puppet::Util::Log.newdestination(:console)
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
+    end
+
+    if options[:debug]
+      Puppet::Util::Log.level = :debug
+    elsif options[:verbose]
+      Puppet::Util::Log.level = :info
     end
 
     Puppet::Util::Log.setup_default unless options[:setdest]
@@ -384,7 +403,7 @@ class Application
     # Create an option parser
     option_parser = OptionParser.new(self.class.banner)
 
-    # He're we're building up all of the options that the application may need to handle.  The main
+    # Here we're building up all of the options that the application may need to handle.  The main
     # puppet settings defined in "defaults.rb" have already been parsed once (in command_line.rb) by
     # the time we get here; however, our app may wish to handle some of them specially, so we need to
     # make the parser aware of them again.  We might be able to make this a bit more efficient by

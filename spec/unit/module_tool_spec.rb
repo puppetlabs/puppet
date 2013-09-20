@@ -152,93 +152,126 @@ TREE
 TREE
     end
   end
+
   describe '.set_option_defaults' do
-    include PuppetSpec::Files
-    let (:setting) { {:environment => "foo", :modulepath => make_absolute("foo")} }
+    describe 'option :environment' do
+      context 'passed:' do
+        let (:environment) { "ahgkduerh" }
+        let (:options) { {:environment => environment} }
 
-    [:environment, :modulepath].each do |value|
-      describe "if #{value} is part of options" do
-        let (:options) { {} }
-
-        before(:each) do
-          options[value] = setting[value]
-          Puppet[value] = "bar"
-        end
-
-        it "should set Puppet[#{value}] to the options[#{value}]" do
+        it 'Puppet[:environment] should be set to the value of the option' do
           subject.set_option_defaults options
-          Puppet[value].should == options[value]
+
+          Puppet[:environment].should == environment
         end
 
-        it "should not override options[#{value}]" do
+        it 'the option value should not be overridden' do
+          Puppet[:environment] = :foo
           subject.set_option_defaults options
-          options[value].should == setting[value]
-        end
 
+          options[:environment].should == environment
+        end
       end
 
-      describe "if #{value} is not part of options" do
-        let (:options) { {} }
+      context 'NOT passed:' do
+        it 'Puppet[:environment] should NOT be overridden' do
+          Puppet[:environment] = :foo
 
-        before(:each) do
-          Puppet[value] = setting[value]
+          subject.set_option_defaults({})
+          Puppet[:environment].should == :foo
         end
 
-        it "should populate options[#{value}] with the value of Puppet[#{value}]" do
-          subject.set_option_defaults options
-          Puppet[value].should == options[value]
-        end
+        it 'the option should be set to the value of Puppet[:environment]' do
+          options_to_modify = Hash.new
+          Puppet[:environment] = :abcdefg
 
-        it "should not override Puppet[#{value}]" do
-          subject.set_option_defaults options
-          Puppet[value].should == setting[value]
+          subject.set_option_defaults options_to_modify
+
+          options_to_modify[:environment].should == :abcdefg
         end
       end
     end
 
-    describe ':target_dir' do
-      let (:sep) { File::PATH_SEPARATOR }
+    describe 'option :modulepath' do
+      context 'passed:' do
+        let (:modulepath) { PuppetSpec::Files.make_absolute('/bar') }
+        let (:options) { {:modulepath => modulepath} }
 
-      let (:my_fake_path) {
-          ["/my/fake/dir", "/my/other/dir"].collect { |dir| make_absolute(dir) } .join(sep)
-      }
-      let (:options) { {:modulepath => my_fake_path}}
+        it 'Puppet[:modulepath] should be set to the value of the option' do
 
-      describe "when not specified" do
-
-        it "should set options[:target_dir]" do
           subject.set_option_defaults options
-          options[:target_dir].should_not be_nil
+
+          Puppet[:modulepath].should == modulepath
         end
 
-        it "should be the first path of options[:modulepath]" do
+        it 'the option value should not be overridden' do
+          Puppet[:modulepath] = "/foo"
+
           subject.set_option_defaults options
-          options[:target_dir].should == my_fake_path.split(sep).first
+
+          options[:modulepath].should == modulepath
         end
       end
 
-      describe "when specified" do
-        let (:my_target_dir) { make_absolute("/foo/bar") }
+      context 'NOT passed:' do
+        let (:options) { {:environment => :pmttestenv} }
+
         before(:each) do
-          options[:target_dir] = my_target_dir
+          Puppet[:modulepath] = "/no"
+          Puppet[:environment] = :pmttestenv
+          Puppet.settings.set_value(:modulepath,
+                                    ["/foo", "/bar", "/no"].join(File::PATH_SEPARATOR),
+                                    :pmttestenv)
         end
 
-        it "should not be overridden" do
+        it 'Puppet[:modulepath] should be reset to the module path of the current environment' do
           subject.set_option_defaults options
-          options[:target_dir].should == my_target_dir
+
+          Puppet[:modulepath].should == Puppet.settings.value(:modulepath, :pmttestenv)
         end
 
-        it "should be prepended to options[:modulepath]" do
+        it 'the option should be set to the module path of the current environment' do
           subject.set_option_defaults options
-          options[:modulepath].split(sep).first.should == my_target_dir
+
+          options[:modulepath].should == Puppet.settings.value(:modulepath, :pmttestenv)
+        end
+      end
+    end
+
+    describe 'option :target_dir' do
+      let (:target_dir) { 'boo' }
+
+      context 'passed:' do
+        let (:options) { {:target_dir => target_dir} }
+
+        it 'the option value should be prepended to the Puppet[:modulepath]' do
+          Puppet[:modulepath] = "/fuz"
+          original_modulepath = Puppet[:modulepath]
+
+          subject.set_option_defaults options
+
+          Puppet[:modulepath].should == options[:target_dir] + File::PATH_SEPARATOR + original_modulepath
         end
 
-        it "should leave the remainder of options[:modulepath] untouched" do
+        it 'the option value should be turned into an absolute path' do
           subject.set_option_defaults options
-          options[:modulepath].split(sep).drop(1).join(sep).should == my_fake_path
+
+          options[:target_dir].should == File.expand_path(target_dir)
         end
       end
 
+      describe 'NOT passed:' do
+        before :each do
+          Puppet[:modulepath] = 'foo' + File::PATH_SEPARATOR + 'bar'
+        end
+
+        it 'the option should be set to the first component of Puppet[:modulepath]' do
+          options = Hash.new
+          subject.set_option_defaults options
+
+          options[:target_dir].should == Puppet[:modulepath].split(File::PATH_SEPARATOR)[0]
+        end
+      end
     end
   end
 end

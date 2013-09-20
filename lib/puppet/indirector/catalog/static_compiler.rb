@@ -15,23 +15,25 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     This terminus works today, but cannot be used without additional
     configuration. Specifically:
 
-    You must create a `Filebucket['puppet']` resource in site.pp (or somewhere
-    else where it will be added to every node's catalog). The title of this
-    resource **MUST** be "puppet"; the static compiler treats this title as magical.
+    * You must create a special filebucket resource --- with the title `puppet`
+      and the `path` attribute set to `false` --- in site.pp or somewhere else
+      where it will be added to every node's catalog. Using `puppet` as the title
+      is mandatory; the static compiler treats this title as magical.
 
-        # Note: the special $servername var always contains the master's FQDN,
-        # even if it was reached at a different name.
-        filebucket { puppet:
-          server => $servername,
-          path   => false,
-        }
+          filebucket { puppet:
+            path => false,
+          }
 
-    You must set `catalog_terminus = static_compiler` in the puppet master's puppet.conf.
-
-    If you are using multiple puppet masters, you must configure load balancer
-    affinity for agent nodes. This is because puppet masters other than the one
-    that compiled a given catalog may not have stored the required file contents
-    in their filebuckets.}
+    * You must set `catalog_terminus = static_compiler` in the puppet
+      master's puppet.conf.
+    * The puppet master's auth.conf must allow authenticated nodes to access the
+      `file_bucket_file` endpoint. This is enabled by default (see the
+      `path /file` rule), but if you have made your auth.conf more restrictive,
+      you may need to re-enable it.)
+    * If you are using multiple puppet masters, you must configure load balancer
+      affinity for agent nodes. This is because puppet masters other than the one
+      that compiled a given catalog may not have stored the required file contents
+      in their filebuckets.}
 
   def compiler
     @compiler ||= indirection.terminus(:compiler)
@@ -47,6 +49,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       next unless source =~ /^puppet:/
 
       file = resource.to_ral
+
       if file.recurse?
         add_children(request.key, catalog, resource, file)
       else
@@ -57,6 +60,18 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     catalog
   end
 
+  # Take a resource with a fileserver based file source remove the source
+  # parameter, and insert the file metadata into the resource.
+  #
+  # This method acts to do the fileserver metadata retrieval in advance, while
+  # the file source is local and doesn't require an HTTP request. It retrieves
+  # the file metadata for a given file resource, removes the source parameter
+  # from the resource, inserts the metadata into the file resource, and uploads
+  # the file contents of the source to the file bucket.
+  #
+  # @param host [String] The host name of the node requesting this catalog
+  # @param resource [Puppet::Resource] The resource to replace the metadata in
+  # @param file [Puppet::Type::File] The file RAL associated with the resource
   def find_and_replace_metadata(host, resource, file)
     # We remove URL info from it, so it forces a local copy
     # rather than routing through the network.
@@ -69,6 +84,14 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     replace_metadata(host, resource, metadata)
   end
 
+  # Rewrite a given file resource with the metadata from a fileserver based file
+  #
+  # This performs the actual metadata rewrite for the given file resource and
+  # uploads the content of the source file to the filebucket.
+  #
+  # @param host [String] The host name of the node requesting this catalog
+  # @param resource [Puppet::Resource] The resource to add the metadata to
+  # @param metadata [Puppet::FileServing::Metadata] The metadata of the given fileserver based file
   def replace_metadata(host, resource, metadata)
     [:mode, :owner, :group].each do |param|
       resource[param] ||= metadata.send(param)
@@ -87,6 +110,12 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{old_source}'"
   end
 
+  # Generate children resources for a recursive file and add them to the catalog.
+  #
+  # @param host [String] The host name of the node requesting this catalog
+  # @param catalog [Puppet::Resource::Catalog]
+  # @param resource [Puppet::Resource]
+  # @param file [Puppet::Type::File] The file RAL associated with the resource
   def add_children(host, catalog, resource, file)
     file = resource.to_ral
 
@@ -100,6 +129,14 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     end
   end
 
+  # Given a recursive file resource, recursively generate its children resources
+  #
+  # @param host [String] The host name of the node requesting this catalog
+  # @param catalog [Puppet::Resource::Catalog]
+  # @param resource [Puppet::Resource]
+  # @param file [Puppet::Type::File] The file RAL associated with the resource
+  #
+  # @return [Array<Puppet::Resource>] The recursively generated File resources for the given resource
   def get_child_resources(host, catalog, resource, file)
     sourceselect = file[:sourceselect]
     children = {}
@@ -113,7 +150,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       result.each { |data| data.source = "#{source}/#{data.relative_path}" }
       break result if result and ! result.empty? and sourceselect == :first
       result
-    end.flatten
+    end.flatten.compact
 
     # This only happens if we have sourceselect == :all
     unless sourceselect == :first
@@ -135,18 +172,33 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
 
       # I think this is safe since it's a URL, not an actual file
       children[meta.relative_path][:source] = source + "/" + meta.relative_path
+      resource.each do |param, value|
+        # These should never be passed to our children.
+        unless [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].include? param
+          children[meta.relative_path][param] = value
+        end
+      end
       replace_metadata(host, children[meta.relative_path], meta)
     end
 
     children
   end
 
+  # Remove any file resources in the catalog that will be duplicated by the
+  # given file resources.
+  #
+  # @param children [Array<Puppet::Resource>]
+  # @param catalog [Puppet::Resource::Catalog]
   def remove_existing_resources(children, catalog)
     existing_names = catalog.resources.collect { |r| r.to_s }
     both = (existing_names & children.keys).inject({}) { |hash, name| hash[name] = true; hash }
     both.each { |name| children.delete(name) }
   end
 
+  # Retrieve the source of a file resource using a fileserver based source and
+  # upload it to the filebucket.
+  #
+  # @param resource [Puppet::Resource]
   def store_content(resource)
     @summer ||= Object.new
     @summer.extend(Puppet::Util::Checksums)

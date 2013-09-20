@@ -3,40 +3,17 @@
 This file is intended to provide a place for developers and contributors to
 document what other developers need to know about changes made to Puppet.
 
-# Use of RVM considered dangerous #
+# Internal Structures
 
-Use of RVM in production situations, e.g. running CI tests against this
-repository, is considered dangerous.  The reason we consider RVM to be
-dangerous is because the default behavior of RVM is to hijack the builtin
-behavior of the shell, causing Gemfile files to be loaded and evaluated when
-the shell changes directories into the project root.
-
-This behavior causes the CI Job execution environment that runs with `set -e`
-to be incompatible with RVM.
-
-We work around this issue by disabling the per-project RC file parsing using
-
-    if ! grep -qx rvm_project_rvmrc=0 ~/.rvmrc; then
-      echo rvm_project_rvmrc=0 >> ~/.rvmrc
-    fi
-
-When we setup CI nodes, but this is not standard or expected behavior.
-
-Please consider rbenv instead of rvm.  The default behavior of rvm is difficult
-to maintain with `set -e` shell environments.
-
-# Two Types of Catalog
+## Two Types of Catalog
 
 When working on subsystems of Puppet that deal with the catalog it is important
-to be aware of the two different types of Catalog.  I often ran into this when
-working in Professional Services when I built a small tool to diff two catalogs
-to determine if an upgrade in Puppet produces the same configuration catalogs.
-As a developer I've run into this difference while working on spec tests for
-the static compiler and working on spec tests for types and providers.
+to be aware of the two different types of Catalog.  Developers will often find
+this difference while working on the static compiler and types and providers.
 
 The two different types of catalog becomes relevant when writing spec tests
 because we frequently need to wire up a fake catalog so that we can exercise
-types, providers, or terminii that filter the catalog.
+types, providers, or termini that filter the catalog.
 
 The two different types of catalogs are so-called "resource" catalogs and "RAL"
 (resource abstraction layer) catalogs.  At a high level, the resource catalog
@@ -48,7 +25,7 @@ is used to apply the configuration model to the system.
 Resource dependency information is most easily obtained from a RAL catalog by
 walking the graph instance produced by the `relationship_graph` method.
 
-## Resource Catalog
+### Resource Catalog
 
 If you're writing spec tests for something that deals with a catalog "server
 side," a new catalog terminus for example, then you'll be dealing with a
@@ -73,7 +50,7 @@ Resource dependencies are not easily walked using a resource catalog however.
 To walk the dependency tree convert the catalog to a RAL catalog as described
 in
 
-## RAL Catalog
+### RAL Catalog
 
 The resource catalog may be converted to a RAL catalog using `catalog.to_ral`.
 The RAL catalog contains `Puppet::Type` instances instead of `Puppet::Resource`
@@ -153,52 +130,424 @@ method.
 
 # Ruby Dependencies #
 
-Puppet is considered an Application as it relates to the recommendation of
-adding a Gemfile.lock file to the repository and the information published at
-[Clarifying the Roles of the .gemspec and
-Gemfile](http://yehudakatz.com/2010/12/16/clarifying-the-roles-of-the-gemspec-and-gemfile/)
+To install the dependencies run:
 
-To install the dependencies run: `bundle install` to install the dependencies.
+    $ bundle install --path .bundle/gems/
 
-A checkout of the source repository should be used in a way that provides
-puppet as a gem rather than a simple Ruby library.  The parent directory should
-be set along the `GEM_PATH`, preferably before other tools such as RVM that
-manage gemsets using `GEM_PATH`.
+Once this is done, you can interact with puppet through bundler using `bundle
+exec <command>` which will ensure that `<command>` is executed in the context
+of puppet's dependencies.
 
-For example, Puppet checked out into `/workspace/src/puppet` using `git
-checkout https://github.com/puppetlabs/puppet` in `/workspace/src` can be used
-with the following actions.  The trick is to symlink `gems` to `src`.
+For example to run the specs:
 
-    $ cd /workspace
-    $ ln -s src gems
-    $ mkdir specifications
-    $ pushd specifications; ln -s ../gems/puppet/puppet.gemspec; popd
-    $ export GEM_PATH="/workspace:${GEM_PATH}"
-    $ gem list puppet
+    $ bundle exec rake spec
 
-This should list out
+To run puppet itself (for a resource lookup say):
 
-    puppet (2.7.19)
+    $ bundle exec puppet resource host localhost
 
-## Bundler ##
+which should return something like:
 
-With a source checkout of Puppet properly setup as a gem, dependencies can be
-installed using [Bundler](http://gembundler.com/)
+    host { 'localhost':
+      ensure => 'present',
+      ip     => '127.0.0.1',
+      target => '/etc/hosts',
+    }
 
-    $ bundle install
-    Fetching gem metadata from http://rubygems.org/........
-    Using diff-lcs (1.1.3)
-    Installing facter (1.6.11)
-    Using metaclass (0.0.1)
-    Using mocha (0.10.5)
-    Using puppet (2.7.19) from source at /workspace/puppet-2.7.x/src/puppet
-    Using rack (1.4.1)
-    Using rspec-core (2.10.1)
-    Using rspec-expectations (2.10.0)
-    Using rspec-mocks (2.10.1)
-    Using rspec (2.10.0)
-    Using bundler (1.1.5)
-    Your bundle is complete! Use `bundle show [gemname]` to see where a bundled gem is installed.
+# Running Tests #
+
+Puppet Labs projects use a common convention of using Rake to run unit tests.
+The tests can be run with the following rake task:
+
+    bundle exec rake spec
+
+This allows the Rakefile to set up the environment beforehand if needed. This
+method is how the unit tests are run in [Jenkins](https://jenkins.puppetlabs.com).
+
+Under the hood Puppet's tests use `rspec`.  To run all of them, you can directly
+use 'rspec':
+
+    bundle exec rspec
+
+To run a single file's worth of tests (much faster!), give the filename, and use
+the nested format to see the descriptions:
+
+    bundle exec rspec spec/unit/ssl/host_spec.rb --format nested
+
+## Testing dependency version requirements
+
+Puppet is only compatible with certain versions of RSpec and Mocha. If you are
+not using Bundler to install the required test libraries you must ensure that
+you are using the right library versions. Using unsupported versions of Mocha
+and RSpec will probably display many spurious failures. The supported versions
+of RSpec and Mocha can be found in the project Gemfile.
+
+# A brief introduction to testing in Puppet
+
+Puppet relies heavily on automated testing to ensure that Puppet behaves as
+expected and that new features don't interfere with existing behavior. There are
+three primary sets of tests that Puppet uses: _unit tests_, _integration tests_,
+and _acceptance tests_.
+
+- - -
+
+Unit tests are used to test the individual components of Puppet to ensure that
+they function as expected in isolation. Unit tests are designed to hide the
+actual system implementations and provide canned information so that only the
+intended behavior is tested, rather than the targeted code and everything else
+connected to it. Unit tests should never affect the state of the system that's
+running the test.
+
+- - -
+
+Integration tests serve to test different units of code together to ensure that
+they interact correctly. While individual methods might perform correctly, when
+used with the rest of the system they might fail, so integration tests are a
+higher level version of unit tests that serve to check the behavior of
+individual subsystems.
+
+All of the unit and integration tests for Puppet are kept in the spec/ directory.
+
+- - -
+
+Acceptance tests are used to test high level behaviors of Puppet that deal with
+a number of concerns and aren't easily tested with normal unit tests. Acceptance
+tests function by changing system state and checking the system after
+the fact to make sure that the intended behavior occurred. Because of this
+acceptance tests can be destructive, so the systems being tested should be
+throwaway systems.
+
+All of the acceptance tests for Puppet are kept in the acceptance/tests/
+directory.
+
+## Puppet Continuous integration
+
+  * Travis-ci (unit tests only): https://travis-ci.org/puppetlabs/puppet/
+  * Jenkins (unit and acceptance tests): https://jenkins.puppetlabs.com/view/Puppet%20FOSS/
+
+## RSpec
+
+Puppet uses RSpec to perform unit and integration tests. RSpec handles a number
+of concerns to make testing easier:
+
+  * Executing examples and ensuring the actual behavior matches the expected behavior (examples)
+  * Grouping tests (describe and contexts)
+  * Setting up test environments and cleaning up afterwards (before and after blocks)
+  * Isolating tests (mocks and stubs)
+
+#### Examples and expectations
+
+At the most basic level, RSpec provides a framework for executing tests (which
+are called examples) and ensuring that the actual behavior matches the expected
+behavior (which are done with expectations)
+
+```ruby
+# This is an example; it sets the test name and defines the test to run
+specify "one equals one" do
+  # 'should' is an expectation; it adds a check to make sure that the left argument
+  # matches the right argument
+  1.should == 1
+end
+
+# Examples can be declared with either 'it' or 'specify'
+it "one doesn't equal two" do
+  1.should_not == 2
+end
+```
+
+Good examples generally do as little setup as possible and only test one or two
+things; it makes tests easier to understand and easier to debug.
+
+More complete documentation on expectations is available at https://www.relishapp.com/rspec/rspec-expectations/docs
+
+### Example groups
+
+Example groups are fairly self explanatory; they group similar examples into a
+set.
+
+```ruby
+describe "the number one" do
+
+  it "is larger than zero" do
+    1.should be > 0
+  end
+
+  it "is an odd number" do
+    1.odd?.should be true
+  end
+
+  it "is not nil" do
+    1.should_not be_nil
+  end
+end
+```
+
+Example groups have a number of uses that we'll get into later, but one of the
+simplest demonstrations of what they do is how they help to format
+documentation:
+
+```
+rspec ex.rb --format documentation
+
+the number one
+  is larger than zero
+  is an odd number
+  is not nil
+
+Finished in 0.00516 seconds
+3 examples, 0 failures
+```
+
+### Setting up and tearing down tests
+
+Examples may require some setup before they can run, and might need to clean up
+afterwards. `before` and `after` blocks can be used before this, and can be
+used inside of example groups to limit how many examples they affect.
+
+```ruby
+
+describe "something that could warn" do
+  before :each do
+    # Disable warnings for this test
+    $VERBOSE = nil
+  end
+
+  after do
+    # Enable warnings afterwards
+    $VERBOSE = true
+  end
+
+  it "doesn't generate a warning" do
+    MY_CONSTANT = 1
+    # reassigning a normally prints out 'warning: already initialized constant FOO'
+    MY_CONSTANT = 2
+  end
+end
+```
+
+### Setting up helper data
+
+Some examples may require setting up data before hand and making it available to
+tests. RSpec provides helper methods with the `let` method call that can be used
+inside of tests.
+
+```ruby
+describe "a helper object" do
+  # This creates an array with three elements that we can retrieve in tests. A
+  # new copy will be made for each test.
+  let(:my_helper) do
+    ['foo', 'bar', 'baz']
+  end
+
+  it "should be an array" do
+    my_helper.should be_a_kind_of Array
+  end
+
+  it "should have three elements" do
+    my_helper.should have(3).items
+  end
+end
+```
+
+Like `before` blocks, helper objects like this are used to avoid doing a lot of
+setup in individual examples and share setup between similar tests.
+
+### Isolating tests with stubs
+
+RSpec allows you to provide fake data during testing to make sure that
+individual tests are only running the code being tested. You can stub out entire
+objects, or just stub out individual methods on an object. When a method is
+stubbed the method itself will never be called.
+
+While RSpec comes with its own stubbing framework, Puppet uses the Mocha
+framework.
+
+A brief usage guide for Mocha is available at http://gofreerange.com/mocha/docs/#Usage,
+and an overview of Mocha expectations is available at http://gofreerange.com/mocha/docs/Mocha/Expectation.html
+
+```ruby
+describe "stubbing a method on an object" do
+  let(:my_helper) do
+    ['foo', 'bar', 'baz']
+  end
+
+  it 'should have three items before being stubbed' do
+    my_helper.size.should == 3
+  end
+
+  describe 'when stubbing the size' do
+    before do
+      my_helper.stubs(:size).returns 10
+    end
+
+    it 'should have the stubbed value for size' do
+      my_helper.size.should == 10
+    end
+  end
+end
+```
+
+Entire objects can be stubbed as well.
+
+```ruby
+describe "stubbing an object" do
+  let(:my_helper) do
+    stub(:not_an_array, :size => 10)
+  end
+
+  it 'should have the stubbed size'
+    my_helper.size.should == 10
+  end
+end
+```
+
+### Adding expectations with mocks
+
+It's possible to combine the concepts of stubbing and expectations so that a
+method has to be called for the test to pass (like an expectation), and can
+return a fixed value (like a stub).
+
+```ruby
+describe "mocking a method on an object" do
+  let(:my_helper) do
+    ['foo', 'bar', 'baz']
+  end
+
+  describe "when mocking the size" do
+    before do
+      my_helper.expects(:size).returns 10
+    end
+
+    it "adds an expectation that a method was called" do
+      my_helper.size
+    end
+  end
+end
+```
+
+Like stubs, entire objects can be mocked.
+
+```ruby
+describe "mocking an object" do
+  let(:my_helper) do
+    mock(:not_an_array)
+  end
+
+  before do
+    not_an_array.expects(:size).returns 10
+  end
+
+  it "adds an expectation that the method was called" do
+    not_an_array.size
+  end
+end
+```
+### Writing tests without side effects
+
+When properly written each test should be able to run in isolation, and tests
+should be able to be run in any order. This makes tests more reliable and allows
+a single test to be run if only that test is failing, instead of running all
+17000+ tests each time something is changed. However, there are a number of ways
+that can make tests fail when run in isolation or out of order.
+
+#### Using instance variables
+
+Puppet has a number of older tests that use `before` blocks and instance
+variables to set up fixture data, instead of `let` blocks. These can retain
+state between tests, which can lead to test failures when tests are run out of
+order.
+
+```ruby
+# test.rb
+RSpec.configure do |c|
+  c.mock_framework = :mocha
+end
+
+describe "fixture data" do
+  describe "using instance variables" do
+
+    # BAD
+    before :all do
+      # This fixture will be created only once and will retain the `foo` stub
+      # between tests.
+      @fixture = stub 'test data'
+    end
+
+    it "can be stubbed" do
+      @fixture.stubs(:foo).returns :bar
+      @fixture.foo.should == :bar
+    end
+
+    it "should not keep state between tests" do
+      # The foo stub was added in the previous test and shouldn't be present
+      # in this test.
+      expect { @fixture.foo }.to raise_error
+    end
+  end
+
+  describe "using `let` blocks" do
+
+    # GOOD
+    # This will be recreated between tests so that state isn't retained.
+    let(:fixture) { stub 'test data' }
+
+    it "can be stubbed" do
+      fixture.stubs(:foo).returns :bar
+      fixture.foo.should == :bar
+    end
+
+    it "should not keep state between tests" do
+      # since let blocks are regenerated between tests, the foo stub added in
+      # the previous test will not be present here.
+      expect { fixture.foo }.to raise_error
+    end
+  end
+end
+```
+
+```
+bundle exec rspec test.rb -fd
+
+fixture data
+  using instance variables
+    can be stubbed
+    should not keep state between tests (FAILED - 1)
+  using `let` blocks
+    can be stubbed
+    should not keep state between tests
+
+Failures:
+
+  1) fixture data using instance variables should not keep state between tests
+     Failure/Error: expect { @fixture.foo }.to raise_error
+       expected Exception but nothing was raised
+     # ./test.rb:17:in `block (3 levels) in <top (required)>'
+
+Finished in 0.00248 seconds
+4 examples, 1 failure
+
+Failed examples:
+
+rspec ./test.rb:16 # fixture data using instance variables should not keep state between tests
+```
+
+
+### RSpec references
+
+  * RSpec core docs: https://www.relishapp.com/rspec/rspec-core/docs
+  * RSpec guidelines with Ruby: http://betterspecs.org/
+
+### Puppet-acceptance
+
+[puppet-acceptance]: https://github.com/puppetlabs/puppet-acceptance
+[test::unit]: http://test-unit.rubyforge.org/
+
+Puppet has a custom acceptance testing framework called
+[puppet-acceptance][puppet-acceptance] for running acceptance tests.
+Puppet-acceptance runs the tests by configuring one or more VMs, copying the
+test cases onto the VMs, performing the tests and collecting the results, and
+ensuring that the results match the intended behavior. It uses
+[test::unit][test::unit] to perform the actual assertions.
 
 # UTF-8 Handling #
 
@@ -265,23 +614,32 @@ include `ext/envpuppet.bat` will help.
 To quickly run Puppet from source, assuming you already have Ruby installed
 from [rubyinstaller.org](http://rubyinstaller.org).
 
-    gem install sys-admin win32-process win32-dir win32-taskscheduler --no-rdoc --no-ri
-    gem install win32-service --platform=mswin32 --no-rdoc --no-ri --version 0.7.1
-    net use Z: "\\vmware-host\Shared Folders" /persistent:yes
-    Z:
-    cd <path_to_puppet>
-    set PATH=%PATH%;Z:\<path_to_puppet>\ext
-    envpuppet puppet --version
+    C:\> cd C:\work\puppet
+    C:\work\puppet> set PATH=%PATH%;C:\work\puppet\ext
+    C:\work\puppet> envpuppet bundle install
+    C:\work\puppet> envpuppet puppet --version
     2.7.9
 
-Some spec tests are known to fail on Windows, e.g. no mount provider
-on Windows, so use the following rspec exclude filter:
+When writing a test that cannot possibly run on Windows, e.g. there is
+no mount type on windows, do the following:
 
-    cd <path_to_puppet>
-    envpuppet rspec --tag ~fails_on_windows spec
+    describe Puppet::MyClass, :unless => Puppet.features.microsoft_windows? do
+      ..
+    end
 
-This will give you a shared filesystem with your Mac and allow you to run
-Puppet directly from source without using install.rb or copying files around.
+If the test doesn't currently pass on Windows, e.g. due to on going porting, then use an rspec conditional pending block:
+
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      <example1>
+    end
+
+    pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
+      <example2>
+    end
+
+Then run the test as:
+
+    C:\work\puppet> envpuppet bundle exec rspec spec
 
 ## Common Issues ##
 
@@ -403,16 +761,16 @@ This special filebucket resource named "puppet" will cause the agent to fetch
 file contents specified by checksum from the remote filebucket instead of the
 default clientbucket.
 
-## Quick start
+## Trying out the Static Compiler
 
 Create a module that recursively downloads something.  The jeffmccune-filetest
 module will recursively copy the rubygems source tree.
 
-    $ puppet module install jeffmccune-filetest
+    $ bundle exec puppet module install jeffmccune-filetest
 
 Start the master with the StaticCompiler turned on:
 
-    $ puppet master \
+    $ bundle exec puppet master \
         --catalog_terminus=static_compiler \
         --verbose \
         --no-daemonize
@@ -427,11 +785,25 @@ Add the special Filebucket[puppet] resource:
 
 Get the static catalog:
 
-    $ puppet agent --test
+    $ bundle exec puppet agent --test
 
 You should expect all file metadata to be contained in the catalog, including a
 checksum representing the content.  When managing an out of sync file resource,
 the real contents should be fetched from the server instead of the
 clientbucket.
+
+Package Maintainers
+=====
+
+Software Version API
+-----
+
+Please see the public API regarding the software version as described in
+`lib/puppet/version.rb`.  Puppet provides the means to easily specify the exact
+version of the software packaged using the VERSION file, for example:
+
+    $ git describe --match "3.0.*" > lib/puppet/VERSION
+    $ ruby -r puppet/version -e 'puts Puppet.version'
+    3.0.1-260-g9ca4e54
 
 EOF

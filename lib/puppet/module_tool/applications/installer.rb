@@ -27,6 +27,7 @@ module Puppet::ModuleTool
       end
 
       def run
+        results = {}
         begin
           if is_module_package?(@name)
             @source = :filesystem
@@ -121,7 +122,7 @@ module Puppet::ModuleTool
 
       #
       # Resolve installation conflicts by checking if the requested module
-      # or one of it's dependencies conflicts with an installed module.
+      # or one of its dependencies conflicts with an installed module.
       #
       # Conflicts occur under the following conditions:
       #
@@ -152,7 +153,10 @@ module Puppet::ModuleTool
                 :version => release[:version][:vstring]
               }
               dependency = is_dependency ? dependency_info : nil
-              latest_version = @versions["#{@module_name}"].sort_by { |h| h[:semver] }.last[:vstring]
+              all_versions = @versions["#{@module_name}"].sort_by { |h| h[:semver] }
+              versions = all_versions.select { |x| x[:semver].special == '' }
+              versions = all_versions if versions.empty?
+              latest_version = versions.last[:vstring]
 
               raise InstallConflictError,
                 :requested_module  => @module_name,
@@ -171,7 +175,7 @@ module Puppet::ModuleTool
       # Check if a file is a vaild module package.
       # ---
       # FIXME: Checking for a valid module package should be more robust and
-      # use the acutal metadata contained in the package. 03132012 - Hightower
+      # use the actual metadata contained in the package. 03132012 - Hightower
       # +++
       #
       def is_module_package?(name)

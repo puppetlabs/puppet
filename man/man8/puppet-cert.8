@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-CERT" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-CERT" "8" "January 2013" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-cert\fR \- Manage certificates and requests
@@ -24,7 +24,7 @@ Revoke a host\'s certificate (if applicable) and remove all files related to tha
 .
 .TP
 fingerprint
-Print the DIGEST (defaults to md5) fingerprint of a host\'s certificate\.
+Print the DIGEST (defaults to the signing algorithm) fingerprint of a host\'s certificate\.
 .
 .TP
 generate
@@ -40,7 +40,7 @@ Print the full\-text version of a host\'s certificate\.
 .
 .TP
 revoke
-Revoke the certificate of a client\. The certificate can be specified either by its serial number (given as a decimal number or a hexadecimal number prefixed by \'0x\') or by its hostname\. The certificate is revoked by adding it to the Certificate Revocation List given by the \'cacrl\' configuration option\. Note that the puppet master needs to be restarted after revoking certificates\.
+Revoke the certificate of a client\. The certificate can be specified either by its serial number (given as a hexadecimal number prefixed by \'0x\') or by its hostname\. The certificate is revoked by adding it to the Certificate Revocation List given by the \'cacrl\' configuration option\. Note that the puppet master needs to be restarted after revoking certificates\.
 .
 .TP
 sign
@@ -62,7 +62,7 @@ Operate on all items\. Currently only makes sense with the \'sign\', \'clean\', 
 .
 .TP
 \-\-digest
-Set the digest for fingerprinting (defaults to md5)\. Valid values depends on your openssl and openssl ruby extension version, but should contain at least md5, sha1, md2, sha256\.
+Set the digest for fingerprinting (defaults to the the digest used when signing the cert)\. Valid values depends on your openssl and openssl ruby extension version\.
 .
 .TP
 \-\-debug

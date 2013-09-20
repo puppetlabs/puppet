@@ -106,77 +106,23 @@ Puppet::Util::Log.newdesttype :console do
   end
 
   def handle(msg)
-    error_levels = {
-      :warning => 'Warning',
-      :err     => 'Error',
-      :alert   => 'Alert',
-      :emerg   => 'Emergency',
-      :crit    => 'Critical'
+    levels = {
+      :emerg   => { :name => 'Emergency', :color => :hred,  :stream => $stderr },
+      :alert   => { :name => 'Alert',     :color => :hred,  :stream => $stderr },
+      :crit    => { :name => 'Critical',  :color => :hred,  :stream => $stderr },
+      :err     => { :name => 'Error',     :color => :hred,  :stream => $stderr },
+      :warning => { :name => 'Warning',   :color => :hred,  :stream => $stderr },
+
+      :notice  => { :name => 'Notice',    :color => :reset, :stream => $stdout },
+      :info    => { :name => 'Info',      :color => :green, :stream => $stdout },
+      :debug   => { :name => 'Debug',     :color => :cyan,  :stream => $stdout },
     }
 
     str = msg.respond_to?(:multiline) ? msg.multiline : msg.to_s
     str = msg.source == "Puppet" ? str : "#{msg.source}: #{str}"
 
-    case msg.level
-    when *error_levels.keys
-      $stderr.puts colorize(:hred, "#{error_levels[msg.level]}: #{str}")
-    when :info
-      $stdout.puts "#{colorize(:green, 'Info')}: #{str}"
-    when :debug
-      $stdout.puts "#{colorize(:cyan, 'Debug')}: #{str}"
-    else
-      $stdout.puts str
-    end
-  end
-end
-
-Puppet::Util::Log.newdesttype :host do
-  def initialize(host)
-    Puppet.info "Treating #{host} as a hostname"
-    args = {}
-    if host =~ /:(\d+)/
-      args[:Port] = $1
-      args[:Server] = host.sub(/:\d+/, '')
-    else
-      args[:Server] = host
-    end
-
-    @name = host
-
-    @driver = Puppet::Network::Client::LogClient.new(args)
-  end
-
-  def handle(msg)
-    unless msg.is_a?(String) or msg.remote
-      @hostname ||= Facter["hostname"].value
-      unless defined?(@domain)
-        @domain = Facter["domain"].value
-        @hostname += ".#{@domain}" if @domain
-      end
-      if Puppet::Util.absolute_path?(msg.source)
-        msg.source = @hostname + ":#{msg.source}"
-      elsif msg.source == "Puppet"
-        msg.source = @hostname + " #{msg.source}"
-      else
-        msg.source = @hostname + " #{msg.source}"
-      end
-      begin
-        #puts "would have sent #{msg}"
-        #puts "would have sent %s" %
-        #    CGI.escape(YAML.dump(msg))
-        begin
-          tmp = CGI.escape(YAML.dump(msg))
-        rescue => detail
-          puts "Could not dump: #{detail}"
-          return
-        end
-        # Add the hostname to the source
-        @driver.addlog(tmp)
-      rescue => detail
-        Puppet.log_exception(detail)
-        Puppet::Util::Log.close(self)
-      end
-    end
+    level = levels[msg.level]
+    level[:stream].puts colorize(level[:color], "#{level[:name]}: #{str}")
   end
 end
 

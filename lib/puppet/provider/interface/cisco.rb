@@ -8,8 +8,8 @@ Puppet::Type.type(:interface).provide :cisco, :parent => Puppet::Provider::Cisco
 
   def self.lookup(device, name)
     interface = nil
-    device.command do |ng|
-      interface = device.interface(name)
+    device.command do |dev|
+      interface = dev.interface(name)
     end
     interface
   end
@@ -19,8 +19,8 @@ Puppet::Type.type(:interface).provide :cisco, :parent => Puppet::Provider::Cisco
   end
 
   def flush
-    device.command do |device|
-      device.new_interface(name).update(former_properties, properties)
+    device.command do |dev|
+      dev.new_interface(name).update(former_properties, properties)
     end
     super
   end

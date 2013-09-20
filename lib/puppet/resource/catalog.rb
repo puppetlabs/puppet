@@ -1,18 +1,20 @@
 require 'puppet/node'
 require 'puppet/indirector'
-require 'puppet/simple_graph'
 require 'puppet/transaction'
-
 require 'puppet/util/pson'
-
 require 'puppet/util/tagging'
+require 'puppet/graph'
 
-# This class models a node catalog.  It is the thing
-# meant to be passed from server to client, and it contains all
-# of the information in the catalog, including the resources
-# and the relationships between them.
-class Puppet::Resource::Catalog < Puppet::SimpleGraph
-  class DuplicateResourceError < Puppet::Error; end
+# This class models a node catalog.  It is the thing meant to be passed
+# from server to client, and it contains all of the information in the
+# catalog, including the resources and the relationships between them.
+#
+# @api public
+
+class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
+  class DuplicateResourceError < Puppet::Error
+    include Puppet::ExternalFileError
+  end
 
   extend Puppet::Indirector
   indirects :catalog, :terminus_setting => :catalog_terminus
@@ -62,33 +64,49 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     [$1, $2]
   end
 
-  # Add a resource to our graph and to our resource table.
-  # This is actually a relatively complicated method, because it handles multiple
-  # aspects of Catalog behaviour:
-  # * Add the resource to the resource table
-  # * Add the resource to the resource graph
-  # * Add the resource to the relationship graph
-  # * Add any aliases that make sense for the resource (e.g., name != title)
-  def add_resource(*resource)
-    add_resource(*resource[0..-2]) if resource.length > 1
-    resource = resource.pop
-    raise ArgumentError, "Can only add objects that respond to :ref, not instances of #{resource.class}" unless resource.respond_to?(:ref)
-    fail_on_duplicate_type_and_title(resource)
-    title_key = title_key_for_ref(resource.ref)
-
-    @transient_resources << resource if applying?
-    @resource_table[title_key] = resource
-
-    # If the name and title differ, set up an alias
-
-    if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
-      self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
+  def add_resource(*resources)
+    resources.each do |resource|
+      add_one_resource(resource)
     end
+  end
+
+  # @param resource [A Resource] a resource in the catalog
+  # @return [A Resource, nil] the resource that contains the given resource
+  # @api public
+  def container_of(resource)
+    adjacent(resource, :direction => :in)[0]
+  end
+
+  def add_one_resource(resource)
+    fail_on_duplicate_type_and_title(resource)
+
+    add_resource_to_table(resource)
+    create_resource_aliases(resource)
 
     resource.catalog = self if resource.respond_to?(:catalog=)
+    add_resource_to_graph(resource)
+  end
+  private :add_one_resource
+
+  def add_resource_to_table(resource)
+    title_key = title_key_for_ref(resource.ref)
+    @resource_table[title_key] = resource
+    @resources << title_key
+  end
+  private :add_resource_to_table
+
+  def add_resource_to_graph(resource)
     add_vertex(resource)
     @relationship_graph.add_vertex(resource) if @relationship_graph
   end
+  private :add_resource_to_graph
+
+  def create_resource_aliases(resource)
+    if resource.respond_to?(:isomorphic?) and resource.isomorphic? and resource.name != resource.title
+      self.alias(resource, resource.uniqueness_key)
+    end
+  end
+  private :create_resource_aliases
 
   # Create an alias for a resource.
   def alias(resource, key)
@@ -118,32 +136,32 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @aliases[resource.ref] << newref
   end
 
-  # Apply our catalog to the local host.  Valid options
-  # are:
-  #   :tags - set the tags that restrict what resources run
-  #       during the transaction
-  #   :ignoreschedules - tell the transaction to ignore schedules
-  #       when determining the resources to run
+  # Apply our catalog to the local host.
+  # @param options [Hash{Symbol => Object}] a hash of options
+  # @option options [Puppet::Transaction::Report] :report
+  #   The report object to log this transaction to. This is optional,
+  #   and the resulting transaction will create a report if not
+  #   supplied.
+  # @option options [Array[String]] :tags
+  #   Tags used to filter the transaction. If supplied then only
+  #   resources tagged with any of these tags will be evaluated.
+  # @option options [Boolean] :ignoreschedules
+  #   Ignore schedules when evaluating resources
+  # @option options [Boolean] :for_network_device
+  #   Whether this catalog is for a network device
+  #
+  # @return [Puppet::Transaction] the transaction created for this
+  #   application
+  #
+  # @api public
   def apply(options = {})
-    @applying = true
-
     Puppet::Util::Storage.load if host_config?
 
-    transaction = Puppet::Transaction.new(self, options[:report])
-    register_report = options[:report].nil?
-
-    transaction.tags = options[:tags] if options[:tags]
-    transaction.ignoreschedules = true if options[:ignoreschedules]
-    transaction.for_network_device = options[:network_device]
-
-    transaction.add_times :config_retrieval => self.retrieval_duration || 0
+    transaction = create_transaction(options)
 
     begin
-      Puppet::Util::Log.newdestination(transaction.report) if register_report
-      begin
+      transaction.report.as_logging_destination do
         transaction.evaluate
-      ensure
-        Puppet::Util::Log.close(transaction.report) if register_report
       end
     rescue Puppet::Error => detail
       Puppet.log_exception(detail, "Could not apply complete catalog: #{detail}")
@@ -157,14 +175,20 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     yield transaction if block_given?
 
-    return transaction
-  ensure
-    @applying = false
+    transaction
   end
 
-  # Are we in the middle of applying the catalog?
-  def applying?
-    @applying
+  # The relationship_graph form of the catalog. This contains all of the
+  # dependency edges that are used for determining order.
+  #
+  # @return [Puppet::Graph::RelationshipGraph]
+  # @api public
+  def relationship_graph
+    if @relationship_graph.nil?
+      @relationship_graph = Puppet::Graph::RelationshipGraph.new(prioritizer)
+      @relationship_graph.populate_from(self)
+    end
+    @relationship_graph
   end
 
   def clear(remove_resources = true)
@@ -172,6 +196,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # We have to do this so that the resources clean themselves up.
     @resource_table.values.each { |resource| resource.remove } if remove_resources
     @resource_table.clear
+    @resources = []
 
     if @relationship_graph
       @relationship_graph.clear
@@ -212,8 +237,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @name = name if name
     @classes = []
     @resource_table = {}
-    @transient_resources = []
-    @applying = false
+    @resources = []
     @relationship_graph = nil
 
     @host_config = true
@@ -240,109 +264,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
   end
 
-  # Create a graph of all of the relationships in our catalog.
-  def relationship_graph
-    unless @relationship_graph
-      # It's important that we assign the graph immediately, because
-      # the debug messages below use the relationships in the
-      # relationship graph to determine the path to the resources
-      # spitting out the messages.  If this is not set,
-      # then we get into an infinite loop.
-      @relationship_graph = Puppet::SimpleGraph.new
-
-      # First create the dependency graph
-      self.vertices.each do |vertex|
-        @relationship_graph.add_vertex vertex
-        vertex.builddepends.each do |edge|
-          @relationship_graph.add_edge(edge)
-        end
-      end
-
-      # Lastly, add in any autorequires
-      @relationship_graph.vertices.each do |vertex|
-        vertex.autorequire(self).each do |edge|
-          unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
-            unless @relationship_graph.edge?(edge.target, edge.source)
-              vertex.debug "Autorequiring #{edge.source}"
-              @relationship_graph.add_edge(edge)
-            else
-              vertex.debug "Skipping automatic relationship with #{(edge.source == vertex ? edge.target : edge.source)}"
-            end
-          end
-        end
-      end
-      @relationship_graph.write_graph(:relationships) if host_config?
-
-      # Then splice in the container information
-      splice!(@relationship_graph)
-
-      @relationship_graph.write_graph(:expanded_relationships) if host_config?
-    end
-    @relationship_graph
-  end
-
-  # Impose our container information on another graph by using it
-  # to replace any container vertices X with a pair of verticies
-  # { admissible_X and completed_X } such that that
-  #
-  #    0) completed_X depends on admissible_X
-  #    1) contents of X each depend on admissible_X
-  #    2) completed_X depends on each on the contents of X
-  #    3) everything which depended on X depens on completed_X
-  #    4) admissible_X depends on everything X depended on
-  #    5) the containers and their edges must be removed
-  #
-  # Note that this requires attention to the possible case of containers
-  # which contain or depend on other containers, but has the advantage
-  # that the number of new edges created scales linearly with the number
-  # of contained verticies regardless of how containers are related;
-  # alternatives such as replacing container-edges with content-edges
-  # scale as the product of the number of external dependences, which is
-  # to say geometrically in the case of nested / chained containers.
-  #
-  Default_label = { :callback => :refresh, :event => :ALL_EVENTS }
-  def splice!(other)
-    stage_class      = Puppet::Type.type(:stage)
-    whit_class       = Puppet::Type.type(:whit)
-    component_class  = Puppet::Type.type(:component)
-    containers = vertices.find_all { |v| (v.is_a?(component_class) or v.is_a?(stage_class)) and vertex?(v) }
-    #
-    # These two hashes comprise the aforementioned attention to the possible
-    #   case of containers that contain / depend on other containers; they map
-    #   containers to their sentinels but pass other verticies through.  Thus we
-    #   can "do the right thing" for references to other verticies that may or
-    #   may not be containers.
-    #
-    admissible = Hash.new { |h,k| k }
-    completed  = Hash.new { |h,k| k }
-    containers.each { |x|
-      admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => self)
-      completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => self)
-    }
-    #
-    # Implement the six requierments listed above
-    #
-    containers.each { |x|
-      contents = adjacent(x, :direction => :out)
-      other.add_edge(admissible[x],completed[x]) if contents.empty? # (0)
-      contents.each { |v|
-        other.add_edge(admissible[x],admissible[v],Default_label) # (1)
-        other.add_edge(completed[v], completed[x], Default_label) # (2)
-      }
-      # (3) & (5)
-      other.adjacent(x,:direction => :in,:type => :edges).each { |e|
-        other.add_edge(completed[e.source],admissible[x],e.label)
-        other.remove_edge! e
-      }
-      # (4) & (5)
-      other.adjacent(x,:direction => :out,:type => :edges).each { |e|
-        other.add_edge(completed[x],admissible[e.target],e.label)
-        other.remove_edge! e
-      }
-    }
-    containers.each { |x| other.remove_vertex! x } # (5)
-  end
-
   # Remove the resource from our catalog.  Notice that we also call
   # 'remove' on the resource, at least until resource classes no longer maintain
   # references to the resource instances.
@@ -356,20 +277,21 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       end
       remove_vertex!(resource) if vertex?(resource)
       @relationship_graph.remove_vertex!(resource) if @relationship_graph and @relationship_graph.vertex?(resource)
+      @resources.delete(title_key)
       resource.remove
     end
   end
 
   # Look a resource up by its reference (e.g., File[/etc/passwd]).
   def resource(type, title = nil)
-    # Always create a resource reference, so that it always canonizes how we
-    # are referring to them.
+    # Always create a resource reference, so that it always
+    # canonicalizes how we are referring to them.
     if title
       res = Puppet::Resource.new(type, title)
     else
       # If they didn't provide a title, then we expect the first
       # argument to be of the form 'Class[name]', which our
-      # Reference class canonizes for us.
+      # Reference class canonicalizes for us.
       res = Puppet::Resource.new(nil, type)
     end
     title_key      = [res.type, res.title.to_s]
@@ -386,7 +308,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   end
 
   def resources
-    @resource_table.values.uniq
+    @resources.collect do |key|
+      @resource_table[key]
+    end
   end
 
   def self.from_pson(data)
@@ -405,10 +329,9 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
 
     if resources = data['resources']
-      resources = PSON.parse(resources) if resources.is_a?(String)
-      resources.each do |res|
-        resource_from_pson(result, res)
-      end
+      result.add_resource(*resources.collect do |res|
+        Puppet::Resource.from_pson(res)
+      end)
     end
 
     if edges = data['edges']
@@ -442,11 +365,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     result.add_edge(edge)
   end
 
-  def self.resource_from_pson(result, res)
-    res = Puppet::Resource.from_pson(res) if res.is_a? Hash
-    result.add_resource(res)
-  end
-
   PSON.register_document_type('Catalog',self)
   def to_pson_data_hash
     {
@@ -456,7 +374,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         'name'      => name,
         'version'   => version,
         'environment' => environment.to_s,
-        'resources' => vertices.collect { |v| v.to_pson_data_hash },
+        'resources' => @resources.collect { |v| @resource_table[v].to_pson_data_hash },
         'edges'     => edges.   collect { |e| e.to_pson_data_hash },
         'classes'   => classes
         },
@@ -523,6 +441,28 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
   private
 
+  def prioritizer
+    @prioritizer ||= case Puppet[:ordering]
+                     when "title-hash"
+                       Puppet::Graph::TitleHashPrioritizer.new
+                     when "manifest"
+                       Puppet::Graph::SequentialPrioritizer.new
+                     when "random"
+                       Puppet::Graph::RandomPrioritizer.new
+                     else
+                       raise Puppet::DevError, "Unknown ordering type #{Puppet[:ordering]}"
+                     end
+  end
+
+  def create_transaction(options)
+    transaction = Puppet::Transaction.new(self, options[:report], prioritizer)
+    transaction.tags = options[:tags] if options[:tags]
+    transaction.ignoreschedules = true if options[:ignoreschedules]
+    transaction.for_network_device = options[:network_device]
+
+    transaction
+  end
+
   # Verify that the given resource isn't declared elsewhere.
   def fail_on_duplicate_type_and_title(resource)
     # Short-curcuit the common case,
@@ -531,11 +471,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # If we've gotten this far, it's a real conflict
     msg = "Duplicate declaration: #{resource.ref} is already declared"
 
-    msg << " in file #{existing_resource.file} at line #{existing_resource.line}" if existing_resource.file and existing_resource.line
+    msg << " in file #{existing_resource.file}:#{existing_resource.line}" if existing_resource.file and existing_resource.line
 
-    msg << "; cannot redeclare" if resource.line or resource.file
+    msg << "; cannot redeclare"
 
-    raise DuplicateResourceError.new(msg)
+    raise DuplicateResourceError.new(msg, resource.file, resource.line)
   end
 
   # An abstracted method for converting one catalog into another type of catalog.
@@ -548,7 +488,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     result.environment = self.environment
 
     map = {}
-    vertices.each do |resource|
+    resources.each do |resource|
       next if virtual_not_exported?(resource)
       next if block_given? and yield resource
 

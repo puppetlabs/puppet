@@ -1,6 +1,5 @@
 require 'puppet/face'
 require 'puppet/application/face_base'
-require 'puppet/util/command_line'
 require 'puppet/util/constant_inflector'
 require 'pathname'
 require 'erb'
@@ -123,25 +122,25 @@ Detail: "#{detail.message}"
 
   # Return a list of applications that are not simply just stubs for Faces.
   def legacy_applications
-    Puppet::Util::CommandLine.available_subcommands.reject do |appname|
+    Puppet::Application.available_application_names.reject do |appname|
       (is_face_app?(appname)) or (exclude_from_docs?(appname))
     end.sort
   end
 
   # Return a list of all applications (both legacy and Face applications), along with a summary
   #  of their functionality.
-  # @returns [Array] An Array of Arrays.  The outer array contains one entry per application; each
+  # @return [Array] An Array of Arrays.  The outer array contains one entry per application; each
   #  element in the outer array is a pair whose first element is a String containing the application
   #  name, and whose second element is a String containing the summary for that application.
   def all_application_summaries()
-    Puppet::Util::CommandLine.available_subcommands.sort.inject([]) do |result, appname|
+    Puppet::Application.available_application_names.sort.inject([]) do |result, appname|
       next result if exclude_from_docs?(appname)
 
       if (is_face_app?(appname))
         begin
           face = Puppet::Face[appname, :current]
           result << [appname, face.summary]
-        rescue Puppet::Error => detail
+        rescue Puppet::Error
           result << [ "! #{appname}", "! Subcommand unavailable due to error. Check error logs." ]
         end
       else
@@ -152,7 +151,6 @@ Detail: "#{detail.message}"
 
   def horribly_extract_summary_from(appname)
     begin
-      require "puppet/application/#{appname}"
       help = Puppet::Application[appname].help.split("\n")
       # Now we find the line with our summary, extract it, and return it.  This
       # depends on the implementation coincidence of how our pages are

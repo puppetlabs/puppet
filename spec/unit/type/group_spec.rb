@@ -51,4 +51,14 @@ describe Puppet::Type.type(:group) do
     group.provider.expects(:delete)
     group.parameter(:ensure).sync
   end
+
+  it "delegates the existance check to its provider" do
+    provider = @class.provide(:testing) {}
+    provider_instance = provider.new
+    provider_instance.expects(:exists?).returns true
+
+    type = @class.new(:name => "group", :provider => provider_instance)
+
+    type.exists?.should == true
+  end
 end

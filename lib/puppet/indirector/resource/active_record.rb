@@ -1,6 +1,8 @@
 require 'puppet/indirector/active_record'
+require 'puppet/indirector/resource/validator'
 
 class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
+  include Puppet::Resource::Validator
 
   desc "A component of ActiveRecord storeconfigs. ActiveRecord-based storeconfigs
     and inventory are deprecated. See http://links.puppetlabs.com/activerecord-deprecation"

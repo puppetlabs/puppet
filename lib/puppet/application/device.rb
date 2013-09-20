@@ -195,7 +195,7 @@ Licensed under the Apache 2.0 License
 
         require 'puppet/configurer'
         configurer = Puppet::Configurer.new
-        report = configurer.run(:network_device => true, :pluginsync => Puppet[:pluginsync])
+        configurer.run(:network_device => true, :pluginsync => Puppet[:pluginsync])
       rescue => detail
         Puppet.log_exception(detail)
       ensure
@@ -210,7 +210,7 @@ Licensed under the Apache 2.0 License
   def setup_host
     @host = Puppet::SSL::Host.new
     waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
-    cert = @host.wait_for_cert(waitforcert)
+    @host.wait_for_cert(waitforcert)
   end
 
   def setup
@@ -230,7 +230,7 @@ Licensed under the Apache 2.0 License
     # but this is just a temporary band-aid.
     Puppet[:ignoreimport] = true
 
-    # We need to specify a ca location for all of the SSL-related i
+    # We need to specify a ca location for all of the SSL-related
     # indirected classes to work; in fingerprint mode we just need
     # access to the local files and we don't need a ca.
     Puppet::SSL::Host.ca_location = :remote

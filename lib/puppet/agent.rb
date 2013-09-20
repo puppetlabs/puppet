@@ -1,4 +1,3 @@
-require 'sync'
 require 'puppet/application'
 
 # A general class for triggering a run of another
@@ -10,13 +9,13 @@ class Puppet::Agent
   require 'puppet/agent/disabler'
   include Puppet::Agent::Disabler
 
-  attr_reader :client_class, :client, :splayed
-  attr_accessor :should_fork
+  attr_reader :client_class, :client, :splayed, :should_fork
 
   # Just so we can specify that we are "the" instance.
-  def initialize(client_class)
+  def initialize(client_class, should_fork=true)
     @splayed = false
 
+    @should_fork = should_fork
     @client_class = client_class
   end
 
@@ -37,12 +36,12 @@ class Puppet::Agent
 
     result = nil
     block_run = Puppet::Application.controlled_run do
-      splay
+      splay client_options.fetch :splay, Puppet[:splay]
       result = run_in_fork(should_fork) do
         with_client do |client|
           begin
             client_args = client_options.merge(:pluginsync => Puppet[:pluginsync])
-            sync.synchronize { lock { client.run(client_args) } }
+            lock { client.run(client_args) }
           rescue SystemExit,NoMemoryError
             raise
           rescue Exception => detail
@@ -66,18 +65,14 @@ class Puppet::Agent
   end
 
   # Sleep when splay is enabled; else just return.
-  def splay
-    return unless Puppet[:splay]
+  def splay(do_splay = Puppet[:splay])
+    return unless do_splay
     return if splayed?
 
     time = rand(Puppet[:splaylimit] + 1)
     Puppet.info "Sleeping for #{time} seconds (splay is enabled)"
     sleep(time)
     @splayed = true
-  end
-
-  def sync
-    @sync ||= Sync.new
   end
 
   def run_in_fork(forking = true)

@@ -1,5 +1,5 @@
 # Test whether a given class or definition is defined
-Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :doc => "Determine whether
+Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2, :doc => "Determine whether
   a given class or resource type is defined. This function can also determine whether a
   specific resource has been declared. Returns true or false. Accepts class names,
   type names, and resource references.

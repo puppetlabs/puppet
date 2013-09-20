@@ -1,15 +1,27 @@
-require 'puppet/interface/action'
-require 'puppet/interface/action_builder'
-
+# This class is not actually public API, but the method
+# {Puppet::Interface::ActionManager#action action} is public when used
+# as part of the Faces DSL (i.e. from within a
+# {Puppet::Interface.define define} block).
+# @api public
 module Puppet::Interface::ActionManager
   # Declare that this app can take a specific action, and provide
   # the code to do so.
+
+  # Defines a new action. This takes a block to build the action using
+  # the methods on {Puppet::Interface::ActionBuilder}.
+  # @param name [Symbol] The name that will be used to invoke the
+  #   action
+  # @overload action(name, {|| block})
+  # @return [void]
+  # @api public
+  # @dsl Faces
   def action(name, &block)
     @actions ||= {}
     Puppet.warning "Redefining action #{name} for #{self}" if action?(name)
 
     action = Puppet::Interface::ActionBuilder.build(self, name, &block)
 
+    # REVISIT: (#18042) doesn't this mean we can't redefine the default action? -- josh
     if action.default and current = get_default_action
       raise "Actions #{current.name} and #{name} cannot both be default"
     end
@@ -17,14 +29,21 @@ module Puppet::Interface::ActionManager
     @actions[action.name] = action
   end
 
-  # This is the short-form of an action definition; it doesn't use the
-  # builder, just creates the action directly from the block.
+  # Defines an action without using ActionBuilder. The block given is
+  # the code that will be executed when the action is invoked.
+  # @api public
+  # @deprecated
   def script(name, &block)
     @actions ||= {}
-    raise "Action #{name} already defined for #{self}" if action?(name)
+    Puppet.warning "Redefining action #{name} for #{self}" if action?(name)
+
+    # REVISIT: (#18048) it's possible to create multiple default actions
     @actions[name] = Puppet::Interface::Action.new(self, name, :when_invoked => block)
   end
 
+  # Returns the list of available actions for this face.
+  # @return [Array<Symbol>] The names of the actions for this face
+  # @api private
   def actions
     @actions ||= {}
     result = @actions.keys
@@ -40,6 +59,10 @@ module Puppet::Interface::ActionManager
     result.uniq.sort
   end
 
+  # Retrieves a named action
+  # @param name [Symbol] The name of the action
+  # @return [Puppet::Interface::Action] The action object
+  # @api private
   def get_action(name)
     @actions ||= {}
     result = @actions[name.to_sym]
@@ -60,6 +83,9 @@ module Puppet::Interface::ActionManager
     return result
   end
 
+  # Retrieves the default action for the face
+  # @return [Puppet::Interface::Action]
+  # @api private
   def get_default_action
     default = actions.map {|x| get_action(x) }.select {|x| x.default }
     if default.length > 1
@@ -68,6 +94,7 @@ module Puppet::Interface::ActionManager
     default.first
   end
 
+  # @api private
   def action?(name)
     actions.include?(name.to_sym)
   end

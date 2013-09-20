@@ -1,31 +1,20 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/rails'
 require 'puppet/node/facts'
 
 describe "Puppet::Resource::ActiveRecord", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
   before :each do
-    setup_scratch_database
-    Puppet[:storeconfigs] = true
-  end
-
-  subject {
     require 'puppet/indirector/resource/active_record'
-    Puppet::Resource.indirection.terminus(:active_record)
-  }
-
-  it "should automatically initialize Rails" do
-    # Other tests in the suite may have established the connection, which will
-    # linger; the assertion is just to enforce our assumption about the call,
-    # not because I *really* want to test ActiveRecord works.  Better to have
-    # an early failure than wonder why the test overall doesn't DTRT.
-    ActiveRecord::Base.remove_connection
-    ActiveRecord::Base.should_not be_connected
-    subject.should be
-    ActiveRecord::Base.should be_connected
+    setup_scratch_database
   end
+
+  after :each do
+    Puppet::Rails.teardown
+  end
+
+  subject { Puppet::Resource.indirection.terminus(:active_record) }
 
   it "should issue a deprecation warning" do
     Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
@@ -33,8 +22,6 @@ describe "Puppet::Resource::ActiveRecord", :if => can_use_scratch_database? do
   end
 
   describe "#search" do
-    before :each do Puppet::Rails.init end
-
     def search(type, host = 'default.local', filter = nil)
       args = { :host => host, :filter => filter }
       subject.search(Puppet::Resource.indirection.request(:search, type, nil, args))
@@ -79,10 +66,6 @@ describe "Puppet::Resource::ActiveRecord", :if => can_use_scratch_database? do
   end
 
   describe "#build_active_record_query" do
-    before :each do
-      Puppet::Rails.init
-    end
-
     let :type do 'Notify' end
 
     def query(type, host, filter = nil)

@@ -180,6 +180,5 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       exit(1)
     end
   end
-
 end
 

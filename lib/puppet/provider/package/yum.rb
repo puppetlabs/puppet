@@ -1,13 +1,17 @@
 require 'puppet/util/package'
 
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
-  desc "Support via `yum`."
+  desc "Support via `yum`.
+
+  Using this provider's `uninstallable` feature will not remove dependent packages. To
+  remove dependent packages with this provider use the `purgeable` feature, but note this
+  feature is destructive and should be used with the utmost care."
 
   has_feature :versionable
 
   commands :yum => "yum", :rpm => "rpm", :python => "python"
 
-  YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
+  self::YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
 
   attr_accessor :latest_info
 
@@ -30,7 +34,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # collect our 'latest' info
     updates = {}
-    python(YUMHELPER).each_line do |l|
+    python(self::YUMHELPER).each_line do |l|
       l.chomp!
       next if l.empty?
       if l[0,4] == "_pkg"
@@ -70,7 +74,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    output = yum "-d", "0", "-e", "0", "-y", operation, wanted
+    yum "-d", "0", "-e", "0", "-y", operation, wanted
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is

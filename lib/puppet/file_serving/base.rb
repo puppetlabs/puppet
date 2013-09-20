@@ -15,17 +15,24 @@ class Puppet::FileServing::Base
   def exist?
       stat
       return true
-  rescue => detail
+  rescue
       return false
   end
 
   # Return the full path to our file.  Fails if there's no path set.
   def full_path(dummy_argument=:work_arround_for_ruby_GC_bug)
-    (if relative_path.nil? or relative_path == "" or relative_path == "."
-       path
+    if relative_path.nil? or relative_path == "" or relative_path == "."
+       full_path = path
      else
-       File.join(path, relative_path)
-     end).gsub(%r{//+}, "/")
+       full_path = File.join(path, relative_path)
+     end
+
+     if Puppet.features.microsoft_windows?
+       # Replace multiple slashes as long as they aren't at the beginning of a filename
+       full_path.gsub(%r{(./)/+}, '\1')
+     else
+       full_path.gsub(%r{//+}, '/')
+     end
   end
 
   def initialize(path, options = {})

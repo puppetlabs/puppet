@@ -14,7 +14,7 @@ describe Puppet::Run do
 
   it "should use a configurer agent as its agent" do
     agent = mock 'agent'
-    Puppet::Agent.expects(:new).with(Puppet::Configurer).returns agent
+    Puppet::Agent.expects(:new).with(Puppet::Configurer, anything).returns agent
 
     @runner.agent.should equal(agent)
   end
@@ -122,19 +122,54 @@ describe Puppet::Run do
   end
 
   describe ".from_pson" do
-    it "should accept a hash of options, and pass them with symbolified keys to new" do
+    it "should read from a hash that represents the 'options' to initialize" do
       options = {
         "tags" => "whatever",
         "background" => true,
+        "ignoreschedules" => false,
       }
+      run = Puppet::Run.from_pson(options)
 
-      Puppet::Run.expects(:new).with({
+      run.options.should == {
         :tags => "whatever",
-        :background => true,
-        :pluginsync => Puppet[:pluginsync]
-      })
+        :pluginsync => Puppet[:pluginsync],
+        :ignoreschedules => false,
+      }
+      run.background.should be_true
+    end
 
-      Puppet::Run.from_pson(options)
+    it "should read from a hash that follows the actual object structure" do
+      hash = {"background" => true,
+              "options" => {
+                "pluginsync" => true,
+                "tags" => [],
+                "ignoreschedules" => false},
+              "status" => "success"}
+      run = Puppet::Run.from_pson(hash)
+
+      run.options.should == {
+        :pluginsync => true,
+        :tags => [],
+        :ignoreschedules => false
+      }
+      run.background.should be_true
+      run.status.should == 'success'
+    end
+
+    it "should round trip through pson" do
+      run = Puppet::Run.new(
+        :tags => ['a', 'b', 'c'],
+        :ignoreschedules => true,
+        :pluginsync => false,
+        :background => true
+      )
+      run.instance_variable_set(:@status, true)
+
+      tripped = Puppet::Run.convert_from(:pson, run.render(:pson))
+
+      tripped.options.should == run.options
+      tripped.status.should == run.status
+      tripped.background.should == run.background
     end
   end
 end

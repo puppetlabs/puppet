@@ -9,6 +9,7 @@ class Puppet::Application::Kick < Puppet::Application
   option("--debug","-d")
   option("--ping","-P")
   option("--test")
+  option("--ignoreschedules")
 
   option("--host HOST") do |arg|
     @hosts << arg
@@ -144,6 +145,9 @@ with '--genconfig'.
   forking for each client to which to connect. The default is 1, meaning
   serial execution.
 
+* --puppetport:
+  Use the specified TCP port to connect to agents. Defaults to 8139.
+
 * --tag:
   Specify a tag for selecting the objects to apply. Does not work with
   the --test option.
@@ -153,7 +157,7 @@ with '--genconfig'.
   option requires LDAP support at this point.
 
 * --ping:
-  Do a ICMP echo against the target host. Skip hosts that don't respond
+  Do an ICMP echo against the target host. Skip hosts that don't respond
   to ping.
 
 
@@ -236,7 +240,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def run_for_host(host)
     if options[:ping]
-      out = %x{ping -c 1 #{host}}
+      %x{ping -c 1 #{host}}
       unless $CHILD_STATUS == 0
         $stderr.print "Could not contact #{host}\n"
         exit($CHILD_STATUS)

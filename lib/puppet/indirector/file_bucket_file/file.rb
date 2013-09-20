@@ -22,7 +22,6 @@ module Puppet::FileBucketFile
       return nil unless path_match(dir_path, files_original_path)
 
       if request.options[:diff_with]
-        hash_protocol = sumtype(checksum)
         file2_path = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
         raise "could not find diff_with #{request.options[:diff_with]}" unless ::File.exists?(file2_path)
         return `diff #{file_path.inspect} #{file2_path.inspect}`
@@ -45,7 +44,13 @@ module Puppet::FileBucketFile
       checksum, files_original_path = request_to_checksum_and_path(request)
 
       save_to_disk(instance, files_original_path)
-      instance.to_s
+
+      # don't echo the request content back to the agent
+      model.new('')
+    end
+
+    def validate_key(request)
+      # There are no ACLs on filebucket files so validating key is not important
     end
 
     private

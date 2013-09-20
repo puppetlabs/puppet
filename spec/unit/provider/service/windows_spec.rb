@@ -119,7 +119,7 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
       resource[:restart] = 'c:/bin/foo'
 
       provider.expects(:execute).never
-      provider.expects(:execute).with(['c:/bin/foo'], :failonfail => true, :squelch => true)
+      provider.expects(:execute).with(['c:/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
 
       provider.restart
     end

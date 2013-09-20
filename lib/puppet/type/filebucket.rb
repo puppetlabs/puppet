@@ -2,35 +2,44 @@ module Puppet
   require 'puppet/file_bucket/dipper'
 
   newtype(:filebucket) do
-    @doc = "A repository for backing up files.  If no filebucket is
-      defined, then files will be backed up in their current directory,
-      but the filebucket can be either a host- or site-global repository
-      for backing up.  It stores files and returns the MD5 sum, which
-      can later be used to retrieve the file if restoration becomes
-      necessary.  A filebucket does not do any work itself; instead,
-      it can be specified as the value of *backup* in a **file** object.
+    @doc = <<-EOT
+      A repository for storing and retrieving file content by MD5 checksum. Can
+      be local to each agent node, or centralized on a puppet master server. All
+      puppet masters provide a filebucket service that agent nodes can access
+      via HTTP, but you must declare a filebucket resource before any agents
+      will do so.
 
-      Currently, filebuckets are only useful for manual retrieval of
-      accidentally removed files (e.g., you look in the log for the md5 sum
-      and retrieve the file with that sum from the filebucket), but when
-      transactions are fully supported filebuckets will be used to undo
-      transactions.
+      Filebuckets are used for the following features:
 
-      You will normally want to define a single filebucket for your
-      whole network and then use that as the default backup location:
+      - **Content backups.** If the `file` type's `backup` attribute is set to
+        the name of a filebucket, Puppet will back up the _old_ content whenever
+        it rewrites a file; see the documentation for the `file` type for more
+        details. These backups can be used for manual recovery of content, but
+        are more commonly used to display changes and differences in a tool like
+        Puppet Dashboard.
+      - **Content distribution.** The optional static compiler populates the
+        puppet master's filebucket with the _desired_ content for each file,
+        then instructs the agent to retrieve the content for a specific
+        checksum. For more details,
+        [see the `static_compiler` section in the catalog indirection docs](http://docs.puppetlabs.com/references/latest/indirection.html#catalog).
 
-          # Define the bucket
+      To use a central filebucket for backups, you will usually want to declare
+      a filebucket resource and a resource default for the `backup` attribute
+      in site.pp:
+
+          # /etc/puppet/manifests/site.pp
           filebucket { 'main':
-            server => puppet,
-            path   => false,
-            # Due to a known issue, path must be set to false for remote filebuckets.
+            path   => false,                # This is required for remote filebuckets.
+            server => 'puppet.example.com', # Optional; defaults to the configured puppet master.
           }
 
-          # Specify it as the default target
-          File { backup => main }
+          File { backup => main, }
 
-      Puppetmaster servers create a filebucket by default, so this will
-      work in a default configuration."
+      Puppet master servers automatically provide the filebucket service, so
+      this will work in a default configuration. If you have a heavily
+      restricted `auth.conf` file, you may need to allow access to the
+      `file_bucket_file` endpoint.
+    EOT
 
     newparam(:name) do
       desc "The name of the filebucket."
@@ -38,27 +47,25 @@ module Puppet
     end
 
     newparam(:server) do
-      desc "The server providing the remote filebucket.  If this is not
-        specified then *path* is checked. If it is set, then the
-        bucket is local.  Otherwise the puppetmaster server specified
-        in the config or at the commandline is used.
+      desc "The server providing the remote filebucket service. Defaults to the
+        value of the `server` setting (that is, the currently configured
+        puppet master server).
 
-        Due to a known issue, you currently must set the `path` attribute to
-        false if you wish to specify a `server` attribute."
+        This setting is _only_ consulted if the `path` attribute is set to `false`."
       defaultto { Puppet[:server] }
     end
 
     newparam(:port) do
-      desc "The port on which the remote server is listening.
-        Defaults to the normal Puppet port, %s." % Puppet[:masterport]
+      desc "The port on which the remote server is listening. Defaults to the
+        value of the `masterport` setting, which is usually %s." % Puppet[:masterport]
 
       defaultto { Puppet[:masterport] }
     end
 
     newparam(:path) do
-      desc "The path to the local filebucket.  If this is
-        unset, then the bucket is remote.  The parameter *server* must
-        can be specified to set the remote server."
+      desc "The path to the _local_ filebucket; defaults to the value of the
+        `clientbucketdir` setting.  To use a remote filebucket, you _must_ set
+        this attribute to `false`."
 
       defaultto { Puppet[:clientbucketdir] }
 

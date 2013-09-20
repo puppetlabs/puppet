@@ -12,8 +12,8 @@ module Puppet::Network::HttpPool
 
   # Retrieve a cached http instance if caching is enabled, else return
   # a new one.
-  def self.http_instance(host, port, use_ssl = true)
-    Puppet::Network::HTTP::Connection.new(host, port, use_ssl)
+  def self.http_instance(host, port, use_ssl = true, verify_peer = true)
+    Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => use_ssl, :verify_peer => verify_peer)
   end
 
 end

@@ -16,7 +16,10 @@ class Puppet::SSL::Host
   CertificateRevocationList = Puppet::SSL::CertificateRevocationList
 
   extend Puppet::Indirector
-  indirects :certificate_status, :terminus_class => :file
+  indirects :certificate_status, :terminus_class => :file, :doc => <<DOC
+    This indirection represents the host that ties a key, certificate, and certificate request together.
+    The indirection key is the certificate CN (generally a hostname).
+DOC
 
   attr_reader :name
   attr_accessor :ca
@@ -156,20 +159,12 @@ class Puppet::SSL::Host
     @certificate_request ||= CertificateRequest.indirection.find(name)
   end
 
-  def this_csr_is_for_the_current_host
-    name == Puppet[:certname].downcase
-  end
-
-  def this_csr_is_for_the_current_host
-    name == Puppet[:certname].downcase
-  end
-
   # Our certificate request requires the key but that's all.
   def generate_certificate_request(options = {})
     generate_key unless key
 
-    # If this is for the current machine...
-    if this_csr_is_for_the_current_host
+    # If this CSR is for the current machine...
+    if name == Puppet[:certname].downcase
       # ...add our configured dns_alt_names
       if Puppet[:dns_alt_names] and Puppet[:dns_alt_names] != ''
         options[:dns_alt_names] ||= Puppet[:dns_alt_names]
@@ -257,10 +252,12 @@ ERROR_STRING
       # a lookup in the middle of setting our ssl connection.
       @ssl_store.add_file(Puppet[:localcacert])
 
-      # If there's a CRL, add it to our store.
-      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
-        @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
-        @ssl_store.add_crl(crl.content)
+      # If we're doing revocation and there's a CRL, add it to our store.
+      if Puppet.settings[:certificate_revocation]
+        if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
+          @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+          @ssl_store.add_crl(crl.content)
+        end
       end
       return @ssl_store
     end
@@ -284,7 +281,7 @@ ERROR_STRING
     # It appears that we have no internal consumers of this api
     # --jeffweiss 30 aug 2012
     pson_hash[:fingerprint] = thing_to_use.fingerprint
-    
+
     # The above fingerprint doesn't tell us what message digest algorithm was used
     # No problem, except that the default is changing between 2.7 and 3.0. Also, as
     # we move to FIPS 140-2 compliance, MD5 is no longer allowed (and, gasp, will
@@ -294,15 +291,15 @@ ERROR_STRING
     # --jeffweiss 31 july 2012
     pson_hash[:fingerprints] = {}
     pson_hash[:fingerprints][:default] = thing_to_use.fingerprint
-    
-    suitable_message_digest_algorithms.each do |md| 
+
+    suitable_message_digest_algorithms.each do |md|
       pson_hash[:fingerprints][md] = thing_to_use.fingerprint md
     end
     pson_hash[:dns_alt_names] = thing_to_use.subject_alt_names
 
     pson_hash.to_pson(*args)
   end
-  
+
   # eventually we'll probably want to move this somewhere else or make it
   # configurable
   # --jeffweiss 29 aug 2012
@@ -319,7 +316,7 @@ ERROR_STRING
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
-      Puppet.log_exception(detail, "Could not request certificate: #{detail}")
+      Puppet.log_exception(detail, "Could not request certificate: #{detail.message}")
       if time < 1
         puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
         exit(1)
@@ -340,7 +337,7 @@ ERROR_STRING
         break if certificate
         Puppet.notice "Did not receive certificate"
       rescue StandardError => detail
-        Puppet.log_exception(detail, "Could not request certificate: #{detail}")
+        Puppet.log_exception(detail, "Could not request certificate: #{detail.message}")
       end
     end
   end

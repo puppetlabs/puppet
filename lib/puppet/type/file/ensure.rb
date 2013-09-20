@@ -7,30 +7,29 @@ module Puppet
 
     desc <<-'EOT'
       Whether to create files that don't currently exist.
-      Possible values are *absent*, *present*, *file*, and *directory*.
+      Possible values are `absent`, `present`, `file`, `directory`, and `link`.
       Specifying `present` will match any form of file existence, and
       if the file is missing will create an empty file. Specifying
-      `absent` will delete the file (or directory, if `recurse => true`).
+      `absent` will delete the file (or directory, if `recurse => true` and
+      `force => true`). Specifying `link` requires that you also set the `target`
+      attribute; note that symlinks cannot be managed on Windows.
 
-      Anything other than the above values will create a symlink; note that
-      symlinks cannot be managed on Windows. In the interest of readability
-      and clarity, symlinks should be created by setting `ensure => link` and
-      explicitly specifying a target; however, if a `target` attribute isn't
-      provided, the value of the `ensure` attribute will be used as the
-      symlink target. The following two declarations are equivalent:
+      If you specify the path to another file as the ensure value, it is
+      equivalent to specifying `link` and using that path as the `target`:
 
-          # (Useful on Solaris)
+          # Equivalent resources:
 
-          # Less maintainable:
           file { "/etc/inetd.conf":
             ensure => "/etc/inet/inetd.conf",
           }
 
-          # More maintainable:
           file { "/etc/inetd.conf":
             ensure => link,
             target => "/etc/inet/inetd.conf",
           }
+
+      However, we recommend using `link` and `target` explicitly, since this
+      behavior can be harder to read.
     EOT
 
     # Most 'ensure' properties have a default, but with files we, um, don't.
@@ -48,7 +47,7 @@ module Puppet
         property.sync
       else
         @resource.write(:ensure)
-        mode = @resource.should(:mode)
+        @resource.should(:mode)
       end
     end
 
@@ -68,7 +67,7 @@ module Puppet
       end
       if mode
         Puppet::Util.withumask(000) do
-          Dir.mkdir(@resource[:path], symbolic_mode_to_int(mode, 755, true))
+          Dir.mkdir(@resource[:path], symbolic_mode_to_int(mode, 0755, true))
         end
       else
         Dir.mkdir(@resource[:path])

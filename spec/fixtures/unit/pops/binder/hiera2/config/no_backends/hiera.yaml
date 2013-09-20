@@ -1,0 +1,7 @@
+---
+version: 2
+hierarchy:
+  os:
+    - ${osfamily}
+    - for_${osfamily}
+

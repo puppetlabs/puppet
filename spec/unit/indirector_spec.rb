@@ -79,6 +79,12 @@ describe Puppet::Indirector, "when registering an indirection" do
   before do
     @thingie = Class.new do
       extend Puppet::Indirector
+
+      # override Class#name, since we're not naming this ephemeral class
+      def self.name
+        'Thingie'
+      end
+
       attr_reader :name
       def initialize(name)
         @name = name
@@ -108,13 +114,13 @@ describe Puppet::Indirector, "when registering an indirection" do
 
   it "should pass any provided options to the indirection during initialization" do
     klass = mock 'terminus class'
-    Puppet::Indirector::Indirection.expects(:new).with(@thingie, :first, {:some => :options})
+    Puppet::Indirector::Indirection.expects(:new).with(@thingie, :first, {:some => :options, :indirected_class => 'Thingie'})
     @indirection = @thingie.indirects :first, :some => :options
   end
 
-  it "should extend the class with the Format Handler" do
+  it "should extend the class to handle serialization" do
     @indirection = @thingie.indirects :first
-    @thingie.singleton_class.ancestors.should be_include(Puppet::Network::FormatHandler)
+    @thingie.should respond_to(:convert_from)
   end
 
   after do

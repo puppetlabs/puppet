@@ -14,9 +14,6 @@ module Puppet::ModuleTool
       attr_accessor :options
 
       def initialize(options = {})
-        if Puppet.features.microsoft_windows?
-          raise Puppet::Error, "`puppet module` actions are currently not supported on Microsoft Windows"
-        end
         @options = options
       end
 
@@ -49,6 +46,16 @@ module Puppet::ModuleTool
             Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
           elsif require_modulefile
             raise ArgumentError, "No Modulefile found."
+          end
+          extra_metadata_path = File.join(@path, 'metadata.json')
+          if File.file?(extra_metadata_path)
+            File.open(extra_metadata_path) do |f|
+              begin
+                @metadata.extra_metadata = PSON.load(f)
+              rescue PSON::ParserError
+                raise ArgumentError, "Could not parse JSON #{extra_metadata_path}"
+              end
+            end
           end
         end
         @metadata

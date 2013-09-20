@@ -1,8 +1,8 @@
 require 'ostruct'
-require 'puppet/util/loadedfile'
+require 'puppet/util/watched_file'
 require 'puppet/util/network_device'
 
-class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
+class Puppet::Util::NetworkDevice::Config
 
   def self.main
     @main ||= self.new
@@ -18,12 +18,9 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
     FileTest.exists?(@file)
   end
 
-  def initialize()
-    @file = Puppet[:deviceconfig]
+  def initialize
+    @file = Puppet::Util::WatchedFile.new(Puppet[:deviceconfig])
 
-    raise Puppet::DevError, "No device config file defined" unless @file
-    return unless self.exists?
-    super(@file)
     @devices = {}
 
     read(true) # force reading at start
@@ -31,9 +28,9 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
 
   # Read the configuration file.
   def read(force = false)
-    return unless FileTest.exists?(@file)
+    return unless exists?
 
-    parse if force or changed?
+    parse if force or @file.changed?
   end
 
   private
@@ -59,10 +56,11 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
             device = OpenStruct.new
             device.name = name
             device.line = count
+            device.options = { :debug => false }
             Puppet.debug "found device: #{device.name} at #{device.line}"
             devices[name] = device
-          when /^\s*(type|url)\s+(.+)$/
-            parse_directive(device, $1, $2, count)
+          when /^\s*(type|url|debug)(\s+(.+))*$/
+            parse_directive(device, $1, $3, count)
           else
             raise Puppet::Error, "Invalid line #{count}: #{line}"
           end
@@ -85,6 +83,8 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
       device.provider = value
     when "url"
       device.url = value
+    when "debug"
+      device.options[:debug] = true
     else
       raise Puppet::Error, "Invalid argument '#{var}' at line #{count}"
     end

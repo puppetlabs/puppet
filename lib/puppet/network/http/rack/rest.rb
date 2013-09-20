@@ -1,5 +1,7 @@
+require 'openssl'
 require 'puppet/network/http/handler'
 require 'puppet/network/http/rack/httphandler'
+require 'puppet/util/ssl'
 
 class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
@@ -46,6 +48,14 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     end
   end
 
+  # Retrieve all headers from the http request, as a map.
+  def headers(request)
+    request.env.select {|k,v| k.start_with? 'HTTP_'}.inject({}) do |m, (k,v)|
+      m[k.sub(/^HTTP_/, '').gsub('_','-').downcase] = v
+      m
+    end
+  end
+
   # Retrieve the accept header from the http request.
   def accept_header(request)
     request.env[HEADER_ACCEPT]
@@ -73,8 +83,6 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
   end
 
   # return the request body
-  # request.body has some limitiations, so we need to concat it back
-  # into a regular string, which is something puppet can use.
   def body(request)
     request.body.read
   end
@@ -89,15 +97,25 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     OpenSSL::X509::Certificate.new(cert)
   end
 
+  # Passenger freaks out if we finish handling the request without reading any
+  # part of the body, so make sure we have.
+  def cleanup(request)
+    request.body.read(1)
+    nil
+  end
+
   def extract_client_info(request)
     result = {}
     result[:ip] = request.ip
 
-    # if we find SSL info in the headers, use them to get a hostname.
+    # if we find SSL info in the headers, use them to get a hostname from the CN.
     # try this with :ssl_client_header, which defaults should work for
     # Apache with StdEnvVars.
-    if dn = request.env[Puppet[:ssl_client_header]] and dn_matchdata = dn.match(/^.*?CN\s*=\s*(.*)/)
-      result[:node] = dn_matchdata[1].to_str
+    subj_str = request.env[Puppet[:ssl_client_header]]
+    subject = Puppet::Util::SSL.subject_from_dn(subj_str || "")
+
+    if cn = Puppet::Util::SSL.cn_from_subject(subject)
+      result[:node] = cn
       result[:authenticated] = (request.env[Puppet[:ssl_client_verify_header]] == 'SUCCESS')
     else
       result[:node] = resolve_node(result)

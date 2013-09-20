@@ -20,7 +20,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   # Executing an init script with the 'rcvar' argument returns
   # the service name, rcvar name and whether it's enabled/disabled
   def rcvar
-    rcvar = execute([self.initscript, :rcvar], :failonfail => true, :squelch => false)
+    rcvar = execute([self.initscript, :rcvar], :failonfail => true, :combine => false, :squelch => false)
     rcvar = rcvar.split("\n")
     rcvar.delete_if {|str| str =~ /^#\s*$/}
     rcvar[1] = rcvar[1].gsub(/^\$/, '')
@@ -41,7 +41,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def rcvar_name
     name = self.rcvar[1]
     self.error("No rcvar name found in rcvar") if name.nil?
-    name = name.gsub!(/(.*)(_enable)?=(.*)/, '\1')
+    name = name.gsub!(/(.*?)(_enable)?=(.*)/, '\1')
     self.error("rcvar name is empty") if name.nil?
     self.debug("rcvar name is #{name}")
     name
@@ -73,7 +73,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     [rcconf, rcconf_local, rcconf_dir + "/#{service}"].each do |filename|
       if File.exists?(filename)
         s = File.read(filename)
-        if s.gsub!(/(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
+        if s.gsub!(/^(#{rcvar}(_enable)?)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
           File.open(filename, File::WRONLY) { |f| f << s }
           self.debug("Replaced in #{filename}")
           success = true

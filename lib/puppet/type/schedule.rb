@@ -130,7 +130,7 @@ module Puppet
       def match?(previous, now)
         # The lowest-level array is of the hour, minute, second triad
         # then it's an array of two of those, to present the limits
-        # then it's array of those ranges
+        # then it's an array of those ranges
         @value = [@value] unless @value[0][0].is_a?(Array)
 
         @value.each do |value|
@@ -304,9 +304,6 @@ module Puppet
           # than the unit of time, we match.  We divide the scale
           # by the repeat, so that we'll repeat that often within
           # the scale.
-          diff = (now.to_i - previous.to_i)
-          comparison = (scale / @resource[:repeat])
-
           return (now.to_i - previous.to_i) >= (scale / @resource[:repeat])
         end
       end
@@ -421,6 +418,11 @@ module Puppet
 
     def self.mkdefaultschedules
       result = []
+      unless Puppet[:default_schedules]
+        Puppet.debug "Not creating default schedules: default_schedules is false"
+        return result
+      end
+
       Puppet.debug "Creating default schedules"
 
             result << self.new(

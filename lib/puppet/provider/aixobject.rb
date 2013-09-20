@@ -1,39 +1,35 @@
 #
 # Common code for AIX providers. This class implements basic structure for
-# AIX resources. 
+# AIX resources.
 # Author::    Hector Rivas Gandara <keymon@gmail.com>
 #
 class Puppet::Provider::AixObject < Puppet::Provider
   desc "Generic AIX resource provider"
 
   # The real provider must implement these functions.
-  def lscmd(value=@resource[:name])
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
+  def lscmd( _value = @resource[:name] )
+    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement lscmd"
   end
 
-  def lscmd(value=@resource[:name])
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
+  def addcmd( _extra_attrs = [] )
+    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement addcmd"
   end
 
-  def addcmd(extra_attrs = [])
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
-  end
-
-  def modifycmd(attributes_hash)
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
+  def modifycmd( _attributes_hash = {} )
+    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement modifycmd"
   end
 
   def deletecmd
-    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: #{detail}"
+    raise Puppet::Error, "Method not defined #{@resource.class.name} #{@resource.name}: Base AixObject provider doesn't implement deletecmd"
   end
 
   # Valid attributes to be managed by this provider.
   # It is a list of hashes
   #  :aix_attr      AIX command attribute name
   #  :puppet_prop   Puppet propertie name
-  #  :to            Optional. Method name that adapts puppet property to aix command value. 
+  #  :to            Optional. Method name that adapts puppet property to aix command value.
   #  :from          Optional. Method to adapt aix command line value to puppet property. Optional
-  class << self 
+  class << self
     attr_accessor :attribute_mapping
   end
 
@@ -49,7 +45,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
       }
     end
     @attribute_mapping_to
-  end    
+  end
 
   # Mapping from AIX attribute to Puppet property.
   def self.attribute_mapping_from
@@ -64,7 +60,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     end
     @attribute_mapping_from
   end
-  
+
   # This functions translates a key and value using the given mapping.
   # Mapping can be nil (no translation) or a hash with this format
   # {:key => new_key, :method => translate_method}
@@ -72,7 +68,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def translate_attr(key, value, mapping)
     return [key, value] unless mapping
     return nil unless mapping[key]
-    
+
     if mapping[key][:method]
       new_value = method(mapping[key][:method]).call(value)
     else
@@ -80,7 +76,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     end
     [mapping[key][:key], new_value]
   end
-  
+
   # Loads an AIX attribute (key=value) and stores it in the given hash with
   # puppet semantics. It translates the pair using the given mapping.
   #
@@ -94,13 +90,13 @@ class Puppet::Provider::AixObject < Puppet::Provider
       true
     elsif mapping[key][:method].nil?
       objectinfo[mapping[key][:key]] = value
-    elsif 
+    elsif
       objectinfo[mapping[key][:key]] = method(mapping[key][:method]).call(value)
     end
-    
+
     return objectinfo
   end
-  
+
   # Gets the given command line argument for the given key and value,
   # using the given mapping to translate key and value.
   # All the objectinfo hash (@resource or @property_hash) is passed.
@@ -109,7 +105,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # and default behaviour is return the arguments as key=value pairs.
   # Subclasses must reimplement this if more complex operations/arguments
   # are needed
-  # 
+  #
   def get_arguments(key, value, mapping, objectinfo)
     if mapping.nil?
       new_key = key
@@ -121,7 +117,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     elsif mapping[key][:method].nil?
       new_key = mapping[key][:key]
       new_value = value
-    elsif 
+    elsif
       new_key = mapping[key][:key]
       new_value = method(mapping[key][:method]).call(value)
     end
@@ -130,18 +126,18 @@ class Puppet::Provider::AixObject < Puppet::Provider
     new_value = Array(new_value).join(',')
 
     if new_key
-      return [ "#{new_key}=#{new_value}" ] 
+      return [ "#{new_key}=#{new_value}" ]
     else
       return []
     end
   end
-  
+
   # Convert the provider properties (hash) to AIX command arguments
   # (list of strings)
   # This function will translate each value/key and generate the argument using
   # the get_arguments function.
   def hash2args(hash, mapping=self.class.attribute_mapping_to)
-    return "" unless hash 
+    return "" unless hash
     arg_list = []
     hash.each {|key, val|
       arg_list += self.get_arguments(key, val, mapping, hash)
@@ -151,8 +147,8 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
   # Parse AIX command attributes from the output of an AIX command, that
   # which format is a list of space separated of key=value pairs:
-  # "uid=100 groups=a,b,c". 
-  # It returns an hash. 
+  # "uid=100 groups=a,b,c".
+  # It returns a hash.
   #
   # If a mapping is provided, the keys are translated as defined in the
   # mapping hash. And only values included in mapping will be added
@@ -161,20 +157,22 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def parse_attr_list(str, mapping=self.class.attribute_mapping_from)
     properties = {}
     attrs = []
-    if !str or (attrs = str.split()).empty?
+    if str.nil? or (attrs = str.split()).empty?
       return nil
-    end 
+    end
 
     attrs.each { |i|
       if i.include? "=" # Ignore if it does not include '='
         (key_str, val) = i.split('=')
         # Check the key
-        if !key_str or key_str.empty?
+        if key_str.nil? or key_str.empty?
           info "Empty key in string 'i'?"
           continue
         end
+        key_str.strip!
         key = key_str.to_sym
-       
+        val.strip! if val
+
         properties = self.load_attribute(key, val, mapping, properties)
       end
     }
@@ -193,18 +191,17 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def parse_colon_list(str, key_list, mapping=self.class.attribute_mapping_from)
     properties = {}
     attrs = []
-    if !str or (attrs = str.split(':')).empty?
+    if str.nil? or (attrs = str.split(':')).empty?
       return nil
-    end 
+    end
 
     attrs.each { |val|
       key = key_list.shift.downcase.to_sym
       properties = self.load_attribute(key, val, mapping, properties)
     }
     properties.empty? ? nil : properties
-    
   end
-  
+
   # Default parsing function for AIX commands.
   # It will choose the method depending of the first line.
   # For the colon separated list it will:
@@ -213,7 +210,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def parse_command_output(output, mapping=self.class.attribute_mapping_from)
     lines = output.split("\n")
     # if it begins with #something:... is a colon separated list.
-    if lines[0] =~ /^#.*:/ 
+    if lines[0] =~ /^#.*:/
       self.parse_colon_list(lines[1], lines[0][1..-1].split(':'), mapping)
     else
       self.parse_attr_list(lines[0], mapping)
@@ -228,12 +225,12 @@ class Puppet::Provider::AixObject < Puppet::Provider
       # Execute lsuser, split all attributes and add them to a dict.
       begin
         output = execute(self.lscmd)
-        @objectinfo = self.parse_command_output(execute(self.lscmd))
+        @objectinfo = self.parse_command_output(output)
         # All attributtes without translation
-        @objectosinfo = self.parse_command_output(execute(self.lscmd), nil)
+        @objectosinfo = self.parse_command_output(output, nil)
       rescue Puppet::ExecutionFailure => detail
         # Print error if needed. FIXME: Do not check the user here.
-        Puppet.debug "aix.getinfo(): Could not find #{@resource.class.name} #{@resource.name}: #{detail}" 
+        Puppet.debug "aix.getinfo(): Could not find #{@resource.class.name} #{@resource.name}: #{detail}"
       end
     end
     @objectinfo
@@ -242,27 +239,30 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Like getinfo, but it will not use the mapping to translate the keys and values.
   # It might be usefult to retrieve some raw information.
   def getosinfo(refresh = false)
-    if @objectosinfo .nil? or refresh == true
+    if @objectosinfo.nil? or refresh == true
       getinfo(refresh)
     end
-    @objectosinfo
+    @objectosinfo || Hash.new
   end
 
 
   # List all elements of given type. It works for colon separated commands and
   # list commands.
   # It returns a list of names.
-  def list_all
+  def self.list_all
     names = []
     begin
-      output = execute(self.lsallcmd()).split('\n')
-      (output.select{ |l| l != /^#/ }).each { |v|
-        name = v.split(/[ :]/)
+      output = execute([self.command(:list), 'ALL'])
+
+      output = output.split("\n").select{ |line| line != /^#/ }
+
+      output.each do |line|
+        name = line.split(/[ :]/)[0]
         names << name if not name.empty?
-      }
+      end
     rescue Puppet::ExecutionFailure => detail
       # Print error if needed
-      Puppet.debug "aix.list_all(): Could not get all resources of type #{@resource.class.name}: #{detail}" 
+      Puppet.debug "aix.list_all(): Could not get all resources of type #{@resource.class.name}: #{detail}"
     end
     names
   end
@@ -271,7 +271,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   #-------------
   # Provider API
   # ------------
- 
+
   # Clear out the cached values.
   def flush
     @property_hash.clear if @property_hash
@@ -283,12 +283,12 @@ class Puppet::Provider::AixObject < Puppet::Provider
     !!getinfo(true) # !! => converts to bool
   end
 
-  # Return all existing instances  
+  # Return all existing instances
   # The method for returning a list of provider instances.  Note that it returns
   # providers, preferably with values already filled in, not resources.
   def self.instances
     objects=[]
-    self.list_all().each { |entry|
+    list_all.each { |entry|
       objects << new(:name => entry, :ensure => :present)
     }
     objects
@@ -319,7 +319,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}"
     end
-  end 
+  end
 
   # Delete this instance of the resource
   def delete
@@ -347,13 +347,13 @@ class Puppet::Provider::AixObject < Puppet::Provider
       define_method(prop.to_s + "=") { |*vals| set(prop, *vals) } unless public_method_defined?(prop.to_s + "=")
     end
   end
-  
+
   # Define the needed getters and setters as soon as we know the resource type
   def self.resource_type=(resource_type)
     super
     mk_resource_methods
   end
-  
+
   # Retrieve a specific value by name.
   def get(param)
     (hash = getinfo(false)) ? hash[param] : nil
@@ -362,15 +362,15 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # Set a property.
   def set(param, value)
     @property_hash[param.intern] = value
-    
+
     if getinfo().nil?
-      # This is weird... 
+      # This is weird...
       raise Puppet::Error, "Trying to update parameter '#{param}' to '#{value}' for a resource that does not exists #{@resource.class.name} #{@resource.name}: #{detail}"
     end
     if value == getinfo()[param.to_sym]
       return
     end
-    
+
     #self.class.validate(param, value)
     if cmd = modifycmd({param =>value})
       begin
@@ -379,15 +379,14 @@ class Puppet::Provider::AixObject < Puppet::Provider
         raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"
       end
     end
-    
-    # Refresh de info.  
-    hash = getinfo(true)
+
+    # Refresh de info.
+    getinfo(true)
   end
- 
+
   def initialize(resource)
     super
     @objectinfo = nil
     @objectosinfo = nil
-  end  
-
+  end
 end

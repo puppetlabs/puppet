@@ -102,6 +102,23 @@ describe Puppet::FileServing::Base do
     end
   end
 
+  describe "when handling a UNC file path on Windows" do
+    let(:path) { '//server/share/filename' }
+    let(:file) { Puppet::FileServing::Base.new(path) }
+
+    it "should preserve double slashes at the beginning of the path" do
+      Puppet.features.stubs(:microsoft_windows?).returns(true)
+      file.full_path.should == path
+    end
+
+    it "should strip double slashes not at the beginning of the path" do
+      Puppet.features.stubs(:microsoft_windows?).returns(true)
+      file = Puppet::FileServing::Base.new('//server//share//filename')
+      file.full_path.should == path
+    end
+  end
+
+
   describe "when stat'ing files" do
     let(:path) { File.expand_path('/this/file') }
     let(:file) { Puppet::FileServing::Base.new(path) }

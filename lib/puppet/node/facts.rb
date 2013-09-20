@@ -28,6 +28,7 @@ class Puppet::Node::Facts
   def add_local_facts
     values["clientcert"] = Puppet.settings[:certname]
     values["clientversion"] = Puppet.version.to_s
+    values["clientnoop"] = Puppet.settings[:noop]
   end
 
   def initialize(name, values = {})
@@ -37,10 +38,38 @@ class Puppet::Node::Facts
     add_timestamp
   end
 
+  def initialize_from_hash(data)
+    @name = data['name']
+    @values = data['values']
+    # Timestamp will be here in YAML
+    timestamp = data['values']['_timestamp']
+    @values.delete_if do |key, val|
+      key =~ /^_/
+    end
+
+    #Timestamp will be here in pson
+    timestamp ||= data['timestamp']
+    timestamp = Time.parse(timestamp) if timestamp.is_a? String
+    self.timestamp = timestamp
+
+    self.expiration = data['expiration']
+    if expiration.is_a? String
+      self.expiration = Time.parse(expiration)
+    end
+  end
+
   # Convert all fact values into strings.
   def stringify
     values.each do |fact, value|
       values[fact] = value.to_s
+    end
+  end
+
+  # Sanitize fact values by converting everything not a string, boolean
+  # numeric, array or hash into strings.
+  def sanitize
+    values.each do |fact, value|
+      values[fact] = sanitize_fact value
     end
   end
 
@@ -50,10 +79,9 @@ class Puppet::Node::Facts
   end
 
   def self.from_pson(data)
-    result = new(data['name'], data['values'])
-    result.timestamp = Time.parse(data['timestamp']) if data['timestamp']
-    result.expiration = Time.parse(data['expiration']) if data['expiration']
-    result
+    new_facts = allocate
+    new_facts.initialize_from_hash(data)
+    new_facts
   end
 
   def to_pson(*args)
@@ -74,11 +102,11 @@ class Puppet::Node::Facts
   end
 
   def timestamp=(time)
-    self.values[:_timestamp] = time
+    self.values['_timestamp'] = time
   end
 
   def timestamp
-    self.values[:_timestamp]
+    self.values['_timestamp']
   end
 
   private
@@ -88,5 +116,22 @@ class Puppet::Node::Facts
     newvals = values.dup
     newvals.find_all { |name, value| name.to_s =~ /^_/ }.each { |name, value| newvals.delete(name) }
     newvals
+  end
+
+  def sanitize_fact(fact)
+    if fact.is_a? Hash then
+      ret = {}
+      fact.each_pair { |k,v| ret[sanitize_fact k]=sanitize_fact v }
+      ret
+    elsif fact.is_a? Array then
+      fact.collect { |i| sanitize_fact i }
+    elsif fact.is_a? Numeric \
+      or fact.is_a? TrueClass \
+      or fact.is_a? FalseClass \
+      or fact.is_a? String
+      fact
+    else
+      fact.to_s
+    end
   end
 end

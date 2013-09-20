@@ -1,0 +1,36 @@
+{
+  "$schema":     "http://json-schema.org/draft-04/schema#",
+  "title":       "Resource Type",
+  "description": "A puppet resource type",
+  "type":        "object",
+  "properties": {
+    "doc": {
+      "type": "string"
+    },
+    "line": {
+      "type": "integer"
+    },
+    "file": {
+      "type": "string"
+    },
+    "parent": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "class",
+        "node",
+        "defined_type"
+      ]
+    },
+    "parameters": {
+      "type": "object"
+    }
+  },
+  "required": ["name", "kind"],
+  "additionalProperties": false
+}

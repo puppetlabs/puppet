@@ -84,6 +84,13 @@ describe content do
 
       @content.should.must == string
     end
+
+    it "should convert the value to ASCII-8BIT", :if => "".respond_to?(:encode) do
+      @content = content.new(:resource => @resource)
+      @content.should= "Let's make a \u{2603}"
+
+      @content.actual_content.should == "Let's make a \xE2\x98\x83".force_encoding(Encoding::ASCII_8BIT)
+    end
   end
 
   describe "when retrieving the current content" do
@@ -147,6 +154,17 @@ describe content do
       @content.must be_safe_insync("whatever")
     end
 
+    it "should warn that no content will be synced to links when ensure is :present" do
+      @resource[:ensure] = :present
+      @resource[:content] = 'foo'
+      @resource.stubs(:should_be_file?).returns false
+      @resource.stubs(:stat).returns mock("stat", :ftype => "link")
+
+      @resource.expects(:warning).with {|msg| msg =~ /Ensure set to :present but file type is/}
+
+      @content.insync? :present
+    end
+
     it "should return false if the current content is :absent" do
       @content.should = "foo"
       @content.should_not be_safe_insync(:absent)
@@ -162,36 +180,36 @@ describe content do
     describe "and the file exists" do
       before do
         @resource.stubs(:stat).returns mock("stat")
+        @content.should = "some content"
       end
 
       it "should return false if the current contents are different from the desired content" do
-        @content.should = "some content"
         @content.should_not be_safe_insync("other content")
       end
 
       it "should return true if the sum for the current contents is the same as the sum for the desired content" do
-        @content.should = "some content"
         @content.must be_safe_insync("{md5}" + Digest::MD5.hexdigest("some content"))
       end
 
-      describe "and Puppet[:show_diff] is set" do
-        before do
-          Puppet[:show_diff] = true
-        end
+      [true, false].product([true, false]).each do |cfg, param|
+        describe "and Puppet[:show_diff] is #{cfg} and show_diff => #{param}" do
+          before do
+            Puppet[:show_diff] = cfg
+            @resource.stubs(:show_diff?).returns param
+          end
 
-        it "should display a diff if the current contents are different from the desired content" do
-          @content.should = "some content"
-          @content.expects(:diff).returns("my diff").once
-          @content.expects(:notice).with("\nmy diff").once
-
-          @content.safe_insync?("other content")
-        end
-
-        it "should not display a diff if the sum for the current contents is the same as the sum for the desired content" do
-          @content.should = "some content"
-          @content.expects(:diff).never
-
-          @content.safe_insync?("{md5}" + Digest::MD5.hexdigest("some content"))
+          if cfg and param
+            it "should display a diff" do
+              @content.expects(:diff).returns("my diff").once
+              @content.expects(:notice).with("\nmy diff").once
+              @content.should_not be_safe_insync("other content")
+            end
+          else
+            it "should not display a diff" do
+              @content.expects(:diff).never
+              @content.should_not be_safe_insync("other content")
+            end
+          end
         end
       end
     end

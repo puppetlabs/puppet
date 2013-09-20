@@ -9,7 +9,7 @@ class Puppet::Transaction::Event
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
 
-  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited]
+  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes]
   YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time}.map(&:to_sym)
   attr_accessor *ATTRIBUTES
   attr_writer :tags
@@ -18,10 +18,44 @@ class Puppet::Transaction::Event
 
   EVENT_STATUSES = %w{noop success failure audit}
 
+  def self.from_pson(data)
+    obj = self.allocate
+    obj.initialize_from_hash(data)
+    obj
+  end
+
   def initialize(options = {})
     @audited = false
+
     set_options(options)
     @time = Time.now
+  end
+
+  def initialize_from_hash(data)
+    @audited = data['audited']
+    @property = data['property']
+    @previous_value = data['previous_value']
+    @desired_value = data['desired_value']
+    @historical_value = data['historical_value']
+    @message = data['message']
+    @name = data['name'].intern if data['name']
+    @status = data['status']
+    @time = data['time']
+    @time = Time.parse(@time) if @time.is_a? String
+  end
+
+  def to_pson
+    {
+      'audited' => @audited,
+      'property' => @property,
+      'previous_value' => @previous_value,
+      'desired_value' => @desired_value,
+      'historical_value' => @historical_value,
+      'message' => @message,
+      'name' => @name,
+      'status' => @status,
+      'time' => @time.iso8601(9),
+    }.to_pson
   end
 
   def property=(prop)
@@ -29,15 +63,8 @@ class Puppet::Transaction::Event
   end
 
   def resource=(res)
-    begin
-      # In Ruby 1.8 looking up a symbol on a string gives nil; in 1.9 it will
-      # raise a TypeError, which we then catch.  This should work on both
-      # versions, for all that it is a bit naff. --daniel 2012-03-11
-      if res.respond_to?(:[]) and level = res[:loglevel]
-        @default_log_level = level
-      end
-    rescue TypeError => e
-      raise unless e.to_s == "can't convert Symbol into Integer"
+    if res.respond_to?(:[]) and level = res[:loglevel]
+      @default_log_level = level
     end
     @resource = res.to_s
   end
@@ -56,7 +83,7 @@ class Puppet::Transaction::Event
   end
 
   def to_yaml_properties
-    YAML_ATTRIBUTES & instance_variables
+    YAML_ATTRIBUTES & super
   end
 
   private

@@ -10,7 +10,7 @@ describe Puppet::Util::RunMode do
     @run_mode.run_dir.should == '$vardir/run'
   end
 
-  describe Puppet::Util::UnixRunMode do
+  describe Puppet::Util::UnixRunMode, :unless => Puppet.features.microsoft_windows? do
     before do
       @run_mode = Puppet::Util::UnixRunMode.new('fake')
     end
@@ -59,21 +59,12 @@ describe Puppet::Util::RunMode do
         end
       end
     end
-
-    def without_home
-      saved_home = ENV["HOME"]
-      ENV.delete "HOME"
-      yield
-    ensure
-      ENV["HOME"] = saved_home
-    end
   end
 
-  describe Puppet::Util::WindowsRunMode do
+  describe Puppet::Util::WindowsRunMode, :if => Puppet.features.microsoft_windows? do
     before do
       if not Dir.const_defined? :COMMON_APPDATA
         Dir.const_set :COMMON_APPDATA, "/CommonFakeBase"
-        Dir.const_set :LOCAL_APPDATA, "/LocalFakeBase"
         @remove_const = true
       end
       @run_mode = Puppet::Util::WindowsRunMode.new('fake')
@@ -82,7 +73,6 @@ describe Puppet::Util::RunMode do
     after do
       if @remove_const
         Dir.send :remove_const, :COMMON_APPDATA
-        Dir.send :remove_const, :LOCAL_APPDATA
       end
     end
 
@@ -91,8 +81,20 @@ describe Puppet::Util::RunMode do
         as_root { @run_mode.conf_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")) }
       end
 
-      it "has confdir in the local appdata when run as non-root" do
-        as_non_root { @run_mode.conf_dir.should == File.expand_path(File.join(Dir::LOCAL_APPDATA, "PuppetLabs", "puppet")) }
+      it "has confdir in ~/.puppet when run as non-root" do
+        as_non_root { @run_mode.conf_dir.should == File.expand_path("~/.puppet") }
+      end
+
+      it "fails when asking for the conf_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do
+        as_non_root do
+          without_env('HOME') do
+            without_env('HOMEDRIVE') do
+              without_env('USERPROFILE') do
+                expect { @run_mode.conf_dir }.to raise_error ArgumentError, /couldn't find HOME/
+              end
+            end
+          end
+        end
       end
     end
 
@@ -101,8 +103,20 @@ describe Puppet::Util::RunMode do
         as_root { @run_mode.var_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var")) }
       end
 
-      it "has vardir local appdata when run as non-root" do
-        as_non_root { @run_mode.var_dir.should == File.expand_path(File.join(Dir::LOCAL_APPDATA, "PuppetLabs", "puppet", "var")) }
+      it "has vardir in ~/.puppet/var when run as non-root" do
+        as_non_root { @run_mode.var_dir.should == File.expand_path("~/.puppet/var") }
+      end
+
+      it "fails when asking for the conf_dir as non-root and there is no %HOME%, %HOMEDRIVE%, and %USERPROFILE%" do
+        as_non_root do
+          without_env('HOME') do
+            without_env('HOMEDRIVE') do
+              without_env('USERPROFILE') do
+                expect { @run_mode.var_dir }.to raise_error ArgumentError, /couldn't find HOME/
+              end
+            end
+          end
+        end
       end
     end
   end
@@ -115,5 +129,17 @@ describe Puppet::Util::RunMode do
   def as_non_root
     Puppet.features.stubs(:root?).returns(false)
     yield
+  end
+
+  def without_env(name, &block)
+    saved = ENV[name]
+    ENV.delete name
+    yield
+  ensure
+    ENV[name] = saved
+  end
+
+  def without_home(&block)
+    without_env('HOME', &block)
   end
 end

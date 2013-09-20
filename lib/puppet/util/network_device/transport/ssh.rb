@@ -7,10 +7,11 @@ require 'puppet/util/network_device/transport/base'
 # a sane interface to Net::SSH. Credits goes to net-ssh-telnet authors
 class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice::Transport::Base
 
-  attr_accessor :buf, :ssh, :channel, :verbose
+  attr_accessor :buf, :ssh, :channel
 
-  def initialize
-    super
+  def initialize(verbose = false)
+    super()
+    @verbose = verbose
     unless Puppet.features.ssh?
       raise 'Connecting with ssh to a network device requires the \'net/ssh\' ruby library'
     end
@@ -35,7 +36,7 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
       raise TimeoutError, "timed out while opening an ssh connection to the host"
     rescue Net::SSH::AuthenticationFailed
       raise Puppet::Error, "SSH authentication failure connecting to #{host} as #{user}"
-    rescue Net::SSH::Exception => detail
+    rescue Net::SSH::Exception
       raise Puppet::Error, "SSH connection failure to #{host}"
     end
 

@@ -1,7 +1,7 @@
 require 'puppet/util/posix'
 
-# Manage file group ownership.
 module Puppet
+  # Manage file group ownership.
   Puppet::Type.type(:file).newproperty(:group) do
     desc <<-EOT
       Which group should own the file.  Argument can be either a group

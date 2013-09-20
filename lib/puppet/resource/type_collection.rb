@@ -1,8 +1,12 @@
 require 'puppet/parser/type_loader'
+require 'puppet/util/file_watcher'
+require 'puppet/util/warnings'
 
 class Puppet::Resource::TypeCollection
   attr_reader :environment
   attr_accessor :parse_failed
+
+  include Puppet::Util::Warnings
 
   def clear
     @hostclasses.clear
@@ -22,7 +26,7 @@ class Puppet::Resource::TypeCollection
     # So we can keep a list and match the first-defined regex
     @node_list = []
 
-    @watched_files = {}
+    @watched_files = Puppet::Util::FileWatcher.new
   end
 
   def import_ast(ast, modname)
@@ -130,29 +134,29 @@ class Puppet::Resource::TypeCollection
   end
 
   def stale?
-    @watched_files.values.detect { |file| file.changed? }
+    @watched_files.changed?
   end
 
   def version
-    return @version if defined?(@version)
-
-    if environment[:config_version] == ""
-      @version = Time.now.to_i
-      return @version
+    if !defined?(@version)
+      if environment[:config_version] == ""
+        @version = Time.now.to_i
+      else
+        @version = Puppet::Util::Execution.execute([environment[:config_version]]).strip
+      end
     end
 
-    @version = Puppet::Util::Execution.execute([environment[:config_version]]).strip
-
+    @version
   rescue Puppet::ExecutionFailure => e
-    raise Puppet::ParseError, "Unable to set config_version: #{e.message}"
+    raise Puppet::ParseError, "Execution of config_version command `#{environment[:config_version]}` failed: #{e.message}"
   end
 
-  def watch_file(file)
-    @watched_files[file] = Puppet::Util::LoadedFile.new(file)
+  def watch_file(filename)
+    @watched_files.watch(filename)
   end
 
-  def watching_file?(file)
-    @watched_files.include?(file)
+  def watching_file?(filename)
+    @watched_files.watching?(filename)
   end
 
   private
@@ -199,9 +203,11 @@ class Puppet::Resource::TypeCollection
     searchspace.each do |fqname|
       result = send(type, fqname)
       unless result
-        # do not try to autoload if we already tried and it wasn't conclusive
-        # as this is a time consuming operation.
-        unless @notfound[fqname]
+        if @notfound[fqname] and Puppet[:ignoremissingtypes]
+          # do not try to autoload if we already tried and it wasn't conclusive
+          # as this is a time consuming operation. Warn the user.
+          debug_once "Not attempting to load #{type} #{fqname} as this object was missing during a prior compilation"
+        else
           result = loader.try_load_fqname(type, fqname)
           @notfound[fqname] = result.nil?
         end

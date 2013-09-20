@@ -75,7 +75,7 @@ module Puppet
     def checksum_type
       if source = resource.parameter(:source)
         result = source.checksum
-      else checksum = resource.parameter(:checksum)
+      else
         result = resource[:checksum]
       end
       if result =~ /^\{(\w+)\}.+/
@@ -100,6 +100,9 @@ module Puppet
       if resource.should_be_file?
         return false if is == :absent
       else
+        if resource[:ensure] == :present and resource[:content] and s = resource.stat
+          resource.warning "Ensure set to :present but file type is #{s.ftype} so no content will be synced"
+        end
         return true
       end
 
@@ -107,7 +110,7 @@ module Puppet
 
       result = super
 
-      if ! result and Puppet[:show_diff]
+      if ! result and Puppet[:show_diff] and resource.show_diff?
         write_temporarily do |path|
           notice "\n" + diff(@resource[:path], path)
         end
@@ -130,6 +133,9 @@ module Puppet
 
     # Make sure we're also managing the checksum property.
     def should=(value)
+      # treat the value as a bytestring, in Ruby versions that support it, regardless of the encoding
+      # in which it has been supplied
+      value = value.clone.force_encoding(Encoding::ASCII_8BIT) if value.respond_to?(:force_encoding)
       @resource.newattr(:checksum) unless @resource.parameter(:checksum)
       super
     end

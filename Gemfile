@@ -1,31 +1,64 @@
-source :rubygems
+source "https://rubygems.org"
 
-# This is a fake version just to make bundler happy during development
-FAKE_VERSION = '9999.0.0'
-
-def location_for(place)
+def location_for(place, fake_version = nil)
   if place =~ /^(git:[^#]*)#(.*)/
-    [{ :git => $1, :branch => $2, :require => false }]
+    [fake_version, { :git => $1, :branch => $2, :require => false }].compact
   elsif place =~ /^file:\/\/(.*)/
-    [FAKE_VERSION, { :path => File.expand_path($1), :require => false }]
+    ['>= 0', { :path => File.expand_path($1), :require => false }]
   else
     [place, { :require => false }]
   end
 end
 
+# C Ruby (MRI) or Rubinius, but NOT Windows
+platforms :ruby do
+  gem 'pry', :group => :development
+  gem 'yard', :group => :development
+  gem 'redcarpet', '~> 2.0', :group => :development
+  gem "racc", "~> 1.4", :group => :development
+end
+
+gem "puppet", :path => File.dirname(__FILE__), :require => false
+gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
+gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
+gem "rake", :require => false
+gem "rgen", "0.6.5", :require => false
+
+
 group(:development, :test) do
-  gem "puppet", *location_for('file://.')
-  gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6.4')
-  gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0.0')
-  gem "rack", "~> 1.4.1", :require => false
-  gem "rake", "~> 0.9.2", :require => false
-  gem "rspec", "~> 2.10.0", :require => false
+
+  # Jenkins workers may be using RSpec 2.9, so RSpec 2.11 syntax
+  # (like `expect(value).to eq matcher`) should be avoided.
+  gem "rspec", "~> 2.11.0", :require => false
+
+  # Mocha is not compatible across minor version changes; because of this only
+  # versions matching ~> 0.10.5 are supported. All other versions are unsupported
+  # and can be expected to fail.
   gem "mocha", "~> 0.10.5", :require => false
+
+  gem "yarjuf", "~> 1.0"
+
+  # json-schema does not support windows, so use the 'ruby' platform to exclude it on windows
+  platforms :ruby do
+    # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
+    gem "multi_json", "1.7.7", :require => false
+    gem "json-schema", "2.1.1", :require => false
+  end
+
+end
+
+group(:extra) do
+  gem "rack", "~> 1.4", :require => false
+  gem "activerecord", '~> 3.0.7', :require => false
+  gem "couchrest", '~> 1.0', :require => false
+  gem "net-ssh", '~> 2.1', :require => false
+  gem "puppetlabs_spec_helper", :require => false
+  gem "sqlite3", :require => false
+  gem "stomp", :require => false
+  gem "tzinfo", :require => false
 end
 
 platforms :mswin, :mingw do
-  # See http://jenkins.puppetlabs.com/ for current Gem listings for the Windows
-  # CI Jobs.
   gem "sys-admin", "~> 1.5.6", :require => false
   gem "win32-api", "~> 1.4.8", :require => false
   gem "win32-dir", "~> 0.3.7", :require => false
@@ -35,8 +68,9 @@ platforms :mswin, :mingw do
   gem "win32-service", "~> 0.7.2", :require => false
   gem "win32-taskscheduler", "~> 0.2.2", :require => false
   gem "win32console", "~> 1.3.2", :require => false
-  gem "windows-api", "~> 0.4.1", :require => false
+  gem "windows-api", "~> 0.4.2", :require => false
   gem "windows-pr", "~> 1.2.1", :require => false
+  gem "minitar", "~> 0.5.4", :require => false
 end
 
 if File.exists? "#{__FILE__}.local"

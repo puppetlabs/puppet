@@ -1,14 +1,20 @@
 require 'puppet/network/format_handler'
 
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
-  # Yaml doesn't need the class name; it's serialized.
   def intern(klass, text)
-    YAML.load(text)
+    data = YAML.load(text, :safe => true, :deserialize_symbols => true)
+    return data if data.is_a?(klass)
+    klass.from_pson(data)
   end
 
-  # Yaml doesn't need the class name; it's serialized.
   def intern_multiple(klass, text)
-    YAML.load(text)
+    YAML.load(text, :safe => true, :deserialize_symbols => true).collect do |data|
+      if data.is_a?(klass)
+        data
+      else
+        klass.from_pson(data)
+      end
+    end
   end
 
   def render(instance)
@@ -20,7 +26,6 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
     instances.to_yaml
   end
 
-  # Unlike core's yaml, ZAML should support 1.8.1 just fine
   def supported?(klass)
     true
   end
@@ -45,11 +50,15 @@ Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
   end
 
   def intern(klass, text)
-    decode(text)
+    requiring_zlib do
+      Puppet::Network::FormatHandler.format(:yaml).intern(klass, decode(text))
+    end
   end
 
   def intern_multiple(klass, text)
-    decode(text)
+    requiring_zlib do
+      Puppet::Network::FormatHandler.format(:yaml).intern_multiple(klass, decode(text))
+    end
   end
 
   def render(instance)
@@ -64,15 +73,13 @@ Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
     true
   end
 
+  def decode(data)
+    Zlib::Inflate.inflate(Base64.decode64(data))
+  end
+
   def encode(text)
     requiring_zlib do
       Base64.encode64(Zlib::Deflate.deflate(text, Zlib::BEST_COMPRESSION))
-    end
-  end
-
-  def decode(yaml)
-    requiring_zlib do
-      YAML.load(Zlib::Inflate.inflate(Base64.decode64(yaml)))
     end
   end
 end
@@ -148,12 +155,21 @@ Puppet::Network::FormatHandler.create(:console,
     # Simple hash to table
     if datum.is_a? Hash and datum.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
       output = ''
-      column_a = datum.map do |k,v| k.to_s.length end.max + 2
-      column_b = 79 - column_a
+      column_a = datum.empty? ? 2 : datum.map{ |k,v| k.to_s.length }.max + 2
       datum.sort_by { |k,v| k.to_s } .each do |key, value|
         output << key.to_s.ljust(column_a)
         output << json.render(value).
           chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
+        output << "\n"
+      end
+      return output
+    end
+
+    # Print one item per line for arrays
+    if datum.is_a? Array
+      output = ''
+      datum.each do |item|
+        output << item.to_s
         output << "\n"
       end
       return output

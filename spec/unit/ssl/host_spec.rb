@@ -490,6 +490,7 @@ describe Puppet::SSL::Host do
       @request.stubs(:generate)
       @request.stubs(:name).returns("myname")
       terminus = stub 'terminus'
+      terminus.stubs(:validate)
       Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
       terminus.expects(:save).with { |req| req.instance == @request && req.key == "myname" }.raises "eh"
 
@@ -709,17 +710,38 @@ describe Puppet::SSL::Host do
       before do
         @crl = stub 'crl', :content => "real_crl"
         Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns @crl
-        Puppet[:certificate_revocation] = true
       end
 
-      it "should add the CRL" do
-        @store.expects(:add_crl).with "real_crl"
-        @host.ssl_store
+      describe "and 'certificate_revocation' is true" do
+        before do
+          Puppet[:certificate_revocation] = true
+        end
+
+        it "should add the CRL" do
+          @store.expects(:add_crl).with "real_crl"
+          @host.ssl_store
+        end
+
+        it "should set the flags to OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK" do
+          @store.expects(:flags=).with OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+          @host.ssl_store
+        end
       end
 
-      it "should set the flags to OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK" do
-        @store.expects(:flags=).with OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
-        @host.ssl_store
+      describe "and 'certificate_revocation' is false" do
+        before do
+          Puppet[:certificate_revocation] = false
+        end
+
+        it "should not add the CRL" do
+          @store.expects(:add_crl).never
+          @host.ssl_store
+        end
+
+        it "should not set the flags" do
+          @store.expects(:flags=).never
+          @host.ssl_store
+        end
       end
     end
   end

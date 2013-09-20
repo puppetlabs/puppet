@@ -1,5 +1,3 @@
-require 'puppet/settings/errors'
-
 ##
 # @api private
 #
@@ -40,7 +38,7 @@ class Puppet::Settings::ConfigFile
         if var == :mode
           value = $2
         else
-          value = @value_converter.call($2)
+          value = @value_converter[$2]
         end
 
         # Check to see if this is a file argument and it has extra options

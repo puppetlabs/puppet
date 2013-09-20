@@ -102,6 +102,16 @@ describe Puppet::Transaction::EventManager do
 
       @manager.queue_events(@resource, [@event])
     end
+
+    it "should dequeue events for the changed resource if an event with invalidate_refreshes is processed" do
+      @event2 = Puppet::Transaction::Event.new(:name => :foo, :resource => @resource, :invalidate_refreshes => true)
+
+      @graph.stubs(:matching_edges).returns []
+
+      @manager.expects(:dequeue_events_for_resource).with(@resource, :refresh)
+
+      @manager.queue_events(@resource, [@event, @event2])
+    end
   end
 
   describe "when queueing events for a resource" do
@@ -137,7 +147,7 @@ describe Puppet::Transaction::EventManager do
 
   describe "when processing events for a given resource" do
     before do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
       @manager = Puppet::Transaction::EventManager.new(@transaction)
       @manager.stubs(:queue_events)
 
@@ -255,6 +265,45 @@ describe Puppet::Transaction::EventManager do
       it "should set the 'restarted' state on the resource status" do
         @manager.process_events(@resource)
         @transaction.resource_status(@resource).should_not be_restarted
+      end
+    end
+  end
+
+  describe "when queueing then processing events for a given resource" do
+    before do
+      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
+      @manager = Puppet::Transaction::EventManager.new(@transaction)
+
+      @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
+      @target = Puppet::Type.type(:file).new :path => make_absolute("/your/file")
+
+      @graph = stub 'graph'
+      @graph.stubs(:matching_edges).returns []
+      @graph.stubs(:matching_edges).with(anything, @resource).returns [stub('edge', :target => @target, :callback => :refresh)]
+      @manager.stubs(:relationship_graph).returns @graph
+
+      @event  = Puppet::Transaction::Event.new(:name => :notify, :resource => @target)
+      @event2 = Puppet::Transaction::Event.new(:name => :service_start, :resource => @target, :invalidate_refreshes => true)
+    end
+
+    it "should succeed when there's no invalidated event" do
+      @manager.queue_events(@target, [@event2])
+    end
+
+    describe "and the events were dequeued/invalidated" do
+      before do
+        @resource.expects(:info).with { |msg| msg.include?("Scheduling refresh") }
+        @target.expects(:info).with { |msg| msg.include?("Unscheduling") }
+      end
+
+      it "should not run an event or log" do
+        @target.expects(:notice).with { |msg| msg.include?("Would have triggered 'refresh'") }.never
+        @target.expects(:refresh).never
+
+        @manager.queue_events(@resource, [@event])
+        @manager.queue_events(@target, [@event2])
+        @manager.process_events(@resource)
+        @manager.process_events(@target)
       end
     end
   end

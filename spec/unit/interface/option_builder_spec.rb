@@ -1,4 +1,5 @@
-require 'puppet/interface/option_builder'
+require 'spec_helper'
+require 'puppet/interface'
 
 describe Puppet::Interface::OptionBuilder do
   let :face do Puppet::Interface.new(:option_builder_testing, '0.0.1') end

@@ -10,6 +10,7 @@ describe Puppet::Application::Apply do
   before :each do
     @apply = Puppet::Application[:apply]
     Puppet::Util::Log.stubs(:newdestination)
+    Puppet[:reports] = "none"
   end
 
   after :each do
@@ -20,7 +21,7 @@ describe Puppet::Application::Apply do
     Puppet::Node.indirection.cache_class = nil
   end
 
-  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes,:catalog].each do |option|
+  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes,:catalog, :write_catalog_summary].each do |option|
     it "should declare handle_#{option} method" do
       @apply.should respond_to("handle_#{option}".to_sym)
     end
@@ -102,6 +103,22 @@ describe Puppet::Application::Apply do
       @apply.setup
     end
 
+    it "configures a profiler when profiling is enabled" do
+      Puppet[:profile] = true
+
+      @apply.setup
+
+      expect(Puppet::Util::Profiler.current).to be_a(Puppet::Util::Profiler::WallClock)
+    end
+
+    it "does not have a profiler if profiling is disabled" do
+      Puppet[:profile] = false
+
+      @apply.setup
+
+      expect(Puppet::Util::Profiler.current).to eq(Puppet::Util::Profiler::NONE)
+    end
+
     it "should set default_file_terminus to `file_server` to be local" do
       @apply.app_defaults[:default_file_terminus].should == :file_server
     end
@@ -147,7 +164,7 @@ describe Puppet::Application::Apply do
 
         STDIN.stubs(:read)
 
-        @transaction = Puppet::Transaction.new(@catalog)
+        @transaction = stub('transaction')
         @catalog.stubs(:apply).returns(@transaction)
 
         Puppet::Util::Storage.stubs(:load)
@@ -208,7 +225,7 @@ describe Puppet::Application::Apply do
       it "should raise an error if we can't find the node" do
         Puppet::Node.indirection.expects(:find).returns(nil)
 
-        lambda { @apply.main }.should raise_error
+        lambda { @apply.main }.should raise_error(RuntimeError, /Could not find node/)
       end
 
       it "should load custom classes if loadclasses" do
@@ -237,6 +254,21 @@ describe Puppet::Application::Apply do
 
       it "should finalize the catalog" do
         @catalog.expects(:finalize)
+
+        expect { @apply.main }.to exit_with 0
+      end
+
+      it "should not save the classes or resource file by default" do
+        @catalog.expects(:write_class_file).never
+        @catalog.expects(:write_resource_file).never
+        expect { @apply.main }.to exit_with 0
+      end
+
+      it "should save the classes and resources files when requested" do
+        @apply.options[:write_catalog_summary] = true
+
+        @catalog.expects(:write_class_file).once
+        @catalog.expects(:write_resource_file).once
 
         expect { @apply.main }.to exit_with 0
       end

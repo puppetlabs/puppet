@@ -1,84 +1,123 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet/type/file/ensure'
 
-property = Puppet::Type.type(:file).attrclass(:ensure)
+describe Puppet::Type::File::Ensure do
+  include PuppetSpec::Files
 
-describe property do
-  before do
-    # Wow that's a messy interface to the resource.
-    @resource = stub 'resource', :[] => nil, :[]= => nil, :property => nil, :newattr => nil, :parameter => nil, :replace? => true
-    @resource.stubs(:[]).returns "foo"
-    @resource.stubs(:[]).with(:path).returns "/my/file"
-    @ensure = property.new :resource => @resource
-  end
+  let(:path) { tmpfile('file_ensure') }
+  let(:resource) { Puppet::Type.type(:file).new(:ensure => 'file', :path => path, :replace => true) }
+  let(:property) { resource.property(:ensure) }
 
   it "should be a subclass of Ensure" do
-    property.superclass.must == Puppet::Property::Ensure
+    described_class.superclass.must == Puppet::Property::Ensure
   end
 
   describe "when retrieving the current state" do
     it "should return :absent if the file does not exist" do
-      @ensure = property.new(:resource => @resource)
-      @resource.expects(:stat).returns nil
+      resource.expects(:stat).returns nil
 
-      @ensure.retrieve.should == :absent
+      property.retrieve.should == :absent
     end
 
     it "should return the current file type if the file exists" do
-      @ensure = property.new(:resource => @resource)
       stat = mock 'stat', :ftype => "directory"
-      @resource.expects(:stat).returns stat
+      resource.expects(:stat).returns stat
 
-      @ensure.retrieve.should == :directory
+      property.retrieve.should == :directory
     end
   end
 
   describe "when testing whether :ensure is in sync" do
-    before do
-      @ensure = property.new(:resource => @resource)
-      @stat = stub 'stat', :ftype => "file"
-    end
-
     it "should always be in sync if replace is 'false' unless the file is missing" do
-      @ensure.should = :file
-      @resource.expects(:replace?).returns false
-      @ensure.safe_insync?(:link).should be_true
+      property.should = :file
+      resource.expects(:replace?).returns false
+      property.safe_insync?(:link).should be_true
     end
 
     it "should be in sync if :ensure is set to :absent and the file does not exist" do
-      @ensure.should = :absent
+      property.should = :absent
 
-      @ensure.must be_safe_insync(:absent)
+      property.must be_safe_insync(:absent)
     end
 
     it "should not be in sync if :ensure is set to :absent and the file exists" do
-      @ensure.should = :absent
+      property.should = :absent
 
-      @ensure.should_not be_safe_insync(:file)
+      property.should_not be_safe_insync(:file)
     end
 
     it "should be in sync if a normal file exists and :ensure is set to :present" do
-      @ensure.should = :present
+      property.should = :present
 
-      @ensure.must be_safe_insync(:file)
+      property.must be_safe_insync(:file)
     end
 
     it "should be in sync if a directory exists and :ensure is set to :present" do
-      @ensure.should = :present
+      property.should = :present
 
-      @ensure.must be_safe_insync(:directory)
+      property.must be_safe_insync(:directory)
     end
 
     it "should be in sync if a symlink exists and :ensure is set to :present" do
-      @ensure.should = :present
+      property.should = :present
 
-      @ensure.must be_safe_insync(:link)
+      property.must be_safe_insync(:link)
     end
 
     it "should not be in sync if :ensure is set to :file and a directory exists" do
-      @ensure.should = :file
+      property.should = :file
 
-      @ensure.should_not be_safe_insync(:directory)
+      property.should_not be_safe_insync(:directory)
+    end
+  end
+
+  describe "#sync" do
+    context "directory" do
+      before :each do
+        resource[:ensure] = :directory
+      end
+
+      it "should raise if the parent directory doesn't exist" do
+        newpath = File.join(path, 'nonexistentparent', 'newdir')
+        resource[:path] = newpath
+
+        expect {
+          property.sync
+        }.to raise_error(Puppet::Error, /Cannot create #{newpath}; parent directory #{File.dirname(newpath)} does not exist/)
+      end
+
+      it "should accept octal mode as fixnum" do
+        resource[:mode] = 0700
+        resource.expects(:property_fix)
+        Dir.expects(:mkdir).with(path, 0700)
+
+        property.sync
+      end
+
+      it "should accept octal mode as string" do
+        resource[:mode] = "700"
+        resource.expects(:property_fix)
+        Dir.expects(:mkdir).with(path, 0700)
+
+        property.sync
+      end
+
+      it "should accept octal mode as string with leading zero" do
+        resource[:mode] = "0700"
+        resource.expects(:property_fix)
+        Dir.expects(:mkdir).with(path, 0700)
+
+        property.sync
+      end
+
+      it "should accept symbolic mode" do
+        resource[:mode] = "u=rwx,go=x"
+        resource.expects(:property_fix)
+        Dir.expects(:mkdir).with(path, 0711)
+
+        property.sync
+      end
     end
   end
 end

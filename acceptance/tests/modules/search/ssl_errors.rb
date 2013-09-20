@@ -7,7 +7,7 @@ step "Search against a website where the certificate is not signed by a public a
 with_master_running_on(master) do
   on master, puppet("module search yup --module_repository=https://#{master}:8140"), :acceptable_exit_codes => [1] do
     assert_match <<-STDOUT, stdout
-Searching https://#{master}:8140 ...
+\e[mNotice: Searching https://#{master}:8140 ...\e[0m
 STDOUT
     assert_match <<-STDERR.chomp, stderr
 Error: Could not connect via HTTPS to https://#{master}:8140

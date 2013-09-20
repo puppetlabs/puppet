@@ -94,6 +94,24 @@ describe Array do
       [1,2,3].drop(3).should == []
     end
   end
+
+  describe "#respond_to?" do
+    it "should return true for a standard method (each)" do
+      [].respond_to?(:each).should be_true
+    end
+
+    it "should return false for to_hash" do
+      [].respond_to?(:to_hash).should be_false
+    end
+
+    it "should accept one argument" do
+      lambda { [].respond_to?(:each) }.should_not raise_error
+    end
+
+    it "should accept two arguments" do
+      lambda { [].respond_to?(:each, false) }.should_not raise_error
+    end
+  end
 end
 
 describe IO do
@@ -242,15 +260,28 @@ describe Range do
   end
 end
 
-
-describe Object, "#instance_variables" do
-  it "should work with no instance variables" do
-    Object.new.instance_variables.should == []
+describe OpenSSL::SSL::SSLContext do
+  it 'disables SSLv2 via the SSLContext#options bitmask' do
+    (subject.options & OpenSSL::SSL::OP_NO_SSLv2).should == OpenSSL::SSL::OP_NO_SSLv2
   end
+  it 'explicitly disable SSLv2 ciphers using the ! prefix so they cannot be re-added' do
+    cipher_str = OpenSSL::SSL::SSLContext::DEFAULT_PARAMS[:ciphers]
+    cipher_str.split(':').should include('!SSLv2')
+  end
+  it 'sets parameters on initialization' do
+    described_class.any_instance.expects(:set_params)
+    subject
+  end
+  it 'has no ciphers with version SSLv2 enabled' do
+    ciphers = subject.ciphers.select do |name, version, bits, alg_bits|
+      /SSLv2/.match(version)
+    end
+    ciphers.should be_empty
+  end
+end
 
-  it "should return symbols, not strings" do
-    o = Object.new
-    ["@foo", "@bar", "@baz"].map {|x| o.instance_variable_set(x, x) }
-    o.instance_variables.should =~ [:@foo, :@bar, :@baz]
+describe SecureRandom do
+  it 'generates a properly formatted uuid' do
+    SecureRandom.uuid.should =~ /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
   end
 end

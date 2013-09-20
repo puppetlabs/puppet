@@ -1,6 +1,7 @@
 require 'openssl'
 require 'puppet/ssl'
 require 'puppet/ssl/digest'
+require 'puppet/util/ssl'
 
 # The base class for wrapping SSL instances.
 class Puppet::SSL::Base
@@ -47,9 +48,18 @@ class Puppet::SSL::Base
     self.class.validate_certname(@name)
   end
 
-  # Method to extract a 'name' from the subject of a certificate
+  ##
+  # name_from_subject extracts the common name attribute from the subject of an
+  # x.509 certificate certificate
+  #
+  # @api private
+  #
+  # @param [OpenSSL::X509::Name] subject The full subject (distinguished name) of the x.509
+  #   certificate.
+  #
+  # @return [String] the name (CN) extracted from the subject.
   def self.name_from_subject(subject)
-    subject.to_s.sub(/\/CN=/i, '')
+    Puppet::Util::SSL.cn_from_subject(subject)
   end
 
   # Create an instance of our Puppet::SSL::* class using a given instance of the wrapped class

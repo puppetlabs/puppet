@@ -38,7 +38,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   has_features :manages_expiry,  :manages_password_age
 
   # Attribute verification (TODO)
-  #verify :gid, "GID must be an string or int of a valid group" do |value|
+  #verify :gid, "GID must be a string or int of a valid group" do |value|
   #  value.is_a? String || value.is_a? Integer
   #end
   #
@@ -48,7 +48,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # User attributes to ignore from AIX output.
   def self.attribute_ignore
-    []
+    ["name"]
   end
 
   # AIX attributes to properties mapping.
@@ -60,18 +60,20 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   #  :to            Method to adapt puppet property to aix command value. Optional.
   #  :from          Method to adapt aix command value to puppet property. Optional
   self.attribute_mapping = [
-    #:name => :name,
     {:aix_attr => :pgrp,       :puppet_prop => :gid,
-        :to => :gid_to_attr, :from => :gid_from_attr},
+                                :to => :gid_to_attr,
+                                :from => :gid_from_attr },
     {:aix_attr => :id,         :puppet_prop => :uid},
     {:aix_attr => :groups,     :puppet_prop => :groups},
     {:aix_attr => :home,       :puppet_prop => :home},
     {:aix_attr => :shell,      :puppet_prop => :shell},
     {:aix_attr => :expires,    :puppet_prop => :expiry,
-        :to => :expiry_to_attr, :from => :expiry_from_attr},
+                                :to => :expiry_to_attr,
+                                :from => :expiry_from_attr },
     {:aix_attr => :maxage,     :puppet_prop => :password_max_age},
     {:aix_attr => :minage,     :puppet_prop => :password_min_age},
     {:aix_attr => :attributes, :puppet_prop => :attributes},
+    { :aix_attr => :gecos,      :puppet_prop => :comment },
   ]
 
   #--------------
@@ -94,7 +96,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   def lscmd(value=@resource[:name])
-    [self.class.command(:list)] + self.get_ia_module_args + [ value]
+    [self.class.command(:list), "-c"] + self.get_ia_module_args + [ value]
   end
 
   def lsallcmd()
@@ -139,14 +141,14 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     if key == :attributes
       raise Puppet::Error, "Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]" \
         unless value and value.is_a? Hash
-      return value.select { |k,v| true }.map { |pair| pair.join("=") }
+      return value.map { |k,v| k.to_s.strip + "=" + v.to_s.strip}
     end
 
     super(key, value, mapping, objectinfo)
   end
 
   # Get the groupname from its id
-  def self.groupname_by_id(gid)
+  def groupname_by_id(gid)
     groupname=nil
     execute(lsgroupscmd("ALL")).each_line { |entry|
       attrs = self.parse_attr_list(entry, nil)
@@ -166,7 +168,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   # Check that a group exists and is valid
   def verify_group(value)
     if value.is_a? Integer or value.is_a? Fixnum
-      groupname = self.groupname_by_id(value)
+      groupname = groupname_by_id(value)
       raise ArgumentError, "AIX group must be a valid existing group" unless groupname
     else
       raise ArgumentError, "AIX group must be a valid existing group" unless groupid_by_name(value)
@@ -212,6 +214,11 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     expiry_date
   end
 
+  def open_security_passwd
+    # helper method for tests
+    File.open("/etc/security/passwd", 'r')
+  end
+
   #--------------------------------
   # Getter and Setter
   # When the provider is initialized, create getter/setter methods for each
@@ -227,15 +234,15 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def password
     password = :absent
     user = @resource[:name]
-    f = File.open("/etc/security/passwd", 'r')
+    f = open_security_passwd
     # Skip to the user
     f.each_line { |l| break if l  =~ /^#{user}:\s*$/ }
     if ! f.eof?
       f.each_line { |l|
         # If there is a new user stanza, stop
         break if l  =~ /^\S*:\s*$/
-        # If the password= entry is found, return it
-        if l  =~ /^\s*password\s*=\s*(.*)$/
+        # If the password= entry is found, return it, stripping trailing space
+        if l  =~ /^\s*password\s*=\s*(\S*)\s*$/
           password = $1; break;
         end
       }
@@ -270,18 +277,30 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     end
   end
 
+  def managed_attribute_keys(hash)
+    managed_attributes ||= @resource.original_parameters[:attributes] || hash.keys.map{|k| k.to_s}
+    managed_attributes.map {|attr| key, value = attr.split("="); key.strip.to_sym}
+  end
+
+  def should_include?(key, managed_keys)
+    !self.class.attribute_mapping_from.include?(key) and
+            !self.class.attribute_ignore.include?(key) and
+            managed_keys.include?(key)
+  end
+
   def filter_attributes(hash)
-    # Return only not managed attributtes.
-    hash.select {
-        |k,v| !self.class.attribute_mapping_from.include?(k) and
-                !self.class.attribute_ignore.include?(k)
+    # Return only managed attributtes.
+    managed_keys = managed_attribute_keys(hash)
+    results = hash.select {
+        |k,v| should_include?(k, managed_keys)
       }.inject({}) {
         |hash, array| hash[array[0]] = array[1]; hash
       }
+    results
   end
 
   def attributes
-    filter_attributes(getosinfo(refresh = false))
+    filter_attributes(getosinfo(false))
   end
 
   def attributes=(attr_hash)
@@ -297,13 +316,6 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     end
   end
 
-  #- **comment**
-  #    A description of the user.  Generally is a user's full name.
-  #def comment=(value)
-  #end
-  #
-  #def comment
-  #end
   # UNSUPPORTED
   #- **profile_membership**
   #    Whether specified roles should be treated as the only roles

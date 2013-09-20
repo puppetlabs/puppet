@@ -16,8 +16,8 @@ describe "the sprintf function" do
     Puppet::Parser::Functions.function("sprintf").should == "function_sprintf"
   end
 
-  it "should raise a ParseError if there is less than 1 argument" do
-    lambda { @scope.function_sprintf([]) }.should( raise_error(Puppet::ParseError))
+  it "should raise an ArgumentError if there is less than 1 argument" do
+    lambda { @scope.function_sprintf([]) }.should( raise_error(ArgumentError))
   end
 
   it "should format integers" do
@@ -32,7 +32,12 @@ describe "the sprintf function" do
 
   it "should format large floats" do
     result = @scope.function_sprintf(["%+.2e", "27182818284590451"])
-    str = Puppet.features.microsoft_windows? ? "+2.72e+016" : "+2.72e+16"
+    str =
+      if Puppet.features.microsoft_windows? && RUBY_VERSION[0,3] == '1.8'
+        "+2.72e+016"
+      else
+        "+2.72e+16"
+      end
     result.should(eql(str))
   end
 

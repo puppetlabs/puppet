@@ -1,0 +1,19 @@
+---
+version: 1
+layers:
+  [{name: site, include: 'confdir-hiera:/'},
+   {name: test, include: 'echo:/quick/brown/fox'},
+   {name: modules, include: ['module-hiera:/*/', 'module:/*::default'], exclude: 'module-hiera:/bad/' }
+  ]
+categories:
+  [['node', '$fqdn'],
+   ['environment', '${environment}'],
+   ['osfamily', '${osfamily}'],
+   ['common', 'true']
+  ]
+extensions:
+  scheme_handlers:
+    echo: 'Puppetx::Awesome::EchoSchemeHandler'
+
+  hiera_backends:
+    echo: 'Puppetx::Awesome::EchoBackend'

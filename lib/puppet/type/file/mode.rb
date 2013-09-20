@@ -1,6 +1,8 @@
 # Manage file modes.  This state should support different formats
 # for specification (e.g., u+rwx, or -0011), but for now only supports
 # specifying the full mode.
+
+
 module Puppet
   Puppet::Type.type(:file).newproperty(:mode) do
     require 'puppet/util/symbolic_file_mode'
@@ -78,7 +80,6 @@ module Puppet
     # If we're a directory, we need to be executable for all cases
     # that are readable.  This should probably be selectable, but eh.
     def dirmask(value)
-      orig = value
       if FileTest.directory?(resource[:path]) and value =~ /^\d+$/ then
         value = value.to_i(8)
         value |= 0100 if value & 0400 != 0
@@ -142,7 +143,13 @@ module Puppet
     end
 
     def is_to_s(currentvalue)
-      currentvalue.rjust(4, "0")
+      if currentvalue == :absent
+        # This can occur during audits---if a file is transitioning from
+        # present to absent the mode will have a value of `:absent`.
+        super
+      else
+        currentvalue.rjust(4, "0")
+      end
     end
   end
 end

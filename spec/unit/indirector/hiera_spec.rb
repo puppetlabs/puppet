@@ -96,7 +96,9 @@ describe Puppet::Indirector::Hiera do
 
     it "should return a hiera configuration hash" do
       results = @hiera_class.hiera_config
-      results.should == default_hiera_config
+      default_hiera_config.each do |key,value|
+        results[key].should == value
+      end
       results.should be_a_kind_of Hash
     end
 
@@ -125,7 +127,7 @@ describe Puppet::Indirector::Hiera do
 
     let(:data_binder) { @hiera_class.new }
 
-    it "support looking up an integer" do
+    it "should support looking up an integer" do
       data_binder.find(request_integer).should == 3000
     end
 

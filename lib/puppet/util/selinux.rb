@@ -42,11 +42,12 @@ module Puppet::Util::SELinux
     # If the file exists we should pass the mode to matchpathcon for the most specific
     # matching.  If not, we can pass a mode of 0.
     begin
-      filestat = File.lstat(file)
+      filestat = file_lstat(file)
       mode = filestat.mode
-    rescue Errno::ENOENT
+    rescue Errno::EACCES, Errno::ENOENT
       mode = 0
     end
+
     retval = Selinux.matchpathcon(file, mode)
     if retval == -1
       return nil
@@ -208,4 +209,14 @@ module Puppet::Util::SELinux
     # Should never be reached...
     return mounts['/']
   end
+
+  ##
+  # file_lstat is an internal, private method to allow precise stubbing and
+  # mocking without affecting the rest of the system.
+  #
+  # @return [File::Stat] File.lstat result
+  def file_lstat(path)
+    File.lstat(path)
+  end
+  private :file_lstat
 end

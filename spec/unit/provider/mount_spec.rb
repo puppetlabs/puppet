@@ -29,9 +29,18 @@ describe Puppet::Provider::Mount do
       @mounter.mount
     end
 
-    it "should add the options following '-o' if they exist and are not set to :absent" do
+    it "should add the options following '-o' on MacOS if they exist and are not set to :absent" do
+      Facter.expects(:value).with(:kernel).returns 'Darwin'
       @mounter.stubs(:options).returns("ro")
-      @mounter.expects(:mountcmd).with { |*ary| ary[0] == "-o" and ary[1] == "ro" }
+      @mounter.expects(:mountcmd).with '-o', 'ro', '/'
+
+      @mounter.mount
+    end
+
+    it "should not explicitly pass mount options on systems other than MacOS" do
+      Facter.expects(:value).with(:kernel).returns 'HP-UX'
+      @mounter.stubs(:options).returns("ro")
+      @mounter.expects(:mountcmd).with '/'
 
       @mounter.mount
     end

@@ -117,10 +117,10 @@ begin
   step "verify that the module files were synced down to the agent" do
     agents.each do |agent|
       unless test_file_exists?(agent, agent_module_app_file) then
-        fail_test("Expected app file not synced to agent: '#{get_test_file_path(agent, agent_module_app_file)}'")
+        fail_test("The app file we expected was not synced to the agent: '#{get_test_file_path(agent, agent_module_app_file)}'")
       end
       unless test_file_exists?(agent, agent_module_face_file) then
-        fail_test("Expected face file not synced to agent: '#{get_test_file_path(agent, agent_module_face_file)}'")
+        fail_test("The face file we expected was not not synced to the agent: '#{get_test_file_path(agent, agent_module_face_file)}'")
       end
     end
   end

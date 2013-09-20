@@ -25,15 +25,8 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   # http://www.linuxplanet.com/linuxplanet/tutorials/7033/2/
   has_feature :enableable
 
-  # 'wait-for-state' is excluded from instances here because it takes
-  # parameters that have unclear meaning. It looks like 'wait-for-state' is
-  # mainly used internally for other upstart services as a 'sleep until something happens'
-  # (http://lists.debian.org/debian-devel/2012/02/msg01139.html). There is an open launchpad bug
-  # (https://bugs.launchpad.net/ubuntu/+source/upstart/+bug/962047) that may
-  # eventually explain how to use this service or perhaps why it should remain
-  # excluded. When that bug is adddressed this should be reexamined.
   def self.instances
-    self.get_services(['wait-for-state'])
+    self.get_services(self.excludes) # Take exclude list from init provider
   end
 
   def self.get_services(exclude=[])
@@ -64,7 +57,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def upstart_version
-    @@upstart_version ||= initctl("--version").match(/initctl \(upstart ([^\)]*)\)/)[1]
+    @upstart_version ||= initctl("--version").match(/initctl \(upstart ([^\)]*)\)/)[1]
   end
 
   # Where is our override script?

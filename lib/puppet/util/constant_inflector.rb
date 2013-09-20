@@ -5,12 +5,13 @@
 
 # A common module for converting between constants and
 # file names.
+
+
 module Puppet
   module Util
     module ConstantInflector
       def file2constant(file)
-        # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-        x = file.split("/").collect { |name| name.capitalize }.join("::").gsub(/_+(.)/) { |term| $1.capitalize }
+        file.split("/").collect { |name| name.capitalize }.join("::").gsub(/_+(.)/) { |term| $1.capitalize }
       end
       module_function :file2constant
 

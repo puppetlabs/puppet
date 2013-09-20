@@ -35,7 +35,7 @@ describe Puppet::Util::Backups do
     end
 
     it "a bucket should be used when provided" do
-      File.stubs(:stat).with(path).returns(mock('stat', :ftype => 'file'))
+      File.stubs(:lstat).with(path).returns(mock('lstat', :ftype => 'file'))
       bucket.expects(:backup).with(path).returns("mysum")
       FileTest.expects(:exists?).with(path).returns(true)
 
@@ -43,7 +43,7 @@ describe Puppet::Util::Backups do
     end
 
     it "should propagate any exceptions encountered when backing up to a filebucket" do
-      File.stubs(:stat).with(path).returns(mock('stat', :ftype => 'file'))
+      File.stubs(:lstat).with(path).returns(mock('lstat', :ftype => 'file'))
       bucket.expects(:backup).raises ArgumentError
       FileTest.expects(:exists?).with(path).returns(true)
 
@@ -66,7 +66,7 @@ describe Puppet::Util::Backups do
 
       it "should fail when the old backup can't be removed" do
         File.expects(:lstat).with(backup).returns stub("stat", :ftype => "file")
-        File.expects(:unlink).raises ArgumentError
+        File.expects(:unlink).with(backup).raises ArgumentError
         FileUtils.expects(:cp_r).never
         FileTest.expects(:exists?).with(path).returns(true)
 
@@ -75,7 +75,7 @@ describe Puppet::Util::Backups do
 
       it "should not try to remove backups that don't exist" do
         File.expects(:lstat).with(backup).raises(Errno::ENOENT)
-        File.expects(:unlink).never
+        File.expects(:unlink).with(backup).never
         FileUtils.stubs(:cp_r)
         FileTest.expects(:exists?).with(path).returns(true)
 
@@ -108,7 +108,7 @@ describe Puppet::Util::Backups do
 
       bucket.expects(:backup).with(filename).returns true
 
-      File.stubs(:stat).with(path).returns(stub('stat', :ftype => 'directory'))
+      File.stubs(:lstat).with(path).returns(stub('lstat', :ftype => 'directory'))
 
       FileTest.stubs(:exists?).with(path).returns(true)
       FileTest.stubs(:exists?).with(filename).returns(true)

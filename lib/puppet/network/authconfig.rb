@@ -1,11 +1,8 @@
-require 'puppet/util/loadedfile'
 require 'puppet/network/rights'
 
 module Puppet
   class ConfigurationError < Puppet::Error; end
   class Network::AuthConfig
-
-    extend MonitorMixin
     attr_accessor :rights
 
     DEFAULT_ACL = [
@@ -15,7 +12,7 @@ module Puppet
       # to fileserver.conf
       { :acl => "/file" },
       { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-      { :acl => "/report", :method => :save, :authenticated => true },
+      { :acl => "~ ^\/report\/([^\/]+)$", :method => :save, :allow => '$1', :authenticated => true },
       # These allow `auth any`, because if you can do them anonymously you
       # should probably also be able to do them when trusted.
       { :acl => "/certificate/ca", :method => :find, :authenticated => :any },

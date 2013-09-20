@@ -30,7 +30,7 @@ module Puppet::Forge::Errors
     #
     # @return [String] the multiline version of the error message
     def multiline
-      message = <<-EOS.chomp
+      <<-EOS.chomp
 Could not connect via HTTPS to #{@uri}
   Unable to verify the SSL certificate
     The certificate may not be signed by a valid CA
@@ -57,12 +57,46 @@ Could not connect via HTTPS to #{@uri}
     #
     # @return [String] the multiline version of the error message
     def multiline
-      message = <<-EOS.chomp
+      <<-EOS.chomp
 Could not connect to #{@uri}
   There was a network communications problem
     The error we caught said '#{@detail}'
     Check your network connection and try again
       EOS
+    end
+  end
+
+  # This exception is raised when there is a bad HTTP response from the forge
+  # and optionally a message in the response.
+  class ResponseError < ForgeError
+    # @option options [String] :uri The URI that failed
+    # @option options [String] :input The user's input (e.g. module name)
+    # @option options [String] :message Error from the API response (optional)
+    # @option options [Net::HTTPResponse] :response The original HTTP response
+    def initialize(options)
+      @uri     = options[:uri]
+      @input   = options[:input]
+      @message = options[:message]
+      response = options[:response]
+      @response = "#{response.code} #{response.message.strip}"
+
+      message = "Could not execute operation for '#{@input}'. Detail: "
+      message << @message << " / " if @message
+      message << @response << "."
+      super(message, original)
+    end
+
+    # Return a multiline version of the error message
+    #
+    # @return [String] the multiline version of the error message
+    def multiline
+      message = <<-EOS
+Could not execute operation for '#{@input}'
+  The server being queried was #{@uri}
+  The HTTP response we received was '#{@response}'
+      EOS
+      message << "  The message we received said '#{@message}'\n" if @message
+      message << "    Check the author and module names are correct."
     end
   end
 

@@ -42,7 +42,7 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     end
 
     it "should not find excluded services" do
-      processes = "wait-for-state stop/waiting"
+      processes = "wait-for-state stop/waiting\nportmap-wait start/running"
       provider_class.stubs(:execpipe).yields(processes)
       provider_class.instances.should be_empty
     end

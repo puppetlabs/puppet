@@ -1,9 +1,14 @@
 require 'net/https'
 require 'puppet/ssl/host'
 require 'puppet/ssl/configuration'
+require 'puppet/ssl/validator'
 require 'puppet/network/authentication'
+require 'uri'
 
 module Puppet::Network::HTTP
+
+  # This will be raised if too many redirects happen for a given HTTP request
+  class RedirectionLimitExceededException < Puppet::Error ; end
 
   # This class provides simple methods for issuing various types of HTTP
   # requests.  It's interface is intended to mirror Ruby's Net::HTTP
@@ -17,10 +22,34 @@ module Puppet::Network::HTTP
   class Connection
     include Puppet::Network::Authentication
 
-    def initialize(host, port, use_ssl = true)
+    OPTION_DEFAULTS = {
+      :use_ssl => true,
+      :verify_peer => true,
+      :redirect_limit => 10
+    }
+
+    # Creates a new HTTP client connection to `host`:`port`. 
+    # @param host [String] the host to which this client will connect to
+    # @param port [Fixnum] the port to which this client will connect to
+    # @param options [Hash] options influencing the properties of the created connection,
+    #   the following options are recognized:
+    #     :use_ssl [Boolean] true to connect with SSL, false otherwise, defaults to true
+    #     :verify_peer [Boolean] true to verify the peer's certificate, false otherwise, defaults to true
+    #     :redirect_limit [Fixnum] the number of allowed redirections, defaults to 10
+    #   passing any other option in the options hash results in a Puppet::Error exception
+    # @note the HTTP connection itself happens lazily only when {#request}, or one of the {#get}, {#post}, {#delete}, {#head} or {#put} is called
+    # @api private
+    def initialize(host, port, options = {})
       @host = host
       @port = port
-      @use_ssl = use_ssl
+
+      unknown_options = options.keys - OPTION_DEFAULTS.keys
+      raise Puppet::Error, "Unrecognized option(s): #{unknown_options.map(&:inspect).sort.join(', ')}" unless unknown_options.empty?
+
+      options = OPTION_DEFAULTS.merge(options)
+      @use_ssl = options[:use_ssl]
+      @verify_peer = options[:verify_peer]
+      @redirect_limit = options[:redirect_limit]
     end
 
     def get(*args)
@@ -44,46 +73,21 @@ module Puppet::Network::HTTP
     end
 
     def request(method, *args)
-      peer_certs = []
-      verify_errors = []
+      current_args = args.dup
+      @redirect_limit.times do |redirection|
+        response = execute_request(method, *args)
+        return response unless [301, 302, 307].include?(response.code.to_i)
 
-      connection.verify_callback = proc do |preverify_ok, ssl_context|
-        # We use the callback to collect the certificates for use in
-        # constructing the error message if the verification failed.
-        # This is necessary since we don't have direct access to the
-        # cert that we expected the connection to use otherwise.
-        peer_certs << Puppet::SSL::Certificate.from_instance(ssl_context.current_cert)
-        # And also keep the detailed verification error if such an error occurs
-        if ssl_context.error_string and not preverify_ok
-          verify_errors << "#{ssl_context.error_string} for #{ssl_context.current_cert.subject}"
-        end
-        preverify_ok
+        # handle the redirection
+        location = URI.parse(response['location'])
+        @connection = initialize_connection(location.host, location.port, location.scheme == 'https')
+
+        # update to the current request path
+        current_args = [location.path] + current_args.drop(1)
+        # and try again...
       end
-
-      response = connection.send(method, *args)
-
-      # Now that the request completed successfully, lets check the involved
-      # certificates for approaching expiration dates
-      warn_if_near_expiration(*peer_certs)
-
-      response
-    rescue OpenSSL::SSL::SSLError => error
-      if error.message.include? "certificate verify failed"
-        msg = error.message
-        msg << ": [" + verify_errors.join('; ') + "]"
-        raise Puppet::Error, msg
-      elsif error.message =~ /hostname (was )?not match/
-        raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
-
-        valid_certnames = [cert.name, *cert.subject_alt_names].uniq
-        msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
-
-        raise Puppet::Error, "Server hostname '#{connection.address}' did not match server certificate; expected #{msg}"
-      else
-        raise
-      end
+      raise RedirectionLimitExceededException, "Too many HTTP redirections for #{@host}:#{@port}"
     end
-
 
     # TODO: These are proxies for the Net::HTTP#request_* methods, which are
     # almost the same as the "get", "post", etc. methods that we've ported above,
@@ -105,7 +109,6 @@ module Puppet::Network::HTTP
     end
     # end of Net::HTTP#request_* proxies
 
-
     def address
       connection.address
     end
@@ -118,15 +121,42 @@ module Puppet::Network::HTTP
       connection.use_ssl?
     end
 
-
     private
 
     def connection
-      @connection || initialize_connection
+      @connection || initialize_connection(@host, @port, @use_ssl)
     end
 
-    def initialize_connection
-      args = [@host, @port]
+    def execute_request(method, *args)
+      ssl_validator = Puppet::SSL::Validator.new(:ssl_configuration => ssl_configuration)
+      # Perform our own validation of the SSL connection in addition to OpenSSL
+      ssl_validator.register_verify_callback(connection)
+
+      response = connection.send(method, *args)
+
+      # Check the peer certs and warn if they're nearing expiration.
+      warn_if_near_expiration(*ssl_validator.peer_certs)
+
+      response
+    rescue OpenSSL::SSL::SSLError => error
+      if error.message.include? "certificate verify failed"
+        msg = error.message
+        msg << ": [" + ssl_validator.verify_errors.join('; ') + "]"
+        raise Puppet::Error, msg
+      elsif error.message =~ /hostname (\w+ )?not match/
+        leaf_ssl_cert = ssl_validator.peer_certs.last
+
+        valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
+        msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
+
+        raise Puppet::Error, "Server hostname '#{connection.address}' did not match server certificate; expected #{msg}"
+      else
+        raise
+      end
+    end
+
+    def initialize_connection(host, port, use_ssl)
+      args = [host, port]
       if Puppet[:http_proxy_host] == "none"
         args << nil << nil
       else
@@ -139,7 +169,7 @@ module Puppet::Network::HTTP
       # give us a reader for ca_file... Grr...
       class << @connection; attr_accessor :ca_file; end
 
-      @connection.use_ssl = @use_ssl
+      @connection.use_ssl = use_ssl
       # Use configured timeout (#1176)
       @connection.read_timeout = Puppet[:configtimeout]
       @connection.open_timeout = Puppet[:configtimeout]
@@ -151,7 +181,7 @@ module Puppet::Network::HTTP
 
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
-      if FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
+      if @verify_peer and FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
         @connection.cert_store  = ssl_host.ssl_store
         @connection.ca_file     = ssl_configuration.ca_auth_file
         @connection.cert        = ssl_host.certificate.content

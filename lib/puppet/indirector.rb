@@ -10,7 +10,7 @@ module Puppet::Indirector
   require 'puppet/indirector/indirection'
   require 'puppet/indirector/terminus'
   require 'puppet/indirector/envelope'
-  require 'puppet/network/format_handler'
+  require 'puppet/network/format_support'
 
   def self.configure_routes(application_routes)
     application_routes.each do |indirection_name, termini|
@@ -38,11 +38,14 @@ module Puppet::Indirector
     # populate this class with the various new methods
     extend ClassMethods
     include Puppet::Indirector::Envelope
-    extend Puppet::Network::FormatHandler
+    include Puppet::Network::FormatSupport
+
+    # record the indirected class name for documentation purposes
+    options[:indirected_class] = name
 
     # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
     # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
-    @indirection = Puppet::Indirector::Indirection.new(self, indirection,  options)
+    @indirection = Puppet::Indirector::Indirection.new(self, indirection, options)
   end
 
   module ClassMethods

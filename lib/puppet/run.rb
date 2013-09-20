@@ -11,7 +11,8 @@ class Puppet::Run
   attr_reader :status, :background, :options
 
   def agent
-    Puppet::Agent.new(Puppet::Configurer)
+    # Forking disabled for "puppet kick" runs
+    Puppet::Agent.new(Puppet::Configurer, false)
   end
 
   def background?
@@ -30,6 +31,17 @@ class Puppet::Run
     end
 
     @options = options
+  end
+
+  def initialize_from_hash(hash)
+    @options = {}
+
+    hash['options'].each do |key, value|
+      @options[key.to_sym] = value
+    end
+
+    @background = hash['background']
+    @status = hash['status']
   end
 
   def log_run
@@ -62,9 +74,20 @@ class Puppet::Run
     self
   end
 
-  def self.from_pson( pson )
+  def self.from_hash(hash)
+    obj = allocate
+    obj.initialize_from_hash(hash)
+    obj
+  end
+
+  def self.from_pson(hash)
+    if hash['options']
+      return from_hash(hash)
+    end
+
     options = { :pluginsync => Puppet[:pluginsync] }
-    pson.each do |key, value|
+
+    hash.each do |key, value|
       options[key.to_sym] = value
     end
 
@@ -72,6 +95,10 @@ class Puppet::Run
   end
 
   def to_pson
-    @options.merge(:background => @background).to_pson
+    {
+      :options => @options,
+      :background => @background,
+      :status => @status
+    }.to_pson
   end
 end

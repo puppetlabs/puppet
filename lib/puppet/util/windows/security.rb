@@ -69,6 +69,7 @@ require 'windows/handle'
 require 'windows/security'
 require 'windows/process'
 require 'windows/memory'
+require 'windows/msvcrt/buffer'
 require 'windows/volume'
 
 module Puppet::Util::Windows::Security

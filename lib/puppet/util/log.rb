@@ -142,6 +142,19 @@ class Puppet::Util::Log
     end
   end
 
+  def Log.with_destination(destination, &block)
+    if @destinations.include?(destination)
+      yield
+    else
+      newdestination(destination)
+      begin
+        yield
+      ensure
+        close(destination)
+      end
+    end
+  end
+
   # Route the actual message. FIXME There are lots of things this method
   # should do, like caching and a bit more.  It's worth noting that there's
   # a potential for a loop here, if the machine somehow gets the destination set as
@@ -152,9 +165,7 @@ class Puppet::Util::Log
     queuemessage(msg) if @destinations.length == 0
 
     @destinations.each do |name, dest|
-      threadlock(dest) do
-        dest.handle(msg)
-      end
+      dest.handle(msg)
     end
   end
 
@@ -220,6 +231,12 @@ class Puppet::Util::Log
     @levels.include?(level)
   end
 
+  def self.from_pson(data)
+    obj = allocate
+    obj.initialize_from_hash(data)
+    obj
+  end
+
   attr_accessor :time, :remote, :file, :line, :source
   attr_reader :level, :message
 
@@ -242,6 +259,31 @@ class Puppet::Util::Log
     Log.newmessage(self)
   end
 
+  def initialize_from_hash(data)
+    @level = data['level'].intern
+    @message = data['message']
+    @source = data['source']
+    @tags = data['tags']
+    @time = data['time']
+    if @time.is_a? String
+      @time = Time.parse(@time)
+    end
+    @file = data['file'] if data['file']
+    @line = data['line'] if data['line']
+  end
+
+  def to_pson
+    {
+      'level' => @level,
+      'message' => @message,
+      'source' => @source,
+      'tags' => @tags,
+      'time' => @time.iso8601(9),
+      'file' => @file,
+      'line' => @line,
+    }.to_pson
+  end
+
   def message=(msg)
     raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
     @message = msg.to_s
@@ -260,16 +302,11 @@ class Puppet::Util::Log
   # If they pass a source in to us, we make sure it is a string, and
   # we retrieve any tags we can.
   def source=(source)
-    if source.respond_to?(:source_descriptors)
-      descriptors = source.source_descriptors
-      @source = descriptors[:path]
-
-      descriptors[:tags].each { |t| tag(t) }
-
-      [:file, :line].each do |param|
-        next unless descriptors[param]
-        send(param.to_s + "=", descriptors[param])
-      end
+    if source.respond_to?(:path)
+      @source = source.path
+      source.tags.each { |t| tag(t) }
+      self.file = source.file
+      self.line = source.line
     else
       @source = source.to_s
     end
@@ -282,6 +319,7 @@ class Puppet::Util::Log
   def to_s
     message
   end
+
 end
 
 # This is for backward compatibility from when we changed the constant to Puppet::Util::Log

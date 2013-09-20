@@ -7,4 +7,5 @@ class Puppet::Indirector::CertificateStatus::Rest < Puppet::Indirector::REST
 
   use_server_setting(:ca_server)
   use_port_setting(:ca_port)
+  use_srv_service(:ca)
 end

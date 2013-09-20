@@ -7,7 +7,7 @@ require 'puppet/util/network_device'
 describe Puppet::Util::NetworkDevice do
 
   before(:each) do
-    @device = OpenStruct.new(:name => "name", :provider => "test")
+    @device = OpenStruct.new(:name => "name", :provider => "test", :url => "telnet://admin:password@127.0.0.1", :options => { :debug => false })
   end
 
   after(:each) do
@@ -16,7 +16,7 @@ describe Puppet::Util::NetworkDevice do
 
   class Puppet::Util::NetworkDevice::Test
     class Device
-      def initialize(device)
+      def initialize(device, options)
       end
     end
   end
@@ -29,7 +29,7 @@ describe Puppet::Util::NetworkDevice do
 
     it "should create a network device instance" do
       Puppet::Util::NetworkDevice.stubs(:require)
-      Puppet::Util::NetworkDevice::Test::Device.expects(:new)
+      Puppet::Util::NetworkDevice::Test::Device.expects(:new).with("telnet://admin:password@127.0.0.1", :debug => false)
       Puppet::Util::NetworkDevice.init(@device)
     end
 

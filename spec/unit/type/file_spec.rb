@@ -26,6 +26,11 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "/foo/bar/baz"
       end
 
+      it "should remove triple slashes" do
+        file[:path] = "/foo/bar///baz"
+        file[:path].should == "/foo/bar/baz"
+      end
+
       it "should remove trailing double slashes" do
         file[:path] = "/foo/bar/baz//"
         file[:path].should == "/foo/bar/baz"
@@ -36,11 +41,14 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "/"
       end
 
-      it "should accept and preserve a double-slash at the start of the path" do
-        expect {
-          file[:path] = "//tmp/xxx"
-          file[:path].should == '//tmp/xxx'
-        }.to_not raise_error
+      it "should accept and collapse a double-slash at the start of the path" do
+        file[:path] = "//tmp/xxx"
+        file[:path].should == '/tmp/xxx'
+      end
+
+      it "should accept and collapse a triple-slash at the start of the path" do
+        file[:path] = "///tmp/xxx"
+        file[:path].should == '/tmp/xxx'
       end
     end
 
@@ -70,10 +78,6 @@ describe Puppet::Type.type(:file) do
       end
 
       describe "when using UNC filenames", :if => Puppet.features.microsoft_windows? do
-        before :each do
-          pending("UNC file paths not yet supported")
-        end
-
         it "should remove trailing slashes" do
           file[:path] = "//server/foo/bar/baz/"
           file[:path].should == "//server/foo/bar/baz"
@@ -176,14 +180,14 @@ describe Puppet::Type.type(:file) do
     [true, :true, :yes].each do |value|
       it "should consider #{value} to be true" do
         file[:replace] = value
-        file[:replace].should == :true
+        file[:replace].should be_true
       end
     end
 
     [false, :false, :no].each do |value|
       it "should consider #{value} to be false" do
         file[:replace] = value
-        file[:replace].should == :false
+        file[:replace].should be_false
       end
     end
   end
@@ -191,32 +195,6 @@ describe Puppet::Type.type(:file) do
   describe ".instances" do
     it "should return an empty array" do
       described_class.instances.should == []
-    end
-  end
-
-  describe "#asuser" do
-    before :each do
-      # Mocha won't let me just stub SUIDManager.asuser to yield and return,
-      # but it will do exactly that if we're not root.
-      Puppet.features.stubs(:root?).returns false
-    end
-
-    it "should return the desired owner if they can write to the parent directory" do
-      file[:owner] = 1001
-      FileTest.stubs(:writable?).with(File.dirname file[:path]).returns true
-
-      file.asuser.should == 1001
-    end
-
-    it "should return nil if the desired owner can't write to the parent directory" do
-      file[:owner] = 1001
-      FileTest.stubs(:writable?).with(File.dirname file[:path]).returns false
-
-      file.asuser.should == nil
-    end
-
-    it "should return nil if not managing owner" do
-      file.asuser.should == nil
     end
   end
 
@@ -285,48 +263,6 @@ describe Puppet::Type.type(:file) do
 
     it "should return nil if not managing owner" do
       file.asuser.should == nil
-    end
-  end
-
-  describe "#bucket" do
-    it "should return nil if backup is off" do
-      file[:backup] = false
-      file.bucket.should == nil
-    end
-
-    it "should return nil if using a file extension for backup" do
-      file[:backup] = '.backup'
-
-      file.bucket.should == nil
-    end
-
-    it "should return the default filebucket if using the 'puppet' filebucket" do
-      file[:backup] = 'puppet'
-      bucket = stub('bucket')
-      file.stubs(:default_bucket).returns bucket
-
-      file.bucket.should == bucket
-    end
-
-    it "should fail if using a remote filebucket and no catalog exists" do
-      file.catalog = nil
-      file[:backup] = 'my_bucket'
-
-      expect { file.bucket }.to raise_error(Puppet::Error, "Can not find filebucket for backups without a catalog")
-    end
-
-    it "should fail if the specified filebucket isn't in the catalog" do
-      file[:backup] = 'my_bucket'
-
-      expect { file.bucket }.to raise_error(Puppet::Error, "Could not find filebucket my_bucket specified in backup")
-    end
-
-    it "should use the specified filebucket if it is in the catalog" do
-      file[:backup] = 'my_bucket'
-      filebucket = Puppet::Type.type(:filebucket).new(:name => 'my_bucket')
-      catalog.add_resource(filebucket)
-
-      file.bucket.should == filebucket.bucket
     end
   end
 
@@ -924,20 +860,39 @@ describe Puppet::Type.type(:file) do
 
   describe "#remove_existing" do
     it "should do nothing if the file doesn't exist" do
-      file.remove_existing(:file).should == nil
+      file.remove_existing(:file).should == false
     end
 
     it "should fail if it can't backup the file" do
-      file.stubs(:stat).returns stub('stat')
+      file.stubs(:stat).returns stub('stat', :ftype => 'file')
       file.stubs(:perform_backup).returns false
 
       expect { file.remove_existing(:file) }.to raise_error(Puppet::Error, /Could not back up; will not replace/)
     end
 
+    describe "backing up directories" do
+      it "should not backup directories if force is false" do
+        file[:force] = false
+        file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+        file.expects(:perform_backup).never
+        file.remove_existing(:file).should == false
+      end
+
+      it "should backup directories if force is true" do
+        file[:force] = true
+        FileUtils.expects(:rmtree).with(file[:path])
+
+        file.stubs(:stat).returns stub('stat', :ftype => 'directory')
+        file.expects(:perform_backup).once.returns(true)
+
+        file.remove_existing(:file).should == true
+      end
+    end
+
     it "should not do anything if the file is already the right type and not a link" do
       file.stubs(:stat).returns stub('stat', :ftype => 'file')
 
-      file.remove_existing(:file).should == nil
+      file.remove_existing(:file).should == false
     end
 
     it "should not remove directories and should not invalidate the stat unless force is set" do
@@ -1165,7 +1120,7 @@ describe Puppet::Type.type(:file) do
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
         file.stubs(:property).with(:content).returns(property)
 
-        expect { file.write :NOTUSED }.to_not raise_error(Puppet::Error)
+        expect { file.write :NOTUSED }.to_not raise_error
       end
     end
   end

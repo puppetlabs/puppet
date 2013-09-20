@@ -16,8 +16,11 @@ PreReq: %{insserv_prereq} %{fillup_prereq}
 Requires: ruby >= 1.8.7
 Requires: facter >= 1.6.11
 Requires: cron
+Requires: logrotate
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: ruby >= 1.8.7
+BuildRequires: klogd
+BuildRequires: sysconfig
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a 

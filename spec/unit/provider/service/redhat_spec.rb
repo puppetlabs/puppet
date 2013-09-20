@@ -19,9 +19,10 @@ describe provider_class, :as_platform => :posix do
     @provider.stubs(:get).with(:hasstatus).returns false
     FileTest.stubs(:file?).with('/sbin/service').returns true
     FileTest.stubs(:executable?).with('/sbin/service').returns true
+    Facter.stubs(:value).with(:operatingsystem).returns('CentOS')
   end
 
-  osfamily = [ 'redhat', 'suse' ]
+  osfamily = [ 'RedHat', 'Suse' ]
 
   osfamily.each do |osfamily|
     it "should be the default provider on #{osfamily}" do
@@ -66,6 +67,13 @@ describe provider_class, :as_platform => :posix do
 
   it "should have an enabled? method" do
     @provider.should respond_to(:enabled?)
+  end
+
+  it "should use --check on SuSE" do
+    Facter.expects(:value).with(:osfamily).returns 'Suse'
+    provider_class.expects(:chkconfig).with(@resource[:name], '--check')
+
+    @provider.enabled?
   end
 
   it "should have an enable method" do

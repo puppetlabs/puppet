@@ -28,16 +28,11 @@ describe Puppet::Resource::Catalog::Compiler do
       node1 = stub 'node1', :merge => nil
       node2 = stub 'node2', :merge => nil
       compiler.stubs(:compile)
-      Puppet::Node.indirection.stubs(:find).with('node1', anything).returns(node1)
-      Puppet::Node.indirection.stubs(:find).with('node2', anything).returns(node2)
+      Puppet::Node.indirection.stubs(:find).with('node1', has_entry(:environment => anything)).returns(node1)
+      Puppet::Node.indirection.stubs(:find).with('node2', has_entry(:environment => anything)).returns(node2)
 
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node1', nil, :node => 'node1'))
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node2', nil, :node => 'node2'))
-    end
-
-    it "should provide a method for determining if the catalog is networked" do
-      compiler = Puppet::Resource::Catalog::Compiler.new
-      compiler.should respond_to(:networked?)
     end
   end
 
@@ -53,11 +48,20 @@ describe Puppet::Resource::Catalog::Compiler do
       @request = Puppet::Indirector::Request.new(:catalog, :find, @name, nil, :node => @name)
     end
 
-    it "should directly use provided nodes" do
+    it "should directly use provided nodes for a local request" do
       Puppet::Node.indirection.expects(:find).never
       @compiler.expects(:compile).with(@node)
       @request.stubs(:options).returns(:use_node => @node)
+      @request.stubs(:remote?).returns(false)
       @compiler.find(@request)
+    end
+
+    it "rejects a provided node if the request is remote" do
+      @request.stubs(:options).returns(:use_node => @node)
+      @request.stubs(:remote?).returns(true)
+      expect {
+        @compiler.find(@request)
+      }.to raise_error Puppet::Error, /invalid option use_node/i
     end
 
     it "should use the authenticated node name if no request key is provided" do
@@ -99,6 +103,24 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.find(@request)
     end
 
+    it "requires `facts_format` option if facts are passed in" do
+      facts = Puppet::Node::Facts.new("mynode", :afact => "avalue")
+      request = Puppet::Indirector::Request.new(:catalog, :find, "mynode", nil, :facts => facts)
+      expect {
+        @compiler.find(request)
+      }.to raise_error ArgumentError, /no fact format provided for mynode/
+    end
+
+    it "rejects facts in the request from a different node" do
+      facts = Puppet::Node::Facts.new("differentnode", :afact => "avalue")
+      request = Puppet::Indirector::Request.new(
+        :catalog, :find, "mynode", nil, :facts => facts, :facts_format => "unused"
+      )
+      expect {
+        @compiler.find(request)
+      }.to raise_error Puppet::Error, /fact definition for the wrong node/i
+    end
+
     it "should return the results of compiling as the catalog" do
       Puppet::Node.indirection.stubs(:find).returns(@node)
       config = mock 'config'
@@ -107,74 +129,48 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.expects(:compile).returns result
       @compiler.find(@request).should equal(result)
     end
-
-    it "should benchmark the compile process" do
-      Puppet::Node.indirection.stubs(:find).returns(@node)
-      @compiler.stubs(:networked?).returns(true)
-      @compiler.expects(:benchmark).with do |level, message|
-        level == :notice and message =~ /^Compiled catalog/
-      end
-      Puppet::Parser::Compiler.stubs(:compile)
-      @compiler.find(@request)
-    end
-
-    it "should log the benchmark result" do
-      Puppet::Node.indirection.stubs(:find).returns(@node)
-      @compiler.stubs(:networked?).returns(true)
-      Puppet::Parser::Compiler.stubs(:compile)
-
-      Puppet.expects(:notice).with { |msg| msg =~ /Compiled catalog/ }
-
-      @compiler.find(@request)
-    end
   end
 
   describe "when extracting facts from the request" do
     before do
+      Puppet::Node::Facts.indirection.terminus_class = :memory
       Facter.stubs(:value).returns "something"
       @compiler = Puppet::Resource::Catalog::Compiler.new
-      @request = stub 'request', :options => {}
 
       @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
-      Puppet::Node::Facts.indirection.stubs(:save).returns(nil)
+    end
+
+    def a_request_that_contains(facts)
+      request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
+      request.options[:facts_format] = "pson"
+      request.options[:facts] = CGI.escape(facts.render(:pson))
+      request
     end
 
     it "should do nothing if no facts are provided" do
-      Puppet::Node::Facts.indirection.expects(:convert_from).never
-      @request.options[:facts] = nil
+      request = Puppet::Indirector::Request.new(:catalog, :find, "hostname", nil)
+      request.options[:facts] = nil
 
-      @compiler.extract_facts_from_request(@request)
+      @compiler.extract_facts_from_request(request).should be_nil
     end
 
-    it "should use the Facts class to deserialize the provided facts and update the timestamp" do
-      @request.options[:facts_format] = "foo"
-      @request.options[:facts] = "bar"
-      Puppet::Node::Facts.expects(:convert_from).returns @facts
-
+    it "deserializes the facts and timestamps them" do
       @facts.timestamp = Time.parse('2010-11-01')
-      @now = Time.parse('2010-11-02')
-      Time.expects(:now).returns(@now)
+      request = a_request_that_contains(@facts)
+      now = Time.parse('2010-11-02')
+      Time.stubs(:now).returns(now)
 
-      @compiler.extract_facts_from_request(@request)
-      @facts.timestamp.should == @now
-    end
+      facts = @compiler.extract_facts_from_request(request)
 
-    it "should use the provided fact format" do
-      @request.options[:facts_format] = "foo"
-      @request.options[:facts] = "bar"
-      Puppet::Node::Facts.expects(:convert_from).with { |format, text| format == "foo" }.returns @facts
-
-      @compiler.extract_facts_from_request(@request)
+      facts.timestamp.should == now
     end
 
     it "should convert the facts into a fact instance and save it" do
-      @request.options[:facts_format] = "foo"
-      @request.options[:facts] = "bar"
-      Puppet::Node::Facts.expects(:convert_from).returns @facts
+      request = a_request_that_contains(@facts)
 
-      Puppet::Node::Facts.indirection.expects(:save).with(@facts)
+      Puppet::Node::Facts.indirection.expects(:save).with(equals(@facts))
 
-      @compiler.extract_facts_from_request(@request)
+      @compiler.extract_facts_from_request(request)
     end
   end
 

@@ -1,6 +1,7 @@
 require 'puppet/network/http/handler'
 require 'resolv'
 require 'webrick'
+require 'puppet/util/ssl'
 
 class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
@@ -14,14 +15,28 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   # Retrieve the request parameters, including authentication information.
   def params(request)
-    result = request.query
-    result = decode_params(result)
-    result.merge(client_information(request))
+    params = request.query || {}
+
+    params = Hash[params.collect do |key, value|
+      all_values = value.list
+      [key, all_values.length == 1 ? value : all_values]
+    end]
+
+    params = decode_params(params)
+    params.merge(client_information(request))
   end
 
   # WEBrick uses a service method to respond to requests.  Simply delegate to the handler response method.
   def service(request, response)
     process(request, response)
+  end
+
+  def headers(request)
+    result = {}
+    request.each do |k, v|
+      result[k.downcase] = v
+    end
+    result
   end
 
   def accept_header(request)
@@ -73,8 +88,8 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     # then we get the hostname from the cert, instead of via IP
     # info
     result[:authenticated] = false
-    if cert = request.client_cert and nameary = cert.subject.to_a.find { |ary| ary[0] == "CN" }
-      result[:node] = nameary[1]
+    if cert = request.client_cert and cn = Puppet::Util::SSL.cn_from_subject(cert.subject)
+      result[:node] = cn
       result[:authenticated] = true
     else
       result[:node] = resolve_node(result)

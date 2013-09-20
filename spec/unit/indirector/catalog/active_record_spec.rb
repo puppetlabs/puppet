@@ -4,11 +4,13 @@ require 'spec_helper'
 describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_database? do
   include PuppetSpec::Files
 
-  require 'puppet/rails'
-
   before :each do
     require 'puppet/indirector/catalog/active_record'
     setup_scratch_database
+  end
+
+  after :each do
+    Puppet::Rails.teardown
   end
 
   let :terminus do
@@ -17,7 +19,8 @@ describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_datab
 
   it "should issue a deprecation warning" do
     Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
-    terminus
+
+    Puppet::Resource::Catalog::ActiveRecord.new
   end
 
   it "should be a subclass of the ActiveRecord terminus class" do
@@ -86,9 +89,11 @@ describe "Puppet::Resource::Catalog::ActiveRecord", :if => can_use_scratch_datab
     end
 
     it "should set the last compile time on the host" do
-      now = Time.now
+      before = Time.now
       terminus.save(request)
-      Puppet::Rails::Host.find_by_name("foo").last_compile.should be_within(1).of(now)
+      after = Time.now
+
+      Puppet::Rails::Host.find_by_name("foo").last_compile.should be_between(before, after)
     end
 
     it "should save the Rails host instance" do

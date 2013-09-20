@@ -23,7 +23,7 @@ describe Puppet::Parser::Collector, "when initializing" do
   end
 
   it "should only accept :virtual or :exported as the collector form" do
-    proc { @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @vquery, @equery, :other) }.should raise_error(ArgumentError)
+    expect { @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @vquery, @equery, :other) }.to raise_error(ArgumentError)
   end
 
   it "should accept an optional virtual query" do
@@ -34,7 +34,7 @@ describe Puppet::Parser::Collector, "when initializing" do
     @collector.equery.should equal(@equery)
   end
 
-  it "should canonize the type name" do
+  it "should canonicalize the type name" do
     @collector = Puppet::Parser::Collector.new(@scope, "resource::type", @equery, @vquery, @form)
     @collector.type.should == "Resource::Type"
   end
@@ -61,7 +61,7 @@ describe Puppet::Parser::Collector, "when collecting specific virtual resources"
   it "should not fail when it does not find any resources to collect" do
     @collector.resources = ["File[virtual1]", "File[virtual2]"]
     @scope.stubs(:findresource).returns(false)
-    proc { @collector.evaluate }.should_not raise_error
+    expect { @collector.evaluate }.to_not raise_error
   end
 
   it "should mark matched resources as non-virtual" do
@@ -288,6 +288,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       Puppet[:storeconfigs_backend] = "active_record"
     end
 
+    after :each do
+      Puppet::Rails.teardown
+    end
+
     it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do
       one = Puppet::Parser::Resource.new('notify', 'one',
                                          :virtual  => true,
@@ -304,10 +308,6 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       @collector.evaluate.should == [one, two]
       one.should_not be_virtual
       two.should_not be_virtual
-
-      # REVISIT: Apparently we never actually marked local resources as
-      # non-exported.  So, this is what the previous test asserted, and checking
-      # what it claims to do causes test failures. --daniel 2011-08-23
     end
 
     it "should mark all returned resources as not virtual" do
@@ -429,7 +429,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       @compiler.add_resource(@scope, local)
 
       got = nil
-      expect { got = @collector.evaluate }.not_to raise_error(Puppet::ParseError)
+      expect { got = @collector.evaluate }.not_to raise_error
       got.length.should == 1
       got.first.type.should == "Notify"
       got.first.title.should == "boingy-boingy"

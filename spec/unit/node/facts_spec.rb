@@ -14,25 +14,76 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts.values["one"].should == "1"
   end
 
-  it "should add the node's certificate name as the 'clientcert' fact when adding local facts" do
-    @facts.add_local_facts
-    @facts.values["clientcert"].should == Puppet.settings[:certname]
+  describe "adding local facts" do
+    it "should add the node's certificate name as the 'clientcert' fact" do
+      @facts.add_local_facts
+      @facts.values["clientcert"].should == Puppet.settings[:certname]
+    end
+
+    it "adds the Puppet version as a 'clientversion' fact" do
+      @facts.add_local_facts
+      @facts.values["clientversion"].should == Puppet.version.to_s
+    end
+
+    it "adds the agent side noop setting as 'clientnoop'" do
+      @facts.add_local_facts
+      @facts.values["clientnoop"].should == Puppet.settings[:noop]
+    end
+
+    it "doesn't add the current environment" do
+      @facts.add_local_facts
+      @facts.values.should_not include("environment")
+    end
+
+    it "doesn't replace any existing environment fact when adding local facts" do
+      @facts.values["environment"] = "foo"
+      @facts.add_local_facts
+      @facts.values["environment"].should == "foo"
+    end
   end
 
-  it "should add the Puppet version as a 'clientversion' fact when adding local facts" do
-    @facts.add_local_facts
-    @facts.values["clientversion"].should == Puppet.version.to_s
-  end
+  describe "when sanitizing facts" do
+    it "should convert fact values if needed" do
+      @facts.values["test"] = /foo/
+      @facts.sanitize
+      @facts.values["test"].should == "(?-mix:foo)"
+    end
 
-  it "should not add the current environment" do
-    @facts.add_local_facts
-    @facts.values.should_not include("environment")
-  end
+    it "should convert hash keys if needed" do
+      @facts.values["test"] = {/foo/ => "bar"}
+      @facts.sanitize
+      @facts.values["test"].should == {"(?-mix:foo)" => "bar"}
+    end
 
-  it "should not replace any existing environment fact when adding local facts" do
-    @facts.values["environment"] = "foo"
-    @facts.add_local_facts
-    @facts.values["environment"].should == "foo"
+    it "should convert hash values if needed" do
+      @facts.values["test"] = {"foo" => /bar/}
+      @facts.sanitize
+      @facts.values["test"].should == {"foo" => "(?-mix:bar)"}
+    end
+
+    it "should convert array elements if needed" do
+      @facts.values["test"] = [1, "foo", /bar/]
+      @facts.sanitize
+      @facts.values["test"].should == [1, "foo", "(?-mix:bar)"]
+    end
+
+    it "should handle nested arrays" do
+      @facts.values["test"] = [1, "foo", [/bar/]]
+      @facts.sanitize
+      @facts.values["test"].should == [1, "foo", ["(?-mix:bar)"]]
+    end
+
+    it "should handle nested hashes" do
+      @facts.values["test"] = {/foo/ => {"bar" => /baz/}}
+      @facts.sanitize
+      @facts.values["test"].should == {"(?-mix:foo)" => {"bar" => "(?-mix:baz)"}}
+    end
+
+    it "should handle nester arrays and hashes" do
+      @facts.values["test"] = {/foo/ => ["bar", /baz/]}
+      @facts.sanitize
+      @facts.values["test"].should == {"(?-mix:foo)" => ["bar", "(?-mix:baz)"]}
+    end
   end
 
   describe "when indirecting" do
@@ -67,7 +118,7 @@ describe Puppet::Node::Facts, "when indirecting" do
   describe "when storing and retrieving" do
     it "should add metadata to the facts" do
       facts = Puppet::Node::Facts.new("me", "one" => "two", "three" => "four")
-      facts.values[:_timestamp].should be_instance_of(Time)
+      facts.values['_timestamp'].should be_instance_of(Time)
     end
 
     describe "using pson" do
@@ -82,7 +133,7 @@ describe Puppet::Node::Facts, "when indirecting" do
         facts = format.intern(Puppet::Node::Facts,pson)
         facts.name.should == 'foo'
         facts.expiration.should == @expiration
-        facts.values.should == {'a' => '1', 'b' => '2', 'c' => '3', :_timestamp => @timestamp}
+        facts.values.should == {'a' => '1', 'b' => '2', 'c' => '3', '_timestamp' => @timestamp}
       end
 
       it "should generate properly formatted pson" do

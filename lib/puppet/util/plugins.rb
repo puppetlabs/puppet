@@ -25,8 +25,8 @@
 # Note that the instance variables are local to this Puppet::Plugin (and so may be used
 #   for maintaining state, etc.) but the plugin system does not provide any thread safety
 #   assurances, so they may not be adequate for some complex use cases.
-#
-#
+
+
 module Puppet
   class Plugins
     Paths  = [] # Where we might find plugin initialization code
@@ -44,7 +44,7 @@ module Puppet
     #
     # Add more places to look for plugins without adding duplicates or changing the
     #   order of ones we've already found.
-    #   
+    #
     def self.look_in(*paths)
       Paths.replace Paths | paths.flatten.collect { |path| File.expand_path(path) }
     end
@@ -53,18 +53,18 @@ module Puppet
     #
     look_in $LOAD_PATH
     #
-    # Calling methods (hooks) on the class calls the method of the same name on 
+    # Calling methods (hooks) on the class calls the method of the same name on
     #   all plugins that use that hook, passing in the same arguments to each
     #   and returning an array containing the results returned by each plugin as
     #   an array of [plugin_name,result] pairs.
-    # 
+    #
     def self.method_missing(hook,*args,&block)
       known.
         select  { |p| p.respond_to? hook }.
         collect { |p| [p.name,p.send(hook,*args,&block)] }
     end
     #
-    # 
+    #
     #
     attr_reader :path,:name
     def initialize(path)

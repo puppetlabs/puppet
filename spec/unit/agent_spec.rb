@@ -20,7 +20,9 @@ end
 
 describe Puppet::Agent do
   before do
-    @agent = Puppet::Agent.new(AgentTestClient)
+    Puppet::Status.indirection.stubs(:find).returns Puppet::Status.new("version" => Puppet.version)
+
+    @agent = Puppet::Agent.new(AgentTestClient, false)
 
     # So we don't actually try to hit the filesystem.
     @agent.stubs(:lock).yields
@@ -43,7 +45,7 @@ describe Puppet::Agent do
   end
 
   it "should set its client class at initialization" do
-    Puppet::Agent.new("foo").client_class.should == "foo"
+    Puppet::Agent.new("foo", false).client_class.should == "foo"
   end
 
   it "should include the Locker module" do
@@ -133,18 +135,6 @@ describe Puppet::Agent do
       @agent.run
     end
 
-    it "should use a mutex to restrict multi-threading" do
-      client = AgentTestClient.new
-      AgentTestClient.expects(:new).returns client
-
-      mutex = mock 'mutex'
-      @agent.expects(:sync).returns mutex
-
-      mutex.expects(:synchronize)
-      client.expects(:run).never # if it doesn't run, then we know our yield is what triggers it
-      @agent.run
-    end
-
     it "should use a filesystem lock to restrict multiple processes running the agent" do
       client = AgentTestClient.new
       AgentTestClient.expects(:new).returns client
@@ -181,7 +171,11 @@ describe Puppet::Agent do
 
     describe "when should_fork is true" do
       before do
-        @agent.should_fork = true
+        @agent = Puppet::Agent.new(AgentTestClient, true)
+
+        # So we don't actually try to hit the filesystem.
+        @agent.stubs(:lock).yields
+
         Kernel.stubs(:fork)
         Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => 0)]
         @agent.stubs(:exit)

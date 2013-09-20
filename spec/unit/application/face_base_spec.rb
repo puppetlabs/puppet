@@ -33,7 +33,7 @@ describe Puppet::Application::FaceBase do
     end
 
     describe "with just an action" do
-      before :all do
+      before(:each) do
         # We have to stub Signal.trap to avoid a crazy mess where we take
         # over signal handling and make it impossible to cancel the test
         # suite run.
@@ -162,12 +162,18 @@ describe Puppet::Application::FaceBase do
 
     it "does not skip when a puppet global setting is given as one item" do
       app.command_line.stubs(:args).returns %w{--confdir=/tmp/puppet foo}
-      expect { app.preinit; app.parse_options }.not_to raise_error
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == {}
     end
 
     it "does not skip when a puppet global setting is given as two items" do
       app.command_line.stubs(:args).returns %w{--confdir /tmp/puppet foo}
-      expect { app.preinit; app.parse_options }.not_to raise_error
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == {}
     end
 
     { "boolean options before" => %w{--trace foo},
@@ -298,8 +304,8 @@ describe Puppet::Application::FaceBase do
       end
 
       [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
-        it "should render #{input.class} using JSON" do
-          app.render(input, {}).should == input.to_pson.chomp
+        it "should render Array as one item per line" do
+          app.render(input, {}).should == input.collect { |item| item.to_s + "\n" }.join('')
         end
       end
 

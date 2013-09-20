@@ -1,5 +1,5 @@
 # Include the specified classes
-Puppet::Parser::Functions::newfunction(:include, :doc => "Evaluate one or more classes.") do |vals|
+Puppet::Parser::Functions::newfunction(:include, :arity => -2, :doc => "Evaluate one or more classes.") do |vals|
     if vals.is_a?(Array)
       # Protect against array inside array
       vals = vals.flatten

@@ -2,12 +2,24 @@ require 'puppet/provider/package'
 require 'puppet/util/package'
 
 Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package do
-  desc "Installation from the AIX software directory."
+  desc "Installation from an AIX software directory, using the AIX `installp`
+       command.  The `source` parameter is required for this provider, and should
+       be set to the absolute path (on the puppet agent machine) of a directory
+       containing one or more BFF package files.
+
+       The `installp` command will generate a table of contents file (named `.toc`)
+       in this directory, and the `name` parameter (or resource title) that you
+       specify for your `package` resource must match a package name that exists
+       in the `.toc` file.
+
+       Note that package downgrades are *not* supported; if your resource specifies
+       a specific version number and there is already a newer version of the package
+       installed on the machine, the resource will fail with an error message."
 
   # The commands we are using on an AIX box are installed standard
   # (except nimclient) nimclient needs the bos.sysmgt.nim.client fileset.
   commands    :lslpp => "/usr/bin/lslpp",
-        :installp => "/usr/sbin/installp"
+              :installp => "/usr/sbin/installp"
 
   # AIX supports versionable packages with and without a NIM server
   has_feature :versionable
@@ -60,6 +72,12 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     # Automatically process dependencies when installing/uninstalling
     # with the -g option to installp.
     installp "-gu", @resource[:name]
+
+    # installp will return an exit code of zero even if it didn't uninstall
+    # anything... so let's make sure it worked.
+    unless query().nil?
+      self.fail "Failed to uninstall package '#{@resource[:name]}'"
+    end
   end
 
   def install(useversion = true)
@@ -69,9 +87,15 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     pkg = @resource[:name]
 
-    pkg << " #{@resource.should(:ensure)}" if (! @resource.should(:ensure).is_a? Symbol) and useversion
+    pkg += " #{@resource.should(:ensure)}" if (! @resource.should(:ensure).is_a? Symbol) and useversion
 
-    installp "-acgwXY", "-d", source, pkg
+    output = installp "-acgwXY", "-d", source, pkg
+
+    # If the package is superseded, it means we're trying to downgrade and we
+    # can't do that.
+    if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
+      self.fail "aix package provider is unable to downgrade packages"
+    end
   end
 
   def self.pkglist(hash = {})

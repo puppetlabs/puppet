@@ -1,6 +1,8 @@
 # Defaults for puppet - sourced by /etc/init.d/puppet
 
-# Start puppet on boot?
+# Enable puppet agent service?
+# Setting this to "yes" allows the puppet agent service to run.
+# Setting this to "no" keeps the puppet agent service from running.
 START=no
 
 # Startup options

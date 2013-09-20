@@ -1,6 +1,7 @@
 require 'net/http'
 require 'uri'
 
+require 'puppet/network/http'
 require 'puppet/network/http_pool'
 require 'puppet/network/http/api/v1'
 require 'puppet/network/http/compression'
@@ -41,63 +42,40 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     Puppet.settings[port_setting || :masterport].to_i
   end
 
-  # Figure out the content type, turn that into a format, and use the format
-  # to extract the body of the response.
-  def deserialize(response, multiple = false)
-    case response.code
-    when "404"
-      return nil
-    when /^2/
-      raise "No content type in http response; cannot parse" unless response['content-type']
-
-      content_type = response['content-type'].gsub(/\s*;.*$/,'') # strip any appended charset
-
-      body = uncompress_body(response)
-
-      # Convert the response to a deserialized object.
-      if multiple
-        model.convert_from_multiple(content_type, body)
-      else
-        model.convert_from(content_type, body)
-      end
-    else
-      # Raise the http error if we didn't get a 'success' of some kind.
-      raise convert_to_http_error(response)
-    end
-  end
-
-  def convert_to_http_error(response)
-    message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
-    Net::HTTPError.new(message, response)
-  end
-
   # Provide appropriate headers.
   def headers
     add_accept_encoding({"Accept" => model.supported_formats.join(", ")})
+  end
+
+  def add_profiling_header(headers)
+    if (Puppet[:profile])
+      headers[Puppet::Network::HTTP::HEADER_ENABLE_PROFILING] = "true"
+    end
+    headers
   end
 
   def network(request)
     Puppet::Network::HTTP::Connection.new(request.server || self.class.server, request.port || self.class.port)
   end
 
-  def http_get(request, *args)
-    http_request(:get, request, *args)
+  def http_get(request, path, headers = nil, *args)
+    http_request(:get, request, path, add_profiling_header(headers), *args)
   end
 
-  def http_post(request, *args)
-    http_request(:post, request, *args)
+  def http_post(request, path, data, headers = nil, *args)
+    http_request(:post, request, path, data, add_profiling_header(headers), *args)
   end
 
-  def http_head(request, *args)
-    http_request(:head, request, *args)
+  def http_head(request, path, headers = nil, *args)
+    http_request(:head, request, path, add_profiling_header(headers), *args)
   end
 
-  def http_delete(request, *args)
-    http_request(:delete, request, *args)
+  def http_delete(request, path, headers = nil, *args)
+    http_request(:delete, request, path, add_profiling_header(headers), *args)
   end
 
-  def http_put(request, *args)
-    http_request(:put, request, *args)
+  def http_put(request, path, data, headers = nil, *args)
+    http_request(:put, request, path, data, add_profiling_header(headers), *args)
   end
 
   def http_request(method, request, *args)
@@ -118,12 +96,16 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         http_get(request, uri_with_query_string, headers)
       end
     end
-    result = deserialize(response)
 
-    return nil unless result
-
-    result.name = request.key if result.respond_to?(:name=)
-    result
+    if is_http_200?(response)
+      check_master_version(response)
+      content_type, body = parse_response(response)
+      result = deserialize_find(content_type, body)
+      result.name = request.key if result.respond_to?(:name=)
+      result
+    else
+      nil
+    end
   end
 
   def head(request)
@@ -131,39 +113,57 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       http_head(request, indirection2uri(request), headers)
     end
 
-    case response.code
-    when "404"
-      return false
-    when /^2/
-      return true
+    if is_http_200?(response)
+      check_master_version(response)
+      true
     else
-      # Raise the http error if we didn't get a 'success' of some kind.
-      raise convert_to_http_error(response)
+      false
     end
   end
 
   def search(request)
-    result = do_request(request) do |request|
-      deserialize(http_get(request, indirection2uri(request), headers), true)
+    response = do_request(request) do |request|
+      http_get(request, indirection2uri(request), headers)
     end
 
-    # result from the server can be nil, but we promise to return an array...
-    result || []
+    if is_http_200?(response)
+      check_master_version(response)
+      content_type, body = parse_response(response)
+      deserialize_search(content_type, body) || []
+    else
+      []
+    end
   end
 
   def destroy(request)
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
 
-    do_request(request) do |request|
-      return deserialize(http_delete(request, indirection2uri(request), headers))
+    response = do_request(request) do |request|
+      http_delete(request, indirection2uri(request), headers)
+    end
+
+    if is_http_200?(response)
+      check_master_version(response)
+      content_type, body = parse_response(response)
+      deserialize_destroy(content_type, body)
+    else
+      nil
     end
   end
 
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
 
-    do_request(request) do |request|
-      deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+    response = do_request(request) do |request|
+      http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+    end
+
+    if is_http_200?(response)
+      check_master_version(response)
+      content_type, body = parse_response(response)
+      deserialize_save(content_type, body)
+    else
+      nil
     end
   end
 
@@ -177,7 +177,68 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     request.do_request(self.class.srv_service, self.class.server, self.class.port) { |request| yield(request) }
   end
 
+  def validate_key(request)
+    # Validation happens on the remote end
+  end
+
   private
+
+  def is_http_200?(response)
+    case response.code
+    when "404"
+      false
+    when /^2/
+      true
+    else
+      # Raise the http error if we didn't get a 'success' of some kind.
+      raise convert_to_http_error(response)
+    end
+  end
+
+  def convert_to_http_error(response)
+    message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
+    Net::HTTPError.new(message, response)
+  end
+
+  def check_master_version response
+    if !response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] &&
+       (Puppet[:legacy_query_parameter_serialization] == false || Puppet[:report_serialization_format] != "yaml")
+      Puppet.notice "Using less secure serialization of reports and query parameters for compatibility"
+      Puppet.notice "with older puppet master. To remove this notice, please upgrade your master(s) "
+      Puppet.notice "to Puppet 3.3 or newer."
+      Puppet.notice "See http://links.puppetlabs.com/deprecate_yaml_on_network for more information."
+      Puppet[:legacy_query_parameter_serialization] = true
+      Puppet[:report_serialization_format] = "yaml"
+    end
+  end
+
+  # Returns the content_type, stripping any appended charset, and the
+  # body, decompressed if necessary (content-encoding is checked inside
+  # uncompress_body)
+  def parse_response(response)
+    if response['content-type']
+      [ response['content-type'].gsub(/\s*;.*$/,''),
+        body = uncompress_body(response) ]
+    else
+      raise "No content type in http response; cannot parse"
+    end
+  end
+
+  def deserialize_find(content_type, body)
+    model.convert_from(content_type, body)
+  end
+
+  def deserialize_search(content_type, body)
+    model.convert_from_multiple(content_type, body)
+  end
+
+  def deserialize_destroy(content_type, body)
+    model.convert_from(content_type, body)
+  end
+
+  def deserialize_save(content_type, body)
+    nil
+  end
 
   def environment
     Puppet::Node::Environment.new

@@ -12,13 +12,13 @@ token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
-token IN UNLESS
+token IN UNLESS MODULO
 
 prechigh
   right NOT
   nonassoc UMINUS
   left  IN MATCH NOMATCH
-  left  TIMES DIV
+  left  TIMES DIV MODULO
   left  MINUS PLUS
   left  LSHIFT RSHIFT
   left  NOTEQUAL ISEQUAL
@@ -32,7 +32,7 @@ program:    statements_and_declarations
   | nil
 
   statements_and_declarations:   statement_or_declaration {
-    result = ast AST::ASTArray, :children => (val[0] ? [val[0]] : [])
+    result = ast AST::BlockExpression, :children => (val[0] ? [val[0]] : [])
   }
   | statements_and_declarations statement_or_declaration {
     if val[1]
@@ -489,6 +489,9 @@ expression:   rvalue
   | expression TIMES expression {
     result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
+  | expression MODULO expression {
+    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+}
   | expression LSHIFT expression {
     result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
@@ -550,7 +553,7 @@ caseopt:        casevalues COLON LBRACE statements RBRACE {
     AST::CaseOpt,
     :value => val[0],
 
-    :statements => ast(AST::ASTArray)
+    :statements => ast(AST::BlockExpression)
   )
 }
 
@@ -780,7 +783,6 @@ hasharrayaccesses:    hasharrayaccess
 end
 ---- header ----
 require 'puppet'
-require 'puppet/util/loadedfile'
 require 'puppet/parser/lexer'
 require 'puppet/parser/ast'
 

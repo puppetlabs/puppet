@@ -38,6 +38,11 @@ class Puppet::Parser::Parser
     ast AST::ASTArray, :children => [arg]
   end
 
+  # Create an AST block containing a single element
+  def block(arg)
+    ast AST::BlockExpression, :children => [arg]
+  end
+
   # Create an AST object, and automatically add the file and line information if
   # available.
   def ast(klass, hash = {})
@@ -64,7 +69,7 @@ class Puppet::Parser::Parser
 
   # Raise a Parse error.
   def error(message, options = {})
-    if brace = @lexer.expected
+    if @lexer.expected
       message += "; expected '%s'"
     end
     except = Puppet::ParseError.new(message)
@@ -93,7 +98,16 @@ class Puppet::Parser::Parser
   def_delegators :known_resource_types, :watch_file, :version
 
   def import(file)
-    known_resource_types.loader.import(file, @lexer.file)
+    if @lexer.file
+      # use a path relative to the file doing the importing
+      dir = File.dirname(@lexer.file)
+    else
+      # otherwise assume that everything needs to be from where the user is
+      # executing this command. Normally, this would be in a "puppet apply -e"
+      dir = Dir.pwd
+    end
+
+    known_resource_types.loader.import(file, dir)
   end
 
   def initialize(env)
@@ -146,9 +160,10 @@ class Puppet::Parser::Parser
       rescue Puppet::ParseError => except
         except.line ||= @lexer.line
         except.file ||= @lexer.file
+        except.pos ||= @lexer.pos
         raise except
       rescue => except
-        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, except)
+        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, nil, except)
       end
     end
     # Store the results as the top-level class.
@@ -158,12 +173,14 @@ class Puppet::Parser::Parser
   end
 
   def parse_ruby_file
+    Puppet.deprecation_warning("Use of the Ruby DSL is deprecated.")
+
     # Execute the contents of the file inside its own "main" object so
     # that it can call methods in the resource type API.
     main_object = Puppet::DSL::ResourceTypeAPI.new
     main_object.instance_eval(File.read(self.file))
 
     # Then extract any types that were created.
-    Puppet::Parser::AST::ASTArray.new :children => main_object.instance_eval { @__created_ast_objects__ }
+    Puppet::Parser::AST::BlockExpression.new :children => main_object.instance_eval { @__created_ast_objects__ }
   end
 end

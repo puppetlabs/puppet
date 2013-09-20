@@ -4,13 +4,76 @@ require 'puppet_spec/compiler'
 describe "Two step scoping for variables" do
   include PuppetSpec::Compiler
 
-  def expect_the_message_to_be(message, node = Puppet::Node.new('the node')) 
+  def expect_the_message_to_be(message, node = Puppet::Node.new('the node'))
     catalog = compile_to_catalog(yield, node)
     catalog.resource('Notify', 'something')[:message].should == message
   end
 
   before :each do
     Puppet.expects(:deprecation_warning).never
+  end
+
+  describe "fully qualified variable names" do
+    it "keeps nodescope separate from topscope" do
+      expect_the_message_to_be('topscope') do <<-MANIFEST
+          $c = "topscope"
+          node default {
+            $c = "nodescope"
+            notify { 'something': message => $::c }
+          }
+        MANIFEST
+      end
+    end
+  end
+
+  describe "when colliding class and variable names" do
+    it "finds a topscope variable with the same name as a class" do
+      expect_the_message_to_be('topscope') do <<-MANIFEST
+          $c = "topscope"
+          class c { }
+          node default {
+            include c
+            notify { 'something': message => $c }
+          }
+        MANIFEST
+      end
+    end
+
+    it "finds a node scope variable with the same name as a class" do
+      expect_the_message_to_be('nodescope') do <<-MANIFEST
+          class c { }
+          node default {
+            $c = "nodescope"
+            include c
+            notify { 'something': message => $c }
+          }
+        MANIFEST
+      end
+    end
+
+    it "finds a class variable when the class collides with a nodescope variable" do
+      expect_the_message_to_be('class') do <<-MANIFEST
+          class c { $b = "class" }
+          node default {
+            $c = "nodescope"
+            include c
+            notify { 'something': message => $c::b }
+          }
+        MANIFEST
+      end
+    end
+
+    it "finds a class variable when the class collides with a topscope variable" do
+      expect_the_message_to_be('class') do <<-MANIFEST
+          $c = "topscope"
+          class c { $b = "class" }
+          node default {
+            include c
+            notify { 'something': message => $::c::b }
+          }
+        MANIFEST
+      end
+    end
   end
 
   describe "when using shadowing and inheritance" do
@@ -119,7 +182,7 @@ describe "Two step scoping for variables" do
           class c {
             notify { 'something': message => "$a::b" }
           }
-          
+
           class a { }
 
           node default {

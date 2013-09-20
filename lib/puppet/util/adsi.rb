@@ -28,21 +28,21 @@ module Puppet::Util::ADSI
       unless @computer_name
         buf = " " * 128
         Win32API.new('kernel32', 'GetComputerName', ['P','P'], 'I').call(buf, buf.length.to_s)
-        @computer_name = buf.unpack("A*")
+        @computer_name = buf.unpack("A*")[0]
       end
       @computer_name
     end
 
-    def computer_uri
-      "WinNT://#{computer_name}"
+    def computer_uri(host = '.')
+      "WinNT://#{host}"
     end
 
     def wmi_resource_uri( host = '.' )
       "winmgmts:{impersonationLevel=impersonate}!//#{host}/root/cimv2"
     end
 
-    def uri(resource_name, resource_type)
-      "#{computer_uri}/#{resource_name},#{resource_type}"
+    def uri(resource_name, resource_type, host = '.')
+      "#{computer_uri(host)}/#{resource_name},#{resource_type}"
     end
 
     def wmi_connection
@@ -54,7 +54,7 @@ module Puppet::Util::ADSI
     end
 
     def sid_for_account(name)
-      Puppet.deprecation_warning "Puppet::Util::ADSI.sid_for_account is deprecated and will be removed in 3.0, use Puppet::Util::Windows::SID.name_to_account instead."
+      Puppet.deprecation_warning "Puppet::Util::ADSI.sid_for_account is deprecated and will be removed in 3.0, use Puppet::Util::Windows::SID.name_to_sid instead."
 
       Puppet::Util::Windows::Security.name_to_sid(name)
     end
@@ -74,8 +74,8 @@ module Puppet::Util::ADSI
       @native_user ||= Puppet::Util::ADSI.connect(uri)
     end
 
-    def self.uri(name)
-      Puppet::Util::ADSI.uri(name, 'user')
+    def self.uri(name, host = '.')
+      Puppet::Util::ADSI.uri(name, 'user', host)
     end
 
     def uri
@@ -175,11 +175,11 @@ module Puppet::Util::ADSI
     end
 
     def self.each(&block)
-      wql = Puppet::Util::ADSI.execquery("select * from win32_useraccount")
+      wql = Puppet::Util::ADSI.execquery("select name from win32_useraccount")
 
       users = []
       wql.each do |u|
-        users << new(u.name, u)
+        users << new(u.name)
       end
 
       users.each(&block)
@@ -216,8 +216,8 @@ module Puppet::Util::ADSI
       self.class.uri(name)
     end
 
-    def self.uri(name)
-      Puppet::Util::ADSI.uri(name, 'group')
+    def self.uri(name, host = '.')
+      Puppet::Util::ADSI.uri(name, 'group', host)
     end
 
     def native_group
@@ -235,14 +235,14 @@ module Puppet::Util::ADSI
 
     def add_members(*names)
       names.each do |name|
-        native_group.Add(Puppet::Util::ADSI::User.uri(name))
+        native_group.Add(Puppet::Util::ADSI::User.uri(name, Puppet::Util::ADSI.computer_name))
       end
     end
     alias add_member add_members
 
     def remove_members(*names)
       names.each do |name|
-        native_group.Remove(Puppet::Util::ADSI::User.uri(name))
+        native_group.Remove(Puppet::Util::ADSI::User.uri(name, Puppet::Util::ADSI.computer_name))
       end
     end
     alias remove_member remove_members
@@ -283,11 +283,11 @@ module Puppet::Util::ADSI
     end
 
     def self.each(&block)
-      wql = Puppet::Util::ADSI.execquery( "select * from win32_group" )
+      wql = Puppet::Util::ADSI.execquery( "select name from win32_group" )
 
       groups = []
       wql.each do |g|
-        groups << new(g.name, g)
+        groups << new(g.name)
       end
 
       groups.each(&block)

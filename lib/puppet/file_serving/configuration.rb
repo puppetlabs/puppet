@@ -1,4 +1,3 @@
-require 'monitor'
 require 'puppet'
 require 'puppet/file_serving'
 require 'puppet/file_serving/mount'
@@ -9,12 +8,8 @@ require 'puppet/file_serving/mount/plugins'
 class Puppet::FileServing::Configuration
   require 'puppet/file_serving/configuration/parser'
 
-  extend MonitorMixin
-
   def self.configuration
-    synchronize do
-      @configuration ||= new
-    end
+    @configuration ||= new
   end
 
   Mount = Puppet::FileServing::Mount

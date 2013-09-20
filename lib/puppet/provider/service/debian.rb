@@ -18,10 +18,6 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
 
   defaultfor :operatingsystem => [:debian, :ubuntu]
 
-  def self.defpath
-    superclass.defpath
-  end
-
   # Remove the symlinks
   def disable
     if `dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?`.to_i == 0
@@ -58,7 +54,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
   end
 
   def get_start_link_count
-    Dir.glob("/etc/rc*.d/S*#{@resource[:name]}").length
+    Dir.glob("/etc/rc*.d/S??#{@resource[:name]}").length
   end
 
   def enable

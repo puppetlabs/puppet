@@ -1,11 +1,12 @@
 # Manage systemd services using /bin/systemctl
 
 Puppet::Type.type(:service).provide :systemd, :parent => :base do
-  desc "Manages `systemd` services using `/bin/systemctl`."
+  desc "Manages `systemd` services using `systemctl`."
 
-  commands :systemctl => "/bin/systemctl"
+  commands :systemctl => "systemctl"
 
   #defaultfor :osfamily => [:redhat, :suse]
+  defaultfor :osfamily => [:archlinux]
 
   def self.instances
     i = []
@@ -36,7 +37,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def status
     begin
-      output = systemctl("is-active", @resource[:name])
+      systemctl("is-active", @resource[:name])
     rescue Puppet::ExecutionFailure
       return :stopped
     end

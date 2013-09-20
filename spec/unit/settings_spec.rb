@@ -85,14 +85,6 @@ describe Puppet::Settings do
       @settings.define_settings(:main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS)
     end
 
-    it "should fail if someone attempts to initialize app defaults more than once" do
-      @settings.initialize_app_defaults(default_values)
-
-      expect {
-        @settings.initialize_app_defaults(default_values)
-      }.to raise_error(Puppet::DevError)
-    end
-
     it "should fail if the app defaults hash is missing any required values" do
       incomplete_default_values = default_values.reject { |key, _| key == :confdir }
       expect {
@@ -274,7 +266,7 @@ describe Puppet::Settings do
       @settings[:myval] = "12"
       @settings.set_by_cli?(:myval).should be_false
     end
-    
+
     describe "setbycli" do
       it "should generate a deprecation warning" do
         Puppet.expects(:deprecation_warning)
@@ -297,9 +289,15 @@ describe Puppet::Settings do
       @settings.define_settings :mysection,
           :one => { :default => "whah", :desc => "yay" },
           :two => { :default => "$one yay", :desc => "bah" }
+      @settings.expects(:unsafe_flush_cache)
       @settings[:two].should == "whah yay"
       @settings.handlearg("--one", "else")
       @settings[:two].should == "else yay"
+    end
+
+    it "should clear the cache when the preferred_run_mode is changed" do
+      @settings.expects(:flush_cache)
+      @settings.preferred_run_mode = :master
     end
 
     it "should not clear other values when setting getopt-specific values" do
@@ -485,7 +483,8 @@ describe Puppet::Settings do
           :one    => { :default => "ONE", :desc => "a" },
           :two    => { :default => "$one TWO", :desc => "b"},
           :three  => { :default => "$one $two THREE", :desc => "c"},
-          :four   => { :default => "$two $three FOUR", :desc => "d"}
+          :four   => { :default => "$two $three FOUR", :desc => "d"},
+          :five   => { :default => nil, :desc => "e" }
       FileTest.stubs(:exist?).returns true
     end
 
@@ -541,6 +540,20 @@ describe Puppet::Settings do
       @settings[:two].should == "ONE TWO"
       @settings[:one] = "one"
       @settings[:two].should == "one TWO"
+    end
+
+    describe "caching values that evaluate to false" do
+      it "caches nil" do
+        @settings.expects(:convert).once.returns nil
+        @settings[:five].should be_nil
+        @settings[:five].should be_nil
+      end
+
+      it "caches false" do
+        @settings.expects(:convert).once.returns false
+        @settings[:five].should == false
+        @settings[:five].should == false
+      end
     end
 
     it "should not cache values such that information from one environment is returned for another environment" do
@@ -676,6 +689,7 @@ describe Puppet::Settings do
     before do
       @settings = Puppet::Settings.new
       @settings.stubs(:service_user_available?).returns true
+      @settings.stubs(:service_group_available?).returns true
       @file = make_absolute("/some/file")
       @userconfig = make_absolute("/test/userconfigfile")
       @settings.define_settings :section, :user => { :default => "suser", :desc => "doc" }, :group => { :default => "sgroup", :desc => "doc" }
@@ -783,6 +797,33 @@ describe Puppet::Settings do
       @settings.send(:parse_config_files)
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser"}
+    end
+
+    it "should support loading metadata (owner, group, or mode) from a run_mode section in the configuration file" do
+      default_values = {}
+      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
+        default_values[key] = 'default value'
+      end
+      @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
+      @settings.define_settings :master, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
+
+      otherfile = make_absolute("/other/file")
+      text = "[master]
+      myfile = #{otherfile} {mode = 664}
+      "
+      @settings.expects(:read_file).returns(text)
+
+      # will start initialization as user
+      @settings.preferred_run_mode.should == :user
+      @settings.send(:parse_config_files)
+
+      # change app run_mode to master
+      @settings.initialize_app_defaults(default_values.merge(:run_mode => :master))
+      @settings.preferred_run_mode.should == :master
+
+      # initializing the app should have reloaded the metadata based on run_mode
+      @settings[:myfile].should == otherfile
+      @settings.metadata(:myfile).should == {:mode => "664"}
     end
 
     it "should call hooks associated with values set in the configuration file" do
@@ -964,65 +1005,53 @@ describe Puppet::Settings do
       @settings.stubs(:user_config_file).returns(@userconfig)
     end
 
-    it "should use a LoadedFile instance to determine if the file has changed" do
-      file = mock 'file'
-      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
-
-      file.expects(:changed?)
-
-      @settings.stubs(:parse)
-      @settings.reparse_config_files
-    end
-
-    it "should not create the LoadedFile instance and should not parse if the file does not exist" do
+    it "does not create the WatchedFile instance and should not parse if the file does not exist" do
       FileTest.expects(:exist?).with(@file).returns false
-      Puppet::Util::LoadedFile.expects(:new).never
+      Puppet::Util::WatchedFile.expects(:new).never
 
       @settings.expects(:parse_config_files).never
 
       @settings.reparse_config_files
     end
 
-    it "should not reparse if the file has not changed" do
-      file = mock 'file'
-      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
+    context "and watched file exists" do
+      before do
+        @watched_file = Puppet::Util::WatchedFile.new(@file)
+        Puppet::Util::WatchedFile.expects(:new).with(@file).returns @watched_file
+      end
 
-      file.expects(:changed?).returns false
+      it "uses a WatchedFile instance to determine if the file has changed" do
+        @watched_file.expects(:changed?)
 
-      @settings.expects(:parse_config_files).never
+        @settings.reparse_config_files
+      end
 
-      @settings.reparse_config_files
-    end
+      it "does not reparse if the file has not changed" do
+        @watched_file.expects(:changed?).returns false
 
-    it "should reparse if the file has changed" do
-      file = stub 'file', :file => @file
-      Puppet::Util::LoadedFile.expects(:new).with(@file).returns file
+        @settings.expects(:parse_config_files).never
 
-      file.expects(:changed?).returns true
+        @settings.reparse_config_files
+      end
 
-      @settings.expects(:parse_config_files)
+      it "reparses if the file has changed" do
+        @watched_file.expects(:changed?).returns true
 
-      @settings.reparse_config_files
-    end
+        @settings.expects(:unsafe_parse).with(@file)
 
-    it "should replace in-memory values with on-file values" do
-      # Init the value
-      text = "[main]\none = disk-init\n"
-      file = mock 'file'
-      file.stubs(:changed?).returns(true)
-      file.stubs(:file).returns(@file)
-      @settings[:one] = "init"
-      @settings.files = [file]
+        @settings.reparse_config_files
+      end
 
-      # Now replace the value
-      text = "[main]\none = disk-replace\n"
+      it "replaces in-memory values with on-file values" do
+        @watched_file.stubs(:changed?).returns(true)
+        @settings[:one] = "init"
 
-      # This is kinda ridiculous - the reason it parses twice is that
-      # it goes to parse again when we ask for the value, because the
-      # mock always says it should get reparsed.
-      @settings.stubs(:read_file).returns(text)
-      @settings.reparse_config_files
-      @settings[:one].should == "disk-replace"
+        # Now replace the value
+        text = "[main]\none = disk-replace\n"
+        @settings.stubs(:read_file).returns(text)
+        @settings.reparse_config_files
+        @settings[:one].should == "disk-replace"
+      end
     end
 
     it "should retain parameters set by cli when configuration files are reparsed" do
@@ -1245,6 +1274,7 @@ describe Puppet::Settings do
     before do
       @settings = Puppet::Settings.new
       @settings.stubs(:service_user_available?).returns true
+      @settings.stubs(:service_group_available?).returns true
       @settings.define_settings :main, :noop => { :default => false, :desc => "", :type => :boolean }
       @settings.define_settings :main,
           :maindir => { :type => :directory, :default => make_absolute("/maindir"), :desc => "a" },
@@ -1452,32 +1482,88 @@ describe Puppet::Settings do
   end
 
   describe "when determining if the service user is available" do
+    let(:settings) do
+      settings = Puppet::Settings.new
+      settings.define_settings :main, :user => { :default => nil, :desc => "doc" }
+      settings
+    end
+
+    def a_user_type_for(username)
+      user = mock 'user'
+      Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == username }.returns user
+      user
+    end
+
     it "should return false if there is no user setting" do
-      Puppet::Settings.new.should_not be_service_user_available
+      settings.should_not be_service_user_available
     end
 
     it "should return false if the user provider says the user is missing" do
-      settings = Puppet::Settings.new
-      settings.define_settings :main, :user => { :default => "foo", :desc => "doc" }
+      settings[:user] = "foo"
 
-      user = mock 'user'
-      user.expects(:exists?).returns false
-
-      Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == "foo" }.returns user
+      a_user_type_for("foo").expects(:exists?).returns false
 
       settings.should_not be_service_user_available
     end
 
     it "should return true if the user provider says the user is present" do
-      settings = Puppet::Settings.new
-      settings.define_settings :main, :user => { :default => "foo", :desc => "doc" }
+      settings[:user] = "foo"
 
-      user = mock 'user'
-      user.expects(:exists?).returns true
-
-      Puppet::Type.type(:user).expects(:new).with { |args| args[:name] == "foo" }.returns user
+      a_user_type_for("foo").expects(:exists?).returns true
 
       settings.should be_service_user_available
+    end
+
+    it "caches the result of determining if the user is present" do
+      settings[:user] = "foo"
+
+      a_user_type_for("foo").expects(:exists?).returns true
+      settings.should be_service_user_available
+
+      settings.should be_service_user_available
+    end
+  end
+
+  describe "when determining if the service group is available" do
+    let(:settings) do
+      settings = Puppet::Settings.new
+      settings.define_settings :main, :group => { :default => nil, :desc => "doc" }
+      settings
+    end
+
+    def a_group_type_for(groupname)
+      group = mock 'group'
+      Puppet::Type.type(:group).expects(:new).with { |args| args[:name] == groupname }.returns group
+      group
+    end
+
+    it "should return false if there is no group setting" do
+      settings.should_not be_service_group_available
+    end
+
+    it "should return false if the group provider says the group is missing" do
+      settings[:group] = "foo"
+
+      a_group_type_for("foo").expects(:exists?).returns false
+
+      settings.should_not be_service_group_available
+    end
+
+    it "should return true if the group provider says the group is present" do
+      settings[:group] = "foo"
+
+      a_group_type_for("foo").expects(:exists?).returns true
+
+      settings.should be_service_group_available
+    end
+
+    it "caches the result of determining if the group is present" do
+      settings[:group] = "foo"
+
+      a_group_type_for("foo").expects(:exists?).returns true
+      settings.should be_service_group_available
+
+      settings.should be_service_group_available
     end
   end
 
@@ -1528,6 +1614,22 @@ describe Puppet::Settings do
 
     it "should transform boolean option to no- form" do
       Puppet::Settings.clean_opt("--[no-]option", false).should == ["--no-option", false]
+    end
+
+    it "should set preferred run mode from --run_mode <foo> string without error" do
+      args = ["--run_mode", "master"]
+      settings.expects(:handlearg).with("--run_mode", "master").never
+      expect { settings.send(:parse_global_options, args) } .to_not raise_error
+      Puppet.settings.preferred_run_mode.should == :master
+      args.empty?.should == true
+    end
+
+    it "should set preferred run mode from --run_mode=<foo> string without error" do
+      args = ["--run_mode=master"]
+      settings.expects(:handlearg).with("--run_mode", "master").never
+      expect { settings.send(:parse_global_options, args) } .to_not raise_error
+      Puppet.settings.preferred_run_mode.should == :master
+      args.empty?.should == true
     end
   end
 

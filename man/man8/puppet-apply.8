@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-APPLY" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-APPLY" "8" "January 2013" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-apply\fR \- Apply Puppet manifests locally
@@ -10,7 +10,7 @@
 Applies a standalone Puppet manifest to the local system\.
 .
 .SH "USAGE"
-puppet apply [\-h|\-\-help] [\-V|\-\-version] [\-d|\-\-debug] [\-v|\-\-verbose] [\-e|\-\-execute] [\-\-detailed\-exitcodes] [\-l|\-\-logdest \fIfile\fR] [\-\-noop] [\-\-apply \fIcatalog\fR] [\-\-catalog \fIcatalog\fR] \fIfile\fR
+puppet apply [\-h|\-\-help] [\-V|\-\-version] [\-d|\-\-debug] [\-v|\-\-verbose] [\-e|\-\-execute] [\-\-detailed\-exitcodes] [\-l|\-\-logdest \fIfile\fR] [\-\-noop] [\-\-catalog \fIcatalog\fR] \fIfile\fR
 .
 .SH "DESCRIPTION"
 This is the standalone puppet execution tool; use it to apply individual manifests\.
@@ -58,10 +58,6 @@ Execute a specific piece of Puppet code
 .TP
 \-\-verbose
 Print extra information\.
-.
-.TP
-\-\-apply
-Apply a JSON catalog (such as one generated with \'puppet master \-\-compile\')\. You can either specify a JSON file or pipe in JSON from standard input\. Deprecated, please use \-\-catalog instead\.
 .
 .TP
 \-\-catalog

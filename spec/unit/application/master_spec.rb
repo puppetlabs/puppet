@@ -47,21 +47,6 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       @master.preinit
     end
-
-    it "should create a Puppet Daemon" do
-      Puppet::Daemon.expects(:new).returns(@daemon)
-
-      @master.preinit
-    end
-
-    it "should give ARGV to the Daemon" do
-      argv = stub 'argv'
-      ARGV.stubs(:dup).returns(argv)
-      @daemon.expects(:argv=).with(argv)
-
-      @master.preinit
-    end
-
   end
 
   [:debug,:verbose].each do |option|
@@ -241,25 +226,25 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       before do
         Puppet[:manifest] = "site.pp"
         Puppet.stubs(:err)
-        @master.stubs(:jj)
+        @master.stubs(:puts)
       end
 
       it "should compile a catalog for the specified node" do
         @master.options[:node] = "foo"
         Puppet::Resource::Catalog.indirection.expects(:find).with("foo").returns Puppet::Resource::Catalog.new
-        $stdout.stubs(:puts)
 
         expect { @master.compile }.to exit_with 0
       end
 
-      it "should convert the catalog to a pure-resource catalog and use 'jj' to pretty-print the catalog" do
+      it "should convert the catalog to a pure-resource catalog and use 'PSON::pretty_generate' to pretty-print the catalog" do
         catalog = Puppet::Resource::Catalog.new
+        PSON.stubs(:pretty_generate)
         Puppet::Resource::Catalog.indirection.expects(:find).returns catalog
 
         catalog.expects(:to_resource).returns("rescat")
 
         @master.options[:node] = "foo"
-        @master.expects(:jj).with("rescat")
+        PSON.expects(:pretty_generate).with('rescat', :allow_nan => true, :max_nesting => false)
 
         expect { @master.compile }.to exit_with 0
       end

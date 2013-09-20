@@ -1,5 +1,6 @@
 require 'etc'
 require 'facter'
+require 'puppet/parameter/boolean'
 require 'puppet/property/list'
 require 'puppet/property/ordered_list'
 require 'puppet/property/keyvalue'
@@ -33,6 +34,10 @@ module Puppet
       "The provider can set age requirements and restrictions for
       passwords."
 
+    feature :manages_password_salt,
+      "The provider can set a password salt. This is for providers that
+       implement PBKDF2 passwords with salt properties."
+
     feature :manages_solaris_rbac,
       "The provider can manage roles and normal users"
 
@@ -44,6 +49,10 @@ module Puppet
 
     feature :manages_aix_lam,
       "The provider can manage AIX Loadable Authentication Module (LAM) system."
+
+    feature :libuser,
+      "Allows local users to be managed on systems that also use some other
+       remote NSS method of managing accounts."
 
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
@@ -275,46 +284,46 @@ module Puppet
       defaultto :minimum
     end
 
-    newparam(:system, :boolean => true) do
+    newparam(:system, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether the user is a system user, according to the OS's criteria;
       on most platforms, a UID less than or equal to 500 indicates a system
       user. Defaults to `false`."
 
-      newvalues(:true, :false)
-
       defaultto false
     end
 
-    newparam(:allowdupe, :boolean => true) do
+    newparam(:allowdupe, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether to allow duplicate UIDs. Defaults to `false`."
 
-      newvalues(:true, :false)
-
       defaultto false
     end
 
-    newparam(:managehome, :boolean => true) do
+    newparam(:managehome, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether to manage the home directory when managing the user.
-        Defaults to `false`."
-
-      newvalues(:true, :false)
+        This will create the home directory when `ensure => present`, and
+        delete the home directory when `ensure => absent`. Defaults to `false`."
 
       defaultto false
 
       validate do |val|
-        if val.to_s == "true"
-          raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" unless provider.class.manages_homedir?
+        if munge(val)
+          raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" if provider and not provider.class.manages_homedir?
         end
       end
     end
 
     newproperty(:expiry, :required_features => :manages_expiry) do
       desc "The expiry date for this user. Must be provided in
-           a zero-padded YYYY-MM-DD format --- e.g. 2010-02-19."
+           a zero-padded YYYY-MM-DD format --- e.g. 2010-02-19.
+           If you want to make sure the user account does never
+           expire, you can pass the special value `absent`."
+
+      newvalues :absent
+      newvalues /^\d{4}-\d{2}-\d{2}$/
 
       validate do |value|
-        if value !~ /^\d{4}-\d{2}-\d{2}$/
-          raise ArgumentError, "Expiry dates must be YYYY-MM-DD"
+        if value.intern != :absent and value !~ /^\d{4}-\d{2}-\d{2}$/
+          raise ArgumentError, "Expiry dates must be YYYY-MM-DD or the string \"absent\""
         end
       end
     end
@@ -350,7 +359,14 @@ module Puppet
       autos
     end
 
-    # Provide an external hook.  Yay breaking out of APIs.
+    # This method has been exposed for puppet to manage users and groups of
+    # files in its settings and should not be considered available outside of
+    # puppet.
+    #
+    # (see Puppet::Settings#service_user_available?)
+    #
+    # @return [Boolean] if the user exists on the system
+    # @api private
     def exists?
       provider.exists?
     end
@@ -519,6 +535,31 @@ module Puppet
       defaultto :minimum
     end
 
+    newproperty(:salt, :required_features => :manages_password_salt) do
+      desc "This is the 32 byte salt used to generate the PBKDF2 password used in
+            OS X"
+    end
 
+    newproperty(:iterations, :required_features => :manages_password_salt) do
+      desc "This is the number of iterations of a chained computation of the
+            password hash (http://en.wikipedia.org/wiki/PBKDF2).  This parameter
+            is used in OS X"
+
+      munge do |value|
+        if value.is_a?(String) and value =~/^[-0-9]+$/
+          Integer(value)
+        else
+          value
+        end
+      end
+    end
+
+    newparam(:forcelocal, :boolean => true,
+            :required_features => :libuser,
+            :parent => Puppet::Parameter::Boolean) do
+      desc "Forces the mangement of local accounts when accounts are also
+            being managed by some other NSS"
+      defaultto false
+    end
   end
 end

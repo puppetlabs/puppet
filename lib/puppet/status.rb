@@ -14,8 +14,12 @@ class Puppet::Status
     @status.to_pson
   end
 
-  def self.from_pson( pson )
-    self.new( pson )
+  def self.from_pson(pson)
+    if pson.include?('status')
+      self.new(pson['status'])
+    else
+      self.new(pson)
+    end
   end
 
   def name
@@ -24,5 +28,13 @@ class Puppet::Status
 
   def name=(name)
     # NOOP
+  end
+
+  def version
+    @status['version']
+  end
+
+  def version=(version)
+    @status['version'] = version
   end
 end

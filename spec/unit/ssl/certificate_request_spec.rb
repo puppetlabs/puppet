@@ -31,7 +31,9 @@ describe Puppet::SSL::CertificateRequest do
 
   describe "when converting from a string" do
     it "should create a CSR instance with its name set to the CSR subject and its content set to the extracted CSR" do
-      csr = stub 'csr', :subject => "/CN=Foo.madstop.com", :is_a? => true
+      csr = stub 'csr',
+        :subject => OpenSSL::X509::Name.parse("/CN=Foo.madstop.com"),
+        :is_a? => true
       OpenSSL::X509::Request.expects(:new).with("my csr").returns(csr)
 
       mycsr = stub 'sslcsr'
@@ -211,6 +213,24 @@ describe Puppet::SSL::CertificateRequest do
       generated.should be_a(OpenSSL::X509::Request)
       generated.should be(request.content)
     end
+
+    it "should use SHA1 to sign the csr when SHA256 isn't available" do
+      csr = OpenSSL::X509::Request.new
+      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
+      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(true)
+      signer = Puppet::SSL::CertificateSigner.new
+      signer.sign(csr, key.content)
+      csr.verify(key.content).should be_true
+    end
+
+    it "should raise an error if neither SHA256 nor SHA1 are available" do
+      csr = OpenSSL::X509::Request.new
+      OpenSSL::Digest.expects(:const_defined?).with("SHA256").returns(false)
+      OpenSSL::Digest.expects(:const_defined?).with("SHA1").returns(false)
+      expect {
+        signer = Puppet::SSL::CertificateSigner.new
+      }.to raise_error(Puppet::Error)
+    end
   end
 
   describe "when a CSR is saved" do
@@ -221,6 +241,7 @@ describe Puppet::SSL::CertificateRequest do
 
         csr = Puppet::SSL::CertificateRequest.new("me")
         terminus = mock 'terminus'
+        terminus.stubs(:validate)
         Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
         terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
 
@@ -234,6 +255,7 @@ describe Puppet::SSL::CertificateRequest do
 
         csr = Puppet::SSL::CertificateRequest.new("me")
         terminus = mock 'terminus'
+        terminus.stubs(:validate)
         Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
         terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
 

@@ -9,15 +9,14 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
   # The attributes that Puppet class information is stored in.
   def class_attributes
-    # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    x = Puppet[:ldapclassattrs].split(/\s*,\s*/)
+    Puppet[:ldapclassattrs].split(/\s*,\s*/)
   end
 
   # Separate this out so it's relatively atomic.  It's tempting to call
   # process instead of name2hash() here, but it ends up being
   # difficult to test because all exceptions get caught by ldapsearch.
   # LAK:NOTE Unfortunately, the ldap support is too stupid to throw anything
-  # but LDAP::ResultError, even on bad connections, so we are rough handed
+  # but LDAP::ResultError, even on bad connections, so we are rough-handed
   # with our error handling.
   def name2hash(name)
     info = nil
@@ -198,7 +197,6 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   end
 
   def merge_parent(info)
-    parent_info = nil
     parent = info[:parent]
 
     # Preload the parent array with the node name.

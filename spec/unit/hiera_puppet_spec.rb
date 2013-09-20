@@ -35,7 +35,7 @@ describe 'HieraPuppet' do
   end
 
   describe 'HieraPuppet#hiera_config_file' do
-    it "should return nil when we cannot derive the hiera config file form Puppet.settings" do
+    it "should return nil when we cannot derive the hiera config file from Puppet.settings" do
       begin
         Puppet.settings[:hiera_config] = nil
       rescue ArgumentError => detail

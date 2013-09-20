@@ -25,7 +25,7 @@ Puppet::Type.type(:package).provide :pip,
   # that's managed by `pip` or an empty array if `pip` is not available.
   def self.instances
     packages = []
-    pip_cmd = which('pip') or return []
+    pip_cmd = which(cmd) or return []
     execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
@@ -35,11 +35,20 @@ Puppet::Type.type(:package).provide :pip,
     packages
   end
 
+  def self.cmd
+    case Facter.value(:osfamily)
+      when "RedHat"
+        "pip-python"
+      else
+        "pip"
+    end
+  end
+
   # Return structured information about a particular package or `nil` if
   # it is not installed or `pip` itself is not available.
   def query
     self.class.instances.each do |provider_pip|
-      return provider_pip.properties if @resource[:name] == provider_pip.name
+      return provider_pip.properties if @resource[:name].downcase == provider_pip.name.downcase
     end
     return nil
   end
@@ -64,7 +73,6 @@ Puppet::Type.type(:package).provide :pip,
   def install
     args = %w{install -q}
     if @resource[:source]
-      args << "-e"
       if String === @resource[:ensure]
         args << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{
           @resource[:name]}"
@@ -101,7 +109,7 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if pathname = which('pip')
+    if pathname = which(self.class.cmd)
       self.class.commands :pip => pathname
       pip *args
     else

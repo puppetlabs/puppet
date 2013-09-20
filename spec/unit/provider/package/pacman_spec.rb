@@ -5,7 +5,7 @@ require 'stringio'
 provider = Puppet::Type.type(:package).provider(:pacman)
 
 describe provider do
-  let(:no_extra_options) { { :custom_environment => {} } }
+  let(:no_extra_options) { { :failonfail => true, :combine => true, :custom_environment => {} } }
   let(:executor) { Puppet::Util::Execution }
   let(:resolver) { Puppet::Util }
 

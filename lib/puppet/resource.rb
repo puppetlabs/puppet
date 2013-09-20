@@ -5,6 +5,8 @@ require 'puppet/parameter'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
+#
+# @api public
 class Puppet::Resource
   # This stub class is only needed for serialization compatibility with 0.25.x.
   # Specifically, it exists to provide a compatibility API when using YAML
@@ -28,8 +30,8 @@ class Puppet::Resource
   ATTRIBUTES = [:file, :line, :exported]
 
   def self.from_pson(pson)
-    raise ArgumentError, "No resource type provided in pson data" unless type = pson['type']
-    raise ArgumentError, "No resource title provided in pson data" unless title = pson['title']
+    raise ArgumentError, "No resource type provided in serialized data" unless type = pson['type']
+    raise ArgumentError, "No resource title provided in serialized data" unless title = pson['title']
 
     resource = new(type, title)
 
@@ -46,8 +48,6 @@ class Puppet::Resource
         resource.send(a.to_s + "=", value)
       end
     end
-
-    resource.exported ||= false
 
     resource
   end
@@ -313,20 +313,30 @@ class Puppet::Resource
   #
   # Example:
   #
-  #   class foo($port){ ... }
+  #   class foo($port=0){ ... }
   #
   # We make a request to the backend for the key 'foo::port' not 'foo'
   #
   def lookup_external_default_for(param, scope)
-    if resource_type.type == :hostclass
+    # Only lookup parameters for host classes
+    return nil unless resource_type.type == :hostclass
+
+    name = "#{resource_type.name}::#{param}"
+    # Lookup with injector (optionally), and if no value bound, lookup with "classic hiera"
+    result = nil
+    if scope.compiler.is_binder_active?
+      result = scope.compiler.injector.lookup(scope, name)
+    end
+    if result.nil?
       Puppet::DataBinding.indirection.find(
-        "#{resource_type.name}::#{param}",
+        name,
         :environment => scope.environment.to_s,
         :variables => Puppet::DataBinding::Variables.new(scope))
     else
-      nil
+      result
     end
   end
+
   private :lookup_external_default_for
 
   def set_default_parameters(scope)
@@ -398,7 +408,7 @@ class Puppet::Resource
   # Produce a canonical method name.
   def parameter_name(param)
     param = param.to_s.downcase.to_sym
-    if param == :name and n = namevar
+    if param == :name and namevar
       param = namevar
     end
     param

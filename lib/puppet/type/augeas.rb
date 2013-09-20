@@ -116,6 +116,10 @@ Puppet::Type.newtype(:augeas) do
     : Sets the node at `PATH` to `NULL`, creating it if needed
 
 
+    `clearm <PATH> <SUB>`
+    : Sets multiple nodes (matching `SUB` relative to `PATH`) to `NULL`
+
+
     `ins <LABEL> (before|after) <PATH>`
     : Inserts an empty node `LABEL` either before or after `PATH`.
 

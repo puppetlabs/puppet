@@ -7,8 +7,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
   let (:joblabel) { "com.foo.food" }
   let (:provider) { subject.class }
   let (:launchd_overrides) { '/var/db/launchd.db/com.apple.launchd/overrides.plist' }
-  let(:resource) { Puppet::Type.type(:service).new(:name => joblabel) }
-  subject { Puppet::Type.type(:service).provider(:launchd).new(resource) }
+  let(:resource) { Puppet::Type.type(:service).new(:name => joblabel, :provider => :launchd) }
+  subject { resource.provider }
 
   describe "the type interface" do
     %w{ start stop enabled? enable disable status}.each do |method|
@@ -92,7 +92,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:execute).with([:launchctl, :load, joblabel])
       subject.start
     end
-    it "should execute 'launchctl load' once without writing to the plist if the job is enabled" do  
+    it "should execute 'launchctl load' once without writing to the plist if the job is enabled" do
       subject.expects(:plist_from_label).returns([joblabel, {}])
       subject.expects(:enabled?).returns :true
       subject.expects(:execute).with([:launchctl, :load, joblabel]).once
@@ -118,6 +118,12 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:status).returns(:stopped)
       subject.expects(:execute).with([:launchctl, :load, '-w', joblabel])
       subject.start
+    end
+
+    it "(#16271) Should stop and start the service when a restart is called" do
+      subject.expects(:stop)
+      subject.expects(:start)
+      subject.restart
     end
   end
 
@@ -200,6 +206,32 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       provider.stubs(:read_plist).returns({})
       Plist::Emit.expects(:save_plist).once
       subject.enable
+    end
+  end
+
+  describe "when encountering malformed plists" do
+    let(:plist_without_label) do
+      {
+        'LimitLoadToSessionType' => 'Aqua'
+      }
+    end
+    let(:busted_plist_path) { '/Library/LaunchAgents/org.busted.plist' }
+
+    it "[17624] should warn that the plist in question is being skipped" do
+      provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
+      provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns([busted_plist_path])
+      provider.expects(:read_plist).with(busted_plist_path).returns(plist_without_label)
+      Puppet.expects(:warning).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
+      provider.jobsearch
+    end
+
+    it "[15929] should skip plists that plutil cannot read" do
+      provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout',
+        busted_plist_path).raises(Puppet::ExecutionFailure, 'boom')
+      Puppet.expects(:warning).with("Cannot read file #{busted_plist_path}; " +
+                                    "Puppet is skipping it. \n" +
+                                    "Details: boom")
+      provider.read_plist(busted_plist_path)
     end
   end
 end

@@ -41,6 +41,20 @@ describe Puppet::Network::HTTP::WEBrickREST do
       @handler.service(@request, @response).should == "stuff"
     end
 
+    describe "#headers" do
+      let(:fake_request) { {"Foo" => "bar", "BAZ" => "bam" } }
+
+      it "should iterate over the request object using #each" do
+        fake_request.expects(:each)
+        @handler.headers(fake_request)
+      end
+
+      it "should return a hash with downcased header names" do
+        result = @handler.headers(fake_request)
+        result.should == fake_request.inject({}) { |m,(k,v)| m[k.downcase] = v; m }
+      end
+    end
+
     describe "when using the Handler interface" do
       it "should use the 'accept' request parameter as the Accept header" do
         @request.expects(:[]).with("accept").returns "foobar"
@@ -111,49 +125,100 @@ describe Puppet::Network::HTTP::WEBrickREST do
     end
 
     describe "and determining the request parameters" do
-      it "should include the HTTP request parameters, with the keys as symbols" do
-        @request.stubs(:query).returns("foo" => "baz", "bar" => "xyzzy")
+      def query_of(options)
+        request = Puppet::Indirector::Request.new(:myind, :find, "my key", nil, options)
+        WEBrick::HTTPUtils.parse_query(request.query_string.sub(/^\?/, ''))
+      end
+
+      def a_request_querying(query_data)
+        @request.expects(:query).returns(query_of(query_data))
+        @request
+      end
+
+      it "has no parameters when there is no query string" do
+        only_server_side_information = [:authenticated, :ip, :node]
+        @request.stubs(:query).returns(nil)
+
         result = @handler.params(@request)
+
+        result.keys.sort.should == only_server_side_information
+      end
+
+      it "should include the HTTP request parameters, with the keys as symbols" do
+        request = a_request_querying("foo" => "baz", "bar" => "xyzzy")
+        result = @handler.params(request)
+
         result[:foo].should == "baz"
         result[:bar].should == "xyzzy"
       end
 
-      it "should CGI-decode the HTTP parameters" do
-        encoding = CGI.escape("foo bar")
-        @request.expects(:query).returns('foo' => encoding)
-        result = @handler.params(@request)
-        result[:foo].should == "foo bar"
+      it "should handle parameters with no value" do
+        request = a_request_querying('foo' => "")
+
+        result = @handler.params(request)
+
+        result[:foo].should == ""
       end
 
       it "should convert the string 'true' to the boolean" do
-        @request.expects(:query).returns('foo' => "true")
-        result = @handler.params(@request)
-        result[:foo].should be_true
+        request = a_request_querying('foo' => "true")
+
+        result = @handler.params(request)
+
+        result[:foo].should == true
       end
 
       it "should convert the string 'false' to the boolean" do
-        @request.expects(:query).returns('foo' => "false")
-        result = @handler.params(@request)
-        result[:foo].should be_false
+        request = a_request_querying('foo' => "false")
+
+        result = @handler.params(request)
+
+        result[:foo].should == false
       end
 
-      it "should YAML-load and CGI-decode values that are YAML-encoded" do
-        escaping = CGI.escape(YAML.dump(%w{one two}))
-        @request.expects(:query).returns('foo' => escaping)
-        result = @handler.params(@request)
+      it "should reconstruct arrays" do
+        request = a_request_querying('foo' => ["a", "b", "c"])
+
+        result = @handler.params(request)
+
+        result[:foo].should == ["a", "b", "c"]
+      end
+
+      it "should convert values inside arrays into primitive types" do
+        request = a_request_querying('foo' => ["true", "false", "1", "1.2"])
+
+        result = @handler.params(request)
+
+        result[:foo].should == [true, false, 1, 1.2]
+      end
+
+      it "should YAML-load values that are YAML-encoded" do
+        request = a_request_querying('foo' => YAML.dump(%w{one two}))
+
+        result = @handler.params(request)
+
+        result[:foo].should == %w{one two}
+      end
+
+      it "should YAML-load that are YAML-encoded" do
+        request = a_request_querying('foo' => YAML.dump(%w{one two}))
+
+        result = @handler.params(request)
+
         result[:foo].should == %w{one two}
       end
 
       it "should not allow clients to set the node via the request parameters" do
-        @request.stubs(:query).returns("node" => "foo")
+        request = a_request_querying("node" => "foo")
         @handler.stubs(:resolve_node)
 
-        @handler.params(@request)[:node].should be_nil
+        @handler.params(request)[:node].should be_nil
       end
 
       it "should not allow clients to set the IP via the request parameters" do
-        @request.stubs(:query).returns("ip" => "foo")
-        @handler.params(@request)[:ip].should_not == "foo"
+        request = a_request_querying("ip" => "foo")
+
+        @handler.params(request)[:ip].should_not == "foo"
       end
 
       it "should pass the client's ip address to model find" do
@@ -173,8 +238,10 @@ describe Puppet::Network::HTTP::WEBrickREST do
       end
 
       it "should pass the client's certificate name to model method if a certificate is present" do
-        cert = stub 'cert', :subject => [%w{CN host.domain.com}]
+        subj = stub 'subj'
+        cert = stub 'cert', :subject => subj
         @request.stubs(:client_cert).returns cert
+        Puppet::Util::SSL.expects(:cn_from_subject).with(subj).returns 'host.domain.com'
         @handler.params(@request)[:node].should == "host.domain.com"
       end
 
@@ -185,6 +252,17 @@ describe Puppet::Network::HTTP::WEBrickREST do
 
         @handler.params(@request)[:node].should == :resolved_node
       end
-    end
+
+      it "should resolve the node name with an ip address look-up if CN parsing fails" do
+        subj = stub 'subj'
+        cert = stub 'cert', :subject => subj
+        @request.stubs(:client_cert).returns cert
+        Puppet::Util::SSL.expects(:cn_from_subject).with(subj).returns nil
+
+        @handler.expects(:resolve_node).returns(:resolved_node)
+
+        @handler.params(@request)[:node].should == :resolved_node
+      end
+   end
   end
 end

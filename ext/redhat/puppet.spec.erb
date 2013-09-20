@@ -37,9 +37,8 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires:  facter < 1:2.0
 # Puppet 3.x drops ruby 1.8.5 support and adds ruby 1.9 support
 BuildRequires:  ruby >= 1.8.7
-
 BuildArch:      noarch
-Requires:       ruby(abi) >= 1.8
+Requires:       ruby >= 1.8
 Requires:       ruby-shadow
 
 # Pull in ruby selinux bindings where available
@@ -56,6 +55,7 @@ Requires:       facter >= 1.6.11
 # Ruby 1.8.7 available for el5 at: yum.puppetlabs.com/el/5/devel/$ARCH
 Requires:       ruby >= 1.8.7
 Requires:       hiera >= 1.0.0
+Requires:       ruby-rgen >= 0.6.5
 Obsoletes:      hiera-puppet < 1.0.0
 Provides:       hiera-puppet >= 1.0.0
 %{!?_without_augeas:Requires: ruby-augeas}
@@ -66,6 +66,11 @@ Requires:       shadow-utils
 %if 0%{?_with_systemd}
 # Required for %%post, %%preun, %%postun
 Requires:       systemd
+%if 0%{?fedora} >= 18
+BuildRequires:  systemd
+%else
+BuildRequires:  systemd-units
+%endif
 %else
 # Required for %%post and %%preun
 Requires:       chkconfig
@@ -93,26 +98,14 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q -n %{name}-%{realversion}
-patch -s -p1 < ext/redhat/rundir-perms.patch
 
 
 %build
-# Fix some rpmlint complaints
-for f in mac_dscl.pp mac_dscl_revert.pp \
-         mac_pkgdmg.pp ; do
-  sed -i -e'1d' examples/$f
-  chmod a-x examples/$f
-done
 for f in external/nagios.rb relationship.rb; do
   sed -i -e '1d' lib/puppet/$f
 done
-#chmod +x ext/puppetstoredconfigclean.rb
 
-find examples/ -type f -empty | xargs rm
-find examples/ -type f | xargs chmod a-x
-
-# puppet-queue.conf is more of an example, used for stompserver
-mv conf/puppet-queue.conf examples/etc/puppet/
+find examples/ -type f | xargs --no-run-if-empty chmod a-x
 
 %install
 rm -rf %{buildroot}
@@ -179,12 +172,22 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 # Create puppet modules directory for puppet module tool
 mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 
+
+# Install a NetworkManager dispatcher script to pickup changes to
+# # /etc/resolv.conf and such (https://bugzilla.redhat.com/532085).
+mkdir -p %{buildroot}%{_sysconfdir}/NetworkManager/dispatcher.d
+cp -pr ext/puppet-nm-dispatcher \
+  %{buildroot}%{_sysconfdir}/NetworkManager/dispatcher.d/98-%{name}
+
 %files
 %defattr(-, root, root, 0755)
 %doc LICENSE README.md examples
 %{_bindir}/puppet
 %{_bindir}/extlookup2hiera
 %{puppet_libdir}/*
+%dir %{_sysconfdir}/NetworkManager
+%dir %{_sysconfdir}/NetworkManager/dispatcher.d
+%{_sysconfdir}/NetworkManager/dispatcher.d/98-puppet
 %if 0%{?_with_systemd}
 %{_unitdir}/puppetagent.service
 %else
@@ -203,11 +206,7 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %{_datadir}/emacs
 %{_datadir}/vim
 %{_datadir}/%{name}
-# These need to be owned by puppet so the server can
-# write to them
-%attr(-, puppet, puppet) %{_localstatedir}/run/puppet
-%attr(-, puppet, puppet) %{_localstatedir}/log/puppet
-%attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
+# man pages
 %{_mandir}/man5/puppet.conf.5.gz
 %{_mandir}/man8/puppet.8.gz
 %{_mandir}/man8/puppet-agent.8.gz
@@ -243,6 +242,15 @@ mkdir -p %{buildroot}%{_sysconfdir}/%{name}/modules
 %{_mandir}/man8/puppet-resource_type.8.gz
 %{_mandir}/man8/puppet-secret_agent.8.gz
 %{_mandir}/man8/puppet-status.8.gz
+%{_mandir}/man8/extlookup2hiera.8.gz
+# These need to be owned by puppet so the server can
+# write to them. The separate %defattr's are required
+# to work around RH Bugzilla 681540
+%defattr(-, puppet, puppet, 0755)
+%{_localstatedir}/run/puppet
+%defattr(-, puppet, puppet, 0750)
+%{_localstatedir}/log/puppet
+%{_localstatedir}/lib/puppet
 
 %files server
 %defattr(-, root, root, 0755)
@@ -385,6 +393,27 @@ rm -rf %{buildroot}
 %changelog
 * <%= Time.now.strftime("%a %b %d %Y") %> Puppet Labs Release <info@puppetlabs.com> -  <%= @rpmversion %>-<%= @rpmrelease %>
 - Build for <%= @version %>
+
+* Thu Jun 27 2013 Matthaus Owens <matthaus@puppetlabs.com> - 3.2.3-0.1rc0
+- Bump requires on ruby-rgen to 0.6.5
+
+* Fri Apr 12 2013 Matthaus Owens <matthaus@puppetlabs.com> - 3.2.0-0.1rc0
+- Add requires on ruby-rgen for new parser in Puppet 3.2
+
+* Fri Jan 25 2013 Matthaus Owens <matthaus@puppetlabs.com> - 3.1.0-0.1rc1
+- Add extlookup2hiera.8.gz to the files list
+
+* Wed Jan 9  2013 Ryan Uber <ru@ryanuber.com> - 3.1.0-0.1rc1
+- Work-around for RH Bugzilla 681540
+
+* Fri Dec 28 2012 Michael Stahnke <stahnma@puppetlabs.com> -  3.0.2-2
+- Added a script for Network Manager for bug https://bugzilla.redhat.com/532085
+
+* Tue Dec 18 2012 Matthaus Owens <matthaus@puppetlabs.com>
+- Remove for loop on examples/ code which no longer exists. Add --no-run-if-empty to xargs invocations.
+
+* Sat Dec 1 2012 Ryan Uber <ryuber@cisco.com>
+- Fix for logdir perms regression (#17866)
 
 * Wed Aug 29 2012 Moses Mendoza <moses@puppetlabs.com> - 3.0.0-0.1rc5
 - Update for 3.0.0 rc5

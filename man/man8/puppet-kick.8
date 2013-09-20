@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-KICK" "8" "May 2012" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-KICK" "8" "January 2013" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-kick\fR \- Remotely control puppet agent
@@ -101,6 +101,10 @@ Whether the client should ignore schedules when running its configuration\. This
 How parallel to make the connections\. Parallelization is provided by forking for each client to which to connect\. The default is 1, meaning serial execution\.
 .
 .TP
+\-\-puppetport
+Use the specified TCP port to connect to agents\. Defaults to 8139\.
+.
+.TP
 \-\-tag
 Specify a tag for selecting the objects to apply\. Does not work with the \-\-test option\.
 .
@@ -110,7 +114,7 @@ Print the hosts you would connect to but do not actually connect\. This option r
 .
 .TP
 \-\-ping
-Do a ICMP echo against the target host\. Skip hosts that don\'t respond to ping\.
+Do an ICMP echo against the target host\. Skip hosts that don\'t respond to ping\.
 .
 .SH "EXAMPLE"
 .

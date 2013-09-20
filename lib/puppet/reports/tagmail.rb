@@ -6,7 +6,7 @@ require 'time'
 
 Puppet::Reports.register_report(:tagmail) do
   desc "This report sends specific log messages to specific email addresses
-    based on the tags in the log messages.  
+    based on the tags in the log messages.
 
     See the [documentation on tags](http://projects.puppetlabs.com/projects/puppet/wiki/Using_Tags) for more information.
 
@@ -35,7 +35,7 @@ Puppet::Reports.register_report(:tagmail) do
 
     If you are using anti-spam controls such as grey-listing on your mail
     server, you should whitelist the sending email address (controlled by
-    `reportform` configuration option) to ensure your email is not discarded as spam.
+    `reportfrom` configuration option) to ensure your email is not discarded as spam.
     "
 
   # Find all matching messages.
@@ -133,7 +133,7 @@ Puppet::Reports.register_report(:tagmail) do
     pid = Puppet::Util.safe_posix_fork do
       if Puppet[:smtpserver] != "none"
         begin
-          Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
+          Net::SMTP.start(Puppet[:smtpserver], Puppet[:smtpport], Puppet[:smtphelo]) do |smtp|
             reports.each do |emails, messages|
               smtp.open_message_stream(Puppet[:reportfrom], *emails) do |p|
                 p.puts "From: #{Puppet[:reportfrom]}"

@@ -223,6 +223,9 @@ describe Puppet::Util do
       $stdin.stubs(:reopen)
       $stdout.stubs(:reopen)
       $stderr.stubs(:reopen)
+
+      # ensure that we don't really close anything!
+      (0..256).each {|n| IO.stubs(:new) }
     end
 
     it "should close all open file descriptors except stdin/stdout/stderr" do
@@ -270,7 +273,10 @@ describe Puppet::Util do
     it "should warn if the user's HOME is not set but their PATH contains a ~" do
       env_path = %w[~/bin /usr/bin /bin].join(File::PATH_SEPARATOR)
 
-      Puppet::Util.withenv({:HOME => nil, :PATH => env_path}) do
+      env = {:HOME => nil, :PATH => env_path}
+      env.merge!({:HOMEDRIVE => nil, :USERPROFILE => nil}) if Puppet.features.microsoft_windows?
+
+      Puppet::Util.withenv(env) do
         Puppet::Util::Warnings.expects(:warnonce).once
         Puppet::Util.which('foo')
       end
@@ -491,6 +497,22 @@ describe Puppet::Util do
       # ...and check the replacement was complete.
       File.read(target.path).should == "hello, world\n"
     end
+
+    {:string => '664', :number => 0664, :symbolic => "ug=rw-,o=r--" }.each do |label,mode|
+      it "should support #{label} format permissions" do
+        new_target = target.path + "#{mode}.foo"
+        File.should_not be_exist(new_target)
+
+        begin
+          subject.replace_file(new_target, mode) {|fh| fh.puts "this is an interesting content" }
+
+          get_mode(new_target).should == 0664
+        ensure
+          File.unlink(new_target) if File.exists?(new_target)
+        end
+      end
+    end
+
   end
 
   describe "#pretty_backtrace" do
@@ -507,6 +529,48 @@ describe Puppet::Util do
     it "should work with Windows paths" do
       Puppet::Util.pretty_backtrace(["C:/work/puppet/c.rb:12:in `foo'\n"]).
         should == "C:/work/puppet/c.rb:12:in `foo'"
+    end
+  end
+
+  describe "#execute" do
+    let(:command) { 'mycommand' }
+
+    it "should pass arguments through" do
+      arguments = 'myarg'
+      Puppet::Util::Execution.expects(:execute).with(command, arguments)
+
+      subject.execute(command, arguments)
+    end
+
+    it "should not supply default arguments" do
+      Puppet::Util::Execution.expects(:execute).with(command)
+
+      subject.execute(command)
+    end
+  end
+
+  describe "#deterministic_rand" do
+
+    it "should not fiddle with future rand calls" do
+      Puppet::Util.deterministic_rand(123,20)
+      rand_one = rand()
+      Puppet::Util.deterministic_rand(123,20)
+      rand().should_not eql(rand_one)
+    end
+
+    if defined?(Random) == 'constant' && Random.class == Class
+      it "should not fiddle with the global seed" do
+        srand(1234)
+        Puppet::Util.deterministic_rand(123,20)
+        srand().should eql(1234)
+      end
+    # ruby below 1.9.2 variant
+    else
+      it "should set a new global seed" do
+        srand(1234)
+        Puppet::Util.deterministic_rand(123,20)
+        srand().should_not eql(1234)
+      end
     end
   end
 end

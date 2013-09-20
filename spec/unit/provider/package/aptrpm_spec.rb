@@ -10,10 +10,16 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
   it { should be_versionable }
 
   context "when retrieving ensure" do
+    before(:each) do
+      Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
+      pkg.provider.stubs(:which).with("rpm").returns("/bin/rpm")
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns("4.10.1\n").at_most_once
+    end
+
     def rpm
       pkg.provider.expects(:rpm).
         with('-q', 'faff', '--nosignature', '--nodigest', '--qf',
-             "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\n")
+             "'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} :DESC: %{SUMMARY}\\n'")
     end
 
     it "should report absent packages" do
@@ -22,7 +28,7 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
     end
 
     it "should report present packages correctly" do
-      rpm.returns("faff-1.2.3-1 0 1.2.3-1 5 i686\n")
+      rpm.returns("faff-1.2.3-1 0 1.2.3-1 5 i686 :DESC: faff desc\n")
       pkg.property(:ensure).retrieve.should == "1.2.3-1-5"
     end
   end

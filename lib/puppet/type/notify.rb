@@ -1,6 +1,6 @@
 #
 # Simple module for logging messages on the client-side
-#
+
 
 module Puppet
   newtype(:notify) do

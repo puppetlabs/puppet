@@ -42,8 +42,9 @@ describe Puppet::Type.type(:exec) do
   describe "when not stubbing the provider" do
     before do
       path = tmpdir('path')
-      true_cmd = File.join(path, 'true')
-      false_cmd = File.join(path, 'false')
+      ext = Puppet.features.microsoft_windows? ? '.exe' : ''
+      true_cmd = File.join(path, "true#{ext}")
+      false_cmd = File.join(path, "false#{ext}")
 
       FileUtils.touch(true_cmd)
       FileUtils.touch(false_cmd)
@@ -153,11 +154,13 @@ describe Puppet::Type.type(:exec) do
     foo = make_absolute('/bin/foo')
     catalog = Puppet::Resource::Catalog.new
     tmp = Puppet::Type.type(:file).new(:name => foo)
-    catalog.add_resource tmp
     execer = Puppet::Type.type(:exec).new(:name => foo)
-    catalog.add_resource execer
 
-    catalog.relationship_graph.dependencies(execer).should == [tmp]
+    catalog.add_resource tmp
+    catalog.add_resource execer
+    dependencies = execer.autorequire(catalog)
+
+    dependencies.collect(&:to_s).should == [Puppet::Relationship.new(tmp, execer).to_s]
   end
 
   describe "when handling the path parameter" do
@@ -315,6 +318,17 @@ describe Puppet::Type.type(:exec) do
         @test[param] = input
         @test[param].should == input
       end
+    end
+  end
+
+  describe "when setting command" do
+    subject { described_class.new(:name => @command) }
+    it "fails when passed an Array" do
+      expect { subject[:command] = [] }.to raise_error Puppet::Error, /Command must be a String/
+    end
+
+    it "fails when passed a Hash" do
+      expect { subject[:command] = {} }.to raise_error Puppet::Error, /Command must be a String/
     end
   end
 
@@ -737,6 +751,13 @@ describe Puppet::Type.type(:exec) do
 
     it "should accept an absolute command with a path" do
       type.new(:command => abs, :path => path).must be
+    end
+  end
+  describe "when providing a umask" do
+    it "should fail if an invalid umask is used" do
+      resource = Puppet::Type.type(:exec).new :command => @command
+      expect { resource[:umask] = '0028'}.to raise_error(Puppet::ResourceError, /umask specification is invalid/)
+      expect { resource[:umask] = '28' }.to raise_error(Puppet::ResourceError, /umask specification is invalid/)
     end
   end
 end

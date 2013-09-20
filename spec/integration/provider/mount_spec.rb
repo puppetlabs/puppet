@@ -20,6 +20,7 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
     @current_options = "local"
     @current_device = "/dev/disk1s1"
     Puppet::Type.type(:mount).defaultprovider.stubs(:default_target).returns(@fake_fstab)
+    Facter.stubs(:value).with(:kernel).returns('Darwin')
     Facter.stubs(:value).with(:operatingsystem).returns('Darwin')
     Facter.stubs(:value).with(:osfamily).returns('Darwin')
     Puppet::Util::ExecutionStub.set do |command, options|

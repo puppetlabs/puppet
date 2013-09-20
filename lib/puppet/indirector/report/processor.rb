@@ -43,12 +43,11 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
 
   # Handle the parsing of the reports attribute.
   def reports
-    # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-    x = Puppet[:reports].gsub(/(^\s+)|(\s+$)/, '').split(/\s*,\s*/)
+    Puppet[:reports].gsub(/(^\s+)|(\s+$)/, '').split(/\s*,\s*/)
   end
 
   def processors(&blk)
-    return if Puppet[:reports] == "none"
+    return [] if Puppet[:reports] == "none"
     reports.each do |name|
       if mod = Puppet::Reports.report(name)
         yield(mod)

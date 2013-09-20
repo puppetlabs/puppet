@@ -50,6 +50,15 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
     end
 
+    describe "command" do
+      it "should discard leading spaces" do
+        described_class.new(:name => 'foo', :command => " /bin/true")[:command].should_not match Regexp.new(" ")
+      end
+      it "should discard trailing spaces" do
+        described_class.new(:name => 'foo', :command => "/bin/true ")[:command].should_not match Regexp.new(" ")
+      end
+    end
+
     describe "minute" do
       it "should support absent" do
         expect { described_class.new(:name => 'foo', :minute => 'absent') }.to_not raise_error
@@ -448,13 +457,13 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       it "should accept empty environment variables that do not contain '='" do
         expect do
           described_class.new(:name => 'foo',:environment => 'MAILTO=')
-        end.to_not raise_error(Puppet::Error)
+        end.to_not raise_error
       end
 
       it "should accept 'absent'" do
         expect do
           described_class.new(:name => 'foo',:environment => 'absent')
-        end.to_not raise_error(Puppet::Error)
+        end.to_not raise_error
       end
 
     end

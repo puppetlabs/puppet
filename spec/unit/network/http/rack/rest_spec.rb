@@ -31,6 +31,16 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       Rack::Request.new(env)
     end
 
+    describe "#headers" do
+      it "should return the headers (parsed from env with prefix 'HTTP_')" do
+        req = mk_req('/', {'HTTP_Accept' => 'myaccept',
+                           'HTTP_X_Custom_Header' => 'mycustom',
+                           'NOT_HTTP_foo' => 'not an http header'})
+        @handler.headers(req).should == {"accept" => 'myaccept',
+                                         "x-custom-header" => 'mycustom'}
+      end
+    end
+
     describe "and using the HTTP Handler interface" do
       it "should return the HTTP_ACCEPT parameter as the accept header" do
         req = mk_req('/', 'HTTP_ACCEPT' => 'myaccept')
@@ -111,6 +121,23 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
           @handler.set_response(@response, @file, 200)
         end
       end
+
+      it "should ensure the body has been read on success" do
+        req = mk_req('/production/report/foo', :method => 'PUT')
+        req.body.expects(:read).at_least_once
+
+        Puppet::Transaction::Report.stubs(:save)
+
+        @handler.process(req, @response)
+      end
+
+      it "should ensure the body has been partially read on failure" do
+        req = mk_req('/production/report/foo')
+        req.body.expects(:read).with(1)
+        req.stubs(:check_authorization).raises(Exception)
+
+        @handler.process(req, @response)
+      end
     end
 
     describe "and determining the request parameters" do
@@ -181,30 +208,42 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
     end
 
     describe "with pre-validated certificates" do
-      it "should retrieve the hostname by matching the certificate parameter given in :ssl_client_header" do
+      it "should retrieve the hostname by finding the CN given in :ssl_client_header, in the format returned by Apache (RFC2253)" do
+        Puppet[:ssl_client_header] = "myheader"
+        req = mk_req('/', "myheader" => "O=Foo\\, Inc,CN=host.domain.com")
+        @handler.params(req)[:node].should == "host.domain.com"
+      end
+
+      it "should retrieve the hostname by finding the CN given in :ssl_client_header, in the format returned by nginx" do
         Puppet[:ssl_client_header] = "myheader"
         req = mk_req('/', "myheader" => "/CN=host.domain.com")
+        @handler.params(req)[:node].should == "host.domain.com"
+      end
+
+      it "should retrieve the hostname by finding the CN given in :ssl_client_header, ignoring other fields" do
+        Puppet[:ssl_client_header] = "myheader"
+        req = mk_req('/', "myheader" => 'ST=Denial,CN=host.domain.com,O=Domain\\, Inc.')
         @handler.params(req)[:node].should == "host.domain.com"
       end
 
       it "should use the :ssl_client_header to determine the parameter for checking whether the host certificate is valid" do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
-        req = mk_req('/', "myheader" => "SUCCESS", "certheader" => "/CN=host.domain.com")
+        req = mk_req('/', "myheader" => "SUCCESS", "certheader" => "CN=host.domain.com")
         @handler.params(req)[:authenticated].should be_true
       end
 
       it "should consider the host unauthenticated if the validity parameter does not contain 'SUCCESS'" do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
-        req = mk_req('/', "myheader" => "whatever", "certheader" => "/CN=host.domain.com")
+        req = mk_req('/', "myheader" => "whatever", "certheader" => "CN=host.domain.com")
         @handler.params(req)[:authenticated].should be_false
       end
 
       it "should consider the host unauthenticated if no certificate information is present" do
         Puppet[:ssl_client_header] = "certheader"
         Puppet[:ssl_client_verify_header] = "myheader"
-        req = mk_req('/', "myheader" => nil, "certheader" => "/CN=host.domain.com")
+        req = mk_req('/', "myheader" => nil, "certheader" => "CN=host.domain.com")
         @handler.params(req)[:authenticated].should be_false
       end
 
@@ -213,6 +252,23 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         req = mk_req('/', "myheader" => nil)
         @handler.expects(:resolve_node).returns("host.domain.com")
         @handler.params(req)[:node].should == "host.domain.com"
+      end
+
+      it "should resolve the node name with an ip address look-up if a certificate without a CN is present" do
+        Puppet[:ssl_client_header] = "myheader"
+        req = mk_req('/', "myheader" => "O=no CN")
+        @handler.expects(:resolve_node).returns("host.domain.com")
+        @handler.params(req)[:node].should == "host.domain.com"
+      end
+
+      it "should not allow authentication via the verify header if there is no CN available" do
+        Puppet[:ssl_client_header] = "dn_header"
+        Puppet[:ssl_client_verify_header] = "verify_header"
+        req = mk_req('/', "dn_header" => "O=no CN", "verify_header" => 'SUCCESS')
+
+        @handler.expects(:resolve_node).returns("host.domain.com")
+
+        @handler.params(req)[:authenticated].should be_false
       end
     end
   end

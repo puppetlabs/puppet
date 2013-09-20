@@ -8,7 +8,7 @@ describe 'Puppet::Parser::Functions#hiera_array' do
   let :scope do Puppet::Parser::Scope.new_for_test_harness('foo') end
 
   it 'should require a key argument' do
-    expect { scope.function_hiera_array([]) }.to raise_error(Puppet::ParseError)
+    expect { scope.function_hiera_array([]) }.to raise_error(ArgumentError)
   end
 
   it 'should raise a useful error when nil is returned' do

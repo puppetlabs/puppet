@@ -1,16 +1,13 @@
-require 'puppet/interface'
-
 module Puppet::Interface::FaceCollection
   @faces = Hash.new { |hash, key| hash[key] = {} }
+
+  @loader = Puppet::Util::Autoload.new(:application, 'puppet/face')
 
   def self.faces
     unless @loaded
       @loaded = true
-      $LOAD_PATH.each do |dir|
-        Dir.glob("#{dir}/puppet/face/*.rb").
-          collect {|f| File.basename(f, '.rb') }.
-          each {|name| self[name, :current] }
-      end
+      names = @loader.files_to_load.map {|fn| ::File.basename(fn, '.rb')}.uniq
+      names.each {|name| self[name, :current]}
     end
     @faces.keys.select {|name| @faces[name].length > 0 }
   end
@@ -58,7 +55,7 @@ module Puppet::Interface::FaceCollection
     # other Ruby library that we might want to use.  --daniel 2011-04-06
     if safely_require name then
       # If we wanted :current, we need to index to find that; direct version
-      # requests just work™ as they go. --daniel 2011-04-06
+      # requests just work as they go. --daniel 2011-04-06
       if version == :current then
         # We need to find current out of this.  This is the largest version
         # number that doesn't have a dedicated on-disk file present; those
@@ -99,7 +96,7 @@ module Puppet::Interface::FaceCollection
   end
 
   def self.safely_require(name, version = nil)
-    path = File.join 'puppet' ,'face', version.to_s, name.to_s
+    path = @loader.expand(version ? ::File.join(version.to_s, name.to_s) : name)
     require path
     true
 

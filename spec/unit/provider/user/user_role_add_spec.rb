@@ -116,7 +116,7 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
 
   describe "with :allow_duplicates" do
     before do
-      resource.expects(:allowdupe?).returns true
+      resource.stubs(:allowdupe?).returns true
       provider.stubs(:is_role?).returns(false)
       provider.stubs(:execute)
       resource.stubs(:system?).returns false
@@ -267,6 +267,7 @@ FIXTURE
     end
 
     it "should only update the target user" do
+      Date.expects(:today).returns Date.new(2011,12,07)
       write_fixture <<FIXTURE
 before:seriously:15315:0:99999:7:::
 fakeval:seriously:15315:0:99999:7:::
@@ -293,6 +294,23 @@ FIXTURE
       write_fixture fixture
       provider.password = "totally"
       File.read(path).should == fixture
+    end
+
+    it "should update the lastchg field" do
+      Date.expects(:today).returns Date.new(2013,5,12) # 15837 days after 1970-01-01
+      write_fixture <<FIXTURE
+before:seriously:15315:0:99999:7:::
+fakeval:seriously:15629:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+FIXTURE
+      provider.password = "totally"
+      File.read(path).should == <<EOT
+before:seriously:15315:0:99999:7:::
+fakeval:totally:15837:0:99999:7:::
+fakevalish:seriously:15315:0:99999:7:::
+after:seriously:15315:0:99999:7:::
+EOT
     end
   end
 

@@ -17,55 +17,61 @@ describe provider_class do
 
     it "should run pw with no additional flags when no properties are given" do
       provider.addcmd.must == [provider_class.command(:pw), "useradd", "testuser"]
-      provider.expects(:execute).with([provider_class.command(:pw), "useradd", "testuser"])
+      provider.expects(:execute).with([provider_class.command(:pw), "useradd", "testuser"], kind_of(Hash))
       provider.create
     end
 
     it "should use -o when allowdupe is enabled" do
       resource[:allowdupe] = true
-      provider.expects(:execute).with(includes("-o"))
+      provider.expects(:execute).with(includes("-o"), kind_of(Hash))
       provider.create
     end
 
     it "should use -c with the correct argument when the comment property is set" do
       resource[:comment] = "Testuser Name"
-      provider.expects(:execute).with(all_of(includes("-c"), includes("Testuser Name")))
+      provider.expects(:execute).with(all_of(includes("-c"), includes("Testuser Name")), kind_of(Hash))
       provider.create
     end
 
     it "should use -e with the correct argument when the expiry property is set" do
       resource[:expiry] = "2010-02-19"
-      provider.expects(:execute).with(all_of(includes("-e"), includes("19-02-2010")))
+      provider.expects(:execute).with(all_of(includes("-e"), includes("19-02-2010")), kind_of(Hash))
+      provider.create
+    end
+
+    it "should use -e 00-00-0000 if the expiry property has to be removed" do
+      resource[:expiry] = :absent
+      provider.expects(:execute).with(all_of(includes("-e"), includes("00-00-0000")), kind_of(Hash))
       provider.create
     end
 
     it "should use -g with the correct argument when the gid property is set" do
       resource[:gid] = 12345
-      provider.expects(:execute).with(all_of(includes("-g"), includes(12345)))
+      provider.expects(:execute).with(all_of(includes("-g"), includes(12345)), kind_of(Hash))
       provider.create
     end
 
     it "should use -G with the correct argument when the groups property is set" do
       resource[:groups] = "group1"
-      provider.expects(:execute).with(all_of(includes("-G"), includes("group1")))
+      provider.expects(:execute).with(all_of(includes("-G"), includes("group1")), kind_of(Hash))
       provider.create
     end
 
     it "should use -G with all the given groups when the groups property is set to an array" do
       resource[:groups] = ["group1", "group2"]
-      provider.expects(:execute).with(all_of(includes("-G"), includes("group1,group2")))
+      provider.expects(:execute).with(all_of(includes("-G"), includes("group1,group2")), kind_of(Hash))
       provider.create
     end
 
     it "should use -d with the correct argument when the home property is set" do
       resource[:home] = "/home/testuser"
-      provider.expects(:execute).with(all_of(includes("-d"), includes("/home/testuser")))
+      provider.expects(:execute).with(all_of(includes("-d"), includes("/home/testuser")), kind_of(Hash))
       provider.create
     end
 
     it "should use -m when the managehome property is enabled" do
       resource[:managehome] = true
-      provider.expects(:execute).with(includes("-m"))
+      provider.expects(:execute).with(includes("-m"), kind_of(Hash))
       provider.create
     end
 
@@ -78,13 +84,13 @@ describe provider_class do
 
     it "should use -s with the correct argument when the shell property is set" do
       resource[:shell] = "/bin/sh"
-      provider.expects(:execute).with(all_of(includes("-s"), includes("/bin/sh")))
+      provider.expects(:execute).with(all_of(includes("-s"), includes("/bin/sh")), kind_of(Hash))
       provider.create
     end
 
     it "should use -u with the correct argument when the uid property is set" do
       resource[:uid] = 12345
-      provider.expects(:execute).with(all_of(includes("-u"), includes(12345)))
+      provider.expects(:execute).with(all_of(includes("-u"), includes(12345)), kind_of(Hash))
       provider.create
     end
 
@@ -93,7 +99,7 @@ describe provider_class do
       resource[:password] = "*"
       provider.addcmd.should_not include("-p")
       provider.expects(:password=)
-      provider.expects(:execute).with(Not(includes("-p")))
+      provider.expects(:execute).with(Not(includes("-p")), kind_of(Hash))
       provider.create
     end
   end
@@ -148,6 +154,12 @@ describe provider_class do
       resource[:expiry] = "2010-02-19"
       provider.expects(:execute).with(all_of(includes("-e"), includes("19-02-2011")))
       provider.expiry = "2011-02-19"
+    end
+
+    it "should use -e with the correct argument when the expiry property is removed" do
+      resource[:expiry] = :absent
+      provider.expects(:execute).with(all_of(includes("-e"), includes("00-00-0000")))
+      provider.expiry = :absent
     end
 
     it "should use -g with the correct argument when the gid property is changed" do

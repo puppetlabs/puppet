@@ -5,12 +5,12 @@ require 'puppet/external/lock'
 require 'puppet/error'
 require 'puppet/util/execution_stub'
 require 'uri'
-require 'sync'
-require 'monitor'
 require 'tempfile'
 require 'pathname'
 require 'ostruct'
 require 'puppet/util/platform'
+require 'puppet/util/symbolic_file_mode'
+require 'securerandom'
 
 module Puppet
 module Util
@@ -22,8 +22,7 @@ module Util
   require 'puppet/util/posix'
   extend Puppet::Util::POSIX
 
-  @@sync_objects = {}.extend MonitorMixin
-
+  extend Puppet::Util::SymbolicFileMode
 
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
@@ -62,20 +61,6 @@ module Util
     end
   end
 
-
-  def self.synchronize_on(x,type)
-    sync_object,users = 0,1
-    begin
-      @@sync_objects.synchronize {
-        (@@sync_objects[x] ||= [Sync.new,0])[users] += 1
-      }
-      @@sync_objects[x][sync_object].synchronize(type) { yield }
-    ensure
-      @@sync_objects.synchronize {
-        @@sync_objects.delete(x) unless (@@sync_objects[x][users] -= 1) > 0
-      }
-    end
-  end
 
   # Change the process to a different user
   def self.chuser
@@ -150,7 +135,6 @@ module Util
     end
   end
 
-
   def benchmark(*args)
     msg = args.pop
     level = args.pop
@@ -174,7 +158,6 @@ module Util
 
     # Only benchmark if our log level is high enough
     if level != :none and Puppet::Util::Log.sendlevel?(level)
-      result = nil
       seconds = Benchmark.realtime {
         yield
       }
@@ -184,7 +167,15 @@ module Util
       yield
     end
   end
+  module_function :benchmark
 
+  # Resolve a path for an executable to the absolute path. This tries to behave
+  # in the same manner as the unix `which` command and uses the `PATH`
+  # environment variable.
+  #
+  # @api public
+  # @param bin [String] the name of the executable to find.
+  # @return [String] the absolute path to the found executable.
   def which(bin)
     if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
@@ -232,10 +223,6 @@ module Util
   AbsolutePathWindows = %r!^(?:(?:[A-Z]:#{slash})|(?:#{slash}#{slash}#{label}#{slash}#{label})|(?:#{slash}#{slash}\?#{slash}#{label}))!io
   AbsolutePathPosix   = %r!^/!
   def absolute_path?(path, platform=nil)
-    # Due to weird load order issues, I was unable to remove this require.
-    # This is fixed in Telly so it can be removed there.
-    require 'puppet' unless defined?(Puppet)
-
     # Ruby only sets File::ALT_SEPARATOR on Windows and the Ruby standard
     # library uses that to test what platform it's on.  Normally in Puppet we
     # would use Puppet.features.microsoft_windows?, but this method needs to
@@ -264,7 +251,7 @@ module Util
     if Puppet.features.microsoft_windows?
       path = path.gsub(/\\/, '/')
 
-      if unc = /^\/\/([^\/]+)(\/[^\/]+)/.match(path)
+      if unc = /^\/\/([^\/]+)(\/.+)/.match(path)
         params[:host] = unc[1]
         path = unc[2]
       elsif path =~ /^[a-z]:\//i
@@ -313,13 +300,6 @@ module Util
     child_pid
   end
   module_function :safe_posix_fork
-
-  # Create an exclusive lock.
-  def threadlock(resource, type = Sync::EX)
-    Puppet::Util.synchronize_on(resource,type) { yield }
-  end
-
-  module_function :benchmark
 
   def memory
     unless defined?(@pmap)
@@ -393,14 +373,18 @@ module Util
   #
   # The default_mode is the mode to use when the target file doesn't already
   # exist; if the file is present we copy the existing mode/owner/group values
-  # across.
+  # across. The default_mode can be expressed as an octal integer, a numeric string (ie '0664')
+  # or a symbolic file mode.
   def replace_file(file, default_mode, &block)
     raise Puppet::DevError, "replace_file requires a block" unless block_given?
 
+    unless valid_symbolic_mode?(default_mode)
+      raise Puppet::DevError, "replace_file default_mode: #{default_mode} is invalid"
+    end
+    mode = symbolic_mode_to_int(normalize_symbolic_mode(default_mode))
+
     file     = Pathname(file)
     tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
-
-    file_exists = file.exist?
 
     # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just
@@ -412,7 +396,7 @@ module Util
     # secure" tempfile permissions instead.  Magic happens later.
     unless Puppet.features.microsoft_windows?
       # Grab the current file mode, and fall back to the defaults.
-      stat = file.lstat rescue OpenStruct.new(:mode => default_mode,
+      stat = file.lstat rescue OpenStruct.new(:mode => mode,
                                               :uid  => Process.euid,
                                               :gid  => Process.egid)
 
@@ -453,7 +437,7 @@ module Util
         # Yes, the arguments are reversed compared to the rename in the rest
         # of the world.
         Puppet::Util::Windows::File.replace_file(file, tempfile.path)
-      rescue Puppet::Util::Windows::Error => e
+      rescue Puppet::Util::Windows::Error
         # This might race, but there are enough possible cases that there
         # isn't a good, solid "better" way to do this, and the next call
         # should fail in the same way anyhow.
@@ -472,13 +456,13 @@ module Util
         end
 
         # Set the permissions to what we want.
-        Puppet::Util::Windows::Security.set_mode(default_mode, file.to_s)
+        Puppet::Util::Windows::Security.set_mode(mode, file.to_s)
 
         # ...and finally retry the operation.
         retry
       end
     else
-      File.rename(tempfile.path, file)
+      File.rename(tempfile.path, file.to_s)
     end
 
     # Ideally, we would now fsync the directory as well, but Ruby doesn't
@@ -493,6 +477,7 @@ module Util
   # Executes a block of code, wrapped with some special exception handling.  Causes the ruby interpreter to
   #  exit if the block throws an exception.
   #
+  # @api public
   # @param [String] message a message to log if the block fails
   # @param [Integer] code the exit code that the ruby interpreter should return if the block fails
   # @yield
@@ -515,7 +500,17 @@ module Util
   end
   module_function :exit_on_fail
 
-
+  def deterministic_rand(seed,max)
+    if defined?(Random) == 'constant' && Random.class == Class
+      Random.new(seed).rand(max).to_s
+    else
+      srand(seed)
+      result = rand(max).to_s
+      srand()
+      result
+    end
+  end
+  module_function :deterministic_rand
 
 
   #######################################################################################################
@@ -534,9 +529,10 @@ module Util
   end
   module_function :execfail
 
-  def execute(command, arguments = {})
+  def execute(*args)
     Puppet.deprecation_warning("Puppet::Util.execute is deprecated; please use Puppet::Util::Execution.execute")
-    Puppet::Util::Execution.execute(command, arguments)
+
+    Puppet::Util::Execution.execute(*args)
   end
   module_function :execute
 

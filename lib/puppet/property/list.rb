@@ -2,6 +2,9 @@ require 'puppet/property'
 
 module Puppet
   class Property
+    # This subclass of {Puppet::Property} manages an unordered list of values.
+    # For an ordered list see {Puppet::Property::OrderedList}.
+    #
     class List < Property
 
       def should_to_s(should_value)

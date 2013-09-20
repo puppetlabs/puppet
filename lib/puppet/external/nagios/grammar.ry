@@ -36,7 +36,7 @@ vars: var
     }
     ;
 
-var: PARAM VALUE returns { result = { val[0] => val[1] } }
+var: PARAM VALUE returns { result = {val[0] => val[1]} }
     ;
 
 returns: RETURN

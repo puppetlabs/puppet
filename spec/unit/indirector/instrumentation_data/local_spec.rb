@@ -28,7 +28,7 @@ describe Puppet::Indirector::InstrumentationData::Local do
   end
 
   describe "when finding instrumentation data" do
-    it "should return a Instrumentation Data instance matching the key" do
+    it "should return an Instrumentation Data instance matching the key" do
     end
   end
 

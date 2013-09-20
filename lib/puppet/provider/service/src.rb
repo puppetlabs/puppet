@@ -14,12 +14,25 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
   defaultfor :operatingsystem => :aix
   confine :operatingsystem => :aix
 
-  commands :stopsrc  => "/usr/bin/stopsrc"
-  commands :startsrc => "/usr/bin/startsrc"
-  commands :refresh  => "/usr/bin/refresh"
-  commands :lssrc    => "/usr/bin/lssrc"
+  optional_commands :stopsrc  => "/usr/bin/stopsrc",
+                    :startsrc => "/usr/bin/startsrc",
+                    :refresh  => "/usr/bin/refresh",
+                    :lssrc    => "/usr/bin/lssrc",
+                    :lsitab   => "/usr/sbin/lsitab",
+                    :mkitab   => "/usr/sbin/mkitab",
+                    :rmitab   => "/usr/sbin/rmitab",
+                    :chitab   => "/usr/sbin/chitab"
 
   has_feature :refreshable
+
+  def self.instances
+    services = lssrc('-S')
+    services.split("\n").reject { |x| x.strip.start_with? '#' }.collect do |line|
+      data = line.split(':')
+      service_name = data[0]
+      new(:name => service_name)
+    end
+  end
 
   def startcmd
     [command(:startsrc), "-s", @resource[:name]]
@@ -27,6 +40,27 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
 
   def stopcmd
     [command(:stopsrc), "-s", @resource[:name]]
+  end
+
+  def default_runlevel
+    "2"
+  end
+
+  def default_action
+    "once"
+  end
+
+  def enabled?
+    execute([command(:lsitab), @resource[:name]], {:failonfail => false, :combine => true})
+    $CHILD_STATUS.exitstatus == 0 ? :true : :false
+  end
+
+  def enable
+    mkitab("%s:%s:%s:%s" % [@resource[:name], default_runlevel, default_action, startcmd.join(" ")])
+  end
+
+  def disable
+    rmitab(@resource[:name])
   end
 
   def restart

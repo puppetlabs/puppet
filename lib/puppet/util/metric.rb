@@ -9,6 +9,20 @@ class Puppet::Util::Metric
 
   attr_writer :basedir
 
+  def self.from_pson(data)
+    metric = new(data['name'], data['label'])
+    metric.values = data['values']
+    metric
+  end
+
+  def to_pson
+    {
+      'name' => @name,
+      'label' => @label,
+      'values' => @values
+    }.to_pson
+  end
+
   # Return a specific value
   def [](name)
     if value = @values.find { |v| v[0] == name }
@@ -79,7 +93,6 @@ class Puppet::Util::Metric
       args.push("--title",self.label)
       args.push("--imgformat","PNG")
       args.push("--interlace")
-      i = 0
       defs = []
       lines = []
       #p @values.collect { |s,l| s }

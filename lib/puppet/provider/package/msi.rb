@@ -74,7 +74,7 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
     # because of the special quoting we need to do around the MSI
     # properties to use.
     command = ['msiexec.exe', '/qn', '/norestart', '/i', shell_quote(resource[:source]), install_options].flatten.compact.join(' ')
-    execute(command, :combine => true)
+    execute(command, :failonfail => false, :combine => true)
 
     check_result(exit_status)
   end
@@ -83,7 +83,7 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
     fail("The productcode property is missing.") unless properties[:productcode]
 
     command = ['msiexec.exe', '/qn', '/norestart', '/x', properties[:productcode], uninstall_options].flatten.compact.join(' ')
-    execute(command, :combine => true)
+    execute(command, :failonfail => false, :combine => true)
 
     check_result(exit_status)
   end

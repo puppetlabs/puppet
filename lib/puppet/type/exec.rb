@@ -79,11 +79,6 @@ module Puppet
 
       # Actually execute the command.
       def sync
-        olddir = nil
-
-        # We need a dir to change to, even if it's just the cwd
-        dir = self.resource[:cwd] || Dir.pwd
-
         event = :executed_command
         tries = self.resource[:tries]
         try_sleep = self.resource[:try_sleep]
@@ -137,6 +132,10 @@ module Puppet
         normal log level (usually `notice`), but if the command fails
         (meaning its return code does not match the specified code) then
         any output is logged at the `err` log level."
+
+      validate do |command|
+        raise ArgumentError, "Command must be a String, got value of class #{command.class}" unless command.is_a? String
+      end
     end
 
     newparam(:path) do
@@ -157,7 +156,10 @@ module Puppet
         use this then any error output is not currently captured.  This
         is because of a bug within Ruby.  If you are using Puppet to
         create this user, the exec will automatically require the user,
-        as long as it is specified by name."
+        as long as it is specified by name.
+
+        Please note that the $HOME environment variable is not automatically set
+        when using this attribute."
 
       # Most validation is handled by the SUIDManager class.
       validate do |user|
@@ -180,9 +182,11 @@ module Puppet
     end
 
     newparam(:logoutput) do
-      desc "Whether to log output.  Defaults to `on_failure`, which only logs
-        the output when the command has a non-zero exit code.  In addition to
-        the values below, you may set this attribute to any legal log level."
+      desc "Whether to log command output in addition to logging the
+        exit code.  Defaults to `on_failure`, which only logs the output
+        when the command has an exit code that does not match any value
+        specified by the `returns` attribute.  In addition to the values
+        below, you may set this attribute to any legal log level."
 
       defaultto :on_failure
 
@@ -216,6 +220,18 @@ module Puppet
       end
     end
 
+    newparam(:umask, :required_feature => :umask) do
+      desc "Sets the umask to be used while executing this command"
+
+      munge do |value|
+        if value =~ /^0?[0-7]{1,4}$/
+          return value.to_i(8)
+        else
+          raise Puppet::Error, "The umask specification is invalid: #{value.inspect}"
+        end
+      end
+    end
+
     newparam(:timeout) do
       desc "The maximum time the command should take.  If the command takes
         longer than the timeout, the command is considered to have failed
@@ -226,7 +242,7 @@ module Puppet
         value = value.shift if value.is_a?(Array)
         begin
           value = Float(value)
-        rescue ArgumentError => e
+        rescue ArgumentError
           raise ArgumentError, "The timeout must be a number."
         end
         [value, 0.0].max
@@ -313,9 +329,11 @@ module Puppet
 
     newcheck(:creates, :parent => Puppet::Parameter::Path) do
       desc <<-'EOT'
-        A file that this command creates.  If this
-        parameter is provided, then the command will only be run
-        if the specified file does not exist.
+        A file to look for before running the command. The command will
+        only run if the file **doesn't exist.**
+
+        This parameter doesn't cause Puppet to create a file; it is only
+        useful if **the command itself** creates a file.
 
             exec { "tar -xf /Volumes/nfs02/important.tar":
               cwd     => "/var/tmp",
@@ -323,8 +341,11 @@ module Puppet
               path    => ["/usr/bin", "/usr/sbin"]
             }
 
-        In this example, if `/var/tmp/myfile` is ever deleted, the exec
-        will bring it back by re-extracting the tarball.
+        In this example, `myfile` is assumed to be a file inside
+        `important.tar`. If it is ever deleted, the exec will bring it
+        back by re-extracting the tarball. If `important.tar` does **not**
+        actually contain `myfile`, the exec will keep running every time
+        Puppet runs.
       EOT
 
       accept_arrays

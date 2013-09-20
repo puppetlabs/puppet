@@ -32,7 +32,7 @@ class Puppet::Parser::Collector
     # we have an override for the collected resources
     if @overrides and !objects.empty?
       # force the resource to be always child of any other resource
-      overrides[:source].meta_def(:child_of?) do
+      overrides[:source].meta_def(:child_of?) do |klass|
         true
       end
 

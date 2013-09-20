@@ -6,6 +6,9 @@ module Puppet::Util::Warnings
     Puppet::Util::Warnings.maybe_log(msg, self.class) { Puppet.notice msg }
   end
 
+  def debug_once(msg)
+    Puppet::Util::Warnings.maybe_log(msg, self.class) { Puppet.debug msg }
+  end
 
   def warnonce(msg)
     Puppet::Util::Warnings.maybe_log(msg, self.class) { Puppet.warning msg }
