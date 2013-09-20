@@ -5,9 +5,7 @@ require 'puppet/external/nagios'
 
 describe "Nagios parser" do
 
-  before do
-
-    @snippet = <<-'EOL'
+    SNIPPET = <<-'EOL'
 define host{
     use                     linux-server            ; Name of host template to use
     host_name               localhost
@@ -21,7 +19,7 @@ define command{
   }
 EOL
 
-    @line_comment_snippet = <<-'EOL'
+    LINE_COMMENT_SNIPPET = <<-'EOL'
 
 # This is a comment starting at the beginning of a line
 
@@ -44,7 +42,7 @@ define command{
 
 EOL
 
-    @line_comment_snippet2 = <<-'EOL'
+    LINE_COMMENT_SNIPPET2 = <<-'EOL'
       define host{
           use                     linux-server            ; Name of host template to use
           host_name               localhost
@@ -57,57 +55,53 @@ define command{
   }
 EOL
 
-    @bad_snippet = <<-'EOL'
+    BAD_SNIPPET = <<-'EOL'
       define command2{
         command_name  notify-host-by-email
         command_line  /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$
         }
       EOL
 
-    @bad_snippet2 = <<-'EOL'
+    BAD_SNIPPET2 = <<-'EOL'
       define command{
         command_name  notify-host-by-email
         command_line  /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$
       EOL
 
-    @regression1 = <<-'EOL'
+    REGRESSION1 = <<-'EOL'
         define command {
             command_name  nagios_table_size
             command_line $USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name "SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\"$ARG1$\"\;" --name2 "table size" --units kBytes -w $ARG2$ -c $ARG3$
         }
       EOL
 
-    @regression2 = <<-'EOL'
+    REGRESSION2 = <<-'EOL'
         define command {
             command_name  notify-by-irc
             command_line /usr/local/bin/riseup-nagios-client.pl "$HOSTNAME$ ($SERVICEDESC$) $NOTIFICATIONTYPE$ #$SERVICEATTEMPT$ $SERVICESTATETYPE$ $SERVICEEXECUTIONTIME$s $SERVICELATENCY$s $SERVICEOUTPUT$ $SERVICEPERFDATA$"
         }
       EOL
 
-    @regression3 = <<-EOL
+    REGRESSION3 = <<-EOL
 define command {
 \tcommand_name                   check_haproxy
 \tcommand_line                   LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats\\;csv'
 }
 EOL
-  end
 
   it "should parse without error" do
     parser =  Nagios::Parser.new
     lambda {
-      results = parser.parse(@snippet)
+      results = parser.parse(SNIPPET)
     }.should_not raise_error
   end
 
-  it "should have the proper base type" do
+  describe "when parsing a statement" do
     parser =  Nagios::Parser.new
-    results = parser.parse(@snippet)
+    results = parser.parse(SNIPPET)
     results.each do |obj|
-
-      describe "should parse correctly" do
-        it "should work" do
-            obj.should be_a_kind_of(Nagios::Base)
-        end
+      it "should have the proper base type" do
+        obj.should be_a_kind_of(Nagios::Base)
       end
     end
   end
@@ -115,14 +109,14 @@ EOL
   it "should raise an error when an incorrect command is present" do
     parser =  Nagios::Parser.new
     lambda {
-      results = parser.parse(@bad_snippet)
+      results = parser.parse(BAD_SNIPPET)
     }.should raise_error Nagios::Base::UnknownNagiosType
   end
 
   it "should raise an error when syntax is not correct" do
     parser =  Nagios::Parser.new
     lambda {
-      results = parser.parse(@bad_snippet2)
+      results = parser.parse(BAD_SNIPPET2)
     }.should raise_error Nagios::Parser::SyntaxError
   end
 
@@ -130,19 +124,19 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       lambda {
-        results = parser.parse(@regression1)
+        results = parser.parse(REGRESSION1)
       }.should_not raise_error Nagios::Parser::SyntaxError
     end
 
     it "should ignore it if it is a comment" do
       parser =  Nagios::Parser.new
-      results = parser.parse(@snippet)
+      results = parser.parse(SNIPPET)
       results[0].use.should eql("linux-server")
     end
 
     it "should parse correctly if it is escaped" do
       parser =  Nagios::Parser.new
-      results = parser.parse(@regression1)
+      results = parser.parse(REGRESSION1)
       results[0].command_line.should eql("$USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name \"SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\\\"$ARG1$\\\";\" --name2 \"table size\" --units kBytes -w $ARG2$ -c $ARG3$")
     end
   end
@@ -152,20 +146,20 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       lambda {
-        results = parser.parse(@regression2)
+        results = parser.parse(REGRESSION2)
       }.should_not raise_error Nagios::Parser::SyntaxError
     end
 
 
     it "should ignore it at the beginning of a line" do
       parser =  Nagios::Parser.new
-      results = parser.parse(@line_comment_snippet)
+      results = parser.parse(LINE_COMMENT_SNIPPET)
       results[0].command_line.should eql("command_line")
     end
 
     it "should let it go anywhere else" do
       parser =  Nagios::Parser.new
-      results = parser.parse(@regression2)
+      results = parser.parse(REGRESSION2)
       results[0].command_line.should eql("/usr/local/bin/riseup-nagios-client.pl \"$HOSTNAME$ ($SERVICEDESC$) $NOTIFICATIONTYPE$ \#$SERVICEATTEMPT$ $SERVICESTATETYPE$ $SERVICEEXECUTIONTIME$s $SERVICELATENCY$s $SERVICEOUTPUT$ $SERVICEPERFDATA$\"")
     end
 
@@ -175,13 +169,13 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       lambda {
-        results = parser.parse(@regression3)
+        results = parser.parse(REGRESSION3)
       }.should_not raise_error Nagios::Parser::SyntaxError
     end
 
     it "should parse correctly" do
       parser =  Nagios::Parser.new
-      results = parser.parse(@regression3)
+      results = parser.parse(REGRESSION3)
       results[0].command_line.should eql("LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats;csv'")
     end
   end
@@ -189,12 +183,12 @@ EOL
 
   it "should be idempotent" do
     parser =  Nagios::Parser.new
-    src = @regression3.dup
+    src = REGRESSION3.dup
     results = parser.parse(src)
     nagios_type = Nagios::Base.create(:command)
     nagios_type.command_name = results[0].command_name
     nagios_type.command_line = results[0].command_line
-    nagios_type.to_s.should eql(@regression3)
+    nagios_type.to_s.should eql(REGRESSION3)
   end
 
 end
