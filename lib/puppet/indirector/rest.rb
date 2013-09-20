@@ -98,6 +98,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
+      check_master_version(response)
       content_type, body = parse_response(response)
       result = deserialize_find(content_type, body)
       result.name = request.key if result.respond_to?(:name=)
@@ -112,7 +113,12 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       http_head(request, indirection2uri(request), headers)
     end
 
-    !!is_http_200?(response)
+    if is_http_200?(response)
+      check_master_version(response)
+      true
+    else
+      false
+    end
   end
 
   def search(request)
@@ -121,6 +127,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
+      check_master_version(response)
       content_type, body = parse_response(response)
       deserialize_search(content_type, body) || []
     else
@@ -136,6 +143,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
+      check_master_version(response)
       content_type, body = parse_response(response)
       deserialize_destroy(content_type, body)
     else
@@ -151,6 +159,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     if is_http_200?(response)
+      check_master_version(response)
       content_type, body = parse_response(response)
       deserialize_save(content_type, body)
     else
@@ -189,6 +198,18 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def convert_to_http_error(response)
     message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
     Net::HTTPError.new(message, response)
+  end
+
+  def check_master_version response
+    if !response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] &&
+       (Puppet[:legacy_query_parameter_serialization] == false || Puppet[:report_serialization_format] != "yaml")
+      Puppet.notice "Using less secure serialization of reports and query parameters for compatibility"
+      Puppet.notice "with older puppet master. To remove this notice, please upgrade your master(s) "
+      Puppet.notice "to Puppet 3.3 or newer."
+      Puppet.notice "See http://links.puppetlabs.com/deprecate_yaml_on_network for more information."
+      Puppet[:legacy_query_parameter_serialization] = true
+      Puppet[:report_serialization_format] = "yaml"
+    end
   end
 
   # Returns the content_type, stripping any appended charset, and the

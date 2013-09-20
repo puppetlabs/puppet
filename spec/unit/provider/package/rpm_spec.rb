@@ -76,7 +76,7 @@ describe provider_class do
 
       installed_packages = subject.instances
 
-      installed_packages[0].properties.should ==
+      expect(installed_packages[0].properties).to eq(
         {
           :provider => :rpm,
           :name => "cracklib-dicts",
@@ -87,7 +87,8 @@ describe provider_class do
           :ensure => "2.8.9-3.3",
           :description => "The standard CrackLib dictionaries",
         }
-      installed_packages[1].properties.should ==
+      )
+      expect(installed_packages[1].properties).to eq(
         {
           :provider => :rpm,
           :name => "basesystem",
@@ -98,7 +99,8 @@ describe provider_class do
           :ensure => "8.0-5.1.1.el5.centos",
           :description => "The skeleton package which defines a simple Red Hat Enterprise Linux system",
         }
-      installed_packages[2].properties.should ==
+      )
+      expect(installed_packages[2].properties).to eq(
         {
           :provider => :rpm,
           :name => "chkconfig",
@@ -109,7 +111,8 @@ describe provider_class do
           :ensure => "1.3.30.2-2.el5",
           :description => "A system tool for maintaining the /etc/rc*.d hierarchy",
         }
-      installed_packages.last.properties.should ==
+      )
+      expect(installed_packages.last.properties).to eq(
         {
           :provider    => :rpm,
           :name        => "mysummaryless",
@@ -120,6 +123,7 @@ describe provider_class do
           :ensure      => "1.2.3.4-5.el4",
           :description => "",
         }
+      )
     end
   end
 
@@ -157,7 +161,7 @@ describe provider_class do
     it "should retrieve version string after querying rpm for version from source file" do
       resource.expects(:[]).with(:source).returns('source-string')
       Puppet::Util::Execution.expects(:execfail).with(["/bin/rpm", "-q", "--qf", nevra_format, "-p", "source-string"], Puppet::Error).returns("myresource 0 1.2.3.4 5.el4 noarch :DESC:\n")
-      provider.latest.should == "1.2.3.4-5.el4"
+      expect(provider.latest).to eq("1.2.3.4-5.el4")
     end
   end
 
@@ -201,7 +205,7 @@ describe provider_class do
     def parser_test(rpm_output_string, gold_hash, number_of_warnings = 0)
       Puppet.expects(:warning).times(number_of_warnings)
       Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format], execute_options).returns(rpm_output_string)
-      provider.query.should == gold_hash
+      expect(provider.query).to eq(gold_hash)
     end
 
     let(:resource_name) { 'name' }
@@ -258,6 +262,10 @@ describe provider_class do
     it "should warn but not fail if line is unparseable" do
       parser_test('bad data', {}, 1)
     end
+
+    it "should not warn and not fail if rpm returns package not found" do
+      parser_test('package foo is not installed', {}, 0)
+    end
   end
 
   describe ".nodigest" do
@@ -271,7 +279,7 @@ describe provider_class do
       describe "when current version is #{version}" do
         it "should return #{expected.inspect}" do
           subject.stubs(:current_version).returns(version)
-          subject.nodigest.should == expected
+          expect(subject.nodigest).to eq(expected)
         end
       end
     end
@@ -287,7 +295,7 @@ describe provider_class do
       describe "when current version is #{version}" do
         it "should return #{expected.inspect}" do
           subject.stubs(:current_version).returns(version)
-          subject.nosignature.should == expected
+          expect(subject.nosignature).to eq(expected)
         end
       end
     end

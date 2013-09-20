@@ -1100,12 +1100,24 @@ EOT
 
       This should almost always be set to `pson`. It can be temporarily set to
       `yaml` to let agents using this Puppet version connect to a puppet master
-      running Puppet 3.0.0 through 3.2.4.",
-      :hook => proc do |value|
-        if value == "yaml"
-          Puppet.deprecation_warning("Sending reports in 'yaml' is deprecated; use 'pson' instead.")
-        end
-      end
+      running Puppet 3.0.0 through 3.2.x.
+
+      Note that this is set to 'yaml' automatically if the agent detects an
+      older master, so should never need to be set explicitly."
+    },
+    :legacy_query_parameter_serialization => {
+        :default    => false,
+        :type       => :boolean,
+        :desc => "The serialization format to use when sending file_metadata
+      query parameters.  Older versions of puppet master expect certain query
+      parameters to be serialized as yaml, which is deprecated.
+
+      This should almost always be false. It can be temporarily set to true
+      to let agents using this Puppet version connect to a puppet master
+      running Puppet 3.0.0 through 3.2.x.
+
+      Note that this is set to true automatically if the agent detects an
+      older master, so should never need to be set explicitly."
     },
     :agent_catalog_run_lockfile => {
       :default    => "$statedir/agent_catalog_run.lock",

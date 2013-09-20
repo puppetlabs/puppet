@@ -20,6 +20,8 @@ end
 
 describe Puppet::Agent do
   before do
+    Puppet::Status.indirection.stubs(:find).returns Puppet::Status.new("version" => Puppet.version)
+
     @agent = Puppet::Agent.new(AgentTestClient, false)
 
     # So we don't actually try to hit the filesystem.
