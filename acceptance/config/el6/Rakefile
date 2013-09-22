@@ -173,17 +173,18 @@ end
 namespace :ci do
 
   task :check_env do
-    raise(USAGE) unless sha && config
+    raise(USAGE) unless sha
   end
 
   namespace :test do
 
     USAGE = <<-EOS
 Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
-Also must set CONFIG=config/nodes/foo.yaml or path to some other Beaker configuration.
+Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker.
 You may set TESTS=path/to/test,and/more/tests.
 You may set additional Beaker OPTIONS='--more --options'
 If testing from git checkouts, you may optional set the github fork to checkout from using FORK='other-puppet-fork'.
+A beaker options hash in ./local_options.rb will be included, with online commandline options set through the above environment variables overriding.
 EOS
 
 
