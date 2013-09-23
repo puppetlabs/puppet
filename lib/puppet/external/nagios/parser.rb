@@ -140,7 +140,7 @@ def token
 
                       else
                         text = @ss.string[@ss.pos .. -1]
-                        raise  ScanError, "can not match: '" + text + "'"
+                        raise  ScanError, "can not match: '#{text}'"
                       end  # if
             end
         else
