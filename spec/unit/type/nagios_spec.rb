@@ -141,7 +141,7 @@ EOL
     end
   end
 
-  describe "when encoutering '#'" do
+  describe "when encountering '#'" do
 
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
