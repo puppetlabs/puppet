@@ -88,7 +88,10 @@ EOS
   begin
     sh "beaker --options-file #{options_file} #{config_opt} #{tests} #{overriding_options}"
   ensure
-    generate_config_for_latest_hosts
+    if preserve_config && (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
+      sh "cp #{hosts_file} log/latest/config.yml"
+      generate_config_for_latest_hosts
+    end
     sh "mv #{options_file} log/latest"
   end
 end
@@ -102,7 +105,7 @@ def generate_config_for_latest_hosts
     config_yml =~ /agent:.*?platform: ([\w-]+)\s*$/m
     nodes[:agent][:platform] = $1
   end
-  File.open('log/latest/pre-suite-run.log', 'r') do |log_file|
+  File.open('log/latest/pre_suite-run.log', 'r') do |log_file|
     while nodes.values.detect { |h| h[:hostname].nil? }
       if log_file.readline =~ /^(\w+) \((master|agent)\)/
         nodes[$2.to_sym][:hostname] = $1
