@@ -20,8 +20,8 @@ def parse(src)
     @ss = StringScanner.new(src)
 
     # state variables
-    @invar = false
-    @inobject = false
+    @in_parameter_value = false
+    @in_object_definition = false
     @done = false
 
     @line = 1
@@ -58,7 +58,7 @@ def tokenize_outside_definitions
         action { [:NAME, text] }
 
       when (text = @ss.scan(/\{/))                  # the opening curly bracket - we enter object definition
-        @inobject = true
+        @in_object_definition = true
         action { [:LCURLY, text] }
 
       else
@@ -67,92 +67,117 @@ def tokenize_outside_definitions
     end  # case
 end
 
+=begin
+    This tokenizes until we find the parameter name.
+=end
+def tokenize_parameter_name
+    case
+      when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+        ;
+
+      when (text = @ss.scan(/\#.*$/))               # ignore comments
+        ;
+
+      when (text = @ss.scan(/;.*$/))                # ignore inline comments
+        ;
+
+      when (text = @ss.scan(/\n/))                  # newline
+        action { [:RETURN, text] }
+
+      when (text = @ss.scan(/\}/))                  # closing curly bracket : end of definition
+        @in_object_definition = false
+        action { [:RCURLY, text] }
+
+      when (not @in_parameter_value and (text = @ss.scan(/\S+/)))    # This is the name of the parameter
+        @in_parameter_value = true
+        action { [:PARAM, text] }
+
+      else
+        text = @ss.string[@ss.pos .. -1]
+        raise  ScanError, "can not match: '#{text}'"
+    end  # case
+end
+
+=begin
+    This tokenizes the parameter value.
+    There is a special handling for lines containing semicolons :
+        - unescaped semicolons are line comments (and should stop parsing of the line)
+        - escaped (with backslash \) semicolons should be kept in the parameter value (without the backslash)
+=end
+def tokenize_parameter_value
+    case
+      when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+        ;
+
+      when (text = @ss.scan(/\#.*$/))               # ignore comments
+        ;
+
+      when (text = @ss.scan(/\n/))                  # newline
+        action { [:RETURN, text] }
+
+      when (text = @ss.scan(/.+$/))                 # Value of parameter
+        @in_parameter_value = false
+
+        # Special handling of inline comments (;) and escaped semicolons (\;)
+
+        # We split the string on escaped semicolons (\;),
+        # Then we rebuild it as long as there are no inline comments (;)
+        # We join the rebuilt string with unescaped semicolons (on purpose)
+        array = text.split('\;', 0)
+
+        text = ""
+
+        array.each do |elt|
+
+            # Now we split at inline comments. If we have more than 1 element in the array
+            # it means we have an inline comment, so we are able to stop parsing
+            # However we still want to reconstruct the string with its first part (before the comment)
+            linearray = elt.split(';', 0)
+
+            # Let's reconstruct the string with a (unescaped) semicolon
+            if text != "" then
+                text += ';'
+            end
+            text += linearray[0]
+
+            # Now we can stop
+            if linearray.length > 1 then
+                break                                
+            end
+        end
+
+
+        # We strip the text to remove spaces between end of string and beginning of inline comment
+        action { [:VALUE, text.strip] }
+
+      else
+        text = @ss.string[@ss.pos .. -1]
+        raise  ScanError, "can not match: '#{text}'"
+    end  # case
+end
+
+=begin
+    This tokenizes inside an object definition.
+    Two cases : parameter name and parameter value
+=end
+def tokenize_inside_definitions
+    if @in_parameter_value
+        tokenize_parameter_value
+    else
+        tokenize_parameter_name
+    end
+end
+
 # The lexer.  Very simple.
 def token
     text = @ss.peek(1)
     @line  +=  1  if text == "\n"
 
-    token = if not @inobject
+    token = if @in_object_definition
+        tokenize_inside_definitions
+    else
         tokenize_outside_definitions
-    else   # @inobject == true
-        if @invar
-            case
-              when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
-                ;
-
-              when (text = @ss.scan(/\#.*$/))               # ignore comments
-                ;
-
-              when (text = @ss.scan(/\n/))                  # newline
-                action { [:RETURN, text] }
-
-              when (text = @ss.scan(/.+$/))                 # Value of parameter
-                @invar = false
-
-                # Special handling of inline comments (;) and escaped semicolons (\;)
-
-                # We split the string on escaped semicolons (\;),
-                # Then we rebuild it as long as there are no inline comments (;)
-                # We join the rebuilt string with unescaped semicolons (on purpose)
-                array = text.split('\;', 0)
-
-                text = ""
-
-                array.each do |elt|
-
-                    # Now we split at inline comments. If we have more than 1 element in the array
-                    # it means we have an inline comment, so we are able to stop parsing
-                    # However we still want to reconstruct the string with its first part (before the comment)
-                    linearray = elt.split(';', 0)
-
-                    # Let's reconstruct the string with a (unescaped) semicolon
-                    if text != "" then
-                        text += ';'
-                    end
-                    text += linearray[0]
-
-                    # Now we can stop
-                    if linearray.length > 1 then
-                        break                                
-                    end
-                end
-
-
-                # We strip the text to remove spaces between end of string and beginning of inline comment
-                action { [:VALUE, text.strip] }
-
-              else
-                text = @ss.string[@ss.pos .. -1]
-                raise  ScanError, "can not match: '#{text}'"
-            end  # case
-        else              # @invar == false
-            case
-              when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
-                ;
-
-              when (text = @ss.scan(/\#.*$/))               # ignore comments
-                ;
-
-              when (text = @ss.scan(/;.*$/))               # ignore inline comments
-                ;
-
-              when (text = @ss.scan(/\n/))                  # newline
-                action { [:RETURN, text] }
-
-              when (text = @ss.scan(/\}/))
-                @inobject = false
-                action { [:RCURLY, text] }
-
-              when (not @invar and (text = @ss.scan(/\S+/)))
-                @invar = true
-                action { [:PARAM, text] }
-
-              else
-                text = @ss.string[@ss.pos .. -1]
-                raise  ScanError, "can not match: '#{text}'"
-            end  # case
-        end  # if @invar
-    end  # if not @inobject
+    end
     token
 end
 
