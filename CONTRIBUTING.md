@@ -47,6 +47,28 @@ top of things.
 * Make sure you have added the necessary tests for your changes.
 * Run _all_ the tests to assure nothing else was accidentally broken.
 
+## Making Trivial Changes
+
+### Documentation
+
+For changes of a trivial nature to comments and documentation, it is not
+always necessary to create a new ticket in Redmine. In this case, it is
+appropriate to start the first line of a commit with '(doc)' instead of
+a ticket number. 
+
+````
+    (doc) Add documentation commit example to CONTRIBUTING
+
+    There is no example for contributing a documentation commit
+    to the Puppet repository. This is a problem because the contributor
+    is left to assume how a commit of this nature may appear.
+
+    The first line is a real life imperative statement with '(doc)' in
+    place of what would have been the ticket number in a 
+    non-documentation related commit. The body describes the nature of
+    the new documentation or comments added.
+````
+
 ## Submitting Changes
 
 * Sign the [Contributor License Agreement](http://links.puppetlabs.com/cla).
