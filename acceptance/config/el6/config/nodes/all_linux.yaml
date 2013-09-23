@@ -1,0 +1,42 @@
+HOSTS:
+  master:
+    roles:
+      - master
+      - agent
+    platform: el-6-x86_64
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/redhat-6-x86_64
+  rhel-agent:
+    roles:
+      - agent
+    platform: el-6-i386
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/redhat-6-i386
+  fedora-agent:
+    roles:
+      - agent
+    platform: fedora-18-i386
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/fedora-18-i386
+  ubuntu-agent:
+    roles:
+      - agent
+    platform: ubuntu-lucid-i386
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-i386
+  wheezy-agent:
+    roles:
+      - agent
+    platform: debian-wheezy-i386
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/debian-7-i386
+  centos-agent:
+    roles:
+      - agent
+    platform: centos-5-i386
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/centos-5-i386
+CONFIG:
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
