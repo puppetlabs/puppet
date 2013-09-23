@@ -35,9 +35,87 @@ def token
     text = @ss.peek(1)
     @line  +=  1  if text == "\n"
 
-    token = case @inobject
-        when false  # @inobject == false
-          case
+    token = if not @inobject
+        case
+          when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+            ;
+
+          when (text = @ss.scan(/\#.*$/))               # ignore comments
+            ;
+
+          when (text = @ss.scan(/;.*$/))               # ignore inline comments
+            ;
+
+          when (text = @ss.scan(/\n/))                  # newline
+            action { [:RETURN, text] }
+
+          when (text = @ss.scan(/\b(define)\b/))
+            action { [:DEFINE, text] }
+
+          when (text = @ss.scan(/[^{ \t\n]+/))
+            action { [:NAME, text] }
+
+          when (text = @ss.scan(/\{/))
+            @inobject = true
+            action { [:LCURLY, text] }
+
+          else
+            text = @ss.string[@ss.pos .. -1]
+            raise  ScanError, "can not match: '" + text + "'"
+        end  # case
+    else   # @inobject == true
+        if @invar
+            case
+              when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+                ;
+
+              when (text = @ss.scan(/\#.*$/))               # ignore comments
+                ;
+
+              when (text = @ss.scan(/\n/))                  # newline
+                action { [:RETURN, text] }
+
+              when (text = @ss.scan(/.+$/))                 # Value of parameter
+                @invar = false
+
+                # Special handling of inline comments (;) and escaped semicolons (\;)
+
+                # We split the string on escaped semicolons (\;),
+                # Then we rebuild it as long as there are no inline comments (;)
+                # We join the rebuilt string with unescaped semicolons (on purpose)
+                array = text.split('\;', 0)
+
+                text = ""
+
+                array.each do |elt|
+
+                    # Now we split at inline comments. If we have more than 1 element in the array
+                    # it means we have an inline comment, so we are able to stop parsing
+                    # However we still want to reconstruct the string with its first part (before the comment)
+                    linearray = elt.split(';', 0)
+
+                    # Let's reconstruct the string with a (unescaped) semicolon
+                    if text != "" then
+                        text += ';'
+                    end
+                    text += linearray[0]
+
+                    # Now we can stop
+                    if linearray.length > 1 then
+                        break                                
+                    end
+                end
+
+
+                # We strip the text to remove spaces between end of string and beginning of inline comment
+                action { [:VALUE, text.strip] }
+
+              else
+                text = @ss.string[@ss.pos .. -1]
+                raise  ScanError, "can not match: '" + text + "'"
+            end  # case
+        else              # @invar == false
+            case
               when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
                 ;
 
@@ -50,101 +128,20 @@ def token
               when (text = @ss.scan(/\n/))                  # newline
                 action { [:RETURN, text] }
 
-              when (text = @ss.scan(/\b(define)\b/))
-                action { [:DEFINE, text] }
+              when (text = @ss.scan(/\}/))
+                @inobject = false
+                action { [:RCURLY, text] }
 
-              when (text = @ss.scan(/[^{ \t\n]+/))
-                action { [:NAME, text] }
-
-              when (text = @ss.scan(/\{/))
-                @inobject = true
-                action { [:LCURLY, text] }
+              when (not @invar and (text = @ss.scan(/\S+/)))
+                @invar = true
+                action { [:PARAM, text] }
 
               else
                 text = @ss.string[@ss.pos .. -1]
-                raise  ScanError, "can not match: '" + text + "'"
-              end  # if
-        when true   # @inobject == true
-            if @invar
-                case
-                  when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
-                    ;
-
-                  when (text = @ss.scan(/\#.*$/))               # ignore comments
-                    ;
-
-                  when (text = @ss.scan(/\n/))                  # newline
-                    action { [:RETURN, text] }
-
-                  when (text = @ss.scan(/.+$/))                 # Value of parameter
-                    @invar = false
-
-                    # Special handling of inline comments (;) and escaped semicolons (\;)
-
-                    # We split the string on escaped semicolons (\;),
-                    # Then we rebuild it as long as there are no inline comments (;)
-                    # We join the rebuilt string with unescaped semicolons (on purpose)
-                    array = text.split('\;', 0)
-
-                    text = ""
-
-                    array.each do |elt|
-
-                        # Now we split at inline comments. If we have more than 1 element in the array
-                        # it means we have an inline comment, so we are able to stop parsing
-                        # However we still want to reconstruct the string with its first part (before the comment)
-                        linearray = elt.split(';', 0)
-
-                        # Let's reconstruct the string with a (unescaped) semicolon
-                        if text != "" then
-                            text += ';'
-                        end
-                        text += linearray[0]
-
-                        # Now we can stop
-                        if linearray.length > 1 then
-                            break                                
-                        end
-                    end
-
-
-                    # We strip the text to remove spaces between end of string and beginning of inline comment
-                    action { [:VALUE, text.strip] }
-
-                  else
-                    text = @ss.string[@ss.pos .. -1]
-                    raise  ScanError, "can not match: '" + text + "'"
-                end  # case
-            else              # @invar == false
-                case
-                  when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
-                    ;
-
-                  when (text = @ss.scan(/\#.*$/))               # ignore comments
-                    ;
-
-                  when (text = @ss.scan(/;.*$/))               # ignore inline comments
-                    ;
-
-                  when (text = @ss.scan(/\n/))                  # newline
-                    action { [:RETURN, text] }
-
-                  when (text = @ss.scan(/\}/))
-                    @inobject = false
-                    action { [:RCURLY, text] }
-
-                  when (not @invar and (text = @ss.scan(/\S+/)))
-                    @invar = true
-                    action { [:PARAM, text] }
-
-                  else
-                    text = @ss.string[@ss.pos .. -1]
-                    raise  ScanError, "can not match: '#{text}'"
-                end  # case
-            end
-        else
-          raise  ScanError, "undefined state: '" + state.to_s + "'"
-    end  # case state
+                raise  ScanError, "can not match: '#{text}'"
+            end  # case
+        end  # if @invar
+    end  # if not @inobject
     token
 end
 
