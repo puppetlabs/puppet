@@ -5,7 +5,7 @@ require 'puppet/external/nagios'
 
 describe "Nagios parser" do
 
-    SNIPPET = <<-'EOL'
+    NONESCAPED_SEMICOLON_COMMENT = <<-'EOL'
 define host{
     use                     linux-server            ; Name of host template to use
     host_name               localhost
@@ -55,34 +55,34 @@ define command{
   }
 EOL
 
-    BAD_SNIPPET = <<-'EOL'
+    UNKNOWN_NAGIOS_OBJECT_DEFINITION = <<-'EOL'
       define command2{
         command_name  notify-host-by-email
         command_line  /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$
         }
       EOL
 
-    BAD_SNIPPET2 = <<-'EOL'
+    MISSING_CLOSING_CURLY_BRACKET = <<-'EOL'
       define command{
         command_name  notify-host-by-email
         command_line  /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mail -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$
       EOL
 
-    REGRESSION1 = <<-'EOL'
+    ESCAPED_SEMICOLON = <<-'EOL'
         define command {
             command_name  nagios_table_size
             command_line $USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name "SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\"$ARG1$\"\;" --name2 "table size" --units kBytes -w $ARG2$ -c $ARG3$
         }
       EOL
 
-    REGRESSION2 = <<-'EOL'
+    POUND_SIGN_HASH_SYMBOL_NOT_IN_FIRST_COLUMN = <<-'EOL'
         define command {
             command_name  notify-by-irc
             command_line /usr/local/bin/riseup-nagios-client.pl "$HOSTNAME$ ($SERVICEDESC$) $NOTIFICATIONTYPE$ #$SERVICEATTEMPT$ $SERVICESTATETYPE$ $SERVICEEXECUTIONTIME$s $SERVICELATENCY$s $SERVICEOUTPUT$ $SERVICEPERFDATA$"
         }
       EOL
 
-    REGRESSION3 = <<-EOL
+    ANOTHER_ESCAPED_SEMICOLON = <<-EOL
 define command {
 \tcommand_name                   check_haproxy
 \tcommand_line                   LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats\\;csv'
@@ -92,13 +92,13 @@ EOL
   it "should parse without error" do
     parser =  Nagios::Parser.new
     expect {
-      results = parser.parse(SNIPPET)
+      results = parser.parse(NONESCAPED_SEMICOLON_COMMENT)
     }.to_not raise_error
   end
 
   describe "when parsing a statement" do
     parser =  Nagios::Parser.new
-    results = parser.parse(SNIPPET)
+    results = parser.parse(NONESCAPED_SEMICOLON_COMMENT)
     results.each do |obj|
       it "should have the proper base type" do
         obj.should be_a_kind_of(Nagios::Base)
@@ -106,17 +106,17 @@ EOL
     end
   end
 
-  it "should raise an error when an incorrect command is present" do
+  it "should raise an error when an incorrect object definition is present" do
     parser =  Nagios::Parser.new
     expect {
-      results = parser.parse(BAD_SNIPPET)
+      results = parser.parse(UNKNOWN_NAGIOS_OBJECT_DEFINITION)
     }.to raise_error Nagios::Base::UnknownNagiosType
   end
 
   it "should raise an error when syntax is not correct" do
     parser =  Nagios::Parser.new
     expect {
-      results = parser.parse(BAD_SNIPPET2)
+      results = parser.parse(MISSING_CLOSING_CURLY_BRACKET)
     }.to raise_error Nagios::Parser::SyntaxError
   end
 
@@ -124,19 +124,19 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       expect {
-        results = parser.parse(REGRESSION1)
+        results = parser.parse(ESCAPED_SEMICOLON)
       }.to_not raise_error Nagios::Parser::SyntaxError
     end
 
     it "should ignore it if it is a comment" do
       parser =  Nagios::Parser.new
-      results = parser.parse(SNIPPET)
+      results = parser.parse(NONESCAPED_SEMICOLON_COMMENT)
       results[0].use.should eql("linux-server")
     end
 
     it "should parse correctly if it is escaped" do
       parser =  Nagios::Parser.new
-      results = parser.parse(REGRESSION1)
+      results = parser.parse(ESCAPED_SEMICOLON)
       results[0].command_line.should eql("$USER3$/check_mysql_health --hostname localhost --username nagioschecks --password nagiosCheckPWD --mode sql --name \"SELECT ROUND(Data_length/1024) as Data_kBytes from INFORMATION_SCHEMA.TABLES where TABLE_NAME=\\\"$ARG1$\\\";\" --name2 \"table size\" --units kBytes -w $ARG2$ -c $ARG3$")
     end
   end
@@ -146,7 +146,7 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       expect {
-        results = parser.parse(REGRESSION2)
+        results = parser.parse(POUND_SIGN_HASH_SYMBOL_NOT_IN_FIRST_COLUMN)
       }.to_not raise_error Nagios::Parser::SyntaxError
     end
 
@@ -159,7 +159,7 @@ EOL
 
     it "should let it go anywhere else" do
       parser =  Nagios::Parser.new
-      results = parser.parse(REGRESSION2)
+      results = parser.parse(POUND_SIGN_HASH_SYMBOL_NOT_IN_FIRST_COLUMN)
       results[0].command_line.should eql("/usr/local/bin/riseup-nagios-client.pl \"$HOSTNAME$ ($SERVICEDESC$) $NOTIFICATIONTYPE$ \#$SERVICEATTEMPT$ $SERVICESTATETYPE$ $SERVICEEXECUTIONTIME$s $SERVICELATENCY$s $SERVICEOUTPUT$ $SERVICEPERFDATA$\"")
     end
 
@@ -169,13 +169,13 @@ EOL
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
       expect {
-        results = parser.parse(REGRESSION3)
+        results = parser.parse(ANOTHER_ESCAPED_SEMICOLON)
       }.to_not raise_error Nagios::Parser::SyntaxError
     end
 
     it "should parse correctly" do
       parser =  Nagios::Parser.new
-      results = parser.parse(REGRESSION3)
+      results = parser.parse(ANOTHER_ESCAPED_SEMICOLON)
       results[0].command_line.should eql("LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats;csv'")
     end
   end
@@ -183,12 +183,12 @@ EOL
 
   it "should be idempotent" do
     parser =  Nagios::Parser.new
-    src = REGRESSION3.dup
+    src = ANOTHER_ESCAPED_SEMICOLON.dup
     results = parser.parse(src)
     nagios_type = Nagios::Base.create(:command)
     nagios_type.command_name = results[0].command_name
     nagios_type.command_line = results[0].command_line
-    nagios_type.to_s.should eql(REGRESSION3)
+    nagios_type.to_s.should eql(ANOTHER_ESCAPED_SEMICOLON)
   end
 
 end
