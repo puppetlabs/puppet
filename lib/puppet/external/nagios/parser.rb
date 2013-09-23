@@ -30,39 +30,50 @@ def parse(src)
     do_parse
 end
 
+=begin
+    This tokenizes the outside of object definitions,
+    and detects when we start defining an object.
+    We ignore whitespaces, comments and inline comments.
+    We yield when finding newlines, the "define" keyword,
+        the object name and the opening curly bracket.
+=end
+def tokenize_outside_definitions
+    case
+      when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+        ;
+
+      when (text = @ss.scan(/\#.*$/))               # ignore comments
+        ;
+
+      when (text = @ss.scan(/;.*$/))                # ignore inline comments
+        ;
+
+      when (text = @ss.scan(/\n/))                  # newline
+        action { [:RETURN, text] }
+
+      when (text = @ss.scan(/\b(define)\b/))        # the "define" keyword 
+        action { [:DEFINE, text] }
+
+      when (text = @ss.scan(/[^{ \t\n]+/))          # the name of the object being defined (everything not an opening curly bracket or a separator)
+        action { [:NAME, text] }
+
+      when (text = @ss.scan(/\{/))                  # the opening curly bracket - we enter object definition
+        @inobject = true
+        action { [:LCURLY, text] }
+
+      else
+        text = @ss.string[@ss.pos .. -1]
+        raise  ScanError, "can not match: '#{text}'"
+    end  # case
+end
+
 # The lexer.  Very simple.
 def token
     text = @ss.peek(1)
     @line  +=  1  if text == "\n"
 
     token = if not @inobject
-        case
-          when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
-            ;
-
-          when (text = @ss.scan(/\#.*$/))               # ignore comments
-            ;
-
-          when (text = @ss.scan(/;.*$/))               # ignore inline comments
-            ;
-
-          when (text = @ss.scan(/\n/))                  # newline
-            action { [:RETURN, text] }
-
-          when (text = @ss.scan(/\b(define)\b/))
-            action { [:DEFINE, text] }
-
-          when (text = @ss.scan(/[^{ \t\n]+/))
-            action { [:NAME, text] }
-
-          when (text = @ss.scan(/\{/))
-            @inobject = true
-            action { [:LCURLY, text] }
-
-          else
-            text = @ss.string[@ss.pos .. -1]
-            raise  ScanError, "can not match: '" + text + "'"
-        end  # case
+        tokenize_outside_definitions
     else   # @inobject == true
         if @invar
             case
@@ -112,7 +123,7 @@ def token
 
               else
                 text = @ss.string[@ss.pos .. -1]
-                raise  ScanError, "can not match: '" + text + "'"
+                raise  ScanError, "can not match: '#{text}'"
             end  # case
         else              # @invar == false
             case
