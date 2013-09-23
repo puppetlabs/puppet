@@ -20,7 +20,8 @@ describe provider_class do
   let(:resource) do
     Puppet::Type.type(:package).new(
       :name     => resource_name,
-      :ensure   => :installed
+      :ensure   => :installed,
+      :provider => 'rpm'
     )
   end
 
@@ -134,23 +135,40 @@ describe provider_class do
 
     describe "when not already installed" do
       it "should only include the '-i' flag" do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-i", '/path/to/package'], execute_options)
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", ["-i"], '/path/to/package'], execute_options)
         provider.install
       end
-   end
+    end
 
-   describe "when an older version is installed" do
-     before(:each) do
-       # Force the provider to think a version of the package is already installed
-       # This is real hacky. I'm sorry.  --jeffweiss 25 Jan 2013
-       provider.instance_variable_get('@property_hash')[:ensure] = '1.2.3.3'
-     end
+    describe "when installed with options" do
+      let(:resource) do
+        Puppet::Type.type(:package).new(
+          :name            => resource_name,
+          :ensure          => :installed,
+          :provider        => 'rpm',
+          :source          => '/path/to/package',
+          :install_options => ['-D', {'--test' => 'value'}, '-Q']
+        )
+      end
 
-     it "should include the '-U --oldpackage' flags" do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", ["-U", "--oldpackage"], '/path/to/package'], execute_options)
+      it "should include the options" do
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", ["-i", "-D", "--test=value", "-Q"], '/path/to/package'], execute_options)
         provider.install
-     end
-   end
+      end
+    end
+
+    describe "when an older version is installed" do
+      before(:each) do
+        # Force the provider to think a version of the package is already installed
+        # This is real hacky. I'm sorry.  --jeffweiss 25 Jan 2013
+        provider.instance_variable_get('@property_hash')[:ensure] = '1.2.3.3'
+      end
+
+      it "should include the '-U --oldpackage' flags" do
+         Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", ["-U", "--oldpackage"], '/path/to/package'], execute_options)
+         provider.install
+      end
+    end
   end
 
   describe "#latest" do
@@ -257,6 +275,31 @@ describe provider_class do
 
     it "should warn but not fail if line is unparseable" do
       parser_test('bad data', {}, 1)
+    end
+  end
+
+  describe "#install_options" do
+    it "should return empty array by default" do
+      provider.install_options.should == []
+    end
+
+    it "should return install_options when set" do
+      provider.resource[:install_options] = ['-n']
+      provider.install_options.should == ['-n']
+    end
+
+    it "should return multiple install_options when set" do
+      provider.resource[:install_options] = ['-L', '/opt/puppet']
+      provider.install_options.should == ['-L', '/opt/puppet']
+    end
+
+    it 'should return install_options when set as hash' do
+      provider.resource[:install_options] = { '-Darch' => 'vax' }
+      provider.install_options.should == ['-Darch=vax']
+    end
+    it 'should return install_options when an array with hashes' do
+      provider.resource[:install_options] = [ '-L', { '-Darch' => 'vax' }]
+      provider.install_options.should == ['-L', '-Darch=vax']
     end
   end
 
