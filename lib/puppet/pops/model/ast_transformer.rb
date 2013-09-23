@@ -157,6 +157,13 @@ class Puppet::Pops::Model::AstTransformer
     ast o, AST::Collection, args
   end
 
+  def transform_EppExpression(o)
+    parameters = o.parameters.collect {|p| transform(p) }
+    args = { :parameters => parameters }
+    args[:children] = transform(o.body) unless is_nop?(o.body)
+    Puppet::Parser::AST::Epp.new(merge_location(args, o))
+  end
+
   def transform_ExportedQuery(o)
     if is_nop?(o.expr)
       result = :exported
@@ -432,6 +439,11 @@ class Puppet::Pops::Model::AstTransformer
     Puppet::Parser::AST::Hostclass.new(o.name, merge_location(args, o))
   end
 
+  def transform_HeredocExpression(o)
+    args = {:syntax=> o.syntax(), :expr => transform(o.text_expr()) }
+    Puppet::Parser::AST::Heredoc.new(merge_location(args, o))
+  end
+
   def transform_NodeDefinition(o)
     # o.host_matches are expressions, and 3.1 AST requires special object AST::HostName
     # where a HostName is one of NAME, STRING, DEFAULT or Regexp - all of these are strings except regexp
@@ -477,6 +489,14 @@ class Puppet::Pops::Model::AstTransformer
 
   def transform_RelationshipExpression(o)
     Puppet::Parser::AST::Relationship.new(transform(o.left_expr), transform(o.right_expr), o.operator.to_s, merge_location({}, o))
+  end
+
+  def transform_RenderStringExpression(o)
+    ast o, AST::RenderString, :value => o.value
+  end
+
+  def transform_RenderExpression(o)
+    ast o, AST::RenderExpression, :value => transform(o.expr)
   end
 
   def transform_ResourceTypeDefinition(o)

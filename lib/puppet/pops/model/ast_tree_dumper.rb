@@ -248,6 +248,17 @@ class Puppet::Pops::Model::AstTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
+  def dump_Epp(o)
+    result = ["epp"]
+    result << ["parameters"] + o.parameters.collect {|p| _dump_ParameterArray(p) } if o.parameters && o.parameters.size() > 0
+    if is_nop?(o.children)
+      result << []
+    else
+      result << do_dump(o.children)
+    end
+    result
+  end
+
   def dump_ResourceReference o
     result = ["slice", do_dump(o.type)]
     if o.title.children.size == 1
@@ -344,6 +355,14 @@ class Puppet::Pops::Model::AstTreeDumper < Puppet::Pops::Model::TreeDumper
     end
     result << :dedent
     result
+  end
+
+  def dump_RenderExpression(o)
+    ["render", do_dump(o.value)]
+  end
+
+  def dump_RenderString(o)
+    ["render-s", " '#{o.value}'"]
   end
 
   def dump_Resource o

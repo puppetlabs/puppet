@@ -248,6 +248,11 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  def build_RenderStringExpression(o, string)
+    o.value = string;
+    o
+  end
+
   def build_ResourceBody(o, title_expression, attribute_operations)
     o.title = build(title_expression)
     attribute_operations.each {|ao| o.addOperations(build(ao)) }
@@ -519,6 +524,8 @@ class Puppet::Pops::Model::Factory
 
   def self.HASH(entries);                new(Model::LiteralHash, *entries);                      end
 
+  def self.HEREDOC(name, expr);          new(Model::HeredocExpression, name, expr);              end
+
   def self.LIST(entries);                new(Model::LiteralList, *entries);                      end
 
   def self.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
@@ -545,6 +552,18 @@ class Puppet::Pops::Model::Factory
 
   def self.TEXT(expr)
     new(Model::TextExpression, expr)
+  end
+
+  def self.RENDER_STRING(o)
+    new(Model::RenderStringExpression, o)
+  end
+
+  def self.RENDER_EXPR(expr)
+    new(Model::RenderExpression, expr)
+  end
+
+  def self.EPP(parameters, body)
+    new(Model::EppExpression, parameters, body)
   end
 
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the
@@ -760,6 +779,13 @@ class Puppet::Pops::Model::Factory
     x = Model::LiteralHash.new
     (o.sort_by {|k,v| k.to_s}).each {|k,v| x.addEntries(build(Model::KeyedEntry.new, k, v)) }
     x
+  end
+
+  # @param name [String, nil] the name of the syntax
+  def build_HeredocExpression(o, syntax, expr)
+    o.syntax = syntax
+    o.text_expr = to_ops(expr)
+    o
   end
 
   # @param rval_required [Boolean] if the call must produce a value

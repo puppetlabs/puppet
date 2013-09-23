@@ -103,6 +103,13 @@ module Puppetx
           in_multibind(SYNTAX_CHECKERS)
           to_instance('Puppetx::Puppetlabs::SyntaxCheckers::Json')
         end
+
+        bindings.bind do
+          name('yaml')
+          instance_of(SYNTAX_CHECKERS_TYPE)
+          in_multibind(SYNTAX_CHECKERS)
+          to_instance('Puppetx::Puppetlabs::SyntaxCheckers::Yaml')
+        end
       end
     end
   end

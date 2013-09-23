@@ -1,6 +1,5 @@
 require 'puppet/pops'
-
-require File.join(File.dirname(__FILE__), '/../factory_rspec_helper')
+require 'puppet_spec/factory_rspec_helper'
 
 module ParserRspecHelper
   include FactoryRspecHelper

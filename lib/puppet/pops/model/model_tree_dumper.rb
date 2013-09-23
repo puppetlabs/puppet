@@ -54,6 +54,17 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
+  def dump_EppExpression o
+    result = ["epp"]
+    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    if o.body
+      result << do_dump(o.body)
+    else
+      result << []
+    end
+    result
+  end
+
   def dump_ExportedQuery o
     result = ["<<| |>>"]
     result += dump_QueryExpression(o) unless is_nop?(o.expr)
@@ -188,6 +199,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     ["cat"] + o.segments.collect {|x| do_dump(x)}
   end
 
+  def dump_HeredocExpression(o)
+    result = ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
+  end
+
   def dump_HostClassDefinition o
     result = ["class", o.name]
     result << ["inherits", o.parent_class] if o.parent_class
@@ -304,6 +319,14 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_RelationshipExpression o
     [o.operator.to_s, do_dump(o.left_expr), do_dump(o.right_expr)]
+  end
+
+  def dump_RenderStringExpression o
+    ["render-s", " '#{o.value}'"]
+  end
+
+  def dump_RenderExpression o
+    ["render", do_dump(o.expr)]
   end
 
   def dump_ResourceBody o
