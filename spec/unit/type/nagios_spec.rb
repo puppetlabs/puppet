@@ -91,9 +91,9 @@ EOL
 
   it "should parse without error" do
     parser =  Nagios::Parser.new
-    lambda {
+    expect {
       results = parser.parse(SNIPPET)
-    }.should_not raise_error
+    }.to_not raise_error
   end
 
   describe "when parsing a statement" do
@@ -108,24 +108,24 @@ EOL
 
   it "should raise an error when an incorrect command is present" do
     parser =  Nagios::Parser.new
-    lambda {
+    expect {
       results = parser.parse(BAD_SNIPPET)
-    }.should raise_error Nagios::Base::UnknownNagiosType
+    }.to raise_error Nagios::Base::UnknownNagiosType
   end
 
   it "should raise an error when syntax is not correct" do
     parser =  Nagios::Parser.new
-    lambda {
+    expect {
       results = parser.parse(BAD_SNIPPET2)
-    }.should raise_error Nagios::Parser::SyntaxError
+    }.to raise_error Nagios::Parser::SyntaxError
   end
 
   describe "when encoutering ';'" do
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
-      lambda {
+      expect {
         results = parser.parse(REGRESSION1)
-      }.should_not raise_error Nagios::Parser::SyntaxError
+      }.to_not raise_error Nagios::Parser::SyntaxError
     end
 
     it "should ignore it if it is a comment" do
@@ -145,9 +145,9 @@ EOL
 
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
-      lambda {
+      expect {
         results = parser.parse(REGRESSION2)
-      }.should_not raise_error Nagios::Parser::SyntaxError
+      }.to_not raise_error Nagios::Parser::SyntaxError
     end
 
 
@@ -168,9 +168,9 @@ EOL
   describe "when encountering ';' again" do
     it "should not throw an exception" do
       parser =  Nagios::Parser.new
-      lambda {
+      expect {
         results = parser.parse(REGRESSION3)
-      }.should_not raise_error Nagios::Parser::SyntaxError
+      }.to_not raise_error Nagios::Parser::SyntaxError
     end
 
     it "should parse correctly" do
