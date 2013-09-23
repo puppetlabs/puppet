@@ -150,6 +150,55 @@ def list_preserved_configurations
   preserved.map { |k,v| [v,k] }.sort { |a,b| a[0] <=> b[0] }.reverse
 end
 
+def list_preserved_hosts
+  hosts = Set.new
+  Dir.glob('log/**/pre*suite*run.log').each do |log|
+    yesterday = Time.now - (24 * 60 * 60)
+    File.open(log, 'r') do |file|
+      if file.ctime > yesterday
+        file.each_line do |line|
+          matchdata = /^(\w+) \(.*?\) \$/.match(line.encode!('UTF-8', 'UTF-8', :invalid => :replace))
+          hosts.add(matchdata[1]) if matchdata
+        end
+      end
+    end
+  end
+  pp hosts
+end
+
+# Plagiarized from Beaker::Vcloud#cleanup
+def destroy_preserved_hosts
+  require 'beaker/hypervisor/vsphere_helper'
+  vsphere_credentials = VsphereHelper.load_config("#{ENV['HOME']}/.fog")
+
+  puts "Connecting to vSphere at #{vsphere_credentials[:server]}" +
+    " with credentials for #{vsphere_credentials[:user]}"
+
+  vsphere_helper = VsphereHelper.new( vsphere_credentials )
+
+  vm_names = list_preserved_hosts.to_a
+  vms = vsphere_helper.find_vms vm_names
+  vm_names.each do |name|
+    unless vm = vms[name]
+      puts "Couldn't find VM #{name} in vSphere!"
+      next
+    end
+
+    if vm.runtime.powerState == 'poweredOn'
+      puts "Shutting down #{vm.name}"
+      start = Time.now
+      vm.PowerOffVM_Task.wait_for_completion
+      puts "Spent %.2f seconds halting #{vm.name}" % (Time.now - start)
+    end
+
+    start = Time.now
+    vm.Destroy_Task
+    puts "Spent %.2f seconds destroying #{vm.name}" % (Time.now - start)
+  end
+
+  vsphere_helper.close
+end
+
 def print_preserved(preserved)
   preserved.each_with_index do |entry,i|
     puts "##{i}: #{entry[0]}"
@@ -223,6 +272,11 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
   task :list_preserved do
     preserved = list_preserved_configurations
     print_preserved(preserved)
+  end
+
+  desc "Shutdown and destroy any hosts that we have preserved for testing.  These should be reaped daily by scripts, but this will free up resources immediately."
+  task :destroy_preserved_hosts do
+    destroy_preserved_hosts
   end
 
   desc <<-EOS
