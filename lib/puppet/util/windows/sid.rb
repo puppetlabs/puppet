@@ -31,6 +31,18 @@ module Puppet::Util::Windows
       nil
     end
 
+    # Converts an octet string array of bytes to a SID object,
+    # e.g. [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] is the representation for
+    # S-1-5-18, the local 'SYSTEM' account.
+    # Raises an Error for nil or non-array input.
+    def octet_string_to_sid_object(bytes)
+      if !bytes || !bytes.respond_to?('pack') || bytes.empty?
+        raise Puppet::Util::Windows::Error.new("Octet string must be an array of bytes")
+      end
+
+      Win32::Security::SID.new(bytes.pack('C*'))
+    end
+
     # Convert a SID string, e.g. "S-1-5-32-544" to a name,
     # e.g. 'BUILTIN\Administrators'. Returns nil if an account
     # for that SID does not exist.
