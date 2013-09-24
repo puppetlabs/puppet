@@ -173,6 +173,15 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     resource.should_not be_noop
   end
 
+  it "should raise an error when the required attribute is not specified" do
+    expect {
+      Puppet::Type.newtype(:provider_test_type) do
+        newparam(:name) { isnamevar }
+        newproperty(:foo) { isrequired }
+      end.new(:name => "foo")
+    }.to raise_error(Puppet::DevError, /is requried/)
+  end
+
   describe "when creating an event" do
     before do
       @resource = Puppet::Type.type(:mount).new :name => "foo"
