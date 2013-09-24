@@ -276,6 +276,48 @@ describe provider_class do
       @provider.need_to_run?.should == true
     end
 
+    #Ticket 22617 testing
+    it "should return true when a get string compare is true" do
+      @resource[:onlyif] = "get bpath > a"
+      @augeas.stubs("get").returns("b")
+      @provider.need_to_run?.should == true
+    end
+
+    #Ticket 22617 testing
+    it "should return false when a get string compare is false" do
+      @resource[:onlyif] = "get a19path > a2"
+      @augeas.stubs("get").returns("a19")
+      @provider.need_to_run?.should == false
+    end
+
+    #Ticket 22617 testing
+    it "should return true when a get int gt compare is true" do
+      @resource[:onlyif] = "get path19 > 2"
+      @augeas.stubs("get").returns("19")
+      @provider.need_to_run?.should == true
+    end
+
+    #Ticket 22617 testing
+    it "should return true when a get int ge compare is true" do
+      @resource[:onlyif] = "get path19 >= 2"
+      @augeas.stubs("get").returns("19")
+      @provider.need_to_run?.should == true
+    end
+
+    #Ticket 22617 testing
+    it "should return true when a get int lt compare is true" do
+      @resource[:onlyif] = "get path2 < 19"
+      @augeas.stubs("get").returns("2")
+      @provider.need_to_run?.should == true
+    end
+
+    #Ticket 22617 testing
+    it "should return false when a get int le compare is false" do
+      @resource[:onlyif] = "get path39 <= 4"
+      @augeas.stubs("get").returns("39")
+      @provider.need_to_run?.should == false
+    end
+
     it "should return false when a get filter does not match" do
       @resource[:onlyif] = "get path == another value"
       @augeas.stubs("get").returns("value")
