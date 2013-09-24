@@ -8,8 +8,8 @@ Find
 
 Retrieve a catalog.
 
-    POST /:environment/catalog/:name
-    GET /:environment/catalog/:name
+    POST /:environment/catalog/:nodename
+    GET /:environment/catalog/:nodename
 
 ### Supported HTTP Methods
 
@@ -154,6 +154,6 @@ Schema
 ------
 
 In the POST request body (or the GET query), the facts parameter should adhere to the
-api/schemas/catalog_facts.json schema.
+api/schemas/facts.json schema.
 
 A catalog response body should adhere to the api/schemas/catalog.json schema.
