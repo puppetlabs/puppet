@@ -21,7 +21,7 @@ class Puppet::Application::Apply < Puppet::Application
   option("--logdest LOGDEST", "-l") do |arg|
     begin
       Puppet::Util::Log.newdestination(arg)
-      options[:logset] = true
+      options[:logdest] = true
     rescue => detail
       $stderr.puts detail.to_s
     end
@@ -238,7 +238,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def setup
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
-    Puppet::Util::Log.newdestination(:console) unless options[:logset]
+    Puppet::Util::Log.newdestination(:console) unless options[:logdest]
 
     Signal.trap(:INT) do
       $stderr.puts "Exiting"
