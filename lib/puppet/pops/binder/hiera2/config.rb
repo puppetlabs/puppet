@@ -6,7 +6,18 @@ module Puppet::Pops::Binder::Hiera2
   # @api public
   #
   class Puppet::Pops::Binder::Hiera2::Config
-    DEFAULT_HIERARCHY = [ ['osfamily', '${osfamily}', 'data/osfamily/${osfamily}'], ['common', 'true', 'data/common']]
+    DEFAULT_HIERARCHY_2 = [ ['osfamily', '${osfamily}', 'data/osfamily/${osfamily}'], ['common', 'true', 'data/common']]
+    DEFAULT_HIERARCHY_3 = [
+      { 'category' => 'osfamily',
+        'value'    => '${osfamily}', 
+        'path'     => 'osfamily/${osfamily}'
+      },
+      { 'category' => 'common',
+        'value'   => 'true',
+        'path'    => 'common'
+      }
+    ]
+    DEFAULT_DATADIR = 'data'
     DEFAULT_BACKENDS = ['yaml', 'json']
 
     if defined?(::Psych::SyntaxError)
@@ -19,6 +30,9 @@ module Puppet::Pops::Binder::Hiera2
     #
     # @return [Array<String>] backend names
     attr_reader :backends
+
+    # The datadir relative to the hiera.yaml file, prepended to paths
+    attr_reader :data_dir
 
     # Root directory of the module holding the configuration
     #
@@ -33,6 +47,12 @@ module Puppet::Pops::Binder::Hiera2
     # @return [Array<Array(String, String, String)>]
     # @api public
     attr_reader :hierarchy
+
+    # The configuration file version. (This implementation supports 2 and 3
+    # @return [String]
+    # @api public
+    #
+    attr_reader :version
 
     # Creates a new Config. The configuration is loaded from the file 'hiera.yaml' which
     # is expected to be found in the given module_dir.
@@ -52,6 +72,8 @@ module Puppet::Pops::Binder::Hiera2
           # if these are missing the result is nil, and they get default values later
           @hierarchy = data['hierarchy']
           @backends = data['backends']
+          @version = data['version']
+          @data_dir = data['data_dir']
         end
       rescue Errno::ENOENT
         diagnostics.accept(Issues::CONFIG_FILE_NOT_FOUND, config_file)
@@ -62,8 +84,13 @@ module Puppet::Pops::Binder::Hiera2
       rescue *YamlLoadExceptions => e
         diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, e)
       end
-      @hierarchy ||= DEFAULT_HIERARCHY
+      @data_dir  ||= DEFAULT_DATADIR
       @backends ||= DEFAULT_BACKENDS
+      if version == 3
+        @hierarchy ||= DEFAULT_HIERARCHY_3
+      else
+        @hierarchy ||= DEFAULT_HIERARCHY_2
+      end
     end
   end
 end
