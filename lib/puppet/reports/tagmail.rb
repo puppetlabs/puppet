@@ -158,7 +158,7 @@ Puppet::Reports.register_report(:tagmail) do
               p.puts "From: #{Puppet[:reportfrom]}"
               p.puts "Subject: Puppet Report for #{self.host}"
               p.puts "To: " + emails.join(", ")
-
+              p.puts
               p.puts messages
             end
           end
