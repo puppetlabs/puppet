@@ -328,16 +328,39 @@ class Puppet::Resource
       result = scope.compiler.injector.lookup(scope, name)
     end
     if result.nil?
-      Puppet::DataBinding.indirection.find(
-        name,
-        :environment => scope.environment.to_s,
-        :variables => scope)
+      lookup_with_databinding(name, scope)
     else
       result
     end
   end
 
   private :lookup_external_default_for
+
+  # What is thrown depends on the Ruby/YAML version being used and which DataBinding terminus is used.
+  # Difficult to list all kinds of Exceptions to catch without catching Exception
+  #
+  if defined?(::Psych::SyntaxError)
+    DataBindingExceptions = [::StandardError, ::ArgumentError, ::Psych::SyntaxError, ::SyntaxError, Errno::ENOENT, Errno::ENOTDIR]
+  else
+    DataBindingExceptions = [::StandardError, ::ArgumentError, ::SyntaxError, Errno::ENOENT, Errno::ENOTDIR]
+  end
+
+  def lookup_with_databinding(name, scope)
+    begin
+      Puppet::DataBinding.indirection.find(
+        name,
+        :environment => scope.environment.to_s,
+        :variables => scope)
+    rescue *DataBindingExceptions => e
+      # Fail if config / data is wrong - there is no way of telling how bad a catalog may turn out if this goes
+      # undetected, but do fail more gracefully and informative than just letting the exception be turned into
+      # a Puppet::ParseError (higher in the call chain) which reports the problem as originating in a manifest.
+      #
+      raise Puppet::Error, "Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}', Error: #{e.class}, '#{e.message}'"
+    end
+  end
+
+  private :lookup_with_databinding
 
   def set_default_parameters(scope)
     return [] unless resource_type and resource_type.respond_to?(:arguments)
