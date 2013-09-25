@@ -89,10 +89,10 @@ EOS
     sh "beaker --options-file #{options_file} #{config_opt} #{tests} #{overriding_options}"
   ensure
     if preserve_config && (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
-      sh "cp #{hosts_file} log/latest/config.yml"
+      cp(hosts_file, "log/latest/config.yml")
       generate_config_for_latest_hosts
     end
-    sh "mv #{options_file} log/latest"
+    mv(options_file, "log/latest")
   end
 end
 
