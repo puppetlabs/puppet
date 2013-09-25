@@ -160,7 +160,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     else
       cmd = [command(:add)]
     end
-    if not @resource.should(gid) and Puppet::Util.gid(@resource[:name])
+    if not @resource.should(:gid) and Puppet::Util.gid(@resource[:name])
       cmd += ["-g", @resource[:name]]
     end
     cmd += add_properties
