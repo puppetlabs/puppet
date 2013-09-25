@@ -1,4 +1,5 @@
 require 'puppet/indirector/terminus'
+require 'hiera/scope'
 
 class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   def initialize(*args)
@@ -9,7 +10,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
   end
 
   def find(request)
-    hiera.lookup(request.key, nil, request.options[:variables], nil, nil)
+    hiera.lookup(request.key, nil, Hiera::Scope.new(request.options[:variables]), nil, nil)
   end
 
   private

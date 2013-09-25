@@ -331,7 +331,7 @@ class Puppet::Resource
       Puppet::DataBinding.indirection.find(
         name,
         :environment => scope.environment.to_s,
-        :variables => Puppet::DataBinding::Variables.new(scope))
+        :variables => scope)
     else
       result
     end
