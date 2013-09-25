@@ -618,4 +618,28 @@ describe Puppet::Application do
     end
 
   end
+
+  describe "#handle_logdest_arg" do
+
+    let(:test_arg) { "arg_test_logdest" }
+
+    it "should log an exception that is raised" do
+      our_exception = Puppet::DevError.new("test exception")
+      Puppet::Util::Log.expects(:newdestination).with(test_arg).raises(our_exception)
+      Puppet.expects(:log_exception).with(our_exception)
+      @app.handle_logdest_arg(test_arg)
+    end
+
+    it "should set the new log destination" do
+      Puppet::Util::Log.expects(:newdestination).with(test_arg)
+      @app.handle_logdest_arg(test_arg)
+    end
+
+    it "should set the flag that a destination is set in the options hash" do
+      Puppet::Util::Log.stubs(:newdestination).with(test_arg)
+      @app.handle_logdest_arg(test_arg)
+      @app.options[:setdest].should be_true
+    end
+  end
+
 end

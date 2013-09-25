@@ -47,12 +47,7 @@ class Puppet::Application::Device < Puppet::Application
   end
 
   option("--logdest DEST", "-l DEST") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:setdest] = true
-    rescue => detail
-      Puppet.log_exception(detail)
-    end
+    handle_logdest_arg(arg)
   end
 
   option("--waitforcert WAITFORCERT", "-w") do |arg|
