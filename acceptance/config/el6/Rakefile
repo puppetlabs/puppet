@@ -1,5 +1,6 @@
 require 'rake/clean'
 require 'pp'
+require 'yaml'
 
 REPO_CONFIGS_DIR = "repo-configs"
 CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb')
@@ -97,43 +98,33 @@ EOS
 end
 
 def generate_config_for_latest_hosts
-  nodes = { :master => {}, :agent => {} }
-  File.open('log/latest/config.yml', 'r') do |file|
-    config_yml = file.read
-    config_yml =~ /master:.*?platform: ([\w-]+)\s*$/m
-    nodes[:master][:platform] = $1
-    config_yml =~ /agent:.*?platform: ([\w-]+)\s*$/m
-    nodes[:agent][:platform] = $1
+  preserved_config_hash = { 'HOSTS' => {} }
+
+  config_hash = YAML.load_file('log/latest/config.yml').to_hash
+  nodes = config_hash['HOSTS'].map do |node_label,hash|
+    { :node_label => node_label, :platform => hash['platform'] }
   end
-  File.open('log/latest/pre_suite-run.log', 'r') do |log_file|
-    while nodes.values.detect { |h| h[:hostname].nil? }
-      if log_file.readline =~ /^(\w+) \((master|agent)\)/
-        nodes[$2.to_sym][:hostname] = $1
-      end
-      return if log_file.eof?
-    end
+
+  pre_suite_log = File.read('log/latest/pre_suite-run.log')
+  nodes.each do |node_info|
+    hostname = /^(\w+) \(#{node_info[:node_label]}\)/.match(pre_suite_log)[1]
+    fqdn = "#{hostname}.delivery.puppetlabs.net"
+    preserved_config_hash['HOSTS'][fqdn] = {
+      'roles' => [ 'agent'],
+      'platform' => node_info[:platform],
+    }
+    preserved_config_hash['HOSTS'][fqdn]['roles'].unshift('master') if node_info[:node_label] =~ /master/
   end
-  pp nodes
+  pp preserved_config_hash
+
   File.open('log/latest/preserved_config.yaml', 'w') do |config_file|
-    config_file.puts <<-EOF
-HOSTS:
-  #{nodes[:master][:hostname]}.delivery.puppetlabs.net:
-    roles:
-      - master
-      - agent
-    platform: #{nodes[:master][:platform]}
-  #{nodes[:agent][:hostname]}.delivery.puppetlabs.net:
-    roles:
-      - agent
-    platform: #{nodes[:agent][:platform]}
-    EOF
+    YAML.dump(preserved_config_hash, config_file)
   end
 rescue Errno::ENOENT => e
   puts "Couldn't generate log #{e}"
 end
 
 def list_preserved_configurations
-  require 'yaml'
   preserved = {}
   Dir.glob('log/*_*').each do |dir|
     preserved_config_path = "#{dir}/preserved_config.yaml"
