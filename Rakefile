@@ -84,9 +84,11 @@ namespace "ci" do
     success = false
     require 'json'
     require 'timeout'
+    require 'net/http'
     Timeout.timeout(15 * 60) do
       loop do
-        status = `curl '#{downstream_url}'`
+        uri = URI(downstream_url)
+        status = Net::HTTP.get(uri)
         json = JSON.parse(status)
         actions = json['builds'].first['actions']
         parameters = actions.select { |h| h.key?('parameters') }.first["parameters"]
