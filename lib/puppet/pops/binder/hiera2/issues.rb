@@ -56,12 +56,24 @@ module Puppet::Pops::Binder::Hiera2::Issues
     "The configuration file '#{semantic}' does not have a version."
   end
 
-  WRONG_VERSION = issue :WRONG_VERSION do
+  WRONG_VERSION = issue :WRONG_VERSION, :expected, :actual do
     "The configuration file '#{semantic}' has the wrong version, expected: #{expected}, actual: #{actual}"
   end
 
-  LATER_VERSION = issue :LATER_VERSION do
+  INCOMPATIBLE_VERSION = issue :INCOMPATIBLE_VERSION, :expected, :actual do
+    "The configuration file '#{semantic}' has incompatible version, expected: #{expected}, actual: #{actual}"
+  end
+
+  LATER_VERSION = issue :LATER_VERSION, :expected, :actual do
     "The configuration file '#{semantic}' has a version that is newer (features may not work), expected: #{expected}, actual: #{actual}"
+  end
+
+  DEPRECATED_VERSION = issue :DEPRECATED_VERSION, :deprecated, :latest do
+    "The configuration file format version of '#{semantic}' is deprecated '#{deprecated}', please update to latest format '#{latest}"
+  end
+
+  HIERARCHY_ENTRY_NOT_OBJECT = issue :HIERARCHY_ENTRY_NOT_OBJECT do
+    "The configuration file '#{semantic}' contains an entry in 'hierarchy' that is not an Object/Hash"
   end
 
 end
