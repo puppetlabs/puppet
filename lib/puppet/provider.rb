@@ -148,6 +148,7 @@ class Puppet::Provider
   # @raise [Puppet::DevError] if the name does not reference an existing command.
   # @return [String] the absolute path to the found executable for the command
   # @see which
+  # @api public
   def self.command(name)
     name = name.intern
 
@@ -173,6 +174,7 @@ class Puppet::Provider
   #   be executing on the system. Each command is specified with a name and the path of the executable.
   # @return [void]
   # @see optional_commands
+  # @api public
   #
   def self.commands(command_specs)
     command_specs.each do |name, path|
@@ -189,6 +191,7 @@ class Puppet::Provider
   #   be executing on the system. Each command is specified with a name and the path of the executable.
   # (@see #has_command)
   # @see commands
+  # @api public
   def self.optional_commands(hash)
     hash.each do |name, target|
       has_command(name, target) do
@@ -221,6 +224,7 @@ class Puppet::Provider
   # @comment a yield [ ] produces {|| ...} in the signature, do not remove the space.
   # @note the name ´has_command´ looks odd in an API context, but makes more sense when seen in the internal
   #   DSL context where a Provider is declaratively defined.
+  # @api public
   #
   def self.has_command(name, path, &block)
     name = name.intern
@@ -602,6 +606,7 @@ class Puppet::Provider
   # fetched state (i.e. what is returned from the {instances} method).
   # @param resources_hash [Hash<{String => Puppet::Resource}>] map from name to resource of resources to prefetch
   # @return [void]
+  # @api public
 
   # @comment Document post_resource_eval here as it does not exist anywhere else (called from transaction if implemented)
   # @!method self.post_resource_eval()
@@ -620,5 +625,6 @@ class Puppet::Provider
   # This method may be implemented by a provider in order to flush properties that has not been individually
   # applied to the managed entity's current state.
   # @return [void]
+  # @api public
 end
 
