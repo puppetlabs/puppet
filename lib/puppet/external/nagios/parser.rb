@@ -49,17 +49,17 @@ def tokenize_outside_definitions
         ;
 
       when (text = @ss.scan(/\n/))                  # newline
-        action { [:RETURN, text] }
+        [:RETURN, text]
 
       when (text = @ss.scan(/\b(define)\b/))        # the "define" keyword 
-        action { [:DEFINE, text] }
+        [:DEFINE, text]
 
       when (text = @ss.scan(/[^{ \t\n]+/))          # the name of the object being defined (everything not an opening curly bracket or a separator)
-        action { [:NAME, text] }
+        [:NAME, text]
 
       when (text = @ss.scan(/\{/))                  # the opening curly bracket - we enter object definition
         @in_object_definition = true
-        action { [:LCURLY, text] }
+        [:LCURLY, text]
 
       else
         text = @ss.string[@ss.pos .. -1]
@@ -82,15 +82,15 @@ def tokenize_parameter_name
         ;
 
       when (text = @ss.scan(/\n/))                  # newline
-        action { [:RETURN, text] }
+        [:RETURN, text]
 
       when (text = @ss.scan(/\}/))                  # closing curly bracket : end of definition
         @in_object_definition = false
-        action { [:RCURLY, text] }
+        [:RCURLY, text]
 
       when (not @in_parameter_value and (text = @ss.scan(/\S+/)))    # This is the name of the parameter
         @in_parameter_value = true
-        action { [:PARAM, text] }
+        [:PARAM, text]
 
       else
         text = @ss.string[@ss.pos .. -1]
@@ -113,7 +113,7 @@ def tokenize_parameter_value
         ;
 
       when (text = @ss.scan(/\n/))                  # newline
-        action { [:RETURN, text] }
+        [:RETURN, text]
 
       when (text = @ss.scan(/.+$/))                 # Value of parameter
         @in_parameter_value = false
@@ -148,7 +148,7 @@ def tokenize_parameter_value
 
 
         # We strip the text to remove spaces between end of string and beginning of inline comment
-        action { [:VALUE, text.strip] }
+        [:VALUE, text.strip]
 
       else
         text = @ss.string[@ss.pos .. -1]
@@ -197,10 +197,6 @@ def yywrap
     0
 end
 
-def action
-    yield
-end
-
 def on_error(token, value, vstack )
 #    text = @ss.string[@ss.pos .. -1]
     text = @ss.peek(20)
@@ -223,34 +219,36 @@ end
 ##### State transition tables begin ###
 
 racc_action_table = [
-     6,     5,     5,    15,    12,    17,    10,     4,     4,     9,
-    15,    12,     8,    19,    12 ]
+     8,     3,     3,    14,    12,    18,    10,     4,     4,     9,
+    14,    12,     6,    19,    12 ]
 
 racc_action_check = [
-     1,     0,     1,    13,    10,    13,     8,     0,     1,     6,
-    11,    12,     5,    15,    19 ]
+     5,     0,     5,    13,     9,    13,     8,     0,     5,     6,
+    11,    12,     3,    14,    19 ]
 
 racc_action_pointer = [
-    -1,     0,   nil,   nil,   nil,     9,     9,   nil,     1,   nil,
-    -4,     6,     3,    -1,   nil,     6,   nil,   nil,   nil,     6,
+    -1,   nil,   nil,     9,   nil,     0,     4,   nil,     6,    -4,
+   nil,     6,     3,    -1,     6,   nil,   nil,   nil,   nil,     6,
    nil ]
 
 racc_action_default = [
-   -11,   -11,    -1,    -3,    -4,   -11,   -11,    -2,   -11,    21,
-   -11,   -11,    -9,   -11,    -6,   -11,   -10,    -5,    -7,   -11,
+   -11,    -1,    -3,   -11,    -4,   -11,   -11,    -2,   -11,   -11,
+    21,   -11,    -9,   -11,   -11,    -6,   -10,    -7,    -5,   -11,
     -8 ]
 
 racc_goto_table = [
-    11,    14,    16,    18,     2,     7,    13,     1,   nil,    20 ]
+    11,     1,    15,    16,    17,    13,     7,     5,   nil,   nil,
+    20 ]
 
 racc_goto_check = [
-     4,     6,     4,     6,     2,     2,     5,     1,   nil,     4 ]
+     4,     2,     6,     4,     6,     5,     2,     1,   nil,   nil,
+     4 ]
 
 racc_goto_pointer = [
-   nil,     7,     4,   nil,   -10,    -5,   -10 ]
+   nil,     7,     1,   nil,    -9,    -6,    -9 ]
 
 racc_goto_default = [
-   nil,   nil,   nil,     3,   nil,   nil,   nil ]
+   nil,   nil,   nil,     2,   nil,   nil,   nil ]
 
 racc_reduce_table = [
   0, 0, :racc_error,

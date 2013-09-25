@@ -86,17 +86,17 @@ def tokenize_outside_definitions
         ;
 
       when (text = @ss.scan(/\n/))                  # newline
-        action { [:RETURN, text] }
+        [:RETURN, text]
 
       when (text = @ss.scan(/\b(define)\b/))        # the "define" keyword 
-        action { [:DEFINE, text] }
+        [:DEFINE, text]
 
       when (text = @ss.scan(/[^{ \t\n]+/))          # the name of the object being defined (everything not an opening curly bracket or a separator)
-        action { [:NAME, text] }
+        [:NAME, text]
 
       when (text = @ss.scan(/\{/))                  # the opening curly bracket - we enter object definition
         @in_object_definition = true
-        action { [:LCURLY, text] }
+        [:LCURLY, text]
 
       else
         text = @ss.string[@ss.pos .. -1]
@@ -119,15 +119,15 @@ def tokenize_parameter_name
         ;
 
       when (text = @ss.scan(/\n/))                  # newline
-        action { [:RETURN, text] }
+        [:RETURN, text]
 
       when (text = @ss.scan(/\}/))                  # closing curly bracket : end of definition
         @in_object_definition = false
-        action { [:RCURLY, text] }
+        [:RCURLY, text]
 
       when (not @in_parameter_value and (text = @ss.scan(/\S+/)))    # This is the name of the parameter
         @in_parameter_value = true
-        action { [:PARAM, text] }
+        [:PARAM, text]
 
       else
         text = @ss.string[@ss.pos .. -1]
@@ -150,7 +150,7 @@ def tokenize_parameter_value
         ;
 
       when (text = @ss.scan(/\n/))                  # newline
-        action { [:RETURN, text] }
+        [:RETURN, text]
 
       when (text = @ss.scan(/.+$/))                 # Value of parameter
         @in_parameter_value = false
@@ -185,7 +185,7 @@ def tokenize_parameter_value
 
 
         # We strip the text to remove spaces between end of string and beginning of inline comment
-        action { [:VALUE, text.strip] }
+        [:VALUE, text.strip]
 
       else
         text = @ss.string[@ss.pos .. -1]
@@ -232,10 +232,6 @@ end
 
 def yywrap
     0
-end
-
-def action
-    yield
 end
 
 def on_error(token, value, vstack )
