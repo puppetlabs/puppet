@@ -148,6 +148,12 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         result[:bar].should == "xyzzy"
       end
 
+      it "should return multi-values params as an array of the values" do
+        req = mk_req('/?foo=baz&foo=xyzzy')
+        result = @handler.params(req)
+        result[:foo].should == ["baz", "xyzzy"]
+      end
+
       it "should CGI-decode the HTTP parameters" do
         encoding = CGI.escape("foo bar")
         req = mk_req("/?foo=#{encoding}")
