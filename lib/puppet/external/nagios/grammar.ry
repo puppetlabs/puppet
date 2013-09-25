@@ -51,20 +51,20 @@ require 'strscan'
 class ::Nagios::Parser::SyntaxError < RuntimeError; end
 
 def parse(src)
-    if src.respond_to?("force_encoding") then
-        src.force_encoding("ASCII-8BIT")
-    end
-    @ss = StringScanner.new(src)
+  if src.respond_to?("force_encoding") then
+    src.force_encoding("ASCII-8BIT")
+  end
+  @ss = StringScanner.new(src)
 
-    # state variables
-    @in_parameter_value = false
-    @in_object_definition = false
-    @done = false
+  # state variables
+  @in_parameter_value = false
+  @in_object_definition = false
+  @done = false
 
-    @line = 1
-    @yydebug = true
+  @line = 1
+  @yydebug = true
 
-    do_parse
+  do_parse
 end
 
 # This tokenizes the outside of object definitions,
@@ -167,13 +167,13 @@ def tokenize_parameter_value
 
       # Let's reconstruct the string with a (unescaped) semicolon
       if text != "" then
-          text += ';'
+        text += ';'
       end
       text += linearray[0]
 
       # Now we can stop
       if linearray.length > 1 then
-          break                                
+        break                                
       end
     end
 
@@ -190,57 +190,57 @@ end
 # This tokenizes inside an object definition.
 # Two cases : parameter name and parameter value
 def tokenize_inside_definitions
-    if @in_parameter_value
-        tokenize_parameter_value
-    else
-        tokenize_parameter_name
-    end
+  if @in_parameter_value
+    tokenize_parameter_value
+  else
+    tokenize_parameter_name
+  end
 end
 
 # The lexer.  Very simple.
 def token
-    text = @ss.peek(1)
-    @line  +=  1  if text == "\n"
+  text = @ss.peek(1)
+  @line  +=  1  if text == "\n"
 
-    token = if @in_object_definition
-        tokenize_inside_definitions
-    else
-        tokenize_outside_definitions
-    end
-    token
+  token = if @in_object_definition
+    tokenize_inside_definitions
+  else
+    tokenize_outside_definitions
+  end
+  token
 end
 
 def next_token
-    return if @ss.eos?
+  return if @ss.eos?
 
-    # skips empty actions
-    until _next_token = token or @ss.eos?; end
-    _next_token
+  # skips empty actions
+  until _next_token = token or @ss.eos?; end
+  _next_token
 end
 
 def yydebug
-    1
+  1
 end
 
 def yywrap
-    0
+  0
 end
 
 def on_error(token, value, vstack )
-#    text = @ss.string[@ss.pos .. -1]
-    text = @ss.peek(20)
-    msg = ""
-    unless value.nil?
-        msg = "line #{@line}: syntax error at value '#{value}' : #{text}"
-    else
-        msg = "line #{@line}: syntax error at token '#{token}' : #{text}"
-    end
-    if @ss.eos?
-        msg = "line #{@line}: Unexpected end of file"
-    end
-    if token == '$end'.intern
-        puts "okay, this is silly"
-    else
-        raise ::Nagios::Parser::SyntaxError, msg
-    end
+  #    text = @ss.string[@ss.pos .. -1]
+  text = @ss.peek(20)
+  msg = ""
+  unless value.nil?
+    msg = "line #{@line}: syntax error at value '#{value}' : #{text}"
+  else
+    msg = "line #{@line}: syntax error at token '#{token}' : #{text}"
+  end
+  if @ss.eos?
+    msg = "line #{@line}: Unexpected end of file"
+  end
+  if token == '$end'.intern
+    puts "okay, this is silly"
+  else
+    raise ::Nagios::Parser::SyntaxError, msg
+  end
 end
