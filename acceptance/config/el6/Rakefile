@@ -77,21 +77,21 @@ EOS
     merged.puts(final_options.pretty_inspect)
   end
 
-  overriding_options = (ENV['OPTIONS'])
 
-  tests = ENV['TEST']
-  tests = "--tests #{tests}" if tests
+  tests = "--tests=#{ENV['TEST']}" if ENV['TEST']
 
-  config_opt = "--hosts #{config}" if config
+  config_opt = "--hosts=#{config}" if config
 
-  preserve_config = options.key?(:preserve_hosts) || overriding_options =~ /--preserve-hosts/
+  overriding_options = ENV['OPTIONS']
+
+  args = ["--options-file", options_file, config_opt, tests, overriding_options].compact
 
   begin
-    sh "beaker --options-file #{options_file} #{config_opt} #{tests} #{overriding_options}"
+    sh("beaker", *args)
   ensure
-    if preserve_config && (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
+    if (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
       cp(hosts_file, "log/latest/config.yml")
-      generate_config_for_latest_hosts
+      generate_config_for_latest_hosts if final_options[:preserve_hosts] || overriding_options =~ /--preserve-hosts/
     end
     mv(options_file, "log/latest")
   end
