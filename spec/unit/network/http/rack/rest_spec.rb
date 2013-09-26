@@ -148,6 +148,25 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         result[:bar].should == "xyzzy"
       end
 
+      it "should return multi-values params as an array of the values" do
+        req = mk_req('/?foo=baz&foo=xyzzy')
+        result = @handler.params(req)
+        result[:foo].should == ["baz", "xyzzy"]
+      end
+
+      it "should return parameters from the POST body" do
+        req = mk_req("/", :method => 'POST', :input => 'foo=baz&bar=xyzzy')
+        result = @handler.params(req)
+        result[:foo].should == "baz"
+        result[:bar].should == "xyzzy"
+      end
+
+      it "should not return multi-valued params in a POST body as an array of values" do
+        req = mk_req("/", :method => 'POST', :input => 'foo=baz&foo=xyzzy')
+        result = @handler.params(req)
+        result[:foo].should be_one_of("baz", "xyzzy")
+      end
+
       it "should CGI-decode the HTTP parameters" do
         encoding = CGI.escape("foo bar")
         req = mk_req("/?foo=#{encoding}")
