@@ -84,8 +84,8 @@ EOL
 
     ANOTHER_ESCAPED_SEMICOLON = <<-EOL
 define command {
-\tcommand_name                   check_haproxy
 \tcommand_line                   LC_ALL=en_US.UTF-8 /usr/lib/nagios/plugins/check_haproxy -u 'http://blah:blah@$HOSTADDRESS$:8080/haproxy?stats\\;csv'
+\tcommand_name                   check_haproxy
 }
 EOL
 
