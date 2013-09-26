@@ -103,3 +103,13 @@ RSpec::Matchers.define :equal_attributes_of do |expected|
     end
   end
 end
+
+RSpec::Matchers.define :be_one_of do |*expected|
+  match do |actual|
+    expected.include? actual
+  end
+
+  failure_message_for_should do |actual|
+    "expected #{actual.inspect} to be one of #{expected.map(&:inspect).join(' or ')}"
+  end
+end
