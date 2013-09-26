@@ -8,205 +8,269 @@ require 'racc/parser.rb'
 module Nagios
   class Parser < Racc::Parser
 
-module_eval(<<'...end grammar.ry/module_eval...', 'grammar.ry', 57)
+module_eval(<<'...end grammar.ry/module_eval...', 'grammar.ry', 49)
+require 'strscan'
 
 class ::Nagios::Parser::SyntaxError < RuntimeError; end
 
 def parse(src)
-    @src = src
+  if src.respond_to?("force_encoding") then
+    src.force_encoding("ASCII-8BIT")
+  end
+  @ss = StringScanner.new(src)
 
-    # state variables
-    @invar = false
-    @inobject = false
-    @done = false
+  # state variables
+  @in_parameter_value = false
+  @in_object_definition = false
+  @done = false
 
-    @line = 0
-    @yydebug = true
+  @line = 1
+  @yydebug = true
 
-    do_parse
+  do_parse
+end
+
+# This tokenizes the outside of object definitions,
+# and detects when we start defining an object.
+# We ignore whitespaces, comments and inline comments.
+# We yield when finding newlines, the "define" keyword,
+#     the object name and the opening curly bracket.
+def tokenize_outside_definitions
+  case
+  when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+    ;
+
+  when (text = @ss.scan(/\#.*$/))               # ignore comments
+    ;
+
+  when (text = @ss.scan(/;.*$/))                # ignore inline comments
+    ;
+
+  when (text = @ss.scan(/\n/))                  # newline
+    [:RETURN, text]
+
+  when (text = @ss.scan(/\b(define)\b/))        # the "define" keyword 
+    [:DEFINE, text]
+
+  when (text = @ss.scan(/[^{ \t\n]+/))          # the name of the object being defined (everything not an opening curly bracket or a separator)
+    [:NAME, text]
+
+  when (text = @ss.scan(/\{/))                  # the opening curly bracket - we enter object definition
+    @in_object_definition = true
+    [:LCURLY, text]
+
+  else
+    text = @ss.string[@ss.pos .. -1]
+    raise  ScanError, "can not match: '#{text}'"
+  end  # case
+end
+
+# This tokenizes until we find the parameter name.
+def tokenize_parameter_name
+  case
+  when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+    ;
+
+  when (text = @ss.scan(/\#.*$/))               # ignore comments
+    ;
+
+  when (text = @ss.scan(/;.*$/))                # ignore inline comments
+    ;
+
+  when (text = @ss.scan(/\n/))                  # newline
+    [:RETURN, text]
+
+  when (text = @ss.scan(/\}/))                  # closing curly bracket : end of definition
+    @in_object_definition = false
+    [:RCURLY, text]
+
+  when (not @in_parameter_value and (text = @ss.scan(/\S+/)))    # This is the name of the parameter
+    @in_parameter_value = true
+    [:PARAM, text]
+
+  else
+    text = @ss.string[@ss.pos .. -1]
+    raise  ScanError, "can not match: '#{text}'"
+  end  # case
+end
+
+# This tokenizes the parameter value.
+# There is a special handling for lines containing semicolons :
+#     - unescaped semicolons are line comments (and should stop parsing of the line)
+#     - escaped (with backslash \) semicolons should be kept in the parameter value (without the backslash)
+def tokenize_parameter_value
+  case
+  when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+    ;
+
+  when (text = @ss.scan(/\#.*$/))               # ignore comments
+    ;
+
+  when (text = @ss.scan(/\n/))                  # newline
+    [:RETURN, text]
+
+  when (text = @ss.scan(/.+$/))                 # Value of parameter
+    @in_parameter_value = false
+
+    # Special handling of inline comments (;) and escaped semicolons (\;)
+
+    # We split the string on escaped semicolons (\;),
+    # Then we rebuild it as long as there are no inline comments (;)
+    # We join the rebuilt string with unescaped semicolons (on purpose)
+    array = text.split('\;', 0)
+
+    text = ""
+
+    array.each do |elt|
+
+      # Now we split at inline comments. If we have more than 1 element in the array
+      # it means we have an inline comment, so we are able to stop parsing
+      # However we still want to reconstruct the string with its first part (before the comment)
+      linearray = elt.split(';', 0)
+
+      # Let's reconstruct the string with a (unescaped) semicolon
+      if text != "" then
+        text += ';'
+      end
+      text += linearray[0]
+
+      # Now we can stop
+      if linearray.length > 1 then
+        break                                
+      end
+    end
+
+
+    # We strip the text to remove spaces between end of string and beginning of inline comment
+    [:VALUE, text.strip]
+
+  else
+    text = @ss.string[@ss.pos .. -1]
+    raise  ScanError, "can not match: '#{text}'"
+  end  # case
+end
+
+# This tokenizes inside an object definition.
+# Two cases : parameter name and parameter value
+def tokenize_inside_definitions
+  if @in_parameter_value
+    tokenize_parameter_value
+  else
+    tokenize_parameter_name
+  end
 end
 
 # The lexer.  Very simple.
 def token
-    @src.sub!(/\A\n/,'')
-    if $&
-        @line += 1
-        return [ :RETURN, "\n" ]
-    end
+  text = @ss.peek(1)
+  @line  +=  1  if text == "\n"
 
-    if @done
-        return nil
-    end
-    yytext = String.new
-
-
-    # remove comments from this line
-    @src.sub!(/\A[ \t]*;.*\n/,"\n")
-    if $&
-        return [:INLINECOMMENT, ""]
-    end
-
-    @src.sub!(/\A#.*\n/,"\n")
-    if $&
-        return [:COMMENT, ""]
-    end
-
-    @src.sub!(/#.*/,'')
-
-    if @src.length == 0
-        @done = true
-        return [false, '$']
-    end
-
-    if @invar
-        @src.sub!(/\A[ \t]+/,'')
-        @src.sub!(/\A([^;\n]+)(\n|;)/,'\2')
-        if $1
-            yytext += $1
-        end
-        @invar = false
-        return [:VALUE, yytext]
-    else
-        @src.sub!(/\A[\t ]*(\S+)([\t ]*|$)/,'')
-        if $1
-            yytext = $1
-            case yytext
-            when 'define'
-                #puts "got define"
-                return [:DEFINE, yytext]
-            when '{'
-                #puts "got {"
-                @inobject = true
-                return [:LCURLY, yytext]
-            else
-                unless @inobject
-                    #puts "got type: #{yytext}"
-                    if yytext =~ /\W/
-                        giveback = yytext.dup
-                        giveback.sub!(/^\w+/,'')
-                        #puts "giveback " + giveback
-                        #puts "yytext " + yytext
-                        yytext.sub!(/\W.*$/,'')
-                        #puts "yytext " + yytext
-                        #puts "all [#{giveback} #{yytext} #{orig}]"
-                        @src = giveback + @src
-                    end
-                    return [:NAME, yytext]
-                else
-                    if yytext == '}'
-                        #puts "got closure: #{yytext}"
-                        @inobject = false
-                        return [:RCURLY, '}']
-                    end
-
-                    unless @invar
-                        @invar = true
-                        return [:PARAM, $1]
-                    else
-                    end
-                end
-            end
-        end
-    end
+  token = if @in_object_definition
+    tokenize_inside_definitions
+  else
+    tokenize_outside_definitions
+  end
+  token
 end
 
 def next_token
-    token
+  return if @ss.eos?
+
+  # skips empty actions
+  until _next_token = token or @ss.eos?; end
+  _next_token
 end
 
 def yydebug
-    1
+  1
 end
 
 def yywrap
-    0
+  0
 end
 
 def on_error(token, value, vstack )
-    msg = ""
-    unless value.nil?
-        msg = "line #{@line}: syntax error at '#{value}'"
-    else
-        msg = "line #{@line}: syntax error at '#{token}'"
-    end
-    unless @src.size > 0
-        msg = "line #{@line}: Unexpected end of file"
-    end
-    if token == '$end'.intern
-        puts "okay, this is silly"
-    else
-        raise ::Nagios::Parser::SyntaxError, msg
-    end
+  #    text = @ss.string[@ss.pos .. -1]
+  text = @ss.peek(20)
+  msg = ""
+  unless value.nil?
+    msg = "line #{@line}: syntax error at value '#{value}' : #{text}"
+  else
+    msg = "line #{@line}: syntax error at token '#{token}' : #{text}"
+  end
+  if @ss.eos?
+    msg = "line #{@line}: Unexpected end of file"
+  end
+  if token == '$end'.intern
+    puts "okay, this is silly"
+  else
+    raise ::Nagios::Parser::SyntaxError, msg
+  end
 end
 ...end grammar.ry/module_eval...
 ##### State transition tables begin ###
 
 racc_action_table = [
-     8,    17,     7,    18,     7,    14,    12,    13,    11,     4,
-     6,     4,     6,    17,    10,    20,    22,    24,    25 ]
+     8,     3,     3,    14,    12,    18,    10,     4,     4,     9,
+    14,    12,     6,    19,    12 ]
 
 racc_action_check = [
-     1,    15,     1,    15,     0,    13,     8,    11,     7,     1,
-     1,     0,     0,    14,     6,    17,    20,    21,    23 ]
+     5,     0,     5,    13,     9,    13,     8,     0,     5,     6,
+    11,    12,     3,    14,    19 ]
 
 racc_action_pointer = [
-     2,     0,   nil,   nil,   nil,   nil,     5,     5,     6,   nil,
-   nil,     1,   nil,    -4,     8,    -4,   nil,     7,   nil,   nil,
-     5,     8,   nil,     9,   nil,   nil ]
+    -1,   nil,   nil,     9,   nil,     0,     4,   nil,     6,    -4,
+   nil,     6,     3,    -1,     6,   nil,   nil,   nil,   nil,     6,
+   nil ]
 
 racc_action_default = [
-   -15,   -15,    -1,    -3,    -4,    -5,   -15,   -15,   -15,    -2,
-    -6,   -15,    26,   -15,   -15,   -15,    -8,   -15,    -7,    -9,
-   -13,   -15,   -14,   -10,   -11,   -12 ]
+   -11,    -1,    -3,   -11,    -4,   -11,   -11,    -2,   -11,   -11,
+    21,   -11,    -9,   -11,   -11,    -6,   -10,    -7,    -5,   -11,
+    -8 ]
 
 racc_goto_table = [
-    16,    19,     2,     9,     1,    15,    21,    23 ]
+    11,     1,    15,    16,    17,    13,     7,     5,   nil,   nil,
+    20 ]
 
 racc_goto_check = [
-     6,     6,     2,     2,     1,     5,     7,     8 ]
+     4,     2,     6,     4,     6,     5,     2,     1,   nil,   nil,
+     4 ]
 
 racc_goto_pointer = [
-   nil,     4,     2,   nil,   nil,    -9,   -14,   -14,   -14 ]
+   nil,     7,     1,   nil,    -9,    -6,    -9 ]
 
 racc_goto_default = [
-   nil,   nil,   nil,     3,     5,   nil,   nil,   nil,   nil ]
+   nil,   nil,   nil,     2,   nil,   nil,   nil ]
 
 racc_reduce_table = [
   0, 0, :racc_error,
-  1, 13, :_reduce_1,
-  2, 13, :_reduce_2,
-  1, 14, :_reduce_3,
-  1, 14, :_reduce_4,
+  1, 10, :_reduce_1,
+  2, 10, :_reduce_2,
+  1, 11, :_reduce_3,
+  1, 11, :_reduce_4,
+  6, 12, :_reduce_5,
   1, 14, :_reduce_none,
-  2, 16, :_reduce_6,
-  6, 15, :_reduce_7,
-  1, 17, :_reduce_none,
-  2, 17, :_reduce_9,
-  4, 18, :_reduce_10,
-  1, 20, :_reduce_none,
-  2, 20, :_reduce_none,
-  0, 19, :_reduce_none,
-  1, 19, :_reduce_none ]
+  2, 14, :_reduce_7,
+  3, 15, :_reduce_8,
+  1, 13, :_reduce_none,
+  2, 13, :_reduce_none ]
 
-racc_reduce_n = 15
+racc_reduce_n = 11
 
-racc_shift_n = 26
+racc_shift_n = 21
 
 racc_token_table = {
   false => 0,
   :error => 1,
   :DEFINE => 2,
   :NAME => 3,
-  :STRING => 4,
-  :PARAM => 5,
-  :LCURLY => 6,
-  :RCURLY => 7,
-  :VALUE => 8,
-  :RETURN => 9,
-  :COMMENT => 10,
-  :INLINECOMMENT => 11 }
+  :PARAM => 4,
+  :LCURLY => 5,
+  :RCURLY => 6,
+  :VALUE => 7,
+  :RETURN => 8 }
 
-racc_nt_base = 12
+racc_nt_base = 9
 
 racc_use_result_var = true
 
@@ -231,23 +295,18 @@ Racc_token_to_s_table = [
   "error",
   "DEFINE",
   "NAME",
-  "STRING",
   "PARAM",
   "LCURLY",
   "RCURLY",
   "VALUE",
   "RETURN",
-  "COMMENT",
-  "INLINECOMMENT",
   "$start",
   "decls",
   "decl",
   "object",
-  "comment",
+  "returns",
   "vars",
-  "var",
-  "icomment",
-  "returns" ]
+  "var" ]
 
 Racc_debug_parser = false
 
@@ -257,82 +316,72 @@ Racc_debug_parser = false
 
 module_eval(<<'.,.,', 'grammar.ry', 6)
   def _reduce_1(val, _values, result)
-     return val[0] if val[0]
+     return val[0] if val[0] 
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'grammar.ry', 8)
   def _reduce_2(val, _values, result)
-    if val[1].nil?
-      result = val[0]
-    else
-      if val[0].nil?
-        result = val[1]
-      else
-        result = [ val[0], val[1] ].flatten
-      end
-    end
+            if val[1].nil?
+            result = val[0]
+        else
+            if val[0].nil?
+                result = val[1]
+            else
+                result = [ val[0], val[1] ].flatten
+            end
+        end
+    
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'grammar.ry', 20)
   def _reduce_3(val, _values, result)
-    result = [val[0]]
+     result = [val[0]] 
     result
   end
 .,.,
 
 module_eval(<<'.,.,', 'grammar.ry', 21)
   def _reduce_4(val, _values, result)
-    result = nil
+     result = nil 
     result
   end
 .,.,
-
-# reduce 5 omitted
 
 module_eval(<<'.,.,', 'grammar.ry', 25)
-  def _reduce_6(val, _values, result)
-    result = nil
+  def _reduce_5(val, _values, result)
+            result = Nagios::Base.create(val[1],val[4])
+    
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'grammar.ry', 29)
+# reduce 6 omitted
+
+module_eval(<<'.,.,', 'grammar.ry', 31)
   def _reduce_7(val, _values, result)
-    result = Nagios::Base.create(val[1],val[4])
+            val[1].each {|p,v|
+            val[0][p] = v
+        }
+        result = val[0]
+    
     result
   end
 .,.,
 
-# reduce 8 omitted
-
-module_eval(<<'.,.,', 'grammar.ry', 35)
-  def _reduce_9(val, _values, result)
-    val[1].each {|p,v|
-      val[0][p] = v
-    }
-    result = val[0]
+module_eval(<<'.,.,', 'grammar.ry', 38)
+  def _reduce_8(val, _values, result)
+     result = {val[0] => val[1]} 
     result
   end
 .,.,
 
-module_eval(<<'.,.,', 'grammar.ry', 42)
-  def _reduce_10(val, _values, result)
-    result = {val[0] => val[1]}
-    result
-  end
-.,.,
+# reduce 9 omitted
 
-# reduce 11 omitted
-
-# reduce 12 omitted
-
-# reduce 13 omitted
-
-# reduce 14 omitted
+# reduce 10 omitted
 
 def _reduce_none(val, _values, result)
   val[0]
