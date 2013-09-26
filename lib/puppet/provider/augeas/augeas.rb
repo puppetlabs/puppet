@@ -218,14 +218,11 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     #check the value in augeas
     result = @aug.get(path) || ''
 
-    if comparator == "<" and is_numeric?(result) and is_numeric?(arg)
-      return_value = result.to_s.to_f < arg.to_s.to_f
-    elsif comparator == "<=" and is_numeric?(result) and is_numeric?(arg)
-      return_value = result.to_s.to_f <= arg.to_s.to_f
-    elsif comparator == ">" and is_numeric?(result) and is_numeric?(arg)
-      return_value = result.to_s.to_f > arg.to_s.to_f
-    elsif comparator == ">=" and is_numeric?(result) and is_numeric?(arg)
-      return_value = result.to_s.to_f >= arg.to_s.to_f
+    if ['<', '<=', '>=', '>'].include? comparator and is_numeric?(result) and
+                                                      is_numeric?(arg)
+      resultf = result.to_f
+      argf = arg.to_f
+      return_value = (resultf.send(comparator, argf))
     elsif comparator == "!="
       return_value = (result != arg)
     elsif comparator == "=~"
