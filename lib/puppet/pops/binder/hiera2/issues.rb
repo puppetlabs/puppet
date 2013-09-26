@@ -16,6 +16,7 @@ module Puppet::Pops::Binder::Hiera2::Issues
     "The configuration file '#{semantic}' contains no backends"
   end
 
+  # Format 2 Only
   CATEGORY_MUST_BE_THREE_ELEMENT_ARRAY = issue :CATEGORY_MUST_BE_THREE_ELEMENT_ARRAY do
     "The configuration file '#{semantic}' has a malformed hierarchy (should consist of arrays with three string entries)"
   end
@@ -76,4 +77,31 @@ module Puppet::Pops::Binder::Hiera2::Issues
     "The configuration file '#{semantic}' contains an entry in 'hierarchy' that is not an Object/Hash"
   end
 
+  HIERARCHY_ENTRY_MISSING_ATTRIBUTE = issue :HIERARCHY_ENTRY_MISSING_ATTRIBUTE, :name do
+    "The configuration file '#{semantic}' contains an entry in 'hierarchy' is missing the required attribute '#{name}'."
+  end
+
+  UNKNOWN_CATEGORY_ATTRIBUTE = issue :UNKNOWN_CATEGORY_ATTRIBUTE, :name do
+    "The configuration file '#{semantic}' contains an entry in 'hierarchy' with the unknown attribute '#{name}'."
+  end
+
+  ILLEGAL_VALUE_FOR_COMMON = issue :ILLEGAL_VALUE_FOR_COMMON, :value do
+    "The configuration file '#{semantic}' the 'common' category should have no 'value', got the value: '#{value}'."
+  end
+
+  PATH_PATHS_EXCLUSIVE = issue :PATH_PATHS_EXCLUSIVE do
+    "The configuration file '#{semantic}' has an entry in 'hierarchy' using both 'path' and 'paths' (mutually exclusive)."
+  end
+
+  CATEGORY_ATTR_WRONG_TYPE = issue :CATEGORY_ATTR_WRONG_TYPE, :name, :expected, :actual do
+    "The configuration file '#{semantic}' has an entry in 'hierarchy' with name '#{name}' with wrong type, expected: '#{expected}', actual: '#{actual}'."
+  end
+
+  CATEGORY_ATTR_EMPTY = issue :CATEGORY_ATTR_EMPTY, :name do
+    "The configuration file '#{semantic}' has an entry in 'hierarchy' with name '#{name}' that is empty."
+  end
+
+  CATEGORY_ATTR_ARRAY_ENTRY_EMPTY = issue :CATEGORY_ATTR_ARRAY_ENTRY_EMPTY, :name do
+    "The configuration file '#{semantic}' has an entry in 'hierarchy' with name '#{name}' that is an array with an empty entry."
+  end
 end

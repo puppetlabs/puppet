@@ -1,0 +1,15 @@
+---
+version: 3
+
+hierarchy:
+  -
+   category: 'os'
+   value:    '${osfamily}'
+   paths:
+      - 'not empty'
+      - ''
+
+datadir: 'data'
+
+backends:
+  - yaml

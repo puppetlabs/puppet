@@ -17,25 +17,21 @@ describe 'The hiera2 config' do
     File.dirname(my_fixture("#{config_name}/hiera.yaml"))
   end
 
-  def config_dir2(config_name)
-    File.dirname(my_fixture("format2/#{config_name}/hiera.yaml"))
-  end
-
   def test_config_issue(config_name, issue)
-    Puppet::Pops::Binder::Hiera2::Config.new(config_dir2(config_name), diag)
+    Puppet::Pops::Binder::Hiera2::Config.new(config_dir(config_name), diag)
     acceptor.should have_issue(issue)
   end
 
   context 'using hiera.yaml version 2' do
     it 'should load and validate OK configuration' do
-      Puppet::Pops::Binder::Hiera2::Config.new(config_dir2('ok'), diag)
+      Puppet::Pops::Binder::Hiera2::Config.new(config_dir('ok'), diag)
       acceptor.errors?.should() == false
       acceptor.should have_issue(Puppet::Pops::Binder::Hiera2::Issues::DEPRECATED_VERSION)
       acceptor.warnings.size.should == 1
     end
 
     it 'should report missing config file' do
-      Puppet::Pops::Binder::Hiera2::Config.new(File.dirname(my_fixture('format2/missing/foo.txt')), diag)
+      Puppet::Pops::Binder::Hiera2::Config.new(File.dirname(my_fixture('missing/foo.txt')), diag)
       acceptor.should have_issue(Puppet::Pops::Binder::Hiera2::Issues::CONFIG_FILE_NOT_FOUND)
     end
 

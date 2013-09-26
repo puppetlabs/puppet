@@ -126,7 +126,7 @@ class ConfigChecker
         diagnostics.accept(Issues::MISSING_VERSION, config_file)
         return false
       end
-      unless version == 2
+      unless version == 3
         # it may have a sane subset, hence a different error (configured as warning)
         diagnostics.accept(Issues::INCOMPATIBLE_VERSION, config_file, :expected => 2, :actual => version)
       end
@@ -159,26 +159,35 @@ class ConfigChecker
         end
       end
 
-      if v = category_hash['value']
+      # 'category' is required
+      unless category_hash['category']
+        diagnostics.accept(Issues::HIERARCHY_ENTRY_MISSING_ATTRIBUTE, config_file, {:name => 'category'})
+      end
+
+      if category_hash['category'] == 'common'
+        unless category_hash['value'].nil?
+          diagnostics.accept(Issues::ILLEGAL_VALUE_FOR_COMMON, config_file, {:value => category_hash['value'].to_s})
+        end
+      elsif !(v = category_hash['value']).nil?
         check_category_value(v, config_file)
       end
 
-      if category_hash['path'] && category_hash['paths']
-        diagnostic.accept(Issues::PATH_PATHS_EXCLUSIVE, config_file)
+      if !category_hash['path'].nil? && !category_hash['paths'].nil?
+        diagnostics.accept(Issues::PATH_PATHS_EXCLUSIVE, config_file)
       end
 
-      if v = category_hash['path']
+      if !(v = category_hash['path']).nil?
         check_category_path(v, config_file)
       end
 
-      if v = category_hash['paths']
+      if !(v = category_hash['paths']).nil?
         check_category_paths(v, config_file)
       end
 
     end
 
     def check_attr_type(name, expected, actual, config_file)
-      if !type_calculator.assignable(expected, actual)
+      if !type_calculator.assignable?(expected, actual)
         diagnostics.accept(Issues::CATEGORY_ATTR_WRONG_TYPE, config_file,
         { :name => name,
           :expected => type_calculator.string(expected),
@@ -210,6 +219,10 @@ class ConfigChecker
           diagnostics.accept(Issues::CATEGORY_ATTR_ARRAY_ENTRY_EMPTY, config_file, :name => name)
         end
       end
+    end
+
+    def check_datadir(value, config_file)
+      check_non_empty_string('datadir', value, config_file) unless value.nil?
     end
 
     def check_category_path(value, config_file)

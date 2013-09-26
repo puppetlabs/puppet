@@ -1,0 +1,8 @@
+---
+version: 3
+
+hierarchy:
+  ['os', '${osfamily}' ]
+
+backends:
+  - yaml
