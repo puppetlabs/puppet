@@ -1,4 +1,5 @@
 require 'openssl'
+require 'cgi'
 require 'puppet/network/http/handler'
 require 'puppet/network/http/rack/httphandler'
 require 'puppet/util/ssl'
@@ -73,7 +74,15 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   # Return the query params for this request.
   def params(request)
-    result = decode_params(request.params)
+    if request.post?
+      params = request.params
+    else
+      # rack doesn't support multi-valued query parameters,
+      # e.g. ignore, so parse them ourselves
+      params = CGI.parse(request.query_string)
+      convert_singular_arrays_to_value(params)
+    end
+    result = decode_params(params)
     result.merge(extract_client_info(request))
   end
 
@@ -125,4 +134,11 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     result
   end
 
+  def convert_singular_arrays_to_value(hash)
+    hash.each do |key, value|
+      if value.size == 1
+        hash[key] = value.first
+      end
+    end
+  end
 end
