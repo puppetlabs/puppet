@@ -494,7 +494,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 
   # Get the next available uid on the system by getting a list of user ids,
   # sorting them, grabbing the last one, and adding a 1. Scientific stuff here.
-  def next_system_id(min_id=20)
+  def next_system_id(min_id=501)
     dscl_output = dscl '.', '-list', '/Users', 'uid'
     # We're ok with throwing away negative uids here. Also, remove nil values.
     user_ids = dscl_output.split.compact.collect { |l| l.to_i if l.match(/^\d+$/) }
@@ -504,6 +504,8 @@ Puppet::Type.type(:user).provide :directoryservice do
       next_id = ids[i] + 1
       return next_id if ids[i+1] != next_id and next_id >= min_id
     end
+    # if we reach here, then the highest existing uid is smaller than min_id
+    return min_id
   end
 
   # This method is only called on version 10.7 or greater. On 10.7 machines,
