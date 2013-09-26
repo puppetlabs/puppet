@@ -164,6 +164,9 @@ module Puppet
 
     newproperty(:comment) do
       desc "A description of the user.  Generally the user's full name."
+      munge do |v|
+        v.respond_to?(:force_encoding) ? v.force_encoding('ASCII-8BIT') : v
+      end
     end
 
     newproperty(:shell) do
