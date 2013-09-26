@@ -390,6 +390,15 @@ class Application
     Puppet::Util::Log.setup_default unless options[:setdest]
   end
 
+  def handle_logdest_arg(arg)
+    begin
+      Puppet::Util::Log.newdestination(arg)
+      options[:setdest] = true
+    rescue => detail
+      Puppet.log_exception(detail)
+    end
+  end
+
   def configure_indirector_routes
     route_file = Puppet[:route_file]
     if ::File.exists?(route_file)

@@ -45,8 +45,8 @@ describe Puppet::Application::Apply do
       @apply.handle_logdest("console")
     end
 
-    it "should put the logset options to true" do
-      @apply.options.expects(:[]=).with(:logset,true)
+    it "should set the setdest options to true" do
+      @apply.options.expects(:[]=).with(:setdest,true)
 
       @apply.handle_logdest("console")
     end

@@ -112,12 +112,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   option("--logdest DEST", "-l DEST") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:setdest] = true
-    rescue => detail
-      Puppet.log_exception(detail)
-    end
+    handle_logdest_arg(arg)
   end
 
   def main
