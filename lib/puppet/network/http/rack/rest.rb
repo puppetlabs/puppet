@@ -74,8 +74,14 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   # Return the query params for this request.
   def params(request)
-    params = CGI.parse(request.query_string)
-    convert_singular_arrays_to_value(params)
+    if request.post?
+      params = request.params
+    else
+      # rack doesn't support multi-valued query parameters,
+      # e.g. ignore, so parse them ourselves
+      params = CGI.parse(request.query_string)
+      convert_singular_arrays_to_value(params)
+    end
     result = decode_params(params)
     result.merge(extract_client_info(request))
   end
