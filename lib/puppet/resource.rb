@@ -102,6 +102,18 @@ class Puppet::Resource
     end
   end
 
+  YAML_ATTRIBUTES = [:@file, :@line, :@exported, :@type, :@title, :@tags, :@parameters]
+
+  # Explicitly list the instance variables that should be serialized when
+  # converting to YAML.
+  #
+  # @api private
+  # @return [Array<Symbol>] The intersection of our explicit variable list and
+  #   all of the instance variables defined on this class.
+  def to_yaml_properties
+    YAML_ATTRIBUTES & super
+  end
+
   def to_pson(*args)
     to_pson_data_hash.to_pson(*args)
   end
