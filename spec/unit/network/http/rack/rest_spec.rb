@@ -164,7 +164,7 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "should not return multi-valued params in a POST body as an array of values" do
         req = mk_req("/", :method => 'POST', :input => 'foo=baz&foo=xyzzy')
         result = @handler.params(req)
-        result[:foo].should_not == ["baz", "xyzzy"]
+        result[:foo].should be_one_of("baz", "xyzzy")
       end
 
       it "should CGI-decode the HTTP parameters" do
