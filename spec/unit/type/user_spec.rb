@@ -47,6 +47,10 @@ describe Puppet::Type.type(:user) do
     described_class.provider_feature(:system_users).should_not be_nil
   end
 
+  it "should have a manages_shell feature" do
+    described_class.provider_feature(:manages_shell).should_not be_nil
+  end
+
   describe :managehome do
     let (:provider) { @provider_class.new(:name => 'foo', :ensure => :absent) }
     let (:instance) { described_class.new(:name => 'foo', :provider => provider) }
@@ -376,17 +380,25 @@ describe Puppet::Type.type(:user) do
       described_class.stubs(:defaultprovider).returns @shell_provider_class
     end
 
-    it "should call :check_valid_shell on the provider when changing shell" do
-      @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash')
-      @provider.expects(:check_valid_shell)
-      described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider).parameter(:shell).sync
+    context 'with provider with manages_shell' do
+      it "should call :check_valid_shell on the provider when changing shell" do
+        @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash')
+        @provider.expects(:check_valid_shell)
+        described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider).parameter(:shell).sync
+      end
+
+      it "should call :check_valid_shell on the provider when chaging from present to absent" do
+        @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => 'absent')
+        @provider.expects(:check_valid_shell)
+        described_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => 'present', :provider => @provider).parameter(:shell).sync
+      end
     end
 
-    it "should call :check_valid_shell on the provider when chaging from present to absent" do
-      @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => 'absent')
-      @provider.expects(:check_valid_shell)
-      described_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => 'present', :provider => @provider).parameter(:shell).sync
+    context 'with provider without manages_shell ' do
+      it "it should raise an error" do
+        @provider.stubs(:manages_shell?).returns false
+        expect { described_class.new(:name => 'foo', :shell => '/bin/foo/',:provider => @provider ) }.to raise_error Puppet::Error
+      end
     end
-
   end
 end
