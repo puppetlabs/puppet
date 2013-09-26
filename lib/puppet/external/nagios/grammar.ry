@@ -1,7 +1,7 @@
 # vim: syntax=ruby
 class Nagios::Parser
 
-token DEFINE NAME STRING PARAM LCURLY RCURLY VALUE RETURN COMMENT INLINECOMMENT
+token DEFINE NAME PARAM LCURLY RCURLY VALUE RETURN
 
 rule
 decls: decl { return val[0] if val[0] }
@@ -20,13 +20,9 @@ decls: decl { return val[0] if val[0] }
 
 decl: object { result = [val[0]] }
     | RETURN { result = nil }
-    | comment
     ;
 
-comment: COMMENT RETURN { result = nil }
-    ;
-
-object: DEFINE NAME LCURLY RETURN vars RCURLY {
+object: DEFINE NAME LCURLY returns vars RCURLY {
         result = Nagios::Base.create(val[1],val[4])
     }
     ;
@@ -40,146 +36,211 @@ vars: var
     }
     ;
 
-var: PARAM VALUE icomment returns { result = {val[0] => val[1]} }
+var: PARAM VALUE returns { result = {val[0] => val[1]} }
     ;
 
-returns:      RETURN
-            | returns RETURN
-            ;
-
-icomment: # nothing
-    | INLINECOMMENT
+returns: RETURN
+    | RETURN returns
     ;
 
 end
 
 ----inner
+require 'strscan'
 
 class ::Nagios::Parser::SyntaxError < RuntimeError; end
 
 def parse(src)
-    @src = src
+  if src.respond_to?("force_encoding") then
+    src.force_encoding("ASCII-8BIT")
+  end
+  @ss = StringScanner.new(src)
 
-    # state variables
-    @invar = false
-    @inobject = false
-    @done = false
+  # state variables
+  @in_parameter_value = false
+  @in_object_definition = false
+  @done = false
 
-    @line = 0
-    @yydebug = true
+  @line = 1
+  @yydebug = true
 
-    do_parse
+  do_parse
+end
+
+# This tokenizes the outside of object definitions,
+# and detects when we start defining an object.
+# We ignore whitespaces, comments and inline comments.
+# We yield when finding newlines, the "define" keyword,
+#     the object name and the opening curly bracket.
+def tokenize_outside_definitions
+  case
+  when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+    ;
+
+  when (text = @ss.scan(/\#.*$/))               # ignore comments
+    ;
+
+  when (text = @ss.scan(/;.*$/))                # ignore inline comments
+    ;
+
+  when (text = @ss.scan(/\n/))                  # newline
+    [:RETURN, text]
+
+  when (text = @ss.scan(/\b(define)\b/))        # the "define" keyword 
+    [:DEFINE, text]
+
+  when (text = @ss.scan(/[^{ \t\n]+/))          # the name of the object being defined (everything not an opening curly bracket or a separator)
+    [:NAME, text]
+
+  when (text = @ss.scan(/\{/))                  # the opening curly bracket - we enter object definition
+    @in_object_definition = true
+    [:LCURLY, text]
+
+  else
+    text = @ss.string[@ss.pos .. -1]
+    raise  ScanError, "can not match: '#{text}'"
+  end  # case
+end
+
+# This tokenizes until we find the parameter name.
+def tokenize_parameter_name
+  case
+  when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+    ;
+
+  when (text = @ss.scan(/\#.*$/))               # ignore comments
+    ;
+
+  when (text = @ss.scan(/;.*$/))                # ignore inline comments
+    ;
+
+  when (text = @ss.scan(/\n/))                  # newline
+    [:RETURN, text]
+
+  when (text = @ss.scan(/\}/))                  # closing curly bracket : end of definition
+    @in_object_definition = false
+    [:RCURLY, text]
+
+  when (not @in_parameter_value and (text = @ss.scan(/\S+/)))    # This is the name of the parameter
+    @in_parameter_value = true
+    [:PARAM, text]
+
+  else
+    text = @ss.string[@ss.pos .. -1]
+    raise  ScanError, "can not match: '#{text}'"
+  end  # case
+end
+
+# This tokenizes the parameter value.
+# There is a special handling for lines containing semicolons :
+#     - unescaped semicolons are line comments (and should stop parsing of the line)
+#     - escaped (with backslash \) semicolons should be kept in the parameter value (without the backslash)
+def tokenize_parameter_value
+  case
+  when (chars = @ss.skip(/[ \t]+/))             # ignore whitespace /\s+/
+    ;
+
+  when (text = @ss.scan(/\#.*$/))               # ignore comments
+    ;
+
+  when (text = @ss.scan(/\n/))                  # newline
+    [:RETURN, text]
+
+  when (text = @ss.scan(/.+$/))                 # Value of parameter
+    @in_parameter_value = false
+
+    # Special handling of inline comments (;) and escaped semicolons (\;)
+
+    # We split the string on escaped semicolons (\;),
+    # Then we rebuild it as long as there are no inline comments (;)
+    # We join the rebuilt string with unescaped semicolons (on purpose)
+    array = text.split('\;', 0)
+
+    text = ""
+
+    array.each do |elt|
+
+      # Now we split at inline comments. If we have more than 1 element in the array
+      # it means we have an inline comment, so we are able to stop parsing
+      # However we still want to reconstruct the string with its first part (before the comment)
+      linearray = elt.split(';', 0)
+
+      # Let's reconstruct the string with a (unescaped) semicolon
+      if text != "" then
+        text += ';'
+      end
+      text += linearray[0]
+
+      # Now we can stop
+      if linearray.length > 1 then
+        break                                
+      end
+    end
+
+
+    # We strip the text to remove spaces between end of string and beginning of inline comment
+    [:VALUE, text.strip]
+
+  else
+    text = @ss.string[@ss.pos .. -1]
+    raise  ScanError, "can not match: '#{text}'"
+  end  # case
+end
+
+# This tokenizes inside an object definition.
+# Two cases : parameter name and parameter value
+def tokenize_inside_definitions
+  if @in_parameter_value
+    tokenize_parameter_value
+  else
+    tokenize_parameter_name
+  end
 end
 
 # The lexer.  Very simple.
 def token
-    @src.sub!(/\A\n/,'')
-    if $&
-        @line += 1
-        return [ :RETURN, "\n" ]
-    end
+  text = @ss.peek(1)
+  @line  +=  1  if text == "\n"
 
-    if @done
-        return nil
-    end
-    yytext = String.new
-
-
-    # remove comments from this line
-    @src.sub!(/\A[ \t]*;.*\n/,"\n")
-    if $&
-        return [:INLINECOMMENT, ""]
-    end
-
-    @src.sub!(/\A#.*\n/,"\n")
-    if $&
-        return [:COMMENT, ""]
-    end
-
-    @src.sub!(/#.*/,'')
-
-    if @src.length == 0
-        @done = true
-        return [false, '$']
-    end
-
-    if @invar
-        @src.sub!(/\A[ \t]+/,'')
-        @src.sub!(/\A([^;\n]+)(\n|;)/,'\2')
-        if $1
-            yytext += $1
-        end
-        @invar = false
-        return [:VALUE, yytext]
-    else
-        @src.sub!(/\A[\t ]*(\S+)([\t ]*|$)/,'')
-        if $1
-            yytext = $1
-            case yytext
-            when 'define'
-                #puts "got define"
-                return [:DEFINE, yytext]
-            when '{'
-                #puts "got {"
-                @inobject = true
-                return [:LCURLY, yytext]
-            else
-                unless @inobject
-                    #puts "got type: #{yytext}"
-                    if yytext =~ /\W/
-                        giveback = yytext.dup
-                        giveback.sub!(/^\w+/,'')
-                        #puts "giveback " + giveback
-                        #puts "yytext " + yytext
-                        yytext.sub!(/\W.*$/,'')
-                        #puts "yytext " + yytext
-                        #puts "all [#{giveback} #{yytext} #{orig}]"
-                        @src = giveback + @src
-                    end
-                    return [:NAME, yytext]
-                else
-                    if yytext == '}'
-                        #puts "got closure: #{yytext}"
-                        @inobject = false
-                        return [:RCURLY, '}']
-                    end
-
-                    unless @invar
-                        @invar = true
-                        return [:PARAM, $1]
-                    else
-                    end
-                end
-            end
-        end
-    end
+  token = if @in_object_definition
+    tokenize_inside_definitions
+  else
+    tokenize_outside_definitions
+  end
+  token
 end
 
 def next_token
-    token
+  return if @ss.eos?
+
+  # skips empty actions
+  until _next_token = token or @ss.eos?; end
+  _next_token
 end
 
 def yydebug
-    1
+  1
 end
 
 def yywrap
-    0
+  0
 end
 
 def on_error(token, value, vstack )
-    msg = ""
-    unless value.nil?
-        msg = "line #{@line}: syntax error at '#{value}'"
-    else
-        msg = "line #{@line}: syntax error at '#{token}'"
-    end
-    unless @src.size > 0
-        msg = "line #{@line}: Unexpected end of file"
-    end
-    if token == '$end'.intern
-        puts "okay, this is silly"
-    else
-        raise ::Nagios::Parser::SyntaxError, msg
-    end
+  #    text = @ss.string[@ss.pos .. -1]
+  text = @ss.peek(20)
+  msg = ""
+  unless value.nil?
+    msg = "line #{@line}: syntax error at value '#{value}' : #{text}"
+  else
+    msg = "line #{@line}: syntax error at token '#{token}' : #{text}"
+  end
+  if @ss.eos?
+    msg = "line #{@line}: Unexpected end of file"
+  end
+  if token == '$end'.intern
+    puts "okay, this is silly"
+  else
+    raise ::Nagios::Parser::SyntaxError, msg
+  end
 end
