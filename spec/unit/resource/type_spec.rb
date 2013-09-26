@@ -4,10 +4,6 @@ require 'puppet/resource/type'
 
 # the json-schema gem doesn't support windows
 if not Puppet.features.microsoft_windows?
-  require 'json'
-  require 'json-schema'
-
-  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/json-meta-schema.json')))
   RESOURCE_TYPE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/resource_type.json')))
 
   describe "resource type schema" do

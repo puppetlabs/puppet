@@ -6,12 +6,8 @@ require 'puppet/transaction/report'
 
 # the json-schema gem doesn't support windows
 if not Puppet.features.microsoft_windows?
-  require 'json'
-  require 'json-schema'
-
   REPORT_SCHEMA_URI = File.join(File.dirname(__FILE__),    '../../../api/schemas/report.json')
   REPORT_SCHEMA = JSON.parse(File.read(REPORT_SCHEMA_URI))
-  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/json-meta-schema.json')))
 
   describe "report schema" do
     it "should validate against the json meta-schema" do
