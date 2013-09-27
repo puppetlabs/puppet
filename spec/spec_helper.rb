@@ -43,6 +43,15 @@ Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))
 end
 
+# various spec tests now use json schema validation
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  require 'json'
+  require 'json-schema'
+
+  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../api/schemas/json-meta-schema.json')))
+end
+
 RSpec.configure do |config|
   include PuppetSpec::Fixtures
 

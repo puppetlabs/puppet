@@ -4,10 +4,6 @@ require 'puppet_spec/compiler'
 
 # the json-schema gem doesn't support windows
 if not Puppet.features.microsoft_windows?
-  require 'json'
-  require 'json-schema'
-
-  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/json-meta-schema.json')))
   CATALOG_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/catalog.json')))
 
   describe "catalog schema" do
