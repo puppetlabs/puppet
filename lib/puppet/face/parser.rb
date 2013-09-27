@@ -41,10 +41,13 @@ Puppet::Face.define(:parser, '0.0.1') do
            Puppet.notice "No manifest specified. Validating the default manifest #{Puppet[:manifest]}"
         end
       end
+      missing_files = []
       files.each do |file|
+        missing_files << file if ! File.exists?(file)
         Puppet[:manifest] = file
         validate_manifest
       end
+      raise Puppet::Error, "One or more file(s) specified did not exist:\n#{missing_files.collect {|f| " " * 3 + f + "\n"}}" if ! missing_files.empty?
       nil
     end
   end
