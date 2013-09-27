@@ -68,19 +68,20 @@ module Puppet::Pops::Binder::Hiera2
         begin
         key = entry['category']
         rescue TypeError => e
-          require 'debugger'; debugger
         end
         if key == 'common'
           # has no value entry
           value = 'true'
+          default_category_path = "common"
         else
           # given value, or defaults to the category (i.e. key)
           value = entry['value'] || "${#{key}}"
+          # default path under directory named after the category, and then switch on category == fact
+          default_category_path = "#{key}/${#{key}}"
         end
-        # A single path, or an array of paths
-        # if neither, use key/${key}
-        #
-        paths = entry['paths'] || entry['path'] || "#{key}/${#{key}}"
+
+        # A single path, or an array of paths made into an array for uniform treatment
+        paths = entry['paths'] || entry['path'] || default_category_path
         paths = [paths] unless paths.is_a?(Array)
 
         # prepend datadir if it is defined
@@ -88,6 +89,7 @@ module Puppet::Pops::Binder::Hiera2
           paths = paths.collect {|p| [@config.data_dir, p].join('/') }
         end
 
+        # Evaluate the value as a string, it may contain interpolated DSL expressions
         category_value = @parser.evaluate_string(scope, @parser.quote(value), source_file)
 
         hierarchy[key] = {

@@ -138,5 +138,32 @@ describe 'The hiera2 bindings provider' do
       end
     end
 
+    context 'when loading ok category_only bindings using format version 3' do
+      let(:module_dir) { config_dir('ok_category_only') }
+
+      it 'should load and validate OK simple bindings' do
+        Puppet::Pops::Binder::BindingsValidatorFactory.new().validator(acceptor).validate(bindings)
+        acceptor.errors?.should() == false
+      end
+
+      it 'should contain the expected effective categories' do
+        expected = [['node', 'node.example.com'], ['common', 'true']]
+        bindings.effective_categories.categories.collect {|c| [c.categorization, c.value] }.should == expected
+      end
+
+      it 'should make the injector lookup expected constants' do
+        node_binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(test_layer_with_bindings))
+        injector = Puppet::Pops::Binder::Injector.new(node_binder)
+
+        injector.lookup(scope, 'a_number').should == 42
+        injector.lookup(scope, 'a_string').should == 'forty two'
+        injector.lookup(scope, 'a_json_number').should == 142
+        injector.lookup(scope, 'a_json_string').should == 'one hundred and forty two'
+        expect(injector.lookup(scope, "a_json_array")).to be == ["a", "b", 100]
+        expect(injector.lookup(scope, "a_json_hash")).to be == {"a"  => 1, "b" => 2}
+        expect(injector.lookup(scope, 'a_common_number')).to be == 242
+      end
+    end
+
   end
 end
