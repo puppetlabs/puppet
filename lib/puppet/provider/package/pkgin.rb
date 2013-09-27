@@ -63,6 +63,11 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   def latest
     # -f seems required when repositories.conf changes
     pkgin("-yf", :update)
+    package = self.query
+    if package[:status] == '<'
+      notice  "Upgrading #{package[:name]} to #{package[:version]}"
+      pkgin("-y", :install, package[:name])
+    end
   end
 
 end
