@@ -9,26 +9,8 @@ module RDoc
   # PuppetGenerator.
 
   # PuppetTopLevel is a top level (usually a .pp/.rb file)
-  class PuppetTopLevel < TopLevel
+  module PuppetTopLevel
     attr_accessor :module_name, :global
-
-    # will contain all plugins
-    @@all_plugins = {}
-
-    # contains all cutoms facts
-    @@all_facts = {}
-
-    def initialize(toplevel)
-      super(toplevel.file_relative_name)
-    end
-
-    def self.all_plugins
-      @@all_plugins.values
-    end
-
-    def self.all_facts
-      @@all_facts.values
-    end
   end
 
   # PuppetModule holds a Puppet Module
@@ -40,12 +22,8 @@ module RDoc
     def initialize(name,superclass=nil)
       @facts = []
       @plugins = []
-      super(name,superclass)
-    end
-
-    def initialize_classes_and_modules
-      super
       @nodes = {}
+      super(name,superclass)
     end
 
     def add_plugin(plugin)
@@ -130,7 +108,7 @@ module RDoc
     # but are written class1::class2::define we need to perform the lookup by
     # ourselves.
     def find_symbol(symbol, method=nil)
-      result = super
+      result = super(symbol)
       if not result and symbol =~ /::/
         modules = symbol.split(/::/)
         unless modules.empty?
