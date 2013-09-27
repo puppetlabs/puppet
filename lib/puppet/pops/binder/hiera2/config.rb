@@ -108,7 +108,7 @@ module Puppet::Pops::Binder::Hiera2
           @hierarchy = data['hierarchy']
           @backends = data['backends']
           @version = data['version']
-          @data_dir = data['data_dir']
+          @data_dir = data['datadir']
         end
       end
 
@@ -120,6 +120,8 @@ module Puppet::Pops::Binder::Hiera2
       if version == 3
         @hierarchy ||= DEFAULT_HIERARCHY_3
       else
+        # TODO: Remove experimental format version 2 (used in Puppet 3.3.0)
+        @version = 2
         @hierarchy ||= DEFAULT_HIERARCHY_2
       end
     end

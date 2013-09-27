@@ -2,7 +2,10 @@
 version: 3
 
 hierarchy:
-  - ['os', 'foo' ]
+  - 'path'
+  - 'path2'
+
+datadir: 'data'
 
 backends:
   - yaml

@@ -73,10 +73,6 @@ module Puppet::Pops::Binder::Hiera2::Issues
     "The configuration file format version of '#{semantic}' is deprecated '#{deprecated}', please update to latest format '#{latest}"
   end
 
-  HIERARCHY_ENTRY_NOT_OBJECT = issue :HIERARCHY_ENTRY_NOT_OBJECT do
-    "The configuration file '#{semantic}' contains an entry in 'hierarchy' that is not an Object/Hash"
-  end
-
   HIERARCHY_ENTRY_MISSING_ATTRIBUTE = issue :HIERARCHY_ENTRY_MISSING_ATTRIBUTE, :name do
     "The configuration file '#{semantic}' contains an entry in 'hierarchy' is missing the required attribute '#{name}'."
   end
@@ -103,5 +99,9 @@ module Puppet::Pops::Binder::Hiera2::Issues
 
   CATEGORY_ATTR_ARRAY_ENTRY_EMPTY = issue :CATEGORY_ATTR_ARRAY_ENTRY_EMPTY, :name do
     "The configuration file '#{semantic}' has an entry in 'hierarchy' with name '#{name}' that is an array with an empty entry."
+  end
+
+  HIERARCHY_WRONG_TYPE = issue :HIERARCHY_WRONG_TYPE, :expected1, :expected2, :actual do
+    "The configuration file '#{semantic}' has a 'hierarchy' of wrong type, expected: '#{expected1}' or '#{expected2}', got actual: '#{actual}'."
   end
 end

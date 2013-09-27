@@ -1,0 +1,17 @@
+---
+version: 3
+
+hierarchy:
+  -
+    category: 'node'
+    value:    '${node}'
+    path:     '${node}'
+  -
+    category: 'common'
+    path:     'common'
+
+datadir: ""
+
+backends:
+  - yaml
+  - json

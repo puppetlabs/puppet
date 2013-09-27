@@ -109,8 +109,10 @@ class ConfigChecker
     def initialize(diagnostics)
       super
       @type_calculator = Puppet::Pops::Types::TypeCalculator.new
-      @string_t = Puppet::Pops::Types::TypeFactory.string()
-      @array_of_string_t = Puppet::Pops::Types::TypeFactory.array_of(@string_t)
+      types = Puppet::Pops::Types::TypeFactory
+      @string_t = types.string()
+      @array_of_string_t = types.array_of(types.string)
+      @array_hash_literal_data_t = types.array_of(types.hash_of_data)
     end
 
     def top_level_attributes
@@ -134,15 +136,23 @@ class ConfigChecker
     end
 
     def check_hierarchy(hierarchy, config_file)
+      # The hierarchy may be an Array[String] which means a list of paths for the common category,
+      # or an Array[Hash[String, Data]] with more detail per entry
+
       if !hierarchy.is_a?(Array) || hierarchy.empty?
         diagnostics.accept(Issues::MISSING_HIERARCHY, config_file)
       else
-        hierarchy.each do |value|
-          if !value.is_a?(Hash)
-            diagnostics.accept(Issues::HIERARCHY_ENTRY_NOT_OBJECT, config_file)
-          else
-            check_category_entry(value, config_file)
-          end
+        hierarchy_type = type_calculator.infer(hierarchy)
+        if type_calculator.assignable?(@array_of_string_t, hierarchy_type)
+          hierarchy.each {|value| check_category_path(value, config_file) }
+        elsif type_calculator.assignable?(@array_hash_literal_data_t, hierarchy_type)
+          hierarchy.each {|value| check_category_entry(value, config_file) }
+        else
+          diagnostics.accept(Issues::HIERARCHY_WRONG_TYPE, config_file, {
+            :expected1 => @array_of_string,
+            :expected2 => @array_hash_literal_data,
+            :actual => hierarchy_type
+            })
         end
       end
     end
@@ -207,6 +217,10 @@ class ConfigChecker
       end
     end
 
+    def check_string(name, value, config_file)
+      check_attr_type(name, @string_t, type_calculator.infer(value), config_file )
+    end
+
     def check_non_empty_array_of_string(name, value, config_file)
       if check_attr_type(name, @array_of_string_t, type_calculator.infer(value), config_file )
         if value.empty?
@@ -222,7 +236,7 @@ class ConfigChecker
     end
 
     def check_datadir(value, config_file)
-      check_non_empty_string('datadir', value, config_file) unless value.nil?
+      check_string('datadir', value, config_file) unless value.nil?
     end
 
     def check_category_path(value, config_file)

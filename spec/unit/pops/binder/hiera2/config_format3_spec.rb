@@ -28,8 +28,13 @@ describe 'The hiera2 config' do
       acceptor.errors_or_warnings?.should() == false
     end
 
-    it 'should load and validate OK configuration with only a category' do
+    it 'should load and validate OK configuration with only a single category' do
       Puppet::Pops::Binder::Hiera2::Config.new(config_dir('ok_defaults'), diag)
+      acceptor.errors_or_warnings?.should() == false
+    end
+
+    it 'should load and validate OK configuration with only a list of paths' do
+      Puppet::Pops::Binder::Hiera2::Config.new(config_dir('ok_simple'), diag)
       acceptor.errors_or_warnings?.should() == false
     end
 
@@ -62,7 +67,7 @@ describe 'The hiera2 config' do
     end
 
     it 'should report when config hierarchy is malformed' do
-      test_config_issue('malformed_hierarchy', Puppet::Pops::Binder::Hiera2::Issues::HIERARCHY_ENTRY_NOT_OBJECT)
+      test_config_issue('malformed_hierarchy', Puppet::Pops::Binder::Hiera2::Issues::HIERARCHY_WRONG_TYPE)
     end
 
     it 'should report when config hierarchy entry has no category' do
