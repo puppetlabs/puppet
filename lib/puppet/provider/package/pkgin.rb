@@ -59,4 +59,10 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   def uninstall
     pkgin("-y", :remove, resource[:name])
   end
+
+  def latest
+    # -f seems required when repositories.conf changes
+    pkgin("-yf", :update)
+  end
+
 end
