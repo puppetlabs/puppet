@@ -67,6 +67,8 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     if package[:status] == '<'
       notice  "Upgrading #{package[:name]} to #{package[:version]}"
       pkgin("-y", :install, package[:name])
+    else
+      true
     end
   end
 
