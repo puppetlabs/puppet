@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   defaultfor :operatingsystem => :dragonfly
 
-  has_feature :installable, :uninstallable
+  has_feature :installable, :uninstallable, :upgradeable
 
   def self.parse_pkgin_line(package, force_status=nil)
 
