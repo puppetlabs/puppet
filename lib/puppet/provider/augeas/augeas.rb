@@ -199,7 +199,14 @@ Puppet::Type.type(:augeas).provide(:augeas) do
   end
 
   def is_numeric?(s)
-    s.to_s.match(/\A[+-]?\d+?(\.\d+)?\Z/n) == nil ? false : true
+    case s
+      when Fixnum
+        return true
+      when String
+        return s.match(/\A[+-]?\d+?(\.\d+)?\Z/n) == nil ? false : true
+      else
+        return false
+    end
   end
 
   # Used by the need_to_run? method to process get filters. Returns
