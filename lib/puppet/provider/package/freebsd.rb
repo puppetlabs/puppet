@@ -32,7 +32,8 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     end
   end
 
-  def query
+  # @api private
+  def query_a_package
     self.class.instances.each do |provider|
       if provider.name == @resource.name
         return provider.properties

@@ -149,7 +149,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     matches[1]
   end
 
-  def query
+  # @api private
+  def query_a_package
     hash = nil
 
     # list out our specific package

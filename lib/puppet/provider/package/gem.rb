@@ -111,7 +111,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     hash[:ensure][0]
   end
 
-  def query
+  # @api private
+  def query_a_package
     self.class.gemlist(:justme => resource[:name], :local => true)
   end
 

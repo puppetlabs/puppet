@@ -92,7 +92,8 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     hash[:avail]
   end
 
-  def query
+  # @api private
+  def query_a_package
     if hash = self.class.blastlist(:justme => @resource[:name])
       hash
     else

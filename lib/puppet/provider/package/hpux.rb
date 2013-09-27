@@ -26,7 +26,8 @@ Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package 
     swinstall(*args)
   end
 
-  def query
+  # @api private
+  def query_a_package
     swlist resource[:name]
     {:ensure => :present}
   rescue

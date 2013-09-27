@@ -168,7 +168,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
   ###### Query subcommand - return a hash of details if exists, or nil if it doesn't.
   # Used to make sure the package is installed
 
-  def query
+  # @api private
+  def query_a_package
     Puppet.debug "portupgrade.query() - Called on #{@resource[:name]}"
 
     cmdline = ["-qO", @resource[:name]]

@@ -168,7 +168,8 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     hash[:avail] if hash
   end
 
-  def query
+  # @api private
+  def query_a_package
     if hash = pkgsingle(@resource)
       hash
     else

@@ -122,7 +122,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     return nil
   end
 
-  def query
+  # @api private
+  def query_a_package
     # Search for the version info
     if pkginfo(@resource[:name]) =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
       return { :ensure => $2 }

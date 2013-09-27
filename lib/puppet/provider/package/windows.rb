@@ -45,7 +45,8 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
 
   # Query for the provider hash for the current resource. The provider we
   # are querying, may not have existed during prefetch
-  def query
+  # @api private
+  def query_a_package
     Puppet::Provider::Package::Windows::Package.find do |pkg|
       if pkg.match?(resource)
         return self.class.to_hash(pkg)

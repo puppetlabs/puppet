@@ -46,7 +46,8 @@ Puppet::Type.type(:package).provide :pip,
 
   # Return structured information about a particular package or `nil` if
   # it is not installed or `pip` itself is not available.
-  def query
+  # @api private
+  def query_a_package
     self.class.instances.each do |provider_pip|
       return provider_pip.properties if @resource[:name].downcase == provider_pip.name.downcase
     end
