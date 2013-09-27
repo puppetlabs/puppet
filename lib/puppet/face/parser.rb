@@ -35,7 +35,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       if files.empty?
         if not STDIN.tty?
           Puppet[:code] = STDIN.read
-          Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+          validate_manifest
         else
            files << Puppet[:manifest]
            Puppet.notice "No manifest specified. Validating the default manifest #{Puppet[:manifest]}"
@@ -43,9 +43,15 @@ Puppet::Face.define(:parser, '0.0.1') do
       end
       files.each do |file|
         Puppet[:manifest] = file
-        Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+        validate_manifest
       end
       nil
     end
+  end
+  def validate_manifest
+     Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+     rescue => detail
+       Puppet.log_exception(detail)
+       exit(1)
   end
 end
