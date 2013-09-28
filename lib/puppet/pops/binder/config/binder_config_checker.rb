@@ -9,7 +9,9 @@ module Puppet::Pops::Binder::Config
       @diagnostics = diagnostics
       t = Puppet::Pops::Types
       @type_calculator = t::TypeCalculator.new()
-      @array_of_string_type = t::TypeFactory.array_of(t::TypeFactory.string())
+      types = t::TypeFactory
+      @array_of_string_type = types.array_of(types.string())
+      @hash_of_string_string = types.hash_of(types.string(), types.string())
     end
 
     # Validate the consistency of the given data. Diagnostics will be emitted to the DiagnosticProducer
@@ -105,6 +107,7 @@ module Puppet::Pops::Binder::Config
       end
     end
 
+    # TODO: Accept String (the name), Array (String, String), or Object (name:, :value)
     def check_category(category, config_file)
       type = @type_calculator.infer(category)
       unless @type_calculator.assignable?(@array_of_string_type, type)

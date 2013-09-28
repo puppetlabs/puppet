@@ -1,0 +1,17 @@
+---
+version: 1
+layers:
+  -  name: site
+     include: 'confdir-hiera:/'
+
+  - name: modules
+    include: 'module-hiera:/*/'
+    exclude: 'module-hiera:/bad/'
+
+categories:
+  - ['node', '$fqn']
+  - 'operatingsystem'
+  - name: 'osfamily'
+  - name: 'environment'
+    value: '$environment'
+  - 'common'

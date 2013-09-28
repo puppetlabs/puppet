@@ -36,10 +36,11 @@ module Puppet::Pops::Binder::Config
     ]
 
     DEFAULT_CATEGORIES = [
-      ['node',        "${fqdn}"],
-      ['osfamily',    "${osfamily}"],
-      ['environment', "${environment}"],
-      ['common',      "true"]
+      ['node',            "${fqdn}"],
+      ['operatingsystem', "${operatingsystem}"],
+      ['osfamily',        "${osfamily}"],
+      ['environment',     "${environment}"],
+      ['common',          "true"]
     ]
 
     DEFAULT_SCHEME_EXTENSIONS = {}
@@ -83,16 +84,15 @@ module Puppet::Pops::Binder::Config
           raise ArgumentError, "Cannot find the given binder configuration file '#{@config_file}'"
         end
       else
-        raise ArgumentError, "The setting binder_config is expected to be a String, got: #{@config_file.class.name}."
+        raise ArgumentError, "The setting 'binder_config' is expected to be a String, got: #{@config_file.class.name}."
       end
       unless @config_file.is_a?(String) && File.exist?(@config_file)
         @config_file = nil # use defaults
       end
 
-      validator = BinderConfigChecker.new(diagnostics)
+      # TODO: YAML ERRORS, SAME AS ELSEWHERE, USE YAML UTIL ?
       begin
         data = @config_file ? YAML.load_file(@config_file) : default_config()
-        validator.validate(data, @config_file)
       rescue Errno::ENOENT
         diagnostics.accept(Issues::CONFIG_FILE_NOT_FOUND, @config_file)
       rescue Errno::ENOTDIR
@@ -101,7 +101,9 @@ module Puppet::Pops::Binder::Config
         diagnostics.accept(Issues::CONFIG_FILE_SYNTAX_ERROR, @config_file, :detail => e.message)
       end
 
+
       unless diagnostics.errors?
+        normalize_categorization(data)
         @layering_config   = data['layers'] or default_layers
         @categorization    = data['categories'] or default_categories
         @scheme_extensions = (data['extensions'] and data['extensions']['scheme_handlers'] or default_scheme_extensions)
@@ -112,6 +114,8 @@ module Puppet::Pops::Binder::Config
         @scheme_extensions = {}
         @hiera_backends = {}
       end
+      validator = BinderConfigChecker.new(diagnostics)
+      validator.validate(data, @config_file)
     end
 
     # The default_xxx methods exists to make it easier to do mocking in tests.
@@ -135,5 +139,24 @@ module Puppet::Pops::Binder::Config
     def default_hiera_backends_extensions
       DEFAULT_HIERA_BACKENDS_EXTENSIONS
     end
+
+    # Normalizes parsed categorization into an array of array-tuples [name, value]
+    def normalize_categorization(data)
+      return unless data['categories']
+
+      data['categories'] = data['categories'].collect do |entry|
+        case entry
+        when String
+          [entry, entry == 'common' ? 'true' : "${#{entry}}"]
+        when Array
+          [entry[0], entry[1]]
+        when Hash
+          name  = entry['name']  || entry[:name]
+          value = entry['value'] || entry[:value] || name == 'common' ? 'true' : "${#{name}}"
+          [name, value]
+        end
+      end
+    end
+
   end
 end

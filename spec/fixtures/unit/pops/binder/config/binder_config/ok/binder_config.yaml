@@ -6,4 +6,4 @@ layers:
 categories:
   - ['node', '$fqn']
   - ['environment', '$environment']
-  - ['common', 'true']
+  - ['common']
