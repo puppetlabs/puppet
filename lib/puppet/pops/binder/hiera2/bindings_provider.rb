@@ -84,9 +84,11 @@ module Puppet::Pops::Binder::Hiera2
         paths = entry['paths'] || entry['path'] || default_category_path
         paths = [paths] unless paths.is_a?(Array)
 
+        # a datadir in the contributin to a category wins over the global config's datadir
+        datadir = entry['datadir'] || @config.data_dir
         # prepend datadir if it is defined
-        if @config.data_dir && !@config.data_dir.empty?
-          paths = paths.collect {|p| [@config.data_dir, p].join('/') }
+        if datadir && !datadir.empty?
+          paths = paths.collect {|p| [datadir, p].join('/') }
         end
 
         # Evaluate the value as a string, it may contain interpolated DSL expressions

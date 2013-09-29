@@ -158,7 +158,7 @@ class ConfigChecker
     end
 
     def check_category_entry(category_hash, config_file)
-      keys = ['category', 'value', 'path', 'paths']
+      keys = ['category', 'value', 'path', 'paths', 'datadir']
       if category_hash.size == 0
         diagnostics.accept(Issues::EMPTY_CATEGORY_ENTRY, config_file)
         return
