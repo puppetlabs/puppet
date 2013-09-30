@@ -200,12 +200,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   def is_numeric?(s)
     case s
-      when Fixnum
-        return true
-      when String
-        return s.match(/\A[+-]?\d+?(\.\d+)?\Z/n) == nil ? false : true
-      else
-        return false
+    when Fixnum
+      return true
+    when String
+      return s.match(/\A[+-]?\d+?(\.\d+)?\Z/n) == nil ? false : true
+    else
+      return false
     end
   end
 
