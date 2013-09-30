@@ -70,6 +70,18 @@ module Puppet::Util::ADSI
       @native_user = native_user
     end
 
+    def self.parse_name(name)
+      if name =~ /\//
+        raise Puppet::Error.new( "Value must be in DOMAIN\\user style syntax" )
+      end
+
+      matches = name.scan(/((.*)\\)?(.*)/)
+      domain = matches[0][1] || '.'
+      account = matches[0][2]
+
+      return account, domain
+    end
+
     def native_user
       @native_user ||= Puppet::Util::ADSI.connect(uri)
     end
@@ -79,7 +91,7 @@ module Puppet::Util::ADSI
     end
 
     def uri
-      self.class.uri(name)
+      self.class.uri(*self.class.parse_name(@name))
     end
 
     def self.logon(name, password)
@@ -167,7 +179,7 @@ module Puppet::Util::ADSI
     end
 
     def self.exists?(name)
-      Puppet::Util::ADSI::connectable?(User.uri(name))
+      Puppet::Util::ADSI::connectable?(User.uri(*User.parse_name(name)))
     end
 
     def self.delete(name)

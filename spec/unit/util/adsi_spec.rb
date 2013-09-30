@@ -54,9 +54,29 @@ describe Puppet::Util::ADSI do
 
   describe Puppet::Util::ADSI::User do
     let(:username)  { 'testuser' }
+    let(:domain)    { 'DOMAIN' }
+    let(:domain_username) { "#{domain}\\#{username}"}
 
     it "should generate the correct URI" do
       Puppet::Util::ADSI::User.uri(username).should == "WinNT://./#{username},user"
+    end
+
+    it "should generate the correct URI for a user with a domain" do
+      Puppet::Util::ADSI::User.uri(username, domain).should == "WinNT://#{domain}/#{username},user"
+    end
+
+    it "should be able to parse a username without a domain" do
+      Puppet::Util::ADSI::User.parse_name(username).should == [username, '.']
+    end
+
+    it "should be able to parse a username with a domain" do
+      Puppet::Util::ADSI::User.parse_name(domain_username).should == [username, domain]
+    end
+
+    it "should raise an error with a username that contains a /" do
+      expect {
+        Puppet::Util::ADSI::User.parse_name("#{domain}/#{username}")
+      }.to raise_error(Puppet::Error, /Value must be in DOMAIN\\user style syntax/)
     end
 
     it "should be able to create a user" do
@@ -74,6 +94,11 @@ describe Puppet::Util::ADSI do
     it "should be able to check the existence of a user" do
       Puppet::Util::ADSI.expects(:connect).with("WinNT://./#{username},user").returns connection
       Puppet::Util::ADSI::User.exists?(username).should be_true
+    end
+
+    it "should be able to check the existence of a domain user" do
+      Puppet::Util::ADSI.expects(:connect).with("WinNT://#{domain}/#{username},user").returns connection
+      Puppet::Util::ADSI::User.exists?(domain_username).should be_true
     end
 
     it "should be able to delete a user" do
@@ -101,6 +126,7 @@ describe Puppet::Util::ADSI do
     describe "an instance" do
       let(:adsi_user) { stub 'user' }
       let(:user)      { Puppet::Util::ADSI::User.new(username, adsi_user) }
+      let(:domain_user){ Puppet::Util::ADSI::User.new(domain_username, adsi_user) }
 
       it "should provide its groups as a list of names" do
         names = ["group1", "group2"]
@@ -135,6 +161,10 @@ describe Puppet::Util::ADSI do
 
       it "should generate the correct URI" do
         user.uri.should == "WinNT://./#{username},user"
+      end
+
+      it "should generate the correct URI for a domain user" do
+        domain_user.uri.should == "WinNT://#{domain}/#{username},user"
       end
 
       describe "when given a set of groups to which to add the user" do
