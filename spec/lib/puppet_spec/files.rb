@@ -51,6 +51,13 @@ module PuppetSpec::Files
     path
   end
 
+  def file_containing(name, contents) PuppetSpec::Files.file_containing(name, contents) end
+  def self.file_containing(name, contents)
+    file = tmpfile(name)
+    File.open(file, 'wb') { |f| f.write(contents) }
+    file
+  end
+
   def tmpdir(name) PuppetSpec::Files.tmpdir(name) end
   def self.tmpdir(name)
     path = tmpfile(name)
