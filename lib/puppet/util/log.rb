@@ -272,7 +272,7 @@ class Puppet::Util::Log
     @line = data['line'] if data['line']
   end
 
-  def to_pson
+  def to_hash
     {
       'level' => @level,
       'message' => @message,
@@ -281,7 +281,11 @@ class Puppet::Util::Log
       'time' => @time.iso8601(9),
       'file' => @file,
       'line' => @line,
-    }.to_pson
+    }
+  end
+
+  def to_pson
+    self.to_hash.to_pson
   end
 
   def message=(msg)
