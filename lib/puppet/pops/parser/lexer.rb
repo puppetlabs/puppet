@@ -619,11 +619,11 @@ class Puppet::Pops::Parser::Lexer
 
       lexing_context[:after] = final_token.name unless newline
       if final_token.name == :DQPRE
-          lexing_context[:string_interpolation_depth] += 1
-          lexing_context[:bracestack] << lexing_context[:brace_count]
+        lexing_context[:string_interpolation_depth] += 1
+        lexing_context[:bracestack] << lexing_context[:brace_count]
       elsif final_token.name == :DQPOST
-          lexing_context[:string_interpolation_depth] -= 1
-          lexing_context[:bracestack].pop
+        lexing_context[:string_interpolation_depth] -= 1
+        lexing_context[:bracestack].pop
       end
 
       value = token_value[:value]
