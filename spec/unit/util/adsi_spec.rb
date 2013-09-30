@@ -139,9 +139,9 @@ describe Puppet::Util::ADSI do
     end
 
     describe "an instance" do
-      let(:adsi_user) { stub 'user' }
+      let(:adsi_user) { stub('user', :objectSID => []) }
+      let(:sid)       { stub(:account => username, :domain => 'testcomputername') }
       let(:user)      { Puppet::Util::ADSI::User.new(username, adsi_user) }
-      let(:domain_user){ Puppet::Util::ADSI::User.new(domain_username, adsi_user) }
 
       it "should provide its groups as a list of names" do
         names = ["group1", "group2"]
@@ -174,18 +174,16 @@ describe Puppet::Util::ADSI do
         user.password = 'pwd'
       end
 
-      it "should generate the correct URI" do
-        user.uri.should == "WinNT://./#{username},user"
+      it "should generate the correct URI",:if => Puppet.features.microsoft_windows? do
+        Puppet::Util::Windows::Security.stubs(:octet_string_to_sid_object).returns(sid)
+        user.uri.should == "WinNT://testcomputername/#{username},user"
       end
 
-      it "should generate the correct URI for a domain user" do
-        domain_user.uri.should == "WinNT://#{domain}/#{username},user"
-      end
-
-      describe "when given a set of groups to which to add the user" do
+      describe "when given a set of groups to which to add the user", :if => Puppet.features.microsoft_windows? do
         let(:groups_to_set) { 'group1,group2' }
 
         before(:each) do
+          Puppet::Util::Windows::Security.stubs(:octet_string_to_sid_object).returns(sid)
           user.expects(:groups).returns ['group2', 'group3']
         end
 
@@ -197,6 +195,7 @@ describe Puppet::Util::ADSI do
             group3 = stub 'group1'
             group3.expects(:Remove).with("WinNT://testcomputername/#{username},user")
 
+            Puppet::Util::ADSI.expects(:sid_uri).with(sid).returns("WinNT://testcomputername/#{username},user").twice
             Puppet::Util::ADSI.expects(:connect).with('WinNT://./group1,group').returns group1
             Puppet::Util::ADSI.expects(:connect).with('WinNT://./group3,group').returns group3
 
@@ -209,6 +208,7 @@ describe Puppet::Util::ADSI do
             group1 = stub 'group1'
             group1.expects(:Add).with("WinNT://testcomputername/#{username},user")
 
+            Puppet::Util::ADSI.expects(:sid_uri).with(sid).returns("WinNT://testcomputername/#{username},user")
             Puppet::Util::ADSI.expects(:connect).with('WinNT://./group1,group').returns group1
 
             user.set_groups(groups_to_set, true)
@@ -224,17 +224,56 @@ describe Puppet::Util::ADSI do
     describe "an instance" do
       let(:adsi_group) { stub 'group' }
       let(:group)      { Puppet::Util::ADSI::Group.new(groupname, adsi_group) }
+      let(:someone_sid){ stub(:account => 'someone', :domain => 'testcomputername')}
 
-      it "should be able to add a member" do
+      it "should be able to add a member (deprecated)", :if => Puppet.features.microsoft_windows? do
+        Puppet.expects(:deprecation_warning).with('Puppet::Util::ADSI::Group#add_members is deprecated; please use Puppet::Util::ADSI::Group#add_member_sids')
+
+        Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('someone').returns(someone_sid)
+        Puppet::Util::ADSI.expects(:sid_uri).with(someone_sid).returns("WinNT://testcomputername/someone,user")
+
         adsi_group.expects(:Add).with("WinNT://testcomputername/someone,user")
 
         group.add_member('someone')
       end
 
-      it "should be able to remove a member" do
+      it "should raise when adding a member that can't resolve to a SID (deprecated)", :if => Puppet.features.microsoft_windows? do
+        expect {
+          group.add_member('foobar')
+        }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
+      end
+
+      it "should be able to remove a member (deprecated)", :if => Puppet.features.microsoft_windows? do
+        Puppet.expects(:deprecation_warning).with('Puppet::Util::ADSI::Group#remove_members is deprecated; please use Puppet::Util::ADSI::Group#remove_member_sids')
+
+        Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('someone').returns(someone_sid)
+        Puppet::Util::ADSI.expects(:sid_uri).with(someone_sid).returns("WinNT://testcomputername/someone,user")
+
         adsi_group.expects(:Remove).with("WinNT://testcomputername/someone,user")
 
         group.remove_member('someone')
+      end
+
+      it "should raise when removing a member that can't resolve to a SID (deprecated)", :if => Puppet.features.microsoft_windows? do
+        expect {
+          group.remove_member('foobar')
+        }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
+      end
+
+      describe "should be able to use SID objects", :if => Puppet.features.microsoft_windows? do
+        let(:system)     { Puppet::Util::Windows::Security.name_to_sid_object('SYSTEM') }
+
+        it "to add a member" do
+          adsi_group.expects(:Add).with("WinNT://S-1-5-18")
+
+          group.add_member_sids(system)
+        end
+
+        it "to remove a member" do
+          adsi_group.expects(:Remove).with("WinNT://S-1-5-18")
+
+          group.remove_member_sids(system)
+        end
       end
 
       it "should provide its groups as a list of names" do
@@ -247,14 +286,38 @@ describe Puppet::Util::ADSI do
         group.members.should =~ names
       end
 
-      it "should be able to add a list of users to a group" do
-        names = ['user1', 'user2']
-        adsi_group.expects(:Members).returns names.map{|n| stub(:Name => n)}
+      it "should be able to add a list of users to a group", :if => Puppet.features.microsoft_windows? do
+        names = ['DOMAIN\user1', 'user2']
+        sids = [
+          stub(:account => 'user1', :domain => 'DOMAIN'),
+          stub(:account => 'user2', :domain => 'testcomputername'),
+          stub(:account => 'user3', :domain => 'DOMAIN2'),
+        ]
 
-        adsi_group.expects(:Remove).with('WinNT://testcomputername/user1,user')
-        adsi_group.expects(:Add).with('WinNT://testcomputername/user3,user')
+        # use stubbed objectSid on member to return stubbed SID
+        Puppet::Util::Windows::Security.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
+        Puppet::Util::Windows::Security.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
 
-        group.set_members(['user2', 'user3'])
+        Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('user2').returns(sids[1])
+        Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('DOMAIN2\user3').returns(sids[2])
+
+        Puppet::Util::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
+        Puppet::Util::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")
+
+        members = names.each_with_index.map{|n,i| stub(:Name => n, :objectSID => [i])}
+        adsi_group.expects(:Members).returns members
+
+        adsi_group.expects(:Remove).with('WinNT://DOMAIN/user1,user')
+        adsi_group.expects(:Add).with('WinNT://DOMAIN2/user3,user')
+
+        group.set_members(['user2', 'DOMAIN2\user3'])
+      end
+
+      it "should raise an error when a username does not resolve to a SID", :if => Puppet.features.microsoft_windows? do
+        expect {
+          adsi_group.expects(:Members).returns []
+          group.set_members(['foobar'])
+        }.to raise_error(Puppet::Error, /Could not resolve username: foobar/)
       end
 
       it "should generate the correct URI" do
