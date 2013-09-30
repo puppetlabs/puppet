@@ -163,6 +163,14 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd
   end
 
+  def shell
+    @resource[:shell]
+  end
+
+  def shell=(value)
+    check_valid_shell
+  end
+
   def addcmd
     if @resource.forcelocal?
       cmd = [command(:localadd)]

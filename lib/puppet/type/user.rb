@@ -174,17 +174,6 @@ module Puppet
 
         This attribute cannot be managed on Windows systems."
 
-      validate do |val|
-        if munge(val)
-          raise ArgumentError, "User provider #{provider.class.name} can not set a shell for the user" if provider and not provider.class.manages_shell?
-        end
-      end
-
-      def sync
-        provider.check_valid_shell
-        set(should)
-      end
-
     end
 
     newproperty(:password, :required_features => :manages_passwords) do

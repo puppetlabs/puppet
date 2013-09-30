@@ -420,4 +420,14 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       lambda { provider.check_valid_shell }.should raise_error(Puppet::Error, /Shell LICENSE must be executable/)
     end
   end
+
+  describe "#shell" do
+    it "should trigger check_valid_shell" do
+      resource[:shell] = 'foo'
+      provider.shell.must == 'foo'
+      provider.expects(:check_valid_shell)
+      expect { provider.create }.to raise_error Puppet::Error
+    end
+  end
+
 end
