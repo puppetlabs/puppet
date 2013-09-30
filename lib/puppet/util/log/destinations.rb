@@ -95,6 +95,29 @@ Puppet::Util::Log.newdesttype :file do
   end
 end
 
+Puppet::Util::Log.newdesttype :logstash_event do
+  require 'json'
+  require 'time'
+
+  def format(msg)
+    # logstash_event format is documented at
+    # https://logstash.jira.com/browse/LOGSTASH-675
+
+    data = {}
+    data = msg.to_hash
+    data['version'] = 1
+    data['@timestamp'] = data['time']
+    data.delete('time')
+
+    data
+  end
+
+  def handle(msg)
+    message = format(msg)
+    $stdout.puts message.to_json
+  end
+end
+
 Puppet::Util::Log.newdesttype :console do
   require 'puppet/util/colors'
   include Puppet::Util::Colors
