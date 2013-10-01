@@ -230,7 +230,8 @@ class Puppet::Resource
   end
 
   def resource_type
-    @rstype ||= case type
+    # NOTE: Caching this in an instance variable breaks client YAML catalogs. (#4506)
+    case type
     when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
     when "Node"; known_resource_types.node(title)
     else
