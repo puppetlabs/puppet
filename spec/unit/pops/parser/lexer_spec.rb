@@ -154,7 +154,7 @@ describe Puppet::Pops::Parser::Lexer::TOKENS do
     :LBRACK => '[',
     :RBRACK => ']',
 #    :LBRACE => '{',
-    :RBRACE => '}',
+#    :RBRACE => '}',
     :LPAREN => '(',
     :RPAREN => ')',
     :EQUALS => '=',
@@ -232,7 +232,7 @@ describe Puppet::Pops::Parser::Lexer::TOKENS do
 
   # These tokens' strings don't matter, just that the tokens exist.
   [:STRING, :DQPRE, :DQMID, :DQPOST, :BOOLEAN, :NAME, :NUMBER, :COMMENT, :MLCOMMENT,
-    :LBRACE, :LAMBDA,
+    :LBRACE, :RBRACE, :LAMBDA,
     :RETURN, :SQUOTE, :DQUOTE, :VARIABLE].each do |name|
     it "should have a token named #{name.to_s}" do
       Puppet::Pops::Parser::Lexer::TOKENS[name].should_not be_nil
@@ -583,7 +583,24 @@ describe Puppet::Pops::Parser::Lexer,"when lexing strings" do
     %q[""]                                                          => [[:STRING,""]],
     %q["123 456 789 0"]                                             => [[:STRING,"123 456 789 0"]],
     %q["${123} 456 $0"]                                             => [[:DQPRE,""],[:VARIABLE,"123"],[:DQMID," 456 "],[:VARIABLE,"0"],[:DQPOST,""]],
-    %q["$foo::::bar"]                                               => [[:DQPRE,""],[:VARIABLE,"foo"],[:DQPOST,"::::bar"]]
+    %q["$foo::::bar"]                                               => [[:DQPRE,""],[:VARIABLE,"foo"],[:DQPOST,"::::bar"]],
+    # Keyword variables
+    %q["$true"]                                                     => [[:DQPRE,""],[:VARIABLE, "true"],[:DQPOST,""]],
+    %q["$false"]                                                    => [[:DQPRE,""],[:VARIABLE, "false"],[:DQPOST,""]],
+    %q["$if"]                                                       => [[:DQPRE,""],[:VARIABLE, "if"],[:DQPOST,""]],
+    %q["$case"]                                                     => [[:DQPRE,""],[:VARIABLE, "case"],[:DQPOST,""]],
+    %q["$unless"]                                                   => [[:DQPRE,""],[:VARIABLE, "unless"],[:DQPOST,""]],
+    %q["$undef"]                                                    => [[:DQPRE,""],[:VARIABLE, "undef"],[:DQPOST,""]],
+    # Expressions
+    %q["${true}"]                                                   => [[:DQPRE,""],[:BOOLEAN, true],[:DQPOST,""]],
+    %q["${false}"]                                                  => [[:DQPRE,""],[:BOOLEAN, false],[:DQPOST,""]],
+    %q["${undef}"]                                                  => [[:DQPRE,""],:UNDEF,[:DQPOST,""]],
+    %q["${if true {false}}"]                                        => [[:DQPRE,""],:IF,[:BOOLEAN, true], :LBRACE, [:BOOLEAN, false], :RBRACE, [:DQPOST,""]],
+    %q["${unless true {false}}"]                                    => [[:DQPRE,""],:UNLESS,[:BOOLEAN, true], :LBRACE, [:BOOLEAN, false], :RBRACE, [:DQPOST,""]],
+    %q["${case true {true:{false}}}"] => [
+      [:DQPRE,""],:CASE,[:BOOLEAN, true], :LBRACE, [:BOOLEAN, true], :COLON, :LBRACE, [:BOOLEAN, false],
+        :RBRACE, :RBRACE, [:DQPOST,""]],
+    %q[{ "${a}" => 1 }] => [ :LBRACE, [:DQPRE,""], [:VARIABLE,"a"], [:DQPOST,""], :FARROW, [:NAME,"1"], :RBRACE ],
   }.each { |src,expected_result|
     it "should handle #{src} correctly" do
       EgrammarLexerSpec.tokens_scanned_from(src).should be_like(*expected_result)
@@ -742,7 +759,7 @@ describe "Puppet::Pops::Parser::Lexer in the old tests" do
 
   it "should end variables at `-`" do
     EgrammarLexerSpec.tokens_scanned_from('$hyphenated-variable').
-      should be_like [:VARIABLE, "hyphenated"], [:MINUS, '-'], [:NAME, 'variable']
+      should be_like([:VARIABLE, "hyphenated"], [:MINUS, '-'], [:NAME, 'variable'])
   end
 
   it "should not include whitespace in a variable" do
