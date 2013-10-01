@@ -600,6 +600,7 @@ describe Puppet::Pops::Parser::Lexer,"when lexing strings" do
     %q["${case true {true:{false}}}"] => [
       [:DQPRE,""],:CASE,[:BOOLEAN, true], :LBRACE, [:BOOLEAN, true], :COLON, :LBRACE, [:BOOLEAN, false],
         :RBRACE, :RBRACE, [:DQPOST,""]],
+    %q[{ "${a}" => 1 }] => [ :LBRACE, [:DQPRE,""], [:VARIABLE,"a"], [:DQPOST,""], :FARROW, [:NAME,"1"], :RBRACE ],
   }.each { |src,expected_result|
     it "should handle #{src} correctly" do
       EgrammarLexerSpec.tokens_scanned_from(src).should be_like(*expected_result)

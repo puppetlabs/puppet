@@ -214,15 +214,6 @@ class Puppet::Pops::Parser::Lexer
       REGEX_INTRODUCING_TOKENS.include? context[:after]
     end
 
-    IN_STRING_INTERPOLATION = Proc.new do |context|
-      context[:string_interpolation_depth] > 0 && context[:brace_count] == context[:bracestack][-1]
-    end
-
-    NOT_IN_STRING_INTERPOLATION = Proc.new do |context|
-      depth = context[:string_interpolation_depth]
-      depth == 0 || depth > 0 && context[:brace_count] != context[:bracestack][-1]
-    end
-
     DASHED_VARIABLES_ALLOWED = Proc.new do |context|
       Puppet[:allow_variables_with_dashes]
     end
@@ -231,27 +222,6 @@ class Puppet::Pops::Parser::Lexer
       Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
     end
   end
-
-  # LBRACE needs look ahead to differentiate between '{' and a '{'
-  # followed by a '|' (start of lambda) The racc grammar can only do one
-  # token lookahead.
-  #
-  TOKENS.add_token :LBRACE, /\{/ do | lexer, value |
-    lexer.lexing_context[:brace_count] += 1
-    if lexer.match?(/[ \t\r]*\|/)
-      [TOKENS[:LAMBDA], value]
-    elsif lexer.lexing_context[:after] == :QMARK
-      [TOKENS[:SELBRACE], value]
-    else
-      [TOKENS[:LBRACE], value]
-    end
-  end
-
-  TOKENS.add_token :RBRACE, /\}/ do | lexer, value |
-    lexer.lexing_context[:brace_count] -= 1
-    [TOKENS[:RBRACE], value]
-  end
-  TOKENS[:RBRACE].acceptable_when Contextual::NOT_IN_STRING_INTERPOLATION
 
   # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
@@ -317,10 +287,33 @@ class Puppet::Pops::Parser::Lexer
     lexer.tokenize_interpolated_string(DQ_initial_token_types)
   end
 
-  TOKENS.add_token :DQCONT, /\}/ do |lexer, value|
-    lexer.tokenize_interpolated_string(DQ_continuation_token_types)
+
+  # LBRACE needs look ahead to differentiate between '{' and a '{'
+  # followed by a '|' (start of lambda) The racc grammar can only do one
+  # token lookahead.
+  #
+  TOKENS.add_token :LBRACE, "{" do |lexer, value|
+    lexer.lexing_context[:brace_count] += 1
+    if lexer.match?(/[ \t\r]*\|/)
+      [TOKENS[:LAMBDA], value]
+    elsif lexer.lexing_context[:after] == :QMARK
+      [TOKENS[:SELBRACE], value]
+    else
+      [TOKENS[:LBRACE], value]
+    end
   end
-  TOKENS[:DQCONT].acceptable_when Contextual::IN_STRING_INTERPOLATION
+
+  # RBRACE needs to differentiate between a regular brace that is part of
+  # syntax and one that is the ending of a string interpolation.
+  TOKENS.add_token :RBRACE, "}" do |lexer, value|
+    context = lexer.lexing_context
+    if context[:interpolation_stack].empty? || context[:brace_count] != context[:interpolation_stack][-1]
+      context[:brace_count] -= 1
+      [TOKENS[:RBRACE], value]
+    else
+      lexer.tokenize_interpolated_string(DQ_continuation_token_types)
+    end
+  end
 
   TOKENS.add_token :DOLLAR_VAR_WITH_DASH, %r{\$(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
     lexer.warn_if_variable_has_hyphen(value)
@@ -525,9 +518,8 @@ class Puppet::Pops::Parser::Lexer
       :start_of_line => true,
       :offset => 0,      # byte offset before where token starts
       :end_offset => 0,  # byte offset after scanned token
-      :string_interpolation_depth => 0,
       :brace_count => 0,  # nested depth of braces
-      :bracestack => []   # matching interpolation brace level
+      :interpolation_stack => []   # matching interpolation brace level
     }
   end
 
@@ -619,11 +611,9 @@ class Puppet::Pops::Parser::Lexer
 
       lexing_context[:after] = final_token.name unless newline
       if final_token.name == :DQPRE
-        lexing_context[:string_interpolation_depth] += 1
-        lexing_context[:bracestack] << lexing_context[:brace_count]
+        lexing_context[:interpolation_stack] << lexing_context[:brace_count]
       elsif final_token.name == :DQPOST
-        lexing_context[:string_interpolation_depth] -= 1
-        lexing_context[:bracestack].pop
+        lexing_context[:interpolation_stack].pop
       end
 
       value = token_value[:value]
