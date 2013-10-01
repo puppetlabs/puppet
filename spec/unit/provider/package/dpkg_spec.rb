@@ -290,12 +290,24 @@ desired ok status name ensure :DESC: summary text
       parser_test(no_description, package_hash.merge(:description => ''))
     end
 
-    it "parses dpkg reporting that package does not exist without warning about a failed match (#22529)" do
-      Puppet.expects(:warning).never
-      pipe = StringIO.new("No packages found matching non-existent-package")
-      Puppet::Util::Execution.expects(:execpipe).with(query_args).yields(pipe).raises(Puppet::ExecutionFailure.new('no package found'))
+    context "dpkg-query versions < 1.16" do
+      it "parses dpkg-query 1.15 reporting that package does not exist without warning about a failed match (#22529)" do
+        Puppet.expects(:warning).never
+        pipe = StringIO.new("No packages found matching non-existent-package")
+        Puppet::Util::Execution.expects(:execpipe).with(query_args).yields(pipe).raises(Puppet::ExecutionFailure.new('no package found'))
 
-      expect(provider.query).to eq({:ensure=>:purged, :status=>"missing", :name=>"name", :error=>"ok"})
+        expect(provider.query).to eq({:ensure=>:purged, :status=>"missing", :name=>"name", :error=>"ok"})
+      end
+    end
+
+    context "dpkg-query versions >= 1.16" do
+      it "parses dpkg-query 1.16 reporting that package does not exist without warning about a failed match (#22529)" do
+        Puppet.expects(:warning).never
+        pipe = StringIO.new("dpkg-query: no packages found matching non-existent-package")
+        Puppet::Util::Execution.expects(:execpipe).with(query_args).yields(pipe).raises(Puppet::ExecutionFailure.new('no package found'))
+
+        expect(provider.query).to eq({:ensure=>:purged, :status=>"missing", :name=>"name", :error=>"ok"})
+      end
     end
   end
 
