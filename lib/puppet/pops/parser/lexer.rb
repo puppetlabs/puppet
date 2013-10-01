@@ -148,8 +148,8 @@ class Puppet::Pops::Parser::Lexer
   TOKENS.add_tokens(
   '['   => :LBRACK,
   ']'   => :RBRACK,
-  #    '{'   => :LBRACE, # Specialized to handle lambda
-  '}'   => :RBRACE,
+  #    '{'   => :LBRACE, # Specialized to handle lambda and brace count
+  #    '}'   => :RBRACE, # Specialized to handle brace count
   '('   => :LPAREN,
   ')'   => :RPAREN,
   '='   => :EQUALS,
@@ -214,30 +214,12 @@ class Puppet::Pops::Parser::Lexer
       REGEX_INTRODUCING_TOKENS.include? context[:after]
     end
 
-    IN_STRING_INTERPOLATION = Proc.new do |context|
-      context[:string_interpolation_depth] > 0
-    end
-
     DASHED_VARIABLES_ALLOWED = Proc.new do |context|
       Puppet[:allow_variables_with_dashes]
     end
 
     VARIABLE_AND_DASHES_ALLOWED = Proc.new do |context|
       Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
-    end
-  end
-
-  # LBRACE needs look ahead to differentiate between '{' and a '{'
-  # followed by a '|' (start of lambda) The racc grammar can only do one
-  # token lookahead.
-  #
-  TOKENS.add_token :LBRACE, /\{/ do | lexer, value |
-    if lexer.match?(/[ \t\r]*\|/)
-      [TOKENS[:LAMBDA], value]
-    elsif lexer.lexing_context[:after] == :QMARK
-      [TOKENS[:SELBRACE], value]
-    else
-      [TOKENS[:LBRACE], value]
     end
   end
 
@@ -305,10 +287,33 @@ class Puppet::Pops::Parser::Lexer
     lexer.tokenize_interpolated_string(DQ_initial_token_types)
   end
 
-  TOKENS.add_token :DQCONT, /\}/ do |lexer, value|
-    lexer.tokenize_interpolated_string(DQ_continuation_token_types)
+
+  # LBRACE needs look ahead to differentiate between '{' and a '{'
+  # followed by a '|' (start of lambda) The racc grammar can only do one
+  # token lookahead.
+  #
+  TOKENS.add_token :LBRACE, "{" do |lexer, value|
+    lexer.lexing_context[:brace_count] += 1
+    if lexer.match?(/[ \t\r]*\|/)
+      [TOKENS[:LAMBDA], value]
+    elsif lexer.lexing_context[:after] == :QMARK
+      [TOKENS[:SELBRACE], value]
+    else
+      [TOKENS[:LBRACE], value]
+    end
   end
-  TOKENS[:DQCONT].acceptable_when Contextual::IN_STRING_INTERPOLATION
+
+  # RBRACE needs to differentiate between a regular brace that is part of
+  # syntax and one that is the ending of a string interpolation.
+  TOKENS.add_token :RBRACE, "}" do |lexer, value|
+    context = lexer.lexing_context
+    if context[:interpolation_stack].empty? || context[:brace_count] != context[:interpolation_stack][-1]
+      context[:brace_count] -= 1
+      [TOKENS[:RBRACE], value]
+    else
+      lexer.tokenize_interpolated_string(DQ_continuation_token_types)
+    end
+  end
 
   TOKENS.add_token :DOLLAR_VAR_WITH_DASH, %r{\$(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
     lexer.warn_if_variable_has_hyphen(value)
@@ -339,9 +344,21 @@ class Puppet::Pops::Parser::Lexer
     # reference.
     #
     if lexer.match?(%r{[ \t\r]*\(})
-      [TOKENS[:NAME],value]
+      # followed by ( is a function call
+      [TOKENS[:NAME], value]
+
+    elsif kwd_token = KEYWORDS.lookup(value)
+      # true, false, if, unless, case, and undef are keywords that cannot be used as variables
+      # but node, and several others are variables
+      if [ :TRUE, :FALSE ].include?(kwd_token.name)
+        [ TOKENS[:BOOLEAN], eval(value) ]
+      elsif [ :IF, :UNLESS, :CASE, :UNDEF ].include?(kwd_token.name)
+        [kwd_token, value]
+      else
+        [TOKENS[:VARIABLE], value]
+      end
     else
-      [TOKENS[:VARIABLE],value]
+      [TOKENS[:VARIABLE], value]
     end
 
   end
@@ -501,7 +518,8 @@ class Puppet::Pops::Parser::Lexer
       :start_of_line => true,
       :offset => 0,      # byte offset before where token starts
       :end_offset => 0,  # byte offset after scanned token
-      :string_interpolation_depth => 0
+      :brace_count => 0,  # nested depth of braces
+      :interpolation_stack => []   # matching interpolation brace level
     }
   end
 
@@ -592,8 +610,11 @@ class Puppet::Pops::Parser::Lexer
       end
 
       lexing_context[:after] = final_token.name unless newline
-      lexing_context[:string_interpolation_depth] += 1 if final_token.name == :DQPRE
-      lexing_context[:string_interpolation_depth] -= 1 if final_token.name == :DQPOST
+      if final_token.name == :DQPRE
+        lexing_context[:interpolation_stack] << lexing_context[:brace_count]
+      elsif final_token.name == :DQPOST
+        lexing_context[:interpolation_stack].pop
+      end
 
       value = token_value[:value]
 
