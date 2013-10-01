@@ -365,35 +365,6 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  describe "when setting shell" do
-    before :each do
-      @shell_provider_class = described_class.provide(:manages_shell) do
-        has_features :manages_shell
-        mk_resource_methods
-        def create; end
-        def delete; end
-        def exists?; get(:ensure) != :absent; end
-        def flush; end
-        def self.instances; []; end
-      end
-      described_class.stubs(:defaultprovider).returns @shell_provider_class
-    end
 
 
-    it "should call :shell on the provider when chaging from present to absent" do
-      @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => 'absent')
-      @provider.expects(:shell)
-      resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
-
-      Puppet::Util::Storage.stubs(:load)
-      Puppet::Util::Storage.stubs(:store)
-
-      catalog = Puppet::Resource::Catalog.new
-      catalog.add_resource resource
-
-      catalog.apply
-    end
-
-
-  end
 end
