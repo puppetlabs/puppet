@@ -26,4 +26,15 @@ module Puppet::Coercion
       fail('expected a boolean value')
     end
   end
+
+  # Return the list of acceptable boolean values.
+  #
+  # This is limited to lower-case, even though boolean() is case-insensitive.
+  #
+  # @return [Array]
+  # @raise
+  # @api private
+  def self.boolean_values
+    ['true', 'false', 'yes', 'no']
+  end
 end
