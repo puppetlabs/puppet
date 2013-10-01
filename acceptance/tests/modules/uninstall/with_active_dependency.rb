@@ -4,11 +4,10 @@ step "Setup"
 apply_manifest_on master, <<-PP
 file {
   [
-    '/etc/puppet/modules',
-    '/etc/puppet/modules/crakorn',
-    '/etc/puppet/modules/appleseed',
+    '#{master['distmoduledir']}/crakorn',
+    '#{master['distmoduledir']}/appleseed',
   ]: ensure => directory;
-  '/etc/puppet/modules/crakorn/metadata.json':
+  '#{master['distmoduledir']}/crakorn/metadata.json':
     content => '{
       "name": "jimmy/crakorn",
       "version": "0.4.0",
@@ -17,7 +16,7 @@ file {
       "license": "MIT",
       "dependencies": []
     }';
-  '/etc/puppet/modules/appleseed/metadata.json':
+  '#{master['distmoduledir']}/appleseed/metadata.json':
     content => '{
       "name": "jimmy/appleseed",
       "version": "1.1.0",
@@ -30,11 +29,14 @@ file {
     }';
 }
 PP
+
 teardown do
-  on master, "rm -rf /etc/puppet/modules"
+  on master, "rm -rf #{master['distmoduledir']}/crakorn"
+  on master, "rm -rf #{master['distmoduledir']}/appleseed"
 end
-on master, '[ -d /etc/puppet/modules/crakorn ]'
-on master, '[ -d /etc/puppet/modules/appleseed ]'
+
+on master, "[ -d #{master['distmoduledir']}/crakorn ]"
+on master, "[ -d #{master['distmoduledir']}/appleseed ]"
 
 step "Try to uninstall the module jimmy-crakorn"
 on master, puppet('module uninstall jimmy-crakorn'), :acceptable_exit_codes => [1] do
@@ -46,8 +48,8 @@ on master, puppet('module uninstall jimmy-crakorn'), :acceptable_exit_codes => [
     STDERR>     Use `puppet module uninstall --force` to uninstall this module anyway\e[0m
   OUTPUT
 end
-on master, '[ -d /etc/puppet/modules/crakorn ]'
-on master, '[ -d /etc/puppet/modules/appleseed ]'
+on master, "[ -d #{master['distmoduledir']}/crakorn ]"
+on master, "[ -d #{master['distmoduledir']}/appleseed ]"
 
 step "Try to uninstall the module jimmy-crakorn with a version range"
 on master, puppet('module uninstall jimmy-crakorn --version 0.x'), :acceptable_exit_codes => [1] do
@@ -59,15 +61,15 @@ on master, puppet('module uninstall jimmy-crakorn --version 0.x'), :acceptable_e
     STDERR>     Use `puppet module uninstall --force` to uninstall this module anyway\e[0m
   OUTPUT
 end
-on master, '[ -d /etc/puppet/modules/crakorn ]'
-on master, '[ -d /etc/puppet/modules/appleseed ]'
+on master, "[ -d #{master['distmoduledir']}/crakorn ]"
+on master, "[ -d #{master['distmoduledir']}/appleseed ]"
 
 step "Uninstall the module jimmy-crakorn forcefully"
 on master, puppet('module uninstall jimmy-crakorn --force') do
   assert_output <<-OUTPUT
     \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
-    Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from /etc/puppet/modules
+    Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{master['distmoduledir']}
   OUTPUT
 end
-on master, '[ ! -d /etc/puppet/modules/crakorn ]'
-on master, '[ -d /etc/puppet/modules/appleseed ]'
+on master, "[ ! -d #{master['distmoduledir']}/crakorn ]"
+on master, "[ -d #{master['distmoduledir']}/appleseed ]"
