@@ -67,12 +67,42 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       subject.name_to_sid('SYSTEM').should == subject.name_to_sid('system')
     end
 
+    it "should be leading and trailing whitespace-insensitive" do
+      subject.name_to_sid('SYSTEM').should == subject.name_to_sid(' SYSTEM ')
+    end
+
     it "should accept domain qualified account names" do
       subject.name_to_sid('NT AUTHORITY\SYSTEM').should == sid
     end
 
     it "should be the identity function for any sid" do
       subject.name_to_sid(sid).should == sid
+    end
+  end
+
+  context "#name_to_sid_object" do
+    it "should return nil if the account does not exist" do
+      subject.name_to_sid_object(unknown_name).should be_nil
+    end
+
+    it "should return a Win32::Security::SID instance for any valid sid" do
+      subject.name_to_sid_object(sid).should be_an_instance_of(Win32::Security::SID)
+    end
+
+    it "should accept unqualified account name" do
+      subject.name_to_sid_object('SYSTEM').to_s.should == sid
+    end
+
+    it "should be case-insensitive" do
+      subject.name_to_sid_object('SYSTEM').should == subject.name_to_sid_object('system')
+    end
+
+    it "should be leading and trailing whitespace-insensitive" do
+      subject.name_to_sid_object('SYSTEM').should == subject.name_to_sid_object(' SYSTEM ')
+    end
+
+    it "should accept domain qualified account names" do
+      subject.name_to_sid_object('NT AUTHORITY\SYSTEM').to_s.should == sid
     end
   end
 
