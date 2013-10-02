@@ -23,6 +23,14 @@ describe 'function for dynamically creating resources' do
     expect { @scope.function_create_resources(['foo', 'bar', 'blah', 'baz']) }.to raise_error(ArgumentError, 'create_resources(): wrong number of arguments (4; must be 2 or 3)')
   end
 
+  it 'should require second argument to be a hash' do
+    expect { @scope.function_create_resources(['foo','bar']) }.to raise_error(ArgumentError, 'create_resources(): second argument must be a hash')
+  end
+
+  it 'should require optional third argument to be a hash' do
+    expect { @scope.function_create_resources(['foo',{},'foo']) }.to raise_error(ArgumentError, 'create_resources(): third argument, if provided, must be a hash')
+  end
+
   describe 'when creating native types' do
     it 'empty hash should not cause resources to be added' do
       noop_catalog = compile_to_catalog("create_resources('file', {})")
