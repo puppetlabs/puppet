@@ -21,7 +21,6 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
     str << "\n\n"
 
     # Now print the data about the item.
-    str << ""
     val = object.default
     if name.to_s == "vardir"
       val = "/var/lib/puppet"

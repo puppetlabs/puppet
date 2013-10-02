@@ -84,7 +84,7 @@ module Puppet::Util::ProviderFeatures
     names = @features.keys.sort { |a,b| a.to_s <=> b.to_s }
     names.each do |name|
       doc = @features[name].docs.gsub(/\n\s+/, " ")
-      str += "- *#{name}*: #{doc}\n"
+      str << "- *#{name}*: #{doc}\n"
     end
 
     if providers.length > 0
@@ -101,7 +101,7 @@ module Puppet::Util::ProviderFeatures
           end
         end
       end
-      str += doctable(headers, data)
+      str << doctable(headers, data)
     end
     str
   end
