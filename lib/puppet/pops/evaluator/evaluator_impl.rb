@@ -30,7 +30,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   include Puppet::Pops::Evaluator::Runtime3Support
 
   def initialize
-    # TODO: Change these to class variables to get caching.
     @@eval_visitor     ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
     @@assign_visitor   ||= Puppet::Pops::Visitor.new(self, "assign", 3, 3)
     @@call_visitor     ||= Puppet::Pops::Visitor.new(self, "call", 3, 3)
@@ -92,7 +91,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   # Call a closure - Can only be called with a closure (for now), may be refactored later
   # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
-  # could create similar objects to Closure, wait until other types of defines are instantiated - they may bhave
+  # could create similar objects to Closure, wait until other types of defines are instantiated - they may behave
   # as special cases of calls - i.e. 'new')
   #
   # @raise ArgumentError, if there are to many or too few arguments
