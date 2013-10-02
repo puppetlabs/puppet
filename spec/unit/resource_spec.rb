@@ -376,6 +376,14 @@ describe Puppet::Resource do
           resource[:port].should == '80'
         end
 
+        it "should fail with error message about data binding on a hiera failure" do
+          Puppet::DataBinding.indirection.expects(:find).raises(ArgumentError, 'Forgettabotit')
+          expect {
+            resource.set_default_parameters(scope)
+            resource[:port].should == '80'
+          }.to raise_error(Puppet::Error, /Error from DataBinding 'hiera' while looking up 'apache::port', Error: ArgumentError, 'Forgettabotit'/)
+        end
+
         it "should use the default value if the injector returns nil" do
           compiler.injector.expects(:lookup).returns(nil)
 
