@@ -328,16 +328,26 @@ class Puppet::Resource
       result = scope.compiler.injector.lookup(scope, name)
     end
     if result.nil?
-      Puppet::DataBinding.indirection.find(
-        name,
-        :environment => scope.environment.to_s,
-        :variables => scope)
+      lookup_with_databinding(name, scope)
     else
       result
     end
   end
 
   private :lookup_external_default_for
+
+  def lookup_with_databinding(name, scope)
+    begin
+      Puppet::DataBinding.indirection.find(
+        name,
+        :environment => scope.environment.to_s,
+        :variables => scope)
+    rescue Puppet::DataBinding::LookupError => e
+      raise Puppet::Error.new("Error from DataBinding '#{Puppet[:data_binding_terminus]}' while looking up '#{name}': #{e.message}", e)
+    end
+  end
+
+  private :lookup_with_databinding
 
   def set_default_parameters(scope)
     return [] unless resource_type and resource_type.respond_to?(:arguments)
