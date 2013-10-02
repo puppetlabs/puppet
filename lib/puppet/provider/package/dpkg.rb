@@ -44,7 +44,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   self::DPKG_DESCRIPTION_DELIMITER = ':DESC:'
   self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} #{self::DPKG_DESCRIPTION_DELIMITER} ${Description}\\n#{self::DPKG_DESCRIPTION_DELIMITER}\\n'}
   self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*) #{self::DPKG_DESCRIPTION_DELIMITER} (.*)$}
-  self::DPKG_PACKAGE_NOT_FOUND_REGEX = /No packages found matching/
+  self::DPKG_PACKAGE_NOT_FOUND_REGEX = /no package.*match/i
   self::FIELDS= [:desired, :error, :status, :name, :ensure, :description]
   self::END_REGEX = %r{^#{self::DPKG_DESCRIPTION_DELIMITER}$}
 
