@@ -96,7 +96,6 @@ Puppet::Util::Log.newdesttype :file do
 end
 
 Puppet::Util::Log.newdesttype :logstash_event do
-  require 'json'
   require 'time'
 
   def format(msg)
@@ -114,7 +113,7 @@ Puppet::Util::Log.newdesttype :logstash_event do
 
   def handle(msg)
     message = format(msg)
-    $stdout.puts message.to_json
+    $stdout.puts message.to_pson
   end
 end
 
