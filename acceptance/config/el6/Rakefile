@@ -157,11 +157,11 @@ def list_preserved_hosts
       end
     end
   end
-  pp hosts
+  hosts
 end
 
 # Plagiarized from Beaker::Vcloud#cleanup
-def destroy_preserved_hosts
+def destroy_preserved_hosts(hosts = list_preserved_hosts)
   require 'beaker/hypervisor/vsphere_helper'
   vsphere_credentials = VsphereHelper.load_config("#{ENV['HOME']}/.fog")
 
@@ -170,7 +170,8 @@ def destroy_preserved_hosts
 
   vsphere_helper = VsphereHelper.new( vsphere_credentials )
 
-  vm_names = list_preserved_hosts.to_a
+  vm_names = hosts.to_a
+  pp vm_names
   vms = vsphere_helper.find_vms vm_names
   vm_names.each do |name|
     unless vm = vms[name]
@@ -268,9 +269,13 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
     print_preserved(preserved)
   end
 
-  desc "Shutdown and destroy any hosts that we have preserved for testing.  These should be reaped daily by scripts, but this will free up resources immediately."
+  desc <<-EOS
+Shutdown and destroy any hosts that we have preserved for testing.  These should be reaped daily by scripts, but this will free up resources immediately.
+Specify a list of comma separated HOST_NAMES if you have a set of dynamic vcloud host names you want to purge outside of what can be grepped from the logs.
+  EOS
   task :destroy_preserved_hosts do
-    destroy_preserved_hosts
+    host_names = ENV['HOST_NAMES'].split(',') if ENV['HOST_NAMES']
+    destroy_preserved_hosts(host_names)
   end
 
   desc <<-EOS
