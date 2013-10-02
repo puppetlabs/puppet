@@ -1,16 +1,24 @@
 require 'spec_helper'
+require 'puppet/data_binding'
 require 'puppet/indirector/hiera'
 require 'hiera/backend'
 
 describe Puppet::Indirector::Hiera do
   include PuppetSpec::Files
 
+  module Testing
+    module DataBinding
+      class Hiera < Puppet::Indirector::Hiera
+      end
+    end
+  end
+
   def write_hiera_config(config_file, datadir)
     File.open(config_file, 'w') do |f|
       f.write("---
         :yaml:
           :datadir: #{datadir}
-        :hierarchy: ['global']
+        :hierarchy: ['global', 'invalid']
         :logger: 'noop'
         :backends: ['yaml']
       ")
@@ -18,52 +26,10 @@ describe Puppet::Indirector::Hiera do
   end
 
   before do
+    hiera_config_file = tmpfile("hiera.yaml")
     Puppet.settings[:hiera_config] = hiera_config_file
-    write_hiera_config(hiera_config_file, datadir)
-
-    Puppet::Indirector::Terminus.stubs(:register_terminus_class)
-    Puppet::Indirector::Indirection.stubs(:instance).returns(indirection)
-
-    module Testing; end
-    @hiera_class = class Testing::Hiera < Puppet::Indirector::Hiera
-      self
-    end
+    write_hiera_config(hiera_config_file, my_fixture_dir)
   end
-
-  let(:model)   { mock('model') }
-  let(:options) { {:host => 'foo' } }
-
-  let(:request_integer) do
-    stub('request', :key => "integer", :options => options)
-  end
-
-  let(:request_string) do
-    stub('request', :key => "string", :options => options)
-  end
-
-  let(:request_array) do
-    stub('request', :key => "array", :options => options)
-  end
-
-  let(:request_hash) do
-    stub('request', :key => "hash", :options => options)
-  end
-
-  let(:indirection) do
-    stub('indirection', :name => :none, :register_terminus_type => nil,
-      :model => model)
-  end
-
-  let(:facts) do
-    { 'fqdn' => 'agent.testing.com' }
-  end
-  let(:facter_obj) { stub(:values => facts) }
-
-  let(:hiera_config_file) do
-    tmpfile("hiera.yaml")
-  end
-
-  let(:datadir) { my_fixture_dir }
 
   it "should be the default data_binding terminus" do
     Puppet.settings[:data_binding_terminus].should == :hiera
@@ -71,35 +37,13 @@ describe Puppet::Indirector::Hiera do
 
   it "should raise an error if we don't have the hiera feature" do
     Puppet.features.expects(:hiera?).returns(false)
-    lambda { @hiera_class.new }.should raise_error RuntimeError,
+    lambda { Testing::DataBinding::Hiera.new }.should raise_error RuntimeError,
       "Hiera terminus not supported without hiera library"
   end
 
   describe "the behavior of the hiera_config method", :if => Puppet.features.hiera? do
-    let(:default_hiera_config) do
-      {
-        :logger    => "puppet",
-        :backends  => ["yaml"],
-        :yaml      => { :datadir => datadir },
-        :hierarchy => ["global"]
-      }
-    end
-
-    it "should load the hiera config file by delegating to Hiera" do
-      Hiera::Config.expects(:load).with(hiera_config_file).returns({})
-      @hiera_class.hiera_config
-    end
-
     it "should override the logger and set it to puppet" do
-      @hiera_class.hiera_config[:logger].should == "puppet"
-    end
-
-    it "should return a hiera configuration hash" do
-      results = @hiera_class.hiera_config
-      default_hiera_config.each do |key,value|
-        results[key].should == value
-      end
-      results.should be_a_kind_of Hash
+      Testing::DataBinding::Hiera.hiera_config[:logger].should == "puppet"
     end
 
     context "when the Hiera configuration file does not exist" do
@@ -112,43 +56,53 @@ describe Puppet::Indirector::Hiera do
       it "should log a warning" do
         Puppet.expects(:warning).with(
          "Config file #{path} not found, using Hiera defaults")
-        @hiera_class.hiera_config
+        Testing::DataBinding::Hiera.hiera_config
       end
 
       it "should only configure the logger and set it to puppet" do
         Puppet.expects(:warning).with(
          "Config file #{path} not found, using Hiera defaults")
-        @hiera_class.hiera_config.should == { :logger => 'puppet' }
+        Testing::DataBinding::Hiera.hiera_config.should == { :logger => 'puppet' }
       end
     end
   end
 
   describe "the behavior of the find method", :if => Puppet.features.hiera? do
 
-    let(:data_binder) { @hiera_class.new }
+    let(:data_binder) { Testing::DataBinding::Hiera.new }
 
     it "should support looking up an integer" do
-      data_binder.find(request_integer).should == 3000
+      data_binder.find(request("integer")).should == 3000
     end
 
     it "should support looking up a string" do
-      data_binder.find(request_string).should == 'apache'
+      data_binder.find(request("string")).should == 'apache'
     end
 
     it "should support looking up an array" do
-      data_binder.find(request_array).should == [
+      data_binder.find(request("array")).should == [
         '0.ntp.puppetlabs.com',
         '1.ntp.puppetlabs.com',
       ]
     end
 
     it "should support looking up a hash" do
-      data_binder.find(request_hash).should == {
+      data_binder.find(request("hash")).should == {
         'user'  => 'Hightower',
         'group' => 'admin',
         'mode'  => '0644'
       }
     end
+
+    it "raises a data binding error if hiera cannot parse the yaml data" do
+      expect do
+        data_binder.find(request('invalid'))
+      end.to raise_error(Puppet::DataBinding::LookupError)
+    end
+  end
+
+  def request(key)
+    Puppet::Indirector::Request.new(:hiera, :find, key, nil)
   end
 end
 

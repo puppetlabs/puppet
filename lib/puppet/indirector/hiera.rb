@@ -9,8 +9,16 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
     super
   end
 
+  if defined?(::Psych::SyntaxError)
+    DataBindingExceptions = [::StandardError, ::Psych::SyntaxError]
+  else
+    DataBindingExceptions = [::StandardError]
+  end
+
   def find(request)
     hiera.lookup(request.key, nil, Hiera::Scope.new(request.options[:variables]), nil, nil)
+  rescue *DataBindingExceptions => detail
+    raise Puppet::DataBinding::LookupError.new(detail.message, detail)
   end
 
   private
