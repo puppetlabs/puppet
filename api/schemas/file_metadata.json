@@ -1,0 +1,73 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "File Metadata",
+    "description": "Metadata about a file, directory, or symbolic link",
+    "type":        "object",
+    "properties": {
+        "document_type": {
+            "description": "Only supported value is 'FileMetadata'",
+            "type": "string",
+            "enum": ["FileMetadata"]
+        },
+        "metadata": {
+            "description": "Only contents of metadata is api_version",
+            "type": "object",
+            "properties": {
+                "api_version": {
+                    "description": "Only supported api_version is 1",
+                    "type": "integer",
+                    "enum": [1]
+                }
+            },
+            "required": ["api_version"],
+            "additionalProperties": false
+        },
+        "data": {
+            "description": "The file metadata itself",
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string"
+                },
+                "relative_path": {
+                    "oneOf": [{"type": "string"}, {"type": "null"}]
+                },
+                "links": {
+                    "enum": ["manage", "follow"]
+                },
+                "owner": {
+                    "type": "integer"
+                },
+                "group": {
+                    "type": "integer"
+                },
+                "mode": {
+                    "type": "integer"
+                },
+                "type": {
+                    "enum": ["file", "directory", "link"]
+                },
+                "destination": {
+                    "oneOf": [{"type": "string"}, {"type": "null"}]
+                },
+                "checksum": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "enum": ["md5", "ctime"]
+                        },
+                        "value": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["type", "value"],
+                    "additionalProperties": false
+                }
+            },
+            "required": ["path", "relative_path", "links", "owner", "group", "mode", "type", "destination", "checksum"],
+            "additionalProperties": false
+        }
+    },
+    "required": ["document_type", "metadata", "data"],
+    "additionalProperties": false
+}

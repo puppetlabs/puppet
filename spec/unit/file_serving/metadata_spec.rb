@@ -3,6 +3,21 @@ require 'spec_helper'
 
 require 'puppet/file_serving/metadata'
 
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  FILE_METADATA_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/file_metadata.json')))
+
+  describe "catalog schema" do
+    it "should validate against the json meta-schema" do
+      JSON::Validator.validate!(JSON_META_SCHEMA, FILE_METADATA_SCHEMA)
+    end
+  end
+
+  def validate_as_json(file_metadata)
+    JSON::Validator.validate!(FILE_METADATA_SCHEMA, file_metadata.to_pson)
+  end
+end
+
 describe Puppet::FileServing::Metadata do
   let(:foobar) { File.expand_path('/foo/bar') }
 
@@ -84,7 +99,6 @@ describe Puppet::FileServing::Metadata do
     it "should pass the checksum in the hash verbatim as the checksum's value" do
       metadata.to_pson_data_hash['data']['checksum']['value'].should == metadata.checksum
     end
-
   end
 end
 
@@ -139,6 +153,10 @@ describe Puppet::FileServing::Metadata do
             metadata.checksum.should == "{mtime}#{@time}"
           end
         end
+
+        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+          validate_as_json(metadata)
+        end
       end
 
       describe "when managing directories" do
@@ -160,6 +178,11 @@ describe Puppet::FileServing::Metadata do
           metadata.collect
           metadata.checksum.should == "{ctime}#{time}"
         end
+
+        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+          metadata.collect
+          validate_as_json(metadata)
+        end
       end
 
       describe "when managing links", :unless => Puppet.features.microsoft_windows? do
@@ -178,6 +201,10 @@ describe Puppet::FileServing::Metadata do
 
         it "should read links instead of returning their checksums" do
           metadata.destination.should == target
+        end
+
+        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+          validate_as_json(metadata)
         end
       end
     end
@@ -208,6 +235,10 @@ describe Puppet::FileServing::Metadata do
         File.delete(path)
 
         proc { metadata.collect}.should raise_error(Errno::ENOENT)
+      end
+
+      it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+        validate_as_json(metadata)
       end
     end
   end
