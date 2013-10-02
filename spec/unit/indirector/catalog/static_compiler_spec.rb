@@ -171,6 +171,41 @@ describe Puppet::Resource::Catalog::StaticCompiler do
     catalog
   end
 
+  describe "(#22744) when filtering resources" do
+    before :each do
+      Facter.stubs(:value)
+      @compiler = Puppet::Resource::Catalog::Compiler.new
+      @catalog = stub_everything 'catalog'
+      @catalog.stubs(:respond_to?).with(:filter).returns(true)
+    end
+
+    it "should delegate to the catalog instance filtering" do
+      @catalog.expects(:filter)
+      @compiler.filter(@catalog)
+    end
+
+    it "should filter out virtual resources" do
+      resource = mock 'resource', :virtual? => true
+      @catalog.stubs(:filter).yields(resource)
+
+      @compiler.filter(@catalog)
+    end
+
+    it "should return the same catalog if it doesn't support filtering" do
+      @catalog.stubs(:respond_to?).with(:filter).returns(false)
+
+      @compiler.filter(@catalog).should == @catalog
+    end
+
+    it "should return the filtered catalog" do
+      catalog = stub 'filtered catalog'
+      @catalog.stubs(:filter).returns(catalog)
+
+      @compiler.filter(@catalog).should == catalog
+    end
+
+  end
+
   def fileserver_metadata(options = {})
     yaml = <<EOFILESERVERMETADATA
 --- !ruby/object:Puppet::FileServing::Metadata
