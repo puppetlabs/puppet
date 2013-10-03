@@ -49,7 +49,7 @@ DOC
     Puppet.notice "Revoked certificate with serial #{serial}"
     time = Time.now
 
-    add_certitificate_revocation_for(serial, reason, time)
+    add_certificate_revocation_for(serial, reason, time)
     update_to_next_crl_number
     update_valid_time_range_to_start_at(time)
     sign_with(cakey)
@@ -69,7 +69,7 @@ private
     @content.extensions = [crl_number_of(0)]
   end
 
-  def add_certitificate_revocation_for(serial, reason, time)
+  def add_certificate_revocation_for(serial, reason, time)
     revoked = OpenSSL::X509::Revoked.new
     revoked.serial = serial
     revoked.time = time
