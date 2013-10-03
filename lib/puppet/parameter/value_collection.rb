@@ -33,7 +33,7 @@ class Puppet::Parameter::ValueCollection
     unless defined?(@doc)
       @doc = ""
       unless values.empty?
-        @doc << "  Valid values are "
+        @doc << "Valid values are "
         @doc << @strings.collect do |value|
           if aliases = value.aliases and ! aliases.empty?
             "`#{value.name}` (also called `#{aliases.join(", ")}`)"
@@ -43,7 +43,9 @@ class Puppet::Parameter::ValueCollection
         end.join(", ") << ". "
       end
 
-      @doc << "  Values can match `#{regexes.join("`, `")}`." unless regexes.empty?
+      unless regexes.empty?
+        @doc << "Values can match `#{regexes.join("`, `")}`."
+      end
     end
 
     @doc
