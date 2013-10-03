@@ -45,6 +45,8 @@ group(:development, :test) do
     gem "json-schema", "2.1.1", :require => false
   end
 
+  # For running the tests for the ohai facts terminus
+  gem "ohai"
 end
 
 group(:extra) do
