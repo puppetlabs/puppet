@@ -2,6 +2,7 @@ require 'rake/clean'
 require 'pp'
 require 'yaml'
 
+ONE_DAY_IN_SECS = 24 * 60 * 60
 REPO_CONFIGS_DIR = "repo-configs"
 CLEAN.include('*.tar', REPO_CONFIGS_DIR, 'merged_options.rb')
 
@@ -124,11 +125,11 @@ rescue Errno::ENOENT => e
   puts "Couldn't generate log #{e}"
 end
 
-def list_preserved_configurations
+def list_preserved_configurations(secs_ago = ONE_DAY_IN_SECS)
   preserved = {}
   Dir.glob('log/*_*').each do |dir|
     preserved_config_path = "#{dir}/preserved_config.yaml"
-    yesterday = Time.now - 24 * 60 * 60
+    yesterday = Time.now - secs_ago.to_i
     if preserved_config = File.exists?(preserved_config_path)
       directory = File.new(dir)
       if directory.ctime > yesterday
@@ -144,10 +145,10 @@ def list_preserved_configurations
   preserved.map { |k,v| [v,k] }.sort { |a,b| a[0] <=> b[0] }.reverse
 end
 
-def list_preserved_hosts
+def list_preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
   hosts = Set.new
   Dir.glob('log/**/pre*suite*run.log').each do |log|
-    yesterday = Time.now - (24 * 60 * 60)
+    yesterday = Time.now - secs_ago.to_i
     File.open(log, 'r') do |file|
       if file.ctime > yesterday
         file.each_line do |line|
@@ -161,7 +162,8 @@ def list_preserved_hosts
 end
 
 # Plagiarized from Beaker::Vcloud#cleanup
-def destroy_preserved_hosts(hosts = list_preserved_hosts)
+def destroy_preserved_hosts(hosts = nil, secs_ago = ONE_DAY_IN_SECS)
+  hosts ||= list_preserved_hosts(secs_ago)
   require 'beaker/hypervisor/vsphere_helper'
   vsphere_credentials = VsphereHelper.load_config("#{ENV['HOME']}/.fog")
 
@@ -272,10 +274,12 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
   desc <<-EOS
 Shutdown and destroy any hosts that we have preserved for testing.  These should be reaped daily by scripts, but this will free up resources immediately.
 Specify a list of comma separated HOST_NAMES if you have a set of dynamic vcloud host names you want to purge outside of what can be grepped from the logs.
+You can go back through the last SECS_AGO logs.  Default is one day ago in secs.
   EOS
   task :destroy_preserved_hosts do
     host_names = ENV['HOST_NAMES'].split(',') if ENV['HOST_NAMES']
-    destroy_preserved_hosts(host_names)
+    secs_ago = ENV['SECS_AGO']
+    destroy_preserved_hosts(host_names, secs_ago)
   end
 
   desc <<-EOS
