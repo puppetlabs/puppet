@@ -255,7 +255,6 @@ module Puppet::Network::HTTP::Handler
 
   def read_body_into_model(model_class, request)
     data = body(request).to_s
-    raise ArgumentError, "No data to save" if !data or data.empty?
 
     format = request_format(request)
     model_class.convert_from(format, data)
