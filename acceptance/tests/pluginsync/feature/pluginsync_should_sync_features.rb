@@ -1,10 +1,11 @@
 test_name "the pluginsync functionality should sync feature definitions"
 
 #
-# This test is intended to ensure that pluginsync syncs feature definitions to the agents.  It checks the feature
-# twice; once to make sure that it gets loaded successfully during the run in which it was synced, and once to
-# ensure that it still gets loaded successfully during the subsequent run (in which it should not be synced because
-# the files haven't changed.)
+# This test is intended to ensure that pluginsync syncs feature definitions to
+# the agents.  It checks the feature twice; once to make sure that it gets
+# loaded successfully during the run in which it was synced, and once to ensure
+# that it still gets loaded successfully during the subsequent run (in which it
+# should not be synced because the files haven't changed.)
 #
 
 
@@ -116,10 +117,15 @@ begin
 
   step "start the master" do
 
-    with_master_running_on(master,
-               "--manifest=\"#{get_test_file_path(master, master_manifest_file)}\" " +
-               "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
-               "--autosign true --pluginsync") do
+    master_opts = {
+      'master' => {
+        'manifest' => "#{get_test_file_path(master, master_manifest_file)}",
+        'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
+        'node_terminus' => 'plain',
+      }
+    }
+
+    with_puppet_running_on master, master_opts do
 
       # the module files shouldn't exist on the agent yet because they haven't been synced
       step "verify that the module files don't exist on the agent path" do
@@ -135,7 +141,7 @@ begin
 
       step "run the agent and verify that it loaded the feature" do
         agents.each do |agent|
-          run_agent_on(agent, agent_args % get_test_file_path(agent, agent_lib_dir),
+          on(agent, puppet('agent', agent_args % get_test_file_path(agent, agent_lib_dir)),
                        :acceptable_exit_codes => agent_exit_codes) do
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
               "Expected agent stdout to include confirmation that the feature was 'true'")
@@ -155,7 +161,7 @@ begin
 
       step "run the agent again" do
         agents.each do |agent|
-          run_agent_on(agent, agent_args % get_test_file_path(agent, agent_lib_dir),
+          on(agent, puppet('agent', agent_args % get_test_file_path(agent, agent_lib_dir)),
                           :acceptable_exit_codes => agent_exit_codes) do
             assert_match(/The value of the #{module_name} feature is: true/, result.stdout,
                          "Expected agent stdout to include confirmation that the feature was 'true'")

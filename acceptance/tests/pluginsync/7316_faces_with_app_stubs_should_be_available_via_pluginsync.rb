@@ -58,19 +58,17 @@ end
 
 HERE
 
-
-
-# this begin block is here for handling temp file cleanup via an "ensure" block at the very end of the
-# test.
+# this begin block is here for handling temp file cleanup via an "ensure" block
+# at the very end of the test.
 begin
 
-  # here we create a custom app, which basically doesn't do anything except for print a hello-world message
+  # here we create a custom app, which basically doesn't do anything except for
+  # print a hello-world message
   agent_module_face_file = "#{agent_lib_dir}/puppet/face/#{app_name}.rb"
   master_module_face_file = "#{master_module_dir}/#{app_name}/lib/puppet/face/#{app_name}.rb"
 
   agent_module_app_file = "#{agent_lib_dir}/puppet/application/#{app_name}.rb"
   master_module_app_file = "#{master_module_dir}/#{app_name}/lib/puppet/application/#{app_name}.rb"
-
 
   # copy all the files to the master
   step "write our simple module out to the master" do
@@ -87,10 +85,15 @@ begin
     end
   end
 
+  master_opts = {
+    'master' => {
+      'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
+      'node_terminus' => 'plain',
+    }
+  }
+
   step "start the master" do
-    with_master_running_on(master,
-           "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
-           "--autosign true") do
+    with_puppet_running_on master, master_opts do
 
       # the module files shouldn't exist on the agent yet because they haven't been synced
       step "verify that the module files don't exist on the agent path" do
@@ -106,8 +109,10 @@ begin
 
       step "run the agent" do
         agents.each do |agent|
-          run_agent_on(agent, "--trace --libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\" " +
-                              "--no-daemonize --verbose --onetime --test --server #{master}")
+          on(agent, puppet('agent',
+                           "--libdir=\"#{get_test_file_path(agent, agent_lib_dir)}\" ",
+                           "--trace --test --server #{master}")
+          )
         end
       end
 

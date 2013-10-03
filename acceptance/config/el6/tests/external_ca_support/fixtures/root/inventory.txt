@@ -1,2 +1,0 @@
-V	330325055048Z		01	unknown	/CN=Intermediate CA (agent-ca)/emailAddress=test@example.org/O=Example Org, LLC/OU=Server Operations
-V	330325055048Z		02	unknown	/CN=Intermediate CA (master-ca)/emailAddress=test@example.org/O=Example Org, LLC/OU=Server Operations

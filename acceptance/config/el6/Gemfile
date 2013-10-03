@@ -1,7 +1,12 @@
 source "https://rubygems.org"
 
-gem "puppet_acceptance", :git => "git://github.com/puppetlabs/puppet-acceptance.git"
+gem "beaker", :git => "git://github.com/puppetlabs/beaker.git"
 gem "rake"
+
+group(:test) do
+  gem "rspec", "~> 2.11.0", :require => false
+  gem "mocha", "~> 0.10.5", :require => false
+end
 
 if File.exists? "#{__FILE__}.local"
   eval(File.read("#{__FILE__}.local"), binding)

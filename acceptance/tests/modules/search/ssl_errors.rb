@@ -4,7 +4,7 @@ step "Search against a website where the certificate is not signed by a public a
 
 # This might seem silly, but a master has a self-signed certificate and is a
 # cheap way of testing against a web server without a publicly signed cert
-with_master_running_on(master) do
+with_puppet_running_on master, {} do
   on master, puppet("module search yup --module_repository=https://#{master}:8140"), :acceptable_exit_codes => [1] do
     assert_match <<-STDOUT, stdout
 \e[mNotice: Searching https://#{master}:8140 ...\e[0m
