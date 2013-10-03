@@ -7,11 +7,11 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
         # A hash of user resources:
         $myusers = {
           'nick' => { uid    => '1330',
-                      group  => allstaff,
-                      groups => ['developers', 'operations', 'release'], }
+                      gid    => allstaff,
+                      groups => ['developers', 'operations', 'release'], },
           'dan'  => { uid    => '1308',
-                      group  => allstaff,
-                      groups => ['developers', 'prosvc', 'release'], }
+                      gid    => allstaff,
+                      groups => ['developers', 'prosvc', 'release'], },
         }
 
         create_resources(user, $myusers)
