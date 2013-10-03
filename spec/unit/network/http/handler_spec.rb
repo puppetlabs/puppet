@@ -448,7 +448,9 @@ describe Puppet::Network::HTTP::Handler do
         request = a_request_that_submits(data)
         request[:body] = ''
 
-        expect { handler.do_save("my_handler", "my_result", {}, request, response) }.to raise_error(ArgumentError)
+        expect do
+          handler.do_save(indirection.name, "my data", {}, request, response)
+        end.to raise_error(ArgumentError, "No data to save")
       end
 
       it "saves the data sent in the request" do
