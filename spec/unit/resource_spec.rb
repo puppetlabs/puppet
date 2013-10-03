@@ -618,7 +618,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "when serializing" do
+  describe "when serializing a native type" do
     before do
       @resource = Puppet::Resource.new("file", "/my/file")
       @resource["one"] = "test"
@@ -626,6 +626,31 @@ describe Puppet::Resource do
     end
 
     it "should produce an equivalent yaml object" do
+      text = @resource.render('yaml')
+
+      newresource = Puppet::Resource.convert_from('yaml', text)
+      newresource.should equal_attributes_of @resource
+    end
+  end
+
+  describe "when serializing a defined type" do
+    before do
+      type = Puppet::Resource::Type.new(:definition, "foo::bar")
+      Puppet::Node::Environment.new.known_resource_types.add type
+    end
+
+    before :each do
+      @resource = Puppet::Resource.new('foo::bar', 'xyzzy')
+      @resource['one'] = 'test'
+      @resource['two'] = 'other'
+      @resource.resource_type
+    end
+
+    it "doesn't include transient instance variables (#4506)" do
+      expect(@resource.to_yaml_properties).to_not include :@rstype
+    end
+
+    it "produces an equivalent yaml object" do
       text = @resource.render('yaml')
 
       newresource = Puppet::Resource.convert_from('yaml', text)
