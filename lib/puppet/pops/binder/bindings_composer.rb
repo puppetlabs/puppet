@@ -62,7 +62,6 @@ class Puppet::Pops::Binder::BindingsComposer
     # get extensions from the config
     # ------------------------------
     scheme_extensions = @config.scheme_extensions
-    hiera_backends = @config.hiera_backends
 
     # Define a named bindings that are known by the SystemBindings
     boot_bindings = Puppet::Pops::Binder::BindingsFactory.named_bindings(Puppet::Pops::Binder::SystemBindings::ENVIRONMENT_BOOT_BINDINGS_NAME) do
@@ -71,20 +70,10 @@ class Puppet::Pops::Binder::BindingsComposer
         # do this in category 'extensions' to allow them to override the 'default'
         when_in_category('extension', 'true').bind do
           name(scheme)
-          instance_of(Puppetx::BINDINGS_SCHEMES_TYPE)
-          in_multibind(Puppetx::BINDINGS_SCHEMES)
+          instance_of(::Puppetx::BINDINGS_SCHEMES_TYPE)
+          in_multibind(::Puppetx::BINDINGS_SCHEMES)
           to_instance(class_name)
           end
-      end
-      hiera_backends.each_pair do |symbolic, class_name|
-        # turn each symbolic => class_name into a binding (contribute to the hiera backends multibind).
-        # do this in category 'extensions' to allow them to override the 'default'
-        when_in_category('extension', 'true').bind do
-          name(symbolic)
-          instance_of(Puppetx::HIERA2_BACKENDS_TYPE)
-          in_multibind(Puppetx::HIERA2_BACKENDS)
-          to_instance(class_name)
-        end
       end
     end
 

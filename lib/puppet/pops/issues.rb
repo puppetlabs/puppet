@@ -48,6 +48,7 @@ module Puppet::Pops::Issues
         # Evaluate the message block in the msg data's binding
         msgdata.format(hash, &message_block)
       rescue StandardError => e
+        Puppet::Pops::Issues::MessageData
         raise RuntimeError, "Error while reporting issue: #{issue_code}. #{e.message}", caller
       end
     end

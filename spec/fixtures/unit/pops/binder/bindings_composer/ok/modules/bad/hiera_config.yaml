@@ -1,9 +1,0 @@
-# BROKEN ON PURPOSE
----
-hierarchyyyyyy:
-  - ['node', '${fqdn}', '${fqdn}'
-  - ['common', 'true', 'common'
-
-backendsssssss:
-  - yaml
-  - json

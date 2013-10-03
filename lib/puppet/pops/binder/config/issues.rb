@@ -100,7 +100,7 @@ module Puppet::Pops::Binder::Config::Issues
     "The configuration file '#{semantic}' contains '#{extension}', expected: Hash, but got: #{actual}."
   end
 
-  UNKNOWN_EXTENSION = issue :UNKNOWN_EXTENSION, :actual do
+  UNKNOWN_EXTENSION = issue :UNKNOWN_EXTENSION, :extension do
     "The configuration file '#{semantic}' contains the unknown extension: #{extension}."
   end
 end

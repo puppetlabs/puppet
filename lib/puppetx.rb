@@ -27,14 +27,6 @@ module Puppetx
   # @api public
   BINDINGS_SCHEMES_TYPE = 'Puppetx::Puppet::BindingsSchemeHandler'
 
-  # The lookup **key** for the multibind containing a map from hiera-2 backend name to class implementing the backend.
-  # @api public
-  HIERA2_BACKENDS      = 'puppetx::puppet::hiera2::backends'
-
-  # The lookup **type** for the multibind containing a map from hiera-2 backend name to class implementing the backend.
-  # @api public
-  HIERA2_BACKENDS_TYPE = 'Puppetx::Puppet::Hiera2Backend'
-
   # This module is the name space for extension points
   # @api public
   module Puppet
@@ -53,7 +45,6 @@ module Puppetx
         extensions = system_bindings.extensions()
         extensions.multibind(SYNTAX_CHECKERS).name(SYNTAX_CHECKERS).hash_of(SYNTAX_CHECKERS_TYPE)
         extensions.multibind(BINDINGS_SCHEMES).name(BINDINGS_SCHEMES).hash_of(BINDINGS_SCHEMES_TYPE)
-        extensions.multibind(HIERA2_BACKENDS).name(HIERA2_BACKENDS).hash_of(HIERA2_BACKENDS_TYPE)
 
         # Register injector boot bindings
         # -------------------------------
@@ -63,20 +54,9 @@ module Puppetx
         require 'puppetx/puppet/bindings_scheme_handler'
         { 'module'        => 'ModuleScheme', 
           'confdir'       => 'ConfdirScheme',
-          'module-hiera'  => 'ModuleHieraScheme',
-          'confdir-hiera' => 'ConfdirHieraScheme'
         }.each do |scheme, class_name|
           boot_bindings.bind.name(scheme).instance_of(BINDINGS_SCHEMES_TYPE).in_multibind(BINDINGS_SCHEMES).
             to_instance("Puppet::Pops::Binder::SchemeHandler::#{class_name}")
-        end
-
-        # Register the default hiera2 backends
-        require 'puppetx/puppet/hiera2_backend'
-        { 'json' => 'JsonBackend',
-          'yaml' => 'YamlBackend'
-        }.each do |symbolic, class_name|
-          boot_bindings.bind.name(symbolic).instance_of(HIERA2_BACKENDS_TYPE).in_multibind(HIERA2_BACKENDS).
-            to_instance("Puppet::Pops::Binder::Hiera2::#{class_name}")
         end
       end
   end
