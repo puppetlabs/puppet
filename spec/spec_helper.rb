@@ -50,6 +50,9 @@ if not Puppet.features.microsoft_windows?
   require 'json-schema'
 
   JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../api/schemas/json-meta-schema.json')))
+
+  # FACTS_SCHEMA is shared across two spec files so promote constant to here
+  FACTS_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../api/schemas/facts.json')))
 end
 
 RSpec.configure do |config|
