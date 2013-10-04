@@ -1004,8 +1004,8 @@ describe Puppet::Type.type(:file) do
         catalog.add_resource file
         catalog.apply
 
-        get_owner(path).should == 'S-1-5-32-544'
-        get_group(path).should == 'S-1-0-0'
+        get_owner(path).should =~ /^S\-1\-5\-.*$/
+        get_group(path).should =~ /^S\-1\-0\-0.*$/
         get_mode(path).should == 0644
       end
     end
