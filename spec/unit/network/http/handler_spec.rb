@@ -17,6 +17,10 @@ describe Puppet::Network::HTTP::Handler do
         @data = data
       end
 
+      def self.from_raw(raw)
+        new(nil, raw)
+      end
+
       def self.from_pson(pson)
         new(pson["name"], pson["data"])
       end
@@ -33,7 +37,6 @@ describe Puppet::Network::HTTP::Handler do
       end
     end
 
-    # The subclass must not be all caps even though the superclass is
     class Puppet::TestModel::Memory < Puppet::Indirector::Memory
     end
 
@@ -443,12 +446,23 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     describe "when saving a model instance" do
-      it "should fail to save model if data is not specified" do
-        data = Puppet::TestModel.new("my data", "some data")
+      it "allows an empty body when the format supports it" do
+        class Puppet::TestModel::Nonvalidatingmemory < Puppet::TestModel::Memory
+          def validate_key(_)
+            # nothing
+          end
+        end
+
+        indirection.terminus_class = :nonvalidatingmemory
+
+        data = Puppet::TestModel.new("test", '')
         request = a_request_that_submits(data)
+        request[:content_type_header] = "application/x-raw"
         request[:body] = ''
 
-        expect { handler.do_save("my_handler", "my_result", {}, request, response) }.to raise_error(ArgumentError)
+        handler.do_save(indirection.name, "test", {}, request, response)
+
+        Puppet::TestModel.indirection.find("test").data.should == ''
       end
 
       it "saves the data sent in the request" do
