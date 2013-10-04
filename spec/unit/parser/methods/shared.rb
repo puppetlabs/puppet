@@ -54,8 +54,8 @@ shared_examples_for 'all iterative functions argument checks' do |func|
   it 'raises an error when called without a block' do
     expect do
       compile_to_catalog(<<-MANIFEST)
-        [1].#{func}(1)
+        [1].#{func}([1])
       MANIFEST
-    end.to raise_error(Puppet::Error, /must be a parameterized block/)
+    end.to raise_error(Puppet::Error, /(must be a parameterized block)|(Wrong number of arguments)/)
   end
 end
