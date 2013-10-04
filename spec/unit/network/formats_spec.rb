@@ -63,27 +63,31 @@ describe "Puppet Network Format" do
       @yaml.intern(String, YAML.dump(:foo)).should == "foo"
     end
 
-    it "should fail when type does not match deserialized form and has no from_pson" do
-      expect do
-        @yaml.intern(Hash, YAML.dump("foo"))
-      end.to raise_error(NoMethodError)
-    end
-
     it "should load from yaml when deserializing an array" do
       text = YAML.dump(["foo"])
       @yaml.intern_multiple(String, text).should == ["foo"]
     end
 
-    it "should fail when one element does not have a from_pson" do
+    it "fails intelligibly instead of calling to_pson with something other than a hash" do
       expect do
-        @yaml.intern_multiple(Hash, YAML.dump(["foo"]))
-      end.to raise_error(NoMethodError)
+        @yaml.intern(Puppet::Node, '')
+      end.to raise_error(Puppet::Network::FormatHandler::FormatError, /did not contain a valid instance/)
+    end
+
+    it "fails intelligibly when intern_multiple is called and yaml doesn't decode to an array" do
+      expect do
+        @yaml.intern_multiple(Puppet::Node, '')
+      end.to raise_error(Puppet::Network::FormatHandler::FormatError, /did not contain a collection/)
+    end
+
+    it "fails intelligibly instead of calling to_pson with something other than a hash when interning multiple" do
+      expect do
+        @yaml.intern_multiple(Puppet::Node, YAML.dump(["hello"]))
+      end.to raise_error(Puppet::Network::FormatHandler::FormatError, /did not contain a valid instance/)
     end
   end
 
   describe "base64 compressed yaml", :if => Puppet.features.zlib? do
-    yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
-
     before do
       @yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
     end
@@ -293,6 +297,12 @@ describe "Puppet Network Format" do
         PsonTest.expects(:from_pson).with("bar").returns "BAR"
         PsonTest.expects(:from_pson).with("baz").returns "BAZ"
         @pson.intern_multiple(PsonTest, text).should == %w{BAR BAZ}
+      end
+
+      it "fails intelligibly when given invalid data" do
+        expect do
+          @pson.intern(Puppet::Node, '')
+        end.to raise_error(PSON::ParserError, /source did not contain any PSON/)
       end
     end
   end

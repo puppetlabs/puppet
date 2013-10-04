@@ -3,18 +3,28 @@ require 'puppet/network/format_handler'
 Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   def intern(klass, text)
     data = YAML.load(text, :safe => true, :deserialize_symbols => true)
-    return data if data.is_a?(klass)
-    klass.from_pson(data)
+    data_to_instance(klass, data)
   end
 
   def intern_multiple(klass, text)
-    YAML.load(text, :safe => true, :deserialize_symbols => true).collect do |data|
-      if data.is_a?(klass)
-        data
-      else
-        klass.from_pson(data)
-      end
+    data = YAML.load(text, :safe => true, :deserialize_symbols => true)
+    unless data.respond_to?(:collect)
+      raise Puppet::Network::FormatHandler::FormatError, "Serialized YAML did not contain a collection of instances when calling intern_multiple"
     end
+
+    data.collect do |datum|
+      data_to_instance(klass, datum)
+    end
+  end
+
+  def data_to_instance(klass, data)
+    return data if data.is_a?(klass)
+
+    unless data.is_a? Hash
+      raise Puppet::Network::FormatHandler::FormatError, "Serialized YAML did not contain a valid instance of #{klass}"
+    end
+
+    klass.from_pson(data)
   end
 
   def render(instance)
