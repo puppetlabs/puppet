@@ -6,6 +6,7 @@ of the endpoint; the search variant has a trailing 's' so is actually `file_meta
 
 Although the term 'file' is used generically in the endpoint name and documentation, each returned item can be one of
 the following three types:
+
 * file
 * directory
 * symbolic link
@@ -14,6 +15,7 @@ Note that an `:environment` must be specified in the endpoint, but is actually i
 is not environment-specific.  (In fact, the specified `:environment` does even need to be valid.)
 
 The endpoint path includes a `:mount` which can be one of three types:
+
 * customer file serving mounts as specified in fileserver.conf -- see [the puppet file serving guide](http://docs.puppetlabs.com/guides/file_serving.html#serving-files-from-custom-mount-points)
 * `modules/<module>` -- a semi-magical mount point which allows access to the `files` subdirectory of `module` -- see [the puppet file serving guide](http://docs.puppetlabs.com/guides/file_serving.html#serving-module-files)
 * `plugins` -- a highly magical mount point which merges many directories together: used for plugin sync, sub-paths can not be specified, not intended for general consumption
@@ -335,6 +337,7 @@ Accept: pson, text/pson
 
 This example is identical to the above example, except for the different links parameter.  The result pson, then,
 is identical to the above example, except for:
+
 * the 'links' field is set to "follow" rather than "manage" in all metadata objects
 * in the 'link_to_file.txt' metadata:
 ** for 'manage' the 'destination' field is the link destination; for 'follow', it's null
@@ -420,8 +423,8 @@ Sample Module
 The examples above use this (faux) module:
 
     /etc/puppet/conf/modules/example/
-      └── files
-        ├── just_a_file.txt
-        ├── link_to_file.txt -> /etc/puppet/conf/modules/example/files/just_a_file.txt
-        └── subdirectory
-            └── another_file.txt
+      files/
+        just_a_file.txt
+        link_to_file.txt -> /etc/puppet/conf/modules/example/files/just_a_file.txt
+        subdirectory/
+          another_file.txt
