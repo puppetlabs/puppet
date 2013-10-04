@@ -59,12 +59,18 @@ if File.exist?(build_defs_file)
   end
 end
 
+PROJECTS = %w{core}
+
 task :default do
   sh %{rake -T}
 end
 
 task :spec do
-  sh %{rspec -fd spec}
+  PROJECTS.each do |project|
+    Dir.chdir(project) do
+      sh %{rspec -fd spec}
+    end
+  end
 end
 
 namespace "ci" do

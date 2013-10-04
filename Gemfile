@@ -18,7 +18,7 @@ platforms :ruby do
   gem "racc", "~> 1.4", :group => :development
 end
 
-gem "puppet", :path => File.dirname(__FILE__), :require => false
+gem "puppet-core", :path => 'core', :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
 gem "rake", :require => false
