@@ -39,12 +39,12 @@ while len(args) > 0:
         if len(args) < 1:
             raise ValueError, a
         next = args.pop(0)
-        disable.extend([ next ])
+        disable.extend( next.split(",") )
     if a == "-e":
         if len(args) < 1:
             raise ValueError, a
         next = args.pop(0)
-        enable.extend([ next ])
+        enable.extend( next.split(",") )
 
 def pkg_lists(my):
     my.doConfigSetup()
@@ -71,10 +71,10 @@ def pkg_lists(my):
 def shell_out():
     try:
         repostring = ""
-        for repo in disable:
-            repostring += " '--disablerepo=%s'" % repo
-        for repo in enable:
-            repostring += " '--enablerepo=%s'" % repo
+        if disable:
+            repostring += " '--disablerepo=%s'" % ",".join(disable)
+        if enable:
+            repostring += " '--disablerepo=%s'" % ",".join(enable)
         p = popen("/usr/bin/env yum%s check-update 2>&1" % repostring)
         output = p.readlines()
         rc = p.close()

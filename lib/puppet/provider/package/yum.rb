@@ -32,35 +32,35 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     super
     return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
-    repoconfig = { }
-    repoconfig[""] = [ ]
+    # repo_combinations is list of all unique combinations of enabled repositories
+    # empty string represents enablerepo not specified
+    repo_combinations = [""]
     packages.each do |name, package|
-      if package[:enablerepo].respond_to?("length")
-        if package[:enablerepo].length != 0
-          if package[:enablerepo].respond_to?("join")
-            repoconfig[ package[:enablerepo].join(",") ] = package[:enablerepo]
-          else
-            repoconfig[ package[:enablerepo] ] = package[:enablerepo]
-          end
+      unless package[:enablerepo].empty?
+        repos = package[:enablerepo].sort.join(",")
+        unless repo_combinations.include?(repos)
+          repo_combinations << repos
         end
       end
     end
 
     updates = {}
 
-    repoconfig.each do |config, enablerepo|
-      fullyumhelper = []
-      enablerepo.each do |value|
-        fullyumhelper += [ "-e", value ]
+    # run yumhelper for each combination of repositories
+    repo_combinations.each do |repos|
+      if repos.empty?
+        arguments = []
+      else
+        arguments = ["-e", repos]
       end
-
       # collect our 'latest' info
-      python(self::YUMHELPER, fullyumhelper).each_line do |l|
+      python(self::YUMHELPER, *arguments).each_line do |l|
         l.chomp!
         next if l.empty?
         if l[0,4] == "_pkg"
           hash = nevra_to_hash(l[5..-1])
-          ["#{hash[:name]}.#{config}", "#{hash[:name]}.#{hash[:arch]}.#{config}"].each  do |n|
+          # include info on which set of repos this update is from
+          ["#{hash[:name]}.#{repos}", "#{hash[:name]}.#{hash[:arch]}.#{repos}"].each  do |n|
             updates[n] ||= []
             updates[n] << hash
           end
@@ -70,17 +70,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # Add our 'latest' info to the providers.
     packages.each do |name, package|
-      repocfg = ""
-      if package[:enablerepo].respond_to?("length")
-        if package[:enablerepo].length != 0
-          if package[:enablerepo].respond_to?("join")
-            repocfg = package[:enablerepo].join(",")
-          else
-            repocfg = package[:enablerepo]
-          end
-        end
+      if package[:enablerepo].empty?
+        repos = ""
+      else
+        repos = package[:enablerepo].join(",")
       end
-      if info = updates["#{package[:name]}.#{repocfg}"]
+      if info = updates["#{package[:name]}.#{repos}"]
         package.provider.latest_info = info[0]
       end
     end
