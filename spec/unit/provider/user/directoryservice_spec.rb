@@ -615,7 +615,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
   describe '#get_attribute_from_dscl' do
     # The below value is the result of executing
     # `dscl -plist . read /Users/<username/ GeneratedUID`
-    # on an OS X system. 
+    # on an OS X system.
     let(:user_guid_xml) do
       '<?xml version="1.0" encoding="UTF-8"?>
        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -672,6 +672,16 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     it 'should return the next available UID number that is not in the list obtained from dscl and is greater than the passed integer value' do
       provider.expects(:dscl).with('.', '-list', '/Users', 'uid').returns("kathee 312\ngary 11\ntanny 33\njohn 9\nzach 5")
       provider.next_system_id(30).should == 34
+    end
+
+    it 'should return the next available UID number that is not in the list obtained from dscl and is greater than the default value when not passed an argument' do
+      provider.expects(:dscl).with('.', '-list', '/Users', 'uid').returns("kathee 312\ngary 11\ntanny 33\njohn 9\nzach 5")
+      provider.next_system_id.should == 501
+    end
+
+    it 'should return the next available UID number that is not in the list obtained from dscl and is greater than the default value when not passed an argument and there are ids above the minimum one' do
+      provider.expects(:dscl).with('.', '-list', '/Users', 'uid').returns("kathee 312\ngary 11\ntanny 33\njohn 9\nzach 5\nfoo 503")
+      provider.next_system_id.should == 504
     end
   end
 
