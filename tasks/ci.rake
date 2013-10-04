@@ -5,18 +5,21 @@ namespace "ci" do
   end
 
   desc <<-EOS
-    Check to see if the job at the url given in DOWNSTREAM_JOB has begun a build including the given BUILD_SELECTOR parameter.  An example `rake ci:check_for_downstream DOWNSTREAM_JOB='http://jenkins-foss.delivery.puppetlabs.net/job/Puppet-Package-Acceptance-master' BUILD_SELECTOR=123`
+    Check to see if the job at the url given in DOWNSTREAM_JOB has begun a build including the given BUILD_SELECTOR parameter.
+    An example `rake ci:check_for_downstream DOWNSTREAM_JOB='http://jenkins-foss.delivery.puppetlabs.net/job/Puppet-Package-Acceptance-master' BUILD_SELECTOR=123`
+    You may optionally set TIMEOUT_MIN, which defaults to 20 min.
   EOS
   task :check_for_downstream do
     downstream_url = ENV['DOWNSTREAM_JOB'] || raise('No ENV DOWNSTREAM_JOB set!')
     downstream_url += '/api/json?depth=1'
     expected_selector = ENV['BUILD_SELECTOR'] || raise('No ENV BUILD_SELECTOR set!')
+    timeout = (ENV['TIMEOUT_MIN'] || 20) * 60
     puts "Waiting for a downstream job calling for BUILD_SELECTOR #{expected_selector}"
     success = false
     require 'json'
     require 'timeout'
     require 'net/http'
-    Timeout.timeout(15 * 60) do
+    Timeout.timeout(timeout) do
       loop do
         uri = URI(downstream_url)
         status = Net::HTTP.get(uri)
