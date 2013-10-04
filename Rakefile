@@ -59,7 +59,7 @@ if File.exist?(build_defs_file)
   end
 end
 
-PROJECTS = %w{core pops}
+PROJECTS = %w{core pops testing}
 
 task :default do
   sh %{rake -T}

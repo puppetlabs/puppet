@@ -1,6 +1,6 @@
 module PuppetSpec::Fixtures
   def fixtures(*rest)
-    File.join(PuppetSpec::FIXTURE_DIR, *rest)
+    File.expand_path(File.join('spec', 'fixtures', *rest))
   end
   def my_fixture_dir
     callers = caller

@@ -20,6 +20,7 @@ end
 
 gem "puppet-core", :path => 'core', :require => false
 gem "puppet-pops", :path => 'pops', :require => false
+gem "puppet-testing", :path => 'testing', :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || '~> 1.6')
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
 gem "rake", :require => false

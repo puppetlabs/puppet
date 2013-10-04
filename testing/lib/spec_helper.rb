@@ -2,8 +2,6 @@
 #  puppetlabs_spec_helper.  We should probably eat our own dog food and get rid of most of this from here,
 #  and have the puppet core itself use puppetlabs_spec_helper
 
-dir = File.expand_path(File.dirname(__FILE__))
-$LOAD_PATH.unshift File.join(dir, 'lib')
 
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
@@ -19,7 +17,6 @@ require 'rspec/expectations'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
-  FIXTURE_DIR = File.join(dir = File.expand_path(File.dirname(__FILE__)), "fixtures") unless defined?(FIXTURE_DIR)
 end
 
 require 'pathname'
@@ -35,6 +32,9 @@ require 'puppet_spec/database'
 require 'monkey_patches/alias_should_to_must'
 require 'puppet/test/test_helper'
 
+require 'spec_helper_local'
+
+dir = 'spec'
 Pathname.glob("#{dir}/shared_contexts/*.rb") do |file|
   require file.relative_path_from(Pathname.new(dir))
 end
