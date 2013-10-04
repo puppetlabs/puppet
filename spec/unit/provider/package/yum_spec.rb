@@ -57,27 +57,47 @@ describe provider do
       @provider.stubs(:query).returns(:ensure => '1.2').then.returns(:ensure => '1.0')
       @provider.install
     end
+
     it 'should be able to install disabling a repo' do
       @resource.stubs(:[]).with(:enablerepo).returns []
       @resource.stubs(:[]).with(:disablerepo).returns ['test1']
       @resource.stubs(:should).with(:ensure).returns :installed
-      @provider.expects(:yum).with{ |c| c[5] == [" --disablerepo=test1"] }
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '--disablerepo=test1', :install, 'mypackage')
       @provider.install
     end
+
     it 'should be able to install enabling a repo' do
       @resource.stubs(:[]).with(:enablerepo).returns ['test0']
       @resource.stubs(:[]).with(:disablerepo).returns []
       @resource.stubs(:should).with(:ensure).returns :installed
-      @provider.expects(:yum).with{ |c| c[6] == [" --enablerepo=test0"] }
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '--enablerepo=test0', :install, 'mypackage')
       @provider.install
     end
+
     it 'should be able to install enabling and disabling a repo' do
       @resource.stubs(:[]).with(:enablerepo).returns ['test0']
       @resource.stubs(:[]).with(:disablerepo).returns ['test1']
       @resource.stubs(:should).with(:ensure).returns :installed
-      @provider.expects(:yum).with{ |c| c[5] == [" --disablerepo=test1"] and c[6] == [" --enablerepo=test0"]}
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '--disablerepo=test1', '--enablerepo=test0', :install, 'mypackage')
       @provider.install
     end
+
+    it 'should be able to install enabling multiple repos' do
+      @resource.stubs(:[]).with(:enablerepo).returns ['test0', 'test1']
+      @resource.stubs(:[]).with(:disablerepo).returns []
+      @resource.stubs(:should).with(:ensure).returns :installed
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '--enablerepo=test0,test1', :install, 'mypackage')
+      @provider.install
+    end
+
+    it 'should be able to install disabling multiple repos' do
+      @resource.stubs(:[]).with(:enablerepo).returns []
+      @resource.stubs(:[]).with(:disablerepo).returns ['test0', 'test1']
+      @resource.stubs(:should).with(:ensure).returns :installed
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '--disablerepo=test0,test1', :install, 'mypackage')
+      @provider.install
+    end
+
   end
 
   describe 'when uninstalling' do
