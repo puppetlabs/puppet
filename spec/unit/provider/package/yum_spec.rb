@@ -8,6 +8,8 @@ describe provider do
     # Create a mock resource
      @resource = stub 'resource'
      @resource.stubs(:[]).with(:name).returns 'mypackage'
+     @resource.stubs(:[]).with(:enablerepo).returns []
+     @resource.stubs(:[]).with(:disablerepo).returns []
      @provider = provider.new(@resource)
      @provider.stubs(:resource).returns @resource
      @provider.stubs(:yum).returns 'yum'
@@ -53,6 +55,27 @@ describe provider do
       @resource.stubs(:should).with(:ensure).returns '1.0'
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, 'mypackage-1.0')
       @provider.stubs(:query).returns(:ensure => '1.2').then.returns(:ensure => '1.0')
+      @provider.install
+    end
+    it 'should be able to install disabling a repo' do
+      @resource.stubs(:[]).with(:enablerepo).returns []
+      @resource.stubs(:[]).with(:disablerepo).returns ['test1']
+      @resource.stubs(:should).with(:ensure).returns :installed
+      @provider.expects(:yum).with{ |c| c[5] == [" --disablerepo=test1"] }
+      @provider.install
+    end
+    it 'should be able to install enabling a repo' do
+      @resource.stubs(:[]).with(:enablerepo).returns ['test0']
+      @resource.stubs(:[]).with(:disablerepo).returns []
+      @resource.stubs(:should).with(:ensure).returns :installed
+      @provider.expects(:yum).with{ |c| c[6] == [" --enablerepo=test0"] }
+      @provider.install
+    end
+    it 'should be able to install enabling and disabling a repo' do
+      @resource.stubs(:[]).with(:enablerepo).returns ['test0']
+      @resource.stubs(:[]).with(:disablerepo).returns ['test1']
+      @resource.stubs(:should).with(:ensure).returns :installed
+      @provider.expects(:yum).with{ |c| c[5] == [" --disablerepo=test1"] and c[6] == [" --enablerepo=test0"]}
       @provider.install
     end
   end

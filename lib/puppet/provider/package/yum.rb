@@ -32,23 +32,55 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     super
     return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
-    # collect our 'latest' info
+    repoconfig = { }
+    repoconfig[""] = [ ]
+    packages.each do |name, package|
+      if package[:enablerepo].respond_to?("length")
+        if package[:enablerepo].length != 0
+          if package[:enablerepo].respond_to?("join")
+            repoconfig[ package[:enablerepo].join(",") ] = package[:enablerepo]
+          else
+            repoconfig[ package[:enablerepo] ] = package[:enablerepo]
+          end
+        end
+      end
+    end
+
     updates = {}
-    python(self::YUMHELPER).each_line do |l|
-      l.chomp!
-      next if l.empty?
-      if l[0,4] == "_pkg"
-        hash = nevra_to_hash(l[5..-1])
-        [hash[:name], "#{hash[:name]}.#{hash[:arch]}"].each  do |n|
-          updates[n] ||= []
-          updates[n] << hash
+
+    repoconfig.each do |config, enablerepo|
+      fullyumhelper = []
+      enablerepo.each do |value|
+        fullyumhelper += [ "-e", value ]
+      end
+
+      # collect our 'latest' info
+      python(self::YUMHELPER, fullyumhelper).each_line do |l|
+        l.chomp!
+        next if l.empty?
+        if l[0,4] == "_pkg"
+          hash = nevra_to_hash(l[5..-1])
+          ["#{hash[:name]}.#{config}", "#{hash[:name]}.#{hash[:arch]}.#{config}"].each  do |n|
+            updates[n] ||= []
+            updates[n] << hash
+          end
         end
       end
     end
 
     # Add our 'latest' info to the providers.
     packages.each do |name, package|
-      if info = updates[package[:name]]
+      repocfg = ""
+      if package[:enablerepo].respond_to?("length")
+        if package[:enablerepo].length != 0
+          if package[:enablerepo].respond_to?("join")
+            repocfg = package[:enablerepo].join(",")
+          else
+            repocfg = package[:enablerepo]
+          end
+        end
+      end
+      if info = updates["#{package[:name]}.#{repocfg}"]
         package.provider.latest_info = info[0]
       end
     end
@@ -59,6 +91,18 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
     operation = :install
+
+    fulldisablerepo = []
+    disablerepo= @resource[:disablerepo]
+    disablerepo.each do |value|
+      fulldisablerepo += [ " --disablerepo=" + value ]
+    end
+
+    fullenablerepo  = []
+    enablerepo = @resource[:enablerepo]
+    enablerepo.each do |value|
+      fullenablerepo += [ " --enablerepo=" + value ]
+    end
 
     case should
     when true, false, Symbol
@@ -74,7 +118,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    yum "-d", "0", "-e", "0", "-y", operation, wanted
+    if fullenablerepo == [] and fulldisablerepo == []
+      yum "-d", "0", "-e", "0", "-y", operation, wanted
+    else
+      yum "-d", "0", "-e", "0", "-y", fulldisablerepo, fullenablerepo, operation, wanted
+    end
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is
