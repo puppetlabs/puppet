@@ -82,6 +82,7 @@ module Puppet::Util::Colors
   if Puppet::Util::Platform.windows?
     # We're on windows, need win32console for color to work
     begin
+      require 'Win32API'
       require 'win32console'
       require 'windows/wide_string'
 
