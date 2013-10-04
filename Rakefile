@@ -67,9 +67,7 @@ end
 
 task :spec do
   PROJECTS.each do |project|
-    Dir.chdir(project) do
-      sh %{rake spec}
-    end
+    Rake::Task["#{project}:spec"].invoke
   end
 end
 
