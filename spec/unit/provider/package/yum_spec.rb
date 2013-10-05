@@ -177,6 +177,19 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
      YUMHELPER_OUTPUT
     end
 
+    let(:yumhelper_output_with_myrepo) do
+      <<-YUMHELPER_OUTPUT
+ * base: centos.tcpdiag.net
+ * extras: centos.mirrors.hoobly.com
+ * updates: mirrors.arsc.edu
+ * myrepo: mirrors.example.com
+_pkg nss-tools 0 3.14.3 4.el6_4 x86_64
+_pkg pixman 0 0.26.2 5.el6_4 x86_64
+_pkg myresource 0 1.2.3.4 6.el4 noarch
+_pkg mysummaryless 0 1.2.3.4 6.el4 noarch
+     YUMHELPER_OUTPUT
+    end
+
     let(:execute_options) do
       {:failonfail => true, :combine => true, :custom_environment => {}}
     end
@@ -234,6 +247,45 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
         :provider=>:yum,
         :ensure=>"1.2.3.4-5.el4"
       })
+    end
+
+    it "chooses packages from enabled repositories when prefetching" do
+        Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/), "-e", "myrepo").returns(yumhelper_output_with_myrepo)
+        myresource = a_package_type_instance_with_yum_provider_and_ensure_latest('myresource')
+        mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
+        mysummaryless[:enablerepo] = ['myrepo']
+
+        yum_provider.prefetch({ "myresource" => myresource, "mysummaryless" => mysummaryless })
+
+        expect(myresource.provider.latest_info).to eq({
+          :name=>"myresource",
+          :epoch=>"0",
+          :version=>"1.2.3.4",
+          :release=>"5.el4",
+          :arch=>"noarch",
+          :description=>nil,
+          :provider=>:yum,
+          :ensure=>"1.2.3.4-5.el4"
+        })
+
+        expect(mysummaryless.provider.latest_info).to eq({
+          :name=>"mysummaryless",
+          :epoch=>"0",
+          :version=>"1.2.3.4",
+          :release=>"6.el4",
+          :arch=>"noarch",
+          :description=>nil,
+          :provider=>:yum,
+          :ensure=>"1.2.3.4-6.el4"
+        })
+    end
+
+    it "should be able to enable multiple repositories when prefetching" do
+        Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/), "-e", "anotherrepo,myrepo").returns(yumhelper_output_with_myrepo)
+        mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
+        mysummaryless[:enablerepo] = ['myrepo', 'anotherrepo']
+
+        yum_provider.prefetch({ "mysummaryless" => mysummaryless })
     end
   end
 end
