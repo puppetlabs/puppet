@@ -14,7 +14,7 @@ describe 'the select method' do
   it 'should select on an array (all berries)' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = ['strawberry','blueberry','orange']
-      $a.select {|$x| $x  =~ /berry$/}.foreach {|$v|
+      $a.select {|$x| $x  =~ /berry$/}.each {|$v|
         file { "/file_$v": ensure => present }
       }
     MANIFEST
@@ -38,7 +38,7 @@ describe 'the select method' do
   it 'selects on a hash (all berries) by key' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'strawberry'=>'red','blueberry'=>'blue','orange'=>'orange'}
-      $a.select {|$x| $x[0]  =~ /berry$/}.foreach {|$v|
+      $a.select {|$x| $x[0]  =~ /berry$/}.each {|$v|
         file { "/file_${v[0]}": ensure => present }
       }
     MANIFEST
@@ -65,7 +65,7 @@ describe 'the select method' do
   it 'selects on a hash (all berries) by value' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'strawb'=>'red berry','blueb'=>'blue berry','orange'=>'orange fruit'}
-      $a.select {|$x| $x[1]  =~ /berry$/}.foreach {|$v|
+      $a.select {|$x| $x[1]  =~ /berry$/}.each {|$v|
         file { "/file_${v[0]}": ensure => present }
       }
     MANIFEST
