@@ -32,19 +32,20 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     super
     return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
-    # repo_combinations is list of all unique combinations of enabled and disabled repositories
-    repo_combinations = [ { "enablerepo" => [], "disablerepo" => [] } ]
+    # repo_permutations is list of all permutations of enabled and disabled repositories
+    repo_permutations = [ { "enablerepo" => [], "disablerepo" => [] } ]
     packages.each_value do |package|
+      # sort needed to avoid combinations and to ensure array
       repos = { "enablerepo" => package[:enablerepo].sort, "disablerepo" =>  package[:disablerepo].sort}
-      unless repo_combinations.include?(repos)
-        repo_combinations << repos
+      unless repo_permutations.include?(repos)
+        repo_permutations << repos
       end
     end
 
     updates = {}
 
     # run yumhelper for each combination of repositories
-    repo_combinations.each do |repos|
+    repo_permutations.each do |repos|
       arguments = []
       unless repos["enablerepo"].empty?
         arguments += ["-e", repos["enablerepo"].join(",")]
@@ -97,11 +98,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     end
 
     arguments = [ "-d", "0", "-e", "0", "-y" ]
+    # sorts below used for side effect of ensuring parameter is array
     unless @resource[:disablerepo].empty?
-      arguments <<  "--disablerepo=#{@resource[:disablerepo].join(',')}"
+      arguments <<  "--disablerepo=#{@resource[:disablerepo].sort.join(',')}"
     end
     unless @resource[:enablerepo].empty?
-      arguments <<  "--enablerepo=#{@resource[:enablerepo].join(',')}"
+      arguments <<  "--enablerepo=#{@resource[:enablerepo].sort.join(',')}"
     end
     arguments += [ operation , wanted ]
     yum *arguments

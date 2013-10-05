@@ -60,14 +60,14 @@ describe provider do
 
     it 'should be able to install disabling a repo' do
       @resource.stubs(:[]).with(:enablerepo).returns []
-      @resource.stubs(:[]).with(:disablerepo).returns ['test1']
+      @resource.stubs(:[]).with(:disablerepo).returns 'test1'
       @resource.stubs(:should).with(:ensure).returns :installed
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '--disablerepo=test1', :install, 'mypackage')
       @provider.install
     end
 
     it 'should be able to install enabling a repo' do
-      @resource.stubs(:[]).with(:enablerepo).returns ['test0']
+      @resource.stubs(:[]).with(:enablerepo).returns 'test0'
       @resource.stubs(:[]).with(:disablerepo).returns []
       @resource.stubs(:should).with(:ensure).returns :installed
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '--enablerepo=test0', :install, 'mypackage')
@@ -75,8 +75,8 @@ describe provider do
     end
 
     it 'should be able to install enabling and disabling a repo' do
-      @resource.stubs(:[]).with(:enablerepo).returns ['test0']
-      @resource.stubs(:[]).with(:disablerepo).returns ['test1']
+      @resource.stubs(:[]).with(:enablerepo).returns 'test0'
+      @resource.stubs(:[]).with(:disablerepo).returns 'test1'
       @resource.stubs(:should).with(:ensure).returns :installed
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '--disablerepo=test1', '--enablerepo=test0', :install, 'mypackage')
       @provider.install
@@ -264,7 +264,7 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
         Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/), "-e", "myrepo").returns(yumhelper_output_with_myrepo)
         myresource = a_package_type_instance_with_yum_provider_and_ensure_latest('myresource')
         mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
-        mysummaryless[:enablerepo] = ['myrepo']
+        mysummaryless[:enablerepo] = 'myrepo'
 
         yum_provider.prefetch({ "myresource" => myresource, "mysummaryless" => mysummaryless })
 
@@ -295,7 +295,7 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
         Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/), "-d", "updates").returns(yumhelper_output_without_updates)
         myresource = a_package_type_instance_with_yum_provider_and_ensure_latest('myresource')
         mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
-        mysummaryless[:disablerepo] = ['updates']
+        mysummaryless[:disablerepo] = 'updates'
 
         yum_provider.prefetch({ "myresource" => myresource, "mysummaryless" => mysummaryless })
 
@@ -330,11 +330,19 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
         yum_provider.prefetch({ "mysummaryless" => mysummaryless })
     end
 
+    it "should be able to disable multiple repositories when prefetching" do
+        Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/), "-d", "anotherrepo,myrepo").returns(yumhelper_output_with_myrepo)
+        mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
+        mysummaryless[:disablerepo] = ['myrepo', 'anotherrepo']
+
+        yum_provider.prefetch({ "mysummaryless" => mysummaryless })
+    end
+
     it "should be able to enable and disable repositories when prefetching" do
         Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/), "-e", "myrepo", "-d", "updates").returns(yumhelper_output_with_myrepo)
         mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
-        mysummaryless[:enablerepo] = ['myrepo']
-        mysummaryless[:disablerepo] = ['updates']
+        mysummaryless[:enablerepo] = 'myrepo'
+        mysummaryless[:disablerepo] = 'updates'
 
         yum_provider.prefetch({ "mysummaryless" => mysummaryless })
     end
