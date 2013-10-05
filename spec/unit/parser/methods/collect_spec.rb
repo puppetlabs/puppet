@@ -16,7 +16,7 @@ describe 'the collect method' do
       it 'collect on an array (multiplying each value by 2)' do
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = [1,2,3]
-          $a.collect {|$x| $x*2}.foreach {|$v| 
+          $a.collect {|$x| $x*2}.each {|$v|
             file { "/file_$v": ensure => present }
           }
         MANIFEST
@@ -29,7 +29,7 @@ describe 'the collect method' do
       it 'collect on a hash selecting keys' do
         catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>1,'b'=>2,'c'=>3}
-        $a.collect {|$x| $x[0]}.foreach {|$k| 
+        $a.collect {|$x| $x[0]}.each {|$k|
             file { "/file_$k": ensure => present }
           }
         MANIFEST
@@ -39,10 +39,10 @@ describe 'the collect method' do
         catalog.resource(:file, "/file_c")['ensure'].should == 'present'
       end
 
-      it 'foreach on a hash selecting value' do
+      it 'each on a hash selecting value' do
         catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>1,'b'=>2,'c'=>3}
-        $a.collect {|$x| $x[1]}.foreach {|$k| 
+        $a.collect {|$x| $x[1]}.each {|$k| 
             file { "/file_$k": ensure => present }
           }
         MANIFEST
@@ -97,7 +97,7 @@ describe 'the collect method' do
         it 'collect on an array (multiplying each value by 2)' do
           catalog = compile_to_catalog(<<-MANIFEST)
             $a = [1,2,3]
-            $a.collect |$x| #{farr}{ $x*2}.foreach |$v| #{farr}{ 
+            $a.collect |$x| #{farr}{ $x*2}.each |$v| #{farr}{ 
               file { "/file_$v": ensure => present }
             }
           MANIFEST
@@ -110,7 +110,7 @@ describe 'the collect method' do
         it 'collect on a hash selecting keys' do
           catalog = compile_to_catalog(<<-MANIFEST)
           $a = {'a'=>1,'b'=>2,'c'=>3}
-          $a.collect |$x| #{farr}{ $x[0]}.foreach |$k| #{farr}{ 
+          $a.collect |$x| #{farr}{ $x[0]}.each |$k| #{farr}{ 
               file { "/file_$k": ensure => present }
             }
           MANIFEST
@@ -120,10 +120,10 @@ describe 'the collect method' do
           catalog.resource(:file, "/file_c")['ensure'].should == 'present'
         end
 
-        it 'foreach on a hash selecting value' do
+        it 'each on a hash selecting value' do
           catalog = compile_to_catalog(<<-MANIFEST)
           $a = {'a'=>1,'b'=>2,'c'=>3}
-          $a.collect |$x| #{farr} {$x[1]}.foreach |$k|#{farr}{ 
+          $a.collect |$x| #{farr} {$x[1]}.each |$k|#{farr}{ 
               file { "/file_$k": ensure => present }
             }
           MANIFEST
