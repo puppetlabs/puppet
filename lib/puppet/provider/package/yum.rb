@@ -32,15 +32,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     super
     return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
-    # repo_combinations is list of all unique combinations of enabled repositories
-    # empty string represents enablerepo not specified
-    repo_combinations = [""]
-    packages.each do |name, package|
-      unless package[:enablerepo].empty?
-        repos = package[:enablerepo].sort.join(",")
-        unless repo_combinations.include?(repos)
-          repo_combinations << repos
-        end
+    # repo_combinations is list of all unique combinations of enabled and disabled repositories
+    repo_combinations = [ { "enablerepo" => [], "disablerepo" => [] } ]
+    packages.each_value do |package|
+      repos = { "enablerepo" => package[:enablerepo].sort, "disablerepo" =>  package[:disablerepo].sort}
+      unless repo_combinations.include?(repos)
+        repo_combinations << repos
       end
     end
 
@@ -48,10 +45,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # run yumhelper for each combination of repositories
     repo_combinations.each do |repos|
-      if repos.empty?
-        arguments = []
-      else
-        arguments = ["-e", repos]
+      arguments = []
+      unless repos["enablerepo"].empty?
+        arguments += ["-e", repos["enablerepo"].join(",")]
+      end
+      unless repos["disablerepo"].empty?
+        arguments += ["-d", repos["disablerepo"].join(",")]
       end
       # collect our 'latest' info
       python(self::YUMHELPER, *arguments).each_line do |l|
@@ -70,11 +69,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # Add our 'latest' info to the providers.
     packages.each do |name, package|
-      if package[:enablerepo].empty?
-        repos = ""
-      else
-        repos = package[:enablerepo].join(",")
-      end
+      repos = { "enablerepo" => package[:enablerepo].sort, "disablerepo" =>  package[:disablerepo].sort}
       if info = updates["#{package[:name]}.#{repos}"]
         package.provider.latest_info = info[0]
       end
