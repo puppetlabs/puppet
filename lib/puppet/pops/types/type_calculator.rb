@@ -139,7 +139,7 @@ class Puppet::Pops::Types::TypeCalculator
       t2 = type(t2)
     end
 
-    @@assignable_visitor.visit_this(self, t, t2)
+    @@assignable_visitor.visit_this_1(self, t, t2)
  end
 
   # Answers 'what is the Puppet Type corresponding to the given Ruby class'
@@ -187,7 +187,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def infer(o)
-    @@infer_visitor.visit_this(self, o)
+    @@infer_visitor.visit_this_0(self, o)
   end
 
   # Answers 'is o an instance of type t'
@@ -320,7 +320,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def string(t)
-    @@string_visitor.visit_this(self, t)
+    @@string_visitor.visit_this_0(self, t)
   end
 
 
