@@ -2,15 +2,11 @@ require 'puppet/settings/errors'
 
 # The base setting type
 class Puppet::Settings::BaseSetting
-  attr_accessor :name, :section, :default, :call_on_define, :call_hook
-  attr_reader :desc, :short
+  attr_accessor :name, :desc, :section, :default, :call_on_define, :call_hook
+  attr_reader :short
 
   def self.available_call_hook_values
     [:on_define_and_write, :on_initialize_and_write, :on_write_only]
-  end
-
-  def desc=(value)
-    @desc = value.gsub(/^\s*/, '')
   end
 
   def call_on_define
@@ -130,10 +126,12 @@ class Puppet::Settings::BaseSetting
 
   # Convert the object to a config statement.
   def to_config
-    str = @desc.gsub(/^/, "# ") + "\n"
+    require 'puppet/util/docs'
+    # Scrub any funky indentation; comment out description.
+    str = Puppet::Util::Docs.scrub(@desc).gsub(/^/, "# ") + "\n"
 
     # Add in a statement about the default.
-    str += "# The default value is '#{default(true)}'.\n" if default(true)
+    str << "# The default value is '#{default(true)}'.\n" if default(true)
 
     # If the value has not been overridden, then print it out commented
     # and unconverted, so it's clear that that's the default and how it
@@ -146,8 +144,9 @@ class Puppet::Settings::BaseSetting
       line = "# #{@name} = #{@default}"
     end
 
-    str += line + "\n"
+    str << (line + "\n")
 
+    # Indent
     str.gsub(/^/, "    ")
   end
 

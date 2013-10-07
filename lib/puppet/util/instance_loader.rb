@@ -42,9 +42,9 @@ module Puppet::Util::InstanceLoader
     # Use this method so they all get loaded
     loaded_instances(type).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
       mod = self.loaded_instance(name)
-      docs += "#{name}\n#{"-" * name.to_s.length}\n"
+      docs << "#{name}\n#{"-" * name.to_s.length}\n"
 
-      docs += Puppet::Util::Docs.scrub(mod.doc) + "\n\n"
+      docs << Puppet::Util::Docs.scrub(mod.doc) << "\n\n"
     end
 
     docs

@@ -10,7 +10,7 @@ reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirect
     name = indirection.to_s.capitalize
     text << "## " + indirection.to_s + "\n\n"
 
-    text << ind.doc + "\n\n"
+    text << Puppet::Util::Docs.scrub(ind.doc) + "\n\n"
 
     text << "### Termini\n\n"
 
@@ -40,15 +40,15 @@ The termini can be local (e.g., on-disk files) or remote (e.g., using a REST int
 
 An indirector has five methods, which are mapped into HTTP verbs for the REST interface:
 
- * `find(key)` - get a single value (mapped to GET or POST with a singular endpoint)
- * `search(key)` - get a list of matching values (mapped to GET with a plural endpoint)
- * `head(key)` - return true if the key exists (mapped to HEAD)
- * `destroy(key)` - remove the key van value (mapped to DELETE)
- * `save(instance)` - write the instance to the store, using the instance's name as the key (mapped to PUT)
+* `find(key)` - get a single value (mapped to GET or POST with a singular endpoint)
+* `search(key)` - get a list of matching values (mapped to GET with a plural endpoint)
+* `head(key)` - return true if the key exists (mapped to HEAD)
+* `destroy(key)` - remove the key van value (mapped to DELETE)
+* `save(instance)` - write the instance to the store, using the instance's name as the key (mapped to PUT)
 
-These methods are available via the `indirection` class method on the indirected classes.  For example::
+These methods are available via the `indirection` class method on the indirected classes.  For example:
 
-  foo_cert = Puppet::SSL::Certificate.indirection.find('foo.example.com')
+    foo_cert = Puppet::SSL::Certificate.indirection.find('foo.example.com')
 
 At startup, each indirection is configured with a terminus.
 In most cases, this is the default terminus defined by the indirected class, but it can be overridden by the application or face, or overridden with the `route_file` configuration.

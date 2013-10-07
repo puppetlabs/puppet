@@ -332,7 +332,7 @@ module Puppet
     end
 
     newproperty(:cost, :parent => Puppet::IniProperty) do
-      desc "Cost of this repository.\n#{ABSENT_DOC}"
+      desc "Cost of this repository. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{\d+}) { }
     end
@@ -364,28 +364,30 @@ module Puppet
 
     newproperty(:sslcacert, :parent => Puppet::IniProperty) do
       desc "Path to the directory containing the databases of the
-        certificate authorities yum should use to verify SSL certificates.\n#{ABSENT_DOC}"
+        certificate authorities yum should use to verify SSL certificates.
+        #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
     end
 
     newproperty(:sslverify, :parent => Puppet::IniProperty) do
       desc "Should yum verify SSL certificates/hosts at all.
-        Possible values are 'True' or 'False'.\n#{ABSENT_DOC}"
+        Possible values are 'True' or 'False'.
+        #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r(True|False)) { }
     end
 
     newproperty(:sslclientcert, :parent => Puppet::IniProperty) do
       desc "Path  to the SSL client certificate yum should use to connect
-        to repos/remote sites.\n#{ABSENT_DOC}"
+        to repos/remote sites. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
     end
 
     newproperty(:sslclientkey, :parent => Puppet::IniProperty) do
       desc "Path to the SSL client key yum should use to connect
-        to repos/remote sites.\n#{ABSENT_DOC}"
+        to repos/remote sites. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
     end

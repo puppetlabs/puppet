@@ -185,14 +185,14 @@ module Puppet::Parser::Functions
     ret = ""
 
     merged_functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
-      ret += "#{name}\n#{"-" * name.to_s.length}\n"
+      ret << "#{name}\n#{"-" * name.to_s.length}\n"
       if hash[:doc]
-        ret += Puppet::Util::Docs.scrub(hash[:doc])
+        ret << Puppet::Util::Docs.scrub(hash[:doc])
       else
-        ret += "Undocumented.\n"
+        ret << "Undocumented.\n"
       end
 
-      ret += "\n\n- *Type*: #{hash[:type]}\n\n"
+      ret << "\n\n- *Type*: #{hash[:type]}\n\n"
     end
 
     ret

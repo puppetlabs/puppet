@@ -356,10 +356,10 @@ module Puppet
         of the range, not necessarily the day that it is when it matches.
         For example, consider this schedule:
 
-          schedule { 'maintenance_window':
-            range   => '22:00 - 04:00',
-            weekday => 'Saturday',
-          }
+            schedule { 'maintenance_window':
+              range   => '22:00 - 04:00',
+              weekday => 'Saturday',
+            }
 
         This will match at 11 PM on Saturday and 2 AM on Sunday, but not
         at 2 AM on Saturday.
