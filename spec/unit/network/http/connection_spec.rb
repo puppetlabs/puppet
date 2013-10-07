@@ -261,7 +261,7 @@ describe Puppet::Network::HTTP::Connection do
                                                                             :with_error_string => 'shady looking signature'),
                                              :fails_with => 'certificate verify failed'))
       expect do
-        subject.request(:get, stub('request'))
+        subject.process_request(:get, stub('request'))
       end.to raise_error(Puppet::Error, "certificate verify failed: [shady looking signature for /CN=not_my_server]")
     end
 
@@ -271,7 +271,7 @@ describe Puppet::Network::HTTP::Connection do
                                              :in_context => a_store_context(:verify_raises => true),
                                              :fails_with => 'certificate verify failed'))
       expect do
-        subject.request(:get, stub('request'))
+        subject.process_request(:get, stub('request'))
       end.to raise_error(Puppet::Error, "certificate verify failed: [oh noes]")
     end
 
@@ -282,7 +282,7 @@ describe Puppet::Network::HTTP::Connection do
                                                                             :for_aliases => 'foo,bar,baz'),
                                              :fails_with => 'hostname was not match with server certificate'))
 
-      expect { subject.request(:get, stub('request')) }.
+      expect { subject.process_request(:get, stub('request')) }.
           to raise_error(Puppet::Error) do |error|
         error.message =~ /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
         $1.split(', ').should =~ %w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server]
@@ -296,7 +296,7 @@ describe Puppet::Network::HTTP::Connection do
       connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('some other message'))
 
       expect do
-        subject.request(:get, stub('request'))
+        subject.process_request(:get, stub('request'))
       end.to raise_error(/some other message/)
     end
 
@@ -316,7 +316,7 @@ describe Puppet::Network::HTTP::Connection do
 
       subject.expects(:warn_if_near_expiration).with(cert, cert)
 
-      subject.request(:get, stubs('request'))
+      subject.process_request(:get, stubs('request'))
     end
   end
 
