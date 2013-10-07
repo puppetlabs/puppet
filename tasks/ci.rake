@@ -4,6 +4,11 @@ namespace "ci" do
     sh %{rspec -r yarjuf -f JUnit -o result.xml -fd spec}
   end
 
+  def get_parameter_value_from_actions(actions, parameter)
+    parameters = actions.select { |h| h.key?('parameters') }.first["parameters"]
+    parameters.select { |h| h['name'] == parameter }.first['value']
+  end
+
   desc <<-EOS
     Check to see if the job at the url given in DOWNSTREAM_JOB has begun a build including the given BUILD_SELECTOR parameter.
     An example `rake ci:check_for_downstream DOWNSTREAM_JOB='http://jenkins-foss.delivery.puppetlabs.net/job/Puppet-Package-Acceptance-master' BUILD_SELECTOR=123`
@@ -24,9 +29,11 @@ namespace "ci" do
         uri = URI(downstream_url)
         status = Net::HTTP.get(uri)
         json = JSON.parse(status)
-        actions = json['builds'].first['actions']
-        parameters = actions.select { |h| h.key?('parameters') }.first["parameters"]
-        build_selector = parameters.select { |h| h['name'] == 'BUILD_SELECTOR' }.first['value']
+        build_selector = get_parameter_value_from_actions(json['builds'].first['actions'], 'BUILD_SELECTOR')
+        if build_selector < expected_selector && json['queueItem']
+          queued_actions = json['queueItem']['actions']
+          build_selector = get_parameter_value_from_actions(queued_actions, 'BUILD_SELECTOR') if queued_actions
+        end
         puts " * downstream job's last build selector: #{build_selector}"
         break if build_selector >= expected_selector
         sleep 60
