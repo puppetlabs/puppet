@@ -1,19 +1,12 @@
 class Puppet::Interface
   # @api private
   module DocGen
+    require 'puppet/util/docs'
+
     # @api private
     def self.strip_whitespace(text)
-      text.gsub!(/[ \t\f]+$/, '')
-
-      # We need to identify an indent: the minimum number of whitespace
-      # characters at the start of any line in the text.
-      indent = text.split(/\n/).map {|x| x.index(/[^\s]/) }.compact.min
-
-      if indent > 0 then
-        text.gsub!(/^[ \t\f]{0,#{indent}}/, '')
-      end
-
-      return text
+      # I don't want no...
+      Puppet::Util::Docs.scrub(text)
     end
 
     # The documentation attributes all have some common behaviours; previously

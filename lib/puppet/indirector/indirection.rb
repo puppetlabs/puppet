@@ -85,7 +85,7 @@ class Puppet::Indirector::Indirection
   def doc
     text = ""
 
-    text += scrub(@doc) + "\n\n" if @doc
+    text << scrub(@doc) << "\n\n" if @doc
 
     text << "* **Indirected Class**: `#{@indirected_class}`\n";
     if terminus_setting

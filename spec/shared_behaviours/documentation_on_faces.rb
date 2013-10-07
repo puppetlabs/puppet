@@ -62,7 +62,7 @@ shared_examples_for "documentation on faces" do
             end
 
             it "should not remove formatting whitespace, only global indent" do
-              text = "this\n  is\n    the\n  ultimate\ntest\n"
+              text = "this\n  is\n    the\n  ultimate\ntest"
               subject.send(setter, text.gsub(/^/, indent))
               subject.send(getter).should == text
             end
@@ -70,8 +70,8 @@ shared_examples_for "documentation on faces" do
         end
 
         it "should strip whitespace with a blank line" do
-          subject.send(setter, "  this\n\n  should outdent\n")
-          subject.send(getter).should == "this\n\nshould outdent\n"
+          subject.send(setter, "  this\n\n  should outdent")
+          subject.send(getter).should == "this\n\nshould outdent"
         end
       end
     end
