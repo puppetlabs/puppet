@@ -276,6 +276,61 @@ describe provider_class do
       @provider.need_to_run?.should == true
     end
 
+    describe "performing numeric comparisons (#22617)" do
+      it "should return true when a get string compare is true" do
+        @resource[:onlyif] = "get bpath > a"
+        @augeas.stubs("get").returns("b")
+        @provider.need_to_run?.should == true
+      end
+
+      it "should return false when a get string compare is false" do
+        @resource[:onlyif] = "get a19path > a2"
+        @augeas.stubs("get").returns("a19")
+        @provider.need_to_run?.should == false
+      end
+
+      it "should return true when a get int gt compare is true" do
+        @resource[:onlyif] = "get path19 > 2"
+        @augeas.stubs("get").returns("19")
+        @provider.need_to_run?.should == true
+      end
+
+      it "should return true when a get int ge compare is true" do
+        @resource[:onlyif] = "get path19 >= 2"
+        @augeas.stubs("get").returns("19")
+        @provider.need_to_run?.should == true
+      end
+
+      it "should return true when a get int lt compare is true" do
+        @resource[:onlyif] = "get path2 < 19"
+        @augeas.stubs("get").returns("2")
+        @provider.need_to_run?.should == true
+      end
+
+      it "should return false when a get int le compare is false" do
+        @resource[:onlyif] = "get path39 <= 4"
+        @augeas.stubs("get").returns("39")
+        @provider.need_to_run?.should == false
+      end
+    end
+    describe "performing is_numeric checks (#22617)" do
+      it "should return false for nil" do
+        @provider.is_numeric?(nil).should == false
+      end
+      it "should return true for Fixnums" do
+        @provider.is_numeric?(9).should == true
+      end
+      it "should return true for numbers in Strings" do
+        @provider.is_numeric?('9').should == true
+      end
+      it "should return false for non-number Strings" do
+        @provider.is_numeric?('x9').should == false
+      end
+      it "should return false for other types" do
+        @provider.is_numeric?([true]).should == false
+      end
+    end
+
     it "should return false when a get filter does not match" do
       @resource[:onlyif] = "get path == another value"
       @augeas.stubs("get").returns("value")
