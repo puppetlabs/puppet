@@ -16,7 +16,7 @@ is not environment-specific.  (In fact, the specified `:environment` does even n
 
 The endpoint path includes a `:mount` which can be one of three types:
 
-* customer file serving mounts as specified in fileserver.conf -- see [the puppet file serving guide](http://docs.puppetlabs.com/guides/file_serving.html#serving-files-from-custom-mount-points)
+* custom file serving mounts as specified in fileserver.conf -- see [the puppet file serving guide](http://docs.puppetlabs.com/guides/file_serving.html#serving-files-from-custom-mount-points)
 * `modules/<module>` -- a semi-magical mount point which allows access to the `files` subdirectory of `module` -- see [the puppet file serving guide](http://docs.puppetlabs.com/guides/file_serving.html#serving-module-files)
 * `plugins` -- a highly magical mount point which merges many directories together: used for plugin sync, sub-paths can not be specified, not intended for general consumption
 
