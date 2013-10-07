@@ -125,7 +125,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           end
           fail("missing string argument #{narg} for #{cmd}") unless argline[-1]
         elsif f == :comparator
-          argline << sc.scan(/(==|!=|=~|<|<=|>|>=)/)
+          argline << sc.scan(/(==|!=|=~|<=|>=|<|>)/)
           unless argline[-1]
             puts sc.rest
             fail("invalid comparator for command #{cmd}")
@@ -198,6 +198,17 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     end
   end
 
+  def is_numeric?(s)
+    case s
+    when Fixnum
+      true
+    when String
+      s.match(/\A[+-]?\d+?(\.\d+)?\Z/n) == nil ? false : true
+    else
+      false
+    end
+  end
+
   # Used by the need_to_run? method to process get filters. Returns
   # true if there is a match, false if otherwise
   # Assumes a syntax of get /files/path [COMPARATOR] value
@@ -213,10 +224,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
     #check the value in augeas
     result = @aug.get(path) || ''
-    case comparator
-    when "!="
+
+    if ['<', '<=', '>=', '>'].include? comparator and is_numeric?(result) and
+                                                      is_numeric?(arg)
+      resultf = result.to_f
+      argf = arg.to_f
+      return_value = (resultf.send(comparator, argf))
+    elsif comparator == "!="
       return_value = (result != arg)
-    when "=~"
+    elsif comparator == "=~"
       regex = Regexp.new(arg)
       return_value = (result =~ regex)
     else
