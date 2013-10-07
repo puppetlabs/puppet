@@ -340,9 +340,11 @@ is identical to the above example, except for:
 
 * the 'links' field is set to "follow" rather than "manage" in all metadata objects
 * in the 'link_to_file.txt' metadata:
-** for 'manage' the 'destination' field is the link destination; for 'follow', it's null
-** for 'manage' the 'type' field is 'link'; for 'follow' it's 'file'
-** for 'manage' the 'mode', 'owner' and 'group' fields are the link's values; for 'follow' the destination's values
+    * for 'manage' the 'destination' field is the link destination; for 'follow', it's null
+    * for 'manage' the 'type' field is 'link'; for 'follow' it's 'file'
+    * for 'manage' the 'mode', 'owner' and 'group' fields are the link's values; for 'follow' the destination's values
+
+` `
 
     GET /env/file_metadatas/modules/example?recurse=true&ignore=sub*&links=follow
 
