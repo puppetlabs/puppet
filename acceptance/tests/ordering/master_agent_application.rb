@@ -13,7 +13,10 @@ notify { "seventh": }
 notify { "eighth": }
 PP
 
-on master, "chown -R root:puppet #{testdir}"
+user = master.execute('puppet config print user')
+group = master.execute('puppet config print group')
+
+on master, "chown -R #{user}:#{group} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
 master_opts = {
