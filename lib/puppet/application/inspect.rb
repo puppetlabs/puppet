@@ -88,11 +88,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       exit(1)
     end
 
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
-    end
+    set_log_level
 
     Puppet::Transaction::Report.indirection.terminus_class = :rest
     Puppet::Resource::Catalog.indirection.terminus_class = :yaml

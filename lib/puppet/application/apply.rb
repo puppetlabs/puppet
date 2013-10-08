@@ -243,11 +243,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
 
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
-    end
+    set_log_level
 
     if Puppet[:profile]
       Puppet::Util::Profiler.current = Puppet::Util::Profiler::WallClock.new(Puppet.method(:debug), "apply")
