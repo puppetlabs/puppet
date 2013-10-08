@@ -118,7 +118,7 @@ module PSON
         else
           raise TypeError, "#{source.inspect} is not like a string"
         end
-        if defined?(::Encoding)
+        if supports_encodings?(source)
           if source.encoding == ::Encoding::ASCII_8BIT
             b = source[0, 4].bytes.to_a
             source =
@@ -155,6 +155,14 @@ module PSON
             end
         end
         source
+      end
+
+      def supports_encodings?(string)
+        # Some modules, such as REXML on 1.8.7 (see #22804) can actually create
+        # a top-level Encoding constant when they are misused. Therefore
+        # checking for just that constant is not enough, so we'll be a bit more
+        # robust about if we can actually support encoding transformations.
+        string.respond_to?(:encoding) && defined?(::Encoding)
       end
 
       # Unescape characters in strings.
