@@ -80,6 +80,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     false
   end
 
+  def shell=(value)
+    check_valid_shell
+    set("shell", value.to_s)
+  end
+
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end
@@ -163,13 +168,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd
   end
 
-  def shell
-    @resource[:shell]
-  end
 
-  def shell=(value)
-    check_valid_shell
-  end
 
   def addcmd
     if @resource.forcelocal?
