@@ -14,17 +14,17 @@ Find
     GET /:environment/certificate_status/:certname
     Accept: pson
 
-Retrieve information about the specified certificate. Similar to puppet
-cert --list :certname.
+Retrieve information about the specified certificate. Similar to `puppet
+cert --list :certname`.
 
 Search
 -----
 
-    GET /:environment/certificate_statuses/no_key
+    GET /:environment/certificate_statuses/:any_key
     Accept: pson
 
-Retrieve information about all known certificates. Similar to puppet
-cert --list --all.
+Retrieve information about all known certificates. Similar to `puppet
+cert --list --all`. A key is required but is ignored.
 
 Save
 ----
@@ -37,7 +37,7 @@ is sent in the body of the PUT request as a one-item PSON hash; the two
 allowed complete hashes are `{"desired_state":"signed"}` (for signing a
 certificate signing request; similar to `puppet cert --sign`) and
 `{"desired_state":"revoked"}` (for revoking a certificate; similar to
-puppet cert --revoke).
+`puppet cert --revoke`).
 
 When revoking certificates, you may wish to use a DELETE request
 instead, which will also clean up other info about the host.
@@ -103,6 +103,24 @@ incomplete.
     }
 
 
+#### Revoking a certificate
+
+    PUT /production/certificate_status/mycertname HTTP/1.1
+    Content-Type: text/pson
+    Content-Length: 27
+
+    {"desired_state":"revoked"}
+
+This has no meaningful return value.
+
+
+#### Deleting the certificate information
+
+    DELETE /production/certificate_status/mycertname HTTP/1.1
+
+Gets the response:
+
+    "Deleted for mycertname: Puppet::SSL::Certificate, Puppet::SSL::Key"
 
 Schema
 -----
