@@ -164,7 +164,9 @@ end
 
 # Plagiarized from Beaker::Vcloud#cleanup
 def destroy_preserved_hosts(hosts = nil, secs_ago = ONE_DAY_IN_SECS)
+  secs_ago ||= ONE_DAY_IN_SECS
   hosts ||= list_preserved_hosts(secs_ago)
+
   require 'beaker/hypervisor/vsphere_helper'
   vsphere_credentials = VsphereHelper.load_config("#{ENV['HOME']}/.fog")
 
