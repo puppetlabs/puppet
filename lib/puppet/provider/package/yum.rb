@@ -35,8 +35,17 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     # repo_permutations is list of all permutations of enabled and disabled repositories
     repo_permutations = [ { "enablerepo" => [], "disablerepo" => [] } ]
     packages.each_value do |package|
-      # sort needed to avoid combinations and to ensure array
-      repos = { "enablerepo" => package[:enablerepo].sort, "disablerepo" =>  package[:disablerepo].sort}
+      if package[:enablerepo].is_a? Array
+        enablerepo = package[:enablerepo]
+      else
+        enablerepo = [package[:enablerepo]]
+      end
+      if package[:disablerepo].is_a? Array
+        disablerepo = package[:disablerepo]
+      else
+        disablerepo = [package[:disablerepo]]
+      end
+      repos = { "enablerepo" => enablerepo.sort, "disablerepo" =>  disablerepo.sort}
       unless repo_permutations.include?(repos)
         repo_permutations << repos
       end
@@ -70,7 +79,17 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     # Add our 'latest' info to the providers.
     packages.each do |name, package|
-      repos = { "enablerepo" => package[:enablerepo].sort, "disablerepo" =>  package[:disablerepo].sort}
+      if package[:enablerepo].is_a? Array
+        enablerepo = package[:enablerepo]
+      else
+        enablerepo = [package[:enablerepo]]
+      end
+      if package[:disablerepo].is_a? Array
+        disablerepo = package[:disablerepo]
+      else
+        disablerepo = [package[:disablerepo]]
+      end
+      repos = { "enablerepo" => enablerepo.sort, "disablerepo" =>  disablerepo.sort}
       if info = updates["#{package[:name]}.#{repos}"]
         package.provider.latest_info = info[0]
       end
@@ -82,6 +101,17 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
     operation = :install
+
+    if @resource[:enablerepo].is_a? Array
+      enablerepo = @resource[:enablerepo]
+    else
+      enablerepo = [@resource[:enablerepo]]
+    end
+    if @resource[:disablerepo].is_a? Array
+      disablerepo = @resource[:disablerepo]
+    else
+      disablerepo = [@resource[:disablerepo]]
+    end
 
     case should
     when true, false, Symbol
@@ -98,12 +128,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     end
 
     arguments = [ "-d", "0", "-e", "0", "-y" ]
-    # sorts below used for side effect of ensuring parameter is array
     unless @resource[:disablerepo].empty?
-      arguments <<  "--disablerepo=#{@resource[:disablerepo].sort.join(',')}"
+      arguments <<  "--disablerepo=#{disablerepo.join(',')}"
     end
     unless @resource[:enablerepo].empty?
-      arguments <<  "--enablerepo=#{@resource[:enablerepo].sort.join(',')}"
+      arguments <<  "--enablerepo=#{enablerepo.join(',')}"
     end
     arguments += [ operation , wanted ]
     yum *arguments
