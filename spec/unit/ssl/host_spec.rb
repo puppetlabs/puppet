@@ -23,7 +23,7 @@ end
 describe Puppet::SSL::Host do
   include PuppetSpec::Files
 
-  def validate_as_json(host)
+  def validate_json_for_host(host)
     JSON::Validator.validate!(HOST_SCHEMA, host.to_pson)
   end
 
@@ -857,7 +857,7 @@ describe Puppet::SSL::Host do
 
       it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
         host.generate_certificate_request
-        validate_as_json(host)
+        validate_json_for_host(host)
       end
 
       describe "explicit fingerprints" do
@@ -904,7 +904,7 @@ describe Puppet::SSL::Host do
             end
 
             it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-              validate_as_json(host)
+              validate_json_for_host(host)
             end
           end
         end

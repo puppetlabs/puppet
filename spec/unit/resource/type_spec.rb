@@ -42,7 +42,7 @@ describe Puppet::Resource::Type do
   end
 
   describe "when converting to json" do
-    def validate_as_json(type)
+    def validate_json_for_type(type)
       JSON::Validator.validate!(RESOURCE_TYPE_SCHEMA, type.to_pson)
     end
 
@@ -64,7 +64,7 @@ describe Puppet::Resource::Type do
     end
 
     it "should validate with only name and kind", :unless => Puppet.features.microsoft_windows? do
-      validate_as_json(@type)
+      validate_json_for_type(@type)
     end
 
     it "should validate with all fields set", :unless => Puppet.features.microsoft_windows? do
@@ -74,7 +74,7 @@ describe Puppet::Resource::Type do
       @type.file = "/etc/manifests/thing.pp"
       @type.parent = "one::two"
 
-      validate_as_json(@type)
+      validate_json_for_type(@type)
     end
 
     it "should include any arguments" do
