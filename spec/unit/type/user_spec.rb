@@ -65,7 +65,7 @@ describe Puppet::Type.type(:user) do
 
     it "cannot be set to true for a provider that does not manage homedirs" do
       provider.class.stubs(:manages_homedir?).returns false
-      expect { instance[:managehome] = 'yes' }.to raise_error Puppet::Error
+      expect { instance[:managehome] = 'yes' }.to raise_error(Puppet::Error, /can not manage home directories/)
     end
 
     it "can be set to true for a provider that does manage homedirs" do
@@ -365,6 +365,46 @@ describe Puppet::Type.type(:user) do
     end
   end
 
+  describe "when setting shell" do
+    before :each do
+      @shell_provider_class = described_class.provide(:shell_manager) do
+        has_features :manages_shell
+        mk_resource_methods
+        def create; check_valid_shell;end
+        def shell=(value); check_valid_shell; end
+        def delete; end
+        def exists?; get(:ensure) != :absent; end
+        def flush; end
+        def self.instances; []; end
+        def check_valid_shell; end
+      end
 
+      described_class.stubs(:defaultprovider).returns @shell_provider_class
+    end
 
+    context 'with a provider that manages_shell' do
+      it "should call :check_valid_shell on the provider when changing shell" do
+        @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => :present)
+        @provider.expects(:check_valid_shell)
+        resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
+        Puppet::Util::Storage.stubs(:load)
+        Puppet::Util::Storage.stubs(:store)
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource resource
+        catalog.apply
+      end
+
+      it "should call :check_valid_shell on the provider when chaging from present to absent" do
+        @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => :absent)
+        @provider.expects(:check_valid_shell)
+        resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
+        Puppet::Util::Storage.stubs(:load)
+        Puppet::Util::Storage.stubs(:store)
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource resource
+        catalog.apply
+      end
+    end
+
+  end
 end
