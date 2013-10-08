@@ -18,6 +18,7 @@ module HarnessOptions
     :ssh => {
       :keys => ["id_rsa-acceptance"],
     },
+    :xml => true,
   }
 
   class Aggregator
