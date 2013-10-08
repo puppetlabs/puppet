@@ -44,6 +44,11 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
 
   ENDHEREDOC
   raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be 2 or 3)") if args.length > 3
+  raise ArgumentError, ('create_resources(): second argument must be a hash') unless args[1].is_a?(Hash)
+  if args.length == 3
+    raise ArgumentError, ('create_resources(): third argument, if provided, must be a hash') unless args[2].is_a?(Hash)
+  end
+
 
   type, instances, defaults = args
   defaults ||= {}
