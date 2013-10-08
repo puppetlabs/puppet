@@ -85,7 +85,7 @@ describe Puppet::Configurer::FactHandler do
     @facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts => text}
   end
 
-  def validate_as_json(catalog_facts)
+  def validate_json_for_facts(catalog_facts)
     JSON::Validator.validate!(FACTS_SCHEMA, catalog_facts)
   end
 
@@ -93,7 +93,7 @@ describe Puppet::Configurer::FactHandler do
     facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
     Puppet::Node::Facts.indirection.save(facts)
 
-    validate_as_json(CGI.unescape(@facthandler.facts_for_uploading[:facts]))
+    validate_json_for_facts(CGI.unescape(@facthandler.facts_for_uploading[:facts]))
   end
 
 end

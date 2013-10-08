@@ -9,8 +9,23 @@ def base_pson_comparison(result, pson_hash)
   result["state"].should       == pson_hash["desired_state"]
 end
 
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  HOST_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/host.json')))
+
+  describe "host schema" do
+    it "should validate against the json meta-schema" do
+      JSON::Validator.validate!(JSON_META_SCHEMA, HOST_SCHEMA)
+    end
+  end
+end
+
 describe Puppet::SSL::Host do
   include PuppetSpec::Files
+
+  def validate_json_for_host(host)
+    JSON::Validator.validate!(HOST_SCHEMA, host.to_pson)
+  end
 
   before do
     Puppet::SSL::Host.indirection.terminus_class = :file
@@ -823,7 +838,7 @@ describe Puppet::SSL::Host do
       let(:host) do
         Puppet::SSL::Host.new("bazinga")
       end
-      
+
       let(:pson_hash) do
         {
           "fingerprint"   => host.certificate_request.fingerprint,
@@ -831,15 +846,20 @@ describe Puppet::SSL::Host do
           "name"          => host.name
         }
       end
-      
+
       it "should be able to identify a host with an unsigned certificate request" do
         host.generate_certificate_request
 
         result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
-        
+
         base_pson_comparison result, pson_hash
       end
-      
+
+      it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+        host.generate_certificate_request
+        validate_json_for_host(host)
+      end
+
       describe "explicit fingerprints" do
         [:SHA1, :SHA256, :SHA512].each do |md|
           it "should include #{md}" do
@@ -854,7 +874,7 @@ describe Puppet::SSL::Host do
           end
         end
       end
-      
+
       describe "dns_alt_names" do
         describe "when not specified" do
           it "should include the dns_alt_names associated with the certificate" do
@@ -867,22 +887,28 @@ describe Puppet::SSL::Host do
           end
         end
 
-        [ "", 
+        [ "",
           "test, alt, names"
         ].each do |alt_names|
           describe "when #{alt_names}" do
-            it "should include the dns_alt_names associated with the certificate" do
+            before(:each) do
               host.generate_certificate_request :dns_alt_names => alt_names
+            end
+
+            it "should include the dns_alt_names associated with the certificate" do
               pson_hash["desired_alt_names"] = host.certificate_request.subject_alt_names
 
               result = PSON.parse(Puppet::SSL::Host.new(host.name).to_pson)
               base_pson_comparison result, pson_hash
               result["dns_alt_names"].should == pson_hash["desired_alt_names"]
             end
+
+            it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+              validate_json_for_host(host)
+            end
           end
         end
       end
-      
 
       it "should be able to identify a host with a signed certificate" do
         host.generate_certificate_request
