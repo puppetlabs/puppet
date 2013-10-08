@@ -156,16 +156,12 @@ describe Puppet::Node::Facts, "when indirecting" do
         result['expiration'].should == facts.expiration.to_s
       end
 
-      def validate_as_json(facts)
-        JSON::Validator.validate!(FACTS_SCHEMA, facts)
-      end
-
       it "should generate valid facts data against the facts schema", :unless => Puppet.features.microsoft_windows? do
         Time.stubs(:now).returns(@timestamp)
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
 
-        validate_as_json(facts.to_pson)
+        JSON::Validator.validate!(FACTS_SCHEMA, facts.to_pson)
       end
 
       it "should not include nil values" do

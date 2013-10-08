@@ -13,7 +13,7 @@ if not Puppet.features.microsoft_windows?
     end
   end
 
-  def validate_as_json(file_metadata)
+  def validate_json_for_file_metadata(file_metadata)
     JSON::Validator.validate!(FILE_METADATA_SCHEMA, file_metadata.to_pson)
   end
 end
@@ -155,7 +155,7 @@ describe Puppet::FileServing::Metadata do
         end
 
         it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-          validate_as_json(metadata)
+          validate_json_for_file_metadata(metadata)
         end
       end
 
@@ -181,7 +181,7 @@ describe Puppet::FileServing::Metadata do
 
         it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
           metadata.collect
-          validate_as_json(metadata)
+          validate_json_for_file_metadata(metadata)
         end
       end
 
@@ -204,7 +204,7 @@ describe Puppet::FileServing::Metadata do
         end
 
         it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-          validate_as_json(metadata)
+          validate_json_for_file_metadata(metadata)
         end
       end
     end
@@ -238,7 +238,7 @@ describe Puppet::FileServing::Metadata do
       end
 
       it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-        validate_as_json(metadata)
+        validate_json_for_file_metadata(metadata)
       end
     end
   end

@@ -736,38 +736,38 @@ end
 describe Puppet::Resource::Catalog, "when converting a resource catalog to pson" do
   include PuppetSpec::Compiler
 
-  def validate_as_json(catalog)
+  def validate_json_for_catalog(catalog)
     JSON::Validator.validate!(CATALOG_SCHEMA, catalog.to_pson)
   end
 
   it "should validate an empty catalog against the schema", :unless => Puppet.features.microsoft_windows? do
     empty_catalog = compile_to_catalog("")
-    validate_as_json(empty_catalog)
+    validate_json_for_catalog(empty_catalog)
   end
 
   it "should validate a noop catalog against the schema", :unless => Puppet.features.microsoft_windows? do
     noop_catalog = compile_to_catalog("create_resources('file', {})")
-    validate_as_json(noop_catalog)
+    validate_json_for_catalog(noop_catalog)
   end
 
   it "should validate a single resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
     catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
-    validate_as_json(catalog)
+    validate_json_for_catalog(catalog)
   end
 
   it "should validate a virtual resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
     catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
-    validate_as_json(catalog)
+    validate_json_for_catalog(catalog)
   end
 
   it "should validate a single exported resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
     catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
-    validate_as_json(catalog)
+    validate_json_for_catalog(catalog)
   end
 
   it "should validate a two resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
     catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
-    validate_as_json(catalog)
+    validate_json_for_catalog(catalog)
   end
 
   it "should validate a two parameter class catalog against the schema", :unless => Puppet.features.microsoft_windows? do
@@ -783,7 +783,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         two => 'world',
       }
     MANIFEST
-    validate_as_json(catalog)
+    validate_json_for_catalog(catalog)
   end
 end
 

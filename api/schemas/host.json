@@ -1,0 +1,44 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "Host",
+    "description": "SSL Host information",
+    "type":        "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "state": {
+            "type": "string",
+            "enum": [
+                "requested",
+                "signed",
+                "revoked"
+            ]
+        },
+        "desired_state": {
+            "type": "string",
+            "enum": [
+                "signed",
+                "revoked"
+            ]
+        },
+        "fingerprint": {
+            "type": "string"
+        },
+        "fingerprints": {
+            "type": "object",
+            "patternProperties": {
+                "^[A-Za-z0-9_]*$": {}
+            },
+            "additionalProperties": false
+        },
+        "dns_alt_names": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        }
+    },
+    "required": ["name", "state", "fingerprint", "fingerprints", "dns_alt_names"],
+    "additionalProperties": false
+}
