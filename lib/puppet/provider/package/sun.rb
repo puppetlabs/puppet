@@ -83,7 +83,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     info2hash(@resource[:source])[:ensure]
   end
 
-  def query
+  # @api private
+  def query_a_package
     info2hash
   end
 

@@ -57,7 +57,8 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     self.install
   end
 
-  def query
+  # @api private
+  def query_a_package
     # list out our specific package
     output = opkg( 'list-installed', @resource[:name] )
     if output =~ /^(\S+) - (\S+)/

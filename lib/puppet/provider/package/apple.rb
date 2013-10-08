@@ -32,7 +32,8 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
     }
   end
 
-  def query
+  # @api private
+  def query_a_package
     FileTest.exists?("/Library/Receipts/#{@resource[:name]}.pkg") ? {:name => @resource[:name], :ensure => :present} : nil
   end
 

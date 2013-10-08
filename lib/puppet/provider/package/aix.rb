@@ -142,7 +142,8 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     end
   end
 
-  def query
+  # @api private
+  def query_a_package
     self.class.pkglist(:pkgname => @resource[:name])
   end
 

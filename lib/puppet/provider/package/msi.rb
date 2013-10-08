@@ -61,7 +61,8 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
   # matches the resource name (case-insensitively due to hex) or the ProductName matches
   # the resource name. The ProductName is not guaranteed to be unique, but the PackageCode
   # should be if the package is authored correctly.
-  def query
+  # @api private
+  def query_a_package
     MsiPackage.enum_for.find do |package|
       resource[:name].casecmp(package[:packagecode]) == 0 || resource[:name] == package[:name]
     end

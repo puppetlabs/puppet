@@ -37,7 +37,8 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     end
   end
 
-  def query
+  # @api private
+  def query_a_package
     packages = pkgin(:search, resource[:name]).split("\n")
 
     # Remove the last three lines of help text.

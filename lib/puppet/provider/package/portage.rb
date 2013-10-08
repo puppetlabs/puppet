@@ -77,7 +77,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     self.install
   end
 
-  def query
+  # @api private
+  def query_a_package
     result_format = self.class.eix_result_format
     result_fields = self.class.eix_result_fields
 

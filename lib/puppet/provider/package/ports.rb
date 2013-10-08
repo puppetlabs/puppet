@@ -69,7 +69,8 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
     newversion
   end
 
-  def query
+  # @api private
+  def query_a_package
     # support portorigin_glob such as "mail/postfix"
     name = self.name
     if name =~ /\//

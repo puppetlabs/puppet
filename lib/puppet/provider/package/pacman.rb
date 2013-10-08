@@ -131,7 +131,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   end
 
   # Querys the pacman master list for information about the package.
-  def query
+  # @api private
+  def query_a_package
     begin
       output = pacman("-Qi", @resource[:name])
 

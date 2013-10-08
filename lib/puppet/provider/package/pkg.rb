@@ -177,7 +177,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   end
 
   # list a specific package
-  def query
+  # @api private
+  def query_a_package
     r = exec_cmd(command(:pkg), 'list', '-H', @resource[:name])
     return {:ensure => :absent, :name => @resource[:name]} if r[:exit] != 0
     self.class.parse_line(r[:out])

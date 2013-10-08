@@ -69,7 +69,8 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
     # situations where a port cannot be found or installed.
   end
 
-  def query
+  # @api private
+  def query_a_package
     result = self.class.parse_installed_query_line(execute([command(:port), "-q", :installed, @resource[:name]], :failonfail => false, :combine => false))
     return {} if result.nil?
     return result
