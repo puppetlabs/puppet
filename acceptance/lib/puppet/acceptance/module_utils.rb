@@ -74,7 +74,7 @@ module Puppet
       # @param ending_hash [Hash] paths for found modules indexed
       #   by hostname. Taken in the teardown stage of a test.
       def rm_installed_modules_from_hosts (beginning_hash, ending_hash)
-        ending_hash.each do |host, mod_array|3
+        ending_hash.each do |host, mod_array|
           mod_array.each do |mod|
             if ! beginning_hash[host].include? mod
               on host, "rm -rf #{mod}"
