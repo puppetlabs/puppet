@@ -16,7 +16,20 @@ module EgrammarLexerSpec
   def self.tokens_scanned_from(s)
     lexer = Puppet::Pops::Parser::Lexer.new
     lexer.string = s
-    lexer.fullscan[0..-2]
+    tokens = lexer.fullscan[0..-2]
+    tokens.map do |t|
+      key = t[0]
+      options = t[1]
+      if options[:locator]
+        # unresolved locations needs to be resolved for tests that check positioning
+        [key,
+          options[:locator].to_location_hash(
+            options[:offset],
+            options[:end_offset]).merge({:value => options[:value]}) ]
+      else
+        t
+      end
+    end
   end
 end
 
@@ -350,8 +363,11 @@ describe Puppet::Pops::Parser::Lexer::TOKENS[:COMMENT] do
     @token.skip?.should be_true
   end
 
-  it "'s block should return the comment without the #" do
-    @token.convert(@lexer,"# this is a comment")[1].should == "this is a comment"
+  it "'s block should return the comment without any text" do
+    # This is a silly test, the original tested that the comments was processed, but
+    # all comments are skipped anyway, and never collected for documentation.
+    #
+    @token.convert(@lexer,"# this is a comment")[1].should == ""
   end
 end
 
@@ -383,9 +399,12 @@ describe Puppet::Pops::Parser::Lexer::TOKENS[:MLCOMMENT] do
   end
 
   it "'s block should return the comment without the comment marks" do
+    # This is a silly test, the original tested that the comments was processed, but
+    # all comments are skipped anyway, and never collected for documentation.
+    #
     @lexer.stubs(:line=).with(0)
 
-    @token.convert(@lexer,"/* this is a comment */")[1].should == "this is a comment"
+    @token.convert(@lexer,"/* this is a comment */")[1].should == ""
   end
 end
 
@@ -444,62 +463,9 @@ describe Puppet::Pops::Parser::Lexer::TOKENS[:VARIABLE] do
 end
 
 describe "the horrible deprecation / compatibility variables with dashes" do
-  ENamesWithDashes = %w{f- f-o -f f::-o f::o- f::o-o}
-
-  { Puppet::Pops::Parser::Lexer::TOKENS[:DOLLAR_VAR_WITH_DASH] => '$',
-    Puppet::Pops::Parser::Lexer::TOKENS[:VARIABLE_WITH_DASH]   => ''
-  }.each do |token, prefix|
-    describe token do
-      its(:skip_text) { should be_false }
-
-      context "when compatibly is disabled" do
-        before :each do Puppet[:allow_variables_with_dashes] = false end
-        Puppet::Pops::Parser::Lexer::TOKENS.each do |name, value|
-          it "should be unacceptable after #{name}" do
-            token.acceptable?(:after => name).should be_false
-          end
-        end
-
-        # Yes, this should still *match*, just not be acceptable.
-        ENamesWithDashes.each do |name|
-          ["", "::"].each do |global_scope|
-            var = prefix + global_scope + name
-            it "should match #{var.inspect}" do
-              subject.regex.match(var).to_a.should == [var]
-            end
-          end
-        end
-      end
-
-      context "when compatibility is enabled" do
-        before :each do Puppet[:allow_variables_with_dashes] = true end
-
-        it "should be acceptable after DQPRE" do
-          token.acceptable?(:after => :DQPRE).should be_true
-        end
-
-        ENamesWithDashes.each do |name|
-          ["", "::"].each do |global_scope|
-            var = prefix + global_scope + name
-            it "should match #{var.inspect}" do
-              subject.regex.match(var).to_a.should == [var]
-            end
-          end
-        end
-      end
-    end
-  end
 
   context "deprecation warnings" do
     before :each do Puppet[:allow_variables_with_dashes] = true end
-
-    it "should match a top level variable" do
-      Puppet.expects(:deprecation_warning).once
-
-      EgrammarLexerSpec.tokens_scanned_from('$foo-bar').should == [
-        [:VARIABLE, {:value=>"foo-bar", :line=>1, :pos=>1, :offset=>0, :length=>8}]
-      ]
-    end
 
     it "does not warn about a variable without a dash" do
       Puppet.expects(:deprecation_warning).never
@@ -514,34 +480,6 @@ describe "the horrible deprecation / compatibility variables with dashes" do
 
       EgrammarLexerSpec.tokens_scanned_from('foo-bar').should == [
         [:NAME, {:value=>"foo-bar", :line=>1, :pos=>1, :offset=>0, :length=>7}]
-      ]
-    end
-
-    it "warns about reference to variable" do
-      Puppet.expects(:deprecation_warning).once
-
-      EgrammarLexerSpec.tokens_scanned_from('$::foo-bar::baz-quux').should == [
-        [:VARIABLE, {:value=>"::foo-bar::baz-quux", :line=>1, :pos=>1, :offset=>0, :length=>20}]
-      ]
-    end
-
-    it "warns about reference to variable interpolated in a string" do
-      Puppet.expects(:deprecation_warning).once
-
-      EgrammarLexerSpec.tokens_scanned_from('"$::foo-bar::baz-quux"').should == [
-        [:DQPRE,    {:value=>"", :line=>1, :pos=>1, :offset=>0, :length=>2}],  # length since preamble includes start and terminator
-        [:VARIABLE, {:value=>"::foo-bar::baz-quux", :line=>1, :pos=>3, :offset=>2, :length=>19}],
-        [:DQPOST,   {:value=>"", :line=>1, :pos=>22, :offset=>21, :length=>1}],
-      ]
-    end
-
-    it "warns about reference to variable interpolated in a string as an expression" do
-      Puppet.expects(:deprecation_warning).once
-
-      EgrammarLexerSpec.tokens_scanned_from('"${::foo-bar::baz-quux}"').should == [
-        [:DQPRE,    {:value=>"", :line=>1, :pos=>1, :offset=>0, :length=>3}],
-        [:VARIABLE, {:value=>"::foo-bar::baz-quux", :line=>1, :pos=>4, :offset=>3, :length=>19}],
-        [:DQPOST,   {:value=>"", :line=>1, :pos=>23, :offset=>22, :length=>2}],
       ]
     end
   end
@@ -898,5 +836,14 @@ describe "when lexing interpolation detailed positioning should be correct" do
       [:DQMID,   {:value=>"\n mid", :line=>3, :offset=>11, :pos=>5, :length=>7}],
       [:VARIABLE, {:value=>"y",    :line=>4, :offset=>18, :pos=>6, :length=>1}]
     )
+  end
+end
+
+describe "when benchmarked" do
+  it "should not take longer than x sec", :profile => true do
+    lexer = Puppet::Pops::Parser::Lexer.new
+#    code = 'if true { 10 + 10 } else { "interpolate ${foo} andn stuff" }'
+    code = 'if true \n{\n 10 + 10\n }\n else\n {\n "interpolate ${foo} andn stuff"\n }\n'
+  puts Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
   end
 end

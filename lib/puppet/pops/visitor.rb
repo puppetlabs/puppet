@@ -38,11 +38,12 @@ class Puppet::Pops::Visitor
     else
       thing.class.ancestors().each do |ancestor|
         method_name = :"#{@message}_#{ancestor.name.split(/::/).last}"
-        next unless receiver.respond_to? method_name
+        next unless receiver.respond_to?(method_name, true)
         @cache[thing.class] = method_name
         return receiver.send(method_name, thing, *args)
       end
     end
+    require 'byebug'; byebug
     raise "Visitor Error: the configured receiver (#{receiver.class}) can't handle instance of: #{thing.class}"
   end
 
