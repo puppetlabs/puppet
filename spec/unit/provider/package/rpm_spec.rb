@@ -30,7 +30,7 @@ describe provider_class do
     provider
   end
 
-  let(:nevra_format) { %Q{'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} :DESC: %{SUMMARY}\\n'} }
+  let(:nevra_format) { %Q{%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} :DESC: %{SUMMARY}\\n} }
   let(:execute_options) do
     {:failonfail => true, :combine => true, :custom_environment => {}}
   end
@@ -47,7 +47,7 @@ describe provider_class do
   describe "self.instances" do
     describe "with a modern version of RPM" do
       it "should include all the modern flags" do
-        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf #{nevra_format}").yields(packages)
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}'").yields(packages)
 
         installed_packages = subject.instances
       end
@@ -56,7 +56,7 @@ describe provider_class do
     describe "with a version of RPM < 4.1" do
       let(:rpm_version) { "RPM version 4.0.2\n" }
       it "should exclude the --nosignature flag" do
-        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa  --nodigest --qf #{nevra_format}").yields(packages)
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa  --nodigest --qf '#{nevra_format}'").yields(packages)
 
         installed_packages = subject.instances
       end
@@ -65,14 +65,14 @@ describe provider_class do
     describe "with a version of RPM < 4.0.2" do
       let(:rpm_version) { "RPM version 3.0.5\n" }
       it "should exclude the --nodigest flag" do
-        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa   --qf #{nevra_format}").yields(packages)
+        Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa   --qf '#{nevra_format}'").yields(packages)
 
         installed_packages = subject.instances
       end
     end
 
     it "returns an array of packages" do
-      Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf #{nevra_format}").yields(packages)
+      Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}'").yields(packages)
 
       installed_packages = subject.instances
 

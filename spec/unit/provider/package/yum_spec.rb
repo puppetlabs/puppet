@@ -153,7 +153,7 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
     end
 
     def expect_execpipe_to_provide_package_info_for_an_rpm_query
-      Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf #{nevra_format}").yields(packages)
+      Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}'").yields(packages)
     end
 
     def expect_python_yumhelper_call_to_return_latest_info

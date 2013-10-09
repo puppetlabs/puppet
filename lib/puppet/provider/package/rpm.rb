@@ -11,7 +11,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   # eventually become this Puppet:Type::Package::ProviderRpm class.
   self::RPM_DESCRIPTION_DELIMITER = ':DESC:'
   # The query format by which we identify installed packages
-  self::NEVRA_FORMAT = %Q{'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} #{self::RPM_DESCRIPTION_DELIMITER} %{SUMMARY}\\n'}
+  self::NEVRA_FORMAT = %Q{%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} #{self::RPM_DESCRIPTION_DELIMITER} %{SUMMARY}\\n}
   self::NEVRA_REGEX  = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)(?: #{self::RPM_DESCRIPTION_DELIMITER} ?(.*))?$}
   self::RPM_PACKAGE_NOT_FOUND_REGEX = /package .+ is not installed/
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch, :description]
@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     # list out all of the packages
     begin
-      execpipe("#{command(:rpm)} -qa #{nosignature} #{nodigest} --qf #{self::NEVRA_FORMAT}") { |process|
+      execpipe("#{command(:rpm)} -qa #{nosignature} #{nodigest} --qf '#{self::NEVRA_FORMAT}'") { |process|
         # now turn each returned line into a package object
         process.each_line { |line|
           hash = nevra_to_hash(line)
