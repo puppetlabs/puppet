@@ -151,12 +151,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def setup
     Puppet::Util::Log.newdestination(:console)
-
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
-    end
+    set_log_level
   end
 
   private
