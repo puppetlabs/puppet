@@ -309,36 +309,6 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
   end
 end
 
-namespace :standalone do
-  desc "Bring up the vagrant environment.  Includes pre-puppet environment packages installation and cross node networking support (/etc/hosts munging)"
-  task :up do
-    sh "vagrant up"
-  end
-
-  desc "Completely destroy the vagrant instances."
-  task :clean do
-    sh "vagrant destroy -f"
-  end
-
-  task :ensure_good_private_key do
-    sh "chmod 600 acceptance.priv"
-  end
-
-  desc "Bring up vagrant boxes and run the tests through the puppet-acceptance beaker harness.  Specify TEST='../../tests/foo' to customize which tests are to be run, and/or OPTIONS='bar' to pass options to beaker."
-  task :test => [:up, :ensure_good_private_key] do
-    beaker_test(:git,
-      :ssh => {
-        :keys => ['acceptance.priv'],
-      },
-      :install => [
-        'git://github.com/puppetlabs/facter.git#stable',
-        'git://github.com/puppetlabs/hiera.git#stable',
-        'file:///vagrant-puppet',
-      ]
-    )
-  end
-end
-
 task :default do
   sh('rake -T')
 end

@@ -27,9 +27,9 @@ In order to run the tests on hosts provisioned from packages produced by Deliver
 
     rake --trace package:implode
     rake --trace package:bootstrap
-    rake --trace pl:jenkins:uber_build DOWNSTREAM_JOB="http://jenkins-foss.delivery.puppetlabs.net/job/Puppet-Package-Acceptance-stable/buildWithParameters?token=iheartjenkins&SHA=$GIT_COMMIT&BUILD_SELECTOR=$BUILD_NUMBER"
+    rake --trace pl:jenkins:uber_build
 
-The above Rake tasks were run from the root of a Puppet checkout.  They are quoted just for reference.  Typically if you are investigating a failure, you will have a SHA from a failed jenkins run which should correspond to a successful pipeline run, and you should not need to run the pipeline anually.
+The above Rake tasks were run from the root of a Puppet checkout.  They are quoted just for reference.  Typically if you are investigating a failure, you will have a SHA from a failed jenkins run which should correspond to a successful pipeline run, and you should not need to run the pipeline manually.
 
 A finished pipeline will have repository information available at http://builds.puppetlabs.lan/puppet/  So you can also browse this list and select a recent sha which has repo_configs/ available.
 
@@ -74,14 +74,3 @@ If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hos
     bundle exec ci:destroy_preserved_hosts
 
 to clean them up sooner and free resources.
-
-Standalone
-----------
-
-The standalone tests use vagrant, but have decayed some and probably need to be cleaned up.  There biggest utility would be running the acceptance suite without access to our internal VSphere, and running it against hosts available in vagrant but not as vcloud templates.  It relies on git clone and install.rb installation.
-
-The standalone tests currently run against this configuration config/local/config.yaml.  They use your local repository as the source for puppet installation, so changes you make are reflected in the next run.  This allows you to debug and write acceptance tests quickly, and even write a failing acceptance test and then explore code changes to fulfill it.
-
-    be rake standalone:test
-
-TODO use Adrien's vagrant-hosts and vagrant-auto_network to handle the host/ip configuration which is currently hard set.
