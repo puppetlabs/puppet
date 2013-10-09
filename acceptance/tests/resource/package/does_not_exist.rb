@@ -5,7 +5,7 @@ test_name "Puppet returns only resource package declaration when querying an uni
   ensure => '(?:purged|absent)',
 \}@m
 
-  package_apply_regex = %r@Notice: Compiled catalog for [\w-]+.delivery.puppetlabs.net in environment production in \d+\.\d{2} seconds(?:\e\[0m)?
+  package_apply_regex = %r@Notice: Compiled catalog for .* in environment production in \d+\.\d{2} seconds(?:\e\[0m)?
 (?:\e\[m)?Notice: Finished catalog run in \d+\.\d{2} seconds@m
 
   agents.each do |agent|
