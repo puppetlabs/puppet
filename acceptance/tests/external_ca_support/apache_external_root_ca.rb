@@ -7,6 +7,7 @@ end
 
 # This test only runs on EL-6 master roles.
 confine :to, :platform => 'el-6'
+confine :except, :type => 'pe'
 
 # Verify that a trivial manifest can be run to completion.
 # Supported Setup: Single, Root CA
