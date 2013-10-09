@@ -124,8 +124,9 @@ module Puppet
     newproperty(:gid) do
       desc "The user's primary group.  Can be specified numerically or by name.
 
-        Note that users on Windows systems do not have a primary group; manage groups
-        with the `groups` attribute instead."
+        This attribute is not supported on Windows systems; use the `groups`
+        attribute instead. (On Windows, designating a primary group is only
+        meaningful for domain accounts, which Puppet does not currently manage.)"
 
       munge do |value|
         if value.is_a?(String) and value =~ /^[-0-9]+$/
