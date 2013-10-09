@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 # subscriptions are permanent associations determining how different
 # objects react to an event
 
