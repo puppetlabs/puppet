@@ -52,6 +52,21 @@ describe Puppet::Util::ADSI do
     end
   end
 
+  describe ".sid_uri", :if => Puppet.features.microsoft_windows? do
+    it "should raise an error when the input is not a SID object" do
+      [Object.new, {}, 1, :symbol, '', nil].each do |input|
+        expect {
+          Puppet::Util::ADSI.sid_uri(input)
+        }.to raise_error(Puppet::Error, /Must use a valid SID object/)
+      end
+    end
+
+    it "should return a SID uri for a well-known SID (SYSTEM)" do
+      sid = Win32::Security::SID.new('SYSTEM')
+      Puppet::Util::ADSI.sid_uri(sid).should == 'WinNT://S-1-5-18'
+    end
+  end
+
   describe Puppet::Util::ADSI::User do
     let(:username)  { 'testuser' }
     let(:domain)    { 'DOMAIN' }
