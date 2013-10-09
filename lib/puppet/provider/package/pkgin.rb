@@ -31,6 +31,12 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     end
   end
 
+  def self.prefetch(packages)
+    super
+    # -f seems required when repositories.conf changes
+    pkgin("-yf", :update)
+  end
+
   def self.instances
     pkgin(:list).split("\n").map do |package|
       new(parse_pkgin_line(package, :present))
@@ -61,8 +67,6 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   end
 
   def latest
-    # -f seems required when repositories.conf changes
-    pkgin("-yf", :update)
     package = self.query
     if package[:status] == '<'
       notice  "Upgrading #{package[:name]} to #{package[:version]}"
