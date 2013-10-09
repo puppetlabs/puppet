@@ -87,6 +87,24 @@ module Puppet
         newvalue = newvalue.join(",")
         super(currentvalue, newvalue)
       end
+
+      def insync?(current)
+        if provider.respond_to?(:members_insync?)
+          return provider.members_insync?(current, @should)
+        end
+
+        super(current)
+      end
+
+      def is_to_s(currentvalue)
+        if provider.respond_to?(:members_to_s)
+          currentvalue = '' if currentvalue.nil?
+          return provider.members_to_s(currentvalue.split(','))
+        end
+
+        super(currentvalue)
+      end
+      alias :should_to_s :is_to_s
     end
 
     newparam(:auth_membership) do
