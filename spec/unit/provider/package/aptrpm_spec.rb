@@ -19,7 +19,7 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
     def rpm
       pkg.provider.expects(:rpm).
         with('-q', 'faff', '--nosignature', '--nodigest', '--qf',
-             "'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} :DESC: %{SUMMARY}\\n'")
+             "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} :DESC: %{SUMMARY}\\n")
     end
 
     it "should report absent packages" do
