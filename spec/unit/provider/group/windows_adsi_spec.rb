@@ -73,11 +73,11 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
         provider.members_to_s([]).should be_empty
         provider.members_to_s(nil).should be_empty
       end
-      it "should return a user string like DOMAIN\\USER (SID)" do
-        provider.members_to_s(['user1']).should == '.\user1 (user1sid)'
+      it "should return a user string like DOMAIN\\USER" do
+        provider.members_to_s(['user1']).should == '.\user1'
       end
-      it "should return a user string like DOMAIN\\USER (SID),DOMAIN2\\USER2 (SID2)" do
-        provider.members_to_s(['user1', 'user2']).should == '.\user1 (user1sid),.\user2 (user2sid)'
+      it "should return a user string like DOMAIN\\USER,DOMAIN2\\USER2" do
+        provider.members_to_s(['user1', 'user2']).should == '.\user1,.\user2'
       end
     end
   end
@@ -159,5 +159,9 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
   it "should fail when trying to manage the gid property" do
     provider.expects(:fail).with { |msg| msg =~ /gid is read-only/ }
     provider.send(:gid=, 500)
+  end
+
+  it "should prefer the domain component from the resolved SID", :if => Puppet.features.microsoft_windows? do
+    provider.members_to_s(['.\Administrators']).should == 'BUILTIN\Administrators'
   end
 end

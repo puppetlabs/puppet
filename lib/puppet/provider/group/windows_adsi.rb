@@ -28,7 +28,13 @@ Puppet::Type.type(:group).provide :windows_adsi do
     return '' if users.nil? or !users.kind_of?(Array)
     users = users.map do |user_name|
       sid = Puppet::Util::Windows::Security.name_to_sid_object(user_name)
-      "#{sid.domain}\\#{sid.account} (#{sid.to_s})"
+      if sid.account =~ /\\/
+        account, _ = Puppet::Util::ADSI::User.parse_name(sid.account)
+      else
+        account = sid.account
+      end
+      resource.debug("#{sid.domain}\\#{account} (#{sid.to_s})")
+      "#{sid.domain}\\#{account}"
     end
     return users.join(',')
   end
