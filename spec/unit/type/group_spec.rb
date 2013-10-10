@@ -61,4 +61,24 @@ describe Puppet::Type.type(:group) do
 
     type.exists?.should == true
   end
+
+  describe "should delegate :members implementation to the provider:"  do
+
+    let (:provider) { @class.provide(:testing) { has_features :manages_members } }
+    let (:provider_instance) { provider.new }
+    let (:type) { @class.new(:name => "group", :provider => provider_instance, :members => ['user1']) }
+
+    it "insync? calls members_insync?" do
+      provider_instance.expects(:members_insync?).with(['user1'], ['user1']).returns true
+      type.property(:members).insync?(['user1']).should be_true
+    end
+
+    it "is_to_s and should_to_s call members_to_s" do
+      provider_instance.expects(:members_to_s).with(['user2', 'user1']).returns "user2 (), user1 ()"
+      provider_instance.expects(:members_to_s).with(['user1']).returns "user1 ()"
+
+      type.property(:members).is_to_s('user1').should == 'user1 ()'
+      type.property(:members).should_to_s('user2,user1').should == 'user2 (), user1 ()'
+    end
+  end
 end

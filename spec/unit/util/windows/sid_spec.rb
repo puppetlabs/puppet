@@ -15,6 +15,45 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
   let(:unknown_sid)  { 'S-0-0-0' }
   let(:unknown_name) { 'chewbacca' }
 
+  context "#octet_string_to_sid_object" do
+    it "should properly convert an array of bytes for the local Administrator SID" do
+      host = '.'
+      username = 'Administrator'
+      admin = WIN32OLE.connect("WinNT://#{host}/#{username},user")
+      converted = subject.octet_string_to_sid_object(admin.objectSID)
+
+      converted.should == Win32::Security::SID.new(username, host)
+      converted.should be_an_instance_of Win32::Security::SID
+    end
+
+    it "should properly convert an array of bytes for a well-known SID" do
+      bytes = [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0]
+      converted = subject.octet_string_to_sid_object(bytes)
+
+      converted.should == Win32::Security::SID.new('SYSTEM')
+      converted.should be_an_instance_of Win32::Security::SID
+    end
+
+    it "should raise an error for non-array input" do
+      expect {
+        subject.octet_string_to_sid_object(invalid_sid)
+      }.to raise_error(Puppet::Error, /Octet string must be an array of bytes/)
+    end
+
+    it "should raise an error for an empty byte array" do
+      expect {
+        subject.octet_string_to_sid_object([])
+      }.to raise_error(Puppet::Error, /Octet string must be an array of bytes/)
+    end
+
+    it "should raise an error for a malformed byte array" do
+      expect {
+        invalid_octet = [1]
+        subject.octet_string_to_sid_object(invalid_octet)
+      }.to raise_error(Win32::Security::SID::Error, /No mapping between account names and security IDs was done./)
+    end
+  end
+
   context "#name_to_sid" do
     it "should return nil if the account does not exist" do
       subject.name_to_sid(unknown_name).should be_nil
@@ -28,12 +67,42 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       subject.name_to_sid('SYSTEM').should == subject.name_to_sid('system')
     end
 
+    it "should be leading and trailing whitespace-insensitive" do
+      subject.name_to_sid('SYSTEM').should == subject.name_to_sid(' SYSTEM ')
+    end
+
     it "should accept domain qualified account names" do
       subject.name_to_sid('NT AUTHORITY\SYSTEM').should == sid
     end
 
     it "should be the identity function for any sid" do
       subject.name_to_sid(sid).should == sid
+    end
+  end
+
+  context "#name_to_sid_object" do
+    it "should return nil if the account does not exist" do
+      subject.name_to_sid_object(unknown_name).should be_nil
+    end
+
+    it "should return a Win32::Security::SID instance for any valid sid" do
+      subject.name_to_sid_object(sid).should be_an_instance_of(Win32::Security::SID)
+    end
+
+    it "should accept unqualified account name" do
+      subject.name_to_sid_object('SYSTEM').to_s.should == sid
+    end
+
+    it "should be case-insensitive" do
+      subject.name_to_sid_object('SYSTEM').should == subject.name_to_sid_object('system')
+    end
+
+    it "should be leading and trailing whitespace-insensitive" do
+      subject.name_to_sid_object('SYSTEM').should == subject.name_to_sid_object(' SYSTEM ')
+    end
+
+    it "should accept domain qualified account names" do
+      subject.name_to_sid_object('NT AUTHORITY\SYSTEM').to_s.should == sid
     end
   end
 

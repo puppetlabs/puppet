@@ -20,15 +20,37 @@ module Puppet::Util::Windows
     # 'BUILTIN\Administrators', or 'S-1-5-32-544', and will return the
     # SID. Returns nil if the account doesn't exist.
     def name_to_sid(name)
+      sid = name_to_sid_object(name)
+
+      sid ? sid.to_s : nil
+    end
+
+    # Convert an account name, e.g. 'Administrators' into a SID object,
+    # e.g. 'S-1-5-32-544'. The name can be specified as 'Administrators',
+    # 'BUILTIN\Administrators', or 'S-1-5-32-544', and will return the
+    # SID object. Returns nil if the account doesn't exist.
+    def name_to_sid_object(name)
       # Apparently, we accept a symbol..
-      name = name.to_s if name
+      name = name.to_s.strip if name
 
-      # if it's in SID string form, return it, otherwise, lookup sid
-      is_sid = Win32::Security::SID.string_to_sid(name) rescue nil
+      # if it's in SID string form, convert to user
+      parsed_sid = Win32::Security::SID.string_to_sid(name) rescue nil
 
-      is_sid ? name : Win32::Security::SID.new(name).to_s
+      parsed_sid ? Win32::Security::SID.new(parsed_sid) : Win32::Security::SID.new(name)
     rescue
       nil
+    end
+
+    # Converts an octet string array of bytes to a SID object,
+    # e.g. [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] is the representation for
+    # S-1-5-18, the local 'SYSTEM' account.
+    # Raises an Error for nil or non-array input.
+    def octet_string_to_sid_object(bytes)
+      if !bytes || !bytes.respond_to?('pack') || bytes.empty?
+        raise Puppet::Util::Windows::Error.new("Octet string must be an array of bytes")
+      end
+
+      Win32::Security::SID.new(bytes.pack('C*'))
     end
 
     # Convert a SID string, e.g. "S-1-5-32-544" to a name,

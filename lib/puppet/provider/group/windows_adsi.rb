@@ -8,6 +8,37 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
   has_features :manages_members
 
+  def members_insync?(current, should)
+    return false unless current
+
+    # By comparing account SIDs we don't have to worry about case
+    # sensitivity, or canonicalization of account names.
+
+    # Cannot use munge of the group property to canonicalize @should
+    # since the default array_matching comparison is not commutative
+    should_empty = should.nil? or should.empty?
+
+    return false if current.empty? != should_empty
+
+    # dupes automatically weeded out when hashes built
+    Puppet::Util::ADSI::Group.name_sid_hash(current) == Puppet::Util::ADSI::Group.name_sid_hash(should)
+  end
+
+  def members_to_s(users)
+    return '' if users.nil? or !users.kind_of?(Array)
+    users = users.map do |user_name|
+      sid = Puppet::Util::Windows::Security.name_to_sid_object(user_name)
+      if sid.account =~ /\\/
+        account, _ = Puppet::Util::ADSI::User.parse_name(sid.account)
+      else
+        account = sid.account
+      end
+      resource.debug("#{sid.domain}\\#{account} (#{sid.to_s})")
+      "#{sid.domain}\\#{account}"
+    end
+    return users.join(',')
+  end
+
   def group
     @group ||= Puppet::Util::ADSI::Group.new(@resource[:name])
   end
