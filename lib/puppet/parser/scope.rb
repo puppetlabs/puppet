@@ -116,6 +116,9 @@ class Puppet::Parser::Scope
     compiler.node.name
   end
 
+  # TODO: 19514 - this is smelly; who uses this? functions? templates?
+  # What about trusted facts ? Should untrusted facts be removed from facts?
+  #
   def facts
     compiler.node.facts
   end
@@ -461,6 +464,8 @@ class Puppet::Parser::Scope
     }
   end
 
+  RESERVED_VARIABLE_NAMES = ['trusted'].freeze
+
   # Set a variable in the current scope.  This will override settings
   # in scopes above, but will not allow variables in the current scope
   # to be reassigned.
@@ -472,6 +477,11 @@ class Puppet::Parser::Scope
     end
     unless name.is_a? String
       raise Puppet::ParseError, "Scope variable name #{name.inspect} is a #{name.class}, not a string"
+    end
+
+    # Check for reserved variable names
+    if Puppet[:hashed_node_data] && !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
+      raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
     table = effective_symtable options[:ephemeral]
@@ -493,6 +503,29 @@ class Puppet::Parser::Scope
     end
     table[name]
   end
+
+  def set_trusted(hash)
+    setvar('trusted', deep_freeze(hash), :privileged => true)
+  end
+
+  # Deeply freezes the given object. The object and its content must be of the types:
+  # Array, Hash, Numeric, Boolean, Symbol, Regexp, NilClass, or String. All other types raises an Error.
+  # (i.e. if they are assignable to Puppet::Pops::Types::Data type).
+  #
+  def deep_freeze(object)
+    case object
+    when Hash
+      object.each {|k, v| deep_freeze(k); deep_freeze(v) }
+    when NilClass
+      # do nothing
+    when String
+      object.freeze
+    else
+      raise Puppet::Error, "Unsupported data type: '#{object.class}"
+    end
+    object
+  end
+  private :deep_freeze
 
   # Return the effective "table" for setting variables.
   # This method returns the first ephemeral "table" that acts as a local scope, or this
