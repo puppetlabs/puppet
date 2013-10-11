@@ -24,12 +24,12 @@ describe Puppet::Resource::Catalog::Compiler do
     end
 
     it "should cache the server metadata and reuse it" do
+      Puppet[:node_terminus] = :memory
+      Puppet::Node.indirection.save(Puppet::Node.new("node1"))
+      Puppet::Node.indirection.save(Puppet::Node.new("node2"))
+
       compiler = Puppet::Resource::Catalog::Compiler.new
-      node1 = stub 'node1', :merge => nil
-      node2 = stub 'node2', :merge => nil
       compiler.stubs(:compile)
-      Puppet::Node.indirection.stubs(:find).with('node1', has_entry(:environment => anything)).returns(node1)
-      Puppet::Node.indirection.stubs(:find).with('node2', has_entry(:environment => anything)).returns(node2)
 
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node1', nil, :node => 'node1'))
       compiler.find(Puppet::Indirector::Request.new(:catalog, :find, 'node2', nil, :node => 'node2'))
@@ -175,19 +175,16 @@ describe Puppet::Resource::Catalog::Compiler do
   end
 
   describe "when finding nodes" do
-    before do
-      Facter.stubs(:value).returns("whatever")
-      @compiler = Puppet::Resource::Catalog::Compiler.new
-      @name = "me"
-      @node = mock 'node'
-      @request = Puppet::Indirector::Request.new(:catalog, :find, @name, nil)
-      @compiler.stubs(:compile)
-    end
-
     it "should look node information up via the Node class with the provided key" do
-      @node.stubs :merge
-      Puppet::Node.indirection.expects(:find).with(@name, anything).returns(@node)
-      @compiler.find(@request)
+      Facter.stubs(:value).returns("whatever")
+      node = Puppet::Node.new('node')
+      compiler = Puppet::Resource::Catalog::Compiler.new
+      request = Puppet::Indirector::Request.new(:catalog, :find, "me", nil)
+      compiler.stubs(:compile)
+
+      Puppet::Node.indirection.expects(:find).with("me", anything).returns(node)
+
+      compiler.find(request)
     end
   end
 
@@ -197,11 +194,10 @@ describe Puppet::Resource::Catalog::Compiler do
       Facter.expects(:value).with('fqdn').returns("my.server.com")
       Facter.expects(:value).with('ipaddress').returns("my.ip.address")
       @compiler = Puppet::Resource::Catalog::Compiler.new
-      @name = "me"
-      @node = mock 'node'
-      @request = Puppet::Indirector::Request.new(:catalog, :find, @name, nil)
+      @node = Puppet::Node.new("me")
+      @request = Puppet::Indirector::Request.new(:catalog, :find, "me", nil)
       @compiler.stubs(:compile)
-      Puppet::Node.indirection.stubs(:find).with(@name, anything).returns(@node)
+      Puppet::Node.indirection.stubs(:find).with("me", anything).returns(@node)
     end
 
     it "should add the server's Puppet version to the node's parameters as 'serverversion'" do

@@ -482,10 +482,12 @@ class Puppet::Parser::Compiler
     node.parameters.each do |param, value|
       @topscope[param.to_s] = value
     end
-
     # These might be nil.
     catalog.client_version = node.parameters["clientversion"]
     catalog.server_version = node.parameters["serverversion"]
+    if Puppet[:hashed_node_data]
+      @topscope.set_trusted(node.trusted_data)
+    end
   end
 
   def create_settings_scope

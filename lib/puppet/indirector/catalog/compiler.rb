@@ -41,6 +41,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     extract_facts_from_request(request)
 
     node = node_from_request(request)
+    node.trusted_data = trusted_hash_from_request(request)
 
     if catalog = compile(node)
       return catalog
@@ -50,6 +51,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       return nil
     end
   end
+
 
   # filter-out a catalog to remove exported resources
   def filter(catalog)
@@ -69,6 +71,32 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   private
+
+  # Produces a deeply frozen hash with trusted information
+  # The key :authenticated is always present in the result with one of the values
+  # :remote, :local, false, where :remote is authenticated via cert, :local is trusted by virtue
+  # of running on the same machine (not a remove request), and false is an unauthenticated remot request.
+  # When the trusted hash value for :authenticated == false, there is no other values set in the hash.
+  #
+  def trusted_hash_from_request(request)
+    if request.remote?
+      if request.authenticated?
+        trust_authenticated = 'remote'.freeze
+        client_cert = request.node
+      else
+        trust_authenticated = false
+        client_cert = nil
+      end
+    else
+      trust_authenticated = 'local'.freeze
+      # Always trust local data by picking up the available parameters.
+      request_node = request.options[:use_node]
+      client_cert = request_node ? request_node.parameters['clientcert'] : nil
+    end
+
+    # TODO nil or undef for client_cert missing?
+    trusted_hash = { 'authenticated' => trust_authenticated, 'clientcert' => client_cert }
+  end
 
   # Add any extra data necessary to the node.
   def add_node_data(node)
