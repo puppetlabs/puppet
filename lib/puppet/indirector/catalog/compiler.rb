@@ -40,8 +40,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def find(request)
     extract_facts_from_request(request)
 
-    node = node_from_request(request)
-    node.trusted_data = trusted_hash_from_request(request)
+    if node = node_from_request(request)
+      node.trusted_data = trusted_hash_from_request(request)
+    end
 
     if catalog = compile(node)
       return catalog
@@ -90,7 +91,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     else
       trust_authenticated = 'local'.freeze
       # Always trust local data by picking up the available parameters.
-      client_cert = request.options[:use_node].parameters['clientcert']
+      request_node = request.options[:use_node]
+      client_cert = request_node ? request_node.parameters['clientcert'] : nil
     end
 
     # TODO nil or undef for client_cert missing?
