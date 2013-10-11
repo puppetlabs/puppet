@@ -40,8 +40,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   def find(request)
     extract_facts_from_request(request)
 
-    if node = node_from_request(request)
-      node.trusted_data = trusted_hash_from_request(request)
+    if node = node_from_request(request) 
+      node.trusted_data = trusted_hash_from_request(request) if Puppet[:hashed_node_data]
     end
 
     if catalog = compile(node)
