@@ -10,12 +10,12 @@ Services
 * {file:api/docs/http_file_bucket_file.md File Bucket File}
 * {file:api/docs/http_file_content.md File Content}
 * {file:api/docs/http_file_metadata.md File Metadata}
+* {file:api/docs/http_node.md Node}
 * {file:api/docs/http_report.md Report}
 * {file:api/docs/http_resource_type.md Resource Type}
 
 To be documented:
 
-* node
 * resource
 * key
 * status
