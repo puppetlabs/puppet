@@ -7,6 +7,7 @@ Services
 * {file:api/docs/http_certificate_revocation_list.md Certificate Revocation List}
 * {file:api/docs/http_catalog.md Catalog}
 * {file:api_docs/http_facts.md Facts}
+* {file:api/docs/http_file_bucket_file.md File Bucket File}
 * {file:api/docs/http_file_content.md File Content}
 * {file:api/docs/http_file_metadata.md File Metadata}
 * {file:api/docs/http_report.md Report}
@@ -15,7 +16,6 @@ Services
 To be documented:
 
 * node
-* file_bucket_file
 * resource
 * key
 * status
