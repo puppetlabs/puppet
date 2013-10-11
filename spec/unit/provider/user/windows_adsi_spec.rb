@@ -24,7 +24,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     it "should enumerate all users" do
       names = ['user1', 'user2', 'user3']
       stub_users = names.map{|n| stub(:name => n)}
-      connection.stubs(:execquery).with("select name from win32_useraccount").returns(stub_users)
+      connection.stubs(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(stub_users)
 
       described_class.instances.map(&:name).should =~ names
     end
