@@ -7,7 +7,7 @@ Puppet::Parser::Functions::newfunction(
 :doc => <<-'ENDHEREDOC') do |args|
   Applies a parameterized block to each element in a sequence of entries from the first
   argument and returns an array or hash (same type as left operand)
-  with the entires for which the block evaluates to true.
+  with the entries for which the block evaluates to true.
 
   This function takes two mandatory arguments: the first should be an Array or a Hash, and the second
   a parameterized block as produced by the puppet syntax:
