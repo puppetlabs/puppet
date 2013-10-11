@@ -26,13 +26,11 @@ class PsonTest
 end
 
 describe "Puppet Network Format" do
-  require 'msgpack'
-
-  it "should include a msgpack format" do
+  it "should include a msgpack format", :if => Puppet.features.msgpack? do
     Puppet::Network::FormatHandler.format(:msgpack).should_not be_nil
   end
 
-  describe "msgpack" do
+  describe "msgpack", :if => Puppet.features.msgpack? do
     before do
       @msgpack = Puppet::Network::FormatHandler.format(:msgpack)
     end
