@@ -60,7 +60,11 @@ class Puppet::FileBucket::File
 
   def to_pson
     Puppet.deprecation_warning("Serializing Puppet::FileBucket::File objects to pson is deprecated.")
-    { "contents" => contents }.to_pson
+    to_data_hash.to_pson
+  end
+
+  def to_data_hash
+    { "contents" => contents }
   end
 
   # This method is deprecated, but cannot be removed for awhile, otherwise
@@ -69,4 +73,5 @@ class Puppet::FileBucket::File
     Puppet.deprecation_warning("Deserializing Puppet::FileBucket::File objects from pson is deprecated. Upgrade to a newer version.")
     self.new(pson["contents"])
   end
+
 end

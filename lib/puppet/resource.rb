@@ -56,7 +56,7 @@ class Puppet::Resource
     "#{@type}[#{@title}]#{to_hash.inspect}"
   end
 
-  def to_pson_data_hash
+  def to_data_hash
     data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
       next hash unless value = self.send(param)
       hash[param.to_s] = value
@@ -78,6 +78,11 @@ class Puppet::Resource
     data["parameters"] = params unless params.empty?
 
     data
+  end
+
+  # This doesn't include document type as it is part of a catalog
+  def to_pson_data_hash
+    to_data_hash
   end
 
   def self.value_to_pson_data(value)
@@ -115,7 +120,7 @@ class Puppet::Resource
   end
 
   def to_pson(*args)
-    to_pson_data_hash.to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   # Proxy these methods to the parameters hash.  It's likely they'll

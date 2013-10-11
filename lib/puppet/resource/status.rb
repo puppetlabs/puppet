@@ -1,10 +1,12 @@
 require 'time'
+require 'puppet/network/format_support'
 
 module Puppet
   class Resource
     class Status
       include Puppet::Util::Tagging
       include Puppet::Util::Logging
+      include Puppet::Network::FormatSupport
 
       attr_accessor :resource, :node, :file, :line, :current_values, :status, :evaluation_time
 
@@ -113,7 +115,7 @@ module Puppet
         end
       end
 
-      def to_pson
+      def to_data_hash
         {
           'title' => @title,
           'file' => @file,
@@ -131,7 +133,11 @@ module Puppet
           'change_count' => @change_count,
           'out_of_sync_count' => @out_of_sync_count,
           'events' => @events,
-        }.to_pson
+        }
+      end
+
+      def to_pson(*args)
+        to_data_hash.to_pson(*args)
       end
 
       def to_yaml_properties
