@@ -1,6 +1,7 @@
 require 'puppet/network/format_handler'
 
 # Provides network serialization support when included
+# @api public
 module Puppet::Network::FormatSupport
   def self.included(klass)
     klass.extend(ClassMethods)
@@ -107,9 +108,10 @@ module Puppet::Network::FormatSupport
     self.class.support_format?(name)
   end
 
-  # @comment Document o_data_hash here as it is called as a hook from to_msgpack if it exists
+  # @comment Document to_data_hash here as it is called as a hook from to_msgpack if it exists
   # @!method to_data_hash(*args)
   # @api public
+  # @abstract
   # This method may be implemented to return a hash object that is used for serializing.
   # The object returned by this method should contain all the info needed to instantiate it again.
   # If the method exists it will be called from to_msgpack and other serialization methods.
