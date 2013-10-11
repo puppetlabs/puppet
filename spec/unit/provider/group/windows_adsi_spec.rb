@@ -24,7 +24,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
       names = ['group1', 'group2', 'group3']
       stub_groups = names.map{|n| stub(:name => n)}
 
-      connection.stubs(:execquery).with("select name from win32_group").returns stub_groups
+      connection.stubs(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns stub_groups
 
       described_class.instances.map(&:name).should =~ names
     end
