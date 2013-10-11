@@ -152,8 +152,8 @@ describe Puppet::Node::Facts, "when indirecting" do
         result = PSON.parse(facts.to_pson)
         result['name'].should == facts.name
         result['values'].should == facts.values.reject { |key, value| key.to_s =~ /_/ }
-        result['timestamp'].should == facts.timestamp.to_s
-        result['expiration'].should == facts.expiration.to_s
+        result['timestamp'].should == facts.timestamp.iso8601(9)
+        result['expiration'].should == facts.expiration.iso8601(9)
       end
 
       it "should generate valid facts data against the facts schema", :unless => Puppet.features.microsoft_windows? do

@@ -1,20 +1,20 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/provider/confine/exists'
+require 'puppet/confine/exists'
 
-describe Puppet::Provider::Confine::Exists do
+describe Puppet::Confine::Exists do
   before do
-    @confine = Puppet::Provider::Confine::Exists.new("/my/file")
+    @confine = Puppet::Confine::Exists.new("/my/file")
     @confine.label = "eh"
   end
 
   it "should be named :exists" do
-    Puppet::Provider::Confine::Exists.name.should == :exists
+    Puppet::Confine::Exists.name.should == :exists
   end
   
   it "should not pass if exists is nil" do
-    confine = Puppet::Provider::Confine::Exists.new(nil)
+    confine = Puppet::Confine::Exists.new(nil)
     confine.label = ":exists => nil"
     confine.expects(:pass?).with(nil)
     confine.should_not be_valid
@@ -66,7 +66,7 @@ describe Puppet::Provider::Confine::Exists do
     FileTest.expects(:exist?).with("/two").returns false
     FileTest.expects(:exist?).with("/four").returns false
 
-    confine = Puppet::Provider::Confine::Exists.new %w{/one /two /three /four}
+    confine = Puppet::Confine::Exists.new %w{/one /two /three /four}
     confine.summary.should == %w{/two /four}
   end
 
@@ -75,6 +75,6 @@ describe Puppet::Provider::Confine::Exists do
     c2 = mock '2', :summary => %w{two}
     c3 = mock '3', :summary => %w{three}
 
-    Puppet::Provider::Confine::Exists.summarize([c1, c2, c3]).should == %w{one two three}
+    Puppet::Confine::Exists.summarize([c1, c2, c3]).should == %w{one two three}
   end
 end

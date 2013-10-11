@@ -1,6 +1,6 @@
-require 'puppet/provider/confine'
+require 'puppet/confine'
 
-class Puppet::Provider::Confine::False < Puppet::Provider::Confine
+class Puppet::Confine::False < Puppet::Confine
   def self.summarize(confines)
     confines.inject(0) { |count, confine| count + confine.summary }
   end

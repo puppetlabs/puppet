@@ -15,12 +15,16 @@ module Puppet::ModuleTool
       @repository = repository ? Puppet::Forge::Repository.new(repository) : nil
     end
 
-    # Return PSON representation of this data.
-    def to_pson(*args)
+    def to_data_hash
       result = { :name => @full_module_name }
       result[:version_requirement] = @version_requirement if @version_requirement && ! @version_requirement.nil?
       result[:repository] = @repository.to_s if @repository && ! @repository.nil?
-      result.to_pson(*args)
+      result
+    end
+
+    # Return PSON representation of this data.
+    def to_pson(*args)
+      to_data_hash.to_pson(*args)
     end
   end
 end

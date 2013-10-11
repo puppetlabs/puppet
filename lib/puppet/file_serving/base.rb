@@ -71,14 +71,18 @@ class Puppet::FileServing::Base
     File.send(@stat_method, full_path)
   end
 
+  def to_data_hash
+    {
+      'path'          => @path,
+      'relative_path' => @relative_path,
+      'links'         => @links
+    }
+  end
+
   def to_pson_data_hash
     {
       # No 'document_type' since we don't send these bare
-      'data'       => {
-        'path'          => @path,
-        'relative_path' => @relative_path,
-        'links'         => @links
-        },
+      'data'       => to_data_hash,
       'metadata' => {
         'api_version' => 1
         }

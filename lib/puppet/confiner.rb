@@ -1,10 +1,10 @@
-require 'puppet/provider/confine_collection'
+require 'puppet/confine_collection'
 
 # The Confiner module contains methods for managing a Provider's confinement (suitability under given
 # conditions). The intent is to include this module in an object where confinement management is wanted.
 # It lazily adds an instance variable `@confine_collection` to the object where it is included.
 #
-module Puppet::Provider::Confiner
+module Puppet::Confiner
   # Confines a provider to be suitable only under the given conditions.
   # The hash describes a confine using mapping from symbols to values or predicate code.
   #
@@ -26,11 +26,11 @@ module Puppet::Provider::Confiner
     confine_collection.confine(hash)
   end
 
-  # @return [Puppet::Provider::ConfineCollection] the collection of confines
+  # @return [Puppet::ConfineCollection] the collection of confines
   # @api private
   #
   def confine_collection
-    @confine_collection ||= Puppet::Provider::ConfineCollection.new(self.to_s)
+    @confine_collection ||= Puppet::ConfineCollection.new(self.to_s)
   end
 
   # Checks whether this implementation is suitable for the current platform (or returns a summary
