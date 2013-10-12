@@ -1339,6 +1339,15 @@ EOT
       is used for retrieval, so anything that is a valid file source can
       be used here.",
     },
+    :pluginfactdest => {
+      :type     => :directory,
+      :default  => "$vardir/facts",
+      :desc     => "Where Puppet should store external facts that are being handled by pluginsync",
+    },
+    :pluginfactsource => {
+      :default  => "puppet://$server/pluginfacts",
+      :desc     => "Where to retreieve external facts for pluginsync",
+    },
     :pluginsync => {
       :default    => true,
       :type       => :boolean,
