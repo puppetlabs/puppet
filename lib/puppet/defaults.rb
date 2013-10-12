@@ -1341,7 +1341,7 @@ EOT
     },
     :pluginfactdest => {
       :type     => :directory,
-      :default  => "$vardir/facts",
+      :default  => "$vardir/external_facts",
       :desc     => "Where Puppet should store external facts that are being handled by pluginsync",
     },
     :pluginfactsource => {
