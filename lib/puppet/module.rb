@@ -20,7 +20,7 @@ class Puppet::Module
     "files" => "files",
     "templates" => "templates",
     "plugins" => "lib",
-    "pluginfacts" => "facts",
+    "pluginfacts" => "facts.d",
   }
 
   # Find and return the +module+ that +path+ belongs to. If +path+ is
@@ -171,7 +171,7 @@ class Puppet::Module
   end
 
   def plugin_fact_directory
-    subpath("facts")
+    subpath("facts.d")
   end
 
   def supports(name, version = nil)

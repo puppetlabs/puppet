@@ -27,7 +27,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
   def self.setup_external_facts
     # Add any per-module fact directories to the factpath
     module_external_fact_dirs = Puppet[:modulepath].split(File::PATH_SEPARATOR).collect do |d|
-        Dir.glob("#{d}/*/facts")
+        Dir.glob("#{d}/*/facts.d")
     end.flatten
     module_external_fact_dirs += Puppet[:pluginfactdest].split(File::PATH_SEPARATOR)
     module_external_fact_dirs.delete_if do |d| 
