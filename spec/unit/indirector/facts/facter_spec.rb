@@ -58,6 +58,15 @@ describe Puppet::Node::Facts::Facter do
       @facter.find(@request)
     end
 
+    it "should include external facts when feature is present" do
+      clear = sequence 'clear'
+      Puppet.features.stubs(:external_facts?).returns(:true)
+      Puppet::Node::Facts::Facter.expects(:setup_external_facts).in_sequence(clear)
+      Puppet::Node::Facts::Facter.expects(:reload_facter).in_sequence(clear)
+      Puppet::Node::Facts::Facter.expects(:load_fact_plugins).in_sequence(clear)
+      @facter.find(@request)
+    end
+
     it "should return a Facts instance" do
       @facter.find(@request).should be_instance_of(Puppet::Node::Facts)
     end
@@ -131,6 +140,13 @@ describe Puppet::Node::Facts::Facter do
     Puppet::Node::Facts::Facter.load_facts_in_dir("mydir")
   end
 
+  it "should include pluginfactdest when loading external facts" do
+    Puppet[:pluginfactdest] = "/plugin/dest"
+    File.stubs(:directory?).returns true
+    Facter::Util::Config.expects(:external_facts_dirs=).with(includes("/plugin/dest"))
+    Puppet::Node::Facts::Facter.setup_external_facts
+  end
+
   describe "when loading fact plugins from disk" do
     let(:one) { File.expand_path("one") }
     let(:two) { File.expand_path("two") }
@@ -159,6 +175,13 @@ describe Puppet::Node::Facts::Facter do
       Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("twoB")
 
       Puppet::Node::Facts::Facter.load_fact_plugins
+    end
+    it "should include module plugin facts when present" do
+      Puppet[:modulepath] = one
+      Dir.expects(:glob).with("#{one}/*/facts.d").returns("#{one}/mymodule/facts.d")
+      File.stubs(:directory?).returns true
+      Facter::Util::Config.expects(:external_facts_dirs=).with(includes("#{one}/mymodule/facts.d"))
+      Puppet::Node::Facts::Facter.setup_external_facts
     end
   end
 end
