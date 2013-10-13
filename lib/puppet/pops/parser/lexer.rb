@@ -326,7 +326,8 @@ class Puppet::Pops::Parser::Lexer
       context[:brace_count] -= 1
       [TOKENS[:RBRACE], value]
     else
-      lexer.tokenize_interpolated_string(DQ_continuation_token_types)
+    context[:brace_count] -= 1
+      lexer.tokenize_interpolated_string(lexer.continuation_types())
     end
   end
 
@@ -751,7 +752,7 @@ class Puppet::Pops::Parser::Lexer
 
   def slurp_dqstring
     last = @scanner.matched
-    if mode == :dqstring && lexing_context[:string_interpolation_depth] <= 1
+    if mode == :dqstring && lexing_context[:interpolation_stack].size <= 1
       pattern = SLURP_UQ_PATTERN
       escapes = (@options[:escapes] or UQ_ESCAPES)
       ignore = true
@@ -848,6 +849,9 @@ class Puppet::Pops::Parser::Lexer
 
     # Advanced after '{' if this is in expression ${} interpolation
     braced = terminator == '$' && @scanner.scan(/\{/)
+    if braced
+      lexing_context[:brace_count] += 1
+    end
     # make offset to end_ofset be the length of the pre expression string including its start and terminating chars
     lexing_context[:end_offset] = @scanner.pos
 
@@ -1035,7 +1039,7 @@ class Puppet::Pops::Parser::Lexer
   #
   def continuation_types
     context = lexing_context
-    cont_types = if mode() == :dqstring && context[:string_interpolation_depth] <= 1
+    cont_types = if mode() == :dqstring && context[:interpolation_stack].size <= 1
       UQ_continuation_token_types
     else
       DQ_continuation_token_types
