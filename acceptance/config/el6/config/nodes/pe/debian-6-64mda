@@ -1,0 +1,22 @@
+HOSTS:
+  debian-6-amd64:
+    roles:
+      - master
+      - dashboard
+      - database
+      - agent
+    platform: debian-6-amd64
+    template: Delivery/Quality Assurance/Templates/vCloud/debian-6-x86_64
+    hypervisor: vcloud
+  debian-6-amd64-agent:
+    roles:
+      - agent
+    platform: debian-6-amd64
+    template: Delivery/Quality Assurance/Templates/vCloud/debian-6-x86_64
+    hypervisor: vcloud
+CONFIG:
+  nfs_server: none
+  consoleport: 443
+  datastore: instance0
+  folder: Delivery/Quality Assurance/Enterprise/Dynamic
+  resourcepool: delivery/Quality Assurance/Enterprise/Dynamic

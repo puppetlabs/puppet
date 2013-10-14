@@ -1,7 +1,5 @@
 test_name "the $libdir setting hook is called on startup"
 
-
-
 require 'puppet/acceptance/temp_file_utils'
 
 extend Puppet::Acceptance::TempFileUtils
@@ -23,7 +21,6 @@ app_desc = "a simple %1$s for testing %1$s delivery via plugin sync"
 app_output = "Hello from the #{app_name} %s"
 
 master_module_file_content = {}
-
 
 master_module_face_content = <<-HERE
 Puppet::Face.define(:#{app_name}, '0.0.1') do
@@ -52,19 +49,17 @@ end
 
 HERE
 
-
-
-# this begin block is here for handling temp file cleanup via an "ensure" block at the very end of the
-# test.
+# this begin block is here for handling temp file cleanup via an "ensure" block
+# at the very end of the test.
 begin
 
-  # here we create a custom app, which basically doesn't do anything except for print a hello-world message
+  # here we create a custom app, which basically doesn't do anything except for
+  # print a hello-world message
   agent_module_face_file = "#{agent_lib_dir}/puppet/face/#{app_name}.rb"
   master_module_face_file = "#{master_module_dir}/#{app_name}/lib/puppet/face/#{app_name}.rb"
 
   agent_module_app_file = "#{agent_lib_dir}/puppet/application/#{app_name}.rb"
   master_module_app_file = "#{master_module_dir}/#{app_name}/lib/puppet/application/#{app_name}.rb"
-
 
   # copy all the files to the master
   step "write our simple module out to the master" do
@@ -82,9 +77,14 @@ begin
   end
 
   step "start the master" do
-    with_master_running_on(master,
-           "--modulepath=\"#{get_test_file_path(master, master_module_dir)}\" " +
-           "--autosign true") do
+    master_opts = {
+      'master' => {
+        'modulepath' => "#{get_test_file_path(master, master_module_dir)}",
+        'node_terminus' => 'plain',
+      }
+    }
+
+    with_puppet_running_on master, master_opts do
 
       # the module files shouldn't exist on the agent yet because they haven't been synced
       step "verify that the module files don't exist on the agent path" do
@@ -92,7 +92,7 @@ begin
             if test_file_exists?(agent, agent_module_app_file) then
               fail_test("app file already exists on agent: '#{get_test_file_path(agent, agent_module_app_file)}'")
             end
-            if test_file_exists?(agent, agent_module_app_file) then
+            if test_file_exists?(agent, agent_module_face_file) then
               fail_test("face file already exists on agent: '#{get_test_file_path(agent, agent_module_face_file)}'")
             end
         end
@@ -100,8 +100,15 @@ begin
 
       step "run the agent" do
         agents.each do |agent|
-          run_agent_on(agent, "--trace --vardir=\"#{get_test_file_path(agent, agent_var_dir)}\" " +
-                              "--no-daemonize --verbose --onetime --test --server #{master}")
+
+          step "capture the existing ssldir, in case the default package puppet.conf sets it within vardir (rhel...)"
+          agent_ssldir = on(agent, puppet('agent --configprint ssldir')).stdout.chomp
+
+          on(agent, puppet('agent',
+                           "--vardir=\"#{get_test_file_path(agent, agent_var_dir)}\" ",
+                           "--ssldir=\"#{agent_ssldir}\" ",
+                           "--trace  --test --server #{master}")
+          )
         end
       end
 
@@ -137,7 +144,7 @@ begin
 
   step "clear out the libdir on the agents in preparation for the next test" do
     agents.each do |agent|
-      on(agent, "rm -rf #{get_test_file_path(agent, agent_lib_dir)}/*")
+      on(agent, "rm -rf '#{get_test_file_path(agent, agent_lib_dir)}/*'")
     end
   end
 
