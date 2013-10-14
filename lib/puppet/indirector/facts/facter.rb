@@ -63,7 +63,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
   # Look a host's facts up in Facter.
   def find(request)
-    self.class.setup_external_facts
+    self.class.setup_external_facts if Puppet.features.external_facts?
     self.class.reload_facter
     self.class.load_fact_plugins
     result = Puppet::Node::Facts.new(request.key, Facter.to_hash)

@@ -42,10 +42,12 @@ Puppet::Face.define(:plugin, '0.0.1') do
                                          Puppet[:plugindest],
                                          Puppet[:pluginsource],
                                          Puppet[:pluginsignore]).evaluate
-      Puppet::Configurer::Downloader.new("pluginfacts",
-                                         Puppet[:pluginfactdest],
-                                         Puppet[:pluginfactsource],
-                                         Puppet[:pluginsignore]).evaluate
+      if Puppet.features.external_facts?
+          Puppet::Configurer::Downloader.new("pluginfacts",
+                                             Puppet[:pluginfactdest],
+                                             Puppet[:pluginfactsource],
+                                             Puppet[:pluginsignore]).evaluate
+      end
     end
 
     when_rendering :console do |value|
