@@ -1,0 +1,22 @@
+HOSTS:
+  oracle-5-x86_64:
+    roles:
+      - master
+      - dashboard
+      - database
+      - agent
+    platform: el-5-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/oracle-5-x86_64
+    hypervisor: vcloud
+  oracle-5-x86_64-agent:
+    roles:
+      - agent
+    platform: el-5-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/oracle-5-x86_64
+    hypervisor: vcloud
+CONFIG:
+  nfs_server: none
+  consoleport: 443
+  datastore: instance0
+  folder: Delivery/Quality Assurance/Enterprise/Dynamic
+  resourcepool: delivery/Quality Assurance/Enterprise/Dynamic

@@ -125,7 +125,7 @@ describe Puppet::Util::ADSI do
     it "should return an enumeration of IADsUser wrapped objects" do
       name = 'Administrator'
       wmi_users = [stub('WMI', :name => name)]
-      Puppet::Util::ADSI.expects(:execquery).with("select name from win32_useraccount").returns(wmi_users)
+      Puppet::Util::ADSI.expects(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(wmi_users)
 
       native_user = stub('IADsUser')
       homedir = "C:\\Users\\#{name}"
@@ -356,7 +356,7 @@ describe Puppet::Util::ADSI do
     it "should return an enumeration of IADsGroup wrapped objects" do
       name = 'Administrators'
       wmi_groups = [stub('WMI', :name => name)]
-      Puppet::Util::ADSI.expects(:execquery).with("select name from win32_group").returns(wmi_groups)
+      Puppet::Util::ADSI.expects(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns(wmi_groups)
 
       native_group = stub('IADsGroup')
       native_group.expects(:Members).returns([stub(:Name => 'Administrator')])

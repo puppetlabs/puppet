@@ -66,14 +66,3 @@ end
 task :spec do
   sh %{rspec spec}
 end
-
-namespace "ci" do
-  task :spec do
-    ENV["LOG_SPEC_ORDER"] = "true"
-    sh %{rspec -r yarjuf -f JUnit -o result.xml -fd spec}
-  end
-
-  task :el6tests do
-    sh "cd acceptance/config/el6; rm -f el6.tar.gz; tar -czvf el6.tar.gz *"
-  end
-end

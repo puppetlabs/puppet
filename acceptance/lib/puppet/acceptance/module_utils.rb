@@ -74,7 +74,7 @@ module Puppet
       # @param ending_hash [Hash] paths for found modules indexed
       #   by hostname. Taken in the teardown stage of a test.
       def rm_installed_modules_from_hosts (beginning_hash, ending_hash)
-        ending_hash.each do |host, mod_array|3
+        ending_hash.each do |host, mod_array|
           mod_array.each do |mod|
             if ! beginning_hash[host].include? mod
               on host, "rm -rf #{mod}"
@@ -143,11 +143,11 @@ module Puppet
       # @param module_name [String] the name portion of a module name
       def assert_module_installed_on_disk ( host, moduledir, module_name )
         # module directory should exist
-        on host, "[ -d #{moduledir}/#{module_name} ]"
+        on host, %Q{[ -d "#{moduledir}/#{module_name}" ]}
 
         owner = ''
         group = ''
-        on host, "ls -ld #{moduledir}" do
+        on host, %Q{ls -ld "#{moduledir}"} do
           listing = stdout.split(' ')
           owner = listing[2]
           group = listing[3]
@@ -157,7 +157,7 @@ module Puppet
         #     * a mode of 644 (755, if they're a directory)
         #     * owner == owner of moduledir
         #     * group == group of moduledir
-        on host, "ls -alR #{moduledir}/#{module_name}" do
+        on host, %Q{ls -alR "#{moduledir}/#{module_name}"} do
           listings = stdout.split("\n")
           listings = listings.grep(/^[bcdlsp-]/)
           listings = listings.reject { |l| l =~ /\.\.$/ }
@@ -175,7 +175,7 @@ module Puppet
       # @param moduledir [String] the path where the module should be
       # @param module_name [String] the name portion of a module name
       def assert_module_not_installed_on_disk ( host, moduledir, module_name )
-        on host, "[ ! -d #{moduledir}/#{module_name} ]"
+        on host, %Q{[ ! -d "#{moduledir}/#{module_name}" ]}
       end
 
     end

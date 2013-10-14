@@ -1,0 +1,19 @@
+HOSTS:
+  master:
+    roles:
+      - master
+      - agent
+    platform: ubuntu-precise-x86_64
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1204-x86_64
+  agent:
+    roles:
+      - agent
+    platform: ubuntu-precise-i386
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1204-i386
+CONFIG:
+  filecount: 12
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
