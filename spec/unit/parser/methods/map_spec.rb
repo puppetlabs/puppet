@@ -4,7 +4,7 @@ require 'puppet_spec/compiler'
 
 require 'unit/parser/methods/shared'
 
-describe 'the collect method' do
+describe 'the map method' do
   include PuppetSpec::Compiler
 
   before :each do
@@ -13,10 +13,10 @@ describe 'the collect method' do
 
   context "using future parser" do
     context "in Ruby style should be callable as" do
-      it 'collect on an array (multiplying each value by 2)' do
+      it 'map on an array (multiplying each value by 2)' do
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = [1,2,3]
-          $a.collect {|$x| $x*2}.each {|$v|
+          $a.map {|$x| $x*2}.each {|$v|
             file { "/file_$v": ensure => present }
           }
         MANIFEST
@@ -26,10 +26,10 @@ describe 'the collect method' do
         catalog.resource(:file, "/file_6")['ensure'].should == 'present'
       end
 
-      it 'collect on a hash selecting keys' do
+      it 'map on a hash selecting keys' do
         catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>1,'b'=>2,'c'=>3}
-        $a.collect {|$x| $x[0]}.each {|$k|
+        $a.map {|$x| $x[0]}.each {|$k|
             file { "/file_$k": ensure => present }
           }
         MANIFEST
@@ -42,7 +42,7 @@ describe 'the collect method' do
       it 'each on a hash selecting value' do
         catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>1,'b'=>2,'c'=>3}
-        $a.collect {|$x| $x[1]}.each {|$k| 
+        $a.map {|$x| $x[1]}.each {|$k|
             file { "/file_$k": ensure => present }
           }
         MANIFEST
@@ -54,10 +54,10 @@ describe 'the collect method' do
     end
 
     context "handles data type corner cases" do
-      it "collect gets values that are false" do
+      it "map gets values that are false" do
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = [false,false]
-          $a.collect |$x| { $x }.each |$i, $v| {
+          $a.map |$x| { $x }.each |$i, $v| {
             file { "/file_$i.$v": ensure => present }
           }
         MANIFEST
@@ -66,13 +66,13 @@ describe 'the collect method' do
         catalog.resource(:file, "/file_1.false")['ensure'].should == 'present'
       end
 
-      it "collect gets values that are nil" do
+      it "map gets values that are nil" do
         Puppet::Parser::Functions.newfunction(:nil_array, :type => :rvalue) do |args|
           [nil]
         end
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = nil_array()
-          $a.collect |$x| { $x }.each |$i, $v| {
+          $a.map |$x| { $x }.each |$i, $v| {
             file { "/file_$i.$v": ensure => present }
           }
         MANIFEST
@@ -80,10 +80,10 @@ describe 'the collect method' do
         catalog.resource(:file, "/file_0.")['ensure'].should == 'present'
       end
 
-      it "collect gets values that are undef" do
+      it "map gets values that are undef" do
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = [$does_not_exist]
-          $a.collect |$x = "something"| { $x }.each |$i, $v| {
+          $a.map |$x = "something"| { $x }.each |$i, $v| {
             file { "/file_$i.$v": ensure => present }
           }
         MANIFEST
@@ -94,10 +94,10 @@ describe 'the collect method' do
 
     context "in Java style should be callable as" do
       shared_examples_for 'java style' do
-        it 'collect on an array (multiplying each value by 2)' do
+        it 'map on an array (multiplying each value by 2)' do
           catalog = compile_to_catalog(<<-MANIFEST)
             $a = [1,2,3]
-            $a.collect |$x| #{farr}{ $x*2}.each |$v| #{farr}{ 
+            $a.map |$x| #{farr}{ $x*2}.each |$v| #{farr}{
               file { "/file_$v": ensure => present }
             }
           MANIFEST
@@ -107,10 +107,10 @@ describe 'the collect method' do
           catalog.resource(:file, "/file_6")['ensure'].should == 'present'
         end
 
-        it 'collect on a hash selecting keys' do
+        it 'map on a hash selecting keys' do
           catalog = compile_to_catalog(<<-MANIFEST)
           $a = {'a'=>1,'b'=>2,'c'=>3}
-          $a.collect |$x| #{farr}{ $x[0]}.each |$k| #{farr}{ 
+          $a.map |$x| #{farr}{ $x[0]}.each |$k| #{farr}{
               file { "/file_$k": ensure => present }
             }
           MANIFEST
@@ -123,7 +123,7 @@ describe 'the collect method' do
         it 'each on a hash selecting value' do
           catalog = compile_to_catalog(<<-MANIFEST)
           $a = {'a'=>1,'b'=>2,'c'=>3}
-          $a.collect |$x| #{farr} {$x[1]}.each |$k|#{farr}{ 
+          $a.map |$x| #{farr} {$x[1]}.each |$k|#{farr}{
               file { "/file_$k": ensure => present }
             }
           MANIFEST
@@ -148,6 +148,6 @@ describe 'the collect method' do
     end
   end
 
-  it_should_behave_like 'all iterative functions argument checks', 'collect'
-  it_should_behave_like 'all iterative functions hash handling', 'collect'
+  it_should_behave_like 'all iterative functions argument checks', 'map'
+  it_should_behave_like 'all iterative functions hash handling', 'map'
 end
