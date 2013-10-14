@@ -24,13 +24,21 @@ class Puppet::Pops::Parser::Locator
   # Constant set to true if multibyte is supported (includes multibyte extended regular expressions)
   MULTIBYTE = !!(LOCATOR_VERSION == :ruby19 || LOCATOR_VERSION == :ruby20)
 
-  def self.locator(string)
+  def self.locator(string, file)
     case LOCATOR_VERSION
     when :ruby20, :ruby19
-      Locator19.new(string)
+      Locator19.new(string, file)
     else
-      Locator18.new(string)
+      Locator18.new(string, file)
     end
+  end
+
+  # Returns the file name associated with the string content
+  def file
+  end
+
+  # Returns the string content
+  def string
   end
 
   # Returns the position on line (first position on a line is 1)
@@ -39,12 +47,6 @@ class Puppet::Pops::Parser::Locator
 
   # Returns the line number (first line is 1) for the given offset
   def line_for_offset(offset)
-  end
-
-  # Returns the position to use given a string scanner (the support for multibyte varies
-  # depending on Ruby version).
-  #
-  def scanner_pos(scanner)
   end
 
   # Returns the offset on line (first offset on a line is 0).
@@ -67,12 +69,15 @@ class Puppet::Pops::Parser::Locator
     attr_accessor :string
     attr_accessor :prev_offset
     attr_accessor :prev_line
+    attr_reader   :string
+    attr_reader   :file
 
     # Create a locator based on a content string, and a boolean indicating if ruby version support multi-byte strings
     # or not.
     #
-    def initialize(string)
+    def initialize(string, file)
       @string = string.freeze
+      @file = file.freeze
       @prev_offset = nil
       @prev_line = nil
       compute_line_index
@@ -201,5 +206,4 @@ class Puppet::Pops::Parser::Locator
       string.byteslice(offset, end_offset - offset).length
     end
   end
-
 end

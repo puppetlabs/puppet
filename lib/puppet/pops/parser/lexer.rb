@@ -400,7 +400,7 @@ class Puppet::Pops::Parser::Lexer
     @file = file
     contents = Puppet::FileSystem::File.exist?(file) ? File.read(file) : ""
     @scanner = StringScanner.new(contents.freeze)
-    @locator = Puppet::Pops::Parser::Locator.locator(contents)
+    @locator = Puppet::Pops::Parser::Locator.locator(contents, file)
   end
 
   def_delegator :@token_queue, :shift, :shift_token
@@ -731,9 +731,9 @@ class Puppet::Pops::Parser::Lexer
   end
 
   # just parse a string, not a whole file
-  def string=(string)
+  def string=(string, path='')
     @scanner = StringScanner.new(string.freeze)
-    @locator = Puppet::Pops::Parser::Locator.locator(string)
+    @locator = Puppet::Pops::Parser::Locator.locator(string, path)
   end
 
   def warn_if_variable_has_hyphen(var_name)
