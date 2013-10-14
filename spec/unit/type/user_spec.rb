@@ -339,16 +339,12 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  describe "when managing comment" do
-    # This is for Ruby >= 1.9
-    if String.respond_to?(:encode)
-      it "should force value encoding to ASCII-8BIT" do
-        value = 'abcd'.encode('UTF-8')
-        value.encoding.to_s.should == 'UTF-8'
-        comment = described_class.new(:name => 'foo', :comment => value)
-        comment[:comment].should == 'abcd'
-        comment[:comment].encoding.to_s.should == 'ASCII-8BIT'
-      end
+  describe "when managing comment on Ruby 1.9", :if => String.respond_to?(:encode) do
+    it "should force value encoding to ASCII-8BIT" do
+      value = 'abcd'.encode(Encoding::UTF_8)
+      comment = described_class.new(:name => 'foo', :comment => value)
+      comment[:comment].should == 'abcd'
+      comment[:comment].encoding.should == Encoding::ASCII_8BIT
     end
   end
 
