@@ -1,17 +1,19 @@
 confine :except, :platform => 'solaris'
 begin test_name "Auto lookup for class parameters"
 
+testdir = master.tmpdir('databinding')
+
 step "Setup"
 
 apply_manifest_on master, <<-PP
-file { '/etc/puppet/hieradata':
+file { '#{testdir}/hieradata':
   ensure  => directory,
   recurse => true,
   purge   => true,
   force   => true,
 }
 
-file { '/etc/puppet/hiera.yaml':
+file { '#{testdir}/hiera.yaml':
   ensure  => present,
   content => '---
     :backends:
@@ -24,19 +26,14 @@ file { '/etc/puppet/hiera.yaml':
       - "global"
 
     :yaml:
-      :datadir: "/etc/puppet/hieradata"
+      :datadir: "#{testdir}/hieradata"
   '
 }
 PP
 
-testdir = master.tmpdir('databinding')
 
-create_remote_file(master, "#{testdir}/puppet.conf", <<END)
-[main]
-  manifest   = "#{testdir}/site.pp"
-  modulepath = "#{testdir}/modules"
-END
-
+on master, "if [ -f #{master['puppetpath']}/hiera.yaml ]; then cp #{master['puppetpath']}/hiera.yaml #{master['puppetpath']}/hiera.yaml.bak; fi"
+on master, "cat #{testdir}/hiera.yaml > #{master['puppetpath']}/hiera.yaml"
 on master, "mkdir -p #{testdir}/modules/ssh/manifests"
 on master, "mkdir -p #{testdir}/modules/ntp/manifests"
 
@@ -61,13 +58,13 @@ class ssh::server($port, $usepam, $listenaddress) {
 }
 PP
 
-on master, "chown -R root:puppet #{testdir}"
+on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 
 step "Setup Hiera data"
 
 apply_manifest_on master, <<-PP
-file { '/etc/puppet/hieradata/global.yaml':
+file { '#{testdir}/hieradata/global.yaml':
   ensure  => present,
   content => "---
     'ssh::server::port': 22
@@ -79,27 +76,28 @@ PP
 
 step "Should lookup class paramters from Hiera"
 
-with_master_running_on(master, "--config #{testdir}/puppet.conf --debug --verbose --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
-  agents.each do |agent|
-    run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master}")
+master_opts = {
+  'master' => {
+    'manifest' => "#{testdir}/site.pp",
+    'modulepath' => "#{testdir}/modules",
+    'node_terminus'   => 'plain',
+  }
+}
 
-    assert_match("SSH server port: 22", stdout)
-    assert_match("SSH server UsePam: yes", stdout)
-    assert_match("SSH server ListenAddress: 0.0.0.0", stdout)
+with_puppet_running_on master, master_opts, testdir do
+  agents.each do |agent|
+    on(agent, puppet('agent', "-t --server #{master}"), :acceptable_exit_codes => [0,2]) do |res|
+
+      assert_match("SSH server port: 22", res.stdout)
+      assert_match("SSH server UsePam: yes", res.stdout)
+      assert_match("SSH server ListenAddress: 0.0.0.0", res.stdout)
+    end
   end
 end
 
 ensure step "Teardown"
-on master, "rm -rf #{testdir}"
-apply_manifest_on master, <<-PP
-file { '/etc/puppet/hieradata':
-  ensure  => directory,
-  recurse => true,
-  purge   => true,
-  force   => true,
-}
-file { '/etc/puppet/hiera.yaml':
-  ensure => absent,
-}
-PP
+  on master, "if [ -f #{master['puppetpath']}/hiera.yaml.bak ]; then " +
+               "cat #{master['puppetpath']}/hiera.yaml.bak > #{master['puppetpath']}/hiera.yaml; " +
+               "rm -rf #{master['puppetpath']}/hiera.yaml.bak; " +
+             "fi"
 end

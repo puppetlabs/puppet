@@ -1,0 +1,11 @@
+.vagrant
+local_options.rb
+pl-puppet-build.repo
+pl-puppet-repos.rpm
+repos.tar
+repo-configs
+log
+id_rsa-acceptance
+id_rsa-acceptance.pub
+preserved_config.yaml
+merged_options.rb

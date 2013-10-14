@@ -1,0 +1,28 @@
+HOSTS:
+  scientific-6-x86_64-master:
+    roles:
+      - master
+      - agent
+    platform: el-6-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/scientific-6-x86_64
+    hypervisor: vcloud
+  scientific-6-x86_64-dashboard:
+    roles:
+      - dashboard
+      - agent
+    platform: el-6-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/scientific-6-x86_64
+    hypervisor: vcloud
+  scientific-6-x86_64-database:
+    roles:
+      - database
+      - agent
+    platform: el-6-x86_64
+    template: Delivery/Quality Assurance/Templates/vCloud/scientific-6-x86_64
+    hypervisor: vcloud
+CONFIG:
+  nfs_server: none
+  consoleport: 443
+  datastore: instance0
+  folder: Delivery/Quality Assurance/Enterprise/Dynamic
+  resourcepool: delivery/Quality Assurance/Enterprise/Dynamic

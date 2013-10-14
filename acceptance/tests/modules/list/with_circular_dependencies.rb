@@ -1,19 +1,25 @@
 test_name "puppet module list (with circular dependencies)"
 
+teardown do
+  on master, "rm -rf #{master['distmoduledir']}/appleseed"
+  on master, "rm -rf #{master['sitemoduledir']}/crakorn"
+end
+
 step "Setup"
+
+on master, "mkdir -p #{master['distmoduledir']}"
+on master, "mkdir -p #{master['sitemoduledir']}"
+
 apply_manifest_on master, <<-PP
 file {
   [
-    '/etc/puppet/modules',
-    '/etc/puppet/modules/appleseed',
-    '/usr/share/puppet',
-    '/usr/share/puppet/modules',
-    '/usr/share/puppet/modules/crakorn',
+    '#{master['distmoduledir']}/appleseed',
+    '#{master['sitemoduledir']}/crakorn',
   ]: ensure => directory,
      recurse => true,
      purge => true,
      force => true;
-  '/usr/share/puppet/modules/crakorn/metadata.json':
+  '#{master['sitemoduledir']}/crakorn/metadata.json':
     content => '{
       "name": "jimmy/crakorn",
       "version": "0.4.0",
@@ -24,7 +30,7 @@ file {
         { "name": "jimmy/appleseed", "version_requirement": "1.1.0" }
       ]
     }';
-  '/etc/puppet/modules/appleseed/metadata.json':
+  '#{master['distmoduledir']}/appleseed/metadata.json':
     content => '{
       "name": "jimmy/appleseed",
       "version": "1.1.0",
@@ -37,33 +43,19 @@ file {
     }';
 }
 PP
-on master, '[ -d /etc/puppet/modules/appleseed ]'
-on master, '[ -d /usr/share/puppet/modules/crakorn ]'
-teardown do
-  on master, "rm -rf /etc/puppet/modules"
-  on master, "rm -rf /usr/share/puppet/modules"
-end
+on master, "[ -d #{master['distmoduledir']}/appleseed ]"
+on master, "[ -d #{master['sitemoduledir']}/crakorn ]"
 
 step "List the installed modules"
-on master, puppet('module list') do
+on master, puppet("module list") do
   assert_equal '', stderr
-  assert_equal <<-STDOUT, stdout
-/etc/puppet/modules
-└── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-/usr/share/puppet/modules
-└── jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
-STDOUT
+  assert_match /jimmy-crakorn/, stdout, 'Could not find jimmy crakorn'
+  assert_match /jimmy-appleseed/, stdout, 'Could not find jimmy appleseed, but then again... wasnt it johnny appleseed?'
 end
 
 step "List the installed modules as a dependency tree"
-on master, puppet('module list --tree') do
+on master, puppet("module list --tree") do
   assert_equal '', stderr
-  assert_equal <<-STDOUT, stdout
-/etc/puppet/modules
-└─┬ jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
-  └── jimmy-crakorn (\e[0;36mv0.4.0\e[0m) [/usr/share/puppet/modules]
-/usr/share/puppet/modules
-└─┬ jimmy-crakorn (\e[0;36mv0.4.0\e[0m)
-  └── jimmy-appleseed (\e[0;36mv1.1.0\e[0m) [/etc/puppet/modules]
-STDOUT
+  assert_match /jimmy-crakorn.*\[#{master['sitemoduledir']}\]/, stdout, 'Could not find jimmy crakorn'
+  assert_match /jimmy-appleseed.*\[#{master['distmoduledir']}\]/, stdout, 'Could not find jimmy appleseed, but then again... wasnt it johnny appleseed?'
 end

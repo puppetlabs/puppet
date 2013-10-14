@@ -1,8 +1,8 @@
 begin
   test_name "puppet module should not monkey patch puppet-module"
   step "Simulate the behavior of puppet-module"
-  puppet_module = <<-'PUPPET_MODULE'
-ruby -e '
+  puppet_module = <<-PUPPET_MODULE
+#{master['puppetbindir']}/ruby -e '
 module Puppet
   class Module
     module Tool
