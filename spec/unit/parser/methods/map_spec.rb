@@ -42,7 +42,7 @@ describe 'the map method' do
       it 'each on a hash selecting value' do
         catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>1,'b'=>2,'c'=>3}
-        $a.map {|$x| $x[1]}.each {|$k| 
+        $a.map {|$x| $x[1]}.each {|$k|
             file { "/file_$k": ensure => present }
           }
         MANIFEST
@@ -97,7 +97,7 @@ describe 'the map method' do
         it 'map on an array (multiplying each value by 2)' do
           catalog = compile_to_catalog(<<-MANIFEST)
             $a = [1,2,3]
-            $a.map |$x| #{farr}{ $x*2}.each |$v| #{farr}{ 
+            $a.map |$x| #{farr}{ $x*2}.each |$v| #{farr}{
               file { "/file_$v": ensure => present }
             }
           MANIFEST
@@ -110,7 +110,7 @@ describe 'the map method' do
         it 'map on a hash selecting keys' do
           catalog = compile_to_catalog(<<-MANIFEST)
           $a = {'a'=>1,'b'=>2,'c'=>3}
-          $a.map |$x| #{farr}{ $x[0]}.each |$k| #{farr}{ 
+          $a.map |$x| #{farr}{ $x[0]}.each |$k| #{farr}{
               file { "/file_$k": ensure => present }
             }
           MANIFEST
@@ -123,7 +123,7 @@ describe 'the map method' do
         it 'each on a hash selecting value' do
           catalog = compile_to_catalog(<<-MANIFEST)
           $a = {'a'=>1,'b'=>2,'c'=>3}
-          $a.map |$x| #{farr} {$x[1]}.each |$k|#{farr}{ 
+          $a.map |$x| #{farr} {$x[1]}.each |$k|#{farr}{
               file { "/file_$k": ensure => present }
             }
           MANIFEST
