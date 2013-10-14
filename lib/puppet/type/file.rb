@@ -34,6 +34,9 @@ Puppet::Type.newtype(:file) do
     file, the file resource will autorequire them. If Puppet is managing any
     parent directories of a file, the file resource will autorequire them."
 
+  feature :manages_symlinks,
+    "The provider can manage symbolic links."
+
   def self.title_patterns
     [ [ /^(.*?)\/*\Z/m, [ [ :path ] ] ] ]
   end

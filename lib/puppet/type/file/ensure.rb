@@ -77,7 +77,7 @@ module Puppet
     end
 
 
-    newvalue(:link, :event => :link_created) do
+    newvalue(:link, :event => :link_created, :required_features => :manages_symlinks) do
       fail "Cannot create a symlink without a target" unless property = resource.property(:target)
       property.retrieve
       property.mklink

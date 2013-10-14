@@ -204,7 +204,7 @@ describe Puppet::Type.type(:file) do
         end
       end
 
-      describe "for links", :unless => Puppet.features.microsoft_windows? do
+      describe "for links", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
         let(:link) { tmpfile('link_mode') }
 
         describe "when managing links" do
@@ -437,7 +437,7 @@ describe Puppet::Type.type(:file) do
       File.read(file[:path]).should == "bar\n"
     end
 
-    it "should not backup symlinks", :unless => Puppet.features.microsoft_windows? do
+    it "should not backup symlinks", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       link = tmpfile("link")
       dest1 = tmpfile("dest1")
       dest2 = tmpfile("dest2")
@@ -574,7 +574,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively make links to other files", :unless => Puppet.features.microsoft_windows? do
+    it "should be able to recursively make links to other files", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       source = tmpfile("file_link_integration_source")
 
       build_path(source)

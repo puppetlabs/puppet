@@ -184,8 +184,19 @@ describe Puppet::FileServing::Metadata do
           validate_json_for_file_metadata(metadata)
         end
       end
+    end
+  end
 
-      describe "when managing links", :unless => Puppet.features.microsoft_windows? do
+  shared_examples_for "metadata collector symlinks" do
+
+    let(:metadata) do
+      data = described_class.new(path)
+      data.collect
+      data
+    end
+
+    describe "when collecting attributes" do
+      describe "when managing links" do
         # 'path' is a link that points to 'target'
         let(:path) { tmpfile('file_serving_metadata_link') }
         let(:target) { tmpfile('file_serving_metadata_target') }
@@ -253,6 +264,7 @@ describe Puppet::FileServing::Metadata do
     end
 
     it_should_behave_like "metadata collector"
+    it_should_behave_like "metadata collector symlinks"
 
     def set_mode(mode, path)
       File.chmod(mode, path)
@@ -305,7 +317,7 @@ describe Puppet::FileServing::Metadata do
 end
 
 
-describe Puppet::FileServing::Metadata, " when pointing to a link", :unless => Puppet.features.microsoft_windows? do
+describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppet::Type.type(:file).defaultprovider.feature?(:manages_symlinks) do
   describe "when links are managed" do
     before do
       @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
