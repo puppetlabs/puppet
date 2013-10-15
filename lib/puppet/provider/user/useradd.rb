@@ -82,7 +82,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def shell=(value)
     check_valid_shell
-    set("shell", value.to_s)
+    set("shell", value)
   end
 
   verify :gid, "GID must be an integer" do |value|

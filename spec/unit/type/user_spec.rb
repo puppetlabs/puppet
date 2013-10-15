@@ -382,8 +382,7 @@ describe Puppet::Type.type(:user) do
       described_class.stubs(:defaultprovider).returns @shell_provider_class
     end
 
-    context 'with a provider that manages_shell' do
-      it "should call :check_valid_shell on the provider when changing shell" do
+      it "should call :check_valid_shell on the provider when changing shell value" do
         @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => :present)
         @provider.expects(:check_valid_shell)
         resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
@@ -394,7 +393,7 @@ describe Puppet::Type.type(:user) do
         catalog.apply
       end
 
-      it "should call :check_valid_shell on the provider when chaging from present to absent" do
+      it "should call :check_valid_shell on the provider when changing ensure from present to absent" do
         @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => :absent)
         @provider.expects(:check_valid_shell)
         resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
@@ -404,7 +403,6 @@ describe Puppet::Type.type(:user) do
         catalog.add_resource resource
         catalog.apply
       end
-    end
 
   end
 end

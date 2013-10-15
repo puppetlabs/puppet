@@ -174,12 +174,6 @@ module Puppet
 
         This attribute cannot be managed on Windows systems."
 
-      validate do |val|
-        if munge(val)
-          raise ArgumentError, "User provider #{provider.class.name} can not manage shell" if provider and not provider.class.manages_shell?
-        end
-      end
-
     end
 
     newproperty(:password, :required_features => :manages_passwords) do
