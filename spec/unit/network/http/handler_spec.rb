@@ -163,7 +163,6 @@ describe Puppet::Network::HTTP::Handler do
     it "should check the client certificate for upcoming expiration" do
       request = a_request
       cert = mock 'cert'
-      handler.stubs(:uri2indirection).returns(["facts", :mymethod, "key", {:node => "name"}])
       handler.expects(:client_cert).returns(cert).with(request)
       handler.expects(:warn_if_near_expiration).with(cert)
 
@@ -197,17 +196,6 @@ describe Puppet::Network::HTTP::Handler do
       handler.expects(:uri2indirection).with("mymethod", "mypath", { :params => "mine" }).returns stub("request", :method => :find)
 
       handler.stubs(:do_find)
-
-      handler.process(request, response)
-    end
-
-    it "should call the 'do' method and delegate authorization to the authorization layer" do
-      request = a_request
-      handler.expects(:uri2indirection).returns(["facts", :mymethod, "key", {:node => "name"}])
-
-      handler.expects(:do_mymethod).with("facts", "key", {:node => "name"}, request, response)
-
-      handler.expects(:check_authorization).with("facts", :mymethod, "key", {:node => "name"})
 
       handler.process(request, response)
     end
@@ -302,7 +290,7 @@ describe Puppet::Network::HTTP::Handler do
         handler.expects(:set_response).with(response, data.render(:pson))
         handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        handler.do_find(indirection.name, "my data", {}, request, response)
+        handler.do_find(indirection, "my data", {}, request, response)
       end
 
       it "responds with a 406 error when no accept header is provided" do
@@ -311,7 +299,7 @@ describe Puppet::Network::HTTP::Handler do
         request = a_request_that_finds(data, :accept_header => nil)
 
         expect do
-          handler.do_find(indirection.name, "my data", {}, request, response)
+          handler.do_find(indirection, "my data", {}, request, response)
         end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
       end
 
@@ -321,7 +309,7 @@ describe Puppet::Network::HTTP::Handler do
         request = a_request_that_finds(data, :accept_header => "unknown, also/unknown")
 
         expect do
-          handler.do_find(indirection.name, "my data", {}, request, response)
+          handler.do_find(indirection, "my data", {}, request, response)
         end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
       end
 
@@ -334,7 +322,7 @@ describe Puppet::Network::HTTP::Handler do
         handler.expects(:set_response).with(response, data_string)
         handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        handler.do_find(indirection.name, "my data", {}, request, response)
+        handler.do_find(indirection, "my data", {}, request, response)
       end
 
       it "should return a 404 when no model instance can be found" do
@@ -342,7 +330,7 @@ describe Puppet::Network::HTTP::Handler do
         request = a_request_that_finds(data, :accept_header => "unknown, pson, yaml")
 
         expect do
-          handler.do_find(indirection.name, "my data", {}, request, response)
+          handler.do_find(indirection, "my data", {}, request, response)
         end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotFoundError)
       end
     end
@@ -377,7 +365,7 @@ describe Puppet::Network::HTTP::Handler do
         handler.expects(:set_response).with(response, Puppet::TestModel.render_multiple(:pson, [data]))
         handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        handler.do_search(indirection.name, "my", {}, request, response)
+        handler.do_search(indirection, "my", {}, request, response)
       end
 
       it "should return [] when searching returns an empty array" do
@@ -386,7 +374,7 @@ describe Puppet::Network::HTTP::Handler do
         handler.expects(:set_response).with(response, Puppet::TestModel.render_multiple(:pson, []))
         handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        handler.do_search(indirection.name, "nothing", {}, request, response)
+        handler.do_search(indirection, "nothing", {}, request, response)
       end
 
       it "should return a 404 when searching returns nil" do
@@ -394,7 +382,7 @@ describe Puppet::Network::HTTP::Handler do
         indirection.expects(:search).returns(nil)
 
         expect do
-          handler.do_search(indirection.name, "nothing", {}, request, response)
+          handler.do_search(indirection, "nothing", {}, request, response)
         end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotFoundError)
       end
     end
@@ -405,7 +393,7 @@ describe Puppet::Network::HTTP::Handler do
         indirection.save(data, "my data")
         request = a_request_that_destroys(data)
 
-        handler.do_destroy(indirection.name, "my data", {}, request, response)
+        handler.do_destroy(indirection, "my data", {}, request, response)
 
         Puppet::TestModel.indirection.find("my data").should be_nil
       end
@@ -418,7 +406,7 @@ describe Puppet::Network::HTTP::Handler do
         handler.expects(:set_response).with(response, data.render(:yaml))
         handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:yaml))
 
-        handler.do_destroy(indirection.name, "my data", {}, request, response)
+        handler.do_destroy(indirection, "my data", {}, request, response)
       end
 
       it "uses the first supported format for the response" do
@@ -429,7 +417,7 @@ describe Puppet::Network::HTTP::Handler do
         handler.expects(:set_response).with(response, data.render(:pson))
         handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        handler.do_destroy(indirection.name, "my data", {}, request, response)
+        handler.do_destroy(indirection, "my data", {}, request, response)
       end
 
       it "raises an error and does not destory when no accepted formats are known" do
@@ -438,7 +426,7 @@ describe Puppet::Network::HTTP::Handler do
         request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
 
         expect do
-          handler.do_destroy(indirection.name, "my data", {}, request, response)
+          handler.do_destroy(indirection, "my data", {}, request, response)
         end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
 
         Puppet::TestModel.indirection.find("my data").should_not be_nil
@@ -460,7 +448,7 @@ describe Puppet::Network::HTTP::Handler do
         request[:content_type_header] = "application/x-raw"
         request[:body] = ''
 
-        handler.do_save(indirection.name, "test", {}, request, response)
+        handler.do_save(indirection, "test", {}, request, response)
 
         Puppet::TestModel.indirection.find("test").data.should == ''
       end
@@ -469,7 +457,7 @@ describe Puppet::Network::HTTP::Handler do
         data = Puppet::TestModel.new("my data", "some data")
         request = a_request_that_submits(data)
 
-        handler.do_save(indirection.name, "my data", {}, request, response)
+        handler.do_save(indirection, "my data", {}, request, response)
 
         Puppet::TestModel.indirection.find("my data").should == data
       end
@@ -481,7 +469,7 @@ describe Puppet::Network::HTTP::Handler do
         handler.expects(:set_response).with(response, data.render(:yaml))
         handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:yaml))
 
-        handler.do_save(indirection.name, "my data", {}, request, response)
+        handler.do_save(indirection, "my data", {}, request, response)
       end
 
       it "uses the first supported format for the response" do
@@ -491,7 +479,7 @@ describe Puppet::Network::HTTP::Handler do
         handler.expects(:set_response).with(response, data.render(:pson))
         handler.expects(:set_content_type).with(response, Puppet::Network::FormatHandler.format(:pson))
 
-        handler.do_save(indirection.name, "my data", {}, request, response)
+        handler.do_save(indirection, "my data", {}, request, response)
       end
 
       it "raises an error and does not save when no accepted formats are known" do
@@ -499,7 +487,7 @@ describe Puppet::Network::HTTP::Handler do
         request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
 
         expect do
-          handler.do_save(indirection.name, "my data", {}, request, response)
+          handler.do_save(indirection, "my data", {}, request, response)
         end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAcceptableError)
 
         Puppet::TestModel.indirection.find("my data").should be_nil
