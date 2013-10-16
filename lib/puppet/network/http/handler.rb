@@ -103,8 +103,6 @@ module Puppet::Network::HTTP::Handler
 
       send("do_#{method}", indirection, key, params, request, response)
     end
-  rescue SystemExit,NoMemoryError
-    raise
   rescue HTTPError => e
     return do_http_control_exception(response, e)
   rescue Exception => e
