@@ -63,8 +63,8 @@ describe Puppet::Network::FormatHandler do
       Puppet::Network::FormatHandler.most_suitable_format_for(accepted, [:one, :two])
     end
 
-    it "finds either format when anything is accepted" do
-      [format_one, format_two].should include(suitable_in_setup_formats(["*/*"]))
+    it "finds the most preferred format when anything is acceptable" do
+      Puppet::Network::FormatHandler.most_suitable_format_for(["*/*"], [:two, :one]).should == format_two
     end
 
     it "finds no format when none are acceptable" do
