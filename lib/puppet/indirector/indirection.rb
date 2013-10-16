@@ -180,6 +180,10 @@ class Puppet::Indirector::Indirection
     cache.save(request(:save, nil, instance, options))
   end
 
+  def allow_remote_requests?
+    terminus.allow_remote_requests?
+  end
+
   # Search for an instance in the appropriate terminus, caching the
   # results if caching is configured..
   def find(key, options={})

@@ -97,6 +97,10 @@ module Puppet::Network::HTTP::Handler
       indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
       raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
 
+      if !indirection.allow_remote_requests?
+        raise HTTPNotFoundError, "No handler for #{indirection.name}"
+      end
+
       send("do_#{method}", indirection, key, params, request, response)
     end
   rescue SystemExit,NoMemoryError

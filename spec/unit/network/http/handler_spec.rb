@@ -38,6 +38,9 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     class Puppet::TestModel::Memory < Puppet::Indirector::Memory
+      def supports_remote_requests?
+        true
+      end
     end
 
     Puppet::TestModel.indirection.terminus_class = :memory
@@ -150,9 +153,7 @@ describe Puppet::Network::HTTP::Handler do
 
   describe "when processing a request" do
     let(:response) do
-      obj = stub "http 200 ok"
-      obj.stubs(:[]=).with(Puppet::Network::HTTP::HEADER_PUPPET_VERSION, Puppet.version)
-      obj
+      { :status => 200 }
     end
 
     before do
@@ -213,9 +214,18 @@ describe Puppet::Network::HTTP::Handler do
       handler.process(request, response)
     end
 
-    it "should serialize a controller exception when an exception is thrown while finding the model instance" do
+    it "should return an error code if the indirection does not support remote requests" do
       request = a_request
-      handler.expects(:uri2indirection).returns(["facts", :find, "key", {:node => "name"}])
+
+      indirection.expects(:allow_remote_requests?).returns(false)
+
+      handler.process(request, response)
+
+      expect(response[:status]).to eq 404
+    end
+
+    it "should serialize a controller exception when an exception is thrown while finding the model instance" do
+      request = a_request_that_finds(Puppet::TestModel.new("key"))
 
       handler.expects(:do_find).raises(ArgumentError, "The exception")
       handler.expects(:set_response).with(anything, "The exception", 400)
@@ -531,7 +541,8 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     def set_response(response, body, status = 200)
-      "my_result"
+      response[:body] = body
+      response[:status] = status
     end
 
     def http_method(request)
