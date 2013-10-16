@@ -115,11 +115,11 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def check_valid_shell
-    unless File.exists?(@resource.should(:shell).to_s)
-      raise(Puppet::Error, "Shell #{@resource.should(:shell).to_s} must exist")
+    unless File.exists?(@resource.should(:shell))
+      raise(Puppet::Error, "Shell #{@resource.should(:shell)} must exist")
     end
     unless File.executable?(@resource.should(:shell).to_s)
-      raise(Puppet::Error, "Shell #{@resource.should(:shell).to_s} must be executable")
+      raise(Puppet::Error, "Shell #{@resource.should(:shell)} must be executable")
     end
   end
 
