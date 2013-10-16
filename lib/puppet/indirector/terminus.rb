@@ -140,6 +140,10 @@ class Puppet::Indirector::Terminus
     self.class.name
   end
 
+  def allow_remote_requests?
+    true
+  end
+
   def terminus_type
     self.class.terminus_type
   end

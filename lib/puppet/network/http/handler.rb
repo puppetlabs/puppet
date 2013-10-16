@@ -89,15 +89,20 @@ module Puppet::Network::HTTP::Handler
     configure_profiler(request_headers, request_params)
 
     Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
-      indirection, method, key, params = uri2indirection(request_method, request_path, request_params)
+      indirection_name, method, key, params = uri2indirection(request_method, request_path, request_params)
 
-      check_authorization(indirection, method, key, params)
+      check_authorization(indirection_name, method, key, params)
       warn_if_near_expiration(client_cert(request))
+
+      indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
+      raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
+
+      if !indirection.allow_remote_requests?
+        raise HTTPNotFoundError, "No handler for #{indirection.name}"
+      end
 
       send("do_#{method}", indirection, key, params, request, response)
     end
-  rescue SystemExit,NoMemoryError
-    raise
   rescue HTTPError => e
     return do_http_control_exception(response, e)
   rescue Exception => e
@@ -129,19 +134,13 @@ module Puppet::Network::HTTP::Handler
     set_response(response, exception.to_s, status)
   end
 
-  def model(indirection_name)
-    raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
-    indirection.model
-  end
-
   # Execute our find.
-  def do_find(indirection_name, key, params, request, response)
-    model_class = model(indirection_name)
-    unless result = model_class.indirection.find(key, params)
-      raise HTTPNotFoundError, "Could not find #{indirection_name} #{key}"
+  def do_find(indirection, key, params, request, response)
+    unless result = indirection.find(key, params)
+      raise HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
     end
 
-    format = accepted_response_formatter_for(model_class, request)
+    format = accepted_response_formatter_for(indirection.model, request)
     set_content_type(response, format)
 
     rendered_result = result
@@ -157,9 +156,9 @@ module Puppet::Network::HTTP::Handler
   end
 
   # Execute our head.
-  def do_head(indirection_name, key, params, request, response)
-    unless self.model(indirection_name).indirection.head(key, params)
-      raise HTTPNotFoundError, "Could not find #{indirection_name} #{key}"
+  def do_head(indirection, key, params, request, response)
+    unless indirection.head(key, params)
+      raise HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
     end
 
     # No need to set a response because no response is expected from a
@@ -167,38 +166,35 @@ module Puppet::Network::HTTP::Handler
   end
 
   # Execute our search.
-  def do_search(indirection_name, key, params, request, response)
-    model  = self.model(indirection_name)
-    result = model.indirection.search(key, params)
+  def do_search(indirection, key, params, request, response)
+    result = indirection.search(key, params)
 
     if result.nil?
-      raise HTTPNotFoundError, "Could not find instances in #{indirection_name} with '#{key}'"
+      raise HTTPNotFoundError, "Could not find instances in #{indirection.name} with '#{key}'"
     end
 
-    format = accepted_response_formatter_for(model, request)
+    format = accepted_response_formatter_for(indirection.model, request)
     set_content_type(response, format)
 
-    set_response(response, model.render_multiple(format, result))
+    set_response(response, indirection.model.render_multiple(format, result))
   end
 
   # Execute our destroy.
-  def do_destroy(indirection_name, key, params, request, response)
-    model_class = model(indirection_name)
-    formatter = accepted_response_formatter_or_yaml_for(model_class, request)
+  def do_destroy(indirection, key, params, request, response)
+    formatter = accepted_response_formatter_or_yaml_for(indirection.model, request)
 
-    result = model_class.indirection.destroy(key, params)
+    result = indirection.destroy(key, params)
 
     set_content_type(response, formatter)
     set_response(response, formatter.render(result))
   end
 
   # Execute our save.
-  def do_save(indirection_name, key, params, request, response)
-    model_class = model(indirection_name)
-    formatter = accepted_response_formatter_or_yaml_for(model_class, request)
-    sent_object = read_body_into_model(model_class, request)
+  def do_save(indirection, key, params, request, response)
+    formatter = accepted_response_formatter_or_yaml_for(indirection.model, request)
+    sent_object = read_body_into_model(indirection.model, request)
 
-    result = model_class.indirection.save(sent_object, key)
+    result = indirection.save(sent_object, key)
 
     set_content_type(response, formatter)
     set_response(response, formatter.render(result))
