@@ -295,7 +295,7 @@ You may skip rsyncing local puppet files over to the tests hosts by including SK
 Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
   EOS
   task :test_against_preserved_hosts do
-    config_number = ENV['CONFIG_NUMBER'] || 0
+    config_number = (ENV['CONFIG_NUMBER'] || 0).to_i
     preserved = list_preserved_configurations
     print_preserved(preserved)
     config_path = preserved[config_number][0]
