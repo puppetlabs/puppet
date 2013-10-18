@@ -48,6 +48,9 @@ describe Puppet::Node::Facts::Facter do
     Facter.stubs(:to_hash).returns({})
     @name = "me"
     @request = stub 'request', :key => @name
+    @environment = stub 'environment'
+    @request.stubs(:environment).returns(@environment)
+    @request.environment.stubs(:modules).returns([])
   end
 
   describe Puppet::Node::Facts::Facter, " when finding facts" do
@@ -144,7 +147,7 @@ describe Puppet::Node::Facts::Facter do
     Puppet[:pluginfactdest] = "/plugin/dest"
     File.stubs(:directory?).returns true
     Facter::Util::Config.expects(:external_facts_dirs=).with(includes("/plugin/dest"))
-    Puppet::Node::Facts::Facter.setup_external_facts
+    Puppet::Node::Facts::Facter.setup_external_facts(@request)
   end
 
   describe "when loading fact plugins from disk" do
@@ -177,11 +180,11 @@ describe Puppet::Node::Facts::Facter do
       Puppet::Node::Facts::Facter.load_fact_plugins
     end
     it "should include module plugin facts when present" do
-      Puppet[:modulepath] = one
-      Dir.expects(:glob).with("#{one}/*/facts.d").returns("#{one}/mymodule/facts.d")
+      mod = Puppet::Module.new("mymodule", "#{one}/mymodule", @request.environment)
+      @request.environment.stubs(:modules).returns([mod])
       File.stubs(:directory?).returns true
       Facter::Util::Config.expects(:external_facts_dirs=).with(includes("#{one}/mymodule/facts.d"))
-      Puppet::Node::Facts::Facter.setup_external_facts
+      Puppet::Node::Facts::Facter.setup_external_facts(@request)
     end
   end
 end
