@@ -15,7 +15,7 @@ platforms :ruby do
   gem 'pry', :group => :development
   gem 'yard', :group => :development
   gem 'redcarpet', '~> 2.0', :group => :development
-  gem "racc", "~> 1.4", :group => :development
+  gem "racc", "1.4.9", :group => :development
 end
 
 gem "puppet", :path => File.dirname(__FILE__), :require => false
