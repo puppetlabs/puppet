@@ -174,6 +174,10 @@ class Puppet::Module
     subpath("facts.d")
   end
 
+  def has_external_facts?
+    File.directory?(plugin_fact_directory)
+  end
+
   def supports(name, version = nil)
     @supports ||= []
     @supports << [name, version]
