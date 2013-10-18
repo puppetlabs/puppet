@@ -9,10 +9,6 @@ module Puppet::FileBucketFile
 
     desc "Store files in a directory set based on their checksums."
 
-    def initialize
-      Puppet.settings.use(:filebucket)
-    end
-
     def find( request )
       checksum, files_original_path = request_to_checksum_and_path( request )
       dir_path = path_for(request.options[:bucket_path], checksum)
