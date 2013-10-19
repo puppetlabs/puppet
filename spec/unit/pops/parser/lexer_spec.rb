@@ -1,15 +1,10 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'matchers/match_tokens'
 
 require 'puppet/pops'
 
-# This is a special matcher to match easily lexer output
-RSpec::Matchers.define :be_like do |*expected|
-  match do |actual|
-    diffable
-    expected.zip(actual).all? { |e,a| !e or a[0] == e or (e.is_a? Array and a[0] == e[0] and (a[1] == e[1] or (a[1].is_a?(Hash) and a[1][:value] == e[1]))) }
-  end
-end
+# used in token matches to indicate "ignore"
 __ = nil
 
 module EgrammarLexerSpec
@@ -603,7 +598,7 @@ describe Puppet::Pops::Parser::Lexer,"when lexing strings" do
     %q[{ "${a}" => 1 }] => [ :LBRACE, [:DQPRE,""], [:VARIABLE,"a"], [:DQPOST,""], :FARROW, [:NAME,"1"], :RBRACE ],
   }.each { |src,expected_result|
     it "should handle #{src} correctly" do
-      EgrammarLexerSpec.tokens_scanned_from(src).should be_like(*expected_result)
+      EgrammarLexerSpec.tokens_scanned_from(src).should match_tokens(*expected_result)
     end
   }
 end
@@ -633,7 +628,7 @@ describe Puppet::Pops::Parser::Lexer::TOKENS[:REGEX] do
 
   describe "when scanning" do
     it "should not consider escaped slashes to be the end of a regex" do
-      EgrammarLexerSpec.tokens_scanned_from("$x =~ /this \\/ foo/").should be_like(__,__,[:REGEX,%r{this / foo}])
+      EgrammarLexerSpec.tokens_scanned_from("$x =~ /this \\/ foo/").should match_tokens(__,__,[:REGEX,%r{this / foo}])
     end
 
     it "should not lex chained division as a regex" do
@@ -641,7 +636,7 @@ describe Puppet::Pops::Parser::Lexer::TOKENS[:REGEX] do
     end
 
     it "should accept a regular expression after NODE" do
-      EgrammarLexerSpec.tokens_scanned_from("node /www.*\.mysite\.org/").should be_like(__,[:REGEX,Regexp.new("www.*\.mysite\.org")])
+      EgrammarLexerSpec.tokens_scanned_from("node /www.*\.mysite\.org/").should match_tokens(__,[:REGEX,Regexp.new("www.*\.mysite\.org")])
     end
 
     it "should accept regular expressions in a CASE" do
@@ -650,7 +645,7 @@ describe Puppet::Pops::Parser::Lexer::TOKENS[:REGEX] do
         /regex/: {notice("this notably sucks")}
         }
       }
-      EgrammarLexerSpec.tokens_scanned_from(s).should be_like(
+      EgrammarLexerSpec.tokens_scanned_from(s).should match_tokens(
         :CASE,:VARIABLE,:LBRACE,:STRING,:COLON,:LBRACE,:VARIABLE,:EQUALS,:NAME,:DIV,:NAME,:RBRACE,[:REGEX,/regex/],:COLON,:LBRACE,:NAME,:LPAREN,:STRING,:RPAREN,:RBRACE,:RBRACE
       )
     end
@@ -665,7 +660,7 @@ describe Puppet::Pops::Parser::Lexer, "when lexing comments" do
   before { @lexer = Puppet::Pops::Parser::Lexer.new }
 
   it "should skip whitespace before lexing the next token after a non-token" do
-    EgrammarLexerSpec.tokens_scanned_from("/* 1\n\n */ \ntest").should be_like([:NAME, "test"])
+    EgrammarLexerSpec.tokens_scanned_from("/* 1\n\n */ \ntest").should match_tokens([:NAME, "test"])
   end
 end
 
@@ -679,7 +674,7 @@ describe "Puppet::Pops::Parser::Lexer in the old tests" do
       %q{simplest scanner test}   => [[:NAME,"simplest"],[:NAME,"scanner"],[:NAME,"test"]],
       %Q{returned scanner test\n} => [[:NAME,"returned"],[:NAME,"scanner"],[:NAME,"test"]]
     }.each { |source,expected|
-      EgrammarLexerSpec.tokens_scanned_from(source).should be_like(*expected)
+      EgrammarLexerSpec.tokens_scanned_from(source).should match_tokens(*expected)
     }
   end
 
@@ -692,24 +687,24 @@ describe "Puppet::Pops::Parser::Lexer in the old tests" do
   end
 
   it "should correctly identify keywords" do
-    EgrammarLexerSpec.tokens_scanned_from("case").should be_like([:CASE, "case"])
+    EgrammarLexerSpec.tokens_scanned_from("case").should match_tokens([:CASE, "case"])
   end
 
   it "should correctly parse class references" do
-    %w{Many Different Words A Word}.each { |t| EgrammarLexerSpec.tokens_scanned_from(t).should be_like([:CLASSREF,t])}
+    %w{Many Different Words A Word}.each { |t| EgrammarLexerSpec.tokens_scanned_from(t).should match_tokens([:CLASSREF,t])}
   end
 
   # #774
   it "should correctly parse namespaced class refernces token" do
-    %w{Foo ::Foo Foo::Bar ::Foo::Bar}.each { |t| EgrammarLexerSpec.tokens_scanned_from(t).should be_like([:CLASSREF, t]) }
+    %w{Foo ::Foo Foo::Bar ::Foo::Bar}.each { |t| EgrammarLexerSpec.tokens_scanned_from(t).should match_tokens([:CLASSREF, t]) }
   end
 
   it "should correctly parse names" do
-    %w{this is a bunch of names}.each { |t| EgrammarLexerSpec.tokens_scanned_from(t).should be_like([:NAME,t]) }
+    %w{this is a bunch of names}.each { |t| EgrammarLexerSpec.tokens_scanned_from(t).should match_tokens([:NAME,t]) }
   end
 
   it "should correctly parse names with numerals" do
-    %w{1name name1 11names names11}.each { |t| EgrammarLexerSpec.tokens_scanned_from(t).should be_like([:NAME,t]) }
+    %w{1name name1 11names names11}.each { |t| EgrammarLexerSpec.tokens_scanned_from(t).should match_tokens([:NAME,t]) }
   end
 
   it "should correctly parse empty strings" do
@@ -717,7 +712,7 @@ describe "Puppet::Pops::Parser::Lexer in the old tests" do
   end
 
   it "should correctly parse virtual resources" do
-    EgrammarLexerSpec.tokens_scanned_from("@type {").should be_like([:AT, "@"], [:NAME, "type"], [:LBRACE, "{"])
+    EgrammarLexerSpec.tokens_scanned_from("@type {").should match_tokens([:AT, "@"], [:NAME, "type"], [:LBRACE, "{"])
   end
 
   it "should correctly deal with namespaces" do
@@ -753,20 +748,20 @@ describe "Puppet::Pops::Parser::Lexer in the old tests" do
 
   it "should correctly lex variables" do
     ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable"].each do |string|
-      EgrammarLexerSpec.tokens_scanned_from(string).should be_like([:VARIABLE,string.sub(/^\$/,'')])
+      EgrammarLexerSpec.tokens_scanned_from(string).should match_tokens([:VARIABLE,string.sub(/^\$/,'')])
     end
   end
 
   it "should end variables at `-`" do
     EgrammarLexerSpec.tokens_scanned_from('$hyphenated-variable').
-      should be_like([:VARIABLE, "hyphenated"], [:MINUS, '-'], [:NAME, 'variable'])
+      should match_tokens([:VARIABLE, "hyphenated"], [:MINUS, '-'], [:NAME, 'variable'])
   end
 
   it "should not include whitespace in a variable" do
-    EgrammarLexerSpec.tokens_scanned_from("$foo bar").should_not be_like([:VARIABLE, "foo bar"])
+    EgrammarLexerSpec.tokens_scanned_from("$foo bar").should_not match_tokens([:VARIABLE, "foo bar"])
   end
   it "should not include excess colons in a variable" do
-    EgrammarLexerSpec.tokens_scanned_from("$foo::::bar").should_not be_like([:VARIABLE, "foo::::bar"])
+    EgrammarLexerSpec.tokens_scanned_from("$foo::::bar").should_not match_tokens([:VARIABLE, "foo::::bar"])
   end
 end
 
@@ -835,17 +830,17 @@ end
 
 describe "when lexing interpolation detailed positioning should be correct" do
   it "should correctly position a string without interpolation" do
-    EgrammarLexerSpec.tokens_scanned_from('"not interpolated"').should be_like(
+    EgrammarLexerSpec.tokens_scanned_from('"not interpolated"').should match_tokens(
       [:STRING, {:value=>"not interpolated", :line=>1, :offset=>0, :pos=>1, :length=>18}])
   end
 
   it "should correctly position a string with false start in interpolation" do
-    EgrammarLexerSpec.tokens_scanned_from('"not $$$ rpolated"').should be_like(
+    EgrammarLexerSpec.tokens_scanned_from('"not $$$ rpolated"').should match_tokens(
       [:STRING, {:value=>"not $$$ rpolated", :line=>1, :offset=>0, :pos=>1, :length=>18}])
   end
 
   it "should correctly position pre-mid-end interpolation " do
-    EgrammarLexerSpec.tokens_scanned_from('"pre $x mid $y end"').should be_like(
+    EgrammarLexerSpec.tokens_scanned_from('"pre $x mid $y end"').should match_tokens(
       [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>6}],
       [:VARIABLE, {:value=>"x", :line=>1, :offset=>6, :pos=>7, :length=>1}],
       [:DQMID,    {:value=>" mid ", :line=>1, :offset=>7, :pos=>8, :length=>6}],
@@ -855,7 +850,7 @@ describe "when lexing interpolation detailed positioning should be correct" do
   end
 
   it "should correctly position pre-mid-end interpolation using ${} " do
-    EgrammarLexerSpec.tokens_scanned_from('"pre ${x} mid ${y} end"').should be_like(
+    EgrammarLexerSpec.tokens_scanned_from('"pre ${x} mid ${y} end"').should match_tokens(
       [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
       [:VARIABLE, {:value=>"x", :line=>1, :offset=>7, :pos=>8, :length=>1}],
       [:DQMID,    {:value=>" mid ", :line=>1, :offset=>8, :pos=>9, :length=>8}],
@@ -865,7 +860,7 @@ describe "when lexing interpolation detailed positioning should be correct" do
   end
 
   it "should correctly position pre-end interpolation using ${} with f call" do
-    EgrammarLexerSpec.tokens_scanned_from('"pre ${x()} end"').should be_like(
+    EgrammarLexerSpec.tokens_scanned_from('"pre ${x()} end"').should match_tokens(
       [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
       [:NAME,     {:value=>"x",    :line=>1, :offset=>7, :pos=>8, :length=>1}],
       [:LPAREN,   {:value=>"(",    :line=>1, :offset=>8, :pos=>9, :length=>1}],
@@ -875,7 +870,7 @@ describe "when lexing interpolation detailed positioning should be correct" do
   end
 
   it "should correctly position pre-end interpolation using ${} with $x" do
-    EgrammarLexerSpec.tokens_scanned_from('"pre ${$x} end"').should be_like(
+    EgrammarLexerSpec.tokens_scanned_from('"pre ${$x} end"').should match_tokens(
       [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
       [:VARIABLE, {:value=>"x",    :line=>1, :offset=>7, :pos=>8, :length=>2}],
       [:DQPOST,   {:value=>" end", :line=>1, :offset=>9, :pos=>10, :length=>6}]
@@ -883,7 +878,7 @@ describe "when lexing interpolation detailed positioning should be correct" do
   end
 
   it "should correctly position pre-end interpolation across lines" do
-    EgrammarLexerSpec.tokens_scanned_from(%Q["pre ${\n$x} end"]).should be_like(
+    EgrammarLexerSpec.tokens_scanned_from(%Q["pre ${\n$x} end"]).should match_tokens(
       [:DQPRE,    {:value=>"pre ", :line=>1, :offset=>0, :pos=>1, :length=>7}],
       [:VARIABLE, {:value=>"x",    :line=>2, :offset=>8, :pos=>1, :length=>2}],
       [:DQPOST,   {:value=>" end", :line=>2, :offset=>10, :pos=>3, :length=>6}]
@@ -891,7 +886,7 @@ describe "when lexing interpolation detailed positioning should be correct" do
   end
 
   it "should correctly position interpolation across lines when strings have embedded newlines" do
-    EgrammarLexerSpec.tokens_scanned_from(%Q["pre \n\n${$x}\n mid$y"]).should be_like(
+    EgrammarLexerSpec.tokens_scanned_from(%Q["pre \n\n${$x}\n mid$y"]).should match_tokens(
       [:DQPRE,    {:value=>"pre \n\n", :line=>1, :offset=>0, :pos=>1, :length=>9}],
       [:VARIABLE, {:value=>"x",    :line=>3, :offset=>9, :pos=>3, :length=>2}],
       [:DQMID,   {:value=>"\n mid", :line=>3, :offset=>11, :pos=>5, :length=>7}],

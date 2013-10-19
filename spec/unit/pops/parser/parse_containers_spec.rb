@@ -1,9 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
-
-# relative to this spec file (./) does not work as this file is loaded by rspec
-require File.join(File.dirname(__FILE__), '/parser_rspec_helper')
+require 'puppet_spec/parser_rspec_helper'
 
 describe "egrammar parsing containers" do
   include ParserRspecHelper

@@ -1,9 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
-
-# relative to this spec file (./) does not work as this file is loaded by rspec
-require File.join(File.dirname(__FILE__), '/transformer_rspec_helper')
+require 'puppet_spec/transformer_rspec_helper'
 
 describe "transformation to Puppet AST for resource declarations" do
   include TransformerRspecHelper

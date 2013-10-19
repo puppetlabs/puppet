@@ -59,13 +59,17 @@ class Puppet::Pops::IssueReporter
         emitted += 1
         break if emitted >= max_errors
       end
-      warnings_message = (emit_warnings && warnings.size > 0) ? ", and #{warnings.size} warnings" : ""
+      warnings_message = (emit_warnings && warnings.size > 0) ? ", and #{warnings.size} #{pluralize('warning', warnings.size)}" : ""
       giving_up_message = "Found #{errors.size} errors#{warnings_message}. Giving up"
       exception = emit_exception.new(giving_up_message)
       exception.file = errors[0].file
       raise exception
     end
-    parse_result
+  end
+
+  def self.pluralize(word, count)
+    return word if count <= 1
+    word + 's'
   end
 
   def self.format_with_prefix(prefix, message)

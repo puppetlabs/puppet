@@ -15,6 +15,7 @@ token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
 token IN UNLESS PIPE
 token LAMBDA SELBRACE
+token HEREDOC
 token LOW
 
 prechigh
@@ -647,6 +648,7 @@ hash
 quotedtext
   : string
   | dq_string
+  | heredoc
 
 string          : STRING                 { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
 dq_string       : dqpre dqrval           { result = Factory.string(val[0], *val[1]) ; loc result, val[0], val[1][-1] }
@@ -659,6 +661,10 @@ text_expression : expression             { result = Factory.TEXT(val[0]) }
 dqtail
   : dqpost        { result = [val[0]] }
   | dqmid dqrval  { result = [val[0]] + val[1] }
+
+heredoc
+  : HEREDOC string    { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0], val[1] }
+  | HEREDOC dq_string { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0], val[1] }
 
 name     : NAME     { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }
 type     : CLASSREF { result = Factory.QREF(val[0][:value])  ; loc result, val[0] }

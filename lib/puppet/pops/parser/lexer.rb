@@ -19,6 +19,9 @@ class Puppet::Pops::Parser::Lexer
   attr_accessor :indefine
   alias :indefine? :indefine
 
+  # One of the modes :pp, :string, or :epp
+  attr_accessor :mode
+
   def lex_error msg
     raise Puppet::LexError.new(msg)
   end
@@ -221,6 +224,15 @@ class Puppet::Pops::Parser::Lexer
     VARIABLE_AND_DASHES_ALLOWED = Proc.new do |context|
       Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
     end
+
+    NEVER = Proc.new do |context|
+      false
+    end
+  end
+
+  TOKENS.add_token :HEREDOC, /@\(/ do |lexer, value|
+    lexer.heredoc
+    lexer.shift_token
   end
 
   # Numbers are treated separately from names, so that they may contain dots.
@@ -277,16 +289,19 @@ class Puppet::Pops::Parser::Lexer
   TOKENS.add_token :RETURN, "\n", :skip => true, :skip_text => true
 
   TOKENS.add_token :SQUOTE, "'" do |lexer, value|
-    [TOKENS[:STRING], lexer.slurpstring(value,["'"],:ignore_invalid_escapes).first ]
+    [TOKENS[:STRING], lexer.slurp_sqstring()]
   end
+
+  # Different interpolation rules are needed for Double- (DQ), and Un-quoted (UQ) strings
 
   DQ_initial_token_types      = {'$' => :DQPRE,'"' => :STRING}
   DQ_continuation_token_types = {'$' => :DQMID,'"' => :DQPOST}
+  UQ_initial_token_types      = {'$' => :DQPRE,'' => :STRING}
+  UQ_continuation_token_types = {'$' => :DQMID,'' => :DQPOST}
 
   TOKENS.add_token :DQUOTE, /"/ do |lexer, value|
     lexer.tokenize_interpolated_string(DQ_initial_token_types)
   end
-
 
   # LBRACE needs look ahead to differentiate between '{' and a '{'
   # followed by a '|' (start of lambda) The racc grammar can only do one
@@ -311,9 +326,19 @@ class Puppet::Pops::Parser::Lexer
       context[:brace_count] -= 1
       [TOKENS[:RBRACE], value]
     else
-      lexer.tokenize_interpolated_string(DQ_continuation_token_types)
+    context[:brace_count] -= 1
+      lexer.tokenize_interpolated_string(lexer.continuation_types())
     end
   end
+
+  # This token is used "automatically" when mode is :dqstring (lexing content
+  # that is a dq string but that is not surrounded by double quotes). See #find_token
+  # and #auto_token.
+  #
+  TOKENS.add_token :AUTO_DQUOTE, "<auto double quote>" do |lexer, value|
+    lexer.tokenize_interpolated_string(UQ_initial_token_types)
+  end
+  TOKENS[:AUTO_DQUOTE].acceptable_when Contextual::NEVER
 
   TOKENS.add_token :DOLLAR_VAR_WITH_DASH, %r{\$(?:::)?(?:[-\w]+::)*[-\w]+} do |lexer, value|
     lexer.warn_if_variable_has_hyphen(value)
@@ -406,8 +431,10 @@ class Puppet::Pops::Parser::Lexer
     TOKENS.lookup(name) or lex_error "Internal Lexer Error: Could not find expected token #{name}"
   end
 
-  # scan the whole file
-  # basically just used for testing
+  # Scans the entire contents and returns it as an array.
+  # This is used when lexer is used as a sublexer in heredoc processing with dq string semantics
+  # and for testing the lexer.
+  #
   def fullscan
     array = []
 
@@ -459,13 +486,39 @@ class Puppet::Pops::Parser::Lexer
     return best_token, @scanner.scan(best_token.regex) if best_token
   end
 
-  # Find the next token, returning the string and the token.
-  def find_token
-    shift_token || find_regex_token || find_string_token
+  # Produces an automatic implicit token at the start of lexing if a mode requires this.
+  # This is used when a lexer is used as a sublexer and is given the content of a double quoted string
+  # without the delimiting double quotes.
+  #
+  def auto_token
+    if mode == :dqstring && @scanner.pos == 0
+      [TOKENS[:AUTO_DQUOTE], '']
+    else
+      nil
+    end
   end
 
-  def initialize
+  # Find the next token, returning the string and the token.
+  def find_token
+    auto_token || shift_token || find_regex_token || find_string_token
+  end
+
+  # Sets the lexer's mode to one of :pp (the default), :dqstring (for unquoted dq string lexing), or :epp (for
+  # embedded puppet template).
+  # @returns [Puppet::Pops::Impl::Parser::Lexer] self
+  #
+  def mode=(lexer_mode)
+    unless [:pp, :dqstring, :epp].include?(lexer_mode)
+      raise Puppet::DevError.new("Illegal lexer mode: '#{lexer_mode}', must be one of :pp, :dqstring or :epp.")
+    end
+    @mode = lexer_mode
+    self
+  end
+
+  def initialize(options={})
     @multibyte = init_multibyte
+    @options = options
+    self.mode = (options[:mode] or :pp)
     initvars
   end
 
@@ -504,9 +557,13 @@ class Puppet::Pops::Parser::Lexer
 
     if multibyte?
       # Skip all kinds of space, and CR, but not newlines
-      @skip = %r{[[:blank:]\r]+}
+      @skip  = %r{[[:blank:]\r]+}
+      # Regexp string for all blanks (not including CR)
+      @blank = '[[:blank:]]'
     else
-      @skip = %r{[ \t\r]+}
+      @skip  = %r{[ \t\r]+}
+      # Regexp string for all blanks (not including CR)
+      @blank = '[ \t]'
     end
 
     @namestack = []
@@ -545,7 +602,6 @@ class Puppet::Pops::Parser::Lexer
     pos_hash = position_in_source
     pos_hash[:value] = value
 
-    # Add one to pos, first char on line is 1
     return token, pos_hash
   end
 
@@ -578,13 +634,18 @@ class Puppet::Pops::Parser::Lexer
   end
 
   def_delegator :@scanner, :rest
+
   # this is the heart of the lexer
   def scan
     #Puppet.debug("entering scan")
     lex_error "Internal Error: No string or file given to lexer to process." unless @scanner
 
-    # Skip any initial whitespace.
-    skip
+    # Skip any insignificant initial whitespace.
+    # When doing regular lexing, initial whitespace is always "between tokens" and is insignificant.
+    # When mode is :dqstring (when parsing heredoc text with dq string semantics) leading whitespace is significant.
+    # Avoiding this skip is essential as it takes place before a specific token rule gets a chance to veto skipping initial whitespace.
+    #
+    skip unless mode == :dqstring && @scanner.pos == 0
 
     until token_queue.empty? and @scanner.eos? do
       offset = @scanner.pos
@@ -595,6 +656,15 @@ class Puppet::Pops::Parser::Lexer
       lex_error "Could not match #{@scanner.rest[/^(\S+|\s+|.*)/]}" unless matched_token
 
       newline = matched_token.name == :RETURN
+
+      # Adjust if the just found newline has trailing heredoc text
+      if newline && lexing_context[:heredoc_cont]
+        # Adjust, since we reached the newline that has trailing heredoc that needs to be
+        # skipped
+        offset = end_offset = @scanner.pos = lexing_context[:heredoc_cont]
+        offset -= 1
+        lexing_context[:heredoc_cont] = nil
+      end
 
       lexing_context[:start_of_line] = newline
       lexing_context[:offset] = offset
@@ -664,22 +734,67 @@ class Puppet::Pops::Parser::Lexer
   # tokens that need it.
   def_delegator :@scanner, :scan_until
 
-  # we've encountered the start of a string...
-  # slurp in the rest of the string and return it
-  def slurpstring(terminators,escapes=%w{ \\  $ ' " r n t s }+["\n"],ignore_invalid_escapes=false)
-    # we search for the next quote that isn't preceded by a
-    # backslash; the caret is there to match empty strings
+  # Different slurp and escape patterns are needed for Single- (SQ), Double- (DQ), and Un-quoted (UQ) strings
+
+  SLURP_SQ_PATTERN = /(?:[^\\]|^|[^\\])(?:[\\]{2})*[']/
+  SLURP_DQ_PATTERN = /(?:[^\\]|^|[^\\])(?:[\\]{2})*(["$])/
+  SLURP_UQ_PATTERN = /(?:[^\\]|^|[^\\])(?:[\\]{2})*([$]|\z)/
+  SQ_ESCAPES = %w{ ' }
+  DQ_ESCAPES = %w{ \\  $ ' " r n t s }+["\r\n", "\n"]
+  UQ_ESCAPES = %w{ \\  $ r n t s }+["\r\n", "\n"]
+
+  # Slurps an sq string from @scanner (after it has seen opening sq). Returns the string with \' processed.
+  #
+  def slurp_sqstring
+    str = slurp(@scanner, SLURP_SQ_PATTERN, SQ_ESCAPES, :ignore_invalid_escapes) || lex_error(positioned_message("Unclosed quote after \"'\" followed by '#{followed_by}'"))
+    str[0..-2] # strip closing "'" from result
+  end
+
+  def slurp_dqstring
     last = @scanner.matched
-    str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
-    str.gsub!(/\\(.)/m) {
+    if mode == :dqstring && lexing_context[:interpolation_stack].size <= 1
+      pattern = SLURP_UQ_PATTERN
+      escapes = (@options[:escapes] or UQ_ESCAPES)
+      ignore = true
+    else
+      pattern = SLURP_DQ_PATTERN
+      escapes = DQ_ESCAPES
+      ignore = false
+    end
+    str = slurp(@scanner, pattern, escapes, ignore) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
+
+    # Special handling is required here to deal with strings that does not have a terminating character.
+    # This happens when the pattern given to slurpstring allows the string to end with \z (end of input) as is the case when
+    # lexing a heredoc text.
+    # The exceptional case is found by looking at the subgroup 1 of the most recent match made by the scanner (i.e. @scanner[1]).
+    # This is the last match made by the slurp method (having called scan_until on the scanner).
+    # If there is a terminating character is must be stripped and returned separately.
+    #
+    if @scanner[1] != ''
+      [str [0..-2], str[-1,1]] # strip closing terminating char from result, and return it
+    else
+      [str , ''] # there was no terminating token
+    end
+  end
+
+  # Slurps a string from the given scanner until the given pattern and then replaces any escaped
+  # characters given by escapes into their control-character equivalent or in case of line breaks, replaces the
+  # pattern \r?\n with an empty string.
+  # The returned string contains the terminating character. Returns nil if the scanner can not scan until the given
+  # pattern.
+  #
+  def slurp scanner, pattern, escapes, ignore_invalid_escapes
+    str = scanner.scan_until(pattern) || return
+    str.gsub!(/\\([^\r\n]|(?:\r?\n))/m) {
       ch = $1
       if escapes.include? ch
         case ch
-        when 'r'; "\r"
-        when 'n'; "\n"
-        when 't'; "\t"
-        when 's'; " "
-        when "\n"; ''
+        when 'r'   ; "\r"
+        when 'n'   ; "\n"
+        when 't'   ; "\t"
+        when 's'   ; " "
+        when "\n"  ; ''
+        when "\r\n"; ''
         else      ch
         end
       else
@@ -687,7 +802,18 @@ class Puppet::Pops::Parser::Lexer
         "\\#{ch}"
       end
     }
-    [ str[0..-2],str[-1,1] ]
+    str
+  end
+
+  # Slurps a string from the lexer's scanner with the possibility to define, terminators and escapes.
+  # @deprecated use the specialized slurp_sqstring, slurp_dqstring instead.
+  # @todo remove this when tests are no longer running against pre "future" parser
+  #
+  def slurpstring(terminators,escapes=%w{ \\  $ ' " r n t s }+["\n", "\r\n"],ignore_invalid_escapes=false)
+    last = @scanner.matched
+    pattern = /([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/
+    str = slurp(@scanner, pattern, escapes, ignore_invalid_escapes) || lex_error(positioned_message("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'"))
+    [str[0..-2], str[-1,1]]
   end
 
   # Formats given message by appending file, line and position if available.
@@ -719,10 +845,13 @@ class Puppet::Pops::Parser::Lexer
   def tokenize_interpolated_string(token_type,preamble='')
     # Expecting a (possibly empty) stretch of text terminated by end of string ", a variable $, or expression ${
     # The length of this part includes the start and terminating characters.
-    value,terminator = slurpstring('"$')
+    value,terminator = slurp_dqstring()
 
     # Advanced after '{' if this is in expression ${} interpolation
     braced = terminator == '$' && @scanner.scan(/\{/)
+    if braced
+      lexing_context[:brace_count] += 1
+    end
     # make offset to end_ofset be the length of the pre expression string including its start and terminating chars
     lexing_context[:end_offset] = @scanner.pos
 
@@ -744,13 +873,15 @@ class Puppet::Pops::Parser::Lexer
       # If the varname after ${ is followed by (, it is a function call, and not a variable
       # reference.
       #
-      if braced && @scanner.match?(%r{[ \t\r]*\(})
-        token_queue << [TOKENS[:NAME], position_in_source().merge!({:value=>var_name})]
+      emitted_token = if braced && @scanner.match?(/#{@blank}*\(/)
+        TOKENS[:NAME]
       else
-        token_queue << [TOKENS[:VARIABLE],position_in_source().merge!({:value=>var_name})]
+        TOKENS[:VARIABLE]
       end
+      token_queue << [emitted_token, position_in_source().merge!({:value=>var_name})]
+
       lexing_context[:offset] = @scanner.pos
-      tokenize_interpolated_string(DQ_continuation_token_types)
+      tokenize_interpolated_string(continuation_types())
     else
       tokenize_interpolated_string(token_type, replace_false_start_with_text(terminator))
     end
@@ -766,10 +897,170 @@ class Puppet::Pops::Parser::Lexer
     end
   end
 
-  # just parse a string, not a whole file
+  # Returns the pattern for the heredoc `@(endtag[:syntax][/escapes])` syntax (at position when the leading '@' has been seen)
+  # Produces groups for endtag (group 1), syntax (group 2), and escapes (group 3)
+  #
+  def heredoc_tagparts_pattern()
+    # Note: pattern needs access to @blank pattern
+    @heredoc_pattern_cache ||= %r{([^:/\r\n\)]+)(?::#{@blank}*([a-z][a-zA-Z0-9_+]+)#{@blank}*)?(?:/((?:\w|[$])*)#{@blank}*)?\)}
+    @heredoc_pattern_cache
+  end
+
+  def heredoc
+    # scanner is at position after opening @(
+    skip
+    # find end of the heredoc spec
+    str = @scanner.scan_until(/\)/) || lex_error(positioned_message("Unclosed parenthesis after '@(' followed by '#{followed_by}'"))
+    # Update where lexer is in terms of calculating position/offset/length
+    lexing_context[:end_offset] = @scanner.pos
+
+    # Note: allows '+' as separator in syntax, but this needs validation as empty segments are not allowed
+    unless md = str.match(heredoc_tagparts_pattern())
+      lex_error(positioned_message("Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])"))
+    end
+    endtag = md[1]
+    syntax = md[2] || ''
+    escapes = md[3]
+
+    endtag.strip!
+
+    # Is this a dq string style heredoc? (endtag enclosed in "")
+    if endtag =~ /^"(.*)"$/
+      dqstring_style = true
+      endtag = $1.strip
+    end
+
+    unless endtag.length >= 1
+      lex_error(positioned_message("Missing endtag in heredoc"))
+    end
+
+    resulting_escapes = []
+    if escapes
+      escapes = "trnsL$" if escapes.length < 1
+
+      escapes = escapes.split('')
+      lex_error(positioned_message("An escape char for @() may only appear once. Got '#{escapes.join(', ')}")) unless escapes.length == escapes.uniq.length
+      resulting_escapes = ["\\"]
+      escapes.each do |e|
+        case e
+        when "t", "r", "n", "s", "$"
+          resulting_escapes << e
+        when "L"
+          resulting_escapes += ["\n", "\r\n"]
+        else
+          lex_error(positioned_message("Invalid heredoc escape char. Only t, r, n, s, L, $ allowed. Got '#{e}'")) 
+        end
+      end
+    end
+
+    # Produce a heredoc token to make the syntax available to the grammar
+    token_queue << [TOKENS[:HEREDOC], position_in_source().merge!({:value =>syntax})]
+
+    # If this is the second or subsequent heredoc on the line, the lexing context's :heredoc_cont contains
+    # the position after the \n where the next heredoc text should scan. If not set, this is the first
+    # and it should start scanning after the first found \n (or if not found == error).
+    pos_after_heredoc = @scanner.pos # where to continue
+    if lexing_context[:heredoc_cont]
+      @scanner.pos = lexing_context[:heredoc_cont]
+    else
+      @scanner.scan_until(/\n/) || lex_error(positioned_message("Heredoc without any following lines of text"))
+    end
+    # offset 0 for the heredoc, and its line number
+    heredoc_offset = @scanner.pos
+    heredoc_line = @locator.line_for_offset(heredoc_offset)-1
+
+    # Compute message to emit if there is no end (to make it refer to the opening heredoc position).
+    eof_message = positioned_message("Heredoc without end-tagged line")
+
+    # Text from this position (+ lexing contexts offset for any preceding heredoc) is heredoc until a line
+    # that terminates the heredoc is found.
+
+    # (Endline in EBNF form): WS* ('|' WS*)? ('-' WS*)? endtag WS* \r? (\n|$)
+    endline_pattern = /(#{@blank}*)(?:([|])#{@blank}*)?(?:(\-)#{@blank}*)?#{Regexp.escape(endtag)}#{@blank}*\r?(?:\n|\z)/
+    lines = []
+    while !@scanner.eos? do
+      one_line = @scanner.scan_until(/(?:\n|\z)/) || lex_error(eof_message)
+      if md = one_line.match(endline_pattern)
+        leading      = md[1]
+        has_margin   = md[2] == '|'
+        remove_break = md[3] == '-'
+
+        # Record position where next heredoc (from same line as current @()) should start scanning for content
+        lexing_context[:heredoc_cont] = @scanner.pos
+
+        # Process captured lines - remove leading, and trailing newline
+        str = heredoc_text(lines, leading, has_margin, remove_break)
+        if dqstring_style
+          # if the style is dqstring a new lexer instance is needed, it is configured
+          # with offsets to make it report errors correctly and it is given the escapes to use
+          sublexer = self.class.new({:mode => :dqstring, :escapes => resulting_escapes})
+          sublexer.lex_string(str, @file, heredoc_line, heredoc_offset, leading.length())
+          sublexer.fullscan[0..-2].each {|token| token_queue << [TOKENS[token[0]], token[1]] }
+        elsif resulting_escapes.length > 0
+          # this is only needed to process escapes, if there are none the string can be used as is...
+          subscanner = StringScanner.new(str)
+          str = slurp subscanner, /\z/, resulting_escapes, :ignore_invalid_escapes
+          token_queue << munge_token(TOKENS[:STRING], str)
+        else
+          # use string as is
+          token_queue << munge_token(TOKENS[:STRING], str)
+        end
+
+        # Continue scan after @(...)
+        @scanner.pos = pos_after_heredoc
+        return
+      else
+        lines << one_line
+      end
+    end
+    lex_error(eof_message)
+  end
+
+  # Produces the heredoc text string given the individual (unprocessed) lines as an array.
+  # @param lines [Array<String>] unprocessed lines of text in the heredoc w/o terminating line
+  # @param leading [String] the leading text up (up to pipe or other terminating char)
+  # @param has_margin [Boolean] if the left margin should be adjusted as indicated by `leading`
+  # @param remove_break [Boolean] if the line break (\r?\n) at the end of the last line should be removed or not
+  #
+  def heredoc_text lines, leading, has_margin, remove_break
+    if has_margin
+      leading_pattern = /^#{Regexp.escape(leading)}/
+      lines = lines.collect {|s| s.gsub(leading_pattern, '') }
+    end
+    result = lines.join('')
+    result.gsub!(/\r?\n$/, '') if remove_break
+    result
+  end
+
+  # Returns continuation types (tokens that apply depending on how an interpolation scan ends) depending on mode.
+  # If mode is "unquoted dqstring" (as used in Heredoc) and scan is for the outermost level (interpolation
+  # depth <= 1), then the continuation types are based on a regular expression UQ_continuation_types that
+  # matches the end of input without an error and an end token of ''), otherwise the normal continuation types.
+  #
+  def continuation_types
+    context = lexing_context
+    cont_types = if mode() == :dqstring && context[:interpolation_stack].size <= 1
+      UQ_continuation_token_types
+    else
+      DQ_continuation_token_types
+    end
+  end
+
+  # Performs lexing of a string.
+  # @deprecated Use #lex_string instead to enable setting the file origin and offsets.
+  #
   def string=(string)
+    lex_string(string)
+  end
+
+  # Performs lexing of a string with options controlling its origin.
+  # The given file is used for information about the origin of the string. 
+  #
+  def lex_string(string, file=nil, leading_line_count=0, leading_offset = 0, leading_line_offset = 0)
+    # Set file for information purposes only
+    @file = file
     @scanner = StringScanner.new(string)
-    @locator = Locator.new(string, multibyte?)
+    @locator = Locator.new(string, multibyte?, leading_line_count, leading_offset, leading_line_offset)
   end
 
   def warn_if_variable_has_hyphen(var_name)
@@ -788,18 +1079,34 @@ class Puppet::Pops::Parser::Lexer
   end
 
   # Helper class that keeps track of where line breaks are located and can answer questions about positions.
+  # A Locator can be configured to produce absolute positions from relative.
   #
   class Locator
+    # Index of offset per line
     attr_reader :line_index
+
+    # The string being scanned (used to compute multibyte positions/offsets)
     attr_reader :string
+
+    # The number of lines preceding the first line
+    attr_reader :leading_line_count
+
+    # The offset of offset 0
+    attr_reader :leading_offset
+
+    # The amount of offset to add to each line (i.e. the removed left margin in some container)
+    attr_accessor :leading_line_offset
 
     # Create a locator based on a content string, and a boolean indicating if ruby version support multi-byte strings
     # or not.
     #
-    def initialize(string, multibyte)
+    def initialize(string, multibyte, leading_line_count=0, leading_offset = 0, leading_line_offset=0)
       @string = string
       @multibyte = multibyte
       compute_line_index
+      @leading_line_count = leading_line_count
+      @leading_offset = leading_offset
+      @leading_line_offset = leading_line_offset
     end
 
     # Returns whether this a ruby version that supports multi-byte strings or not
@@ -822,20 +1129,21 @@ class Puppet::Pops::Parser::Lexer
     # Returns the line number (first line is 1) for the given offset
     def line_for_offset(offset)
       if line_nbr = line_index.index {|x| x > offset}
-        return line_nbr
+        return line_nbr + leading_line_count
       end
       # If not found it is after last
-      return line_index.size
+      return line_index.size + leading_line_count
     end
 
     # Returns the offset on line (first offset on a line is 0).
     #
     def offset_on_line(offset)
-      line_offset = line_index[line_for_offset(offset)-1]
+      effective_line = line_for_offset(offset) - leading_line_count
+      line_offset = line_index[effective_line-1]
       if multibyte?
-        @string.byteslice(line_offset, offset-line_offset).length
+        @string.byteslice(line_offset, offset-line_offset).length + leading_line_offset
       else
-        offset - line_offset
+        offset - line_offset + leading_line_offset
       end
     end
 
@@ -846,10 +1154,12 @@ class Puppet::Pops::Parser::Lexer
 
     # Returns the character offset for a given byte offset
     def char_offset(byte_offset)
+      effective_line = line_for_offset(byte_offset) - leading_line_count
+      line_offset = line_index[effective_line-1]
       if multibyte?
-        @string.byteslice(0, byte_offset).length
+        @string.byteslice(0, byte_offset).length + (effective_line * leading_line_offset) + leading_offset
       else
-        byte_offset
+        byte_offset + (effective_line * leading_line_offset) + leading_offset
       end
     end
 
