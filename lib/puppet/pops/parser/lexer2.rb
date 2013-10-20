@@ -12,7 +12,7 @@ require 'puppet/pops/parser/interpolation_support'
 require 'puppet/pops/parser/epp_support'
 require 'puppet/pops/parser/slurp_support'
 
-class Lexer2
+class Puppet::Pops::Parser::Lexer2
   include Puppet::Pops::Parser::LexerSupport
   include Puppet::Pops::Parser::HeredocSupport
   include Puppet::Pops::Parser::InterpolationSupport

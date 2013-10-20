@@ -840,10 +840,10 @@ describe "when lexing interpolation detailed positioning should be correct" do
 end
 
 describe "when benchmarked" do
-  it "should not take longer than x sec", :profile => true do
-    lexer = Puppet::Pops::Parser::Lexer.new
-#    code = 'if true { 10 + 10 } else { "interpolate ${foo} andn stuff" }'
-    code = 'if true \n{\n 10 + 10\n }\n else\n {\n "interpolate ${foo} andn stuff"\n }\n'
-  puts Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
-  end
+#  it "should not take longer than x sec", :profile => true do
+#    lexer = Puppet::Pops::Parser::Lexer.new
+##    code = 'if true { 10 + 10 } else { "interpolate ${foo} andn stuff" }'
+#    code = 'if true \n{\n 10 + 10\n }\n else\n {\n "interpolate ${foo} andn stuff"\n }\n'
+#  puts Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
+#  end
 end

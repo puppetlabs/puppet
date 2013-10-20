@@ -5,13 +5,13 @@ require 'puppet/pops/parser/lexer2'
 
 module EgrammarLexer2Spec
   def tokens_scanned_from(s)
-    lexer = Lexer2.new
+    lexer = Puppet::Pops::Parser::Lexer2.new
     lexer.string = s
     tokens = lexer.fullscan[0..-2]
   end
 
   def epp_tokens_scanned_from(s)
-    lexer = Lexer2.new
+    lexer = Puppet::Pops::Parser::Lexer2.new
     lexer.string = s
     tokens = lexer.fullscan_epp[0..-2]
   end
