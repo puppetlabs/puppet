@@ -417,8 +417,8 @@ class Puppet::Pops::Model::Factory
     end
   end
 
-  def respond_to?(meth)
-    current.respond_to?(meth) || super
+  def respond_to?(meth, include_all=false)
+    current.respond_to?(meth, include_all) || super
   end
 
   # Records the position (start -> end) and computes the resulting length.
