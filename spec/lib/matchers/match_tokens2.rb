@@ -24,7 +24,7 @@ RSpec::Matchers.define :match_tokens2 do | *expected |
         zipped_actual = zipped[idx][1]
 
         prefix = compare(zipped_expected, zipped_actual) ? ' ' : '*'
-        msg2 = ["#{prefix}["]
+        msg2 = ["#{prefix}[:"]
         msg2 << e[0].to_s
         msg2 << ', '
         if e[1] == false
