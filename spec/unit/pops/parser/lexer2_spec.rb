@@ -9,6 +9,12 @@ module EgrammarLexer2Spec
     lexer.string = s
     tokens = lexer.fullscan[0..-2]
   end
+
+  def epp_tokens_scanned_from(s)
+    lexer = Lexer2.new
+    lexer.string = s
+    tokens = lexer.fullscan_epp[0..-2]
+  end
 end
 
 describe 'Lexer2' do
@@ -275,16 +281,92 @@ describe 'Lexer2' do
     end
   end
 
+  context 'when lexing epp' do
+    it 'epp can contain just text' do
+      code = <<-CODE
+      This is just text
+      CODE
+      epp_tokens_scanned_from(code).should match_tokens2([:RENDER_STRING, "      This is just text\n"])
+    end
+
+    it 'epp can contain text with interpolated rendered expressions' do
+      code = <<-CODE
+      This is <%= $x %> just text
+      CODE
+      epp_tokens_scanned_from(code).should match_tokens2(
+      [:RENDER_STRING, "      This is "],
+      [:RENDER_EXPR, nil],
+      [:VARIABLE, "$x"],
+      [:RENDER_STRING, " just text\n"]
+      )
+    end
+
+    it 'epp can contain text with expressions that are not rendered' do
+      code = <<-CODE
+      This is <% $x=10 %> just text
+      CODE
+      epp_tokens_scanned_from(code).should match_tokens2(
+      [:RENDER_STRING, "      This is "],
+      [:VARIABLE, "$x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, " just text\n"]
+      )
+    end
+
+    it 'epp can skip leading space in tail text' do
+      code = <<-CODE
+      This is <% $x=10 -%>
+      just text
+      CODE
+      epp_tokens_scanned_from(code).should match_tokens2(
+      [:RENDER_STRING, "      This is "],
+      [:VARIABLE, "$x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "just text\n"]
+      )
+    end
+
+    it 'epp can skip comments' do
+      code = <<-CODE
+      This is <% $x=10 -%>
+      <%# This is an epp comment -%>
+      just text
+      CODE
+      epp_tokens_scanned_from(code).should match_tokens2(
+      [:RENDER_STRING, "      This is "],
+      [:VARIABLE, "$x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "just text\n"]
+      )
+    end
+
+    it 'epp can escape epp tags' do
+      code = <<-CODE
+      This is <% $x=10 -%>
+      <%% this is escaped epp %%>
+      CODE
+      epp_tokens_scanned_from(code).should match_tokens2(
+      [:RENDER_STRING, "      This is "],
+      [:VARIABLE, "$x"],
+      :EQUALS,
+      [:NUMBER, "10"],
+      [:RENDER_STRING, "<% this is escaped epp %>\n"]
+      )
+    end
+  end
 end
 
 describe "when benchmarked" do
 
-  it "Lexer 2", :profile => true do
-    lexer = Lexer2.new
-    code = 'if true \n{\n 10 + 10\n }\n else\n {\n "interpolate ${foo} and stuff"\n }\n'
-     m = Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
-     puts "Lexer2: #{m}"
-  end
+#  it "Lexer 2", :profile => true do
+#    lexer = Lexer2.new
+#    code = 'if true \n{\n 10 + 10\n }\n else\n {\n "interpolate ${foo} and stuff"\n }\n'
+#     m = Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
+#     puts "Lexer2: #{m}"
+#  end
 
 #  it "Pops Optimized", :profile => true do
 #    lexer = Puppet::Pops::Parser::Lexer.new

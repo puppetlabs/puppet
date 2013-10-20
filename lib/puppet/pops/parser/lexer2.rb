@@ -1,8 +1,6 @@
-# A sample small lexer to try performance of ruby
-# This lexer looks like what a "lex" like tool would output, but it is handwritten
-
-# TODO: template support
-
+# The Lexer is responsbile for turning source text into tokens.
+# This version is a performance enhanced lexer (in comparison to the 3.x and earlier "future parser" lexer.
+# 
 # Old returns tokens [:KEY, value, { locator = }
 # Could return [[token], locator]
 # or Token.new([token], locator) with the same API x[0] = token_symbol, x[1] = self, x[:key] = (:value, :file, :line, :pos) etc
@@ -11,6 +9,7 @@ require 'strscan'
 require 'puppet/pops/parser/lexer_support'
 require 'puppet/pops/parser/heredoc_support'
 require 'puppet/pops/parser/interpolation_support'
+require 'puppet/pops/parser/epp_support'
 require 'puppet/pops/parser/slurp_support'
 
 class Lexer2
@@ -18,11 +17,13 @@ class Lexer2
   include Puppet::Pops::Parser::HeredocSupport
   include Puppet::Pops::Parser::InterpolationSupport
   include Puppet::Pops::Parser::SlurpSupport
+  include Puppet::Pops::Parser::EppSupport
 
-  # ALl tokens ahve three slots, the token name (a Symbol), the token text (String), and a token text length.
+  # ALl tokens have three slots, the token name (a Symbol), the token text (String), and a token text length.
   # All operator and punctuation tokens reuse singleton arrays Tokens that require unique values create
   # a unique array per token.
-  # PEFORMANCE NOTES: 
+  #
+  # PEFORMANCE NOTES:
   # This construct reduces the amount of object that needs to be created for operators and punctuation.
   # The length is pre-calculated for all singleton tokens. The length is used both to signal the length of
   # the token, and to advance the scanner position (without having to advance it with a scan(regexp)).
@@ -92,6 +93,12 @@ class Lexer2
   TOKEN_VARIABLE       =  [:VARIABLE, nil,        1].freeze
   TOKEN_VARIABLE_EMPTY =  [:VARIABLE, ''.freeze,  1].freeze
 
+  # Tokens that start HEREDOC and EPP, both have syntax as an argument.
+  # These tokens are always unique to what has been lexed.
+  #
+  TOKEN_HEREDOC        =  [:HEREDOC, nil, 0].freeze
+  TOKEN_EPPSTART       =  [:EPPSTART, nil, 0].freeze
+
   # This is used for unrecognized tokens, will always be a single character. This particular instance
   # is not used, but is kept here for documentation purposes.
   TOKEN_OTHER        = [:OTHER,  nil,  0]
@@ -137,7 +144,7 @@ class Lexer2
   # PATTERN_NAME           = %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*}
 
   # The NAME and CLASSREF in 4x are strict. Each segment must start with 
-  # a letter a-z and may not contain dashes anyway (\w includes letters, digits and _).
+  # a letter a-z and may not contain dashes (\w includes letters, digits and _).
   #
   PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][\w]*)+}
   PATTERN_NAME           = %r{((::)?[a-z][-\w]*)(::[a-z][\w]*)*}
@@ -151,9 +158,17 @@ class Lexer2
   #
   STRING_BSLASH_BSLASH = '\\'.freeze
 
-  def initialize
-    # Nothing is needed here since a lex starts with a call to lex_string, or lex_file which both
-    # resets the instance variables by calling initvars.
+  def initialize()
+  end
+
+  # Clears the lexer state (it is not required to call this as it will be garbage collected
+  # and the next lex call (lex_string, lex_file) will reset the internal state.
+  #
+  def clear()
+    # not really needed, but if someone wants to ensure garbage is collected as early as possible
+    @scanner = nil
+    @locator = nil
+    @lexing_context = nil
   end
 
   # Convenience method, and for compatibility with older lexer. Use the lex_string instead which allows
@@ -203,11 +218,11 @@ class Lexer2
 
   def initvars
     @token_queue = []
+    # NOTE: additional keys are used; :escapes, :uq_slurp_pattern, :newline_jump, :epp_*
     @lexing_context = {
       :brace_count => 0,
       :after => nil,
     }
-    # NOTE: additional keys are used; :escapes, :uq_slurp_pattern, :newline_jump
   end
 
   # Scans all of the content and returns it in an array
@@ -236,7 +251,7 @@ class Lexer2
     ctx   = @lexing_context
     queue = @token_queue
 
-    lex_error "Internal Error: No string or file given to lexer to process." unless scn
+    lex_error_without_pos("Internal Error: No string or file given to lexer to process.") unless scn
 
     scn.skip(PATTERN_WS)
 
@@ -311,7 +326,13 @@ class Lexer2
       emit(TOKEN_TIMES, before)
 
     when '%'
-      emit(TOKEN_MODULO, before)
+      if la1 == '>' && ctx[:epp_mode]
+        scn.pos += 2
+        ctx[:epp_mode] = :text
+        interpolate_epp
+      else
+        emit(TOKEN_MODULO, before)
+      end
 
     when '{'
       # The lexer needs to help the parser since the technology used cannot deal with
@@ -373,16 +394,21 @@ class Lexer2
        TOKEN_PLUS
       end, before)
 
-    # TOKENS '-', '->'
+    # TOKENS '-', '->', and epp '-%>' (end of interpolation with trim)
     when '-'
-      emit(case la1
-        when '>'
-          TOKEN_IN_EDGE
-        when '='
-          TOKEN_DELETES
-        else
-          TOKEN_MINUS
-        end, before)
+      if ctx[:epp_mode] && la1 == '%' && la2 == '>'
+        scn.pos += 3
+        interpolate_epp(:with_trim)
+      else
+        emit(case la1
+          when '>'
+            TOKEN_IN_EDGE
+          when '='
+            TOKEN_DELETES
+          else
+            TOKEN_MINUS
+          end, before)
+      end
 
     # TOKENS !, !=, !~
     when '!'
@@ -473,7 +499,7 @@ class Lexer2
           else
             # move to faulty position ('::<uc-letter>' was ok)
             scn.pos = scn.pos + 3
-            lex_error_with_pos("Illegal fully qualified class reference")
+            lex_error("Illegal fully qualified class reference")
           end
         else
           # NAME or error
@@ -483,7 +509,7 @@ class Lexer2
           else
             # move to faulty position ('::' was ok)
             scn.pos = scn.pos + 2
-            lex_error_with_pos("Illegal fully qualified name")
+            lex_error("Illegal fully qualified name")
           end
         end
       else
@@ -515,7 +541,7 @@ class Lexer2
       else
         # move to faulty position ([0-9] was ok)
         scn.pos = scn.pos + 1
-        lex_error_with_pos("Illegal number")
+        lex_error("Illegal number")
       end
 
     when 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
@@ -526,7 +552,7 @@ class Lexer2
       else
         # move to faulty position ([a-z] was ok)
         scn.pos = scn.pos + 1
-        lex_error_with_pos("Illegal name")
+        lex_error("Illegal name")
       end
 
     when 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
@@ -537,7 +563,7 @@ class Lexer2
       else
         # move to faulty position ([A-Z] was ok)
         scn.pos = scn.pos + 1
-        lex_error_with_pos("Illegal class reference")
+        lex_error("Illegal class reference")
       end
 
     when "\n"

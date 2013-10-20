@@ -4,11 +4,11 @@
 module Puppet::Pops::Parser::LexerSupport
 
   # Formats given message by appending file, line and position if available.
-  def positioned_message msg
+  def positioned_message(msg, pos = nil)
     result = [msg]
     file = @locator.file
-    line = @locator.line_for_offset(@scanner.pos)
-    pos =  @locator.pos_on_line(@scanner.pos)
+    line = @locator.line_for_offset(pos || @scanner.pos)
+    pos =  @locator.pos_on_line(pos || @scanner.pos)
 
     result << "in file #{file}" if file && file.is_a?(String) && !file.empty?
     result << "at line #{line}:#{pos}"
@@ -35,13 +35,13 @@ module Puppet::Pops::Parser::LexerSupport
   end
 
   # Raises a Puppet::LexError with the given message
-  def lex_error msg
+  def lex_error_without_pos msg
     raise Puppet::LexError.new(msg)
   end
 
   # Raises a Puppet::LexError with the given message
-  def lex_error_with_pos msg
-    raise Puppet::LexError.new(positioned_message(msg))
+  def lex_error(msg, pos=nil)
+    raise Puppet::LexError.new(positioned_message(msg, pos))
   end
 
   # Asserts that the given string value is a float, or an integer in decimal, octal or hex form.
@@ -49,13 +49,13 @@ module Puppet::Pops::Parser::LexerSupport
   #
   def assert_numeric(value, length)
     if value =~ /^0[xX].*$/
-      lex_error_with_pos("Not a valid hex number #{value}", length)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
+      lex_error("Not a valid hex number #{value}", length)     unless value =~ /^0[xX][0-9A-Fa-f]+$/
 
     elsif value =~ /^0[^.].*$/
-      lex_error_with_pos("Not a valid octal number #{value}", length)   unless value =~ /^0[0-7]+$/
+      lex_error("Not a valid octal number #{value}", length)   unless value =~ /^0[0-7]+$/
 
     else
-      lex_error_with_pos("Not a valid decimal number #{value}", length) unless value =~ /0?\d+(?:\.\d+)?(?:[eE]-?\d+)?/
+      lex_error("Not a valid decimal number #{value}", length) unless value =~ /0?\d+(?:\.\d+)?(?:[eE]-?\d+)?/
     end
   end
 

@@ -19,7 +19,7 @@ module Puppet::Pops::Parser::SlurpSupport
   def slurp_sqstring
     # skip the leading '
     @scanner.pos += 1
-    str = slurp(@scanner, SLURP_SQ_PATTERN, SQ_ESCAPES, :ignore_invalid_escapes) || lex_error_with_pos("Unclosed quote after \"'\" followed by '#{followed_by}'")
+    str = slurp(@scanner, SLURP_SQ_PATTERN, SQ_ESCAPES, :ignore_invalid_escapes) || lex_error("Unclosed quote after \"'\" followed by '#{followed_by}'")
     str[0..-2] # strip closing "'" from result
   end
 
@@ -28,7 +28,7 @@ module Puppet::Pops::Parser::SlurpSupport
     last = scn.matched
     str = slurp(scn, SLURP_DQ_PATTERN, DQ_ESCAPES, false)
     unless str
-      lex_error_with_pos("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'")
+      lex_error("Unclosed quote after #{format_quote(last)} followed by '#{followed_by}'")
     end
 
     # Terminator may be a single char '"', '$', or two characters '${' group match 1 (scn[1]) from the last slurp holds this

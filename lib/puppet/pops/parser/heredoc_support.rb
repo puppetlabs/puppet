@@ -14,12 +14,12 @@ module Puppet::Pops::Parser::HeredocSupport
 
     # scanner is at position before @(
     # find end of the heredoc spec
-    str = scn.scan_until(/\)/) || lexer.lex_error_with_pos("Unclosed parenthesis after '@(' followed by '#{followed_by}'")
+    str = scn.scan_until(/\)/) || lexer.lex_error("Unclosed parenthesis after '@(' followed by '#{followed_by}'")
     pos_after_heredoc = scn.pos
 
     # Note: allows '+' as separator in syntax, but this needs validation as empty segments are not allowed
     unless md = str.match(PATTERN_HEREDOC)
-      lex_error_with_pos("Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])")
+      lex_error("Invalid syntax in heredoc expected @(endtag[:syntax][/escapes])")
     end
     endtag = md[1]
     syntax = md[2] || ''
@@ -33,7 +33,7 @@ module Puppet::Pops::Parser::HeredocSupport
       endtag = $1.strip
     end
 
-    lexer.lex_error_with_pos("Missing endtag in heredoc") unless endtag.length >= 1
+    lexer.lex_error("Missing endtag in heredoc") unless endtag.length >= 1
 
     resulting_escapes = []
     if escapes
@@ -41,7 +41,7 @@ module Puppet::Pops::Parser::HeredocSupport
 
       escapes = escapes.split('')
       unless escapes.length == escapes.uniq.length
-        lex_error_with_pos("An escape char for @() may only appear once. Got '#{escapes.join(', ')}")
+        lex_error("An escape char for @() may only appear once. Got '#{escapes.join(', ')}")
       end
       resulting_escapes = ["\\"]
       escapes.each do |e|
@@ -51,7 +51,7 @@ module Puppet::Pops::Parser::HeredocSupport
         when "L"
           resulting_escapes += ["\n", "\r\n"]
         else
-          lex_error(positioned_message("Invalid heredoc escape char. Only t, r, n, s,  u, L, $ allowed. Got '#{e}'")) 
+          lex_error("Invalid heredoc escape char. Only t, r, n, s,  u, L, $ allowed. Got '#{e}'")
         end
       end
     end
@@ -66,7 +66,7 @@ module Puppet::Pops::Parser::HeredocSupport
     if ctx[:newline_jump]
       scn.pos = lexing_context[:newline_jump]
     else
-      scn.scan_until(/\n/) || lex_error_with_pos("Heredoc without any following lines of text")
+      scn.scan_until(/\n/) || lex_error("Heredoc without any following lines of text")
     end
     # offset 0 for the heredoc, and its line number
     heredoc_offset = scn.pos
@@ -82,7 +82,7 @@ module Puppet::Pops::Parser::HeredocSupport
     endline_pattern = /([[:blank:]]*)(?:([|])[[:blank:]]*)?(?:(\-)[[:blank:]]*)?#{Regexp.escape(endtag)}[[:blank:]]*\r?(?:\n|\z)/
     lines = []
     while !scn.eos? do
-      one_line = scn.scan_until(/(?:\n|\z)/) || lexer.lex_error(eof_message)
+      one_line = scn.scan_until(/(?:\n|\z)/) || lexer.lex_error_without_pos(eof_message)
       if md = one_line.match(endline_pattern)
         leading      = md[1]
         has_margin   = md[2] == '|'
@@ -105,7 +105,7 @@ module Puppet::Pops::Parser::HeredocSupport
         lines << one_line
       end
     end
-    lex_error(eof_message)
+    lex_error_without_pos(eof_message)
   end
 
   # Produces the heredoc text string given the individual (unprocessed) lines as an array.
