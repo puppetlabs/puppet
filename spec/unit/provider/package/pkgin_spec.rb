@@ -155,21 +155,23 @@ SEARCH
       let(:package) { "vim-7.2.446 =        Vim editor (vi clone) without GUI" }
 
       it "extracts the name and status" do
-        hash = provider_class.parse_pkgin_line(package)
-        hash[:name].should == "vim"
-        hash[:ensure].should == :present
-        hash[:provider].should == :pkgin
+        provider_class.parse_pkgin_line(package).should == { :name => "vim" ,
+                                                             :ensure => :present ,
+                                                             :status => "=" ,
+                                                             :version => "7.2.446" ,
+                                                             :provider => :pkgin }
       end
     end
 
     context "with an installed package with a hyphen in the name" do
-      let(:package) { "ruby18-puppet-0.25.5nb1 = Configuration management framework written in Ruby" }
+      let(:package) { "ruby18-puppet-0.25.5nb1 > Configuration management framework written in Ruby" }
 
       it "extracts the name and status" do
-        hash = provider_class.parse_pkgin_line(package)
-        hash[:name].should == "ruby18-puppet"
-        hash[:ensure].should == :present
-        hash[:provider].should == :pkgin
+        provider_class.parse_pkgin_line(package).should == { :name =>  "ruby18-puppet",
+                                                             :ensure => :present ,
+                                                             :status => ">" ,
+                                                             :version => "0.25.5nb1" ,
+                                                             :provider => :pkgin }
       end
     end
 
@@ -177,17 +179,19 @@ SEARCH
       let(:package) { "vim-7.2.446          Vim editor (vi clone) without GUI" }
 
       it "extracts the name and status" do
-        hash = provider_class.parse_pkgin_line(package)
-        hash[:name].should == "vim"
-        hash[:ensure].should == :absent
-        hash[:provider].should == :pkgin
+        provider_class.parse_pkgin_line(package).should == { :name => "vim" ,
+                                                             :ensure => :absent ,
+                                                             :status => nil ,
+                                                             :version => "7.2.446" ,
+                                                             :provider => :pkgin }
       end
 
       it "extracts the name and an overridden status" do
-        hash = provider_class.parse_pkgin_line(package, :present)
-        hash[:name].should == "vim"
-        hash[:ensure].should == :present
-        hash[:provider].should == :pkgin
+        provider_class.parse_pkgin_line(package, :present).should == { :name => "vim" ,
+                                                                       :ensure => :present ,
+                                                                       :status => nil ,
+                                                                       :version => "7.2.446" ,
+                                                                       :provider => :pkgin }
       end
     end
 
