@@ -92,7 +92,7 @@ describe provider_class do
       end
 
       it "returns true" do
-        subject.latest.should be_true
+        subject.latest.should be_nil
       end
     end
 
