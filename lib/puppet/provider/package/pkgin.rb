@@ -45,19 +45,14 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     end
   end
 
-  def query
+  def query_upgrades
     packages = pkgin(:search, resource[:name]).split("\n")
 
     # Remove the last three lines of help text.
     packages.slice!(-3, 3)
 
-    matching_package = nil
-    packages.detect do |package|
-      properties = self.class.parse_pkgin_line(package)
-      matching_package = properties if properties && resource[:name] == properties[:name]
-    end
-
-    matching_package
+    pkglist = packages.map{ |line| self.class.parse_pkgin_line(line) }
+    pkglist.detect{ |package| resource[:name] == package[:name] and [ '<' , nil ].index( package[:status] ) }
   end
 
   def install
@@ -69,7 +64,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   end
 
   def latest
-    package = self.query
+    package = self.query_upgrades
     return nil if not package
     if package[:status] == '<' or package[:status] == nil
       notice  "Upgrading #{package[:name]} to #{package[:version]}"
