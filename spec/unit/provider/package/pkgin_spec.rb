@@ -111,6 +111,33 @@ describe provider_class do
       end
     end
 
+    context "when multiple candidates do exists" do
+      let(:pkgin_search_output) do
+        <<-SEARCH
+vim-7.1 >            Vim editor (vi clone) without GUI
+vim-share-7.1 >      Data files for the vim editor (vi clone)
+vim-7.2.446 =        Vim editor (vi clone) without GUI
+vim-share-7.2.446 =  Data files for the vim editor (vi clone)
+vim-7.3 <            Vim editor (vi clone) without GUI
+vim-share-7.3 <      Data files for the vim editor (vi clone)
+
+=: package is installed and up-to-date
+<: package is installed but newer version is available
+>: installed package has a greater version than available package
+SEARCH
+      end
+
+      it "returns a hash with the upgraded package" do
+        provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
+        provider_class.stubs(:pkgin).with("-y", :install, "vim")
+        subject.latest.should == { :name => "vim" ,
+                                   :ensure => :present ,
+                                   :status => "><" ,
+                                   :version => "7.3" ,
+                                   :provider => :pkgin }
+      end
+    end
+
     context "when the package cannot be found" do
       let(:pkgin_search_output) do
         "\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
