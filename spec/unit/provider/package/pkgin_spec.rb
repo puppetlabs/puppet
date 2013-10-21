@@ -132,7 +132,7 @@ SEARCH
         provider_class.stubs(:pkgin).with("-y", :install, "vim")
         subject.latest.should == { :name => "vim" ,
                                    :ensure => :present ,
-                                   :status => "><" ,
+                                   :status => "<" ,
                                    :version => "7.3" ,
                                    :provider => :pkgin }
       end
