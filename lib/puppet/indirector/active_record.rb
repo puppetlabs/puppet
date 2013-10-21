@@ -1,3 +1,4 @@
+require 'puppet/rails'
 require 'puppet/indirector'
 
 class Puppet::Indirector::ActiveRecord < Puppet::Indirector::Terminus
