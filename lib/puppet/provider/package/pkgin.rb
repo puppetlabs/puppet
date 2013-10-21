@@ -49,10 +49,10 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     packages = pkgin(:search, resource[:name]).split("\n")
 
     # Remove the last three lines of help text.
-    packages.slice!(-3, 3)
+    packages.slice!(-4, 4)
 
     pkglist = packages.map{ |line| self.class.parse_pkgin_line(line) }
-    pkglist.detect{ |package| resource[:name] == package[:name] and [ '<' , nil ].index( package[:status] ) }
+    pkglist.detect{ |package| resource[:name] == package[:name] and [ '<' , nil ].index( package[:status] ) } if pkglist
   end
 
   def install
