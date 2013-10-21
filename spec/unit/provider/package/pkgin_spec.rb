@@ -56,6 +56,73 @@ describe provider_class do
     end
   end
 
+  describe "#latest" do
+    before do
+      provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
+    end
+
+    context "when the package is installed" do
+      let(:pkgin_search_output) do
+        "vim-7.2.446 =        Vim editor (vi clone) without GUI\nvim-share-7.2.446 =  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
+      end
+
+      it "returns true" do
+        subject.latest.should be_true
+      end
+    end
+
+    context "when the package is out of date" do
+      let(:pkgin_search_output) do
+        "vim-7.2.446 <        Vim editor (vi clone) without GUI\nvim-share-7.2.446 =  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
+      end
+
+      it "returns a hash with the upgraded package" do
+        provider_class.stubs(:pkgin).with("-y", :install, "vim")
+        subject.latest.should == { :name => "vim" ,
+                                   :ensure => :present ,
+                                   :status => "<" ,
+                                   :version => "7.2.446" ,
+                                   :provider => :pkgin }
+      end
+    end
+
+    context "when the package is ahead of date" do
+      let(:pkgin_search_output) do
+        "vim-7.2.446 >        Vim editor (vi clone) without GUI\nvim-share-7.2.446 =  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
+      end
+
+      it "returns true" do
+        subject.latest.should be_true
+      end
+    end
+
+    context "when the package is not installed" do
+      let(:pkgin_search_output) do
+        "vim-7.2.446          Vim editor (vi clone) without GUI\nvim-share-7.2.446 =  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
+      end
+
+      it "returns a hash with the new installed package" do
+        provider_class.stubs(:pkgin).with("-y", :install, "vim").once()
+        subject.latest.should == { :name => "vim" ,
+                                   :ensure => :present ,
+                                   :status => nil ,
+                                   :version => "7.2.446" ,
+                                   :provider => :pkgin }
+      end
+    end
+
+    context "when the package cannot be found" do
+      let(:pkgin_search_output) do
+        "\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
+      end
+
+      it "returns nil" do
+        subject.latest.should be_nil
+      end
+    end
+
+  end
+
   describe "#query" do
     before do
       provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
