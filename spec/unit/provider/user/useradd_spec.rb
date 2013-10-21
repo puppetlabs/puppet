@@ -93,9 +93,9 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         provider.expects(:execute).with(includes('/usr/sbin/luseradd'), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
- 
+
       it "should NOT use -o when allowdupe=true" do
-        resource[:allowdupe] = :true 
+        resource[:allowdupe] = :true
         provider.expects(:execute).with(Not(includes('-o')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.create
       end
@@ -110,19 +110,28 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         resource[:groups] = ['group1', 'group2']
         provider.expects(:execute).with(Not(includes("-G")), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.expects(:execute).with(includes('/usr/sbin/usermod'))
-        provider.create 
+        provider.create
       end
 
       it "should not use -m when managehome set" do
         resource[:managehome] = :true
         provider.expects(:execute).with(Not(includes('-m')), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
-        provider.create 
+        provider.create
       end
 
       it "should not use -e with luseradd, should call usermod with -e after luseradd when expiry is set" do
         resource[:expiry] = '2038-01-24'
         provider.expects(:execute).with(all_of(includes('/usr/sbin/luseradd'), Not(includes('-e'))), has_entry(:custom_environment, has_key('LIBUSER_CONF')))
         provider.expects(:execute).with(all_of(includes('/usr/sbin/usermod'), includes('-e')))
+        provider.create
+      end
+    end
+
+    describe "on systems that allow to set shell" do
+      it "should trigger shell validation" do
+        resource[:shell] = '/bin/bash'
+        provider.expects(:check_valid_shell)
+        provider.expects(:execute).with(includes('-s'), kind_of(Hash))
         provider.create
       end
     end
@@ -399,4 +408,17 @@ describe Puppet::Type.type(:user).provider(:useradd) do
       provider.passcmd.must == ['/usr/bin/chage','-m',123,'-M',999,'myuser']
     end
   end
+
+  describe "#check_valid_shell" do
+    it "should raise an error if shell does not exist" do
+      resource[:shell] = 'foo/bin/bash'
+      lambda { provider.check_valid_shell }.should raise_error(Puppet::Error, /Shell foo\/bin\/bash must exist/)
+    end
+
+    it "should raise an error if the shell is not executable" do
+      resource[:shell] = 'LICENSE'
+      lambda { provider.check_valid_shell }.should raise_error(Puppet::Error, /Shell LICENSE must be executable/)
+    end
+  end
+
 end
