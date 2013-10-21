@@ -230,6 +230,10 @@ describe 'Lexer2' do
     end
   end
 
+  it 'should lex assignment' do
+    tokens_scanned_from("$a = 10").should match_tokens2([:VARIABLE, "a"], :EQUALS, [:NUMBER, '10'])
+  end
+  
 # TODO: Tricky, and heredoc not supported yet
 #  it "should not lex regexp after heredoc" do
 #    tokens_scanned_from("1 / /./").should match_tokens2(:NUMBER, :DIV, :REGEX)
@@ -296,7 +300,7 @@ describe 'Lexer2' do
       epp_tokens_scanned_from(code).should match_tokens2(
       [:RENDER_STRING, "      This is "],
       [:RENDER_EXPR, nil],
-      [:VARIABLE, "$x"],
+      [:VARIABLE, "x"],
       [:RENDER_STRING, " just text\n"]
       )
     end
@@ -307,7 +311,7 @@ describe 'Lexer2' do
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
       [:RENDER_STRING, "      This is "],
-      [:VARIABLE, "$x"],
+      [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
       [:RENDER_STRING, " just text\n"]
@@ -321,7 +325,7 @@ describe 'Lexer2' do
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
       [:RENDER_STRING, "      This is "],
-      [:VARIABLE, "$x"],
+      [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
       [:RENDER_STRING, "just text\n"]
@@ -336,7 +340,7 @@ describe 'Lexer2' do
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
       [:RENDER_STRING, "      This is "],
-      [:VARIABLE, "$x"],
+      [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
       [:RENDER_STRING, "just text\n"]
@@ -350,7 +354,7 @@ describe 'Lexer2' do
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
       [:RENDER_STRING, "      This is "],
-      [:VARIABLE, "$x"],
+      [:VARIABLE, "x"],
       :EQUALS,
       [:NUMBER, "10"],
       [:RENDER_STRING, "<% this is escaped epp %>\n"]

@@ -175,6 +175,44 @@ module Puppet::Pops::Parser::InterpolationSupport
     interpolate_tail_uq
   end
 
+  # Enqueues lexed tokens until either end of input, or the given brace_count is reached
+  #
+  def enqueue_until brace_count
+    scn = @scanner
+    ctx = @lexing_context
+    queue = @token_queue
+
+    scn.skip(self.class::PATTERN_WS)
+    queue_size = queue.size
+    until scn.eos? do
+      if token = lex_token
+        token_name = token[0]
+        ctx[:after] = token_name
+        if token_name == :RBRACE && ctx[:brace_count] == brace_count
+          if queue.size - queue_size == 1
+            # Single token is subject to replacement
+            queue[-1] = transform_to_variable(queue[-1])
+          end
+          return
+        end
+        queue << token
+      else
+        scn.skip(self.class::PATTERN_WS)
+      end
+    end
+  end
+
+  def transform_to_variable(token)
+    token_name = token[0]
+    if [:NUMBER, :NAME].include?(token_name) || self.class::KEYWORD_NAMES[token_name]
+      t = token[1]
+      ta = t.token_array
+      [:VARIABLE, self.class::TokenValue.new([:VARIABLE, ta[1], ta[2]], t.offset, t.locator)]
+    else
+      token
+    end
+  end
+
   # Interpolates unquoted string and transfers the result to the given lexer
   # (This is used when a second lexer instance is used to lex a substring)
   #

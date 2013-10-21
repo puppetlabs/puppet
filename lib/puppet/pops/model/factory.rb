@@ -15,6 +15,7 @@ class Puppet::Pops::Model::Factory
 
   # Shared build_visitor, since there are many instances of Factory being used
   @@build_visitor = Puppet::Pops::Visitor.new(self, "build")
+  @@interpolation_visitor = Puppet::Pops::Visitor.new(self, "interpolate")
   # Initialize a factory with a single object, or a class with arguments applied to build of
   # created instance
   #
@@ -26,6 +27,16 @@ class Puppet::Pops::Model::Factory
   def build(o, *args)
     begin
       @@build_visitor.visit_this(self, o, *args)
+    rescue =>e
+      # require 'debugger'; debugger # enable this when in trouble...
+      raise e
+    end
+  end
+
+  # Polymorphic inerpolate
+  def interpolate()
+    begin
+      @@interpolation_visitor.visit_this(self, current)
     rescue =>e
       # require 'debugger'; debugger # enable this when in trouble...
       raise e
@@ -549,7 +560,7 @@ class Puppet::Pops::Model::Factory
   end
 
   def self.TEXT(expr)
-    new(Model::TextExpression, expr)
+    new(Model::TextExpression, new(expr).interpolate)
   end
 
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the
@@ -557,6 +568,15 @@ class Puppet::Pops::Model::Factory
   #
   def self.QNAME(name)
     new(Model::QualifiedName, name)
+  end
+
+  def self.NUMBER(name)
+    if n_radix = Puppet::Pops::Utils.to_n_with_radix(name)
+      new(Model::LiteralNumber, *n_radix)
+    else
+      # Bad number should already have been caught by lexer - this should never happen
+      raise ArgumentError, "Internal Error, NUMBER token does not contain a valid number, #{name}"
+    end
   end
 
   # Convert input string to either a qualified name, or a LiteralNumber with radix
@@ -808,6 +828,60 @@ class Puppet::Pops::Model::Factory
   # with the given arguments
   def build_Class(o, *args)
     build(o.new(), *args)
+  end
+
+  def interpolate_Factory(o)
+    interpolate(o.current)
+  end
+
+  def interpolate_LiteralNumber(o)
+    # TODO
+    # convert number to name using correct radix
+    # convert name to variable
+  end
+
+  def interpolate_Object(o)
+    o
+  end
+
+  def interpolate_QualifiedName(o)
+    self.class.new(o).var
+  end
+
+  # rewrite left expression to variable if it is name, number, and recurse if it is an access expression
+  # this is for interpolation support in new lexer (${NAME}, ${NAME[}}, ${NUMBER}, ${NUMBER[]} - all
+  # other expressions requires variables to be preceded with $
+  #
+  def interpolate_AccessExpression(o)
+    if is_interop_rewriteable?(o.left_expr)
+      o.left_expr = to_ops(self.class.new(o.left_expr).interpolate)
+    end
+    o
+  end
+
+  def interpolate_NamedAccessExpression(o)
+    if is_interop_rewriteable?(o.left_expr)
+        o.left_expr = to_ops(self.class.new(o.left_expr).interpolate)
+    end
+    o
+  end
+
+  # Rewrite method calls on the form ${x.each ...} to ${$x.each}
+  def interpolate_CallMethodExpression(o)
+    if is_interop_rewriteable?(o.functor_expr)
+      o.functor_expr = to_ops(self.class.new(o.functor_expr).interpolate)
+    end
+    o
+  end
+
+  def is_interop_rewriteable?(o)
+    case o
+    when Model::LiteralNumber, Model::AccessExpression, Model::QualifiedName,
+      Model::NamedAccessExpression, Model::CallMethodExpression
+      true
+    else
+      false
+    end
   end
 
   # Checks if the object is already a model object, or build it

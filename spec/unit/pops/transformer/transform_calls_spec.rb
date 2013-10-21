@@ -60,7 +60,7 @@ describe "transformation to Puppet AST for function calls" do
       astdump(parse("$a.foo")).should == "(call-method (. $a foo))"
     end
 
-    it "$a.foo ||{ }" do
+    it "$a.foo || { }" do
       astdump(parse("$a.foo || { }")).should == "(call-method (. $a foo) (lambda ()))"
     end
 
@@ -68,7 +68,7 @@ describe "transformation to Puppet AST for function calls" do
       astdump(parse("$a.foo || {[]}")).should == "(call-method (. $a foo) (lambda (block ([]))))"
     end
 
-    it "$a.foo {|$x| }" do
+    it "$a.foo |$x| { }" do
       astdump(parse("$a.foo |$x| { }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
     end
 

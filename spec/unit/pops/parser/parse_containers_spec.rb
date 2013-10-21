@@ -57,7 +57,9 @@ describe "egrammar parsing containers" do
         # a very confusing effect when resolving relative names, getting the global hardwired "Class"
         # instead of some foo::class etc.
         # This is allowed in 3.x.
-        dump(parse("class class {}")).should == "(class class ())"
+        expect {
+          dump(parse("class class {}")).should == "(class class ())"
+        }.to raise_error(/not a valid classname/)
       end
 
       it "class default {} # a class named 'default'" do
@@ -72,7 +74,9 @@ describe "egrammar parsing containers" do
       end
 
       it "class class inherits default {} # inherits default", :broken => true do
-        dump(parse("class class inherits default {}")).should == "(class class (inherits default) ())"
+        expect {
+          dump(parse("class class inherits default {}")).should == "(class class (inherits default) ())"
+        }.to raise_error(/not a valid classname/)
       end
 
       it "class class inherits default {} # inherits default" do
@@ -80,12 +84,16 @@ describe "egrammar parsing containers" do
         # this because a class is named at parse time (since class evaluation is lazy, the model must have the
         # full class name for nested classes - only, it gets this wrong when a class is named "class" - or at least
         # I think it is wrong.)
-        #
+        # 
+        expect {
         dump(parse("class class inherits default {}")).should == "(class class::class (inherits default) ())"
+          }.to raise_error(/not a valid classname/)
       end
 
       it "class foo inherits class" do
-        dump(parse("class foo inherits class {}")).should == "(class foo (inherits class) ())"
+        expect {
+          dump(parse("class foo inherits class {}")).should == "(class foo (inherits class) ())"
+        }.to raise_error(/not a valid classname/)
       end
     end
   end
@@ -119,7 +127,9 @@ describe "egrammar parsing containers" do
       it "define class {} # a define named 'class'" do
         # This is weird because Class already exists, and instantiating this define will probably not
         # work
-        dump(parse("define class {}")).should == "(define class ())"
+        expect {
+          dump(parse("define class {}")).should == "(define class ())"
+          }.to raise_error(/not a valid classname/)
       end
 
       it "define default {} # a define named 'default'" do
@@ -165,7 +175,7 @@ describe "egrammar parsing containers" do
     end
 
     it "node wat inherits /apache.*/ {}" do
-      expect { parse("node wat inherits /apache.*/ {}")}.to raise_error(Puppet::ParseError)
+      dump(parse("node wat inherits /apache.*/ {}")).should == "(node (matches wat) (parent /apache.*/) ())"
     end
 
     it "node foo inherits bar {$a = 10 $b = 20}" do

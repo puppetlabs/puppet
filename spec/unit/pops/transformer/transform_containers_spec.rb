@@ -57,7 +57,9 @@ describe "transformation to Puppet AST for containers" do
         # a very confusing effect when resolving relative names, getting the global hardwired "Class"
         # instead of some foo::class etc.
         # This is allowed in 3.x.
+        expect {
         astdump(parse("class class {}")).should == "(class class ())"
+        }.to raise_error(/is not a valid classname/)
       end
 
       it "class default {} # a class named 'default'" do
@@ -81,11 +83,15 @@ describe "transformation to Puppet AST for containers" do
         # full class name for nested classes - only, it gets this wrong when a class is named "class" - or at least
         # I think it is wrong.)
         #
-        astdump(parse("class class inherits default {}")).should == "(class class::class (inherits default) ())"
+        expect {
+          astdump(parse("class class inherits default {}")).should == "(class class::class (inherits default) ())"
+        }.to raise_error(/is not a valid classname/)
       end
 
       it "class foo inherits class" do
-        astdump(parse("class foo inherits class {}")).should == "(class foo (inherits class) ())"
+        expect {
+          astdump(parse("class foo inherits class {}")).should == "(class foo (inherits class) ())"
+        }.to raise_error(/is not a valid classname/)
       end
     end
   end
@@ -119,7 +125,9 @@ describe "transformation to Puppet AST for containers" do
       it "define class {} # a define named 'class'" do
         # This is weird because Class already exists, and instantiating this define will probably not
         # work
-        astdump(parse("define class {}")).should == "(define class ())"
+        expect {
+          astdump(parse("define class {}")).should == "(define class ())"
+        }.to raise_error(/is not a valid classname/)
       end
 
       it "define default {} # a define named 'default'" do
@@ -171,7 +179,7 @@ describe "transformation to Puppet AST for containers" do
     end
 
     it "node wat inherits /apache.*/ {}" do
-      expect { parse("node wat inherits /apache.*/ {}")}.to raise_error(Puppet::ParseError)
+      astdump(parse("node wat inherits /apache.*/ {}")).should == "(node (matches 'wat') (parent /apache.*/) ())"
     end
 
     it "node foo inherits bar {$a = 10 $b = 20}" do

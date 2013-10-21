@@ -64,6 +64,10 @@ module Puppet::Pops::Parser::LexerSupport
   # line and position on line information.
   #
   class TokenValue
+    attr_reader :token_array
+    attr_reader :offset
+    attr_reader :locator
+
     def initialize(token_array, offset, locator)
       @token_array = token_array
       @offset = offset
@@ -83,6 +87,8 @@ module Puppet::Pops::Parser::LexerSupport
         @token_array[2]
       when :locator
         @locator
+      when :offset
+        @offset
       else
         nil
       end

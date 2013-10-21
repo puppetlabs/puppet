@@ -43,7 +43,6 @@ class Puppet::Pops::Visitor
         return receiver.send(method_name, thing, *args)
       end
     end
-    require 'byebug'; byebug
     raise "Visitor Error: the configured receiver (#{receiver.class}) can't handle instance of: #{thing.class}"
   end
 

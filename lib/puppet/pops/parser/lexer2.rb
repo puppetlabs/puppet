@@ -1,6 +1,6 @@
 # The Lexer is responsbile for turning source text into tokens.
 # This version is a performance enhanced lexer (in comparison to the 3.x and earlier "future parser" lexer.
-# 
+#
 # Old returns tokens [:KEY, value, { locator = }
 # Could return [[token], locator]
 # or Token.new([token], locator) with the same API x[0] = token_symbol, x[1] = self, x[:key] = (:value, :file, :line, :pos) etc
@@ -71,6 +71,7 @@ class Puppet::Pops::Parser::Lexer2
   TOKEN_DOT          = [:DOT,          '.'.freeze,   1].freeze
   TOKEN_PIPE         = [:PIPE,         '|'.freeze,   1].freeze
   TOKEN_AT           = [:AT ,          '@'.freeze,   1].freeze
+  TOKEN_ATAT         = [:ATAT ,        '@@'.freeze,  2].freeze
   TOKEN_COLON        = [:COLON,        ':'.freeze,   1].freeze
   TOKEN_COMMA        = [:COMMA,        ','.freeze,   1].freeze
   TOKEN_SEMIC        = [:SEMIC,        ';'.freeze,   1].freeze
@@ -105,7 +106,7 @@ class Puppet::Pops::Parser::Lexer2
 
   # Keywords are all singleton tokens with pre calculated lengths.
   # Booleans are pre-calculated (rather than evaluating the strings "false" "true" repeatedly.
-  # 
+  #
   KEYWORDS = {
     "case"     => [:CASE,    'case',     4],
     "class"    => [:CLASS,   'class',    5],
@@ -127,6 +128,11 @@ class Puppet::Pops::Parser::Lexer2
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
 
+  # Reverse lookup of keyword name to string
+  KEYWORD_NAMES = {}
+  KEYWORDS.each {|k, v| KEYWORD_NAMES[v[0]] = k }
+  KEYWORD_NAMES.freeze
+
   PATTERN_WS        = %r{[[:blank:]\r]+}
 
   # The single line comment includes the line ending.
@@ -143,7 +149,7 @@ class Puppet::Pops::Parser::Lexer2
   # PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][-\w]*)+}
   # PATTERN_NAME           = %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*}
 
-  # The NAME and CLASSREF in 4x are strict. Each segment must start with 
+  # The NAME and CLASSREF in 4x are strict. Each segment must start with
   # a letter a-z and may not contain dashes (\w includes letters, digits and _).
   #
   PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][\w]*)+}
@@ -152,11 +158,12 @@ class Puppet::Pops::Parser::Lexer2
   PATTERN_DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
   PATTERN_NUMBER         = %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b}
 
-
   # PERFORMANCE NOTE:
   # Comparison against a frozen string is faster (than unfrozen).
   #
   STRING_BSLASH_BSLASH = '\\'.freeze
+
+  attr_reader :locator
 
   def initialize()
   end
@@ -205,6 +212,13 @@ class Puppet::Pops::Parser::Lexer2
   #
   def file=(file)
     lex_file(file)
+  end
+
+  # TODO: This method should not be used, callers should get the locator since it is most likely required to
+  # compute line, position etc given offsets.
+  #
+  def file
+    @locator ? @locator.file : nil
   end
 
   # Initializes lexing of the content of the given file. An empty string is used if the file does not exist.
@@ -350,7 +364,7 @@ class Puppet::Pops::Parser::Lexer2
       ctx[:brace_count] -= 1
       emit(TOKEN_RBRACE, before)
 
-    # TOKENS @, @@, @(
+      # TOKENS @, @@, @(
     when '@'
       case la1
       when '@'
@@ -361,7 +375,7 @@ class Puppet::Pops::Parser::Lexer2
         emit(TOKEN_AT, before)
       end
 
-    # TOKENS |, |>, |>>
+      # TOKENS |, |>, |>>
     when '|'
       emit(case la1
       when '>'
@@ -370,7 +384,7 @@ class Puppet::Pops::Parser::Lexer2
         TOKEN_PIPE
       end, before)
 
-    # TOKENS =, =>, ==, =~
+      # TOKENS =, =>, ==, =~
     when '='
       emit(case la1
       when '='
@@ -383,34 +397,34 @@ class Puppet::Pops::Parser::Lexer2
         TOKEN_EQUALS
       end, before)
 
-    # TOKENS '+', '+=', and '+>'
+      # TOKENS '+', '+=', and '+>'
     when '+'
       emit(case la1
       when '='
         TOKEN_APPENDS
       when '>'
-       TOKEN_PARROW
+        TOKEN_PARROW
       else
-       TOKEN_PLUS
+        TOKEN_PLUS
       end, before)
 
-    # TOKENS '-', '->', and epp '-%>' (end of interpolation with trim)
+      # TOKENS '-', '->', and epp '-%>' (end of interpolation with trim)
     when '-'
       if ctx[:epp_mode] && la1 == '%' && la2 == '>'
         scn.pos += 3
         interpolate_epp(:with_trim)
       else
         emit(case la1
-          when '>'
-            TOKEN_IN_EDGE
-          when '='
-            TOKEN_DELETES
-          else
-            TOKEN_MINUS
-          end, before)
+        when '>'
+          TOKEN_IN_EDGE
+        when '='
+          TOKEN_DELETES
+        else
+          TOKEN_MINUS
+        end, before)
       end
 
-    # TOKENS !, !=, !~
+      # TOKENS !, !=, !~
     when '!'
       emit(case la1
       when '='
@@ -421,7 +435,7 @@ class Puppet::Pops::Parser::Lexer2
         TOKEN_NOT
       end, before)
 
-    # TOKENS ~>, ~
+      # TOKENS ~>, ~
     when '~'
       emit(la1 == '>' ? TOKEN_IN_EDGE_SUB : TOKEN_TILDE, before)
 
@@ -429,7 +443,7 @@ class Puppet::Pops::Parser::Lexer2
       scn.skip(PATTERN_COMMENT)
       nil
 
-    # TOKENS '/', '/*' and '/ regexp /'
+      # TOKENS '/', '/*' and '/ regexp /'
     when '/'
       case la1
       when '*'
@@ -450,7 +464,7 @@ class Puppet::Pops::Parser::Lexer2
         end
       end
 
-    # TOKENS <, <=, <|, <<|, <<, <-, <~
+      # TOKENS <, <=, <|, <<|, <<, <-, <~
     when '<'
       emit(case la1
       when '<'
@@ -471,7 +485,7 @@ class Puppet::Pops::Parser::Lexer2
         TOKEN_LESSTHAN
       end, before)
 
-    # TOKENS >, >=, >>
+      # TOKENS >, >=, >>
     when '>'
       emit(case la1
       when '>'
@@ -482,7 +496,7 @@ class Puppet::Pops::Parser::Lexer2
         TOKEN_GREATERTHAN
       end, before)
 
-    # TOKENS :, ::CLASSREF, ::NAME
+      # TOKENS :, ::CLASSREF, ::NAME
     when ':'
       if la1 == ':'
         before = scn.pos
@@ -518,7 +532,7 @@ class Puppet::Pops::Parser::Lexer2
 
     when '$'
       if value = scn.scan(PATTERN_DOLLAR_VAR)
-        emit_completed([:VARIABLE, value, scn.pos - before], before)
+        emit_completed([:VARIABLE, value[1..-1], scn.pos - before], before)
       else
         # consume the $ and let higher layer complain about the error instead of getting a syntax error
         emit(TOKEN_VARIABLE_EMPTY, before)
@@ -545,7 +559,7 @@ class Puppet::Pops::Parser::Lexer2
       end
 
     when 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-         'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'w', 'x', 'y', 'z'
+    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
       value = scn.scan(PATTERN_NAME)
       if value
         emit_completed(KEYWORDS[value] || [:NAME, value, scn.pos - before], before)
@@ -556,7 +570,7 @@ class Puppet::Pops::Parser::Lexer2
       end
 
     when 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-         'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'W', 'X', 'Y', 'Z'
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
       value = scn.scan(PATTERN_CLASSREF)
       if value
         emit_completed([:CLASSREF, value, scn.pos - before], before)
@@ -569,7 +583,7 @@ class Puppet::Pops::Parser::Lexer2
     when "\n"
       # If heredoc_cont is in effect there are heredoc text lines to skip over
       # otherwise just skip the newline.
-      # 
+      #
       if ctx[:newline_jump]
         scn.pos = ctx[:newline_jump]
         ctx[:newline_jump] = nil
@@ -619,27 +633,6 @@ class Puppet::Pops::Parser::Lexer2
     @token_queue << emitted_token
   end
 
-  # Enqueues lexed tokens until either end of input, or the given brace_count is reached
-  #
-  def enqueue_until brace_count
-    scn = @scanner
-    ctx = @lexing_context
-    queue = @token_queue
-
-    scn.skip(PATTERN_WS)
-
-    until scn.eos? do
-      if token = lex_token
-        token_name = token[0]
-        ctx[:after] = token_name
-        return if token_name == :RBRACE && ctx[:brace_count] == brace_count
-        queue << token
-      else
-        scn.skip(PATTERN_WS)
-      end
-    end
-  end
-
   # Answers after which tokens it is acceptable to lex a regular expression.
   # PERFORMANCE NOTE:
   # It may be beneficial to turn this into a hash with default value of true for missing entries.
@@ -653,7 +646,7 @@ class Puppet::Pops::Parser::Lexer2
     when :RPAREN, :RBRACK, :RBRACE, :RRCOLLECT, :RCOLLECT
       false
 
-    # Operands (that can be followed by DIV (even if illegal in grammar)
+      # Operands (that can be followed by DIV (even if illegal in grammar)
     when :NAME, :CLASSREF, :NUMBER, :STRING, :BOOLEAN, :DQPRE, :DQMID, :DQPOST, :HEREDOC, :REGEX
       false
 

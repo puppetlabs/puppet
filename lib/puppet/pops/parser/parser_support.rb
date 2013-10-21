@@ -42,7 +42,7 @@ class Puppet::Pops::Parser::Parser
   # before evaluation-time.
   #
   def classname(name)
-    [@lexer.namespace, name].join("::").sub(/^::/, '')
+    [namespace, name].join("::").sub(/^::/, '')
   end
 
   # Reinitializes variables (i.e. creates a new lexer instance
@@ -52,11 +52,11 @@ class Puppet::Pops::Parser::Parser
   end
 
   # Raises a Parse error.
-  def error(message, options = {})
+  def error(value, message, options = {})
     except = Puppet::ParseError.new(message)
-    except.line = options[:line] || @lexer.line
-    except.file = options[:file] || @lexer.file
-    except.pos = options[:pos]   || @lexer.pos
+    except.line = options[:line] || value[:line]
+    except.file = options[:file] || value[:file] # @lexer.file
+    except.pos = options[:pos]   || value[:pos] # @lexer.pos
 
     raise except
   end
@@ -84,7 +84,8 @@ class Puppet::Pops::Parser::Parser
   # @return [void]
   #
   def initvars
-    @lexer = Puppet::Pops::Parser::Lexer.new
+    @lexer = Puppet::Pops::Parser::Lexer2.new
+    @namestack = []
   end
 
   # This is a callback from the generated grammar (when an error occurs while parsing)
@@ -93,11 +94,11 @@ class Puppet::Pops::Parser::Parser
   #
   def on_error(token,value,stack)
     if token == 0 # denotes end of file
-      value = 'end of file'
+      value_at = 'end of file'
     else
-      value = "'#{value[:value]}'"
+      value_at = "'#{value[:value]}'"
     end
-    error = "Syntax error at #{value}"
+    error = "Syntax error at #{value_at}"
 
     # The 'expected' is only of value at end of input, otherwise any parse error involving a
     # start of a pair will be reported as expecting the close of the pair - e.g. "$x.each |$x {", would
@@ -105,14 +106,19 @@ class Puppet::Pops::Parser::Parser
     # Real "expected" tokens are very difficult to compute (would require parsing of racc output data). Output of the stack
     # could help, but can require extensive backtracking and produce many options.
     #
-    if token == 0 && brace = @lexer.expected
-      error += "; expected '#{brace}'"
-    end
+    # The lexer should handle the "expected instead of end of file for strings, and interpolation", other exåectancies
+    # must be handled by the grammar. The lexer may have enqueued tokens far ahead - the lexer's opinion about this
+    # is not trustworthy.
+    #
+#    if token == 0 && brace = @lexer.expected
+#      error += "; expected '#{brace}'"
+#    end
 
     except = Puppet::ParseError.new(error)
-    except.line = @lexer.line
-    except.file = @lexer.file if @lexer.file
-    except.pos  = @lexer.pos
+    except.line = value[:line] unless token == 0
+    path = value[:file]
+    except.file = path if path.is_a?(String) && !path.empty?
+    except.pos  = value[:pos] unless token == 0
 
     raise except
   end
@@ -161,6 +167,18 @@ class Puppet::Pops::Parser::Parser
   def aryfy(o)
     o = [o] unless o.is_a?(Array)
     o
+  end
+
+  def namespace
+    @namestack.join('::')
+  end
+
+  def namestack(name)
+    @namestack << name
+  end
+
+  def namepop()
+    @namestack.pop
   end
 
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
