@@ -68,12 +68,12 @@ module Puppet::FileBucketFile
           paths_file.dir.mkpath
         end
 
-        paths_file.exclusive_open(0640, ::File::CREAT | ::File::RDWR | ::File::APPEND) do |f|
+        paths_file.exclusive_open(0640, 'a') do |f|
           if contents_file.exist?
             verify_identical_file!(contents_file, bucket_file)
             contents_file.touch
           else
-            contents_file.open(0440, ::File::CREAT | ::File::WRONLY | ::File::BINARY) do |of|
+            contents_file.open(0440, 'wb') do |of|
               of.write(bucket_file.contents)
             end
           end

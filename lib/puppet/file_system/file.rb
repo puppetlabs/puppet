@@ -1,18 +1,46 @@
+# An abstraction over the ruby file system operations for a single file.
+#
+# For the time being this is being kept private so that we can evolve it for a
+# while.
+#
+# @api private
 class Puppet::FileSystem::File
   attr_reader :path
 
+  IMPL = if RUBY_VERSION =~ /^1\.8/
+           require 'puppet/file_system/file18'
+           Puppet::FileSystem::File18
+         else
+           require 'puppet/file_system/file19'
+           Puppet::FileSystem::File19
+         end
+
+  def self.new(path)
+    file = IMPL.allocate
+    file.send(:initialize, path)
+    file
+  end
+
   def initialize(path)
-    @path = Pathname.new(path)
+    if path.is_a?(Pathname)
+      @path = path
+    else
+      @path = Pathname.new(path)
+    end
   end
 
   def open(mode, options, &block)
     ::File.open(@path, options, mode, &block)
   end
 
+  # @return [Puppet::FileSystem::File] The directory of this file
+  # @api public
   def dir
-    @path.dirname
+    Puppet::FileSystem::File.new(@path.dirname)
   end
 
+  # @return [Num] The size of this file
+  # @api public
   def size
     @path.size
   end
@@ -23,11 +51,11 @@ class Puppet::FileSystem::File
   #
   # @param mode [Integer] The mode to apply to the file if it is created
   # @param options [Integer] Extra file operation mode information to use
-  # (defaults to create and read-write mode)
+  # (defaults to read-only mode)
   # @yield The file handle, in read-write mode
   # @return [Void]
   # @api public
-  def exclusive_open(mode, options = ::File::CREAT|::File::RDWR, &block)
+  def exclusive_open(mode, options = 'r', &block)
     written = false
     while !written
       ::File.open(@path, options, mode) do |rf|
@@ -54,7 +82,7 @@ class Puppet::FileSystem::File
 
   # @return [String] The binary contents of the file
   def binread
-    @path.binread
+    raise NotImplementedError
   end
 
   # @return [Boolean] Whether the path of this file is present
@@ -62,7 +90,13 @@ class Puppet::FileSystem::File
     @path.exist?
   end
 
+  # Touches the file. On most systems this updates the mtime of the file.
   def touch
     ::FileUtils.touch(@path)
+  end
+
+  # Create the entire path as directories
+  def mkpath
+    @path.mkpath
   end
 end

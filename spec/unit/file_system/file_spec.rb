@@ -8,7 +8,7 @@ describe Puppet::FileSystem::File do
     it "opens ands allows updating of an existing file" do
       file = Puppet::FileSystem::File.new(file_containing("file_to_update", "the contents"))
 
-      file.exclusive_open(0660) do |fh|
+      file.exclusive_open(0660, 'r+') do |fh|
         old = fh.read
         fh.truncate(0)
         fh.rewind
@@ -21,7 +21,7 @@ describe Puppet::FileSystem::File do
     it "opens, creates ands allows updating of a new file" do
       file = Puppet::FileSystem::File.new(tmpfile("file_to_update"))
 
-      file.exclusive_open(0660) do |fh|
+      file.exclusive_open(0660, 'w') do |fh|
         fh.write("updated new file")
       end
 
@@ -31,7 +31,7 @@ describe Puppet::FileSystem::File do
     it "excludes other processes from updating at the same time" do
       file = Puppet::FileSystem::File.new(file_containing("file_to_update", "0"))
 
-      increment_counter_in_multiple_processes(file, 5)
+      increment_counter_in_multiple_processes(file, 5, 'r+')
 
       expect(file.read).to eq("5")
     end
@@ -39,16 +39,17 @@ describe Puppet::FileSystem::File do
     it "excludes other processes from updating at the same time even when creating the file" do
       file = Puppet::FileSystem::File.new(tmpfile("file_to_update"))
 
-      increment_counter_in_multiple_processes(file, 5)
+      increment_counter_in_multiple_processes(file, 5, 'a+')
 
       expect(file.read).to eq("5")
     end
 
-    def increment_counter_in_multiple_processes(file, num_procs)
+    def increment_counter_in_multiple_processes(file, num_procs, options)
       children = []
       5.times do |number|
         children << Kernel.fork do
-          file.exclusive_open(0660) do |fh|
+          file.exclusive_open(0660, options) do |fh|
+            fh.rewind
             contents = (fh.read || 0).to_i
             fh.truncate(0)
             fh.rewind
