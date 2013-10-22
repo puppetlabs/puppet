@@ -516,64 +516,6 @@ describe Puppet::Util do
 
   end
 
-  context "#exclusively_update_file" do
-    it "opens ands allows updating of an existing file" do
-      filename = file_containing("file_to_update", "the contents")
-
-      Puppet::Util.exclusively_update_file(filename, 0660) do |fh|
-        old = fh.read
-        fh.truncate(0)
-        fh.rewind
-        fh.write("updated #{old}")
-      end
-
-      expect(File.read(filename)).to eq("updated the contents")
-    end
-
-    it "opens, creates ands allows updating of a new file" do
-      filename = tmpfile("file_to_update")
-
-      Puppet::Util.exclusively_update_file(filename, 0660) do |fh|
-        fh.write("updated new file")
-      end
-
-      expect(File.read(filename)).to eq("updated new file")
-    end
-
-    it "excludes other processes from updating at the same time" do
-      filename = file_containing("file_to_update", "0")
-
-      increment_counter_in_multiple_processes(filename, 5)
-
-      expect(File.read(filename)).to eq("5")
-    end
-
-    it "excludes other processes from updating at the same time even when creating the file" do
-      filename = tmpfile("file_to_update")
-
-      increment_counter_in_multiple_processes(filename, 5)
-
-      expect(File.read(filename)).to eq("5")
-    end
-
-    def increment_counter_in_multiple_processes(filename, num_procs)
-      children = []
-      5.times do |number|
-        children << Kernel.fork do
-          Puppet::Util.exclusively_update_file(filename, 0660) do |fh|
-            contents = (fh.read || 0).to_i
-            fh.truncate(0)
-            fh.rewind
-            fh.write((contents + 1).to_s)
-          end
-          exit(0)
-        end
-      end
-
-      children.each { |pid| Process.wait(pid) }
-    end
-  end
-
   describe "#pretty_backtrace" do
     it "should include lines that don't match the standard backtrace pattern" do
       line = "non-standard line\n"

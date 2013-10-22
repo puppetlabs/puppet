@@ -43,6 +43,25 @@ describe Puppet::FileBucketFile::File do
         Puppet::FileBucket::File.indirection.head("#{bucket_file.checksum_type}/#{bucket_file.checksum_data}/testing").should be_true
       end
 
+      it "fails if the contents collide with existing contents" do
+        # This is the shortest known MD5 collision. See http://eprint.iacr.org/2010/643.pdf
+        first_contents = [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,
+                          0x6503cf04,0x854f709e,0xfb0fc034,0x874c9c65,
+                          0x2f94cc40,0x15a12deb,0x5c15f4a3,0x490786bb,
+                          0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("I" * 16)
+
+        collision_contents = [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,
+                              0x6503cf04,0x854f749e,0xfb0fc034,0x874c9c65,
+                              0x2f94cc40,0x15a12deb,0xdc15f4a3,0x490786bb,
+                              0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("I" * 16)
+
+        save_bucket_file(first_contents, "/foo/bar")
+
+        expect do
+          save_bucket_file(collision_contents, "/foo/bar")
+        end.to raise_error(Puppet::FileBucket::BucketError, /Got passed new contents/)
+      end
+
       describe "when supplying a path" do
         it "should store the path if not already stored" do
           checksum = save_bucket_file("stuff\r\n", "/foo/bar")
@@ -258,34 +277,6 @@ HERE
           end
         end
       end
-    end
-  end
-
-  describe "when verifying identical files" do
-    let(:contents) { "file\r\n contents" }
-    let(:digest) { "8b3702ad1aed1ace7e32bde76ffffb2d" }
-    let(:checksum) { "{md5}#{@digest}" }
-    let(:bucketdir) { tmpdir('file_bucket_file') }
-    let(:destdir) { "#{bucketdir}/8/b/3/7/0/2/a/d/8b3702ad1aed1ace7e32bde76ffffb2d" }
-    let(:bucket) { Puppet::FileBucket::File.new(contents) }
-
-    before :each do
-      Puppet[:bucketdir] = bucketdir
-      FileUtils.mkdir_p(destdir)
-    end
-
-    it "should raise an error if the files don't match" do
-      File.open(File.join(destdir, 'contents'), 'wb') { |f| f.print "corrupt contents" }
-
-      lambda{
-        Puppet::FileBucketFile::File.new.send(:verify_identical_file!, bucket)
-      }.should raise_error(Puppet::FileBucket::BucketError)
-    end
-
-    it "should do nothing if the files match" do
-      File.open(File.join(destdir, 'contents'), 'wb') { |f| f.print contents }
-
-      Puppet::FileBucketFile::File.new.send(:verify_identical_file!, bucket)
     end
   end
 end

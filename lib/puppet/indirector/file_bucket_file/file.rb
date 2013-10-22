@@ -9,37 +9,39 @@ module Puppet::FileBucketFile
 
     desc "Store files in a directory set based on their checksums."
 
-    def find( request )
-      checksum, files_original_path = request_to_checksum_and_path( request )
-      dir_path = path_for(request.options[:bucket_path], checksum)
-      file_path = ::File.join(dir_path, 'contents')
+    def find(request)
+      checksum, files_original_path = request_to_checksum_and_path(request)
+      contents_file = path_for(request.options[:bucket_path], checksum, 'contents')
+      paths_file = path_for(request.options[:bucket_path], checksum, 'paths')
 
-      return nil unless ::File.exists?(file_path)
-      return nil unless path_match(dir_path, files_original_path)
+      return nil unless contents_file.exist?
+      return nil unless path_match(paths_file, files_original_path)
 
       if request.options[:diff_with]
-        file2_path = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
-        raise "could not find diff_with #{request.options[:diff_with]}" unless ::File.exists?(file2_path)
-        return `diff #{file_path.inspect} #{file2_path.inspect}`
+        other_contents_file = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
+        raise "could not find diff_with #{request.options[:diff_with]}" unless other_contents_file.exist?
+        return `diff #{contents_file.path.to_s.inspect} #{other_contents_file.path.to_s.inspect}`
       else
-        contents = IO.binread(file_path)
         Puppet.info "FileBucket read #{checksum}"
-        model.new(contents)
+        model.new(contents_file.binread)
       end
     end
 
     def head(request)
       checksum, files_original_path = request_to_checksum_and_path(request)
-      dir_path = path_for(request.options[:bucket_path], checksum)
+      contents_file = path_for(request.options[:bucket_path], checksum, 'contents')
+      paths_file = path_for(request.options[:bucket_path], checksum, 'paths')
 
-      ::File.exists?(::File.join(dir_path, 'contents')) and path_match(dir_path, files_original_path)
+      contents_file.exist? && path_match(paths_file, files_original_path)
     end
 
-    def save( request )
+    def save(request)
       instance = request.instance
-      checksum, files_original_path = request_to_checksum_and_path(request)
+      _, files_original_path = request_to_checksum_and_path(request)
+      contents_file = path_for(instance.bucket_path, instance.checksum_data, 'contents')
+      paths_file = path_for(instance.bucket_path, instance.checksum_data, 'paths')
 
-      save_to_disk(instance, files_original_path)
+      save_to_disk(instance, files_original_path, contents_file, paths_file)
 
       # don't echo the request content back to the agent
       model.new('')
@@ -51,46 +53,39 @@ module Puppet::FileBucketFile
 
     private
 
-    def path_match(dir_path, files_original_path)
+    def path_match(paths_file, files_original_path)
       return true unless files_original_path # if no path was provided, it's a match
-      paths_path = ::File.join(dir_path, 'paths')
-      return false unless ::File.exists?(paths_path)
-      ::File.open(paths_path) do |f|
-        f.each_line do |line|
-          return true if line.chomp == files_original_path
-        end
+      return false unless paths_file.exist?
+      paths_file.each_line do |line|
+        return true if line.chomp == files_original_path
       end
       return false
     end
 
-    def save_to_disk( bucket_file, files_original_path )
-      filename = path_for(bucket_file.bucket_path, bucket_file.checksum_data, 'contents')
-      dir_path = path_for(bucket_file.bucket_path, bucket_file.checksum_data)
-      paths_path = ::File.join(dir_path, 'paths')
-
+    def save_to_disk(bucket_file, files_original_path, contents_file, paths_file)
       Puppet::Util.withumask(0007) do
-        unless ::File.directory?(dir_path)
-          ::FileUtils.mkdir_p(dir_path)
+        unless paths_file.dir.exist?
+          paths_file.dir.mkpath
         end
 
-        Puppet::Util.exclusively_update_file(paths_path, 0640, ::File::APPEND) do |f|
-          if ::File.exist?(filename)
-            verify_identical_file!(bucket_file)
-            ::FileUtils.touch(filename)
+        paths_file.exclusive_open(0640, ::File::CREAT | ::File::RDWR | ::File::APPEND) do |f|
+          if contents_file.exist?
+            verify_identical_file!(contents_file, bucket_file)
+            contents_file.touch
           else
-            ::File.open(filename, 'wb', 0440) do |of|
+            contents_file.open(0440, ::File::CREAT | ::File::WRONLY | ::File::BINARY) do |of|
               of.write(bucket_file.contents)
             end
           end
 
-          unless path_match(dir_path, files_original_path)
+          unless path_match(paths_file, files_original_path)
             f.puts(files_original_path)
           end
         end
       end
     end
 
-    def request_to_checksum_and_path( request )
+    def request_to_checksum_and_path(request)
       checksum_type, checksum, path = request.key.split(/\//, 3)
       if path == '' # Treat "md5/<checksum>/" like "md5/<checksum>"
         path = nil
@@ -106,22 +101,26 @@ module Puppet::FileBucketFile
       dir     = ::File.join(digest[0..7].split(""))
       basedir = ::File.join(bucket_path, dir, digest)
 
-      return basedir unless subfile
-      ::File.join(basedir, subfile)
+      Puppet::FileSystem::File.new(if subfile
+        ::File.join(basedir, subfile)
+      else
+        basedir
+      end)
     end
 
-    # If conflict_check is enabled, verify that the passed text is
-    # the same as the text in our file.
-    def verify_identical_file!(bucket_file)
-      disk_contents = IO.binread(path_for(bucket_file.bucket_path, bucket_file.checksum_data, 'contents'))
+    def verify_identical_file!(contents_file, bucket_file)
+      if bucket_file.contents.size == contents_file.size
+        disk_contents = contents_file.binread
 
-      # If the contents don't match, then we've found a conflict.
-      # Unlikely, but quite bad.
-      if disk_contents != bucket_file.contents
-        raise Puppet::FileBucket::BucketError, "Got passed new contents for sum #{bucket_file.checksum}"
-      else
-        Puppet.info "FileBucket got a duplicate file #{bucket_file.checksum}"
+        if disk_contents == bucket_file.contents
+          Puppet.info "FileBucket got a duplicate file #{bucket_file.checksum}"
+          return
+        end
       end
+
+      # If the contents or sizes don't match, then we've found a conflict.
+      # Unlikely, but quite bad.
+      raise Puppet::FileBucket::BucketError, "Got passed new contents for sum #{bucket_file.checksum}"
     end
   end
 end
