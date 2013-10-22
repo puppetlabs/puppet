@@ -473,6 +473,29 @@ module Util
   end
   module_function :replace_file
 
+  # Allows exclusive updates to a file to be made by excluding concurrent
+  # access using flock. This means that if the file is on a filesystem that
+  # does not support flock, this method will provide no protection.
+  #
+  # @param file [String] The name of the file to open
+  # @param options [Integer] Extra file operation mode information to use
+  # @param mode [Integer] The mode to apply to the file if it is created
+  # @yield The file handle, in read-write mode
+  # @return [Void]
+  # @api public
+  def exclusively_update_file(file, mode, options = 0, &block)
+    written = false
+    while !written
+      File.open(file, ::File::CREAT | ::File::RDWR | options, mode) do |rf|
+        if rf.flock(::File::LOCK_EX|::File::LOCK_NB)
+          yield rf
+          written = true
+        end
+      end
+    end
+  end
+  module_function :exclusively_update_file
+
 
   # Executes a block of code, wrapped with some special exception handling.  Causes the ruby interpreter to
   #  exit if the block throws an exception.

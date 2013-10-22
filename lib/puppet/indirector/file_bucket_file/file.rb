@@ -68,35 +68,24 @@ module Puppet::FileBucketFile
       dir_path = path_for(bucket_file.bucket_path, bucket_file.checksum_data)
       paths_path = ::File.join(dir_path, 'paths')
 
-      # If the file already exists, touch it.
-      if ::File.exist?(filename)
-        verify_identical_file!(bucket_file)
-        ::FileUtils.touch(filename)
-      else
-        # Make the directories if necessary.
+      Puppet::Util.withumask(0007) do
         unless ::File.directory?(dir_path)
-          Puppet::Util.withumask(0007) do
-            ::FileUtils.mkdir_p(dir_path)
-          end
+          ::FileUtils.mkdir_p(dir_path)
         end
 
-        Puppet.info "FileBucket adding #{bucket_file.checksum}"
-
-        # Write the file to disk.
-        Puppet::Util.withumask(0007) do
-          ::File.open(filename, ::File::WRONLY|::File::CREAT, 0440) do |of|
-            of.binmode
-            of.print bucket_file.contents
+        Puppet::Util.exclusively_update_file(paths_path, 0640, ::File::APPEND) do |f|
+          if ::File.exist?(filename)
+            verify_identical_file!(bucket_file)
+            ::FileUtils.touch(filename)
+          else
+            ::File.open(filename, 'wb', 0440) do |of|
+              of.write(bucket_file.contents)
+            end
           end
-          ::File.open(paths_path, ::File::WRONLY|::File::CREAT, 0640) do |of|
-            # path will be written below
-          end
-        end
-      end
 
-      unless path_match(dir_path, files_original_path)
-        ::File.open(paths_path, 'a') do |f|
-          f.puts(files_original_path)
+          unless path_match(dir_path, files_original_path)
+            f.puts(files_original_path)
+          end
         end
       end
     end

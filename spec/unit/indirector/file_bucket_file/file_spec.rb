@@ -26,6 +26,23 @@ describe Puppet::FileBucketFile::File do
         result.contents.should be_empty
       end
 
+      it "deals with multiple processes saving at the same time" do
+        bucket_file = Puppet::FileBucket::File.new("contents")
+
+        children = []
+        5.times do |count|
+          children << Kernel.fork do
+            save_bucket_file("contents", "/testing")
+            exit(0)
+          end
+        end
+        children.each { |child| Process.wait(child) }
+
+        paths = File.read("#{Puppet[:bucketdir]}/9/8/b/f/7/d/8/c/98bf7d8c15784f0a3d63204441e1e2aa/paths").lines.to_a
+        paths.length.should == 1
+        Puppet::FileBucket::File.indirection.head("#{bucket_file.checksum_type}/#{bucket_file.checksum_data}/testing").should be_true
+      end
+
       describe "when supplying a path" do
         it "should store the path if not already stored" do
           checksum = save_bucket_file("stuff\r\n", "/foo/bar")
