@@ -99,4 +99,13 @@ class Puppet::FileSystem::File
   def mkpath
     @path.mkpath
   end
+
+  # Compare the contents of this file against the contents of a stream.
+  # @param stream [IO] The stream to compare the contents against
+  # @return [Boolean] Whether the contents were the same
+  def compare_stream(stream)
+    open(0, 'rb') do |this|
+      FileUtils.compare_stream(this, stream)
+    end
+  end
 end

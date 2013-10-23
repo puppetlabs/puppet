@@ -106,9 +106,7 @@ module Puppet::FileBucketFile
 
     def verify_identical_file!(contents_file, bucket_file)
       if bucket_file.contents.size == contents_file.size
-        disk_contents = contents_file.binread
-
-        if disk_contents == bucket_file.contents
+        if contents_file.compare_stream(bucket_file.stream)
           Puppet.info "FileBucket got a duplicate file #{bucket_file.checksum}"
           return
         end

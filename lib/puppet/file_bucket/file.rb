@@ -2,6 +2,7 @@ require 'puppet/file_bucket'
 require 'puppet/indirector'
 require 'puppet/util/checksums'
 require 'digest/md5'
+require 'stringio'
 
 class Puppet::FileBucket::File
   # This class handles the abstract notion of a file in a filebucket.
@@ -32,6 +33,16 @@ class Puppet::FileBucket::File
 
     @bucket_path = options.delete(:bucket_path)
     raise ArgumentError.new("Unknown option(s): #{options.keys.join(', ')}") unless options.empty?
+  end
+
+  # @return [Num] The size of the contents
+  def size
+    contents.size
+  end
+
+  # @return [IO] A stream that reads the contents
+  def stream
+    StringIO.new(contents)
   end
 
   def checksum_type
