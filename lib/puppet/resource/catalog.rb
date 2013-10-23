@@ -469,7 +469,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Verify that the given resource isn't declared elsewhere.
   def fail_on_duplicate_type_and_title(resource)
-    # Short-curcuit the common case,
+    # Short-circuit the common case,
     return unless existing_resource = @resource_table[title_key_for_ref(resource.ref)]
 
     # If we've gotten this far, it's a real conflict
