@@ -376,6 +376,7 @@ module RDoc::PuppetParserCore
   def parse_fact(container)
     comments = ""
     current_fact = nil
+    parsed_facts = []
     File.open(@input_file_name) do |of|
       of.each do |line|
         # fetch comments
@@ -385,8 +386,7 @@ module RDoc::PuppetParserCore
           current_fact = RDoc::Fact.new($1,{})
           look_for_directives_in(container, comments) unless comments.empty?
           current_fact.comment = comments
-          container.add_fact(current_fact)
-          current_fact.record_location(@top_level)
+          parsed_facts << current_fact
           comments = ""
           Puppet.debug "rdoc: found custom fact #{current_fact.name}"
         elsif line =~ /^[ \t]*confine[ \t]*:(.*?)[ \t]*=>[ \t]*(.*)$/
@@ -395,6 +395,10 @@ module RDoc::PuppetParserCore
           comments =""
         end
       end
+    end
+    parsed_facts.each do |f|
+      container.add_fact(f)
+      f.record_location(@top_level)
     end
   end
 
@@ -409,20 +413,20 @@ module RDoc::PuppetParserCore
         # fetch comments
         if line =~ /^[ \t]*# ?(.*)$/
           comments += $1 + "\n"
-        elsif line =~ /^[ \t]*newfunction[ \t]*\([ \t]*:(.*?)[ \t]*,[ \t]*:type[ \t]*=>[ \t]*(:rvalue|:lvalue)\)/
+        elsif line =~ /^[ \t]*(?:Puppet::Parser::Functions::)?newfunction[ \t]*\([ \t]*:(.*?)[ \t]*,[ \t]*:type[ \t]*=>[ \t]*(:rvalue|:lvalue)/
           current_plugin = RDoc::Plugin.new($1, "function")
-          container.add_plugin(current_plugin)
           look_for_directives_in(container, comments) unless comments.empty?
           current_plugin.comment = comments
           current_plugin.record_location(@top_level)
+          container.add_plugin(current_plugin)
           comments = ""
           Puppet.debug "rdoc: found new function plugins #{current_plugin.name}"
         elsif line =~ /^[ \t]*Puppet::Type.newtype[ \t]*\([ \t]*:(.*?)\)/
           current_plugin = RDoc::Plugin.new($1, "type")
-          container.add_plugin(current_plugin)
           look_for_directives_in(container, comments) unless comments.empty?
           current_plugin.comment = comments
           current_plugin.record_location(@top_level)
+          container.add_plugin(current_plugin)
           comments = ""
           Puppet.debug "rdoc: found new type plugins #{current_plugin.name}"
         elsif line =~ /module Puppet::Parser::Functions/

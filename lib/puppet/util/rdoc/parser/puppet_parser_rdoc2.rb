@@ -1,9 +1,13 @@
 require 'puppet/util/rdoc/parser/puppet_parser_core.rb'
 
-class RDoc::PuppetParserRDoc2 < ::RDoc::Parser
-  include RDoc::PuppetParserCore
+module RDoc
+  PUPPET_RDOC_VERSION = 2
 
-  def create_rdoc_preprocess
-    preprocess = RDoc::Markup::PreProcess.new(@input_file_name, @options.rdoc_include)
+  class PuppetParserRDoc2 < Parser
+    include PuppetParserCore
+
+    def create_rdoc_preprocess
+      preprocess = Markup::PreProcess.new(@input_file_name, @options.rdoc_include)
+    end
   end
 end
