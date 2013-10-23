@@ -5,8 +5,6 @@ require 'puppet/resource'
 # parent is that this class has rules on who can set
 # parameters
 class Puppet::Parser::Resource < Puppet::Resource
-  extend Forwardable
-
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
   require 'puppet/parser/yaml_trimmer'
@@ -56,7 +54,9 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  def_delegator :scope, :environment
+  def environment
+    scope.environment
+  end
 
   # Process the  stage metaparameter for a class.   A containment edge
   # is drawn from  the class to the stage.   The stage for containment
@@ -228,7 +228,9 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   # Convert this resource to a RAL resource.
-  def_delegator :to_resource, :to_ral
+  def to_ral
+    to_resource.to_ral
+  end
 
   private
 
