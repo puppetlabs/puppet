@@ -10,6 +10,11 @@ end
 describe Puppet::Resource::StoreConfigs do
   it_should_behave_like "a StoreConfigs terminus"
 
+  before :each do
+    Puppet[:storeconfigs] = true
+    Puppet[:storeconfigs_backend] = "store_configs_testing"
+  end
+
   it "is deprecated on the network, but still allows requests" do
     Puppet.expects(:deprecation_warning)
 
