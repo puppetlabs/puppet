@@ -1,9 +1,10 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
+require 'puppet_spec/compiler'
 
 describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   it "should be Comparable" do
     a = Puppet::Type.type(:notify).new(:name => "a")
@@ -129,6 +130,26 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
   it "should consider its version to be zero if it has no catalog" do
     Puppet::Type.type(:mount).new(:name => "foo").version.should == 0
+  end
+
+  it "reports the correct path even after path is used during setup of the type" do
+    Puppet::Type.newtype(:testing) do
+      newparam(:name) do
+        isnamevar
+        validate do |value|
+          path # forces the computation of the path
+        end
+      end
+    end
+
+    ral = compile_to_ral(<<-MANIFEST)
+      class something {
+        testing { something: }
+      }
+      include something
+    MANIFEST
+
+    ral.resource("Testing[something]").path.should == "/Stage[main]/Something/Testing[something]"
   end
 
   context "resource attributes" do
