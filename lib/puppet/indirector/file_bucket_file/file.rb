@@ -101,11 +101,7 @@ module Puppet::FileBucketFile
       dir     = ::File.join(digest[0..7].split(""))
       basedir = ::File.join(bucket_path, dir, digest)
 
-      Puppet::FileSystem::File.new(if subfile
-        ::File.join(basedir, subfile)
-      else
-        basedir
-      end)
+      Puppet::FileSystem::File.new(subfile ? ::File.join(basedir, subfile) : basedir)
     end
 
     def verify_identical_file!(contents_file, bucket_file)
