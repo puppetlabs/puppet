@@ -846,9 +846,9 @@ describe Puppet::Resource do
     end
   end
 
-  describe "it should implement to_resource" do
+  describe "it should implement copy_as_resource" do
     resource = Puppet::Resource.new("file", "/my/file")
-    resource.to_resource.should == resource
+    resource.copy_as_resource.should == resource
   end
 
   describe "because it is an indirector model" do

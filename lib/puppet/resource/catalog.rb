@@ -496,22 +496,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       next if virtual_not_exported?(resource)
       next if block_given? and yield resource
 
-      #This is hackity hack for 1094
-      #Aliases aren't working in the ral catalog because the current instance of the resource
-      #has a reference to the catalog being converted. . . So, give it a reference to the new one
-      #problem solved. . .
-      if resource.class == Puppet::Resource
-        resource = resource.dup
-        resource.catalog = nil
-      elsif resource.is_a?(Puppet::Parser::Resource)
-        resource = resource.to_resource
-        resource.catalog = nil
-      end
-
-      if resource.is_a?(Puppet::Resource) and convert.to_s == "to_resource"
-        newres = resource
+      if convert == :to_resource
+        newres = resource.copy_as_resource
       else
-        newres = resource.send(convert)
+        newres = resource.copy_as_resource.to_ral
       end
 
       # We can't guarantee that resources don't munge their names

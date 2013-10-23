@@ -217,12 +217,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       @r1 = stub_everything 'r1', :ref => "File[/a]"
       @r1.stubs(:respond_to?).with(:ref).returns(true)
-      @r1.stubs(:dup).returns(@r1)
+      @r1.stubs(:copy_as_resource).returns(@r1)
       @r1.stubs(:is_a?).with(Puppet::Resource).returns(true)
 
       @r2 = stub_everything 'r2', :ref => "File[/b]"
       @r2.stubs(:respond_to?).with(:ref).returns(true)
-      @r2.stubs(:dup).returns(@r2)
+      @r2.stubs(:copy_as_resource).returns(@r2)
       @r2.stubs(:is_a?).with(Puppet::Resource).returns(true)
 
       @resources = [@r1,@r2]
