@@ -90,7 +90,7 @@ describe Puppet::Parser::Resource do
   it "should use a Puppet::Resource for converting to a ral resource" do
     trans = mock 'resource', :to_ral => "yay"
     @resource = mkresource
-    @resource.expects(:to_resource).returns trans
+    @resource.expects(:copy_as_resource).returns trans
     @resource.to_ral.should == "yay"
   end
 
@@ -445,7 +445,7 @@ describe Puppet::Parser::Resource do
   it "should be able to be converted to a normal resource" do
     @source = stub 'scope', :name => "myscope"
     @resource = mkresource :source => @source
-    @resource.should respond_to(:to_resource)
+    @resource.should respond_to(:copy_as_resource)
   end
 
   describe "when being converted to a resource" do
@@ -454,19 +454,19 @@ describe Puppet::Parser::Resource do
     end
 
     it "should create an instance of Puppet::Resource" do
-      @parser_resource.to_resource.should be_instance_of(Puppet::Resource)
+      @parser_resource.copy_as_resource.should be_instance_of(Puppet::Resource)
     end
 
     it "should set the type correctly on the Puppet::Resource" do
-      @parser_resource.to_resource.type.should == @parser_resource.type
+      @parser_resource.copy_as_resource.type.should == @parser_resource.type
     end
 
     it "should set the title correctly on the Puppet::Resource" do
-      @parser_resource.to_resource.title.should == @parser_resource.title
+      @parser_resource.copy_as_resource.title.should == @parser_resource.title
     end
 
     it "should copy over all of the parameters" do
-      result = @parser_resource.to_resource.to_hash
+      result = @parser_resource.copy_as_resource.to_hash
 
       # The name will be in here, also.
       result[:foo].should == "bar"
@@ -477,40 +477,40 @@ describe Puppet::Parser::Resource do
       @parser_resource.tag "foo"
       @parser_resource.tag "bar"
 
-      @parser_resource.to_resource.tags.should == @parser_resource.tags
+      @parser_resource.copy_as_resource.tags.should == @parser_resource.tags
     end
 
     it "should copy over the line" do
       @parser_resource.line = 40
-      @parser_resource.to_resource.line.should == 40
+      @parser_resource.copy_as_resource.line.should == 40
     end
 
     it "should copy over the file" do
       @parser_resource.file = "/my/file"
-      @parser_resource.to_resource.file.should == "/my/file"
+      @parser_resource.copy_as_resource.file.should == "/my/file"
     end
 
     it "should copy over the 'exported' value" do
       @parser_resource.exported = true
-      @parser_resource.to_resource.exported.should be_true
+      @parser_resource.copy_as_resource.exported.should be_true
     end
 
     it "should copy over the 'virtual' value" do
       @parser_resource.virtual = true
-      @parser_resource.to_resource.virtual.should be_true
+      @parser_resource.copy_as_resource.virtual.should be_true
     end
 
     it "should convert any parser resource references to Puppet::Resource instances" do
       ref = Puppet::Resource.new("file", "/my/file")
       @parser_resource = mkresource :source => @source, :parameters => {:foo => "bar", :fee => ref}
-      result = @parser_resource.to_resource
+      result = @parser_resource.copy_as_resource
       result[:fee].should == Puppet::Resource.new(:file, "/my/file")
     end
 
     it "should convert any parser resource references to Puppet::Resource instances even if they are in an array" do
       ref = Puppet::Resource.new("file", "/my/file")
       @parser_resource = mkresource :source => @source, :parameters => {:foo => "bar", :fee => ["a", ref]}
-      result = @parser_resource.to_resource
+      result = @parser_resource.copy_as_resource
       result[:fee].should == ["a", Puppet::Resource.new(:file, "/my/file")]
     end
 
@@ -518,7 +518,7 @@ describe Puppet::Parser::Resource do
       ref1 = Puppet::Resource.new("file", "/my/file1")
       ref2 = Puppet::Resource.new("file", "/my/file2")
       @parser_resource = mkresource :source => @source, :parameters => {:foo => "bar", :fee => ["a", [ref1,ref2]]}
-      result = @parser_resource.to_resource
+      result = @parser_resource.copy_as_resource
       result[:fee].should == ["a", Puppet::Resource.new(:file, "/my/file1"), Puppet::Resource.new(:file, "/my/file2")]
     end
 

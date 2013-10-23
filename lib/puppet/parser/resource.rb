@@ -1,12 +1,9 @@
-require 'forwardable'
 require 'puppet/resource'
 
 # The primary difference between this class and its
 # parent is that this class has rules on who can set
 # parameters
 class Puppet::Parser::Resource < Puppet::Resource
-  extend Forwardable
-
   require 'puppet/parser/resource/param'
   require 'puppet/util/tagging'
   require 'puppet/parser/yaml_trimmer'
@@ -56,7 +53,9 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-  def_delegator :scope, :environment
+  def environment
+    scope.environment
+  end
 
   # Process the  stage metaparameter for a class.   A containment edge
   # is drawn from  the class to the stage.   The stage for containment
@@ -188,47 +187,10 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
   end
 
-
-  # Create a Puppet::Resource instance from this parser resource.
-  # We plan, at some point, on not needing to do this conversion, but
-  # it's sufficient for now.
-  def to_resource
-    result = Puppet::Resource.new(type, title)
-
-    to_hash.each do |p, v|
-      if v.is_a?(Puppet::Resource)
-        v = Puppet::Resource.new(v.type, v.title)
-      elsif v.is_a?(Array)
-        # flatten resource references arrays
-        v = v.flatten if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
-        v = v.collect do |av|
-          av = Puppet::Resource.new(av.type, av.title) if av.is_a?(Puppet::Resource)
-          av
-        end
-      end
-
-      # If the value is an array with only one value, then
-      # convert it to a single value.  This is largely so that
-      # the database interaction doesn't have to worry about
-      # whether it returns an array or a string.
-      result[p] = if v.is_a?(Array) and v.length == 1
-                    v[0]
-                  else
-                    v
-                  end
-    end
-
-    result.file = self.file
-    result.line = self.line
-    result.exported = self.exported
-    result.virtual = self.virtual
-    result.tag(*self.tags)
-
-    result
-  end
-
   # Convert this resource to a RAL resource.
-  def_delegator :to_resource, :to_ral
+  def to_ral
+    copy_as_resource.to_ral
+  end
 
   private
 

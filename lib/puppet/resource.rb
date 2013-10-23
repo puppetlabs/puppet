@@ -389,8 +389,39 @@ class Puppet::Resource
     end.compact
   end
 
-  def to_resource
-    self
+  def copy_as_resource
+    result = Puppet::Resource.new(type, title)
+
+    to_hash.each do |p, v|
+      if v.is_a?(Puppet::Resource)
+        v = Puppet::Resource.new(v.type, v.title)
+      elsif v.is_a?(Array)
+        # flatten resource references arrays
+        v = v.flatten if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
+        v = v.collect do |av|
+          av = Puppet::Resource.new(av.type, av.title) if av.is_a?(Puppet::Resource)
+          av
+        end
+      end
+
+      # If the value is an array with only one value, then
+      # convert it to a single value.  This is largely so that
+      # the database interaction doesn't have to worry about
+      # whether it returns an array or a string.
+      result[p] = if v.is_a?(Array) and v.length == 1
+                    v[0]
+                  else
+                    v
+                  end
+    end
+
+    result.file = self.file
+    result.line = self.line
+    result.exported = self.exported
+    result.virtual = self.virtual
+    result.tag(*self.tags)
+
+    result
   end
 
   def valid_parameter?(name)
