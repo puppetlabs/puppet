@@ -335,6 +335,7 @@ module Util
 
   # Because IO#binread is only available in 1.9
   def binread(file)
+    Puppet.deprecation_warning("Puppet::Util.binread is deprecated. Read the file without this method as it will be removed in a future version.")
     File.open(file, 'rb') { |f| f.read }
   end
   module_function :binread
