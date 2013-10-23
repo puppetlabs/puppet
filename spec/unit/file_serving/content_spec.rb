@@ -98,13 +98,17 @@ describe Puppet::FileServing::Content, "when returning the contents" do
 
   it "should return the contents of the path if the file exists" do
     File.expects(:stat).with(path).returns stub("stat", :ftype => "file")
-    IO.expects(:binread).with(path).returns(:mycontent)
+    mocked_file = mock(path)
+    Puppet::FileSystem::File.expects(:new).with(path).returns(mocked_file)
+    mocked_file.expects(:binread).returns(:mycontent)
     content.content.should == :mycontent
   end
 
   it "should cache the returned contents" do
     File.expects(:stat).with(path).returns stub("stat", :ftype => "file")
-    IO.expects(:binread).with(path).returns(:mycontent)
+    mocked_file = mock(path)
+    Puppet::FileSystem::File.expects(:new).with(path).returns(mocked_file)
+    mocked_file.expects(:binread).returns(:mycontent)
     content.content
     # The second run would throw a failure if the content weren't being cached.
     content.content

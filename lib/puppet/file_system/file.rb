@@ -90,6 +90,12 @@ class Puppet::FileSystem::File
     @path.exist?
   end
 
+  # @return [Boolean] Whether the file is writable by the current
+  # process
+  def writable?
+    @path.writable?
+  end
+
   # Touches the file. On most systems this updates the mtime of the file.
   def touch
     ::FileUtils.touch(@path)

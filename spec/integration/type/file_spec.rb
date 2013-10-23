@@ -397,13 +397,13 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource file
       catalog.add_resource filebucket
 
-      File.open(file[:path], "wb") { |f| f.puts "bar" }
+      File.open(file[:path], "w") { |f| f.write("bar") }
 
-      md5 = Digest::MD5.hexdigest(IO.binread(file[:path]))
+      md5 = Digest::MD5.hexdigest("bar")
 
       catalog.apply
 
-      filebucket.bucket.getfile(md5).should == "bar\n"
+      filebucket.bucket.getfile(md5).should == "bar"
     end
 
     it "should backup files in the local directory when a backup string is provided" do
