@@ -497,31 +497,22 @@ definition_expression
         @lexer.indefine = false
       end
     }
-#  | DEFINE classname parameter_list LBRACE RBRACE {
-#      result = Factory.DEFINITION(classname(val[1][:value]), val[2], nil)
-#      loc result, val[0], val[4]
-#      @lexer.indefine = false
-#    }
 
 #---HOSTCLASS
-# ORIGINAL COMMENT: Our class gets defined in the parent namespace, not our own.
-#    WAT ??! This is way odd; should get its complete name, classnames do not nest
-#    Seems like the call to classname makes use of the name scope
-#    (This is uneccesary, since the parent name is known when evaluating)
 #
 # Produces Model::HostClassDefinition
 #
 hostclass_expression
   : CLASS stacked_classname parameter_list classparent LBRACE opt_statements RBRACE {
+      # Remove this class' name from the namestack as all nested classes have been parsed
       namepop
       result = Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), val[5])
       loc result, val[0], val[6]
     }
-#  | CLASS classname parameter_list classparent LBRACE RBRACE {
-#      result = Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), nil)
-#      loc result, val[0], val[5]
-#      }
 
+  # Record the classname so nested classes gets a fully qualified name at parse-time
+  # This is a separate rule since racc does not support intermediate actions.
+  #
   stacked_classname
     : classname { namestack(val[0][:value]) ; result = val[0] }
 
@@ -569,18 +560,23 @@ node_definition_expression
   # Produces a LiteralExpression (string, :default, or regexp)
   # String with interpolation is validated for better error message
   hostname
-    : NAME        { result = Factory.fqn(val[0][:value]); loc result, val[0] }
-    | quotedtext  { result = val[0] } 
+    : dotted_name { result = val[0]; loc result, val[0] }
+    | quotedtext  { result = val[0] }
     | DEFAULT     { result = Factory.literal(:default); loc result, val[0] }
     | regex
+
+  dotted_name
+    : NAME        { result = Factory.literal(val[0][:value]); loc result, val[0] }
+    | dotted_name DOT NAME { result = Factory.concat(val[0], '.', val[2][:value]); loc result, val[0], val[2] }
 
   # Produces Expression, since hostname is an Expression
   nodeparent
     : nil
     | INHERITS hostname { result = val[1] }
 
-#---NAMES AND PARAMTERS COMMON TO SEVERAL RULES
-# String result
+#---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
+#   Produces String
+#
 classname
   : NAME  { result = val[0] }
   | CLASS { error val[0], "'class' is not a valid classname" }

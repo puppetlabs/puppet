@@ -156,11 +156,19 @@ describe "egrammar parsing containers" do
 
   context "When parsing node" do
     it "node foo {}" do
-      dump(parse("node foo {}")).should == "(node (matches foo) ())"
+      dump(parse("node foo {}")).should == "(node (matches 'foo') ())"
+    end
+
+    it "node kermit.example.com {}" do
+      dump(parse("node kermit.example.com {}")).should == "(node (matches 'kermit.example.com') ())"
+    end
+
+    it "node kermit . example . com {}" do
+      dump(parse("node kermit . example . com {}")).should == "(node (matches 'kermit.example.com') ())"
     end
 
     it "node foo, x::bar, default {}" do
-      dump(parse("node foo, x::bar, default {}")).should == "(node (matches foo x::bar :default) ())"
+      dump(parse("node foo, x::bar, default {}")).should == "(node (matches 'foo' 'x::bar' :default) ())"
     end
 
     it "node 'foo' {}" do
@@ -168,15 +176,15 @@ describe "egrammar parsing containers" do
     end
 
     it "node foo inherits x::bar {}" do
-      dump(parse("node foo inherits x::bar {}")).should == "(node (matches foo) (parent x::bar) ())"
+      dump(parse("node foo inherits x::bar {}")).should == "(node (matches 'foo') (parent 'x::bar') ())"
     end
 
     it "node foo inherits 'bar' {}" do
-      dump(parse("node foo inherits 'bar' {}")).should == "(node (matches foo) (parent 'bar') ())"
+      dump(parse("node foo inherits 'bar' {}")).should == "(node (matches 'foo') (parent 'bar') ())"
     end
 
     it "node foo inherits default {}" do
-      dump(parse("node foo inherits default {}")).should == "(node (matches foo) (parent :default) ())"
+      dump(parse("node foo inherits default {}")).should == "(node (matches 'foo') (parent :default) ())"
     end
 
     it "node /web.*/ {}" do
@@ -188,11 +196,11 @@ describe "egrammar parsing containers" do
     end
 
     it "node wat inherits /apache.*/ {}" do
-      dump(parse("node wat inherits /apache.*/ {}")).should == "(node (matches wat) (parent /apache.*/) ())"
+      dump(parse("node wat inherits /apache.*/ {}")).should == "(node (matches 'wat') (parent /apache.*/) ())"
     end
 
     it "node foo inherits bar {$a = 10 $b = 20}" do
-      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == "(node (matches foo) (parent bar) (block (= $a 10) (= $b 20)))"
+      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == "(node (matches 'foo') (parent 'bar') (block (= $a 10) (= $b 20)))"
     end
   end
 end

@@ -892,4 +892,18 @@ class Puppet::Pops::Model::Factory
       build(o, *args)
     end
   end
+
+  def self.concat(*args)
+    new(args.map do |e|
+      e = e.current if e.is_a?(self)
+      case e
+      when Model::LiteralString
+        e.value
+      when String
+        e
+      else
+        raise ArgumentError, "can only concatenate strings, got #{e.class}"
+      end
+    end.join(''))
+  end
 end
