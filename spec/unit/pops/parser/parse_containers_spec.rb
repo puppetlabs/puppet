@@ -23,6 +23,10 @@ describe "egrammar parsing containers" do
       dump(parse("class foo {}")).should == "(class foo ())"
     end
 
+    it "class foo { class bar {} }" do
+      dump(parse("class foo { class bar {}}")).should == "(class foo (block (class foo::bar ())))"
+    end
+
     it "class foo::bar {}" do
       dump(parse("class foo::bar {}")).should == "(class foo::bar ())"
     end
@@ -101,6 +105,15 @@ describe "egrammar parsing containers" do
   context "When the parser parses define" do
     it "define foo {}" do
       dump(parse("define foo {}")).should == "(define foo ())"
+    end
+
+    it "class foo { define bar {}}" do
+      dump(parse("class foo {define bar {}}")).should == "(class foo (block (define foo::bar ())))"
+    end
+
+    it "define foo { define bar {}}" do
+      # This is illegal, but handled as part of validation
+      dump(parse("define foo { define bar {}}")).should == "(define foo (block (define bar ())))"
     end
 
     it "define foo::bar {}" do
