@@ -14,6 +14,7 @@ class Puppet::Application::Resource < Puppet::Application
   option("--edit","-e")
 
   option("--host HOST","-H") do |arg|
+    Puppet.warning("Accessing resources on the network is deprecated. See http://links.puppetlabs.com/deprecate-networked-resource")
     @host = arg
   end
 
