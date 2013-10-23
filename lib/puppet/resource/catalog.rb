@@ -502,10 +502,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       #problem solved. . .
       if resource.class == Puppet::Resource
         resource = resource.dup
-        resource.catalog = result
+        resource.catalog = nil
       elsif resource.is_a?(Puppet::Parser::Resource)
         resource = resource.to_resource
-        resource.catalog = result
+        resource.catalog = nil
       end
 
       if resource.is_a?(Puppet::Resource) and convert.to_s == "to_resource"
@@ -546,6 +546,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     result.add_class(*self.classes)
     result.tag(*self.tags)
+
+    # Don't introduce the resources to the catalog until the catalog is complete
+    result.resources.each { |resource| resource.catalog = result }
 
     result
   end
