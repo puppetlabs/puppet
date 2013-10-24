@@ -115,10 +115,15 @@ class Puppet::Pops::Parser::Parser
 #    end
 
     except = Puppet::ParseError.new(error)
-    except.line = value[:line] unless token == 0
-    path = value[:file]
+    if token != 0
+      path        = value[:file]
+      except.line = value[:line]
+      except.pos  = value[:pos]
+    else
+      # At end of input, use what the lexer thinks is the source file
+      path        = lexer.file
+    end
     except.file = path if path.is_a?(String) && !path.empty?
-    except.pos  = value[:pos] unless token == 0
 
     raise except
   end
