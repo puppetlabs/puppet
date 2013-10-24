@@ -628,7 +628,7 @@ hash
     | hashpairs COMMA hashpair { result = val[0].push val[2] }
 
   hashpair
-    : text_or_name FARROW expression { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
+    : expression FARROW expression { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
 
 quotedtext
   : string
