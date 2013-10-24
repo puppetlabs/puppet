@@ -123,7 +123,7 @@ describe Puppet::FileBucket::Dipper do
         klass.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(contents))
 
         dipper.restore(dest, md5).should == md5
-        Digest::MD5.hexdigest(IO.binread(dest)).should == md5
+        Digest::MD5.hexdigest(Puppet::FileSystem::File.new(dest).binread).should == md5
 
         request.key.should == "md5/#{md5}"
         request.server.should == server
