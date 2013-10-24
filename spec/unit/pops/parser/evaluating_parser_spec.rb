@@ -88,22 +88,22 @@ describe 'The hiera2 string evaluator' do
     end
   end
 
-#  describe "when benchmarked" do
-#
-#    it "Pops Parser", :profile => true do
-#      code = 'if true
-#{
-#$a = 10 + 10
-#}
-#else
-#{
-#$a = "interpolate ${foo} and stuff"
-#}
-#'
-#      parser = Puppet::Pops::Parser::EvaluatingParser.new()
-#      m = Benchmark.measure { 10000.times { parser.parse_string(code) }}
-#      puts "Parser: #{m}"
-#    end
-#  end
+  describe "when benchmarked" do
+
+    it "Pops Parser", :profile => true do
+      code = 'if true
+{
+$a = 10 + 10
+}
+else
+{
+$a = "interpolate ${foo} and stuff"
+}
+'
+      parser = Puppet::Pops::Parser::EvaluatingParser.new()
+      m = Benchmark.measure { 10000.times { parser.parse_string(code) }}
+      puts "Parser: #{m}"
+    end
+  end
 
 end
