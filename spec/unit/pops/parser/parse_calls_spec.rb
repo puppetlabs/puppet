@@ -81,16 +81,16 @@ describe "egrammar parsing function calls" do
       dump(parse("$a.foo")).should == "(call-method (. $a foo))"
     end
 
-    it "$a.foo {|| }" do
+    it "$a.foo || { }" do
       dump(parse("$a.foo || { }")).should == "(call-method (. $a foo) (lambda ()))"
     end
 
-    it "$a.foo {|$x| }" do
-      dump(parse("$a.foo {|$x| }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
+    it "$a.foo |$x| { }" do
+      dump(parse("$a.foo |$x|{ }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
     end
 
-    it "$a.foo {|$x| }" do
-      dump(parse("$a.foo {|$x| $b = $x}")).should ==
+    it "$a.foo |$x|{ }" do
+      dump(parse("$a.foo |$x|{ $b = $x}")).should ==
       "(call-method (. $a foo) (lambda (parameters x) (block (= $b $x))))"
     end
   end

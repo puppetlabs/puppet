@@ -14,7 +14,7 @@ describe 'the filter method' do
   it 'should filter on an array (all berries)' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = ['strawberry','blueberry','orange']
-      $a.filter {|$x| $x  =~ /berry$/}.each {|$v|
+      $a.filter |$x|{ $x  =~ /berry$/}.each |$v|{
         file { "/file_$v": ensure => present }
       }
     MANIFEST
@@ -26,7 +26,7 @@ describe 'the filter method' do
   it 'should produce an array when acting on an array' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = ['strawberry','blueberry','orange']
-      $b = $a.filter {|$x| $x  =~ /berry$/}
+      $b = $a.filter |$x|{ $x  =~ /berry$/}
       file { "/file_${b[0]}": ensure => present }
       file { "/file_${b[1]}": ensure => present }
     MANIFEST
@@ -38,7 +38,7 @@ describe 'the filter method' do
   it 'filters on a hash (all berries) by key' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'strawberry'=>'red','blueberry'=>'blue','orange'=>'orange'}
-      $a.filter {|$x| $x[0]  =~ /berry$/}.each {|$v|
+      $a.filter |$x|{ $x[0]  =~ /berry$/}.each |$v|{
         file { "/file_${v[0]}": ensure => present }
       }
     MANIFEST
@@ -50,7 +50,7 @@ describe 'the filter method' do
   it 'should produce a hash when acting on a hash' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'strawberry'=>'red','blueberry'=>'blue','orange'=>'orange'}
-      $b = $a.filter {|$x| $x[0]  =~ /berry$/}
+      $b = $a.filter |$x|{ $x[0]  =~ /berry$/}
       file { "/file_${b['strawberry']}": ensure => present }
       file { "/file_${b['blueberry']}": ensure => present }
       file { "/file_${b['orange']}": ensure => present }
@@ -65,7 +65,7 @@ describe 'the filter method' do
   it 'filters on a hash (all berries) by value' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'strawb'=>'red berry','blueb'=>'blue berry','orange'=>'orange fruit'}
-      $a.filter {|$x| $x[1]  =~ /berry$/}.each {|$v|
+      $a.filter |$x|{ $x[1]  =~ /berry$/}.each |$v|{
         file { "/file_${v[0]}": ensure => present }
       }
     MANIFEST
