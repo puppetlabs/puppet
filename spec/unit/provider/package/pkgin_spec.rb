@@ -76,13 +76,9 @@ describe provider_class do
         "vim-7.2.446 <        Vim editor (vi clone) without GUI\nvim-share-7.2.446 =  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
       end
 
-      it "returns a hash with the upgraded package" do
-        provider_class.stubs(:pkgin).with("-y", :install, "vim")
-        subject.latest.should == { :name => "vim" ,
-                                   :ensure => :present ,
-                                   :status => "<" ,
-                                   :version => "7.2.446" ,
-                                   :provider => :pkgin }
+      it "returns latest as the current state" do
+        provider_class.stubs(:pkgin).with("-y", :install, "vim").once()
+        subject.latest.should == :latest
       end
     end
 
@@ -91,23 +87,8 @@ describe provider_class do
         "vim-7.2.446 >        Vim editor (vi clone) without GUI\nvim-share-7.2.446 =  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
       end
 
-      it "returns true" do
+      it "returns nil" do
         subject.latest.should be_nil
-      end
-    end
-
-    context "when the package is not installed" do
-      let(:pkgin_search_output) do
-        "vim-7.2.446          Vim editor (vi clone) without GUI\nvim-share-7.2.446 =  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
-      end
-
-      it "returns a hash with the new installed package" do
-        provider_class.stubs(:pkgin).with("-y", :install, "vim").once()
-        subject.latest.should == { :name => "vim" ,
-                                   :ensure => :present ,
-                                   :status => nil ,
-                                   :version => "7.2.446" ,
-                                   :provider => :pkgin }
       end
     end
 
@@ -129,12 +110,8 @@ SEARCH
 
       it "returns a hash with the upgraded package" do
         provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
-        provider_class.stubs(:pkgin).with("-y", :install, "vim")
-        subject.latest.should == { :name => "vim" ,
-                                   :ensure => :present ,
-                                   :status => "<" ,
-                                   :version => "7.3" ,
-                                   :provider => :pkgin }
+        provider_class.stubs(:pkgin).with("-y", :install, "vim").once()
+        subject.latest.should == :latest
       end
     end
 
@@ -147,7 +124,6 @@ SEARCH
         subject.latest.should be_nil
       end
     end
-
   end
 
   describe "#parse_pkgin_line" do
