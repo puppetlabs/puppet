@@ -194,7 +194,6 @@ class Puppet::Pops::Parser::Lexer
   "<dqstring between two interpolations>" => :DQMID,
   "<dqstring after final interpolation>" => :DQPOST,
   "<boolean>" => :BOOLEAN,
-  "<lambda start>" => :LAMBDA, # A LBRACE followed by '|'
   "<select start>" => :SELBRACE # A QMARK followed by '{'
   )
 
@@ -294,9 +293,7 @@ class Puppet::Pops::Parser::Lexer
   #
   TOKENS.add_token :LBRACE, "{" do |lexer, value|
     lexer.lexing_context[:brace_count] += 1
-    if lexer.match?(/[ \t\r]*\|/)
-      [TOKENS[:LAMBDA], value]
-    elsif lexer.lexing_context[:after] == :QMARK
+    if lexer.lexing_context[:after] == :QMARK
       [TOKENS[:SELBRACE], value]
     else
       [TOKENS[:LBRACE], value]

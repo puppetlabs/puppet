@@ -232,7 +232,7 @@ describe Puppet::Pops::Parser::Lexer::TOKENS do
 
   # These tokens' strings don't matter, just that the tokens exist.
   [:STRING, :DQPRE, :DQMID, :DQPOST, :BOOLEAN, :NAME, :NUMBER, :COMMENT, :MLCOMMENT,
-    :LBRACE, :RBRACE, :LAMBDA,
+    :LBRACE, :RBRACE,
     :RETURN, :SQUOTE, :DQUOTE, :VARIABLE].each do |name|
     it "should have a token named #{name.to_s}" do
       Puppet::Pops::Parser::Lexer::TOKENS[name].should_not be_nil

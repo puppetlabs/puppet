@@ -365,13 +365,13 @@ describe Puppet::Parser do
   end
   context "when parsing method calls" do
     it "should parse method call with one param lambda" do
-      expect { @parser.parse("$a.each {|$a| debug $a }") }.to_not raise_error
+      expect { @parser.parse("$a.each |$a|{ debug $a }") }.to_not raise_error
     end
     it "should parse method call with two param lambda" do
-      expect { @parser.parse("$a.each {|$a,$b| debug $a }") }.to_not raise_error
+      expect { @parser.parse("$a.each |$a,$b|{ debug $a }") }.to_not raise_error
     end
     it "should parse method call with two param lambda and default value" do
-      expect { @parser.parse("$a.each {|$a,$b=1| debug $a }") }.to_not raise_error
+      expect { @parser.parse("$a.each |$a,$b=1|{ debug $a }") }.to_not raise_error
     end
     it "should parse method call without lambda (statement)" do
       expect { @parser.parse("$a.each") }.to_not raise_error
@@ -400,7 +400,7 @@ describe Puppet::Parser do
         expect { @parser.parse("$a.foo.bar") }.to_not raise_error
       end
       it "chained method calls with lambda should be allowed" do
-        expect { @parser.parse("$a.foo{||}.bar{||}") }.to_not raise_error
+        expect { @parser.parse("$a.foo||{}.bar||{}") }.to_not raise_error
       end
     end
   end
