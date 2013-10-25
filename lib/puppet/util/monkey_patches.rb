@@ -105,6 +105,7 @@ class IO
   end
 
   def self.binread(name, length = nil, offset = 0)
+    Puppet.deprecation_warning("This is a monkey-patched implementation of IO.binread on ruby 1.8 and is deprecated. Read the file without this method as it will be removed in a future version.")
     File.open(name, 'rb') do |f|
       f.seek(offset) if offset > 0
       f.read(length)

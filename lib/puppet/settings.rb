@@ -1045,6 +1045,9 @@ Generated on #{Time.now}.
     end
   end
 
+  # TODO: this method does not actually work as intended.
+  # We need to delete it and modify users to use the new
+  # exclusively_update_file method.
   def readwritelock(default, *args, &bloc)
     file = value(get_config_file_default(default).name)
     tmpfile = file + ".tmp"
