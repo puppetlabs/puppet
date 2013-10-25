@@ -35,6 +35,21 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     end
   end
 
+  def query
+    packages = parse_pkgsearch_line
+
+    if not packages
+      if @resource[:ensure] == :absent
+        notice "declared as absent but unavailable #{@resource.file}:#{resource.line}"
+        return false
+      else
+        @resource.fail "No candidate to be installed"
+      end
+    end
+
+    packages.first.merge( :ensure => :absent )
+  end
+
   def parse_pkgsearch_line
     packages = pkgin(:search, resource[:name]).split("\n")
 
