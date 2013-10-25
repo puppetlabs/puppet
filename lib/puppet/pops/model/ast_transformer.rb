@@ -33,6 +33,12 @@ class Puppet::Pops::Model::AstTransformer
     klass.new(merge_location(hash, o))
   end
 
+  # THIS IS AN EXPENSIVE OPERATION
+  # The 3x AST requires line, pos etc. to be recorded directly in the AST nodes and this information
+  # must be computed.
+  # (Newer implementation only computes the information that is actually needed; typically when raising an
+  # exception).
+  #
   def merge_location(hash, o)
     if o
       pos = {}

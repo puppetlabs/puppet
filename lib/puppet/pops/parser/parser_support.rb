@@ -141,8 +141,8 @@ class Puppet::Pops::Parser::Parser
   # @return [Puppet::Pops::Model::Factory] the given factory
   # @api private
   #
-  def loc(factory, start_token, end_token = nil)
-    factory.record_position(sourcepos(start_token), sourcepos(end_token))
+  def loc(factory, start_locateable, end_locateable = nil)
+    factory.record_position(start_locateable, end_locateable)
   end
 
   # Associate documentation with the factory wrapped model object.
@@ -152,22 +152,22 @@ class Puppet::Pops::Parser::Parser
     factory.doc = doc_string
   end
 
-  def sourcepos(o)
-    if !o
-      Puppet::Pops::Adapters::SourcePosAdapter.new
-    elsif o.is_a? Puppet::Pops::Model::Factory
-      # It is a built model element with loc set returns start at pos 0
-      o.loc
-    else
-      loc = Puppet::Pops::Adapters::SourcePosAdapter.new
-      # It must be a token
-      loc.line = o[:line]
-      loc.pos = o[:pos]
-      loc.offset = o[:offset]
-      loc.length = o[:length]
-      loc
-    end
-  end
+#  def sourcepos(o)
+#    if !o
+#      Puppet::Pops::Adapters::SourcePosAdapter.new
+#    elsif o.is_a? Puppet::Pops::Model::Factory
+#      # It is a built model element with loc set returns start at pos 0
+#      o.loc
+#    else
+#      loc = Puppet::Pops::Adapters::SourcePosAdapter.new
+#      # It must be a token
+#      loc.line = o[:line]
+#      loc.pos = o[:pos]
+#      loc.offset = o[:offset]
+#      loc.length = o[:length]
+#      loc
+#    end
+#  end
 
   def aryfy(o)
     o = [o] unless o.is_a?(Array)

@@ -27,7 +27,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       evaluate(a_block).should == "value is 10 yo"
     end
 
-    it "should interpolate any expression in a text expression, \"${var*2}\"" do
+    it "should interpolate any expression in a text expression, \"${$var*2}\"" do
       a_block = block(fqn('a').set(5), string('value is ', text(var(fqn('a')) * 2) , ' yo'))
       evaluate(a_block).should == "value is 10 yo"
     end

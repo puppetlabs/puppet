@@ -1980,7 +1980,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 557)
 
 module_eval(<<'.,.,', 'egrammar.ra', 562)
   def _reduce_145(val, _values, result)
-     result = val[0]; loc result, val[0] 
+     result = val[0] 
     result
   end
 .,.,

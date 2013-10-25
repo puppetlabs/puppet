@@ -63,7 +63,7 @@ module Puppet::Pops::Parser::LexerSupport
   # and its position in its source container. There is a cost associated with computing the
   # line and position on line information.
   #
-  class TokenValue
+  class TokenValue < Puppet::Pops::Parser::Locatable
     attr_reader :token_array
     attr_reader :offset
     attr_reader :locator
@@ -73,6 +73,11 @@ module Puppet::Pops::Parser::LexerSupport
       @offset = offset
       @locator = locator
     end
+
+    def length
+      @token_array[2]
+    end
+
     def [](key)
       case key
       when :value

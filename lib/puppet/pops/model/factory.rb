@@ -19,8 +19,15 @@ class Puppet::Pops::Model::Factory
   # Initialize a factory with a single object, or a class with arguments applied to build of
   # created instance
   #
-  def initialize popsobj, *args
-    @current = to_ops(popsobj, *args)
+  def initialize o, *args
+    @current = case o
+    when Model::PopsObject
+      o
+    when Puppet::Pops::Model::Factory
+      o.current
+    else
+      build(o, *args)
+    end
   end
 
   # Polymorphic build
@@ -33,7 +40,7 @@ class Puppet::Pops::Model::Factory
     end
   end
 
-  # Polymorphic inerpolate
+  # Polymorphic interpolate
   def interpolate()
     begin
       @@interpolation_visitor.visit_this(self, current)
@@ -434,15 +441,21 @@ class Puppet::Pops::Model::Factory
 
   # Records the position (start -> end) and computes the resulting length.
   #
-  def record_position(start_pos, end_pos)
+  def record_position(start_locatable, end_locatable)
     Puppet::Pops::Adapters::SourcePosAdapter.adapt(current) do |a|
-      a.line   = start_pos.line
-      a.offset = start_pos.offset
-      a.pos    = start_pos.pos
-      a.length = start_pos.length
-      if(end_pos.offset && end_pos.length)
-        a.length = end_pos.offset + end_pos.length - start_pos.offset
+      if start_locatable && end_locatable
+        a.locatable = Puppet::Pops::Parser::Locatable::Range.new(start_locatable, end_locatable)
+      else
+        a.locatable = Puppet::Pops::Parser::Locatable::Lazy.new(start_locatable)
       end
+
+#      a.line   = start_pos.line
+#      a.offset = start_pos.offset
+#      a.pos    = start_pos.pos
+#      a.length = start_pos.length
+#      if(end_pos.offset && end_pos.length)
+#        a.length = end_pos.offset + end_pos.length - start_pos.offset
+#      end
     end
     self
   end
@@ -466,18 +479,19 @@ class Puppet::Pops::Model::Factory
     Puppet::Pops::Adapters::SourcePosAdapter.adapt(current)
   end
 
-  # Returns documentation string, or nil if not available
-  # @return [String, nil] associated documentation if available
-  def doc()
-    a = Puppet::Pops::Adapters::SourcePosAdapter.adapt(current)
-    return a.documentation if a
-    nil
-  end
-
-  def doc=(doc_string)
-    a = Puppet::Pops::Adapters::SourcePosAdapter.adapt(current)
-    a.documentation = doc_string
-  end
+# UNUSED AND WRONG
+#  # Returns documentation string, or nil if not available
+#  # @return [String, nil] associated documentation if available
+#  def doc()
+#    a = Puppet::Pops::Adapters::Source PosAdapter.adapt(current)
+#    return a.documentation if a
+#    nil
+#  end
+#
+#  def doc=(doc_string)
+#    a = Puppet::Pops::Adapters::Source PosAdapter.adapt(current)
+#    a.documentation = doc_string
+#  end
 
   # Returns symbolic information about an expected share of a resource expression given the LHS of a resource expr.
   #
@@ -886,8 +900,11 @@ class Puppet::Pops::Model::Factory
 
   # Checks if the object is already a model object, or build it
   def to_ops(o, *args)
-    if o.kind_of?(Model::PopsObject)
+    case o
+    when Model::PopsObject
       o
+    when Puppet::Pops::Model::Factory
+      o.current
     else
       build(o, *args)
     end
