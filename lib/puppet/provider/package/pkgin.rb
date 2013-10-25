@@ -25,8 +25,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   def self.prefetch(packages)
     super
-    # -f seems required when repositories.conf changes
-    pkgin("-yf", :update)
+    pkgin("-y", :update)
   end
 
   def self.instances
