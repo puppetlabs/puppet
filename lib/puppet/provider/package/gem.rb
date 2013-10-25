@@ -9,6 +9,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     the gem will be installed from the default gem repositories."
 
   has_feature :versionable
+  has_feature :install_options
 
   commands :gemcmd => "gem"
 
@@ -25,6 +26,9 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
     if name = options[:justme]
       gem_list_command << name + "$"
+    end
+    if options[:install_options]
+      gem_list_command << options[:install_options]
     end
 
     begin
@@ -97,6 +101,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       command << "--no-rdoc" << "--no-ri" << resource[:name]
     end
 
+    command << resource[:install_options]
+
     output = execute(command)
     # Apparently some stupid gem versions don't exit non-0 on failure
     self.fail "Could not install: #{output.chomp}" if output.include?("ERROR")
@@ -106,6 +112,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     # This always gets the latest version available.
     gemlist_options = {:justme => resource[:name]}
     gemlist_options.merge!({:source => resource[:source]}) unless resource[:source].nil?
+    gemlist_options.merge!({:install_options => resource[:install_options]}) unless resource[:install_options].nil?
     hash = self.class.gemlist(gemlist_options)
 
     hash[:ensure][0]
