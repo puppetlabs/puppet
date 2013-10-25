@@ -31,9 +31,11 @@ module Puppet::Util::RDoc
                 "--exclude", "/modules/[^/]*/files/.*$",
                 "--exclude", "/modules/[^/]*/tests/.*$",
                 "--exclude", "/modules/[^/]*/templates/.*$",
-                "--force-update",
                 "--op", outputdir ]
 
+    if !Puppet.features.rdoc1? || ::Options::OptionList.options.any? { |o| o[0] == "--force-update" } # Options is a root object in the rdoc1 namespace...
+      options << "--force-update"
+    end
     options += [ "--charset", charset] if charset
     options += files
 

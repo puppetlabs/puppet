@@ -3,6 +3,7 @@ require 'puppet/util/rdoc/parser/puppet_parser_core.rb'
 module RDoc
   PUPPET_RDOC_VERSION = 2
 
+  # @api private
   class PuppetParserRDoc2 < Parser
     include PuppetParserCore
 

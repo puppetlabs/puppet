@@ -151,12 +151,12 @@ module RDoc::PuppetParserCore
   def scan_for_include_or_require(container, code)
     code = [code] unless code.is_a?(Array)
     code.each do |stmt|
-      scan_for_include_or_require(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
+      scan_for_include_or_require(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
       if stmt.is_a?(Puppet::Parser::AST::Function) and ['include','require'].include?(stmt.name)
         stmt.arguments.each do |included|
           Puppet.debug "found #{stmt.name}: #{included}"
-          container.send("add_#{stmt.name}",Include.new(included.to_s, stmt.doc))
+          container.send("add_#{stmt.name}", RDoc::Include.new(included.to_s, stmt.doc))
         end
       end
     end
@@ -167,12 +167,12 @@ module RDoc::PuppetParserCore
   def scan_for_realize(container, code)
     code = [code] unless code.is_a?(Array)
     code.each do |stmt|
-      scan_for_realize(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
+      scan_for_realize(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
       if stmt.is_a?(Puppet::Parser::AST::Function) and stmt.name == 'realize'
         stmt.arguments.each do |realized|
           Puppet.debug "found #{stmt.name}: #{realized}"
-          container.add_realize(Include.new(realized.to_s, stmt.doc))
+          container.add_realize( RDoc::Include.new(realized.to_s, stmt.doc))
         end
       end
     end
@@ -183,11 +183,11 @@ module RDoc::PuppetParserCore
   def scan_for_vardef(container, code)
     code = [code] unless code.is_a?(Array)
     code.each do |stmt|
-      scan_for_vardef(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
+      scan_for_vardef(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
       if stmt.is_a?(Puppet::Parser::AST::VarDef)
         Puppet.debug "rdoc: found constant: #{stmt.name} = #{stmt.value}"
-        container.add_constant(Constant.new(stmt.name.to_s, stmt.value.to_s, stmt.doc))
+        container.add_constant(RDoc::Constant.new(stmt.name.to_s, stmt.value.to_s, stmt.doc))
       end
     end
   end
@@ -197,7 +197,7 @@ module RDoc::PuppetParserCore
   def scan_for_resource(container, code)
     code = [code] unless code.is_a?(Array)
     code.each do |stmt|
-      scan_for_resource(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
+      scan_for_resource(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
       if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
         begin
@@ -215,23 +215,13 @@ module RDoc::PuppetParserCore
               param << res
             end
 
-            container.add_resource(PuppetResource.new(type, title, stmt.doc, param))
+            container.add_resource(RDoc::PuppetResource.new(type, title, stmt.doc, param))
           end
         rescue => detail
           raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}"
         end
       end
     end
-  end
-
-  def resource_stmt_to_ref(stmt)
-    type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
-    title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
-
-    param = stmt.params.children.collect do |p|
-      {"name" => p.param, "value" => p.value.to_s}
-    end
-    PuppetResource.new(type, title, stmt.doc, param)
   end
 
   # create documentation for a class named +name+
@@ -252,7 +242,7 @@ module RDoc::PuppetParserCore
     cls.record_location(@top_level)
 
     # scan class code for include
-    code = klass.code.children if klass.code.is_a?(Puppet::Parser::AST::ASTArray)
+    code = klass.code.children if klass.code.is_a?(Puppet::Parser::AST::BlockExpression)
     code ||= klass.code
     unless code.nil?
       scan_for_include_or_require(cls, code)
@@ -276,7 +266,7 @@ module RDoc::PuppetParserCore
     n = container.add_node(name, superclass)
     n.record_location(@top_level)
 
-    code = node.code.children if node.code.is_a?(Puppet::Parser::AST::ASTArray)
+    code = node.code.children if node.code.is_a?(Puppet::Parser::AST::BlockExpression)
     code ||= node.code
     unless code.nil?
       scan_for_include_or_require(n, code)
@@ -308,7 +298,7 @@ module RDoc::PuppetParserCore
         case value
         when Puppet::Parser::AST::Leaf
           declaration << "'#{value.value}'"
-        when Puppet::Parser::AST::ASTArray
+        when Puppet::Parser::AST::BlockExpression
           declaration << "[#{value.children.collect { |v| "'#{v}'" }.join(", ")}]"
         else
           declaration << "#{value.to_s}"
@@ -342,7 +332,7 @@ module RDoc::PuppetParserCore
         unless name.empty?
           document_class(name,klass,container)
         else # on main class document vardefs
-          code = klass.code.children if klass.code.is_a?(Puppet::Parser::AST::ASTArray)
+          code = klass.code.children if klass.code.is_a?(Puppet::Parser::AST::BlockExpression)
           code ||= klass.code
           scan_for_vardef(container, code) unless code.nil?
         end

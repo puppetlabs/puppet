@@ -6,6 +6,7 @@ describe "RDoc::Parser" do
   require 'puppet_spec/files'
   include PuppetSpec::Files
 
+  let(:document_all) { false }
   let(:tmp_dir) { tmpdir('rdoc_parser_tmp') }
   let(:doc_dir) { File.join(tmp_dir, 'doc') }
   let(:manifests_dir) { File.join(tmp_dir, 'manifests') }
@@ -17,10 +18,32 @@ describe "RDoc::Parser" do
         File.join(manifests_dir, 'site.pp'),
         <<-EOF
 # The test class comment
-class test {}
+class test {
+  # The virtual resource comment
+  @notify { virtual: }
+  # The a_notify_resource comment
+  notify { a_notify_resource:
+    message => "a_notify_resource message"
+  }
+}
+
+# The includes_another class comment
+class includes_another {
+  include another
+}
+
+# The requires_another class comment
+class requires_another {
+  require another
+}
 
 # node comment
-node foo {}
+node foo {
+  include test
+  $a_var = "var_value"
+  realize Notify[virtual]
+  notify { bar: }
+}
         EOF
       ],
       :module_init => [
@@ -28,6 +51,8 @@ node foo {}
         <<-EOF
 # The a_module class comment
 class a_module {}
+
+class another {}
         EOF
       ],
       :module_type => [
@@ -98,6 +123,7 @@ end
 
   before :each do
     prepare_manifests_and_modules
+    Puppet.settings[:document_all] = document_all
     Puppet.settings[:modulepath] = modules_dir
     Puppet::Util::RDoc.rdoc(doc_dir, [modules_dir, manifests_dir])
   end
@@ -107,16 +133,16 @@ end
       file_exists_and_matches_content(module_path(module_name), /Module: #{module_name}/)
     end
 
-    def has_node_rdoc(module_name, node_name)
-      file_exists_and_matches_content(node_path(module_name, node_name), /#{node_name}/, /node comment/)
+    def has_node_rdoc(module_name, node_name, *args)
+      file_exists_and_matches_content(node_path(module_name, node_name), /#{node_name}/, /node comment/, *args)
     end
 
     def has_defined_type(module_name, type_name)
       file_exists_and_matches_content(module_path(module_name), /#{type_name}.*?\(\s*\)/m, "The .*?#{type_name}.*? type comment")
     end
 
-    def has_class_rdoc(module_name, class_name)
-      file_exists_and_matches_content(class_path(module_name, class_name), /#{class_name}.*? class comment/)
+    def has_class_rdoc(module_name, class_name, *args)
+      file_exists_and_matches_content(class_path(module_name, class_name), /#{class_name}.*? class comment/, *args)
     end
 
     def has_plugin_rdoc(module_name, type, name)
@@ -160,6 +186,36 @@ end
     it "documents the a_module::a_fact fact" do
       has_plugin_rdoc("a_module", :fact, 'a_fact')
     end
+
+    it "documents included classes" do
+      has_class_rdoc("__site__", "includes_another", /Included.*?another/m)
+    end
+  end
+
+  shared_examples_for :an_rdoc1_site do
+    it "documents required classes" do
+      has_class_rdoc("__site__", "requires_another", /Required Classes.*?another/m)
+    end
+
+    it "documents realized resources" do
+      has_node_rdoc("__site__", "foo", /Realized Resources.*?Notify\[virtual\]/m)
+    end
+
+    it "documents global variables" do
+      has_node_rdoc("__site__", "foo", /Global Variables.*?a_var.*?=.*?var_value/m)
+    end
+
+    describe "when document_all is true" do
+      let(:document_all) { true }
+
+      it "documents virtual resource declarations" do
+        has_class_rdoc("__site__", "test", /Resources.*?Notify\[virtual\]/m, /The virtual resource comment/)
+      end
+
+      it "documents resources" do
+        has_class_rdoc("__site__", "test", /Resources.*?Notify\[a_notify_resource\]/m, /message => "a_notify_resource message"/, /The a_notify_resource comment/)
+      end
+    end
   end
 
   describe "rdoc1 support", :if => Puppet.features.rdoc1? do
@@ -170,11 +226,12 @@ end
 
     include RdocTesters
 
-    def has_node_rdoc(module_name, node_name)
-      some_file_exists_with_matching_content(node_path(module_name, node_name), /#{node_name}/, /node comment/)
+    def has_node_rdoc(module_name, node_name, *args)
+      some_file_exists_with_matching_content(node_path(module_name, node_name), /#{node_name}/, /node comment/, *args)
     end
 
     it_behaves_like :an_rdoc_site
+    it_behaves_like :an_rdoc1_site
 
     it "references nodes and classes in the __site__ module" do
       file_exists_and_matches_content("#{doc_dir}/classes/__site__.html", /Node.*__site__::foo/, /Class.*__site__::test/)
