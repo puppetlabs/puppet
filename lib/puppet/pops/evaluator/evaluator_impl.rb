@@ -218,6 +218,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     fail("An object of type #{o.class} is not assignable", o, scope)
   end
 
+  def eval_Factory(o, scope)
+    evaluate(o.current, scope)
+  end
+
   # Evaluates any object not evaluated to something else to itself.
   def eval_Object o, scope
     o
@@ -343,6 +347,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
   def calculate(left, right, operator, left_o, right_o, scope)
+    require 'debugger'; debugger
     unless ARITHMETIC_OPERATORS.include?(operator)
       raise ArgumentError, "Unknown arithmetic operator #{o.operator}"
     end

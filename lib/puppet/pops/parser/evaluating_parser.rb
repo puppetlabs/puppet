@@ -31,6 +31,7 @@ class Puppet::Pops::Parser::EvaluatingParser
   end
 
   def evaluate_string(scope, s, file_source='unknown')
+    require 'debugger'; debugger
     evaluate(scope, parse_string(s, file_source))
   end
 
@@ -158,5 +159,16 @@ class Puppet::Pops::Parser::EvaluatingParser
     end
     escaped << p unless p.nil?
     escaped << '"'
+  end
+
+  # This is a temporary solution to making it possible to use the new evaluator. The main class
+  # will eventually have this behavior instead of using transformation to Puppet 3.x AST
+  class Transitional < Puppet::Pops::Parser::EvaluatingParser
+
+    def evaluate(scope, model)
+      return nil unless model
+      Puppet::Pops::Evaluator::EvaluatorImpl.new().evaluate(model, scope)
+    end
+
   end
 end

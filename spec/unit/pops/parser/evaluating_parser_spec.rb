@@ -3,7 +3,7 @@ require 'puppet/pops'
 require 'puppet_spec/pops'
 require 'puppet_spec/scope'
 
-describe 'The hiera2 string evaluator' do
+describe 'The Evaluating Parser' do
 
   include PuppetSpec::Pops
   include PuppetSpec::Scope
