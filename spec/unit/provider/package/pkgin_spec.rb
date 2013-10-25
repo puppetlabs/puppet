@@ -126,6 +126,24 @@ SEARCH
     end
   end
 
+  describe "#update" do
+    before { resource[:ensure] = :absent }
+    before do
+      provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
+    end
+
+    context "when the package is not installed" do
+      let(:pkgin_search_output) do
+        "vim-7.2.446          Vim editor (vi clone) without GUI\nvim-share-7.2.446    Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
+      end
+
+      it "calls pkgin install" do
+        subject.expects(:pkgin).with("-y", :install, "vim").once()
+        subject.update
+      end
+    end
+  end
+
   describe "#parse_pkgin_line" do
     context "with an installed package" do
       let(:package) { "vim-7.2.446 =        Vim editor (vi clone) without GUI" }
