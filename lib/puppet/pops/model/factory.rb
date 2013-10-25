@@ -479,20 +479,6 @@ class Puppet::Pops::Model::Factory
     Puppet::Pops::Adapters::SourcePosAdapter.adapt(current)
   end
 
-# UNUSED AND WRONG
-#  # Returns documentation string, or nil if not available
-#  # @return [String, nil] associated documentation if available
-#  def doc()
-#    a = Puppet::Pops::Adapters::Source PosAdapter.adapt(current)
-#    return a.documentation if a
-#    nil
-#  end
-#
-#  def doc=(doc_string)
-#    a = Puppet::Pops::Adapters::Source PosAdapter.adapt(current)
-#    a.documentation = doc_string
-#  end
-
   # Returns symbolic information about an expected share of a resource expression given the LHS of a resource expr.
   #
   # * `name { }` => `:resource`,  create a resource of the given type
