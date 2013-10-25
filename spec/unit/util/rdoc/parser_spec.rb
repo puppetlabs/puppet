@@ -82,7 +82,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       File.stubs(:open).returns("readme")
       @parser.stubs(:parse_elements)
 
-      @module.expects(:comment=).with("readme")
+      @module.expects(:add_comment).with("readme", "module/manifests/init.pp")
 
       @parser.scan_top_level(@topcontainer)
     end
@@ -93,7 +93,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       File.stubs(:open).returns("readme")
       @parser.stubs(:parse_elements)
 
-      @module.expects(:comment=).with("readme")
+      @module.expects(:add_comment).with("readme", "module/manifests/init.pp")
 
       @parser.scan_top_level(@topcontainer)
     end
@@ -105,7 +105,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       File.stubs(:open).with("module/README.rdoc", "r").returns("readme.rdoc")
       @parser.stubs(:parse_elements)
 
-      @module.expects(:comment=).with("readme.rdoc")
+      @module.expects(:add_comment).with("readme.rdoc", "module/manifests/init.pp")
 
       @parser.scan_top_level(@topcontainer)
     end
@@ -311,7 +311,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
     end
 
     it "should associate the node documentation to the rdoc node" do
-      @rdoc_node.expects(:comment=).with("mydoc")
+      @rdoc_node.expects(:add_comment).with("mydoc", "file")
       @parser.document_node("mynode", @node, @class)
     end
 
@@ -360,7 +360,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
     end
 
     it "should associate the node documentation to the rdoc class" do
-      @rdoc_class.expects(:comment=).with("mydoc")
+      @rdoc_class.expects(:add_comment).with("mydoc", "file")
       @parser.document_class("mynode", @class, @module)
     end
 

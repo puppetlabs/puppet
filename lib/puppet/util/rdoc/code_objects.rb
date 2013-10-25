@@ -13,10 +13,25 @@ module RDoc
     attr_accessor :module_name, :global
   end
 
+  # Add top level comments to a class or module regardless of whether we are
+  # using rdoc1 or rdoc2+
+  # @api private
+  module AddClassModuleComment
+    def add_comment(comment, location = nil)
+      if PUPPET_RDOC_VERSION == 1
+        self.comment = comment
+      else
+        super
+      end
+    end
+  end
+
   # PuppetModule holds a Puppet Module
   # This is mapped to an HTMLPuppetModule
   # it leverage the RDoc (ruby) module infrastructure
   class PuppetModule < NormalModule
+    include AddClassModuleComment
+
     attr_accessor :facts, :plugins
 
     def initialize(name,superclass=nil)
@@ -119,6 +134,8 @@ module RDoc
   # It is mapped to a HTMLPuppetClass for display
   # It leverages RDoc (ruby) Class
   class PuppetClass < ClassModule
+    include AddClassModuleComment
+
     attr_accessor :resource_list, :requires, :childs, :realizes
 
     def initialize(name, superclass)
@@ -200,6 +217,8 @@ module RDoc
   # It is mapped to a HTMLPuppetNode for display
   # A node is just a variation of a class
   class PuppetNode < PuppetClass
+    include AddClassModuleComment
+
     def initialize(name, superclass)
       super(name,superclass)
     end

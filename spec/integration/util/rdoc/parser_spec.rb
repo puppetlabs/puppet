@@ -46,6 +46,12 @@ node foo {
 }
         EOF
       ],
+      :module_readme => [
+        File.join(modules_dir, 'a_module', 'README'),
+        <<-EOF
+The a_module README docs.
+        EOF
+      ],
       :module_init => [
         File.join(modules_dir, 'a_module', 'manifests', 'init.pp'),
         <<-EOF
@@ -129,20 +135,20 @@ end
   end
 
   module RdocTesters
-    def has_module_rdoc(module_name)
-      file_exists_and_matches_content(module_path(module_name), /Module: #{module_name}/)
+    def has_module_rdoc(module_name, *other_test_patterns)
+      file_exists_and_matches_content(module_path(module_name), /Module:? +#{module_name}/i, *other_test_patterns)
     end
 
-    def has_node_rdoc(module_name, node_name, *args)
-      file_exists_and_matches_content(node_path(module_name, node_name), /#{node_name}/, /node comment/, *args)
+    def has_node_rdoc(module_name, node_name, *other_test_patterns)
+      file_exists_and_matches_content(node_path(module_name, node_name), /#{node_name}/, /node comment/, *other_test_patterns)
     end
 
     def has_defined_type(module_name, type_name)
       file_exists_and_matches_content(module_path(module_name), /#{type_name}.*?\(\s*\)/m, "The .*?#{type_name}.*? type comment")
     end
 
-    def has_class_rdoc(module_name, class_name, *args)
-      file_exists_and_matches_content(class_path(module_name, class_name), /#{class_name}.*? class comment/, *args)
+    def has_class_rdoc(module_name, class_name, *other_test_patterns)
+      file_exists_and_matches_content(class_path(module_name, class_name), /#{class_name}.*? class comment/, *other_test_patterns)
     end
 
     def has_plugin_rdoc(module_name, type, name)
@@ -164,7 +170,7 @@ end
     end
 
     it "documents the a_module module" do
-      has_module_rdoc("a_module")
+      has_module_rdoc("a_module", /The .*?a_module.*? .*?README.*?docs/m)
     end
 
     it "documents the a_module::a_module class" do
@@ -226,8 +232,8 @@ end
 
     include RdocTesters
 
-    def has_node_rdoc(module_name, node_name, *args)
-      some_file_exists_with_matching_content(node_path(module_name, node_name), /#{node_name}/, /node comment/, *args)
+    def has_node_rdoc(module_name, node_name, *other_test_patterns)
+      some_file_exists_with_matching_content(node_path(module_name, node_name), /#{node_name}/, /node comment/, *other_test_patterns)
     end
 
     it_behaves_like :an_rdoc_site

@@ -137,7 +137,7 @@ module RDoc::PuppetParserCore
     container, name  = get_class_or_module(container,name)
     mod = container.add_module(RDoc::PuppetModule, name)
     mod.record_location(@top_level)
-    mod.comment = comment
+    mod.add_comment(comment, @input_file_name)
 
     if @input_file_name =~ /\.pp$/
       parse_elements(mod)
@@ -250,7 +250,7 @@ module RDoc::PuppetParserCore
       scan_for_resource(cls, code) if Puppet.settings[:document_all]
     end
 
-    cls.comment = comment
+    cls.add_comment(comment, klass.file)
   rescue => detail
     raise Puppet::ParseError, "impossible to parse class '#{name}' in #{klass.file} at line #{klass.line}: #{detail}"
   end
@@ -275,7 +275,7 @@ module RDoc::PuppetParserCore
       scan_for_resource(n, code) if Puppet.settings[:document_all]
     end
 
-    n.comment = comment
+    n.add_comment(comment, node.file)
   rescue => detail
     raise Puppet::ParseError, "impossible to parse node '#{name}' in #{node.file} at line #{node.line}: #{detail}"
   end
