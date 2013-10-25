@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/file_system'
+require 'puppet/util/platform'
 
 describe Puppet::FileSystem::File do
   include PuppetSpec::Files
@@ -28,7 +29,7 @@ describe Puppet::FileSystem::File do
       expect(file.read).to eq("updated new file")
     end
 
-    it "excludes other processes from updating at the same time" do
+    it "excludes other processes from updating at the same time", :unless => Puppet::Util::Platform.windows? do
       file = Puppet::FileSystem::File.new(file_containing("file_to_update", "0"))
 
       increment_counter_in_multiple_processes(file, 5, 'r+')
@@ -36,7 +37,7 @@ describe Puppet::FileSystem::File do
       expect(file.read).to eq("5")
     end
 
-    it "excludes other processes from updating at the same time even when creating the file" do
+    it "excludes other processes from updating at the same time even when creating the file", :unless => Puppet::Util::Platform.windows? do
       file = Puppet::FileSystem::File.new(tmpfile("file_to_update"))
 
       increment_counter_in_multiple_processes(file, 5, 'a+')

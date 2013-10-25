@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'puppet/indirector/file_bucket_file/file'
+require 'puppet/util/platform'
 
 describe Puppet::FileBucketFile::File do
   include PuppetSpec::Files
@@ -26,7 +27,7 @@ describe Puppet::FileBucketFile::File do
         result.contents.should be_empty
       end
 
-      it "deals with multiple processes saving at the same time" do
+      it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? do
         bucket_file = Puppet::FileBucket::File.new("contents")
 
         children = []
