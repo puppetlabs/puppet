@@ -14,16 +14,17 @@ module Puppet::FileBucketFile
       contents_file = path_for(request.options[:bucket_path], checksum, 'contents')
       paths_file = path_for(request.options[:bucket_path], checksum, 'paths')
 
-      return nil unless contents_file.exist?
-      return nil unless path_match(paths_file, files_original_path)
-
-      if request.options[:diff_with]
-        other_contents_file = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
-        raise "could not find diff_with #{request.options[:diff_with]}" unless other_contents_file.exist?
-        return `diff #{contents_file.path.to_s.inspect} #{other_contents_file.path.to_s.inspect}`
+      if contents_file.exist? && matches(paths_file, files_original_path)
+        if request.options[:diff_with]
+          other_contents_file = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
+          raise "could not find diff_with #{request.options[:diff_with]}" unless other_contents_file.exist?
+          return `diff #{contents_file.path.to_s.inspect} #{other_contents_file.path.to_s.inspect}`
+        else
+          Puppet.info "FileBucket read #{checksum}"
+          model.new(contents_file.binread)
+        end
       else
-        Puppet.info "FileBucket read #{checksum}"
-        model.new(contents_file.binread)
+        nil
       end
     end
 
@@ -32,7 +33,7 @@ module Puppet::FileBucketFile
       contents_file = path_for(request.options[:bucket_path], checksum, 'contents')
       paths_file = path_for(request.options[:bucket_path], checksum, 'paths')
 
-      contents_file.exist? && path_match(paths_file, files_original_path)
+      contents_file.exist? && matches(paths_file, files_original_path)
     end
 
     def save(request)
@@ -53,10 +54,15 @@ module Puppet::FileBucketFile
 
     private
 
-    def path_match(paths_file, files_original_path)
+    def matches(paths_file, files_original_path)
+      paths_file.open(0640, 'a+') do |f|
+        path_match(f, files_original_path)
+      end
+    end
+
+    def path_match(file_handle, files_original_path)
       return true unless files_original_path # if no path was provided, it's a match
-      return false unless paths_file.exist?
-      paths_file.each_line do |line|
+      file_handle.each_line do |line|
         return true if line.chomp == files_original_path
       end
       return false
@@ -68,7 +74,7 @@ module Puppet::FileBucketFile
           paths_file.dir.mkpath
         end
 
-        paths_file.exclusive_open(0640, 'a') do |f|
+        paths_file.exclusive_open(0640, 'a+') do |f|
           if contents_file.exist?
             verify_identical_file!(contents_file, bucket_file)
             contents_file.touch
@@ -78,7 +84,7 @@ module Puppet::FileBucketFile
             end
           end
 
-          unless path_match(paths_file, files_original_path)
+          unless path_match(f, files_original_path)
             f.puts(files_original_path)
           end
         end
