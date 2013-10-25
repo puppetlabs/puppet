@@ -156,10 +156,8 @@ SEARCH
 
       it "extracts the name and status" do
         provider_class.parse_pkgin_line(package).should == { :name => "vim" ,
-                                                             :ensure => :present ,
                                                              :status => "=" ,
-                                                             :version => "7.2.446" ,
-                                                             :provider => :pkgin }
+                                                             :version => "7.2.446" }
       end
     end
 
@@ -168,10 +166,8 @@ SEARCH
 
       it "extracts the name and status" do
         provider_class.parse_pkgin_line(package).should == { :name =>  "ruby18-puppet",
-                                                             :ensure => :present ,
                                                              :status => ">" ,
-                                                             :version => "0.25.5nb1" ,
-                                                             :provider => :pkgin }
+                                                             :version => "0.25.5nb1" }
       end
     end
 
@@ -180,19 +176,10 @@ SEARCH
 
       it "extracts the name and status" do
         provider_class.parse_pkgin_line(package).should == { :name => "vim" ,
-                                                             :ensure => :absent ,
                                                              :status => nil ,
-                                                             :version => "7.2.446" ,
-                                                             :provider => :pkgin }
+                                                             :version => "7.2.446" }
       end
 
-      it "extracts the name and an overridden status" do
-        provider_class.parse_pkgin_line(package, :present).should == { :name => "vim" ,
-                                                                       :ensure => :present ,
-                                                                       :status => nil ,
-                                                                       :version => "7.2.446" ,
-                                                                       :provider => :pkgin }
-      end
     end
 
     context "with an invalid package" do

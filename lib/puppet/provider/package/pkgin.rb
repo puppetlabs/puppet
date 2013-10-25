@@ -10,26 +10,16 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   has_feature :installable, :uninstallable, :upgradeable
 
-  def self.parse_pkgin_line(package, force_status=nil)
+  def self.parse_pkgin_line(package)
 
     # e.g.
     #   vim-7.2.446 =        Vim editor (vi clone) without GUI
     match, name, version, status = *package.match(/(\S+)-(\S+)(?: (=|>|<))?\s+.+$/)
     if match
-      ensure_status = if force_status
-        force_status
-      elsif status
-        :present
-      else
-        :absent
-      end
-
       {
         :name     => name,
-        :ensure   => ensure_status,
         :status   => status,
-        :version  => version,
-        :provider => :pkgin
+        :version  => version
       }
     end
   end
@@ -42,7 +32,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   def self.instances
     pkgin(:list).split("\n").map do |package|
-      new(parse_pkgin_line(package, :present))
+      new(parse_pkgin_line(package).merge(:ensure => :present))
     end
   end
 
