@@ -193,11 +193,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
 
     {
-      "666 =~ /6/" => :error,
-      "[a] =~ /a/" => :error,
+      "666 =~ /6/"    => :error,
+      "[a] =~ /a/"    => :error,
       "{a=>1} =~ /a/" => :error,
-      "/a/ =~ /a/" => :error,
-      "Array =~ /A/" => :error,
+      "/a/ =~ /a/"    => :error,
+      "Array =~ /A/"  => :error,
     }.each do |source, result|
         it "should parse and raise error for '#{source}'" do
           expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(Puppet::ParseError)
