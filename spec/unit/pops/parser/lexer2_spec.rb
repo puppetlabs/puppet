@@ -219,7 +219,6 @@ describe 'Lexer2' do
     "a"     => ["a /./",       [:NAME, :DIV, :DOT, :DIV]],
     "A"     => ["A /./",       [:CLASSREF, :DIV, :DOT, :DIV]],
     ")"     => [") /./",       [:RPAREN, :DIV, :DOT, :DIV]],
-    "}"     => ["} /./",       [:RBRACE, :DIV, :DOT, :DIV]],
     "]"     => ["] /./",       [:RBRACK, :DIV, :DOT, :DIV]],
     "|>"     => ["|> /./",     [:RCOLLECT, :DIV, :DOT, :DIV]],
     "|>>"    => ["|>> /./",    [:RRCOLLECT, :DIV, :DOT, :DIV]],

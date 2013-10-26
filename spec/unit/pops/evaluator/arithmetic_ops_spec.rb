@@ -67,8 +67,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         expect { evaluate(literal('0x12.3') + literal('010'))}.to raise_error(Puppet::ParseError)
       end
 
-      it "'012.3' + '0.3'  ==  12.6 (not error, floats can start with 0)" do
-        evaluate(literal('012.3') + literal('010')) == 12.6
+      it "'012.3' + '010'  ==  20.3 (not error, floats can start with 0)" do
+        evaluate(literal('012.3') + literal('010')).should == 20.3
       end
     end
   end

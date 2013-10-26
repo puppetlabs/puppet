@@ -31,6 +31,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   def initialize
     @@eval_visitor     ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
+    @@lvalue_visitor   ||= Puppet::Pops::Visitor.new(self, "lvalue", 1, 1)
     @@assign_visitor   ||= Puppet::Pops::Visitor.new(self, "assign", 3, 3)
     @@call_visitor     ||= Puppet::Pops::Visitor.new(self, "call", 3, 3)
 
@@ -87,6 +88,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   def assign(target, value, o, scope)
     @@assign_visitor.visit_this(self, target, value, o, scope)
+  end
+
+  def lvalue(o, scope)
+    @@lvalue_visitor.visit_this(self, o, scope)
   end
 
   # Call a closure - Can only be called with a closure (for now), may be refactored later
@@ -158,6 +163,21 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   end
 
   protected
+
+  def lvalue_VariableExpression(o, scope)
+    # evaluate the name
+    evaluate(o.expr, scope)
+  end
+
+  def lvalue_LiteralList(o, scope)
+    evaluate(o.expr, scope)
+  end
+
+  # Catches all illegal lvalues
+  #
+  def lvalue_Object(name, value, o, scope)
+    fail("An object of type #{o.class} can not be on the left side of an assignment", o, scope)
+  end
 
   # Assign value to named variable.
   # The '$' sign is never part of the name.
@@ -287,7 +307,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @todo support for -= ('without' to remove from array) concrete syntax not yet implemented
   #
   def eval_AssignmentExpression(o, scope)
-    name, value = eval_BinaryExpression(o, scope)
+
+    name = lvalue(o.left_expr, scope)
+    value = evaluate(o.right_expr, scope)
 
     case o.operator
     when :'=' # regular assignment
@@ -347,7 +369,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
   def calculate(left, right, operator, left_o, right_o, scope)
-    require 'debugger'; debugger
     unless ARITHMETIC_OPERATORS.include?(operator)
       raise ArgumentError, "Unknown arithmetic operator #{o.operator}"
     end
@@ -590,6 +611,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     # TODO
   end
 
+  def eval_ParenthesizedExpression(o, scope)
+    evaluate(o.expr, scope)
+  end
+
   # TODO:
   # Definition < Expression (abstract)
   # NamedDefinition < Definition (abstract)
@@ -632,10 +657,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # Evaluation of CallMethodExpression handles a NamedAccessExpression functor (receiver.function_name)
   #
   def eval_CallMethodExpression(o, scope)
-    fail("Unacceptable expression for name of function", o.functor_expr, scope) unless o.functor_expr.is_a? Puppet::Pops::Model::NamedAccessExpression
+    unless o.functor_expr.is_a? Puppet::Pops::Model::NamedAccessExpression
+      fail("Unacceptable expression for name of function", o.functor_expr, scope)
+    end
     receiver = evaluate(o.functor_expr.left_expr, scope)
-    name = o.right_expr
-    fail("Unacceptable expression for name of function/method", name, scope) unless name.is_a? Puppet::Pops::Model::QualifiedName
+    name = o.functor_expr.right_expr
+    unless name.is_a? Puppet::Pops::Model::QualifiedName
+      fail("Unacceptable expression for name of function/method", name, scope)
+    end 
     name = name.value # the string function name
     assert_function_available(name, o, scope)
     evaluated_arguments = [receiver] + (o.arguments || []).collect {|arg| evaluate(arg, scope) }

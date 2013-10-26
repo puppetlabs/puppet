@@ -643,10 +643,15 @@ class Puppet::Pops::Parser::Lexer2
     case @lexing_context[:after]
 
     # Ends of (potential) R-value generating expressions
-    when :RPAREN, :RBRACK, :RBRACE, :RRCOLLECT, :RCOLLECT
+    when :RPAREN, :RBRACK, :RRCOLLECT, :RCOLLECT
       false
 
-      # Operands (that can be followed by DIV (even if illegal in grammar)
+    # End of (potential) R-value - but must be allowed because of case expressions
+    # Called out here to not be mistaken for a bug.
+    when :RBRACE
+      true
+
+    # Operands (that can be followed by DIV (even if illegal in grammar)
     when :NAME, :CLASSREF, :NUMBER, :STRING, :BOOLEAN, :DQPRE, :DQMID, :DQPOST, :HEREDOC, :REGEX
       false
 

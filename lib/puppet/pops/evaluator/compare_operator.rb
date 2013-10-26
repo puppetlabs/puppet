@@ -121,7 +121,7 @@ class Puppet::Pops::Evaluator::CompareOperator
     when Regexp
       # match (convert to boolean)
       !!(a =~ b)
-    when Number
+    when Numeric
       # convert string to number, true if ==
       equals(a, b)
     when Puppet::Pops::Types::PStringType

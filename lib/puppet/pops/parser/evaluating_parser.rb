@@ -31,7 +31,6 @@ class Puppet::Pops::Parser::EvaluatingParser
   end
 
   def evaluate_string(scope, s, file_source='unknown')
-    require 'debugger'; debugger
     evaluate(scope, parse_string(s, file_source))
   end
 
@@ -99,7 +98,6 @@ class Puppet::Pops::Parser::EvaluatingParser
       formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
       if errors.size == 1 || max_errors <= 1
         # raise immediately
-        require 'debugger'; debugger
         raise Puppet::ParseError.new(formatter.format(errors[0]))
       end
       emitted = 0

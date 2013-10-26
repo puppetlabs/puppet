@@ -66,10 +66,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
 
       it 'unless true {2} elsif true {5} == 5' do
+        # not supported by concrete syntax
         evaluate(UNLESS(literal(true), literal(2), IF(literal(true), literal(5)))).should == 5
       end
 
       it 'unless true {2} elsif false {5} == nil' do
+        # not supported by concrete syntax
         evaluate(UNLESS(literal(true), literal(2), IF(literal(false), literal(5)))).should == nil
       end
     end

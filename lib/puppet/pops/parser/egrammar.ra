@@ -93,8 +93,8 @@ expression
   : higher_precedence
   | expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
   | expression IN           expression                 { result = val[0].in val[2]        ; loc result, val[1] }
-  | expression MATCH        match_rvalue               { result = val[0] =~  val[2]       ; loc result, val[1] }
-  | expression NOMATCH      match_rvalue               { result = val[0].mne val[2]       ; loc result, val[1] }
+  | expression MATCH        expression                 { result = val[0] =~  val[2]       ; loc result, val[1] }
+  | expression NOMATCH      expression                 { result = val[0].mne val[2]       ; loc result, val[1] }
   | expression PLUS         expression                 { result = val[0] +   val[2]       ; loc result, val[1] }
   | expression MINUS        expression                 { result = val[0] -   val[2]       ; loc result, val[1] }
   | expression DIV          expression                 { result = val[0] /   val[2]       ; loc result, val[1] }
@@ -600,10 +600,10 @@ parameter
 #--RESTRICTED EXPRESSIONS
 #  i.e. where one could have expected an expression, but the set is limited
 
-# What is allowed RHS of match operators (see expression)
-match_rvalue
-  : regex
-  | text_or_name
+## What is allowed RHS of match operators (see expression)
+#match_rvalue
+#  : regex
+#  | text_or_name
 
 #--VARIABLE
 #
