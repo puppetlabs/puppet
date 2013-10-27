@@ -299,12 +299,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     [ evaluate(o.left_expr, scope), evaluate(o.right_expr, scope) ]
   end
 
-  # Evaluates assignment with operators =, +=, -= and []=
+  # Evaluates assignment with operators =, +=, -= and
   #
   # @example Puppet DSL
   #   $a = 1
   #   $a += 1
-  # @todo support for -= ('without' to remove from array) concrete syntax not yet implemented
+  #   $a -= 1
   #
   def eval_AssignmentExpression(o, scope)
 
@@ -645,7 +645,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     name = o.functor_expr.value
     assert_function_available(name, o, scope)
     evaluated_arguments = o.arguments.collect {|arg| evaluate(arg, scope) }
-    # rval_required = o.rval_required # TODO: is this really needed - it can just return nil for a function that is not rval
     # wrap lambda in a callable block if it is present
     evaluated_arguments << Puppet::Evaluator::Lambda.new(self, o.lambda) if o.lambda
     call_function(name, evaluated_arguments, o, scope) do |result|
@@ -735,9 +734,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     when String
     when Numeric
     else
-      fail "Internal error: a variable name should result in a String when evaluated. Got expression of #{o.expr.class} type.", o, scope
+      fail "Internal error: a variable name should result in a String or Number when evaluated. Got expression of #{o.expr.class} type.", o, scope
     end
-    # TODO: Check for valid variable name
+    # TODO: Check for valid variable name (Task for validator)
     # TODO: semantics of undefined variable in scope, this just returns what scope does == value or nil
     get_variable_value(name, o, scope)
   end
