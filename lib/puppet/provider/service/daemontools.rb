@@ -142,7 +142,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
       return :true
     else
       # the service is enabled if it is linked
-      return FileTest.symlink?(self.service) ? :true : :false
+      return Puppet::FileSystem::File.new(self.service).symlink? ? :true : :false
     end
   end
 
@@ -152,9 +152,9 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         self.setupservice
       end
       if self.daemon
-        if ! FileTest.symlink?(self.service)
+        if ! Puppet::FileSystem::File.new(self.service).symlink?
           Puppet.notice "Enabling #{self.service}: linking #{self.daemon} -> #{self.service}"
-          File.symlink(self.daemon, self.service)
+          Puppet::FileSystem::File.new(self.daemon).symlink(self.service)
         end
       end
   rescue Puppet::ExecutionFailure
@@ -168,7 +168,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         self.setupservice
       end
       if self.daemon
-        if FileTest.symlink?(self.service)
+        if Puppet::FileSystem::File.new(self.service).symlink?
           Puppet.notice "Disabling #{self.service}: removing link #{self.daemon} -> #{self.service}"
           File.unlink(self.service)
         end

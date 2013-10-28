@@ -207,7 +207,7 @@ describe Puppet::FileServing::Metadata do
           File.open(target, "wb") {|f| f.print("some content\n")}
           set_mode(0644, target)
 
-          FileUtils.symlink(target, path)
+          Puppet::FileSystem::File.new(target).symlink(path)
         end
 
         it "should read links instead of returning their checksums" do

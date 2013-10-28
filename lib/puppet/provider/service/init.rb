@@ -154,7 +154,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 private
 
   def self.is_init?(script = initscript)
-    !File.symlink?(script) || File.readlink(script) != "/lib/init/upstart-job"
+    file = Puppet::FileSystem::File.new(script)
+    !file.symlink? || File.readlink(script) != "/lib/init/upstart-job"
   end
 end
 

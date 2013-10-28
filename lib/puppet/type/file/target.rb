@@ -47,10 +47,10 @@ module Puppet
           mode = @resource.should(:mode)
           if mode
             Puppet::Util.withumask(000) do
-              File.symlink(target, @resource[:path])
+              Puppet::FileSystem::File.new(target).symlink(@resource[:path])
             end
           else
-            File.symlink(target, @resource[:path])
+            Puppet::FileSystem::File.new(target).symlink(@resource[:path])
           end
         end
 

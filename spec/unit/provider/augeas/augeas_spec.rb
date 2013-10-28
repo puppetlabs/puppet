@@ -674,7 +674,7 @@ describe provider_class do
       link = tmpfile('link')
       target = tmpfile('target')
       FileUtils.touch(target)
-      FileUtils.symlink(target, link)
+      Puppet::FileSystem::File.new(target).symlink(link)
 
       resource = Puppet::Type.type(:augeas).new(
         :name => 'test',

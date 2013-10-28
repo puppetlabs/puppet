@@ -17,7 +17,7 @@ describe Puppet::Type.type(:tidy) do
     link = File.join(dir, "link")
     target = tmpfile("no_such_file_tidy_link_testing")
     Dir.mkdir(dir)
-    File.symlink(target, link)
+    Puppet::FileSystem::File.new(target).symlink(link)
 
     tidy = Puppet::Type.type(:tidy).new :path => dir, :recurse => true
 
@@ -26,6 +26,6 @@ describe Puppet::Type.type(:tidy) do
 
     catalog.apply
 
-    FileTest.should_not be_symlink(link)
+    Puppet::FileSystem::File.new(link).symlink?.should be_false
   end
 end

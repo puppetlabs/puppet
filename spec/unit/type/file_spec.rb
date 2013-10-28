@@ -929,7 +929,7 @@ describe Puppet::Type.type(:file) do
 
       target = tmpfile('link_target')
       FileUtils.touch(target)
-      FileUtils.symlink(target, path)
+      Puppet::FileSystem::File.new(target).symlink(path)
       file[:target] = target
 
       file.remove_existing(:directory).should == true
@@ -1010,7 +1010,7 @@ describe Puppet::Type.type(:file) do
     before do
       target = tmpfile('link_target')
       FileUtils.touch(target)
-      FileUtils.symlink(target, path)
+      Puppet::FileSystem::File.new(target).symlink(path)
 
       file[:target] = target
       file[:links] = :manage # so we always use :lstat
@@ -1318,7 +1318,7 @@ describe Puppet::Type.type(:file) do
           @link   = File.join(path, "link")
 
           File.open(@target, "w", 0644) { |f| f.puts "yayness" }
-          File.symlink(@target, @link)
+          Puppet::FileSystem::File.new(@target).symlink(@link)
 
           file[:path] = @link
           file[:mode] = 0755

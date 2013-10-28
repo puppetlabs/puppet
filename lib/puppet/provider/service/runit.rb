@@ -105,7 +105,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   # before a disable
   def disable
     # unlink the daemon symlink to disable it
-    File.unlink(self.service) if FileTest.symlink?(self.service)
+    File.unlink(self.service) if Puppet::FileSystem::File.new(self.service).symlink?
   end
 end
 

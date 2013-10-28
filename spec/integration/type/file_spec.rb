@@ -214,7 +214,7 @@ describe Puppet::Type.type(:file) do
             FileUtils.touch(link_target)
             File.chmod(0444, link_target)
 
-            File.symlink(link_target, link)
+            Puppet::FileSystem::File.new(link_target).symlink(link)
           end
 
           it "should not set the executable bit on the link nor the target" do
@@ -251,7 +251,7 @@ describe Puppet::Type.type(:file) do
             target = tmpfile('dangling')
 
             FileUtils.touch(target)
-            File.symlink(target, link)
+            Puppet::FileSystem::File.new(target).symlink(link)
             File.delete(target)
 
             catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
@@ -264,7 +264,7 @@ describe Puppet::Type.type(:file) do
             before :each do
               File.chmod(0600, link_target)
 
-              File.symlink(link_target, link)
+              Puppet::FileSystem::File.new(link_target).symlink(link)
             end
 
             after :each do
@@ -327,7 +327,7 @@ describe Puppet::Type.type(:file) do
             before :each do
               FileUtils.touch(link_target)
 
-              File.symlink(link_target, link)
+              Puppet::FileSystem::File.new(link_target).symlink(link)
             end
 
             it "should create the file, not a symlink (#2817, #10315)" do
@@ -357,8 +357,8 @@ describe Puppet::Type.type(:file) do
               File.chmod(0666, real_target)
 
               # link -> target -> real_target
-              File.symlink(real_target, target)
-              File.symlink(target, link)
+              Puppet::FileSystem::File.new(real_target).symlink(target)
+              Puppet::FileSystem::File.new(target).symlink(link)
             end
 
             after :each do
@@ -447,7 +447,7 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource bucket
 
       File.open(dest1, "w") { |f| f.puts "whatever" }
-      File.symlink(dest1, link)
+      Puppet::FileSystem::File.new(dest1).symlink(link)
 
       md5 = Digest::MD5.hexdigest(File.read(file[:path]))
 

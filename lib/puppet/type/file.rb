@@ -716,7 +716,7 @@ Puppet::Type.newtype(:file) do
     use_temporary_file = write_temporary_file?
     if use_temporary_file
       path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while ::File.exists?(path) or ::File.symlink?(path)
+      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while ::File.exists?(path) or Puppet::FileSystem::File.new(path).symlink?
     else
       path = self[:path]
     end
