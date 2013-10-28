@@ -45,6 +45,18 @@ describe Puppet::FileSystem::File do
       expect(file.read).to eq("5")
     end
 
+    it "times out if the lock cannot be aquired in a specified amount of time", :unless => Puppet::Util::Platform.windows? do
+      file = tmpfile("file_to_update")
+
+      fh = open(file, 'a', 0666)
+      fh.flock(::File::LOCK_EX)
+
+      expect do
+        Puppet::FileSystem::File.new(file).exclusive_open(0666, 'r', 1) do |f|
+        end
+      end.to raise_error(Timeout::Error)
+    end
+
     def increment_counter_in_multiple_processes(file, num_procs, options)
       children = []
       5.times do |number|
