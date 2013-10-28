@@ -120,7 +120,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'cannot step Integer sequence with a step of 0' do
       expr = fqr('Integer')[6, 1, 0]
-      expect { evaluate(expr)}.to raise_error(/Integer\[\] cannot step with increment of 0/)
+      expect { evaluate(expr)}.to raise_error(/Integer \[\] can not step with a '0' increment/)
     end
 
     # Hash
@@ -142,7 +142,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it "gives an error if parameter is not a type" do
       expr = fqr('Hash')['String']
-      expect { evaluate(expr)}.to raise_error(/Arguments to Hash\[\] must be types/)
+      expect { evaluate(expr)}.to raise_error(/Hash\[\] arguments must be types/)
     end
 
     # Array
@@ -159,7 +159,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it "gives an error if parameter is not a type" do
       expr = fqr('Array')['String']
-      expect { evaluate(expr)}.to raise_error(/Argument to Array\[\] must be a type/)
+      expect { evaluate(expr)}.to raise_error(/Array\[\] arguments must be types/)
     end
 
     it 'creates a Regexp instance when applied to a Pattern' do
@@ -222,7 +222,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'gives an error if resource is already specialized' do
       expr = fqr('File')[fqn('x')][fqn('y')]
-      expect {evaluate(expr)}.to raise_error(/Cannot specialize an already specialized resource type/)
+      expect {evaluate(expr)}.to raise_error(/Cannot specialize an already specialized Resource type/)
     end
 
   end

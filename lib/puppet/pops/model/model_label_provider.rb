@@ -67,9 +67,12 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_ResourceExpression o          ; "Resource Statement"                end
   def label_SelectorExpression o          ; "Selector Expression"               end
   def label_SelectorEntry o               ; "Selector Option"                   end
-  def label_String o                      ; "Ruby String"                       end
-  def label_Object o                      ; "Ruby Object"                       end
+  def label_String o                      ; "String"                            end
+  def label_Object o                      ; "Object"                            end
+  def label_Hash o                        ; "Hash"                              end
   def label_QualifiedName o               ; "Name"                              end
   def label_QualifiedReference o          ; "Type Name"                         end
 
+  # TODO: Could use the TypeFactory to infer and output more detailed type information instead of
+  # just printing Object, Hash, Array, etc.
 end

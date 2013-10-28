@@ -166,7 +166,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it "$a = Pattern['.*']; 'a' =~ $a  == true"    do
-      expr = block(fqn('a').set(fqr('Pattern')['foo']), literal('foo') =~ var('a'))
+      expr = block(var('a').set(fqr('Pattern')['foo']), literal('foo') =~ var('a'))
       evaluate(expr).should == true
     end
 

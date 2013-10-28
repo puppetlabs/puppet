@@ -13,6 +13,22 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   #
   include Puppet::Pops::Evaluator::Runtime3Support
 
+  Issues = Puppet::Pops::Issues
+
+  class IllegalRelationshipOperandError < RuntimeError
+    attr_reader :operand
+    def initialize operand
+      @operand = operand
+    end
+  end
+
+  class NotCatalogTypeError < RuntimeError
+    attr_reader :type
+    def initialize type
+      @type = type
+    end
+  end
+
   def initialize
     @type_transformer_visitor = Puppet::Pops::Visitor.new(self, "transform", 1, 1)
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
@@ -28,7 +44,7 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   # Catch all non transformable objects
   # @api private
   def transform_Object(o, scope)
-    fail("Not a valid reference in a relationship", o, scope)
+    raise IllegalRelationshipOperandError.new(o)
   end
 
   # A string must be a type reference in string format
@@ -54,9 +70,11 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   #
   def assert_catalog_type(o, scope)
     unless @type_calculator.assignable?(@catalog_type, o)
-      fail("The reference is not a catalog type", o, scope)
+      raise NotCatalogTypeError.new(o)
     end
-    # TODO must check if this is an abstract PResourceType (i.e. without a type_name) - which should fail
+    # TODO must check if this is an abstract PResourceType (i.e. without a type_name) - which should fail ?
+    # e.g. File -> File (and other similar constructs) - maybe the catalog protects against this since references
+    # may be to future objects...
     o
   end
 
@@ -69,33 +87,46 @@ class Puppet::Pops::Evaluator::RelationshipOperator
     :'<~' => :subscription
   }
 
+  # Evaluate a relationship.
+  # TODO: The error reporting is not fine grained since evaluation has already taken place
+  # There is no references to the original source expressions at this point, only the overall
+  # relationship expression. (e.g.. the expression may be ['string', func_call(), etc.] -> func_call())
+  # To implement this, the general evaluator needs to be able to track each evaluation result and associate
+  # it with a corresponding expression. This structure should then be passed to the relationship operator.
+  #
   def evaluate (left_right_evaluated, relationship_expression, scope)
     # assert operator (should have been validated, but this logic makes assumptions which would
     # screw things up royally). Better safe than sorry.
     unless RELATIONSHIP_OPERATORS.include?(relationship_expression.operator)
-      fail("Unknown relationship operator #{relationship_expression.operator}.", relationship_expression, scope)
+      fail(Issues::UNSUPPORTED_OPERATOR, relationship_expression, {:operator => relationship_expression.operator})
     end
 
-    # Turn each side into an array of types (this also asserts their type)
-    # (note wrap in array first if value is not already an array)
-    #
-    # TODO: Later when objects are Puppet Runtime Objects and know their type, it will be more efficient to check/infer
-    # the type first since a chained operation then does not have to visit each element again. This is not meaningful now
-    # since inference needs to visit each object each time, and this is what the transformation does anyway).
-    #
-    # real is [left, right], and both the left and right may be a single value or an array. In each case all content
-    # should be flattened, and then transformed to a type.
-    #
-    real = real.collect {|x| [x].flatten.collect {|x| transform(x, scope) }}
+    begin
+      # Turn each side into an array of types (this also asserts their type)
+      # (note wrap in array first if value is not already an array)
+      #
+      # TODO: Later when objects are Puppet Runtime Objects and know their type, it will be more efficient to check/infer
+      # the type first since a chained operation then does not have to visit each element again. This is not meaningful now
+      # since inference needs to visit each object each time, and this is what the transformation does anyway).
+      #
+      # real is [left, right], and both the left and right may be a single value or an array. In each case all content
+      # should be flattened, and then transformed to a type.
+      #
+      real = real.collect {|x| [x].flatten.collect {|x| transform(x, scope) }}
 
-    # reverse order if operator is Right to Left
-    source, target = reverse_operator?(relationship_expression) ? real.reverse : real
+      # reverse order if operator is Right to Left
+      source, target = reverse_operator?(relationship_expression) ? real.reverse : real
 
-    # Add the relationships to the catalog
-    source.each {|s| target.each {|t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator]) }}
+      # Add the relationships to the catalog
+      source.each {|s| target.each {|t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator]) }}
 
-    # Produce the transformed source RHS (if this is a chain, this does not need to be done again)
-    real.slice(1)
+      # Produce the transformed source RHS (if this is a chain, this does not need to be done again)
+      real.slice(1)
+    rescue NotCatalogTypeError => e
+      fail(Issues::ILLEGAL_RELATIONSHIP_OPERAND_TYPE, relationship_expression, {:type => @type_calculator.string(e.type)})
+    rescue IllegalRelationshipOperandError => e
+      fail(Issues::ILLEGAL_RELATIONSHIP_OPERAND_TYPE, relationship_expression, {:operand => e.operand})
+    end
   end
 
   def reverse_operator?(o)

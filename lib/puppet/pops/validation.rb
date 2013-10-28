@@ -194,6 +194,7 @@ module Puppet::Pops::Validation
       arguments[:semantic] ||= semantic
 
       # A detail message is always provided, but is blank by default.
+      # TODO: this support is questionable, it requires knowledge that :detail is special
       arguments[:detail] ||= ''
 
       origin_adapter = Puppet::Pops::Utils.find_adapter(semantic, Puppet::Pops::Adapters::OriginAdapter)
@@ -221,6 +222,8 @@ module Puppet::Pops::Validation
       @file = file
       @source_pos = source_pos
       @arguments = arguments
+      # TODO: Currently unused, the intention is to provide more information (stack backtrace, etc.) when
+      # debugging or similar - this to catch internal problems reported as higher level issues.
       @exception = exception
     end
   end

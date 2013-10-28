@@ -1,6 +1,6 @@
 
 
-class Puppet::Evaluator::Lambda
+class Puppet::Pops::Evaluator::Lambda
   attr_reader :evaluator
   attr_reader :model
   attr_reader :enclosing_scope

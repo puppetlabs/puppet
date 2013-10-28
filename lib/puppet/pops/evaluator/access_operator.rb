@@ -7,6 +7,8 @@ class Puppet::Pops::Evaluator::AccessOperator
   #
   include Puppet::Pops::Evaluator::Runtime3Support
 
+  Issues = Puppet::Pops::Issues
+
   attr_reader :semantic
 
   # Initialize with AccessExpression to enable reporting issues
@@ -25,20 +27,19 @@ class Puppet::Pops::Evaluator::AccessOperator
   protected
 
   def access_Object(o, scope, keys)
-    # TODO: Use Issues for better handling
     fail("The [] operator is not applicable to the result of the LHS expression: #{o.class}", semantic.left_expr, scope)
   end
 
   def access_String(o, scope, keys)
     case keys.size
     when 0
-      fail("String supports [] with one or two arguments. Got #{keys.size}", @semantic.left_expr, scope)
+      fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
       o[box_numeric(keys[0], @semantic.keys, scope)]
     when 2
       o[box_numeric(keys[0], @semantic.keys, scope), box_numeric(keys[1], @semantic.keys, scope)]
     else
-      fail("String supports [] with one or two arguments. Got #{keys.size}", @semantic.left_expr, scope)
+      fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
   end
 
@@ -59,19 +60,17 @@ class Puppet::Pops::Evaluator::AccessOperator
     case keys.size
     when 0
       # What does this mean: <an array>[] ? Is it error, unit, empty array 
-      fail("Array supports [] with one or two arguments. Got #{keys.size}", @semantic.left_expr, scope)
+      fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
-      # TODO: Objects passed in case of failure are not ideal, it gives all the keys in the model, not the
-      # failing key (needs to pass index as well)
-      o[box_numeric(keys[0], @semantic.keys, scope)]
+      k = box_numeric(keys[0], @semantic.keys[0], scope)
+      o[k]
     when 2
       # A slice [from, to] with support for -1 to mean start, or end respectively.
-      # TODO: Objects passed in case of failure are not ideal, it gives all the keys in the model, not the
-      # failing key (needs to pass index as well)
-      o[box_numeric(keys[0], @semantic.keys, scope), box_numeric(keys[1], @semantic.keys, scope)]
+      k1 = box_numeric(keys[0], @semantic.keys[0], scope)
+      k2 = box_numeric(keys[1], @semantic.keys[1], scope)
+      o[k1, k2]
     else
-      # TODO: Use Issues for better handling
-      fail("Array supports [] with one or two arguments. Got #{keys.size}", semantic.left_expr, scope)
+      fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
   end
 
@@ -83,8 +82,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     result = keys.collect {|k| o[k] }
     case result.size
     when 0
-      # TODO: Use Issues for better handling
-      fail("Hash supports [] with one or more arguments. Got #{keys.size}", semantic.left_expr, scope)
+      fail(Puppet::Pops::Issues::BAD_HASH_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
       result.pop
     else
@@ -102,11 +100,14 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
 
     unless keys.size.between?(2, 3)
-      fail("Integer[] only accepts two or three parameters (from, to, step). Got #{keys.size}", @semantic.keys, scope)
+      fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_ARITY, @semantic, {:actual => keys.size})
     end
-    keys.each {|x| fail("Integer[] requires all keys to be integers", @semantic.keys, scope) unless x.is_a?(Numeric) }
+    keys.each_with_index do |x, index|
+      fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_TYPE, @semantic.keys[index],
+        {:actual => x.class}) unless x.is_a?(Numeric)
+    end
     from, to, step = keys
-    fail("Integer[] cannot step with increment of 0", @semantic.keys, scope) if step == 0
+    fail(Puppet::Pops::Issues::INTEGER_STEP_0, @semantic.keys[2]) if step == 0
     step ||= 1
 
     # Ok, so this is quite bad for very large arrays...
@@ -117,9 +118,9 @@ class Puppet::Pops::Evaluator::AccessOperator
   # It is not possible to create a collection of Hash types.
   #
   def access_PHashType(o, scope, keys)
-    keys.each do |k|
+    keys.each_with_index do |k, index|
       unless k.is_a?(Puppet::Pops::Types::PAbstractType)
-        fail("Arguments to Hash[] must be types. Got #{k.class}", @semantic.keys, scope)
+        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash', :actual => k.class})
       end
     end
     case keys.size
@@ -136,8 +137,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     result.element_type = keys[1]
     result
     else
-      # TODO: Use Issues for better handling
-      fail("Hash type only accepts one or two type parameters (key, and value type). Got #{keys.size}", @semantic.keys, scope)
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Hash', :min => 1, :max => 2, :actual => keys.size})
     end
   end
 
@@ -149,14 +149,13 @@ class Puppet::Pops::Evaluator::AccessOperator
       Marshal.load(Marshal.dump(o)) # Deep copy
     when 1
       unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
-        fail("Argument to Array[] must be a type. Got #{keys[0].class}", @semantic.keys, scope)
+        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array', :actual => keys[0].class})
       end
       result = Puppet::Pops::Types::PArrayType.new()
       result.element_type = keys[0]
       result
     else
-      # TODO: Use Issues for better handling
-      fail("Array type only accepts one type parameter (element type). Got #{keys.size}", semantic.right_expr, scope)
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Array', :min => 1, :actual => keys.size})
     end
   end
 
@@ -177,8 +176,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       return Marshal.load(Marshal.dump(o)) # Deep copy
     end
     unless o.title.nil?
-      # TODO: Use Issues for better handling
-      fail("Cannot specialize an already specialized resource type", semantic.left_expr, scope)
+      fail(Puppet::Pops::Issues::ILLEGAL_TYPE_SPECIALIZATION, semantic.left_expr, {:kind => 'Resource'})
     end
 
     # type_name is LHS type_name if set, else the first given arg
@@ -189,7 +187,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     when String
       type_name.downcase
     else
-      fail("First argument to Resource[] must be a resource type or a string. Got #[type_name.class}")
+      fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, @semantic.keys, {:actual => type_name.class})
     end
     keys = [nil] if keys.size < 1 # if there was only a type_name and it was consumed
     result = keys.collect do |t|
@@ -207,8 +205,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       return Marshal.load(Marshal.dump(o)) # Deep copy
     end
     unless o.class_name.nil?
-      # TODO: Use Issues for better handling
-      fail("Cannot specialize an already specialized Class type", semantic.left_expr, scope)
+      fail(Puppet::Pops::Issues::ILLEGAL_TYPE_SPECIALIZATION, semantic.left_expr, {:kind => 'Class'})
     end
     result = keys.collect do |c|
       ctype = Puppet::Pops::Types::PHostClassType.new()

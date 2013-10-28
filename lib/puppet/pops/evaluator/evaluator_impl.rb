@@ -1,8 +1,8 @@
 require 'rgen/ecore/ecore'
 require 'puppet/pops/evaluator/compare_operator'
-require 'puppet/pops/evaluator/call_operator'
 require 'puppet/pops/evaluator/relationship_operator'
 require 'puppet/pops/evaluator/access_operator'
+require 'puppet/pops/evaluator/closure'
 
 # This implementation of {Puppet::Pops::Evaluator} performs evaluation using the puppet 3.x runtime system
 # in a manner largely compatible with Puppet 3.x, but adds new features and introduces constraints.
@@ -28,6 +28,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
   #
   include Puppet::Pops::Evaluator::Runtime3Support
+
+  # Reference to Issues name space makes it easier to refer to issues
+  # (Issues are shared with the validator).
+  #
+  Issues = Puppet::Pops::Issues
 
   def initialize
     @@eval_visitor     ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
@@ -94,7 +99,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     @@lvalue_visitor.visit_this(self, o, scope)
   end
 
-  # Call a closure - Can only be called with a closure (for now), may be refactored later
+  # Call a closure - Can only be called with a Closure (for now), may be refactored later
   # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
   # could create similar objects to Closure, wait until other types of defines are instantiated - they may behave
   # as special cases of calls - i.e. 'new')
@@ -103,7 +108,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @raise ArgumentError, if given closure is not a Puppet::Pops::Evaluator::Closure
   #
   def call(closure, args, scope, &block)
-    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Closure)
+    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Lambda)
     pblock = closure.model
     parameters = pblock.parameters || []
 
@@ -155,7 +160,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     ensure
       set_scope_nesting_level(scope, scope_memo)
     end
-    if block_given
+    if block_given?
       block.call(result)
     else
       result
@@ -175,8 +180,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   # Catches all illegal lvalues
   #
-  def lvalue_Object(name, value, o, scope)
-    fail("An object of type #{o.class} can not be on the left side of an assignment", o, scope)
+  def lvalue_Object(o, scope)
+    fail(Issues::ILLEGAL_ASSIGNMENT, o)
   end
 
   # Assign value to named variable.
@@ -191,15 +196,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   #
   def assign_String(name, value, o, scope)
     if name =~ /::/
-      # Issues::CROSS_SCOPE_ASSIGNMENT
-      fail("Cross-namespace assignment is not allowed, cannot assign to $#{name}", o.left_expr, scope)
+      fail(Issues::CROSS_SCOPE_ASSIGNMENT, o.left_expr, {:name => name})
     end
     set_variable(name, value, o, scope)
     value
   end
 
-  def assign_Number(n, value, o, scope)
-    fail("Cannot assign to the numeric (match result) variable: $#{name}", o.left_expr, scope)
+  def assign_Numeric(n, value, o, scope)
+    fail(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o.left_expr, {:varname => n.to_s})
   end
 
   # Assign values to named variables in an array.
@@ -235,7 +239,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # Catches all illegal assignment (e.g. 1 = 2, {'a'=>1} = 2, etc)
   #
   def assign_Object(name, value, o, scope)
-    fail("An object of type #{o.class} is not assignable", o, scope)
+    fail(Issues::ILLEGAL_ASSIGNMENT, o)
   end
 
   def eval_Factory(o, scope)
@@ -325,7 +329,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
         # same way as ArithmeticExpression performs `+`.
         assign(name, calculate(get_variable_value(name, o, scope), value, :'+', o.left_expr, o.right_expr, scope), o, scope)
       rescue ArgumentError => e
-        fail("Append assignment += failed with error: #{e.message}", o, scope)
+        fail(Issues::APPEND_FAILED, o, {:message => e.message})
       end
 
     when :'-='
@@ -339,10 +343,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
         # Delegate to delete function to deal with check of LHS, and perform deletion
         assign(name, delete(get_variable_value(name, o, scope), value), o, scope)
       rescue ArgumentError => e
-        fail("'Without' assignment -= failed with error: #{e.message}", o, scope)
+        fail(Issues::APPEND_FAILED, o, {:message => e.message})
       end
     else
-      fail("Unknown assignment operator: '#{o.operator}'.", o, scope)
+      fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
     end
     value
   end
@@ -354,13 +358,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   #
   def eval_ArithmeticExpression(o, scope)
     unless ARITHMETIC_OPERATORS.include?(o.operator)
-      fail("Unknown arithmetic operator #{o.operator}", o, scope)
+      fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
     end
     left, right = eval_BinaryExpression(o, scope)
     begin
       result = calculate(left, right, o.operator, o.left_expr, o.right_expr, scope)
     rescue ArgumentError => e
-      fail(e.message, o, scope)
+      fail(Issues::RUNTIME_ERROR, o, {:detail => e.message}, e)
     end
     result
   end
@@ -370,7 +374,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   #
   def calculate(left, right, operator, left_o, right_o, scope)
     unless ARITHMETIC_OPERATORS.include?(operator)
-      raise ArgumentError, "Unknown arithmetic operator #{o.operator}"
+      fail(Issues::UNSUPPORTED_OPERATOR, left_o.eContainer, {:operator => o.operator})
     end
 
     if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
@@ -382,8 +386,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
         delete(left, right)
       when :'<<'
         unless left.is_a?(Array)
-          # TODO: when improving fail, pass o.left_expr
-          raise ArgumentError, "Left operand in '<<' expression is not an Array"
+          fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
         end
         left + [right]
       end
@@ -394,7 +397,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
       begin
         result = left.send(operator, right)
       rescue NoMethodError => e
-        raise ArgumentError, "Operator #{operator} not applicable to a value of type #{left.class}"
+        fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
       end
       result
     end
@@ -444,7 +447,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
         # left can be assigned to right
         @@type_calculator.assignable?(right, left)
       else
-        fail("Internal Error: unhandled comparison operator '#{o.operator}'.", o, scope)
+        fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
       end
     else
       case o.operator
@@ -461,11 +464,15 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
       when :'>='
         @@compare_operator.compare(left,right) >= 0
       else
-        fail("Internal Error: unhandled comparison operator '#{o.operator}'.", o, scope)
+        fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
       end
     end
     rescue ArgumentError => e
-      fail("Comparison of #{left.class} #{o.operator} #{right.class} is not possible. Caused by #{e.message}.", o, scope)
+      fail(Issues::COMPARISON_NOT_POSSIBLE, o, {
+        :operator => o.operator,
+        :left_value => left,
+        :right_value => right,
+        :detail => e.message})
     end
   end
 
@@ -485,10 +492,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     begin
       pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)
     rescue StandardError => e
-      fail "Can not convert right expression to a regular expression. Caused by: '#{e.message}'", o, scope
+      fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message})
     end
     unless left.is_a?(String)
-      fail("Match expression requires a String as left operand", o.left_expr, scope)
+      fail(Issues::MATCH_NOT_STRING, o.left_expr, {:left_value => left})
     end
 
     matched = pattern.match(left) # nil, or MatchData
@@ -641,12 +648,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   def eval_CallNamedFunctionExpression(o, scope)
     # The functor expression is not evaluated, it is not possible to select the function to call
     # via an expression like $a()
-    fail("Unacceptable expression for name of function", o, scope) unless o.functor_expr.is_a? Puppet::Pops::Model::QualifiedName
+    unless o.functor_expr.is_a? Puppet::Pops::Model::QualifiedName
+      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
+    end
     name = o.functor_expr.value
     assert_function_available(name, o, scope)
     evaluated_arguments = o.arguments.collect {|arg| evaluate(arg, scope) }
     # wrap lambda in a callable block if it is present
-    evaluated_arguments << Puppet::Evaluator::Lambda.new(self, o.lambda) if o.lambda
+    evaluated_arguments << Puppet::Pops::Evaluator::Lambda.new(self, o.lambda, scope) if o.lambda
     call_function(name, evaluated_arguments, o, scope) do |result|
       # prevent functions that are not r-value from leaking its return value
       rvalue_function?(name, o, scope) ? result : nil
@@ -657,17 +666,17 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   #
   def eval_CallMethodExpression(o, scope)
     unless o.functor_expr.is_a? Puppet::Pops::Model::NamedAccessExpression
-      fail("Unacceptable expression for name of function", o.functor_expr, scope)
+      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function accessor', :container => o})
     end
     receiver = evaluate(o.functor_expr.left_expr, scope)
     name = o.functor_expr.right_expr
     unless name.is_a? Puppet::Pops::Model::QualifiedName
-      fail("Unacceptable expression for name of function/method", name, scope)
+      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end 
     name = name.value # the string function name
     assert_function_available(name, o, scope)
     evaluated_arguments = [receiver] + (o.arguments || []).collect {|arg| evaluate(arg, scope) }
-    evaluated_arguments << Puppet::Evaluator::Lambda.new(self, o.lambda) if o.lambda
+    evaluated_arguments << Puppet::Pops::Evaluator::Lambda.new(self, o.lambda, scope) if o.lambda
     call_function(name, evaluated_arguments, o, scope) do |result|
       # prevent functions that are not r-value from leaking its return value
       rvalue_function?(name, o, scope) ? result : nil
@@ -734,7 +743,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     when String
     when Numeric
     else
-      fail "Internal error: a variable name should result in a String or Number when evaluated. Got expression of #{o.expr.class} type.", o, scope
+      fail(Issues::ILLEGAL_VARIABLE_EXPRESSION, o.expr)
     end
     # TODO: Check for valid variable name (Task for validator)
     # TODO: semantics of undefined variable in scope, this just returns what scope does == value or nil
@@ -747,99 +756,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     o.segments.collect {|expr| evaluate(expr, scope).to_s}.join
   end
 
-  # Create a metadata object that describes an attribute (an ECore EAttribute).
-  # Only free-standing metadata is created to the actual attribute in a class (that happens later)
-  #
-  # Part of type creation.
-  #
-  # @todo possibly support:
-  #   changeable: false (i.e. constants)
-  #   volatile: non having storage allocated (default for derived), if true = some kind of cache
-  #   transient: not serialized
-  #   unsettable: how the value can be reset (to default, or unset state)
-  #
-  def eval_CreateAttributeExpression o, scope
-    # Note: Only some of the validation required takes place here
-    # There are additional nonsensical invariants; like derived attributes with default values
-    the_attr = RGen::ECore::EAttribute.new
-
-    evaluator.fail("An attribute name must be a String", o, scope) unless o.name.is_a? String
-    the_attr.name = o.name
-
-    datatype = datatype_reference(evaluate(o.type, scope), o.name, scope)
-    evaluator.fail("Invalid data-type expression.", o.type, scope) unless datatype
-    the_attr.eType = datatype
-
-    min = evaluate(o.min_expr, scope)
-    max = evaluate(o.max_expr, scope)
-    min = 0 if !min || min < 0
-    max = (min == 0 ? 1 : min) unless max
-    max = -1 if max == 'unlimited' || max == 'many' || max == '*' || max == 'M'
-    max = -1 if max < -1
-    if max >= 0 && min > max
-      fail("The max occurrence of an attribute must be bigger than the min occurrence (or be unlimited).", o.max_expr, scope)
-    end
-    if(min == 0 && max == 0)
-      fail("The min and max occurrences of an attribute can not both be 0.", o.max_expr, scope)
-    end
-    the_attr.lowerBound = min
-    the_attr.upperBound = max
-
-    # derived?
-    the_attr.derived = true if o.derived_expr
-
-    # TODO: possibly support:
-    # changeable: false (i.e. constants)
-    # volatile: non having storage allocated (default for derived), if true = cache
-    # transient: not serialized
-    # unsettable: how the value can be reset (to default, or unset state)
-    #
-    the_attr
-  end
-
-  # Creates a metadata object describing an Enumerator (An Ecore EEnum)
-  # This only creates the free standing metadata. It is later used when creating a type.
-  #
-  def eval_CreateEnumExpression o, scope
-    e_enum = RGen::ECore::EEnum.new
-    e_enum.name = o.name
-    values = evaluate(o.values, scope)
-    case values
-    when Array
-      # Convert entries, the numerical representation is based on order
-      values.each_index do |i|
-        e_literal = RGen::ECore::EEnumLiteral.new
-        e_literal.literal = values.slice(i).to_s
-        e_literal.value = i
-        e_literal.eEnum = e_enum
-      end
-    when Hash
-      begin
-        # Convert entries, the numerical representation is based on mapping name to value
-        values.each do |k,v|
-          e_literal = RGen::ECore::EEnumLiteral.new
-          e_literal.literal = k.to_s
-          e_literal.value = v.to_i
-          e_literal.eEnum = e_enum
-        end
-      rescue StandardError => e
-        fail("The given hash could not be converted to Enum entries. Error: "+e.message, o, scope)
-      end
-    else
-      fail("An enumerator accepts an Array of String values, or a Hash of String to Integer mappings. Got instance of #{values.class}.", o, scope)
-    end
-  end
-
-  # Creates a type, and returns a Class implementing this type
-  # @todo this implementation uses scope to create the type; should use the type creator associated
-  #   with the logic that wants to create a type.
-  #
-  def eval_CreateTypeExpression(o, scope)
-    # The actual type creator is kept in the top scope (it keeps all created types)
-    # The type_creator calls back to this evaluator to evaluate attributes and enums
-    # it then creates both the model and a class implementation.
-    scope.top_scope.type_creator.create_type(o, scope, self)
-  end
 
   # If the wrapped expression is a QualifiedName, it is taken as the name of a variable in scope.
   # Note that this is different from the 3.x implementation, where an initial qualified name

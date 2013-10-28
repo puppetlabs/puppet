@@ -1,19 +1,14 @@
 module Puppet::Pops::Evaluator::Runtime3Support
-  # Fails the evaluation of _o_ in the given scope with the given message
+  # Fails the evaluation of _semantic_ with a given issue.
   #
-  # @status may need an extra parameter for error code
-  # @param message [String] the error message
-  # @param o [Object] the object for which evaluation failed in some way. Used to determine origin.
-  # @param scope [Puppet::Parser::Scope] the runtime specific scope in which evaluation failed
+  # @param issue [Puppet::Pops::Issue] the issue to report
+  # @param semantic [Puppet::Pops::ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
+  # @param options [Hash] hash of optional named data elements for the given issue
   # @return [!] this method does not return
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError)
-  # @todo fail evaluation with message, failure evaluating o, in scope
-  # @todo This just fails with the message, should include a label for the expression
-  #       and any origin set in an adapter for o. Scope could be passed for debugging
-  #       purposes / stackdump
   #
-  def fail(message, o, scope)
-    raise Puppet::ParseError.new(message)
+  def fail(issue, semantic, options={}, except=nil)
+    diagnostic_producer.accept(issue, semantic, options, except)
   end
 
   # Binds the given variable name to the given value in the given scope.
@@ -48,7 +43,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   def set_match_data(match_data, o, scope)
     # TODO: Get file, line from semantic o and pass as options to scope since it tracks where these values
-    # came from.
+    # came from. (No it does not! It simply uses them to report errors).
     # NOTE: The 3x scope adds one ephemeral(match) to its internal stack per match that succeeds ! It never
     # clears anything. Thus a context that performs many matches will get very deep (there simply is no way to
     # clear the match variables without rolling back the ephemeral stack.)
@@ -158,7 +153,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   #
   def box_numeric(v, o, scope)
     unless n = Puppet::Pops::Utils.to_n(v)
-      fail("Value '#{v}' can not be converted to Numeric.", o, scope)
+      fail(Puppet::Pops::Issues::NOT_NUMERIC, o, {:value => v})
     end
     n
   end
@@ -167,7 +162,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # as a side effect. Fails if the function does not exist.
   #
   def assert_function_available(name, o, scope)
-    fail("Unknown function #{name}", o, scope) unless Puppet::Parser::Functions.function(name)
+    fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
   end
 
   def call_function(name, args, o, scope)
@@ -218,4 +213,20 @@ module Puppet::Pops::Evaluator::Runtime3Support
     end
   end
 
+  # Creates a diagnostic producer
+  def diagnostic_producer
+    Puppet::Pops::Validation::DiagnosticProducer.new(
+      ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
+      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
+      Puppet::Pops::Model::ModelLabelProvider.new())
+  end
+
+  # An acceptor of diagnostics that immediately raises an exception.
+  class ExceptionRaisingAcceptor < Puppet::Pops::Validation::Acceptor
+    def accept(diagnostic)
+      super
+      Puppet::Pops::IssueReporter.assert_and_report(self, {:message => "Evaluation Error:" })
+      raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+    end
+  end
 end
