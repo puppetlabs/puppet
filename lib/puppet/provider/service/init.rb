@@ -155,7 +155,7 @@ private
 
   def self.is_init?(script = initscript)
     file = Puppet::FileSystem::File.new(script)
-    !file.symlink? || File.readlink(script) != "/lib/init/upstart-job"
+    !file.symlink? || file.readlink != "/lib/init/upstart-job"
   end
 end
 

@@ -322,8 +322,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
     before do
       @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
       File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
-      File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
-
+      path = "/base/path/my/file"
+      Puppet::FileSystem::File.expects(:new).with(path).returns stub(:readlink => "/some/other/path")
       @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
       @file.stubs(:md5_file).returns(@checksum)           #
     end
@@ -346,7 +346,6 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
     before do
       @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :follow)
       File.expects(:stat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
-      File.expects(:readlink).with("/base/path/my/file").never
       @checksum = Digest::MD5.hexdigest("some content\n")
       @file.stubs(:md5_file).returns(@checksum)
     end

@@ -65,10 +65,9 @@ describe Puppet::Type.type(:service).provider(:init) do
     it "should discard upstart jobs", :if => Puppet::Type.type(:file).defaultprovider.feature?(:manages_symlinks) do
       not_init_service, *valid_services = @services
       path = "tmp/#{not_init_service}"
-      mocked_file = mock(path, :symlink? => true)
+      mocked_file = mock(path, :symlink? => true, :readlink => "/lib/init/upstart-job")
       Puppet::FileSystem::File.stubs(:new).returns stub('file', :symlink? => false)
       Puppet::FileSystem::File.expects(:new).with(path).returns(mocked_file)
-      File.stubs(:readlink).with(path).returns("/lib/init/upstart-job")
       described_class.instances.map(&:name).should == valid_services
     end
 

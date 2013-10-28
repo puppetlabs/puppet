@@ -242,7 +242,7 @@ describe Puppet::Type.type(:file) do
 
             File.should be_exist link
             File.lstat(link).ftype.should == 'link'
-            File.readlink(link).should == link_target
+            Puppet::FileSystem::File.new(link).readlink().should == link_target
           end
         end
 
@@ -453,7 +453,7 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
-      File.readlink(link).should == dest2
+      Puppet::FileSystem::File.new(link).readlink().should == dest2
       File.exist?(bucket[:path]).should be_false
     end
 

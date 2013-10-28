@@ -143,6 +143,11 @@ class Puppet::FileSystem::File
     File.symlink?(@path)
   end
 
+  # @return [String] the name of the file referenced by the given link.
+  def readlink
+    File.readlink(@path)
+  end
+
   # Compare the contents of this file against the contents of a stream.
   # @param stream [IO] The stream to compare the contents against
   # @return [Boolean] Whether the contents were the same
