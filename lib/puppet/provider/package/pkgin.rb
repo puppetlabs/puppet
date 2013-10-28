@@ -25,6 +25,13 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   def self.prefetch(packages)
     super
+    packages.each do |name,pkg|
+      if pkg.provider.get(:ensure) == :present and pkg.should(:ensure) == :latest
+        # without this hack, latest is invoked up to two times, but no install/update comes after that
+        # it also mangles the messages shown for present->latest transition
+        pkg.provider.set( { :ensure => :latest } )
+      end
+    end
     pkgin("-y", :update)
   end
 
