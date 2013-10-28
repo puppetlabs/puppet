@@ -123,15 +123,16 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:recurse) do
-    desc "Whether and how deeply to do recursive
-      management. Options are:
+    desc "Whether and how to do recursive file management. Options are:
 
       * `inf,true` --- Regular style recursion on both remote and local
-        directory structure.
-      * `remote` --- Descends recursively into the remote directory
-        but not the local directory. Allows copying of
+        directory structure.  See `recurselimit` to specify a limit to the
+        recursion depth.
+      * `remote` --- Descends recursively into the remote (source) directory
+        but not the local (destination) directory. Allows copying of
         a few files into a directory containing many
         unmanaged files without scanning all the local files.
+        This can only be used when a source parameter is specified. 
       * `false` --- Default of no recursion.
     "
 
