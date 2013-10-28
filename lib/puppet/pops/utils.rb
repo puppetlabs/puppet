@@ -96,7 +96,7 @@ module Puppet::Pops::Utils
   # with true, and Adaptable#adapters.
   #
   def self.find_adapter(o, adapter)
-    return nil unless o
+    return nil if o.nil? || (o.is_a?(Array) && o.empty?)
     a = adapter.get(o)
     return a if a
     return find_adapter(o.eContainer, adapter)
