@@ -23,6 +23,19 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       load_facts_in_dir(dir)
     end
   end
+  
+  def self.setup_external_facts(request)
+    # Add any per-module fact directories to the factpath
+    module_external_fact_dirs = []
+    request.environment.modules.each {|m|
+         if m.has_external_facts?
+            Puppet.info "Loading external facts from #{m.plugin_fact_directory}"
+            module_external_fact_dirs << m.plugin_fact_directory
+         end
+    }
+    module_external_fact_dirs << Puppet[:pluginfactdest]
+    Facter::Util::Config.external_facts_dirs += module_external_fact_dirs
+  end
 
   def self.load_facts_in_dir(dir)
     return unless FileTest.directory?(dir)
@@ -50,6 +63,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
   # Look a host's facts up in Facter.
   def find(request)
+    self.class.setup_external_facts(request) if Puppet.features.external_facts?
     self.class.reload_facter
     self.class.load_fact_plugins
     result = Puppet::Node::Facts.new(request.key, Facter.to_hash)

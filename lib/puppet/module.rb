@@ -20,6 +20,7 @@ class Puppet::Module
     "files" => "files",
     "templates" => "templates",
     "plugins" => "lib",
+    "pluginfacts" => "facts.d",
   }
 
   # Find and return the +module+ that +path+ belongs to. If +path+ is
@@ -167,6 +168,14 @@ class Puppet::Module
   # Find all plugin directories.  This is used by the Plugins fileserving mount.
   def plugin_directory
     subpath("lib")
+  end
+
+  def plugin_fact_directory
+    subpath("facts.d")
+  end
+
+  def has_external_facts?
+    File.directory?(plugin_fact_directory)
   end
 
   def supports(name, version = nil)
