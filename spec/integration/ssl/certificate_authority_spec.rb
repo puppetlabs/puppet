@@ -101,16 +101,41 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
         "CSR contains a public key that does not correspond to the signing key"
       )
     end
+  end
 
-    def certificate_request_for(hostname)
-      key = Puppet::SSL::Key.new(hostname)
-      key.generate
+  it "allows autosigning certificates concurrently", :unless => Puppet.features.windows? do
+    Puppet[:autosign] = true
+    hosts = (0..4).collect { |i| certificate_request_for("host#{i}") }
 
-      host = Puppet::SSL::Host.new(hostname)
-      host.key = key
-      host.generate_certificate_request
-
-      host
+    run_in_parallel(5) do |i|
+      ca.autosign
     end
+
+    certs = hosts.collect { |host| Puppet::SSL::Certificate.indirection.find(host.name).content }
+    serial_numbers = certs.collect(&:serial)
+
+    serial_numbers.sort.should == [2, 3, 4, 5, 6] # serial 1 is the ca certificate
+  end
+
+  def certificate_request_for(hostname)
+    key = Puppet::SSL::Key.new(hostname)
+    key.generate
+
+    host = Puppet::SSL::Host.new(hostname)
+    host.key = key
+    host.generate_certificate_request
+
+    host
+  end
+
+  def run_in_parallel(number)
+    children = []
+    number.times do |i|
+      children << Kernel.fork do
+        yield i
+      end
+    end
+
+    children.each { |pid| Process.wait(pid) }
   end
 end
