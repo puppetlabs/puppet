@@ -362,28 +362,3 @@ describe 'Lexer2' do
   end
 end
 
-describe "when benchmarked" do
-
-#  it "Lexer 2", :profile => true do
-#    lexer = Lexer2.new
-#    code = 'if true \n{\n 10 + 10\n }\n else\n {\n "interpolate ${foo} and stuff"\n }\n'
-#     m = Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
-#     puts "Lexer2: #{m}"
-#  end
-
-#  it "Pops Optimized", :profile => true do
-#    lexer = Puppet::Pops::Parser::Lexer.new
-#  #    code = 'if true { 10 + 10 } else { "interpolate ${foo} andn stuff" }'
-#    code = 'if true \n{\n 10 + 10\n }\n else\n {\n "interpolate ${foo} and stuff"\n }\n'
-#    m = Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
-#    puts "Pops O: #{m}"
-#  end
-#
-#  it "Original", :profile => true do
-#    lexer = Puppet::Parser::Lexer.new
-#  #    code = 'if true { 10 + 10 } else { "interpolate ${foo} andn stuff" }'
-#    code = 'if true \n{\n 10 + 10\n }\n else\n {\n "interpolate ${foo} and stuff"\n }\n'
-#    m = Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
-#    puts "Original: #{m}"
-#  end
-end

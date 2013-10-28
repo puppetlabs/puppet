@@ -67,7 +67,9 @@ RSpec.configure do |config|
   #    IPAddr.new("::2:3:4:5:6:7:8")
   #  end
   # end
-  config.filter_run_excluding :broken => true
+  exclude_filters = {:broken => true}
+  exclude_filters[:benchmark] = true unless ENV['BENCHMARK']
+  config.filter_run_excluding exclude_filters
 
   config.mock_with :mocha
 
