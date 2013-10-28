@@ -26,15 +26,22 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
   
   def self.setup_external_facts(request)
     # Add any per-module fact directories to the factpath
-    module_external_fact_dirs = []
-    request.environment.modules.each {|m|
+    external_facts_dirs = []
+    request.environment.modules.each do |m|
          if m.has_external_facts?
             Puppet.info "Loading external facts from #{m.plugin_fact_directory}"
-            module_external_fact_dirs << m.plugin_fact_directory
+            external_facts_dirs << m.plugin_fact_directory
          end
-    }
-    module_external_fact_dirs << Puppet[:pluginfactdest]
-    Facter::Util::Config.external_facts_dirs += module_external_fact_dirs
+    end
+
+    # Add system external fact directory if it exists
+    if File.directory?(Puppet[:pluginfactdest])
+      external_facts_dirs << Puppet[:pluginfactdest]
+    end
+
+    # Add to facter config
+    Facter::Util::Config.external_facts_dirs += external_facts_dirs
+
   end
 
   def self.load_facts_in_dir(dir)
