@@ -41,45 +41,45 @@ class Puppet::Pops::Validation::Checker3_1
 
   # Performs regular validity check
   def check(o)
-    @@check_visitor.visit_this(self, o)
+    @@check_visitor.visit_this_0(self, o)
   end
 
   # Performs check if this is a vaid hostname expression
   # @param single_feature_name [String, nil] the name of a single valued hostname feature of the value's container. e.g. 'parent'
   def hostname(o, semantic, single_feature_name = nil)
-    @@hostname_visitor.visit_this(self, o, semantic, single_feature_name)
+    @@hostname_visitor.visit_this_2(self, o, semantic, single_feature_name)
   end
 
   # Performs check if this is valid as a query
   def query(o)
-    @@query_visitor.visit_this(self, o)
+    @@query_visitor.visit_this_0(self, o)
   end
 
   # Performs check if this is valid as a relationship side
   def relation(o, container)
-    @@relation_visitor.visit_this(self, o, container)
+    @@relation_visitor.visit_this_1(self, o, container)
   end
 
   # Performs check if this is valid as a rvalue
   def rvalue(o)
-    @@rvalue_visitor.visit_this(self, o)
+    @@rvalue_visitor.visit_this_0(self, o)
   end
 
   # Performs check if this is valid as a container of a definition (class, define, node)
   def top(o, definition)
-    @@top_visitor.visit_this(self, o, definition)
+    @@top_visitor.visit_this_1(self, o, definition)
   end
 
   # Checks the LHS of an assignment (is it assignable?).
   # If args[0] is true, assignment via index is checked.
   #
-  def assign(o, *args)
-    @@assignment_visitor.visit_this(self, o, *args)
+  def assign(o, via_index = false)
+    @@assignment_visitor.visit_this_1(self, o, via_index)
   end
 
   #---ASSIGNMENT CHECKS
 
-  def assign_VariableExpression(o, *args)
+  def assign_VariableExpression(o, via_index)
     varname_string = varname_to_s(o.expr)
     if varname_string =~ /^[0-9]+$/
       acceptor.accept(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o, :varname => varname_string)
@@ -95,7 +95,7 @@ class Puppet::Pops::Validation::Checker3_1
     # TODO: Investigate if there are invalid cases for += assignment
   end
 
-  def assign_AccessExpression(o, *args)
+  def assign_AccessExpression(o, via_index)
     # Are indexed assignments allowed at all ? $x[x] = '...'
     if acceptor.will_accept? Issues::ILLEGAL_INDEXED_ASSIGNMENT
       acceptor.accept(Issues::ILLEGAL_INDEXED_ASSIGNMENT, o)
@@ -105,7 +105,7 @@ class Puppet::Pops::Validation::Checker3_1
     end
   end
 
-  def assign_Object(o, *args)
+  def assign_Object(o, via_index)
     # Can not assign to anything else (differentiate if this is via index or not)
     # i.e. 10 = 'hello' vs. 10['x'] = 'hello' (the root is reported as being in error in both cases)
     #
