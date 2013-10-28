@@ -1,6 +1,6 @@
 require 'puppet/file_serving/mount'
 
-# Find files in the modules' pluginfactss directories.
+# Find files in the modules' pluginfacts directories.
 # This is a very strange mount because it merges
 # many directories into one.
 class Puppet::FileServing::Mount::PluginFacts < Puppet::FileServing::Mount

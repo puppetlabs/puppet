@@ -357,12 +357,12 @@ describe Puppet::Module do
     end
   end
 
-  [:plugins, :plugins, :templates, :files, :manifests].each do |filetype|
+  [:plugins, :pluginfacts, :templates, :files, :manifests].each do |filetype|
     case filetype
       when :plugins
         dirname = "lib"
       when :pluginfacts
-        dirname = "facts"
+        dirname = "facts.d"
       else
         dirname = filetype.to_s
     end
