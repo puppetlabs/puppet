@@ -23,6 +23,13 @@ $a = "interpolate ${foo} and stuff"
     puts "Transformer: #{m}"
   end
 
+  it "validator", :profile => true do
+    parser = Puppet::Pops::Parser::EvaluatingParser.new()
+    model = parser.parse_string(code)
+    m = Benchmark.measure { 100000.times { parser.assert_and_report(model) }}
+    puts "Validator: #{m}"
+  end
+
   it "parse transform", :profile => true do
     parser = Puppet::Pops::Parser::Parser.new()
     transformer = Puppet::Pops::Model::AstTransformer.new()

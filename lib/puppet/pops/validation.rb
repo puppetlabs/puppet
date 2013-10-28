@@ -90,6 +90,7 @@ module Puppet::Pops::Validation
   # @api public
   #
   class SeverityProducer
+    @@severity_hash = {:ignore => true, :warning => true, :error => true, :deprecation => true }
 
     # Creates a new instance where all issues are diagnosed as :error unless overridden.
     # @api public
@@ -122,8 +123,8 @@ module Puppet::Pops::Validation
     # @api public
     #
     def []=(issue, level)
-      assert_issue(issue)
-      assert_severity(level)
+      raise Puppet::DevError.new("Attempt to set validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Puppet::Pops::Issues::Issue
+      raise Puppet::DevError.new("Illegal severity level: #{option}") unless @@severity_hash[level]
       raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
       @severities[issue] = level
     end
@@ -134,7 +135,7 @@ module Puppet::Pops::Validation
     # @api public
     #
     def should_report? issue
-      diagnose = self[issue]
+      diagnose = @severities[issue]
       diagnose == :error || diagnose == :warning || diagnose == :deprecation
     end
 
@@ -149,7 +150,7 @@ module Puppet::Pops::Validation
     # @api private
     #
     def assert_severity level
-      raise Puppet::DevError.new("Illegal severity level: #{option}") unless [:ignore, :warning, :error, :deprecation].include? level
+      raise Puppet::DevError.new("Illegal severity level: #{option}") unless @@severity_hash[level]
     end
   end
 
