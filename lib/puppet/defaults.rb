@@ -1346,7 +1346,7 @@ EOT
     },
     :pluginfactsource => {
       :default  => "puppet://$server/pluginfacts",
-      :desc     => "Where to retreieve external facts for pluginsync",
+      :desc     => "Where to retrieve external facts for pluginsync",
     },
     :pluginsync => {
       :default    => true,
