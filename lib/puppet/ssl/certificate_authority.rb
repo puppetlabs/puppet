@@ -216,7 +216,7 @@ class Puppet::SSL::CertificateAuthority
   # file so this one is considered used.
   def next_serial
     serial = 1
-    Puppet.settings.readwritelock(:serial) do |f|
+    Puppet.settings.setting(:serial).exclusive_open('a+') do |f|
       serial = f.read.chomp.hex
       if serial == 0
         serial = 1

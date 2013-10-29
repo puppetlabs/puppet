@@ -91,6 +91,12 @@ class Puppet::Settings
     @config_file_parser = Puppet::Settings::ConfigFile.new(@translate)
   end
 
+  # @param name [Symbol] The name of the setting to fetch
+  # @return [Puppet::Settings::BaseSetting] The setting object
+  def setting(name)
+    @config[name]
+  end
+
   # Retrieve a config value
   def [](param)
     value(param)
@@ -1041,29 +1047,6 @@ Generated on #{Time.now}.
         File.open(file, *args) do |file|
           yield file
         end
-      end
-    end
-  end
-
-  # TODO: this method does not actually work as intended.
-  # We need to delete it and modify users to use the new
-  # exclusively_update_file method.
-  def readwritelock(default, &block)
-    file = value(get_config_file_default(default).name)
-    obj = get_config_file_default(default)
-    chown = nil
-    if Puppet.features.root?
-      chown = [obj.owner, obj.group]
-    else
-      chown = [nil, nil]
-    end
-
-    Puppet::Util::SUIDManager.asuser(*chown) do
-      mode = obj.mode ? obj.mode.to_i : 0640
-
-      # Update the umask to make non-executable files
-      Puppet::Util.withumask(File.umask ^ 0111) do
-        Puppet::FileSystem::File.new(file).exclusive_open(mode, "a+", &block)
       end
     end
   end

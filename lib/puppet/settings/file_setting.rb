@@ -178,6 +178,22 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     }
   end
 
+  def exclusive_open(option = 'r', &block)
+    chown = nil
+    if Puppet.features.root?
+      chown = [owner, group]
+    else
+      chown = [nil, nil]
+    end
+
+    Puppet::Util::SUIDManager.asuser(*chown) do
+      # Update the umask to make non-executable files
+      Puppet::Util.withumask(File.umask ^ 0111) do
+        Puppet::FileSystem::File.new(value).exclusive_open(mode ? mode.to_i : 0640, option, &block)
+      end
+    end
+  end
+
 private
   def unknown_value(parameter, value)
     raise SettingError, "The #{parameter} parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
