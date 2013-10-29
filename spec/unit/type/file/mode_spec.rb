@@ -18,6 +18,10 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       expect { mode.value = '0755' }.not_to raise_error
     end
 
+    it "should accept valid symbolic strings" do
+      expect { mode.value = 'g+w,u-x' }.not_to raise_error
+    end
+
     it "should not accept strings other than octal numbers" do
       expect do
         mode.value = 'readable please!'
@@ -33,6 +37,10 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
 
     it "should accept strings as arguments" do
       mode.munge('0644').should == '644'
+    end
+
+    it "should accept symbolic strings as arguments and return them intact" do
+      mode.munge('u=rw,go=r').should == 'u=rw,go=r'
     end
 
     it "should accept integers are arguments" do
@@ -76,6 +84,29 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       File.symlink('anything', path)
 
       mode.must be_insync('644')
+    end
+
+    describe "with a symbolic mode" do
+      let(:resource_sym) { Puppet::Type.type(:file).new :path => path, :mode => 'u+w,g-w' }
+      let(:mode_sym) { resource_sym.property(:mode) }
+
+      it "should return true if the mode matches, regardless of other bits" do
+        FileUtils.touch(path)
+
+        mode_sym.must be_insync('644')
+      end
+
+      it "should return false if the mode requires 0's where there are 1's" do
+        FileUtils.touch(path)
+
+        mode_sym.must_not be_insync('624')
+      end
+
+      it "should return false if the mode requires 1's where there are 0's" do
+        FileUtils.touch(path)
+
+        mode_sym.must_not be_insync('044')
+      end
     end
   end
 
@@ -143,6 +174,19 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       it 'returns :absent' do
         mode.is_to_s(:absent).should == :absent
       end
+    end
+  end
+
+  describe "#sync with a symbolic mode" do
+    let(:resource_sym) { Puppet::Type.type(:file).new :path => path, :mode => 'u+w,g-w' }
+    let(:mode_sym) { resource_sym.property(:mode) }
+
+    before { FileUtils.touch(path) }
+
+    it "changes only the requested bits" do
+      FileUtils.chmod 0467, path
+      mode_sym.sync
+      (File.stat(path).mode & 0777).to_s(8).should == "647"
     end
   end
 end
