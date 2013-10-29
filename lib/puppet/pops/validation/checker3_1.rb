@@ -109,7 +109,7 @@ class Puppet::Pops::Validation::Checker3_1
     # Can not assign to anything else (differentiate if this is via index or not)
     # i.e. 10 = 'hello' vs. 10['x'] = 'hello' (the root is reported as being in error in both cases)
     #
-    acceptor.accept(args[0] ? Issues::ILLEGAL_ASSIGNMENT_VIA_INDEX : Issues::ILLEGAL_ASSIGNMENT, o)
+    acceptor.accept(via_index ? Issues::ILLEGAL_ASSIGNMENT_VIA_INDEX : Issues::ILLEGAL_ASSIGNMENT, o)
   end
 
   #---CHECKS
