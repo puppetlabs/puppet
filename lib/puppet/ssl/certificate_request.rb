@@ -63,6 +63,15 @@ DOC
       csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
     end
 
+    if ![nil, false, 'false', ''].include?(Puppet[:csr_attributes_file]) and FileTest.exists?(Puppet[:csr_attributes_file])
+      if extensions = YAML.load_file(Puppet[:csr_attributes_file]) then
+        extensions.each { |oid, values|
+          attr_set = OpenSSL::ASN1::Set((values.is_a?(Array) ? values : [values]).map { |value| OpenSSL::ASN1::OctetString(value.to_s) })
+          csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
+        }
+      end
+    end
+
     signer = Puppet::SSL::CertificateSigner.new
     signer.sign(csr, key)
 

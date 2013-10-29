@@ -26,6 +26,7 @@ class Puppet::SSL::CertificateAuthority
   require 'puppet/ssl/certificate_revocation_list'
   require 'puppet/ssl/certificate_authority/interface'
   require 'puppet/network/authstore'
+	require 'puppet/network/authcommand'
 
   class CertificateVerificationError < RuntimeError
     attr_accessor :error_code
@@ -73,31 +74,24 @@ class Puppet::SSL::CertificateAuthority
 
   # If autosign is configured, then autosign all CSRs that match our configuration.
   def autosign
-    return unless auto = autosign?
-
-    store = nil
-    store = autosign_store(auto) if auto != true
-
     Puppet::SSL::CertificateRequest.indirection.search("*").each do |csr|
-      if auto == true or store.allowed?(csr.name, "127.1.1.1")
-        Puppet.info "Autosigning #{csr.name}"
-        sign(csr.name)
-      end
+      sign(csr.name) if autosign_basic?(csr.name) or autosign_command?(csr.name)
     end
   end
 
-  # Do we autosign?  This returns true, false, or a filename.
-  def autosign?
+  # This is the legacy autosign that either signs all certs, or signs based on pattern matching the cert name
+  def autosign_basic?(certname, addr = '127.1.1.1')
     auto = Puppet[:autosign]
-    return false if ['false', false].include?(auto)
+    return false if ['false', false, nil].include?(auto)
     return true if ['true', true].include?(auto)
+    return false if !FileTest.exist?(auto)
 
-    raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless Puppet::Util.absolute_path?(auto)
-    FileTest.exist?(auto) && auto
+    store = autosign_basic_store(auto)
+    store.allowed?(certname, addr)
   end
 
-  # Create an AuthStore for autosigning.
-  def autosign_store(file)
+  # Create an AuthStore for basic autosigning.
+  def autosign_basic_store(file)
     auth = Puppet::Network::AuthStore.new
     File.readlines(file).each do |line|
       next if line =~ /^\s*#/
@@ -106,6 +100,17 @@ class Puppet::SSL::CertificateAuthority
     end
 
     auth
+  end
+
+  # Try to autosign a certificate based an external script
+  def autosign_command?(certname, addr = '127.1.1.1')
+    cmd = Puppet[:autosign_command]
+
+    return false if cmd.nil?
+    raise ArgumentError, "The autosign_command '#{Puppet[:autosign_command]}' is not a valid executable" unless FileTest.exist?(cmd) and FileTest.executable?(cmd)
+
+    auth_cmd = Puppet::Network::AuthCommand.new(cmd)
+    auth_cmd.allowed?(certname, addr)
   end
 
   # Retrieve (or create, if necessary) the certificate revocation list.
