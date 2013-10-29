@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby -w
-
 #--------------------
 # A script to retrieve hosts from ldap and create an importable
 # cfservd file from them
