@@ -143,10 +143,17 @@ describe Puppet::Node::Facts::Facter do
     Puppet::Node::Facts::Facter.load_facts_in_dir("mydir")
   end
 
-  it "should include pluginfactdest when loading external facts" do
+  it "should include pluginfactdest when loading external facts", :unless => Puppet.features.microsoft_windows? do
     Puppet[:pluginfactdest] = "/plugin/dest"
     File.stubs(:directory?).returns true
     Facter::Util::Config.expects(:external_facts_dirs=).with(includes("/plugin/dest"))
+    Puppet::Node::Facts::Facter.setup_external_facts(@request)
+  end
+
+  it "should include pluginfactdest when loading external facts", :if => Puppet.features.microsoft_windows? do
+    Puppet[:pluginfactdest] = "/plugin/dest"
+    File.stubs(:directory?).returns true
+    Facter::Util::Config.expects(:external_facts_dirs=).with(includes("C:/plugin/dest"))
     Puppet::Node::Facts::Facter.setup_external_facts(@request)
   end
 
