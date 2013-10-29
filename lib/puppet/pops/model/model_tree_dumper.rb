@@ -123,10 +123,6 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     "'#{o.value}'"
   end
 
-  def dump_LiteralText o
-    o.value
-  end
-
   def dump_LambdaExpression o
     result = ["lambda"]
     result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0

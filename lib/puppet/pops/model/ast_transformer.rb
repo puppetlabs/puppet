@@ -358,11 +358,6 @@ class Puppet::Pops::Model::AstTransformer
     ast o, AST::String, :value => o.value
   end
 
-  # Literal text in a concatenated string
-  def transform_LiteralText(o)
-    ast o, AST::String, :value => o.value
-  end
-
   def transform_LambdaExpression(o)
     astargs = { :parameters => o.parameters.collect {|p| transform(p) } }
     astargs.merge!({ :children => transform(o.body) }) if o.body         # do not want children if it is nil/nop

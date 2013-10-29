@@ -35,7 +35,6 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_KeyedEntry o                  ; "Hash Entry"                        end
   def label_LiteralBoolean o              ; "Boolean"                           end
   def label_LiteralString o               ; "String"                            end
-  def label_LiteralText o                 ; "Text in Interpolated String"       end
   def label_LambdaExpression o            ; "Lambda"                            end
   def label_LiteralDefault o              ; "'default' expression"              end
   def label_LiteralUndef o                ; "'undef' expression"                end

@@ -23,6 +23,8 @@
 require 'rgen/metamodel_builder'
 
 module Puppet::Pops::Model
+  extend RGen::MetamodelBuilder::ModuleExtension
+
   # A base class for modeled objects that makes them Visitable, and Adaptable.
   # @todo currently  includes Containment which will not be needed when the corresponding methods
   #   are added to RGen (in some version after 0.6.2).
@@ -339,11 +341,6 @@ module Puppet::Pops::Model
   # A Literal String
   #
   class LiteralString < LiteralValue; end
-
-  # A literal text is like a literal string, but has other rules for escaped characters. It
-  # is used as part of a ConcatenatedString
-  #
-  class LiteralText < LiteralValue; end
 
   # A literal number has a radix of decimal (10), octal (8), or hex (16) to enable string conversion with the input radix.
   # By default, a radix of 10 is used.
