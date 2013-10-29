@@ -30,7 +30,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
     describe "and creating the inventory file" do
       it "re-adds all of the existing certificates" do
         inventory_file = StringIO.new
-        Puppet.settings.stubs(:write).with(:cert_inventory).yields(inventory_file)
+        Puppet.settings.setting(:cert_inventory).stubs(:open).yields(inventory_file)
 
         cert1 = stub 'cert1',
           :serial => 2,
@@ -65,33 +65,23 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
       end
 
       it "should use the Settings to write to the file" do
-        Puppet.settings.expects(:write).with(:cert_inventory, "a")
-
-        @inventory.add(@cert)
-      end
-
-      it "should use the actual certificate if it was passed a Puppet certificate" do
-        cert = Puppet::SSL::Certificate.new("mycert")
-        cert.content = @cert
-
-        fh = stub 'filehandle', :print => nil
-        Puppet.settings.stubs(:write).yields fh
-
-        @inventory.expects(:format).with(@cert)
+        Puppet.settings.setting(:cert_inventory).expects(:open).with("a")
 
         @inventory.add(@cert)
       end
 
       it "should add formatted certificate information to the end of the file" do
-        fh = mock 'filehandle'
+        cert = Puppet::SSL::Certificate.new("mycert")
+        cert.content = @cert
 
-        Puppet.settings.stubs(:write).yields fh
+        fh = StringIO.new
+        Puppet.settings.setting(:cert_inventory).expects(:open).with("a").yields(fh)
 
         @inventory.expects(:format).with(@cert).returns "myformat"
 
-        fh.expects(:print).with("myformat")
-
         @inventory.add(@cert)
+
+        expect(fh.string).to eq("myformat")
       end
     end
 

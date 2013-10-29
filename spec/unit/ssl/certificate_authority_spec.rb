@@ -167,14 +167,14 @@ describe Puppet::SSL::CertificateAuthority do
 
       FileTest.expects(:exist?).with(Puppet[:capass]).returns false
 
-      fh = mock 'filehandle'
-      Puppet.settings.expects(:write).with(:capass).yields fh
-
-      fh.expects(:print).with { |s| s.length > 18 }
+      fh = StringIO.new
+      Puppet.settings.setting(:capass).expects(:open).with('w').yields fh
 
       @ca.stubs(:sign)
 
       @ca.generate_ca_certificate
+
+      expect(fh.string.length).to be > 18
     end
 
     it "should generate a key if one does not exist" do
@@ -933,7 +933,7 @@ describe "CertificateAuthority.generate" do
   end
 
   def expect_to_write_the_ca_password
-    Puppet.settings.expects(:write).with(:capass)
+    Puppet.settings.setting(:capass).expects(:open).with('w')
   end
 
   def expect_ca_initialization

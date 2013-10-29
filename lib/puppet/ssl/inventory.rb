@@ -10,7 +10,7 @@ class Puppet::SSL::Inventory
     cert = cert.content if cert.is_a?(Puppet::SSL::Certificate)
 
     if FileTest.exist?(@path)
-      Puppet.settings.write(:cert_inventory, "a") do |f|
+      Puppet.settings.setting(:cert_inventory).open("a") do |f|
         f.print format(cert)
       end
     else
@@ -33,7 +33,7 @@ class Puppet::SSL::Inventory
   def rebuild
     Puppet.notice "Rebuilding inventory file"
 
-    Puppet.settings.write(:cert_inventory) do |f|
+    Puppet.settings.setting(:cert_inventory).open('w') do |f|
       f.print "# Inventory of signed certificates\n# SERIAL NOT_BEFORE NOT_AFTER SUBJECT\n"
       Puppet::SSL::Certificate.indirection.search("*").each do |cert|
         f.print format(cert)

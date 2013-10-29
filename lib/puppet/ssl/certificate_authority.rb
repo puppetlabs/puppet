@@ -180,7 +180,7 @@ class Puppet::SSL::CertificateAuthority
     20.times { pass += (rand(74) + 48).chr }
 
     begin
-      Puppet.settings.write(:capass) { |f| f.print pass }
+      Puppet.settings.setting(:capass).open('w') { |f| f.print pass }
     rescue Errno::EACCES => detail
       raise Puppet::Error, "Could not write CA password: #{detail}"
     end

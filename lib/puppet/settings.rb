@@ -1019,38 +1019,6 @@ Generated on #{Time.now}.
     val
   end
 
-  # Open a file with the appropriate user, group, and mode
-  def write(default, *args, &bloc)
-    obj = get_config_file_default(default)
-    writesub(default, value(obj.name), *args, &bloc)
-  end
-
-  # Open a non-default file under a default dir with the appropriate user,
-  # group, and mode
-  def writesub(default, file, *args, &bloc)
-    obj = get_config_file_default(default)
-    chown = nil
-    if Puppet.features.root?
-      chown = [obj.owner, obj.group]
-    else
-      chown = [nil, nil]
-    end
-
-    Puppet::Util::SUIDManager.asuser(*chown) do
-      mode = obj.mode ? obj.mode.to_i : 0640
-      args << "w" if args.empty?
-
-      args << mode
-
-      # Update the umask to make non-executable files
-      Puppet::Util.withumask(File.umask ^ 0111) do
-        File.open(file, *args) do |file|
-          yield file
-        end
-      end
-    end
-  end
-
   private
 
   def get_config_file_default(default)
