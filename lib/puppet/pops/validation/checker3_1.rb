@@ -126,7 +126,7 @@ class Puppet::Pops::Validation::Checker3_1
     case o.left_expr
     when Model::QualifiedName
       # allows many keys, but the name should really be a QualifiedReference
-      acceptor.accept(Issues::DEPRECATED_NAME_AS_TYPE, o, :name => o.value)
+      acceptor.accept(Issues::DEPRECATED_NAME_AS_TYPE, o, :name => o.left_expr.value)
     when Model::QualifiedReference
       # ok, allows many - this is a resource reference
 
