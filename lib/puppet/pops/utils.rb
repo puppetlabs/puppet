@@ -14,8 +14,8 @@ module Puppet::Pops::Utils
     end
   end
 
-  # To LiteralNumber with radix, or nil if not a number.
-  # If the value is already a number it is returned verbatim with a radix of 10.
+  # To Numeric with radix, or nil if not a number.
+  # If the value is already Numeric it is returned verbatim with a radix of 10.
   # @param o [String, Number] a string containing a number in octal, hex, integer (decimal) or floating point form
   # @return [Array<Number, Integer>, nil] array with converted number and radix, or nil if not possible to convert
   # @api public

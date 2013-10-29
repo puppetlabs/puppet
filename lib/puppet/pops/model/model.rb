@@ -331,22 +331,56 @@ module Puppet::Pops::Model
   #
   class LiteralValue < Literal
     abstract
-    has_attr 'value', Object, :lowerBound => 1
   end
 
   # A Regular Expression Literal.
   #
-  class LiteralRegularExpression < LiteralValue; end
+  class LiteralRegularExpression < LiteralValue
+    has_attr 'value', Object, :lowerBound => 1, :transient => true
+    has_attr 'pattern', String, :lowerBound => 1
+
+    module ClassModule
+      # Go through the gymnastics of making either value or pattern settable
+      # with syncronization to the other form. A derived value cannot be serialized
+      # and we want to serialize the pattern. When recreating the object we need to
+      # recreate it from the pattern string.
+      # The below sets both values if one is changed.
+      #
+#      alias _value= value=
+#      alias _pattern= pattern=
+      def value= regexp
+        setValue regexp
+        setPattern regexp.to_s
+      end
+
+      def pattern= regexp_string
+        setPattern regexp_string
+        setValue Regexp.new(regexp_string)
+      end
+    end
+
+  end
 
   # A Literal String
   #
-  class LiteralString < LiteralValue; end
+  class LiteralString < LiteralValue
+    has_attr 'value', String, :lowerBound => 1
+  end
+
+  class LiteralNumber < LiteralValue
+    abstract
+  end
 
   # A literal number has a radix of decimal (10), octal (8), or hex (16) to enable string conversion with the input radix.
   # By default, a radix of 10 is used.
   #
-  class LiteralNumber < LiteralValue
+  class LiteralInteger < LiteralNumber
     has_attr 'radix', Integer, :lowerBound => 1, :defaultValueLiteral => "10"
+    has_attr 'value', Integer, :lowerBound => 1
+  end
+
+  class LiteralFloat < LiteralNumber
+    has_attr 'value', Float, :lowerBound => 1
   end
 
   # The DSL `undef`.
@@ -357,7 +391,9 @@ module Puppet::Pops::Model
   class LiteralDefault < Literal; end
 
   # DSL `true` or `false`
-  class LiteralBoolean < LiteralValue; end
+  class LiteralBoolean < LiteralValue
+    has_attr 'value', Boolean, :lowerBound => 1
+  end
 
   # A text expression is an interpolation of an expression. If the embedded expression is
   # a QualifiedName, it it taken as a variable name and resolved. All other expressions are evaluated.
@@ -376,11 +412,15 @@ module Puppet::Pops::Model
 
   # A DSL NAME (one or multiple parts separated by '::').
   #
-  class QualifiedName < LiteralValue; end
+  class QualifiedName < LiteralValue
+    has_attr 'value', String, :lowerBound => 1
+  end
 
   # A DSL CLASSREF (one or multiple parts separated by '::' where (at least) the first part starts with an upper case letter).
   #
-  class QualifiedReference < LiteralValue; end
+  class QualifiedReference < LiteralValue
+    has_attr 'value', String, :lowerBound => 1
+  end
 
   # A Variable expression looks up value of expr (some kind of name) in scope.
   # The expression is typically a QualifiedName, or QualifiedReference.

@@ -68,7 +68,12 @@ class Puppet::Pops::Model::AstTransformer
     @@hostname_transform_visitor.visit_this(self, o)
   end
 
-  def transform_LiteralNumber(o)
+  def transform_LiteralFloat(o)
+    # Numbers are Names in the AST !! (Name a.k.a BareWord)
+    ast o, AST::Name, :value => o.value.to_s
+  end
+
+  def transform_LiteralInteger(o)
     s = case o.radix
     when 10
       o.value.to_s

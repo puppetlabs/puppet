@@ -46,7 +46,7 @@ describe Puppet::Pops::Model::AstTransformer do
     end
 
     it "converts an unknown radix to an error string" do
-      ast = transform(Puppet::Pops::Model::Factory.new(Puppet::Pops::Model::LiteralNumber, 3, 2))
+      ast = transform(Puppet::Pops::Model::Factory.new(Puppet::Pops::Model::LiteralInteger, 3, 2))
 
       ast.should be_kind_of(Puppet::Parser::AST::Name)
       ast.value.should == "bad radix:3"

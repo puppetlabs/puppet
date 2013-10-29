@@ -169,7 +169,12 @@ class Puppet::Pops::Model::Factory
     o
   end
 
-  def build_LiteralNumber(o, val, radix)
+  def build_LiteralFloat(o, val)
+    o.value = val
+    o
+  end
+
+  def build_LiteralInteger(o, val, radix)
     o.value = val
     o.radix = radix
     o
@@ -570,20 +575,30 @@ class Puppet::Pops::Model::Factory
     new(Model::QualifiedName, name)
   end
 
-  def self.NUMBER(name)
-    if n_radix = Puppet::Pops::Utils.to_n_with_radix(name)
-      new(Model::LiteralNumber, *n_radix)
+  def self.NUMBER(name_or_numeric)
+    if n_radix = Puppet::Pops::Utils.to_n_with_radix(name_or_numeric)
+      val, radix = n_radix
+      if val.is_a?(Float)
+        new(Model::LiteralFloat, val)
+      else
+        new(Model::LiteralInteger, val, radix)
+      end
     else
       # Bad number should already have been caught by lexer - this should never happen
-      raise ArgumentError, "Internal Error, NUMBER token does not contain a valid number, #{name}"
+      raise ArgumentError, "Internal Error, NUMBER token does not contain a valid number, #{name_or_numeric}"
     end
   end
 
-  # Convert input string to either a qualified name, or a LiteralNumber with radix
+  # Convert input string to either a qualified name, a LiteralInteger with radix, or a LiteralFloat
   #
   def self.QNAME_OR_NUMBER(name)
     if n_radix = Puppet::Pops::Utils.to_n_with_radix(name)
-      new(Model::LiteralNumber, *n_radix)
+      val, radix = n_radix
+      if val.is_a?(Float)
+        new(Model::LiteralFloat, val)
+      else
+        new(Model::LiteralInteger, val, radix)
+      end
     else
       new(Model::QualifiedName, name)
     end
@@ -736,13 +751,13 @@ class Puppet::Pops::Model::Factory
   end
 
   def build_Fixnum(o)
-    x = Model::LiteralNumber.new
+    x = Model::LiteralInteger.new
     x.value = o;
     x
   end
 
   def build_Float(o)
-    x = Model::LiteralNumber.new
+    x = Model::LiteralFloat.new
     x.value = o;
     x
   end
@@ -834,10 +849,9 @@ class Puppet::Pops::Model::Factory
     interpolate(o.current)
   end
 
-  def interpolate_LiteralNumber(o)
-    # TODO
-    # convert number to name using correct radix
-    # convert name to variable
+  def interpolate_LiteralInteger(o)
+    # convert number to a variable
+    self.class.new(o).var
   end
 
   def interpolate_Object(o)
@@ -876,9 +890,12 @@ class Puppet::Pops::Model::Factory
 
   def is_interop_rewriteable?(o)
     case o
-    when Model::LiteralNumber, Model::AccessExpression, Model::QualifiedName,
+    when Model::AccessExpression, Model::QualifiedName,
       Model::NamedAccessExpression, Model::CallMethodExpression
       true
+    when Model::LiteralInteger
+      # Only decimal integers can represent variables, else it is a number
+      o.radix == 10
     else
       false
     end

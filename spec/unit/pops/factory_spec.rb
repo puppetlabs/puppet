@@ -267,7 +267,7 @@ describe Puppet::Pops::Model::Factory do
       built = UNLESS(true, literal(1), nil).current
       built.class.should == Puppet::Pops::Model::UnlessExpression
       built.test.class.should == Puppet::Pops::Model::LiteralBoolean
-      built.then_expr.class.should == Puppet::Pops::Model::LiteralNumber
+      built.then_expr.class.should == Puppet::Pops::Model::LiteralInteger
       built.else_expr.class.should == Puppet::Pops::Model::Nop
     end
 
@@ -275,8 +275,8 @@ describe Puppet::Pops::Model::Factory do
       built = UNLESS(true, literal(1), literal(2)).current
       built.class.should == Puppet::Pops::Model::UnlessExpression
       built.test.class.should == Puppet::Pops::Model::LiteralBoolean
-      built.then_expr.class.should == Puppet::Pops::Model::LiteralNumber
-      built.else_expr.class.should == Puppet::Pops::Model::LiteralNumber
+      built.then_expr.class.should == Puppet::Pops::Model::LiteralInteger
+      built.else_expr.class.should == Puppet::Pops::Model::LiteralInteger
     end
   end
 
@@ -285,7 +285,7 @@ describe Puppet::Pops::Model::Factory do
       built = IF(true, literal(1), nil).current
       built.class.should == Puppet::Pops::Model::IfExpression
       built.test.class.should == Puppet::Pops::Model::LiteralBoolean
-      built.then_expr.class.should == Puppet::Pops::Model::LiteralNumber
+      built.then_expr.class.should == Puppet::Pops::Model::LiteralInteger
       built.else_expr.class.should == Puppet::Pops::Model::Nop
     end
 
@@ -293,8 +293,8 @@ describe Puppet::Pops::Model::Factory do
       built = IF(true, literal(1), literal(2)).current
       built.class.should == Puppet::Pops::Model::IfExpression
       built.test.class.should == Puppet::Pops::Model::LiteralBoolean
-      built.then_expr.class.should == Puppet::Pops::Model::LiteralNumber
-      built.else_expr.class.should == Puppet::Pops::Model::LiteralNumber
+      built.then_expr.class.should == Puppet::Pops::Model::LiteralInteger
+      built.else_expr.class.should == Puppet::Pops::Model::LiteralInteger
     end
   end
 
