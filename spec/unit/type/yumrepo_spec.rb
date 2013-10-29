@@ -11,7 +11,7 @@ describe Puppet::Type.type(:yumrepo) do
     end
 
     [:baseurl, :cost, :descr, :enabled, :enablegroups, :exclude, :failovermethod, :gpgcheck, :gpgkey, :http_caching, 
-       :include, :includepkgs, :keepalive, :metadata_expire, :mirrorlist, :priority, :protect, :proxy, :proxy_username, :proxy_password, :timeout, 
+       :include, :includepkgs, :keepalive, :metadata_expire, :metalink, :mirrorlist, :priority, :protect, :proxy, :proxy_username, :proxy_password, :timeout, 
        :sslcacert, :sslverify, :sslclientcert, :sslclientkey, :s3_enabled].each do |param|
       it "should have a '#{param}' parameter" do
         Puppet::Type.type(:yumrepo).attrtype(param).should == :property
