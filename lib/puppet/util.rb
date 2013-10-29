@@ -1,7 +1,6 @@
 # A module to collect utility functions.
 
 require 'English'
-require 'puppet/external/lock'
 require 'puppet/error'
 require 'puppet/util/execution_stub'
 require 'uri'

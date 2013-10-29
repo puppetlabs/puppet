@@ -62,7 +62,7 @@ class Puppet::FileSystem::File
   # @raise [Timeout::Error] If the timeout is exceeded while waiting to aquire the lock
   # @api public
   def exclusive_open(mode, options = 'r', timeout = 300, &block)
-    wait = 0.02 + (Random.rand / 10)
+    wait = 0.001 + (Random.rand / 1000)
     written = false
     while !written
       ::File.open(@path, options, mode) do |rf|
