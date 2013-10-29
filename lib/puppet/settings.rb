@@ -1048,31 +1048,22 @@ Generated on #{Time.now}.
   # TODO: this method does not actually work as intended.
   # We need to delete it and modify users to use the new
   # exclusively_update_file method.
-  def readwritelock(default, *args, &bloc)
+  def readwritelock(default, &block)
     file = value(get_config_file_default(default).name)
-    tmpfile = file + ".tmp"
-    raise Puppet::DevError, "Cannot create #{file}; directory #{File.dirname(file)} does not exist" unless FileTest.directory?(File.dirname(tmpfile))
+    obj = get_config_file_default(default)
+    chown = nil
+    if Puppet.features.root?
+      chown = [obj.owner, obj.group]
+    else
+      chown = [nil, nil]
+    end
 
-    File.open(file, ::File::CREAT|::File::RDWR, 0600) do |rf|
-      rf.lock_exclusive do
-        if File.exist?(tmpfile)
-          raise Puppet::Error, ".tmp file already exists for #{file}; Aborting locked write. Check the .tmp file and delete if appropriate"
-        end
+    Puppet::Util::SUIDManager.asuser(*chown) do
+      mode = obj.mode ? obj.mode.to_i : 0640
 
-        # If there's a failure, remove our tmpfile
-        begin
-          writesub(default, tmpfile, *args, &bloc)
-        rescue
-          File.unlink(tmpfile) if FileTest.exist?(tmpfile)
-          raise
-        end
-
-        begin
-          File.rename(tmpfile, file)
-        rescue => detail
-          Puppet.err "Could not rename #{file} to #{tmpfile}: #{detail}"
-          File.unlink(tmpfile) if FileTest.exist?(tmpfile)
-        end
+      # Update the umask to make non-executable files
+      Puppet::Util.withumask(File.umask ^ 0111) do
+        Puppet::FileSystem::File.new(file).exclusive_open(mode, "a+", &block)
       end
     end
   end

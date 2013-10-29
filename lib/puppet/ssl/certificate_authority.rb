@@ -72,17 +72,15 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # If autosign is configured, then autosign all CSRs that match our configuration.
-  def autosign
+  def autosign(name)
     return unless auto = autosign?
 
     store = nil
     store = autosign_store(auto) if auto != true
 
-    Puppet::SSL::CertificateRequest.indirection.search("*").each do |csr|
-      if auto == true or store.allowed?(csr.name, "127.1.1.1")
-        Puppet.info "Autosigning #{csr.name}"
-        sign(csr.name)
-      end
+    if auto == true or store.allowed?(name, "127.1.1.1")
+      Puppet.info "Autosigning #{name}"
+      sign(name)
     end
   end
 
@@ -217,19 +215,19 @@ class Puppet::SSL::CertificateAuthority
   # Read the next serial from the serial file, and increment the
   # file so this one is considered used.
   def next_serial
-    serial = nil
+    serial = 1
+    Puppet.settings.readwritelock(:serial) do |f|
+      serial = f.read.chomp.hex
+      if serial == 0
+        serial = 1
+      end
 
-    # This is slightly odd.  If the file doesn't exist, our readwritelock creates
-    # it, but with a mode we can't actually read in some cases.  So, use
-    # a default before the lock.
-    serial = 0x1 unless FileTest.exist?(Puppet[:serial])
-
-    Puppet.settings.readwritelock(:serial) { |f|
-      serial ||= File.read(Puppet.settings[:serial]).chomp.hex if FileTest.exist?(Puppet[:serial])
+      f.truncate(0)
+      f.rewind
 
       # We store the next valid serial, not the one we just used.
       f << "%04X" % (serial + 1)
-    }
+    end
 
     serial
   end
