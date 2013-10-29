@@ -28,43 +28,27 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
     end
 
     describe "and creating the inventory file" do
-      before do
-        Puppet.settings.stubs(:write)
-        FileTest.stubs(:exist?).with(cert_inventory).returns false
+      it "re-adds all of the existing certificates" do
+        inventory_file = StringIO.new
+        Puppet.settings.stubs(:write).with(:cert_inventory).yields(inventory_file)
 
-        Puppet::SSL::Certificate.indirection.stubs(:search).returns []
-      end
-
-      it "should log that it is building a new inventory file" do
-        Puppet.expects(:notice)
-
-        @inventory.rebuild
-      end
-
-      it "should use the Settings to write to the file" do
-        Puppet.settings.expects(:write).with(:cert_inventory)
-
-        @inventory.rebuild
-      end
-
-      it "should add a header to the file" do
-        fh = mock 'filehandle'
-        Puppet.settings.stubs(:write).yields fh
-        fh.expects(:print).with { |str| str =~ /^#/ }
-
-        @inventory.rebuild
-      end
-
-      it "should add formatted information on all existing certificates" do
-        cert1 = mock 'cert1'
-        cert2 = mock 'cert2'
-
+        cert1 = stub 'cert1',
+          :serial => 2,
+          :not_before => Time.now,
+          :not_after => Time.now,
+          :subject => "/CN=smocking"
+        cert2 = stub 'cert2',
+          :serial => 3,
+          :not_before => Time.now,
+          :not_after => Time.now,
+          :subject => "/CN=mocking bird"
         Puppet::SSL::Certificate.indirection.expects(:search).with("*").returns [cert1, cert2]
 
-        @class.any_instance.expects(:add).with(cert1)
-        @class.any_instance.expects(:add).with(cert2)
-
         @inventory.rebuild
+
+        expect(inventory_file.string).to match(/# Inventory of signed certificates/)
+        expect(inventory_file.string).to match(/\/CN=smocking/)
+        expect(inventory_file.string).to match(/\/CN=mocking bird/)
       end
     end
 
