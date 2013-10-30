@@ -15,7 +15,6 @@ class Puppet::Parser::Resource < Puppet::Resource
   include Puppet::Util::MethodHelper
   include Puppet::Util::Errors
   include Puppet::Util::Logging
-  include Puppet::Util::Tagging
   include Puppet::Parser::YamlTrimmer
 
   attr_accessor :source, :scope, :collector_id

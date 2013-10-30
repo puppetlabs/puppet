@@ -653,7 +653,7 @@ describe Puppet::Parser::Compiler do
         catalog = @compiler.compile
 
         r2 = catalog.resources.detect {|r| r.title == 'Bar::Foo' }
-        r2.tags.should =~ ['bar::foo', 'class', 'bar', 'foo']
+        r2.tags.should == Puppet::Util::TagSet.new(['bar::foo', 'class', 'bar', 'foo'])
       end
     end
 

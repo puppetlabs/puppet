@@ -102,7 +102,7 @@ module Puppet
         @evaluation_time = data['evaluation_time']
         @change_count = data['change_count']
         @out_of_sync_count = data['out_of_sync_count']
-        @tags = data['tags']
+        @tags = Puppet::Util::TagSet.new(data['tags'])
         @time = data['time']
         @time = Time.parse(@time) if @time.is_a? String
         @out_of_sync = data['out_of_sync']

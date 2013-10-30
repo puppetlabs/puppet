@@ -265,7 +265,7 @@ class Puppet::Util::Log
     @level = data['level'].intern
     @message = data['message']
     @source = data['source']
-    @tags = data['tags']
+    @tags = Puppet::Util::TagSet.new(data['tags'])
     @time = data['time']
     if @time.is_a? String
       @time = Time.parse(@time)

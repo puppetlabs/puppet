@@ -59,7 +59,9 @@ describe Puppet::Resource::Status do
 
   it "should copy the resource's tags" do
     @resource.expects(:tags).returns %w{foo bar}
-    Puppet::Resource::Status.new(@resource).tags.should == %w{foo bar}
+    status = Puppet::Resource::Status.new(@resource)
+    status.should be_tagged("foo")
+    status.should be_tagged("bar")
   end
 
   it "should always convert the resource to a string" do

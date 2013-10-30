@@ -124,7 +124,8 @@ describe Puppet::Parser::Resource do
       tags = [ "tag1", "tag2" ]
       @arguments[:parameters] = [ param(:tag, tags , :source) ]
       res = Puppet::Parser::Resource.new("resource", "testing", @arguments)
-      (res.tags & tags).should == tags
+      res.should be_tagged("tag1")
+      res.should be_tagged("tag2")
     end
   end
 

@@ -166,7 +166,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should have tags" do
-      resource.tags.should == ["mount", "foo"]
+      expect(resource).to be_tagged("mount")
+      expect(resource).to be_tagged("foo")
     end
 
     it "should have a path" do
@@ -208,11 +209,17 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       @resource.event.default_log_level.should == :warning
     end
 
-    {:file => "/my/file", :line => 50, :tags => %{foo bar}}.each do |attr, value|
+    {:file => "/my/file", :line => 50}.each do |attr, value|
       it "should set the #{attr}" do
         @resource.stubs(attr).returns value
         @resource.event.send(attr).should == value
       end
+    end
+
+    it "should set the tags" do
+      @resource.tag("abc", "def")
+      @resource.event.should be_tagged("abc")
+      @resource.event.should be_tagged("def")
     end
 
     it "should allow specification of event attributes" do
@@ -653,7 +660,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       resource.should be_a Puppet::Resource
       resource[:fstype].should   == 15
       resource[:remounts].should == :true
-      resource.tags.should       =~ %w{foo bar baz mount}
+      resource.tags.should == Puppet::Util::TagSet.new(%w{foo bar baz mount})
     end
   end
 

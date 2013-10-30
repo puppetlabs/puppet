@@ -99,26 +99,28 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should accept tags" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one")
-      config.tags.should == %w{one}
+      config.should be_tagged("one")
     end
 
     it "should accept multiple tags at once" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one", "two")
-      config.tags.should == %w{one two}
+      config.should be_tagged("one")
+      config.should be_tagged("two")
     end
 
     it "should convert all tags to strings" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one", :two)
-      config.tags.should == %w{one two}
+      config.should be_tagged("one")
+      config.should be_tagged("two")
     end
 
     it "should tag with both the qualified name and the split name" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one::two")
-      config.tags.include?("one").should be_true
-      config.tags.include?("one::two").should be_true
+      config.should be_tagged("one")
+      config.should be_tagged("one::two")
     end
 
     it "should accept classes" do
@@ -132,7 +134,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should tag itself with passed class names" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.add_class("one")
-      config.tags.should == %w{one}
+      config.should be_tagged("one")
     end
   end
 
@@ -809,11 +811,11 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     PSON.parse @catalog.to_pson
   end
 
-  [:name, :version, :tags, :classes].each do |param|
+  [:name, :version, :classes].each do |param|
     it "should set its #{param} to the #{param} of the resource" do
       @catalog.send(param.to_s + "=", "testing") unless @catalog.send(param)
 
-      pson_output_should { |hash| hash['data'][param.to_s] == @catalog.send(param) }
+      pson_output_should { |hash| hash['data'][param.to_s].should == @catalog.send(param) }
       PSON.parse @catalog.to_pson
     end
   end
@@ -882,7 +884,8 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
   it "should set any provided tags on the catalog" do
     @data['tags'] = %w{one two}
     PSON.parse @pson.to_pson
-    @catalog.tags.should == @data['tags']
+    @catalog.should be_tagged("one")
+    @catalog.should be_tagged("two")
   end
 
   it "should set any provided classes on the catalog" do

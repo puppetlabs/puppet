@@ -198,8 +198,6 @@ class Puppet::Parser::Scope
 
     extend_with_functions_module
 
-    @tags = []
-
     # The symbol table for this scope.  This is where we store variables.
     @symtable = Ephemeral.new(nil, true)
 
