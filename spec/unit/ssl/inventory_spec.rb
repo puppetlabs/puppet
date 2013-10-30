@@ -32,12 +32,14 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
         inventory_file = StringIO.new
         Puppet.settings.setting(:cert_inventory).stubs(:open).yields(inventory_file)
 
-        cert1 = stub 'cert1',
+        cert1 = Puppet::SSL::Certificate.new("cert1")
+        cert1.content = stub 'cert1',
           :serial => 2,
           :not_before => Time.now,
           :not_after => Time.now,
           :subject => "/CN=smocking"
-        cert2 = stub 'cert2',
+        cert2 = Puppet::SSL::Certificate.new("cert2")
+        cert2.content = stub 'cert2',
           :serial => 3,
           :not_before => Time.now,
           :not_after => Time.now,
