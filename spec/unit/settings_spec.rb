@@ -1285,10 +1285,6 @@ describe Puppet::Settings do
       @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => 0755}
     end
 
-    it "should provide a method that writes files with the correct modes" do
-      @settings.should respond_to(:write)
-    end
-
     it "should provide a method that creates directories with the correct modes" do
       Puppet::Util::SUIDManager.expects(:asuser).with("suser", "sgroup").yields
       Dir.expects(:mkdir).with(make_absolute("/otherdir"), 0755)
@@ -1566,17 +1562,6 @@ describe Puppet::Settings do
       settings.should be_service_group_available
     end
   end
-
-  describe "#writesub" do
-    it "should only pass valid arguments to File.open" do
-      settings = Puppet::Settings.new
-      settings.stubs(:get_config_file_default).with(:privatekeydir).returns(OpenStruct.new(:mode => "750"))
-
-      File.expects(:open).with("/path/to/keydir", "w", 750).returns true
-      settings.writesub(:privatekeydir, "/path/to/keydir")
-    end
-  end
-
 
   describe "when dealing with command-line options" do
     let(:settings) { Puppet::Settings.new }

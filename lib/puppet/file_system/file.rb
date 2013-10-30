@@ -49,19 +49,33 @@ class Puppet::FileSystem::File
   # access using flock. This means that if the file is on a filesystem that
   # does not support flock, this method will provide no protection.
   #
+  # While polling to aquire the lock the process will wait ever increasing
+  # amounts of time in order to prevent multiple processes from wasting
+  # resources.
+  #
   # @param mode [Integer] The mode to apply to the file if it is created
   # @param options [Integer] Extra file operation mode information to use
   # (defaults to read-only mode)
+  # @param timeout [Integer] Number of seconds to wait for the lock (defaults to 300)
   # @yield The file handle, in read-write mode
   # @return [Void]
+  # @raise [Timeout::Error] If the timeout is exceeded while waiting to aquire the lock
   # @api public
-  def exclusive_open(mode, options = 'r', &block)
+  def exclusive_open(mode, options = 'r', timeout = 300, &block)
+    wait = 0.001 + (Kernel.rand / 1000)
     written = false
     while !written
       ::File.open(@path, options, mode) do |rf|
         if rf.flock(::File::LOCK_EX|::File::LOCK_NB)
           yield rf
           written = true
+        else
+          sleep wait
+          timeout -= wait
+          wait *= 2
+          if timeout < 0
+            raise Timeout::Error, "Timeout waiting for exclusive lock on #{@path}"
+          end
         end
       end
     end

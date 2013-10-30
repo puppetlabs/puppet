@@ -64,16 +64,15 @@ describe Puppet::SSL::Key::File do
     end
 
     it "should save the public key when saving the private key" do
-      Puppet.settings.stubs(:writesub)
+      fh = StringIO.new
 
-      fh = mock 'filehandle'
-
-      Puppet.settings.expects(:writesub).with(:publickeydir, @public_key_path).yields fh
+      Puppet.settings.setting(:publickeydir).expects(:open_file).with(@public_key_path, 'w').yields fh
+      Puppet.settings.setting(:privatekeydir).stubs(:open_file)
       @public_key.expects(:to_pem).returns "my pem"
 
-      fh.expects(:print).with "my pem"
-
       @searcher.save(@request)
+
+      expect(fh.string).to eq("my pem")
     end
 
     it "should destroy the public key when destroying the private key" do

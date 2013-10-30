@@ -91,6 +91,12 @@ class Puppet::Settings
     @config_file_parser = Puppet::Settings::ConfigFile.new(@translate)
   end
 
+  # @param name [Symbol] The name of the setting to fetch
+  # @return [Puppet::Settings::BaseSetting] The setting object
+  def setting(name)
+    @config[name]
+  end
+
   # Retrieve a config value
   def [](param)
     value(param)
@@ -1011,70 +1017,6 @@ Generated on #{Time.now}.
     # And cache it
     @cache[environment||"none"][param] = val
     val
-  end
-
-  # Open a file with the appropriate user, group, and mode
-  def write(default, *args, &bloc)
-    obj = get_config_file_default(default)
-    writesub(default, value(obj.name), *args, &bloc)
-  end
-
-  # Open a non-default file under a default dir with the appropriate user,
-  # group, and mode
-  def writesub(default, file, *args, &bloc)
-    obj = get_config_file_default(default)
-    chown = nil
-    if Puppet.features.root?
-      chown = [obj.owner, obj.group]
-    else
-      chown = [nil, nil]
-    end
-
-    Puppet::Util::SUIDManager.asuser(*chown) do
-      mode = obj.mode ? obj.mode.to_i : 0640
-      args << "w" if args.empty?
-
-      args << mode
-
-      # Update the umask to make non-executable files
-      Puppet::Util.withumask(File.umask ^ 0111) do
-        File.open(file, *args) do |file|
-          yield file
-        end
-      end
-    end
-  end
-
-  # TODO: this method does not actually work as intended.
-  # We need to delete it and modify users to use the new
-  # exclusively_update_file method.
-  def readwritelock(default, *args, &bloc)
-    file = value(get_config_file_default(default).name)
-    tmpfile = file + ".tmp"
-    raise Puppet::DevError, "Cannot create #{file}; directory #{File.dirname(file)} does not exist" unless FileTest.directory?(File.dirname(tmpfile))
-
-    File.open(file, ::File::CREAT|::File::RDWR, 0600) do |rf|
-      rf.lock_exclusive do
-        if File.exist?(tmpfile)
-          raise Puppet::Error, ".tmp file already exists for #{file}; Aborting locked write. Check the .tmp file and delete if appropriate"
-        end
-
-        # If there's a failure, remove our tmpfile
-        begin
-          writesub(default, tmpfile, *args, &bloc)
-        rescue
-          File.unlink(tmpfile) if FileTest.exist?(tmpfile)
-          raise
-        end
-
-        begin
-          File.rename(tmpfile, file)
-        rescue => detail
-          Puppet.err "Could not rename #{file} to #{tmpfile}: #{detail}"
-          File.unlink(tmpfile) if FileTest.exist?(tmpfile)
-        end
-      end
-    end
   end
 
   private
