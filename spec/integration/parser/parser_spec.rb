@@ -87,7 +87,15 @@ describe "Puppet::Parser::Parser" do
         end
         ast = @parser.parse("""
         # comment
-        class test {}
+        class test {
+          $foo = {bar => 23}
+          $bar = [23, 42]
+          $x   = 'argument'
+          # this comment should not be returned
+          some_function('with', {a => 'hash'},
+                        ['and', 1, 'array', $argument],
+                      ) # not?
+        }
         """)
 
         ast.code[0].should be_a(Puppet::Parser::AST::Hostclass)
