@@ -36,7 +36,7 @@ class Puppet::SSL::Inventory
     Puppet.settings.setting(:cert_inventory).open('w') do |f|
       f.print "# Inventory of signed certificates\n# SERIAL NOT_BEFORE NOT_AFTER SUBJECT\n"
       Puppet::SSL::Certificate.indirection.search("*").each do |cert|
-        f.print format(cert)
+        f.print format(cert.content)
       end
     end
   end
