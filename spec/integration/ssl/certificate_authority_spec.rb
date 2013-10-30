@@ -103,7 +103,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     end
   end
 
-  it "allows autosigning certificates concurrently", :unless => Puppet.features.windows? do
+  it "allows autosigning certificates concurrently", :unless => Puppet::Util::Platform.windows? do
     Puppet[:autosign] = true
     hosts = (0..4).collect { |i| certificate_request_for("host#{i}") }
 
