@@ -51,9 +51,8 @@ describe Puppet::FileSystem::File do
       child = spawn_process_that_locks(file)
 
       expect do
-	Puppet::FileSystem::File.new(file).exclusive_open(0666, 'a', 0.1) do |f|
-puts "aquired lock"
-	end
+        Puppet::FileSystem::File.new(file).exclusive_open(0666, 'a', 0.1) do |f|
+        end
       end.to raise_error(Timeout::Error)
 
       Process.kill(9, child)
@@ -64,11 +63,11 @@ puts "aquired lock"
 
       child = Kernel.fork do
         read.close
-	Puppet::FileSystem::File.new(file).exclusive_open(0666, 'a') do |fh|
-	  write.write(true)
+        Puppet::FileSystem::File.new(file).exclusive_open(0666, 'a') do |fh|
+          write.write(true)
           write.close
-	  sleep 10
-	end
+          sleep 10
+        end
       end
 
       write.close
