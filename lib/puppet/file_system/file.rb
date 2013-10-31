@@ -10,6 +10,9 @@ class Puppet::FileSystem::File
   IMPL = if RUBY_VERSION =~ /^1\.8/
            require 'puppet/file_system/file18'
            Puppet::FileSystem::File18
+         elsif Puppet::Util::Platform.windows?
+           require 'puppet/file_system/file19windows'
+           Puppet::FileSystem::File19Windows
          else
            require 'puppet/file_system/file19'
            Puppet::FileSystem::File19
@@ -104,6 +107,7 @@ class Puppet::FileSystem::File
   #
   # @return [Boolean] true if the named file exists.
   def self.exist?(path)
+    return IMPL.exist?(path) if IMPL.method(:exist?) != self.method(:exist?)
     File.exist?(path)
   end
 
@@ -131,18 +135,28 @@ class Puppet::FileSystem::File
     @path.mkpath
   end
 
-  # Creates a symbolic link dest which points to the current file. If dest
-  # already exists and it is a directory, creates a symbolic link dest/the
-  # current file. If dest already exists and it is not a directory,
-  # raises Errno::EEXIST. But if :force option is set, overwrite dest.
+  # Creates a symbolic link dest which points to the current file.
+  # If dest already exists:
   #
-  # @param dest [String] The mode to apply to the file if it is created
-  # @param [Hash] options the options to create a message with.
+  # * and is a file, will raise Errno::EEXIST
+  # * and is a directory, will return 0 but perform no action
+  # * and is a symlink referencing a file, will raise Errno::EEXIST
+  # * and is a symlink referencing a directory, will return 0 but perform no action
+  #
+  # With the :force option set to true, when dest already exists:
+  #
+  # * and is a file, will replace the existing file with a symlink (DANGEROUS)
+  # * and is a directory, will return 0 but perform no action
+  # * and is a symlink referencing a file, will modify the existing symlink
+  # * and is a symlink referencing a directory, will return 0 but perform no action
+  #
+  # @param dest [String] The path to create the new symlink at
+  # @param [Hash] options the options to create the symlink with
   # @option options [Boolean] :force overwrite dest
   # @option options [Boolean] :noop do not perform the operation
   # @option options [Boolean] :verbose verbose output
   #
-  # @raise [Errno::EEXIST] dest already exists and it is not a directory
+  # @raise [Errno::EEXIST] dest already exists as a file and, :force is not set
   #
   # @return [Integer] 0
   def symlink(dest, options = {})
@@ -166,6 +180,7 @@ class Puppet::FileSystem::File
   #
   # @return [Integer] the number of names passed as arguments
   def self.unlink(*file_names)
+    return IMPL.unlink(*file_names) if IMPL.method(:unlink) != self.method(:unlink)
     File.unlink(*file_names)
   end
 

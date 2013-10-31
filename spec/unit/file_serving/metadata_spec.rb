@@ -282,6 +282,7 @@ describe Puppet::FileServing::Metadata do
     end
 
     it_should_behave_like "metadata collector"
+    it_should_behave_like "metadata collector symlinks"
 
     describe "if ACL metadata cannot be collected" do
       let(:path) { tmpdir('file_serving_metadata_acl') }
@@ -324,10 +325,17 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
       @file = Puppet::FileServing::Metadata.new(path, :links => :manage)
       stat = stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
       stub_file = stub(:readlink => "/some/other/path", :lstat => stat)
-      Puppet::FileSystem::File.expects(:new).with(path).twice.returns stub_file
+      Puppet::FileSystem::File.expects(:new).with(path).at_least_once.returns stub_file
       @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
       @file.stubs(:md5_file).returns(@checksum)           #
+
+      if Puppet.features.microsoft_windows?
+        win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
+          :ftype => 'link', :mode => 0755)
+        Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
+      end
     end
+
     it "should store the destination of the link in :destination if links are :manage" do
       @file.collect
       @file.destination.should == "/some/other/path"
@@ -349,8 +357,15 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
       @file = Puppet::FileServing::Metadata.new(path, :links => :follow)
       stat = stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
       mocked_file = mock(path, :stat => stat)
-      Puppet::FileSystem::File.expects(:new).with(path).returns mocked_file
+      Puppet::FileSystem::File.expects(:new).with(path).at_least_once.returns mocked_file
       mocked_file.expects(:readlink).never
+
+      if Puppet.features.microsoft_windows?
+        win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
+          :ftype => 'file', :mode => 0755)
+        Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
+      end
+
       @checksum = Digest::MD5.hexdigest("some content\n")
       @file.stubs(:md5_file).returns(@checksum)
     end

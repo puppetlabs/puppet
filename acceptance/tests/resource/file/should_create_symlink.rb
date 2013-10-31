@@ -1,11 +1,17 @@
 test_name "should create symlink"
-confine :except, :platform => 'windows'
 
 message = 'hello world'
 target  = "/tmp/test-#{Time.new.to_i}"
 source  = "/tmp/test-#{Time.new.to_i}-source"
 
 agents.each do |agent|
+  confine_block :to, :platform => 'windows' do
+    # symlinks are supported only on Vista+ (version 6.0 and higher)
+    on agents, facter('kernelmajversion') do
+      skip_test "Test not supported on this plaform" if stdout.chomp.to_f < 6.0
+    end
+  end
+
   step "clean up the system before we begin"
   on agent, "rm -rf #{target}"
   on agent, "echo '#{message}' > #{source}"

@@ -45,7 +45,7 @@ describe "the generate function" do
     scope.function_generate([command]).should == 'yay'
   end
 
-  describe "on Windows", :as_platform => :windows do
+  describe "on Windows", :if => Puppet.features.microsoft_windows? do
     it "should accept the tilde in the path" do
       command = "C:/DOCUME~1/ADMINI~1/foo.bat"
       Dir.expects(:chdir).with(File.dirname(command)).returns("yay")
