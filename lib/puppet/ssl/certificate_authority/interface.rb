@@ -4,7 +4,9 @@ module Puppet
       # This class is basically a hidden class that knows how to act on the
       # CA.  Its job is to provide a CLI-like interface to the CA class.
       class Interface
-        INTERFACE_METHODS = [:destroy, :list, :revoke, :generate, :sign, :print, :verify, :fingerprint]
+        INTERFACE_METHODS = [:destroy, :list, :revoke, :generate, :sign, :print, :verify, :fingerprint, :reinventory]
+
+        SUBJECTLESS_METHODS = [:list, :reinventory]
 
         class InterfaceError < ArgumentError; end
 
@@ -12,7 +14,7 @@ module Puppet
 
         # Actually perform the work.
         def apply(ca)
-          unless subjects or method == :list
+          if !subjects && !SUBJECTLESS_METHODS.include?(method)
             raise ArgumentError, "You must provide hosts or --all when using #{method}"
           end
 
@@ -154,6 +156,10 @@ module Puppet
           list.each do |host|
             ca.sign(host, options[:allow_dns_alt_names])
           end
+        end
+
+        def reinventory(ca)
+          ca.inventory.rebuild
         end
 
         # Set the list of hosts we're operating on.  Also supports keywords.
