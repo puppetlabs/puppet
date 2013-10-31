@@ -62,6 +62,7 @@ module Puppet::FileBucketFile
 
     def path_match(file_handle, files_original_path)
       return true unless files_original_path # if no path was provided, it's a match
+      file_handle.rewind
       file_handle.each_line do |line|
         return true if line.chomp == files_original_path
       end
@@ -85,6 +86,7 @@ module Puppet::FileBucketFile
           end
 
           unless path_match(f, files_original_path)
+            f.seek(0, IO::SEEK_END)
             f.puts(files_original_path)
           end
         end

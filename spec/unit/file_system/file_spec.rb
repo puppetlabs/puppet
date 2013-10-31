@@ -48,13 +48,34 @@ describe Puppet::FileSystem::File do
     it "times out if the lock cannot be aquired in a specified amount of time", :unless => Puppet::Util::Platform.windows? do
       file = tmpfile("file_to_update")
 
-      fh = open(file, 'a', 0666)
-      fh.flock(::File::LOCK_EX)
+      child = spawn_process_that_locks(file)
 
       expect do
-        Puppet::FileSystem::File.new(file).exclusive_open(0666, 'r', 1) do |f|
-        end
+	Puppet::FileSystem::File.new(file).exclusive_open(0666, 'a', 0.1) do |f|
+puts "aquired lock"
+	end
       end.to raise_error(Timeout::Error)
+
+      Process.kill(9, child)
+    end
+
+    def spawn_process_that_locks(file)
+      read, write = IO.pipe
+
+      child = Kernel.fork do
+        read.close
+	Puppet::FileSystem::File.new(file).exclusive_open(0666, 'a') do |fh|
+	  write.write(true)
+          write.close
+	  sleep 10
+	end
+      end
+
+      write.close
+      read.read
+      read.close
+
+      child
     end
 
     def increment_counter_in_multiple_processes(file, num_procs, options)

@@ -217,6 +217,7 @@ class Puppet::SSL::CertificateAuthority
   def next_serial
     serial = 1
     Puppet.settings.setting(:serial).exclusive_open('a+') do |f|
+      f.rewind
       serial = f.read.chomp.hex
       if serial == 0
         serial = 1
