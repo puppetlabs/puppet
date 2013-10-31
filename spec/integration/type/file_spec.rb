@@ -27,15 +27,15 @@ describe Puppet::Type.type(:file) do
     end
 
     def get_mode(file)
-      File.lstat(file).mode
+      Puppet::FileSystem::File.new(file).lstat.mode
     end
 
     def get_owner(file)
-      File.lstat(file).uid
+      Puppet::FileSystem::File.new(file).lstat.uid
     end
 
     def get_group(file)
-      File.lstat(file).gid
+      Puppet::FileSystem::File.new(file).lstat.gid
     end
   else
     class SecurityHelper
@@ -222,8 +222,8 @@ describe Puppet::Type.type(:file) do
 
             catalog.apply
 
-            (File.stat(link).mode & 07777) == 0666
-            (File.lstat(link_target).mode & 07777) == 0444
+            (Puppet::FileSystem::File.new(link).stat.mode & 07777) == 0666
+            (Puppet::FileSystem::File.new(link_target).lstat.mode & 07777) == 0444
           end
 
           it "should ignore dangling symlinks (#6856)" do
@@ -241,7 +241,7 @@ describe Puppet::Type.type(:file) do
             catalog.apply
 
             File.should be_exist link
-            File.lstat(link).ftype.should == 'link'
+            Puppet::FileSystem::File.new(link).lstat.ftype.should == 'link'
             Puppet::FileSystem::File.new(link).readlink().should == link_target
           end
         end
@@ -590,13 +590,13 @@ describe Puppet::Type.type(:file) do
       @dirs.each do |path|
         link_path = path.sub(source, dest)
 
-        File.lstat(link_path).should be_directory
+        Puppet::FileSystem::File.new(link_path).lstat.should be_directory
       end
 
       @files.each do |path|
         link_path = path.sub(source, dest)
 
-        File.lstat(link_path).ftype.should == "link"
+        Puppet::FileSystem::File.new(link_path).lstat.ftype.should == "link"
       end
     end
 
@@ -616,13 +616,13 @@ describe Puppet::Type.type(:file) do
       @dirs.each do |path|
         newpath = path.sub(source, dest)
 
-        File.lstat(newpath).should be_directory
+        Puppet::FileSystem::File.new(newpath).lstat.should be_directory
       end
 
       @files.each do |path|
         newpath = path.sub(source, dest)
 
-        File.lstat(newpath).ftype.should == "file"
+        Puppet::FileSystem::File.new(newpath).lstat.ftype.should == "file"
       end
     end
 
@@ -897,7 +897,7 @@ describe Puppet::Type.type(:file) do
 
       expected_mode = Puppet.features.microsoft_windows? ? 0644 : 0755
       File.read(dest).should == "foo"
-      (File.stat(dest).mode & 007777).should == expected_mode
+      (Puppet::FileSystem::File.new(dest).stat.mode & 007777).should == expected_mode
     end
 
     it "should be able to copy individual files even if recurse has been specified" do

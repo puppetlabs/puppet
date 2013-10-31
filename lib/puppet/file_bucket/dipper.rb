@@ -82,7 +82,7 @@ class Puppet::FileBucket::Dipper
         newsum = Digest::MD5.hexdigest(newcontents)
         changed = nil
         if file_handle.exist? and ! file_handle.writable?
-          changed = ::File.stat(file).mode
+          changed = Puppet::FileSystem::File.new(file).stat.mode
           ::File.chmod(changed | 0200, file)
         end
         ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|

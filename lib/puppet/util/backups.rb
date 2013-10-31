@@ -19,7 +19,7 @@ module Puppet::Util::Backups
 
   def perform_backup_with_bucket(fileobj)
     file = (fileobj.class == String) ? fileobj : fileobj.name
-    case File.lstat(file).ftype
+    case Puppet::FileSystem::File.new(file).lstat.ftype
     when "directory"
       # we don't need to backup directories when recurse is on
       return true if self[:recurse]
@@ -58,7 +58,7 @@ module Puppet::Util::Backups
     end
 
     begin
-      stat = File.send(method, newfile)
+      stat = Puppet::FileSystem::File.new(newfile).send(method)
     rescue Errno::ENOENT
       return
     end

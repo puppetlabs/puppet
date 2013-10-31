@@ -201,7 +201,7 @@ describe Puppet::FileServing::Metadata do
         let(:path) { tmpfile('file_serving_metadata_link') }
         let(:target) { tmpfile('file_serving_metadata_target') }
         let(:checksum) { Digest::MD5.hexdigest("some content\n") }
-        let(:fmode) { File.lstat(path).mode & 0777 }
+        let(:fmode) { Puppet::FileSystem::File.new(path).lstat.mode & 0777 }
 
         before :each do
           File.open(target, "wb") {|f| f.print("some content\n")}
@@ -320,10 +320,11 @@ end
 describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppet::Type.type(:file).defaultprovider.feature?(:manages_symlinks) do
   describe "when links are managed" do
     before do
-      @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :manage)
-      File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
       path = "/base/path/my/file"
-      Puppet::FileSystem::File.expects(:new).with(path).returns stub(:readlink => "/some/other/path")
+      @file = Puppet::FileServing::Metadata.new(path, :links => :manage)
+      stat = stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
+      stub_file = stub(:readlink => "/some/other/path", :lstat => stat)
+      Puppet::FileSystem::File.expects(:new).with(path).twice.returns stub_file
       @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
       @file.stubs(:md5_file).returns(@checksum)           #
     end
@@ -344,8 +345,12 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
 
   describe "when links are followed" do
     before do
-      @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :follow)
-      File.expects(:stat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
+      path = "/base/path/my/file"
+      @file = Puppet::FileServing::Metadata.new(path, :links => :follow)
+      stat = stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
+      mocked_file = mock(path, :stat => stat)
+      Puppet::FileSystem::File.expects(:new).with(path).returns mocked_file
+      mocked_file.expects(:readlink).never
       @checksum = Digest::MD5.hexdigest("some content\n")
       @file.stubs(:md5_file).returns(@checksum)
     end

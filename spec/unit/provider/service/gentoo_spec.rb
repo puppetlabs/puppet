@@ -13,7 +13,9 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     # The initprovider (parent of the gentoo provider) does a stat call
     # before it even tries to execute an initscript. We use sshd in all the
     # tests so make sure it is considered present.
-    File.stubs(:stat).with('/etc/init.d/sshd')
+    sshd_path = '/etc/init.d/sshd'
+    stub_file = stub(sshd_path, :stat => stub('stat'))
+    Puppet::FileSystem::File.stubs(:new).with(sshd_path).returns stub_file
   end
 
   let :initscripts do
@@ -55,6 +57,8 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
       helperscripts.each do |script|
         FileTest.expects(:executable?).with("/etc/init.d/#{script}").never
       end
+
+      Puppet::FileSystem::File.stubs(:new).returns stub('file', :symlink? => false)
       described_class.instances.map(&:name).should == [
         'alsasound',
         'bootmisc',

@@ -1329,14 +1329,14 @@ describe Puppet::Type.type(:file) do
         it "should default to managing the link" do
           catalog.apply
           # I convert them to strings so they display correctly if there's an error.
-          (File.stat(@target).mode & 007777).to_s(8).should == '644'
+          (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '644'
         end
 
         it "should be able to follow links" do
           file[:links] = :follow
           catalog.apply
 
-          (File.stat(@target).mode & 007777).to_s(8).should == '755'
+          (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '755'
         end
       end
     else # @real_posix

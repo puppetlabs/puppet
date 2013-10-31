@@ -19,7 +19,7 @@ describe Puppet::Util do
     end
 
     def get_mode(file)
-      File.lstat(file).mode & 07777
+      Puppet::FileSystem::File.new(file).lstat.mode & 07777
     end
   end
 
@@ -449,7 +449,7 @@ describe Puppet::Util do
 
     it "should copy the permissions of the source file before yielding on Unix", :if => !Puppet.features.microsoft_windows? do
       set_mode(0555, target.path)
-      inode = File.stat(target.path).ino
+      inode = Puppet::FileSystem::File.new(target.path).stat.ino
 
       yielded = false
       subject.replace_file(target.path, 0600) do |fh|
@@ -458,7 +458,7 @@ describe Puppet::Util do
       end
       yielded.should be_true
 
-      File.stat(target.path).ino.should_not == inode
+      Puppet::FileSystem::File.new(target.path).stat.ino.should_not == inode
       get_mode(target.path).should == 0555
     end
 

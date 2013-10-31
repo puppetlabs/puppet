@@ -106,7 +106,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
           it "should update the mode to #{mode}" do
             resource(:mode => mode).property(:mode).sync
 
-            (File.stat(path).mode & 07777).to_s(8).should == mode
+            (Puppet::FileSystem::File.new(path).stat.mode & 07777).to_s(8).should == mode
           end
         end
       end

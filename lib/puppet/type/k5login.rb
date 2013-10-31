@@ -70,7 +70,7 @@ Puppet::Type.newtype(:k5login) do
 
     # Return the mode as an octal string, not as an integer
     def mode
-      "%o" % (File.stat(@resource[:name]).mode & 007777)
+      "%o" % (Puppet::FileSystem::File.new(@resource[:name]).stat.mode & 007777)
     end
 
     # Set the file mode, converting from a string to an integer.

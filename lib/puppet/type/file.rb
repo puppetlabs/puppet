@@ -691,7 +691,7 @@ Puppet::Type.newtype(:file) do
     end
 
     @stat = begin
-      ::File.send(method, self[:path])
+      Puppet::FileSystem::File.new(self[:path]).send(method)
     rescue Errno::ENOENT => error
       nil
     rescue Errno::ENOTDIR => error

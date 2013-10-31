@@ -148,6 +148,18 @@ class Puppet::FileSystem::File
     File.readlink(@path)
   end
 
+
+  # @return [File::Stat] object for the named file.
+  def stat
+    File.stat(@path)
+  end
+
+  # @return [File::Stat] Same as stat, but does not follow the last symbolic
+  # link. Instead, reports on the link itself.
+  def lstat
+    File.lstat(@path)
+  end
+
   # Compare the contents of this file against the contents of a stream.
   # @param stream [IO] The stream to compare the contents against
   # @return [Boolean] Whether the contents were the same

@@ -85,7 +85,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
   describe "#owner" do
     it "should return the uid of the file owner" do
       FileUtils.touch(path)
-      owner = File.stat(path).uid
+      owner = Puppet::FileSystem::File.new(path).stat.uid
 
       provider.owner.should == owner
     end
@@ -178,7 +178,7 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
   describe "#group" do
     it "should return the gid of the file group" do
       FileUtils.touch(path)
-      group = File.stat(path).gid
+      group = Puppet::FileSystem::File.new(path).stat.gid
 
       provider.group.should == group
     end

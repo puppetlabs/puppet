@@ -496,7 +496,7 @@ describe Puppet::Configurer do
         require 'puppet/util/windows/security'
         mode = Puppet::Util::Windows::Security.get_mode(Puppet[:lastrunfile])
       else
-        mode = File.stat(Puppet[:lastrunfile]).mode
+        mode = Puppet::FileSystem::File.new(Puppet[:lastrunfile]).stat.mode
       end
       (mode & 0777).should == 0664
     end

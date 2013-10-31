@@ -41,7 +41,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
   end
 
   def user
-    uid = File.stat(target).uid
+    uid = Puppet::FileSystem::File.new(target).stat.uid
     Etc.getpwuid(uid).name
   end
 
