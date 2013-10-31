@@ -12,7 +12,10 @@ module Puppet
       if the file is missing will create an empty file. Specifying
       `absent` will delete the file (or directory, if `recurse => true` and
       `force => true`). Specifying `link` requires that you also set the `target`
-      attribute; note that symlinks cannot be managed on Windows.
+      attribute; note that symlinks are only supported on Windows Vista / 2008
+      and higher and require the account to have the token privilege
+      SeCreateSymbolicLinkPrivilege, present on the Administrator account by
+      default.
 
       If you specify the path to another file as the ensure value, it is
       equivalent to specifying `link` and using that path as the `target`:

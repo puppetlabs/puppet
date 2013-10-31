@@ -565,7 +565,7 @@ module Puppet::Util::Windows::Security
              FILE_SHARE_READ | FILE_SHARE_WRITE,
              0, # security_attributes
              OPEN_EXISTING,
-             FILE_FLAG_BACKUP_SEMANTICS,
+             FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
              0) # template
     raise Puppet::Util::Windows::Error.new("Failed to open '#{path}'") if handle == INVALID_HANDLE_VALUE
     begin

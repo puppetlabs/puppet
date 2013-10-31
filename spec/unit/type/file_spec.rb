@@ -1029,7 +1029,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should return nil if the file does not exist" do
-      file[:path] = '/foo/bar/baz/non-existent'
+      file[:path] = make_absolute('/foo/bar/baz/non-existent')
 
       file.stat.should be_nil
     end
@@ -1341,15 +1341,6 @@ describe Puppet::Type.type(:file) do
       end
     else # @real_posix
       # should recode tests using expectations instead of using the filesystem
-    end
-
-    describe "on Microsoft Windows systems" do
-      before do
-        Puppet.features.stubs(:posix?).returns(false)
-        Puppet.features.stubs(:microsoft_windows?).returns(true)
-      end
-
-      it "should refuse to work with links"
     end
   end
 
