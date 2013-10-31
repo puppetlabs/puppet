@@ -813,4 +813,10 @@ class Puppet::Pops::Model::Factory
       build(o, *args)
     end
   end
+
+  # Useful when debugging as this dumps the expression in compact form
+  def to_s
+    @@dumper ||= Puppet::Pops::Model::ModelTreeDumper.new
+    @@dumper.dump(self)
+  end
 end

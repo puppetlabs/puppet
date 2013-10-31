@@ -165,6 +165,14 @@ describe "egrammar parsing basic expressions" do
       dump(parse("$a = $b[2]")).should == "(= $a (slice $b 2))"
     end
 
+    it "$a = foo [2]" do
+      dump(parse("$a = foo [2]")).should == "(block (= $a foo) ([] 2))"
+    end
+
+    it "$a = $foo [2]" do
+      dump(parse("$a = $foo [2]")).should == "(= $a (slice $foo 2))"
+    end
+
     it "$a = [1, 2, 3][2]" do
       dump(parse("$a = [1,2,3][2]")).should == "(= $a (slice ([] 1 2 3) 2))"
     end

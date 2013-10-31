@@ -182,7 +182,9 @@ class Puppet::Pops::Parser::Parser
   #
   def _parse()
     begin
+      # to get debugging output, set @yydebug to true, and @racc_debug_out to $stdout
       @yydebug = false
+      # @racc_debug_out = $stdout
       main = yyparse(@lexer,:scan)
       # #Commented out now because this hides problems in the racc grammar while developing
       # # TODO include this when test coverage is good enough.
