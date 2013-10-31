@@ -306,8 +306,8 @@ describe Puppet::Util::Execution do
           Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
 
           Puppet::Util::Windows::Process.expects(:wait_process).with(process_handle).raises('whatever')
-          Process.expects(:CloseHandle).with(thread_handle)
-          Process.expects(:CloseHandle).with(process_handle)
+          Puppet::Util::Windows::Process.expects(:CloseHandle).with(thread_handle)
+          Puppet::Util::Windows::Process.expects(:CloseHandle).with(process_handle)
 
           expect { Puppet::Util::Execution.execute('test command') }.to raise_error(RuntimeError)
         end
