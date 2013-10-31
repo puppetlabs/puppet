@@ -143,18 +143,18 @@ describe Puppet::Node::Facts::Facter do
     Puppet::Node::Facts::Facter.load_facts_in_dir("mydir")
   end
 
-  it "should include pluginfactdest when loading external facts", :unless => Puppet.features.microsoft_windows? do
+  it "should include pluginfactdest when loading external facts",
+     :if => Puppet.features.external_facts?, :unless => Puppet.features.microsoft_windows? do
     Puppet[:pluginfactdest] = "/plugin/dest"
-    File.stubs(:directory?).returns true
-    Facter::Util::Config.expects(:external_facts_dirs=).with(includes("/plugin/dest"))
-    Puppet::Node::Facts::Facter.setup_external_facts(@request)
+    @facter.find(@request)
+    Facter::Util::Config.external_facts_dirs.include?("/plugin/dest")
   end
 
-  it "should include pluginfactdest when loading external facts", :if => Puppet.features.microsoft_windows? do
+  it "should include pluginfactdest when loading external facts",
+    :if => Puppet.features.external_facts?, :if => Puppet.features.microsoft_windows? do
     Puppet[:pluginfactdest] = "/plugin/dest"
-    File.stubs(:directory?).returns true
-    Facter::Util::Config.expects(:external_facts_dirs=).with(includes("C:/plugin/dest"))
-    Puppet::Node::Facts::Facter.setup_external_facts(@request)
+    @facter.find(@request)
+    Facter::Util::Config.external_facts_dirs.include?("C:/plugin/dest")
   end
 
   describe "when loading fact plugins from disk" do
@@ -186,12 +186,12 @@ describe Puppet::Node::Facts::Facter do
 
       Puppet::Node::Facts::Facter.load_fact_plugins
     end
-    it "should include module plugin facts when present" do
+
+    it "should include module plugin facts when present", :if => Puppet.features.external_facts? do
       mod = Puppet::Module.new("mymodule", "#{one}/mymodule", @request.environment)
       @request.environment.stubs(:modules).returns([mod])
-      File.stubs(:directory?).returns true
-      Facter::Util::Config.expects(:external_facts_dirs=).with(includes("#{one}/mymodule/facts.d"))
-      Puppet::Node::Facts::Facter.setup_external_facts(@request)
+      @facter.find(@request)
+      Facter::Util::Config.external_facts_dirs.include?("#{one}/mymodule/facts.d")
     end
   end
 end
