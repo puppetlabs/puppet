@@ -29,11 +29,11 @@ class Puppet::Pops::Parser::Lexer2
   # the token, and to advance the scanner position (without having to advance it with a scan(regexp)).
   #
   TOKEN_LBRACK       = [:LBRACK,       '['.freeze,   1].freeze
+  TOKEN_LISTSTART    = [:LISTSTART,    '['.freeze,   1].freeze
   TOKEN_RBRACK       = [:RBRACK,       ']'.freeze,   1].freeze
   TOKEN_LBRACE       = [:LBRACE,       '{'.freeze,   1].freeze
   TOKEN_RBRACE       = [:RBRACE,       '}'.freeze,   1].freeze
   TOKEN_SELBRACE     = [:SELBRACE,     '{'.freeze,   1].freeze
-  TOKEN_LAMBDA       = [:LAMBDA,       '{'.freeze,   1].freeze # should be removed
   TOKEN_LPAREN       = [:LPAREN,       '('.freeze,   1].freeze
   TOKEN_RPAREN       = [:RPAREN,       ')'.freeze,   1].freeze
 
@@ -319,7 +319,11 @@ class Puppet::Pops::Parser::Lexer2
       emit(TOKEN_COMMA, before)
 
     when '['
-      emit(TOKEN_LBRACK, before)
+      if ctx[:after] == :NAME && (before == 0 || scn.string[before-1,1] =~ /[[:blank:]\r\n]+/)
+        emit(TOKEN_LISTSTART, before)
+      else
+        emit(TOKEN_LBRACK, before)
+      end
 
     when ']'
       emit(TOKEN_RBRACK, before)

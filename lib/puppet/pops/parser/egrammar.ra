@@ -27,7 +27,8 @@ prechigh
   left  AT ATAT
   left  DOT
   left  CALL
-  left  LBRACK
+  left  LBRACK LISTSTART
+  left  RBRACK
   left  QMARK
   left  LCOLLECT LLCOLLECT
   right NOT
@@ -150,7 +151,7 @@ literal_expression
   | default
   | hash
   | regex
-  | text_or_name =LOW # resolves hash key ambiguity (racc W U require this?)
+  | text_or_name
   | number
   | type
   | undef
@@ -617,6 +618,9 @@ array
   : LBRACK expressions       RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[2] }
   | LBRACK expressions COMMA RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
   | LBRACK                   RBRACK { result = Factory.literal([]) ; loc result, val[0] }
+  | LISTSTART expressions       RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[2] }
+  | LISTSTART expressions COMMA RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
+  | LISTSTART                   RBRACK { result = Factory.literal([]) ; loc result, val[0] }
 
 hash
   : LBRACE hashpairs RBRACE       { result = Factory.HASH(val[1]); loc result, val[0], val[2] }
