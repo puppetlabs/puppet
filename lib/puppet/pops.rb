@@ -81,6 +81,8 @@ module Puppet
     module Validation
       require 'puppet/pops/validation/checker3_1'
       require 'puppet/pops/validation/validator_factory_3_1'
+      require 'puppet/pops/validation/checker4_0'
+      require 'puppet/pops/validation/validator_factory_4_0'
     end
 
     module Evaluator

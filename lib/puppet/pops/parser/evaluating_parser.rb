@@ -168,5 +168,9 @@ class Puppet::Pops::Parser::EvaluatingParser
       Puppet::Pops::Evaluator::EvaluatorImpl.new().evaluate(model, scope)
     end
 
+    def validator()
+      @validator ||= Puppet::Pops::Validation::ValidatorFactory_4_0.new().validator(acceptor)
+    end
+
   end
 end

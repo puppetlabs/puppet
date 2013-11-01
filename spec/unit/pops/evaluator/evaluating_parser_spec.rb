@@ -367,6 +367,64 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
   end
 
+  context "When evaluator performs [] operations" do
+    {
+      "[1,2,3][0]"      => 1,
+      "[1,2,3][2]"      => 3,
+      "[1,2,3][3]"      => nil,
+      "[1,2,3][-1]"     => 3,
+      "[1,2,3][-2]"     => 2,
+      "[1,2,3][-4]"     => nil,
+      "[1,2,3,4][0,2]"  => [1,2],
+      "[1,2,3,4][1,3]"  => [2,3,4],
+      "[1,2,3,4][-2,2]"  => [3,4],
+    }.each do |source, result|
+      it "should parse and evaluate the expression '#{source}' to #{result}" do
+        parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+
+    {
+      "{a=>1, b=>2, c=>3}[a]"      => 1,
+      "{a=>1, b=>2, c=>3}[c]"      => 3,
+      "{a=>1, b=>2, c=>3}[x]"      => nil,
+      "{a=>1, b=>2, c=>3}[c,b]"    => [3,2],
+      "{a=>1, b=>2, c=>3}[a,b,c]"  => [1,2,3],
+    }.each do |source, result|
+      it "should parse and evaluate the expression '#{source}' to #{result}" do
+        parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+
+    {
+      "'abc'[0]"      => 'a',
+      "'abc'[2]"      => 'c',
+      "'abc'[-1]"     => 'c',
+      "'abc'[-2]"     => 'b',
+      "'abc'[-3]"     => 'a',
+      "'abc'[-4]"     => nil,
+      "'abc'[3]"      => nil,
+      "abc[0]"        => 'a',
+      "abc[2]"        => 'c',
+      "abc[-1]"       => 'c',
+      "abc[-2]"       => 'b',
+      "abc[-3]"       => 'a',
+      "abc[-4]"       => nil,
+      "abc[3]"        => nil,
+      "'abcd'[0,2]"   => 'ab',
+      "'abcd'[1,3]"   => 'bcd',
+      "'abcd'[-2,2]"  => 'cd',
+      "'abcd'[-3,2]"  => 'bc',
+      "'abcd'[3,5]"   => 'd',
+      "'abcd'[5,2]"   => nil,
+      "'abcd'[-5,2]" => nil,
+    }.each do |source, result|
+      it "should parse and evaluate the expression '#{source}' to #{result}" do
+        parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+  end
+
   context "When the evaluator performs boolean operations" do
     {
       "true and true"   => true,
