@@ -17,6 +17,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   let(:parser) { Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
   let(:node) { 'node.example.com' }
   let(:scope) { s = create_test_scope_for_node(node); s }
+  types = Puppet::Pops::Types::TypeFactory
 
   context "When evaluator evaluates literals" do
     {
@@ -33,7 +34,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "banana::split" => 'banana::split',
       "false"         => false,
       "true"          => true,
-      "Array"         => Puppet::Pops::Types::TypeFactory.array_of_data(),
+      "Array"         => types.array_of_data(),
       "/.*/"          => /.*/
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
@@ -420,6 +421,28 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'abcd'[-5,2]" => nil,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
+        parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+
+    # Type operations (full set tested by tests covering type calculator)
+    {
+      "Array[Integer]"             => types.array_of(types.integer),
+      "Hash[Integer,Integer]"      => types.hash_of(types.integer, types.integer),
+      "Resource[File]"             => types.resource('File'),
+      "Resource['File']"           => types.resource(types.resource('File')),
+    }.each do |source, result|
+      it "should parse and evaluate the expression '#{source}' to #{result}" do
+        parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+
+    {
+      "file {foo: } File[foo]"                 => :TODO,
+      "file {[foo, bar]: } File[foo, bar]"     => [:TODO],
+    }.each do |source, result|
+      it "should parse and evaluate the expression '#{source}' to #{result}" do
+        pending "Not yet implemented Resource Instance resolution"
         parser.evaluate_string(scope, source, __FILE__).should == result
       end
     end
