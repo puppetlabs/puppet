@@ -55,7 +55,7 @@ describe Puppet::Settings::PrioritySetting do
         {
           'high'   => Process::HIGH_PRIORITY_CLASS,
           'normal' => Process::NORMAL_PRIORITY_CLASS,
-          'low'    => Process::BELOW_NORMAL_CLASS,
+          'low'    => Process::BELOW_NORMAL_PRIORITY_CLASS,
           'idle'   => Process::IDLE_PRIORITY_CLASS
         }.each do |value, converted_value|
           setting.munge(value).should == converted_value
