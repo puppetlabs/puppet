@@ -335,6 +335,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "unless false {5}"                => 5,
       "unless true {5}"                 => nil,
       "unless true {2} else {5}"        => 5,
+      "$a = if true {5} $a"                     => 5,
+      "$a = if false {5} $a"                    => nil,
+      "$a = if false {2} else {5} $a"           => 5,
+      "$a = if false {2} elsif true {5} $a"     => 5,
+      "$a = if false {2} elsif false {5} $a"    => nil,
+      "$a = unless false {5} $a"                => 5,
+      "$a = unless true {5} $a"                 => nil,
+      "$a = unless true {2} else {5} $a"        => 5,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
