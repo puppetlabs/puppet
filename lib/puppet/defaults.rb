@@ -715,7 +715,13 @@ EOT
       :desc => "Whether to enable autosign.  Valid values are true (which
         autosigns any key request, and is a very bad idea), false (which
         never autosigns any key request), and the path to a file, which
-        uses that configuration file to determine which keys to sign."},
+        uses that configuration file to determine which keys to sign.",
+      :hook => proc do |value|
+        unless [false, 'false', true, 'true'].include?(value) or Puppet::Util.absolute_path?(value)
+          raise ArgumentError, "The autosign parameter must be 'true'/'false' or an absolute path"
+        end
+      end
+    },
     :allow_duplicate_certs => {
       :default    => false,
       :type       => :boolean,
