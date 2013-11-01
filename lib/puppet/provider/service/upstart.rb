@@ -71,7 +71,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
       paths.each do |path|
         service_name = name.match(/^(\S+)/)[1]
         fqname = File.join(path, service_name + suffix)
-        if File.exists?(fqname)
+        if Puppet::FileSystem::File.exist?(fqname)
           return fqname
         end
 
@@ -148,7 +148,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
 private
   def is_upstart?(script = initscript)
-    File.exists?(script) && script.match(/\/etc\/init\/\S+\.conf/)
+    Puppet::FileSystem::File.exist?(script) && script.match(/\/etc\/init\/\S+\.conf/)
   end
 
   def version_is_pre_0_6_7
@@ -256,7 +256,7 @@ private
   end
 
   def read_override_file
-    if File.exists?(overscript)
+    if Puppet::FileSystem::File.exist?(overscript)
       read_script_from(overscript)
     else
       ""

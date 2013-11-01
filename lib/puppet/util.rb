@@ -441,7 +441,7 @@ module Util
         # This might race, but there are enough possible cases that there
         # isn't a good, solid "better" way to do this, and the next call
         # should fail in the same way anyhow.
-        raise if have_retried or File.exist?(file)
+        raise if have_retried or Puppet::FileSystem::File.exist?(file)
         have_retried = true
 
         # OK, so, we can't replace a file that doesn't exist, so let us put

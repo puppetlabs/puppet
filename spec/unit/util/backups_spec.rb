@@ -20,7 +20,7 @@ describe Puppet::Util::Backups do
       file = Puppet::Type.type(:file).new(:name => path)
 
       file.expects(:bucket).never
-      FileTest.expects(:exists?).with(path).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(path).returns false
 
       file.perform_backup
     end
@@ -29,7 +29,7 @@ describe Puppet::Util::Backups do
       file = Puppet::Type.type(:file).new(:name => path, :backup => false)
 
       file.expects(:bucket).never
-      FileTest.expects(:exists?).never
+      Puppet::FileSystem::File.expects(:exist?).never
 
       file.perform_backup
     end
@@ -38,7 +38,7 @@ describe Puppet::Util::Backups do
       stub_file = stub(path, :lstat => mock('lstat', :ftype => 'file'))
       Puppet::FileSystem::File.expects(:new).with(path).returns stub_file
       bucket.expects(:backup).with(path).returns("mysum")
-      FileTest.expects(:exists?).with(path).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(path).returns(true)
 
       file.perform_backup
     end
@@ -47,7 +47,7 @@ describe Puppet::Util::Backups do
       stub_file = stub(path, :lstat => mock('lstat', :ftype => 'file'))
       Puppet::FileSystem::File.expects(:new).with(path).returns stub_file
       bucket.expects(:backup).raises ArgumentError
-      FileTest.expects(:exists?).with(path).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(path).returns(true)
 
       lambda { file.perform_backup }.should raise_error(ArgumentError)
     end
@@ -62,7 +62,7 @@ describe Puppet::Util::Backups do
         Puppet::FileSystem::File.expects(:new).with(backup).returns stub_file
         File.expects(:unlink).with(backup)
         FileUtils.stubs(:cp_r)
-        FileTest.expects(:exists?).with(path).returns(true)
+        Puppet::FileSystem::File.expects(:exist?).with(path).returns(true)
 
         file.perform_backup
       end
@@ -72,7 +72,7 @@ describe Puppet::Util::Backups do
         Puppet::FileSystem::File.expects(:new).with(backup).returns stub_file
         File.expects(:unlink).with(backup).raises ArgumentError
         FileUtils.expects(:cp_r).never
-        FileTest.expects(:exists?).with(path).returns(true)
+        Puppet::FileSystem::File.expects(:exist?).with(path).returns(true)
 
         lambda { file.perform_backup }.should raise_error(Puppet::Error)
       end
@@ -83,14 +83,14 @@ describe Puppet::Util::Backups do
         stub_file.expects(:lstat).raises(Errno::ENOENT)
         File.expects(:unlink).with(backup).never
         FileUtils.stubs(:cp_r)
-        FileTest.expects(:exists?).with(path).returns(true)
+        Puppet::FileSystem::File.expects(:exist?).with(path).returns(true)
 
         file.perform_backup
       end
 
       it "a copy should be created in the local directory" do
         FileUtils.expects(:cp_r).with(path, backup, :preserve => true)
-        FileTest.stubs(:exists?).with(path).returns(true)
+        Puppet::FileSystem::File.stubs(:exist?).with(path).returns(true)
 
         file.perform_backup.should be_true
       end
@@ -98,7 +98,7 @@ describe Puppet::Util::Backups do
       it "should propagate exceptions if no backup can be created" do
         FileUtils.expects(:cp_r).raises ArgumentError
 
-        FileTest.stubs(:exists?).with(path).returns(true)
+        Puppet::FileSystem::File.stubs(:exist?).with(path).returns(true)
         lambda { file.perform_backup }.should raise_error(Puppet::Error)
       end
     end
@@ -117,8 +117,8 @@ describe Puppet::Util::Backups do
       stub_file = stub(path, :lstat => stub('stat', :ftype => 'directory'))
       Puppet::FileSystem::File.expects(:new).with(path).returns stub_file
 
-      FileTest.stubs(:exists?).with(path).returns(true)
-      FileTest.stubs(:exists?).with(filename).returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).with(path).returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).with(filename).returns(true)
 
       file.perform_backup
     end

@@ -15,7 +15,7 @@ class Puppet::Util::NetworkDevice::Config
   attr_reader :devices
 
   def exists?
-    FileTest.exists?(@file)
+    Puppet::FileSystem::File.exist?(@file)
   end
 
   def initialize

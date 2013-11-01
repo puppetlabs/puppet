@@ -7,7 +7,7 @@ class Puppet::FileServing::Configuration::Parser
 
   # Parse our configuration file.
   def parse
-    raise("File server configuration #{@file} does not exist") unless FileTest.exists?(@file)
+    raise("File server configuration #{@file} does not exist") unless Puppet::FileSystem::File.exist?(@file)
     raise("Cannot read file server configuration #{@file}") unless FileTest.readable?(@file)
 
     @mounts = {}

@@ -99,7 +99,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
       if File.directory?(path)
         true
       else
-        if File.exist?(path)
+        if Puppet::FileSystem::File.exist?(path)
           self.debug "Search path #{path} is not a directory"
         else
           self.debug "Search path #{path} does not exist"
@@ -112,7 +112,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
   def search(name)
     paths.each do |path|
       fqname = File.join(path,name)
-      if File.exist? fqname
+      if Puppet::FileSystem::File.exist? fqname
         return fqname
       else
         self.debug("Could not find #{name} in #{path}")
@@ -121,7 +121,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
     paths.each do |path|
       fqname_sh = File.join(path,"#{name}.sh")
-      if File.exist? fqname_sh
+      if Puppet::FileSystem::File.exist? fqname_sh
         return fqname_sh
       else
         self.debug("Could not find #{name}.sh in #{path}")

@@ -238,7 +238,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def self.get_sha1(guid)
     password_hash = nil
     password_hash_file = "#{password_hash_dir}/#{guid}"
-    if File.exists?(password_hash_file) and File.file?(password_hash_file)
+    if Puppet::FileSystem::File.exist?(password_hash_file) and File.file?(password_hash_file)
       raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" if not File.readable?(password_hash_file)
       f = File.new(password_hash_file)
       password_hash = f.read

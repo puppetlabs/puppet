@@ -53,7 +53,8 @@ class Puppet::Module
 
   def has_metadata?
     return false unless metadata_file
-    return false unless FileTest.exist?(metadata_file)
+
+    return false unless Puppet::FileSystem::File.exist?(metadata_file)
 
     begin
       metadata =  PSON.parse(File.read(metadata_file))
@@ -70,7 +71,7 @@ class Puppet::Module
     # we have files of a given type.
     define_method(type +'?') do
       type_subpath = subpath(location)
-      unless FileTest.exist?(type_subpath)
+      unless Puppet::FileSystem::File.exist?(type_subpath)
         Puppet.debug("No #{type} found in subpath '#{type_subpath}' " +
                          "(file / directory does not exist)")
         return false
@@ -93,7 +94,7 @@ class Puppet::Module
         full_path = subpath(location)
       end
 
-      return nil unless FileTest.exist?(full_path)
+      return nil unless Puppet::FileSystem::File.exist?(full_path)
       return full_path
     end
 
@@ -152,7 +153,7 @@ class Puppet::Module
   end
 
   def all_manifests
-    return [] unless File.exists?(manifests)
+    return [] unless Puppet::FileSystem::File.exist?(manifests)
 
     Dir.glob(File.join(manifests, '**', '*.{rb,pp}'))
   end

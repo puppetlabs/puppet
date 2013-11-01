@@ -46,7 +46,7 @@ describe Puppet::Network::HTTP::Connection do
       describe "peer verification" do
         def setup_standard_ssl_configuration
           ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
-          FileTest.stubs(:exist?).with(ca_cert_file).returns(true)
+          Puppet::FileSystem::File.stubs(:exist?).with(ca_cert_file).returns(true)
 
           ssl_configuration = stub('ssl_configuration', :ca_auth_file => ca_cert_file)
           Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_configuration).returns(ssl_configuration)
@@ -54,7 +54,7 @@ describe Puppet::Network::HTTP::Connection do
 
         def setup_standard_hostcert
           host_cert_file = File.expand_path('/path/to/ssl/certs/host_cert.pem')
-          FileTest.stubs(:exist?).with(host_cert_file).returns(true)
+          Puppet::FileSystem::File.stubs(:exist?).with(host_cert_file).returns(true)
 
           Puppet[:hostcert] = host_cert_file
         end
@@ -140,8 +140,8 @@ describe Puppet::Network::HTTP::Connection do
 
       context "with neither a host cert or a local CA cert" do
         before :each do
-          FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns(false)
-          FileTest.stubs(:exist?).with(ca_auth_file).returns(false)
+          Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:hostcert]).returns(false)
+          Puppet::FileSystem::File.stubs(:exist?).with(ca_auth_file).returns(false)
         end
 
         include_examples "HTTPS setup without all certificates"
@@ -149,8 +149,8 @@ describe Puppet::Network::HTTP::Connection do
 
       context "with there is no host certificate" do
         before :each do
-          FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns(false)
-          FileTest.stubs(:exist?).with(ca_auth_file).returns(true)
+          Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:hostcert]).returns(false)
+          Puppet::FileSystem::File.stubs(:exist?).with(ca_auth_file).returns(true)
         end
 
         include_examples "HTTPS setup without all certificates"
@@ -158,8 +158,8 @@ describe Puppet::Network::HTTP::Connection do
 
       context "with there is no local CA certificate" do
         before :each do
-          FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns(true)
-          FileTest.stubs(:exist?).with(ca_auth_file).returns(false)
+          Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:hostcert]).returns(true)
+          Puppet::FileSystem::File.stubs(:exist?).with(ca_auth_file).returns(false)
         end
 
         include_examples "HTTPS setup without all certificates"
@@ -169,8 +169,8 @@ describe Puppet::Network::HTTP::Connection do
         subject { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection) }
 
         before :each do
-          FileTest.expects(:exist?).with(Puppet[:hostcert]).returns(true)
-          FileTest.expects(:exist?).with(ca_auth_file).returns(true)
+          Puppet::FileSystem::File.expects(:exist?).with(Puppet[:hostcert]).returns(true)
+          Puppet::FileSystem::File.expects(:exist?).with(ca_auth_file).returns(true)
         end
 
         it                { should be_use_ssl }

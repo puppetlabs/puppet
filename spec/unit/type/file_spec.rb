@@ -921,7 +921,7 @@ describe Puppet::Type.type(:file) do
 
       file.remove_existing(:directory).should == true
 
-      File.exists?(file[:path]).should == false
+      Puppet::FileSystem::File.exist?(file[:path]).should == false
     end
 
     it "should remove an existing link", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
@@ -934,7 +934,7 @@ describe Puppet::Type.type(:file) do
 
       file.remove_existing(:directory).should == true
 
-      File.exists?(file[:path]).should == false
+      Puppet::FileSystem::File.exist?(file[:path]).should == false
     end
 
     it "should fail if the file is not a file, link, or directory" do
@@ -1432,7 +1432,7 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
-      File.should be_exist(path)
+      Puppet::FileSystem::File.exist?(path).should be_true
       @logs.should_not be_any {|l| l.level != :notice }
     end
   end

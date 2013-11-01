@@ -131,7 +131,7 @@ describe Puppet::Indirector::JSON do
         with_content('hello') do
           subject.destroy(request)
         end
-        File.should_not be_exist file
+        Puppet::FileSystem::File.exist?(file).should be_false
       end
 
       it "silently succeeds when files don't exist" do

@@ -99,7 +99,18 @@ class Puppet::FileSystem::File
     raise NotImplementedError
   end
 
-  # @return [Boolean] Whether the path of this file is present
+  # Determine if a file exists by verifying that the file can be stat'd.
+  # Will follow symlinks and verify that the actual target path exists.
+  #
+  # @return [Boolean] true if the named file exists.
+  def self.exist?(path)
+    File.exist?(path)
+  end
+
+  # Determine if a file exists by verifying that the file can be stat'd.
+  # Will follow symlinks and verify that the actual target path exists.
+  #
+  # @return [Boolean] true if the path of this file is present
   def exist?
     @path.exist?
   end

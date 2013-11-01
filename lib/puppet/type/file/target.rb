@@ -40,7 +40,7 @@ module Puppet
       # it doesn't determine what's removed.
       @resource.remove_existing(target)
 
-      raise Puppet::Error, "Could not remove existing file" if FileTest.exists?(@resource[:path])
+      raise Puppet::Error, "Could not remove existing file" if Puppet::FileSystem::File.exist?(@resource[:path])
 
       Dir.chdir(File.dirname(@resource[:path])) do
         Puppet::Util::SUIDManager.asuser(@resource.asuser) do
@@ -63,7 +63,7 @@ module Puppet
     def insync?(currentvalue)
       if [:nochange, :notlink].include?(self.should) or @resource.recurse?
         return true
-      elsif ! @resource.replace? and File.exists?(@resource[:path])
+      elsif ! @resource.replace? and Puppet::FileSystem::File.exist?(@resource[:path])
         return true
       else
         return super(currentvalue)

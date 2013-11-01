@@ -42,12 +42,12 @@ describe Puppet::FileServing::Base do
   end
 
   it "should allow specification of a path" do
-    FileTest.stubs(:exists?).returns(true)
+    Puppet::FileSystem::File.stubs(:exist?).returns(true)
     Puppet::FileServing::Base.new(path, :path => file).path.should == file
   end
 
   it "should allow specification of a relative path" do
-    FileTest.stubs(:exists?).returns(true)
+    Puppet::FileSystem::File.stubs(:exist?).returns(true)
     Puppet::FileServing::Base.new(path, :relative_path => "my/file").relative_path.should == "my/file"
   end
 
@@ -71,7 +71,7 @@ describe Puppet::FileServing::Base do
   describe "when setting the relative path" do
     it "should require that the relative path be unqualified" do
       @file = Puppet::FileServing::Base.new(path)
-      FileTest.stubs(:exists?).returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).returns(true)
       proc { @file.relative_path = File.expand_path("/qualified/file") }.should raise_error(ArgumentError)
     end
   end

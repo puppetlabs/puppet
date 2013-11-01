@@ -45,7 +45,7 @@ describe Puppet::FileBucket::Dipper do
     Digest::MD5.hexdigest("my\r\ncontents").should == checksum
 
     @dipper.backup(file).should == checksum
-    File.exists?("#{file_bucket}/f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea/contents").should == true
+    Puppet::FileSystem::File.exist?("#{file_bucket}/f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea/contents").should == true
   end
 
   it "should not backup a file that is already in the bucket" do

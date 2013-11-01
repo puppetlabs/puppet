@@ -37,7 +37,7 @@ class Puppet::SSL::Inventory
 
   # Find the serial number for a given certificate.
   def serial(name)
-    return nil unless FileTest.exist?(@path)
+    return nil unless Puppet::FileSystem::File.exist?(@path)
 
     File.readlines(@path).each do |line|
       next unless line =~ /^(\S+).+\/CN=#{name}$/

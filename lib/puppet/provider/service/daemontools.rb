@@ -48,7 +48,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     def defpath(dummy_argument=:work_arround_for_ruby_GC_bug)
       unless @defpath
         ["/var/lib/service", "/etc"].each do |path|
-          if FileTest.exist?(path)
+          if Puppet::FileSystem::File.exist?(path)
             @defpath = path
             break
           end
@@ -74,7 +74,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     # or don't contain a run file
     Dir.entries(path).reject { |e|
       fullpath = File.join(path, e)
-      e =~ /^\./ or ! FileTest.directory?(fullpath) or ! FileTest.exist?(File.join(fullpath,"run"))
+      e =~ /^\./ or ! FileTest.directory?(fullpath) or ! Puppet::FileSystem::File.exist?(File.join(fullpath,"run"))
     }.collect do |name|
       new(:name => name, :path => path)
     end
@@ -89,7 +89,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   def servicedir
     unless @servicedir
       ["/service", "/etc/service","/var/lib/svscan"].each do |path|
-        if FileTest.exist?(path)
+        if Puppet::FileSystem::File.exist?(path)
           @servicedir = path
           break
         end

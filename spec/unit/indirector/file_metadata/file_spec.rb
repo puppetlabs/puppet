@@ -19,7 +19,7 @@ describe Puppet::Indirector::FileMetadata::File do
       @uri = Puppet::Util.path_to_uri(@path).to_s
       @data = mock 'metadata'
       @data.stubs(:collect)
-      FileTest.expects(:exists?).with(@path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@path).returns true
 
       @request = Puppet::Indirector::Request.new(:file_metadata, :find, @uri, nil)
     end
@@ -42,7 +42,7 @@ describe Puppet::Indirector::FileMetadata::File do
     end
 
     it "should collect the attributes of the instances returned" do
-      FileTest.expects(:exists?).with(@path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@path).returns true
       @metadata.expects(:path2instances).returns( [mock("one", :collect => nil), mock("two", :collect => nil)] )
       @metadata.search(@request)
     end

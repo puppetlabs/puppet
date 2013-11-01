@@ -161,7 +161,7 @@ class Puppet::Util::Metric
       Puppet.warning "RRD library is missing; cannot store metrics"
       return
     end
-    self.create(time - 5) unless FileTest.exists?(self.path)
+    self.create(time - 5) unless Puppet::FileSystem::File.exist?(self.path)
 
     if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
       @rrd ||= RRDtool.new(self.path)

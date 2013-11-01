@@ -32,7 +32,7 @@ module Puppet::ModuleTool
           if is_module_package?(@name)
             @source = :filesystem
             @filename = File.expand_path(@name)
-            raise MissingPackageError, :requested_package => @filename unless File.exist?(@filename)
+            raise MissingPackageError, :requested_package => @filename unless Puppet::FileSystem::File.exist?(@filename)
 
             parsed = parse_filename(@filename)
             @module_name = parsed[:module_name]

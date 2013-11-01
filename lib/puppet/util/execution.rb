@@ -262,7 +262,7 @@ module Util::Execution
     #  about a race condition because all of the places that we call this from are preceded by a call to "waitpid2",
     #  meaning that the processes responsible for writing the file have completed before we get here.)
     2.times do |try|
-      if File.exists?(stdout.path)
+      if Puppet::FileSystem::File.exist?(stdout.path)
         stdout.open
         begin
           return stdout.read

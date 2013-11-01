@@ -37,7 +37,7 @@ Puppet::Type.newtype(:k5login) do
 
     # Does this file exist?
     def exists?
-      File.exists?(@resource[:name])
+      Puppet::FileSystem::File.exist?(@resource[:name])
     end
 
     # create the file
@@ -56,7 +56,7 @@ Puppet::Type.newtype(:k5login) do
 
     # Return the principals
     def principals(dummy_argument=:work_arround_for_ruby_GC_bug)
-      if File.exists?(@resource[:name])
+      if Puppet::FileSystem::File.exist?(@resource[:name])
         File.readlines(@resource[:name]).collect { |line| line.chomp }
       else
         :absent

@@ -37,7 +37,7 @@ module Puppet
     def self.known
       Paths[Loaded.length...Paths.length].each { |path|
         file = File.join(path,'plugin_init.rb')
-        Loaded << (File.exist?(file) && new(file))
+        Loaded << (Puppet::FileSystem::File.exist?(file) && new(file))
       }
       Loaded.compact
     end

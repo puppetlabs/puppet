@@ -113,7 +113,7 @@ end
   end
 
   def file_exists_and_matches_content(file, *content_patterns)
-    File.exists?(file).should(be_true, "Cannot find #{file}")
+    Puppet::FileSystem::File.exist?(file).should(be_true, "Cannot find #{file}")
     content_patterns.each do |pattern|
       content = File.read(file)
       content.should match(pattern)

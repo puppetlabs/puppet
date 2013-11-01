@@ -6,7 +6,7 @@ class Puppet::Confine::Exists < Puppet::Confine
   end
 
   def pass?(value)
-    value && (for_binary? ? which(value) : FileTest.exist?(value))
+    value && (for_binary? ? which(value) : Puppet::FileSystem::File.exist?(value))
   end
 
   def message(value)

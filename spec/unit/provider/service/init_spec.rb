@@ -82,7 +82,7 @@ describe Puppet::Type.type(:service).provider(:init) do
   describe "when checking valid paths" do
     it "should discard paths that do not exist" do
       File.expects(:directory?).with(paths[0]).returns false
-      File.expects(:exist?).with(paths[0]).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(paths[0]).returns false
       File.expects(:directory?).with(paths[1]).returns true
 
       provider.paths.should == [paths[1]]
@@ -90,7 +90,7 @@ describe Puppet::Type.type(:service).provider(:init) do
 
     it "should discard paths that are not directories" do
       paths.each do |path|
-        File.expects(:exist?).with(path).returns true
+        Puppet::FileSystem::File.expects(:exist?).with(path).returns true
         File.expects(:directory?).with(path).returns false
       end
       provider.paths.should be_empty
@@ -103,28 +103,28 @@ describe Puppet::Type.type(:service).provider(:init) do
     end
 
     it "should be able to find the init script in the service path" do
-      File.expects(:exist?).with("#{paths[0]}/myservice").returns true
-      File.expects(:exist?).with("#{paths[1]}/myservice").never # first one wins
+      Puppet::FileSystem::File.expects(:exist?).with("#{paths[0]}/myservice").returns true
+      Puppet::FileSystem::File.expects(:exist?).with("#{paths[1]}/myservice").never # first one wins
       provider.initscript.should == "/service/path/myservice"
     end
 
     it "should be able to find the init script in an alternate service path" do
-      File.expects(:exist?).with("#{paths[0]}/myservice").returns false
-      File.expects(:exist?).with("#{paths[1]}/myservice").returns true
+      Puppet::FileSystem::File.expects(:exist?).with("#{paths[0]}/myservice").returns false
+      Puppet::FileSystem::File.expects(:exist?).with("#{paths[1]}/myservice").returns true
       provider.initscript.should == "/alt/service/path/myservice"
     end
 
     it "should be able to find the init script if it ends with .sh" do
-      File.expects(:exist?).with("#{paths[0]}/myservice").returns false
-      File.expects(:exist?).with("#{paths[1]}/myservice").returns false
-      File.expects(:exist?).with("#{paths[0]}/myservice.sh").returns true
+      Puppet::FileSystem::File.expects(:exist?).with("#{paths[0]}/myservice").returns false
+      Puppet::FileSystem::File.expects(:exist?).with("#{paths[1]}/myservice").returns false
+      Puppet::FileSystem::File.expects(:exist?).with("#{paths[0]}/myservice.sh").returns true
       provider.initscript.should == "/service/path/myservice.sh"
     end
 
     it "should fail if the service isn't there" do
       paths.each do |path|
-        File.expects(:exist?).with("#{path}/myservice").returns false
-        File.expects(:exist?).with("#{path}/myservice.sh").returns false
+        Puppet::FileSystem::File.expects(:exist?).with("#{path}/myservice").returns false
+        Puppet::FileSystem::File.expects(:exist?).with("#{path}/myservice.sh").returns false
       end
       expect { provider.initscript }.to raise_error(Puppet::Error, "Could not find init script for 'myservice'")
     end
@@ -134,7 +134,7 @@ describe Puppet::Type.type(:service).provider(:init) do
     before :each do
       File.stubs(:directory?).with("/service/path").returns true
       File.stubs(:directory?).with("/alt/service/path").returns true
-      File.stubs(:exist?).with("/service/path/myservice").returns true
+      Puppet::FileSystem::File.stubs(:exist?).with("/service/path/myservice").returns true
     end
 
     [:start, :stop, :status, :restart].each do |method|

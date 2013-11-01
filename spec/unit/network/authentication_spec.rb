@@ -20,7 +20,7 @@ describe Puppet::Network::Authentication do
   describe "when warning about upcoming expirations" do
     before do
       Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
-      FileTest.stubs(:exist?).returns(false)
+      Puppet::FileSystem::File.stubs(:exist?).returns(false)
     end
 
     it "should check the expiration of the CA certificate" do
@@ -34,7 +34,7 @@ describe Puppet::Network::Authentication do
     it "should check the expiration of the localhost certificate" do
       Puppet::SSL::Host.stubs(:localhost).returns(host)
       cert.expects(:near_expiration?).returns(false)
-      FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:hostcert]).returns(true)
       subject.warn_if_near_expiration
     end
 

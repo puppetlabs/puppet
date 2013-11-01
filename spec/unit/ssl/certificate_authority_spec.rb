@@ -165,7 +165,7 @@ describe Puppet::SSL::CertificateAuthority do
     it "should create and store a password at :capass" do
       Puppet[:capass] = File.expand_path("/path/to/pass")
 
-      FileTest.expects(:exist?).with(Puppet[:capass]).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(Puppet[:capass]).returns false
 
       fh = StringIO.new
       Puppet.settings.setting(:capass).expects(:open).with('w').yields fh
@@ -580,7 +580,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       it "should do nothing if no autosign.conf exists" do
         Puppet[:autosign] = autosign
-        FileTest.expects(:exist?).with(autosign).returns false
+        Puppet::FileSystem::File.expects(:exist?).with(autosign).returns false
 
         Puppet::SSL::CertificateRequest.indirection.expects(:search).never
         @ca.autosign("host")
@@ -589,7 +589,7 @@ describe Puppet::SSL::CertificateAuthority do
       describe "and autosign is enabled and the autosign.conf file exists" do
         before do
           Puppet[:autosign] = autosign
-          FileTest.stubs(:exist?).with(autosign).returns true
+          Puppet::FileSystem::File.stubs(:exist?).with(autosign).returns true
           File.stubs(:readlines).with(autosign).returns ["one\n", "two\n"]
 
           Puppet::SSL::CertificateRequest.indirection.stubs(:search).returns []

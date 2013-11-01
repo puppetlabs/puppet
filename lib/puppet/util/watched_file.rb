@@ -26,7 +26,7 @@ class Puppet::Util::WatchedFile
   end
 
   # Allow this to be used as the name of the file being watched in various
-  # other methods (such as File.exist?)
+  # other methods (such as Puppet::FileSystem::File.exist?)
   def to_str
     @filename
   end

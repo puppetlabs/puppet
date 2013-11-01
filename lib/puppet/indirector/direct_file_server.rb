@@ -6,14 +6,14 @@ class Puppet::Indirector::DirectFileServer < Puppet::Indirector::Terminus
   include Puppet::FileServing::TerminusHelper
 
   def find(request)
-    return nil unless FileTest.exists?(request.key)
+    return nil unless Puppet::FileSystem::File.exist?(request.key)
     instance = model.new(request.key)
     instance.links = request.options[:links] if request.options[:links]
     instance
   end
 
   def search(request)
-    return nil unless FileTest.exists?(request.key)
+    return nil unless Puppet::FileSystem::File.exist?(request.key)
     path2instances(request, request.key)
   end
 end

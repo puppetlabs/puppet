@@ -716,7 +716,7 @@ Puppet::Type.newtype(:file) do
     use_temporary_file = write_temporary_file?
     if use_temporary_file
       path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while ::File.exists?(path) or Puppet::FileSystem::File.new(path).symlink?
+      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while Puppet::FileSystem::File.exist?(path) or Puppet::FileSystem::File.new(path).symlink?
     else
       path = self[:path]
     end
@@ -736,7 +736,7 @@ Puppet::Type.newtype(:file) do
         fail "Could not rename temporary file #{path} to #{self[:path]}: #{detail}"
       ensure
         # Make sure the created file gets removed
-        ::File.unlink(path) if FileTest.exists?(path)
+        ::File.unlink(path) if Puppet::FileSystem::File.exist?(path)
       end
     end
 

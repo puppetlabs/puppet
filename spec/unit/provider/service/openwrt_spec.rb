@@ -33,7 +33,7 @@ describe Puppet::Type.type(:service).provider(:openwrt), :as_platform => :posix 
     # All OpenWrt tests operate on the init script directly. It must exist.
     File.stubs(:directory?).with('/etc/init.d').returns true
 
-    File.stubs(:exist?).with('/etc/init.d/myservice').returns true
+    Puppet::FileSystem::File.stubs(:exist?).with('/etc/init.d/myservice').returns true
     FileTest.stubs(:file?).with('/etc/init.d/myservice').returns true
     FileTest.stubs(:executable?).with('/etc/init.d/myservice').returns true
   end

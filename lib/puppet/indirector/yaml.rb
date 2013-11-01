@@ -6,7 +6,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
   # Read a given name's file in and convert it from YAML.
   def find(request)
     file = path(request.key)
-    return nil unless FileTest.exist?(file)
+    return nil unless Puppet::FileSystem::File.exist?(file)
 
     begin
       return Puppet::Util::Yaml.load_file(file)
@@ -24,7 +24,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     basedir = File.dirname(file)
 
     # This is quite likely a bad idea, since we're not managing ownership or modes.
-    Dir.mkdir(basedir) unless FileTest.exist?(basedir)
+    Dir.mkdir(basedir) unless Puppet::FileSystem::File.exist?(basedir)
 
     begin
       Puppet::Util::Yaml.dump(request.instance, file)
@@ -46,7 +46,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
   def destroy(request)
     file_path = path(request.key)
-    File.unlink(file_path) if File.exists?(file_path)
+    File.unlink(file_path) if Puppet::FileSystem::File.exist?(file_path)
   end
 
   def search(request)

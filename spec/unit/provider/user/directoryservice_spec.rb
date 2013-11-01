@@ -704,7 +704,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     let(:stub_password_file) { stub('connection') }
 
     it 'should return a sha1 hash read from disk' do
-      File.expects(:exists?).with(password_hash_file).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(password_hash_file).returns(true)
       File.expects(:file?).with(password_hash_file).returns(true)
       File.expects(:readable?).with(password_hash_file).returns(true)
       File.expects(:new).with(password_hash_file).returns(stub_password_file)
@@ -714,18 +714,18 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should return nil if the password_hash_file does not exist' do
-      File.expects(:exists?).with(password_hash_file).returns(false)
+      Puppet::FileSystem::File.expects(:exist?).with(password_hash_file).returns(false)
       provider.class.get_sha1('user_guid').should == nil
     end
 
     it 'should return nil if the password_hash_file is not a file' do
-      File.expects(:exists?).with(password_hash_file).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(password_hash_file).returns(true)
       File.expects(:file?).with(password_hash_file).returns(false)
       provider.class.get_sha1('user_guid').should == nil
     end
 
     it 'should raise an error if the password_hash_file is not readable' do
-      File.expects(:exists?).with(password_hash_file).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(password_hash_file).returns(true)
       File.expects(:file?).with(password_hash_file).returns(true)
       File.expects(:readable?).with(password_hash_file).returns(false)
       expect { provider.class.get_sha1('user_guid').should == nil }.to raise_error Puppet::Error, /Could not read password hash file at #{password_hash_file}/

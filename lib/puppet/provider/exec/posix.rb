@@ -17,7 +17,7 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
     exe = extractexe(command)
 
     if File.expand_path(exe) == exe
-      if !File.exists?(exe)
+      if !Puppet::FileSystem::File.exist?(exe)
         raise ArgumentError, "Could not find command '#{exe}'"
       elsif !File.file?(exe)
         raise ArgumentError, "'#{exe}' is a #{File.ftype(exe)}, not a file"

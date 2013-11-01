@@ -61,7 +61,7 @@ module Puppet
     newvalue(:directory, :event => :directory_created) do
       mode = @resource.should(:mode)
       parent = File.dirname(@resource[:path])
-      unless FileTest.exists? parent
+      unless Puppet::FileSystem::File.exist? parent
         raise Puppet::Error,
           "Cannot create #{@resource[:path]}; parent directory #{parent} does not exist"
       end
@@ -121,7 +121,7 @@ module Puppet
     def check
       basedir = File.dirname(@resource[:path])
 
-      if ! FileTest.exists?(basedir)
+      if ! Puppet::FileSystem::File.exist?(basedir)
         raise Puppet::Error,
           "Can not create #{@resource.title}; parent directory does not exist"
       elsif ! FileTest.directory?(basedir)

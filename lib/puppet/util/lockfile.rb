@@ -56,7 +56,7 @@ class Puppet::Util::Lockfile
   #  being overridden by child classes.
   # @return [boolean] true if the file is locked, false if it is not.
   def file_locked?()
-    File.exists? @file_path
+    Puppet::FileSystem::File.exist? @file_path
   end
   private :file_locked?
 end

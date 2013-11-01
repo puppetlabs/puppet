@@ -464,13 +464,13 @@ describe Puppet::Util do
 
     it "should use the default permissions if the source file doesn't exist" do
       new_target = target.path + '.foo'
-      File.should_not be_exist(new_target)
+      Puppet::FileSystem::File.exist?(new_target).should be_false
 
       begin
         subject.replace_file(new_target, 0555) {|fh| fh.puts "foo" }
         get_mode(new_target).should == 0555
       ensure
-        File.unlink(new_target) if File.exists?(new_target)
+        File.unlink(new_target) if Puppet::FileSystem::File.exist?(new_target)
       end
     end
 
@@ -502,14 +502,14 @@ describe Puppet::Util do
     {:string => '664', :number => 0664, :symbolic => "ug=rw-,o=r--" }.each do |label,mode|
       it "should support #{label} format permissions" do
         new_target = target.path + "#{mode}.foo"
-        File.should_not be_exist(new_target)
+        Puppet::FileSystem::File.exist?(new_target).should be_false
 
         begin
           subject.replace_file(new_target, mode) {|fh| fh.puts "this is an interesting content" }
 
           get_mode(new_target).should == 0664
         ensure
-          File.unlink(new_target) if File.exists?(new_target)
+          File.unlink(new_target) if Puppet::FileSystem::File.exist?(new_target)
         end
       end
     end

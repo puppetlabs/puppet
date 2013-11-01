@@ -42,7 +42,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
     def defpath(dummy_argument=:work_arround_for_ruby_GC_bug)
       unless @defpath
         ["/etc/sv", "/var/lib/service"].each do |path|
-          if FileTest.exist?(path)
+          if Puppet::FileSystem::File.exist?(path)
             @defpath = path
             break
           end
@@ -57,7 +57,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   def servicedir
     unless @servicedir
       ["/service", "/etc/service","/var/service"].each do |path|
-        if FileTest.exist?(path)
+        if Puppet::FileSystem::File.exist?(path)
           @servicedir = path
           break
         end

@@ -464,7 +464,7 @@ describe Puppet::Configurer do
 
     it "should write the last run file" do
       @configurer.save_last_run_summary(@report)
-      FileTest.exists?(Puppet[:lastrunfile]).should be_true
+      Puppet::FileSystem::File.exist?(Puppet[:lastrunfile]).should be_true
     end
 
     it "should write the raw summary as yaml" do

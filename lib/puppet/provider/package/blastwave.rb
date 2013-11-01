@@ -18,7 +18,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
         "The pkg-get command is missing; blastwave packaging unavailable"
     end
 
-    unless FileTest.exists?("/var/pkg-get/admin")
+    unless Puppet::FileSystem::File.exist?("/var/pkg-get/admin")
       Puppet.notice "It is highly recommended you create '/var/pkg-get/admin'."
       Puppet.notice "See /var/pkg-get/admin-fullauto"
     end

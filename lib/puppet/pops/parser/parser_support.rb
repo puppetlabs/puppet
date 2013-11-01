@@ -63,7 +63,7 @@ class Puppet::Pops::Parser::Parser
 
   # Parses a file expected to contain pp DSL logic.
   def parse_file(file)
-    unless FileTest.exist?(file)
+    unless Puppet::FileSystem::File.exist?(file)
       unless file =~ /\.pp$/
         file = file + ".pp"
       end
