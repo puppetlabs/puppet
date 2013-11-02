@@ -254,8 +254,6 @@ module Puppet::Pops::Model
   # A resource type definition (a 'define' in the DSL).
   #
   class ResourceTypeDefinition < NamedDefinition
-    # FUTURE
-    # contains_one_uni 'producer', Producer
   end
 
   # A node definition matches hosts using Strings, or Regular expressions. It may inherit from
@@ -341,13 +339,11 @@ module Puppet::Pops::Model
 
     module ClassModule
       # Go through the gymnastics of making either value or pattern settable
-      # with syncronization to the other form. A derived value cannot be serialized
+      # with synchronization to the other form. A derived value cannot be serialized
       # and we want to serialize the pattern. When recreating the object we need to
       # recreate it from the pattern string.
       # The below sets both values if one is changed.
       #
-#      alias _value= value=
-#      alias _pattern= pattern=
       def value= regexp
         setValue regexp
         setPattern regexp.to_s
@@ -427,18 +423,6 @@ module Puppet::Pops::Model
   #
   class VariableExpression < UnaryExpression; end
 
-  # A type reference is a reference to a type.
-  #
-  class TypeReference < Expression
-    contains_one_uni 'type_name', QualifiedReference, :lowerBound => 1
-  end
-
-  # An instance reference is a reference to one or many named instances of a particular type
-  #
-  class InstanceReferences < TypeReference
-    contains_many_uni 'names', Expression, :lowerBound => 1
-  end
-
   # A resource body describes one resource instance
   #
   class ResourceBody < PopsObject
@@ -451,6 +435,7 @@ module Puppet::Pops::Model
   # All derived classes may not support all forms, and these needs to be validated
   #
   class AbstractResource < Expression
+    abstract
     has_attr 'form', RGen::MetamodelBuilder::DataTypes::Enum.new([:regular, :virtual, :exported ]), :lowerBound => 1, :defaultValueLiteral => "regular"
     has_attr 'virtual', Boolean, :derived => true
     has_attr 'exported', Boolean, :derived => true
@@ -505,100 +490,8 @@ module Puppet::Pops::Model
     contains_many_uni 'selectors', SelectorEntry
   end
 
-  # Create Invariant. Future suggested enhancement Puppet Types.
-  #
-  class CreateInvariantExpression < Expression
-    has_attr 'name', String
-    contains_one_uni 'message_expr', Expression, :lowerBound => 1
-    contains_one_uni 'constraint_expr', Expression, :lowerBound => 1
-  end
-
-  # Create Attribute. Future suggested enhancement Puppet Types.
-  #
-  class CreateAttributeExpression < Expression
-    has_attr 'name', String, :lowerBound => 1
-
-    # Should evaluate to name of datatype (String, Integer, Float, Boolean) or an EEnum metadata
-    # (created by CreateEnumExpression). If omitted, the type is a String.
-    #
-    contains_one_uni 'type', Expression
-    contains_one_uni 'min_expr', Expression
-    contains_one_uni 'max_expr', Expression
-    contains_one_uni 'default_value', Expression
-    contains_one_uni 'input_transformer', Expression
-    contains_one_uni 'derived_expr', Expression
-  end
-
-  # Create Attribute. Future suggested enhancement Puppet Types.
-  #
-  class CreateEnumExpression < Expression
-    has_attr 'name', String
-    contains_one_uni 'values', Expression
-  end
-
-  # Create Type. Future suggested enhancement Puppet Types.
-  #
-  class CreateTypeExpression < Expression
-    has_attr 'name', String, :lowerBound => 1
-    has_attr 'super_name', String
-    contains_many_uni 'attributes', CreateAttributeExpression
-    contains_many_uni 'invariants', CreateInvariantExpression
-  end
-
-  # Create ResourceType. Future suggested enhancement Puppet Types.
-  # @todo UNFINISHED
-  #
-  class CreateResourceType < CreateTypeExpression
-    # TODO CreateResourceType
-    # - has features required by the provider - provider invariant?
-    # - super type must be a ResourceType
-  end
-
   # A named access expression looks up a named part. (e.g. $a.b)
   #
   class NamedAccessExpression < BinaryExpression; end
 
-  # A named function definition declares and defines a new function
-  # Future enhancement.
-  #
-  class NamedFunctionDefinition < NamedDefinition; end
-
-  # Future enhancements - Injection - Unfinished
-  #
-  module Injection
-    # A producer expression produces an instance of a type. The instance is initialized
-    # from an expression (or from the current scope if this expression is missing).
-    #--
-    # new. to handle production of injections
-    #
-    class Producer < Expression
-      contains_one_uni 'type_name', TypeReference, :lowerBound => 1
-      contains_one_uni 'instantiation_expr', Expression
-    end
-
-    # A binding entry binds one capability generically or named, specifies default bindings or
-    # composition of other bindings.
-    #
-    class BindingEntry < PopsObject
-      contains_one_uni 'key', Expression
-      contains_one_uni 'value', Expression
-    end
-
-    # Defines an optionally named binding.
-    #
-    class Binding < Expression
-      contains_one_uni 'title_expr', Expression
-      contains_many_uni 'bindings', BindingEntry
-    end
-
-    # An injection provides a value bound in the effective binding scope. The injection
-    # is based on a type (a capability) and an optional list of instance names (i.e. an InstanceReference).
-    # Invariants: optional and instantiation are mutually exclusive
-    #
-    class InjectExpression < Expression
-      has_attr 'optional', Boolean
-      contains_one_uni 'binding', Expression, :lowerBound => 1
-      contains_one_uni 'instantiation', Expression
-    end
-  end
 end

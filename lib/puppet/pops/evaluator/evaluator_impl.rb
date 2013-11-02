@@ -629,8 +629,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   # NodeDefinition < Expression
   # HostClassDefinition < NamedDefinition
-  # TypeReference < Expression
-  # InstanceReferences < TypeReference
   # ResourceExpression < Expression
   #    class ResourceBody < ASTObject
   # ResourceDefaultsExpression < Expression
@@ -772,6 +770,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
       # TODO: formalize, when scope returns nil, vs error
       get_variable_value(o.expr.value, o, scope).to_s
     else
+      # TODO: This is not very good as it forces the to_s to apply to all kind of results
+      # It should call a polymorph method to allow to_s to be applied in general, and possible some other
+      # to string formatter for other values (like PType Objects).
+      #
       evaluate(o.expr, scope).to_s
     end
   end

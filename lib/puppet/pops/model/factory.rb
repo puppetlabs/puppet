@@ -616,13 +616,6 @@ class Puppet::Pops::Model::Factory
     new(Model::ExportedQuery, query_expr)
   end
 
-  # Used by regular grammar, egrammar creates an AccessExpression instead, and evaluation determines
-  # if access is to instances or something else.
-  #
-  def self.INSTANCE(type_name, name_expressions)
-    new(Model::InstanceReferences, type_name, name_expressions)
-  end
-
   def self.ATTRIBUTE_OP(name, op, expr)
     new(Model::AttributeOperation, name, op, expr)
   end

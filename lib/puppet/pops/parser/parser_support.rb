@@ -101,12 +101,12 @@ class Puppet::Pops::Parser::Parser
     error = "Syntax error at #{value_at}"
 
     # The 'expected' is only of value at end of input, otherwise any parse error involving a
-    # start of a pair will be reported as expecting the close of the pair - e.g. "$x.each |$x {", would
+    # start of a pair will be reported as expecting the close of the pair - e.g. "$x.each |$x {|", would
     # report that "seeing the '{', the '}' is expected. That would be wrong.
     # Real "expected" tokens are very difficult to compute (would require parsing of racc output data). Output of the stack
     # could help, but can require extensive backtracking and produce many options.
     #
-    # The lexer should handle the "expected instead of end of file for strings, and interpolation", other exåectancies
+    # The lexer should handle the "expected instead of end of file for strings, and interpolation", other expectancies
     # must be handled by the grammar. The lexer may have enqueued tokens far ahead - the lexer's opinion about this
     # is not trustworthy.
     #
@@ -151,23 +151,6 @@ class Puppet::Pops::Parser::Parser
   def doc factory, doc_string
     factory.doc = doc_string
   end
-
-#  def sourcepos(o)
-#    if !o
-#      Puppet::Pops::Adapters::SourcePosAdapter.new
-#    elsif o.is_a? Puppet::Pops::Model::Factory
-#      # It is a built model element with loc set returns start at pos 0
-#      o.loc
-#    else
-#      loc = Puppet::Pops::Adapters::SourcePosAdapter.new
-#      # It must be a token
-#      loc.line = o[:line]
-#      loc.pos = o[:pos]
-#      loc.offset = o[:offset]
-#      loc.length = o[:length]
-#      loc
-#    end
-#  end
 
   def aryfy(o)
     o = [o] unless o.is_a?(Array)
