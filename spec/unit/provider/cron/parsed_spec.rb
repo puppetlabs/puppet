@@ -208,7 +208,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
           h
         end.should == [
           {
-            :name        => :absent,
+            :name        => 'unmanaged:$HOME/bin/daily.job_>>_$HOME/tmp/out_2>&1',
             :minute      => ['5'],
             :hour        => ['0'],
             :weekday     => :absent,
@@ -222,7 +222,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
             :target      => 'foobar'
           },
           {
-            :name        => :absent,
+            :name        => 'unmanaged:$HOME/bin/monthly',
             :minute      => ['15'],
             :hour        => ['14'],
             :weekday     => :absent,
