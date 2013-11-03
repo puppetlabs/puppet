@@ -3,7 +3,7 @@ require "spec_helper"
 provider_class = Puppet::Type.type(:package).provider(:pkgin)
 
 describe provider_class do
-  let(:resource) { Puppet::Type.type(:package).new(:name => "vim") }
+  let(:resource) { Puppet::Type.type(:package).new(:name => "vim", :ensure => "7.2.446") }
   subject        { provider_class.new(resource) }
 
   describe "Puppet provider interface" do
@@ -23,7 +23,6 @@ describe provider_class do
    end
 
    describe "a package with a fixed version" do
-    before { resource[:ensure] = "7.2.446" }
     it "uses pkgin install to install a fixed version" do
       subject.expects(:pkgin).with("-y", :install, "vim-7.2.446").once()
       subject.install
@@ -86,14 +85,13 @@ describe provider_class do
       end
 
       it "returns the version to be installed" do
-        provider_class.stubs(:pkgin).with("-y", :install, "vim").once()
         subject.latest.should == "7.2.447"
       end
     end
 
     context "when the package is ahead of date" do
       let(:pkgin_search_output) do
-        "vim-7.2.445 >        Vim editor (vi clone) without GUI\nvim-share-7.2.445 >  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
+        "vim-7.2.446 >        Vim editor (vi clone) without GUI\nvim-share-7.2.446 >  Data files for the vim editor (vi clone)\n\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
       end
 
       it "returns current version" do
@@ -119,7 +117,6 @@ SEARCH
 
       it "returns the newest available version" do
         provider_class.stubs(:pkgin).with(:search, "vim").returns(pkgin_search_output)
-        provider_class.stubs(:pkgin).with("-y", :install, "vim").once()
         subject.latest.should == "7.3"
       end
     end
