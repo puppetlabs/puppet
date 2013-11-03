@@ -75,19 +75,13 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   def latest
     package = parse_pkgsearch_line.detect{ |package| package[:status] == '<' }
-    @property_hash[:ensure] = :present
-    if not package
-      set( { :abort => true } )
-      return nil
-    end
+    return properties[:ensure] if not package
     notice  "Upgrading #{package[:name]} to #{package[:ensure]}"
     return package[:ensure]
   end
 
   def update
-    unless @property_hash[:abort]
-      pkgin("-y", :install, resource[:name])
-    end
+    pkgin("-y", :install, resource[:name])
   end
 
 end
