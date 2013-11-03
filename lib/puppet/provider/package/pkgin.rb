@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   defaultfor :operatingsystem => [ :dragonfly , :smartos ]
 
-  has_feature :installable, :uninstallable, :upgradeable
+  has_feature :installable, :uninstallable, :upgradeable, :versionable
 
   def self.parse_pkgin_line(package)
 
@@ -18,7 +18,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
       {
         :name     => name,
         :status   => status,
-        :version  => version
+        :ensure   => version
       }
     end
   end
@@ -83,8 +83,8 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
       set( { :abort => true } )
       return nil
     end
-    notice  "Upgrading #{package[:name]} to #{package[:version]}"
-    return package[:version]
+    notice  "Upgrading #{package[:name]} to #{package[:ensure]}"
+    return package[:ensure]
   end
 
   def update
