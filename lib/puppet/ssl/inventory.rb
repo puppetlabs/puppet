@@ -8,13 +8,8 @@ class Puppet::SSL::Inventory
   # Add a certificate to our inventory.
   def add(cert)
     cert = cert.content if cert.is_a?(Puppet::SSL::Certificate)
-
-    if FileTest.exist?(@path)
-      Puppet.settings.setting(:cert_inventory).open("a") do |f|
-        f.print format(cert)
-      end
-    else
-      rebuild
+    Puppet.settings.setting(:cert_inventory).open("a") do |f|
+      f.print format(cert)
     end
   end
 
