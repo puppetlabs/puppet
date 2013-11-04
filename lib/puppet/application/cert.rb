@@ -215,8 +215,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       hosts = command_line.args.collect { |h| h.downcase }
     end
     begin
-      @ca.apply(:revoke, options.merge(:to => hosts)) if subcommand == :destroy
-      @ca.apply(subcommand, options.merge(:to => hosts, :digest => @digest))
+      apply(@ca, :revoke, options.merge(:to => hosts)) if subcommand == :destroy
+      apply(@ca, subcommand, options.merge(:to => hosts, :digest => @digest))
     rescue => detail
       Puppet.log_exception(detail)
       exit(24)
@@ -265,4 +265,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
     result
   end
+
+  # Create and run an applicator.  I wanted to build an interface where you could do
+  # something like 'ca.apply(:generate).to(:all) but I don't think it's really possible.
+  def apply(ca, method, options)
+    raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all" unless options[:to]
+    applier = Puppet::SSL::CertificateAuthority::Interface.new(method, options)
+    applier.apply(ca)
+  end
+
 end

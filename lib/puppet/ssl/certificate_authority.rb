@@ -59,14 +59,6 @@ class Puppet::SSL::CertificateAuthority
 
   attr_reader :name, :host
 
-  # Create and run an applicator.  I wanted to build an interface where you could do
-  # something like 'ca.apply(:generate).to(:all) but I don't think it's really possible.
-  def apply(method, options)
-    raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all" unless options[:to]
-    applier = Interface.new(method, options)
-    applier.apply(self)
-  end
-
   # If autosign is configured, then autosign all CSRs that match our configuration.
   def autosign(name)
     case auto = autosign?
