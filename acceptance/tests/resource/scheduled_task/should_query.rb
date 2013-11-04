@@ -6,10 +6,8 @@ confine :to, :platform => 'windows'
 agents.each do |agent|
   # Have to use /v1 parameter for Vista and later, older versions
   # don't accept the parameter
-  version = '/v1'
-  on agents, facter('kernelmajversion') do
-    version = '' if stdout.chomp.to_f < 6.0
-  end
+  kernel_maj_version = on(agent, facter('kernelmajversion')).stdout.chomp.to_f
+  version = kernel_maj_version < 6.0 ? '' : '/v1'
 
   step "create the task"
   on agent, "schtasks.exe /create #{version} /tn #{name} /tr c:\\\\windows\\\\system32\\\\notepad.exe /sc daily /ru system"
