@@ -112,7 +112,7 @@ class Puppet::FileSystem::File
   #
   # @return [Boolean] true if the path of this file is present
   def exist?
-    @path.exist?
+    self.class.exist?(@path)
   end
 
   # @return [Boolean] Whether the file is writable by the current
