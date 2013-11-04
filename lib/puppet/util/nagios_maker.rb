@@ -29,6 +29,11 @@ module Puppet::Util::NagiosMaker
 
       type.newproperty(param) do
         desc "Nagios configuration file parameter."
+        validate do |value|
+          if value.strip.empty?
+            raise ArgumentError, "#{param.to_s} must not be empty"
+          end
+        end
       end
     end
 
