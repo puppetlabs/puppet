@@ -12,14 +12,12 @@ reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirect
 
     text << Puppet::Util::Docs.scrub(ind.doc) + "\n\n"
 
-    text << "### Termini\n\n"
-
     Puppet::Indirector::Terminus.terminus_classes(ind.name).sort { |a,b| a.to_s <=> b.to_s }.each do |terminus|
       terminus_name = terminus.to_s
       term_class = Puppet::Indirector::Terminus.terminus_class(ind.name, terminus)
       if term_class
         terminus_doc = Puppet::Util::Docs.scrub(term_class.doc)
-        text << markdown_definitionlist(terminus_name, terminus_doc)
+        text << markdown_header("`#{terminus_name}` terminus", 3) << terminus_doc << "\n\n"
       else
         Puppet.warning "Could not build docs for indirector #{name.inspect}, terminus #{terminus_name.inspect}: could not locate terminus."
       end
@@ -31,7 +29,7 @@ end
 
 reference.header = <<HEADER
 
-# About Indirection
+## About Indirection
 
 Puppet's indirector support pluggable backends (termini) for a variety of key-value stores (indirections).
 Each indirection type corresponds to a particular Ruby class (the "Indirected Class" below) and values are instances of that class.
@@ -58,12 +56,12 @@ Indirections can also have a cache, represented by a second terminus.
 This is a write-through cache: modifications are written both to the cache and to the primary terminus.
 Values fetched from the terminus are written to the cache.
 
-## Interaction with REST
+### Interaction with REST
 
 REST endpoints have the form `/{environment}/{indirection}/{key}`, where the indirection can be singular or plural, following normal English spelling rules.
 On the server side, REST responses are generated from the locally-configured endpoints.
 
-## Indirections and Termini
+### Indirections and Termini
 
 Below is the list of all indirections, their associated terminus classes, and how you select between them.
 
