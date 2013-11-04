@@ -14,7 +14,7 @@ EOM
 
 manifest_absent = <<-EOM
 user { '#{username}':
-  ensure     => present,
+  ensure     => absent,
   managehome => true,
 }
 EOM
