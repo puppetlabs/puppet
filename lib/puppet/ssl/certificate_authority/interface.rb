@@ -14,14 +14,15 @@ module Puppet
 
         # Actually perform the work.
         def apply(ca)
-          if !subjects && !SUBJECTLESS_METHODS.include?(method)
+          unless subjects || SUBJECTLESS_METHODS.include?(method)
             raise ArgumentError, "You must provide hosts or --all when using #{method}"
           end
 
-          return send(method, ca) if respond_to?(method)
-
-          (subjects == :all ? ca.list : subjects).each do |host|
-            ca.send(method, host)
+          # if the interface implements the method, use it instead of the ca's method
+          if respond_to?(method)
+            send(method, ca)
+          else
+            (subjects == :all ? ca.list : subjects).each { |host| ca.send(method, host) }
           end
         end
 
@@ -68,14 +69,11 @@ module Puppet
             end
 
             if verify_error
-              cert = Puppet::SSL::Certificate.indirection.find(host)
-              certs[:invalid][host] = [cert, verify_error]
+              certs[:invalid][host] = [ Puppet::SSL::Certificate.indirection.find(host), verify_error ]
             elsif signed.include?(host)
-              cert = Puppet::SSL::Certificate.indirection.find(host)
-              certs[:signed][host] = cert
+              certs[:signed][host]  = Puppet::SSL::Certificate.indirection.find(host)
             else
-              req = Puppet::SSL::CertificateRequest.indirection.find(host)
-              certs[:request][host] = req
+              certs[:request][host] = Puppet::SSL::CertificateRequest.indirection.find(host)
             end
           end
 
@@ -149,13 +147,11 @@ module Puppet
           end
         end
 
-        # Sign a given certificate.
+        # Signs given certificates or waiting of subjects == :all
         def sign(ca)
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
-          list.each do |host|
-            ca.sign(host, options[:allow_dns_alt_names])
-          end
+          list.each { |host| ca.sign(host, options[:allow_dns_alt_names]) }
         end
 
         def reinventory(ca)
@@ -164,13 +160,11 @@ module Puppet
 
         # Set the list of hosts we're operating on.  Also supports keywords.
         def subjects=(value)
-          unless value == :all or value == :signed or value.is_a?(Array)
+          unless value == :all || value == :signed || value.is_a?(Array)
             raise ArgumentError, "Subjects must be an array or :all; not #{value}"
           end
 
-          value = nil if value.is_a?(Array) and value.empty?
-
-          @subjects = value
+          @subjects = (value == []) ? nil : value
         end
       end
     end

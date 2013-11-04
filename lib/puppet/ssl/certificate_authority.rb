@@ -48,17 +48,13 @@ class Puppet::SSL::CertificateAuthority
   end
 
   def self.ca?
-    return false unless Puppet[:ca]
-    return false unless Puppet.run_mode.master?
-    true
+    # running as ca? - ensure boolean answer
+    !!(Puppet[:ca] && Puppet.run_mode.master?)
   end
 
-  # If this process can function as a CA, then return a singleton
-  # instance.
+  # If this process can function as a CA, then return a singleton instance.
   def self.instance
-    return nil unless ca?
-
-    singleton_instance
+    ca? ? singleton_instance : nil
   end
 
   attr_reader :name, :host
@@ -73,28 +69,44 @@ class Puppet::SSL::CertificateAuthority
 
   # If autosign is configured, then autosign all CSRs that match our configuration.
   def autosign(name)
-    return unless auto = autosign?
+    case auto = autosign?
 
-    store = nil
-    store = autosign_store(auto) if auto != true
+    when false, nil
+      # auto-signing is off
+      return
 
-    if auto == true or store.allowed?(name, "127.1.1.1")
-      Puppet.info "Autosigning #{name}"
-      sign(name)
+    when true
+      # auto-signing is on and all are allowed
+
+    else
+      # auto-signing if allowed by store
+      return unless autosign_store(auto).allowed?(name, "127.1.1.1")
     end
+
+    Puppet.info "Autosigning #{name}"
+    sign(name)
   end
 
   # Do we autosign?  This returns true, false, or a filename.
   def autosign?
-    auto = Puppet[:autosign]
-    return false if ['false', false].include?(auto)
-    return true if ['true', true].include?(auto)
+    case auto = Puppet[:autosign]
 
-    raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless Puppet::Util.absolute_path?(auto)
-    FileTest.exist?(auto) && auto
+    when 'false', false
+      return false
+
+    when 'true', true
+      return true
+
+    else
+      # it must be an absolute path to an existing file
+      unless Puppet::Util.absolute_path?(auto)
+        raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file"
+      end
+      FileTest.exist?(auto) && auto
+    end
   end
 
-  # Create an AuthStore for autosigning.
+  # Creates an AuthStore for autosigning
   def autosign_store(file)
     auth = Puppet::Network::AuthStore.new
     File.readlines(file).each do |line|
@@ -106,7 +118,7 @@ class Puppet::SSL::CertificateAuthority
     auth
   end
 
-  # Retrieve (or create, if necessary) the certificate revocation list.
+  # Retrieves (or create, if necessary) the certificate revocation list.
   def crl
     unless defined?(@crl)
       unless @crl = Puppet::SSL::CertificateRevocationList.indirection.find(Puppet::SSL::CA_NAME)
@@ -118,12 +130,12 @@ class Puppet::SSL::CertificateAuthority
     @crl
   end
 
-  # Delegate this to our Host class.
+  # Delegates this to our Host class.
   def destroy(name)
     Puppet::SSL::Host.destroy(name)
   end
 
-  # Generate a new certificate.
+  # Generates a new certificate.
   # @return Puppet::SSL::Certificate
   def generate(name, options = {})
     raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.indirection.find(name)
@@ -387,7 +399,7 @@ class Puppet::SSL::CertificateAuthority
   #
   # @return [OpenSSL::X509::Store]
   def x509_store(options = {})
-    if (options[:cache]) 
+    if (options[:cache])
       return @x509store unless @x509store.nil?
       @x509store = create_x509_store
     else
@@ -401,11 +413,13 @@ class Puppet::SSL::CertificateAuthority
   #
   # @return [OpenSSL::X509::Store]
   def create_x509_store
-    store = OpenSSL::X509::Store.new
-    store.add_file Puppet[:cacert]
-    store.add_crl crl.content if self.crl
+    store = OpenSSL::X509::Store.new()
+    store.add_file(Puppet[:cacert])
+    store.add_crl(crl.content) if self.crl
     store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-    store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
+    if Puppet.settings[:certificate_revocation]
+      store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL | OpenSSL::X509::V_FLAG_CRL_CHECK
+    end
     store
   end
   private :create_x509_store
