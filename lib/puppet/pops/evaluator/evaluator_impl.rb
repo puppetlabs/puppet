@@ -622,13 +622,23 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     evaluate(o.expr, scope)
   end
 
-  # TODO:
-  # Definition < Expression (abstract)
-  # NamedDefinition < Definition (abstract)
-  # ResourceTypeDefinition < NamedDefinition
+  # This evaluates classes, nodes and resource type definitions to nil, since 3x:
+  # instantiates them, and evaluates thwir parameters and body. This is acheived by
+  # providing bridge AST classes in Puppet::Parser::AST::PopsBridge that bridges a
+  # Pops Program and a Pops Expression.
+  #
+  # Since all Definitions are handled "out of band", they are treated as a no-op when
+  # evaluated.
+  #
+  def eval_Definition(o, scope)
+    nil
+  end
 
-  # NodeDefinition < Expression
-  # HostClassDefinition < NamedDefinition
+  def eval_Program(o, scope)
+    evaluate(o.body, scope)
+  end
+
+  # TODO:
   # ResourceExpression < Expression
   #    class ResourceBody < ASTObject
   # ResourceDefaultsExpression < Expression

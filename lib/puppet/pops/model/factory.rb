@@ -224,7 +224,7 @@ class Puppet::Pops::Model::Factory
     end
   end
 
-  def build_Definition(o, parameters, body)
+  def build_LambdaExpression(o, parameters, body)
     parameters.each {|p| o.addParameters(build(p)) }
     b = f_build_body(body)
     o.body = b.current if b
@@ -232,7 +232,9 @@ class Puppet::Pops::Model::Factory
   end
 
   def build_NamedDefinition(o, name, parameters, body)
-    build_Definition(o, parameters, body)
+    parameters.each {|p| o.addParameters(build(p)) }
+    b = f_build_body(body)
+    o.body = b.current if b
     o.name = name
     o
   end
@@ -304,6 +306,13 @@ class Puppet::Pops::Model::Factory
   def build_UnaryExpression(o, expr)
     ops = to_ops(expr)
     o.expr = ops unless Puppet::Pops::Model::Factory.nop? ops
+    o
+  end
+
+  def build_Program(o, body, definitions)
+    o.body = to_ops(body)
+    # non containment
+    definitions.each { |d| o.addDefinitions(d) }
     o
   end
 
@@ -657,6 +666,10 @@ class Puppet::Pops::Model::Factory
 
   def self.RESOURCE_BODY(resource_title, attribute_operations)
     new(Model::ResourceBody, resource_title, attribute_operations)
+  end
+
+  def self.PROGRAM(body, definitions)
+    new(Model::Program, body, definitions)
   end
 
   # Builds a BlockExpression if args size > 1, else the single expression/value in args

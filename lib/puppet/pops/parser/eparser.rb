@@ -1072,7 +1072,7 @@ Racc_debug_parser = false
 
 module_eval(<<'.,.,', 'egrammar.ra', 59)
   def _reduce_1(val, _values, result)
-     result = Factory.block_or_expression(*val[0]) 
+     result = create_program(Factory.block_or_expression(*val[0])) 
     result
   end
 .,.,
@@ -1927,7 +1927,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 483)
 
 module_eval(<<'.,.,', 'egrammar.ra', 493)
   def _reduce_132(val, _values, result)
-          result = Factory.DEFINITION(classname(val[1][:value]), val[2], val[4])
+          result = add_definition(Factory.DEFINITION(classname(val[1][:value]), val[2], val[4]))
       loc result, val[0], val[5]
       # New lexer does not keep track of this, this is done in validation
       if @lexer.respond_to?(:'indefine=')
@@ -1942,7 +1942,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 507)
   def _reduce_133(val, _values, result)
           # Remove this class' name from the namestack as all nested classes have been parsed
       namepop
-      result = Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), val[5])
+      result = add_definition(Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), val[5]))
       loc result, val[0], val[6]
     
     result
@@ -1975,7 +1975,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 526)
 
 module_eval(<<'.,.,', 'egrammar.ra', 543)
   def _reduce_141(val, _values, result)
-          result = Factory.NODE(val[1], val[2], val[4])
+          result = add_definition(Factory.NODE(val[1], val[2], val[4]))
       loc result, val[0], val[5]
     
     result
@@ -1984,7 +1984,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 543)
 
 module_eval(<<'.,.,', 'egrammar.ra', 547)
   def _reduce_142(val, _values, result)
-          result = Factory.NODE(val[1], val[2], nil)
+          result = add_definition(Factory.NODE(val[1], val[2], nil))
       loc result, val[0], val[4]
     
     result

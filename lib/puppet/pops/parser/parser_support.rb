@@ -24,6 +24,7 @@ class Puppet::Pops::Parser::Parser
   include Puppet::Resource::TypeCollectionHelper
 
   attr_accessor :lexer
+  attr_reader :definitions
 
   # Returns the token text of the given lexer token, or nil, if token is nil
   def token_text t
@@ -86,6 +87,7 @@ class Puppet::Pops::Parser::Parser
   def initvars
     @lexer = Puppet::Pops::Parser::Lexer2.new
     @namestack = []
+    @definitions = []
   end
 
   # This is a callback from the generated grammar (when an error occurs while parsing)
@@ -169,11 +171,21 @@ class Puppet::Pops::Parser::Parser
     @namestack.pop
   end
 
+  def add_definition(definition)
+    @definitions << definition.current
+    definition
+  end
+
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
   # expression, or expression list
   #
   def transform_calls(expressions)
     Factory.transform_calls(expressions)
+  end
+
+  # If there are definitions that require initialization a Program is produced, else the body
+  def create_program(body)
+    definitions.empty? ? body : Factory.PROGRAM(body, definitions)
   end
 
   # Performs the parsing and returns the resulting model.

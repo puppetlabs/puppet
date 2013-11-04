@@ -545,6 +545,10 @@ class Puppet::Pops::Model::AstTransformer
     transform(o.expr)
   end
 
+  def transform_Program(o)
+    transform(o.body)
+  end
+
   def transform_IfExpression(o)
     args = { :test => transform(o.test), :statements => transform(o.then_expr) }
     args[:else] = transform(o.else_expr) # Tests say Nop should be there (unless is_nop? o.else_expr), probably not needed

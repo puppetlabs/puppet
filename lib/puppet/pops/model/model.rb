@@ -241,14 +241,14 @@ module Puppet::Pops::Model
   #
   class Definition < Expression
     abstract
-    contains_many_uni 'parameters', Parameter
-    contains_one_uni 'body', Expression
   end
 
-  # Abstract base class for named definitions.
+  # Abstract base class for named and parameterized definitions.
   class NamedDefinition < Definition
     abstract
     has_attr 'name', String, :lowerBound => 1
+    contains_many_uni 'parameters', Parameter
+    contains_one_uni 'body', Expression
   end
 
   # A resource type definition (a 'define' in the DSL).
@@ -259,7 +259,7 @@ module Puppet::Pops::Model
   # A node definition matches hosts using Strings, or Regular expressions. It may inherit from
   # a parent node (also using a String or Regular expression).
   #
-  class NodeDefinition < Expression
+  class NodeDefinition < Definition
     contains_one_uni 'parent', Expression
     contains_many_uni 'host_matches', Expression, :lowerBound => 1
     contains_one_uni 'body', Expression
@@ -272,7 +272,10 @@ module Puppet::Pops::Model
   end
 
   # i.e {|parameters| body }
-  class LambdaExpression < Definition; end
+  class LambdaExpression < Expression
+    contains_many_uni 'parameters', Parameter
+    contains_one_uni 'body', Expression
+  end
 
   # If expression. If test is true, the then_expr part should be evaluated, else the (optional)
   # else_expr. An 'elsif' is simply an else_expr = IfExpression, and 'else' is simply else == Block.
@@ -494,4 +497,8 @@ module Puppet::Pops::Model
   #
   class NamedAccessExpression < BinaryExpression; end
 
+  class Program < PopsObject
+    contains_one_uni 'body', Expression
+    has_many 'definitions', Definition
+  end
 end

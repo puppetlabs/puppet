@@ -245,6 +245,12 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     do_dump(o.expr)
   end
 
+  # Hides that Program exists in the output (only its body is shown), the definitions are just
+  # references to contained classes, resource types, and nodes
+  def dump_Program(o)
+    dump(o.body)
+  end
+
   def dump_IfExpression o
     result = ["if", do_dump(o.test), :indent, :break,
       ["then", :indent, do_dump(o.then_expr), :dedent]]
