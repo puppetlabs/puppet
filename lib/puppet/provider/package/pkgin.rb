@@ -37,7 +37,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   def query
     packages = parse_pkgsearch_line
 
-    if not packages or packages.empty?
+    if packages.empty?
       if @resource[:ensure] == :absent
         notice "declared as absent but unavailable #{@resource.file}:#{resource.line}"
         return false
@@ -52,7 +52,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
   def parse_pkgsearch_line
     packages = pkgin(:search, resource[:name]).split("\n")
 
-    return nil if packages.length == 1
+    return [] if packages.length == 1
 
     # Remove the last three lines of help text.
     packages.slice!(-4, 4)
