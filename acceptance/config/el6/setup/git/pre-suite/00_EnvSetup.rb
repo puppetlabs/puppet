@@ -20,27 +20,19 @@ PACKAGES = {
   ],
   :windows => [
     'git',
-    'ruby',
   ],
 }
 
 install_packages_on(hosts, PACKAGES, :check_if_exists => true)
 
-step "Add Gems"
-
-WINDOWS_GEMS = [
-  'sys-admin -v1.5.6', 'win32console -v1.3.2', 'win32-security -v0.1.4', 'win32-dir -v0.3.7', 'win32-eventlog -v0.5.3',
-  'win32-process -v0.6.5', 'win32-service -v0.7.2', 'win32-taskscheduler -v0.2.2', 'minitar -v0.5.4'
-]
-
 hosts.each do |host|
-  case host['platform']
-  when /windows/
-    WINDOWS_GEMS.each do |gem|
-      step "Installing #{gem}"
-      on host, "cmd /c gem install #{gem} --no-ri --no-rdoc"
-    end
-  else
-    step "No gems to add"
+  if host['platform'] =~ /windows/
+    on host, 'echo $PATH'
+    on host, 'git clone https://github.com/puppetlabs/puppet-win32-ruby'
+    on host, 'cp -r puppet-win32-ruby/ruby/* /'
+    on host, 'cd /lib; icacls ruby /grant "Everyone:(OI)(CI)(RX)"'
+    on host, 'cd /lib; icacls ruby /reset /T'
+    on host, 'ruby --version'
+    on host, 'cmd /c gem list'
   end
 end
