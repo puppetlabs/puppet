@@ -226,6 +226,32 @@ describe provider_class do
     end
   end
 
+  context "#latest"  do
+    before do
+      provider.resource[:source] = '/tmp/tcsh.tgz'
+      provider.resource[:name] = 'tcsh'
+      provider.stubs(:pkginfo).with('-Q', 'tcsh')
+      provider.stubs(:pkginfo).with('tcsh')
+    end
+
+    it "should return the ensure value if the package is already installed" do
+      provider.stubs(:properties).returns({:ensure => '4.2.45'})
+      provider.latest.should == '4.2.45'
+    end
+
+    it "should recognize a new version" do
+      pkginfo_query = 'tcsh-6.18.01p1'
+      provider_class.expects(:execpipe).with(%w{/bin/pkg_info -Q}).yields(pkginfo_query)
+      provider.latest.should == '6.18.01p1'
+    end
+
+    it "should recognize a package that is already the newest" do
+      pkginfo_query = 'tcsh-6.18.01p0 (installed)'
+      provider_class.expects(:execpipe).with(%w{/bin/pkg_info -Q}).yields(pkginfo_query)
+      provider.latest.should == '6.18.01p0'
+    end
+  end
+
   context "#get_version" do
     it "should return nil if execution fails" do
       provider.expects(:execpipe).raises(Puppet::ExecutionFailure, 'wawawa')
@@ -279,7 +305,7 @@ describe provider_class do
       provider.install_options.should == ['-Darch=vax']
     end
   end
-  
+
   context "#uninstall_options" do
     it "should return nill by default" do
       provider.uninstall_options.should be_nil
@@ -300,7 +326,7 @@ describe provider_class do
       provider.uninstall_options.should == ['-Dbaddepend=1']
     end
   end
-  
+
   context "#uninstall" do
     describe 'when uninstalling' do
       it 'should use erase to purge' do
