@@ -127,6 +127,34 @@ describe Puppet::Transaction::ResourceHarness do
           false
         end
       end
+
+      newproperty(:brillig) do
+        desc "A property that raises a StandardError exception when you test if it's insync?"
+        def sync
+        end
+
+        def retrieve
+          :absent
+        end
+
+        def insync?(reference_value)
+          raise ZeroDivisionError.new('brillig')
+        end
+      end
+
+      newproperty(:slithy) do
+        desc "A property that raises an Exception when you test if it's insync?"
+        def sync
+        end
+
+        def retrieve
+          :absent
+        end
+
+        def insync?(reference_value)
+          raise Exception.new('slithy')
+        end
+      end
     end
     stubProvider
   end
@@ -160,6 +188,35 @@ describe Puppet::Transaction::ResourceHarness do
     it "should log and pass the exception through" do
       lambda { @harness.evaluate(@resource) }.should raise_error(Exception, /baz/)
       @logs.first.message.should == "change from absent to 1 failed: baz"
+      @logs.first.level.should == :err
+    end
+  end
+
+  describe "when a StandardError exception occurs during insync?" do
+    before :each do
+      stub_provider = make_stub_provider
+      @resource = stub_provider.new :name => 'name', :brillig => 1
+      @resource.expects(:err).never
+    end
+
+    it "should record a failure event" do
+      @status = @harness.evaluate(@resource)
+      @status.events[0].name.to_s.should == 'brillig_changed'
+      @status.events[0].property.should == 'brillig'
+      @status.events[0].status.should == 'failure'
+    end
+  end
+
+  describe "when an Exception occurs during insync?" do
+    before :each do
+      stub_provider = make_stub_provider
+      @resource = stub_provider.new :name => 'name', :slithy => 1
+      @resource.expects(:err).never
+    end
+
+    it "should log and pass the exception through" do
+      lambda { @harness.evaluate(@resource) }.should raise_error(Exception, /slithy/)
+      @logs.first.message.should == "change from absent to 1 failed: slithy"
       @logs.first.level.should == :err
     end
   end
