@@ -123,7 +123,7 @@ SEARCH
 
     context "when the package cannot be found" do
       let(:pkgin_search_output) do
-        "\n=: package is installed and up-to-date\n<: package is installed but newer version is available\n>: installed package has a greater version than available package\n"
+        "No results found for is-puppet"
       end
 
       it "returns nil" do
