@@ -110,6 +110,16 @@ describe Puppet::Configurer do
       @agent.run.should == 0
     end
 
+    it "applies a cached catalog when it can't connect to the master" do
+      error = Errno::ECONNREFUSED.new('Connection refused - connect(2)')
+
+      Puppet::Node.indirection.expects(:find).raises(error)
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entry(:ignore_cache => true)).raises(error)
+      Puppet::Resource::Catalog.indirection.expects(:find).with(anything, has_entry(:ignore_terminus => true)).returns(@catalog)
+
+      @agent.run.should == 0
+    end
+
     it "should initialize a transaction report if one is not provided" do
       report = Puppet::Transaction::Report.new("apply")
       Puppet::Transaction::Report.expects(:new).returns report

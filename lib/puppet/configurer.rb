@@ -157,7 +157,9 @@ class Puppet::Configurer
             query_options = nil
           end
         end
-      rescue Puppet::Error, Net::HTTPError => detail
+      rescue SystemExit,NoMemoryError
+        raise
+      rescue Exception => detail
         Puppet.warning("Unable to fetch my node definition, but the agent run will continue:")
         Puppet.warning(detail)
       end
