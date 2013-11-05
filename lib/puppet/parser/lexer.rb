@@ -490,7 +490,14 @@ class Puppet::Parser::Lexer
         @expected.pop
       end
 
-      if final_token.name == :LBRACE or final_token.name == :LPAREN
+      if final_token.name == :LBRACE and @previous_token == nil
+        raise "a manifest cannot begin with an opening brace"
+      end
+      hashliteral = ( final_token.name == :LBRACE and (
+                       @previous_token.name == :FARROW or
+		       @previous_token.name == :EQUALS ) )
+
+      if ( final_token.name == :LBRACE and ! hashliteral ) or final_token.name == :LPAREN
         commentpush
       end
       if final_token.name == :RPAREN
