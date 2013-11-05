@@ -647,28 +647,6 @@ describe Puppet::SSL::CertificateAuthority do
       @ca = Puppet::SSL::CertificateAuthority.new
     end
 
-    it "should have a method for acting on the SSL files" do
-      @ca.should respond_to(:apply)
-    end
-
-    describe "when applying a method to a set of hosts" do
-      it "should fail if no subjects have been specified" do
-        expect { @ca.apply(:generate) }.to raise_error(ArgumentError)
-      end
-
-      it "should create an Interface instance with the specified method and the options" do
-        Puppet::SSL::CertificateAuthority::Interface.expects(:new).with(:generate, :to => :host).returns(stub('applier', :apply => nil))
-        @ca.apply(:generate, :to => :host)
-      end
-
-      it "should apply the Interface with itself as the argument" do
-        applier = stub('applier')
-        applier.expects(:apply).with(@ca)
-        Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns applier
-        @ca.apply(:generate, :to => :ca_testing)
-      end
-    end
-
     it "should be able to list waiting certificate requests" do
       req1 = stub 'req1', :name => "one"
       req2 = stub 'req2', :name => "two"
