@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
       end
     end
 
-    packages.first
+    packages.first.update( :ensure => :absent )
   end
 
   def parse_pkgsearch_line
