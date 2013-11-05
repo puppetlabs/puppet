@@ -50,6 +50,10 @@ module Puppet
       passed to the installer command."
     feature :uninstall_options, "The provider accepts options to be
       passed to the uninstaller command."
+    feature :package_options, "The provider accepts options to be ensured for
+      the given package. The meaning and format of the options is defined by
+      provider.",
+      :methods => [:package_options_insync?, :package_options, :package_options=]
 
     ensurable do
       desc <<-EOT
@@ -229,6 +233,77 @@ module Puppet
       validate do |value|
         if !value.is_a?(String)
           raise ArgumentError, "Name must be a String not #{value.class}"
+        end
+      end
+    end
+
+    newproperty(:package_options, :required_features=>:package_options) do
+      desc "Package options. The definition of package options is provider
+        specific. In general, these are certain properties which alter contents
+        of a package being installed. An example of package options are
+        compilation options for packages which are compiled from sources
+        (FreeBSD ports for example).
+
+        The package_option attribute is a property, what means options can be
+        enforced during installation and verified/retrieved after installation.
+
+        For example, ports provider maps the package options to port options
+        (the ones you normally set with make config). There is a simple
+        example of the package with package_options for FreeBSD ports:
+
+            package  { 'apache22':
+              provider => ports,
+              package_options => { 'SUEXEC' => false }
+            }
+
+        This manifest ensures, that apache22 is compiled without SUEXEC module.
+
+        Note, that typical behavior, when you change package options, shall be
+        to reinstall package with new options (this is similar to changing
+        package version with versionable providers in your manifest).
+        "
+
+      validate do |value|
+        if provider.respond_to?(:package_options_validate)
+          provider.package_options_validate(value)
+        else
+          super
+        end
+      end
+
+      munge do |value|
+        if provider.respond_to?(:package_options_munge)
+          provider.package_options_munge(value)
+        else
+          super
+        end
+      end
+
+      def insync?(is)
+        provider.package_options_insync?(should, is)
+      end
+
+      def should_to_s(newvalue)
+        if provider.respond_to?(:package_options_should_to_s)
+          provider.package_options_should_to_s(should, newvalue)
+        else
+          super
+        end
+      end
+
+      def is_to_s(currentvalue)
+        if provider.respond_to?(:package_options_is_to_s)
+          provider.package_options_is_to_s(should, currentvalue)
+        else
+          super
+        end
+      end
+
+      def change_to_s(currentvalue, newvalue)
+        if provider.respond_to?(:package_options_change_to_s)
+          provider.package_options_change_to_s(currentvalue, newvalue)
+        else
+          super
         end
       end
     end
