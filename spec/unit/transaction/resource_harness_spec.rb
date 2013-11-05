@@ -180,7 +180,9 @@ describe Puppet::Transaction::ResourceHarness do
       File.open(test_file, 'w').close
       resource = Puppet::Type.type(:file).new :path => test_file, :audit => ['group'], :backup => false
       resource.expects(:err).never # make sure no exceptions get swallowed
+
       status = @harness.evaluate(resource)
+
       status.events.each do |event|
         event.status.should != 'failure'
       end

@@ -6,38 +6,50 @@ class Puppet::Transaction::ResourceHarness
 
   attr_reader :transaction
 
-  ResourceApplicationContext = Struct.new(:current_values,
-                                          :historical_values,
-                                          :audited_params,
-                                          :synced_params,
-                                          :status) do
-    def self.from_resource(resource, status)
-      ResourceApplicationContext.new(resource.retrieve_resource.to_hash,
-                                     Puppet::Util::Storage.cache(resource).dup,
-                                     (resource[:audit] || []).map { |p| p.to_sym },
-                                     [],
-                                     status)
-    end
-
-    def resource_present?
-      current_values[:ensure] != :absent
-    end
-
-    def record(event)
-      status << event
-    end
+  def initialize(transaction)
+    @transaction = transaction
   end
 
-  def allow_changes?(resource)
-    if resource.purging? and resource.deleting? and deps = relationship_graph.dependents(resource) \
-            and ! deps.empty? and deps.detect { |d| ! d.deleting? }
-      deplabel = deps.collect { |r| r.ref }.join(",")
-      plurality = deps.length > 1 ? "":"s"
-      resource.warning "#{deplabel} still depend#{plurality} on me -- not purging"
-      false
-    else
-      true
+  def evaluate(resource)
+    status = Puppet::Resource::Status.new(resource)
+
+    begin
+      context = ResourceApplicationContext.from_resource(resource, status)
+      perform_changes(resource, context)
+
+      if status.changed? && ! resource.noop?
+        cache(resource, :synced, Time.now)
+        resource.flush if resource.respond_to?(:flush)
+      end
+    rescue => detail
+      status.failed_because(detail)
+    ensure
+      status.evaluation_time = Time.now - status.time
     end
+
+    status
+  end
+
+  def scheduled?(resource)
+    return true if Puppet[:ignoreschedules]
+    return true unless schedule = schedule(resource)
+
+    # We use 'checked' here instead of 'synced' because otherwise we'll
+    # end up checking most resources most times, because they will generally
+    # have been synced a long time ago (e.g., a file only gets updated
+    # once a month on the server and its schedule is daily; the last sync time
+    # will have been a month ago, so we'd end up checking every run).
+    schedule.match?(cached(resource, :checked).to_i)
+  end
+
+  def schedule(resource)
+    unless resource.catalog
+      resource.warning "Cannot schedule without a schedule-containing catalog"
+      return nil
+    end
+
+    return nil unless name = resource[:schedule]
+    resource.catalog.resource(:schedule, name) || resource.fail("Could not find schedule #{name}")
   end
 
   # Used mostly for scheduling and auditing at this point.
@@ -49,6 +61,8 @@ class Puppet::Transaction::ResourceHarness
   def cache(resource, name, value)
     Puppet::Util::Storage.cache(resource)[name] = value
   end
+
+  private
 
   def perform_changes(resource, context)
     cache(resource, :checked, Time.now)
@@ -71,6 +85,18 @@ class Puppet::Transaction::ResourceHarness
     end
 
     capture_audit_events(resource, context)
+  end
+
+  def allow_changes?(resource)
+    if resource.purging? and resource.deleting? and deps = relationship_graph.dependents(resource) \
+            and ! deps.empty? and deps.detect { |d| ! d.deleting? }
+      deplabel = deps.collect { |r| r.ref }.join(",")
+      plurality = deps.length > 1 ? "":"s"
+      resource.warning "#{deplabel} still depend#{plurality} on me -- not purging"
+      false
+    else
+      true
+    end
   end
 
   def manage_via_ensure_if_possible(resource, context)
@@ -185,49 +211,26 @@ class Puppet::Transaction::ResourceHarness
     end
   end
 
-  def evaluate(resource)
-    status = Puppet::Resource::Status.new(resource)
-
-    begin
-      context = ResourceApplicationContext.from_resource(resource, status)
-      perform_changes(resource, context)
-
-      if status.changed? && ! resource.noop?
-        cache(resource, :synced, Time.now)
-        resource.flush if resource.respond_to?(:flush)
-      end
-    rescue => detail
-      status.failed_because(detail)
-    ensure
-      status.evaluation_time = Time.now - status.time
+  # @api private
+  ResourceApplicationContext = Struct.new(:current_values,
+                                          :historical_values,
+                                          :audited_params,
+                                          :synced_params,
+                                          :status) do
+    def self.from_resource(resource, status)
+      ResourceApplicationContext.new(resource.retrieve_resource.to_hash,
+                                     Puppet::Util::Storage.cache(resource).dup,
+                                     (resource[:audit] || []).map { |p| p.to_sym },
+                                     [],
+                                     status)
     end
 
-    status
-  end
-
-  def initialize(transaction)
-    @transaction = transaction
-  end
-
-  def scheduled?(resource)
-    return true if Puppet[:ignoreschedules]
-    return true unless schedule = schedule(resource)
-
-    # We use 'checked' here instead of 'synced' because otherwise we'll
-    # end up checking most resources most times, because they will generally
-    # have been synced a long time ago (e.g., a file only gets updated
-    # once a month on the server and its schedule is daily; the last sync time
-    # will have been a month ago, so we'd end up checking every run).
-    schedule.match?(cached(resource, :checked).to_i)
-  end
-
-  def schedule(resource)
-    unless resource.catalog
-      resource.warning "Cannot schedule without a schedule-containing catalog"
-      return nil
+    def resource_present?
+      current_values[:ensure] != :absent
     end
 
-    return nil unless name = resource[:schedule]
-    resource.catalog.resource(:schedule, name) || resource.fail("Could not find schedule #{name}")
+    def record(event)
+      status << event
+    end
   end
 end
