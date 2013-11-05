@@ -75,6 +75,7 @@ describe provider_class do
       end
 
       it "returns installed version" do
+        subject.expects(:properties).returns( { :ensure => "7.2.446" } )
         subject.latest.should == "7.2.446"
       end
     end
@@ -95,6 +96,7 @@ describe provider_class do
       end
 
       it "returns current version" do
+        subject.expects(:properties).returns( { :ensure => "7.2.446" } )
         subject.latest.should == "7.2.446"
       end
     end
