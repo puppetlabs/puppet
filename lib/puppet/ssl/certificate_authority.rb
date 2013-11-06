@@ -110,7 +110,7 @@ class Puppet::SSL::CertificateAuthority
     auth
   end
 
-  # Retrieves (or create, if necessary) the certificate revocation list.
+  # Retrieves (or creates, if necessary) the certificate revocation list.
   def crl
     unless defined?(@crl)
       unless @crl = Puppet::SSL::CertificateRevocationList.indirection.find(Puppet::SSL::CA_NAME)

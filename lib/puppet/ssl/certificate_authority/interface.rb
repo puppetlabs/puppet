@@ -22,7 +22,9 @@ module Puppet
           if respond_to?(method)
             send(method, ca)
           else
-            (subjects == :all ? ca.list : subjects).each { |host| ca.send(method, host) }
+            (subjects == :all ? ca.list : subjects).each do |host|
+              ca.send(method, host)
+            end
           end
         end
 
@@ -151,7 +153,9 @@ module Puppet
         def sign(ca)
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
-          list.each { |host| ca.sign(host, options[:allow_dns_alt_names]) }
+          list.each do |host|
+            ca.sign(host, options[:allow_dns_alt_names])
+          end
         end
 
         def reinventory(ca)
