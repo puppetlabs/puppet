@@ -11,7 +11,8 @@ module Puppet::Parser
     def self.parser(environment)
       case Puppet[:parser]
       when 'future'
-        eparser(environment)
+        evaluating_parser()
+#        eparser(environment)
       else
         classic_parser(environment)
       end
@@ -22,6 +23,16 @@ module Puppet::Parser
     def self.classic_parser(environment)
       require 'puppet/parser'
       Puppet::Parser::Parser.new(environment)
+    end
+
+    # Returns an instance of an EvaluatingParser
+    def self.evaluating_parser
+      # Since RGen is optional, test that it is installed
+      @@asserted ||= false
+      assert_rgen_installed() unless @@asserted
+      @@asserted = true
+      require 'puppet/parser/e4_parser_adapter'
+      E4ParserAdapter.new()
     end
 
     # Creates an instance of the expression based parser 'eparser'

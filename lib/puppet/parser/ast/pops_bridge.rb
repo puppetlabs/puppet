@@ -1,5 +1,5 @@
 require 'puppet/parser/ast/top_level_construct'
-require 'pops'
+require 'puppet/pops'
 
 # The AST::Bridge contains classes that bridges between the new Pops based model
 # and the 3.x AST. This is required to be able to reuse the Puppet::Resource::Type which is
@@ -12,16 +12,26 @@ class Puppet::Parser::AST::PopsBridge
   # This is used to represent the body of a class, definition, or node, and for each parameter's defauöt value
   # expression.
   #
-  class Expression < Puppet::Parser::ASTLeaf
+  class Expression < Puppet::Parser::AST::Leaf
+
+    def initialize args
+      super
+      @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser::Transitional.new()
+    end
 
     def to_s
       Puppet::Pops::ModelTreeDumper.new(dump(@value))
     end
 
     def evaluate(scope)
-      # TODO: This is wasteful, a new evaluator created for each expression
-      evaluator = Puppet::Pops::Evaluator::EvaluatingParser::Transitional.new()
-      evaluator.evaluate(scope, @value)
+      @@evaluator.evaluate(scope, @value)
+    end
+
+    # Adapts to 3x where top level constructs needs to have each to iterate over children. Short circuit this
+    # by yielding self. By adding this there is no need to wrap a pops expression inside an AST::BlockExpression
+    #
+    def each
+      yield self
     end
   end
 
@@ -38,6 +48,7 @@ class Puppet::Parser::AST::PopsBridge
       @program_model = model
       @context = context
       @ast_transformer ||= Puppet::Pops::Model::AstTransformer.new(@context[:file])
+      @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser::Transitional.new()
     end
 
     # This is the 3x API, the 3x AST searches through all code to find the instantiatable instructions.
@@ -58,6 +69,17 @@ class Puppet::Parser::AST::PopsBridge
           raise Puppet::ParseError("Internal Error: Unknown type of definition - got '#{d.class}'")
         end
       end.flatten() # flatten since node definition may have returned an array
+    end
+
+    def evaluate(scope)
+      @@evaluator.evaluate(scope, model)
+    end
+
+    # Adapts to 3x where top level constructs needs to have each to iterate over children. Short circuit this
+    # by yielding self. This means that the HostClass container will call this bridge instance with `instantiate`.
+    #
+    def each
+      yield self
     end
 
     private
