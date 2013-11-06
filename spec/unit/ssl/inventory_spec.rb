@@ -48,23 +48,12 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
 
         @inventory.rebuild
 
-        expect(inventory_file.string).to match(/# Inventory of signed certificates/)
         expect(inventory_file.string).to match(/\/CN=smocking/)
         expect(inventory_file.string).to match(/\/CN=mocking bird/)
       end
     end
 
     describe "and adding a certificate" do
-      it "should build the inventory file if one does not exist" do
-        Puppet[:cert_inventory] = cert_inventory
-        Puppet.settings.stubs(:write)
-
-        FileTest.expects(:exist?).with(cert_inventory).returns false
-
-        @inventory.expects(:rebuild)
-
-        @inventory.add(@cert)
-      end
 
       it "should use the Settings to write to the file" do
         Puppet.settings.setting(:cert_inventory).expects(:open).with("a")

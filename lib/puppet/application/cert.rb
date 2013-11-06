@@ -1,4 +1,5 @@
 require 'puppet/application'
+require 'puppet/ssl/certificate_authority/interface'
 
 class Puppet::Application::Cert < Puppet::Application
 
@@ -36,11 +37,36 @@ class Puppet::Application::Cert < Puppet::Application
     Puppet::Util::Log.level = :debug
   end
 
-  require 'puppet/ssl/certificate_authority/interface'
-  Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject {|m| m == :destroy }.each do |method|
-    option("--#{method.to_s.gsub('_','-')}", "-#{method.to_s[0,1]}") do |arg|
-      self.subcommand = method
-    end
+  option("--list", "-l") do |arg|
+    self.subcommand = :list
+  end
+
+  option("--revoke", "-r") do |arg|
+    self.subcommand = :revoke
+  end
+
+  option("--generate", "-g") do |arg|
+    self.subcommand = :generate
+  end
+
+  option("--sign", "-s") do |arg|
+    self.subcommand = :sign
+  end
+
+  option("--print", "-p") do |arg|
+    self.subcommand = :print
+  end
+
+  option("--verify", "-v") do |arg|
+    self.subcommand = :verify
+  end
+
+  option("--fingerprint", "-f") do |arg|
+    self.subcommand = :fingerprint
+  end
+
+  option("--reinventory") do |arg|
+    self.subcommand = :reinventory
   end
 
   option("--[no-]allow-dns-alt-names") do |value|
@@ -120,6 +146,11 @@ unless the '--all' option is set.
 * verify:
   Verify the named certificate against the local CA certificate.
 
+* reinventory:
+  Build an inventory of the issued certificates. This will destroy the current
+  inventory file specified by 'cert_inventory' and recreate it from the
+  certificates found in the 'certdir'. This action should only be invoked
+  on an inactive master.
 
 OPTIONS
 -------
@@ -184,8 +215,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       hosts = command_line.args.collect { |h| h.downcase }
     end
     begin
-      @ca.apply(:revoke, options.merge(:to => hosts)) if subcommand == :destroy
-      @ca.apply(subcommand, options.merge(:to => hosts, :digest => @digest))
+      apply(@ca, :revoke, options.merge(:to => hosts)) if subcommand == :destroy
+      apply(@ca, subcommand, options.merge(:to => hosts, :digest => @digest))
     rescue => detail
       Puppet.log_exception(detail)
       exit(24)
@@ -234,4 +265,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
     result
   end
+
+  # Create and run an applicator.  I wanted to build an interface where you could do
+  # something like 'ca.apply(:generate).to(:all) but I don't think it's really possible.
+  def apply(ca, method, options)
+    raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all" unless options[:to]
+    applier = Puppet::SSL::CertificateAuthority::Interface.new(method, options)
+    applier.apply(ca)
+  end
+
 end
