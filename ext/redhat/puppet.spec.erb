@@ -305,6 +305,15 @@ if [ "$1" -ge 1 ]; then
     (kill $(< "$oldpid") && rm -f "$oldpid" && \
       /sbin/service puppet start) >/dev/null 2>&1 || :
   fi
+
+  # If an old puppet process (one whose binary is located in /sbin) is running,
+  # kill it and then start up a fresh with the new binary.
+  if [ -e "$newpid" ]; then
+    if ps aux | grep `cat "$newpid"` | grep -v grep | awk '{ print $12 }' | grep -q sbin; then
+      (kill $(< "$newpid") && rm -f "$newpid" && \
+        /sbin/service puppet start) >/dev/null 2>&1 || :
+    fi
+  fi
 fi
 %endif
 
