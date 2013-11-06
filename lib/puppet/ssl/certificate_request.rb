@@ -34,7 +34,17 @@ DOC
     @ef ||= OpenSSL::X509::ExtensionFactory.new
   end
 
-  # How to create a certificate request with our system defaults.
+  # Create a certificate request with our system settings.
+  #
+  # @param key [OpenSSL::X509::Key, Puppet::SSL::Key] The key pair associated
+  #   with this CSR.
+  # @param opts [Hash]
+  # @options opts [String] :dns_alt_names A comma separated list of
+  #   Subject Alternative Names to include in the CSR extension request.
+  #
+  # @raise [Puppet::Error] If the generated CSR signature couldn't be verified
+  #
+  # @return [OpenSSL::X509::Request] The generated CSR
   def generate(key, options = {})
     Puppet.info "Creating a new SSL certificate request for #{name}"
 
