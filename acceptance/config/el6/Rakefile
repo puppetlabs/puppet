@@ -19,6 +19,7 @@ module HarnessOptions
       :keys => ["id_rsa-acceptance"],
     },
     :xml => true,
+    :timesync => true,
   }
 
   class Aggregator
@@ -79,14 +80,14 @@ EOS
     merged.puts(final_options.pretty_inspect)
   end
 
-
-  tests = "--tests=#{ENV['TEST']}" if ENV['TEST']
+  tests = ENV['TESTS'] || ENV['TEST'] 
+  tests_opt = "--tests=#{tests}" if tests
 
   config_opt = "--hosts=#{config}" if config
 
   overriding_options = ENV['OPTIONS']
 
-  args = ["--options-file", options_file, config_opt, tests, overriding_options].compact
+  args = ["--options-file", options_file, config_opt, tests_opt, overriding_options].compact
 
   begin
     sh("beaker", *args)

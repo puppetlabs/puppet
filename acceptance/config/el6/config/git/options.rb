@@ -4,5 +4,4 @@
     'git://github.com/puppetlabs/hiera.git#stable',
   ],
   :pre_suite => ['setup/git/pre-suite'],
-  :ntp => true,
 }
