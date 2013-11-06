@@ -523,6 +523,7 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def top_Object(o, definition)
+    require 'debugger'; debugger
     # fail, reached a container that is not top level
     acceptor.accept(Issues::NOT_TOP_LEVEL, definition)
   end
@@ -534,6 +535,10 @@ class Puppet::Pops::Validation::Checker4_0
 
   def top_HostClassDefinition(o, definition)
     # ok, stop scanning parents
+  end
+
+  def top_Program(o, definition)
+    # ok
   end
 
   # A LambdaExpression is a BlockExpression, and this method is needed to prevent the polymorph method for BlockExpression

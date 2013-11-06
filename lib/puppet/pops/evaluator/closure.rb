@@ -25,4 +25,12 @@ class Puppet::Pops::Evaluator::Lambda
   def parameters()
     @model.parameters || []
   end
+
+  # Returns the number of parameters (required and optional)
+  # @return [Integer] the total number of accepted parameters
+  def parameter_count
+    # yes, this is duplication of code, but it saves a method call
+    (@model.parameters || []).size
+  end
+
 end

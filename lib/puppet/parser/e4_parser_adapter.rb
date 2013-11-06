@@ -40,7 +40,7 @@ class Puppet::Parser::E4ParserAdapter
       # * a Model::Program
       # * a Model::Expression
       #
-      model = parse_result.current
+      model = parse_result.nil? ? nil : parse_result.current 
       args = {}
       Puppet::Pops::Model::AstTransformer.new(@file).merge_location(args, model)
 
