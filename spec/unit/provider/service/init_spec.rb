@@ -62,7 +62,7 @@ describe Puppet::Type.type(:service).provider(:init) do
       described_class.instances.should be_all { |provider| provider.get(:hasstatus) == true }
     end
 
-    it "should discard upstart jobs", :if => Puppet::Type.type(:file).defaultprovider.feature?(:manages_symlinks) do
+    it "should discard upstart jobs", :if => Puppet.features.manages_symlinks? do
       not_init_service, *valid_services = @services
       path = "tmp/#{not_init_service}"
       mocked_file = mock(path, :symlink? => true, :readlink => "/lib/init/upstart-job")

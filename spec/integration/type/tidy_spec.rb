@@ -12,7 +12,7 @@ describe Puppet::Type.type(:tidy) do
   end
 
   # Testing #355.
-  it "should be able to remove dead links", :if => Puppet::Type.type(:file).defaultprovider.feature?(:manages_symlinks) do
+  it "should be able to remove dead links", :if => Puppet.features.manages_symlinks? do
     dir = tmpfile("tidy_link_testing")
     link = File.join(dir, "link")
     target = tmpfile("no_such_file_tidy_link_testing")

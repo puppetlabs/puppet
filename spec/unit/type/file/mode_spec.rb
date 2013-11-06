@@ -80,7 +80,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       mode.must_not be_insync('755')
     end
 
-    it "should return true if the file is a link and we are managing links", :if => Puppet::Type.type(:file).defaultprovider.feature?(:manages_symlinks) do
+    it "should return true if the file is a link and we are managing links", :if => Puppet.features.manages_symlinks? do
       Puppet::FileSystem::File.new('anything').symlink(path)
 
       mode.must be_insync('644')
