@@ -4,6 +4,7 @@ require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_revocation_list'
+require 'puppet/ssl/certificate_request_attributes'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -171,6 +172,11 @@ DOC
       elsif Puppet::SSL::CertificateAuthority.ca? and fqdn = Facter.value(:fqdn) and domain = Facter.value(:domain)
         options[:dns_alt_names] = "puppet, #{fqdn}, puppet.#{domain}"
       end
+    end
+
+    csr_attributes = Puppet::SSL::CertificateRequestAttributes.new(Puppet[:csr_attributes])
+    if csr_attributes.load
+      options[:csr_attributes] = csr_attributes.custom_attributes
     end
 
     @certificate_request = CertificateRequest.new(name)

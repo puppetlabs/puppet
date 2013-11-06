@@ -500,6 +500,19 @@ have a pool of multiple load balanced masters, or for the same master to
 respond on two physically separate networks under different names.
 EOT
     },
+    :csr_attributes => {
+      :default => "$confdir/csr_attributes.yaml",
+      :type => :file,
+      :desc => <<EOT
+Custom attributes can be included when a puppet agent generates its certificate
+signing request by setting this directive to a pathname. The default path is
+"${confdir}/csr_attributes.yaml".
+
+The yaml file must be a Hash with the key 'custom_attributes' and a value of a
+Hash where each attribute has an OID for a key, and a value of either a
+String or an Array of Strings.
+EOT
+    },
     :certdir => {
       :default => "$ssldir/certs",
       :type   => :directory,

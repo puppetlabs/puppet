@@ -26,17 +26,17 @@ class Puppet::SSL::CertificateAuthority::AutosignCommand
     cmd = "#{@path} #{name}"
     csr_file = Tempfile.new('puppet-csr')
     csr_file.write(csr.to_s)
+    csr_file.close
 
     execute_options = {:stdinfile => csr_file.path, :combine => true, :failonfail => false}
     output = Puppet::Util::Execution.execute(cmd, execute_options)
 
-    output.chomp! if output.is_a? String
-    exitstatus = $CHILD_STATUS.exitstatus
+    output.chomp!
 
-    Puppet.info "autosign_command '#{cmd}' completed with exit status #{exitstatus}"
+    Puppet.info "autosign_command '#{cmd}' completed with exit status #{output.exitstatus}"
     Puppet.debug "Output of autosign_command '#{cmd}': #{output}"
 
-    case exitstatus
+    case output.exitstatus
     when 0
       true
     else

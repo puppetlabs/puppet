@@ -64,6 +64,8 @@ DOC
   # @param opts [Hash]
   # @options opts [String] :dns_alt_names A comma separated list of
   #   Subject Alternative Names to include in the CSR extension request.
+  # @options opts [Hash<String, String, Array<String>>] :csr_attributes A hash
+  #   of OIDs and values that are either a string or array of strings.
   #
   # @raise [Puppet::Error] If the generated CSR signature couldn't be verified
   #
@@ -83,6 +85,10 @@ DOC
     csr.version = 0
     csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
     csr.public_key = key.public_key
+
+    if options[:csr_attributes]
+      add_csr_attributes(csr, options[:csr_attributes])
+    end
 
     if options[:dns_alt_names] then
       names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
@@ -174,5 +180,56 @@ DOC
       flatten.
       sort.
       uniq
+  end
+
+  # Return all user specified attributes attached to this CSR as a hash. IF an
+  # OID has a single value it is returned as a string, otherwise all values are
+  # returned as an array.
+  #
+  # The format of CSR attributes is specified in PKCS#10/RFC 2986
+  #
+  # @see http://tools.ietf.org/html/rfc2986 "RFC 2986 Certification Request Syntax Specification"
+  #
+  # @api public
+  #
+  # @return [Hash<String, <String, Array<String>>]
+  def custom_attributes
+    x509_attributes = @content.attributes.reject do |attr|
+      PRIVATE_CSR_ATTRIBUTES.include? attr.oid
+    end
+
+    x509_attributes.map do |attr|
+      oid = attr.oid
+
+      attr_values = attr.value.first.value.map { |os| os.value }
+      value = attr_values.size > 1 ? attr_values : attr_values.first
+
+      {"oid" => attr.oid, "value" => value}
+    end
+  end
+
+  private
+
+  # Exclude OIDs that may conflict with how Puppet creates CSRs.
+  #
+  # We only have nominal support for Microsoft extension requests, but since we
+  # ultimately respect that field when looking for extension requests in a CSR
+  # we need to prevent that field from being written to directly.
+  PRIVATE_CSR_ATTRIBUTES = [
+    'extReq',   '1.2.840.113549.1.9.14',
+    'msExtReq', '1.3.6.1.4.1.311.2.1.14',
+  ]
+
+  def add_csr_attributes(csr, csr_attributes)
+    csr_attributes.each do |oid, values|
+      if PRIVATE_CSR_ATTRIBUTES.include? oid
+        raise ArgumentError, "Cannot specify CSR attribute #{oid}: conflicts with internally used CSR attribute"
+      end
+
+      encoded_strings = Array(values).map { |value| OpenSSL::ASN1::OctetString.new(value.to_s) }
+      attr_set = OpenSSL::ASN1::Set.new([OpenSSL::ASN1::Sequence.new(encoded_strings)])
+      csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
+      Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
+    end
   end
 end
