@@ -318,7 +318,7 @@ describe Puppet::FileServing::Metadata do
 end
 
 
-describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppet::Type.type(:file).defaultprovider.feature?(:manages_symlinks) do
+describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppet.features.manages_symlinks? do
   describe "when links are managed" do
     before do
       path = "/base/path/my/file"
