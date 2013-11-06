@@ -10,12 +10,12 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
     Puppet::Type.type(:cron).stubs(:defaultprovider).returns described_class
     Puppet::FileBucket::Dipper.any_instance.stubs(:backup) # Don't backup to filebucket
 
-    # I dont want to execute anything
+    # I don't want to execute anything
     described_class.stubs(:filetype).returns Puppet::Util::FileType::FileTypeFlat
     described_class.stubs(:default_target).returns crontab_user1
 
-    # I dont want to stub Time.now to get a static header because I dont know
-    # where Time.now is used elsewere so just go with a very simple header
+    # I don't want to stub Time.now to get a static header because I don't know
+    # where Time.now is used elsewhere, so just go with a very simple header
     described_class.stubs(:header).returns "# HEADER: some simple\n# HEADER: header\n"
     FileUtils.cp(my_fixture('crontab_user1'), crontab_user1)
     FileUtils.cp(my_fixture('crontab_user2'), crontab_user2)
@@ -191,8 +191,6 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
         File.read(crontab_user2).should == File.read(my_fixture('moved_cronjob_input2'))
       end
     end
-
-    it "should not add multiple headers"
   end
 
 end
