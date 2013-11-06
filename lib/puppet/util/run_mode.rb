@@ -55,21 +55,21 @@ module Puppet
 
     class UnixRunMode < RunMode
       def conf_dir
-        which_dir("/etc/puppet", "~/.puppet")
+        which_dir("/etc/puppet", "#{ENV['HOME']}/.puppet")
       end
 
       def var_dir
-        which_dir("/var/lib/puppet", "~/.puppet/var")
+        which_dir("/var/lib/puppet", "#{ENV['HOME']}/.puppet/var")
       end
     end
 
     class WindowsRunMode < RunMode
       def conf_dir
-        which_dir(File.join(windows_common_base("etc")), "~/.puppet")
+        which_dir(File.join(windows_common_base("etc")), "#{ENV['HOME']}/.puppet")
       end
 
       def var_dir
-        which_dir(File.join(windows_common_base("var")), "~/.puppet/var")
+        which_dir(File.join(windows_common_base("var")), "#{ENV['HOME']}/.puppet/var")
       end
 
     private
