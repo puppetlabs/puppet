@@ -194,6 +194,16 @@ describe Puppet::Resource::Status do
     events_as_hashes(tripped).should == events_as_hashes(@status)
   end
 
+  describe "when failed_because is tripped" do
+    it "should generate an event with default values" do
+      @status.failed_because("something bad happened")
+      @status.events[0].name.should == ""
+      @status.events[0].desired_value.should == ""
+      @status.events[0].historical_value.should == ""
+      @status.events[0].previous_value.should == ""
+    end
+  end
+
   def events_as_hashes(report)
     report.events.collect do |e|
       {

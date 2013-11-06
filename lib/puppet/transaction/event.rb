@@ -27,6 +27,10 @@ class Puppet::Transaction::Event
 
   def initialize(options = {})
     @audited = false
+    @previous_value = ""
+    @desired_value = ""
+    @historical_value = ""
+    @name = ""
 
     set_options(options)
     @time = Time.now
