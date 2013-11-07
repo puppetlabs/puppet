@@ -115,6 +115,14 @@ describe Puppet::Resource::Status do
     @status.events.should == [event]
   end
 
+  it "records an event for a failure caused by an error" do
+    @status.failed_because(StandardError.new("the message"))
+
+    expect(@status.events[0].message).to eq("the message")
+    expect(@status.events[0].status).to eq("failure")
+    expect(@status.events[0].name).to eq(:resource_error)
+  end
+
   it "should count the number of successful events and set changed" do
     3.times{ @status << Puppet::Transaction::Event.new(:status => 'success') }
     @status.change_count.should == 3

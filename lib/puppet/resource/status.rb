@@ -67,7 +67,7 @@ module Puppet
         # will always be accompanied by an event with some explanatory power.  This
         # is useful for reporting/diagnostics/etc.  So synthesize an event here
         # with the exception detail as the message.
-        add_event(@real_resource.event(:status => "failure", :message => detail.to_s))
+        add_event(@real_resource.event(:name => :resource_error, :status => "failure", :message => detail.to_s))
       end
 
       def initialize(resource)
