@@ -407,6 +407,16 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  # A Puppet::Parser::Resource, or Puppet::Resource
+  #
+  def infer_Resource(o)
+    t = Types::PResourceType.new()
+    t.type_name = o.type.to_s
+    t.title = o.title
+    t
+  end
+
+  # @api private
   def infer_Array(o)
     type = Types::PArrayType.new()
     type.element_type = if o.empty?

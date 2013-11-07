@@ -176,6 +176,55 @@ module Puppet::Pops::Evaluator::Runtime3Support
     Puppet::Parser::Functions.rvalue?(name)
   end
 
+  # The o is used for source reference
+  # TODO: The line information is wrong - it is cheating atm.
+  def create_resource_parameter(o, scope, name, value, operator)
+    Puppet::Parser::Resource::Param.new(
+      :name   => name,
+      :value  => value,
+      :source => scope.source, :line => -1, :file => 'TODO:Get file',
+      :add    => operator == :'+>'
+    )
+  end
+
+  def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
+
+    # resolve in scope. TODO: Investigate what happens here - opportunity to optimize?
+    fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type_name, resource_titles)
+
+    # Build a resource for each title (there may be only one)
+    resource_titles.map do |resource_title|
+        resource = Puppet::Parser::Resource.new(
+          fully_qualified_type, resource_title,
+          :parameters => evaluated_parameters,
+          # TODO: Location
+          :file => 'TODO: file location',
+          :line => -1,
+          :exported => exported,
+          :virtual => virtual,
+          # WTF is this? Which source is this? The file? The name of the context ?
+          :source => scope.source,
+          :scope => scope,
+          :strict => true
+        )
+
+        if resource.resource_type.is_a? Puppet::Resource::Type
+          resource.resource_type.instantiate_resource(scope, resource)
+        end
+        scope.compiler.add_resource(scope, resource)
+        scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == 'class'
+        # Turn the resource into a PType (a reference to a resource type)
+        # weed out nil's
+        resource_to_ptype(resource)
+    end.flatten.compact
+
+  end
+
+  def resource_to_ptype(resource)
+    nil if resource.nil?
+    type_calculator.infer(resource)
+  end
+
   # This is the same type of "truth" as used in the current Puppet DSL.
   #
   def is_true? o

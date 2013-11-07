@@ -34,6 +34,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   #
   Issues = Puppet::Pops::Issues
 
+
   def initialize
     @@eval_visitor     ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
     @@lvalue_visitor   ||= Puppet::Pops::Visitor.new(self, "lvalue", 1, 1)
@@ -45,6 +46,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
     @@compare_operator     ||= Puppet::Pops::Evaluator::CompareOperator.new()
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
+  end
+
+  def type_calculator
+    @@type_calculator
   end
 
   # Polymorphic evaluate - calls eval_TYPE
@@ -117,7 +122,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     # associate values with parameters
     merged = parameters.zip(args)
     # calculate missing arguments
-    missing = parameters.slice(args.size, parameters.size - args.size).select {|p| e.value.nil? }
+    missing = parameters.slice(args.size, parameters.size - args.size).select {|p| p.value.nil? }
     unless missing.empty?
       optional = parameters.count { |p| !p.value.nil? }
       raise ArgumentError, "Too few arguments; #{args.size} for #{optional > 0 ? ' min ' : ''}#{parameters.size - optional}"
@@ -599,11 +604,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   end
 
   # @todo not implemented
-  def eval_AttributeOperation o, scope
-    # TODO
-  end
-
-  # @todo not implemented
   def eval_OptionalAttributeOperation o, scope
     # TODO
   end
@@ -638,12 +638,33 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     evaluate(o.body, scope)
   end
 
+  def eval_ResourceExpression(o, scope)
+    exported = o.exported
+    virtual = o.virtual
+    type_name = evaluate(o.type_name, scope)
+    o.bodies.each do |body|
+      titles = [evaluate(body.title, scope)].flatten
+      evaluated_parameters = body.operations.map {|op| evaluate(op, scope) }
+      titles.each do |title|
+        create_resources(o, scope, virtual, exported, type_name, titles, evaluated_parameters)
+      end
+    end
+  end
+
+  def eval_ResourceDefaultsExpression(o, scope)
+  end
+
+  def eval_ResourceOverrideExpression(o, scope)
+  end
+
+  def eval_AttributeOperation(o, scope)
+    create_resource_parameter(o, scope, o.attribute_name, evaluate(o.value_expr, scope), o.operator)
+  end
   # TODO:
   # ResourceExpression < Expression
   #    class ResourceBody < ASTObject
   # ResourceDefaultsExpression < Expression
   # ResourceOverrideExpression < Expression
-  # NamedAccessExpression < Expression
 
   # Puppet 3.1 AST only supports calling a function by name (it is not possible to produce a function
   # that is then called). TODO- should puppet 4 accept this? It is very powerful in combiantion with
