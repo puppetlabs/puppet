@@ -350,6 +350,12 @@ module Puppet
       EOT
     end
 
+    newparam(:virtualenv) do
+      desc "The path to the virtualenv where the python package has to
+        be installed (when using the pip `provider`).  This has the same
+        meaning as the `-E` or `--environment` parameter of `pip install`."
+    end
+
     autorequire(:file) do
       autos = []
       [:responsefile, :adminfile].each { |param|

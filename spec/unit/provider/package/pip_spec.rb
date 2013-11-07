@@ -184,6 +184,15 @@ describe provider_class do
       @provider.install
     end
 
+    it "should install into a virtualenv" do
+      @resource[:ensure] = :installed
+      @resource[:source] = nil
+      @resource[:virtualenv] = "/path/to/virtualenv"
+      @provider.expects(:lazy_pip).
+        with("install", "--environment='/path/to/virtualenv'", '-q', "sdsfdssdhdfyjymdgfcjdfjxdrssf")
+      @provider.install
+    end
+
   end
 
   describe "uninstall" do
@@ -192,6 +201,14 @@ describe provider_class do
       @resource[:name] = "fake_package"
       @provider.expects(:lazy_pip).
         with('uninstall', '-y', '-q', 'fake_package')
+      @provider.uninstall
+    end
+
+    it "should install from a virtualenv" do
+      @resource[:name] = "sdsfdssdhdfyjymdgfcjdfjxdrssf"
+      @resource[:virtualenv] = "/path/to/virtualenv"
+      @provider.expects(:lazy_pip).
+        with('uninstall', '-y', '-q', '--environment=/path/to/virtualenv', 'sdsfdssdhdfyjymdgfcjdfjxdrssf')
       @provider.uninstall
     end
 
