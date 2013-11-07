@@ -80,7 +80,7 @@ describe "Puppet::Parser::Parser" do
 #    @parser = Puppet::Parser::Parser.new "development"
   end
   shared_examples_for 'a puppet parser' do
-    describe "when parsing comments before statement" do
+    describe "when parsing comments before a statement" do
       it "should associate the documentation to the statement AST node" do
         if Puppet[:parser] == 'future'
           pending "egrammar does not yet process comments"
@@ -92,6 +92,14 @@ describe "Puppet::Parser::Parser" do
 
         ast.code[0].should be_a(Puppet::Parser::AST::Hostclass)
         ast.code[0].name.should == 'test'
+        ast.code[0].instantiate('')[0].doc.should == "comment\n"
+      end
+
+      it "should recognize docs when hash literals are in use" do
+        ast = @parser.parse("""
+        # comment
+        class test($param={}) {}
+        """)
         ast.code[0].instantiate('')[0].doc.should == "comment\n"
       end
     end
