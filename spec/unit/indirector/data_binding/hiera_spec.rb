@@ -26,6 +26,10 @@ describe Puppet::DataBinding::Hiera do
     write_hiera_config(hiera_config_file, my_fixture_dir)
   end
 
+  after do
+    Puppet::DataBinding::Hiera.instance_variable_set(:@hiera, nil)
+  end
+
   it "should have documentation" do
     Puppet::DataBinding::Hiera.doc.should_not be_nil
   end
