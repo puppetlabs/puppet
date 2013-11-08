@@ -28,11 +28,11 @@ characters:
     | 0x0C | Form Feed       | 0x5C, 0x66       | \f                     |
     | 0x0D | Carriage Return | 0x5C, 0x72       | \r                     |
 
-In addition any ASCII control character, which is any character between 0x00
-and 0x1F, (except the ones listed above) must be encoded as a six byte sequence
-of \u followed by four ASCII digits of the hex number of the desired character.
-For example the ASCII Record Separator character (0x1E) is represented as
-\u001E (0x5C, 0x75, 0x30, 0x30, 0x31, 0x45).
+In addition, any character between 0x00 and 0x1F, (except the ones listed
+above) must be encoded as a six byte sequence of \u followed by four ASCII
+digits of the hex number of the desired character.  For example the ASCII
+Record Separator character (0x1E) is represented as \u001E (0x5C, 0x75, 0x30,
+0x30, 0x31, 0x45).
 
 Decoding PSON Using JSON Parsers
 --------------------------------
@@ -42,17 +42,19 @@ data. Although JSON requires that it is encoded as unicode most parsers will
 produce usable output from PSON if they are instructed to interpret the input
 as Latin-1 encoding.
 
-In all these examples there is a file available called `data.pson` that contains the ruby structure `{ "data" => "\xc3\xc3" }` encoded as PSON (the value is an invalid unicode sequence). In bytes the data is:
+In all these examples there is a file available called `data.pson` that
+contains the ruby structure `{ "data" => "\x07\x08\xC3\xC3" }` encoded as
+PSON (the value is an invalid unicode sequence). In bytes the data is:
 
-    0x7b 0x22 0x64 0x61 0x74 0x61 0x22 0x3a 0x22 0xc3 0xc3 0x22 0x7d
+    0x7b 0x22 0x64 0x61 0x74 0x61 0x22 0x3a 0x22 0x5c 0x75 0x30 0x30 0x30 0x37 0x5c 0x62 0xc3 0xc3 0x22 0x7d
 
 Python Example:
 
     >>> import json
     >>> json.load(open("data.pson"), "latin_1")
-    {u'data': u'\xc3\xc3'}
+    {u'data': u'\x07\x08\xc3\xc3'}
 
 Clojure Example:
 
     user> (parse-string (slurp "data.pson" :encoding "ISO-8859-1"))
-    {"data" "ÃÃ"}
+    {"data" "^G\bÃÃ"}
