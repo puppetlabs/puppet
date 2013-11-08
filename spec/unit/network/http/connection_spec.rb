@@ -169,8 +169,8 @@ describe Puppet::Network::HTTP::Connection do
         subject { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true).send(:connection) }
 
         before :each do
-          FileTest.expects(:exist?).with(Puppet[:hostcert]).returns(true)
-          FileTest.expects(:exist?).with(ca_auth_file).returns(true)
+          FileTest.stubs(:exist?).with(Puppet[:hostcert]).returns(true)
+          FileTest.stubs(:exist?).with(ca_auth_file).returns(true)
         end
 
         it                { should be_use_ssl }
@@ -304,7 +304,7 @@ describe Puppet::Network::HTTP::Connection do
       connection = Net::HTTP.new('my_server', 8140)
       subject.stubs(:create_connection).returns(connection)
 
-      cert = stubs 'cert'
+      cert = master_ca_cert
       Puppet::SSL::Certificate.expects(:from_instance).twice.returns(cert)
 
       connection.stubs(:get).with do
@@ -317,6 +317,29 @@ describe Puppet::Network::HTTP::Connection do
       subject.expects(:warn_if_near_expiration).with(cert, cert)
 
       subject.request(:get, stubs('request'))
+    end
+
+    it "should store the host certificate name", :unless => Puppet.features.microsoft_windows? do
+      connection = Net::HTTP.new('my_server', 8140)
+      subject.stubs(:create_connection).returns(connection)
+
+      # Use a Puppet SSL certificate to prevent excessive mocking and stubbing
+      cert = master_ca_cert
+      Puppet::SSL::Certificate.expects(:from_instance).twice.returns(cert)
+
+      connection.stubs(:get).with do
+        context = a_store_context(:for_server => 'a_server', :with_error_string => false)
+        connection.verify_callback.call(true, context)
+        connection.verify_callback.call(true, context)
+        true
+      end.returns(httpok)
+
+      subject.expects(:warn_if_near_expiration).with(cert, cert)
+
+      subject.request(:get, stubs('request'))
+
+      # The stored hostname should match the lowercase version of the certificate
+      subject.host_certificate_name.should == 'intermediate ca (master-ca)'
     end
   end
 
@@ -357,4 +380,29 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
+  def master_ca
+    <<-MASTER_CA
+-----BEGIN CERTIFICATE-----
+MIICljCCAf+gAwIBAgIBAjANBgkqhkiG9w0BAQUFADBJMRAwDgYDVQQDDAdSb290
+IENBMRowGAYDVQQLDBFTZXJ2ZXIgT3BlcmF0aW9uczEZMBcGA1UECgwQRXhhbXBs
+ZSBPcmcsIExMQzAeFw0xMzAzMzAwNTUwNDhaFw0zMzAzMjUwNTUwNDhaMH4xJDAi
+BgNVBAMTG0ludGVybWVkaWF0ZSBDQSAobWFzdGVyLWNhKTEfMB0GCSqGSIb3DQEJ
+ARYQdGVzdEBleGFtcGxlLm9yZzEZMBcGA1UEChMQRXhhbXBsZSBPcmcsIExMQzEa
+MBgGA1UECxMRU2VydmVyIE9wZXJhdGlvbnMwXDANBgkqhkiG9w0BAQEFAANLADBI
+AkEAvo/az3oR69SP92jGnUHMJLEyyD1Ui1BZ/rUABJcQTRQqn3RqtlfYePWZnUaZ
+srKbXRS4q0w5Vqf1kx5w3q5tIwIDAQABo4GcMIGZMHkGA1UdIwRyMHCAFDBN1mqO
+Nc4gUraE4zRtw6ueFDDaoU2kSzBJMRAwDgYDVQQDDAdSb290IENBMRowGAYDVQQL
+DBFTZXJ2ZXIgT3BlcmF0aW9uczEZMBcGA1UECgwQRXhhbXBsZSBPcmcsIExMQ4IJ
+ALf2Pk2HvtBzMA8GA1UdEwEB/wQFMAMBAf8wCwYDVR0PBAQDAgEGMA0GCSqGSIb3
+DQEBBQUAA4GBACRfa1YPS7RQUuhYovGgV0VYqxuATC7WwdIRihVh5FceSXKgSIbz
+BKmOBAy/KixEhpnHTbkpaJ0d9ITkvjMTmj3M5YMahKaQA5niVPckQPecMMd6jg9U
+l1k75xLLIcrlsDYo3999KOSSchH2K7bLT7TuQ2okdP6FHWmeWmudewlu
+-----END CERTIFICATE-----
+    MASTER_CA
+  end
+
+  let :master_ca_cert do
+    Puppet[:ssldir] = tmpdir('conf')
+    Puppet::SSL::Certificate.from_s(master_ca)
+  end
 end
