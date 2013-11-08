@@ -3,10 +3,14 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do
-  before do
+  before :all do
     @provider_class = described_class.provide(:simple) { mk_resource_methods }
     @provider_class.stubs(:suitable?).returns true
     described_class.stubs(:defaultprovider).returns @provider_class
+  end
+
+  after :all do
+    described_class.unprovide(:simple)
   end
 
   it "should have :name be its namevar" do
