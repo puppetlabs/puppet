@@ -50,6 +50,9 @@ module Puppet::Network::HTTP
       @use_ssl = options[:use_ssl]
       @verify_peer = options[:verify_peer]
       @redirect_limit = options[:redirect_limit]
+
+      @host_certificate_name = nil
+      @host_is_valid_peer = false
     end
 
     def get(*args)
@@ -121,6 +124,14 @@ module Puppet::Network::HTTP
       connection.use_ssl?
     end
 
+    def host_certificate_name
+      @host_certificate_name
+    end
+
+    def host_is_valid_peer?
+      @host_is_valid_peer
+    end
+
     private
 
     def connection
@@ -133,6 +144,15 @@ module Puppet::Network::HTTP
       ssl_validator.register_verify_callback(connection)
 
       response = connection.send(method, *args)
+
+      # Fetch the certificate for the host
+      leaf_ssl_cert = ssl_validator.peer_certs.last
+
+      # Store the name and certificate validation status for possible review
+      unless leaf_ssl_cert.nil?
+        @host_certificate_name = leaf_ssl_cert.name
+        @host_is_valid_peer = ssl_validator.valid_peer?
+      end
 
       # Check the peer certs and warn if they're nearing expiration.
       warn_if_near_expiration(*ssl_validator.peer_certs)
@@ -181,17 +201,24 @@ module Puppet::Network::HTTP
 
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
-      if @verify_peer and FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
+
+      if ssl_certificates_are_present?
+
+        # We have the local certificates, we should use them. This will
+        # allow manual validation of server certificates after making a
+        # request. This is a useful workaround for not having full control
+        # of the SSL handshake process in Ruby.
+        # -- adaburrows
+
         @connection.cert_store  = ssl_host.ssl_store
         @connection.ca_file     = ssl_configuration.ca_auth_file
         @connection.cert        = ssl_host.certificate.content
-        @connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
         @connection.key         = ssl_host.key.content
+      end
+
+      if @verify_peer and ssl_certificates_are_present?
+        @connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
       else
-        # We don't have the local certificates, so we don't do any verification
-        # or setup at this early stage.  REVISIT: Shouldn't we supply the local
-        # certificate details if we have them?  The original code didn't.
-        # --daniel 2012-06-03
 
         # Ruby 1.8 defaulted to this, but 1.9 defaults to peer verify,
         # and we almost always talk to a dedicated, not-standard CA that
@@ -217,6 +244,10 @@ module Puppet::Network::HTTP
           :ca_chain_file => Puppet[:ssl_client_ca_chain],
           :ca_auth_file  => Puppet[:ssl_client_ca_auth]
       )
+    end
+
+    def ssl_certificates_are_present?
+      @ssl_certificates_are_present ||= FileTest.exist?(Puppet[:hostcert]) && FileTest.exist?(ssl_configuration.ca_auth_file)
     end
   end
 end
