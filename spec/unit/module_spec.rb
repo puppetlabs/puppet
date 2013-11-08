@@ -526,6 +526,13 @@ describe Puppet::Module do
     Puppet::Module.new("yay", "/path", mock("env"))
   end
 
+  it "should tolerate failure to parse" do
+    FileTest.expects(:exist?).with(@module.metadata_file).returns true
+    File.stubs(:read).with(@module.metadata_file).returns(my_fixture('trailing-comma.json'))
+
+    @module.has_metadata?.should be_false
+  end
+
   def a_module_with_metadata(data)
     text = data.to_pson
 

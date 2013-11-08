@@ -53,11 +53,14 @@ class Puppet::Module
 
   def has_metadata?
     return false unless metadata_file
-
     return false unless FileTest.exist?(metadata_file)
 
-    metadata = PSON.parse File.read(metadata_file)
-
+    begin
+      metadata =  PSON.parse(File.read(metadata_file))
+    rescue PSON::PSONError => e
+      Puppet.debug("#{name} has an invalid and unparsable metadata.json file.  The parse error: #{e.message}")
+      return false
+    end
 
     return metadata.is_a?(Hash) && !metadata.keys.empty?
   end
