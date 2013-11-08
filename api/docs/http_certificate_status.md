@@ -125,6 +125,6 @@ Gets the response:
 Schema
 -----
 
-Find and search operations return Puppet::SSL::Host objects which
+Find and search operations return objects which
 conform to the json schema at {file:api/schemas/host.json
 api/schemas/host.json}.

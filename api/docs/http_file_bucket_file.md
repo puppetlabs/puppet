@@ -95,4 +95,5 @@ None
 Schema
 ------
 
-A `file_bucket_file` response body is the unstructured file content.
+A `file_bucket_file` response body is not structured data according to any standard scheme such as
+json/pson/yaml, so no schema is applicable.

@@ -183,5 +183,5 @@ decoding of the CRL PEM file.
 Schema
 ------
 
-A certificate_revocation_list response body is not structured data according to any
+A `certificate_revocation_list` response body is not structured data according to any
 standard scheme such as json/pson/yaml, so no schema is applicable.

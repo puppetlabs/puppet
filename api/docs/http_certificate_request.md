@@ -161,5 +161,5 @@ The CSR PEMs are separated by "\n---\n"
 Schema
 ------
 
-A certificate_request response body is not structured data according to any
+A `certificate_request` response body is not structured data according to any
 standard scheme such as json/pson/yaml, so no schema is applicable.

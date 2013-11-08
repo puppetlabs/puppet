@@ -104,5 +104,5 @@ The environment field is ignored.
 Schema
 ------
 
-A certificate response body is not structured data according to any standard scheme such as
+A `certificate` response body is not structured data according to any standard scheme such as
 json/pson/yaml, so no schema is applicable.

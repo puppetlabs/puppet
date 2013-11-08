@@ -62,5 +62,5 @@ None
 Schema
 ------
 
-A file_content response body is not structured data according to any standard scheme such as
+A `file_content` response body is not structured data according to any standard scheme such as
 json/pson/yaml, so no schema is applicable.
