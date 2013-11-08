@@ -28,7 +28,7 @@ module Puppet::Network::HTTP
       :redirect_limit => 10
     }
 
-    # Creates a new HTTP client connection to `host`:`port`. 
+    # Creates a new HTTP client connection to `host`:`port`.
     # @param host [String] the host to which this client will connect to
     # @param port [Fixnum] the port to which this client will connect to
     # @param options [Hash] options influencing the properties of the created connection,
@@ -53,26 +53,30 @@ module Puppet::Network::HTTP
     end
 
     def get(*args)
-      request(:get, *args)
+      process_request(:get, *args)
     end
 
     def post(*args)
-      request(:post, *args)
+      process_request(:post, *args)
     end
 
     def head(*args)
-      request(:head, *args)
+      process_request(:head, *args)
     end
 
     def delete(*args)
-      request(:delete, *args)
+      process_request(:delete, *args)
     end
 
     def put(*args)
-      request(:put, *args)
+      process_request(:put, *args)
     end
 
-    def request(method, *args)
+    def request(*args)
+      process_request(:request, *args)
+    end
+
+    def process_request(method, *args)
       current_args = args.dup
       @redirect_limit.times do |redirection|
         response = execute_request(method, *args)
