@@ -1,7 +1,30 @@
 require 'puppet/ssl/base'
 require 'puppet/ssl/certificate_signer'
 
-# Manage certificate requests.
+# This class creates and manages X509 certificate signing requests.
+#
+# ## CSR attributes
+#
+# CSRs may contain a set of attributes that includes supplementary information
+# about the CSR or information for the signed certificate.
+#
+# PKCS#9/RFC 2985 section 5.4 formally defines the "Challenge password",
+# "Extension request", and "Extended-certificate attributes", but this
+# implementation only handles the "Extension request" attribute. Other
+# attributes may be defined on a CSR, but the RFC doesn't define behavior for
+# any other attributes so we treat them as only informational.
+#
+# ## CSR Extension request attribute
+#
+# CSRs may contain an optional set of extension requests, which allow CSRs to
+# include additional information that may be included in the signed
+# certificate. Any additional information that should be copied from the CSR
+# to the signed certificate MUST be included in this attribute.
+#
+# This behavior is dictated by PKCS#9/RFC 2985 section 5.4.2.
+#
+# @see http://tools.ietf.org/html/rfc2985 "RFC 2985 Section 5.4.2 Extension request"
+#
 class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   wraps OpenSSL::X509::Request
 
