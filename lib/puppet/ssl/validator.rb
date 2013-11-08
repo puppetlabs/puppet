@@ -1,8 +1,10 @@
-require 'puppet/ssl'
 require 'openssl'
-module Puppet
-module SSL
-class Validator
+
+# Perform peer certificate verification against the known CA.
+# If there is no CA information known, then no verification is performed
+#
+# @api private
+class Puppet::SSL::Validator
   attr_reader :peer_certs
   attr_reader :verify_errors
   attr_reader :ssl_configuration
@@ -12,9 +14,16 @@ class Validator
   #
   # @option opts [Puppet::SSL::Configuration] :ssl_configuration to use for
   #   authorizing the peer certificate chain.
-  def initialize(opts = {})
+  def initialize(
+    ssl_configuration = Puppet::SSL::Configuration.new(
+      Puppet[:localcacert],
+      :ca_chain_file => Puppet[:ssl_client_ca_chain],
+      :ca_auth_file  => Puppet[:ssl_client_ca_auth]),
+    ssl_host = Puppet::SSL::Host.localhost)
+
     reset!
-    @ssl_configuration = opts[:ssl_configuration] or raise ArgumentError, ":ssl_configuration is required"
+    @ssl_configuration = ssl_configuration
+    @ssl_host = ssl_host
   end
 
   ##
@@ -74,11 +83,20 @@ class Validator
   ##
   # Register the instance's call method with the connection.
   #
-  # @param [Net::HTTP] connection The connection to velidate
+  # @param [Net::HTTP] connection The connection to validate
   #
   # @return [void]
-  def register_verify_callback(connection)
-    connection.verify_callback = self
+  def setup_connection(connection)
+    if ssl_certificates_are_present?
+      connection.cert_store = @ssl_host.ssl_store
+      connection.ca_file = @ssl_configuration.ca_auth_file
+      connection.cert = @ssl_host.certificate.content
+      connection.key = @ssl_host.key.content
+      connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      connection.verify_callback = self
+    else
+      connection.verify_mode = OpenSSL::SSL::VERIFY_NONE
+    end
   end
 
   ##
@@ -111,6 +129,8 @@ class Validator
       end
     end
   end
-end
-end
+
+  def ssl_certificates_are_present?
+    Puppet::FileSystem::File.exist?(Puppet[:hostcert]) && Puppet::FileSystem::File.exist?(@ssl_configuration.ca_auth_file)
+  end
 end
