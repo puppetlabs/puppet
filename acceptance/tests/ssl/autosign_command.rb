@@ -15,9 +15,9 @@ test_name "autosign_command behavior (#7244)" do
     reset_agent_ssl
   end
 
-  step "Step 1: ensure autosign_command can approve CSRs"
-
   reset_agent_ssl(false)
+
+  step "Step 1: ensure autosign_command can approve CSRs"
 
   master_opts = {'master' => {'autosign' => 'false', 'autosign_command' => '/bin/true'}}
   with_puppet_running_on(master, master_opts) do
@@ -26,7 +26,7 @@ test_name "autosign_command behavior (#7244)" do
 
       on(agent, puppet("agent --test --server #{master} --waitforcert 0"))
       assert_key_generated(agent)
-      assert_no_match(/failed to retrieve certificate/, stdout, "Expected certificate to be autosigned")
+      assert_match(/Caching certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
     end
   end
 
@@ -41,7 +41,7 @@ test_name "autosign_command behavior (#7244)" do
 
       on(agent, puppet("agent --test --server #{master} --waitforcert 0"), :acceptable_exit_codes => [1])
       assert_key_generated(agent)
-      assert_no_match(/failed to retrieve certificate/, stdout, "Expected certificate to not be autosigned")
+      assert_match(/no certificate found/, stdout, "Expected certificate to not be autosigned")
     end
   end
 end
