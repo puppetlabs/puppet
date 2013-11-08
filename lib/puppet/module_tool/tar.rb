@@ -4,7 +4,8 @@ module Puppet::ModuleTool::Tar
   require 'puppet/module_tool/tar/mini'
 
   def self.instance(module_name)
-    if Facter.value('osfamily') == 'Solaris' && Puppet::Util.which('gtar') && ! Puppet::Util::Platform.windows?
+    if Facter.value('osfamily') == 'Solaris' || Facter.value('osfamily') == 'OpenBSD' \
+      && Puppet::Util.which('gtar') && ! Puppet::Util::Platform.windows?
       Solaris.new
     elsif Puppet::Util.which('tar') && ! Puppet::Util::Platform.windows?
       Gnu.new
