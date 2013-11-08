@@ -40,6 +40,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     @@lvalue_visitor   ||= Puppet::Pops::Visitor.new(self, "lvalue", 1, 1)
     @@assign_visitor   ||= Puppet::Pops::Visitor.new(self, "assign", 3, 3)
     @@call_visitor     ||= Puppet::Pops::Visitor.new(self, "call", 3, 3)
+    @@string_visitor   ||= Puppet::Pops::Visitor.new(self, "string", 1, 1)
 
     @@type_calculator  ||= Puppet::Pops::Types::TypeCalculator.new()
     @@type_parser      ||= Puppet::Pops::Types::TypeParser.new()
@@ -102,6 +103,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   def lvalue(o, scope)
     @@lvalue_visitor.visit_this(self, o, scope)
+  end
+
+  def string(o, scope)
+    @@string_visitor.visit_this(self, o, scope)
   end
 
   # Call a closure - Can only be called with a Closure (for now), may be refactored later
@@ -782,7 +787,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # Evaluates double quoted strings that may contain interpolation
   #
   def eval_ConcatenatedString o, scope
-    o.segments.collect {|expr| evaluate(expr, scope).to_s}.join
+    o.segments.collect {|expr| string(evaluate(expr, scope), scope)}.join
   end
 
 
@@ -799,13 +804,26 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   def eval_TextExpression o, scope
     if o.expr.is_a?(Puppet::Pops::Model::QualifiedName)
       # TODO: formalize, when scope returns nil, vs error
-      get_variable_value(o.expr.value, o, scope).to_s
+      string(get_variable_value(o.expr.value, o, scope), scope)
     else
       # TODO: This is not very good as it forces the to_s to apply to all kind of results
       # It should call a polymorph method to allow to_s to be applied in general, and possible some other
       # to string formatter for other values (like PType Objects).
       #
-      evaluate(o.expr, scope).to_s
+      string(evaluate(o.expr, scope), scope)
+    end
+  end
+
+  def string_Object(o, scope)
+    o.to_s
+  end
+
+  def string_Symbol(o, scope)
+    case o
+    when :undef
+      ''
+    else
+      o.to_s
     end
   end
 
