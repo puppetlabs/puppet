@@ -48,13 +48,9 @@ incorrect, the file will be instead saved under the correct checksum.
 
 GET, HEAD, PUT
 
-### Supported Format
+### Supported Response Formats
 
-Accept: `s`
-
-Content-Type: `text/plain`
-
-Note: `s` or `text/plain` is equivalent to the raw file contents
+s or text/plain (a string of the raw file contents)
 
 Puppet also understands `pson` and `text/pson`, but their use is
 deprecated and support will be removed in a future version.

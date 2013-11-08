@@ -40,7 +40,7 @@ GET
 
 ### Supported Formats
 
-Accept: pson, text/pson
+PSON
 
 ### Parameters
 

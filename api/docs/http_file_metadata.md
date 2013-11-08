@@ -32,11 +32,13 @@ Get file metadata for a single file
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson, text/pson
+PSON
 
 ### Parameters
+
+None
 
 ### Example Response
 

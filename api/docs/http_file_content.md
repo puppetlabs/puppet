@@ -20,9 +20,9 @@ for more information about how mount points work.
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: raw
+raw (the raw binary content)
 
 ### Parameters
 

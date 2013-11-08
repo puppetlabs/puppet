@@ -15,9 +15,9 @@ Retrieve a catalog.
 
 POST, GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson, text/pson
+PSON
 
 ### Notes
 

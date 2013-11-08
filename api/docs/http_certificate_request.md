@@ -54,9 +54,11 @@ Destroy actions. It is not recommended that you change the default settings.
 
 GET, PUT, DELETE
 
-### Supported Format
+### Supported Response Formats
 
-Accept: s
+s (denotes a string of text)
+
+The returned CSR is always in the `.pem` format.
 
 ### Parameters
 

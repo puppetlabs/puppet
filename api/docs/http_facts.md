@@ -15,9 +15,9 @@ Get facts for a node.
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson, text/pson
+PSON
 
 ### Parameters
 

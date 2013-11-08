@@ -19,9 +19,11 @@ Get the submitted CRL
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: s
+s (denotes a string of text)
+
+The returned CRL is always in the `.pem` format.
 
 ### Parameters
 

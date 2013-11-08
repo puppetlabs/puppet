@@ -73,9 +73,9 @@ over the certificates used by the puppet master.
 GET, PUT, DELETE
 
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson
+PSON
 
 This endpoint can produce yaml as well, but the returned data is
 incomplete.

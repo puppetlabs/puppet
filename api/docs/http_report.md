@@ -15,15 +15,15 @@ The http(s) endpoint for sending reports to the master is:
 
 ### Supported HTTP Methods
 
-    PUT
+PUT
 
 ### Supported Format(s)
 
-    Accept: pson, text/pson
+PSON
 
 ### Parameters
 
-    None
+None
 
 ### Content
 
