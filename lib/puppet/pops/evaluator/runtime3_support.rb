@@ -192,7 +192,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # resolve in scope. TODO: Investigate what happens here - opportunity to optimize?
     fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type_name, resource_titles)
 
-    # Build a resource for each title (there may be only one)
+    # Build a resource for each title
     resource_titles.map do |resource_title|
         resource = Puppet::Parser::Resource.new(
           fully_qualified_type, resource_title,
@@ -216,8 +216,35 @@ module Puppet::Pops::Evaluator::Runtime3Support
         # Turn the resource into a PType (a reference to a resource type)
         # weed out nil's
         resource_to_ptype(resource)
-    end.flatten.compact
+    end
+  end
 
+  # Defines default parameters for a type with the given name.
+  #
+  def create_resource_defaults(o, scope, type_name, evaluated_parameters)
+    # Note that name must be capitalized in this 3x call
+    # The 3x impl creates a Resource instance with a bogus title and then asks the created resource
+    # for the type of the name
+    scope.define_settings(type_name.capitalize, evaluated_parameters)
+  end
+
+  # Creates resource overrides for all resource type objects in evaluated_resources. The same set of
+  # evaluated parameters are applied to all.
+  #
+  def create_resource_overrides(o, scope, evaluated_resources, evaluated_parameters)
+    evaluated_resources.each do |r|
+      resource = Puppet::Parser::Resource.new(
+      r.type_name, r.title,
+        :parameters => evaluated_parameters,
+        :file => 'TODO: file location',
+        :line => -1,
+        # WTF is this? Which source is this? The file? The name of the context ?
+        :source => scope.source,
+        :scope => scope
+      )
+
+      scope.compiler.add_override(resource)
+    end
   end
 
   def resource_to_ptype(resource)
@@ -249,7 +276,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   private
 
   # Produces an array with [type, title] from a PCatalogEntryType
-  # Only used to produce the reference resource instances that are used to form a relationship.
+  # Used to produce reference resource instances (used when 3x is operating on a resource).
   #
   def catalog_type_to_split_type_title(catalog_type)
     case catalog_type

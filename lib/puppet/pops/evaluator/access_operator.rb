@@ -173,6 +173,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   #
   def access_PResourceType(o, scope, keys)
     if keys.size == 0
+      # TODO: Either the below or an error
       return Marshal.load(Marshal.dump(o)) # Deep copy
     end
     unless o.title.nil?

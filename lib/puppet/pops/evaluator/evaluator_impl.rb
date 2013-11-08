@@ -618,11 +618,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     # TODO
   end
 
-  # @todo not implemented
-  def eval_Parameter o, scope
-    # TODO
-  end
-
+# NOT NEEDED IN THIS VERSION SINCE PARAMTERS ARE HANDLED IN POPS BRIDGE FOR DEFINITIONS, AND AT POINT OF
+# CALL FOR LAMBDAS
+#
+#  # @todo not implemented
+#  def eval_Parameter o, scope
+#  end
+#
   def eval_ParenthesizedExpression(o, scope)
     evaluate(o.expr, scope)
   end
@@ -643,33 +645,40 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     evaluate(o.body, scope)
   end
 
+  # Produces Array[PObjectType], an array of resource references
+  #
   def eval_ResourceExpression(o, scope)
     exported = o.exported
     virtual = o.virtual
     type_name = evaluate(o.type_name, scope)
-    o.bodies.each do |body|
+    o.bodies.map do |body|
       titles = [evaluate(body.title, scope)].flatten
       evaluated_parameters = body.operations.map {|op| evaluate(op, scope) }
-      titles.each do |title|
-        create_resources(o, scope, virtual, exported, type_name, titles, evaluated_parameters)
-      end
-    end
-  end
-
-  def eval_ResourceDefaultsExpression(o, scope)
+      create_resources(o, scope, virtual, exported, type_name, titles, evaluated_parameters)
+    end.flatten.compact
   end
 
   def eval_ResourceOverrideExpression(o, scope)
+    evaluated_resources = evaluate(o.resources, scope)
+    evaluated_parameters = o.operations.map { |op| evaluate(op, scope) }
+    create_resource_overrides(o, scope, [evaluated_resources].flatten, evaluated_parameters)
+    evaluated_resources
   end
 
+  # Produces 3x array of parameters
   def eval_AttributeOperation(o, scope)
     create_resource_parameter(o, scope, o.attribute_name, evaluate(o.value_expr, scope), o.operator)
   end
-  # TODO:
-  # ResourceExpression < Expression
-  #    class ResourceBody < ASTObject
-  # ResourceDefaultsExpression < Expression
-  # ResourceOverrideExpression < Expression
+
+  # Sets default parameter values for a type, produces the type
+  #
+  def eval_ResourceDefaultsExpression(o, scope)
+    type_name = o.type_ref.value # a QualifiedName's string value
+    evaluated_parameters = o.operations.map {|op| evaluate(op, scope) }
+    create_resource_defaults(o, scope, type_name, evaluated_parameters)
+    # Produce the type
+    evaluate(o.type_ref, scope)
+  end
 
   # Puppet 3.1 AST only supports calling a function by name (it is not possible to produce a function
   # that is then called). TODO- should puppet 4 accept this? It is very powerful in combiantion with
@@ -825,6 +834,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     else
       o.to_s
     end
+  end
+
+  def string_PAbstractType(o, scope)
+    @@type_calculator.string(o)
   end
 
   # Produces concatenation / merge of x and y.
