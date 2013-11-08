@@ -14,8 +14,16 @@ Services
 * {file:api/docs/http_report.md Report}
 * {file:api/docs/http_resource_type.md Resource Type}
 
-To be documented:
+Serialization Formats
+---------------------
 
-* resource
-* key
+Puppet sends messages using several different serialization formats. Not all
+REST services support all of the formats.
+
+* {file:api/docs/pson.md PSON}
+* {http://www.yaml.org/spec/1.2/spec.html YAML}
+
+To Be Documented
+----------------
+
 * status
