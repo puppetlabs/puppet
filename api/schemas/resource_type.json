@@ -34,8 +34,8 @@
       ]
     },
     "parameters": {
-      "type": "object"
-      "description": "The default arguments to the type. If an argument has no default value, the value is represented by a literal "null" (without quotes in pson).  Default values are the string representation of that value, even for more complex structures (e.g. the hash { key => 'val', key2 => 'val2' } would be represented in pson as \"{key => \\\"val\\\", key2 => \\\"val2\\\"}\".",
+      "type": "object",
+      "description": "The default arguments to the type. If an argument has no default value, the value is represented by a literal \"null\" (without quotes in pson).  Default values are the string representation of that value, even for more complex structures (e.g. the hash { key => 'val', key2 => 'val2' } would be represented in pson as \"{key => \\\"val\\\", key2 => \\\"val2\\\"}\"."
     }
   },
   "required": ["name", "kind"],
