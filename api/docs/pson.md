@@ -3,7 +3,7 @@ PSON
 
 PSON is a variant of {http://json.org JSON} that puppet uses for serializing
 data to transmit across the network or store on disk. Whereas JSON requires
-that the serialized form is valid unicode (usually UTF-8), PSON is 8bit ASCII,
+that the serialized form is valid unicode (usually UTF-8), PSON is 8-bit ASCII,
 which allows it to represent arbitrary bytes sequences in strings.
 
 Puppet uses the MIME types "pson" and "text/pson" to refer to PSON.
@@ -14,7 +14,7 @@ Differences from JSON
 PSON does *not differ* from JSON in its representation of objects, arrays, numbers, booleans, and null values. PSON *does* serialize strings differently from JSON.
 
 A PSON string is a sequence of 8-bit ASCII encoded data. It must start and end
-with " (ASCII 0x22) characters. Between these characters is may contain any
+with " (ASCII 0x22) characters. Between these characters it may contain any
 byte sequence. Some individual characters are represented by a sequence of
 characters:
 
@@ -28,10 +28,11 @@ characters:
     | 0x0C | Form Feed       | 0x5C, 0x66       | \f                     |
     | 0x0D | Carriage Return | 0x5C, 0x72       | \r                     |
 
-In addition any ASCII control character (except the ones listed above) must be
-encoded as a six byte sequence of \u followed by four ASCII digits of the hex
-number of the desired character. For example the ASCII Record Separator
-character (0x1E) is represented as \u001E (0x5C, 0x75, 0x30, 0x30, 0x31, 0x45).
+In addition any ASCII control character, which is any character between 0x00
+and 0x1F, (except the ones listed above) must be encoded as a six byte sequence
+of \u followed by four ASCII digits of the hex number of the desired character.
+For example the ASCII Record Separator character (0x1E) is represented as
+\u001E (0x5C, 0x75, 0x30, 0x30, 0x31, 0x45).
 
 Decoding PSON Using JSON Parsers
 --------------------------------
