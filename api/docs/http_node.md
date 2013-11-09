@@ -20,9 +20,9 @@ Retrieve data for a node
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson
+PSON
 
 ### Examples
 

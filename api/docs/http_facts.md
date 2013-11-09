@@ -15,9 +15,9 @@ Get facts for a node.
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson, text/pson
+PSON
 
 ### Parameters
 
@@ -141,4 +141,4 @@ Schema
 ------
 
 The representation of facts, whether returned from a GET or contained in a PUT body, should adhere to the
-api/schemas/facts.json schema.
+{file:api/schemas/facts.json api/schemas/facts.json} schema.

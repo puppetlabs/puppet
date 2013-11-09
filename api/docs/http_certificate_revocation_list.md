@@ -19,9 +19,11 @@ Get the submitted CRL
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: s
+s (denotes a string of text)
+
+The returned CRL is always in the `.pem` format.
 
 ### Parameters
 
@@ -181,5 +183,5 @@ decoding of the CRL PEM file.
 Schema
 ------
 
-A certificate_revocation_list response body is not structured data according to any
+A `certificate_revocation_list` response body is not structured data according to any
 standard scheme such as json/pson/yaml, so no schema is applicable.

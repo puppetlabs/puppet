@@ -54,9 +54,11 @@ Destroy actions. It is not recommended that you change the default settings.
 
 GET, PUT, DELETE
 
-### Supported Format
+### Supported Response Formats
 
-Accept: s
+s (denotes a string of text)
+
+The returned CSR is always in the `.pem` format.
 
 ### Parameters
 
@@ -159,5 +161,5 @@ The CSR PEMs are separated by "\n---\n"
 Schema
 ------
 
-A certificate_request response body is not structured data according to any
+A `certificate_request` response body is not structured data according to any
 standard scheme such as json/pson/yaml, so no schema is applicable.
