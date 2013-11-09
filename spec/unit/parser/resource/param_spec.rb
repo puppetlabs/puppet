@@ -34,5 +34,11 @@ describe Puppet::Parser::Resource::Param do
         Puppet::Parser::Resource::Param.new(:name => 'myparam', :value => nil)
       }.to raise_error(Puppet::Error, /value is a required option/)
     end
+
+    it "includes file/line context in errors" do
+      expect {
+        Puppet::Parser::Resource::Param.new(:name => 'myparam', :value => nil, :file => 'foo.pp', :line => 42)
+      }.to raise_error(Puppet::Error, /foo.pp:42/)
+    end
   end
 end
