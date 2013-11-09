@@ -95,12 +95,38 @@ describe "Puppet::Parser::Parser" do
         ast.code[0].instantiate('')[0].doc.should == "comment\n"
       end
 
-      it "should recognize docs when hash literals are in use" do
-        ast = @parser.parse("""
-        # comment
-        class test($param={}) {}
-        """)
-        ast.code[0].instantiate('')[0].doc.should == "comment\n"
+      { "an empty hash" => "{}",
+        "a simple hash" => "{ 'key' => 'value' }",
+        "a nested hash" => "{ 'first' => $x, 'second' => { a => 1, b => 2 } }"
+      }.each_pair do |hash_desc, hash_expr|
+        context "in the presence of #{hash_desc}" do
+          { "a parameter default" => "class test($param = #{hash_expr}) { }",
+            "a parameter value"   => "foo { 'bar': options => #{hash_expr} }",
+            "an plusignment rvalue" => "Foo['bar'] { options +> #{hash_expr} }",
+            "an assignment rvalue" => "$x = #{hash_expr}",
+            "an inequality rvalue" => "if $x != #{hash_expr} { }",
+            "an function argument in parenthesis"    => "flatten(#{hash_expr})",
+            "a second argument" => "merge($x, #{hash_expr})",
+          }.each_pair do |dsl_desc, dsl_expr|
+            context "as #{dsl_desc}" do
+              it "should associate the docstring to the container" do
+                ast = @parser.parse("# comment\nclass container { #{dsl_expr} }\n")
+                ast.code[0].instantiate('')[0].doc.should == "comment\n"
+              end
+            end
+          end
+          # Pending, these syntaxes are not yet supported in 3.x
+          #
+          # @todo Merge these into the test above after the migration to the new
+          #   parser is complete.
+          { "a selector alternative" => "$opt ? { { 'a' => 1 } => true, default => false }",
+            "an argument without parenthesis" => "flatten { 'a' => 1 }",
+          }.each_pair do |dsl_desc, dsl_expr|
+            context "as #{dsl_desc}" do
+              it "should associate the docstring to the container"
+            end
+          end
+        end
       end
     end
 
