@@ -61,7 +61,7 @@ module Puppet
     newvalue(:directory, :event => :directory_created) do
       mode = @resource.should(:mode)
       parent = File.dirname(@resource[:path])
-      unless FileTest.exists? parent
+      unless Puppet::FileSystem::File.exist? parent
         raise Puppet::Error,
           "Cannot create #{@resource[:path]}; parent directory #{parent} does not exist"
       end
@@ -77,7 +77,7 @@ module Puppet
     end
 
 
-    newvalue(:link, :event => :link_created) do
+    newvalue(:link, :event => :link_created, :required_features => :manages_symlinks) do
       fail "Cannot create a symlink without a target" unless property = resource.property(:target)
       property.retrieve
       property.mklink
@@ -121,7 +121,7 @@ module Puppet
     def check
       basedir = File.dirname(@resource[:path])
 
-      if ! FileTest.exists?(basedir)
+      if ! Puppet::FileSystem::File.exist?(basedir)
         raise Puppet::Error,
           "Can not create #{@resource.title}; parent directory does not exist"
       elsif ! FileTest.directory?(basedir)

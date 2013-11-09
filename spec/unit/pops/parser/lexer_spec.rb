@@ -786,7 +786,7 @@ describe "when trying to lex a non-existent file" do
   it "should return an empty list of tokens" do
     lexer = Puppet::Pops::Parser::Lexer.new
     lexer.file = nofile = tmpfile('lexer')
-    File.exists?(nofile).should == false
+    Puppet::FileSystem::File.exist?(nofile).should == false
 
     lexer.fullscan.should == [[false,false]]
   end

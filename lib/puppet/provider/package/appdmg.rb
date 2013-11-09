@@ -93,7 +93,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
   end
 
   def query
-    FileTest.exists?("/var/db/.puppet_appdmg_installed_#{@resource[:name]}") ? {:name => @resource[:name], :ensure => :present} : nil
+    Puppet::FileSystem::File.exist?("/var/db/.puppet_appdmg_installed_#{@resource[:name]}") ? {:name => @resource[:name], :ensure => :present} : nil
   end
 
   def install

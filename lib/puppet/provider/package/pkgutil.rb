@@ -14,7 +14,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   end
 
   def self.healthcheck()
-    unless FileTest.exists?("/var/opt/csw/pkgutil/admin")
+    unless Puppet::FileSystem::File.exist?("/var/opt/csw/pkgutil/admin")
       Puppet.notice "It is highly recommended you create '/var/opt/csw/pkgutil/admin'."
       Puppet.notice "See /var/opt/csw/pkgutil"
     end

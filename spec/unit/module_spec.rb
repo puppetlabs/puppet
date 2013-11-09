@@ -15,7 +15,7 @@ describe Puppet::Module do
   before do
     # This is necessary because of the extra checks we have for the deprecated
     # 'plugins' directory
-    FileTest.stubs(:exist?).returns false
+    Puppet::FileSystem::File.stubs(:exist?).returns false
   end
 
   it "should have a class method that returns a named module from a given environment" do
@@ -90,12 +90,14 @@ describe Puppet::Module do
 
   describe "when finding unmet dependencies" do
     before do
-      FileTest.unstub(:exist?)
+      Puppet::FileSystem::File.unstub(:exist?)
       @modpath = tmpdir('modpath')
       Puppet.settings[:modulepath] = @modpath
     end
 
     it "should list modules that are missing" do
+      metadata_file = "#{@modpath}/needy/metadata.json"
+      Puppet::FileSystem::File.expects(:exist?).twice.with(metadata_file).returns true
       mod = PuppetSpec::Modules.create(
         'needy',
         @modpath,
@@ -116,6 +118,8 @@ describe Puppet::Module do
     end
 
     it "should list modules that are missing and have invalid names" do
+      metadata_file = "#{@modpath}/needy/metadata.json"
+      Puppet::FileSystem::File.expects(:exist?).with(metadata_file).twice.returns true
       mod = PuppetSpec::Modules.create(
         'needy',
         @modpath,
@@ -136,6 +140,10 @@ describe Puppet::Module do
     end
 
     it "should list modules with unmet version requirement" do
+      ['foobar', 'foobaz'].each do |mod_name|
+        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
+        Puppet::FileSystem::File.stubs(:exist?).with(metadata_file).returns true
+      end
       mod = PuppetSpec::Modules.create(
         'foobar',
         @modpath,
@@ -204,6 +212,8 @@ describe Puppet::Module do
     end
 
     it "should consider a dependency without a semantic version to be unmet" do
+      metadata_file = "#{@modpath}/foobar/metadata.json"
+      Puppet::FileSystem::File.expects(:exist?).with(metadata_file).times(3).returns true
       mod = PuppetSpec::Modules.create(
         'foobar',
         @modpath,
@@ -244,6 +254,10 @@ describe Puppet::Module do
     end
 
     it "should only list unmet dependencies" do
+      [name, 'satisfied'].each do |mod_name|
+        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
+        Puppet::FileSystem::File.expects(:exist?).with(metadata_file).twice.returns true
+      end
       mod = PuppetSpec::Modules.create(
         name,
         @modpath,
@@ -368,31 +382,31 @@ describe Puppet::Module do
     end
     it "should be able to return individual #{filetype}" do
       module_file = File.join(path, dirname, "my/file")
-      FileTest.expects(:exist?).with(module_file).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(module_file).returns true
       mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should == module_file
     end
 
     it "should consider #{filetype} to be present if their base directory exists" do
       module_file = File.join(path, dirname)
-      FileTest.expects(:exist?).with(module_file).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(module_file).returns true
       mod.send(filetype.to_s + "?").should be_true
     end
 
     it "should consider #{filetype} to be absent if their base directory does not exist" do
       module_file = File.join(path, dirname)
-      FileTest.expects(:exist?).with(module_file).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(module_file).returns false
       mod.send(filetype.to_s + "?").should be_false
     end
 
     it "should return nil if asked to return individual #{filetype} that don't exist" do
       module_file = File.join(path, dirname, "my/file")
-      FileTest.expects(:exist?).with(module_file).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(module_file).returns false
       mod.send(filetype.to_s.sub(/s$/, ''), "my/file").should be_nil
     end
 
     it "should return the base directory if asked for a nil path" do
       base = File.join(path, dirname)
-      FileTest.expects(:exist?).with(base).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(base).returns true
       mod.send(filetype.to_s.sub(/s$/, ''), nil).should == base
     end
   end
@@ -425,8 +439,8 @@ describe Puppet::Module, "when finding matching manifests" do
   end
 
   it "should default to the 'init' file if no glob pattern is specified" do
-    FileTest.expects(:exist?).with("/a/manifests/init.pp").returns(true)
-    FileTest.expects(:exist?).with("/a/manifests/init.rb").returns(false)
+    Puppet::FileSystem::File.expects(:exist?).with("/a/manifests/init.pp").returns(true)
+    Puppet::FileSystem::File.expects(:exist?).with("/a/manifests/init.rb").returns(false)
 
     @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
   end
@@ -478,21 +492,21 @@ describe Puppet::Module do
   end
 
   it "should have metadata if it has a metadata file and its data is not empty" do
-    FileTest.expects(:exist?).with(@module.metadata_file).returns true
+    Puppet::FileSystem::File.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file).returns "{\"foo\" : \"bar\"}"
 
     @module.should be_has_metadata
   end
 
   it "should have metadata if it has a metadata file and its data is not empty" do
-    FileTest.expects(:exist?).with(@module.metadata_file).returns true
+    Puppet::FileSystem::File.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file).returns "{\"foo\" : \"bar\"}"
 
     @module.should be_has_metadata
   end
 
   it "should not have metadata if has a metadata file and its data is empty" do
-    FileTest.expects(:exist?).with(@module.metadata_file).returns true
+    Puppet::FileSystem::File.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file).returns "/*
 +-----------------------------------------------------------------------+
 |                                                                       |
@@ -510,7 +524,7 @@ describe Puppet::Module do
   end
 
   it "should know if it is missing a metadata file" do
-    FileTest.expects(:exist?).with(@module.metadata_file).returns false
+    Puppet::FileSystem::File.expects(:exist?).with(@module.metadata_file).returns false
 
     @module.should_not be_has_metadata
   end
@@ -527,7 +541,7 @@ describe Puppet::Module do
   end
 
   it "should tolerate failure to parse" do
-    FileTest.expects(:exist?).with(@module.metadata_file).returns true
+    Puppet::FileSystem::File.expects(:exist?).with(@module.metadata_file).returns true
     File.stubs(:read).with(@module.metadata_file).returns(my_fixture('trailing-comma.json'))
 
     @module.has_metadata?.should be_false

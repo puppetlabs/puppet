@@ -34,7 +34,7 @@ describe "base service provider" do
     end
 
     before :each do
-      File.unlink(flag) if File.exist?(flag)
+      File.unlink(flag) if Puppet::FileSystem::File.exist?(flag)
     end
 
     it { should be }

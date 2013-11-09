@@ -30,12 +30,12 @@ describe Puppet::Confine::Exists do
   end
 
   it "should return false if the value does not point to a file" do
-    FileTest.expects(:exist?).with("/my/file").returns false
+    Puppet::FileSystem::File.expects(:exist?).with("/my/file").returns false
     @confine.pass?("/my/file").should be_false
   end
 
   it "should return true if the value points to a file" do
-    FileTest.expects(:exist?).with("/my/file").returns true
+    Puppet::FileSystem::File.expects(:exist?).with("/my/file").returns true
     @confine.pass?("/my/file").should be_true
   end
 
@@ -62,9 +62,9 @@ describe Puppet::Confine::Exists do
   end
 
   it "should produce a summary containing all missing files" do
-    FileTest.stubs(:exist?).returns true
-    FileTest.expects(:exist?).with("/two").returns false
-    FileTest.expects(:exist?).with("/four").returns false
+    Puppet::FileSystem::File.stubs(:exist?).returns true
+    Puppet::FileSystem::File.expects(:exist?).with("/two").returns false
+    Puppet::FileSystem::File.expects(:exist?).with("/four").returns false
 
     confine = Puppet::Confine::Exists.new %w{/one /two /three /four}
     confine.summary.should == %w{/two /four}

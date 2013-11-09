@@ -170,7 +170,7 @@ module Puppet
       unless Puppet[:noop]
         target_mode = 0644 # FIXME: should be configurable
         inifile.each_file do |file|
-          current_mode = ::File.stat(file).mode & 0777
+          current_mode = Puppet::FileSystem::File.new(file).stat.mode & 0777
           unless current_mode == target_mode
             Puppet::info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
             ::File.chmod(target_mode, file)

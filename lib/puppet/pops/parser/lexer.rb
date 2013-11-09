@@ -418,7 +418,7 @@ class Puppet::Pops::Parser::Lexer
 
   def file=(file)
     @file = file
-    contents = File.exists?(file) ? File.read(file) : ""
+    contents = Puppet::FileSystem::File.exist?(file) ? File.read(file) : ""
     @scanner = StringScanner.new(contents)
     @locator = Locator.new(contents, multibyte?)
   end

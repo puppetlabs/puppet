@@ -464,7 +464,7 @@ describe Puppet::Configurer do
 
     it "should write the last run file" do
       @configurer.save_last_run_summary(@report)
-      FileTest.exists?(Puppet[:lastrunfile]).should be_true
+      Puppet::FileSystem::File.exist?(Puppet[:lastrunfile]).should be_true
     end
 
     it "should write the raw summary as yaml" do
@@ -496,7 +496,7 @@ describe Puppet::Configurer do
         require 'puppet/util/windows/security'
         mode = Puppet::Util::Windows::Security.get_mode(Puppet[:lastrunfile])
       else
-        mode = File.stat(Puppet[:lastrunfile]).mode
+        mode = Puppet::FileSystem::File.new(Puppet[:lastrunfile]).stat.mode
       end
       (mode & 0777).should == 0664
     end

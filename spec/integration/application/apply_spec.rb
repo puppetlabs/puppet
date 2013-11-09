@@ -26,7 +26,7 @@ describe "apply" do
 
       puppet.apply
 
-      File.should be_exist(file_to_create)
+      Puppet::FileSystem::File.exist?(file_to_create).should be_true
       File.read(file_to_create).should == "my stuff"
     end
   end

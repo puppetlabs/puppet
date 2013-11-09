@@ -63,7 +63,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
         after :each do
           winsec.set_mode(WindowsSecurityTester::S_IRWXU, parent)
-          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) if File.exists?(path)
+          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) if Puppet::FileSystem::File.exist?(path)
         end
 
         describe "#supports_acl?" do
@@ -258,7 +258,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         after :each do
-          if File.exists?(path)
+          if Puppet::FileSystem::File.exist?(path)
             winsec.set_owner(sids[:current_user], path)
             winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
           end

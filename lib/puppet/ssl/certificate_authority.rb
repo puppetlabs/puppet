@@ -94,7 +94,7 @@ class Puppet::SSL::CertificateAuthority
       unless Puppet::Util.absolute_path?(auto)
         raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file"
       end
-      FileTest.exist?(auto) && auto
+      Puppet::FileSystem::File.exist?(auto) && auto
     end
   end
 
@@ -239,7 +239,7 @@ class Puppet::SSL::CertificateAuthority
 
   # Does the password file exist?
   def password?
-    FileTest.exist? Puppet[:capass]
+    Puppet::FileSystem::File.exist? Puppet[:capass]
   end
 
   # Print a given host's certificate as text.

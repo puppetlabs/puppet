@@ -99,9 +99,20 @@ class Puppet::FileSystem::File
     raise NotImplementedError
   end
 
-  # @return [Boolean] Whether the path of this file is present
+  # Determine if a file exists by verifying that the file can be stat'd.
+  # Will follow symlinks and verify that the actual target path exists.
+  #
+  # @return [Boolean] true if the named file exists.
+  def self.exist?(path)
+    File.exist?(path)
+  end
+
+  # Determine if a file exists by verifying that the file can be stat'd.
+  # Will follow symlinks and verify that the actual target path exists.
+  #
+  # @return [Boolean] true if the path of this file is present
   def exist?
-    @path.exist?
+    self.class.exist?(@path)
   end
 
   # @return [Boolean] Whether the file is writable by the current
@@ -118,6 +129,46 @@ class Puppet::FileSystem::File
   # Create the entire path as directories
   def mkpath
     @path.mkpath
+  end
+
+  # Creates a symbolic link dest which points to the current file. If dest
+  # already exists and it is a directory, creates a symbolic link dest/the
+  # current file. If dest already exists and it is not a directory,
+  # raises Errno::EEXIST. But if :force option is set, overwrite dest.
+  #
+  # @param dest [String] The mode to apply to the file if it is created
+  # @param [Hash] options the options to create a message with.
+  # @option options [Boolean] :force overwrite dest
+  # @option options [Boolean] :noop do not perform the operation
+  # @option options [Boolean] :verbose verbose output
+  #
+  # @raise [Errno::EEXIST] dest already exists and it is not a directory
+  #
+  # @return [Integer] 0
+  def symlink(dest, options = {})
+    FileUtils.symlink(@path, dest, options)
+  end
+
+  # @return [Boolean] true if the file is a symbolic link.
+  def symlink?
+    File.symlink?(@path)
+  end
+
+  # @return [String] the name of the file referenced by the given link.
+  def readlink
+    File.readlink(@path)
+  end
+
+
+  # @return [File::Stat] object for the named file.
+  def stat
+    File.stat(@path)
+  end
+
+  # @return [File::Stat] Same as stat, but does not follow the last symbolic
+  # link. Instead, reports on the link itself.
+  def lstat
+    File.lstat(@path)
   end
 
   # Compare the contents of this file against the contents of a stream.

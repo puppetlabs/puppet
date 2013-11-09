@@ -163,7 +163,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet[:code] = options[:code] || STDIN.read
     else
       manifest = command_line.args.shift
-      raise "Could not find file #{manifest}" unless ::File.exist?(manifest)
+      raise "Could not find file #{manifest}" unless Puppet::FileSystem::File.exist?(manifest)
       Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
       Puppet[:manifest] = manifest
     end
@@ -189,7 +189,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # Allow users to load the classes that puppet agent creates.
     if options[:loadclasses]
       file = Puppet[:classfile]
-      if FileTest.exists?(file)
+      if Puppet::FileSystem::File.exist?(file)
         unless FileTest.readable?(file)
           $stderr.puts "#{file} is not readable"
           exit(63)

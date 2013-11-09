@@ -14,7 +14,7 @@ module Puppet::Network::Authentication
     certs << Puppet::SSL::CertificateAuthority.instance.host.certificate if Puppet::SSL::CertificateAuthority.ca?
 
     # Always check the host cert if we have one, this will be the agent or master cert depending on the run mode
-    certs << Puppet::SSL::Host.localhost.certificate if FileTest.exist?(Puppet[:hostcert])
+    certs << Puppet::SSL::Host.localhost.certificate if Puppet::FileSystem::File.exist?(Puppet[:hostcert])
 
     # Remove nil values for caller convenience
     certs.compact.each do |cert|

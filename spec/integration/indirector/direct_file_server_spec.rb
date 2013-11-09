@@ -15,7 +15,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
 
   it "should return an instance of the model" do
     pending("porting to Windows", :if => Puppet.features.microsoft_windows?) do
-      FileTest.expects(:exists?).with(@filepath).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(@filepath).returns(true)
 
       @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}", nil)).should be_instance_of(Puppet::FileServing::Content)
     end

@@ -261,7 +261,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
       # which makes zoneadmd mount the zone root
       zoneadm :ready unless File.directory?(zoneetc)
 
-      unless File.exists?(sysidcfg)
+      unless Puppet::FileSystem::File.exist?(sysidcfg)
         begin
           File.open(sysidcfg, "w", 0600) do |f|
             f.puts cfg

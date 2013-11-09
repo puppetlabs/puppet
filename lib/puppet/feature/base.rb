@@ -70,3 +70,8 @@ Puppet.features.add(:sqlite, :libs => ["sqlite3"])
 Puppet.features.add(:hiera, :libs => ["hiera"])
 
 Puppet.features.add(:minitar, :libs => ["archive/tar/minitar"])
+
+# We can manage symlinks
+Puppet.features.add(:manages_symlinks) do
+  ! Puppet::Util::Platform.windows?
+end

@@ -99,9 +99,14 @@ describe provider_class do
   end
 
   describe "when enabling" do
-    it "should create a symlink between daemon dir and service dir" do
-      FileTest.stubs(:symlink?).returns(false)
-      File.expects(:symlink).with(File.join(@daemondir,"myservice"), File.join(@servicedir,"myservice")).returns(0)
+    it "should create a symlink between daemon dir and service dir", :if => Puppet::Type.type(:file).defaultprovider.feature?(:manages_symlinks)  do
+      daemon_path = File.join(@daemondir, "myservice")
+      stub_daemon = stub(daemon_path, :symlink? => false)
+      Puppet::FileSystem::File.expects(:new).with(daemon_path).returns(stub_daemon)
+      service_path = File.join(@servicedir, "myservice")
+      mock_service = mock(service_path, :symlink? => false)
+      Puppet::FileSystem::File.expects(:new).with(service_path).returns(mock_service)
+      stub_daemon.expects(:symlink).returns(0)
       @provider.enable
     end
   end
@@ -109,15 +114,18 @@ describe provider_class do
   describe "when disabling" do
     it "should remove the symlink between daemon dir and service dir" do
       FileTest.stubs(:directory?).returns(false)
-      FileTest.stubs(:symlink?).returns(true)
-      File.expects(:unlink).with(File.join(@servicedir,"myservice"))
+      path = File.join(@servicedir,"myservice")
+      mocked_file = mock(path, :symlink? => true)
+      Puppet::FileSystem::File.expects(:new).with(path).returns(mocked_file)
+      File.expects(:unlink).with(path)
       @provider.stubs(:texecute).returns("")
       @provider.disable
     end
 
     it "should stop the service" do
       FileTest.stubs(:directory?).returns(false)
-      FileTest.stubs(:symlink?).returns(true)
+      mocked_file = mock('anything', :symlink? => true)
+      Puppet::FileSystem::File.expects(:new).returns(mocked_file)
       File.stubs(:unlink)
       @provider.expects(:stop)
       @provider.disable
@@ -134,7 +142,9 @@ describe provider_class do
     [true, false].each do |t|
       it "should return #{t} if the symlink exists" do
         @provider.stubs(:status).returns(:stopped)
-        FileTest.stubs(:symlink?).returns(t)
+        path = File.join(@servicedir,"myservice")
+        mocked_file = mock(path, :symlink? => t)
+        Puppet::FileSystem::File.expects(:new).with(path).returns(mocked_file)
 
         @provider.enabled?.should == "#{t}".to_sym
       end

@@ -27,15 +27,15 @@ describe Puppet::Type.type(:file) do
     end
 
     def get_mode(file)
-      File.lstat(file).mode
+      Puppet::FileSystem::File.new(file).lstat.mode
     end
 
     def get_owner(file)
-      File.lstat(file).uid
+      Puppet::FileSystem::File.new(file).lstat.uid
     end
 
     def get_group(file)
-      File.lstat(file).gid
+      Puppet::FileSystem::File.new(file).lstat.gid
     end
   else
     class SecurityHelper
@@ -72,7 +72,7 @@ describe Puppet::Type.type(:file) do
     status = catalog.apply.report.resource_statuses["File[#{source}]"]
     status.should_not be_failed
     status.should_not be_changed
-    File.should_not be_exist(source)
+    Puppet::FileSystem::File.exist?(source).should be_false
   end
 
   describe "when ensure is absent" do
@@ -81,14 +81,14 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
       report = catalog.apply.report
       report.resource_statuses["File[#{path}]"].should_not be_failed
-      File.should_not be_exist(path)
+      Puppet::FileSystem::File.exist?(path).should be_false
     end
 
     it "should do nothing if file is not present" do
       catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
       report = catalog.apply.report
       report.resource_statuses["File[#{path}]"].should_not be_failed
-      File.should_not be_exist(path)
+      Puppet::FileSystem::File.exist?(path).should be_false
     end
 
     # issue #14599
@@ -204,7 +204,7 @@ describe Puppet::Type.type(:file) do
         end
       end
 
-      describe "for links", :unless => Puppet.features.microsoft_windows? do
+      describe "for links", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
         let(:link) { tmpfile('link_mode') }
 
         describe "when managing links" do
@@ -214,7 +214,7 @@ describe Puppet::Type.type(:file) do
             FileUtils.touch(link_target)
             File.chmod(0444, link_target)
 
-            File.symlink(link_target, link)
+            Puppet::FileSystem::File.new(link_target).symlink(link)
           end
 
           it "should not set the executable bit on the link nor the target" do
@@ -222,8 +222,8 @@ describe Puppet::Type.type(:file) do
 
             catalog.apply
 
-            (File.stat(link).mode & 07777) == 0666
-            (File.lstat(link_target).mode & 07777) == 0444
+            (Puppet::FileSystem::File.new(link).stat.mode & 07777) == 0666
+            (Puppet::FileSystem::File.new(link_target).lstat.mode & 07777) == 0444
           end
 
           it "should ignore dangling symlinks (#6856)" do
@@ -232,7 +232,7 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => link_target, :links => :manage)
             catalog.apply
 
-            File.should_not be_exist(link)
+            Puppet::FileSystem::File.exist?(link).should be_false
           end
 
           it "should create a link to the target if ensure is omitted" do
@@ -240,9 +240,9 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource described_class.new(:path => link, :target => link_target)
             catalog.apply
 
-            File.should be_exist link
-            File.lstat(link).ftype.should == 'link'
-            File.readlink(link).should == link_target
+            Puppet::FileSystem::File.exist?(link).should be_true
+            Puppet::FileSystem::File.new(link).lstat.ftype.should == 'link'
+            Puppet::FileSystem::File.new(link).readlink().should == link_target
           end
         end
 
@@ -251,7 +251,7 @@ describe Puppet::Type.type(:file) do
             target = tmpfile('dangling')
 
             FileUtils.touch(target)
-            File.symlink(target, link)
+            Puppet::FileSystem::File.new(target).symlink(link)
             File.delete(target)
 
             catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
@@ -264,7 +264,7 @@ describe Puppet::Type.type(:file) do
             before :each do
               File.chmod(0600, link_target)
 
-              File.symlink(link_target, link)
+              Puppet::FileSystem::File.new(link_target).symlink(link)
             end
 
             after :each do
@@ -327,7 +327,7 @@ describe Puppet::Type.type(:file) do
             before :each do
               FileUtils.touch(link_target)
 
-              File.symlink(link_target, link)
+              Puppet::FileSystem::File.new(link_target).symlink(link)
             end
 
             it "should create the file, not a symlink (#2817, #10315)" do
@@ -357,8 +357,8 @@ describe Puppet::Type.type(:file) do
               File.chmod(0666, real_target)
 
               # link -> target -> real_target
-              File.symlink(real_target, target)
-              File.symlink(target, link)
+              Puppet::FileSystem::File.new(real_target).symlink(target)
+              Puppet::FileSystem::File.new(target).symlink(link)
             end
 
             after :each do
@@ -415,7 +415,7 @@ describe Puppet::Type.type(:file) do
       catalog.apply
 
       backup = file[:path] + ".bak"
-      FileTest.should be_exist(backup)
+      Puppet::FileSystem::File.exist?(backup).should be_true
       File.read(backup).should == "bar\n"
     end
 
@@ -437,7 +437,7 @@ describe Puppet::Type.type(:file) do
       File.read(file[:path]).should == "bar\n"
     end
 
-    it "should not backup symlinks", :unless => Puppet.features.microsoft_windows? do
+    it "should not backup symlinks", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       link = tmpfile("link")
       dest1 = tmpfile("dest1")
       dest2 = tmpfile("dest2")
@@ -447,14 +447,14 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource bucket
 
       File.open(dest1, "w") { |f| f.puts "whatever" }
-      File.symlink(dest1, link)
+      Puppet::FileSystem::File.new(dest1).symlink(link)
 
       md5 = Digest::MD5.hexdigest(File.read(file[:path]))
 
       catalog.apply
 
-      File.readlink(link).should == dest2
-      File.exist?(bucket[:path]).should be_false
+      Puppet::FileSystem::File.new(link).readlink().should == dest2
+      Puppet::FileSystem::File.exist?(bucket[:path]).should be_false
     end
 
     it "should backup directories to the local filesystem by copying the whole directory" do
@@ -574,7 +574,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively make links to other files", :unless => Puppet.features.microsoft_windows? do
+    it "should be able to recursively make links to other files", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       source = tmpfile("file_link_integration_source")
 
       build_path(source)
@@ -590,13 +590,13 @@ describe Puppet::Type.type(:file) do
       @dirs.each do |path|
         link_path = path.sub(source, dest)
 
-        File.lstat(link_path).should be_directory
+        Puppet::FileSystem::File.new(link_path).lstat.should be_directory
       end
 
       @files.each do |path|
         link_path = path.sub(source, dest)
 
-        File.lstat(link_path).ftype.should == "link"
+        Puppet::FileSystem::File.new(link_path).lstat.ftype.should == "link"
       end
     end
 
@@ -616,13 +616,13 @@ describe Puppet::Type.type(:file) do
       @dirs.each do |path|
         newpath = path.sub(source, dest)
 
-        File.lstat(newpath).should be_directory
+        Puppet::FileSystem::File.new(newpath).lstat.should be_directory
       end
 
       @files.each do |path|
         newpath = path.sub(source, dest)
 
-        File.lstat(newpath).ftype.should == "file"
+        Puppet::FileSystem::File.new(newpath).lstat.ftype.should == "file"
       end
     end
 
@@ -685,8 +685,8 @@ describe Puppet::Type.type(:file) do
             catalog.apply
 
             File.should be_directory(path)
-            File.should_not be_exist(File.join(path, 'one'))
-            File.should be_exist(File.join(path, 'three', 'four'))
+            Puppet::FileSystem::File.exist?(File.join(path, 'one')).should be_false
+            Puppet::FileSystem::File.exist?(File.join(path, 'three', 'four')).should be_true
           end
 
           it "should recursively copy an empty directory" do
@@ -707,7 +707,7 @@ describe Puppet::Type.type(:file) do
             catalog.apply
 
             File.should be_directory(path)
-            File.should_not be_exist(File.join(path, 'a'))
+            Puppet::FileSystem::File.exist?(File.join(path, 'a')).should be_false
           end
 
           it "should only recurse one level" do
@@ -731,9 +731,9 @@ describe Puppet::Type.type(:file) do
 
             catalog.apply
 
-            File.should be_exist(File.join(path, 'a'))
-            File.should_not be_exist(File.join(path, 'a', 'b'))
-            File.should_not be_exist(File.join(path, 'z'))
+            Puppet::FileSystem::File.exist?(File.join(path, 'a')).should be_true
+            Puppet::FileSystem::File.exist?(File.join(path, 'a', 'b')).should be_false
+            Puppet::FileSystem::File.exist?(File.join(path, 'z')).should be_false
           end
         end
 
@@ -830,10 +830,10 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource obj
             catalog.apply
 
-            File.should be_exist(File.join(path, 'a'))
-            File.should_not be_exist(File.join(path, 'a', 'b'))
-            File.should be_exist(File.join(path, 'z'))
-            File.should_not be_exist(File.join(path, 'z', 'y'))
+            Puppet::FileSystem::File.exist?(File.join(path, 'a')).should be_true
+            Puppet::FileSystem::File.exist?(File.join(path, 'a', 'b')).should be_false
+            Puppet::FileSystem::File.exist?(File.join(path, 'z')).should be_true
+            Puppet::FileSystem::File.exist?(File.join(path, 'z', 'y')).should be_false
           end
         end
       end
@@ -897,7 +897,7 @@ describe Puppet::Type.type(:file) do
 
       expected_mode = Puppet.features.microsoft_windows? ? 0644 : 0755
       File.read(dest).should == "foo"
-      (File.stat(dest).mode & 007777).should == expected_mode
+      (Puppet::FileSystem::File.new(dest).stat.mode & 007777).should == expected_mode
     end
 
     it "should be able to copy individual files even if recurse has been specified" do
@@ -949,7 +949,7 @@ describe Puppet::Type.type(:file) do
     catalog.add_resource file
     catalog.apply
 
-    File.should_not be_exist(dest)
+    Puppet::FileSystem::File.exist?(dest).should be_false
   end
 
   describe "when sourcing" do
@@ -1056,7 +1056,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should purge files that are neither remote nor otherwise managed" do
-      FileTest.should_not be_exist(@purgee)
+      Puppet::FileSystem::File.exist?(@purgee).should be_false
     end
   end
 

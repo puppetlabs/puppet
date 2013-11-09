@@ -36,7 +36,7 @@ DOC
   end
 
   def password
-    return nil unless password_file and FileTest.exist?(password_file)
+    return nil unless password_file and Puppet::FileSystem::File.exist?(password_file)
 
     ::File.read(password_file)
   end

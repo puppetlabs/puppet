@@ -71,7 +71,7 @@ describe Puppet::SSL::Key do
     end
 
     it "should not try to use the provided password file if the file does not exist" do
-      FileTest.stubs(:exist?).returns false
+      Puppet::FileSystem::File.stubs(:exist?).returns false
       @key.password_file = "/path/to/password"
 
       path = "/my/path"
@@ -84,7 +84,7 @@ describe Puppet::SSL::Key do
     end
 
     it "should read the key with the password retrieved from the password file if one is provided" do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       @key.password_file = "/path/to/password"
 
       path = "/my/path"
@@ -154,7 +154,7 @@ describe Puppet::SSL::Key do
 
     describe "with a password file set" do
       it "should return a nil password if the password file does not exist" do
-        FileTest.expects(:exist?).with("/path/to/pass").returns false
+        Puppet::FileSystem::File.expects(:exist?).with("/path/to/pass").returns false
         File.expects(:read).with("/path/to/pass").never
 
         @instance.password_file = "/path/to/pass"
@@ -163,7 +163,7 @@ describe Puppet::SSL::Key do
       end
 
       it "should return the contents of the password file as its password" do
-        FileTest.expects(:exist?).with("/path/to/pass").returns true
+        Puppet::FileSystem::File.expects(:exist?).with("/path/to/pass").returns true
         File.expects(:read).with("/path/to/pass").returns "my password"
 
         @instance.password_file = "/path/to/pass"

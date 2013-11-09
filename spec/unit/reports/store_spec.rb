@@ -47,7 +47,7 @@ describe processor do
 
     it "rejects invalid hostnames" do
       @report.host = ".."
-      FileTest.expects(:exists?).never
+      Puppet::FileSystem::File.expects(:exist?).never
       Tempfile.expects(:new).never
       expect { @report.process }.to raise_error(ArgumentError, /Invalid node/)
     end

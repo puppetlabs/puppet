@@ -14,7 +14,10 @@ describe Puppet::Util::Watcher do
     let(:filename) { "fake" }
 
     def after_reading_the_sequence(initial, *results)
-      expectation = File.stubs(:stat).with(filename)
+      mock_file = mock(filename)
+      Puppet::FileSystem::File.expects(:new).with(filename).at_least(1).returns mock_file
+
+      expectation = mock_file.stubs(:stat)
       ([initial] + results).each do |result|
         expectation = if result.is_a? Class
                         expectation.raises(result)

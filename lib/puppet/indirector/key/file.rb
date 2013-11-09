@@ -24,7 +24,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
   def destroy(request)
     super
 
-    return unless FileTest.exist?(public_key_path(request.key))
+    return unless Puppet::FileSystem::File.exist?(public_key_path(request.key))
 
     begin
       File.unlink(public_key_path(request.key))

@@ -485,7 +485,7 @@ describe Puppet::Settings do
           :three  => { :default => "$one $two THREE", :desc => "c"},
           :four   => { :default => "$two $three FOUR", :desc => "d"},
           :five   => { :default => nil, :desc => "e" }
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
     end
 
     describe "call_on_define" do
@@ -589,7 +589,7 @@ describe Puppet::Settings do
         :config => { :type => :file, :default => "/my/file", :desc => "a" },
         :one => { :default => "ONE", :desc => "a" },
         :two => { :default => "TWO", :desc => "b" }
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       @settings.preferred_run_mode = :agent
     end
 
@@ -666,8 +666,8 @@ describe Puppet::Settings do
     describe "when root" do
       it "should look for the main config file default location config settings haven't been overridden'" do
         Puppet.features.stubs(:root?).returns(true)
-        FileTest.expects(:exist?).with(main_config_file_default_location).returns(false)
-        FileTest.expects(:exist?).with(user_config_file_default_location).never
+        Puppet::FileSystem::File.expects(:exist?).with(main_config_file_default_location).returns(false)
+        Puppet::FileSystem::File.expects(:exist?).with(user_config_file_default_location).never
 
         @settings.send(:parse_config_files)
       end
@@ -678,7 +678,7 @@ describe Puppet::Settings do
         Puppet.features.stubs(:root?).returns(false)
 
         seq = sequence "load config files"
-        FileTest.expects(:exist?).with(user_config_file_default_location).returns(false).in_sequence(seq)
+        Puppet::FileSystem::File.expects(:exist?).with(user_config_file_default_location).returns(false).in_sequence(seq)
 
         @settings.send(:parse_config_files)
       end
@@ -699,8 +699,8 @@ describe Puppet::Settings do
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
       @settings.stubs(:user_config_file).returns(@userconfig)
-      FileTest.stubs(:exist?).with(@file).returns true
-      FileTest.stubs(:exist?).with(@userconfig).returns false
+      Puppet::FileSystem::File.stubs(:exist?).with(@file).returns true
+      Puppet::FileSystem::File.stubs(:exist?).with(@userconfig).returns false
     end
 
     it "should not ignore the report setting" do
@@ -712,7 +712,7 @@ describe Puppet::Settings do
         [puppetd]
           report=true
       CONF
-      FileTest.expects(:exist?).with(myfile).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(myfile).returns(true)
       @settings.expects(:read_file).returns(text)
       @settings.send(:parse_config_files)
       @settings[:report].should be_true
@@ -722,7 +722,7 @@ describe Puppet::Settings do
       myfile = make_absolute("/my/file") # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
       @settings[:config] = myfile
 
-      FileTest.expects(:exist?).with(myfile).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(myfile).returns(true)
 
       File.expects(:read).with(myfile).returns "[main]"
 
@@ -730,7 +730,7 @@ describe Puppet::Settings do
     end
 
     it "should not try to parse non-existent files" do
-      FileTest.expects(:exist?).with(@file).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(@file).returns false
 
       File.expects(:read).with(@file).never
 
@@ -925,7 +925,7 @@ describe Puppet::Settings do
     context "running non-root without explicit config file" do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
-        FileTest.expects(:exist?).
+        Puppet::FileSystem::File.expects(:exist?).
           with(user_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -947,7 +947,7 @@ describe Puppet::Settings do
     context "running as root without explicit config file" do
       before :each do
         Puppet.features.stubs(:root?).returns(true)
-        FileTest.expects(:exist?).
+        Puppet::FileSystem::File.expects(:exist?).
           with(main_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -970,7 +970,7 @@ describe Puppet::Settings do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
         @settings[:confdir] = File.dirname(main_config_file_default_location)
-        FileTest.expects(:exist?).
+        Puppet::FileSystem::File.expects(:exist?).
           with(main_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -1000,13 +1000,13 @@ describe Puppet::Settings do
           :one => { :default => "ONE", :desc => "a" },
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
-      FileTest.stubs(:exist?).with(@file).returns true
-      FileTest.stubs(:exist?).with(@userconfig).returns false
+      Puppet::FileSystem::File.stubs(:exist?).with(@file).returns true
+      Puppet::FileSystem::File.stubs(:exist?).with(@userconfig).returns false
       @settings.stubs(:user_config_file).returns(@userconfig)
     end
 
     it "does not create the WatchedFile instance and should not parse if the file does not exist" do
-      FileTest.expects(:exist?).with(@file).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(@file).returns false
       Puppet::Util::WatchedFile.expects(:new).never
 
       @settings.expects(:parse_config_files).never

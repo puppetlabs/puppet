@@ -70,7 +70,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # Remove our file.
   def destroy(request)
     path = path(request.key)
-    return false unless FileTest.exist?(path)
+    return false unless Puppet::FileSystem::File.exist?(path)
 
     Puppet.notice "Removing file #{model} #{request.key} at '#{path}'"
     begin
@@ -135,10 +135,10 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # which we'll be EOL'ing at some point.  This method was added at 20080702
   # and should be removed at some point.
   def rename_files_with_uppercase(file)
-    return file if FileTest.exist?(file)
+    return file if Puppet::FileSystem::File.exist?(file)
 
     dir, short = File.split(file)
-    return nil unless FileTest.exist?(dir)
+    return nil unless Puppet::FileSystem::File.exist?(dir)
 
     raise ArgumentError, "Tried to fix SSL files to a file containing uppercase" unless short.downcase == short
     real_file = Dir.entries(dir).reject { |f| f =~ /^\./ }.find do |other|

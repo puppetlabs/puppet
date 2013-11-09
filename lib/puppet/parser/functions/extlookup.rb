@@ -100,7 +100,7 @@ This is for back compatibility to interpolate variables with %. % interpolation 
 
   # if we got a custom data file, put it first in the array of search files
   if datafile != ""
-    datafiles << extlookup_datadir + "/#{datafile}.csv" if File.exists?(extlookup_datadir + "/#{datafile}.csv")
+    datafiles << extlookup_datadir + "/#{datafile}.csv" if Puppet::FileSystem::File.exist?(extlookup_datadir + "/#{datafile}.csv")
   end
 
   extlookup_precedence.each do |d|
@@ -111,7 +111,7 @@ This is for back compatibility to interpolate variables with %. % interpolation 
 
   datafiles.each do |file|
     if desired.nil?
-      if File.exists?(file)
+      if Puppet::FileSystem::File.exist?(file)
         result = CSV.read(file).find_all do |r|
           r[0] == key
         end

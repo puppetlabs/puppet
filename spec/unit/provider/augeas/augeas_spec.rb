@@ -674,7 +674,7 @@ describe provider_class do
       link = tmpfile('link')
       target = tmpfile('target')
       FileUtils.touch(target)
-      FileUtils.symlink(target, link)
+      Puppet::FileSystem::File.new(target).symlink(link)
 
       resource = Puppet::Type.type(:augeas).new(
         :name => 'test',
@@ -689,7 +689,7 @@ describe provider_class do
       catalog.apply
 
       File.ftype(link).should == 'link'
-      File.readlink(link).should == target
+      Puppet::FileSystem::File.new(link).readlink().should == target
       File.read(target).should =~ /PermitRootLogin no/
     end
   end

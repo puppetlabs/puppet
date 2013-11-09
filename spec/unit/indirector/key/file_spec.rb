@@ -77,8 +77,8 @@ describe Puppet::SSL::Key::File do
 
     it "should destroy the public key when destroying the private key" do
       File.stubs(:unlink).with(@private_key_path)
-      FileTest.stubs(:exist?).with(@private_key_path).returns true
-      FileTest.expects(:exist?).with(@public_key_path).returns true
+      Puppet::FileSystem::File.stubs(:exist?).with(@private_key_path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@public_key_path).returns true
       File.expects(:unlink).with(@public_key_path)
 
       @searcher.destroy(@request)
@@ -87,8 +87,8 @@ describe Puppet::SSL::Key::File do
     it "should not fail if the public key does not exist when deleting the private key" do
       File.stubs(:unlink).with(@private_key_path)
 
-      FileTest.stubs(:exist?).with(@private_key_path).returns true
-      FileTest.expects(:exist?).with(@public_key_path).returns false
+      Puppet::FileSystem::File.stubs(:exist?).with(@private_key_path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@public_key_path).returns false
       File.expects(:unlink).with(@public_key_path).never
 
       @searcher.destroy(@request)

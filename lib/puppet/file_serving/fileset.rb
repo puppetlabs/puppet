@@ -77,7 +77,7 @@ class Puppet::FileServing::Fileset
     links = links.to_sym
     raise(ArgumentError, "Invalid :links value '#{links}'") unless [:manage, :follow].include?(links)
     @links = links
-    @stat_method = File.method(@links == :manage ? :lstat : :stat)
+    @stat_method = @links == :manage ? :lstat : :stat
   end
 
   private
@@ -133,7 +133,7 @@ class Puppet::FileServing::Fileset
     end
 
     def directory?
-      stat_method.call(path).directory?
+      Puppet::FileSystem::File.new(path).send(stat_method).directory?
     rescue Errno::ENOENT, Errno::EACCES
       false
     end
@@ -159,7 +159,7 @@ class Puppet::FileServing::Fileset
   end
 
   def valid?(path)
-    @stat_method.call(path)
+    Puppet::FileSystem::File.new(path).send(@stat_method)
     true
   rescue Errno::ENOENT, Errno::EACCES
     false

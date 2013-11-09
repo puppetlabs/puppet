@@ -178,7 +178,7 @@ describe Puppet::Application::Filebucket do
 
       it "should call the client backup method for each given parameter" do
         @filebucket.stubs(:puts)
-        FileTest.stubs(:exists?).returns(true)
+        Puppet::FileSystem::File.stubs(:exist?).returns(true)
         FileTest.stubs(:readable?).returns(true)
         @filebucket.stubs(:args).returns(["file1", "file2"])
 

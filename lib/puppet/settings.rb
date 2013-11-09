@@ -549,7 +549,7 @@ class Puppet::Settings
   def unsafe_parse(file)
     # build up a single data structure that contains the values from all of the parsed files.
     data = {}
-    if FileTest.exist?(file)
+    if Puppet::FileSystem::File.exist?(file)
       begin
         file_data = parse_file(file)
 
@@ -690,7 +690,7 @@ class Puppet::Settings
     return @files if @files
     @files = []
     [main_config_file, user_config_file].each do |path|
-      if FileTest.exist?(path)
+      if Puppet::FileSystem::File.exist?(path)
         @files << Puppet::Util::WatchedFile.new(path)
       end
     end

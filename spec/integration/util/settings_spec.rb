@@ -41,7 +41,7 @@ describe Puppet::Settings do
 
     settings.use(:main)
 
-    expect(File.stat(settings[:maindir]).mode & 007777).to eq(Puppet.features.microsoft_windows? ? 0755 : 0750)
+    expect(Puppet::FileSystem::File.new(settings[:maindir]).stat.mode & 007777).to eq(Puppet.features.microsoft_windows? ? 0755 : 0750)
   end
 
   it "reparses configuration if configuration file is touched", :if => !Puppet.features.microsoft_windows? do

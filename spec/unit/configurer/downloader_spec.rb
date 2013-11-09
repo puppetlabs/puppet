@@ -135,7 +135,7 @@ describe Puppet::Configurer::Downloader do
       Puppet[:tags] = 'maytag'
       @dler.evaluate
 
-      File.exists?(@dl_name).should be_true
+      Puppet::FileSystem::File.exist?(@dl_name).should be_true
     end
 
     it "should log that it is downloading" do

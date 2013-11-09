@@ -181,7 +181,7 @@ module Puppet::Network::HTTP
 
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
-      if @verify_peer and FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
+      if @verify_peer and Puppet::FileSystem::File.exist?(Puppet[:hostcert]) and Puppet::FileSystem::File.exist?(ssl_configuration.ca_auth_file)
         @connection.cert_store  = ssl_host.ssl_store
         @connection.ca_file     = ssl_configuration.ca_auth_file
         @connection.cert        = ssl_host.certificate.content

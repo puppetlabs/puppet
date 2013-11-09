@@ -26,7 +26,7 @@ describe Puppet::Network::HttpPool do
     describe 'peer verification' do
       def setup_standard_ssl_configuration
         ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
-        FileTest.stubs(:exist?).with(ca_cert_file).returns(true)
+        Puppet::FileSystem::File.stubs(:exist?).with(ca_cert_file).returns(true)
 
         ssl_configuration = stub('ssl_configuration', :ca_auth_file => ca_cert_file)
         Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_configuration).returns(ssl_configuration)
@@ -34,7 +34,7 @@ describe Puppet::Network::HttpPool do
 
       def setup_standard_hostcert
         host_cert_file = File.expand_path('/path/to/ssl/certs/host_cert.pem')
-        FileTest.stubs(:exist?).with(host_cert_file).returns(true)
+        Puppet::FileSystem::File.stubs(:exist?).with(host_cert_file).returns(true)
 
         Puppet[:hostcert] = host_cert_file
       end

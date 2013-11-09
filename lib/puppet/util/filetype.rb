@@ -98,12 +98,12 @@ class Puppet::Util::FileType
   newfiletype(:flat) do
     # Back the file up before replacing it.
     def backup
-      bucket.backup(@path) if File.exists?(@path)
+      bucket.backup(@path) if Puppet::FileSystem::File.exist?(@path)
     end
 
     # Read the file.
     def read
-      if File.exist?(@path)
+      if Puppet::FileSystem::File.exist?(@path)
         File.read(@path)
       else
         return nil
@@ -112,7 +112,7 @@ class Puppet::Util::FileType
 
     # Remove the file.
     def remove
-      File.unlink(@path) if File.exist?(@path)
+      File.unlink(@path) if Puppet::FileSystem::File.exist?(@path)
     end
 
     # Overwrite the file.

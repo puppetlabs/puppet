@@ -20,7 +20,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
     before do
       Puppet[:cert_inventory] = cert_inventory
 
-      FileTest.stubs(:exist?).with(cert_inventory).returns true
+      Puppet::FileSystem::File.stubs(:exist?).with(cert_inventory).returns true
 
       @inventory = @class.new
 
@@ -117,7 +117,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
 
     describe "and finding a serial number" do
       it "should return nil if the inventory file is missing" do
-        FileTest.expects(:exist?).with(cert_inventory).returns false
+        Puppet::FileSystem::File.expects(:exist?).with(cert_inventory).returns false
         @inventory.serial(:whatever).should be_nil
       end
 

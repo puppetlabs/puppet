@@ -108,7 +108,7 @@ Puppet::Reports.register_report(:tagmail) do
 
   # Process the report.  This just calls the other associated messages.
   def process
-    unless FileTest.exists?(Puppet[:tagmap])
+    unless Puppet::FileSystem::File.exist?(Puppet[:tagmap])
       Puppet.notice "Cannot send tagmail report; no tagmap file #{Puppet[:tagmap]}"
       return
     end

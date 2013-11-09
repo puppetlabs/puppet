@@ -43,7 +43,7 @@ class Puppet::Pops::Binder::SchemeHandler::ConfdirHieraScheme < Puppetx::Puppet:
   end
 
   def config_exist?(uri, composer)
-    File.exist?(File.join(composer.confdir, uri.path, 'hiera.yaml'))
+    Puppet::FileSystem::File.exist?(File.join(composer.confdir, uri.path, 'hiera.yaml'))
   end
 
   # A hiera.yaml that exists, is readable, can be loaded, and does not have version >= 2 set is ignored.

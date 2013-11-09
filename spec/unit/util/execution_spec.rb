@@ -519,7 +519,7 @@ describe Puppet::Util::Execution do
 
         Puppet::Util::Execution.execute('test command')
 
-        File.should_not be_exist(path)
+        Puppet::FileSystem::File.exist?(path).should be_false
       end
 
       it "should not raise an error if the file is open" do
