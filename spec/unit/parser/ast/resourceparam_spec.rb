@@ -40,4 +40,12 @@ describe Puppet::Parser::AST::ResourceParam do
     evaled = ast::ResourceParam.new(:param => 'myparam', :value => object, :file => 'foo.pp').evaluate(@scope)
     evaled.file.should == 'foo.pp'
   end
+
+  it "should change nil parameter values to undef" do
+    object = mock 'object'
+    object.expects(:safeevaluate).with(@scope).returns(nil)
+    evaled = ast::ResourceParam.new(:param => 'myparam', :value => object).evaluate(@scope)
+    evaled.should be_a(Puppet::Parser::Resource::Param)
+    evaled.value.should == :undef
+  end
 end
