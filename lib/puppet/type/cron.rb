@@ -407,6 +407,18 @@ Puppet::Type.newtype(:cron) do
     }
   end
 
+  validate do
+    return true unless self[:special]
+    return true if self[:special] == :absent
+    # there is a special schedule in @should, so we don't want to see
+    # any numeric should values
+    [ :minute, :hour, :weekday, :monthday, :month ].each do |field|
+      next unless self[field]
+      next if self[field] == :absent
+      raise ArgumentError, "#{self.ref} cannot specify both a special schedule and a value for #{field}"
+    end
+  end
+
   # We have to reorder things so that :provide is before :target
 
   attr_accessor :uid
