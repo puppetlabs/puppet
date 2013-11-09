@@ -138,8 +138,27 @@ class Puppet::Parser::Compiler
   end
 
   # Evaluate all of the classes specified by the node.
+  # Classes with parameters are evaluated as if they were declared.
+  # Classes without parameters or with an empty set of parameters are evaluated
+  # as if they were included. This means classes with an empty set of
+  # parameters won't conflict even if the class has already been included.
   def evaluate_node_classes
-    evaluate_classes(@node.classes, @node_scope || topscope)
+    if @node.classes.is_a? Hash
+      classes_with_params, classes_without_params = @node.classes.partition {|name,params| params and !params.empty?}
+
+      # The results from Hash#partition are arrays of pairs rather than hashes,
+      # so we have to convert to the forms evaluate_classes expects (Hash, and
+      # Array of class names)
+      classes_with_params = Hash[classes_with_params]
+      classes_without_params.map!(&:first)
+    else
+      classes_with_params = {}
+      classes_without_params = @node.classes
+    end
+
+    evaluate_classes(classes_without_params, @node_scope || topscope)
+
+    evaluate_classes(classes_with_params, @node_scope || topscope)
   end
 
   # Evaluate each specified class in turn.  If there are any classes we can't

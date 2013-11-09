@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/compiler'
 
 class CompilerTestResource
   attr_accessor :builtin, :virtual, :evaluated, :type, :title
@@ -216,27 +217,6 @@ describe Puppet::Parser::Compiler do
       @compiler.catalog.server_version.should == "3"
     end
 
-    it "should evaluate any existing classes named in the node" do
-      classes = %w{one two three four}
-      main = stub 'main'
-      one = stub 'one', :name => "one"
-      three = stub 'three', :name => "three"
-      @node.stubs(:name).returns("whatever")
-      @node.stubs(:classes).returns(classes)
-      compile_stub(:evaluate_node_classes)
-
-      @compiler.expects(:evaluate_classes).with(classes, @compiler.topscope)
-      @compiler.compile
-    end
-
-    it "should evaluate any parameterized classes named in the node" do
-      classes = {'foo'=>{'p1'=>'one'}, 'bar'=>{'p2'=>'two'}}
-      @node.stubs(:classes).returns(classes)
-      @compiler.expects(:evaluate_classes).with(classes, @compiler.topscope)
-      @compiler.compile
-    end
-
-
     it "should evaluate the main class if it exists" do
       compile_stub(:evaluate_main)
       main_class = @known_resource_types.add Puppet::Resource::Type.new(:hostclass, "")
@@ -258,12 +238,6 @@ describe Puppet::Parser::Compiler do
       (klass = @compiler.catalog.resource(:class, "")).should be_instance_of(Puppet::Parser::Resource)
 
       @compiler.catalog.edge?(stage, klass).should be_true
-    end
-
-    it "should evaluate any node classes" do
-      @node.stubs(:classes).returns(%w{one two three four})
-      @compiler.expects(:evaluate_classes).with(%w{one two three four}, @compiler.topscope)
-      @compiler.send(:evaluate_node_classes)
     end
 
     it "should evaluate all added collections" do
@@ -786,6 +760,102 @@ describe Puppet::Parser::Compiler do
       node_resource.expects(:evaluate)
 
       @compiler.send(:evaluate_ast_node)
+    end
+  end
+
+  describe "when evaluating node classes" do
+    include PuppetSpec::Compiler
+
+    describe "when provided classes in array format" do
+      let(:node) { Puppet::Node.new('someone', :classes => ['something']) }
+
+      describe "when the class exists" do
+        it "should succeed if the class is already included" do
+          manifest = <<-MANIFEST
+          class something {}
+          include something
+          MANIFEST
+
+          catalog = compile_to_catalog(manifest, node)
+
+          catalog.resource('Class', 'Something').should_not be_nil
+        end
+
+        it "should evaluate the class without parameters if it's not already included" do
+          manifest = "class something {}"
+
+          catalog = compile_to_catalog(manifest, node)
+
+          catalog.resource('Class', 'Something').should_not be_nil
+        end
+      end
+
+      it "should fail if the class doesn't exist" do
+        expect { compile_to_catalog('', node) }.to raise_error(Puppet::Error, /Could not find class something/)
+      end
+    end
+
+    describe "when provided classes in hash format" do
+      describe "for classes without parameters" do
+        let(:node) { Puppet::Node.new('someone', :classes => {'something' => {}}) }
+
+        describe "when the class exists" do
+          it "should succeed if the class is already included" do
+            manifest = <<-MANIFEST
+            class something {}
+            include something
+            MANIFEST
+
+            catalog = compile_to_catalog(manifest, node)
+
+            catalog.resource('Class', 'Something').should_not be_nil
+          end
+
+          it "should evaluate the class if it's not already included" do
+            manifest = <<-MANIFEST
+            class something {}
+            MANIFEST
+
+            catalog = compile_to_catalog(manifest, node)
+
+            catalog.resource('Class', 'Something').should_not be_nil
+          end
+        end
+
+        it "should fail if the class doesn't exist" do
+          expect { compile_to_catalog('', node) }.to raise_error(Puppet::Error, /Could not find class something/)
+        end
+      end
+
+      describe "for classes with parameters" do
+        let(:node) { Puppet::Node.new('someone', :classes => {'something' => {'configuron' => 'defrabulated'}}) }
+
+        describe "when the class exists" do
+          it "should fail if the class is already included" do
+            manifest = <<-MANIFEST
+            class something($configuron=frabulated) {}
+            include something
+            MANIFEST
+
+            expect { compile_to_catalog(manifest, node) }.to raise_error(Puppet::Error, /Class\[Something\] is already declared/)
+          end
+
+          it "should evaluate the class if it's not already included" do
+            manifest = <<-MANIFEST
+            class something($configuron=frabulated) {}
+            MANIFEST
+
+            catalog = compile_to_catalog(manifest, node)
+
+            resource = catalog.resource('Class', 'Something')
+            resource['configuron'].should == 'defrabulated'
+          end
+        end
+
+        it "should fail if the class doesn't exist" do
+          expect { compile_to_catalog('', node) }.to raise_error(Puppet::Error, /Could not find class something/)
+        end
+      end
     end
   end
 
