@@ -368,4 +368,13 @@ module Puppet::Pops::Issues
   RUNTIME_ERROR = issue :RUNTIME_ERROR, :detail do
     "Error while evaluating #{label.a_an(semantic)}, #{detail}"
   end
+
+  UNKNOWN_RESOURCE = issue :UNKNOWN_RESOURCE, :type_name, :title do
+    "Resource not found: #{type_name.capitalize}['#{title}']"
+  end
+
+  UNKNOWN_RESOURCE_PARAMETER = issue :UNKNOWN_RESOURCE_PARAMETER, :type_name, :title, :param_name do
+    "The resource #{type_name.capitalize}['#{title}'] does not have a parameter called '#{param_name}'"
+  end
+
 end

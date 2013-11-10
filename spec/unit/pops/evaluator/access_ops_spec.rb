@@ -220,9 +220,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(result[1]).to be_the_type(types.resource('File', 'y'))
     end
 
-    it 'gives an error if resource is already specialized' do
+    it 'gives an error if resource is not found' do
       expr = fqr('File')[fqn('x')][fqn('y')]
-      expect {evaluate(expr)}.to raise_error(/Cannot specialize an already specialized Resource type/)
+      expect {evaluate(expr)}.to raise_error(/Resource not found: File\['x'\]/)
     end
 
   end

@@ -439,19 +439,31 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Hash[Integer,Integer]"      => types.hash_of(types.integer, types.integer),
       "Resource[File]"             => types.resource('File'),
       "Resource['File']"           => types.resource(types.resource('File')),
+      "File[foo]"                  => types.resource('file', 'foo'),
+      "File[foo, bar]"             => [types.resource('file', 'foo'), types.resource('file', 'bar')],
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
         parser.evaluate_string(scope, source, __FILE__).should == result
       end
     end
 
+    # Resource default and override expressions and resource parameter access
     {
-      "file {foo: } File[foo]"                 => :TODO,
-      "file {[foo, bar]: } File[foo, bar]"     => [:TODO],
+      "notify { id: message=>explicit} Notify[id][message]"                   => "explicit",
+      "Notify { message=>by_default} notify {foo:} Notify[foo][message]"      => "by_default",
+      "notify {foo:} Notify[foo]{message =>by_override} Notify[foo][message]" => "by_override",
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
-        pending "Not yet implemented Resource Instance resolution"
         parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+    # Resource default and override expressions and resource parameter access
+    {
+      "notify { xid: message=>explicit} Notify[id][message]"                  => /Resource not found/,
+      "notify { id: message=>explicit} Notify[id][mustard]"                   => /does not have a parameter called 'mustard'/,
+    }.each do |source, result|
+      it "should parse '#{source}' and raise error matching #{result}" do
+        expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(result)
       end
     end
   end

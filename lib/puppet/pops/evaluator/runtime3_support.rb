@@ -247,6 +247,34 @@ module Puppet::Pops::Evaluator::Runtime3Support
     end
   end
 
+  # Finds a resource given a type and a title.
+  #
+  def find_resource(scope, type_name, title)
+    scope.compiler.findresource(type_name, title)
+  end
+
+  # Returns the value of a resource's parameter by first looking up the parameter in the resource
+  # and then in the defaults for the resource. Since the resource exists (it must in order to look up its
+  # parameters, any overrides have already been applied). Defaults are not applied to a resource until it
+  # has been finished (which typically has not taked place when this is evaluated; hence the dual lookup).
+  #
+  def get_resource_parameter_value(scope, resource, parameter_name)
+    val = resource[parameter_name]
+    if val.nil? && defaults = scope.lookupdefaults(resource.type)
+      # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
+      # name and value.
+      param = defaults[parameter_name.to_sym]
+      val = param.value
+    end
+    val
+  end
+
+  # Returns true, if the given name is the name of a resource parameter.
+  #
+  def is_parameter_of_resource?(scope, resource, name)
+    resource.valid_parameter?(name)
+  end
+
   def resource_to_ptype(resource)
     nil if resource.nil?
     type_calculator.infer(resource)

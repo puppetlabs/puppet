@@ -176,8 +176,20 @@ class Puppet::Pops::Evaluator::AccessOperator
       # TODO: Either the below or an error
       return Marshal.load(Marshal.dump(o)) # Deep copy
     end
-    unless o.title.nil?
-      fail(Puppet::Pops::Issues::ILLEGAL_TYPE_SPECIALIZATION, semantic.left_expr, {:kind => 'Resource'})
+    if !o.title.nil?
+      # lookup resource and return one or more parameter values
+      resource = find_resource(scope, o.type_name, o.title)
+      unless resource
+        fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => o.type_name, :title => o.title})
+      end
+      result = keys.map do |k|
+        unless is_parameter_of_resource?(scope, resource, k)
+          fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
+            {:type_name => o.type_name, :title => o.title, :param_name=>k})
+        end
+        get_resource_parameter_value(scope, resource, k)
+      end
+      return result.size <= 1 ? result.pop : result
     end
 
     # type_name is LHS type_name if set, else the first given arg
