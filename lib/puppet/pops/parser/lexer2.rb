@@ -153,7 +153,7 @@ class Puppet::Pops::Parser::Lexer2
   # a letter a-z and may not contain dashes (\w includes letters, digits and _).
   #
   PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][\w]*)+}
-  PATTERN_NAME           = %r{((::)?[a-z][-\w]*)(::[a-z][\w]*)*}
+  PATTERN_NAME           = %r{((::)?[a-z][\w]*)(::[a-z][\w]*)*}
 
   PATTERN_DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
   PATTERN_NUMBER         = %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b}
