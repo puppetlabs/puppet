@@ -35,9 +35,11 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
             packages << new(hash)
             hash = {}
           else
-            # Print a warning on lines we can't match, but move
-            # on, since it should be non-fatal
-            warning("Failed to match line #{line}")
+            unless line =~ /Updating the pkgdb/
+              # Print a warning on lines we can't match, but move
+              # on, since it should be non-fatal
+              warning("Failed to match line #{line}")
+            end
           end
         }
       end
