@@ -613,13 +613,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     # TODO
   end
 
-# NOT NEEDED IN THIS VERSION SINCE PARAMTERS ARE HANDLED IN POPS BRIDGE FOR DEFINITIONS, AND AT POINT OF
-# CALL FOR LAMBDAS
-#
-#  # @todo not implemented
-#  def eval_Parameter o, scope
-#  end
-#
   def eval_ParenthesizedExpression(o, scope)
     evaluate(o.expr, scope)
   end
@@ -676,7 +669,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   end
 
   # Puppet 3.1 AST only supports calling a function by name (it is not possible to produce a function
-  # that is then called). TODO- should puppet 4 accept this? It is very powerful in combiantion with
+  # that is then called). TODO- should puppet 4 accept this? It is very powerful in combination with
   # custom functions in puppet language.
   #
   # rval_required (for an expression)
@@ -810,10 +803,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
       # TODO: formalize, when scope returns nil, vs error
       string(get_variable_value(o.expr.value, o, scope), scope)
     else
-      # TODO: This is not very good as it forces the to_s to apply to all kind of results
-      # It should call a polymorph method to allow to_s to be applied in general, and possible some other
-      # to string formatter for other values (like PType Objects).
-      #
       string(evaluate(o.expr, scope), scope)
     end
   end
