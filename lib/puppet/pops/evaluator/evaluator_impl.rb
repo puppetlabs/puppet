@@ -34,12 +34,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   #
   Issues = Puppet::Pops::Issues
 
-
   def initialize
     @@eval_visitor     ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
     @@lvalue_visitor   ||= Puppet::Pops::Visitor.new(self, "lvalue", 1, 1)
     @@assign_visitor   ||= Puppet::Pops::Visitor.new(self, "assign", 3, 3)
-    @@call_visitor     ||= Puppet::Pops::Visitor.new(self, "call", 3, 3)
     @@string_visitor   ||= Puppet::Pops::Visitor.new(self, "string", 1, 1)
 
     @@type_calculator  ||= Puppet::Pops::Types::TypeCalculator.new()
@@ -68,18 +66,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @param target [Object] evaluation target - see methods on the pattern assign_TYPE for actual supported types.
   # @param scope [Object] the runtime specific scope class where evaluation should take place
   # @return [Object] the result of the evaluation
-  # @yieldparam [Object] the result of the evaluation of target
-  # @yieldreturn [Object] the result of evaluating the optional block
   #
   # @api
   #
-  def evaluate(target, scope, &block)
-    x = @@eval_visitor.visit_this(self, target, scope)
-    if block_given?
-      block.call(x)
-    else
-      x
-    end
+  def evaluate(target, scope)
+    @@eval_visitor.visit_this_1(self, target, scope)
   end
 
   # Polymorphic assign - calls assign_TYPE.
@@ -98,15 +89,15 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @param scope [Object] the runtime specific scope where evaluation should take place
 
   def assign(target, value, o, scope)
-    @@assign_visitor.visit_this(self, target, value, o, scope)
+    @@assign_visitor.visit_this_3(self, target, value, o, scope)
   end
 
   def lvalue(o, scope)
-    @@lvalue_visitor.visit_this(self, o, scope)
+    @@lvalue_visitor.visit_this_1(self, o, scope)
   end
 
   def string(o, scope)
-    @@string_visitor.visit_this(self, o, scope)
+    @@string_visitor.visit_this_1(self, o, scope)
   end
 
   # Call a closure - Can only be called with a Closure (for now), may be refactored later
@@ -117,7 +108,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @raise ArgumentError, if there are to many or too few arguments
   # @raise ArgumentError, if given closure is not a Puppet::Pops::Evaluator::Closure
   #
-  def call(closure, args, scope, &block)
+  def call(closure, args, scope)
     raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Lambda)
     pblock = closure.model
     parameters = pblock.parameters || []
@@ -170,11 +161,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     ensure
       set_scope_nesting_level(scope, scope_memo)
     end
-    if block_given?
-      block.call(result)
-    else
-      result
-    end
+    result
   end
 
   protected
@@ -723,11 +710,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     #
     with_guarded_scope(scope) do
       test = evaluate(o.left_expr, scope)
-      selected = o.selectors.find {|s|
-        evaluate(s.matching_expr, scope) {|candidate|
-          candidate == :default || is_match?(test, candidate, s.matching_expr, scope)
-        }
-      }
+      selected = o.selectors.find do |s|
+        candidate = evaluate(s.matching_expr, scope)
+        candidate == :default || is_match?(test, candidate, s.matching_expr, scope)
+      end
       if selected
         evaluate(selected.value_expr, scope)
       else

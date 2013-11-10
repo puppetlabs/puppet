@@ -10,25 +10,25 @@ class Puppet::Pops::Evaluator::CompareOperator
   include Puppet::Pops::Utils
 
   def initialize
-    @@equals_visitor = Puppet::Pops::Visitor.new(self, "equals", 1, 1)
-    @@compare_visitor = Puppet::Pops::Visitor.new(self, "cmp", 1, 1)
-    @@include_visitor = Puppet::Pops::Visitor.new(self, "include", 1, 1)
+    @@equals_visitor  ||= Puppet::Pops::Visitor.new(self, "equals", 1, 1)
+    @@compare_visitor ||= Puppet::Pops::Visitor.new(self, "cmp", 1, 1)
+    @@include_visitor ||= Puppet::Pops::Visitor.new(self, "include", 1, 1)
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
   end
 
   def equals (a, b)
-    @@equals_visitor.visit_this(self, a, b)
+    @@equals_visitor.visit_this_1(self, a, b)
   end
 
   # Performs a comparison of a and b, and return > 0 if a is bigger, 0 if equal, and < 0 if b is bigger.
   # Comparison of String vs. Numeric always compares using numeric.
   def compare(a, b)
-    @@compare_visitor.visit_this(self, a, b)
+    @@compare_visitor.visit_this_1(self, a, b)
   end
 
   # Answers is b included in a
   def include?(a, b)
-    @@include_visitor.visit_this(self, a, b)
+    @@include_visitor.visit_this_1(self, a, b)
   end
 
   protected
