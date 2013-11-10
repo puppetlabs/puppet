@@ -609,11 +609,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   end
 
   # @todo not implemented
-  def eval_OptionalAttributeOperation o, scope
-    # TODO
-  end
-
-  # @todo not implemented
   def eval_CollectExpression o, scope
     # TODO
   end

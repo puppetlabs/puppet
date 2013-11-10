@@ -214,15 +214,6 @@ module Puppet::Pops::Model
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
   end
 
-  # An optional attribute operation sets or appends a value to a named attribute unless
-  # the value is undef/nil in which case the opereration is a Nop.
-  #
-  # This is a new feature proposed to solve the undef as antimatter problem
-  # @note Currently Unused
-  #
-  class OptionalAttributeOperation < AttributeOperation
-  end
-
   # An object that collects stored objects from the central cache and returns
   # them to the current host. Operations may optionally be applied.
   #
