@@ -184,9 +184,11 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     before { FileUtils.touch(path) }
 
     it "changes only the requested bits" do
-      FileUtils.chmod 0467, path
+      # lower nibble must be set to 4 for the sake of passing on Windows
+      FileUtils.chmod 0464, path
       mode_sym.sync
-      (File.stat(path).mode & 0777).to_s(8).should == "647"
+      file = Puppet::FileSystem::File.new(path)
+      (file.stat.mode & 0777).to_s(8).should == "644"
     end
   end
 end
