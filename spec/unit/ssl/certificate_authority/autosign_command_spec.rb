@@ -20,6 +20,8 @@ describe Puppet::SSL::CertificateAuthority::AutosignCommand do
       cmd.should eq '/autosign/command host'
       args.should include(:stdinfile => '/path/to/csr/tempfile')
     end.returns ''
+    $CHILD_STATUS.stubs(:exitstatus).returns 0
+
     subject.allowed?('host')
   end
 
