@@ -100,6 +100,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     @@string_visitor.visit_this_1(self, o, scope)
   end
 
+  # Polymorphic query
+  # Produces a Predicate Proc that can be called with a resource instance to determine of the resource
+  # is to be included in the result or not.
+  #
+  def query(o, scope)
+    @@query_visitor.visit_this_1(self, o, scope)
+  end
+
   # Call a closure - Can only be called with a Closure (for now), may be refactored later
   # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
   # could create similar objects to Closure, wait until other types of defines are instantiated - they may behave
@@ -264,8 +272,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   end
 
   # Captures all LiteralValues not handled elsewhere.
-  #--
-  # QualifiedName < LiteralValue  end
+  #
   def eval_LiteralValue(o, scope)
     o.value
   end
@@ -580,24 +587,25 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     end
   end
 
-  # @todo not implemented - maybe not needed; this is an abstract class
-  def eval_QueryExpression o, scope
-    # TODO: or remove - this is the abstract query
-  end
-
-  # @todo not implemented
-  def eval_ExportedQuery o, scope
-    # TODO
-  end
-
-  # @todo not implemented
-  def eval_VirtualQuery o, scope
-    # TODO
-  end
-
-  # @todo not implemented
+  # Evaluates a CollectExpression by transforming it into a 3x AST::Collection and then evaluating that.
+  # This is done because of the complex API between compiler, indirector, backends, and difference between
+  # collecting virtual resources and exported resources.
+  #
   def eval_CollectExpression o, scope
-    # TODO
+    # The Collect Expression and its contained query expressions are implemented in such a way in
+    # 3x that it is almost impossible to do anything about them (the AST objects are lazily evaluated,
+    # and the built structure consists of both higher order functions and arrays with query expressions
+    # that are either used as a predicate filter, or given to an indirection terminus (such as the Puppet DB
+    # resource terminus). Unfortunately, the 3x implementation has many inconsistencies that the implementation
+    # below carries forward.
+    #
+    collect_3x = Puppet::Pops::Model::AstTransformer.new().transform(o)
+    collect_3x.evaluate(scope)
+    # the 3x returns an instance of Collector (but it is only registered with the compiler at this
+    # point and does not contain any valuable information (like the result, count of the result etc.)
+    # Ensure that this object does not leak to the Puppet Program being evaluated.
+    #
+    nil
   end
 
   def eval_ParenthesizedExpression(o, scope)
