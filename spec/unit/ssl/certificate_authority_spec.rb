@@ -570,61 +570,114 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     describe "when autosigning certificates" do
-      let(:autosign) { File.expand_path("/auto/sign") }
-      it "should do nothing if autosign is disabled" do
-        Puppet[:autosign] = 'false'
+      describe "using the autosign setting" do
+        let(:autosign) { File.expand_path("/auto/sign") }
 
-        Puppet::SSL::CertificateRequest.indirection.expects(:search).never
-        @ca.autosign("host")
-      end
+        it "should do nothing if autosign is disabled" do
+          Puppet[:autosign] = false
 
-      it "should do nothing if no autosign.conf exists" do
-        Puppet[:autosign] = autosign
-        Puppet::FileSystem::File.expects(:exist?).with(autosign).returns false
-
-        Puppet::SSL::CertificateRequest.indirection.expects(:search).never
-        @ca.autosign("host")
-      end
-
-      describe "and autosign is enabled and the autosign.conf file exists" do
-        before do
-          Puppet[:autosign] = autosign
-          Puppet::FileSystem::File.stubs(:exist?).with(autosign).returns true
-          File.stubs(:readlines).with(autosign).returns ["one\n", "two\n"]
-
-          Puppet::SSL::CertificateRequest.indirection.stubs(:search).returns []
-
-          @store = stub 'store', :allow => nil, :allowed? => false
-          Puppet::Network::AuthStore.stubs(:new).returns @store
+          @ca.expects(:sign).never
+          @ca.autosign("host")
         end
 
-        describe "when creating the AuthStore instance to verify autosigning" do
-          it "should create an AuthStore with each line in the configuration file allowed to be autosigned" do
-            @store.expects(:allow).with("one")
-            @store.expects(:allow).with("two")
+        it "should do nothing if no autosign.conf exists" do
+          Puppet[:autosign] = autosign
+          Puppet::FileSystem::File.expects(:exist?).with(autosign).returns false
 
-            @ca.autosign("host")
+          @ca.expects(:sign).never
+          @ca.autosign("host")
+        end
+
+        describe "and autosign is enabled and the autosign.conf file exists" do
+          before do
+            Puppet[:autosign] = autosign
+            Puppet::FileSystem::File.expects(:exist?).with(autosign).returns(true).at_least_once
+            File.stubs(:readlines).with(autosign).returns ["one\n", "two\n"]
+
+            @store = stub 'store', :allow => nil, :allowed? => false
+            Puppet::Network::AuthStore.stubs(:new).returns @store
           end
 
-          it "should reparse the autosign configuration on each call" do
-            Puppet::Network::AuthStore.expects(:new).times(2).returns @store
+          describe "when creating the AuthStore instance to verify autosigning" do
+            it "should create an AuthStore with each line in the configuration file allowed to be autosigned" do
+              @store.expects(:allow).with("one")
+              @store.expects(:allow).with("two")
 
-            @ca.autosign("host")
-            @ca.autosign("host")
+              @ca.autosign("host")
+            end
+
+            it "should reparse the autosign configuration on each call" do
+              Puppet::Network::AuthStore.expects(:new).times(2).returns @store
+
+              @ca.autosign("host")
+              @ca.autosign("host")
+            end
+
+            it "should ignore comments" do
+              File.stubs(:readlines).with(autosign).returns ["one\n", "#two\n"]
+
+              @store.expects(:allow).with("one")
+              @ca.autosign("host")
+            end
+
+            it "should ignore blank lines" do
+              File.stubs(:readlines).with(autosign).returns ["one\n", "\n"]
+
+              @store.expects(:allow).with("one")
+              @ca.autosign("host")
+            end
+          end
+        end
+      end
+
+      describe "using the autosign_command setting" do
+        after(:all) do
+          Puppet[:autosign_command] = nil
+        end
+
+        it "checks the autosign setting first" do
+          Puppet[:autosign] = true
+
+          @ca.expects(:autosign_command?).never
+          @ca.expects(:sign).with('host')
+
+          @ca.autosign("host")
+        end
+
+        it "doesn't autosign the CSR if the autosign_command is unset" do
+          Puppet[:autosign] = false
+          Puppet[:autosign_command] = nil
+
+          @ca.expects(:sign).never
+          @ca.autosign("host")
+        end
+
+        describe "invoking the autosign_command" do
+          let(:autosign_cmd) { mock 'autosign_command' }
+
+          before do
+            Puppet[:autosign] = false
+
+            Puppet::Util.stubs(:absolute_path?).with('autosign_cmd').returns true
+            Puppet[:autosign_command] = 'autosign_cmd'
+
+            Puppet::SSL::CertificateAuthority::AutosignCommand.stubs(:new).returns autosign_cmd
           end
 
-          it "should ignore comments" do
-            File.stubs(:readlines).with(autosign).returns ["one\n", "#two\n"]
+          it "autosigns the CSR if the autosign_command returned true" do
+            autosign_cmd.expects(:allowed?).with('host').returns true
+            Puppet::SSL::CertificateAuthority::AutosignCommand.expects(:new).returns autosign_cmd
 
-            @store.expects(:allow).with("one")
-            @ca.autosign("host")
+            @ca.expects(:sign).with('host')
+            @ca.autosign('host')
           end
 
-          it "should ignore blank lines" do
-            File.stubs(:readlines).with(autosign).returns ["one\n", "\n"]
+          it "doesn't autosign the CSR if the autosign_command returned false" do
+            autosign_cmd.expects(:allowed?).with('host').returns false
+            Puppet::SSL::CertificateAuthority::AutosignCommand.expects(:new).returns autosign_cmd
 
-            @store.expects(:allow).with("one")
-            @ca.autosign("host")
+            @ca.expects(:sign).never
+            @ca.autosign('host')
           end
         end
       end

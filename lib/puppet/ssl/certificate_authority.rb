@@ -25,6 +25,7 @@ class Puppet::SSL::CertificateAuthority
   require 'puppet/ssl/inventory'
   require 'puppet/ssl/certificate_revocation_list'
   require 'puppet/ssl/certificate_authority/interface'
+  require 'puppet/ssl/certificate_authority/autosign_command'
   require 'puppet/network/authstore'
 
   class CertificateVerificationError < RuntimeError
@@ -61,53 +62,18 @@ class Puppet::SSL::CertificateAuthority
 
   # If autosign is configured, then autosign all CSRs that match our configuration.
   def autosign(name)
-    case auto = autosign?
-
-    when false, nil
-      # auto-signing is off
-      return
-
-    when true
-      # auto-signing is on and all are allowed
-
-    else
-      # auto-signing if allowed by store
-      return unless autosign_store(auto).allowed?(name, "127.1.1.1")
-    end
-
-    Puppet.info "Autosigning #{name}"
-    sign(name)
-  end
-
-  # Do we autosign?  This returns true, false, or a filename.
-  def autosign?
-    case auto = Puppet[:autosign]
-
-    when 'false', false
-      return false
-
-    when 'true', true
-      return true
-
-    else
-      # it must be an absolute path to an existing file
-      unless Puppet::Util.absolute_path?(auto)
-        raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file"
-      end
-      Puppet::FileSystem::File.exist?(auto) && auto
+    if autosign?(name)
+      Puppet.info "Autosigning #{name}"
+      sign(name)
     end
   end
 
-  # Creates an AuthStore for autosigning
-  def autosign_store(file)
-    auth = Puppet::Network::AuthStore.new
-    File.readlines(file).each do |line|
-      next if line =~ /^\s*#/
-      next if line =~ /^\s*$/
-      auth.allow(line.chomp)
-    end
-
-    auth
+  # Determine if a CSR can be autosigned by the autosign store or autosign command
+  #
+  # @param name [String] The name of the CSR to check
+  # @return [true, false]
+  def autosign?(name)
+    autosign_store?(name) or autosign_command?(name)
   end
 
   # Retrieves (or creates, if necessary) the certificate revocation list.
@@ -471,5 +437,60 @@ class Puppet::SSL::CertificateAuthority
   # List the waiting certificate requests.
   def waiting?
     Puppet::SSL::CertificateRequest.indirection.search("*").collect { |r| r.name }
+  end
+
+  private
+
+  # Check the autosign setting to see if this cert can be signed.
+  #
+  # @api private
+  # @param name [String] The name of the CSR to check
+  # @return [true, false]
+  def autosign_store?(name)
+    auto = Puppet[:autosign]
+
+    case auto
+
+    when 'false', false, nil
+      return false
+
+    when 'true', true
+      return true
+
+    else
+      if Puppet::FileSystem::File.exist?(auto)
+        store = autosign_store(auto)
+        store.allowed?(name, '127.1.1.1')
+      end
+    end
+  end
+
+  # Construct an autosign store for the contents of the autosign file
+  #
+  # @api private
+  # @param file [String] The path to the autosign file
+  # @return [Puppet::Network::AuthStore]
+  def autosign_store(file)
+    auth = Puppet::Network::AuthStore.new
+    File.readlines(file).each do |line|
+      next if line =~ /^\s*#/
+      next if line =~ /^\s*$/
+      auth.allow(line.chomp)
+    end
+
+    auth
+  end
+
+  # Try to autosign a certificate based an external script
+  #
+  # @api private
+  # @param name [String] The name of the CSR to check
+  # @return [true, false]
+  def autosign_command?(name)
+    cmd = Puppet[:autosign_command]
+    return false if cmd.nil?
+
+    autosign_cmd = Puppet::SSL::CertificateAuthority::AutosignCommand.new(cmd)
+    autosign_cmd.allowed?(name)
   end
 end

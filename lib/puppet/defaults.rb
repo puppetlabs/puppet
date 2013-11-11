@@ -714,8 +714,36 @@ EOT
       :mode => 0644,
       :desc => "Whether to enable autosign.  Valid values are true (which
         autosigns any key request, and is a very bad idea), false (which
-        never autosigns any key request), and the path to a file, which
-        uses that configuration file to determine which keys to sign."},
+        disables autosigning certificates based on an autosign file), and the
+        path to a file, which uses that configuration file to determine which
+        keys to sign.",
+      :hook => proc do |value|
+        unless [false, 'false', true, 'true'].include?(value) or Puppet::Util.absolute_path?(value)
+          raise ArgumentError, "The autosign parameter must be 'true'/'false' or an absolute path"
+        end
+      end
+    },
+    :autosign_command => {
+      :default => nil,
+      :type => :string,
+      :desc => "Command to run which determines whether the certificate
+        request should be automatically signed. The script is called
+        on each request and is passed the certificate name as an
+        argument and the contents of the CSR in PEM format on stdin. It should
+        exit with a status of 0 if the cert should be signed, 1 if the cert
+        should not be signed, and any other value if an error occured while
+        running the command.
+
+        The 'autosign' parameter has precedence over this one. If 'autosign'
+        determines a cert should be signed, 'autosign_command' will never be
+        called. However if 'autosign' does not validate a request, it will
+        pass through to 'autosign_command'.",
+      :hook => proc do |value|
+        if value and !Puppet::Util.absolute_path?(value)
+          raise ArgumentError, "The autosign_command parameter must be an absolute path"
+        end
+      end,
+    },
     :allow_duplicate_certs => {
       :default    => false,
       :type       => :boolean,
