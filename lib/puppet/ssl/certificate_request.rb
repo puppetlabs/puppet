@@ -118,57 +118,66 @@ DOC
 
     # Prefer the standard extReq, but accept the Microsoft specific version as
     # a fallback, if the standard version isn't found.
-    ext = @content.attributes.find {|x| x.oid == "extReq" } or
+    attribute = @content.attributes.find {|x| x.oid == "extReq" } or
       @content.attributes.find {|x| x.oid == "msExtReq" }
-    return [] unless ext
+    return [] unless attribute
 
     # Assert the structure and extract the names into an array of arrays.
-    unless ext.value.is_a? OpenSSL::ASN1::Set
-      raise Puppet::Error, "In #{ext.oid}, expected Set but found #{ext.value.class}"
+    unless attribute.value.is_a? OpenSSL::ASN1::Set
+      raise Puppet::Error, "In #{attribute.oid}, expected Set but found #{attribute.value.class}"
     end
 
-    unless ext.value.value.is_a? Array
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array] but found #{ext.value.value.class}"
+    unless attribute.value.value.is_a? Array
+      raise Puppet::Error, "In #{attribute.oid}, expected Set[Array] but found #{attribute.value.value.class}"
     end
 
-    unless ext.value.value.length == 1
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array[...]], but found #{ext.value.value.length} items in the array"
-    end
+    extensions = attribute.value.value
 
-    san = ext.value.value.first
-    unless san.is_a? OpenSSL::ASN1::Sequence
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array[Sequence[...]]], but found #{san.class}"
-    end
-    san = san.value
-
-    # OK, now san should be the array of items, validate that...
     index = -1
-    san.map do |name|
+    extensions.map do |extension|
       index += 1
+      context = "#{attribute.oid} extension index #{index}"
 
-      unless name.is_a? OpenSSL::ASN1::Sequence
-        raise Puppet::Error, "In #{ext.oid}, expected request extension record #{index} to be a Sequence, but found #{name.class}"
+      unless extension.is_a? OpenSSL::ASN1::Sequence
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[...]]], but found #{extension.class}"
       end
-      name = name.value
+
+      unless extension.value.is_a? Array
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[Array[...]]]], but found #{extension.value.class}"
+      end
+
+      unless extension.value.size == 1
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[Array[...]]]] with one value, but found #{extension.value.size} elements"
+      end
+
+      unless extension.value.first.is_a? OpenSSL::ASN1::Sequence
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[Array[Sequence[...]]]]] but found #{extension.value.first.class}"
+      end
+
+      unless extension.value.first.value.is_a? Array
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[Array[Sequence[Array[...]]]]]], but found #{extension.value.first.value.class}"
+      end
+
+      ext_values = extension.value.first.value
 
       # OK, turn that into an extension, to unpack the content.  Lovely that
       # we have to swap the order of arguments to the underlying method, or
       # perhaps that the ASN.1 representation chose to pack them in a
       # strange order where the optional component comes *earlier* than the
       # fixed component in the sequence.
-      case name.length
+      case ext_values.length
       when 2
-        ev = OpenSSL::X509::Extension.new(name[0].value, name[1].value)
+        ev = OpenSSL::X509::Extension.new(ext_values[0].value, ext_values[1].value)
         { "oid" => ev.oid, "value" => ev.value }
 
       when 3
-        ev = OpenSSL::X509::Extension.new(name[0].value, name[2].value, name[1].value)
+        ev = OpenSSL::X509::Extension.new(ext_values[0].value, ext_values[2].value, ext_values[1].value)
         { "oid" => ev.oid, "value" => ev.value, "critical" => ev.critical? }
 
       else
-        raise Puppet::Error, "In #{ext.oid}, expected extension record #{index} to have two or three items, but found #{name.length}"
+        raise Puppet::Error, "In #{attribute.oid}, expected extension record #{index} to have two or three items, but found #{ext_values.length}"
       end
-    end.flatten
+    end
   end
 
   def subject_alt_names
