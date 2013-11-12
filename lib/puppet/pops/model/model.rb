@@ -18,7 +18,6 @@
 #
 # This metamodel is expressed using RGen.
 #
-# TODO: Anonymous Enums - probably ok, but they can be named (don't know if that is meaningsful)
 
 require 'rgen/metamodel_builder'
 
@@ -26,8 +25,6 @@ module Puppet::Pops::Model
   extend RGen::MetamodelBuilder::ModuleExtension
 
   # A base class for modeled objects that makes them Visitable, and Adaptable.
-  # @todo currently  includes Containment which will not be needed when the corresponding methods
-  #   are added to RGen (in some version after 0.6.2).
   #
   class PopsObject < RGen::MetamodelBuilder::MMBase
     include Puppet::Pops::Visitable
