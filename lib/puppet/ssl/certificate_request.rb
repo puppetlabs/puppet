@@ -66,6 +66,9 @@ DOC
   #   Subject Alternative Names to include in the CSR extension request.
   # @options opts [Hash<String, String, Array<String>>] :csr_attributes A hash
   #   of OIDs and values that are either a string or array of strings.
+  # @options opts [Array<String, String>] :extension_requests A hash of
+  #   certificate extensions to add to the CSR extReq attribute, excluding
+  #   the Subject Alternative Names extension.
   #
   # @raise [Puppet::Error] If the generated CSR signature couldn't be verified
   #
@@ -236,8 +239,23 @@ DOC
 
   private
 
+  PRIVATE_EXTENSIONS = [
+    'subjectAltName', '2.5.29.17',
+  ]
+
   def extension_request_attribute(options)
     extensions = []
+
+    if options[:extension_requests]
+      options[:extension_requests].each_pair do |oid, value|
+        if PRIVATE_EXTENSIONS.include? oid
+          raise Puppet::Error, "Cannot specify CSR extension request #{oid}: conflicts with internally used extension request"
+        end
+
+        ext = OpenSSL::X509::Extension.new(oid, value, false)
+        extensions << OpenSSL::ASN1::Sequence([ext])
+      end
+    end
 
     if options[:dns_alt_names]
       names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
