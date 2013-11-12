@@ -42,10 +42,6 @@ describe component do
       component.new(:name => "Class[foo]").pathbuilder.must == ["Foo"]
     end
 
-    it "should produce an empty string if the component models the 'main' class" do
-      component.new(:name => "Class[main]").pathbuilder.must == [""]
-    end
-
     it "should produce a resource reference if the component does not model a class" do
       component.new(:name => "Foo[bar]").pathbuilder.must == ["Foo[bar]"]
     end
