@@ -179,7 +179,7 @@ DOC
 
   def subject_alt_names
     @subject_alt_names ||= request_extensions.
-      select {|x| x["oid"] = "subjectAltName" }.
+      select {|x| x["oid"] == "subjectAltName" }.
       map {|x| x["value"].split(/\s*,\s*/) }.
       flatten.
       sort.

@@ -261,7 +261,18 @@ describe Puppet::SSL::CertificateRequest do
         end
       end
 
-      it "merges the extReq attribute with the subjectAltNames extension"
+      it "merges the extReq attribute with the subjectAltNames extension" do
+        request.generate(key,
+                         :dns_alt_names => 'first.tld, second.tld',
+                         :extension_requests => extension_data)
+        exts = request.request_extensions
+
+        exts.should include('oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi')
+        exts.should include('oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e')
+        exts.should include('oid' => 'subjectAltName', 'value' => 'DNS:first.tld, DNS:myname, DNS:second.tld')
+
+        request.subject_alt_names.should eq ['DNS:first.tld', 'DNS:myname', 'DNS:second.tld']
+      end
     end
 
     it "should sign the csr with the provided key" do
