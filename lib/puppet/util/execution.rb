@@ -30,6 +30,7 @@ module Util::Execution
   # @raise [ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
   #   `true`.
   # @return [String] a string with the output from the subprocess executed by the given block
+  # @api public
   #
   def self.execpipe(command, failonfail = true)
     # Paste together an array with spaces.  We used to paste directly
@@ -63,6 +64,7 @@ module Util::Execution
   # Wraps execution of {execute} with mapping of exception to given exception (and output as argument).
   # @raise [exception] under same conditions as {execute}, but raises the given `exception` with the output as argument
   # @return (see execute)
+  # @api public
   def self.execfail(command, exception)
     output = execute(command)
     return output
@@ -100,6 +102,7 @@ module Util::Execution
   #   when the options specified are neither failonfail nor combine). If no
   #   options are specified, then failonfail and combine default to true.
   # @comment See commits efe9a833c and d32d7f30
+  # @api public
   #
   def self.execute(command, options = NoOptionsSpecified)
     # specifying these here rather than in the method signature to allow callers to pass in a partial
