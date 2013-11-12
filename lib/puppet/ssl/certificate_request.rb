@@ -90,14 +90,8 @@ DOC
       add_csr_attributes(csr, options[:csr_attributes])
     end
 
-    if options[:dns_alt_names] then
-      names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
-      names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
-      names = extension_factory.create_extension("subjectAltName", names, false)
-
-      extReq = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence([names])])
-
-      csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
+    if (ext_req_attribute = extension_request_attribute(options))
+      csr.add_attribute(ext_req_attribute)
     end
 
     signer = Puppet::SSL::CertificateSigner.new
@@ -237,6 +231,25 @@ DOC
       attr_set = OpenSSL::ASN1::Set.new([OpenSSL::ASN1::Sequence.new(encoded_strings)])
       csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
       Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
+    end
+  end
+
+  private
+
+  def extension_request_attribute(options)
+    extensions = []
+
+    if options[:dns_alt_names]
+      names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
+      names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
+      alt_names_ext = extension_factory.create_extension("subjectAltName", names, false)
+
+      extensions << OpenSSL::ASN1::Sequence([alt_names_ext])
+    end
+
+    unless extensions.empty?
+      ext_req = OpenSSL::ASN1::Set(extensions)
+      OpenSSL::X509::Attribute.new("extReq", ext_req)
     end
   end
 end
