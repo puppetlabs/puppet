@@ -357,6 +357,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "case 2 { 1,3 : { no } 5: { no } }"                    => nil,
       "case 'banana' { 1,3 : { no } /.*ana.*/: { yes } }"    => 'yes',
       "case 'banana' { /.*(ana).*/: { $1 } }"                => 'ana',
+      "case [1] { Array : { yes } }"                         => 'yes',
+      "case [1] {
+         Array[String] : { no }
+         Array[Integer]: { yes }
+      }"                                                     => 'yes',
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
@@ -369,6 +374,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "3 ? { 1 => no, 2 => no, default => yes }"          => 'yes',
       "3 ? { 1 => no, default => yes, 3 => no }"          => 'yes',
       "'banana' ? { /.*(ana).*/  => $1 }"                 => 'ana',
+      "[2] ? { Array[String] => yes, Array => yes}"       => 'yes',
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result

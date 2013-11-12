@@ -663,13 +663,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     evaluate(o.type_ref, scope)
   end
 
-  # Puppet 3.1 AST only supports calling a function by name (it is not possible to produce a function
-  # that is then called). TODO- should puppet 4 accept this? It is very powerful in combination with
-  # custom functions in puppet language.
-  #
-  # rval_required (for an expression)
-  # functor_expr (lhs - the "name" expression)
-  # arguments - list of arguments
+  # Evaluates function call by name.
   #
   def eval_CallNamedFunctionExpression(o, scope)
     # The functor expression is not evaluated, it is not possible to select the function to call
@@ -936,18 +930,23 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   #
   # This is the type of matching performed in a case option, using == for every type
   # of value except regular expression where a match is performed.
-  # @todo there are implementation issues left to deal with (see source)
   #
   def is_match? left, right, o, scope
-    # TODO: deal with TypeError
-    # TODO: match when left is a Number, or something strange
-    # TODO: solution should be used in MatchExpression
     if right.is_a?(Regexp)
+      # TODO: Possibly use unique Issue key for this
+      fail(Issues::MATCH_NOT_STRING, o, {:left_value => left}) unless left.is_a? String
       matched = right.match(left)
       set_match_data(matched, o, scope) # creates or clears ephemeral
       !!matched # convert to boolean
+    elsif right.is_a?(Puppet::Pops::Types::PAbstractType) && !left.is_a?(Puppet::Pops::Types::PAbstractType)
+      # right is a type and left is not - check if left is an instance of the given type
+      # (The reverse is not terribly meaningful - computing which of the case options that first produces
+      # an instance of a given type).
+      #
+      @@type_calculator.instance?(right, left)
     else
-      left == right
+      # Handle equality the same way as the language '==' operator (case insensitive etc.)
+      @@compare_operator.equals(left,right)
     end
   end
 
