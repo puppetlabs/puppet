@@ -83,7 +83,7 @@ describe "Puppet::Parser::Parser" do
     describe "when parsing comments before a statement" do
       it "should associate the documentation to the statement AST node" do
         if Puppet[:parser] == 'future'
-          pending "egrammar does not yet process comments"
+          pending "egrammar does not process comments"
         end
         ast = @parser.parse("""
         # comment
@@ -121,17 +121,6 @@ describe "Puppet::Parser::Parser" do
                 ast = @parser.parse("# comment\nclass container { #{dsl_expr} }\n")
                 ast.code[0].instantiate('')[0].doc.should == "comment\n"
               end
-            end
-          end
-          # Pending, these syntaxes are not yet supported in 3.x
-          #
-          # @todo Merge these into the test above after the migration to the new
-          #   parser is complete.
-          { "a selector alternative" => "$opt ? { { 'a' => 1 } => true, default => false }",
-            "an argument without parenthesis" => "flatten { 'a' => 1 }",
-          }.each_pair do |dsl_desc, dsl_expr|
-            context "as #{dsl_desc}" do
-              it "should associate the docstring to the container"
             end
           end
         end
