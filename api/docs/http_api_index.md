@@ -25,6 +25,7 @@ Puppet Agents.
 * {file:api/docs/http_facts.md Facts}
 * {file:api/docs/http_node.md Node}
 * {file:api/docs/http_resource_type.md Resource Type}
+* {file:api/docs/http_status.md Status}
 
 ### SSL Certificate Related Services
 
@@ -44,8 +45,3 @@ REST services support all of the formats.
 
 * {file:api/docs/pson.md PSON}
 * {http://www.yaml.org/spec/1.2/spec.html YAML}
-
-To Be Documented
-----------------
-
-* status

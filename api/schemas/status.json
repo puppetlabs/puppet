@@ -1,0 +1,18 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "Master status",
+    "description": "Information about a running master",
+    "type":        "object",
+    "properties": {
+        "is_alive": {
+            "description": "This will always be true since the master must be running to retrieve the object",
+            "type": "boolean"
+        },
+        "version": {
+            "description": "The version of the master",
+            "type": "string"
+        }
+    },
+    "required": ["is_alive", "version"],
+    "additionalProperties": false
+}
