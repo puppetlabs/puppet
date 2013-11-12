@@ -688,7 +688,7 @@ describe Puppet::Parser::Lexer, "when lexing comments" do
   end
 
   it "should add a new comment stack level on LBRACE" do
-    @lexer.string = "{"
+    @lexer.string = "class {"
 
     @lexer.expects(:commentpush)
 
