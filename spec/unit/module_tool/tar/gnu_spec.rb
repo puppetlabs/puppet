@@ -8,9 +8,9 @@ describe Puppet::ModuleTool::Tar::Gnu do
   let(:destfile)   { '/the/dest/file.tar.gz' }
 
   it "unpacks a tar file" do
-    Puppet::Util::Execution.expects(:execute).with("tar xzf #{sourcefile} --no-same-permissions --no-same-owner -C #{destdir}")
+    Puppet::Util::Execution.expects(:execute).with("tar xzf #{sourcefile} --no-same-owner -C #{destdir}")
     Puppet::Util::Execution.expects(:execute).with("find #{destdir} -type d -exec chmod 755 {} +")
-    Puppet::Util::Execution.expects(:execute).with("find #{destdir} -type f -exec chmod 644 {} +")
+    Puppet::Util::Execution.expects(:execute).with("find #{destdir} -type f -exec chmod a-wst {} +")
     Puppet::Util::Execution.expects(:execute).with("chown -R <owner:group> #{destdir}")
     subject.unpack(sourcefile, destdir, '<owner:group>')
   end
