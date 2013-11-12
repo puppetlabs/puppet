@@ -163,7 +163,7 @@ module Puppet
           listings = listings.reject { |l| l =~ /\.\.$/ }
 
           listings.each do |line|
-            assert_match /(drwxr-xr-x|[^d]rw-r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
+            assert_match /(drwxr-xr-x|[^d]r--r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
               "bad permissions for '#{line[/\S+$/]}' - expected 644/755, #{owner}, #{group}"
           end
         end
