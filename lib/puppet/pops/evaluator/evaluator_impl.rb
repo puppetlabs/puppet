@@ -117,7 +117,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @raise ArgumentError, if given closure is not a Puppet::Pops::Evaluator::Closure
   #
   def call(closure, args, scope)
-    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Lambda)
+    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Closure)
     pblock = closure.model
     parameters = pblock.parameters || []
 
@@ -675,7 +675,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     assert_function_available(name, o, scope)
     evaluated_arguments = o.arguments.collect {|arg| evaluate(arg, scope) }
     # wrap lambda in a callable block if it is present
-    evaluated_arguments << Puppet::Pops::Evaluator::Lambda.new(self, o.lambda, scope) if o.lambda
+    evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
     call_function(name, evaluated_arguments, o, scope) do |result|
       # prevent functions that are not r-value from leaking its return value
       rvalue_function?(name, o, scope) ? result : nil
@@ -696,7 +696,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     name = name.value # the string function name
     assert_function_available(name, o, scope)
     evaluated_arguments = [receiver] + (o.arguments || []).collect {|arg| evaluate(arg, scope) }
-    evaluated_arguments << Puppet::Pops::Evaluator::Lambda.new(self, o.lambda, scope) if o.lambda
+    evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
     call_function(name, evaluated_arguments, o, scope) do |result|
       # prevent functions that are not r-value from leaking its return value
       rvalue_function?(name, o, scope) ? result : nil
