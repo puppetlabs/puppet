@@ -7,6 +7,8 @@ class Puppet::ModuleTool::Tar::Mini
     Zlib::GzipReader.open(sourcefile) do |reader|
       Archive::Tar::Minitar.unpack(reader, destdir) do |action, name, stats|
         case action
+        when :file_done
+          File.chmod(0444, "#{destdir}/#{name}")
         when :dir, :file_start
           validate_entry(destdir, name)
           Puppet.debug("extracting #{destdir}/#{name}")
