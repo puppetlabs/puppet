@@ -21,7 +21,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def access (o, scope, *keys)
-    @@access_visitor.visit_this(self, o, scope, keys)
+    @@access_visitor.visit_this_2(self, o, scope, keys)
   end
 
   protected
@@ -95,10 +95,6 @@ class Puppet::Pops::Evaluator::AccessOperator
   # An integer type provides a way to create an Array of integers from, to (inclusive) (must be given), and an
   # optional step at the 3d position which defaults to 1
   def access_PIntegerType(o, scope, keys)
-    if keys.size == 0
-      return o
-    end
-
     unless keys.size.between?(2, 3)
       fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_ARITY, @semantic, {:actual => keys.size})
     end
@@ -124,18 +120,16 @@ class Puppet::Pops::Evaluator::AccessOperator
       end
     end
     case keys.size
-    when 0
-      Marshal.load(Marshal.dump(o)) # Deep copy
     when 1
       result = Puppet::Pops::Types::PHashType.new()
       result.key_type = Marshal.load(Marshal.dump(o.key_type))
       result.element_type = keys[0]
       result
     when 2
-    result = Puppet::Pops::Types::PHashType.new()
-    result.key_type = keys[0]
-    result.element_type = keys[1]
-    result
+      result = Puppet::Pops::Types::PHashType.new()
+      result.key_type = keys[0]
+      result.element_type = keys[1]
+      result
     else
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Hash', :min => 1, :max => 2, :actual => keys.size})
     end
@@ -144,10 +138,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   # An Array can create a new Array type. It is not possible to create a collection of Array types.
   #
   def access_PArrayType(o, scope, keys)
-    case keys.size
-    when 0
-      Marshal.load(Marshal.dump(o)) # Deep copy
-    when 1
+    if keys.size == 1
       unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array', :actual => keys[0].class})
       end
@@ -173,8 +164,8 @@ class Puppet::Pops::Evaluator::AccessOperator
   #
   def access_PResourceType(o, scope, keys)
     if keys.size == 0
-      # TODO: Either the below or an error
-      return Marshal.load(Marshal.dump(o)) # Deep copy
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
+        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)
     end
     if !o.title.nil?
       # lookup resource and return one or more parameter values
@@ -215,9 +206,13 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def access_PHostClassType(o, scope, keys)
     if keys.size == 0
-      return Marshal.load(Marshal.dump(o)) # Deep copy
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
+        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)
     end
     unless o.class_name.nil?
+      # TODO: if [] is applied to specific class, it should be treated the same as getting
+      # a resource parameter. Now it fails the operation
+      #
       fail(Puppet::Pops::Issues::ILLEGAL_TYPE_SPECIALIZATION, semantic.left_expr, {:kind => 'Class'})
     end
     result = keys.collect do |c|

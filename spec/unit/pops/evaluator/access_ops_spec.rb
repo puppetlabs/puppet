@@ -178,7 +178,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'produces same class if no class name is given' do
       expr = fqr('Class')[fqn('apache')][]
-      expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
+      expect { evaluate(expr) }.to raise_error(/Evaluation Error: Class\[apache\]\[\] requires 1 arguments\. Got 0/)
     end
 
     it 'produces a collection of classes when multiple class names are given' do
