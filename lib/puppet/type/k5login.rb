@@ -51,7 +51,7 @@ Puppet::Type.newtype(:k5login) do
 
     # remove the file
     def destroy
-      File.unlink(@resource[:name])
+      Puppet::FileSystem::File.unlink(@resource[:name])
     end
 
     # Return the principals

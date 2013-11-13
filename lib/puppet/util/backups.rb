@@ -70,7 +70,7 @@ module Puppet::Util::Backups
     info "Removing old backup of type #{stat.ftype}"
 
     begin
-      File.unlink(newfile)
+      Puppet::FileSystem::File.unlink(newfile)
     rescue => detail
       message = "Could not remove old backup: #{detail}"
       self.log_exception(detail, message)

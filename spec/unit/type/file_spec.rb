@@ -948,7 +948,7 @@ describe Puppet::Type.type(:file) do
       file.stat
       file.stubs(:stat).returns stub('stat', :ftype => 'file')
 
-      File.stubs(:unlink)
+      Puppet::FileSystem::File.stubs(:unlink)
 
       file.remove_existing(:directory).should == true
       file.instance_variable_get(:@stat).should == :needs_stat

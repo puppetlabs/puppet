@@ -58,7 +58,7 @@ Puppet::Reports.register_report(:store) do
       Dir.entries(dir).each do |file|
         next if ['.','..'].include?(file)
         file = File.join(dir, file)
-        File.unlink(file) if File.file?(file)
+        Puppet::FileSystem::File.unlink(file) if File.file?(file)
       end
       Dir.rmdir(dir)
     end

@@ -254,7 +254,7 @@ describe Puppet::Transaction do
     Puppet::FileSystem::File.exist?(fname).should be_true
 
     # Now remove it, so it can get created again
-    File.unlink(fname)
+    Puppet::FileSystem::File.unlink(fname)
 
     file[:content] = "some content"
 
@@ -262,7 +262,7 @@ describe Puppet::Transaction do
     Puppet::FileSystem::File.exist?(fname).should be_true
 
     # Now remove it, so it can get created again
-    File.unlink(fname)
+    Puppet::FileSystem::File.unlink(fname)
 
     # And tag our exec
     exec.tag("testrun")

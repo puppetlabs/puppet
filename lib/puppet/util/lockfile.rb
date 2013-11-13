@@ -31,7 +31,7 @@ class Puppet::Util::Lockfile
 
   def unlock
     if locked?
-      File.unlink(@file_path)
+      Puppet::FileSystem::File.unlink(@file_path)
       true
     else
       false

@@ -114,7 +114,7 @@ describe provider_class do
       mocked_file = mock(path, :symlink? => true)
       FileTest.stubs(:directory?).returns(false)
       Puppet::FileSystem::File.expects(:new).with(path).returns(mocked_file)
-      File.expects(:unlink).with(path).returns(0)
+      Puppet::FileSystem::File.expects(:unlink).with(path).returns(0)
       @provider.disable
     end
   end

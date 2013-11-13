@@ -170,7 +170,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
       if self.daemon
         if Puppet::FileSystem::File.new(self.service).symlink?
           Puppet.notice "Disabling #{self.service}: removing link #{self.daemon} -> #{self.service}"
-          File.unlink(self.service)
+          Puppet::FileSystem::File.unlink(self.service)
         end
       end
     rescue Puppet::ExecutionFailure

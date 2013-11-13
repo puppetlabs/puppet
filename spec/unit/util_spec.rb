@@ -470,7 +470,7 @@ describe Puppet::Util do
         subject.replace_file(new_target, 0555) {|fh| fh.puts "foo" }
         get_mode(new_target).should == 0555
       ensure
-        File.unlink(new_target) if Puppet::FileSystem::File.exist?(new_target)
+        Puppet::FileSystem::File.unlink(new_target) if Puppet::FileSystem::File.exist?(new_target)
       end
     end
 
@@ -509,7 +509,7 @@ describe Puppet::Util do
 
           get_mode(new_target).should == 0664
         ensure
-          File.unlink(new_target) if Puppet::FileSystem::File.exist?(new_target)
+          Puppet::FileSystem::File.unlink(new_target) if Puppet::FileSystem::File.exist?(new_target)
         end
       end
     end

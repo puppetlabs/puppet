@@ -46,7 +46,7 @@ class Puppet::Util::Reference
     # There used to be an attempt to use secure_open / replace_file to secure
     # the target, too, but that did nothing: the race was still here.  We can
     # get exactly the same benefit from running this effort:
-    File.unlink('/tmp/puppetdoc.tex') rescue nil
+    Puppet::FileSystem::File.unlink('/tmp/puppetdoc.tex') rescue nil
     output = %x{#{cmd}}
     unless $CHILD_STATUS == 0
       $stderr.puts "rst2latex failed"
