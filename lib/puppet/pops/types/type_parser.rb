@@ -77,6 +77,8 @@ class Puppet::Pops::Types::TypeParser
       TYPES.integer
     when "float"
       TYPES.float
+    when "numeric"
+        TYPES.numeric
     when "string"
       TYPES.string
     when "boolean"

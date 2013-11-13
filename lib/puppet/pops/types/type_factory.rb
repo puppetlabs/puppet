@@ -20,6 +20,13 @@ module Puppet::Pops::Types::TypeFactory
     Types::PFloatType.new()
   end
 
+  # Produces the Numeric type
+  # @api public
+  #
+  def self.numeric()
+    Types::PNumericType.new()
+  end
+
   # Produces a string representation of the type
   # @api public
   #
