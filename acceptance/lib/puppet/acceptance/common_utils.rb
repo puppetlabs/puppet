@@ -76,28 +76,29 @@ module Puppet
         hostname = master.execute('facter hostname')
         fqdn = master.execute('facter fqdn')
 
-        step "Master: Ensure the master bootstraps CA"
-        with_puppet_running_on(master,
-                                :master => {
-                                  :dns_alt_names => "puppet,#{hostname},#{fqdn}",
-                                  :autosign => true,
-                                }
-                              ) do
-
+        step "Clear old agent certificates from master" do
           agents.each do |agent|
-            next if agent == master
+            agent_cn = on(agent, puppet('agent --configprint certname')).stdout.chomp
+            clean_cert(master, agent_cn, false) if agent_cn
+          end
+        end
 
-            step "Clear old agent certificate from master" do
-              agent_cn = on(agent, puppet('agent --configprint certname')).stdout.chomp
-              clean_cert(master, agent_cn, false) if agent_cn
-            end
-            if resign
-              step "Agents: Run agent --test once to obtained auto-signed cert" do
+        if resign
+          step "Master: Ensure the master is listening and autosigning"
+          with_puppet_running_on(master,
+                                  :master => {
+                                    :dns_alt_names => "puppet,#{hostname},#{fqdn}",
+                                    :autosign => true,
+                                  }
+                                ) do
+
+            agents.each do |agent|
+
+              step "Agents: Run agent --test once to obtain auto-signed cert" do
                 on agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]
               end
             end
           end
-
         end
       end
 
