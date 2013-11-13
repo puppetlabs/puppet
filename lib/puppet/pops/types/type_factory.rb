@@ -69,6 +69,12 @@ module Puppet::Pops::Types::TypeFactory
     Types::PDataType.new()
   end
 
+  # Creates an instance of the Undef type
+  # @api public
+  def self.undef()
+    Types::PNilType.new()
+  end
+
   # Produces an instance of the abstract type PCatalogEntryType
   def self.catalog_entry()
     Types::PCatalogEntryType.new()

@@ -454,6 +454,12 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def assignable_PNilType(t, t2)
+    # Only undef/nil is assignable to nil type
+    t2.is_a?(Types::PNilType)
+  end
+
+  # @api private
   def assignable_PLiteralType(t, t2)
     t2.is_a?(Types::PLiteralType)
   end
@@ -566,6 +572,9 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def string_PObjectType(t)  ; "Object"  ; end
+
+  # @api private
+  def string_PNilType(t)     ; 'Undef'   ; end
 
   # @api private
   def string_PBooleanType(t) ; "Boolean" ; end

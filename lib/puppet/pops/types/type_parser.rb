@@ -97,6 +97,9 @@ class Puppet::Pops::Types::TypeParser
       TYPES.collection()
     when "catalogentry"
       TYPES.catalog_entry()
+    when "undef"
+      # Should not be interpreted as Resource type
+      TYPES.undef()
     when "object", "ruby", "type"
       # should not be interpreted as Resource type
       # TODO: these should not be errors
