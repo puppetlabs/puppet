@@ -7,14 +7,14 @@ describe 'The hiera2 bindings provider' do
   include PuppetSpec::Pops
 
   def config_dir(config_name)
-    File.dirname(my_fixture("#{config_name}/hiera.yaml"))
+    File.dirname(my_fixture("format2/#{config_name}/hiera.yaml"))
   end
 
   before(:each) do
     Puppet[:binder] = true
   end
 
-  context 'when loading ok bindings' do
+  context 'when loading ok bindings using format version 2' do
 
     let(:node) { 'node.example.com' }
     let(:acceptor) {  Puppet::Pops::Validation::Acceptor.new() }
@@ -26,7 +26,9 @@ describe 'The hiera2 bindings provider' do
 
     it 'should load and validate OK bindings' do
       Puppet::Pops::Binder::BindingsValidatorFactory.new().validator(acceptor).validate(bindings)
-      acceptor.errors_or_warnings?.should() == false
+      acceptor.errors?.should() == false
+      acceptor.should have_issue(Puppet::Pops::Binder::Hiera2::Issues::DEPRECATED_VERSION)
+      acceptor.warnings.size.should == 1
     end
 
     it 'should contain the expected effective categories' do

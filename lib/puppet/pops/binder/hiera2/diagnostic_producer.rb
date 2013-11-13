@@ -25,6 +25,9 @@ module Puppet::Pops::Binder::Hiera2
       # Warning since if it does not blow up on anything else, a sane subset of later version was used
       p[Issues::LATER_VERSION] = :warning
 
+      # Using older, now deprecated version
+      p[Issues::DEPRECATED_VERSION] = :warning
+
       # Ignore MISSING_BACKENDS because a default will be provided
       p[Issues::MISSING_BACKENDS] = :ignore
 

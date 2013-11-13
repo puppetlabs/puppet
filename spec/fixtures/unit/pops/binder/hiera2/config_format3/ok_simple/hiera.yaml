@@ -1,0 +1,11 @@
+---
+version: 3
+
+hierarchy:
+  - 'path'
+  - 'path2'
+
+datadir: 'data'
+
+backends:
+  - yaml

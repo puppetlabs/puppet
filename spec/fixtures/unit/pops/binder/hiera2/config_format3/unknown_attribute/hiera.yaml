@@ -1,0 +1,13 @@
+---
+version: 3
+
+hierarchy:
+  -
+   ctagroy:  'fatfingers'
+   value:    '${osfamily}'
+   path:     'for_${osfamily}'
+
+datadir: 'data'
+
+backends:
+  - yaml
