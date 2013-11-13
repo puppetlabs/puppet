@@ -154,7 +154,7 @@ module Puppet
         end
 
         # A module's files should have:
-        #     * a mode of 644 (755, if they're a directory)
+        #     * a mode of 444 (755, if they're a directory)
         #     * owner == owner of moduledir
         #     * group == group of moduledir
         on host, %Q{ls -alR "#{moduledir}/#{module_name}"} do
@@ -164,7 +164,7 @@ module Puppet
 
           listings.each do |line|
             assert_match /(drwxr-xr-x|[^d]r--r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
-              "bad permissions for '#{line[/\S+$/]}' - expected 644/755, #{owner}, #{group}"
+              "bad permissions for '#{line[/\S+$/]}' - expected 444/755, #{owner}, #{group}"
           end
         end
       end
