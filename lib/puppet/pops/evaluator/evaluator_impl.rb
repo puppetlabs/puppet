@@ -19,9 +19,8 @@ require 'puppet/pops/evaluator/closure'
 #
 # See {Puppet::Pops::Visitable} and {Puppet::Pops::Visitor} for more information about
 # polymorphic calling.
-# @api private
 #
-class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
+class Puppet::Pops::Evaluator::EvaluatorImpl
   include Puppet::Pops::Utils
 
   # Provides access to the Puppet 3.x runtime (scope, etc.)
@@ -47,6 +46,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
   end
 
+  # @api private
   def type_calculator
     @@type_calculator
   end
@@ -73,9 +73,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
     @@eval_visitor.visit_this_1(self, target, scope)
   end
 
-  # Polymorphic assign - calls assign_TYPE.
+  # Polymorphic assign - calls assign_TYPE
   #
-  # # Polymorphic assign
+  # ## Polymorphic assign
   # Polymorphic assign calls a method on the format assign_TYPE where TYPE is the last
   # part of the class of the given _target_. A search is performed starting with the actual class, continuing
   # with each of the _target_ class's super classes until a matching method is found.
@@ -87,7 +87,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   # @param value [Object] the value to assign to `target`
   # @param o [Puppet::Pops::Model::PopsObject] originating instruction
   # @param scope [Object] the runtime specific scope where evaluation should take place
-
+  #
+  # @api
+  #
   def assign(target, value, o, scope)
     @@assign_visitor.visit_this_3(self, target, value, o, scope)
   end
@@ -98,14 +100,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
 
   def string(o, scope)
     @@string_visitor.visit_this_1(self, o, scope)
-  end
-
-  # Polymorphic query
-  # Produces a Predicate Proc that can be called with a resource instance to determine of the resource
-  # is to be included in the result or not.
-  #
-  def query(o, scope)
-    @@query_visitor.visit_this_1(self, o, scope)
   end
 
   # Call a closure - Can only be called with a Closure (for now), may be refactored later
@@ -180,6 +174,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl # < Puppet::Pops::Evaluator
   end
 
   def lvalue_LiteralList(o, scope)
+    # evaluate the list - see assign_Array for how this is used
     evaluate(o.expr, scope)
   end
 
