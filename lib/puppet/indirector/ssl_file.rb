@@ -74,7 +74,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
     Puppet.notice "Removing file #{model} #{request.key} at '#{path}'"
     begin
-      File.unlink(path)
+      Puppet::FileSystem::File.unlink(path)
     rescue => detail
       raise Puppet::Error, "Could not remove #{request.key}: #{detail}"
     end

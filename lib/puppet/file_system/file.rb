@@ -159,6 +159,25 @@ class Puppet::FileSystem::File
     File.readlink(@path)
   end
 
+  # Deletes the named files, returning the number of names passed as arguments.
+  # See also Dir::rmdir.
+  #
+  # @raise an exception on any error.
+  #
+  # @return [Integer] the number of names passed as arguments
+  def self.unlink(*file_names)
+    File.unlink(*file_names)
+  end
+
+  # Deletes the file.
+  # See also Dir::rmdir.
+  #
+  # @raise an exception on any error.
+  #
+  # @return [Integer] the number of names passed as arguments, in this case 1
+  def unlink
+    self.class.unlink(@path)
+  end
 
   # @return [File::Stat] object for the named file.
   def stat

@@ -27,7 +27,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     return unless Puppet::FileSystem::File.exist?(public_key_path(request.key))
 
     begin
-      File.unlink(public_key_path(request.key))
+      Puppet::FileSystem::File.unlink(public_key_path(request.key))
     rescue => detail
       raise Puppet::Error, "Could not remove #{request.key} public key: #{detail}"
     end

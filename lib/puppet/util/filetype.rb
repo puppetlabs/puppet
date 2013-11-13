@@ -112,7 +112,7 @@ class Puppet::Util::FileType
 
     # Remove the file.
     def remove
-      File.unlink(@path) if Puppet::FileSystem::File.exist?(@path)
+      Puppet::FileSystem::File.unlink(@path) if Puppet::FileSystem::File.exist?(@path)
     end
 
     # Overwrite the file.

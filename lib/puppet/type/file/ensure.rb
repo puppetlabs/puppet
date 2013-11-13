@@ -36,7 +36,7 @@ module Puppet
     nodefault
 
     newvalue(:absent) do
-      File.unlink(@resource[:path])
+      Puppet::FileSystem::File.unlink(@resource[:path])
     end
 
     aliasvalue(:false, :absent)
