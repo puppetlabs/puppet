@@ -127,6 +127,8 @@ class Puppet::Pops::Parser::EvaluatingParser
   # The method makes an exception for the two character sequences \$ and \s. They
   # will not be escaped since they have a special meaning in puppet syntax.
   #
+  # TODO: Handle \uXXXX characters ??
+  #
   # @param x [String] The string to quote and "unparse"
   # @return [String] The quoted string
   #
