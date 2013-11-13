@@ -119,8 +119,18 @@ module Puppet
         next if metadata_method == :checksum and metadata.ftype == "directory"
         next if metadata_method == :checksum and metadata.ftype == "link" and metadata.links == :manage
 
-        if Puppet.features.microsoft_windows?
-          next if [:owner, :group].include?(metadata_method) and !local?
+        if ! local? && [:owner, :group, :mode].include?(metadata_method)
+          case Puppet[:source_permissions]
+          when "never"
+            next
+          when "creates"
+            next if Puppet::FileSystem::File.exist?(resource[:path])
+          else
+            if Puppet.features.microsoft_windows?
+              Puppet.deprecation_warning("Copying metadata from the puppetmaster to Windows agents is deprecated; Use Puppet[:source_permissions] = never.")
+              next
+            end
+          end
         end
 
         if resource[param_name].nil? or resource[param_name] == :absent

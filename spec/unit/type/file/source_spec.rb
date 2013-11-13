@@ -225,6 +225,84 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
       end
 
+      context "when source_permissions is `creates`" do
+        before :each do
+          Puppet[:source_permissions] = "creates"
+          Puppet.features.expects(:root?).returns true
+          @source.stubs(:local?).returns(false)
+        end
+
+        context "when managing a new file" do
+          it "copies the remote owner" do
+            @source.copy_source_values
+
+            @resource[:owner].must == 100
+          end
+
+          it "copies the remote group" do
+            @source.copy_source_values
+
+            @resource[:group].must == 200
+          end
+
+          it "copies the remote mode" do
+            @source.copy_source_values
+
+            @resource[:mode].must == "173"
+          end
+        end
+
+        context "when managing an existing file" do
+          before :each do
+            Puppet::FileSystem::File.stubs(:exist?).with(@resource[:path]).returns(true)
+          end
+
+          it "preserves the local owner" do
+            @source.copy_source_values
+
+            @resource[:owner].must be_nil
+          end
+
+          it "preserves the local group" do
+            @source.copy_source_values
+
+            @resource[:group].must be_nil
+          end
+
+          it "preserves the local mode" do
+            @source.copy_source_values
+
+            @resource[:mode].must be_nil
+          end
+        end
+      end
+
+      context "when source_permissions is `never`" do
+        before :each do
+          Puppet[:source_permissions] = "never"
+          @source.stubs(:local?).returns(false)
+          Puppet.features.expects(:root?).returns true
+        end
+
+        it "preserves the local owner" do
+          @source.copy_source_values
+
+          @resource[:owner].must be_nil
+        end
+
+        it "preserves the local group" do
+          @source.copy_source_values
+
+          @resource[:group].must be_nil
+        end
+
+        it "preserves the local mode" do
+          @source.copy_source_values
+
+          @resource[:mode].must be_nil
+        end
+      end
+
       describe "on Windows" do
         before :each do
           Puppet.features.stubs(:microsoft_windows?).returns true
@@ -246,6 +324,13 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           @resource[:owner].must == 100
           @resource[:group].must == 200
+        end
+
+        it "deprecates copying metadata from remote sources" do
+          @source.stubs(:local?).returns false
+          Puppet.expects(:deprecation_warning).with("Copying metadata from the puppetmaster to Windows agents is deprecated; Use Puppet[:source_permissions] = never.").at_least_once
+
+          @source.copy_source_values
         end
       end
     end
@@ -358,5 +443,4 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       end
     end
   end
-
 end
