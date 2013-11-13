@@ -82,8 +82,8 @@ describe Puppet::Provider::Mount do
     it "should unmount and mount if the resource does not specify it supports remounting" do
       @mounter.stubs(:info)
       @resource.stubs(:[]).with(:remounts).returns(false)
-      @mounter.expects(:unmount)
-      @mounter.expects(:mount)
+      Facter.expects(:value).with(:operatingsystem).returns 'Darwin'
+      @mounter.expects(:mountcmd).with("-o", "update", @name)
       @mounter.remount
     end
 
