@@ -1,7 +1,8 @@
 require 'puppet/util/adsi'
 
 Puppet::Type.type(:group).provide :windows_adsi do
-  desc "Local group management for Windows. Nested groups are not supported."
+  desc "Local group management for Windows. Group members can be both users and groups.
+    Additionally, local groups can contain domain users."
 
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows
