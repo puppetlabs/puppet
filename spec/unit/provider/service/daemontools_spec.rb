@@ -117,7 +117,7 @@ describe provider_class do
       path = File.join(@servicedir,"myservice")
       mocked_file = mock(path, :symlink? => true)
       Puppet::FileSystem::File.expects(:new).with(path).returns(mocked_file)
-      File.expects(:unlink).with(path)
+      Puppet::FileSystem::File.expects(:unlink).with(path)
       @provider.stubs(:texecute).returns("")
       @provider.disable
     end
@@ -126,7 +126,7 @@ describe provider_class do
       FileTest.stubs(:directory?).returns(false)
       mocked_file = mock('anything', :symlink? => true)
       Puppet::FileSystem::File.expects(:new).returns(mocked_file)
-      File.stubs(:unlink)
+      Puppet::FileSystem::File.stubs(:unlink)
       @provider.expects(:stop)
       @provider.disable
     end

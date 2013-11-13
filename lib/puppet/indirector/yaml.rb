@@ -46,7 +46,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
   def destroy(request)
     file_path = path(request.key)
-    File.unlink(file_path) if Puppet::FileSystem::File.exist?(file_path)
+    Puppet::FileSystem::File.unlink(file_path) if Puppet::FileSystem::File.exist?(file_path)
   end
 
   def search(request)

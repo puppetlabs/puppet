@@ -60,7 +60,7 @@ describe Puppet::Util::Backups do
       it "should remove any local backup if one exists" do
         stub_file = stub(backup, :lstat => stub('stat', :ftype => 'file'))
         Puppet::FileSystem::File.expects(:new).with(backup).returns stub_file
-        File.expects(:unlink).with(backup)
+        Puppet::FileSystem::File.expects(:unlink).with(backup)
         FileUtils.stubs(:cp_r)
         Puppet::FileSystem::File.expects(:exist?).with(path).returns(true)
 
@@ -70,7 +70,7 @@ describe Puppet::Util::Backups do
       it "should fail when the old backup can't be removed" do
         stub_file = stub(backup, :lstat => stub('stat', :ftype => 'file'))
         Puppet::FileSystem::File.expects(:new).with(backup).returns stub_file
-        File.expects(:unlink).with(backup).raises ArgumentError
+        Puppet::FileSystem::File.expects(:unlink).with(backup).raises ArgumentError
         FileUtils.expects(:cp_r).never
         Puppet::FileSystem::File.expects(:exist?).with(path).returns(true)
 
@@ -81,7 +81,7 @@ describe Puppet::Util::Backups do
         stub_file = stub(backup)
         Puppet::FileSystem::File.expects(:new).with(backup).returns stub_file
         stub_file.expects(:lstat).raises(Errno::ENOENT)
-        File.expects(:unlink).with(backup).never
+        Puppet::FileSystem::File.expects(:unlink).with(backup).never
         FileUtils.stubs(:cp_r)
         Puppet::FileSystem::File.expects(:exist?).with(path).returns(true)
 

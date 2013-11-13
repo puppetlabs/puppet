@@ -267,13 +267,13 @@ describe Puppet::Indirector::SslFile do
       describe "that exist" do
         it "should unlink the certificate file" do
           Puppet::FileSystem::File.expects(:exist?).with(@certpath).returns true
-          File.expects(:unlink).with(@certpath)
+          Puppet::FileSystem::File.expects(:unlink).with(@certpath)
           @searcher.destroy(@request)
         end
 
         it "should log that is removing the file" do
           Puppet::FileSystem::File.stubs(:exist?).returns true
-          File.stubs(:unlink)
+          Puppet::FileSystem::File.stubs(:unlink)
           Puppet.expects(:notice)
           @searcher.destroy(@request)
         end

@@ -44,7 +44,7 @@ class Puppet::Configurer
   rescue => detail
     Puppet.log_exception(detail, "Removing corrupt state file #{Puppet[:statefile]}: #{detail}")
     begin
-      ::File.unlink(Puppet[:statefile])
+      Puppet::FileSystem::File.unlink(Puppet[:statefile])
       retry
     rescue => detail
       raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}")

@@ -736,7 +736,7 @@ Puppet::Type.newtype(:file) do
         fail "Could not rename temporary file #{path} to #{self[:path]}: #{detail}"
       ensure
         # Make sure the created file gets removed
-        ::File.unlink(path) if Puppet::FileSystem::File.exist?(path)
+        Puppet::FileSystem::File.unlink(path) if Puppet::FileSystem::File.exist?(path)
       end
     end
 
@@ -786,7 +786,7 @@ Puppet::Type.newtype(:file) do
   # @api private
   def remove_file(current_type, wanted_type)
     debug "Removing existing #{current_type} for replacement with #{wanted_type}"
-    ::File.unlink(self[:path])
+    Puppet::FileSystem::File.unlink(self[:path])
     stat_needed
     true
   end

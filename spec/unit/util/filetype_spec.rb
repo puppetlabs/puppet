@@ -24,7 +24,7 @@ describe Puppet::Util::FileType do
 
       it "should unlink the file when asked to remove it" do
         Puppet::FileSystem::File.expects(:exist?).with(path).returns true
-        File.expects(:unlink).with(path)
+        Puppet::FileSystem::File.expects(:unlink).with(path)
 
         file.remove
       end
