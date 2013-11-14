@@ -1,26 +1,13 @@
 require 'fileutils'
 require 'tempfile'
+require 'tmpdir'
 require 'pathname'
 
 # A support module for testing files.
 module PuppetSpec::Files
-  # This code exists only to support tests that run as root, pretty much.
-  # Once they have finally been eliminated this can all go... --daniel 2011-04-08
-  def self.in_tmp(path)
-    tempdir = Dir.tmpdir
-
-    Pathname.new(path).ascend do |dir|
-      return true if File.identical?(tempdir, dir)
-    end
-
-    false
-  end
-
   def self.cleanup
     $global_tempfiles ||= []
     while path = $global_tempfiles.pop do
-      fail "Not deleting tmpfile #{path} outside regular tmpdir" unless in_tmp(path)
-
       begin
         FileUtils.rm_rf path, :secure => true
       rescue Errno::ENOENT
@@ -43,11 +30,8 @@ module PuppetSpec::Files
     path = source.path
     source.close!
 
-    # ...record it for cleanup,
-    $global_tempfiles ||= []
-    $global_tempfiles << File.expand_path(path)
+    record_tmp(File.expand_path(path))
 
-    # ...and bam.
     path
   end
 
@@ -60,8 +44,16 @@ module PuppetSpec::Files
 
   def tmpdir(name) PuppetSpec::Files.tmpdir(name) end
   def self.tmpdir(name)
-    path = tmpfile(name)
-    FileUtils.mkdir_p(path)
-    path
+    dir = Dir.mktmpdir(name)
+
+    record_tmp(dir)
+
+    dir
+  end
+
+  def self.record_tmp(tmp)
+    # ...record it for cleanup,
+    $global_tempfiles ||= []
+    $global_tempfiles << tmp
   end
 end
