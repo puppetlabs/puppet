@@ -94,7 +94,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
       when Hash
         val.keys.sort.collect do |k,v|
           "#{k}=#{v}"
-        end.join
+        end.join(' ')
       else
         val
       end
