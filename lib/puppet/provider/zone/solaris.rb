@@ -141,7 +141,8 @@ Puppet::Type.type(:zone).provide(:solaris) do
     # In bash, the exit value of the last command is the exit value of the
     # entire pipeline
     out = execute("echo \"#{var[:input]}\" | #{var[:cmd]}", :failonfail => false, :combine => true)
-    {:out => out, :exit => out.exitstatus}
+    st = $?.exitstatus
+    {:out => out, :exit => st}
   end
 
   # Clear out the cached values.
