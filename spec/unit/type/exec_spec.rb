@@ -1,6 +1,5 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/process/process_output'
 
 describe Puppet::Type.type(:exec) do
   include PuppetSpec::Files
@@ -10,7 +9,7 @@ describe Puppet::Type.type(:exec) do
 
     output = rest.delete(:output) || ''
 
-    output = Puppet::ProcessOutput.new(output, exitstatus)
+    output = Puppet::Util::Execution::ProcessOutput.new(output, exitstatus)
     tries  = rest[:tries] || 1
 
     args = {

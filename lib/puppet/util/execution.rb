@@ -5,12 +5,28 @@ module Puppet
   require 'puppet/error'
   class ExecutionFailure < Puppet::Error
   end
+end
 
 # This module defines methods for execution of system commands. It is intented for inclusion
 # in classes that needs to execute system commands.
 # @api public
-module Util::Execution
-  require 'puppet/process/process_output'
+module Puppet::Util::Execution
+
+  # This is the full output from a process. The object itself (a String) is the
+  # stdout of the process.
+  #
+  # @api public
+  class ProcessOutput < String
+    # @return [Integer] The exit status of the process
+    # @api public
+    attr_reader :exitstatus
+
+    # @api private
+    def initialize(value,exitstatus)
+      super(value)
+      @exitstatus = exitstatus
+    end
+  end
 
   # Executes the provided command with STDIN connected to a pipe, yielding the
   # pipe object.
@@ -28,7 +44,7 @@ module Util::Execution
   # @yield [pipe] to a block executing a subprocess
   # @yieldparam pipe [IO] the opened pipe
   # @yieldreturn [String] the output to return
-  # @raise [ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
+  # @raise [Puppet::ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
   #   `true`.
   # @return [String] a string with the output from the subprocess executed by the given block
   #
@@ -54,7 +70,7 @@ module Util::Execution
 
     if failonfail
       unless $CHILD_STATUS == 0
-        raise ExecutionFailure, output
+        raise Puppet::ExecutionFailure, output
       end
     end
 
@@ -67,7 +83,7 @@ module Util::Execution
   def self.execfail(command, exception)
     output = execute(command)
     return output
-  rescue ExecutionFailure
+  rescue Puppet::ExecutionFailure
     raise exception, output
   end
 
@@ -94,7 +110,7 @@ module Util::Execution
   #   Passing in a value of false for this option will allow the command to be executed using the user/system locale.
   # @option options [Hash<{String => String}>] :custom_environment ({}) a hash of key/value pairs to set as environment variables for the duration
   #   of the command.
-  # @return [String] output as specified by options
+  # @return [Puppet::Util::Execution::ProcessOutput] output as specified by options
   # @note Unfortunately, the default behavior for failonfail and combine (since
   #   0.22.4 and 0.24.7, respectively) depend on whether options are specified
   #   or not. If specified, then failonfail and combine default to false (even
@@ -163,10 +179,10 @@ module Util::Execution
     end
 
     if options[:failonfail] and exit_status != 0
-      raise ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
+      raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
     end
 
-    Puppet::ProcessOutput.new(output || '', exit_status)
+    Puppet::Util::Execution::ProcessOutput.new(output || '', exit_status)
   end
 
   # Returns the path to the ruby executable (available via Config object, even if
@@ -280,5 +296,4 @@ module Util::Execution
     nil
   end
   private_class_method :wait_for_output
-end
 end
