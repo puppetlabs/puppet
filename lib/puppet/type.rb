@@ -2318,25 +2318,21 @@ class Type
     self[:name]
   end
 
-  # Returns the parent of this in the catalog.
-  # In case of an erroneous catalog where multiple parents have been produced, the first found (non deterministic)
-  # parent is returned.
-  # @return [???, nil] WHAT (which types can be the parent of a resource in a catalog?), or nil if there
-  #   is no catalog.
-  #
+  # Returns the parent of this in the catalog.  In case of an erroneous catalog
+  # where multiple parents have been produced, the first found (non
+  # deterministic) parent is returned.
+  # @return [Puppet::Type, nil] the
+  #   containing resource or nil if there is no catalog or no containing
+  #   resource.
   def parent
     return nil unless catalog
 
-    unless defined?(@parent)
+    @parent ||=
       if parents = catalog.adjacent(self, :direction => :in)
-        # We should never have more than one parent, so let's just ignore
-        # it if we happen to.
-        @parent = parents.shift
+        parents.shift
       else
-        @parent = nil
+        nil
       end
-    end
-    @parent
   end
 
   # Returns a reference to this as a string in "Type[name]" format.
