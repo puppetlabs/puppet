@@ -23,6 +23,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "-6/3   == -2"   do; evaluate(minus(literal(6)) / literal(3)).should == -2 ; end
       it "8 >> 1 == 4"    do; evaluate(literal(8) >> literal(1)).should == 4 ; end
       it "8 << 1 == 16"   do; evaluate(literal(8) << literal(1)).should == 16; end
+      it "8 >> -1 == 16"    do; evaluate(literal(8) >> literal(-1)).should == 16 ; end
+      it "8 << -1 == 4"   do; evaluate(literal(8) << literal(-1)).should == 4; end
     end
 
     context "on Floats" do
