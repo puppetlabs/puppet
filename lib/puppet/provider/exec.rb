@@ -1,6 +1,5 @@
 require 'puppet/provider'
 require 'puppet/util/execution'
-require 'puppet/process/process_output'
 
 class Puppet::Provider::Exec < Puppet::Provider
   include Puppet::Util::Execution
