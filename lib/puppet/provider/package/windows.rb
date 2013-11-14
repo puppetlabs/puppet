@@ -58,20 +58,16 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     installer = Puppet::Provider::Package::Windows::Package.installer_class(resource)
 
     command = [installer.install_command(resource), install_options].flatten.compact.join(' ')
-    execute(command, :failonfail => false, :combine => true)
+    output = execute(command, :failonfail => false, :combine => true)
 
-    check_result(exit_status)
+    check_result(output.exitstatus)
   end
 
   def uninstall
     command = [package.uninstall_command, uninstall_options].flatten.compact.join(' ')
-    execute(command, :failonfail => false, :combine => true)
+    output = execute(command, :failonfail => false, :combine => true)
 
-    check_result(exit_status)
-  end
-
-  def exit_status
-    $CHILD_STATUS.exitstatus
+    check_result(output.exitstatus)
   end
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa368542(v=vs.85).aspx
@@ -88,8 +84,6 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     case hr
     when self.class::ERROR_SUCCESS
       # yeah
-    when 194
-      warning("The package requested a reboot to finish the operation.")
     when self.class::ERROR_SUCCESS_REBOOT_INITIATED
       warning("The package #{operation}ed successfully and the system is rebooting now.")
     when self.class::ERROR_SUCCESS_REBOOT_REQUIRED

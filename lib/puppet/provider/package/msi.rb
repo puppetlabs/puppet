@@ -74,22 +74,18 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
     # because of the special quoting we need to do around the MSI
     # properties to use.
     command = ['msiexec.exe', '/qn', '/norestart', '/i', shell_quote(resource[:source]), install_options].flatten.compact.join(' ')
-    execute(command, :failonfail => false, :combine => true)
+    output = execute(command, :failonfail => false, :combine => true)
 
-    check_result(exit_status)
+    check_result(output.exitstatus)
   end
 
   def uninstall
     fail("The productcode property is missing.") unless properties[:productcode]
 
     command = ['msiexec.exe', '/qn', '/norestart', '/x', properties[:productcode], uninstall_options].flatten.compact.join(' ')
-    execute(command, :failonfail => false, :combine => true)
+    output = execute(command, :failonfail => false, :combine => true)
 
-    check_result(exit_status)
-  end
-
-  def exit_status
-    $CHILD_STATUS.exitstatus
+    check_result(output.exitstatus)
   end
 
   # (Un)install may "fail" because the package requested a reboot, the system requested a
@@ -102,8 +98,6 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
     case hr
     when 0
       # yeah
-    when 194
-      warning("The package requested a reboot to finish the operation.")
     when 1641
       warning("The package #{operation}ed successfully and the system is rebooting now.")
     when 3010
