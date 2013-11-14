@@ -47,18 +47,17 @@ class Puppet::Provider::Exec < Puppet::Provider
           end
         end
 
-
         Timeout::timeout(resource[:timeout]) do
           # note that we are passing "false" for the "override_locale" parameter, which ensures that the user's
           # default/system locale will be respected.  Callers may override this behavior by setting locale-related
           # environment variables (LANG, LC_ALL, etc.) in their 'environment' configuration.
-          output, status = Puppet::Util::SUIDManager.
-              run_and_capture(command, resource[:user], resource[:group],
-                              :override_locale => false,
-                              :custom_environment => environment)
+          output = Puppet::Util::Execution.execute(command, :failonfail => false, :combine => true,
+                                  :uid => resource[:user], :gid => resource[:group],
+                                  :override_locale => false,
+                                  :custom_environment => environment)
         end
         # The shell returns 127 if the command is missing.
-        if status.exitstatus == 127
+        if output.exitstatus == 127
           raise ArgumentError, output
         end
 
@@ -67,7 +66,10 @@ class Puppet::Provider::Exec < Puppet::Provider
       self.fail detail.to_s
     end
 
-    return output, status
+    # Return output twice as processstatus was returned before, but only exitstatus was ever called.
+    # Output has the exitstatus on it so it is returned instead. This is here twice as changing this
+    #  would result in a change to the underlying API.
+    return output, output
   end
 
   def extractexe(command)
