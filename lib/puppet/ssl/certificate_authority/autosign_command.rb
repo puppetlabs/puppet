@@ -39,10 +39,8 @@ class Puppet::SSL::CertificateAuthority::AutosignCommand
     case exitstatus
     when 0
       true
-    when 1
-      false
     else
-      raise CheckFailure, "autosign_command '#{cmd}' failed while checking #{name}: exit status #{exitstatus}"
+      false
     end
   end
 end
