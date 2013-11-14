@@ -496,10 +496,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       next if virtual_not_exported?(resource)
       next if block_given? and yield resource
 
-      if convert == :to_resource
-        newres = resource.copy_as_resource
-      else
-        newres = resource.copy_as_resource.to_ral
+      newres = resource.copy_as_resource
+      newres.catalog = result
+
+      if convert != :to_resource
+        newres = newres.to_ral
       end
 
       # We can't guarantee that resources don't munge their names
@@ -534,9 +535,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     result.add_class(*self.classes)
     result.tag(*self.tags)
-
-    # Don't introduce the resources to the catalog until the catalog is complete
-    result.resources.each { |resource| resource.catalog = result }
 
     result
   end
