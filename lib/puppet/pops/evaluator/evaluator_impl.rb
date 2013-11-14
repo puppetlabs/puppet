@@ -394,6 +394,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       left = box_numeric(left, left_o, scope)
       right = box_numeric(right, right_o, scope)
       begin
+        if operator == :'%' && (left.is_a?(Float) || right.is_a?(Float))
+          # Deny users the fun of seeing severe rounding errors and confusing results
+          fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
+        end
         result = left.send(operator, right)
       rescue NoMethodError => e
         fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
