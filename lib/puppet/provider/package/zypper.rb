@@ -92,9 +92,9 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     options.collect do |val|
       case val
       when Hash
-        val.keys.sort.collect do |k|
-          "#{k} '#{val[k]}'"
-        end.join(' ')
+        val.keys.sort.collect do |k,v|
+          "#{k}=#{v}"
+        end.join
       else
         val
       end
