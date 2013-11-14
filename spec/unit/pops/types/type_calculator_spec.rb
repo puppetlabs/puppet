@@ -607,7 +607,7 @@ describe 'The type calculator' do
 
     it 'should infer PType as the type of all other types' do
       ptype = Puppet::Pops::Types::PType
-      calculator.string(calculator.infer(Puppet::Pops::Types::PNilType.new()       )).should == "Type[Object]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PNilType.new()       )).should == "Type[Undef]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PDataType.new()      )).should == "Type[Data]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PLiteralType.new()   )).should == "Type[Literal]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PStringType.new()    )).should == "Type[String]"
