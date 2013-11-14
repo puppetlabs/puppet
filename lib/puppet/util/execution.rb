@@ -1,8 +1,9 @@
 module Puppet
   require 'rbconfig'
 
-  # A command failed to execute.
   require 'puppet/error'
+  # A command failed to execute.
+  # @api public
   class ExecutionFailure < Puppet::Error
   end
 end
@@ -47,6 +48,7 @@ module Puppet::Util::Execution
   # @raise [Puppet::ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
   #   `true`.
   # @return [String] a string with the output from the subprocess executed by the given block
+  # @api public
   #
   def self.execpipe(command, failonfail = true)
     if respond_to? :debug
@@ -79,6 +81,7 @@ module Puppet::Util::Execution
   # Wraps execution of {execute} with mapping of exception to given exception (and output as argument).
   # @raise [exception] under same conditions as {execute}, but raises the given `exception` with the output as argument
   # @return (see execute)
+  # @api public
   def self.execfail(command, exception)
     output = execute(command)
     return output
@@ -97,8 +100,8 @@ module Puppet::Util::Execution
   # @param options [Hash] a Hash of options
   # @option options [Boolean]  :failonfail if this value is set to true, then this method will raise an error if the
   #   command is not executed successfully.
-  # @option options [?] :uid (nil) the user id of the user that the process should be run as
-  # @option options [?] :gid (nil) the group id of the group that the process should be run as
+  # @option options [Integer, String] :uid (nil) the user id of the user that the process should be run as
+  # @option options [Integer, String] :gid (nil) the group id of the group that the process should be run as
   # @option options [Boolean] :combine sets whether or not to combine stdout/stderr in the output
   # @option options [String] :stdinfile (nil) sets a file that can be used for stdin. Passing a string for stdin is not currently
   #   supported.
@@ -110,12 +113,15 @@ module Puppet::Util::Execution
   # @option options [Hash<{String => String}>] :custom_environment ({}) a hash of key/value pairs to set as environment variables for the duration
   #   of the command.
   # @return [Puppet::Util::Execution::ProcessOutput] output as specified by options
+  # @raise [Puppet::ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
+  #   `true`.
   # @note Unfortunately, the default behavior for failonfail and combine (since
   #   0.22.4 and 0.24.7, respectively) depend on whether options are specified
   #   or not. If specified, then failonfail and combine default to false (even
   #   when the options specified are neither failonfail nor combine). If no
   #   options are specified, then failonfail and combine default to true.
   # @comment See commits efe9a833c and d32d7f30
+  # @api public
   #
   def self.execute(command, options = NoOptionsSpecified)
     # specifying these here rather than in the method signature to allow callers to pass in a partial
@@ -187,6 +193,7 @@ module Puppet::Util::Execution
   # Returns the path to the ruby executable (available via Config object, even if
   # it's not in the PATH... so this is slightly safer than just using Puppet::Util.which)
   # @return [String] the path to the Ruby executable
+  # @api private
   #
   def self.ruby_path()
     File.join(RbConfig::CONFIG['bindir'],
