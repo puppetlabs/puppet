@@ -551,6 +551,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       '"value is ${$a*2} yo"'                 => "value is 20 yo",
       '"value is ${sprintf("x%iy",$a)} yo"'   => "value is x10y yo",
       '"value is ${"x%iy".sprintf($a)} yo"'   => "value is x10y yo",
+      '"value is ${[1,2,3]} yo"'              => "value is [1, 2, 3] yo",
+      '"value is ${{a=>1,b=>2}} yo"'          => "value is {a => 1, b => 2} yo",
+      '"value is ${/.*/} yo"'                 => "value is /.*/ yo",
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           populate

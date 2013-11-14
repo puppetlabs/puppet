@@ -803,6 +803,18 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     end
   end
 
+  def string_Array(o, scope) 
+    ['[', o.map {|e| string(e, scope)}.join(', '), ']'].join()
+  end
+
+  def string_Hash(o, scope)
+    ['{', o.map {|k,v| string(k, scope) + " => " + string(v, scope)}.join(', '), '}'].join()
+  end
+
+  def string_Regexp(o, scope)
+    ['/', o.source, '/'].join()
+  end
+
   def string_PAbstractType(o, scope)
     @@type_calculator.string(o)
   end
