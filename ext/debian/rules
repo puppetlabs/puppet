@@ -70,7 +70,7 @@ install: build
 	$(INSTALL) -m0644 ext/rack/config.ru \
 		$(CURDIR)/debian/puppetmaster-passenger/usr/share/puppet/rack/puppetmasterd
 	# Install apache2 site configuration template
-	$(INSTALL) -m0644 ext/rack/apache2.conf \
+	$(INSTALL) -m0644 ext/rack/example-passenger-vhost.conf \
 		$(CURDIR)/debian/puppetmaster-passenger/usr/share/puppetmaster-passenger/apache2.site.conf.tmpl
 
 	# Add ext directory
