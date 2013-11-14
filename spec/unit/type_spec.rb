@@ -152,6 +152,16 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     ral.resource("Testing[something]").path.should == "/Stage[main]/Something/Testing[something]"
   end
 
+  context "alias metaparam" do
+    it "creates a new name that can be used for resource references" do
+      ral = compile_to_ral(<<-MANIFEST)
+        notify { a: alias => c }
+      MANIFEST
+
+      expect(ral.resource("Notify[a]")).to eq(ral.resource("Notify[c]"))
+    end
+  end
+
   context "resource attributes" do
     let(:resource) {
       resource = Puppet::Type.type(:mount).new(:name => "foo")
