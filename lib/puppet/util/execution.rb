@@ -10,6 +10,7 @@ module Puppet
 # in classes that needs to execute system commands.
 # @api public
 module Util::Execution
+  require 'puppet/process/process_output'
 
   # Executes the provided command with STDIN connected to a pipe, yielding the
   # pipe object.
@@ -164,7 +165,7 @@ module Util::Execution
       raise ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
     end
 
-    output
+    Puppet::ProcessOutput.new(output || '', exit_status)
   end
 
   # Returns the path to the ruby executable (available via Config object, even if
