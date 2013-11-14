@@ -5,4 +5,5 @@ require 'openssl'
 module Puppet::SSL # :nodoc:
   CA_NAME = "ca"
   require 'puppet/ssl/host'
+  require 'puppet/ssl/oids'
 end
