@@ -693,7 +693,7 @@ When Puppet master is started from Rack, Puppet 3.x will read from
 ~/.puppet/puppet.conf by default.  This is intended behavior.  Rack
 configurations should start Puppet master with an explicit configuration
 directory using `ARGV << "--confdir" << "/etc/puppet"`.  Please see the
-`ext/rack/files/config.ru` file for an up-to-date example.
+`ext/rack/config.ru` file for an up-to-date example.
 
 # Determining the Puppet Version
 
