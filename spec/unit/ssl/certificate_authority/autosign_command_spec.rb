@@ -35,11 +35,8 @@ describe Puppet::SSL::CertificateAuthority::AutosignCommand do
     subject.allowed?('host').should == false
   end
 
-  it "raises an error if the command errored" do
+  it "raises an error if the command failed with a non-1 exit status" do
     $CHILD_STATUS.stubs(:exitstatus).returns 255
-    expect do
-      subject.allowed?('host').should == false
-    end.to raise_error Puppet::SSL::CertificateAuthority::AutosignCommand::CheckFailure,
-      /autosign_command.*failed.*exit status 255/
+    subject.allowed?('host').should == false
   end
 end
