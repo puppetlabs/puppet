@@ -14,8 +14,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
   end
 
   def expect_execute(command, status)
-    provider.expects(:execute).with(command, execute_options)
-    provider.expects(:exit_status).returns(status)
+    provider.expects(:execute).with(command, execute_options).returns(Puppet::Util::Execution::ProcessOutput.new('',status))
   end
 
   describe 'provider features' do
@@ -113,13 +112,6 @@ describe Puppet::Type.type(:package).provider(:windows) do
       provider.install
     end
 
-    it 'should warn if the package requests a reboot' do
-      expect_execute(command, 194)
-      provider.expects(:warning).with('The package requested a reboot to finish the operation.')
-
-      provider.install
-    end
-
     it 'should warn if reboot initiated' do
       expect_execute(command, 1641)
       provider.expects(:warning).with('The package installed successfully and the system is rebooting now.')
@@ -168,13 +160,6 @@ describe Puppet::Type.type(:package).provider(:windows) do
     it 'should not warn if the package install succeeds' do
       expect_execute(command, 0)
       provider.expects(:warning).never
-
-      provider.uninstall
-    end
-
-    it 'should warn if the package requests a reboot' do
-      expect_execute(command, 194)
-      provider.expects(:warning).with('The package requested a reboot to finish the operation.')
 
       provider.uninstall
     end
