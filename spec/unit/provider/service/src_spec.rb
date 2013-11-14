@@ -98,20 +98,23 @@ _EOF_
 
   describe "when checking if it is enabled" do
     it "should execute the lsitab command" do
-      @provider.expects(:execute).with(['/usr/sbin/lsitab', 'myservice'], {:combine => true, :failonfail => false}).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      @provider.expects(:execute).with(['/usr/sbin/lsitab', 'myservice'], {:combine => true, :failonfail => false})
       @provider.enabled?
     end
 
     it "should return false when lsitab returns non-zero" do
-      @provider.stubs(:execute).returns(Puppet::Util::Execution::ProcessOutput.new('', 1))
+      @provider.stubs(:execute)
+      $CHILD_STATUS.stubs(:exitstatus).returns(1)
       @provider.enabled?.should == :false
     end
 
     it "should return true when lsitab returns zero" do
-      @provider.stubs(:execute).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      @provider.stubs(:execute)
+      $CHILD_STATUS.stubs(:exitstatus).returns(0)
       @provider.enabled?.should == :true
     end
   end
+
 
   describe "when checking a subsystem's status" do
     it "should execute status and return running if the subsystem is active" do

@@ -24,8 +24,9 @@ describe Puppet::Type.type(:package).provider(:msi) do
     MsiPackage.stubs(:installer).returns(installer)
   end
 
-  def expect_execute(command, status)
-    provider.expects(:execute).with(command, execute_options).returns(Puppet::Util::Execution::ProcessOutput.new('',status))
+  before :each do
+    # make sure we never try to execute msiexec
+    provider.expects(:execute).never
   end
 
   describe 'provider features' do
@@ -37,7 +38,6 @@ describe Puppet::Type.type(:package).provider(:msi) do
 
   describe 'on Windows', :as_platform => :windows do
     it 'should not be the default provider' do
-      # provider.expects(:execute).never
       Puppet::Type.type(:package).defaultprovider.should_not == subject.class
     end
   end
@@ -90,7 +90,9 @@ describe Puppet::Type.type(:package).provider(:msi) do
   end
 
   context '#install' do
-    let (:command) { "msiexec.exe /qn /norestart /i #{source}" }
+    before :each do
+      provider.stubs(:execute)
+    end
 
     it 'should require the source parameter' do
       resource = Puppet::Type.type(:package).new(:name => name, :provider => :msi)
@@ -102,27 +104,40 @@ describe Puppet::Type.type(:package).provider(:msi) do
 
     it 'should install using the source and install_options' do
       resource[:install_options] = { 'INSTALLDIR' => 'C:\mysql-5.1' }
-      expect_execute("#{command} INSTALLDIR=C:\\mysql-5.1", 0)
+
+      provider.expects(:execute).with("msiexec.exe /qn /norestart /i #{source} INSTALLDIR=C:\\mysql-5.1", execute_options)
+      provider.expects(:exit_status).returns(0)
+
+      provider.install
+    end
+
+    it 'should warn if the package requests a reboot' do
+      provider.stubs(:exit_status).returns(194)
+
+      provider.expects(:warning).with('The package requested a reboot to finish the operation.')
 
       provider.install
     end
 
     it 'should warn if reboot initiated' do
-      expect_execute(command, 1641)
+      provider.stubs(:exit_status).returns(1641)
+
       provider.expects(:warning).with('The package installed successfully and the system is rebooting now.')
 
       provider.install
     end
 
     it 'should warn if reboot required' do
-      expect_execute(command, 3010)
+      provider.stubs(:exit_status).returns(3010)
+
       provider.expects(:warning).with('The package installed successfully, but the system must be rebooted.')
 
       provider.install
     end
 
     it 'should fail otherwise', :if => Puppet.features.microsoft_windows? do
-      expect_execute(command, 5)
+      provider.stubs(:execute)
+      provider.stubs(:exit_status).returns(5)
 
       expect do
         provider.install
@@ -131,9 +146,6 @@ describe Puppet::Type.type(:package).provider(:msi) do
   end
 
   context '#uninstall' do
-
-    let (:command) { "msiexec.exe /qn /norestart /x #{productcode}" }
-
     before :each do
       resource[:ensure] = :absent
       provider.set(:productcode => productcode)
@@ -147,27 +159,42 @@ describe Puppet::Type.type(:package).provider(:msi) do
     end
 
     it 'should uninstall using the productcode' do
-      expect_execute(command, 0)
+      provider.expects(:execute).with("msiexec.exe /qn /norestart /x #{productcode}", execute_options)
+      provider.expects(:exit_status).returns(0)
+
+      provider.uninstall
+    end
+
+    it 'should warn if the package requests a reboot' do
+      provider.stubs(:execute)
+      provider.stubs(:exit_status).returns(194)
+
+      provider.expects(:warning).with('The package requested a reboot to finish the operation.')
 
       provider.uninstall
     end
 
     it 'should warn if reboot initiated' do
-      expect_execute(command, 1641)
+      provider.stubs(:execute)
+      provider.stubs(:exit_status).returns(1641)
+
       provider.expects(:warning).with('The package uninstalled successfully and the system is rebooting now.')
 
       provider.uninstall
     end
 
     it 'should warn if reboot required' do
-      expect_execute(command, 3010)
+      provider.stubs(:execute)
+      provider.stubs(:exit_status).returns(3010)
+
       provider.expects(:warning).with('The package uninstalled successfully, but the system must be rebooted.')
 
       provider.uninstall
     end
 
     it 'should fail otherwise', :if => Puppet.features.microsoft_windows? do
-      expect_execute(command, 5)
+      provider.stubs(:execute)
+      provider.stubs(:exit_status).returns(5)
 
       expect do
         provider.uninstall
