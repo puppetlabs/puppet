@@ -311,6 +311,17 @@ describe Puppet::Util::Execution do
 
           expect { Puppet::Util::Execution.execute('test command') }.to raise_error(RuntimeError)
         end
+
+        describe "when the exit code is greater than 256 and the CHILD_STATUS exitstatus is incorrect" do
+          it "should return the correct exit status" do
+            expected_value = 3010
+            Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
+            stub_process_wait(expected_value)
+            $CHILD_STATUS.stubs(:exitstatus).returns 194 #this is currently what you get back with 3010
+
+            Puppet::Util::Execution.execute('test command',:failonfail => false).exitstatus.should == expected_value
+          end
+        end
       end
     end
 
@@ -509,7 +520,7 @@ describe Puppet::Util::Execution do
         Tempfile.stubs(:new).returns(stdout)
         stdout.write("My expected command output")
 
-        Puppet::Util::Execution.execute('test command', :squelch => true).should == nil
+        Puppet::Util::Execution.execute('test command', :squelch => true).should == ''
       end
 
       it "should delete the file used for output if squelch is false" do
