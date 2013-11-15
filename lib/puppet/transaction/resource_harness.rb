@@ -76,12 +76,14 @@ class Puppet::Transaction::ResourceHarness
 
     managed_via_ensure = manage_via_ensure_if_possible(resource, context)
 
-    if !managed_via_ensure && context.resource_present?
-      resource.properties.each do |param|
-        sync_if_needed(param, context)
+    if !managed_via_ensure
+      if context.resource_present?
+        resource.properties.each do |param|
+          sync_if_needed(param, context)
+        end
+      else
+        resource.debug("Nothing to manage: no ensure and the resource doesn't exist")
       end
-    else
-      resource.debug("Nothing to manage: no ensure and the resource doesn't exist")
     end
 
     capture_audit_events(resource, context)
