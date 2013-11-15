@@ -56,5 +56,6 @@ module Puppet
   # An error class for when I don't know what happened.  Automatically
   # prints a stack trace when in debug mode.
   class DevError < Puppet::Error
+    include ExternalFileError
   end
 end
