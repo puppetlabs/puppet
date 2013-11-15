@@ -92,7 +92,9 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
   end
 
   def lstat
-    raise_if_symlinks_unsupported
+    if ! Puppet.features.manages_symlinks?
+      return Puppet::Util::Windows::File.stat(@path)
+    end
     Puppet::Util::Windows::File.lstat(@path)
   end
 

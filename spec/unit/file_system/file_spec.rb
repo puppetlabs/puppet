@@ -128,8 +128,10 @@ describe Puppet::FileSystem::File do
       expect { missing_file.stat }.to raise_error(Errno::ENOENT)
     end
 
-    it "should raise an error when trying to lstat a file" do
-      expect { file.lstat }.to raise_error(Puppet::Util::Windows::Error)
+    it "should fall back to stat when trying to lstat a file" do
+      Puppet::Util::Windows::File.expects(:stat).with(file.path)
+
+      file.lstat
     end
   end
 
