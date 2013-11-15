@@ -282,7 +282,7 @@ describe Puppet::FileServing::Metadata do
     end
 
     it_should_behave_like "metadata collector"
-    it_should_behave_like "metadata collector symlinks"
+    it_should_behave_like "metadata collector symlinks" if Puppet.features.manages_symlinks?
 
     describe "if ACL metadata cannot be collected" do
       let(:path) { tmpdir('file_serving_metadata_acl') }
