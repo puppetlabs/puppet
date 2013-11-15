@@ -10,7 +10,6 @@ describe Puppet::Type.type(:file) do
   let(:catalog) { Puppet::Resource::Catalog.new }
 
   before do
-    @real_posix = Puppet.features.posix?
     Puppet.features.stubs("posix?").returns(true)
   end
 
@@ -1029,7 +1028,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should return nil if the file does not exist" do
-      file[:path] = '/foo/bar/baz/non-existent'
+      file[:path] = make_absolute('/foo/bar/baz/non-existent')
 
       file.stat.should be_nil
     end
@@ -1307,49 +1306,46 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "when managing links" do
+  describe "when managing links", :if => Puppet.features.manages_symlinks? do
     require 'tempfile'
 
-    if @real_posix
-      describe "on POSIX systems" do
-        before do
-          Dir.mkdir(path)
-          @target = File.join(path, "target")
-          @link   = File.join(path, "link")
+    before :each do
+      Dir.mkdir(path)
+      @target = File.join(path, "target")
+      @link   = File.join(path, "link")
 
-          File.open(@target, "w", 0644) { |f| f.puts "yayness" }
-          Puppet::FileSystem::File.new(@target).symlink(@link)
+      target = described_class.new(
+        :ensure => :file, :path => @target,
+        :catalog => catalog, :content => 'yayness',
+        :mode => 0644)
+      catalog.add_resource target
 
-          file[:path] = @link
-          file[:mode] = 0755
+      @link_resource = described_class.new(
+        :ensure => :link, :path => @link,
+        :target => @target, :catalog => catalog,
+        :mode => 0755)
+      catalog.add_resource @link_resource
 
-          catalog.add_resource file
-        end
-
-        it "should default to managing the link" do
-          catalog.apply
-          # I convert them to strings so they display correctly if there's an error.
-          (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '644'
-        end
-
-        it "should be able to follow links" do
-          file[:links] = :follow
-          catalog.apply
-
-          (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '755'
-        end
-      end
-    else # @real_posix
-      # should recode tests using expectations instead of using the filesystem
+      # to prevent the catalog from trying to write state.yaml
+      Puppet::Util::Storage.stubs(:store)
     end
 
-    describe "on Microsoft Windows systems" do
-      before do
-        Puppet.features.stubs(:posix?).returns(false)
-        Puppet.features.stubs(:microsoft_windows?).returns(true)
-      end
+    it "should preserve the original file mode and ignore the one set by the link" do
+      @link_resource[:links] = :manage # default
+      catalog.apply
 
-      it "should refuse to work with links"
+      # I convert them to strings so they display correctly if there's an error.
+      (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '644'
+    end
+
+    it "should manage the mode of the followed link" do
+      pending("Windows cannot presently manage the mode when following symlinks",
+        :if => Puppet.features.microsoft_windows?) do
+        @link_resource[:links] = :follow
+        catalog.apply
+
+        (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '755'
+      end
     end
   end
 
