@@ -73,5 +73,21 @@ Puppet.features.add(:minitar, :libs => ["archive/tar/minitar"])
 
 # We can manage symlinks
 Puppet.features.add(:manages_symlinks) do
-  ! Puppet::Util::Platform.windows?
+  if ! Puppet::Util::Platform.windows?
+    true
+  else
+    begin
+      require 'Win32API'
+      Win32API.new('kernel32', 'CreateSymbolicLink', 'SSL', 'B')
+      can_symlink = Puppet::Util::Windows::Process.process_privilege_symlink?
+      if !can_symlink
+        warn "The current user account does not have the necessary permissions to create symlinks"
+      end
+
+      can_symlink
+    rescue LoadError => err
+      warn "Microsoft Windows does not support the symlink API on this operating system version"
+      false
+    end
+  end
 end
