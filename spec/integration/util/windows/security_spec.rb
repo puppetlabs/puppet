@@ -16,6 +16,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   before :all do
     @sids = {
       :current_user => Puppet::Util::Windows::Security.name_to_sid(Sys::Admin.get_login),
+      :system => Win32::Security::SID::LocalSystem,
       :admin => Puppet::Util::Windows::Security.name_to_sid("Administrator"),
       :guest => Puppet::Util::Windows::Security.name_to_sid("Guest"),
       :users => Win32::Security::SID::BuiltinUsers,
@@ -122,6 +123,25 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
         end
 
+        it "should preserve full control for SYSTEM when setting owner and group" do
+          # new file has SYSTEM
+          system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
+          system_aces.should_not be_empty
+          system_aces.each { |ace| ace[:mask].should == WindowsSecurityTester::FILE_ALL_ACCESS }
+
+          winsec.set_group(sids[:power_users], path)
+          winsec.set_owner(sids[:current_user], path)
+
+          # and should still have a noninherited SYSTEM ACE granting full control
+          system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
+
+          inherited = Windows::Security::INHERITED_ACE
+          system_aces.each do |ace|
+            ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+            (ace[:flags] & inherited).should_not == inherited
+          end
+        end
+
         describe "#mode=" do
           (0000..0700).step(0100) do |mode|
             it "should enforce mode #{mode.to_s(8)}" do
@@ -151,6 +171,23 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             end
           end
 
+          it "should preserve full control for SYSTEM when setting mode" do
+            # new file has SYSTEM
+            system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
+            system_aces.should_not be_empty
+            system_aces.each { |ace| ace[:mask].should == WindowsSecurityTester::FILE_ALL_ACCESS }
+
+            winsec.set_mode(0600, path)
+
+            # and should still have the same SYSTEM ACE(s)
+            inherited = Windows::Security::INHERITED_ACE
+            system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
+            system_aces.each do |ace|
+              ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+              (ace[:flags] & inherited).should_not == inherited
+            end
+          end
+
           describe "for modes that require deny aces" do
             it "should map everyone to group and owner" do
               winsec.set_mode(0426, path)
@@ -176,9 +213,12 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               (winsec.get_attributes(path) & WindowsSecurityTester::FILE_ATTRIBUTE_READONLY).should == 0
             end
 
-            it "should leave them read-only if no sid has write permission" do
+            it "should leave them read-only if no sid has write permission and should allow full access for SYSTEM" do
               winsec.set_mode(WindowsSecurityTester::S_IRUSR | WindowsSecurityTester::S_IXGRP, path)
               (winsec.get_attributes(path) & WindowsSecurityTester::FILE_ATTRIBUTE_READONLY).should be_nonzero
+
+              system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
+              system_aces.each { |ace| ace[:mask].should == WindowsSecurityTester::FILE_ALL_ACCESS }
             end
           end
 
@@ -195,7 +235,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               end
             end
             mode = winsec.get_mode(path)
-            (mode & WindowsSecurityTester::S_IEXTRA).should_not == 0
+            (mode & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
           end
 
           it "should warn if a deny ace is encountered" do
@@ -204,7 +244,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL, sids[:current_user])
             end
 
-            Puppet.expects(:warning).with("Unsupported access control entry type: 0x1")
+            Puppet.expects(:warning).with("Unsupported access control entry type: 0x1").at_least_once
 
             winsec.get_mode(path)
           end
@@ -224,9 +264,14 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         describe "inherited access control entries" do
-          it "should be absent when the access control list is protected" do
+          it "should be absent when the access control list is protected, and should not remove SYSTEM" do
             winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
-            (winsec.get_mode(path) & WindowsSecurityTester::S_IEXTRA).should == 0
+
+            mode = winsec.get_mode(path)
+            [ WindowsSecurityTester::S_IEXTRA,
+              WindowsSecurityTester::S_ISYSTEM_MISSING ].each do |flag|
+              (mode & flag).should_not == flag
+            end
           end
 
           it "should be present when the access control list is unprotected" do
@@ -355,10 +400,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         describe "#mode" do
-          it "should deny all access when the DACL is empty" do
+          it "should deny all access when the DACL is empty, including SYSTEM" do
             winsec.set_acl(path, true) { |acl| }
 
-            winsec.get_mode(path).should == 0
+            winsec.get_mode(path).should == WindowsSecurityTester::S_ISYSTEM_MISSING
           end
 
           # REMIND: ruby crashes when trying to set a NULL DACL
@@ -603,7 +648,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         Dir.mkdir(newdir)
 
         [newfile, newdir].each do |p|
-          winsec.get_mode(p).to_s(8).should == mode640.to_s(8)
+          mode = winsec.get_mode(p)
+          (mode & 07777).to_s(8).should == mode640.to_s(8)
         end
       end
     end

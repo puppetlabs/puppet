@@ -53,6 +53,8 @@
 #   enables Puppet to detect when file/dirs are out-of-sync,
 #   especially those that Puppet did not create, but is attempting
 #   to manage.
+# * A special case of this is S_ISYSTEM_MISSING, which is set when the
+#   SYSTEM permissions are *not* present on the DACL.
 # * On Unix, the owner and group can be modified without changing the
 #   mode. But on Windows, an access control entry specifies which SID
 #   it applies to. As a result, the set_owner and set_group methods
@@ -100,6 +102,7 @@ module Puppet::Util::Windows::Security
   S_IRWXO = 0000007
   S_ISVTX = 0001000
   S_IEXTRA = 02000000  # represents an extra ace
+  S_ISYSTEM_MISSING = 04000000
 
   # constants that are missing from Windows::Security
   PROTECTED_DACL_SECURITY_INFORMATION   = 0x80000000
@@ -222,6 +225,18 @@ module Puppet::Util::Windows::Security
     (FILE_GENERIC_EXECUTE & ~FILE_READ_ATTRIBUTES) => S_IXOTH
   }
 
+  def get_dacl_for_path(path)
+    with_privilege(SE_BACKUP_NAME) do
+      open_file(path, READ_CONTROL) do |handle|
+        get_dacl(handle)
+      end
+    end
+  end
+
+  def get_aces_for_path_by_sid(path, sid)
+    get_dacl_for_path(path).select { |ace| ace[:sid] == sid }
+  end
+
   # Get the mode of the object referenced by +path+.  The returned
   # integer value represents the POSIX-style read, write, and execute
   # modes for the user, group, and other classes, e.g. 0640.  Any user
@@ -235,10 +250,11 @@ module Puppet::Util::Windows::Security
     group_sid = get_group(path)
     well_known_world_sid = Win32::Security::SID::Everyone
     well_known_nobody_sid = Win32::Security::SID::Nobody
+    well_known_system_sid = Win32::Security::SID::LocalSystem
 
     with_privilege(SE_BACKUP_NAME) do
       open_file(path, READ_CONTROL) do |handle|
-        mode = 0
+        mode = S_ISYSTEM_MISSING
 
         get_dacl(handle).each do |ace|
           case ace[:sid]
@@ -267,6 +283,8 @@ module Puppet::Util::Windows::Security
             if (ace[:mask] & FILE_APPEND_DATA).nonzero?
               mode |= S_ISVTX
             end
+          when well_known_system_sid
+            mode &= ~S_ISYSTEM_MISSING
           else
             #puts "Warning, unable to map SID into POSIX mode: #{ace[:sid]}"
             mode |= S_IEXTRA
@@ -309,11 +327,13 @@ module Puppet::Util::Windows::Security
     group_sid = get_group(path)
     well_known_world_sid = Win32::Security::SID::Everyone
     well_known_nobody_sid = Win32::Security::SID::Nobody
+    well_known_system_sid = Win32::Security::SID::LocalSystem
 
     owner_allow = STANDARD_RIGHTS_ALL  | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES
     group_allow = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | SYNCHRONIZE
     other_allow = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | SYNCHRONIZE
     nobody_allow = 0
+    system_allow = 0
 
     MODE_TO_MASK.each do |k,v|
       if ((mode >> 6) & k) == k
@@ -329,6 +349,13 @@ module Puppet::Util::Windows::Security
 
     if (mode & S_ISVTX).nonzero?
       nobody_allow |= FILE_APPEND_DATA;
+    end
+
+    # caller is NOT managing SYSTEM by using group or owner, so set to FULL
+    if ! [group_sid, owner_sid].include? well_known_system_sid
+      # we don't check S_ISYSTEM_MISSING bit, but automatically carry over existing SYSTEM perms
+      # by default set SYSTEM perms to full
+      system_allow = FILE_ALL_ACCESS
     end
 
     isdir = File.directory?(path)
@@ -371,6 +398,9 @@ module Puppet::Util::Windows::Security
 
       #puts "ace: nobody #{well_known_nobody_sid}, mask 0x#{nobody_allow.to_s(16)}"
       add_access_allowed_ace(acl, nobody_allow, well_known_nobody_sid)
+
+      # puts "ace: system #{well_known_system_sid}, mask 0x#{system_allow.to_s(16)}"
+      add_access_allowed_ace(acl, system_allow, well_known_system_sid)
 
       # add inherit-only aces for child dirs and files that are created within the dir
       if isdir
@@ -488,7 +518,7 @@ module Puppet::Util::Windows::Security
           sid_ptr = ace_ptr.unpack('L')[0] + 8 # address of ace_ptr->SidStart
           raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID") unless IsValidSid(sid_ptr)
           sid = sid_ptr_to_string(sid_ptr)
-          dacl << {:sid => sid, :type => ace_type, :mask => mask}
+          dacl << {:sid => sid, :type => ace_type, :mask => mask, :flags => ace_flags}
         else
           Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
         end
