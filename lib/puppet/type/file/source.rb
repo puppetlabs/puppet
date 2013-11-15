@@ -116,6 +116,7 @@ module Puppet
       [:owner, :mode, :group, :checksum].each do |metadata_method|
         param_name = (metadata_method == :checksum) ? :content : metadata_method
         next if metadata_method == :owner and !Puppet.features.root?
+        next if metadata_method == :group and !Puppet.features.root?
         next if metadata_method == :checksum and metadata.ftype == "directory"
         next if metadata_method == :checksum and metadata.ftype == "link" and metadata.links == :manage
 

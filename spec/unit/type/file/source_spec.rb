@@ -202,7 +202,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         @resource[:content].must == @metadata.checksum
       end
 
-      it "should not copy the metadata's owner to the resource if it is already set" do
+      it "should not copy the metadata's owner, group, checksum and mode to the resource if they are already set" do
         @resource[:owner] = 1
         @resource[:group] = 2
         @resource[:mode] = 3
@@ -217,11 +217,18 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       end
 
       describe "and puppet is not running as root" do
-        it "should not try to set the owner" do
-          Puppet.features.expects(:root?).returns false
+        before do
+          Puppet.features.stubs(:root?).returns false
+        end
 
+        it "should not try to set the owner" do
           @source.copy_source_values
           @resource[:owner].should be_nil
+        end
+
+        it "should not try to set the owner" do
+          @source.copy_source_values
+          @resource[:group].should be_nil
         end
       end
 
