@@ -1,10 +1,11 @@
 require 'puppet/file_system/file19'
+require 'puppet/util/windows'
 
 class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
 
   def self.exist?(path)
     if ! Puppet.features.manages_symlinks?
-      return File.exist?(path)
+      return ::File.exist?(path)
     end
 
     path = path.to_str if path.respond_to?(:to_str) # support WatchedFile
@@ -39,7 +40,7 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
     end
 
     if options[:noop] != true
-      File.delete(dest) if dest_exists # can only be file
+      ::File.delete(dest) if dest_exists # can only be file
       Puppet::Util::Windows::File.symlink(@path, dest)
     end
 
@@ -58,7 +59,7 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
 
   def self.unlink(*file_names)
     if ! Puppet.features.manages_symlinks?
-      return File.unlink(*file_names)
+      return ::File.unlink(*file_names)
     end
 
     file_names.each do |file_name|
@@ -73,7 +74,7 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
           raise Errno::EPERM.new(file_name)
         end
       else
-        File.unlink(file_name)
+        ::File.unlink(file_name)
       end
     end
 
