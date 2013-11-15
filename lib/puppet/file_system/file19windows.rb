@@ -102,5 +102,9 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
       msg = "This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required."
       raise Puppet::Util::Windows::Error.new(msg)
     end
+
+    if ! Puppet::Util::Windows::Process.process_privilege_symlink?
+      Puppet.warning "The current user does not have the necessary permission to manage symlinks."
+    end
   end
 end
