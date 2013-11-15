@@ -91,6 +91,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       it "true  == true  == true"  do; evaluate(literal(true) == literal(true)).should == true  ; end;
       it "false == false == true" do; evaluate(literal(false) == literal(false)).should == true ; end;
       it "true == false  != true" do; evaluate(literal(true) == literal(false)).should == false ; end;
+      it "false  == ''  == false"  do; evaluate(literal(false) == literal('')).should == false  ; end;
     end
 
     context "of collections" do
