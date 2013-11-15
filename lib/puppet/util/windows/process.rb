@@ -216,12 +216,19 @@ module Puppet::Util::Windows::Process
   module_function :get_token_information
 
   TOKEN_ALL_ACCESS = 0xF01FF
+  ERROR_NO_SUCH_PRIVILEGE = 1313
   def process_privilege_symlink?
     handle = get_current_process
     open_process_token(handle, TOKEN_ALL_ACCESS) do |token_handle|
       luid = lookup_privilege_value('SeCreateSymbolicLinkPrivilege')
       token_info = get_token_information(token_handle, :token_privileges)
       token_info[:privileges].any? { |p| p[:luid].values == luid.values }
+    end
+  rescue Puppet::Util::Windows::Error => e
+    if e.code == ERROR_NO_SUCH_PRIVILEGE
+      false # pre-Vista
+    else
+      raise e
     end
   end
   module_function :process_privilege_symlink?

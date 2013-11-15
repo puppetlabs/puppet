@@ -13,7 +13,7 @@ describe "Puppet::Util::Windows::Process", :if => Puppet.features.microsoft_wind
       Puppet::Util::Windows::Process.process_privilege_symlink?.should be_true
     end
 
-    it "should have the SeCreateSymbolicLinkPrivilege necessary to create symlinks on 2003 and earlier",
+    it "should not have the SeCreateSymbolicLinkPrivilege necessary to create symlinks on 2003 and earlier",
       :if => Facter.value(:kernelmajversion).to_f < 6.0 && Puppet.features.microsoft_windows? do
       Puppet::Util::Windows::User.should be_admin
       Puppet::Util::Windows::Process.process_privilege_symlink?.should be_false
