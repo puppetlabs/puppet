@@ -173,11 +173,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     evaluate(o.expr, scope)
   end
 
-  def lvalue_LiteralList(o, scope)
-    # evaluate the list - see assign_Array for how this is used
-    evaluate(o.expr, scope)
-  end
-
   # Catches all illegal lvalues
   #
   def lvalue_Object(o, scope)
@@ -204,36 +199,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
   def assign_Numeric(n, value, o, scope)
     fail(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o.left_expr, {:varname => n.to_s})
-  end
-
-  # Assign values to named variables in an array.
-  # The '$' sign is never part of the name.
-  # @example Puppet DSL
-  #   # all set to 10
-  #   [a, b, c] = 10
-  #
-  #   # set from matching entry in hash
-  #   [a, b, c] = {a => 10, b => 20, c => 30}
-  #
-  #   # set in sequence from array
-  #   [a, b, c] = [1,2,3]
-  #
-  # @param names [Array<String>] array of variable names without $
-  # @param value [Object] value to assign to each variable
-  # @param o [Puppet::Pops::Model::PopsObject] originating instruction
-  # @param scope [Object] the runtime specific scope where evaluation should take place
-  # @return [value<Object>]
-  #
-  def assign_Array(names, value, o, scope)
-    case value
-    when Array
-      names.zip(value).each {|x| set_variable(x, value, o, scope) }
-    when Hash
-      names.each {|x| set_variable(x, value[x], o, scope) }
-    else
-      names.each {|x| set_variable(x, value, o, scope) }
-    end
-    value
   end
 
   # Catches all illegal assignment (e.g. 1 = 2, {'a'=>1} = 2, etc)
@@ -310,7 +275,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #   $a -= 1
   #
   def eval_AssignmentExpression(o, scope)
-
     name = lvalue(o.left_expr, scope)
     value = evaluate(o.right_expr, scope)
 

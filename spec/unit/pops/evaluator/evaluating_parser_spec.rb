@@ -325,6 +325,32 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
   end # arithmetic
 
+  context "When the evaluator evaluates assignment" do
+    {
+      "$a = 5"                     => 5,
+      "$a = 5; $a"                 => 5,
+      "$a = 5; $b = 6; $a"         => 5,
+      "$a = $b = 5; $a == $b"      => true,
+      "$a = [1,2,3]; [x].collect |$x| { $a += x; $a }"      => [[1,2,3,'x']],
+      "$a = [a,x,c]; [x].collect |$x| { $a -= x; $a }"      => [['a','c']],
+    }.each do |source, result|
+        it "should parse and evaluate the expression '#{source}' to #{result}" do
+          parser.evaluate_string(scope, source, __FILE__).should == result
+        end
+      end
+
+    {
+      "[a,b,c] = [1,2,3]; $a == 1 and $b == 2 and $c == 3"               => :error,
+      "[a,b,c] = {b=>2,c=>3,a=>1}; $a == 1 and $b == 2 and $c == 3"      => :error,
+      "$a = [1,2,3]; [x].collect |$x| { [a] += x; $a }"                  => :error,
+      "$a = [a,x,c]; [x].collect |$x| { [a] -= x; $a }"                  => :error,
+    }.each do |source, result|
+        it "should parse and evaluate the expression '#{source}' to #{result}" do
+          expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(Puppet::ParseError)
+        end
+      end
+  end
+
   context "When the evaluator evaluates conditionals" do
     {
       "if true {5}"                     => 5,
