@@ -175,16 +175,30 @@ describe Puppet::Resource::Catalog::Compiler do
   end
 
   describe "when finding nodes" do
-    it "should look node information up via the Node class with the provided key" do
+    let(:request) { Puppet::Indirector::Request.new(:catalog, :find, "me", nil) }
+    let(:node) { Puppet::Node.new('node') }
+    let(:compiler) { Puppet::Resource::Catalog::Compiler.new }
+
+    before :all do
       Facter.stubs(:value).returns("whatever")
-      node = Puppet::Node.new('node')
-      compiler = Puppet::Resource::Catalog::Compiler.new
-      request = Puppet::Indirector::Request.new(:catalog, :find, "me", nil)
+    end
+
+    it "should look node information up via the Node class with the provided key" do
       compiler.stubs(:compile)
-
       Puppet::Node.indirection.expects(:find).with("me", anything).returns(node)
-
       compiler.find(request)
+    end
+
+    it "should not normally clear the loaded functions" do
+      Puppet::Parser::Functions.expects(:forget_all).never
+      compiler.find(request)
+    end
+
+    it "should clear the loaded functions if configured with 'gratuitous function parsing'" do
+      Puppet["gratuitous_function_parsing"] = true
+      Puppet::Parser::Functions.expects(:forget_all)
+      compiler.find(request)
+      Puppet["gratuitous_function_parsing"] = false
     end
   end
 
