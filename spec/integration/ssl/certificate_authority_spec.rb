@@ -108,7 +108,7 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     hosts = (0..4).collect { |i| certificate_request_for("host#{i}") }
 
     run_in_parallel(5) do |i|
-      ca.autosign(hosts[i].name)
+      ca.autosign(Puppet::SSL::CertificateRequest.indirection.find(hosts[i].name))
     end
 
     certs = hosts.collect { |host| Puppet::SSL::Certificate.indirection.find(host.name).content }
