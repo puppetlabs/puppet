@@ -221,6 +221,17 @@ module Puppet::Parser::Functions
   end
 
   class << self
+
+    # Clear the list of loaded functions. This can be used by the compiler
+    # to start with a clean slate.
+    #
+    # @note As this breaks thread safety, it should only be called by any
+    #   piece of code if the user has explicitly configured puppet to
+    #   behave in this dangerous fashion.
+    def forget_all(env = Environment.current)
+      @functions[env].clear
+    end
+
     private
 
     def merged_functions
