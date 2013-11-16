@@ -155,6 +155,15 @@ class Puppet::FileSystem::File
     self.class.exist?(@path)
   end
 
+  # Determine if a file is executable.
+  #
+  # @todo Should this take into account extensions on the windows platform?
+  #
+  # @return [Boolean] true if this file can be executed
+  def executable?
+    ::File.executable?(@path)
+  end
+
   # @return [Boolean] Whether the file is writable by the current
   # process
   def writable?

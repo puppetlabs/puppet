@@ -85,10 +85,11 @@ class Puppet::SSL::CertificateAuthority
       when 'true', true
         AutosignAlways.new
       else
-        if File.executable?(auto)
+        file = Puppet::FileSystem::File.new(auto)
+        if file.executable?
           Puppet::SSL::CertificateAuthority::AutosignCommand.new(auto)
-        elsif Puppet::FileSystem::File.exist?(auto)
-          AutosignConfig.new(auto)
+        elsif file.exist?
+          AutosignConfig.new(file)
         else
           AutosignNever.new
         end
@@ -476,8 +477,8 @@ class Puppet::SSL::CertificateAuthority
 
   # @api private
   class AutosignConfig
-    def initialize(config_filename)
-      @config = config_filename
+    def initialize(config_file)
+      @config = config_file
     end
 
     def allowed?(csr)
@@ -488,7 +489,7 @@ class Puppet::SSL::CertificateAuthority
 
     def autosign_store
       auth = Puppet::Network::AuthStore.new
-      File.readlines(@config).each do |line|
+      @config.each_line do |line|
         next if line =~ /^\s*#/
         next if line =~ /^\s*$/
         auth.allow(line.chomp)
