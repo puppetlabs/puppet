@@ -525,8 +525,25 @@ describe 'The type calculator' do
       calculator.string(Puppet::Pops::Types::PNumericType.new()).should == 'Numeric'
     end
 
-    it 'should yield \'Integer\' for PIntegerType' do
-      calculator.string(Puppet::Pops::Types::PIntegerType.new()).should == 'Integer'
+    it 'should yield \'Integer\' and from/to for PIntegerType' do
+      int_T = Puppet::Pops::Types::PIntegerType
+      calculator.string(int_T.new()).should == 'Integer'
+      int = int_T.new()
+      int.from = 1
+      int.to = 1
+      calculator.string(int).should == 'Integer[1]'
+      int = int_T.new()
+      int.from = 1
+      int.to = 2
+      calculator.string(int).should == 'Integer[1, 2]'
+      int = int_T.new()
+      int.from = nil
+      int.to = 2
+      calculator.string(int).should == 'Integer[default, 2]'
+      int = int_T.new()
+      int.from = 2
+      int.to = nil
+      calculator.string(int).should == 'Integer[2, default]'
     end
 
     it 'should yield \'Float\' for PFloatType' do
