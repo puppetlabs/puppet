@@ -908,8 +908,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   def is_match? left, right, o, scope
     if right.is_a?(Regexp)
-      # TODO: Possibly use unique Issue key for this
-      fail(Issues::MATCH_NOT_STRING, o, {:left_value => left}) unless left.is_a? String
+      return false unless left.is_a? String
       matched = right.match(left)
       set_match_data(matched, o, scope) # creates or clears ephemeral
       !!matched # convert to boolean

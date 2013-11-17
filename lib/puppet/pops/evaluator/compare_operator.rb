@@ -127,11 +127,13 @@ class Puppet::Pops::Evaluator::CompareOperator
     when Puppet::Pops::Types::PStringType
       # is there a string in a string? (yes, each char is a string, and an empty string contains an empty string)
       true
-    when Puppet::Pops::Types::PDataType
-      # is there data in a string?, (yes, a substring is data)
-      true
     else
-      false
+      if b == Puppet::Pops::Types::PDataType || b == Puppet::Pops::Types::PObjectType
+        # A String is Data and Object (but not of all subtypes of those types).
+        true
+      else
+        false
+      end
     end
   end
 

@@ -34,6 +34,9 @@ module Puppet::Pops::Types
 
       alias eql? ==
 
+      def to_s
+        Puppet::Pops::Types::TypeCalculator.new.string(self)
+      end
     end
   end
 
@@ -86,6 +89,39 @@ module Puppet::Pops::Types
 
   # @api public
   class PIntegerType < PNumericType
+    has_attr 'from', Integer, :lowerBound => 0
+    has_attr 'to', Integer, :lowerBound => 0
+
+    module ClassModule
+      # The integer type is enumerable when it defines a range
+      include Enumerable
+
+      # Returns Float.Infinity if one end of the range is unbound
+      def size
+        return 1.0 / 0.0 if from.nil? || to.nil?
+        (to-from).abs
+      end
+
+      # Returns Enumerator if no block is given
+      # Returns self if size is infinity (does not yield)
+      def each
+        return self.to_enum unless block_given?
+        return nil if from.nil? || to.nil?
+        if to < from
+          from.downto(to) {|x| yield x }
+        else
+          from.upto(to) {|x| yield x }
+        end
+      end
+
+      def hash
+        [self.class, from, to].hash
+      end
+
+      def ==(o)
+        self.class == o.class && from == from && to == to
+      end
+    end
   end
 
   # @api public

@@ -326,11 +326,11 @@ module Puppet::Pops::Issues
   end
 
   BAD_INTEGER_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
-    "Integer supports [] with two or three arguments (from, to, step). Got #{actual}"
+    "Integer supports [] with one or two arguments (from, to). Got #{actual}"
   end
 
   BAD_INTEGER_SLICE_TYPE = issue :BAD_INTEGER_SLICE_TYPE, :actual do
-    "Integer [] requires all arguments to be integers. Got #{actual}"
+    "Integer [] requires all arguments to be integers (or default). Got #{actual}"
   end
 
   INTEGER_STEP_0 = issue :INTEGER_STEP_0 do

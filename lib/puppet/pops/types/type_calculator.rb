@@ -69,6 +69,7 @@
 class Puppet::Pops::Types::TypeCalculator
 
   Types = Puppet::Pops::Types
+  TheInfinity = 1.0 / 0.0 # because the Infinity symbol is not defined
 
   # @api public
   #
@@ -76,6 +77,7 @@ class Puppet::Pops::Types::TypeCalculator
     @@assignable_visitor ||= Puppet::Pops::Visitor.new(nil,"assignable",1,1)
     @@infer_visitor ||= Puppet::Pops::Visitor.new(nil,"infer",0,0)
     @@string_visitor ||= Puppet::Pops::Visitor.new(nil,"string",0,0)
+    @@enumerable_visitor ||= Puppet::Pops::Visitor.new(nil,"enumerable",0,0)
 
     da = Types::PArrayType.new()
     da.element_type = Types::PDataType.new()
@@ -140,6 +142,11 @@ class Puppet::Pops::Types::TypeCalculator
     end
 
     @@assignable_visitor.visit_this_1(self, t, t2)
+ end
+
+ # Returns an enumerable if the t represents something that can be iterated
+ def enumerable(t)
+   @@enumerable_visitor.visit_this_0(self, t)
  end
 
   # Answers 'what is the Puppet Type corresponding to the given Ruby class'
@@ -258,6 +265,18 @@ class Puppet::Pops::Types::TypeCalculator
       if t1.type_name == t2.type_name then result.type_name = t1.type_name end
       # the cross assignability test above has already determined that they do not have the same type and title
       return result
+    end
+
+    # Integers have range, narrow the range to the common range
+    if t1.is_a?(Types::PIntegerType) && t2.is_a?(Types::PIntegerType)
+      t1range = from_to_ordered(t1.from, t1.to)
+      t2range = from_to_ordered(t2.from, t2.to)
+      t = Types::PIntegerType.new()
+      from = [t1range[0], t2range[0]].min
+      to = [t1range[1], t2range[1]].max
+      t.from = from unless from == TheInfinity
+      t.to = to unless to == TheInfinity
+      return t
     end
 
     # Common abstract types, from most specific to most general
@@ -383,7 +402,10 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_Integer(o)
-    Types::PIntegerType.new()
+    t = Types::PIntegerType.new()
+    t.from = o
+    t.to = o
+    t
   end
 
   # @api private
@@ -471,7 +493,22 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_PIntegerType(t, t2)
-    t2.is_a?(Types::PIntegerType)
+    return false unless t2.is_a?(Types::PIntegerType)
+    trange =  from_to_ordered(t.from, t.to)
+    t2range = from_to_ordered(t2.from, t2.to)
+    # If t2 min and max are within the range of t
+    trange[0] <= t2range[0] && trange[1] >= t2range[1]
+  end
+
+  # @api private
+  def from_to_ordered(from, to)
+    x = (from.nil? || from == :default) ? -TheInfinity : from
+    y = (to.nil? || to == :default) ? TheInfinity : to
+    if x < y
+      [x, y]
+    else
+      [y, x]
+    end
   end
 
   # @api private
@@ -589,7 +626,20 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PNumericType(t) ; "Numeric" ; end
 
   # @api private
-  def string_PIntegerType(t) ; "Integer" ; end
+  def string_PIntegerType(t)
+    result = ["Integer"]
+    unless t.from.nil? && t.to.nil?
+      from = t.from.nil? ? 'default' : t.from
+      to = t.to.nil? ? 'default' : t.to
+      if from == to
+        "Integer[#{from}]"
+      else
+        "Integer[#{from}, #{to}]"
+      end
+    else
+      "Integer"
+    end
+  end
 
   # @api private
   def string_PFloatType(t)   ; "Float"   ; end
@@ -641,6 +691,19 @@ class Puppet::Pops::Types::TypeCalculator
     else
       "Resource"
     end
+  end
+
+  # Catches all non enumerable types
+  # @api private
+  def enumerable_Object(o)
+    nil
+  end
+
+  # @api private
+  def enumerable_PIntegerType(t)
+    # Not enumerable if representing an infinite range
+    return nil if t.size == TheInfinity
+    t
   end
 
   private

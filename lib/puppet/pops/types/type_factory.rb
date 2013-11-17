@@ -13,6 +13,16 @@ module Puppet::Pops::Types::TypeFactory
     Types::PIntegerType.new()
   end
 
+  # Produces the Integer type
+  # @api public
+  #
+  def self.range(from, to)
+    t = Types::PIntegerType.new()
+    t.from = from unless from == :default
+    t.to = to unless to == :default
+    t
+  end
+
   # Produces the Float type
   # @api public
   #

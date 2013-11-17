@@ -79,6 +79,39 @@ Puppet::Parser::Functions::newfunction(
     o
   end
 
+  def foreach_Type(o, scope, pblock)
+    return nil unless pblock
+    tc = Puppet::Pops::Types::TypeCalculator.new()
+    enumerable = tc.enumerable(o)
+    if enumerable.nil?
+      raise ArgumentError, ("each(): given type '#{tc.string(o)}' is not enumerable")
+    end
+    serving_size = pblock.parameter_count
+    if serving_size == 0
+      raise ArgumentError, "Block must define at least one parameter; value."
+    end
+    if serving_size > 2
+      raise ArgumentError, "Block must define at most two parameters; index, value"
+    end
+    enumerator = enumerable.each
+    index = 0
+    if serving_size == 1
+      begin
+        loop { pblock.call(scope, enumerator.next) }
+      rescue StopIteration
+      end
+    else
+      begin
+        loop do
+          pblock.call(scope, index, enumerator.next)
+          index = index +1
+        end
+      rescue StopIteration
+      end
+    end
+    o
+  end
+
   raise ArgumentError, ("each(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
   receiver = args[0]
   pblock = args[1]
@@ -90,6 +123,10 @@ Puppet::Parser::Functions::newfunction(
   when Hash
     foreach_Hash(receiver, self, pblock)
   else
-    raise ArgumentError, ("each(): wrong argument type (#{args[0].class}; must be an Array or a Hash.")
+    if receiver.is_a?(Puppet::Pops::Types::PAbstractType)
+      foreach_Type(receiver, self, pblock)
+    else
+      raise ArgumentError, ("each(): wrong argument type (#{args[0].class}; must be an Array, Hash, or Enumerable Type.")
+    end
   end
 end

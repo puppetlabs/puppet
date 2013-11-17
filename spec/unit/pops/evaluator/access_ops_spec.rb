@@ -12,6 +12,10 @@ require File.join(File.dirname(__FILE__), '/evaluator_rspec_helper')
 describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
   include EvaluatorRspecHelper
 
+  def range(from, to)
+    Puppet::Pops::Types::TypeFactory.range(from, to)
+  end
+
   context 'The evaluator when operating on a String' do
     it 'can get a single character using a single key index to []' do
       expect(evaluate(literal('abc')[1])).to eql('b')
@@ -93,34 +97,24 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     # Integer
     #
-    it 'produces an Array of ascending values in range from Integer[from, to]' do
+    it 'produces an Integer[from, to]' do
       expr = fqr('Integer')[1, 3]
-      expect(evaluate(expr)).to eql([1,2,3])
+      expect(evaluate(expr)).to eql(range(1,3))
     end
 
-    it 'produces an Array of one value in range from Integer[from, from]' do
-      expr = fqr('Integer')[1,1]
-      expect(evaluate(expr)).to eql([1])
+    it 'produces an Integer[1]' do
+      expr = fqr('Integer')[1]
+      expect(evaluate(expr)).to eql(range(1,1))
     end
 
-    it 'produces an empty Array from Integer[from, <from]' do
+    it 'produces an Integer[from, <from]' do
       expr = fqr('Integer')[1,0]
-      expect(evaluate(expr)).to eql([])
+      expect(evaluate(expr)).to eql(range(1,0))
     end
 
-    it 'produces an Array of ascending values in range from Integer[from, to, step]' do
-      expr = fqr('Integer')[1, 6, 2]
-      expect(evaluate(expr)).to eql([1,3,5])
-    end
-
-    it 'produces an Array of descending values in range from Integer[from, to, step]' do
-      expr = fqr('Integer')[6, 1, -2]
-      expect(evaluate(expr)).to eql([6,4,2])
-    end
-
-    it 'cannot step Integer sequence with a step of 0' do
-      expr = fqr('Integer')[6, 1, 0]
-      expect { evaluate(expr)}.to raise_error(/Integer \[\] can not step with a '0' increment/)
+    it 'produces an error if there are more than 2 keys' do
+      expr = fqr('Integer')[1,2,3]
+      expect { evaluate(expr)}.to raise_error(/with one or two arguments/)
     end
 
     # Hash
