@@ -107,24 +107,6 @@ class Puppet::Pops::Evaluator::AccessOperator
     ranged_integer
   end
 
-  # An integer type provides a way to create an Array of integers from, to (inclusive) (must be given), and an
-  # optional step at the 3d position which defaults to 1
-#  def access_PIntegerType(o, scope, keys)
-#    unless keys.size.between?(2, 3)
-#      fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_ARITY, @semantic, {:actual => keys.size})
-#    end
-#    keys.each_with_index do |x, index|
-#      fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_TYPE, @semantic.keys[index],
-#        {:actual => x.class}) unless x.is_a?(Numeric)
-#    end
-#    from, to, step = keys
-#    fail(Puppet::Pops::Issues::INTEGER_STEP_0, @semantic.keys[2]) if step == 0
-#    step ||= 1
-#
-#    # Ok, so this is quite bad for very large arrays...
-#    from.step(to, step).collect {|x| x}
-#  end
-
   # A Hash can create a new Hash type, one arg sets value type, two args sets key and value type in new type
   # It is not possible to create a collection of Hash types.
   #
