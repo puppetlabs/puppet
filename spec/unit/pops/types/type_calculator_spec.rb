@@ -60,6 +60,13 @@ describe 'The type calculator' do
         calculator.infer([1,2**33]).element_type.class.should == Puppet::Pops::Types::PIntegerType
       end
 
+      it 'Range of integer values are computed' do
+        t = calculator.infer([-3,0,42]).element_type
+        t.class.should == Puppet::Pops::Types::PIntegerType
+        t.from.should == -3
+        t.to.should == 42
+      end
+
       it 'with fixnum and float values translates to PArrayType[PNumericType]' do
         calculator.infer([1,2.0]).element_type.class.should == Puppet::Pops::Types::PNumericType
       end
