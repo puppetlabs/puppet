@@ -4,6 +4,13 @@ require 'puppet/pops'
 describe 'The type calculator' do
   let(:calculator) {  Puppet::Pops::Types::TypeCalculator.new() }
 
+  def int_range(from, to)
+   t = Puppet::Pops::Types::PIntegerType.new
+   t.from = from
+   t.to = to
+   t
+  end
+
   context 'when inferring ruby' do
 
     it 'fixnum translates to PIntegerType' do
@@ -384,6 +391,42 @@ describe 'The type calculator' do
       calculator.assignable?(Puppet::Pops::Types::TypeFactory.hash_of_data(), Hash).should == true
     end
 
+    context 'when dealing with integer ranges' do
+      it 'should accept an equal range' do
+        calculator.assignable?(int_range(2,5), int_range(2,5)).should == true
+      end
+
+      it 'should accept an equal reverse range' do
+        calculator.assignable?(int_range(2,5), int_range(5,2)).should == true
+      end
+
+      it 'should accept a narrower range' do
+        calculator.assignable?(int_range(2,10), int_range(3,5)).should == true
+      end
+
+      it 'should accept a narrower reverse range' do
+        calculator.assignable?(int_range(2,10), int_range(5,3)).should == true
+      end
+
+      it 'should reject a wider range' do
+        calculator.assignable?(int_range(3,5), int_range(2,10)).should == false
+      end
+
+      it 'should reject a wider reverse range' do
+        calculator.assignable?(int_range(3,5), int_range(10,2)).should == false
+      end
+
+      it 'should reject a partially overlapping range' do
+        calculator.assignable?(int_range(3,5), int_range(2,4)).should == false
+        calculator.assignable?(int_range(3,5), int_range(4,6)).should == false
+      end
+
+      it 'should reject a partially overlapping reverse range' do
+        calculator.assignable?(int_range(3,5), int_range(4,2)).should == false
+        calculator.assignable?(int_range(3,5), int_range(6,4)).should == false
+      end
+    end
+
     it 'should recognize ruby type inheritance' do
       class Foo
       end
@@ -456,11 +499,19 @@ describe 'The type calculator' do
 
   context 'when testing if x is instance of type t' do
     it 'should consider fixnum instanceof PIntegerType' do
-      calculator.instance?(Puppet::Pops::Types::PIntegerType.new(), 1)
+      calculator.instance?(Puppet::Pops::Types::PIntegerType.new(), 1) == true
     end
 
     it 'should consider fixnum instanceof Fixnum' do
-      calculator.instance?(Fixnum, 1)
+      calculator.instance?(Fixnum, 1) == true
+    end
+
+    it 'should consider integer in range' do
+      range = int_range(0,10)
+      calculator.instance?(range, 1) == true
+      calculator.instance?(range, 10) == true
+      calculator.instance?(range, -1) == false
+      calculator.instance?(range, 11) == false
     end
   end
 
