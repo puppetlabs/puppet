@@ -5,6 +5,7 @@ require 'puppet/pops'
 require 'puppet/pops/evaluator/evaluator_impl'
 require 'puppet_spec/pops'
 require 'puppet_spec/scope'
+require 'puppet/parser/e4_parser_adapter'
 
 
 # relative to this spec file (./) does not work as this file is loaded by rspec
@@ -652,10 +653,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         source = "class wonka($produces='chocolate'){ }
            include wonka
            Class[wonka][produces]"
+
+        # This is more complicated since it needs to run like 3.x and do an import_ast
         adapted_parser = Puppet::Parser::E4ParserAdapter.new
-        adapted_parser.file(__FILE__)
-        adapted_parser.parse(source).safeevaluate(scope).should == 'chocolate'
-#        parser.evaluate_string(scope, source, __FILE__).should == 'chocolate'
+        adapted_parser.file = __FILE__
+        ast = adapted_parser.parse(source)
+        scope.known_resource_types.import_ast(ast, '')
+        ast.code.safeevaluate(scope).should == 'chocolate'
       end
     end
   end

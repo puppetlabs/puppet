@@ -182,11 +182,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(result[1]).to be_the_type(types.host_class('nginx'))
     end
 
-    it 'gives an error if class is already specialized' do
-      expr = fqr('Class')[fqn('apache')][fqn('nginx')]
-      expect {evaluate(expr)}.to raise_error(/Cannot specialize an already specialized Class type/)
-    end
-
     # Resource
     it 'produces a specific resource type from Resource[type]' do
       expr = fqr('Resource')[fqr('File')]
