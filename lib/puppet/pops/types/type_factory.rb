@@ -58,6 +58,13 @@ module Puppet::Pops::Types::TypeFactory
     Types::PBooleanType.new()
   end
 
+  # Produces the Object type
+  # @api public
+  #
+  def self.object()
+    Types::PObjectType.new()
+  end
+
   # Produces the Pattern type
   # @api public
   #

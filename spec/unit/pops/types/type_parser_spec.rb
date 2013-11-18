@@ -30,14 +30,22 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it "does not support types that do not make sense in the puppet language" do
-    expect { parser.parse("Object") }.to raise_type_error_for("Object")
-    expect { parser.parse("Collection[Integer]") }.to raise_type_error_for("Collection")
     # These will/may make sense later, but are not yet implemented and should not be interpreted as a PResourceType
     expect { parser.parse("Ruby") }.to raise_type_error_for("Ruby")
     expect { parser.parse("Type") }.to raise_type_error_for("Type")
   end
 
+  [
+    'Object', 'Float', 'Collection', 'Data', 'CatalogEntry', 'Boolean', 'Float', 'Literal', 'Undef', 'Numeric',
+    'Pattern'
+  ].each do |name|
+    it "does not support parameterizing unparameterized type <#{name}" do
+      expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
+    end
+  end
+
   it "parses a simple, unparameterized type into the type object" do
+    expect(the_type_parsed_from(types.object)).to be_the_type(types.object)
     expect(the_type_parsed_from(types.integer)).to be_the_type(types.integer)
     expect(the_type_parsed_from(types.float)).to be_the_type(types.float)
     expect(the_type_parsed_from(types.string)).to be_the_type(types.string)
@@ -115,6 +123,10 @@ describe Puppet::Pops::Types::TypeParser do
 
   def raise_type_error_for(type_name)
     raise_error(Puppet::ParseError, /Unknown type <#{type_name}>/)
+  end
+
+  def raise_unparameterized_error_for(type_name)
+    raise_error(Puppet::ParseError, /Not a parameterized type <#{type_name}>/)
   end
 
   def the_type_parsed_from(type)

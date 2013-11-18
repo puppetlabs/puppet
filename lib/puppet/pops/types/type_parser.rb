@@ -29,6 +29,11 @@ class Puppet::Pops::Types::TypeParser
   # @api public
   #
   def parse(string)
+    # TODO: This state (@string) can be removed since the parse result of newer future parser
+    # contains a Locator in its SourcePosAdapter and the Locator keeps the the string.
+    # This way, there is no difference between a parsed "string" and something that has been parsed
+    # earlier and fed to 'interpret'
+    #
     @string = string
     model = @parser.parse_string(@string)
     if model
@@ -40,34 +45,43 @@ class Puppet::Pops::Types::TypeParser
 
   # @api private
   def interpret(ast)
-    result = @type_transformer.visit_this(self, ast)
+    result = @type_transformer.visit_this_0(self, ast)
     raise_invalid_type_specification_error unless result.is_a?(Puppet::Pops::Types::PAbstractType)
     result
   end
 
   # @api private
   def interpret_any(ast)
-    @type_transformer.visit_this(self, ast)
+    @type_transformer.visit_this_0(self, ast)
   end
 
   # @api private
-  def interpret_Object(anything)
+  def interpret_Object(o)
     raise_invalid_type_specification_error
   end
 
   # @api private
-  def interpret_QualifiedName(name_ast)
-    name_ast.value
+  def interpret_QualifiedName(o)
+    o.value
   end
 
   # @api private
-  def interpret_LiteralString(string_ast)
-    string_ast.value
+  def interpret_LiteralString(o)
+    o.value
   end
 
   # @api private
-  def interpret_String(string_object)
-    string_object
+  def interpret_String(o)
+    o
+  end
+
+  # @api private
+  def interpret_LiteralDefault(o)
+    :default
+  end
+
+  def interpret_LiteralInteger(o)
+    o.value
   end
 
   # @api private
@@ -102,7 +116,9 @@ class Puppet::Pops::Types::TypeParser
     when "undef"
       # Should not be interpreted as Resource type
       TYPES.undef()
-    when "object", "ruby", "type"
+    when "object"
+      TYPES.object()
+    when "ruby", "type"
       # should not be interpreted as Resource type
       # TODO: these should not be errors
       raise_unknown_type_error(name_ast)
@@ -154,7 +170,25 @@ class Puppet::Pops::Types::TypeParser
         TYPES.resource(parameters[0], parameters[1])
       end
 
-    when "object", "collection", "ruby", "type"
+    when "integer"
+      if parameters.size == 1
+        case parameters[0]
+        when Integer
+          TYPES.range(parameters[0], parameters[0])
+        when :default
+          TYPES.integer # unbound
+        end
+      elsif parameters.size != 2
+        raise_invalid_parameters_error("Integer", "1 or 2", parameters.size)
+     else
+       TYPES.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
+     end
+
+    when "object", "collection", "data", "catalogentry", "boolean", "float", "literal", "undef", "numeric", "pattern"
+      raise_unparameterized_type_error(parameterized_ast.left_expr)
+
+    when "ruby", "type"
+      # TODO: Add Stage, Node (they are not Resource Type)
       # should not be interpreted as Resource type
       raise_unknown_type_error(parameterized_ast.left_expr)
 
@@ -183,6 +217,9 @@ class Puppet::Pops::Types::TypeParser
     raise Puppet::ParseError,
       "Invalid number of type parameters specified: #{type} requires #{required}, #{given} provided"
   end
+  def raise_unparameterized_type_error(ast)
+    raise Puppet::ParseError, "Not a parameterized type <#{original_text_of(ast)}>"
+  end
 
   def raise_unknown_type_error(ast)
     raise Puppet::ParseError, "Unknown type <#{original_text_of(ast)}>"
@@ -190,6 +227,6 @@ class Puppet::Pops::Types::TypeParser
 
   def original_text_of(ast)
     position = Puppet::Pops::Adapters::SourcePosAdapter.adapt(ast)
-    position.extract_text_from_string(@string)
+    position.extract_text_from_string(@string || position.locator.string)
   end
 end
