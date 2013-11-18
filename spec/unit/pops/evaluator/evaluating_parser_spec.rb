@@ -242,11 +242,37 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Array[Integer] in [2, [3, 4]]" => true,
       "Array[Integer] in [2, [a, 4]]" => false,
       "Integer in { 2 =>'a'}"         => true,
+      "Integer[5,10] in [1,5,3]"      => true,
+      "Integer[5,10] in [1,2,3]"      => false,
       "Integer in {'a'=>'a'}"         => false,
       "Integer in {'a'=>1}"           => false,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
         parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+
+    {
+      'Object'  => ['Data', 'Literal', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Collection',
+                    'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File', 'NotYetKnownResourceType'],
+
+      # Note, Data > Collection is false (so not included)
+      'Data'    => ['Literal', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array', 'Hash',],
+      'Literal' => ['Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern'],
+      'Numeric' => ['Integer', 'Float'],
+      'CatalogEntry' => ['Class', 'Resource', 'File', 'NotYetKnownResourceType'],
+      'Integer[1,10]' => ['Integer[2,3]'],
+    }.each do |general, specials|
+      specials.each do |special |
+        it "should compute that #{general} > #{special}" do
+          parser.evaluate_string(scope, "#{general} > #{special}", __FILE__).should == true
+        end
+        it "should compute that  #{special} < #{general}" do
+          parser.evaluate_string(scope, "#{special} < #{general}", __FILE__).should == true
+        end
+        it "should compute that #{general} != #{special}" do
+          parser.evaluate_string(scope, "#{special} != #{general}", __FILE__).should == true
+        end
       end
     end
 

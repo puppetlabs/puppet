@@ -579,7 +579,7 @@ class Puppet::Pops::Types::TypeCalculator
   # Data is assignable by other Data and by Array[Data] and Hash[Literal, Data]
   # @api private
   def assignable_PDataType(t, t2)
-    t2.is_a?(Types::PDataType) || assignable?(@data_array, t2) || assignable?(@data_hash, t2)
+    t2.is_a?(Types::PDataType) || t2.is_a?(Types::PLiteralType) || assignable?(@data_array, t2) || assignable?(@data_hash, t2)
   end
 
   # Assignable if t2's ruby class is same or subclass of t1's ruby class

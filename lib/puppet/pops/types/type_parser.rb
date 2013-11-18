@@ -111,6 +111,8 @@ class Puppet::Pops::Types::TypeParser
       TYPES.resource()
     when "collection"
       TYPES.collection()
+    when "literal"
+      TYPES.literal()
     when "catalogentry"
       TYPES.catalog_entry()
     when "undef"

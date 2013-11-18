@@ -119,7 +119,7 @@ module Puppet::Pops::Types
       end
 
       def ==(o)
-        self.class == o.class && from == from && to == to
+        self.class == o.class && from == o.from && to == o.to
       end
     end
   end
