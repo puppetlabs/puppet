@@ -219,15 +219,15 @@ module Puppet
   Puppet::Type.type(:file).newparam(:source_permissions) do
     desc <<-'EOT'
       How puppet should copy owner, group and mode permissions from
-      the puppetmaster to `file` resources when the permissions are not
+      the puppet master to `file` resources when the permissions are not
       explicitly specified. Valid values are `always`, `creates`, and `never`:
 
       * `always` (the default) will cause puppet to always apply the owner,
-        group, and mode from the puppetmaster to files that it creates, or
+        group, and mode from the puppet master to files that it creates, or
         files that already exist.
-      * `creates` only apply the owner, group and mode from the puppetmaster
+      * `creates` only apply the owner, group and mode from the puppet master
          when creating the file.
-      * `never` do not apply owner, group and mode from the puppetmaster when
+      * `never` do not apply owner, group and mode from the puppet master when
          creating a new file, or managing an existing one. The resulting owner,
          group, and mode, will depend on platform-specific behavior. On POSIX, the
          umask of the user that puppet is running as. On Windows, the default
