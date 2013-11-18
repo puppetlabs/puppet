@@ -144,10 +144,10 @@ Version table:
     end
 
     it 'should join the install command and options' do
-      resource[:install_options] = '--no-install-recommends'
-      expect_execute("#{command} --no-install-recommends", 0)
+      @resource.expects(:[]).with(:install_options).returns "--no-install-recommends"
+      @provider.expects(:aptget).with { |*command| command.include?("--no-install-recommends") }
 
-      provider.install
+      @provider.install
     end
   end
 end
