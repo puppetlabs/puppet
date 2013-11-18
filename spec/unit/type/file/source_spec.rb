@@ -234,7 +234,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
       context "when source_permissions is `creates`" do
         before :each do
-          Puppet[:source_permissions] = "creates"
+          @resource[:source_permissions] = "creates"
           Puppet.features.expects(:root?).returns true
           @source.stubs(:local?).returns(false)
         end
@@ -286,7 +286,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
       context "when source_permissions is `never`" do
         before :each do
-          Puppet[:source_permissions] = "never"
+          @resource[:source_permissions] = "never"
           @source.stubs(:local?).returns(false)
           Puppet.features.expects(:root?).returns true
         end
@@ -335,7 +335,9 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
         it "deprecates copying metadata from remote sources" do
           @source.stubs(:local?).returns false
-          Puppet.expects(:deprecation_warning).with("Copying metadata from the puppetmaster to Windows agents is deprecated; Use Puppet[:source_permissions] = never.").at_least_once
+          Puppet.expects(:deprecation_warning).with(
+              "Copying metadata from the puppetmaster to Windows agents is deprecated; " <<
+              "Use source_permissions => never.").at_least_once
 
           @source.copy_source_values
         end

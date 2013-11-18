@@ -1,4 +1,3 @@
-
 require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
 
@@ -121,14 +120,15 @@ module Puppet
         next if metadata_method == :checksum and metadata.ftype == "link" and metadata.links == :manage
 
         if ! local? && [:owner, :group, :mode].include?(metadata_method)
-          case Puppet[:source_permissions]
-          when "never"
+          case @resource[:source_permissions]
+          when :never
             next
-          when "creates"
+          when :creates
             next if Puppet::FileSystem::File.exist?(resource[:path])
           else
             if Puppet.features.microsoft_windows?
-              Puppet.deprecation_warning("Copying metadata from the puppetmaster to Windows agents is deprecated; Use Puppet[:source_permissions] = never.")
+              Puppet.deprecation_warning("Copying metadata from the puppetmaster to Windows agents" <<
+                                         " is deprecated; Use source_permissions => never.")
               next
             end
           end
@@ -206,5 +206,27 @@ module Puppet
     def uri
       @uri ||= URI.parse(URI.escape(metadata.source))
     end
+  end
+
+  Puppet::Type.type(:file).newparam(:source_permissions) do
+    desc <<-'EOT'
+      How puppet should copy owner, group and mode permissions from
+      the puppetmaster to `file` resources when the permissions are not
+      explicitly specified. Valid values are `always`, `creates`, and `never`:
+
+      * `always` (the default) will cause puppet to always apply the owner,
+        group, and mode from the puppetmaster to files that it creates, or
+        files that already exist.
+      * `creates` only apply the owner, group and mode from the puppetmaster
+         when creating the file.
+      * `never` do not apply owner, group and mode from the puppetmaster when
+         creating a new file, or managing an existing one. The resulting owner,
+         group, and mode, will depend on platform-specific behavior. On POSIX, the
+         umask of the user that puppet is running as. On Windows, the default
+         DACL associated with the user that puppet is running as.
+    EOT
+
+    defaultto :always
+    newvalues(:always, :creates, :never)
   end
 end

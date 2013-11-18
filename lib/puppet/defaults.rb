@@ -1345,25 +1345,6 @@ EOT
       dependencies set with the before/require/notify/subscribe metaparameters
       and the `->`/`~>` chaining arrows; this setting only affects the relative
       ordering of _unrelated_ resources."
-    },
-    :source_permissions => {
-      :type => :enum,
-      :values => ["always", "creates", "never"],
-      :default => "always",
-      :desc => "How puppet should copy owner, group and mode permissions from
-      the puppetmaster to `file` resources when the permissions are not
-      explicitly specified. Valid values are `always`, `creates`, and `never`:
-
-      * `always` (the default) will cause puppet to always apply the owner,
-        group, and mode from the puppetmaster to files that it creates, or
-        files that already exist.
-      * `creates` only apply the permissions from the puppetmaster when
-         creating the file.
-      * `never` do not apply permissions from the puppetmaster when creating
-         a new file, or managing an existing one. The resulting owner, group,
-         and mode, will depend on platform-specific behavior. On POSIX, the
-         umask of the user that puppet is running as. On Windows, the default
-         DACL associated with the user that puppet is running as."
     }
   )
 
