@@ -1,3 +1,4 @@
+require 'base64'
 require 'puppet'
 require 'puppet/network/http_pool'
 require 'uri'
@@ -15,6 +16,10 @@ Puppet::Reports.register_report(:http) do
     url = URI.parse(Puppet[:reporturl])
     body = self.to_yaml
     headers = { "Content-Type" => "application/x-yaml" }
+    if url.user && url.password
+      user_pass_encoded = Base64.encode64("#{url.user}:#{url.password}").strip
+      headers["Authorization"] = "Basic #{user_pass_encoded}"
+    end
     use_ssl = url.scheme == 'https'
     conn = Puppet::Network::HttpPool.http_instance(url.host, url.port, use_ssl)
     response = conn.post(url.path, body, headers)
