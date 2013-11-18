@@ -20,10 +20,18 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
     reset_agent_ssl
   end
 
+  hostname = master.execute('facter hostname')
+  fqdn = master.execute('facter fqdn')
+
   reset_agent_ssl(false)
 
   step "Step 1: ensure autosign command can approve CSRs" do
-    master_opts = {'master' => {'autosign' => '/bin/true'}}
+    master_opts = {
+      'master' => {
+        'autosign' => '/bin/true',
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+      }
+    }
     with_puppet_running_on(master, master_opts) do
       agents.each do |agent|
         next if agent == master
@@ -37,8 +45,13 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
 
   reset_agent_ssl(false)
 
-  step "Step 2: ensure autosign_command can reject CSRs" do
-    master_opts = {'master' => {'autosign' => '/bin/false'}}
+  step "Step 2: ensure autosign command can reject CSRs" do
+    master_opts = {
+      'master' => {
+        'autosign' => '/bin/false',
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
+      }
+    }
     with_puppet_running_on(master, master_opts) do
       agents.each do |agent|
         next if agent == master
@@ -102,6 +115,7 @@ custom_attributes:
     master_opts = {
       'master' => {
         'autosign' => autosign_inspect_csr_path,
+        'dns_alt_names' => "puppet,#{hostname},#{fqdn}",
       },
       :__commandline_args__ => '--debug --trace',
     }
