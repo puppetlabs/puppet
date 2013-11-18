@@ -84,7 +84,7 @@ module Puppet
 
     def change_to_s(currentvalue, newvalue)
       # newvalue = "{md5}#{@metadata.checksum}"
-      if @resource.property(:ensure).retrieve == :absent
+      if resource.property(:ensure).retrieve == :absent
         return "creating from source #{metadata.source} with contents #{metadata.checksum}"
       else
         return "replacing from source #{metadata.source} with contents #{metadata.checksum}"
@@ -110,19 +110,21 @@ module Puppet
     def copy_source_values
       devfail "Somehow got asked to copy source values without any metadata" unless metadata
 
+      # conditionally copy :checksum
+      if metadata.ftype != "directory" && !(metadata.ftype == "link" && metadata.links == :manage)
+        copy_source_value(:checksum)
+      end
+
       # Take each of the stats and set them as states on the local file
       # if a value has not already been provided.
-      [:owner, :mode, :group, :checksum].each do |metadata_method|
-        param_name = (metadata_method == :checksum) ? :content : metadata_method
+      [:owner, :mode, :group].each do |metadata_method|
         next if metadata_method == :owner and !Puppet.features.root?
         next if metadata_method == :group and !Puppet.features.root?
-        next if metadata_method == :checksum and metadata.ftype == "directory"
-        next if metadata_method == :checksum and metadata.ftype == "link" and metadata.links == :manage
 
-        if ! local? && [:owner, :group, :mode].include?(metadata_method)
-          case @resource[:source_permissions]
+        if !local?
+          case resource[:source_permissions]
           when :never
-            next
+          next
           when :creates
             next if Puppet::FileSystem::File.exist?(resource[:path])
           else
@@ -134,25 +136,19 @@ module Puppet
           end
         end
 
-        if resource[param_name].nil? or resource[param_name] == :absent
-          resource[param_name] = metadata.send(metadata_method)
-        end
+        copy_source_value(metadata_method)
       end
 
       if resource[:ensure] == :absent
         # We know all we need to
       elsif metadata.ftype != "link"
         resource[:ensure] = metadata.ftype
-      elsif @resource[:links] == :follow
+      elsif resource[:links] == :follow
         resource[:ensure] = :present
       else
         resource[:ensure] = "link"
         resource[:target] = metadata.destination
       end
-    end
-
-    def found?
-      ! (metadata.nil? or metadata.ftype.nil?)
     end
 
     attr_writer :metadata
@@ -205,6 +201,18 @@ module Puppet
 
     def uri
       @uri ||= URI.parse(URI.escape(metadata.source))
+    end
+
+    private
+    def found?
+      ! (metadata.nil? or metadata.ftype.nil?)
+    end
+
+    def copy_source_value(metadata_method)
+      param_name = (metadata_method == :checksum) ? :content : metadata_method
+      if resource[param_name].nil? or resource[param_name] == :absent
+        resource[param_name] = metadata.send(metadata_method)
+      end
     end
   end
 
