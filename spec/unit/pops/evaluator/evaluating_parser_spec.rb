@@ -641,4 +641,22 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
   end
 
+  context "When evaluator performs access operatios" do
+    context "on catalog types" do
+      it "[n] gets resource parameter [n]" do
+        source = "notify { 'hello': message=>'yo'} Notify[hello][message]"
+        parser.evaluate_string(scope, source, __FILE__).should == 'yo'
+      end
+
+      it "[n] gets class parameter [n]" do
+        source = "class wonka($produces='chocolate'){ }
+           include wonka
+           Class[wonka][produces]"
+        adapted_parser = Puppet::Parser::E4ParserAdapter.new
+        adapted_parser.file(__FILE__)
+        adapted_parser.parse(source).safeevaluate(scope).should == 'chocolate'
+#        parser.evaluate_string(scope, source, __FILE__).should == 'chocolate'
+      end
+    end
+  end
 end

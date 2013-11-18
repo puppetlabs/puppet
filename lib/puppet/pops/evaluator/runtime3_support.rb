@@ -189,6 +189,9 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
 
+    # TODO: Unknown resource causes creation of Resource to fail with ArgumentError, should give
+    # a proper Issue
+
     # resolve in scope. TODO: Investigate what happens here - opportunity to optimize?
     fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type_name, resource_titles)
 

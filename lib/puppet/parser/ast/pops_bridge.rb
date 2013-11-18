@@ -45,18 +45,17 @@ class Puppet::Parser::AST::PopsBridge
   attr_reader :program_model, :context
 
     def initialize(program_model, context = {})
-      @program_model = model
+      @program_model = program_model
       @context = context
       @ast_transformer ||= Puppet::Pops::Model::AstTransformer.new(@context[:file])
       @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser::Transitional.new()
     end
 
-    # This is the 3x API, the 3x AST searches through all code to find the instantiatable instructions.
-    # This pops model based instantiation relies on the parser to build this list while parsing (which is more
+    # This is the 3x API, the 3x AST searches through all code to find the instructions that can be instantiated.
+    # This Pops-model based instantiation relies on the parser to build this list while parsing (which is more
     # efficient as it avoids one full scan of all logic via recursive enumeration/yield)
     #
     def instantiate(modname)
-      decorate_program
       @program_model.definitions.collect do |d|
         case d
         when Puppet::Pops::Model::HostClassDefinition
@@ -72,7 +71,7 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def evaluate(scope)
-      @@evaluator.evaluate(scope, model)
+      @@evaluator.evaluate(scope, program_model)
     end
 
     # Adapts to 3x where top level constructs needs to have each to iterate over children. Short circuit this
@@ -90,7 +89,7 @@ class Puppet::Parser::AST::PopsBridge
       # can thus reference all sorts of information. Here the value expression is wrapped in an AST Bridge to a Pops
       # expression since the Pops side can not control the evaluation
       if o.value
-        [ o.name, Puppet::AST::PopsBridge::Expression.new(:value => o.value) ]
+        [ o.name, Expression.new(:value => o.value) ]
       else
         [ o.name ]
       end
@@ -99,7 +98,7 @@ class Puppet::Parser::AST::PopsBridge
     # Produces a hash with data for Definition and HostClass
     def args_from_definition(o, modname)
       args = {
-       :arguments => o.parameters.collect {|p| instantiate_Parameter(o) },
+       :arguments => o.parameters.collect {|p| instantiate_Parameter(p) },
        :module_name => modname
       }
       unless is_nop?(o.body)

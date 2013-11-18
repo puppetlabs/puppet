@@ -369,6 +369,10 @@ module Puppet::Pops::Issues
     "Error while evaluating #{label.a_an(semantic)}, #{detail}"
   end
 
+  UNKNOWN_RESOURCE_TYPE = issue :UNKNOWN_RESOURCE_TYPE, :type_name do
+    "Resource type not found: #{type_name.capitalize}"
+  end
+
   UNKNOWN_RESOURCE = issue :UNKNOWN_RESOURCE, :type_name, :title do
     "Resource not found: #{type_name.capitalize}['#{title}']"
   end

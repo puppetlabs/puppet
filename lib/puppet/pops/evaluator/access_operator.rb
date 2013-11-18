@@ -206,7 +206,20 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
         :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)
     end
-    unless o.class_name.nil?
+    if ! o.class_name.nil?
+      # lookup class resource and return one or more parameter values
+      resource = find_resource(scope, 'class', o.class_name)
+      unless resource
+        fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => 'Class', :title => o.class_name})
+      end
+      result = keys.map do |k|
+        unless is_parameter_of_resource?(scope, resource, k)
+          fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
+            {:type_name => 'Class', :title => o.class_name, :param_name=>k})
+        end
+        get_resource_parameter_value(scope, resource, k)
+      end
+      return result.size <= 1 ? result.pop : result
       # TODO: if [] is applied to specific class, it should be treated the same as getting
       # a resource parameter. Now it fails the operation
       #

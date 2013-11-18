@@ -56,6 +56,8 @@ class Puppet::Parser::E4ParserAdapter
 
   end
 
+  # TODO: This is unsused as the validating parser is used instead
+  # Remove this method ?
   def validate(parse_result)
     # TODO: This is too many hoops to jump through... ugly API
     # could reference a ValidatorFactory.validator_3_1(acceptor) instead.
