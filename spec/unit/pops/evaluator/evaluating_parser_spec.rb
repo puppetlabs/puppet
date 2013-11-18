@@ -276,6 +276,19 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
     end
 
+    {
+      'Integer[1,10] > Integer[2,3]'   => true,
+      'Integer[1,10] == Integer[2,3]'  => false,
+      'Integer[1,10] > Integer[0,5]'   => false,
+      'Integer[1,10] > Integer[1,10]'  => false,
+      'Integer[1,10] >= Integer[1,10]' => true,
+      'Integer[1,10] == Integer[1,10]' => true,
+    }.each do |source, result|
+        it "should parse and evaluate the integer range comparison expression '#{source}' to #{result}" do
+          parser.evaluate_string(scope, source, __FILE__).should == result
+        end
+      end
+
   end
 
   context "When the evaluator performs arithmetic" do
