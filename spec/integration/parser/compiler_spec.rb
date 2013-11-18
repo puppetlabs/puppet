@@ -355,7 +355,7 @@ describe "Puppet::Parser::Compiler" do
             MANIFEST
             catalog.resource("Notify[test]")[:message].should == true
             # different errors depending on regular or future parser
-          end.to raise_error(Puppet::Error, /(can't modify frozen Hash)|(Illegal attempt to assign)/)
+          end.to raise_error(Puppet::Error, /(can't modify frozen [hH]ash)|(Illegal attempt to assign)/)
         end
 
         it 'should not allow addition to $trusted hash via Ruby inline template' do
@@ -368,7 +368,7 @@ describe "Puppet::Parser::Compiler" do
               notify { 'test': message => $trusted['extra'] == 'added' }
             MANIFEST
             catalog.resource("Notify[test]")[:message].should == true
-          end.to raise_error(Puppet::Error, /can't modify frozen Hash/)
+          end.to raise_error(Puppet::Error, /can't modify frozen [hH]ash/)
         end
       end
 
