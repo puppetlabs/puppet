@@ -158,7 +158,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = source.new(:resource => @resource)
-      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf", :ftype => "file", :source => @foobar
+      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => "173", :checksum => "{md5}asdfasdf", :ftype => "file", :source => @foobar
       @source.stubs(:metadata).returns @metadata
 
       Puppet.features.stubs(:root?).returns true
