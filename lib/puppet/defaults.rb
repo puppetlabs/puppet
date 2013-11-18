@@ -416,7 +416,7 @@ module Puppet
       :desc    => "Flatten fact values to strings using #to_s. Means you can't have arrays or
         hashes as fact values.",
     },
-    :hashed_node_data => {
+    :trusted_node_data => {
       :default => false,
       :type    => :boolean,
       :desc    => "Stores trusted node data in a hash called $trusted.
