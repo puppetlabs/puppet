@@ -123,14 +123,14 @@ module Puppet
 
         if !local?
           case resource[:source_permissions]
-          when :never
+          when :ignore
           next
-          when :creates
+          when :use_when_creating
             next if Puppet::FileSystem::File.exist?(resource[:path])
           else
             if Puppet.features.microsoft_windows?
               Puppet.deprecation_warning("Copying metadata from the puppetmaster to Windows agents" <<
-                                         " is deprecated; Use source_permissions => never.")
+                                         " is deprecated; Use source_permissions => ignore.")
               next
             end
           end
@@ -220,21 +220,21 @@ module Puppet
     desc <<-'EOT'
       How puppet should copy owner, group and mode permissions from
       the puppet master to `file` resources when the permissions are not
-      explicitly specified. Valid values are `always`, `creates`, and `never`:
+      explicitly specified. Valid values are `use`, `use_when_creating`, and `ignore`:
 
-      * `always` (the default) will cause puppet to always apply the owner,
-        group, and mode from the puppet master to files that it creates, or
+      * `use` (the default) will cause puppet to apply the owner, group
+        and mode from the puppet master to files that it creates, or
         files that already exist.
-      * `creates` only apply the owner, group and mode from the puppet master
+      * `use_when_creating` only apply the owner, group and mode from the puppet master
          when creating the file.
-      * `never` do not apply owner, group and mode from the puppet master when
+      * `ignore` do not apply owner, group and mode from the puppet master when
          creating a new file, or managing an existing one. The resulting owner,
          group, and mode, will depend on platform-specific behavior. On POSIX, the
          umask of the user that puppet is running as. On Windows, the default
          DACL associated with the user that puppet is running as.
     EOT
 
-    defaultto :always
-    newvalues(:always, :creates, :never)
+    defaultto :use
+    newvalues(:use, :use_when_creating, :ignore)
   end
 end
