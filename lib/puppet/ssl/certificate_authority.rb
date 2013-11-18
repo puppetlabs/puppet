@@ -309,8 +309,11 @@ class Puppet::SSL::CertificateAuthority
 
   def check_internal_signing_policies(hostname, csr, allow_dns_alt_names)
     # Reject unknown request extensions.
-    unknown_req = csr.request_extensions.
-      reject {|x| RequestExtensionWhitelist.include? x["oid"] }
+    unknown_req = csr.request_extensions.reject do |x|
+      RequestExtensionWhitelist.include? x["oid"] or
+        Puppet::SSL::Oids.subtree_of?('ppRegCertExt', x["oid"], true) or
+        Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', x["oid"], true)
+    end
 
     if unknown_req and not unknown_req.empty?
       names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
