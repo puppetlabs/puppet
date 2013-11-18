@@ -78,28 +78,28 @@ describe Puppet::Type.type(:file) do
 
       describe "when using UNC filenames", :if => Puppet.features.microsoft_windows? do
         it "should remove trailing slashes" do
-          file[:path] = "//server/foo/bar/baz/"
-          file[:path].should == "//server/foo/bar/baz"
+          file[:path] = "//localhost/foo/bar/baz/"
+          file[:path].should == "//localhost/foo/bar/baz"
         end
 
         it "should remove double slashes" do
-          file[:path] = "//server/foo/bar//baz"
-          file[:path].should == "//server/foo/bar/baz"
+          file[:path] = "//localhost/foo/bar//baz"
+          file[:path].should == "//localhost/foo/bar/baz"
         end
 
         it "should remove trailing double slashes" do
-          file[:path] = "//server/foo/bar/baz//"
-          file[:path].should == "//server/foo/bar/baz"
+          file[:path] = "//localhost/foo/bar/baz//"
+          file[:path].should == "//localhost/foo/bar/baz"
         end
 
         it "should remove a trailing slash from a sharename" do
-          file[:path] = "//server/foo/"
-          file[:path].should == "//server/foo"
+          file[:path] = "//localhost/foo/"
+          file[:path].should == "//localhost/foo"
         end
 
         it "should not modify a sharename" do
-          file[:path] = "//server/foo"
-          file[:path].should == "//server/foo"
+          file[:path] = "//localhost/foo"
+          file[:path].should == "//localhost/foo"
         end
       end
     end
@@ -1267,8 +1267,8 @@ describe Puppet::Type.type(:file) do
       describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
         describe "when using UNC filenames" do
           it "should autorequire its parent directory" do
-            file[:path] = '//server/foo/bar/baz'
-            dir = described_class.new(:path => "//server/foo/bar")
+            file[:path] = '//localhost/foo/bar/baz'
+            dir = described_class.new(:path => "//localhost/foo/bar")
             catalog.add_resource file
             catalog.add_resource dir
             reqs = file.autorequire
@@ -1277,9 +1277,9 @@ describe Puppet::Type.type(:file) do
           end
 
           it "should autorequire its nearest ancestor directory" do
-            file = described_class.new(:path => "//server/foo/bar/baz/qux")
-            dir = described_class.new(:path => "//server/foo/bar/baz")
-            grandparent = described_class.new(:path => "//server/foo/bar")
+            file = described_class.new(:path => "//localhost/foo/bar/baz/qux")
+            dir = described_class.new(:path => "//localhost/foo/bar/baz")
+            grandparent = described_class.new(:path => "//localhost/foo/bar")
             catalog.add_resource file
             catalog.add_resource dir
             catalog.add_resource grandparent
@@ -1290,13 +1290,13 @@ describe Puppet::Type.type(:file) do
           end
 
           it "should not autorequire anything when there is no nearest ancestor directory" do
-            file = described_class.new(:path => "//server/foo/bar/baz/qux")
+            file = described_class.new(:path => "//localhost/foo/bar/baz/qux")
             catalog.add_resource file
             file.autorequire.should be_empty
           end
 
           it "should not autorequire its parent dir if its parent dir is itself" do
-            file = described_class.new(:path => "//server/foo")
+            file = described_class.new(:path => "//localhost/foo")
             catalog.add_resource file
             puts file.autorequire
             file.autorequire.should be_empty
