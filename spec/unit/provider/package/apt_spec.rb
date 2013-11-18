@@ -142,5 +142,12 @@ Version table:
 
       @provider.install
     end
+
+    it 'should join the install command and options' do
+      resource[:install_options] = '--no-install-recommends'
+      expect_execute("#{command} --no-install-recommends", 0)
+
+      provider.install
+    end
   end
 end
