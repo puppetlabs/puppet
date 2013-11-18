@@ -17,24 +17,23 @@ class Puppet::SSL::CertificateAuthority::AutosignCommand
   #
   # @param name [String] The CSR name to check for autosigning
   # @return [true, false] If the CSR should be autosigned
-  def allowed?(name)
-    csr = Puppet::SSL::CertificateRequest.indirection.find(name)
-    if csr.nil?
-      raise CheckFailure, "Could not run autosign_command for #{name}: no CSR for #{name}"
+  def allowed?(csr)
+    name = csr.name
+    cmd = [@path, name]
+
+    output = nil
+    Tempfile.open('puppet-csr') do |csr_file|
+      csr_file.write(csr.to_s)
+      csr_file.flush
+
+      execute_options = {:stdinfile => csr_file.path, :combine => true, :failonfail => false}
+      output = Puppet::Util::Execution.execute(cmd, execute_options)
     end
-
-    cmd = "#{@path} #{name}"
-    csr_file = Tempfile.new('puppet-csr')
-    csr_file.write(csr.to_s)
-    csr_file.close
-
-    execute_options = {:stdinfile => csr_file.path, :combine => true, :failonfail => false}
-    output = Puppet::Util::Execution.execute(cmd, execute_options)
 
     output.chomp!
 
-    Puppet.info "autosign_command '#{cmd}' completed with exit status #{output.exitstatus}"
-    Puppet.debug "Output of autosign_command '#{cmd}': #{output}"
+    Puppet.debug "Autosign command '#{@path}' exit status: #{output.exitstatus}"
+    Puppet.debug "Autosign command '#{@path}' output: #{output}"
 
     case output.exitstatus
     when 0

@@ -1,7 +1,7 @@
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CAUtils
 
-test_name "autosign_command and csr attributes behavior (#7243,#7244)" do
+test_name "autosign command and csr attributes behavior (#7243,#7244)" do
 
   def assert_key_generated(name)
     assert_match(/Creating a new SSL key for #{name}/, stdout, "Expected agent to create a new SSL key for autosigning")
@@ -22,8 +22,8 @@ test_name "autosign_command and csr attributes behavior (#7243,#7244)" do
 
   reset_agent_ssl(false)
 
-  step "Step 1: ensure autosign_command can approve CSRs" do
-    master_opts = {'master' => {'autosign' => 'false', 'autosign_command' => '/bin/true'}}
+  step "Step 1: ensure autosign command can approve CSRs" do
+    master_opts = {'master' => {'autosign' => '/bin/true'}}
     with_puppet_running_on(master, master_opts) do
       agents.each do |agent|
         next if agent == master
@@ -38,7 +38,7 @@ test_name "autosign_command and csr attributes behavior (#7243,#7244)" do
   reset_agent_ssl(false)
 
   step "Step 2: ensure autosign_command can reject CSRs" do
-    master_opts = {'master' => {'autosign' => 'false', 'autosign_command' => '/bin/false'}}
+    master_opts = {'master' => {'autosign' => '/bin/false'}}
     with_puppet_running_on(master, master_opts) do
       agents.each do |agent|
         next if agent == master
@@ -51,7 +51,7 @@ test_name "autosign_command and csr attributes behavior (#7243,#7244)" do
   end
 
   autosign_inspect_csr_path = "#{testdirs[master]}/autosign_inspect_csr.rb"
-  step "Step 3: setup an autosign_command that inspects CSR attributes" do
+  step "Step 3: setup an autosign command that inspects CSR attributes" do
     autosign_inspect_csr = <<-END
 #!/usr/bin/env ruby
 require 'openssl'
@@ -101,8 +101,7 @@ custom_attributes:
   step "Step 5: successfully obtain a cert" do
     master_opts = {
       'master' => {
-        'autosign' => 'false',
-        'autosign_command' => autosign_inspect_csr_path,
+        'autosign' => autosign_inspect_csr_path,
       },
       :__commandline_args__ => '--debug --trace',
     }

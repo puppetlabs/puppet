@@ -18,10 +18,46 @@ class Puppet::FileSystem::File
            Puppet::FileSystem::File19
          end
 
+  @remembered = {}
+
   def self.new(path)
-    file = IMPL.allocate
-    file.send(:initialize, path)
-    file
+    if @remembered.include?(path.to_s)
+      @remembered[path.to_s]
+    else
+      file = IMPL.allocate
+      file.send(:initialize, path)
+      file
+    end
+  end
+
+  # Run a block of code with a file accessible in the filesystem.
+  # @note This API should only be used for testing
+  #
+  # @param file [Object] an object that conforms to the Puppet::FileSystem::File interface
+  # @api private
+  def self.overlay(file, &block)
+    remember(file)
+    yield
+  ensure
+    forget(file)
+  end
+
+  # Create a binding between a filename and a particular instance of a file object.
+  # @note This API should only be used for testing
+  #
+  # @param file [Object] an object that conforms to the Puppet::FileSystem::File interface
+  # @api private
+  def self.remember(file)
+    @remembered[file.path.to_s] = file
+  end
+
+  # Forget a remembered file
+  # @note This API should only be used for testing
+  #
+  # @param file [Object] an object that conforms to the Puppet::FileSystem::File interface
+  # @api private
+  def self.forget(file)
+    @remembered.delete(file.path.to_s)
   end
 
   def initialize(path)
@@ -117,6 +153,15 @@ class Puppet::FileSystem::File
   # @return [Boolean] true if the path of this file is present
   def exist?
     self.class.exist?(@path)
+  end
+
+  # Determine if a file is executable.
+  #
+  # @todo Should this take into account extensions on the windows platform?
+  #
+  # @return [Boolean] true if this file can be executed
+  def executable?
+    ::File.executable?(@path)
   end
 
   # @return [Boolean] Whether the file is writable by the current

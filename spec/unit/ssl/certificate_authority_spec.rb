@@ -570,6 +570,8 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     describe "when autosigning certificates" do
+      let(:csr) { Puppet::SSL::CertificateRequest.new("host") }
+
       describe "using the autosign setting" do
         let(:autosign) { File.expand_path("/auto/sign") }
 
@@ -577,107 +579,94 @@ describe Puppet::SSL::CertificateAuthority do
           Puppet[:autosign] = false
 
           @ca.expects(:sign).never
-          @ca.autosign("host")
+          @ca.autosign(csr)
         end
 
         it "should do nothing if no autosign.conf exists" do
           Puppet[:autosign] = autosign
-          Puppet::FileSystem::File.expects(:exist?).with(autosign).returns false
-
-          @ca.expects(:sign).never
-          @ca.autosign("host")
+          non_existent_file = Puppet::FileSystem::MemoryFile.a_missing_file(autosign)
+          Puppet::FileSystem::File.overlay(non_existent_file) do
+            @ca.expects(:sign).never
+            @ca.autosign(csr)
+          end
         end
 
         describe "and autosign is enabled and the autosign.conf file exists" do
+          let(:store) { stub 'store', :allow => nil, :allowed? => false }
+
           before do
             Puppet[:autosign] = autosign
-            Puppet::FileSystem::File.expects(:exist?).with(autosign).returns(true).at_least_once
-            File.stubs(:readlines).with(autosign).returns ["one\n", "two\n"]
-
-            @store = stub 'store', :allow => nil, :allowed? => false
-            Puppet::Network::AuthStore.stubs(:new).returns @store
           end
 
           describe "when creating the AuthStore instance to verify autosigning" do
             it "should create an AuthStore with each line in the configuration file allowed to be autosigned" do
-              @store.expects(:allow).with("one")
-              @store.expects(:allow).with("two")
+              Puppet::FileSystem::File.overlay(Puppet::FileSystem::MemoryFile.a_regular_file_containing(autosign, "one\ntwo\n")) do
+                Puppet::Network::AuthStore.stubs(:new).returns store
 
-              @ca.autosign("host")
+                store.expects(:allow).with("one")
+                store.expects(:allow).with("two")
+
+                @ca.autosign(csr)
+              end
             end
 
             it "should reparse the autosign configuration on each call" do
-              Puppet::Network::AuthStore.expects(:new).times(2).returns @store
+              Puppet::FileSystem::File.overlay(Puppet::FileSystem::MemoryFile.a_regular_file_containing(autosign, "one")) do
+                Puppet::Network::AuthStore.stubs(:new).times(2).returns store
 
-              @ca.autosign("host")
-              @ca.autosign("host")
+                @ca.autosign(csr)
+                @ca.autosign(csr)
+              end
             end
 
             it "should ignore comments" do
-              File.stubs(:readlines).with(autosign).returns ["one\n", "#two\n"]
+              Puppet::FileSystem::File.overlay(Puppet::FileSystem::MemoryFile.a_regular_file_containing(autosign, "one\n#two\n")) do
+                Puppet::Network::AuthStore.stubs(:new).returns store
 
-              @store.expects(:allow).with("one")
-              @ca.autosign("host")
+                store.expects(:allow).with("one")
+
+                @ca.autosign(csr)
+              end
             end
 
             it "should ignore blank lines" do
-              File.stubs(:readlines).with(autosign).returns ["one\n", "\n"]
+              Puppet::FileSystem::File.overlay(Puppet::FileSystem::MemoryFile.a_regular_file_containing(autosign, "one\n\n")) do
+                Puppet::Network::AuthStore.stubs(:new).returns store
 
-              @store.expects(:allow).with("one")
-              @ca.autosign("host")
+                store.expects(:allow).with("one")
+                @ca.autosign(csr)
+              end
             end
           end
         end
       end
 
-      describe "using the autosign_command setting" do
-        after(:all) do
-          Puppet[:autosign_command] = nil
+      describe "using the autosign command setting" do
+        let(:cmd) { File.expand_path('/autosign_cmd') }
+        let(:autosign_cmd) { mock 'autosign_command' }
+        let(:autosign_executable) { Puppet::FileSystem::MemoryFile.an_executable(cmd) }
+
+        before do
+          Puppet[:autosign] = cmd
+
+          Puppet::SSL::CertificateAuthority::AutosignCommand.stubs(:new).returns autosign_cmd
         end
 
-        it "checks the autosign setting first" do
-          Puppet[:autosign] = true
-
-          @ca.expects(:autosign_command?).never
-          @ca.expects(:sign).with('host')
-
-          @ca.autosign("host")
-        end
-
-        it "doesn't autosign the CSR if the autosign_command is unset" do
-          Puppet[:autosign] = false
-          Puppet[:autosign_command] = nil
-
-          @ca.expects(:sign).never
-          @ca.autosign("host")
-        end
-
-        describe "invoking the autosign_command" do
-          let(:autosign_cmd) { mock 'autosign_command' }
-
-          before do
-            Puppet[:autosign] = false
-
-            Puppet::Util.stubs(:absolute_path?).with('autosign_cmd').returns true
-            Puppet[:autosign_command] = 'autosign_cmd'
-
-            Puppet::SSL::CertificateAuthority::AutosignCommand.stubs(:new).returns autosign_cmd
-          end
-
-          it "autosigns the CSR if the autosign_command returned true" do
-            autosign_cmd.expects(:allowed?).with('host').returns true
-            Puppet::SSL::CertificateAuthority::AutosignCommand.expects(:new).returns autosign_cmd
+        it "autosigns the CSR if the autosign command returned true" do
+          Puppet::FileSystem::File.overlay(autosign_executable) do
+            autosign_cmd.expects(:allowed?).with(csr).returns true
 
             @ca.expects(:sign).with('host')
-            @ca.autosign('host')
+            @ca.autosign(csr)
           end
+        end
 
-          it "doesn't autosign the CSR if the autosign_command returned false" do
-            autosign_cmd.expects(:allowed?).with('host').returns false
-            Puppet::SSL::CertificateAuthority::AutosignCommand.expects(:new).returns autosign_cmd
+        it "doesn't autosign the CSR if the autosign_command returned false" do
+          Puppet::FileSystem::File.overlay(autosign_executable) do
+            autosign_cmd.expects(:allowed?).with(csr).returns false
 
             @ca.expects(:sign).never
-            @ca.autosign('host')
+            @ca.autosign(csr)
           end
         end
       end
