@@ -240,6 +240,16 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
 
         context "when managing a new file" do
+          it "should copy owner and group from local sources" do
+            @source.stubs(:local?).returns true
+
+            @source.copy_source_values
+
+            @resource[:owner].must == 100
+            @resource[:group].must == 200
+            @resource[:mode].must == "173"
+          end
+
           it "copies the remote owner" do
             @source.copy_source_values
 
@@ -262,6 +272,16 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         context "when managing an existing file" do
           before :each do
             Puppet::FileSystem::File.stubs(:exist?).with(@resource[:path]).returns(true)
+          end
+
+          it "should copy owner and group from local sources" do
+            @source.stubs(:local?).returns true
+
+            @source.copy_source_values
+
+            @resource[:owner].must == 100
+            @resource[:group].must == 200
+            @resource[:mode].must == "173"
           end
 
           it "preserves the local owner" do
@@ -289,6 +309,16 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @resource[:source_permissions] = "ignore"
           @source.stubs(:local?).returns(false)
           Puppet.features.expects(:root?).returns true
+        end
+
+        it "should copy owner and group from local sources" do
+          @source.stubs(:local?).returns true
+
+          @source.copy_source_values
+
+          @resource[:owner].must == 100
+          @resource[:group].must == 200
+          @resource[:mode].must == "173"
         end
 
         it "preserves the local owner" do
@@ -331,6 +361,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           @resource[:owner].must == 100
           @resource[:group].must == 200
+          @resource[:mode].must == "173"
         end
 
         it "deprecates copying metadata from remote sources" do
