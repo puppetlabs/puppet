@@ -443,7 +443,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     end
   end
 
-  # Evaluates matching expressions with string or regexp rhs expression.
+  # Evaluates matching expressions with type, string or regexp rhs expression.
+  # If RHS is a type, the =~ matches compatible (assignable?) type.
   #
   # @example
   #   x =~ /abc.*/
@@ -452,21 +453,27 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @example
   #   y = "abc"
   #   x =~ "${y}.*"
+  # @example
+  #   [1,2,3] =~ Array[Integer[1,10]]
   # @return [Boolean] if a match was made or not. Also sets $0..$n to matchdata in current scope.
   #
   def eval_MatchExpression o, scope
     left, pattern = eval_BinaryExpression o, scope
-    begin
-      pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)
-    rescue StandardError => e
-      fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message})
-    end
-    unless left.is_a?(String)
-      fail(Issues::MATCH_NOT_STRING, o.left_expr, {:left_value => left})
-    end
+    if pattern.is_a?(Puppet::Pops::Types::PAbstractType)
+      matched = @@type_calculator.instance?(pattern, left)
+    else
+      begin
+        pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)
+      rescue StandardError => e
+        fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message})
+      end
+      unless left.is_a?(String)
+        fail(Issues::MATCH_NOT_STRING, o.left_expr, {:left_value => left})
+      end
 
-    matched = pattern.match(left) # nil, or MatchData
-    set_match_data(matched, o, scope) # creates ephemeral
+      matched = pattern.match(left) # nil, or MatchData
+      set_match_data(matched, o, scope) # creates ephemeral
+    end
 
     # convert match result to Boolean true, or false
     o.operator == :'=~' ? !!matched : !matched

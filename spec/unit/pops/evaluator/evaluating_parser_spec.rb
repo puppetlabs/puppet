@@ -178,15 +178,18 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
 
    {
-      "'a' =~ /.*/"                 => true,
-      "'a' =~ '.*'"                 => true,
-      "/.*/ != /a.*/"               => true,
-      "'a' !~ /b.*/"                => true,
-      "'a' !~ 'b.*'"                => true,
-      '$x = a; a =~ "$x.*"'         => true,
-      "a =~ Pattern['a.*']"         => true,
-      "$x = /a.*/ a =~ $x"          => true,
-      "$x = Pattern['a.*'] a =~ $x" => true,
+      "'a' =~ /.*/"                     => true,
+      "'a' =~ '.*'"                     => true,
+      "/.*/ != /a.*/"                   => true,
+      "'a' !~ /b.*/"                    => true,
+      "'a' !~ 'b.*'"                    => true,
+      '$x = a; a =~ "$x.*"'             => true,
+      "a =~ Pattern['a.*']"             => true,
+      "$x = /a.*/ a =~ $x"              => true,
+      "$x = Pattern['a.*'] a =~ $x"     => true,
+      "1 =~ Integer"                    => true,
+      "1 !~ Integer"                    => false,
+      "[1,2,3] =~ Array[Integer[1,10]]" => true,
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
