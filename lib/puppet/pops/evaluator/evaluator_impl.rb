@@ -402,17 +402,17 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       when :'!='
         ! @@compare_operator.equals(left,right)
       when :'<'
-        # right can be assigned to left, but they are not equal
-        @@type_calculator.assignable?(left, right) && ! @@compare_operator.equals(left,right)
-      when :'<='
-        # right can be assigned to left
-        @@type_calculator.assignable?(left, right)
-      when :'>'
         # left can be assigned to right, but they are not equal
         @@type_calculator.assignable?(right, left) && ! @@compare_operator.equals(left,right)
-      when :'>='
+      when :'<='
         # left can be assigned to right
         @@type_calculator.assignable?(right, left)
+      when :'>'
+        # right can be assigned to left, but they are not equal
+        @@type_calculator.assignable?(left,right) && ! @@compare_operator.equals(left,right)
+      when :'>='
+        # right can be assigned to left
+        @@type_calculator.assignable?(left, right)
       else
         fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
       end
