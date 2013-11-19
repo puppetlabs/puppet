@@ -209,21 +209,21 @@ describe Puppet::Indirector::REST do
       @request = stub 'request', :key => "foo", :server => nil, :port => nil
       terminus.class.expects(:port).returns 321
       terminus.class.expects(:server).returns "myserver"
-      Puppet::Network::HTTP::Connection.expects(:new).with("myserver", 321).returns "myconn"
+      Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
       terminus.network(@request).should == "myconn"
     end
 
     it "should use the server from the indirection request if one is present" do
       @request = stub 'request', :key => "foo", :server => "myserver", :port => nil
       terminus.class.stubs(:port).returns 321
-      Puppet::Network::HTTP::Connection.expects(:new).with("myserver", 321).returns "myconn"
+      Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
       terminus.network(@request).should == "myconn"
     end
 
     it "should use the port from the indirection request if one is present" do
       @request = stub 'request', :key => "foo", :server => nil, :port => 321
       terminus.class.stubs(:server).returns "myserver"
-      Puppet::Network::HTTP::Connection.expects(:new).with("myserver", 321).returns "myconn"
+      Puppet::Network::HttpPool.expects(:http_instance).with("myserver", 321).returns "myconn"
       terminus.network(@request).should == "myconn"
     end
   end
