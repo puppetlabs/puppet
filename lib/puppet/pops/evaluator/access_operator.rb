@@ -35,9 +35,9 @@ class Puppet::Pops::Evaluator::AccessOperator
     when 0
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
-      o[box_numeric(keys[0], @semantic.keys, scope)]
+      o[coerce_numeric(keys[0], @semantic.keys, scope)]
     when 2
-      o[box_numeric(keys[0], @semantic.keys, scope), box_numeric(keys[1], @semantic.keys, scope)]
+      o[coerce_numeric(keys[0], @semantic.keys, scope), coerce_numeric(keys[1], @semantic.keys, scope)]
     else
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
@@ -62,12 +62,12 @@ class Puppet::Pops::Evaluator::AccessOperator
       # What does this mean: <an array>[] ? Is it error, unit, empty array 
       fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
-      k = box_numeric(keys[0], @semantic.keys[0], scope)
+      k = coerce_numeric(keys[0], @semantic.keys[0], scope)
       o[k]
     when 2
       # A slice [from, to] with support for -1 to mean start, or end respectively.
-      k1 = box_numeric(keys[0], @semantic.keys[0], scope)
-      k2 = box_numeric(keys[1], @semantic.keys[1], scope)
+      k1 = coerce_numeric(keys[0], @semantic.keys[0], scope)
+      k2 = coerce_numeric(keys[1], @semantic.keys[1], scope)
       o[k1, k2]
     else
       fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})

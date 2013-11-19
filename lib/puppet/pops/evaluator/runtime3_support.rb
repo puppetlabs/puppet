@@ -151,7 +151,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # @param scope [Object] the (runtime specific) scope where evaluation of o takes place
   # @return [Numeric] value `v` converted to Numeric.
   #
-  def box_numeric(v, o, scope)
+  def coerce_numeric(v, o, scope)
     unless n = Puppet::Pops::Utils.to_n(v)
       fail(Puppet::Pops::Issues::NOT_NUMERIC, o, {:value => v})
     end
