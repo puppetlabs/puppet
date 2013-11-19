@@ -177,6 +177,7 @@ DOC
     csr_attributes = Puppet::SSL::CertificateRequestAttributes.new(Puppet[:csr_attributes])
     if csr_attributes.load
       options[:csr_attributes] = csr_attributes.custom_attributes
+      options[:extension_requests] = csr_attributes.extension_requests
     end
 
     @certificate_request = CertificateRequest.new(name)

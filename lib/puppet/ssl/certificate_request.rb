@@ -108,8 +108,12 @@ DOC
   end
 
   # Return the set of extensions requested on this CSR, in a form designed to
-  # be useful to Ruby: a hash.  Which, not coincidentally, you can pass
+  # be useful to Ruby: an array of hashes.  Which, not coincidentally, you can pass
   # successfully to the OpenSSL constructor later, if you want.
+  #
+  # @return [Array<Hash{String => String}>] An array of two or three element
+  # hashes, with key/value pairs for the extension's oid, its value, and
+  # optionally its critical state.
   def request_extensions
     raise Puppet::Error, "CSR needs content to extract fields" unless @content
 
@@ -243,6 +247,7 @@ DOC
     'subjectAltName', '2.5.29.17',
   ]
 
+  # @api private
   def extension_request_attribute(options)
     extensions = []
 
@@ -252,7 +257,7 @@ DOC
           raise Puppet::Error, "Cannot specify CSR extension request #{oid}: conflicts with internally used extension request"
         end
 
-        ext = OpenSSL::X509::Extension.new(oid, value, false)
+        ext = OpenSSL::X509::Extension.new(oid, value.to_s, false)
         extensions << OpenSSL::ASN1::Sequence([ext])
       end
     end

@@ -7,11 +7,12 @@ require 'puppet/util/yaml'
 # @api private
 class Puppet::SSL::CertificateRequestAttributes
 
-  attr_reader :path, :custom_attributes
+  attr_reader :path, :custom_attributes, :extension_requests
 
   def initialize(path)
     @path = path
     @custom_attributes = {}
+    @extension_requests = {}
   end
 
   # Attempt to load a yaml file at the given @path.
@@ -22,6 +23,7 @@ class Puppet::SSL::CertificateRequestAttributes
     if Puppet::FileSystem::File.exist?(path)
       hash = Puppet::Util::Yaml.load_file(path)
       @custom_attributes = hash.delete('custom_attributes') || {}
+      @extension_requests = hash.delete('extension_requests') || {}
       if not hash.keys.empty?
         raise Puppet::Error, "unexpected attributes #{hash.keys.inspect} in #{@path.inspect}"
       end
