@@ -469,65 +469,7 @@ module Puppet::Util::Windows::Security
 
   def get_dacl(handle)
     get_dacl_ptr(handle) do |dacl_ptr|
-      # REMIND: need to handle NULL DACL
-      raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(dacl_ptr)
-
-      # ACL structure, size and count are the important parts. The
-      # size includes both the ACL structure and all the ACEs.
-      #
-      # BYTE AclRevision
-      # BYTE Padding1
-      # WORD AclSize
-      # WORD AceCount
-      # WORD Padding2
-      acl_buf = 0.chr * 8
-      memcpy(acl_buf, dacl_ptr, acl_buf.size)
-      ace_count = acl_buf.unpack('CCSSS')[3]
-
-      dacl = []
-
-      # deny all
-      return dacl if ace_count == 0
-
-      0.upto(ace_count - 1) do |i|
-        ace_ptr = [0].pack('L')
-
-        next unless GetAce(dacl_ptr, i, ace_ptr)
-
-        # ACE structures vary depending on the type. All structures
-        # begin with an ACE header, which specifies the type, flags
-        # and size of what follows. We are only concerned with
-        # ACCESS_ALLOWED_ACE and ACCESS_DENIED_ACEs, which have the
-        # same structure:
-        #
-        # BYTE  C AceType
-        # BYTE  C AceFlags
-        # WORD  S AceSize
-        # DWORD L ACCESS_MASK
-        # DWORD L Sid
-        # ..      ...
-        # DWORD L Sid
-
-        ace_buf = 0.chr * 8
-        memcpy(ace_buf, ace_ptr.unpack('L')[0], ace_buf.size)
-
-        ace_type, ace_flags, size, mask = ace_buf.unpack('CCSL')
-
-        # skip aces that only serve to propagate inheritance
-        next if (ace_flags & INHERIT_ONLY_ACE).nonzero?
-
-        case ace_type
-        when ACCESS_ALLOWED_ACE_TYPE
-          sid_ptr = ace_ptr.unpack('L')[0] + 8 # address of ace_ptr->SidStart
-          raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID") unless IsValidSid(sid_ptr)
-          sid = sid_ptr_to_string(sid_ptr)
-          dacl << {:sid => sid, :type => ace_type, :mask => mask, :flags => ace_flags}
-        else
-          Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
-        end
-      end
-
-      dacl
+      parse_dacl(dacl_ptr)
     end
   end
 
@@ -550,6 +492,68 @@ module Puppet::Util::Windows::Security
     ensure
       LocalFree(sd.unpack('L')[0])
     end
+  end
+
+  def parse_dacl(dacl_ptr)
+    # REMIND: need to handle NULL DACL
+    raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(dacl_ptr)
+
+    # ACL structure, size and count are the important parts. The
+    # size includes both the ACL structure and all the ACEs.
+    #
+    # BYTE AclRevision
+    # BYTE Padding1
+    # WORD AclSize
+    # WORD AceCount
+    # WORD Padding2
+    acl_buf = 0.chr * 8
+    memcpy(acl_buf, dacl_ptr, acl_buf.size)
+    ace_count = acl_buf.unpack('CCSSS')[3]
+
+    dacl = []
+
+    # deny all
+    return dacl if ace_count == 0
+
+    0.upto(ace_count - 1) do |i|
+      ace_ptr = [0].pack('L')
+
+      next unless GetAce(dacl_ptr, i, ace_ptr)
+
+      # ACE structures vary depending on the type. All structures
+      # begin with an ACE header, which specifies the type, flags
+      # and size of what follows. We are only concerned with
+      # ACCESS_ALLOWED_ACE and ACCESS_DENIED_ACEs, which have the
+      # same structure:
+      #
+      # BYTE  C AceType
+      # BYTE  C AceFlags
+      # WORD  S AceSize
+      # DWORD L ACCESS_MASK
+      # DWORD L Sid
+      # ..      ...
+      # DWORD L Sid
+
+      ace_buf = 0.chr * 8
+      memcpy(ace_buf, ace_ptr.unpack('L')[0], ace_buf.size)
+
+      ace_type, ace_flags, size, mask = ace_buf.unpack('CCSL')
+
+      # skip aces that only serve to propagate inheritance
+      next if (ace_flags & INHERIT_ONLY_ACE).nonzero?
+
+      case ace_type
+      when ACCESS_ALLOWED_ACE_TYPE
+        sid_ptr = ace_ptr.unpack('L')[0] + 8 # address of ace_ptr->SidStart
+        raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID") unless IsValidSid(sid_ptr)
+        sid = sid_ptr_to_string(sid_ptr)
+        dacl << {:sid => sid, :type => ace_type, :mask => mask, :flags => ace_flags}
+      else
+        Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
+      end
+    end
+
+    dacl
   end
 
   # Set the security info on the specified handle.
