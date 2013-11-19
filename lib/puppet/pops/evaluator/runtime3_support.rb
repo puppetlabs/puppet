@@ -143,7 +143,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     source_resource = Puppet::Resource.new(type, title)
     type, title = catalog_type_to_split_type_title(target)
     target_resource = Puppet::Resource.new(type, title)
-    scope.compiler.add_relationship(Puppet::Parser::Relationship.new(source_resource, target_resource, type))
+    scope.compiler.add_relationship(Puppet::Parser::Relationship.new(source_resource, target_resource, relationship_type))
   end
 
   # Box value `v` to numeric or fails.

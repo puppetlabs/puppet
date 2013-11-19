@@ -38,7 +38,7 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   end
 
   def transform(o, scope)
-    @type_transformer_vistor.visit(o, scope)
+    @type_transformer_visitor.visit_this_1(self, o, scope)
   end
 
   # Catch all non transformable objects
@@ -112,13 +112,13 @@ class Puppet::Pops::Evaluator::RelationshipOperator
       # real is [left, right], and both the left and right may be a single value or an array. In each case all content
       # should be flattened, and then transformed to a type.
       #
-      real = real.collect {|x| [x].flatten.collect {|x| transform(x, scope) }}
+      real = left_right_evaluated.collect {|x| [x].flatten.collect {|x| transform(x, scope) }}
 
       # reverse order if operator is Right to Left
       source, target = reverse_operator?(relationship_expression) ? real.reverse : real
 
       # Add the relationships to the catalog
-      source.each {|s| target.each {|t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator]) }}
+      source.each {|s| target.each {|t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator], scope) }}
 
       # Produce the transformed source RHS (if this is a chain, this does not need to be done again)
       real.slice(1)

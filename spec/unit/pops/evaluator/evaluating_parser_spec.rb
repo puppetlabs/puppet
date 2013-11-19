@@ -688,13 +688,54 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
   end
 
-  context "When evaluating non existing variables error should be raised for" do
-    it "unqualified variable" do
-      expect { parser.evaluate_string(scope, "$quantum_gravity", __FILE__) }.to raise_error(/Unknown variable/)
+  context "When evaluating variables" do
+    context "that are non existing an error is raised for" do
+      it "unqualified variable" do
+        expect { parser.evaluate_string(scope, "$quantum_gravity", __FILE__) }.to raise_error(/Unknown variable/)
+      end
+
+      it "qualified variable" do
+        expect { parser.evaluate_string(scope, "$quantum_gravity::graviton", __FILE__) }.to raise_error(/Unknown variable/)
+      end
+    end
+  end
+
+  context "When evaluating relationships" do
+    it 'should form a relation with ->' do
+      source = "File[a] -> File[b]"
+      parser.evaluate_string(scope, source, __FILE__)
+      scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'b'])
     end
 
-    it "qualified variable" do
-      expect { parser.evaluate_string(scope, "$quantum_gravity::graviton", __FILE__) }.to raise_error(/Unknown variable/)
+    it 'should form a relation with <-' do
+      source = "File[a] <- File[b]"
+      parser.evaluate_string(scope, source, __FILE__)
+      scope.compiler.should have_relationship(['File', 'b', '->', 'File', 'a'])
+    end
+
+    it 'should form a relation with <-' do
+      source = "File[a] <~ File[b]"
+      parser.evaluate_string(scope, source, __FILE__)
+      scope.compiler.should have_relationship(['File', 'b', '~>', 'File', 'a'])
+    end
+  end
+
+  matcher :have_relationship do |expected|
+    calc = Puppet::Pops::Types::TypeCalculator.new
+
+    match do |compiler|
+      op_name = {'->' => :relationship, '~>' => :subscription}
+      compiler.relationships.any? do | relation |
+        relation.source.type == expected[0] &&
+        relation.source.title == expected[1] &&
+        relation.type == op_name[expected[2]] &&
+        relation.target.type == expected[3] &&
+        relation.target.title == expected[4]
+      end
+    end
+
+    failure_message_for_should do |actual|
+      "Relationship #{expected[0]}[#{expected[1]}] #{expected[2]} #{expected[3]}[#{expected[4]}] but was unknown to compiler"
     end
   end
 
