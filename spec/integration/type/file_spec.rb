@@ -21,6 +21,13 @@ describe Puppet::Type.type(:file) do
     File.join(parent, 'file_testing')
   end
 
+  let(:dir) do
+    # we create a directory first so backups of :path that are stored in
+    # the same directory will also be removed after the tests
+    parent = tmpdir('file_spec')
+    File.join(parent, 'dir_testing')
+  end
+
   if Puppet.features.posix?
     def set_mode(mode, file)
       File.chmod(mode, file)
@@ -56,6 +63,10 @@ describe Puppet::Type.type(:file) do
 
     def get_group(file)
       SecurityHelper.get_group(file)
+    end
+
+    def get_aces_for_path_by_sid(path, sid)
+      SecurityHelper.get_aces_for_path_by_sid(path, sid)
     end
   end
 
@@ -1007,6 +1018,157 @@ describe Puppet::Type.type(:file) do
         get_owner(path).should =~ /^S\-1\-5\-.*$/
         get_group(path).should =~ /^S\-1\-0\-0.*$/
         get_mode(path).should == 0644
+      end
+
+      describe "it should properly handle the SYSTEM ACE" do
+        before do
+          @sids = {
+            :current_user => Puppet::Util::Windows::Security.name_to_sid(Sys::Admin.get_login),
+            :system => Win32::Security::SID::LocalSystem,
+            :admin => Puppet::Util::Windows::Security.name_to_sid("Administrator"),
+            :guest => Puppet::Util::Windows::Security.name_to_sid("Guest"),
+            :users => Win32::Security::SID::BuiltinUsers,
+            :power_users => Win32::Security::SID::PowerUsers,
+          }
+        end
+
+        describe "on files" do
+          before :each do
+            @file = described_class.new(
+              :path   => path,
+              :ensure => :file,
+              :source => source,
+              :backup => false
+            )
+            catalog.add_resource @file
+          end
+
+         it "that already exist by removing the inherited SYSTEM ACE but adding an uninherited one)" do
+            FileUtils.touch(path)
+
+            # read the externally created file SYSTEM ACE(s)
+            system_aces = get_aces_for_path_by_sid(path, @sids[:system])
+            system_aces.should_not be_empty
+            system_aces.each do |ace|
+              ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+              inherited = Windows::Security::INHERITED_ACE
+              (ace[:flags] & inherited).should == inherited
+            end
+
+            catalog.apply
+
+            # should still have the same SYSTEM ACE(s), but with inheritance stripped
+            system_aces = get_aces_for_path_by_sid(path, @sids[:system])
+            system_aces.each do |ace|
+              ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+              inherited = Windows::Security::INHERITED_ACE
+              (ace[:flags] & inherited).should_not == inherited
+            end
+          end
+
+          it "that are new where SYSTEM is not the given group or owner (SYSTEM ACE remains FULL)" do
+            @file[:group] = @sids[:power_users]
+            @file[:owner] = @sids[:guest]
+
+            catalog.apply
+
+            system_aces = get_aces_for_path_by_sid(path, @sids[:system])
+            system_aces.should_not be_empty
+            system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+          end
+
+          describe "created with SYSTEM as the group" do
+            before :each do
+              @file[:group] = @sids[:system]
+              @file[:owner] = @sids[:users]
+              @file[:mode] = 0644
+
+              catalog.apply
+            end
+
+            it "should allow the user to explicitly set the mode to 4" do
+              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
+              system_aces.should_not be_empty
+
+              system_aces.each do |ace|
+                ace[:mask].should == Windows::File::FILE_GENERIC_READ
+              end
+            end
+
+            it "should revert SYSTEM permission to FULL access when the group is later changed" do
+              @file[:group] = @sids[:power_users]
+              catalog.apply
+
+              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
+              system_aces.should_not be_empty
+              system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+            end
+          end
+        end
+
+        describe "on directories" do
+          before :each do
+            @directory = described_class.new(
+              :path   => dir,
+              :ensure => :directory,
+            )
+            catalog.add_resource @directory
+          end
+
+         it "that already exist (SYSTEM ACE remains unmodified)" do
+            FileUtils.mkdir(dir)
+
+            # read the externally created file SYSTEM ACE(s)
+            system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
+            system_aces.should_not be_empty
+            system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+
+            catalog.apply
+
+            # should still have the same SYSTEM ACE(s)
+            get_aces_for_path_by_sid(dir, @sids[:system]).should == system_aces
+          end
+
+          it "that are new where SYSTEM is not the given group or owner (SYSTEM ACE remains FULL)" do
+            @directory[:group] = @sids[:power_users]
+            @directory[:owner] = @sids[:guest]
+
+            catalog.apply
+
+            system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
+            system_aces.should_not be_empty
+            system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+          end
+
+          describe "created with SYSTEM as the group" do
+            before :each do
+              @directory[:group] = @sids[:system]
+              @directory[:owner] = @sids[:users]
+              @directory[:mode] = 0644
+
+              catalog.apply
+            end
+
+            it "should allow the user to explicitly set the mode to 4" do
+              system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
+              system_aces.should_not be_empty
+
+              system_aces.each do |ace|
+                # unlike files, Puppet sets execute bit on directories that are readable
+                ace[:mask].should == Windows::File::FILE_GENERIC_READ | Windows::File::FILE_GENERIC_EXECUTE
+              end
+            end
+
+            it "should revert SYSTEM permission to FULL access when the group is later changed" do
+              @directory[:group] = @sids[:power_users]
+              catalog.apply
+
+              system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
+              system_aces.should_not be_empty
+              system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+            end
+          end
+        end
       end
     end
   end
