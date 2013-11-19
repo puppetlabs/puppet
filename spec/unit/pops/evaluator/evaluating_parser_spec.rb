@@ -546,25 +546,46 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
     end
 
-    # Resource default and override expressions and resource parameter access
-    {
-      "notify { id: message=>explicit} Notify[id][message]"                   => "explicit",
-      "Notify { message=>by_default} notify {foo:} Notify[foo][message]"      => "by_default",
-      "notify {foo:} Notify[foo]{message =>by_override} Notify[foo][message]" => "by_override",
-    }.each do |source, result|
-      it "should parse and evaluate the expression '#{source}' to #{result}" do
-        parser.evaluate_string(scope, source, __FILE__).should == result
+    context "on catalog types" do
+      it "[n] gets resource parameter [n]" do
+        source = "notify { 'hello': message=>'yo'} Notify[hello][message]"
+        parser.evaluate_string(scope, source, __FILE__).should == 'yo'
+      end
+
+      it "[n] gets class parameter [n]" do
+        source = "class wonka($produces='chocolate'){ }
+           include wonka
+           Class[wonka][produces]"
+
+        # This is more complicated since it needs to run like 3.x and do an import_ast
+        adapted_parser = Puppet::Parser::E4ParserAdapter.new
+        adapted_parser.file = __FILE__
+        ast = adapted_parser.parse(source)
+        scope.known_resource_types.import_ast(ast, '')
+        ast.code.safeevaluate(scope).should == 'chocolate'
+      end
+      # Resource default and override expressions and resource parameter access with []
+      {
+        "notify { id: message=>explicit} Notify[id][message]"                   => "explicit",
+        "Notify { message=>by_default} notify {foo:} Notify[foo][message]"      => "by_default",
+        "notify {foo:} Notify[foo]{message =>by_override} Notify[foo][message]" => "by_override",
+      }.each do |source, result|
+        it "should parse and evaluate the expression '#{source}' to #{result}" do
+          parser.evaluate_string(scope, source, __FILE__).should == result
+        end
+      end
+
+      # Resource default and override expressions and resource parameter access error conditions
+      {
+        "notify { xid: message=>explicit} Notify[id][message]"  => /Resource not found/,
+        "notify { id: message=>explicit} Notify[id][mustard]"   => /does not have a parameter called 'mustard'/,
+      }.each do |source, result|
+        it "should parse '#{source}' and raise error matching #{result}" do
+          expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(result)
+        end
       end
     end
-    # Resource default and override expressions and resource parameter access
-    {
-      "notify { xid: message=>explicit} Notify[id][message]"                  => /Resource not found/,
-      "notify { id: message=>explicit} Notify[id][mustard]"                   => /does not have a parameter called 'mustard'/,
-    }.each do |source, result|
-      it "should parse '#{source}' and raise error matching #{result}" do
-        expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(result)
-      end
-    end
+  # end [] operations
   end
 
   context "When the evaluator performs boolean operations" do
@@ -677,25 +698,4 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
   end
 
-  context "When evaluator performs access operatios" do
-    context "on catalog types" do
-      it "[n] gets resource parameter [n]" do
-        source = "notify { 'hello': message=>'yo'} Notify[hello][message]"
-        parser.evaluate_string(scope, source, __FILE__).should == 'yo'
-      end
-
-      it "[n] gets class parameter [n]" do
-        source = "class wonka($produces='chocolate'){ }
-           include wonka
-           Class[wonka][produces]"
-
-        # This is more complicated since it needs to run like 3.x and do an import_ast
-        adapted_parser = Puppet::Parser::E4ParserAdapter.new
-        adapted_parser.file = __FILE__
-        ast = adapted_parser.parse(source)
-        scope.known_resource_types.import_ast(ast, '')
-        ast.code.safeevaluate(scope).should == 'chocolate'
-      end
-    end
-  end
 end
