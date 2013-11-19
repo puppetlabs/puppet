@@ -66,17 +66,7 @@ module Puppet::SSL::CertificateFactory
       inject({}) {|ret, val| ret.merge(val) }
 
     cert.extensions = exts.map do |oid, val|
-      val, crit = *val
-      val       = val.join(', ') unless val.is_a? String
-
-      # Enforce the X509v3 rules about subjectAltName being critical:
-      # specifically, it SHOULD NOT be critical if we have a subject, which we
-      # always do. --daniel 2011-10-18
-      crit = false if oid == "subjectAltName"
-
-      # val can be either a string, or [string, critical], and this does the
-      # right thing regardless of what we get passed.
-      ef.create_ext(oid, val, crit)
+      generate_extension(ef, oid, *val)
     end
   end
 
@@ -144,5 +134,41 @@ module Puppet::SSL::CertificateFactory
       "nsCertType"       => "client,email",
     }
   end
-end
 
+  # Generate an extension with the given OID, value, and critical state
+  #
+  # @param oid [String] The numeric value or short name of a given OID. X509v3
+  #   extensions must be passed by short name or long name, while custom
+  #   extensions may be passed by short name, long name, oid numeric OID.
+  # @param ef [OpenSSL::X509::ExtensionFactory] The extension factory to use
+  #   when generating the extension.
+  # @param val [String, Array<String>] The extension value.
+  # @param crit [true, false] Whether the given extension is critical, defaults
+  #   to false.
+  #
+  # @return [OpenSSL::X509::Extension]
+  #
+  # @api private
+  def self.generate_extension(ef, oid, val, crit = false)
+
+    val = val.join(', ') unless val.is_a? String
+
+    # Enforce the X509v3 rules about subjectAltName being critical:
+    # specifically, it SHOULD NOT be critical if we have a subject, which we
+    # always do. --daniel 2011-10-18
+    crit = false if oid == "subjectAltName"
+
+    if Puppet::SSL::Oids.subtree_of?('id-ce', oid) or Puppet::SSL::Oids.subtree_of?('id-pkix', oid)
+      # Attempt to create a X509v3 certificate extension. Standard certificate
+      # extensions may need access to the associated subject certificate and
+      # issuing certificate, so must be created by the OpenSSL::X509::ExtensionFactory
+      # which provides that context.
+      ef.create_ext(oid, val, crit)
+    else
+      # This is not an X509v3 extension which means that the extension
+      # factory cannot generate it. We need to generate the extension
+      # manually.
+      OpenSSL::X509::Extension.new(oid, val, crit)
+    end
+  end
+end

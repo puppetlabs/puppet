@@ -478,6 +478,40 @@ describe Puppet::SSL::CertificateAuthority do
         end
       end
 
+      it "accepts numeric OIDs under the ppRegCertExt subtree" do
+        exts = [{ 'oid' => '1.3.6.1.4.1.34380.1.1.1',
+                  'value' => '657e4780-4cf5-11e3-8f96-0800200c9a66'}]
+
+        @request.stubs(:request_extensions).returns exts
+
+        expect {
+          @ca.check_internal_signing_policies(@name, @request, false)
+        }.to_not raise_error
+      end
+
+      it "accepts short name OIDs under the ppRegCertExt subtree" do
+        exts = [{ 'oid' => 'pp_uuid',
+                  'value' => '657e4780-4cf5-11e3-8f96-0800200c9a66'}]
+
+        @request.stubs(:request_extensions).returns exts
+
+        expect {
+          @ca.check_internal_signing_policies(@name, @request, false)
+        }.to_not raise_error
+      end
+
+      it "accepts OIDs under the ppPrivCertAttrs subtree" do
+        exts = [{ 'oid' => '1.3.6.1.4.1.34380.1.2.1',
+                  'value' => 'private extension'}]
+
+        @request.stubs(:request_extensions).returns exts
+
+        expect {
+          @ca.check_internal_signing_policies(@name, @request, false)
+        }.to_not raise_error
+      end
+
+
       it "should reject a critical extension that isn't on the whitelist" do
         @request.stubs(:request_extensions).returns [{ "oid" => "banana",
                                                        "value" => "yumm",

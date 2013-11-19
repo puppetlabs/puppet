@@ -42,4 +42,37 @@ module Puppet::SSL::Oids
   PUPPET_OIDS.each do |oid_defn|
     OpenSSL::ASN1::ObjectId.register(*oid_defn)
   end
+
+  # Determine if the first OID contains the second OID
+  #
+  # @param first [String] The containing OID, in dotted form or as the short name
+  # @param second [String] The contained OID, in dotted form or as the short name
+  # @param exclusive [true, false] If an OID should not be considered as a subtree of itself
+  #
+  # @example Comparing two dotted OIDs
+  #   Puppet::SSL::Oids.subtree_of?('1.3.6.1', '1.3.6.1.4.1') #=> true
+  #   Puppet::SSL::Oids.subtree_of?('1.3.6.1', '1.3.6') #=> false
+  #
+  # @example Comparing an OID short name with a dotted OID
+  #   Puppet::SSL::Oids.subtree_of?('IANA', '1.3.6.1.4.1') #=> true
+  #   Puppet::SSL::Oids.subtree_of?('1.3.6.1', 'enterprises') #=> true
+  #
+  # @example Comparing an OID against itself
+  #   Puppet::SSL::Oids.subtree_of?('IANA', 'IANA') #=> true
+  #   Puppet::SSL::Oids.subtree_of?('IANA', 'IANA', true) #=> false
+  #
+  # @return [true, false]
+  def self.subtree_of?(first, second, exclusive = false)
+    first_oid = OpenSSL::ASN1::ObjectId.new(first).oid
+    second_oid = OpenSSL::ASN1::ObjectId.new(second).oid
+
+
+    if exclusive and first_oid == second_oid
+      false
+    else
+      second_oid.index(first_oid) == 0
+    end
+  rescue OpenSSL::ASN1::ASN1Error
+    false
+  end
 end

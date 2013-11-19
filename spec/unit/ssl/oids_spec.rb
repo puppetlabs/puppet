@@ -20,4 +20,29 @@ describe Puppet::SSL::Oids do
       end
     end
   end
+
+  describe "checking if an OID is a subtree of another OID" do
+
+    it "can determine if an OID is contained in another OID" do
+      described_class.subtree_of?('1.3.6.1', '1.3.6.1.4.1').should be_true
+      described_class.subtree_of?('1.3.6.1.4.1', '1.3.6.1').should be_false
+    end
+
+    it "returns true if an OID is compared against itself and exclusive is false" do
+      described_class.subtree_of?('1.3.6.1', '1.3.6.1', false).should be_true
+    end
+
+    it "returns false if an OID is compared against itself and exclusive is true" do
+      described_class.subtree_of?('1.3.6.1', '1.3.6.1', true).should be_false
+    end
+
+    it "can compare OIDs defined as short names" do
+      described_class.subtree_of?('IANA', '1.3.6.1.4.1').should be_true
+      described_class.subtree_of?('1.3.6.1', 'enterprises').should be_true
+    end
+
+    it "returns false when an invalid OID shortname is passed" do
+      described_class.subtree_of?('IANA', 'bananas').should be_false
+    end
+  end
 end
