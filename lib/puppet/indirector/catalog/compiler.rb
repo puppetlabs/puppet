@@ -95,7 +95,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     end
 
     # TODO nil or undef for client_cert missing?
-    trusted_hash = { 'authenticated' => trust_authenticated, 'clientcert' => client_cert }
+    trusted_hash = { 'authenticated' => trust_authenticated, 'certname' => client_cert }.freeze
   end
 
   # Add any extra data necessary to the node.

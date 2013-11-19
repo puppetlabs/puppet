@@ -152,4 +152,11 @@ class Puppet::Node
     end
     tmp.reverse
   end
+
+  # Ensures the data is frozen
+  #
+  def trusted_data=(data)
+    Puppet.warning("Trusted node data modified for node #{name}") unless @trusted_data.nil?
+    @trusted_data = data.freeze
+  end
 end

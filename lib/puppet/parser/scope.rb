@@ -478,7 +478,7 @@ class Puppet::Parser::Scope
     end
 
     # Check for reserved variable names
-    if Puppet[:hashed_node_data] && !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
+    if Puppet[:trusted_node_data] && !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
