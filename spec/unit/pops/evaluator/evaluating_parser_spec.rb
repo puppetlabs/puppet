@@ -629,6 +629,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       '$x = undef "value is $x yo"'           => "value is  yo",
       '$x = default "value is $x yo"'         => "value is default yo",
       '$x = Array[Integer] "value is $x yo"'  => "value is Array[Integer] yo",
+      '"value is ${Array[Integer]} yo"'       => "value is Array[Integer] yo",
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           populate
