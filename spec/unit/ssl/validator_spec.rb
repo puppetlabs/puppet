@@ -1,8 +1,8 @@
 require 'spec_helper'
-require 'puppet/ssl/validator'
+require 'puppet/ssl'
 require 'puppet/ssl/configuration'
 
-describe Puppet::SSL::Validator do
+describe Puppet::SSL::Validator::DefaultValidator do
   let(:ssl_context) do
     mock('OpenSSL::X509::StoreContext')
   end

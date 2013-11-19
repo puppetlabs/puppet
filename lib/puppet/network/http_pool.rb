@@ -9,6 +9,7 @@ module Puppet::Network; end
 # like to make this cache connections in the future.
 #
 # @api public
+#
 module Puppet::Network::HttpPool
 
   # Retrieve a connection for the given host and port.
@@ -18,12 +19,14 @@ module Puppet::Network::HttpPool
   # @param use_ssl [Boolean] Whether to use an SSL connection
   # @param verify_peer [Boolean] Whether to verify the peer credentials, if possible. Verification will not take place if the CA certificate is missing.
   # @return [Puppet::Network::HTTP::Connection]
+  #
   # @api public
+  #
   def self.http_instance(host, port, use_ssl = true, verify_peer = true)
     verifier = if verify_peer
-                 Puppet::SSL::Validator.new()
+                 Puppet::SSL::Validator.defaultValidator()
                else
-                 Puppet::SSL::NoValidator.new()
+                 Puppet::SSL::Validator.noValidator()
                end
 
     Puppet::Network::HTTP::Connection.new(host, port,
@@ -36,10 +39,13 @@ module Puppet::Network::HttpPool
   #
   # @param host [String] the DNS name to connect to
   # @param port [Integer] the port to connect to
-  # @param verifier [#setup_connection, #peer_certs, #verify_errors] An object that will setup the appropriate verification on a Net::HTTP instance and report any errors and the certificates used.
+  # @param verifier [#setup_connection, #peer_certs, #verify_errors] An object that will setup the appropriate
+  #   verification on a Net::HTTP instance and report any errors and the certificates used.
   # @return [Puppet::Network::HTTP::Connection]
+  #
   # @api public
-  def self.http_ssl_instance(host, port, verifier = Puppet::SSL::Validator.new())
+  #
+  def self.http_ssl_instance(host, port, verifier = Puppet::SSL::Validator.defaultValidator())
     Puppet::Network::HTTP::Connection.new(host, port,
                                           :use_ssl => true,
                                           :verify => verifier)
