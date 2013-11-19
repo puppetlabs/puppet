@@ -525,6 +525,27 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
     end
 
+    # LHS where [] not supported, and missing key(s)
+    {
+      "Array[]"                    => :error,
+      "'abc'[]"                    => :error,
+      "Resource[]"                 => :error,
+      "File[]"                     => :error,
+      "String[]"                   => :error,
+      "String[0]"                   => :error,
+      "1[]"                        => :error,
+      "1[0]"                        => :error,
+      "3.14[]"                     => :error,
+      "3.14[0]"                     => :error,
+      "/.*/[]"                     => :error,
+      "/.*/[0]"                     => :error,
+      "$a=[1] $a[]"                => :error,
+    }.each do |source, result|
+      it "should parse and evaluate the expression '#{source}' to #{result}" do
+        expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(Puppet::ParseError)
+      end
+    end
+
     # Resource default and override expressions and resource parameter access
     {
       "notify { id: message=>explicit} Notify[id][message]"                   => "explicit",
