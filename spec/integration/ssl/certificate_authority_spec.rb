@@ -21,10 +21,6 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     @ca = Puppet::SSL::CertificateAuthority.new
   end
 
-  after do
-    Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
-  end
-
   it "should be able to generate a new host certificate" do
     ca.generate("newhost")
 

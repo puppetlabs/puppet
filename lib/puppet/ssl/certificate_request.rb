@@ -66,6 +66,9 @@ DOC
   #   Subject Alternative Names to include in the CSR extension request.
   # @options opts [Hash<String, String, Array<String>>] :csr_attributes A hash
   #   of OIDs and values that are either a string or array of strings.
+  # @options opts [Array<String, String>] :extension_requests A hash of
+  #   certificate extensions to add to the CSR extReq attribute, excluding
+  #   the Subject Alternative Names extension.
   #
   # @raise [Puppet::Error] If the generated CSR signature couldn't be verified
   #
@@ -90,16 +93,8 @@ DOC
       add_csr_attributes(csr, options[:csr_attributes])
     end
 
-    if options[:dns_alt_names] then
-      names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
-      names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
-      names = extension_factory.create_extension("subjectAltName", names, false)
-
-      extReq = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence([names])])
-
-      # We only support the standard request extensions.  If you really need
-      # msExtReq support, let us know and we can restore them. --daniel 2011-10-10
-      csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
+    if (ext_req_attribute = extension_request_attribute(options))
+      csr.add_attribute(ext_req_attribute)
     end
 
     signer = Puppet::SSL::CertificateSigner.new
@@ -113,69 +108,82 @@ DOC
   end
 
   # Return the set of extensions requested on this CSR, in a form designed to
-  # be useful to Ruby: a hash.  Which, not coincidentally, you can pass
+  # be useful to Ruby: an array of hashes.  Which, not coincidentally, you can pass
   # successfully to the OpenSSL constructor later, if you want.
+  #
+  # @return [Array<Hash{String => String}>] An array of two or three element
+  # hashes, with key/value pairs for the extension's oid, its value, and
+  # optionally its critical state.
   def request_extensions
     raise Puppet::Error, "CSR needs content to extract fields" unless @content
 
     # Prefer the standard extReq, but accept the Microsoft specific version as
     # a fallback, if the standard version isn't found.
-    ext = @content.attributes.find {|x| x.oid == "extReq" } or
+    attribute = @content.attributes.find {|x| x.oid == "extReq" } or
       @content.attributes.find {|x| x.oid == "msExtReq" }
-    return [] unless ext
+    return [] unless attribute
 
     # Assert the structure and extract the names into an array of arrays.
-    unless ext.value.is_a? OpenSSL::ASN1::Set
-      raise Puppet::Error, "In #{ext.oid}, expected Set but found #{ext.value.class}"
+    unless attribute.value.is_a? OpenSSL::ASN1::Set
+      raise Puppet::Error, "In #{attribute.oid}, expected Set but found #{attribute.value.class}"
     end
 
-    unless ext.value.value.is_a? Array
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array] but found #{ext.value.value.class}"
+    unless attribute.value.value.is_a? Array
+      raise Puppet::Error, "In #{attribute.oid}, expected Set[Array] but found #{attribute.value.value.class}"
     end
 
-    unless ext.value.value.length == 1
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array[...]], but found #{ext.value.value.length} items in the array"
-    end
+    extensions = attribute.value.value
 
-    san = ext.value.value.first
-    unless san.is_a? OpenSSL::ASN1::Sequence
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array[Sequence[...]]], but found #{san.class}"
-    end
-    san = san.value
-
-    # OK, now san should be the array of items, validate that...
     index = -1
-    san.map do |name|
+    extensions.map do |extension|
       index += 1
+      context = "#{attribute.oid} extension index #{index}"
 
-      unless name.is_a? OpenSSL::ASN1::Sequence
-        raise Puppet::Error, "In #{ext.oid}, expected request extension record #{index} to be a Sequence, but found #{name.class}"
+      unless extension.is_a? OpenSSL::ASN1::Sequence
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[...]]], but found #{extension.class}"
       end
-      name = name.value
+
+      unless extension.value.is_a? Array
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[Array[...]]]], but found #{extension.value.class}"
+      end
+
+      unless extension.value.size == 1
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[Array[...]]]] with one value, but found #{extension.value.size} elements"
+      end
+
+      unless extension.value.first.is_a? OpenSSL::ASN1::Sequence
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[Array[Sequence[...]]]]] but found #{extension.value.first.class}"
+      end
+
+      unless extension.value.first.value.is_a? Array
+        raise Puppet::Error, "In #{context}, expected Set[Array[Sequence[Array[Sequence[Array[...]]]]]], but found #{extension.value.first.value.class}"
+      end
+
+      ext_values = extension.value.first.value
 
       # OK, turn that into an extension, to unpack the content.  Lovely that
       # we have to swap the order of arguments to the underlying method, or
       # perhaps that the ASN.1 representation chose to pack them in a
       # strange order where the optional component comes *earlier* than the
       # fixed component in the sequence.
-      case name.length
+      case ext_values.length
       when 2
-        ev = OpenSSL::X509::Extension.new(name[0].value, name[1].value)
+        ev = OpenSSL::X509::Extension.new(ext_values[0].value, ext_values[1].value)
         { "oid" => ev.oid, "value" => ev.value }
 
       when 3
-        ev = OpenSSL::X509::Extension.new(name[0].value, name[2].value, name[1].value)
+        ev = OpenSSL::X509::Extension.new(ext_values[0].value, ext_values[2].value, ext_values[1].value)
         { "oid" => ev.oid, "value" => ev.value, "critical" => ev.critical? }
 
       else
-        raise Puppet::Error, "In #{ext.oid}, expected extension record #{index} to have two or three items, but found #{name.length}"
+        raise Puppet::Error, "In #{attribute.oid}, expected extension record #{index} to have two or three items, but found #{ext_values.length}"
       end
-    end.flatten
+    end
   end
 
   def subject_alt_names
     @subject_alt_names ||= request_extensions.
-      select {|x| x["oid"] = "subjectAltName" }.
+      select {|x| x["oid"] == "subjectAltName" }.
       map {|x| x["value"].split(/\s*,\s*/) }.
       flatten.
       sort.
@@ -230,6 +238,41 @@ DOC
       attr_set = OpenSSL::ASN1::Set.new([OpenSSL::ASN1::Sequence.new(encoded_strings)])
       csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
       Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
+    end
+  end
+
+  private
+
+  PRIVATE_EXTENSIONS = [
+    'subjectAltName', '2.5.29.17',
+  ]
+
+  # @api private
+  def extension_request_attribute(options)
+    extensions = []
+
+    if options[:extension_requests]
+      options[:extension_requests].each_pair do |oid, value|
+        if PRIVATE_EXTENSIONS.include? oid
+          raise Puppet::Error, "Cannot specify CSR extension request #{oid}: conflicts with internally used extension request"
+        end
+
+        ext = OpenSSL::X509::Extension.new(oid, value.to_s, false)
+        extensions << OpenSSL::ASN1::Sequence([ext])
+      end
+    end
+
+    if options[:dns_alt_names]
+      names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
+      names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
+      alt_names_ext = extension_factory.create_extension("subjectAltName", names, false)
+
+      extensions << OpenSSL::ASN1::Sequence([alt_names_ext])
+    end
+
+    unless extensions.empty?
+      ext_req = OpenSSL::ASN1::Set(extensions)
+      OpenSSL::X509::Attribute.new("extReq", ext_req)
     end
   end
 end

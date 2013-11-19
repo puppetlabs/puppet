@@ -219,6 +219,62 @@ describe Puppet::SSL::CertificateRequest do
       end
     end
 
+    context "with extension requests" do
+      let(:extension_data) do
+        {
+          '1.3.6.1.4.1.34380.1.1.31415' => 'pi',
+          '1.3.6.1.4.1.34380.1.1.2718'  => 'e',
+        }
+      end
+
+      it "adds an extreq attribute to the CSR" do
+        request.generate(key, :extension_requests => extension_data)
+
+        exts = request.content.attributes.select { |attr| attr.oid = 'extReq' }
+        exts.length.should == 1
+      end
+
+      it "adds an extension for each entry in the extension request structure" do
+        request.generate(key, :extension_requests => extension_data)
+
+        exts = request.request_extensions
+
+        exts.should include('oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi')
+        exts.should include('oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e')
+      end
+
+      it "defines the extensions as non-critical" do
+        request.generate(key, :extension_requests => extension_data)
+        request.request_extensions.each do |ext|
+          ext['critical'].should be_false
+        end
+      end
+
+      it "rejects the subjectAltNames extension" do
+        san_names = ['subjectAltName', '2.5.29.17']
+        san_field = 'DNS:first.tld, DNS:second.tld'
+
+        san_names.each do |name|
+          expect do
+            request.generate(key, :extension_requests => {name => san_field})
+          end.to raise_error Puppet::Error, /conflicts with internally used extension/
+        end
+      end
+
+      it "merges the extReq attribute with the subjectAltNames extension" do
+        request.generate(key,
+                         :dns_alt_names => 'first.tld, second.tld',
+                         :extension_requests => extension_data)
+        exts = request.request_extensions
+
+        exts.should include('oid' => '1.3.6.1.4.1.34380.1.1.31415', 'value' => 'pi')
+        exts.should include('oid' => '1.3.6.1.4.1.34380.1.1.2718', 'value' => 'e')
+        exts.should include('oid' => 'subjectAltName', 'value' => 'DNS:first.tld, DNS:myname, DNS:second.tld')
+
+        request.subject_alt_names.should eq ['DNS:first.tld', 'DNS:myname', 'DNS:second.tld']
+      end
+    end
+
     it "should sign the csr with the provided key" do
       request.generate(key)
       request.content.verify(key.content.public_key).should be_true
