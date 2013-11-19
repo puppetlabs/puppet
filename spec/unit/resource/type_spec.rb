@@ -104,6 +104,39 @@ describe Puppet::Resource::Type do
     end
   end
 
+
+  describe "when inheriting from a parent type" do
+
+    let!(:parent_type) do
+      Puppet::Type.newtype(:parent_type) do
+        newparam(:parent_parameter) {}
+        newproperty(:parent_property) {}
+      end
+    end
+
+    let!(:mytype) do
+      Puppet::Type.newtype(:my_type, :parent => Puppet::Type::Parent_type) do
+        newparam(:name) {}
+        newproperty(:just_a_property) {}
+      end
+    end
+
+    subject do
+      Puppet::Type::My_type.new(:name => 'just_a_name')
+    end
+
+    it "param of parent should be recognised as a valid parameter" do
+      subject.class.validparameter?(:parent_parameter).should be_true
+    end
+
+
+    it "should recognise its parent properties" do
+      subject.class.validproperty?(:parent_property).should be_true
+    end
+
+  end
+
+
   describe "when a node"  do
     it "should allow a regex as its name" do
       lambda { Puppet::Resource::Type.new(:node, /foo/) }.should_not raise_error
