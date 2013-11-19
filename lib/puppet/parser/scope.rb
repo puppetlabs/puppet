@@ -364,11 +364,18 @@ class Puppet::Parser::Scope
       if next_scope
         next_scope.lookupvar(name, options)
       else
-        nil
+        variable_not_found()
       end
     end
   end
 
+  def variable_not_found
+    if Puppet[:strict_variables]
+      throw :undefined_variable
+    else
+      nil
+    end
+  end
   # Retrieves the variable value assigned to the name given as an argument. The name must be a String,
   # and namespace can be qualified with '::'. The value is looked up in this scope, its parent scopes,
   # or in a specific visible named scope.
@@ -442,7 +449,7 @@ class Puppet::Parser::Scope
                    ""
                  end
       warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{e.message}#{location}"
-      nil
+      variable_not_found()
     end
   end
 

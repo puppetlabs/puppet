@@ -287,6 +287,7 @@ module Puppet::Pops::Validation
     # have to be used here for backwards compatibility.
     def format_location diagnostic
       file = diagnostic.file
+      file = file.is_a?(String) && file.empty? ? nil : file
       line = pos = nil
       if diagnostic.source_pos
         line = diagnostic.source_pos.line

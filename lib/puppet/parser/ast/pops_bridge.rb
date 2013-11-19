@@ -33,6 +33,16 @@ class Puppet::Parser::AST::PopsBridge
     def each
       yield self
     end
+    def sequence_with(other)
+      if value.nil?
+        # This happens when testing and not having a complete setup
+        other
+      else
+        # When does this happen ? Ever ?
+        require 'debugger'; debugger
+        Puppet::Parser::AST::BlockExpression.new(:children => [self] + other.children)
+      end
+    end
   end
 
   # Bridges the top level "Program" produced by the pops parser.

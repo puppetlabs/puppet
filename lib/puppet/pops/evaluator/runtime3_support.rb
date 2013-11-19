@@ -25,7 +25,10 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Puppet 3x stores all variables as strings (then converts them back to numeric with a regexp... to see if it is a match variable)
     # Not ideal, scope should support numeric lookup directly instead.
     # TODO: consider fixing scope
-    scope.lookupvar(name.to_s)
+    catch(:undefined_variable) {
+      return scope.lookupvar(name.to_s)
+    }
+      fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, {:name => name})
   end
 
   # Returns true if the variable of the given name is set in the given most nested scope. True is returned even if
@@ -35,7 +38,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     scope.bound?(name.to_s)
   end
 
-  # Returns true of the variable is bound to a value or nil, in the scope or it's parent scopes.
+  # Returns true if the variable is bound to a value or nil, in the scope or it's parent scopes.
   #
   def variable_exists?(name, scope)
     scope.exist?(name.to_s)

@@ -365,6 +365,10 @@ module Puppet::Pops::Issues
     "Unknown function: '#{name}'."
   end
 
+  UNKNOWN_VARIABLE = issue :UNKNOWN_VARIABLE, :name do
+    "Unknown variable: '#{name}'."
+  end
+
   RUNTIME_ERROR = issue :RUNTIME_ERROR, :detail do
     "Error while evaluating #{label.a_an(semantic)}, #{detail}"
   end

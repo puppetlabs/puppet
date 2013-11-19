@@ -261,7 +261,7 @@ describe "Puppet::Parser::Parser" do
         $name = 'fred'
         node "macbook-owned-by$name" { }
         SOURCE
-        expect { @parser.parse(source) }.to raise_error(/An interpolated expression is not allowed in a hostname of a node at line 2:24/)
+        expect { @parser.parse(source) }.to raise_error(/An interpolated expression is not allowed in a hostname of a node at line 2:23/)
       end
     end
   end

@@ -14,6 +14,9 @@ require 'puppet/parser/e4_parser_adapter'
 describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   include PuppetSpec::Pops
   include PuppetSpec::Scope
+  before(:each) do
+    Puppet[:strict_variables] = true
+  end
 
   let(:parser) { Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
   let(:node) { 'node.example.com' }
@@ -640,6 +643,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(Puppet::ParseError)
         end
       end
+  end
+
+  context "When evaluating non existing variables error should be raised for" do
+    it "unqualified variable" do
+      expect { parser.evaluate_string(scope, "$quantum_gravity", __FILE__) }.to raise_error(/Unknown variable/)
+    end
+
+    it "qualified variable" do
+      expect { parser.evaluate_string(scope, "$quantum_gravity::graviton", __FILE__) }.to raise_error(/Unknown variable/)
+    end
   end
 
   context "When evaluator performs access operatios" do
