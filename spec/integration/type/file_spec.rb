@@ -1009,8 +1009,8 @@ describe Puppet::Type.type(:file) do
         aces.should_not be_empty
 
         aces.each do |ace|
-          ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-          (ace[:flags] & inherited_ace).should_not == inherited_ace
+          ace.mask.should == Windows::File::FILE_ALL_ACCESS
+          (ace.flags & inherited_ace).should_not == inherited_ace
         end
       end
 
@@ -1025,8 +1025,8 @@ describe Puppet::Type.type(:file) do
         aces.should_not be_empty
 
         aces.any? do |ace|
-          ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
-            (ace[:flags] & inherited_ace) == inherited_ace
+          ace.mask == Windows::File::FILE_ALL_ACCESS &&
+            (ace.flags & inherited_ace) == inherited_ace
         end.should be_true
       end
 
@@ -1116,17 +1116,16 @@ describe Puppet::Type.type(:file) do
               system_aces.should_not be_empty
 
               system_aces.each do |ace|
-                ace[:mask].should == Windows::File::FILE_GENERIC_READ
+                ace.mask.should == Windows::File::FILE_GENERIC_READ
               end
             end
 
-            it "should restore SYSTEM permission to FULL access when the group is later changed" do
+            it "prepends SYSTEM ace when changing group from system to power users" do
               @file[:group] = @sids[:power_users]
               catalog.apply
 
               system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              system_aces.should_not be_empty
-              system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+              system_aces.size.should == 1
             end
           end
         end
@@ -1148,6 +1147,7 @@ describe Puppet::Type.type(:file) do
             before :each do
               @directory[:owner] = 'None'
               @directory[:group] = 'None'
+              @directory[:mode] = 0444
             end
 
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
@@ -1168,8 +1168,8 @@ describe Puppet::Type.type(:file) do
 
             describe "created with SYSTEM as the group" do
               before :each do
-                @directory[:group] = @sids[:system]
                 @directory[:owner] = @sids[:users]
+                @directory[:group] = @sids[:system]
                 @directory[:mode] = 0644
 
                 catalog.apply
@@ -1181,17 +1181,16 @@ describe Puppet::Type.type(:file) do
 
                 system_aces.each do |ace|
                   # unlike files, Puppet sets execute bit on directories that are readable
-                  ace[:mask].should == Windows::File::FILE_GENERIC_READ | Windows::File::FILE_GENERIC_EXECUTE
+                  ace.mask.should == Windows::File::FILE_GENERIC_READ | Windows::File::FILE_GENERIC_EXECUTE
                 end
               end
 
-              it "should restore SYSTEM permission to FULL access when the group is later changed" do
+              it "prepends SYSTEM ace when changing group from system to power users" do
                 @directory[:group] = @sids[:power_users]
                 catalog.apply
 
                 system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-                system_aces.should_not be_empty
-                system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+                system_aces.size.should == 1
               end
             end
           end
