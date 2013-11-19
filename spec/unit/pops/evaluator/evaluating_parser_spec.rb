@@ -374,8 +374,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "$a = 5; $a"                 => 5,
       "$a = 5; $b = 6; $a"         => 5,
       "$a = $b = 5; $a == $b"      => true,
-      "$a = [1,2,3]; [x].collect |$x| { $a += x; $a }"      => [[1,2,3,'x']],
-      "$a = [a,x,c]; [x].collect |$x| { $a -= x; $a }"      => [['a','c']],
+      "$a = [1,2,3]; [x].map |$x| { $a += x; $a }"      => [[1,2,3,'x']],
+      "$a = [a,x,c]; [x].map |$x| { $a -= x; $a }"      => [['a','c']],
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
