@@ -18,14 +18,29 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       :current_user => Puppet::Util::Windows::Security.name_to_sid(Sys::Admin.get_login),
       :system => Win32::Security::SID::LocalSystem,
       :admin => Puppet::Util::Windows::Security.name_to_sid("Administrator"),
+      :administrators => Win32::Security::SID::BuiltinAdministrators,
       :guest => Puppet::Util::Windows::Security.name_to_sid("Guest"),
       :users => Win32::Security::SID::BuiltinUsers,
       :power_users => Win32::Security::SID::PowerUsers,
+      :none => Win32::Security::SID::Nobody,
     }
   end
 
   let (:sids) { @sids }
   let (:winsec) { WindowsSecurityTester.new }
+
+  def set_group_depending_on_current_user(path)
+    if sids[:current_user] == sids[:system]
+      # if the current user is SYSTEM, by setting the group to
+      # guest, SYSTEM is automagically given full control, so instead
+      # override that behavior with SYSTEM as group and a specific mode
+      winsec.set_group(sids[:system], path)
+      mode = winsec.get_mode(path)
+      winsec.set_mode(mode & ~WindowsSecurityTester::S_IRWXG, path)
+    else
+      winsec.set_group(sids[:guest], path)
+    end
+  end
 
   shared_examples_for "only child owner" do
     it "should allow child owner" do
@@ -33,7 +48,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     end
 
     it "should deny parent owner" do
-      lambda { check_parent_owner }.should raise_error(Errno::EACCES)
+      pending("when running as SYSTEM the absence of a SYSTEM group/owner causes full access to be added for SYSTEM",
+        :if => sids[:current_user] == sids[:system]) do
+        lambda { check_parent_owner }.should raise_error(Errno::EACCES)
+      end
     end
 
     it "should deny group" do
@@ -41,7 +59,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     end
 
     it "should deny other" do
-      lambda { check_other }.should raise_error(Errno::EACCES)
+      pending("when running as SYSTEM the absence of a SYSTEM group/owner causes full access to be added for SYSTEM",
+        :if => sids[:current_user] == sids[:system]) do
+        lambda { check_other }.should raise_error(Errno::EACCES)
+      end
     end
   end
 
@@ -127,10 +148,15 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           # new file has SYSTEM
           system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
           system_aces.should_not be_empty
-          system_aces.each { |ace| ace[:mask].should == WindowsSecurityTester::FILE_ALL_ACCESS }
+
+          # when running under SYSTEM account, multiple ACEs come back
+          # so we only care that we have at least one of these
+          system_aces.any? do |ace|
+            ace[:mask] == Windows::File::FILE_ALL_ACCESS
+          end.should be_true
 
           winsec.set_group(sids[:power_users], path)
-          winsec.set_owner(sids[:current_user], path)
+          winsec.set_owner(sids[:administrators], path)
 
           # and should still have a noninherited SYSTEM ACE granting full control
           system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
@@ -175,8 +201,13 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             # new file has SYSTEM
             system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
             system_aces.should_not be_empty
-            system_aces.each { |ace| ace[:mask].should == WindowsSecurityTester::FILE_ALL_ACCESS }
+            # when running under SYSTEM account, multiple ACEs come back
+            # so we only care that we have at least one of these
+            system_aces.any? do |ace|
+              ace[:mask] == WindowsSecurityTester::FILE_ALL_ACCESS
+            end.should be_true
 
+            winsec.set_group(sids[:none], path)
             winsec.set_mode(0600, path)
 
             # and should still have the same SYSTEM ACE(s)
@@ -204,6 +235,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
           describe "for read-only objects" do
             before :each do
+              winsec.set_group(sids[:none], path)
+              winsec.set_mode(0600, path)
               winsec.add_attributes(path, WindowsSecurityTester::FILE_ATTRIBUTE_READONLY)
               (winsec.get_attributes(path) & WindowsSecurityTester::FILE_ATTRIBUTE_READONLY).should be_nonzero
             end
@@ -218,7 +251,12 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               (winsec.get_attributes(path) & WindowsSecurityTester::FILE_ATTRIBUTE_READONLY).should be_nonzero
 
               system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
-              system_aces.each { |ace| ace[:mask].should == WindowsSecurityTester::FILE_ALL_ACCESS }
+
+              # when running under SYSTEM account, and set_group / set_owner hasn't been called
+              # SYSTEM full access will be restored
+              system_aces.any? do |ace|
+                ace[:mask] == Windows::File::FILE_ALL_ACCESS
+              end.should be_true
             end
           end
 
@@ -297,7 +335,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       describe "for an administrator", :if => Puppet.features.root? do
         before :each do
           winsec.set_mode(WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG, path)
-          winsec.set_group(sids[:guest], path)
+          set_group_depending_on_current_user(path)
           winsec.set_owner(sids[:guest], path)
           lambda { File.open(path, 'r') }.should raise_error(Errno::EACCES)
         end
@@ -474,7 +512,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             end
 
             it "should deny other" do
-              lambda { check_other }.should raise_error(Errno::EACCES)
+              pending("when running as SYSTEM the absence of a SYSTEM group/owner causes full access to be added for SYSTEM",
+                :if => sids[:current_user] == sids[:system]) do
+                lambda { check_other }.should raise_error(Errno::EACCES)
+              end
             end
           end
 

@@ -1049,12 +1049,16 @@ describe Puppet::Type.type(:file) do
             # read the externally created file SYSTEM ACE(s)
             system_aces = get_aces_for_path_by_sid(path, @sids[:system])
             system_aces.should_not be_empty
-            system_aces.each do |ace|
-              ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+            # when running under SYSTEM account, multiple ACEs come back
+            # so we only care that we have at least one of these
+            system_aces.any? do |ace|
               inherited = Windows::Security::INHERITED_ACE
-              (ace[:flags] & inherited).should == inherited
-            end
+              ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
+              (ace[:flags] & inherited) == inherited
+            end.should be_true
 
+            # when running under SYSTEM user, must force the group to properly verify
+            @file[:group] = 'None'
             catalog.apply
 
             # should still have the same SYSTEM ACE(s), but with inheritance stripped
@@ -1115,18 +1119,32 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource @directory
           end
 
-         it "that already exist (SYSTEM ACE remains unmodified)" do
+          it "that already exist by removing the inherited SYSTEM ACE but adding an uninherited one" do
             FileUtils.mkdir(dir)
 
             # read the externally created file SYSTEM ACE(s)
             system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
             system_aces.should_not be_empty
-            system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
 
+            inherited = Windows::Security::INHERITED_ACE
+
+            # when running under SYSTEM account, multiple ACEs come back
+            # so we only care that we have at least one of these
+            system_aces.any? do |ace|
+              ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
+              (ace[:flags] & inherited) == inherited
+            end.should be_true
+
+            # when running under SYSTEM user, must force the group to properly verify
+            @directory[:group] = 'Administrators'
             catalog.apply
 
-            # should still have the same SYSTEM ACE(s)
-            get_aces_for_path_by_sid(dir, @sids[:system]).should == system_aces
+            # should still have the same SYSTEM ACE(s), but with inheritance stripped
+            system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
+            system_aces.each do |ace|
+              ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+              (ace[:flags] & inherited).should_not == inherited
+            end
           end
 
           it "that are new where SYSTEM is not the given group or owner (SYSTEM ACE remains FULL)" do

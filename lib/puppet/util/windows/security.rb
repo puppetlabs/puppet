@@ -284,10 +284,13 @@ module Puppet::Util::Windows::Security
               mode |= S_ISVTX
             end
           when well_known_system_sid
-            mode &= ~S_ISYSTEM_MISSING
           else
             #puts "Warning, unable to map SID into POSIX mode: #{ace[:sid]}"
             mode |= S_IEXTRA
+          end
+
+          if ace[:sid] == well_known_system_sid
+            mode &= ~S_ISYSTEM_MISSING
           end
 
           # if owner and group the same, then user and group modes are the OR of both
