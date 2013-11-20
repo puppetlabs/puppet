@@ -3,6 +3,10 @@ require 'spec_helper'
 require 'puppet/network/http_pool'
 
 describe Puppet::Network::HttpPool do
+  before :each do
+    Puppet::SSL::Key.indirection.terminus_class = :memory
+    Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
+  end
 
   describe "when managing http instances" do
 
@@ -26,10 +30,9 @@ describe Puppet::Network::HttpPool do
     describe 'peer verification' do
       def setup_standard_ssl_configuration
         ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
-        Puppet::FileSystem::File.stubs(:exist?).with(ca_cert_file).returns(true)
 
-        ssl_configuration = stub('ssl_configuration', :ca_auth_file => ca_cert_file)
-        Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_configuration).returns(ssl_configuration)
+        Puppet[:ssl_client_ca_auth] = ca_cert_file
+        Puppet::FileSystem::File.stubs(:exist?).with(ca_cert_file).returns(true)
       end
 
       def setup_standard_hostcert
@@ -44,7 +47,7 @@ describe Puppet::Network::HttpPool do
         key  = stub('key',  :content => 'real_key')
         host = stub('host', :certificate => cert, :key => key, :ssl_store => stub('store'))
 
-        Puppet::Network::HTTP::Connection.any_instance.stubs(:ssl_host).returns(host)
+        Puppet::SSL::Host.stubs(:localhost).returns(host)
       end
 
       before do

@@ -15,65 +15,50 @@ describe processor do
       http.expects(:post).returns(httpok)
     end
 
-    it "should use the reporturl setting's host, port and ssl option" do
-      uri = URI.parse(Puppet[:reporturl])
-      ssl = (uri.scheme == 'https')
-      Net::HTTP.expects(:new).with(
-        uri.host, uri.port, optionally(anything, anything)
+    it "configures the connection for ssl when using https" do
+      Puppet[:reporturl] = 'https://testing:8080/the/path'
+
+      Puppet::Network::HttpPool.expects(:http_instance).with(
+        'testing', 8080, true
       ).returns http
-      http.expects(:use_ssl=).with(ssl)
+
       subject.process
     end
 
-    it "uses ssl if reporturl has the https protocol" do
-      Puppet[:reporturl] = "https://myhost.mydomain:1234/report/upload"
-      uri = URI.parse(Puppet[:reporturl])
-      Net::HTTP.expects(:new).with(
-        uri.host, uri.port, optionally(anything, anything)
-      ).returns http
-      http.expects(:use_ssl=).with(true)
-      subject.process
-    end
+    it "does not configure the connectino for ssl when using http" do
+      Puppet[:reporturl] = "http://testing:8080/the/path"
 
-    it "does not use ssl if reporturl has plain http protocol" do
-      Puppet[:reporturl] = "http://myhost.mydomain:1234/report/upload"
-      uri = URI.parse(Puppet[:reporturl])
-      Net::HTTP.expects(:new).with(
-        uri.host, uri.port, optionally(anything, anything)
+      Puppet::Network::HttpPool.expects(:http_instance).with(
+        'testing', 8080, false
       ).returns http
-      http.expects(:use_ssl=).with(false)
+
       subject.process
     end
   end
 
   describe "when making a request" do
-    let(:http) { stub_everything "http" }
+    let(:connection) { stub_everything "connection" }
     let(:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
     before :each do
-      Net::HTTP.expects(:new).returns(http)
+      Puppet::Network::HttpPool.expects(:http_instance).returns(connection)
     end
 
     it "should use the path specified by the 'reporturl' setting" do
-      http.expects(:post).with {|path, data, headers|
-        path.should == URI.parse(Puppet[:reporturl]).path
-      }.returns(httpok)
+      report_path = URI.parse(Puppet[:reporturl]).path
+      connection.expects(:post).with(report_path, anything, anything).returns(httpok)
 
       subject.process
     end
 
     it "should give the body as the report as YAML" do
-      http.expects(:post).with {|path, data, headers|
-        data.should == subject.to_yaml
-      }.returns(httpok)
+      connection.expects(:post).with(anything, subject.to_yaml, anything).returns(httpok)
 
       subject.process
     end
 
     it "should set content-type to 'application/x-yaml'" do
-      http.expects(:post).with {|path, data, headers|
-        headers["Content-Type"].should == "application/x-yaml"
-      }.returns(httpok)
+      connection.expects(:post).with(anything, anything, has_entry("Content-Type" => "application/x-yaml")).returns(httpok)
 
       subject.process
     end
@@ -82,7 +67,7 @@ describe processor do
       if code.to_i >= 200 and code.to_i < 300
         it "should succeed on http code #{code}" do
           response = klass.new('1.1', code, '')
-          http.expects(:post).returns(response)
+          connection.expects(:post).returns(response)
 
           Puppet.expects(:err).never
           subject.process
@@ -92,7 +77,7 @@ describe processor do
       if code.to_i >= 300 && ![301, 302, 307].include?(code.to_i)
         it "should log error on http code #{code}" do
           response = klass.new('1.1', code, '')
-          http.expects(:post).returns(response)
+          connection.expects(:post).returns(response)
 
           Puppet.expects(:err)
           subject.process

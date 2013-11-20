@@ -24,17 +24,17 @@ module Puppet::Network::HTTP
 
     OPTION_DEFAULTS = {
       :use_ssl => true,
-      :verify_peer => true,
+      :verify => nil,
       :redirect_limit => 10
     }
 
-    # Creates a new HTTP client connection to `host`:`port`. 
+    # Creates a new HTTP client connection to `host`:`port`.
     # @param host [String] the host to which this client will connect to
     # @param port [Fixnum] the port to which this client will connect to
     # @param options [Hash] options influencing the properties of the created connection,
     #   the following options are recognized:
     #     :use_ssl [Boolean] true to connect with SSL, false otherwise, defaults to true
-    #     :verify_peer [Boolean] true to verify the peer's certificate, false otherwise, defaults to true
+    #     :verify [#setup_connection] An object that will configure any verification to do on the connection
     #     :redirect_limit [Fixnum] the number of allowed redirections, defaults to 10
     #   passing any other option in the options hash results in a Puppet::Error exception
     # @note the HTTP connection itself happens lazily only when {#request}, or one of the {#get}, {#post}, {#delete}, {#head} or {#put} is called
@@ -48,7 +48,7 @@ module Puppet::Network::HTTP
 
       options = OPTION_DEFAULTS.merge(options)
       @use_ssl = options[:use_ssl]
-      @verify_peer = options[:verify_peer]
+      @verify = options[:verify]
       @redirect_limit = options[:redirect_limit]
     end
 
@@ -128,23 +128,19 @@ module Puppet::Network::HTTP
     end
 
     def execute_request(method, *args)
-      ssl_validator = Puppet::SSL::Validator.new(:ssl_configuration => ssl_configuration)
-      # Perform our own validation of the SSL connection in addition to OpenSSL
-      ssl_validator.register_verify_callback(connection)
-
       response = connection.send(method, *args)
 
       # Check the peer certs and warn if they're nearing expiration.
-      warn_if_near_expiration(*ssl_validator.peer_certs)
+      warn_if_near_expiration(*@verify.peer_certs)
 
       response
     rescue OpenSSL::SSL::SSLError => error
       if error.message.include? "certificate verify failed"
         msg = error.message
-        msg << ": [" + ssl_validator.verify_errors.join('; ') + "]"
+        msg << ": [" + @verify.verify_errors.join('; ') + "]"
         raise Puppet::Error, msg
       elsif error.message =~ /hostname (\w+ )?not match/
-        leaf_ssl_cert = ssl_validator.peer_certs.last
+        leaf_ssl_cert = @verify.peer_certs.last
 
         valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
         msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
@@ -181,42 +177,13 @@ module Puppet::Network::HTTP
 
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
-      if @verify_peer and Puppet::FileSystem::File.exist?(Puppet[:hostcert]) and Puppet::FileSystem::File.exist?(ssl_configuration.ca_auth_file)
-        @connection.cert_store  = ssl_host.ssl_store
-        @connection.ca_file     = ssl_configuration.ca_auth_file
-        @connection.cert        = ssl_host.certificate.content
-        @connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        @connection.key         = ssl_host.key.content
-      else
-        # We don't have the local certificates, so we don't do any verification
-        # or setup at this early stage.  REVISIT: Shouldn't we supply the local
-        # certificate details if we have them?  The original code didn't.
-        # --daniel 2012-06-03
-
-        # Ruby 1.8 defaulted to this, but 1.9 defaults to peer verify,
-        # and we almost always talk to a dedicated, not-standard CA that
-        # isn't trusted out of the box.  This forces the expected state.
-        @connection.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      end
+      @verify.setup_connection(@connection)
     end
 
     # This method largely exists for testing purposes, so that we can
     # mock the actual HTTP connection.
     def create_connection(*args)
       Net::HTTP.new(*args)
-    end
-
-    # Use the global localhost instance.
-    def ssl_host
-      Puppet::SSL::Host.localhost
-    end
-
-    def ssl_configuration
-      @ssl_configuration ||= Puppet::SSL::Configuration.new(
-          Puppet[:localcacert],
-          :ca_chain_file => Puppet[:ssl_client_ca_chain],
-          :ca_auth_file  => Puppet[:ssl_client_ca_auth]
-      )
     end
   end
 end
