@@ -51,11 +51,7 @@ describe Puppet::Configurer::Downloader do
       @dler.file
     end
 
-    describe "on POSIX" do
-      before :each do
-        Puppet.features.stubs(:microsoft_windows?).returns false
-      end
-
+    describe "on POSIX", :as_platform => :posix do
       it "should always set the owner to the current UID" do
         Process.expects(:uid).returns 51
         Puppet::Type.type(:file).expects(:new).with { |opts| opts[:owner] == 51 }
@@ -69,7 +65,7 @@ describe Puppet::Configurer::Downloader do
       end
     end
 
-    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+    describe "on Windows", :as_platform => :windows do
       it "should omit the owner" do
         Puppet::Type.type(:file).expects(:new).with { |opts| opts[:owner] == nil }
         @dler.file
@@ -77,6 +73,11 @@ describe Puppet::Configurer::Downloader do
 
       it "should omit the group" do
         Puppet::Type.type(:file).expects(:new).with { |opts| opts[:group] == nil }
+        @dler.file
+      end
+
+      it "should set source_permissions to ignore" do
+        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:source_permissions] == :ignore }
         @dler.file
       end
     end

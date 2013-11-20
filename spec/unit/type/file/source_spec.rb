@@ -226,7 +226,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @resource[:owner].should be_nil
         end
 
-        it "should not try to set the owner" do
+        it "should not try to set the group" do
           @source.copy_source_values
           @resource[:group].should be_nil
         end
