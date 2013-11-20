@@ -193,15 +193,6 @@ describe Puppet::SSL::CertificateRequest do
         attrs.should include({'oid' => '1.3.6.1.4.1.34380.1.2.2', 'value' => 'more CSR specific info'})
       end
 
-      it "adds attributes with multiple values" do
-        csr_attributes = {'1.3.6.1.4.1.34380.1.2.3' => %w[list of values]}
-
-        request.generate(key, :csr_attributes => csr_attributes)
-
-        attrs = request.custom_attributes
-        attrs.should include({'oid' => '1.3.6.1.4.1.34380.1.2.3', 'value' => %w[list of values]})
-      end
-
       ['extReq', '1.2.840.113549.1.9.14'].each do |oid|
         it "doesn't overwrite standard PKCS#9 CSR attribute '#{oid}'" do
           expect do

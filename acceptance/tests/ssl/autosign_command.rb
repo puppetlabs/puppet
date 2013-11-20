@@ -71,15 +71,14 @@ require 'openssl'
 
 def unwrap_attr(attr)
   set = attr.value
-  seq = set.value.first
-  str = seq.value.first
+  str = set.value.first
   str.value
 end
 
 csr_text = STDIN.read
 csr = OpenSSL::X509::Request.new(csr_text)
 passphrase = csr.attributes.find { |a| a.oid == '1.3.6.1.4.1.34380.2.1' }
-# And here we jump hoops to unwrap ASN1's Attr Set Seq Str
+# And here we jump hoops to unwrap ASN1's Attr Set Str
 if unwrap_attr(passphrase) == 'my passphrase'
   exit 0
 end

@@ -200,19 +200,14 @@ DOC
   #
   # @api public
   #
-  # @return [Hash<String, <String, Array<String>>]
+  # @return [Hash<String, String>]
   def custom_attributes
     x509_attributes = @content.attributes.reject do |attr|
       PRIVATE_CSR_ATTRIBUTES.include? attr.oid
     end
 
     x509_attributes.map do |attr|
-      oid = attr.oid
-
-      attr_values = attr.value.first.value.map { |os| os.value }
-      value = attr_values.size > 1 ? attr_values : attr_values.first
-
-      {"oid" => attr.oid, "value" => value}
+      {"oid" => attr.oid, "value" => attr.value.first.value}
     end
   end
 
@@ -229,13 +224,14 @@ DOC
   ]
 
   def add_csr_attributes(csr, csr_attributes)
-    csr_attributes.each do |oid, values|
+    csr_attributes.each do |oid, value|
       if PRIVATE_CSR_ATTRIBUTES.include? oid
         raise ArgumentError, "Cannot specify CSR attribute #{oid}: conflicts with internally used CSR attribute"
       end
 
-      encoded_strings = Array(values).map { |value| OpenSSL::ASN1::OctetString.new(value.to_s) }
-      attr_set = OpenSSL::ASN1::Set.new([OpenSSL::ASN1::Sequence.new(encoded_strings)])
+      encoded = OpenSSL::ASN1::PrintableString.new(value.to_s)
+
+      attr_set = OpenSSL::ASN1::Set.new([encoded])
       csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
       Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
     end
