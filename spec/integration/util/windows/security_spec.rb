@@ -271,14 +271,15 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             (mode & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
           end
 
-          it "should warn if a deny ace is encountered" do
+          it "should return deny aces" do
             sd = winsec.get_security_descriptor(path)
             sd.dacl.deny(sids[:guest], WindowsSecurityTester::FILE_GENERIC_WRITE)
             winsec.set_security_descriptor(path, sd)
 
-            Puppet.expects(:warning).with("Unsupported access control entry type: 0x1").at_least_once
-
-            winsec.get_mode(path)
+            guest_aces = winsec.get_aces_for_path_by_sid(path, sids[:guest])
+            guest_aces.find do |ace|
+              ace.type == WindowsSecurityTester::ACCESS_DENIED_ACE_TYPE
+            end.should_not be_nil
           end
 
           it "should skip inherit-only ace" do

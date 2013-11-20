@@ -459,9 +459,12 @@ module Puppet::Util::Windows::Security
         raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID") unless IsValidSid(sid_ptr)
         sid = sid_ptr_to_string(sid_ptr)
         dacl.allow(sid, mask, ace_flags)
+      when ACCESS_DENIED_ACE_TYPE
+        sid_ptr = ace_ptr.unpack('L')[0] + 8 # address of ace_ptr->SidStart
+        raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID") unless IsValidSid(sid_ptr)
+        sid = sid_ptr_to_string(sid_ptr)
+        dacl.deny(sid, mask, ace_flags)
       else
-        # TODO: access denied ACE
-        #
         Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
       end
     end
