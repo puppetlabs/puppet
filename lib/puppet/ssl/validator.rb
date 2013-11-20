@@ -12,7 +12,7 @@ class Puppet::SSL::Validator
   #
   # @api public
   #
-  def self.noValidator()
+  def self.no_validator()
     @@no_validator_cache ||= Puppet::SSL::Validator::NoValidator.new()
   end
 
@@ -23,12 +23,12 @@ class Puppet::SSL::Validator
   #
   # @api public
   #
-  def self.defaultValidator()
+  def self.default_validator()
     Puppet::SSL::Validator::DefaultValidator.new()
   end
 
   # Array of peer certificates
-  # @return [Array<?>] peer certificates
+  # @return [Array<Puppet::SSL::Certificate>] peer certificates
   #
   # @api public
   #

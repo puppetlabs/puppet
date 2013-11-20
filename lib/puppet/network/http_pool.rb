@@ -24,9 +24,9 @@ module Puppet::Network::HttpPool
   #
   def self.http_instance(host, port, use_ssl = true, verify_peer = true)
     verifier = if verify_peer
-                 Puppet::SSL::Validator.defaultValidator()
+                 Puppet::SSL::Validator.default_validator()
                else
-                 Puppet::SSL::Validator.noValidator()
+                 Puppet::SSL::Validator.no_validator()
                end
 
     Puppet::Network::HTTP::Connection.new(host, port,
@@ -45,7 +45,7 @@ module Puppet::Network::HttpPool
   #
   # @api public
   #
-  def self.http_ssl_instance(host, port, verifier = Puppet::SSL::Validator.defaultValidator())
+  def self.http_ssl_instance(host, port, verifier = Puppet::SSL::Validator.default_validator())
     Puppet::Network::HTTP::Connection.new(host, port,
                                           :use_ssl => true,
                                           :verify => verifier)

@@ -7,7 +7,7 @@ describe Puppet::Network::HTTP::Connection do
 
   let (:host) { "me" }
   let (:port) { 54321 }
-  subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.noValidator) }
+  subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
 
   context "when providing HTTP connections" do
     after do
@@ -33,12 +33,12 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       it "can set ssl using an option" do
-        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.noValidator).send(:connection).should_not be_use_ssl
-        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verify => Puppet::SSL::Validator.noValidator).send(:connection).should be_use_ssl
+        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator).send(:connection).should_not be_use_ssl
+        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verify => Puppet::SSL::Validator.no_validator).send(:connection).should be_use_ssl
       end
 
       context "proxy and timeout settings should propagate" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.noValidator).send(:connection) }
+        subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator).send(:connection) }
         before :each do
           Puppet[:http_proxy_host] = "myhost"
           Puppet[:http_proxy_port] = 432
@@ -65,7 +65,7 @@ describe Puppet::Network::HTTP::Connection do
   context "when methods that accept a block are called with a block" do
     let (:host) { "my_server" }
     let (:port) { 8140 }
-    let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.noValidator) }
+    let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator) }
     let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
     before :each do
@@ -202,7 +202,7 @@ describe Puppet::Network::HTTP::Connection do
     let (:other_host) { "redirected" }
     let (:other_port) { 9292 }
     let (:other_path) { "other-path" }
-    let (:subject) { Puppet::Network::HTTP::Connection.new("my_server", 8140, :use_ssl => false, :verify => Puppet::SSL::Validator.noValidator) }
+    let (:subject) { Puppet::Network::HTTP::Connection.new("my_server", 8140, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator) }
     let (:httpredirection) { Net::HTTPFound.new('1.1', 302, 'Moved Temporarily') }
     let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
