@@ -367,8 +367,8 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         it "deprecates copying metadata from remote sources" do
           @source.stubs(:local?).returns false
           Puppet.expects(:deprecation_warning).with(
-              "Copying metadata from the puppetmaster to Windows agents is deprecated; " <<
-              "Use source_permissions => ignore.").at_least_once
+              "Copying owner/mode/group from the puppet master to Windows agents" <<
+              " is not supported; use source_permissions => ignore.").at_least_once
 
           @source.copy_source_values
         end
