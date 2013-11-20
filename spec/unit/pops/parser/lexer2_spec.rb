@@ -119,6 +119,12 @@ describe 'Lexer2' do
     end
   end
 
+  { ' 1' => '1', '1 ' => '1', ' 1 ' => '1'}.each do |string, value|
+    it "should lex a NUMBER with surrounding space '#{string}'" do
+      tokens_scanned_from(string).should match_tokens2([:NUMBER, value])
+    end
+  end
+
   [ '0.0', '0.1', '0.2982383139', '29823.235', '10e23', '10e-23', '1.234e23'].each do |string|
     it "should lex a decimal floating point NUMBER on the form '#{string}'" do
       tokens_scanned_from(string).should match_tokens2([:NUMBER, string])
@@ -217,6 +223,10 @@ describe 'Lexer2' do
     it "should lex regexp after '#{token}'" do
       tokens_scanned_from(entry[1]).should match_tokens2(entry[0], :REGEX)
     end
+  end
+
+  it "should lex a simple expression" do
+    tokens_scanned_from('1 + 1').should match_tokens2([:NUMBER, '1'], :PLUS, [:NUMBER, '1'])
   end
 
   { "1"     => ["1 /./",       [:NUMBER, :DIV, :DOT, :DIV]],
