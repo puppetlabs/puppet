@@ -1110,7 +1110,7 @@ describe Puppet::Type.type(:file) do
           before :each do
             @directory = described_class.new(
               :path   => dir,
-              :ensure => :directory,
+              :ensure => :directory
             )
             catalog.add_resource @directory
           end
