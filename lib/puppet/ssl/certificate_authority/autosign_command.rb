@@ -21,13 +21,12 @@ class Puppet::SSL::CertificateAuthority::AutosignCommand
     name = csr.name
     cmd = [@path, name]
 
-    output = nil
-    Tempfile.open('puppet-csr') do |csr_file|
+    output = Puppet::FileSystem::Tempfile.open('puppet-csr') do |csr_file|
       csr_file.write(csr.to_s)
       csr_file.flush
 
       execute_options = {:stdinfile => csr_file.path, :combine => true, :failonfail => false}
-      output = Puppet::Util::Execution.execute(cmd, execute_options)
+      Puppet::Util::Execution.execute(cmd, execute_options)
     end
 
     output.chomp!
