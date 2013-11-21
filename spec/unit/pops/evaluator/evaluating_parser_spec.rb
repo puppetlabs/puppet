@@ -60,7 +60,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[1,2,3][2]"                                      => 3,
       "[1,2,3] + [4,5]"                                 => [1,2,3,4,5],
       "[1,2,3] + [[4,5]]"                               => [1,2,3,[4,5]],
-      "[1,2,3] + {'a' => 1, 'b'=>2}"                    => [1,2,3,['a',1],['b',2]],
       "[1,2,3] + 4"                                     => [1,2,3,4],
       "[1,2,3] << [4,5]"                                => [1,2,3,[4,5]],
       "[1,2,3] << {'a' => 1, 'b'=>2}"                   => [1,2,3,{'a' => 1, 'b'=>2}],
@@ -76,6 +75,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
+        end
+      end
+
+    {
+      "[1,2,3] + {'a' => 1, 'b'=>2}"                    => [1,2,3,['a',1],['b',2]],
+    }.each do |source, result|
+        it "should parse and evaluate the expression '#{source}' to #{result}" do
+          # This test must be done with match_array since the order of the hash
+          # is undefined and Ruby 1.8.7 and 1.9.3 produce different results.
+          expect(parser.evaluate_string(scope, source, __FILE__)).to match_array(result)
         end
       end
 
@@ -684,7 +693,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       '"value is ${sprintf("x%iy",$a)} yo"'   => "value is x10y yo",
       '"value is ${"x%iy".sprintf($a)} yo"'   => "value is x10y yo",
       '"value is ${[1,2,3]} yo"'              => "value is [1, 2, 3] yo",
-      '"value is ${{a=>1,b=>2}} yo"'          => "value is {a => 1, b => 2} yo",
       '"value is ${/.*/} yo"'                 => "value is /.*/ yo",
       '$x = undef "value is $x yo"'           => "value is  yo",
       '$x = default "value is $x yo"'         => "value is default yo",
@@ -696,6 +704,17 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           parser.evaluate_string(scope, source, __FILE__).should == result
         end
       end
+
+    it "should parse and evaluate an interpolation of a hash" do
+      source = '"value is ${{a=>1,b=>2}} yo"'
+      # This test requires testing against two options because a hash to string
+      # produces a result that is unordered
+      hashstr = {'a' => 1, 'b' => 2}.to_s
+      alt_results = ["value is {a => 1, b => 2} yo", "value is {b => 2, a => 1} yo" ]
+      populate
+      parse_result = parser.evaluate_string(scope, source, __FILE__)
+      alt_results.include?(parse_result).should == true
+    end
 
     {
       '"value is ${a*2} yo"'  => :error,
