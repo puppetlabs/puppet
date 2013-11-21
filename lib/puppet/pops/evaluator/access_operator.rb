@@ -31,16 +31,36 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def access_String(o, scope, keys)
-    case keys.size
+    result = case keys.size
     when 0
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
-      o[coerce_numeric(keys[0], @semantic.keys, scope)]
+      # Note that Ruby 1.8.7 requires a length of 1 to produce a String
+      k1 = coerce_numeric(keys[0], @semantic.keys, scope)
+      k2 = 1
+      k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
+      # if k1 is outside, a length of 1 always produces an empty string
+      if k1 < 0
+        ''
+      else
+        o[ k1, k2 ]
+      end
     when 2
-      o[coerce_numeric(keys[0], @semantic.keys, scope), coerce_numeric(keys[1], @semantic.keys, scope)]
+      k1 = coerce_numeric(keys[0], @semantic.keys, scope)
+      k2 = coerce_numeric(keys[1], @semantic.keys, scope)
+      k1 = k1 < 0 ? o.length + k1 : k1           # abs pos (negative is count from end)
+      k2 = k2 < 0 ? o.length - k1 + k2 + 1 : k2  # abs length (negative k2 is length from pos to end count)
+      # if k1 is outside, adjust to first position, and adjust length
+      if k1 < 0
+        k2 = k2 + k1
+        k1 = 0
+      end
+      o[ k1, k2 ]
     else
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
+    # Specified as: an index outside of range, or empty result == empty string
+    (result.nil? || result.empty?) ? '' : result
   end
 
   # Speciaizes the Pattern p into itself p[], one regexp instance p[<regexp string>], or array of regexp instances
@@ -59,7 +79,6 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_Array(o, scope, keys)
     case keys.size
     when 0
-      # What does this mean: <an array>[] ? Is it error, unit, empty array 
       fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
       k = coerce_numeric(keys[0], @semantic.keys[0], scope)
@@ -68,7 +87,19 @@ class Puppet::Pops::Evaluator::AccessOperator
       # A slice [from, to] with support for -1 to mean start, or end respectively.
       k1 = coerce_numeric(keys[0], @semantic.keys[0], scope)
       k2 = coerce_numeric(keys[1], @semantic.keys[1], scope)
-      o[k1, k2]
+
+      # Help confused Ruby do the right thing (it truncates to the right, but negative index + length can never overlap
+      # the available range.
+      k1 = k1 < 0 ? o.length + k1 : k1           # abs pos (negative is count from end)
+      k2 = k2 < 0 ? o.length - k1 + k2 + 1 : k2  # abs length (negative k2 is length from pos to end count)
+      # if k1 is outside, adjust to first position, and adjust length
+      if k1 < 0
+        k2 = k2 + k1
+        k1 = 0
+      end
+      # Help ruby always return empty array when asking for a sub array
+      result = o[ k1, k2 ]
+      result.nil? ? [] : result
     else
       fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end

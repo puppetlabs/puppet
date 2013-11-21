@@ -29,8 +29,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(literal('abcd')[1,2])).to eql('bc')
     end
 
-    it 'produces nil for a missing entry' do
-      expect(evaluate(literal('abc')[100])).to eql(nil)
+    it 'produces empty string for a substring out of range' do
+      expect(evaluate(literal('abc')[100])).to eql('')
     end
 
     it 'raises an error if arity is wrong for []' do
