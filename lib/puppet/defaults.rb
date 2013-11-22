@@ -504,13 +504,30 @@ EOT
       :default => "$confdir/csr_attributes.yaml",
       :type => :file,
       :desc => <<EOT
-Custom attributes can be included when a puppet agent generates its certificate
-signing request by setting this directive to a pathname. The default path is
-"${confdir}/csr_attributes.yaml".
+An optional file containing custom attributes to add to certificate signing
+requests (CSRs). You should ensure that this file does not exist on your CA
+puppet master; if it does, unwanted certificate extensions may leak into
+certificates created with the `puppet cert generate` command.
 
-The yaml file must be a Hash with the key 'custom_attributes' and a value of a
-Hash where each attribute has an OID for a key, and a value of either a
-String or an Array of Strings.
+If present, this file must be a YAML hash containing a `custom_attributes` key
+and/or an `extension_requests` key. The value of each key must be a hash, where
+each key is a valid OID and each value is an object that can be cast to a string.
+
+Custom attributes can be used by the CA when deciding whether to sign the
+certificate, but are then discarded. Attribute OIDs can be any OID value except
+the standard CSR attributes (i.e. attributes described in RFC 2985 section 5.4).
+This is useful for embedding a pre-shared key for autosigning policy executables
+(see the `autosign` setting), often by using the `1.2.840.113549.1.9.7`
+("challenge password") OID.
+
+Extension requests will be permanently embedded in the final certificate.
+Extension OIDs must be in the "ppRegCertExt" (`1.3.6.1.4.1.34380.1.1`) or
+"ppPrivCertExt" (`1.3.6.1.4.1.34380.1.2`) OID arcs. The ppRegCertExt arc is
+reserved for four of the most common pieces of data to embed: `pp_uuid` (`.1`),
+`pp_instance_id` (`.2`), `pp_image_name` (`.3`), and `pp_preshared_key` (`.4`)
+--- in the YAML file, these can be referred to by their short descriptive names
+instead of their full OID. The ppPrivCertExt arc is unregulated, and can be used
+for site-specific extensions.
 EOT
     },
     :certdir => {
