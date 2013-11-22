@@ -128,8 +128,9 @@ module Puppet
             if [:use, :use_when_creating].include?(resource[:source_permissions]) &&
               (resource[:owner] == nil || resource[:group] == nil || resource[:mode] == nil)
 
-              Puppet.deprecation_warning("Copying owner/mode/group from the puppet master to Windows agents" <<
-                                         " is deprecated; use source_permissions => ignore.")
+              Puppet.deprecation_warning("Copying owner/mode/group from the puppet master" <<
+                                         " source file to Windows agents is deprecated;" <<
+                                         " use source_permissions => ignore.")
             end
             next if [:owner, :group].include?(metadata_method)
           end

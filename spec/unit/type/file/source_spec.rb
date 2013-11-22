@@ -343,8 +343,9 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         before :each do
           Puppet.features.stubs(:microsoft_windows?).returns true
         end
-        let(:deprecation_message) { "Copying owner/mode/group from the puppet master to Windows agents" <<
-              " is deprecated; use source_permissions => ignore." }
+        let(:deprecation_message) { "Copying owner/mode/group from the puppet master" <<
+              " source file to Windows agents is deprecated;" <<
+              " use source_permissions => ignore." }
 
         it "should not copy owner and group from remote sources" do
           @source.stubs(:local?).returns false
