@@ -724,19 +724,30 @@ EOT
     :autosign => {
       :default => "$confdir/autosign.conf",
       :type => :file,
-      :desc => "Whether to enable autosign.  Valid values are true (which
-        autosigns any key request, and is a very bad idea), false (which
-        disables autosigning certificates based on an autosign file), and the path to a
-        file which may be either a configuration file to determine which keys to sign,
-        or a custom policy executable, which is a script to test the certificate
-        signing request.
+      :desc => "Whether (and how) to autosign certificate requests. This setting
+        is only relevant on a puppet master acting as a certificate authority (CA).
 
-        The custom policy executable is distinguished by having it's executable bit set.
+        Valid values are true (autosigns all certificate requests; not recommended),
+        false (disables autosigning certificates), or the absolute path to a file.
 
-        The custom policy executable is passed the certificate name as an
-        argument and the contents of the CSR in PEM format on stdin. It should
-        exit with a status of zero if the cert should be signed and non-zero if the cert
-        should not be signed.",
+        The file specified in this setting may be either a **configuration file**
+        or a **custom policy executable.** Puppet will automatically determine
+        what it is: If the Puppet user (see the `user` setting) can execute the
+        file, it will be treated as a policy executable; otherwise, it will be
+        treated as a config file.
+
+        If a custom policy executable is configured, the CA puppet master will run it
+        every time it receives a CSR. The executable will be passed the subject CN of the
+        request _as a command line argument,_ and the contents of the CSR in PEM format
+        _on stdin._ It should exit with a status of 0 if the cert should be autosigned
+        and non-zero if the cert should not be autosigned.
+
+        If a certificate request is not autosigned, it will persist for review. An admin
+        user can use the `puppet cert sign` command to manually sign it, or can delete
+        the request.
+
+        For info on autosign configuration files, see
+        [the guide to Puppet's config files](http://docs.puppetlabs.com/guides/configuring.html).",
       :hook => proc do |value|
         unless [false, 'false', true, 'true'].include?(value) or Puppet::Util.absolute_path?(value)
           raise ArgumentError, "The autosign parameter must be 'true'/'false' or an absolute path"
