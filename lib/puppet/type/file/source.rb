@@ -127,9 +127,9 @@ module Puppet
           if Puppet.features.microsoft_windows?
             if [:use, :use_when_creating].include?(resource[:source_permissions])
               Puppet.deprecation_warning("Copying owner/mode/group from the puppet master to Windows agents" <<
-                                         " is not supported; use source_permissions => ignore.")
+                                         " is deprecated; use source_permissions => ignore.")
             end
-            next
+            next if [:owner, :group].include?(metadata_method)
           end
 
           case resource[:source_permissions]

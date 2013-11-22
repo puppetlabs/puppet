@@ -368,7 +368,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @source.stubs(:local?).returns false
           Puppet.expects(:deprecation_warning).with(
               "Copying owner/mode/group from the puppet master to Windows agents" <<
-              " is not supported; use source_permissions => ignore.").at_least_once
+              " is deprecated; use source_permissions => ignore.").at_least_once
 
           @source.copy_source_values
         end
