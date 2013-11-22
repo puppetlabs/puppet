@@ -125,11 +125,14 @@ module Puppet
           # On Windows, always ignore the source file's metadata.  Issue a warning if
           # use or use_when_creating was specified.
           if Puppet.features.microsoft_windows?
-            if [:use, :use_when_creating].include?(resource[:source_permissions])
-              Puppet.deprecation_warning("Copying owner/mode/group from the puppet master to Windows agents" <<
-                                         " is not supported; use source_permissions => ignore.")
+            if [:use, :use_when_creating].include?(resource[:source_permissions]) &&
+              (resource[:owner] == nil || resource[:group] == nil || resource[:mode] == nil)
+
+              Puppet.deprecation_warning("Copying owner/mode/group from the puppet master" <<
+                                         " source file to Windows agents is deprecated;" <<
+                                         " use source_permissions => ignore.")
             end
-            next
+            next if [:owner, :group].include?(metadata_method)
           end
 
           case resource[:source_permissions]
