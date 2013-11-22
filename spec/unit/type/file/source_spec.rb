@@ -154,7 +154,6 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
   describe "when copying the source values" do
     before do
-
       @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = source.new(:resource => @resource)
@@ -344,6 +343,9 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         before :each do
           Puppet.features.stubs(:microsoft_windows?).returns true
         end
+        let(:deprecation_message) { "Copying owner/mode/group from the puppet master" <<
+              " source file to Windows agents is deprecated;" <<
+              " use source_permissions => ignore." }
 
         it "should not copy owner and group from remote sources" do
           @source.stubs(:local?).returns false
@@ -352,6 +354,15 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           @resource[:owner].must be_nil
           @resource[:group].must be_nil
+          @resource[:mode].must == "173"
+        end
+
+        it "should not copy mode from remote sources" do
+          @source.stubs(:local?).returns false
+
+          @source.copy_source_values
+
+          @resource[:mode].must == "173"
         end
 
         it "should copy owner and group from local sources" do
@@ -364,11 +375,46 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @resource[:mode].must == "173"
         end
 
-        it "deprecates copying metadata from remote sources" do
+        it "should issue deprecation warning when copying metadata from remote sources when group, owner, and mode are unspecified" do
           @source.stubs(:local?).returns false
-          Puppet.expects(:deprecation_warning).with(
-              "Copying owner/mode/group from the puppet master to Windows agents" <<
-              " is not supported; use source_permissions => ignore.").at_least_once
+          Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
+
+          @source.copy_source_values
+        end
+
+        it "should issue deprecation warning when copying metadata from remote sources if only user is unspecified" do
+          @source.stubs(:local?).returns false
+          Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
+          @resource[:group] = 2
+          @resource[:mode] = 3
+
+          @source.copy_source_values
+        end
+
+        it "should issue deprecation warning when copying metadata from remote sources if only group is unspecified" do
+          @source.stubs(:local?).returns false
+          Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
+          @resource[:owner] = 1
+          @resource[:mode] = 3
+
+          @source.copy_source_values
+        end
+
+        it "should issue deprecation warning when copying metadata from remote sources if only mode is unspecified" do
+          @source.stubs(:local?).returns false
+          Puppet.expects(:deprecation_warning).with(deprecation_message).at_least_once
+          @resource[:owner] = 1
+          @resource[:group] = 2
+
+          @source.copy_source_values
+        end
+
+        it "should not issue deprecation warning when copying metadata from remote sources if group, owner, and mode are all specified" do
+          @source.stubs(:local?).returns false
+          Puppet.expects(:deprecation_warning).with(deprecation_message).never
+          @resource[:owner] = 1
+          @resource[:group] = 2
+          @resource[:mode] = 3
 
           @source.copy_source_values
         end
