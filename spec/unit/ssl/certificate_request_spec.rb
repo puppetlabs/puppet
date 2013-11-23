@@ -208,6 +208,14 @@ describe Puppet::SSL::CertificateRequest do
           end.to raise_error ArgumentError, /Cannot specify.*#{oid}/
         end
       end
+
+      it "raises an error if an attribute cannot be created" do
+        csr_attributes = { "thats.no.moon" => "death star" }
+
+        expect do
+          request.generate(key, :csr_attributes => csr_attributes)
+        end.to raise_error Puppet::Error, /Cannot create CSR with attribute thats\.no\.moon: first num too large/
+      end
     end
 
     context "with extension requests" do
@@ -263,6 +271,13 @@ describe Puppet::SSL::CertificateRequest do
         exts.should include('oid' => 'subjectAltName', 'value' => 'DNS:first.tld, DNS:myname, DNS:second.tld')
 
         request.subject_alt_names.should eq ['DNS:first.tld', 'DNS:myname', 'DNS:second.tld']
+      end
+
+      it "raises an error if the OID could not be created" do
+        exts = {"thats.no.moon" => "death star"}
+        expect do
+          request.generate(key, :extension_requests => exts)
+        end.to raise_error Puppet::Error, /Cannot create CSR with extension request thats\.no\.moon: first num too large/
       end
     end
 
