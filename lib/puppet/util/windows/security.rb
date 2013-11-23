@@ -228,6 +228,8 @@ module Puppet::Util::Windows::Security
 
     sd = get_security_descriptor(path)
     sd.dacl.each do |ace|
+      next if ace.inherit_only?
+
       case ace.sid
       when sd.owner
         MASK_TO_MODE.each_pair do |k,v|
@@ -449,9 +451,6 @@ module Puppet::Util::Windows::Security
       memcpy(ace_buf, ace_ptr.unpack('L')[0], ace_buf.size)
 
       ace_type, ace_flags, size, mask = ace_buf.unpack('CCSL')
-
-      # skip aces that only serve to propagate inheritance
-      next if (ace_flags & INHERIT_ONLY_ACE).nonzero?
 
       case ace_type
       when ACCESS_ALLOWED_ACE_TYPE
