@@ -1,3 +1,5 @@
+require 'puppet/indirector/data_binding/hiera'
+
 module Puppet::Test
   # This class is intended to provide an API to be used by external projects
   #  when they are running tests that depend on puppet core.  This should
@@ -87,6 +89,8 @@ module Puppet::Test
       Puppet::Util::Profiler.clear
 
       Puppet.clear_deprecation_warnings
+
+      Puppet::DataBinding::Hiera.instance_variable_set("@hiera", nil)
     end
 
     # Call this method once per test, after execution of each individual test.
