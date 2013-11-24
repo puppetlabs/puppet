@@ -74,13 +74,58 @@ module Puppet::Pops::Types
   class PDataType < PObjectType
   end
 
+  # A flexible type describing an any? of other types
+  # @api public
+  class PVariantType < PObjectType
+    contains_many_uni 'types', PAbstractType, :lowerBound => 1
+
+    module ClassModule
+
+      def hash
+        [self.class, Set.new(self.types)].hash
+      end
+
+      def ==(o)
+        self.class == o.class && Set.new(types) == Set.new(o.types)
+      end
+    end
+  end
+
   # Type that is PDataType compatible, but is not a PCollectionType.
   # @api public
   class PLiteralType < PDataType
   end
 
+  # A string type describing the set of strings having one of the given values
+  #
+  class PEnumType < PLiteralType
+    has_many_attr 'values', String, :lowerBound => 1
+
+    module ClassModule
+      def hash
+        [self.class, Set.new(self.values)].hash
+      end
+
+      def ==(o)
+        self.class == o.class && Set.new(values) == Set.new(o.values)
+      end
+    end
+  end
+
   # @api public
   class PStringType < PLiteralType
+    has_many_attr 'values', String, :lowerBound => 0, :upperBound => -1, :unique => true
+
+    module ClassModule
+
+      def hash
+        [self.class, Set.new(self.values)].hash
+      end
+
+      def ==(o)
+        self.class == o.class && Set.new(values) == Set.new(o.values)
+      end
+    end
   end
 
   # @api public
@@ -129,7 +174,43 @@ module Puppet::Pops::Types
   end
 
   # @api public
+  class PRegexpType < PLiteralType
+    has_attr 'pattern', String, :lowerBound => 1
+    has_attr 'regexp', Object, :derived => true
+
+    module ClassModule
+      def regexp_derived
+        @_regexp = Regexp.new(pattern) unless @_regexp && @_regexp.source == pattern
+        @_regexp
+      end
+
+      def hash
+        [self.class, pattern].hash
+      end
+
+      def ==(o)
+        self.class == o.class && pattern == o.pattern
+      end
+    end
+  end
+
+  # Represents a subtype of String that narrows the string to those matching the patterns
+  # If specified without a pattern it is basically the same as the String type.
+  #
+  # @api public
   class PPatternType < PLiteralType
+    contains_many_uni 'patterns', PRegexpType
+
+    module ClassModule
+
+      def hash
+        [self.class, Set.new(patterns)].hash
+      end
+
+      def ==(o)
+        self.class == o.class && Set.new(patterns) == Set.new(o.patterns)
+      end
+    end
   end
 
   # @api public

@@ -459,21 +459,30 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   def eval_MatchExpression o, scope
     left, pattern = eval_BinaryExpression o, scope
+    # matches RHS types as instance of for all types except a parameterized Regexp[R]
     if pattern.is_a?(Puppet::Pops::Types::PAbstractType)
-      matched = @@type_calculator.instance?(pattern, left)
-    else
-      begin
-        pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)
-      rescue StandardError => e
-        fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message})
+      if pattern.is_a?(Puppet::Pops::Types::PRegexpType) && pattern.pattern
+        # A qualified PRegexpType, get its ruby regexp
+        pattern = pattern.regexp
+      else
+        # evaluate as instance?
+        matched = @@type_calculator.instance?(pattern, left)
+        # convert match result to Boolean true, or false
+        return o.operator == :'=~' ? !!matched : !matched
       end
-      unless left.is_a?(String)
-        fail(Issues::MATCH_NOT_STRING, o.left_expr, {:left_value => left})
-      end
-
-      matched = pattern.match(left) # nil, or MatchData
-      set_match_data(matched, o, scope) # creates ephemeral
     end
+
+    begin
+      pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)
+    rescue StandardError => e
+      fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message})
+    end
+    unless left.is_a?(String)
+      fail(Issues::MATCH_NOT_STRING, o.left_expr, {:left_value => left})
+    end
+
+    matched = pattern.match(left) # nil, or MatchData
+    set_match_data(matched, o, scope) # creates ephemeral
 
     # convert match result to Boolean true, or false
     o.operator == :'=~' ? !!matched : !matched

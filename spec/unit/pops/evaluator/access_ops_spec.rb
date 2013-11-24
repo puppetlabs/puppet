@@ -156,9 +156,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect { evaluate(expr)}.to raise_error(/Array\[\] arguments must be types/)
     end
 
-    it 'creates a Regexp instance when applied to a Pattern' do
+    it 'creates a PPatternType instance when applied to a Pattern' do
       regexp_expr = fqr('Pattern')['foo']
-      expect('foo' =~ evaluate(regexp_expr)).to eql(0)
+      expect(evaluate(regexp_expr)).to eql(Puppet::Pops::Types::TypeFactory.pattern('foo'))
+    end
+
+    it 'creates a Regexp instance when applied to a Pattern' do
+      regexp_expr = fqr('Regexp')['foo']
+      expect(evaluate(regexp_expr)).to eql(Puppet::Pops::Types::TypeFactory.regexp('foo'))
     end
 
     # Class

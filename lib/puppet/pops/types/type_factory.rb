@@ -44,11 +44,31 @@ module Puppet::Pops::Types::TypeFactory
     @type_calculator.string(t)
   end
 
-  # Produces the String type
+  # Produces the String type, optionally with specific string values
   # @api public
   #
-  def self.string()
-    Types::PStringType.new()
+  def self.string(*values)
+    t = Types::PStringType.new()
+    values.each {|v| t.addValues(v) }
+    t
+  end
+
+  # Produces the Enum type, optionally with specific string values
+  # @api public
+  #
+  def self.enum(*values)
+    t = Types::PEnumType.new()
+    values.each {|v| t.addValues(v) }
+    t
+  end
+
+  # Produces the Variant type, optionally with the "one of" types
+  # @api public
+  #
+  def self.variant(*types)
+    t = Types::PVariantType.new()
+    types.each {|v| t.addTypes(type_of(v)) }
+    t
   end
 
   # Produces the Boolean type
@@ -65,11 +85,38 @@ module Puppet::Pops::Types::TypeFactory
     Types::PObjectType.new()
   end
 
-  # Produces the Pattern type
+  # Produces the Regexp type
+  # @param pattern [Regexp, String, nil] (nil) The regular expression object or a regexp source string, or nil for bare type
   # @api public
   #
-  def self.pattern()
-    Types::PPatternType.new()
+  def self.regexp(pattern = nil)
+    t = Types::PRegexpType.new()
+    if pattern
+      t.pattern = pattern.is_a?(Regexp) ? pattern.inspect[1..-1] : pattern
+    end
+    t
+  end
+
+  def self.pattern(*regular_expressions)
+    t = Types::PPatternType.new()
+    regular_expressions.each do |re|
+      case re
+      when String
+        re_T = Types::PRegexpType.new()
+        re_T.pattern = re
+        t.addPatterns(re_T)
+      when Regexp
+        re_T = Type::PRegexpType.new()
+        # Regep.to_s includes options user did not enter and does not escape source
+        # to work either as a string or as a // regexp. The inspect method does a better
+        # job, but includes the //
+        re_T.pattern = re.inspect[1..-2]
+        t.addPatterns(re_T)
+      else
+       raise ArgumentError, "Only String and Regexp are allowed: got '#{re.class}"
+      end
+    end
+    t
   end
 
   # Produces the Literal type

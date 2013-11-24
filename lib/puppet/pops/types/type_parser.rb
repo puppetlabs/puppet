@@ -89,37 +89,62 @@ class Puppet::Pops::Types::TypeParser
     case name_ast.value
     when "integer"
       TYPES.integer
+
     when "float"
       TYPES.float
+
     when "numeric"
         TYPES.numeric
+
     when "string"
       TYPES.string
+
+    when "enum"
+      TYPES.enum
+
     when "boolean"
       TYPES.boolean
+
     when "pattern"
       TYPES.pattern
+
+    when "regexp"
+      TYPES.regexp
+
     when "data"
       TYPES.data
+
     when "array"
       TYPES.array_of_data
+
     when "hash"
       TYPES.hash_of_data
+
     when "class"
       TYPES.host_class()
+
     when "resource"
       TYPES.resource()
+
     when "collection"
       TYPES.collection()
+
     when "literal"
       TYPES.literal()
+
     when "catalogentry"
       TYPES.catalog_entry()
+
     when "undef"
       # Should not be interpreted as Resource type
       TYPES.undef()
+
     when "object"
       TYPES.object()
+
+    when "variant"
+        TYPES.variant()
+
     when "ruby", "type"
       # should not be interpreted as Resource type
       # TODO: these should not be errors
@@ -172,6 +197,26 @@ class Puppet::Pops::Types::TypeParser
         TYPES.resource(parameters[0], parameters[1])
       end
 
+    when "regexp"
+      # 1 parameter being a string, or regular expression
+      raise_invalid_parameters_error("Regexp", "1", parameters.size) unless parameters.size == 1
+      TYPES.regexp(parameters[0])
+
+    when "enum"
+      # 1..m parameters being strings
+      raise_invalid_parameters_error("Enum", "1 or more", parameters.size) unless parameters.size > 1
+      TYPES.enum(*parameters)
+
+    when "pattern"
+      # 1..m parameters being strings or regular expressions
+      raise_invalid_parameters_error("Pattern", "1 or more", parameters.size) unless parameters.size > 1
+      TYPES.pattern(*parameters)
+
+    when "variant"
+      # 1..m parameters being strings or regular expressions
+      raise_invalid_parameters_error("Variant", "1 or more", parameters.size) unless parameters.size > 1
+      TYPES.variant(*parameters)
+
     when "integer"
       if parameters.size == 1
         case parameters[0]
@@ -186,7 +231,7 @@ class Puppet::Pops::Types::TypeParser
        TYPES.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
 
-    when "object", "collection", "data", "catalogentry", "boolean", "float", "literal", "undef", "numeric", "pattern"
+    when "object", "collection", "data", "catalogentry", "boolean", "float", "literal", "undef", "numeric", "pattern", "string"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
 
     when "ruby", "type"

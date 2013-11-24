@@ -23,6 +23,18 @@ describe 'The type factory' do
       Puppet::Pops::Types::TypeFactory.pattern().class().should == Puppet::Pops::Types::PPatternType
     end
 
+    it 'regexp() returns PRegexpType' do
+      Puppet::Pops::Types::TypeFactory.regexp().class().should == Puppet::Pops::Types::PRegexpType
+    end
+
+    it 'enum() returns PEnumType' do
+      Puppet::Pops::Types::TypeFactory.enum().class().should == Puppet::Pops::Types::PEnumType
+    end
+
+    it 'variant() returns PVariantType' do
+      Puppet::Pops::Types::TypeFactory.variant().class().should == Puppet::Pops::Types::PVariantType
+    end
+
     it 'literal() returns PLiteralType' do
       Puppet::Pops::Types::TypeFactory.literal().class().should == Puppet::Pops::Types::PLiteralType
     end

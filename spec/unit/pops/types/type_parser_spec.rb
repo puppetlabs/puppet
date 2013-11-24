@@ -37,7 +37,6 @@ describe Puppet::Pops::Types::TypeParser do
 
   [
     'Object', 'Float', 'Collection', 'Data', 'CatalogEntry', 'Boolean', 'Float', 'Literal', 'Undef', 'Numeric',
-    'Pattern'
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)

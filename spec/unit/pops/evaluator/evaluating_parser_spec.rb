@@ -198,6 +198,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'a' !~ 'b.*'"                    => true,
       '$x = a; a =~ "$x.*"'             => true,
       "a =~ Pattern['a.*']"             => true,
+      "a =~ Regexp['a.*']"              => true,
       "$x = /a.*/ a =~ $x"              => true,
       "$x = Pattern['a.*'] a =~ $x"     => true,
       "1 =~ Integer"                    => true,

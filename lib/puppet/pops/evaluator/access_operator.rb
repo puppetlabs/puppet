@@ -63,15 +63,11 @@ class Puppet::Pops::Evaluator::AccessOperator
     (result.nil? || result.empty?) ? '' : result
   end
 
-  # Speciaizes the Pattern p into itself p[], one regexp instance p[<regexp string>], or array of regexp instances
-  # p[<regexp_string>, <regexp_string>].
+  # Parameterizes a PRegexp Type with a pattern string or r ruby egexp
   #
-  def access_PPatternType(o, scope, keys)
-    if keys.size == 0
-      return Marshal.load(Marshal.dump(o))
-    end
-    result = keys.collect {|p| Regexp.new(keys[0]) }
-    result.size == 1 ? result.pop : result
+  def access_PRegexpType(o, scope, keys)
+    fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o, :min=>1, :actual => keys.size) unless keys.size == 1
+    Puppet::Pops::Types::TypeFactory.regexp(*keys)
   end
 
   # Evaluates <ary>[] with 1 or 2 arguments. One argument is an index lookup, two arguments is a slice from/to.
@@ -121,6 +117,30 @@ class Puppet::Pops::Evaluator::AccessOperator
       result.compact!
       result
     end
+  end
+
+  def access_PEnumType(o, scope, keys)
+    # TODO: Nice error handling
+    Puppet::Pops::Types::TypeFactory.enum(*keys)
+  end
+
+  def access_PVariantType(o, scope, keys)
+    # TODO: Nice error handling
+    Puppet::Pops::Types::TypeFactory.variant(*keys)
+  end
+
+  def access_PStringType(o, scope, keys)
+    # TODO: Nice error handling
+    begin
+    Puppet::Pops::Types::TypeFactory.string(*keys)
+    rescue StandardError => e
+      fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, o, :message => e.message)
+    end
+  end
+
+  def access_PPatternType(o, scope, keys)
+    # TODO: Nice error handling
+    Puppet::Pops::Types::TypeFactory.pattern(*keys)
   end
 
   def access_PIntegerType(o, scope, keys)

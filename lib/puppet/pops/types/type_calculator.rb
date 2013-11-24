@@ -77,6 +77,7 @@ class Puppet::Pops::Types::TypeCalculator
     @@assignable_visitor ||= Puppet::Pops::Visitor.new(nil,"assignable",1,1)
     @@infer_visitor ||= Puppet::Pops::Visitor.new(nil,"infer",0,0)
     @@string_visitor ||= Puppet::Pops::Visitor.new(nil,"string",0,0)
+    @@inspect_visitor ||= Puppet::Pops::Visitor.new(nil,"debug_string",0,0)
     @@enumerable_visitor ||= Puppet::Pops::Visitor.new(nil,"enumerable",0,0)
 
     da = Types::PArrayType.new()
@@ -167,7 +168,7 @@ class Puppet::Pops::Types::TypeCalculator
     when c == String
       type = Types::PStringType.new()
     when c == Regexp
-      type = Types::PPatternType.new()
+      type = Types::PRegexpType.new()
     when c == NilClass
       type = Types::PNilType.new()
     when c == FalseClass, c == TrueClass
@@ -219,6 +220,9 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # Answers, 'What is the common type of t1 and t2?'
+  #
+  # TODO: The current implementation should be optimized for performance
+  #
   # @api public
   #
   def common_type(t1, t2)
@@ -253,7 +257,7 @@ class Puppet::Pops::Types::TypeCalculator
       return type
     end
 
-    # when both are hot-classes, reduce to PHostClass[] (since one was not assignable to the other)
+    # when both are host-classes, reduce to PHostClass[] (since one was not assignable to the other)
     if t1.is_a?(Types::PHostClassType) && t2.is_a?(Types::PHostClassType)
       return Types::PHostClassType.new()
     end
@@ -277,6 +281,38 @@ class Puppet::Pops::Types::TypeCalculator
       t.from = from unless from == TheInfinity
       t.to = to unless to == TheInfinity
       return t
+    end
+
+    if t1.is_a?(Types::PStringType) && t2.is_a?(Types::PStringType)
+      t = Types::PStringType.new()
+      t.values = t1.values | t2.values
+      return t
+    end
+
+    if t1.is_a?(Types::PPatternType) && t2.is_a?(Types::PPatternType)
+      t = Types::PPatternType.new()
+      t.patterns = t1.patterns | t2.patterns
+      return t
+    end
+
+    if t1.is_a?(Types::PEnumType) && t2.is_a?(Types::PEnumType)
+      # The common type is one that complies with either set
+      t = Types::PEnumType.new
+      t.values = t1.values | t2.values
+      return t
+    end
+
+    if t1.is_a?(Types::PVariantType) && t2.is_a?(Types::PVariantType)
+      # The common type is one that complies with either set
+      t = Types::PVariantType.new
+      t.types = (t1.types | t2.types).map {|opt_t| opt_t.copy }
+      return t
+    end
+
+    if t1.is_a?(Types::PRegexpType) && t2.is_a?(Types::PRegexpType)
+      # if they were identical, the general rule would return a parameterized regexp
+      # since they were not, the result is a generic regexp type
+      return Types::PPatternType.new()
     end
 
     # Common abstract types, from most specific to most general
@@ -335,11 +371,19 @@ class Puppet::Pops::Types::TypeCalculator
     end
     result
   end
+
   # Produces a string representing the type
   # @api public
   #
   def string(t)
     @@string_visitor.visit_this_0(self, t)
+  end
+
+  # Produces a debug string representing the type (possibly with more information that the regular string format)
+  # @api public
+  #
+  def debug_string(t)
+    @@inspect_visitor.visit_this_0(self, t)
   end
 
 
@@ -392,7 +436,9 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_String(o)
-    Types::PStringType.new()
+    t = Types::PStringType.new()
+    t.addValues(o)
+    t
   end
 
   # @api private
@@ -410,7 +456,9 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_Regexp(o)
-    Types::PPatternType.new()
+    t = Types::PRegexpType.new()
+    t.pattern = o.source
+    t
   end
 
   # @api private
@@ -512,8 +560,50 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def assignable_PVariantType(t, t2)
+    # A variant is assignable if t2 is assignable to any of its types
+    t.types.any? { |option_t| assignable?(option_t, t2) }
+  end
+
+  def assignable_PEnumType(t, t2)
+    return true if t == t2 || (t.values.empty? && (t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)))
+    if t2.is_a?(Types::PStringType)
+      # if the set of strings are all found in the set of enums
+      t2.values.all? { |s| t.values.any? { |e| e == s }}
+    else
+      false
+    end
+  end
+
+  # @api private
   def assignable_PStringType(t, t2)
-    t2.is_a?(Types::PStringType)
+    if t.values.empty?
+      # A general string is assignable by any other string, or pattern restricted string
+      t2.is_a?(Types::PStringType) || t2.is_a?(Types::PPatternType) || t2.is_a?(Types::PEnumType)
+    elsif t2.is_a?(Types::PStringType)
+      # A specific string acts as a set of strings - must have exactly the same strings
+      Set.new(t.values) == Set.new(t2.values)
+    else
+      # All others are false, since no other type describes the same set of specific strings
+      false
+    end
+  end
+
+  # @api private
+  def assignable_PPatternType(t, t2)
+    return true if t == t2
+    return false unless t2.is_a? Types::PStringType
+
+    if t2.values.empty?
+      # Strings (unknown which ones) cannot all match a pattern, but if there is no pattern it is ok
+      # (There should really always be a pattern, but better safe than sorry).
+      return t.patterns.empty? ? true : false
+    end
+    # all strings in String type must match all patterns in Pattern type
+    t.patterns.all? do |p|
+      re = p.regexp
+      t2.values.all? {|v| re.match(v) }
+    end
   end
 
   # @api private
@@ -527,8 +617,8 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def assignable_PPatternType(t, t2)
-    t2.is_a?(Types::PPatternType)
+  def assignable_PRegexpType(t, t2)
+    t2.is_a?(Types::PRegexpType) && (t.pattern.nil? || t.pattern == t2.pattern)
   end
 
   # @api private
@@ -579,7 +669,11 @@ class Puppet::Pops::Types::TypeCalculator
   # Data is assignable by other Data and by Array[Data] and Hash[Literal, Data]
   # @api private
   def assignable_PDataType(t, t2)
-    t2.is_a?(Types::PDataType) || t2.is_a?(Types::PLiteralType) || assignable?(@data_array, t2) || assignable?(@data_hash, t2)
+    t2.is_a?(Types::PDataType) || 
+    t2.is_a?(Types::PLiteralType) ||
+    assignable?(@data_array, t2) ||
+    assignable?(@data_hash, t2) ||
+    (t2.is_a?(Types::PVariantType) && !t2.types.empty? && t2.types.all? {|t| assignable?(data, t) } )
   end
 
   # Assignable if t2's ruby class is same or subclass of t1's ruby class
@@ -590,6 +684,10 @@ class Puppet::Pops::Types::TypeCalculator
     c2 = class_from_string(t2.ruby_class)
     return false unless c1.is_a?(Class) && c2.is_a?(Class)
     !!(c2 <= c1)
+  end
+
+  def debug_string_Object(t)
+    string(t)
   end
 
   # @api private
@@ -645,10 +743,39 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PFloatType(t)   ; "Float"   ; end
 
   # @api private
-  def string_PPatternType(t) ; "Pattern" ; end
+  def string_PRegexpType(t)
+    t.pattern.nil? ? "Regexp" : "Regexp[#{t.regexp.inspect}]"
+  end
 
   # @api private
-  def string_PStringType(t)  ; "String"  ; end
+  def string_PStringType(t)
+    # skip values in regular output - see debug_string
+    return "String"
+  end
+
+  # @api private
+  def debug_string_PStringType(t)
+    return "String" # if t.values.empty?
+    "String[" << (t.values.map {|s| "'#{s}'" }).join(', ') << ']'
+  end
+
+  # @api private
+  def string_PEnumType(t)
+    return "Enum" if t.values.empty?
+    "Enum[" << t.values.map {|s| "'#{s}'" }.join(', ') << ']'
+  end
+
+  # @api private
+  def string_PVariantType(t)
+    return "Variant" if t.types.empty?
+    "Variant[" << t.types.map {|t2| string(t2) }.join(', ') << ']'
+  end
+
+  # @api private
+  def string_PPatternType(t)
+    return "Pattern" if t.patterns.empty?
+    "Pattern[" << t.patterns.map {|s| "#{s.regexp.inspect}" }.join(', ') << ']'
+  end
 
   # @api private
   def string_PCollectionType(t)  ; "Collection"  ; end

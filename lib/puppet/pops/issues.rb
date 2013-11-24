@@ -349,6 +349,10 @@ module Puppet::Pops::Issues
     end
   end
 
+  BAD_TYPE_SPECIALIZATION = hard_issue :BAD_TYPE_SPECIALIZATION, :message do
+    "Error creating type specialization of #{label.a_an(semantic)}, #{message}"
+  end
+
   ILLEGAL_TYPE_SPECIALIZATION = issue :ILLEGAL_TYPE_SPECIALIZATION, :kind do
     "Cannot specialize an already specialized #{kind} type"
   end
