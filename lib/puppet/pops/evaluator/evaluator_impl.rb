@@ -34,7 +34,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   Issues = Puppet::Pops::Issues
 
   def initialize
-    @@eval_visitor     ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
+    @@eval_visitor   ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
     @@lvalue_visitor   ||= Puppet::Pops::Visitor.new(self, "lvalue", 1, 1)
     @@assign_visitor   ||= Puppet::Pops::Visitor.new(self, "assign", 3, 3)
     @@string_visitor   ||= Puppet::Pops::Visitor.new(self, "string", 1, 1)
@@ -320,9 +320,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
   def eval_ArithmeticExpression(o, scope)
-    unless ARITHMETIC_OPERATORS.include?(o.operator)
-      fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
-    end
     left, right = eval_BinaryExpression(o, scope)
     begin
       result = calculate(left, right, o.operator, o.left_expr, o.right_expr, scope)

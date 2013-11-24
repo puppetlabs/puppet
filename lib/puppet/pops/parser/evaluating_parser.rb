@@ -167,7 +167,8 @@ class Puppet::Pops::Parser::EvaluatingParser
 
     def evaluate(scope, model)
       return nil unless model
-      Puppet::Pops::Evaluator::EvaluatorImpl.new().evaluate(model, scope)
+      @@evaluator ||= Puppet::Pops::Evaluator::EvaluatorImpl.new()
+      @@evaluator.evaluate(model, scope)
     end
 
     def validator()

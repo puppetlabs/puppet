@@ -1,12 +1,17 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/pops'
+require 'puppet_spec/pops'
+require 'puppet_spec/scope'
+
 require 'rgen/environment'
 require 'rgen/metamodel_builder'
 require 'rgen/serializer/json_serializer'
 require 'rgen/instantiator/json_instantiator'
 
 describe "Benchmark", :benchmark => true do
+  include PuppetSpec::Pops
+  include PuppetSpec::Scope
 
     def code
       'if true
@@ -112,5 +117,28 @@ $a = "interpolate ${foo} and stuff"
     lexer = Puppet::Parser::Lexer.new
     m = Benchmark.measure {10000.times {lexer.string = code; lexer.fullscan }}
     puts "Original Lexer: #{m}"
+  end
+
+  context "Measure Evaluator" do
+    let(:parser) { Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
+    let(:node) { 'node.example.com' }
+    let(:scope) { s = create_test_scope_for_node(node); s }
+    it "evaluator", :profile => true do
+    # Do the loop in puppet code since it otherwise drowns in setup
+    puppet_loop =
+      'Integer[0, 1000].each |$i| { if true
+{
+$a = 10 + 10
+}
+else
+{
+$a = "interpolate ${foo} and stuff"
+}}
+'
+      # parse once, only measure the evaluation
+      model = parser.parse_string(puppet_loop, __FILE__)
+      m = Benchmark.measure { parser.evaluate(create_test_scope_for_node(node), model) }
+      puts("Evaluator: #{m}")
+    end
   end
 end
