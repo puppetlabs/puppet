@@ -249,7 +249,7 @@ module Puppet::Util::Windows::Security
             mode |= (v << 6) | (v << 3) | v
           end
         end
-        if File.directory?(path) and (ace.mask & (FILE_WRITE_DATA | FILE_EXECUTE | FILE_DELETE_CHILD)) == (FILE_WRITE_DATA | FILE_EXECUTE)
+        if File.directory?(path) && (ace.mask & (FILE_WRITE_DATA | FILE_EXECUTE | FILE_DELETE_CHILD)) == (FILE_WRITE_DATA | FILE_EXECUTE)
           mode |= S_ISVTX;
         end
       when well_known_nobody_sid
@@ -337,10 +337,10 @@ module Puppet::Util::Windows::Security
       if (mode & (S_IWUSR | S_IXUSR)) == (S_IWUSR | S_IXUSR)
         owner_allow |= FILE_DELETE_CHILD
       end
-      if (mode & (S_IWGRP | S_IXGRP)) == (S_IWGRP | S_IXGRP) and (mode & S_ISVTX) == 0
+      if (mode & (S_IWGRP | S_IXGRP)) == (S_IWGRP | S_IXGRP) && (mode & S_ISVTX) == 0
         group_allow |= FILE_DELETE_CHILD
       end
-      if (mode & (S_IWOTH | S_IXOTH)) == (S_IWOTH | S_IXOTH) and (mode & S_ISVTX) == 0
+      if (mode & (S_IWOTH | S_IXOTH)) == (S_IWOTH | S_IXOTH) && (mode & S_ISVTX) == 0
         other_allow |= FILE_DELETE_CHILD
       end
     end
