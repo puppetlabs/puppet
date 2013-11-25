@@ -281,10 +281,6 @@ class Puppet::Pops::Model::AstTransformer
     ast o, AST::Nop, {}
   end
 
-  def transform_InstanceReferences(o)
-    ast o, AST::ResourceReference, :type => o.type_name.value, :title => transform(o.names)
-  end
-
   # Assignment in AST 3.1 is to variable or hasharray accesses !!! See Bug #16116
   def transform_AssignmentExpression(o)
     args = {:value => transform(o.right_expr) }

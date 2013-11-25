@@ -180,12 +180,6 @@ class Puppet::Pops::Model::Factory
     o
   end
 
-  def build_InstanceReferences(o, type_name, name_expressions)
-    o.type_name = build(type_name)
-    name_expressions.each {|n| o.addNames(build(n)) }
-    o
-  end
-
   def build_ImportExpression(o, files)
     # The argument files has already been built
     files.each {|f| o.addFiles(to_ops(f)) }

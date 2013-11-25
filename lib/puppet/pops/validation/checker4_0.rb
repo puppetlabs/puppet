@@ -189,8 +189,13 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_CaseExpression(o)
+    rvalue(o.test)
     # There should only be one LiteralDefault case option value
     # TODO: Implement this check
+  end
+
+  def check_CaseOption(o)
+    o.values.each { |v| rvalue(v) }
   end
 
   def check_CollectExpression(o)
@@ -231,27 +236,11 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
-  def check_InstanceReference(o)
-    # TODO: Original warning is :
-    #       Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
-    #       This model element is not used in the egrammar.
-    #       Either implement checks or deprecate the use of InstanceReference (the same is acheived by
-    #       transformation of AccessExpression when used where an Instance/Resource reference is allowed.
-    #
-  end
-
-  # Restrictions on hash key are because of the strange key comparisons/and merge rules in the AST evaluation
-  # (Even the allowed ones are handled in a strange way).
-  #
-  def transform_KeyedEntry(o)
-    case o.key
-    when Model::QualifiedName
-    when Model::LiteralString
-    when Model::LiteralNumber
-    when Model::ConcatenatedString
-    else
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.key, :feature => 'hash key', :container => o.eContainer)
-    end
+  def check_KeyedEntry(o)
+    rvalue(o.key)
+    rvalue(o.value)
+    # In case there are additional things to forbid than non-rvalues
+    # acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.key, :feature => 'hash key', :container => o.eContainer)
   end
 
   # A Lambda is a Definition, but it may appear in other scopes that top scope (Which check_Definition asserts).
