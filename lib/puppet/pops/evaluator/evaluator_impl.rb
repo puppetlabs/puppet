@@ -75,7 +75,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @api
   #
   def evaluate(target, scope)
-    @@eval_visitor.visit_this_1(self, target, scope)
+    begin
+      @@eval_visitor.visit_this_1(self, target, scope)
+    rescue StandardError => e
+      if e.is_a? Puppet::ParseError
+        raise e
+      end
+      fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
+    end
   end
 
   # Polymorphic assign - calls assign_TYPE
