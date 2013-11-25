@@ -58,7 +58,7 @@ module Puppet
         retrieve by specifying a version number or `latest` as the ensure
         value. On packaging systems that manage configuration files separately
         from "normal" system files, you can uninstall config files by
-        specifying `purged` as the ensure value.
+        specifying `purged` as the ensure value. This defaults to `installed`.
       EOT
 
       attr_accessor :latest
