@@ -273,14 +273,14 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             Puppet::FileSystem::File.stubs(:exist?).with(@resource[:path]).returns(true)
           end
 
-          it "should copy owner and group from local sources" do
+          it "should not copy owner, group or mode from local sources" do
             @source.stubs(:local?).returns true
 
             @source.copy_source_values
 
-            @resource[:owner].must == 100
-            @resource[:group].must == 200
-            @resource[:mode].must == "173"
+            @resource[:owner].must be_nil
+            @resource[:group].must be_nil
+            @resource[:mode].must be_nil
           end
 
           it "preserves the local owner" do
@@ -310,14 +310,14 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           Puppet.features.expects(:root?).returns true
         end
 
-        it "should copy owner and group from local sources" do
+        it "should not copy owner, group or mode from local sources" do
           @source.stubs(:local?).returns true
 
           @source.copy_source_values
 
-          @resource[:owner].must == 100
-          @resource[:group].must == 200
-          @resource[:mode].must == "173"
+          @resource[:owner].must be_nil
+          @resource[:group].must be_nil
+          @resource[:mode].must be_nil
         end
 
         it "preserves the local owner" do
@@ -343,11 +343,11 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         before :each do
           Puppet.features.stubs(:microsoft_windows?).returns true
         end
-        let(:deprecation_message) { "Copying owner/mode/group from the puppet master" <<
-              " source file to Windows agents is deprecated;" <<
+        let(:deprecation_message) { "Copying owner/mode/group from the" <<
+              " source file on Windows is deprecated;" <<
               " use source_permissions => ignore." }
 
-        it "should not copy owner and group from remote sources" do
+        it "should copy only mode from remote sources" do
           @source.stubs(:local?).returns false
 
           @source.copy_source_values
@@ -357,7 +357,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
           @resource[:mode].must == "173"
         end
 
-        it "should not copy mode from remote sources" do
+        it "should copy mode from remote sources" do
           @source.stubs(:local?).returns false
 
           @source.copy_source_values
