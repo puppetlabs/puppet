@@ -389,4 +389,11 @@ module Puppet::Pops::Issues
     "The resource #{type_name.capitalize}['#{title}'] does not have a parameter called '#{param_name}'"
   end
 
+  DIV_BY_ZERO = hard_issue :DIV_BY_ZERO do
+    "Division by 0"
+  end
+
+  RESULT_IS_INFINITY = hard_issue :RESULT_IS_INFINITY, :operator do
+    "The result of the #{operator} expression is Infinity"
+  end
 end

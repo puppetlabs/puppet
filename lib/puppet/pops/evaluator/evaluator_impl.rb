@@ -28,6 +28,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   include Puppet::Pops::Evaluator::Runtime3Support
 
+  # This constant is not defined as Float::INFINITY in Ruby 1.8.7 (but is available in later version
+  # Refactor when support is dropped for Ruby 1.8.7.
+  #
+  INFINITY = 1.0 / 0.0
+
   # Reference to Issues name space makes it easier to refer to issues
   # (Issues are shared with the validator).
   #
@@ -362,6 +367,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         result = left.send(operator, right)
       rescue NoMethodError => e
         fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
+      rescue ZeroDivisionError => e
+        fail(Issues::DIV_BY_ZERO, right_o)
+      end
+      if result == INFINITY || result == -INFINITY
+        fail(Issues::RESULT_IS_INFINITY, left_o, {:operator => operator})
       end
       result
     end

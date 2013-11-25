@@ -55,7 +55,14 @@ class Puppet::Pops::Model::AstTransformer
 
   # Transforms pops expressions into AST 3.1 statements/expressions
   def transform(o)
+    begin
     @@transform_visitor.visit_this(self,o)
+    rescue StandardError => e
+      loc_data = {}
+      merge_location(loc_data, o)
+      raise Puppet::ParseError.new("Error while transforming to Puppet 3 AST: #{e.message}", 
+        loc_data[:file], loc_data[:line], loc_data[:pos], e)
+    end
   end
 
   # Transforms pops expressions into AST 3.1 query expressions
