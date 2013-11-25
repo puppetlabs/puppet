@@ -635,7 +635,8 @@ class Puppet::Pops::Model::Factory
   end
 
   def self.COLLECT(type_expr, query_expr, attribute_operations)
-    new(Model::CollectExpression, Puppet::Pops::Model::Factory.fqr(type_expr), query_expr, attribute_operations)
+    new(Model::CollectExpression, type_expr, query_expr, attribute_operations)
+#    new(Model::CollectExpression, Puppet::Pops::Model::Factory.fqr(type_expr), query_expr, attribute_operations)
   end
 
   def self.IMPORT(files)
