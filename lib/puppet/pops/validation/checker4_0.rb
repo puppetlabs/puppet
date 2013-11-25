@@ -333,17 +333,12 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
-  # Transformation of SelectorExpression is limited to certain types of expressions.
-  # This is probably due to constraints in the old grammar rather than any real concerns.
-  def select_SelectorExpression(o)
-    case o.left_expr
-    when Model::CallNamedFunctionExpression
-    when Model::AccessExpression
-    when Model::VariableExpression
-    when Model::ConcatenatedString
-    else
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.left_expr, :feature => 'left operand', :container => o)
-    end
+  def check_SelectorExpression(o)
+    rvalue(o.left_expr)
+  end
+
+  def check_SelectorEntry(o)
+    rvalue(o.matching_expr)
   end
 
   def check_UnaryExpression(o)
