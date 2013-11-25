@@ -122,27 +122,10 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_AccessExpression(o)
-    # Check multiplicity of keys
-    case o.left_expr
-    when Model::QualifiedName
-      # allows many keys, but the name should really be a QualifiedReference
-      # acceptor.accept(Issues::DEPRECATED_NAME_AS_TYPE, o, :name => o.value)
-      # OK in 4.x since a name evaluates to a String, and String[] is supported
-      # Also allows many
-    when Model::QualifiedReference
-      # ok, allows many - this is a type / resource reference
-
-    else
-      # i.e. for any other expression that may produce an array or hash
-#      if o.keys.size > 1
-#        acceptor.accept(Issues::UNSUPPORTED_RANGE, o, :count => o.keys.size)
-#      end
-      # Range is ok, multiple keys supported by many LHS types (checked at runtime)
-      # TODO: can statically check key size for some types Name & String 1-2, Array 1,2, Hash 1-many, etc
-      # (but is captured as RT error)
-      if o.keys.size < 1
-        acceptor.accept(Issues::MISSING_INDEX, o)
-      end
+    # Only min range is checked, all other checks are RT checks as they depend on the resulting type
+    # of the LHS.
+    if o.keys.size < 1
+      acceptor.accept(Issues::MISSING_INDEX, o)
     end
   end
 
@@ -228,6 +211,10 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  def check_IfExpression(o)
+    rvalue(o.test)
+  end
+
   def check_ImportExpression(o)
     o.files.each do |f|
       unless f.is_a? Model::LiteralString
@@ -243,13 +230,17 @@ class Puppet::Pops::Validation::Checker4_0
     # acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.key, :feature => 'hash key', :container => o.eContainer)
   end
 
-  # A Lambda is a Definition, but it may appear in other scopes that top scope (Which check_Definition asserts).
+  # A Lambda is a Definition, but it may appear in other scopes than top scope (Which check_Definition asserts).
   #
   def check_LambdaExpression(o)
   end
 
+  def check_LiteralList(o)
+    o.values.each {|v| rvalue(v) }
+  end
+
   def check_NodeDefinition(o)
-    # Check that hostnames are valid hostnames (or regular expressons)
+    # Check that hostnames are valid hostnames (or regular expressions)
     hostname(o.host_matches, o)
     hostname(o.parent, o, 'parent') unless o.parent.nil?
     top(o.eContainer, o)
@@ -360,8 +351,8 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_UnlessExpression(o)
-    # TODO: Unless may not have an elsif
-    # TODO: 3.x unless may not have an else
+    rvalue(o.test)
+    # TODO: Unless may not have an else part that is an IfExpression (grammar denies this though)
   end
 
   def check_VariableExpression(o)
