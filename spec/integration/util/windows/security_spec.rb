@@ -23,6 +23,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       :users => Win32::Security::SID::BuiltinUsers,
       :power_users => Win32::Security::SID::PowerUsers,
       :none => Win32::Security::SID::Nobody,
+      :everyone => Win32::Security::SID::Everyone
     }
   end
 
@@ -153,12 +154,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           winsec.set_group(sids[:power_users], path)
           winsec.set_owner(sids[:administrators], path)
 
-          inherited = Windows::Security::INHERITED_ACE
-
-          noninherited_ace = system_aces.find do |ace|
+          system_aces.find do |ace|
             ace.mask == Windows::File::FILE_ALL_ACCESS && ace.inherited?
-          end
-          noninherited_ace.should_not be_nil
+          end.should_not be_nil
         end
 
         describe "#mode=" do
@@ -206,7 +204,6 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             winsec.set_mode(0600, path)
 
             # and should have a non-inherited SYSTEM ACE(s)
-            inherited = Windows::Security::INHERITED_ACE
             system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
             system_aces.each do |ace|
               ace.mask.should == Windows::File::FILE_ALL_ACCESS && ! ace.inherited?
@@ -289,7 +286,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               sids[:current_user], WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL
             )
             dacl.allow(
-              Win32::Security::SID::Everyone,
+              sids[:everyone],
               WindowsSecurityTester::FILE_GENERIC_READ,
               WindowsSecurityTester::INHERIT_ONLY_ACE | WindowsSecurityTester::OBJECT_INHERIT_ACE
             )
@@ -451,7 +448,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         describe "#mode" do
           it "should deny all access when the DACL is empty, including SYSTEM" do
             sd = winsec.get_security_descriptor(path)
-            new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, [], true)
+            # don't allow inherited aces to affect the test
+            protect = true
+            new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, [], protect)
             winsec.set_security_descriptor(path, new_sd)
 
             winsec.get_mode(path).should == WindowsSecurityTester::S_ISYSTEM_MISSING
@@ -717,31 +716,32 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
     it "preserves aces for other users" do
       dacl = Puppet::Util::Windows::AccessControlList.new
-      [sids[:current_user], sids[:users]].each do |sid|
+      sids_in_dacl = [sids[:current_user], sids[:users]]
+      sids_in_dacl.each do |sid|
         dacl.allow(sid, read_execute)
       end
       sd = Puppet::Util::Windows::SecurityDescriptor.new(sids[:guest], sids[:guest], dacl, true)
       winsec.set_security_descriptor(path, sd)
 
       aces = winsec.get_security_descriptor(path).dacl.to_a
-      ace = aces.find { |ace| ace.sid == sids[:users] }
-      ace.should_not be_nil
-      ace.mask.to_s(16).should == read_execute.to_s(16)
+      aces.map(&:sid).should == sids_in_dacl
+      aces.map(&:mask).all? { |mask| mask == read_execute }.should be_true
     end
 
-    it "reassigns multiple aces for the same sid" do
+    it "changes the sid for all aces that were assigned to the old owner" do
       sd = winsec.get_security_descriptor(path)
+      sd.owner.should_not == sids[:guest]
 
-      [read_execute, synchronize].each do |mask|
-        sd.dacl.allow(sd.owner, mask)
-      end
+      sd.dacl.allow(sd.owner, read_execute)
+      sd.dacl.allow(sd.owner, synchronize)
 
       sd.owner = sids[:guest]
-      sd.group = sids[:guest]
       winsec.set_security_descriptor(path, sd)
 
       dacl = winsec.get_security_descriptor(path).dacl
       aces = dacl.find_all { |ace| ace.sid == sids[:guest] }
+      # only non-inherited aces will be reassigned to guest, so
+      # make sure we find at least the two we added
       aces.size.should >= 2
     end
 
