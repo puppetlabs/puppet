@@ -194,15 +194,19 @@ DOC
 
   def add_csr_attributes(csr, csr_attributes)
     csr_attributes.each do |oid, value|
-      if PRIVATE_CSR_ATTRIBUTES.include? oid
-        raise ArgumentError, "Cannot specify CSR attribute #{oid}: conflicts with internally used CSR attribute"
+      begin
+        if PRIVATE_CSR_ATTRIBUTES.include? oid
+          raise ArgumentError, "Cannot specify CSR attribute #{oid}: conflicts with internally used CSR attribute"
+        end
+
+        encoded = OpenSSL::ASN1::PrintableString.new(value.to_s)
+
+        attr_set = OpenSSL::ASN1::Set.new([encoded])
+        csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
+        Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
+      rescue OpenSSL::X509::AttributeError => e
+        raise Puppet::Error, "Cannot create CSR with attribute #{oid}: #{e.message}"
       end
-
-      encoded = OpenSSL::ASN1::PrintableString.new(value.to_s)
-
-      attr_set = OpenSSL::ASN1::Set.new([encoded])
-      csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
-      Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
     end
   end
 
@@ -218,12 +222,16 @@ DOC
 
     if options[:extension_requests]
       options[:extension_requests].each_pair do |oid, value|
-        if PRIVATE_EXTENSIONS.include? oid
-          raise Puppet::Error, "Cannot specify CSR extension request #{oid}: conflicts with internally used extension request"
-        end
+        begin
+          if PRIVATE_EXTENSIONS.include? oid
+            raise Puppet::Error, "Cannot specify CSR extension request #{oid}: conflicts with internally used extension request"
+          end
 
-        ext = OpenSSL::X509::Extension.new(oid, value.to_s, false)
-        extensions << ext
+          ext = OpenSSL::X509::Extension.new(oid, value.to_s, false)
+          extensions << ext
+        rescue OpenSSL::X509::ExtensionError => e
+          raise Puppet::Error, "Cannot create CSR with extension request #{oid}: #{e.message}"
+        end
       end
     end
 
