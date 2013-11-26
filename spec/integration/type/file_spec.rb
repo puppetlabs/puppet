@@ -1014,6 +1014,18 @@ describe Puppet::Type.type(:file) do
         end
       end
 
+      def expects_at_least_one_inherited_system_ace_grants_full_access(path, sid)
+        inherited_ace = Windows::Security::INHERITED_ACE
+
+        aces = get_aces_for_path_by_sid(path, sid)
+        aces.should_not be_empty
+
+        aces.any? do |ace|
+          ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
+            (ace[:flags] & inherited_ace) == inherited_ace
+        end.should be_true
+      end
+
       it "should provide valid default values when ACLs are not supported" do
         Puppet::Util::Windows::Security.stubs(:supports_acl?).with(source).returns false
 
@@ -1068,15 +1080,7 @@ describe Puppet::Type.type(:file) do
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing file" do
               FileUtils.touch(path)
 
-              inherited_ace = Windows::Security::INHERITED_ACE
-
-              # make sure we have at least one inherited SYSTEM ACE
-              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              system_aces.should_not be_empty
-              system_aces.any? do |ace|
-                ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
-                  (ace[:flags] & inherited_ace) == inherited_ace
-              end.should be_true
+              expects_at_least_one_inherited_system_ace_grants_full_access(path, @sids[:system])
 
               catalog.apply
 
@@ -1141,15 +1145,7 @@ describe Puppet::Type.type(:file) do
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
               FileUtils.mkdir(dir)
 
-              inherited_ace = Windows::Security::INHERITED_ACE
-
-              # make sure we have at least one inherited SYSTEM ACE
-              system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-              system_aces.should_not be_empty
-              system_aces.any? do |ace|
-                ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
-                  (ace[:flags] & inherited_ace) == inherited_ace
-              end.should be_true
+              expects_at_least_one_inherited_system_ace_grants_full_access(dir, @sids[:system])
 
               catalog.apply
 
