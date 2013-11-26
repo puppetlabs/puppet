@@ -1002,6 +1002,18 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+      def expects_system_granted_full_access_explicitly(path, sid)
+        inherited_ace = Windows::Security::INHERITED_ACE
+
+        aces = get_aces_for_path_by_sid(path, sid)
+        aces.should_not be_empty
+
+        aces.each do |ace|
+          ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+          (ace[:flags] & inherited_ace).should_not == inherited_ace
+        end
+      end
+
       it "should provide valid default values when ACLs are not supported" do
         Puppet::Util::Windows::Security.stubs(:supports_acl?).with(source).returns false
 
@@ -1068,27 +1080,13 @@ describe Puppet::Type.type(:file) do
 
               catalog.apply
 
-              # make sure none of the SYSTEM ACEs are inherited
-              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              system_aces.should_not be_empty
-              system_aces.each do |ace|
-                ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-                (ace[:flags] & inherited_ace).should_not == inherited_ace
-              end
+              expects_system_granted_full_access_explicitly(path, @sids[:system])
             end
 
             it "replaces inherited SYSTEM ACEs for a new file with an uninherited one" do
               catalog.apply
 
-              inherited_ace = Windows::Security::INHERITED_ACE
-
-              # make sure none of the SYSTEM ACEs are inherited
-              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              system_aces.should_not be_empty
-              system_aces.each do |ace|
-                ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-                (ace[:flags] & inherited_ace).should_not == inherited_ace
-              end
+              expects_system_granted_full_access_explicitly(path, @sids[:system])
             end
           end
 
@@ -1155,27 +1153,13 @@ describe Puppet::Type.type(:file) do
 
               catalog.apply
 
-              # make sure none of the SYSTEM ACEs are inherited
-              system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-              system_aces.should_not be_empty
-              system_aces.each do |ace|
-                ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-                (ace[:flags] & inherited_ace).should_not == inherited_ace
-              end
+              expects_system_granted_full_access_explicitly(dir, @sids[:system])
             end
 
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
               catalog.apply
 
-              inherited_ace = Windows::Security::INHERITED_ACE
-
-              # make sure none of the SYSTEM ACEs are inherited
-              system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-              system_aces.should_not be_empty
-              system_aces.each do |ace|
-                ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-                (ace[:flags] & inherited_ace).should_not == inherited_ace
-              end
+              expects_system_granted_full_access_explicitly(dir, @sids[:system])
             end
 
             describe "created with SYSTEM as the group" do
