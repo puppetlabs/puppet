@@ -121,26 +121,27 @@ module Puppet
         next if metadata_method == :owner and !Puppet.features.root?
         next if metadata_method == :group and !Puppet.features.root?
 
-        if !local?
-          # On Windows, always ignore the source file's metadata.  Issue a warning if
-          # use or use_when_creating was specified.
-          if Puppet.features.microsoft_windows?
-            if [:use, :use_when_creating].include?(resource[:source_permissions]) &&
-              (resource[:owner] == nil || resource[:group] == nil || resource[:mode] == nil)
+        if Puppet.features.microsoft_windows?
+          # Warn on Windows if source permissions are being used and the file resource
+          # does not have mode owner and group all set (which would take precedence).
+          if [:use, :use_when_creating].include?(resource[:source_permissions]) &&
+            (resource[:owner] == nil || resource[:group] == nil || resource[:mode] == nil)
 
-              Puppet.deprecation_warning("Copying owner/mode/group from the puppet master" <<
-                                         " source file to Windows agents is deprecated;" <<
-                                         " use source_permissions => ignore.")
-            end
-            next if [:owner, :group].include?(metadata_method)
+            warning = "Copying %s from the source" <<
+                      " file on Windows is deprecated;" <<
+                      " use source_permissions => ignore."
+            Puppet.deprecation_warning(warning % 'owner/mode/group')
+            resource.debug(warning % metadata_method.to_s)
           end
+          # But never try to copy remote owner/group on Windows
+          next if [:owner, :group].include?(metadata_method) && !local?
+        end
 
-          case resource[:source_permissions]
-          when :ignore
-            next
-          when :use_when_creating
-            next if Puppet::FileSystem::File.exist?(resource[:path])
-          end
+        case resource[:source_permissions]
+        when :ignore
+          next
+        when :use_when_creating
+          next if Puppet::FileSystem::File.exist?(resource[:path])
         end
 
         copy_source_value(metadata_method)
@@ -226,15 +227,15 @@ module Puppet
   Puppet::Type.type(:file).newparam(:source_permissions) do
     desc <<-'EOT'
       How puppet should copy owner, group and mode permissions from
-      the puppet master to `file` resources when the permissions are not
+      the `source` to `file` resources when the permissions are not
       explicitly specified. Valid values are `use`, `use_when_creating`, and `ignore`:
 
       * `use` (the default) will cause puppet to apply the owner, group
-        and mode from the puppet master to files that it creates, or
+        and mode from the `source` to files that it creates, or
         files that already exist.
-      * `use_when_creating` only apply the owner, group and mode from the puppet master
+      * `use_when_creating` only apply the owner, group and mode from the `source`
          when creating the file.
-      * `ignore` do not apply owner, group and mode from the puppet master when
+      * `ignore` do not apply owner, group and mode from the `source` when
          creating a new file, or managing an existing one. The resulting owner,
          group, and mode, will depend on platform-specific behavior. On POSIX, the
          umask of the user that puppet is running as. On Windows, the default
