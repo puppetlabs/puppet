@@ -45,19 +45,35 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
   shared_examples_for "only child owner" do
     it "should allow child owner" do
-      check_child_owner
+      winsec.set_owner(sids[:guest], parent)
+      winsec.set_group(sids[:current_user], parent)
+      winsec.set_mode(0700, parent)
+
+      check_delete(path)
     end
 
     it "should deny parent owner" do
-      lambda { check_parent_owner }.should raise_error(Errno::EACCES)
+      winsec.set_owner(sids[:guest], path)
+      winsec.set_group(sids[:current_user], path)
+      winsec.set_mode(0700, path)
+
+      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
     end
 
     it "should deny group" do
-      lambda { check_group }.should raise_error(Errno::EACCES)
+      winsec.set_owner(sids[:guest], path)
+      winsec.set_group(sids[:current_user], path)
+      winsec.set_mode(0700, path)
+
+      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
     end
 
     it "should deny other" do
-      lambda { check_other }.should raise_error(Errno::EACCES)
+      winsec.set_owner(sids[:guest], path)
+      winsec.set_group(sids[:current_user], path)
+      winsec.set_mode(0700, path)
+
+      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
     end
   end
 
@@ -473,102 +489,120 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             winsec.set_mode(0777, path, false)
           end
 
-          def check_child_owner
-            winsec.set_group(sids[:guest], parent)
-            winsec.set_owner(sids[:guest], parent)
+          describe "is writable and executable" do
+            describe "and sticky bit is set" do
+              it "should allow child owner" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(01700, parent)
 
-            check_delete(path)
+                check_delete(path)
+              end
+
+              it "should allow parent owner" do
+                winsec.set_owner(sids[:current_user], parent)
+                winsec.set_group(sids[:guest], parent)
+                winsec.set_mode(01700, parent)
+
+                winsec.set_owner(sids[:current_user], path)
+                winsec.set_group(sids[:guest], path)
+                winsec.set_mode(0700, path)
+
+                check_delete(path)
+              end
+
+              it "should deny group" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(01770, parent)
+
+                winsec.set_owner(sids[:guest], path)
+                winsec.set_group(sids[:current_user], path)
+                winsec.set_mode(0700, path)
+
+                lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+              end
+
+              it "should deny other" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(01777, parent)
+
+                winsec.set_owner(sids[:guest], path)
+                winsec.set_group(sids[:current_user], path)
+                winsec.set_mode(0700, path)
+
+                lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+              end
+            end
+
+            describe "and sticky bit is not set" do
+              it "should allow child owner" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(0700, parent)
+
+                check_delete(path)
+              end
+
+              it "should allow parent owner" do
+                winsec.set_owner(sids[:current_user], parent)
+                winsec.set_group(sids[:guest], parent)
+                winsec.set_mode(0700, parent)
+
+                winsec.set_owner(sids[:current_user], path)
+                winsec.set_group(sids[:guest], path)
+                winsec.set_mode(0700, path)
+
+                check_delete(path)
+              end
+
+              it "should allow group" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(0770, parent)
+
+                winsec.set_owner(sids[:guest], path)
+                winsec.set_group(sids[:current_user], path)
+                winsec.set_mode(0700, path)
+
+                check_delete(path)
+              end
+
+              it "should allow other" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(0777, parent)
+
+                winsec.set_owner(sids[:guest], path)
+                winsec.set_group(sids[:current_user], path)
+                winsec.set_mode(0700, path)
+
+                check_delete(path)
+              end
+            end
           end
 
-        def check_parent_owner
-          winsec.set_group(sids[:guest], path)
-          winsec.set_owner(sids[:guest], path)
-
-          check_delete(path)
-        end
-
-        def check_group
-          winsec.set_group(sids[:current_user], path)
-          winsec.set_owner(sids[:guest], path)
-
-          winsec.set_owner(sids[:guest], parent)
-
-          check_delete(path)
-        end
-
-        def check_other
-          winsec.set_group(sids[:guest], path)
-          winsec.set_owner(sids[:guest], path)
-
-          winsec.set_owner(sids[:guest], parent)
-
-          check_delete(path)
-        end
-
-        describe "is writable and executable" do
-          describe "and sticky bit is set" do
+          describe "is not writable" do
             before :each do
-              winsec.set_mode(01777, parent)
+              winsec.set_group(sids[:current_user], parent)
+              winsec.set_mode(0555, parent)
             end
 
-            it "should allow child owner" do
-              check_child_owner
-            end
-
-            it "should allow parent owner" do
-              check_parent_owner
-            end
-
-            it "should deny group" do
-              lambda { check_group }.should raise_error(Errno::EACCES)
-            end
-
-            it "should deny other" do
-              lambda { check_other }.should raise_error(Errno::EACCES)
-            end
+            it_behaves_like "only child owner"
           end
 
-          describe "and sticky bit is not set" do
+          describe "is not executable" do
             before :each do
-              winsec.set_mode(0777, parent)
+              winsec.set_group(sids[:current_user], parent)
+              winsec.set_mode(0666, parent)
             end
 
-            it "should allow child owner" do
-              check_child_owner
-            end
-
-            it "should allow parent owner" do
-              check_parent_owner
-            end
-
-            it "should allow group" do
-              check_group
-            end
-
-            it "should allow other" do
-              check_other
-            end
+            it_behaves_like "only child owner"
           end
-        end
-
-        describe "is not writable" do
-          before :each do
-            winsec.set_mode(0555, parent)
-          end
-
-          it_behaves_like "only child owner"
-        end
-
-        describe "is not executable" do
-          before :each do
-            winsec.set_mode(0666, parent)
-          end
-
-          it_behaves_like "only child owner"
         end
       end
     end
-  end
   end
 
   describe "file" do
