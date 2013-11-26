@@ -1061,6 +1061,7 @@ describe Puppet::Type.type(:file) do
             :guest => Puppet::Util::Windows::Security.name_to_sid("Guest"),
             :users => Win32::Security::SID::BuiltinUsers,
             :power_users => Win32::Security::SID::PowerUsers,
+            :none => Win32::Security::SID::Nobody
           }
         end
 
@@ -1075,8 +1076,33 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource @file
           end
 
+          describe "when source permissions are ignored" do
+            before :each do
+              @file[:source_permissions] = :ignore
+            end
+
+            it "preserves the inherited SYSTEM ACE" do
+              catalog.apply
+
+              expects_at_least_one_inherited_system_ace_grants_full_access(path)
+            end
+          end
+
           describe "when permissions are insync?" do
-            it "preserves inherited SYSTEM ACEs (needs access to SecurityDescriptor)"
+            it "preserves the explicit SYSTEM ACE" do
+              FileUtils.touch(path)
+
+              sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+              sd.protect = true
+              sd.owner = @sids[:none]
+              sd.group = @sids[:none]
+              Puppet::Util::Windows::Security.set_security_descriptor(source, sd)
+              Puppet::Util::Windows::Security.set_security_descriptor(path, sd)
+
+              catalog.apply
+
+              expects_system_granted_full_access_explicitly(path)
+            end
           end
 
           describe "when permissions are not insync?" do
@@ -1139,8 +1165,36 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource @directory
           end
 
+          describe "when source permissions are ignored" do
+            before :each do
+              @directory[:source_permissions] = :ignore
+            end
+
+            it "preserves the inherited SYSTEM ACE" do
+              catalog.apply
+
+              expects_at_least_one_inherited_system_ace_grants_full_access(dir)
+            end
+          end
+
           describe "when permissions are insync?" do
-            it "preserves inherited SYSTEM ACEs (needs access to SecurityDescriptor)"
+            it "preserves the explicit SYSTEM ACE" do
+              Dir.mkdir(dir)
+
+              source_dir = tmpdir('source_dir')
+              @directory[:source] = source_dir
+
+              sd = Puppet::Util::Windows::Security.get_security_descriptor(source_dir)
+              sd.protect = true
+              sd.owner = @sids[:none]
+              sd.group = @sids[:none]
+              Puppet::Util::Windows::Security.set_security_descriptor(source_dir, sd)
+              Puppet::Util::Windows::Security.set_security_descriptor(dir, sd)
+
+              catalog.apply
+
+              expects_system_granted_full_access_explicitly(dir)
+            end
           end
 
           describe "when permissions are not insync?" do
