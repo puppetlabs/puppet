@@ -59,11 +59,11 @@ module Puppet
     :priority => {
       :default => nil,
       :type    => :priority,
-      :desc    => "The scheduling priority of the process.  Valid values are 'high',\n" +
-                  "'normal', 'low', or 'idle', which are mapped to platform specific\n" +
-                  "values.  The priority can also be specified as an integer value and\n" +
-                  "will be passed as is, e.g. -5.  Puppet must be running as a privileged\n" +
-                  "user in order to increase scheduling priority.",
+      :desc    => "The scheduling priority of the process.  Valid values are 'high',
+        'normal', 'low', or 'idle', which are mapped to platform-specific
+        values.  The priority can also be specified as an integer value and
+        will be passed as is, e.g. -5.  Puppet must be running as a privileged
+        user in order to increase scheduling priority.",
     },
     :trace => {
         :default  => false,
