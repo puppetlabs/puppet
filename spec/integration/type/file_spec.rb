@@ -1002,7 +1002,7 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
-      def expects_system_granted_full_access_explicitly(path, sid)
+      def expects_sid_granted_full_access_explicitly(path, sid)
         inherited_ace = Windows::Security::INHERITED_ACE
 
         aces = get_aces_for_path_by_sid(path, sid)
@@ -1014,7 +1014,11 @@ describe Puppet::Type.type(:file) do
         end
       end
 
-      def expects_at_least_one_inherited_system_ace_grants_full_access(path, sid)
+      def expects_system_granted_full_access_explicitly(path)
+        expects_sid_granted_full_access_explicitly(path, @sids[:system])
+      end
+
+      def expects_at_least_one_inherited_ace_grants_full_access(path, sid)
         inherited_ace = Windows::Security::INHERITED_ACE
 
         aces = get_aces_for_path_by_sid(path, sid)
@@ -1024,6 +1028,10 @@ describe Puppet::Type.type(:file) do
           ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
             (ace[:flags] & inherited_ace) == inherited_ace
         end.should be_true
+      end
+
+      def expects_at_least_one_inherited_system_ace_grants_full_access(path)
+        expects_at_least_one_inherited_ace_grants_full_access(path, @sids[:system])
       end
 
       it "should provide valid default values when ACLs are not supported" do
@@ -1080,17 +1088,17 @@ describe Puppet::Type.type(:file) do
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing file" do
               FileUtils.touch(path)
 
-              expects_at_least_one_inherited_system_ace_grants_full_access(path, @sids[:system])
+              expects_at_least_one_inherited_system_ace_grants_full_access(path)
 
               catalog.apply
 
-              expects_system_granted_full_access_explicitly(path, @sids[:system])
+              expects_system_granted_full_access_explicitly(path)
             end
 
             it "replaces inherited SYSTEM ACEs for a new file with an uninherited one" do
               catalog.apply
 
-              expects_system_granted_full_access_explicitly(path, @sids[:system])
+              expects_system_granted_full_access_explicitly(path)
             end
           end
 
@@ -1145,17 +1153,17 @@ describe Puppet::Type.type(:file) do
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
               FileUtils.mkdir(dir)
 
-              expects_at_least_one_inherited_system_ace_grants_full_access(dir, @sids[:system])
+              expects_at_least_one_inherited_system_ace_grants_full_access(dir)
 
               catalog.apply
 
-              expects_system_granted_full_access_explicitly(dir, @sids[:system])
+              expects_system_granted_full_access_explicitly(dir)
             end
 
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
               catalog.apply
 
-              expects_system_granted_full_access_explicitly(dir, @sids[:system])
+              expects_system_granted_full_access_explicitly(dir)
             end
 
             describe "created with SYSTEM as the group" do
