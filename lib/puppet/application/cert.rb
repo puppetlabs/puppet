@@ -149,8 +149,8 @@ unless the '--all' option is set.
 * reinventory:
   Build an inventory of the issued certificates. This will destroy the current
   inventory file specified by 'cert_inventory' and recreate it from the
-  certificates found in the 'certdir'. This action should only be invoked
-  on an inactive master.
+  certificates found in the 'certdir'. Ensure the puppet master is stopped
+  before running this action.
 
 OPTIONS
 -------
