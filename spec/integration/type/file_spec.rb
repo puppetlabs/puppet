@@ -1020,7 +1020,7 @@ describe Puppet::Type.type(:file) do
         get_mode(path).should == 0644
       end
 
-      describe "it should properly handle the SYSTEM ACE" do
+      describe "when processing SYSTEM ACEs" do
         before do
           @sids = {
             :current_user => Puppet::Util::Windows::Security.name_to_sid(Sys::Admin.get_login),
@@ -1043,48 +1043,59 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource @file
           end
 
-         it "that already exist by removing the inherited SYSTEM ACE but adding an uninherited one)" do
-            FileUtils.touch(path)
-
-            # read the externally created file SYSTEM ACE(s)
-            system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-            system_aces.should_not be_empty
-            # when running under SYSTEM account, multiple ACEs come back
-            # so we only care that we have at least one of these
-            system_aces.any? do |ace|
-              inherited = Windows::Security::INHERITED_ACE
-              ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
-              (ace[:flags] & inherited) == inherited
-            end.should be_true
-
-            # when running under SYSTEM user, must force the group to properly verify
-            @file[:group] = 'None'
-            catalog.apply
-
-            # should still have the same SYSTEM ACE(s), but with inheritance stripped
-            system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-            system_aces.each do |ace|
-              ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-              inherited = Windows::Security::INHERITED_ACE
-              (ace[:flags] & inherited).should_not == inherited
-            end
+          describe "when permissions are insync?" do
+            it "preserves inherited SYSTEM ACEs (needs access to SecurityDescriptor)"
           end
 
-          it "that are new where SYSTEM is not the given group or owner (SYSTEM ACE remains FULL)" do
-            @file[:group] = @sids[:power_users]
-            @file[:owner] = @sids[:guest]
+          describe "when permissions are not insync?" do
+            before :each do
+              @file[:owner] = 'None'
+              @file[:group] = 'None'
+            end
 
-            catalog.apply
+            it "replaces inherited SYSTEM ACEs with an uninherited one for an existing file" do
+              FileUtils.touch(path)
 
-            system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-            system_aces.should_not be_empty
-            system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+              inherited_ace = Windows::Security::INHERITED_ACE
+
+              # make sure we have at least one inherited SYSTEM ACE
+              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
+              system_aces.should_not be_empty
+              system_aces.any? do |ace|
+                ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
+                  (ace[:flags] & inherited_ace) == inherited_ace
+              end.should be_true
+
+              catalog.apply
+
+              # make sure none of the SYSTEM ACEs are inherited
+              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
+              system_aces.should_not be_empty
+              system_aces.each do |ace|
+                ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+                (ace[:flags] & inherited_ace).should_not == inherited_ace
+              end
+            end
+
+            it "replaces inherited SYSTEM ACEs for a new file with an uninherited one" do
+              catalog.apply
+
+              inherited_ace = Windows::Security::INHERITED_ACE
+
+              # make sure none of the SYSTEM ACEs are inherited
+              system_aces = get_aces_for_path_by_sid(path, @sids[:system])
+              system_aces.should_not be_empty
+              system_aces.each do |ace|
+                ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+                (ace[:flags] & inherited_ace).should_not == inherited_ace
+              end
+            end
           end
 
           describe "created with SYSTEM as the group" do
             before :each do
-              @file[:group] = @sids[:system]
               @file[:owner] = @sids[:users]
+              @file[:group] = @sids[:system]
               @file[:mode] = 0644
 
               catalog.apply
@@ -1099,7 +1110,7 @@ describe Puppet::Type.type(:file) do
               end
             end
 
-            it "should revert SYSTEM permission to FULL access when the group is later changed" do
+            it "should restore SYSTEM permission to FULL access when the group is later changed" do
               @file[:group] = @sids[:power_users]
               catalog.apply
 
@@ -1119,71 +1130,81 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource @directory
           end
 
-          it "that already exist by removing the inherited SYSTEM ACE but adding an uninherited one" do
-            FileUtils.mkdir(dir)
-
-            # read the externally created file SYSTEM ACE(s)
-            system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-            system_aces.should_not be_empty
-
-            inherited = Windows::Security::INHERITED_ACE
-
-            # when running under SYSTEM account, multiple ACEs come back
-            # so we only care that we have at least one of these
-            system_aces.any? do |ace|
-              ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
-              (ace[:flags] & inherited) == inherited
-            end.should be_true
-
-            # when running under SYSTEM user, must force the group to properly verify
-            @directory[:group] = 'Administrators'
-            catalog.apply
-
-            # should still have the same SYSTEM ACE(s), but with inheritance stripped
-            system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-            system_aces.each do |ace|
-              ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-              (ace[:flags] & inherited).should_not == inherited
-            end
+          describe "when permissions are insync?" do
+            it "preserves inherited SYSTEM ACEs (needs access to SecurityDescriptor)"
           end
 
-          it "that are new where SYSTEM is not the given group or owner (SYSTEM ACE remains FULL)" do
-            @directory[:group] = @sids[:power_users]
-            @directory[:owner] = @sids[:guest]
-
-            catalog.apply
-
-            system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-            system_aces.should_not be_empty
-            system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
-          end
-
-          describe "created with SYSTEM as the group" do
+          describe "when permissions are not insync?" do
             before :each do
-              @directory[:group] = @sids[:system]
-              @directory[:owner] = @sids[:users]
-              @directory[:mode] = 0644
-
-              catalog.apply
+              @directory[:owner] = 'None'
+              @directory[:group] = 'None'
             end
 
-            it "should allow the user to explicitly set the mode to 4" do
+            it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
+              FileUtils.mkdir(dir)
+
+              inherited_ace = Windows::Security::INHERITED_ACE
+
+              # make sure we have at least one inherited SYSTEM ACE
               system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
               system_aces.should_not be_empty
+              system_aces.any? do |ace|
+                ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
+                  (ace[:flags] & inherited_ace) == inherited_ace
+              end.should be_true
 
+              catalog.apply
+
+              # make sure none of the SYSTEM ACEs are inherited
+              system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
+              system_aces.should_not be_empty
               system_aces.each do |ace|
-                # unlike files, Puppet sets execute bit on directories that are readable
-                ace[:mask].should == Windows::File::FILE_GENERIC_READ | Windows::File::FILE_GENERIC_EXECUTE
+                ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+                (ace[:flags] & inherited_ace).should_not == inherited_ace
               end
             end
 
-            it "should revert SYSTEM permission to FULL access when the group is later changed" do
-              @directory[:group] = @sids[:power_users]
+            it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
               catalog.apply
 
+              inherited_ace = Windows::Security::INHERITED_ACE
+
+              # make sure none of the SYSTEM ACEs are inherited
               system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
               system_aces.should_not be_empty
-              system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+              system_aces.each do |ace|
+                ace[:mask].should == Windows::File::FILE_ALL_ACCESS
+                (ace[:flags] & inherited_ace).should_not == inherited_ace
+              end
+            end
+
+            describe "created with SYSTEM as the group" do
+              before :each do
+                @directory[:group] = @sids[:system]
+                @directory[:owner] = @sids[:users]
+                @directory[:mode] = 0644
+
+                catalog.apply
+              end
+
+              it "should allow the user to explicitly set the mode to 4" do
+                system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
+                system_aces.should_not be_empty
+
+                system_aces.each do |ace|
+                  # unlike files, Puppet sets execute bit on directories that are readable
+                  ace[:mask].should == Windows::File::FILE_GENERIC_READ | Windows::File::FILE_GENERIC_EXECUTE
+                end
+              end
+
+              it "should restore SYSTEM permission to FULL access when the group is later changed" do
+                @directory[:group] = @sids[:power_users]
+                catalog.apply
+
+                system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
+                system_aces.should_not be_empty
+                system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+              end
             end
           end
         end
