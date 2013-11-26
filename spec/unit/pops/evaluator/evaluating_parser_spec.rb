@@ -493,11 +493,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     {
-      "{a=>1, b=>2, c=>3}[a]"      => 1,
-      "{a=>1, b=>2, c=>3}[c]"      => 3,
-      "{a=>1, b=>2, c=>3}[x]"      => nil,
-      "{a=>1, b=>2, c=>3}[c,b]"    => [3,2],
-      "{a=>1, b=>2, c=>3}[a,b,c]"  => [1,2,3],
+      "{a=>1, b=>2, c=>3}[a]"              => 1,
+      "{a=>1, b=>2, c=>3}[c]"              => 3,
+      "{a=>1, b=>2, c=>3}[x]"              => nil,
+      "{a=>1, b=>2, c=>3}[c,b]"            => [3,2],
+      "{a=>1, b=>2, c=>3}[a,b,c]"          => [1,2,3],
+      "{a=>{b=>{c=>'it works'}}}[a][b][c]" => 'it works'
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
         parser.evaluate_string(scope, source, __FILE__).should == result
@@ -653,6 +654,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
   end
 
+  context "When evaluator performs operations on literal undef" do
+    it "computes non existing hash lookup as undef" do
+      parser.evaluate_string(scope, "{a => 1}[b] == undef", __FILE__).should == true
+      parser.evaluate_string(scope, "undef == {a => 1}[b]", __FILE__).should == true
+    end
+  end
+
   context "When evaluator performs calls" do
     let(:populate) do
       parser.evaluate_string(scope, "$a = 10 $b = [1,2,3]")
@@ -736,6 +744,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         expect { parser.evaluate_string(scope, "$quantum_gravity::graviton", __FILE__) }.to raise_error(/Unknown variable/)
       end
     end
+
+    it "a lex error should be raised for '$foo::::bar'" do
+      expect { parser.evaluate_string(scope, "$foo::::bar") }.to raise_error(Puppet::LexError, /Illegal fully qualified name at line 1:7/)
+    end
   end
 
   context "When evaluating relationships" do
@@ -756,6 +768,67 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       parser.evaluate_string(scope, source, __FILE__)
       scope.compiler.should have_relationship(['File', 'b', '~>', 'File', 'a'])
     end
+  end
+
+  context "Detailed Error messages are reported" do
+    it 'for illegal type references' do
+      source = '1+1 { "title": }'
+      # Error references position 5 at the opening '{'
+      # Set file to nil to make it easier to match with line number (no file name in output)
+      expect { parser.parse_string(source, nil) }.to raise_error(/Expression is not valid as a resource.*line 1:5/)
+    end
+
+    it 'for non r-value producing <| |>' do
+      expect { parser.parse_string("$a = File <| |>", nil) }.to raise_error(/A Virtual Query does not produce a value at line 1:6/)
+    end
+
+    it 'for non r-value producing <<| |>>' do
+      expect { parser.parse_string("$a = File <<| |>>", nil) }.to raise_error(/An Exported Query does not produce a value at line 1:6/)
+    end
+
+    it 'for non r-value producing define' do
+      Puppet.expects(:err).with("Invalid use of expression. A 'define' expression does not produce a value at line 1:6")
+      Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+      expect { parser.parse_string("$a = define foo { }", nil) }.to raise_error(/2 errors/)
+    end
+
+    it 'for non r-value producing class' do
+      Puppet.expects(:err).with("Invalid use of expression. A Host Class Definition does not produce a value at line 1:6")
+      Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+      expect { parser.parse_string("$a = class foo { }", nil) }.to raise_error(/2 errors/)
+    end
+
+    it 'for unclosed quote with indication of start position of string' do
+      source = <<-SOURCE.gsub(/^ {6}/,'')
+      $a = "xx
+      yyy
+      SOURCE
+      # first char after opening " reported as being in error.
+      expect { parser.parse_string(source) }.to raise_error(/Unclosed quote after '"' followed by 'xx\\nyy\.\.\.' at line 1:7/)
+    end
+
+    it 'for multiple errors with a summary exception' do
+      Puppet.expects(:err).with("Invalid use of expression. A Node Definition does not produce a value at line 1:6")
+      Puppet.expects(:err).with("Classes, definitions, and nodes may only appear at toplevel or inside other classes at line 1:6")
+      expect { parser.parse_string("$a = node x { }",nil) }.to raise_error(/2 errors/)
+    end
+
+    it 'for a bad hostname' do
+      expect {
+        parser.parse_string("node 'macbook+owned+by+name' { }", nil)
+      }.to raise_error(/The hostname 'macbook\+owned\+by\+name' contains illegal characters.*at line 1:6/)
+    end
+
+    it 'for a hostname with interpolation' do
+      source = <<-SOURCE.gsub(/^ {6}/,'')
+      $name = 'fred'
+      node "macbook-owned-by$name" { }
+      SOURCE
+      expect {
+        parser.parse_string(source, nil)
+      }.to raise_error(/An interpolated expression is not allowed in a hostname of a node at line 2:23/)
+    end
+
   end
 
   matcher :have_relationship do |expected|

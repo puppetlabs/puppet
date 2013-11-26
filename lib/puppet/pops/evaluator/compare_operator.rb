@@ -109,6 +109,14 @@ class Puppet::Pops::Evaluator::CompareOperator
     a == b
   end
 
+  def equals_NilClass(a, b)
+    b.nil? || b == :undef
+  end
+
+  def equals_Symbol(a, b)
+    a == b || a == :undef && b.nil?
+  end
+
   def include_Object(a, b)
     false
   end

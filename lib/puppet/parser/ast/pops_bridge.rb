@@ -112,7 +112,7 @@ class Puppet::Parser::AST::PopsBridge
        :module_name => modname
       }
       unless is_nop?(o.body)
-        args[:code] = Puppet::AST::Bridge::PopsBridge::Expression.new(:value => o.body)
+        args[:code] = Expression.new(:value => o.body)
       end
       @ast_transformer.merge_location(args, o)
     end

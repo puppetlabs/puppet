@@ -19,7 +19,8 @@ class Puppet::Pops::Parser::EvaluatingParser
     begin
       assert_and_report(@parser.parse_string(s))
     rescue Puppet::ParseError => e
-      e.file = @file_source unless e.file
+      # TODO: This is not quite right, why does not the exception have the correct file?
+      e.file = @file_source unless e.file.is_a?(String) && !e.file.empty?
       raise e
     end
   end
