@@ -20,6 +20,8 @@ module HarnessOptions
     },
     :xml => true,
     :timesync => true,
+    :repo_proxy => true,
+    :add_el_extras => true,
   }
 
   class Aggregator
@@ -68,7 +70,8 @@ def beaker_test(mode = :packages, options = {})
 
   if mode == :git
     puppet_fork = ENV['FORK'] || 'puppetlabs'
-    final_options[:install] << "git://github.com/#{puppet_fork}/puppet.git##{sha}"
+    git_server  = ENV['GIT_SERVER'] || 'github.com'
+    final_options[:install] << "git://#{git_server}/#{puppet_fork}/puppet.git##{sha}"
   end
 
   options_file = 'merged_options.rb'
@@ -233,10 +236,10 @@ Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
 Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker.
 You may set TESTS=path/to/test,and/more/tests.
 You may set additional Beaker OPTIONS='--more --options'
-If testing from git checkouts, you may optional set the github fork to checkout from using FORK='other-puppet-fork'.
-A beaker options hash in ./local_options.rb will be included, with online commandline options set through the above environment variables overriding.
+If testing from git checkouts, you may optionally set the github fork to checkout from using FORK='other-puppet-fork'.
+You may also optionally set the git server to checkout from using GIT_SERVER='my.host.with.git.daemon', if you have set up a `git daemon` to pull local commits from.  (In this case, the FORK should be set to the path to the repository, and you will need to allow the git daemon to serve the repo (see `git help daemon`)).
+If there is a Beaker options hash in a ./local_options.rb, it will be included.  Commandline options set through the above environment variables will override settings in this file.
 EOS
-
 
     desc <<-EOS
 Run the acceptance tests through Beaker and install packages on the configuration targets.
