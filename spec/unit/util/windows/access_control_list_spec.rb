@@ -99,6 +99,28 @@ describe "Puppet::Util::Windows::AccessControlList", :if => Puppet.features.micr
       aces[0].sid.should == system_sid
     end
 
+    it "prepends an explicit ace for the new sid with the same mask and basic inheritance as the inherited ace" do
+      expected_flags =
+        Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE |
+        Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE |
+        Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE
+
+      flags = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE | expected_flags
+
+      inherited_ace = Puppet::Util::Windows::AccessControlEntry.new(system_sid, 0x1, flags)
+      dacl = klass.new([inherited_ace])
+      dacl.reassign!(system_sid, none_sid)
+      aces = dacl.to_a
+
+      aces.size.should == 2
+      aces[0].sid.should == none_sid
+      aces[0].should_not be_inherited
+      aces[0].flags.should == expected_flags
+
+      aces[1].sid.should == system_sid
+      aces[1].should be_inherited
+    end
+
     it "makes a copy of the ace prior to modifying it" do
       arr = [system_ace]
 

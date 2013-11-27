@@ -56,28 +56,44 @@ class Puppet::Util::Windows::AccessControlList
   def reassign!(old_sid, new_sid)
     new_aces = []
     prepend_needed = false
+    aces_to_prepend = []
 
     @aces.each do |ace|
       new_ace = ace.dup
 
-      if ace.sid == old_sid && ! ace.inherited?
-        new_ace.sid = new_sid
+      if ace.sid == old_sid
+        if ace.inherited?
+          # create an explicit ACE granting or denying the
+          # new_sid the rights that the inherited ACE
+          # granted or denied the old_sid. We mask off all
+          # flags except those affecting inheritance of the
+          # ACE we're creating.
+          inherit_mask = Windows::Security::CONTAINER_INHERIT_ACE |
+            Windows::Security::OBJECT_INHERIT_ACE |
+            Windows::Security::INHERIT_ONLY_ACE
+          explicit_ace = Puppet::Util::Windows::AccessControlEntry.new(new_sid, ace.mask, ace.flags & inherit_mask, ace.type)
+          aces_to_prepend << explicit_ace
+        else
+          new_ace.sid = new_sid
 
-        prepend_needed = old_sid == Win32::Security::SID::LocalSystem
+          prepend_needed = old_sid == Win32::Security::SID::LocalSystem
+        end
       end
-
       new_aces << new_ace
     end
+
+    @aces = []
 
     if prepend_needed
       mask = Windows::Security::STANDARD_RIGHTS_ALL | Windows::Security::SPECIFIC_RIGHTS_ALL
       ace = Puppet::Util::Windows::AccessControlEntry.new(
               Win32::Security::SID::LocalSystem,
               mask)
-      new_aces.unshift(ace)
+      @aces << ace
     end
 
-    @aces = new_aces
+    @aces.concat(aces_to_prepend)
+    @aces.concat(new_aces)
   end
 
   def inspect
