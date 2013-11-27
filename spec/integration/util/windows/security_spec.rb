@@ -23,6 +23,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       :users => Win32::Security::SID::BuiltinUsers,
       :power_users => Win32::Security::SID::PowerUsers,
       :none => Win32::Security::SID::Nobody,
+      :everyone => Win32::Security::SID::Everyone
     }
   end
 
@@ -44,25 +45,35 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
   shared_examples_for "only child owner" do
     it "should allow child owner" do
-      check_child_owner
+      winsec.set_owner(sids[:guest], parent)
+      winsec.set_group(sids[:current_user], parent)
+      winsec.set_mode(0700, parent)
+
+      check_delete(path)
     end
 
     it "should deny parent owner" do
-      pending("when running as SYSTEM the absence of a SYSTEM group/owner causes full access to be added for SYSTEM",
-        :if => sids[:current_user] == sids[:system]) do
-        lambda { check_parent_owner }.should raise_error(Errno::EACCES)
-      end
+      winsec.set_owner(sids[:guest], path)
+      winsec.set_group(sids[:current_user], path)
+      winsec.set_mode(0700, path)
+
+      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
     end
 
     it "should deny group" do
-      lambda { check_group }.should raise_error(Errno::EACCES)
+      winsec.set_owner(sids[:guest], path)
+      winsec.set_group(sids[:current_user], path)
+      winsec.set_mode(0700, path)
+
+      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
     end
 
     it "should deny other" do
-      pending("when running as SYSTEM the absence of a SYSTEM group/owner causes full access to be added for SYSTEM",
-        :if => sids[:current_user] == sids[:system]) do
-        lambda { check_other }.should raise_error(Errno::EACCES)
-      end
+      winsec.set_owner(sids[:guest], path)
+      winsec.set_group(sids[:current_user], path)
+      winsec.set_mode(0700, path)
+
+      lambda { check_delete(path) }.should raise_error(Errno::EACCES)
     end
   end
 
@@ -144,7 +155,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
         end
 
-        it "should preserve full control for SYSTEM when setting owner and group" do
+        it "should preserve inherited full control for SYSTEM when setting owner and group" do
           # new file has SYSTEM
           system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
           system_aces.should_not be_empty
@@ -152,20 +163,16 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           # when running under SYSTEM account, multiple ACEs come back
           # so we only care that we have at least one of these
           system_aces.any? do |ace|
-            ace[:mask] == Windows::File::FILE_ALL_ACCESS
+            ace.mask == Windows::File::FILE_ALL_ACCESS
           end.should be_true
 
+          # changing the owner/group will no longer make the SD protected
           winsec.set_group(sids[:power_users], path)
           winsec.set_owner(sids[:administrators], path)
 
-          # and should still have a noninherited SYSTEM ACE granting full control
-          system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
-
-          inherited = Windows::Security::INHERITED_ACE
-          system_aces.each do |ace|
-            ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-            (ace[:flags] & inherited).should_not == inherited
-          end
+          system_aces.find do |ace|
+            ace.mask == Windows::File::FILE_ALL_ACCESS && ace.inherited?
+          end.should_not be_nil
         end
 
         describe "#mode=" do
@@ -201,21 +208,21 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             # new file has SYSTEM
             system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
             system_aces.should_not be_empty
+
             # when running under SYSTEM account, multiple ACEs come back
             # so we only care that we have at least one of these
             system_aces.any? do |ace|
-              ace[:mask] == WindowsSecurityTester::FILE_ALL_ACCESS
+              ace.mask == WindowsSecurityTester::FILE_ALL_ACCESS
             end.should be_true
 
+            # changing the mode will make the SD protected
             winsec.set_group(sids[:none], path)
             winsec.set_mode(0600, path)
 
-            # and should still have the same SYSTEM ACE(s)
-            inherited = Windows::Security::INHERITED_ACE
+            # and should have a non-inherited SYSTEM ACE(s)
             system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
             system_aces.each do |ace|
-              ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-              (ace[:flags] & inherited).should_not == inherited
+              ace.mask.should == Windows::File::FILE_ALL_ACCESS && ! ace.inherited?
             end
           end
 
@@ -255,7 +262,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
               # when running under SYSTEM account, and set_group / set_owner hasn't been called
               # SYSTEM full access will be restored
               system_aces.any? do |ace|
-                ace[:mask] == Windows::File::FILE_ALL_ACCESS
+                ace.mask == Windows::File::FILE_ALL_ACCESS
               end.should be_true
             end
           end
@@ -267,31 +274,39 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
         describe "#mode" do
           it "should report when extra aces are encounted" do
-            winsec.set_acl(path, true) do |acl|
-              (544..547).each do |rid|
-                winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL, "S-1-5-32-#{rid}")
-              end
+            sd = winsec.get_security_descriptor(path)
+            (544..547).each do |rid|
+              sd.dacl.allow("S-1-5-32-#{rid}", WindowsSecurityTester::STANDARD_RIGHTS_ALL)
             end
+            winsec.set_security_descriptor(path, sd)
+
             mode = winsec.get_mode(path)
             (mode & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
           end
 
-          it "should warn if a deny ace is encountered" do
-            winsec.set_acl(path) do |acl|
-              winsec.add_access_denied_ace(acl, WindowsSecurityTester::FILE_GENERIC_WRITE, sids[:guest])
-              winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL, sids[:current_user])
-            end
+          it "should return deny aces" do
+            sd = winsec.get_security_descriptor(path)
+            sd.dacl.deny(sids[:guest], WindowsSecurityTester::FILE_GENERIC_WRITE)
+            winsec.set_security_descriptor(path, sd)
 
-            Puppet.expects(:warning).with("Unsupported access control entry type: 0x1").at_least_once
-
-            winsec.get_mode(path)
+            guest_aces = winsec.get_aces_for_path_by_sid(path, sids[:guest])
+            guest_aces.find do |ace|
+              ace.type == WindowsSecurityTester::ACCESS_DENIED_ACE_TYPE
+            end.should_not be_nil
           end
 
           it "should skip inherit-only ace" do
-            winsec.set_acl(path) do |acl|
-              winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL, sids[:current_user])
-              winsec.add_access_allowed_ace(acl, WindowsSecurityTester::FILE_GENERIC_READ, Win32::Security::SID::Everyone, WindowsSecurityTester::INHERIT_ONLY_ACE | WindowsSecurityTester::OBJECT_INHERIT_ACE)
-            end
+            sd = winsec.get_security_descriptor(path)
+            dacl = Puppet::Util::Windows::AccessControlList.new
+            dacl.allow(
+              sids[:current_user], WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL
+            )
+            dacl.allow(
+              sids[:everyone],
+              WindowsSecurityTester::FILE_GENERIC_READ,
+              WindowsSecurityTester::INHERIT_ONLY_ACE | WindowsSecurityTester::OBJECT_INHERIT_ACE
+            )
+            winsec.set_security_descriptor(path, sd)
 
             (winsec.get_mode(path) & WindowsSecurityTester::S_IRWXO).should == 0
           end
@@ -317,13 +332,20 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             allow = WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL
             inherit = WindowsSecurityTester::OBJECT_INHERIT_ACE | WindowsSecurityTester::CONTAINER_INHERIT_ACE
 
-            winsec.set_acl(parent, true) do |acl|
-              winsec.add_access_allowed_ace(acl, allow, "S-1-1-0", inherit) # everyone
-
-              (544..547).each do |rid|
-                winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL, "S-1-5-32-#{rid}", inherit)
-              end
+            sd = winsec.get_security_descriptor(parent)
+            sd.dacl.allow(
+              "S-1-1-0", #everyone
+              allow,
+              inherit
+            )
+            (544..547).each do |rid|
+              sd.dacl.allow(
+                "S-1-5-32-#{rid}",
+                WindowsSecurityTester::STANDARD_RIGHTS_ALL,
+                inherit
+              )
             end
+            winsec.set_security_descriptor(parent, sd)
 
             # unprotect child, it should inherit from parent
             winsec.set_mode(WindowsSecurityTester::S_IRWXU, path, false)
@@ -378,16 +400,18 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             winsec.get_group(path).should == sids[:admin]
           end
 
-          it "should allow owner and group to be the same sid" do
-            winsec.set_mode(0610, path)
+          it "should combine owner and group rights when they are the same sid" do
             winsec.set_owner(sids[:power_users], path)
             winsec.set_group(sids[:power_users], path)
+            winsec.set_mode(0610, path)
 
             winsec.get_owner(path).should == sids[:power_users]
             winsec.get_group(path).should == sids[:power_users]
             # note group execute permission added to user ace, and then group rwx value
             # reflected to match
-            winsec.get_mode(path).to_s(8).should == "770"
+
+            # Exclude missing system ace, since that's not relevant
+            (winsec.get_mode(path) & 0777).to_s(8).should == "770"
           end
 
           it "should raise an exception if an invalid sid is provided" do
@@ -439,7 +463,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
         describe "#mode" do
           it "should deny all access when the DACL is empty, including SYSTEM" do
-            winsec.set_acl(path, true) { |acl| }
+            sd = winsec.get_security_descriptor(path)
+            # don't allow inherited aces to affect the test
+            protect = true
+            new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, [], protect)
+            winsec.set_security_descriptor(path, new_sd)
 
             winsec.get_mode(path).should == WindowsSecurityTester::S_ISYSTEM_MISSING
           end
@@ -461,105 +489,120 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             winsec.set_mode(0777, path, false)
           end
 
-          def check_child_owner
-            winsec.set_group(sids[:guest], parent)
-            winsec.set_owner(sids[:guest], parent)
+          describe "is writable and executable" do
+            describe "and sticky bit is set" do
+              it "should allow child owner" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(01700, parent)
 
-            check_delete(path)
-          end
+                check_delete(path)
+              end
 
-        def check_parent_owner
-          winsec.set_group(sids[:guest], path)
-          winsec.set_owner(sids[:guest], path)
+              it "should allow parent owner" do
+                winsec.set_owner(sids[:current_user], parent)
+                winsec.set_group(sids[:guest], parent)
+                winsec.set_mode(01700, parent)
 
-          check_delete(path)
-        end
+                winsec.set_owner(sids[:current_user], path)
+                winsec.set_group(sids[:guest], path)
+                winsec.set_mode(0700, path)
 
-        def check_group
-          winsec.set_group(sids[:current_user], path)
-          winsec.set_owner(sids[:guest], path)
+                check_delete(path)
+              end
 
-          winsec.set_owner(sids[:guest], parent)
+              it "should deny group" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(01770, parent)
 
-          check_delete(path)
-        end
+                winsec.set_owner(sids[:guest], path)
+                winsec.set_group(sids[:current_user], path)
+                winsec.set_mode(0700, path)
 
-        def check_other
-          winsec.set_group(sids[:guest], path)
-          winsec.set_owner(sids[:guest], path)
+                lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+              end
 
-          winsec.set_owner(sids[:guest], parent)
+              it "should deny other" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(01777, parent)
 
-          check_delete(path)
-        end
+                winsec.set_owner(sids[:guest], path)
+                winsec.set_group(sids[:current_user], path)
+                winsec.set_mode(0700, path)
 
-        describe "is writable and executable" do
-          describe "and sticky bit is set" do
-            before :each do
-              winsec.set_mode(01777, parent)
+                lambda { check_delete(path) }.should raise_error(Errno::EACCES)
+              end
             end
 
-            it "should allow child owner" do
-              check_child_owner
-            end
+            describe "and sticky bit is not set" do
+              it "should allow child owner" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(0700, parent)
 
-            it "should allow parent owner" do
-              check_parent_owner
-            end
+                check_delete(path)
+              end
 
-            it "should deny group" do
-              lambda { check_group }.should raise_error(Errno::EACCES)
-            end
+              it "should allow parent owner" do
+                winsec.set_owner(sids[:current_user], parent)
+                winsec.set_group(sids[:guest], parent)
+                winsec.set_mode(0700, parent)
 
-            it "should deny other" do
-              pending("when running as SYSTEM the absence of a SYSTEM group/owner causes full access to be added for SYSTEM",
-                :if => sids[:current_user] == sids[:system]) do
-                lambda { check_other }.should raise_error(Errno::EACCES)
+                winsec.set_owner(sids[:current_user], path)
+                winsec.set_group(sids[:guest], path)
+                winsec.set_mode(0700, path)
+
+                check_delete(path)
+              end
+
+              it "should allow group" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(0770, parent)
+
+                winsec.set_owner(sids[:guest], path)
+                winsec.set_group(sids[:current_user], path)
+                winsec.set_mode(0700, path)
+
+                check_delete(path)
+              end
+
+              it "should allow other" do
+                winsec.set_owner(sids[:guest], parent)
+                winsec.set_group(sids[:current_user], parent)
+                winsec.set_mode(0777, parent)
+
+                winsec.set_owner(sids[:guest], path)
+                winsec.set_group(sids[:current_user], path)
+                winsec.set_mode(0700, path)
+
+                check_delete(path)
               end
             end
           end
 
-          describe "and sticky bit is not set" do
+          describe "is not writable" do
             before :each do
-              winsec.set_mode(0777, parent)
+              winsec.set_group(sids[:current_user], parent)
+              winsec.set_mode(0555, parent)
             end
 
-            it "should allow child owner" do
-              check_child_owner
-            end
-
-            it "should allow parent owner" do
-              check_parent_owner
-            end
-
-            it "should allow group" do
-              check_group
-            end
-
-            it "should allow other" do
-              check_other
-            end
-          end
-        end
-
-        describe "is not writable" do
-          before :each do
-            winsec.set_mode(0555, parent)
+            it_behaves_like "only child owner"
           end
 
-          it_behaves_like "only child owner"
-        end
+          describe "is not executable" do
+            before :each do
+              winsec.set_group(sids[:current_user], parent)
+              winsec.set_mode(0666, parent)
+            end
 
-        describe "is not executable" do
-          before :each do
-            winsec.set_mode(0666, parent)
+            it_behaves_like "only child owner"
           end
-
-          it_behaves_like "only child owner"
         end
       end
     end
-  end
   end
 
   describe "file" do
@@ -692,6 +735,86 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           mode = winsec.get_mode(p)
           (mode & 07777).to_s(8).should == mode640.to_s(8)
         end
+      end
+    end
+  end
+
+  context "security descriptor" do
+    let(:path) { tmpfile('sec_descriptor') }
+    let(:read_execute) { 0x201FF }
+    let(:synchronize)  { 0x100000 }
+
+    before :each do
+      FileUtils.touch(path)
+    end
+
+    it "preserves aces for other users" do
+      dacl = Puppet::Util::Windows::AccessControlList.new
+      sids_in_dacl = [sids[:current_user], sids[:users]]
+      sids_in_dacl.each do |sid|
+        dacl.allow(sid, read_execute)
+      end
+      sd = Puppet::Util::Windows::SecurityDescriptor.new(sids[:guest], sids[:guest], dacl, true)
+      winsec.set_security_descriptor(path, sd)
+
+      aces = winsec.get_security_descriptor(path).dacl.to_a
+      aces.map(&:sid).should == sids_in_dacl
+      aces.map(&:mask).all? { |mask| mask == read_execute }.should be_true
+    end
+
+    it "changes the sid for all aces that were assigned to the old owner" do
+      sd = winsec.get_security_descriptor(path)
+      sd.owner.should_not == sids[:guest]
+
+      sd.dacl.allow(sd.owner, read_execute)
+      sd.dacl.allow(sd.owner, synchronize)
+
+      sd.owner = sids[:guest]
+      winsec.set_security_descriptor(path, sd)
+
+      dacl = winsec.get_security_descriptor(path).dacl
+      aces = dacl.find_all { |ace| ace.sid == sids[:guest] }
+      # only non-inherited aces will be reassigned to guest, so
+      # make sure we find at least the two we added
+      aces.size.should >= 2
+    end
+
+    it "preserves INHERIT_ONLY_ACEs" do
+      # inherit only aces can only be set on directories
+      dir = tmpdir('inheritonlyace')
+
+      inherit_flags = Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE |
+        Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE |
+        Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
+
+      sd = winsec.get_security_descriptor(dir)
+      sd.dacl.allow(sd.owner, Windows::File::FILE_ALL_ACCESS, inherit_flags)
+      winsec.set_security_descriptor(dir, sd)
+
+      sd = winsec.get_security_descriptor(dir)
+
+      winsec.set_owner(sids[:guest], dir)
+
+      sd = winsec.get_security_descriptor(dir)
+      sd.dacl.find do |ace|
+        ace.sid == sids[:guest] && ace.inherit_only?
+      end.should_not be_nil
+    end
+
+    context "when managing mode" do
+      it "removes aces for sids that are neither the owner nor group" do
+        # add a guest ace, it's never owner or group
+        sd = winsec.get_security_descriptor(path)
+        sd.dacl.allow(sids[:guest], read_execute)
+        winsec.set_security_descriptor(path, sd)
+
+        # setting the mode, it should remove extra aces
+        winsec.set_mode(0770, path)
+
+        # make sure it's gone
+        dacl = winsec.get_security_descriptor(path).dacl
+        aces = dacl.find_all { |ace| ace.sid == sids[:guest] }
+        aces.should be_empty
       end
     end
   end

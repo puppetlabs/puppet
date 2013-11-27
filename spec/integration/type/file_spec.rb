@@ -1009,8 +1009,8 @@ describe Puppet::Type.type(:file) do
         aces.should_not be_empty
 
         aces.each do |ace|
-          ace[:mask].should == Windows::File::FILE_ALL_ACCESS
-          (ace[:flags] & inherited_ace).should_not == inherited_ace
+          ace.mask.should == Windows::File::FILE_ALL_ACCESS
+          (ace.flags & inherited_ace).should_not == inherited_ace
         end
       end
 
@@ -1025,8 +1025,8 @@ describe Puppet::Type.type(:file) do
         aces.should_not be_empty
 
         aces.any? do |ace|
-          ace[:mask] == Windows::File::FILE_ALL_ACCESS &&
-            (ace[:flags] & inherited_ace) == inherited_ace
+          ace.mask == Windows::File::FILE_ALL_ACCESS &&
+            (ace.flags & inherited_ace) == inherited_ace
         end.should be_true
       end
 
@@ -1061,6 +1061,7 @@ describe Puppet::Type.type(:file) do
             :guest => Puppet::Util::Windows::Security.name_to_sid("Guest"),
             :users => Win32::Security::SID::BuiltinUsers,
             :power_users => Win32::Security::SID::PowerUsers,
+            :none => Win32::Security::SID::Nobody
           }
         end
 
@@ -1075,8 +1076,33 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource @file
           end
 
+          describe "when source permissions are ignored" do
+            before :each do
+              @file[:source_permissions] = :ignore
+            end
+
+            it "preserves the inherited SYSTEM ACE" do
+              catalog.apply
+
+              expects_at_least_one_inherited_system_ace_grants_full_access(path)
+            end
+          end
+
           describe "when permissions are insync?" do
-            it "preserves inherited SYSTEM ACEs (needs access to SecurityDescriptor)"
+            it "preserves the explicit SYSTEM ACE" do
+              FileUtils.touch(path)
+
+              sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+              sd.protect = true
+              sd.owner = @sids[:none]
+              sd.group = @sids[:none]
+              Puppet::Util::Windows::Security.set_security_descriptor(source, sd)
+              Puppet::Util::Windows::Security.set_security_descriptor(path, sd)
+
+              catalog.apply
+
+              expects_system_granted_full_access_explicitly(path)
+            end
           end
 
           describe "when permissions are not insync?" do
@@ -1116,17 +1142,16 @@ describe Puppet::Type.type(:file) do
               system_aces.should_not be_empty
 
               system_aces.each do |ace|
-                ace[:mask].should == Windows::File::FILE_GENERIC_READ
+                ace.mask.should == Windows::File::FILE_GENERIC_READ
               end
             end
 
-            it "should restore SYSTEM permission to FULL access when the group is later changed" do
+            it "prepends SYSTEM ace when changing group from system to power users" do
               @file[:group] = @sids[:power_users]
               catalog.apply
 
               system_aces = get_aces_for_path_by_sid(path, @sids[:system])
-              system_aces.should_not be_empty
-              system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+              system_aces.size.should == 1
             end
           end
         end
@@ -1140,14 +1165,43 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource @directory
           end
 
+          describe "when source permissions are ignored" do
+            before :each do
+              @directory[:source_permissions] = :ignore
+            end
+
+            it "preserves the inherited SYSTEM ACE" do
+              catalog.apply
+
+              expects_at_least_one_inherited_system_ace_grants_full_access(dir)
+            end
+          end
+
           describe "when permissions are insync?" do
-            it "preserves inherited SYSTEM ACEs (needs access to SecurityDescriptor)"
+            it "preserves the explicit SYSTEM ACE" do
+              Dir.mkdir(dir)
+
+              source_dir = tmpdir('source_dir')
+              @directory[:source] = source_dir
+
+              sd = Puppet::Util::Windows::Security.get_security_descriptor(source_dir)
+              sd.protect = true
+              sd.owner = @sids[:none]
+              sd.group = @sids[:none]
+              Puppet::Util::Windows::Security.set_security_descriptor(source_dir, sd)
+              Puppet::Util::Windows::Security.set_security_descriptor(dir, sd)
+
+              catalog.apply
+
+              expects_system_granted_full_access_explicitly(dir)
+            end
           end
 
           describe "when permissions are not insync?" do
             before :each do
               @directory[:owner] = 'None'
               @directory[:group] = 'None'
+              @directory[:mode] = 0444
             end
 
             it "replaces inherited SYSTEM ACEs with an uninherited one for an existing directory" do
@@ -1168,8 +1222,8 @@ describe Puppet::Type.type(:file) do
 
             describe "created with SYSTEM as the group" do
               before :each do
-                @directory[:group] = @sids[:system]
                 @directory[:owner] = @sids[:users]
+                @directory[:group] = @sids[:system]
                 @directory[:mode] = 0644
 
                 catalog.apply
@@ -1181,17 +1235,16 @@ describe Puppet::Type.type(:file) do
 
                 system_aces.each do |ace|
                   # unlike files, Puppet sets execute bit on directories that are readable
-                  ace[:mask].should == Windows::File::FILE_GENERIC_READ | Windows::File::FILE_GENERIC_EXECUTE
+                  ace.mask.should == Windows::File::FILE_GENERIC_READ | Windows::File::FILE_GENERIC_EXECUTE
                 end
               end
 
-              it "should restore SYSTEM permission to FULL access when the group is later changed" do
+              it "prepends SYSTEM ace when changing group from system to power users" do
                 @directory[:group] = @sids[:power_users]
                 catalog.apply
 
                 system_aces = get_aces_for_path_by_sid(dir, @sids[:system])
-                system_aces.should_not be_empty
-                system_aces.each { |ace| ace[:mask].should == Windows::File::FILE_ALL_ACCESS }
+                system_aces.size.should == 1
               end
             end
           end
