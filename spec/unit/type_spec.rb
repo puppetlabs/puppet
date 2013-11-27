@@ -347,6 +347,17 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+
+  describe "when defining a parent on a newtype" do
+    it "prints a deprecation message" do
+      Puppet.expects(:deprecation_warning)
+      type = Puppet::Type.newtype(:test_with_parent, :parent => Puppet::Type) do
+        newparam(:name) do end
+      end
+    end
+  end
+
+
   describe "when initializing" do
     describe "and passed a Puppet::Resource instance" do
       it "should set its title to the title of the resource if the resource type is equal to the current type" do
