@@ -8,6 +8,9 @@
 # @see http://msdn.microsoft.com/en-us/library/windows/desktop/aa379563(v=vs.85).aspx
 # @api private
 class Puppet::Util::Windows::SecurityDescriptor
+  require 'puppet/util/windows/security'
+  include Puppet::Util::Windows::SID
+
   attr_reader :owner, :group, :dacl
   attr_accessor :protect
 
@@ -46,5 +49,14 @@ class Puppet::Util::Windows::SecurityDescriptor
       @dacl.reassign!(@group, new_group)
       @group = new_group
     end
+  end
+
+  def inspect
+    str = sid_to_name(owner)
+    str << "\n"
+    str << sid_to_name(group)
+    str << "\n"
+    str << @dacl.inspect
+    str
   end
 end

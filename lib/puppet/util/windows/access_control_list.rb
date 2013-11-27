@@ -79,4 +79,12 @@ class Puppet::Util::Windows::AccessControlList
 
     @aces = new_aces
   end
+
+  def inspect
+    str = ""
+    @aces.each do |ace|
+      str << "  #{ace.inspect}\n"
+    end
+    str
+  end
 end
