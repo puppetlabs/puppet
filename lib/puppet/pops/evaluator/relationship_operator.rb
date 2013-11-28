@@ -50,7 +50,7 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   # A string must be a type reference in string format
   # @api private
   def transform_String(o, scope)
-    assert_catalog_type(@type_parser.parse(o.value))
+    assert_catalog_type(@type_parser.parse(o), scope)
   end
 
   # A qualified name is short hand for a class with this name
@@ -63,6 +63,16 @@ class Puppet::Pops::Evaluator::RelationshipOperator
   # @api private
   def transform_PAbstractType(o, scope)
     assert_catalog_type(o, scope)
+  end
+
+  # This transforms a 3x Collector (the result of evaluating a 3x AST::Collection).
+  # It is passed through verbatim since it is evaluated late by the compiler. At the point
+  # where the relationship is evaluated, it is simply recorded with the compiler for later evaluation.
+  # If one of the sides of the relationship is a Collector it is evaluated before the actual
+  # relationship is formed. (All of this happens at a later point in time.
+  #
+  def transform_Collector(o, scope)
+    o
   end
 
   # Asserts (and returns) the type if it is a PCatalogEntryType
@@ -110,9 +120,12 @@ class Puppet::Pops::Evaluator::RelationshipOperator
       # since inference needs to visit each object each time, and this is what the transformation does anyway).
       #
       # real is [left, right], and both the left and right may be a single value or an array. In each case all content
-      # should be flattened, and then transformed to a type.
+      # should be flattened, and then transformed to a type. left or right may also be a value that is transformed
+      # into an array, and thus the resulting left and right must be flattened individually
       #
       real = left_right_evaluated.collect {|x| [x].flatten.collect {|x| transform(x, scope) }}
+      real[0].flatten!
+      real[1].flatten!
 
       # reverse order if operator is Right to Left
       source, target = reverse_operator?(relationship_expression) ? real.reverse : real

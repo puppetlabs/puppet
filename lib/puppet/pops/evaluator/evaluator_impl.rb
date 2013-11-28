@@ -593,12 +593,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     # below carries forward.
     #
     collect_3x = Puppet::Pops::Model::AstTransformer.new().transform(o)
-    collect_3x.evaluate(scope)
-    # the 3x returns an instance of Collector (but it is only registered with the compiler at this
-    # point and does not contain any valuable information (like the result, count of the result etc.)
-    # Ensure that this object does not leak to the Puppet Program being evaluated.
-    #
-    nil
+    collected = collect_3x.evaluate(scope)
+    # the 3x returns an instance of Parser::Collector (but it is only registered with the compiler at this
+    # point and does not contain any valuable information (like the result)
+    # Dilemma: If this object is returned, it is a first class value in the Puppet Language and we
+    # need to be able to perform operations on it. We can forbid it from leaking by making CollectExpression
+    # a non R-value. This makes it possible for the evaluator logic to make use of the Collector.
+    collected
   end
 
   def eval_ParenthesizedExpression(o, scope)

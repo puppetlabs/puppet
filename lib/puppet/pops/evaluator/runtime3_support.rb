@@ -139,10 +139,26 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # TODO: logic that creates a PCatalogEntryType should resolve it to ensure it is loaded (to the best of known_resource_types knowledge).
     # If this is not done, the order in which things are done may be different? OTOH, it probably works anyway :-)
     #
-    type, title = catalog_type_to_split_type_title(source)
-    source_resource = Puppet::Resource.new(type, title)
-    type, title = catalog_type_to_split_type_title(target)
-    target_resource = Puppet::Resource.new(type, title)
+    # And if that is not enough, a source/target may be a Collector (a baked query that will be evaluated by the
+    # compiler - it is simply passed through here for processing by the compiler at the right time).
+    #
+    if source.is_a?(Puppet::Parser::Collector)
+      # use verbatim - behavior defined by 3x
+      source_resource = source
+    else
+      # transform into the wonderful String representation in 3x
+      type, title = catalog_type_to_split_type_title(source)
+      source_resource = Puppet::Resource.new(type, title)
+    end
+    if target.is_a?(Puppet::Parser::Collector)
+      # use verbatim - behavior defined by 3x
+      target_resource = target
+    else
+      # transform into the wonderful String representation in 3x
+      type, title = catalog_type_to_split_type_title(target)
+      target_resource = Puppet::Resource.new(type, title)
+    end
+    # Add the relationship to the compiler for later evaluation.
     scope.compiler.add_relationship(Puppet::Parser::Relationship.new(source_resource, target_resource, relationship_type))
   end
 
