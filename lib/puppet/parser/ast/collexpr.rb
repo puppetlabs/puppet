@@ -45,7 +45,6 @@ class CollExpr < AST::Branch
           if resource[match1].is_a?(Array)
             resource[match1].include?(match2)
           else
-            require 'debugger'; debugger
             resource[match1] == match2
           end
         end
