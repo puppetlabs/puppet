@@ -230,7 +230,6 @@ describe "Puppet::Parser::Compiler" do
       end
 
       it "should create relationships using collection expressions" do
-        require 'debugger'; debugger
         code << "File <| mode == 0644 |> -> File <| mode == 0755 |>"
 
         expected_relationships.concat [
