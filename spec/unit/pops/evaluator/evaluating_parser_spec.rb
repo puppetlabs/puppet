@@ -214,7 +214,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "666 =~ /6/"    => :error,
       "[a] =~ /a/"    => :error,
       "{a=>1} =~ /a/" => :error,
-      "/a/ =~ /a/"    => :error,
+       "/a/ =~ /a/"    => :error,
       "Array =~ /A/"  => :error,
     }.each do |source, result|
         it "should parse and raise error for '#{source}'" do

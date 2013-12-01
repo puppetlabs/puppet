@@ -71,6 +71,34 @@ class Puppet::Pops::Types::TypeCalculator
   Types = Puppet::Pops::Types
   TheInfinity = 1.0 / 0.0 # because the Infinity symbol is not defined
 
+  def self.assignable?(t1, t2)
+    instance.assignable?(t1,t2)
+  end
+
+  def self.string(t)
+    instance.string(t)
+  end
+
+  def self.infer(o)
+    instance.infer(o)
+  end
+
+  def self.debug_string(t)
+    instance.debug_string(t)
+  end
+
+  def self.enumerable(t)
+    instance.enumerable(t)
+  end
+
+  def self.instance()
+    @tc_instance ||= new
+  end
+
+  def self.extract_type_and_title(t)
+    instance.extract_type_and_title(t)
+  end
+
   # @api public
   #
   def initialize
@@ -79,6 +107,7 @@ class Puppet::Pops::Types::TypeCalculator
     @@string_visitor ||= Puppet::Pops::Visitor.new(nil,"string",0,0)
     @@inspect_visitor ||= Puppet::Pops::Visitor.new(nil,"debug_string",0,0)
     @@enumerable_visitor ||= Puppet::Pops::Visitor.new(nil,"enumerable",0,0)
+    @@extract_visitor ||= Puppet::Pops::Visitor.new(nil,"extract",0,0)
 
     da = Types::PArrayType.new()
     da.element_type = Types::PDataType.new()
@@ -145,13 +174,17 @@ class Puppet::Pops::Types::TypeCalculator
     @@assignable_visitor.visit_this_1(self, t, t2)
  end
 
- # Returns an enumerable if the t represents something that can be iterated
- def enumerable(t)
-   @@enumerable_visitor.visit_this_0(self, t)
- end
+  # Returns an enumerable if the t represents something that can be iterated
+  def enumerable(t)
+    @@enumerable_visitor.visit_this_0(self, t)
+  end
+
+  def extract_type_and_title(t)
+    @@extract_visitor.visit_this_0(self, t)
+  end
 
   # Answers 'what is the Puppet Type corresponding to the given Ruby class'
- # @param c [Class] the class for which a puppet type is wanted
+  # @param c [Class] the class for which a puppet type is wanted
   # @api public
   #
   def type(c)
@@ -831,6 +864,19 @@ class Puppet::Pops::Types::TypeCalculator
     # Not enumerable if representing an infinite range
     return nil if t.size == TheInfinity
     t
+  end
+
+  # @api private
+  def extract_Object(o)
+    nil
+  end
+
+  def extract_PResourceType(t)
+    [t.type_name, t.title]
+  end
+
+  def extract_PHostClassType(t)
+    ['class', t.class_name]
   end
 
   private

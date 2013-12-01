@@ -50,13 +50,18 @@ class Puppet::Pops::Parser::EvaluatingParser
     ast.safeevaluate(scope)
   end
 
-  def acceptor()
-    @acceptor ||= Puppet::Pops::Validation::Acceptor.new
-    @acceptor
+  def validate(parse_result)
+    resulting_acceptor = acceptor()
+    validator(resulting_acceptor).validate(parse_result)
+    resulting_acceptor
   end
 
-  def validator()
-    @validator ||= Puppet::Pops::Validation::ValidatorFactory_3_1.new().validator(acceptor)
+  def acceptor()
+    Puppet::Pops::Validation::Acceptor.new
+  end
+
+  def validator(acceptor)
+    Puppet::Pops::Validation::ValidatorFactory_3_1.new().validator(acceptor)
   end
 
   def assert_and_report(parse_result)
@@ -65,19 +70,19 @@ class Puppet::Pops::Parser::EvaluatingParser
     unless Puppet::Pops::Adapters::OriginAdapter.get(parse_result.model)
       Puppet::Pops::Adapters::OriginAdapter.adapt(parse_result.model).origin = @file_source
     end
-    validator.validate(parse_result)
+    validation_result = validate(parse_result)
 
     max_errors = Puppet[:max_errors]
     max_warnings = Puppet[:max_warnings] + 1
     max_deprecations = Puppet[:max_deprecations] + 1
 
     # If there are warnings output them
-    warnings = acceptor.warnings
+    warnings = validation_result.warnings
     if warnings.size > 0
       formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
       emitted_w = 0
       emitted_dw = 0
-      acceptor.warnings.each {|w|
+      validation_result.warnings.each {|w|
         if w.severity == :deprecation
           # Do *not* call Puppet.deprecation_warning it is for internal deprecation, not
           # deprecation of constructs in manifests! (It is not designed for that purpose even if
@@ -94,7 +99,7 @@ class Puppet::Pops::Parser::EvaluatingParser
     end
 
     # If there were errors, report the first found. Use a puppet style formatter.
-    errors = acceptor.errors
+    errors = validation_result.errors
     if errors.size > 0
       formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
       if errors.size == 1 || max_errors <= 1
@@ -172,8 +177,8 @@ class Puppet::Pops::Parser::EvaluatingParser
       @@evaluator.evaluate(model, scope)
     end
 
-    def validator()
-      @validator ||= Puppet::Pops::Validation::ValidatorFactory_4_0.new().validator(acceptor)
+    def validator(acceptor)
+      Puppet::Pops::Validation::ValidatorFactory_4_0.new().validator(acceptor)
     end
 
   end

@@ -46,11 +46,11 @@ class Puppet::Pops::Parser::Parser
     [namespace, name].join("::").sub(/^::/, '')
   end
 
-  # Reinitializes variables (i.e. creates a new lexer instance
-  #
-  def clear
-    initvars
-  end
+#  # Reinitializes variables (i.e. creates a new lexer instance
+#  #
+#  def clear
+#    initvars
+#  end
 
   # Raises a Parse error.
   def error(value, message, options = {})
@@ -78,17 +78,16 @@ class Puppet::Pops::Parser::Parser
     # and there is no syntax that requires knowing if something referenced exists, it is safe
     # to assume that no environment is needed when parsing. (All that comes later).
     #
-    initvars
-  end
-
-  # Initializes the parser support by creating a new instance of {Puppet::Pops::Parser::Lexer}
-  # @return [void]
-  #
-  def initvars
     @lexer = Puppet::Pops::Parser::Lexer2.new
     @namestack = []
     @definitions = []
   end
+
+#  # Initializes the parser support by creating a new instance of {Puppet::Pops::Parser::Lexer}
+#  # @return [void]
+#  #
+#  def initvars
+#  end
 
   # This is a callback from the generated grammar (when an error occurs while parsing)
   # TODO Picks up origin information from the lexer, probably needs this from the caller instead
@@ -216,6 +215,8 @@ class Puppet::Pops::Parser::Parser
     return main
   ensure
     @lexer.clear
+    @namestack = []
+    @definitions = []
   end
 
 end

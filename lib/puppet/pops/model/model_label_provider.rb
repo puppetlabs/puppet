@@ -71,6 +71,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_Hash o                        ; "Hash"                              end
   def label_QualifiedName o               ; "Name"                              end
   def label_QualifiedReference o          ; "Type Name"                         end
+  def label_PAbstractType o               ; "#{Puppet::Pops::Types::TypeCalculator.string(o)} Type" end
 
   # TODO: Could use the TypeFactory to infer and output more detailed type information instead of
   # just printing Object, Hash, Array, etc.

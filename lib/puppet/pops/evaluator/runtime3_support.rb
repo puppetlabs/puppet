@@ -1,3 +1,8 @@
+# A module with bindings between the new evaluator and the 3x runtime.
+# The intention is to separate all calls into scope, compiler, resource, etc. in this module
+# to make it easier to later refactor the evaluator for better implementations of the 3x classes.
+#
+# @api private
 module Puppet::Pops::Evaluator::Runtime3Support
   # Fails the evaluation of _semantic_ with a given issue.
   #
@@ -200,7 +205,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   def create_resource_parameter(o, scope, name, value, operator)
     Puppet::Parser::Resource::Param.new(
       :name   => name,
-      :value  => value,
+      :value  => convert(value, scope), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => -1, :file => 'TODO:Get file',
       :add    => operator == :'+>'
     )
@@ -321,6 +326,58 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # @param x [Object] the object to test if it is instance of TrueClass or FalseClass
   def is_boolean? x
     x.is_a?(TrueClass) || x.is_a?(FalseClass)
+  end
+
+  def initialize
+    @@convert_visitor   ||= Puppet::Pops::Visitor.new(self, "convert", 1, 1)
+  end
+
+  # Converts 4x supported values to 3x values. This is required because
+  # resources and other objects do not know about the new type system, and does not support
+  # regular expressions. Unfortunately this has to be done for array and hash as well.
+  # A complication is that catalog types needs to be resolved against the scope.
+  #
+  def convert(o, scope)
+    @@convert_visitor.visit_this_1(self, o, scope)
+  end
+
+  def convert_Object(o, scope)
+    o
+  end
+
+  def convert_Array(o, scope)
+    o.map {|x| convert(x, scope) }
+  end
+
+  def convert_Hash(o, scope)
+    result = {}
+    o.each {|k,v| result[convert(k, scope)] = convert(v, scope) }
+    result
+  end
+
+  def convert_Regexp(o, scope)
+    # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
+    # source form
+    o.inspect
+  end
+
+  def convert_PAbstractType(o, scope)
+    # Convert all other types to their string forms
+    o.to_s
+  end
+
+  def convert_PResourceType(o,scope)
+    # Needs conversion by calling scope to resolve the name and possibly return a different name
+    # Resolution can only be called with an array, and returns an array. Here there is only one name
+    type, titles = scope.resolve_type_and_titles(o.type_name, [o.title])
+    Puppet::Resource.new(type, titles[0])
+  end
+
+  def convert_PHostClassType(o, scope)
+    # Needs conversion by calling scope to resolve the name and possibly return a different name
+    # Resolution can only be called with an array, and returns an array. Here there is only one name
+    type, titles = scope.resolve_type_and_titles('class', [o.class_name])
+    Puppet::Resource.new(type, titles[0])
   end
 
   private

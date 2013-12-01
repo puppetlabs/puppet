@@ -960,6 +960,54 @@ describe 'The type calculator' do
     end
   end
 
+  context "when asking for an enumerable " do
+    it "should produce an enumerable for an Integer range that is not infinite" do
+      t = Puppet::Pops::Types::PIntegerType.new()
+      t.from = 1
+      t.to = 10
+      calculator.enumerable(t).respond_to?(:each).should == true
+    end
+
+    it "should not produce an enumerable for an Integer range that has an infinite side" do
+      t = Puppet::Pops::Types::PIntegerType.new()
+      t.from = nil
+      t.to = 10
+      calculator.enumerable(t).should == nil
+
+      t = Puppet::Pops::Types::PIntegerType.new()
+      t.from = 1
+      t.to = nil
+      calculator.enumerable(t).should == nil
+    end
+
+    it "all but Integer range are not enumerable" do
+      [Object, Numeric, Float, String, Regexp, Array, Hash].each do |t|
+        calculator.enumerable(calculator.type(t)).should == nil
+      end
+    end
+  end
+
+  context "when supporting 3x it should be possible to extract type & title" do
+    it "from a resource" do
+      t = Puppet::Pops::Types::PResourceType.new()
+      t.type_name = 'File'
+      t.title = '/tmp/foo'
+      calculator.extract_type_and_title(t).should == ['File', '/tmp/foo']
+    end
+
+    it "from a class" do
+      t = Puppet::Pops::Types::PHostClassType.new()
+      t.class_name = 'peekaboo'
+      calculator.extract_type_and_title(t).should == ['class', 'peekaboo']
+    end
+
+    it "but not from anything else" do
+      [Object, Numeric, Integer, Fixnum, Bignum, Float, String, Regexp, Array, Hash].each do |t|
+        calculator.extract_type_and_title(calculator.type(t)).should == nil
+      end
+    end
+  end
+
   matcher :be_assignable_to do |type|
     calc = Puppet::Pops::Types::TypeCalculator.new
 

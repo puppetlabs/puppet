@@ -33,6 +33,7 @@ class Puppet::Parser::AST::PopsBridge
     def each
       yield self
     end
+
     def sequence_with(other)
       if value.nil?
         # This happens when testing and not having a complete setup

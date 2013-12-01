@@ -361,6 +361,10 @@ module Puppet::Pops::Issues
     "First argument to Resource[] must be a resource type or a string. Got #{actual}."
   end
 
+  ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
+    "Illegal Class name in class reference. #{label.a_an_uc(name)} cannot be used where a String is expected"
+  end
+
   NOT_NUMERIC = issue :NOT_NUMERIC, :value do
     "The value '#{value}' cannot be converted to Numeric."
   end

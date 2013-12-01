@@ -49,6 +49,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
     @@compare_operator     ||= Puppet::Pops::Evaluator::CompareOperator.new()
     @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
+
+    # Initialize the runtime module
+    Puppet::Pops::Evaluator::Runtime3Support.instance_method(:initialize).bind(self).call()
   end
 
   # @api private
@@ -607,7 +610,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   # This evaluates classes, nodes and resource type definitions to nil, since 3x:
-  # instantiates them, and evaluates thwir parameters and body. This is acheived by
+  # instantiates them, and evaluates their parameters and body. This is achieved by
   # providing bridge AST classes in Puppet::Parser::AST::PopsBridge that bridges a
   # Pops Program and a Pops Expression.
   #

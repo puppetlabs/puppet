@@ -276,8 +276,18 @@ class Puppet::Pops::Evaluator::AccessOperator
       #
       fail(Puppet::Pops::Issues::ILLEGAL_TYPE_SPECIALIZATION, semantic.left_expr, {:kind => 'Class'})
     end
+    # The type argument may be a Resource Type - the Puppet Language allows a reference such as
+    # Class[Foo], and this is interpreted as Class[Resource[Foo]] - which is ok as long as the resource
+    # does not have a title. This should probably be deprecated.
+    #
     result = keys.collect do |c|
       ctype = Puppet::Pops::Types::PHostClassType.new()
+      if c.is_a?(Puppet::Pops::Types::PResourceType) && c.title.nil?
+        c = c.type_name
+      end
+      unless c.is_a?(String)
+        fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys, {:name => c})
+      end
       ctype.class_name = c
       ctype
     end
