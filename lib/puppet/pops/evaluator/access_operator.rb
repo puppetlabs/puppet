@@ -280,13 +280,16 @@ class Puppet::Pops::Evaluator::AccessOperator
     # Class[Foo], and this is interpreted as Class[Resource[Foo]] - which is ok as long as the resource
     # does not have a title. This should probably be deprecated.
     #
-    result = keys.collect do |c|
+    result = keys.each_with_index.map do |c, i|
       ctype = Puppet::Pops::Types::PHostClassType.new()
-      if c.is_a?(Puppet::Pops::Types::PResourceType) && c.title.nil?
-        c = c.type_name
+      if c.is_a?(Puppet::Pops::Types::PResourceType) && !c.type_name.nil? && c.title.nil?
+        c = c.type_name.downcase
       end
       unless c.is_a?(String)
-        fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys, {:name => c})
+        fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
+      end
+      if c !~ Puppet::Pops::Patterns::NAME
+        fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
       end
       ctype.class_name = c
       ctype

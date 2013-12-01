@@ -561,13 +561,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Resource[]"                 => :error,
       "File[]"                     => :error,
       "String[]"                   => :error,
-      "String[0]"                   => :error,
+      "String[0]"                  => :error,
       "1[]"                        => :error,
-      "1[0]"                        => :error,
+      "1[0]"                       => :error,
       "3.14[]"                     => :error,
-      "3.14[0]"                     => :error,
+      "3.14[0]"                    => :error,
       "/.*/[]"                     => :error,
-      "/.*/[0]"                     => :error,
+      "/.*/[0]"                    => :error,
       "$a=[1] $a[]"                => :error,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
@@ -593,6 +593,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         scope.known_resource_types.import_ast(ast, '')
         ast.code.safeevaluate(scope).should == 'chocolate'
       end
+
       # Resource default and override expressions and resource parameter access with []
       {
         "notify { id: message=>explicit} Notify[id][message]"                   => "explicit",
@@ -611,6 +612,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       }.each do |source, result|
         it "should parse '#{source}' and raise error matching #{result}" do
           expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(result)
+        end
+      end
+      context 'with errors' do
+        { "Class['fail-whale']" => /Illegal name/,
+        }.each do | source, error_pattern|
+          it "an error is flagged for '#{source}'" do
+            expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(error_pattern)
+          end
         end
       end
     end

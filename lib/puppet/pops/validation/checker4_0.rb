@@ -263,8 +263,10 @@ class Puppet::Pops::Validation::Checker4_0
     # Is this a valid qualified name?
     if o.value !~ Puppet::Pops::Patterns::CLASSREF
       acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.value})
-    elsif (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.value.include?('-')
-      acceptor.accept(Issues::NAME_WITH_HYPHEN, o, {:name => o.value})
+# hyphens are not allowed in CLASSREF pattern - if that is changed and it should be flagged instead, change
+# to include this logic:
+#    elsif (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.value.include?('-')
+#      acceptor.accept(Issues::NAME_WITH_HYPHEN, o, {:name => o.value})
     end
   end
 

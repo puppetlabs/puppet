@@ -24,12 +24,12 @@ module Puppet::Pops::Patterns
   # where each part must start with a capital letter A-Z.
   # This name includes hyphen, which may be illegal in some cases.
   #
-  CLASSREF_EXT = %r{\A((::){0,1}[A-Z][-\w]*)+\z}
+  CLASSREF_EXT = %r{\A((::){0,1}[A-Z][\w]*)+\z}
 
   # CLASSREF matches a class reference the way it is represented internally in the
   # model (i.e. in lower case).
   # This name includes hyphen, which may be illegal in some cases.
   #
-  CLASSREF = %r{\A((::){0,1}[a-z][-\w]*)+\z}
+  CLASSREF = %r{\A((::){0,1}[a-z][\w]*)+\z}
 
 end

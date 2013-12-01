@@ -187,6 +187,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(result[1]).to be_the_type(types.host_class('nginx'))
     end
 
+    it 'raises error if the name is not a valid name' do
+      expr = fqr('Class')['fail-whale']
+      expect { evaluate(expr) }.to raise_error(/Illegal name/)
+    end
+
     # Resource
     it 'produces a specific resource type from Resource[type]' do
       expr = fqr('Resource')[fqr('File')]

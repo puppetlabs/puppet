@@ -230,7 +230,7 @@ module Puppet::Pops::Issues
   end
 
   ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
-    "Illegal name. The given name #{name} does not conform to the naming rule \\A((::)?[a-z0-9]\w*)(::[a-z0-9]\w*)*\\z"
+    "Illegal name. The given name #{name} does not conform to the naming rule /^((::)?[a-z0-9]\w*)(::[a-z0-9]\w*)*$/"
   end
 
   # In case a model is constructed programmatically, it must create valid type references.
