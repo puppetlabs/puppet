@@ -500,8 +500,8 @@ class Puppet::Parser::Scope
   # shadow parent values. Ephemeral scopes for match results ($0 - $n) are not included.
   #
   def to_hash(recursive = true)
-    if recursive and parent
-      target = parent.to_hash(recursive)
+    if recursive and has_enclosing_scope?
+      target = enclosing_scope.to_hash(recursive)
     else
       target = Hash.new
     end
