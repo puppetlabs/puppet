@@ -10,15 +10,20 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # @param semantic [Puppet::Pops::ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
   # @param options [Hash] hash of optional named data elements for the given issue
   # @return [!] this method does not return
-  # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError)
+  # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
   def fail(issue, semantic, options={}, except=nil)
     diagnostic_producer.accept(issue, semantic, options, except)
   end
 
   # Binds the given variable name to the given value in the given scope.
-  # The reference object `o` is used for origin information.
-  # @todo yardoc this, and pass on origin
+  # The reference object `o` is intended to be used for origin information - the 3x scope implementation
+  # only makes use of location when there is an error. This is now handled by other mechanisms; first a check
+  # is made if a variable exists and an error is raised if attempting to change an immutable value. Errors
+  # in name, numeric variable assignment etc. have also been validated prior to this call. In the event the
+  # scope.setvar still raises an error, the general exception handling for evaluation of the assignment
+  # expression knows about its location. Because of this, there is no need to extract the location for each
+  # setting (extraction is somewhat expensive since 3x requires line instead of offset).
   #
   def set_variable(name, value, o, scope)
     scope.setvar(name, value)
@@ -55,8 +60,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def set_match_data(match_data, o, scope)
-    # TODO: Get file, line from semantic o and pass as options to scope since it tracks where these values
-    # came from. (No it does not! It simply uses them to report errors).
+    # See set_variable for rationale for not passing file and line to ephemeral_from.
     # NOTE: The 3x scope adds one ephemeral(match) to its internal stack per match that succeeds ! It never
     # clears anything. Thus a context that performs many matches will get very deep (there simply is no way to
     # clear the match variables without rolling back the ephemeral stack.)
@@ -148,6 +152,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     #
     # TODO: logic that creates a PCatalogEntryType should resolve it to ensure it is loaded (to the best of known_resource_types knowledge).
     # If this is not done, the order in which things are done may be different? OTOH, it probably works anyway :-)
+    # TODO: Not sure if references needs to be resolved via the scope?
     #
     # And if that is not enough, a source/target may be a Collector (a baked query that will be evaluated by the
     # compiler - it is simply passed through here for processing by the compiler at the right time).
@@ -172,8 +177,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     scope.compiler.add_relationship(Puppet::Parser::Relationship.new(source_resource, target_resource, relationship_type))
   end
 
-  # Box value `v` to numeric or fails.
-  # The given value `v` is converted to Numeric, and if that fails the operation
+  # Coerce value `v` to numeric or fails.
+  # The given value `v` is coerced to Numeric, and if that fails the operation
   # calls {#fail}.
   # @param v [Object] the value to convert
   # @param o [Object] originating instruction
@@ -219,17 +224,19 @@ module Puppet::Pops::Evaluator::Runtime3Support
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
 
     # TODO: Unknown resource causes creation of Resource to fail with ArgumentError, should give
-    # a proper Issue
+    # a proper Issue. Now the result is "Error while evaluating a Resource Statement" with the message
+    # from the raised exception. (It may be good enough).
 
-    # resolve in scope. TODO: Investigate what happens here - opportunity to optimize?
+    # resolve in scope.
     fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type_name, resource_titles)
 
     # Not 100% accurate as this is the resource expression location and each title is processed separately
     # The titles are however the result of evaluation and they have no location at this point (an array
-    # of positions for the source expressions are required for this to work.
+    # of positions for the source expressions are required for this to work).
     # TODO: Revisit and possible improve the accuracy.
     #
     file, line = extract_file_line(o)
+
     # Build a resource for each title
     resource_titles.map do |resource_title|
         resource = Puppet::Parser::Resource.new(
@@ -261,7 +268,9 @@ module Puppet::Pops::Evaluator::Runtime3Support
   def create_resource_defaults(o, scope, type_name, evaluated_parameters)
     # Note that name must be capitalized in this 3x call
     # The 3x impl creates a Resource instance with a bogus title and then asks the created resource
-    # for the type of the name
+    # for the type of the name.
+    # Note, locations are available per parameter.
+    #
     scope.define_settings(type_name.capitalize, evaluated_parameters)
   end
 
@@ -269,12 +278,19 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # evaluated parameters are applied to all.
   #
   def create_resource_overrides(o, scope, evaluated_resources, evaluated_parameters)
+    # Not 100% accurate as this is the resource expression location and each title is processed separately
+    # The titles are however the result of evaluation and they have no location at this point (an array
+    # of positions for the source expressions are required for this to work.
+    # TODO: Revisit and possible improve the accuracy.
+    #
+    file, line = extract_file_line(o)
+
     evaluated_resources.each do |r|
       resource = Puppet::Parser::Resource.new(
       r.type_name, r.title,
         :parameters => evaluated_parameters,
-        :file => 'TODO: file location',
-        :line => -1,
+        :file => file,
+        :line => line,
         # WTF is this? Which source is this? The file? The name of the context ?
         :source => scope.source,
         :scope => scope
