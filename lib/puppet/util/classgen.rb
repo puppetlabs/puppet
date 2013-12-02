@@ -1,3 +1,5 @@
+require 'puppet/util/methodhelper'
+
 module Puppet
   class ConstantAlreadyDefined < Error; end
   class SubclassAlreadyDefined < Error; end
@@ -67,7 +69,7 @@ module Puppet::Util::ClassGen
     options = symbolize_options(options)
     const = genconst_string(name, options)
     retval = false
-    if const_defined?(const)
+    if is_constant_defined?(const)
       remove_const(const)
       retval = true
     end

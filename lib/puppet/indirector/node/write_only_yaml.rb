@@ -17,7 +17,7 @@ class Puppet::Node::WriteOnlyYaml < Puppet::Indirector::Yaml
   # Overridden to always return nil. This is a write only terminus.
   # @param [Object] request Ignored.
   # @return [nil] This implementation always return nil'
-  # @api
+  # @api public
   def find(request)
     nil
   end
@@ -25,7 +25,7 @@ class Puppet::Node::WriteOnlyYaml < Puppet::Indirector::Yaml
   # Overridden to always return nil. This is a write only terminus.
   # @param [Object] request Ignored.
   # @return [nil] This implementation always return nil
-  # @api
+  # @api public
   def search(request)
     nil
   end

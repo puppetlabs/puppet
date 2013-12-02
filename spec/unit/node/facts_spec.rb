@@ -1,7 +1,16 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'matchers/json'
 require 'puppet/node/facts'
+
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  describe "catalog facts schema" do
+    it "should validate against the json meta-schema" do
+      JSON::Validator.validate!(JSON_META_SCHEMA, FACTS_SCHEMA)
+    end
+  end
+
+end
 
 describe Puppet::Node::Facts, "when indirecting" do
   before do
@@ -143,8 +152,16 @@ describe Puppet::Node::Facts, "when indirecting" do
         result = PSON.parse(facts.to_pson)
         result['name'].should == facts.name
         result['values'].should == facts.values.reject { |key, value| key.to_s =~ /_/ }
-        result['timestamp'].should == facts.timestamp.to_s
-        result['expiration'].should == facts.expiration.to_s
+        result['timestamp'].should == facts.timestamp.iso8601(9)
+        result['expiration'].should == facts.expiration.iso8601(9)
+      end
+
+      it "should generate valid facts data against the facts schema", :unless => Puppet.features.microsoft_windows? do
+        Time.stubs(:now).returns(@timestamp)
+        facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
+        facts.expiration = @expiration
+
+        JSON::Validator.validate!(FACTS_SCHEMA, facts.to_pson)
       end
 
       it "should not include nil values" do

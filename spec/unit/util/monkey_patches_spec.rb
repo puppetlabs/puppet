@@ -280,6 +280,47 @@ describe OpenSSL::SSL::SSLContext do
   end
 end
 
+
+describe OpenSSL::X509::Store, :if => Puppet::Util::Platform.windows? do
+  let(:store) { described_class.new }
+  let(:cert)  { OpenSSL::X509::Certificate.new(File.read(my_fixture('x509.pem'))) }
+
+  def with_root_certs(certs)
+    Puppet::Util::Windows::RootCerts.expects(:instance).returns(certs)
+  end
+
+  it "adds a root cert to the store" do
+    with_root_certs([cert])
+
+    store.set_default_paths
+  end
+
+  it "ignores duplicate root certs" do
+    with_root_certs([cert, cert])
+
+    store.expects(:add_cert).with(cert).once
+
+    store.set_default_paths
+  end
+
+  it "warns when adding a certificate that already exists" do
+    with_root_certs([cert])
+    store.add_cert(cert)
+
+    store.expects(:warn).with('Failed to add /DC=com/DC=microsoft/CN=Microsoft Root Certificate Authority')
+
+    store.set_default_paths
+  end
+
+  it "raises when adding an invalid certificate" do
+    with_root_certs(['notacert'])
+
+    expect {
+      store.set_default_paths
+    }.to raise_error(TypeError)
+  end
+end
+
 describe SecureRandom do
   it 'generates a properly formatted uuid' do
     SecureRandom.uuid.should =~ /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i

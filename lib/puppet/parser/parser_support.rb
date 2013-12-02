@@ -82,7 +82,7 @@ class Puppet::Parser::Parser
   def_delegators :@lexer, :file, :string=
 
   def file=(file)
-    unless FileTest.exist?(file)
+    unless Puppet::FileSystem::File.exist?(file)
       unless file =~ /\.pp$/
         file = file + ".pp"
       end

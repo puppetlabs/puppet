@@ -43,6 +43,18 @@ Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))
 end
 
+# various spec tests now use json schema validation
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  require 'json'
+  require 'json-schema'
+
+  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../api/schemas/json-meta-schema.json')))
+
+  # FACTS_SCHEMA is shared across two spec files so promote constant to here
+  FACTS_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../api/schemas/facts.json')))
+end
+
 RSpec.configure do |config|
   include PuppetSpec::Fixtures
 
@@ -146,6 +158,6 @@ RSpec.configure do |config|
     # Clean up switch of TMPDIR, don't know if needed after this, so needs to reset it
     # to old before removing it
     ENV['TMPDIR'] = oldtmpdir
-    FileUtils.rm_rf(tmpdir) if File.exists?(tmpdir) && tmpdir.to_s.start_with?(oldtmpdir)
+    FileUtils.rm_rf(tmpdir) if Puppet::FileSystem::File.exist?(tmpdir) && tmpdir.to_s.start_with?(oldtmpdir)
   end
 end

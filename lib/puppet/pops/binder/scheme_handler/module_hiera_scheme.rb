@@ -36,7 +36,7 @@ class Puppet::Pops::Binder::SchemeHandler::ModuleHieraScheme < Puppetx::Puppet::
     when '*'
       # create new URIs, one per module name that has a hiera.yaml file relative to its root
       composer.name_to_module.each_pair do | name, mod |
-        if File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera.yaml' ))
+        if Puppet::FileSystem::File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera.yaml' ))
           path_parts =["", name] + split_path[2..-1]
           result << URI.parse('module-hiera:'+File.join(path_parts))
         end
@@ -47,7 +47,7 @@ class Puppet::Pops::Binder::SchemeHandler::ModuleHieraScheme < Puppetx::Puppet::
       # If uri has query that is empty, or the text 'optional' skip this uri if it does not exist
       if query = uri.query()
         if query == '' || query == 'optional'
-          if File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera.yaml' ))
+          if Puppet::FileSystem::File.exist?(File.join(mod.path, split_path[ 2..-1 ], 'hiera.yaml' ))
             result << URI.parse('module-hiera:' + uri.path)
           end
         end

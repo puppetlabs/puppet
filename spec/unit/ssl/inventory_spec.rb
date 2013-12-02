@@ -20,7 +20,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
     before do
       Puppet[:cert_inventory] = cert_inventory
 
-      FileTest.stubs(:exist?).with(cert_inventory).returns true
+      Puppet::FileSystem::File.stubs(:exist?).with(cert_inventory).returns true
 
       @inventory = @class.new
 
@@ -28,86 +28,51 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
     end
 
     describe "and creating the inventory file" do
-      before do
-        Puppet.settings.stubs(:write)
-        FileTest.stubs(:exist?).with(cert_inventory).returns false
+      it "re-adds all of the existing certificates" do
+        inventory_file = StringIO.new
+        Puppet.settings.setting(:cert_inventory).stubs(:open).yields(inventory_file)
 
-        Puppet::SSL::Certificate.indirection.stubs(:search).returns []
-      end
-
-      it "should log that it is building a new inventory file" do
-        Puppet.expects(:notice)
-
-        @inventory.rebuild
-      end
-
-      it "should use the Settings to write to the file" do
-        Puppet.settings.expects(:write).with(:cert_inventory)
-
-        @inventory.rebuild
-      end
-
-      it "should add a header to the file" do
-        fh = mock 'filehandle'
-        Puppet.settings.stubs(:write).yields fh
-        fh.expects(:print).with { |str| str =~ /^#/ }
-
-        @inventory.rebuild
-      end
-
-      it "should add formatted information on all existing certificates" do
-        cert1 = mock 'cert1'
-        cert2 = mock 'cert2'
-
+        cert1 = Puppet::SSL::Certificate.new("cert1")
+        cert1.content = stub 'cert1',
+          :serial => 2,
+          :not_before => Time.now,
+          :not_after => Time.now,
+          :subject => "/CN=smocking"
+        cert2 = Puppet::SSL::Certificate.new("cert2")
+        cert2.content = stub 'cert2',
+          :serial => 3,
+          :not_before => Time.now,
+          :not_after => Time.now,
+          :subject => "/CN=mocking bird"
         Puppet::SSL::Certificate.indirection.expects(:search).with("*").returns [cert1, cert2]
 
-        @class.any_instance.expects(:add).with(cert1)
-        @class.any_instance.expects(:add).with(cert2)
-
         @inventory.rebuild
+
+        expect(inventory_file.string).to match(/\/CN=smocking/)
+        expect(inventory_file.string).to match(/\/CN=mocking bird/)
       end
     end
 
     describe "and adding a certificate" do
-      it "should build the inventory file if one does not exist" do
-        Puppet[:cert_inventory] = cert_inventory
-        Puppet.settings.stubs(:write)
-
-        FileTest.expects(:exist?).with(cert_inventory).returns false
-
-        @inventory.expects(:rebuild)
-
-        @inventory.add(@cert)
-      end
 
       it "should use the Settings to write to the file" do
-        Puppet.settings.expects(:write).with(:cert_inventory, "a")
-
-        @inventory.add(@cert)
-      end
-
-      it "should use the actual certificate if it was passed a Puppet certificate" do
-        cert = Puppet::SSL::Certificate.new("mycert")
-        cert.content = @cert
-
-        fh = stub 'filehandle', :print => nil
-        Puppet.settings.stubs(:write).yields fh
-
-        @inventory.expects(:format).with(@cert)
+        Puppet.settings.setting(:cert_inventory).expects(:open).with("a")
 
         @inventory.add(@cert)
       end
 
       it "should add formatted certificate information to the end of the file" do
-        fh = mock 'filehandle'
+        cert = Puppet::SSL::Certificate.new("mycert")
+        cert.content = @cert
 
-        Puppet.settings.stubs(:write).yields fh
+        fh = StringIO.new
+        Puppet.settings.setting(:cert_inventory).expects(:open).with("a").yields(fh)
 
         @inventory.expects(:format).with(@cert).returns "myformat"
 
-        fh.expects(:print).with("myformat")
-
         @inventory.add(@cert)
+
+        expect(fh.string).to eq("myformat")
       end
     end
 
@@ -152,7 +117,7 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
 
     describe "and finding a serial number" do
       it "should return nil if the inventory file is missing" do
-        FileTest.expects(:exist?).with(cert_inventory).returns false
+        Puppet::FileSystem::File.expects(:exist?).with(cert_inventory).returns false
         @inventory.serial(:whatever).should be_nil
       end
 

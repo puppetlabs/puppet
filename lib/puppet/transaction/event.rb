@@ -2,17 +2,18 @@ require 'puppet/transaction'
 require 'puppet/util/tagging'
 require 'puppet/util/logging'
 require 'puppet/util/methodhelper'
+require 'puppet/network/format_support'
 
 # A simple struct for storing what happens on the system.
 class Puppet::Transaction::Event
   include Puppet::Util::MethodHelper
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
+  include Puppet::Network::FormatSupport
 
   ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited, :invalidate_refreshes]
   YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time}.map(&:to_sym)
   attr_accessor *ATTRIBUTES
-  attr_writer :tags
   attr_accessor :time
   attr_reader :default_log_level
 
@@ -44,7 +45,7 @@ class Puppet::Transaction::Event
     @time = Time.parse(@time) if @time.is_a? String
   end
 
-  def to_pson
+  def to_data_hash
     {
       'audited' => @audited,
       'property' => @property,
@@ -55,7 +56,11 @@ class Puppet::Transaction::Event
       'name' => @name,
       'status' => @status,
       'time' => @time.iso8601(9),
-    }.to_pson
+    }
+  end
+
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   def property=(prop)

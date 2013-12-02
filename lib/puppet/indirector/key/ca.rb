@@ -9,4 +9,8 @@ class Puppet::SSL::Key::Ca < Puppet::Indirector::SslFile
   store_in :privatekeydir
 
   store_ca_at :cakey
+
+  def allow_remote_requests?
+    false
+  end
 end

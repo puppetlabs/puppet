@@ -128,7 +128,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     # Make sure the paths are fully qualified.
     path = File.expand_path(path)
 
-    return nil unless type == :directory or create_files? or File.exist?(path)
+    return nil unless type == :directory or create_files? or Puppet::FileSystem::File.exist?(path)
     return nil if path =~ /^\/dev/ or path =~ /^[A-Z]:\/dev/i
 
     resource = Puppet::Resource.new(:file, path)
@@ -178,8 +178,42 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     }
   end
 
+  # @api private
+  def exclusive_open(option = 'r', &block)
+    controlled_access do |mode|
+      file.exclusive_open(mode, option, &block)
+    end
+  end
+
+  # @api private
+  def open(option = 'r', &block)
+    controlled_access do |mode|
+      file.open(mode, option, &block)
+    end
+  end
+
 private
+  def file
+    Puppet::FileSystem::File.new(value)
+  end
+
   def unknown_value(parameter, value)
     raise SettingError, "The #{parameter} parameter for the setting '#{name}' must be either 'root' or 'service', not '#{value}'"
+  end
+
+  def controlled_access(&block)
+    chown = nil
+    if Puppet.features.root?
+      chown = [owner, group]
+    else
+      chown = [nil, nil]
+    end
+
+    Puppet::Util::SUIDManager.asuser(*chown) do
+      # Update the umask to make non-executable files
+      Puppet::Util.withumask(File.umask ^ 0111) do
+        yield mode ? mode.to_i : 0640
+      end
+    end
   end
 end

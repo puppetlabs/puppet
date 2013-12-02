@@ -9,7 +9,9 @@ describe Puppet::Configurer do
   describe "when downloading plugins" do
     it "should use the :pluginsignore setting, split on whitespace, for ignoring remote files" do
       resource = Puppet::Type.type(:notify).new :name => "yay"
-      Puppet::Type.type(:file).expects(:new).with { |args| args[:ignore] == Puppet[:pluginsignore].split(/\s+/) }.returns resource
+      Puppet::Type.type(:file).expects(:new).at_most(2).with do |args|
+        args[:ignore] == Puppet[:pluginsignore].split(/\s+/)
+      end.returns resource
 
       configurer = Puppet::Configurer.new
       configurer.stubs(:download_plugins?).returns true
@@ -59,7 +61,7 @@ describe Puppet::Configurer do
 
       file_mode = Puppet.features.microsoft_windows? ? '100644' : '100666'
 
-      File.stat(Puppet[:lastrunfile]).mode.to_s(8).should == file_mode
+      Puppet::FileSystem::File.new(Puppet[:lastrunfile]).stat.mode.to_s(8).should == file_mode
 
       summary = nil
       File.open(Puppet[:lastrunfile], "r") do |fd|

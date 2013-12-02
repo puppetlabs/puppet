@@ -47,7 +47,7 @@ describe Puppet::Util::Pidlock do
 
     it "should create a lock file" do
       @lock.lock
-      File.should be_exists(@lockfile)
+      Puppet::FileSystem::File.exist?(@lockfile).should be_true
     end
 
     it "should expose the lock file_path" do
@@ -74,7 +74,7 @@ describe Puppet::Util::Pidlock do
     it "should get rid of the lock file" do
       @lock.lock
       @lock.unlock
-      File.should_not be_exists(@lockfile)
+      Puppet::FileSystem::File.exist?(@lockfile).should be_false
     end
   end
 
@@ -106,12 +106,12 @@ describe Puppet::Util::Pidlock do
     describe "#lock" do
       it "should clear stale locks" do
         @lock.locked?
-        File.should_not be_exists(@lockfile)
+        Puppet::FileSystem::File.exist?(@lockfile).should be_false
       end
 
       it "should replace with new locks" do
         @lock.lock
-        File.should be_exists(@lockfile)
+        Puppet::FileSystem::File.exist?(@lockfile).should be_true
         @lock.lock_pid.should == 6789
         @lock.should be_mine
         @lock.should be_locked
@@ -125,7 +125,7 @@ describe Puppet::Util::Pidlock do
 
       it "should not remove the lock file" do
         @lock.unlock
-        File.should be_exists(@lockfile)
+        Puppet::FileSystem::File.exist?(@lockfile).should be_true
       end
     end
   end
@@ -170,7 +170,7 @@ describe Puppet::Util::Pidlock do
 
       it "should not remove the lock file" do
         @lock.unlock
-        File.should be_exists(@lockfile)
+        Puppet::FileSystem::File.exist?(@lockfile).should be_true
       end
 
       it "should still not be our lock" do

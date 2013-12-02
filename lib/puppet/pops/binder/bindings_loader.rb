@@ -35,7 +35,7 @@ class Puppet::Pops::Binder::BindingsLoader
   def self.loadable?(basedir, name)
     # note, "lib" is added by the autoloader
     #
-    paths_for_name(name).find {|p| File.exists?(File.join(basedir, "lib/puppet/bindings", p)+'.rb') }
+    paths_for_name(name).find {|p| Puppet::FileSystem::File.exist?(File.join(basedir, "lib/puppet/bindings", p)+'.rb') }
   end
 
   private

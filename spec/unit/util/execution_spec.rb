@@ -311,6 +311,16 @@ describe Puppet::Util::Execution do
 
           expect { Puppet::Util::Execution.execute('test command') }.to raise_error(RuntimeError)
         end
+
+        it "should return the correct exit status even when exit status is greater than 256" do
+          real_exit_status = 3010
+
+          Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
+          stub_process_wait(real_exit_status)
+          $CHILD_STATUS.stubs(:exitstatus).returns(real_exit_status % 256) # The exitstatus is changed to be mod 256 so that ruby can fit it into 8 bits.
+
+          Puppet::Util::Execution.execute('test command', :failonfail => false).exitstatus.should == real_exit_status
+        end
       end
     end
 
@@ -509,7 +519,7 @@ describe Puppet::Util::Execution do
         Tempfile.stubs(:new).returns(stdout)
         stdout.write("My expected command output")
 
-        Puppet::Util::Execution.execute('test command', :squelch => true).should == nil
+        Puppet::Util::Execution.execute('test command', :squelch => true).should == ''
       end
 
       it "should delete the file used for output if squelch is false" do
@@ -519,7 +529,7 @@ describe Puppet::Util::Execution do
 
         Puppet::Util::Execution.execute('test command')
 
-        File.should_not be_exist(path)
+        Puppet::FileSystem::File.exist?(path).should be_false
       end
 
       it "should not raise an error if the file is open" do
@@ -589,6 +599,20 @@ describe Puppet::Util::Execution do
       Puppet::Util::Execution.expects(:open).with('| echo hello 2>&1').returns('hello')
       $CHILD_STATUS.expects(:==).with(0).returns(true)
       Puppet::Util::Execution.execpipe('echo hello').should == 'hello'
+    end
+
+    it "should print meaningful debug message for string argument" do
+      Puppet::Util::Execution.expects(:debug).with("Executing 'echo hello'")
+      Puppet::Util::Execution.expects(:open).with('| echo hello 2>&1').returns('hello')
+      $CHILD_STATUS.expects(:==).with(0).returns(true)
+      Puppet::Util::Execution.execpipe('echo hello')
+    end
+
+    it "should print meaningful debug message for array argument" do
+      Puppet::Util::Execution.expects(:debug).with("Executing 'echo hello'")
+      Puppet::Util::Execution.expects(:open).with('| echo hello 2>&1').returns('hello')
+      $CHILD_STATUS.expects(:==).with(0).returns(true)
+      Puppet::Util::Execution.execpipe(['echo','hello'])
     end
 
     it "should execute an array by pasting together with spaces" do

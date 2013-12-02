@@ -8,6 +8,8 @@ describe Puppet::Type.type(:exec) do
     Puppet.features.stubs(:root?).returns(true)
 
     output = rest.delete(:output) || ''
+
+    output = Puppet::Util::Execution::ProcessOutput.new(output, exitstatus)
     tries  = rest[:tries] || 1
 
     args = {
@@ -21,14 +23,12 @@ describe Puppet::Type.type(:exec) do
     exec = Puppet::Type.type(:exec).new(args)
 
     status = stub "process", :exitstatus => exitstatus
-    Puppet::Util::SUIDManager.expects(:run_and_capture).times(tries).
+    Puppet::Util::Execution.expects(:execute).times(tries).
       with() { |*args|
         args[0] == command &&
-        args[1] == nil &&
-        args[2] == nil &&
-        args[3][:override_locale] == false &&
-        args[3].has_key?(:custom_environment)
-      } .returns([output, status])
+        args[1][:override_locale] == false &&
+        args[1].has_key?(:custom_environment)
+      }.returns(output)
 
     return exec
   end
@@ -61,7 +61,7 @@ describe Puppet::Type.type(:exec) do
     end
 
     describe "when execing" do
-      it "should use the 'run_and_capture' method to exec" do
+      it "should use the 'execute' method to exec" do
         exec_tester("true").refresh.should == :executed_command
       end
 
@@ -751,6 +751,13 @@ describe Puppet::Type.type(:exec) do
 
     it "should accept an absolute command with a path" do
       type.new(:command => abs, :path => path).must be
+    end
+  end
+  describe "when providing a umask" do
+    it "should fail if an invalid umask is used" do
+      resource = Puppet::Type.type(:exec).new :command => @command
+      expect { resource[:umask] = '0028'}.to raise_error(Puppet::ResourceError, /umask specification is invalid/)
+      expect { resource[:umask] = '28' }.to raise_error(Puppet::ResourceError, /umask specification is invalid/)
     end
   end
 end

@@ -6,20 +6,20 @@ require 'puppet/util/resource_template'
 describe Puppet::Util::ResourceTemplate do
   describe "when initializing" do
     it "should fail if the template does not exist" do
-      FileTest.expects(:exist?).with("/my/template").returns false
+      Puppet::FileSystem::File.expects(:exist?).with("/my/template").returns false
       lambda { Puppet::Util::ResourceTemplate.new("/my/template", mock('resource')) }.should raise_error(ArgumentError)
     end
 
     it "should not create the ERB template" do
       ERB.expects(:new).never
-      FileTest.expects(:exist?).with("/my/template").returns true
+      Puppet::FileSystem::File.expects(:exist?).with("/my/template").returns true
       Puppet::Util::ResourceTemplate.new("/my/template", mock('resource'))
     end
   end
 
   describe "when evaluating" do
     before do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       File.stubs(:read).returns "eh"
 
       @template = stub 'template', :result => nil

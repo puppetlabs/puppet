@@ -60,20 +60,20 @@ describe "transformation to Puppet AST for function calls" do
       astdump(parse("$a.foo")).should == "(call-method (. $a foo))"
     end
 
-    it "$a.foo {|| }" do
+    it "$a.foo ||{ }" do
       astdump(parse("$a.foo || { }")).should == "(call-method (. $a foo) (lambda ()))"
     end
 
-    it "$a.foo {|| []} # check transformation to block with empty array" do
-      astdump(parse("$a.foo || { []}")).should == "(call-method (. $a foo) (lambda (block ([]))))"
+    it "$a.foo ||{[]} # check transformation to block with empty array" do
+      astdump(parse("$a.foo || {[]}")).should == "(call-method (. $a foo) (lambda (block ([]))))"
     end
 
     it "$a.foo {|$x| }" do
-      astdump(parse("$a.foo {|$x| }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
+      astdump(parse("$a.foo |$x| { }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
     end
 
-    it "$a.foo {|$x| $b = $x}" do
-      astdump(parse("$a.foo {|$x| $b = $x}")).should ==
+    it "$a.foo |$x| { $b = $x}" do
+      astdump(parse("$a.foo |$x| { $b = $x}")).should ==
       "(call-method (. $a foo) (lambda (parameters x) (block (= $b $x))))"
     end
   end

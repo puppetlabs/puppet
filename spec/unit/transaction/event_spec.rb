@@ -15,14 +15,6 @@ end
 describe Puppet::Transaction::Event do
   include PuppetSpec::Files
 
-  [:previous_value, :desired_value, :property, :name, :message, :file, :line, :tags, :audited].each do |attr|
-    it "should support #{attr}" do
-      event = Puppet::Transaction::Event.new
-      event.send(attr.to_s + "=", "foo")
-      event.send(attr).should == "foo"
-    end
-  end
-
   it "should support resource" do
     event = Puppet::Transaction::Event.new
     event.resource = TestResource.new
@@ -101,7 +93,7 @@ describe Puppet::Transaction::Event do
     end
 
     it "should set the tags to the event tags" do
-      Puppet::Util::Log.expects(:new).with { |args| args[:tags] == %w{one two} }
+      Puppet::Util::Log.expects(:new).with { |args| args[:tags].to_a.should =~ %w{one two} }
       Puppet::Transaction::Event.new(:tags => %w{one two}).send_log
     end
 

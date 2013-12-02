@@ -59,8 +59,8 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
   end
 
   it "should find file content in files when node name expansions are used" do
-    FileTest.stubs(:exists?).returns true
-    FileTest.stubs(:exists?).with(Puppet[:fileserverconfig]).returns(true)
+    Puppet::FileSystem::File.stubs(:exist?).returns true
+    Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
 
     @path = tmpfile("file_server_testing")
 

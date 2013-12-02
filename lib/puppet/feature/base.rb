@@ -70,3 +70,19 @@ Puppet.features.add(:sqlite, :libs => ["sqlite3"])
 Puppet.features.add(:hiera, :libs => ["hiera"])
 
 Puppet.features.add(:minitar, :libs => ["archive/tar/minitar"])
+
+# We can manage symlinks
+Puppet.features.add(:manages_symlinks) do
+  if ! Puppet::Util::Platform.windows?
+    true
+  else
+    begin
+      require 'Win32API'
+      Win32API.new('kernel32', 'CreateSymbolicLink', 'SSL', 'B')
+      true
+    rescue LoadError => err
+      Puppet.debug("CreateSymbolicLink is not available")
+      false
+    end
+  end
+end

@@ -68,7 +68,7 @@ Puppet::Util::Log.newdesttype :file do
     # first make sure the directory exists
     # We can't just use 'Config.use' here, because they've
     # specified a "special" destination.
-    unless FileTest.exist?(File.dirname(path))
+    unless Puppet::FileSystem::File.exist?(File.dirname(path))
       FileUtils.mkdir_p(File.dirname(path), :mode => 0755)
       Puppet.info "Creating log directory #{File.dirname(path)}"
     end
@@ -92,6 +92,28 @@ Puppet::Util::Log.newdesttype :file do
     @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
 
     @file.flush if @autoflush
+  end
+end
+
+Puppet::Util::Log.newdesttype :logstash_event do
+  require 'time'
+
+  def format(msg)
+    # logstash_event format is documented at
+    # https://logstash.jira.com/browse/LOGSTASH-675
+
+    data = {}
+    data = msg.to_hash
+    data['version'] = 1
+    data['@timestamp'] = data['time']
+    data.delete('time')
+
+    data
+  end
+
+  def handle(msg)
+    message = format(msg)
+    $stdout.puts message.to_pson
   end
 end
 

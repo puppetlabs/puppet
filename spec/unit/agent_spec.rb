@@ -135,18 +135,6 @@ describe Puppet::Agent do
       @agent.run
     end
 
-    it "should use a mutex to restrict multi-threading" do
-      client = AgentTestClient.new
-      AgentTestClient.expects(:new).returns client
-
-      mutex = mock 'mutex'
-      @agent.expects(:sync).returns mutex
-
-      mutex.expects(:synchronize)
-      client.expects(:run).never # if it doesn't run, then we know our yield is what triggers it
-      @agent.run
-    end
-
     it "should use a filesystem lock to restrict multiple processes running the agent" do
       client = AgentTestClient.new
       AgentTestClient.expects(:new).returns client

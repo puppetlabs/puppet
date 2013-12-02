@@ -17,13 +17,8 @@ class Puppet::Parser::Compiler
   include Puppet::Resource::TypeCollectionHelper
 
   def self.compile(node)
-    # We get these from the environment and only cache them in a thread
-    # variable for the duration of the compilation.  If nothing else is using
-    # the thread, though, we can leave 'em hanging round with no ill effects,
-    # and this is safer than cleaning them at the end and assuming that will
-    # stick until the next entry to this function.
-    Thread.current[:known_resource_types] = nil
-    Thread.current[:env_module_directories] = nil
+    $known_resource_types = nil
+    $env_module_directories = nil
 
     # ...and we actually do the compile now we have caching ready.
     new(node).compile.to_resource
@@ -143,8 +138,27 @@ class Puppet::Parser::Compiler
   end
 
   # Evaluate all of the classes specified by the node.
+  # Classes with parameters are evaluated as if they were declared.
+  # Classes without parameters or with an empty set of parameters are evaluated
+  # as if they were included. This means classes with an empty set of
+  # parameters won't conflict even if the class has already been included.
   def evaluate_node_classes
-    evaluate_classes(@node.classes, @node_scope || topscope)
+    if @node.classes.is_a? Hash
+      classes_with_params, classes_without_params = @node.classes.partition {|name,params| params and !params.empty?}
+
+      # The results from Hash#partition are arrays of pairs rather than hashes,
+      # so we have to convert to the forms evaluate_classes expects (Hash, and
+      # Array of class names)
+      classes_with_params = Hash[classes_with_params]
+      classes_without_params.map!(&:first)
+    else
+      classes_with_params = {}
+      classes_without_params = @node.classes
+    end
+
+    evaluate_classes(classes_without_params, @node_scope || topscope)
+
+    evaluate_classes(classes_with_params, @node_scope || topscope)
   end
 
   # Evaluate each specified class in turn.  If there are any classes we can't
@@ -487,10 +501,12 @@ class Puppet::Parser::Compiler
     node.parameters.each do |param, value|
       @topscope[param.to_s] = value
     end
-
     # These might be nil.
     catalog.client_version = node.parameters["clientversion"]
     catalog.server_version = node.parameters["serverversion"]
+    if Puppet[:trusted_node_data]
+      @topscope.set_trusted(node.trusted_data)
+    end
   end
 
   def create_settings_scope

@@ -1,8 +1,11 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/parser/parser_factory'
+require 'puppet_spec/compiler'
 
 describe "Puppet::Parser::Compiler" do
+  include PuppetSpec::Compiler
+
   before :each do
     @node = Puppet::Node.new "testnode"
 
@@ -308,6 +311,93 @@ describe "Puppet::Parser::Compiler" do
 
         expected_relationships << ['a', 'b'] << ['d', 'c']
         expected_subscriptions << ['b', 'c'] << ['e', 'd']
+      end
+    end
+
+    context 'when working with the trusted data hash' do
+      context 'and have opted in to trusted_node_data' do
+        before :each do
+          Puppet[:trusted_node_data] = true
+        end
+
+        it 'should make $trusted available' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            notify { 'test': message => $trusted[data] }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == "value"
+        end
+
+        it 'should not allow assignment to $trusted' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          expect do
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+              $trusted = 'changed'
+              notify { 'test': message => $trusted == 'changed' }
+            MANIFEST
+            catalog.resource("Notify[test]")[:message].should == true
+          end.to raise_error(Puppet::Error, /Attempt to assign to a reserved variable name: 'trusted'/)
+        end
+
+        it 'should not allow addition to $trusted hash' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          expect do
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+              $trusted['extra'] = 'added'
+              notify { 'test': message => $trusted['extra'] == 'added' }
+            MANIFEST
+            catalog.resource("Notify[test]")[:message].should == true
+            # different errors depending on regular or future parser
+          end.to raise_error(Puppet::Error, /(can't modify frozen [hH]ash)|(Illegal attempt to assign)/)
+        end
+
+        it 'should not allow addition to $trusted hash via Ruby inline template' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          expect do
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+            $dummy = inline_template("<% @trusted['extra'] = 'added' %> lol")
+              notify { 'test': message => $trusted['extra'] == 'added' }
+            MANIFEST
+            catalog.resource("Notify[test]")[:message].should == true
+          end.to raise_error(Puppet::Error, /can't modify frozen [hH]ash/)
+        end
+      end
+
+      context 'and have not opted in to trusted_node_data' do
+        before :each do
+          Puppet[:trusted_node_data] = false
+        end
+
+        it 'should not make $trusted available' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            notify { 'test': message => $trusted == undef }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == true
+        end
+
+        it 'should allow assignment to $trusted' do
+          node = Puppet::Node.new("testing")
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            $trusted = 'changed'
+            notify { 'test': message => $trusted == 'changed' }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == true
+        end
       end
     end
   end

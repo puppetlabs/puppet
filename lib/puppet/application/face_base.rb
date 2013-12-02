@@ -240,7 +240,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   rescue SystemExit => detail
     status = detail.status
 
-  rescue Exception => detail
+  rescue => detail
     Puppet.log_exception(detail)
     Puppet.err "Try 'puppet help #{@face.name} #{@action.name}' for usage"
 

@@ -1,9 +1,10 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
+require 'puppet_spec/compiler'
 
 describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   it "should be Comparable" do
     a = Puppet::Type.type(:notify).new(:name => "a")
@@ -63,6 +64,28 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  it "can retrieve all set parameters" do
+    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present, :tag => 'foo')
+    params = resource.parameters_with_value
+    [:name, :provider, :ensure, :fstype, :pass, :dump, :target, :loglevel, :tag].each do |name|
+      params.should be_include(resource.parameter(name))
+    end
+  end
+
+  it "can not return any `nil` values when retrieving all set parameters" do
+    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present, :tag => 'foo')
+    params = resource.parameters_with_value
+    params.should_not be_include(nil)
+  end
+
+  it "can return an iterator for all set parameters" do
+    resource = Puppet::Type.type(:notify).new(:name=>'foo',:message=>'bar',:tag=>'baz',:require=> "File['foo']")
+    params = [:name, :message, :withpath, :loglevel, :tag, :require]
+    resource.eachparameter { |param|
+      params.should be_include(param.to_s.to_sym)
+    }
+  end
+
   it "should have a method for setting default values for resources" do
     Puppet::Type.type(:mount).new(:name => "foo").must respond_to(:set_default)
   end
@@ -109,6 +132,36 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     Puppet::Type.type(:mount).new(:name => "foo").version.should == 0
   end
 
+  it "reports the correct path even after path is used during setup of the type" do
+    Puppet::Type.newtype(:testing) do
+      newparam(:name) do
+        isnamevar
+        validate do |value|
+          path # forces the computation of the path
+        end
+      end
+    end
+
+    ral = compile_to_ral(<<-MANIFEST)
+      class something {
+        testing { something: }
+      }
+      include something
+    MANIFEST
+
+    ral.resource("Testing[something]").path.should == "/Stage[main]/Something/Testing[something]"
+  end
+
+  context "alias metaparam" do
+    it "creates a new name that can be used for resource references" do
+      ral = compile_to_ral(<<-MANIFEST)
+        notify { a: alias => c }
+      MANIFEST
+
+      expect(ral.resource("Notify[a]")).to eq(ral.resource("Notify[c]"))
+    end
+  end
+
   context "resource attributes" do
     let(:resource) {
       resource = Puppet::Type.type(:mount).new(:name => "foo")
@@ -123,7 +176,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should have tags" do
-      resource.tags.should == ["mount", "foo"]
+      expect(resource).to be_tagged("mount")
+      expect(resource).to be_tagged("foo")
     end
 
     it "should have a path" do
@@ -165,11 +219,17 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       @resource.event.default_log_level.should == :warning
     end
 
-    {:file => "/my/file", :line => 50, :tags => %{foo bar}}.each do |attr, value|
+    {:file => "/my/file", :line => 50}.each do |attr, value|
       it "should set the #{attr}" do
         @resource.stubs(attr).returns value
         @resource.event.send(attr).should == value
       end
+    end
+
+    it "should set the tags" do
+      @resource.tag("abc", "def")
+      @resource.event.should be_tagged("abc")
+      @resource.event.should be_tagged("def")
     end
 
     it "should allow specification of event attributes" do
@@ -470,6 +530,28 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  describe "when #finish is called on a type" do
+    let(:post_hook_type) do
+      Puppet::Type.newtype(:finish_test) do
+        newparam(:name) { isnamevar }
+
+        newparam(:post) do
+          def post_compile
+            raise "post_compile hook ran"
+          end
+        end
+      end
+    end
+
+    let(:post_hook_resource) do
+      post_hook_type.new(:name => 'foo',:post => 'fake_value')
+    end
+
+    it "should call #post_compile on parameters that implement it" do
+      expect { post_hook_resource.finish }.to raise_error(RuntimeError, "post_compile hook ran")
+    end
+  end
+
   it "should have a class method for converting a hash into a Puppet::Resource instance" do
     Puppet::Type.type(:mount).must respond_to(:hash2resource)
   end
@@ -588,7 +670,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       resource.should be_a Puppet::Resource
       resource[:fstype].should   == 15
       resource[:remounts].should == :true
-      resource.tags.should       =~ %w{foo bar baz mount}
+      resource.tags.should == Puppet::Util::TagSet.new(%w{foo bar baz mount})
     end
   end
 

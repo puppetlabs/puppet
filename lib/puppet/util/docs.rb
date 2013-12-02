@@ -20,10 +20,10 @@ module Puppet::Util::Docs
   def doc
     extra = methods.find_all { |m| m.to_s =~ /^dochook_.+/ }.sort.collect { |m|
       self.send(m)
-    }.delete_if {|r| r.nil? }.join("  ")
+    }.delete_if {|r| r.nil? }.collect {|r| "* #{r}"}.join("\n")
 
     if @doc
-      @doc + (extra.empty? ? '' : "\n\n" + extra)
+      scrub(@doc) + (extra.empty? ? '' : "\n\n#{extra}")
     else
       extra
     end
@@ -63,6 +63,7 @@ module Puppet::Util::Docs
     str + "\n"
   end
 
+  # There is nothing that would ever set this. It gets read in reference/type.rb, but will never have any value but nil.
   attr_reader :nodoc
   def nodoc?
     nodoc
@@ -89,33 +90,38 @@ module Puppet::Util::Docs
     str << "\n"
   end
 
-  # Handle the inline indentation in the docs.
+  # Strip indentation and trailing whitespace from embedded doc fragments.
+  #
+  # Multi-line doc fragments are sometimes indented in order to preserve the
+  # formatting of the code they're embedded in. Since indents are syntactic
+  # elements in Markdown, we need to make sure we remove any indent that was
+  # added solely to preserve surrounding code formatting, but LEAVE any indent
+  # that delineates a Markdown element (code blocks, multi-line bulleted list
+  # items). We can do this by removing the *least common indent* from each line.
+  #
+  # Least common indent is defined as follows:
+  #
+  # * Find the smallest amount of leading space on any line...
+  # * ...excluding the first line (which may have zero indent without affecting
+  #   the common indent)...
+  # * ...and excluding lines that consist solely of whitespace.
+  # * The least common indent may be a zero-length string, if the fragment is
+  #   not indented to match code.
+  # * If there are hard tabs for some dumb reason, we assume they're at least
+  #   consistent within this doc fragment.
+  #
+  # See tests in spec/unit/util/docs_spec.rb for examples.
   def scrub(text)
-    # Stupid markdown
-    #text = text.gsub("<%=", "&lt;%=")
-    # For text with no carriage returns, there's nothing to do.
-    return text if text !~ /\n/
-    indent = nil
-
-    # If we can match an indentation, then just remove that same level of
-    # indent from every line.  However, ignore any indentation on the
-    # first line, since that can be inconsistent.
-    text = text.lstrip
-    text.gsub!(/^([\t]+)/) { |s| " "*8*s.length; } # Expand leading tabs
-    # Find first non-empty line after the first line:
-    line2start = (text =~ /(\n?\s*\n)/)
-    line2start += $1.length
-    if (text[line2start..-1] =~ /^([ ]+)\S/) == 0
-      indent = Regexp.quote($1)
-      begin
-        return text.gsub(/^#{indent}/,'')
-      rescue => detail
-        Puppet.log_exception(detail)
-      end
-    else
-      return text
+    # One-liners are easy!
+    return text.strip if text !~ /\n/
+    excluding_first_line = text.partition("\n").last
+    indent = excluding_first_line.scan(/^[ \t]*(?=\S)/).min || '' # prevent nil
+    # Clean hanging indent, if any
+    if indent.length > 0
+      text = text.gsub(/^#{indent}/, '')
     end
-
+    # Clean trailing space
+    text.lines.map{|line|line.rstrip}.join("\n").rstrip
   end
 
   module_function :scrub

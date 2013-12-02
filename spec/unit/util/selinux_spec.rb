@@ -123,7 +123,8 @@ describe Puppet::Util::SELinux do
     it "should return a context if a default context exists" do
       self.expects(:selinux_support?).returns true
       fstat = stub 'File::Stat', :mode => 0
-      File.expects(:lstat).with("/foo").returns fstat
+      stub_file = stub('/foo', :lstat => fstat)
+      Puppet::FileSystem::File.expects(:new).with('/foo').returns stub_file
       self.expects(:find_fs).with("/foo").returns "ext3"
       Selinux.expects(:matchpathcon).with("/foo", 0).returns [0, "user_u:role_r:type_t:s0"]
       get_selinux_default_context("/foo").should == "user_u:role_r:type_t:s0"
@@ -150,7 +151,8 @@ describe Puppet::Util::SELinux do
     it "should return nil if matchpathcon returns failure" do
       self.expects(:selinux_support?).returns true
       fstat = stub 'File::Stat', :mode => 0
-      File.expects(:lstat).with("/foo").returns fstat
+      stub_file = stub('/foo', :lstat => fstat)
+      Puppet::FileSystem::File.expects(:new).with('/foo').returns stub_file
       self.expects(:find_fs).with("/foo").returns "ext3"
       Selinux.expects(:matchpathcon).with("/foo", 0).returns -1
       get_selinux_default_context("/foo").should be_nil

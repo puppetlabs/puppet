@@ -692,6 +692,20 @@ class Type
     }
   end
 
+  # Return the parameters, metaparams, and properties that have a value or were set by a default. Properties are
+  # included since they are a subclass of parameter.
+  # @return [Array<Puppet::Parameter>] Array of parameter objects ( or subclass thereof )
+  def parameters_with_value
+    self.class.allattrs.collect { |attr| parameter(attr) }.compact
+  end
+
+  # Iterates over all parameters with value currently set.
+  # @yieldparam parameter [Puppet::Parameter] or a subclass thereof
+  # @return [void]
+  def eachparameter
+    parameters_with_value.each { |parameter| yield parameter }
+  end
+
   # Creates a transaction event.
   # Called by Transaction or by a property.
   # Merges the given options with the options `:resource`, `:file`, `:line`, and `:tags`, initialized from
@@ -2278,6 +2292,13 @@ class Type
   # @return [Array<Puppet::Parameter>] the validated list/set of attributes
   #
   def finish
+    # Call post_compile hook on every parameter that implements it. This includes all subclasses
+    # of parameter including, but not limited to, regular parameters, metaparameters, relationship
+    # parameters, and properties.
+    eachparameter do |parameter|
+      parameter.post_compile if parameter.respond_to? :post_compile
+    end
+
     # Make sure all of our relationships are valid.  Again, must be done
     # when the entire catalog is instantiated.
     self.class.relationship_params.collect do |klass|
@@ -2297,25 +2318,21 @@ class Type
     self[:name]
   end
 
-  # Returns the parent of this in the catalog.
-  # In case of an erroneous catalog where multiple parents have been produced, the first found (non deterministic)
-  # parent is returned.
-  # @return [???, nil] WHAT (which types can be the parent of a resource in a catalog?), or nil if there
-  #   is no catalog.
-  #
+  # Returns the parent of this in the catalog.  In case of an erroneous catalog
+  # where multiple parents have been produced, the first found (non
+  # deterministic) parent is returned.
+  # @return [Puppet::Type, nil] the
+  #   containing resource or nil if there is no catalog or no containing
+  #   resource.
   def parent
     return nil unless catalog
 
-    unless defined?(@parent)
+    @parent ||=
       if parents = catalog.adjacent(self, :direction => :in)
-        # We should never have more than one parent, so let's just ignore
-        # it if we happen to.
-        @parent = parents.shift
+        parents.shift
       else
-        @parent = nil
+        nil
       end
-    end
-    @parent
   end
 
   # Returns a reference to this as a string in "Type[name]" format.

@@ -120,14 +120,14 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
   end
 
   it "should split paths on '#{File::PATH_SEPARATOR}'" do
-    FileTest.stubs(:exist?).returns(true)
+    Puppet::FileSystem::File.stubs(:exist?).returns(true)
     FileTest.stubs(:directory?).returns(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two#{File::PATH_SEPARATOR}/three/four")
     svc[:path].should == %w{/one/two /three/four}
   end
 
   it "should accept arrays of paths joined by '#{File::PATH_SEPARATOR}'" do
-    FileTest.stubs(:exist?).returns(true)
+    Puppet::FileSystem::File.stubs(:exist?).returns(true)
     FileTest.stubs(:directory?).returns(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :path => ["/one#{File::PATH_SEPARATOR}/two", "/three#{File::PATH_SEPARATOR}/four"])
     svc[:path].should == %w{/one /two /three /four}
@@ -137,7 +137,7 @@ end
 describe Puppet::Type.type(:service), "when setting default attribute values" do
   it "should default to the provider's default path if one is available" do
     FileTest.stubs(:directory?).returns(true)
-    FileTest.stubs(:exist?).returns(true)
+    Puppet::FileSystem::File.stubs(:exist?).returns(true)
 
     Puppet::Type.type(:service).defaultprovider.stubs(:respond_to?).returns(true)
     Puppet::Type.type(:service).defaultprovider.stubs(:defpath).returns("testing")

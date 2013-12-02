@@ -18,18 +18,18 @@ module Puppet::Pops::Patterns
 
   # NAME matches a name the same way as the lexer.
   # This name includes hyphen, which may be illegal in variables, and names in general.
-  NAME = %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*}
+  NAME = %r{\A((::)?[a-z0-9]\w*)(::[a-z0-9]\w*)*\z}
 
   # CLASSREF_EXT matches a class reference the same way as the lexer - i.e. the external source form
   # where each part must start with a capital letter A-Z.
   # This name includes hyphen, which may be illegal in some cases.
   #
-  CLASSREF_EXT = %r{((::){0,1}[A-Z][-\w]*)+}
+  CLASSREF_EXT = %r{\A((::){0,1}[A-Z][-\w]*)+\z}
 
-  # CLASSREF matches a class reference the way it is represented internall in the
+  # CLASSREF matches a class reference the way it is represented internally in the
   # model (i.e. in lower case).
   # This name includes hyphen, which may be illegal in some cases.
   #
-  CLASSREF = %r{((::){0,1}[a-z][-\w]*)+}
+  CLASSREF = %r{\A((::){0,1}[a-z][-\w]*)+\z}
 
 end

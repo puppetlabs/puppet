@@ -138,7 +138,7 @@ net:
     it "should not require path if sysidcfg is specified" do
       resource[:path] = '/mypath'
       resource[:sysidcfg] = 'dummy'
-      File.stubs(:exists?).with('/mypath/root/etc/sysidcfg').returns true
+      Puppet::FileSystem::File.stubs(:exist?).with('/mypath/root/etc/sysidcfg').returns true
       File.stubs(:directory?).with('/mypath/root/etc').returns true
       provider.expects(:zoneadm).with(:boot)
       provider.start

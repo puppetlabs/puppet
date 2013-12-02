@@ -213,11 +213,11 @@ describe "Puppet::Parser::Parser" do
       end
 
       it 'should flag illegal use of non r-value producing <| |>' do
-        expect { @parser.parse("$a = file <| |>") }.to raise_error(/A Virtual Query does not produce a value at line 1:6/)
+        expect { @parser.parse("$a = File <| |>") }.to raise_error(/A Virtual Query does not produce a value at line 1:6/)
       end
 
       it 'should flag illegal use of non r-value producing <<| |>>' do
-        expect { @parser.parse("$a = file <<| |>>") }.to raise_error(/An Exported Query does not produce a value at line 1:6/)
+        expect { @parser.parse("$a = File <<| |>>") }.to raise_error(/An Exported Query does not produce a value at line 1:6/)
       end
 
       it 'should flag illegal use of non r-value producing define' do

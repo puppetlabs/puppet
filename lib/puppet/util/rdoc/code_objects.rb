@@ -9,25 +9,20 @@ module RDoc
   # PuppetGenerator.
 
   # PuppetTopLevel is a top level (usually a .pp/.rb file)
-  class PuppetTopLevel < TopLevel
+  module PuppetTopLevel
     attr_accessor :module_name, :global
+  end
 
-    # will contain all plugins
-    @@all_plugins = {}
-
-    # contains all cutoms facts
-    @@all_facts = {}
-
-    def initialize(toplevel)
-      super(toplevel.file_relative_name)
-    end
-
-    def self.all_plugins
-      @@all_plugins.values
-    end
-
-    def self.all_facts
-      @@all_facts.values
+  # Add top level comments to a class or module regardless of whether we are
+  # using rdoc1 or rdoc2+
+  # @api private
+  module AddClassModuleComment
+    def add_comment(comment, location = nil)
+      if PUPPET_RDOC_VERSION == 1
+        self.comment = comment
+      else
+        super
+      end
     end
   end
 
@@ -35,28 +30,67 @@ module RDoc
   # This is mapped to an HTMLPuppetModule
   # it leverage the RDoc (ruby) module infrastructure
   class PuppetModule < NormalModule
+    include AddClassModuleComment
+
     attr_accessor :facts, :plugins
 
     def initialize(name,superclass=nil)
       @facts = []
       @plugins = []
+      @nodes = {}
       super(name,superclass)
     end
 
-    def initialize_classes_and_modules
-      super
-      @nodes = {}
+    def add_plugin(plugin)
+      if PUPPET_RDOC_VERSION == 1
+        add_to(@plugins, plugin)
+      else
+        add_plugin_rdoc2(plugin)
+      end
     end
 
-    def add_plugin(plugin)
-      add_to(@plugins, plugin)
+    def add_plugin_rdoc2(plugin)
+      name = plugin.name
+      type = plugin.type
+      meth = AnyMethod.new("*args", name)
+      meth.params = "(*args)"
+      meth.visibility = :public
+      meth.document_self = true
+      meth.singleton = false
+      meth.comment = plugin.comment
+      if type == 'function'
+        @function_container ||= add_module(NormalModule, "__functions__")
+        @function_container.add_method(meth)
+      elsif type == 'type'
+        @type_container ||= add_module(NormalModule, "__types__")
+        @type_container.add_method(meth)
+      end
     end
 
     def add_fact(fact)
-      add_to(@facts, fact)
+      if PUPPET_RDOC_VERSION == 1
+        add_to(@facts, fact)
+      else
+        add_fact_rdoc2(fact)
+      end
     end
 
-    def add_node(name,superclass)
+    def add_fact_rdoc2(fact)
+      @fact_container ||= add_module(NormalModule, "__facts__")
+      confine_str = fact.confine.empty? ? '' : fact.confine.to_s
+      const = Constant.new(fact.name, confine_str, fact.comment)
+      @fact_container.add_constant(const)
+    end
+
+    def add_node(name, superclass)
+      if PUPPET_RDOC_VERSION == 1
+        add_node_rdoc1(name, superclass)
+      else
+        add_node_rdoc2(name, superclass)
+      end
+    end
+
+    def add_node_rdoc1(name, superclass)
       cls = @nodes[name]
       unless cls
         cls = PuppetNode.new(name, superclass)
@@ -64,6 +98,18 @@ module RDoc
         cls.parent = self
         cls.section = @current_section
       end
+      cls
+    end
+
+    # Adds a module called __nodes__ and adds nodes to it as classes
+    #
+    def add_node_rdoc2(name,superclass)
+      if cls = @nodes[name]
+        return cls
+      end
+      @node_container ||= add_module(NormalModule, "__nodes__")
+      cls = @node_container.add_class(PuppetNode, name, superclass)
+      @nodes[name] = cls if !@done_documenting
       cls
     end
 
@@ -88,6 +134,8 @@ module RDoc
   # It is mapped to a HTMLPuppetClass for display
   # It leverages RDoc (ruby) Class
   class PuppetClass < ClassModule
+    include AddClassModuleComment
+
     attr_accessor :resource_list, :requires, :childs, :realizes
 
     def initialize(name, superclass)
@@ -130,7 +178,7 @@ module RDoc
     # but are written class1::class2::define we need to perform the lookup by
     # ourselves.
     def find_symbol(symbol, method=nil)
-      result = super
+      result = super(symbol)
       if not result and symbol =~ /::/
         modules = symbol.split(/::/)
         unless modules.empty?
@@ -169,6 +217,8 @@ module RDoc
   # It is mapped to a HTMLPuppetNode for display
   # A node is just a variation of a class
   class PuppetNode < PuppetClass
+    include AddClassModuleComment
+
     def initialize(name, superclass)
       super(name,superclass)
     end

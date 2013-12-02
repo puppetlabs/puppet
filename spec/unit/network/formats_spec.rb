@@ -26,6 +26,30 @@ class PsonTest
 end
 
 describe "Puppet Network Format" do
+  it "should include a msgpack format", :if => Puppet.features.msgpack? do
+    Puppet::Network::FormatHandler.format(:msgpack).should_not be_nil
+  end
+
+  describe "msgpack", :if => Puppet.features.msgpack? do
+    before do
+      @msgpack = Puppet::Network::FormatHandler.format(:msgpack)
+    end
+
+    it "should have its mime type set to application/x-msgpack" do
+      @msgpack.mime.should == "application/x-msgpack"
+    end
+
+    it "should have a weight of 20" do
+      @msgpack.weight.should == 20
+    end
+
+    it "should fail when one element does not have a from_pson" do
+      expect do
+        @msgpack.intern_multiple(Hash, MessagePack.pack(["foo"]))
+      end.to raise_error(NoMethodError)
+    end
+  end
+
   it "should include a yaml format" do
     Puppet::Network::FormatHandler.format(:yaml).should_not be_nil
   end

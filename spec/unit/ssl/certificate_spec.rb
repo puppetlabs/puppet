@@ -75,6 +75,17 @@ describe Puppet::SSL::Certificate do
   end
 
   describe "when managing instances" do
+
+    def build_cert(opts)
+      key = Puppet::SSL::Key.new('quux')
+      key.generate
+      csr = Puppet::SSL::CertificateRequest.new('quux')
+      csr.generate(key, opts)
+
+      raw_cert = Puppet::SSL::CertificateFactory.build('client', csr, csr.content, 14)
+      @class.from_instance(raw_cert)
+    end
+
     before do
       @certificate = @class.new("myname")
     end
@@ -93,33 +104,35 @@ describe Puppet::SSL::Certificate do
 
     describe "#subject_alt_names" do
       it "should list all alternate names when the extension is present" do
-        key = Puppet::SSL::Key.new('quux')
-        key.generate
-
-        csr = Puppet::SSL::CertificateRequest.new('quux')
-        csr.generate(key, :dns_alt_names => 'foo, bar,baz')
-
-        raw_csr = csr.content
-
-        cert = Puppet::SSL::CertificateFactory.build('server', csr, raw_csr, 14)
-        certificate = @class.from_s(cert.to_pem)
+        certificate = build_cert(:dns_alt_names => 'foo, bar,baz')
         certificate.subject_alt_names.
           should =~ ['DNS:foo', 'DNS:bar', 'DNS:baz', 'DNS:quux']
       end
 
       it "should return an empty list of names if the extension is absent" do
-        key = Puppet::SSL::Key.new('quux')
-        key.generate
-
-        csr = Puppet::SSL::CertificateRequest.new('quux')
-        csr.generate(key)
-
-        raw_csr = csr.content
-
-        cert = Puppet::SSL::CertificateFactory.build('client', csr, raw_csr, 14)
-        certificate = @class.from_s(cert.to_pem)
+        certificate = build_cert({})
         certificate.subject_alt_names.should be_empty
       end
+    end
+
+    describe "custom extensions" do
+      it "returns extensions under the ppRegCertExt" do
+        exts = {'pp_uuid' => 'abcdfd'}
+        cert = build_cert(:extension_requests => exts)
+        expect(cert.custom_extensions).to include('oid' => 'pp_uuid', 'value' => 'abcdfd')
+      end
+
+      it "returns extensions under the ppPrivCertExt" do
+        exts = {'1.3.6.1.4.1.34380.1.2.1' => 'x509 :('}
+        cert = build_cert(:extension_requests => exts)
+        expect(cert.custom_extensions).to include('oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'x509 :(')
+      end
+
+      it "doesn't return standard extensions" do
+        cert = build_cert(:dns_alt_names => 'foo')
+        expect(cert.custom_extensions).to be_empty
+      end
+
     end
 
     it "should return a nil expiration if there is no actual certificate" do

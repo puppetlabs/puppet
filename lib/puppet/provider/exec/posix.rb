@@ -1,6 +1,7 @@
 require 'puppet/provider/exec'
 
 Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
+  has_feature :umask
   confine :feature => :posix
   defaultfor :feature => :posix
 
@@ -16,7 +17,7 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
     exe = extractexe(command)
 
     if File.expand_path(exe) == exe
-      if !File.exists?(exe)
+      if !Puppet::FileSystem::File.exist?(exe)
         raise ArgumentError, "Could not find command '#{exe}'"
       elsif !File.file?(exe)
         raise ArgumentError, "'#{exe}' is a #{File.ftype(exe)}, not a file"
@@ -35,5 +36,13 @@ Puppet::Type.type(:exec).provide :posix, :parent => Puppet::Provider::Exec do
     # 'which' will only return the command if it's executable, so we can't
     # distinguish not found from not executable
     raise ArgumentError, "Could not find command '#{exe}'"
+  end
+
+  def run(command, check = false)
+    if resource[:umask]
+      Puppet::Util::withumask(resource[:umask]) { super(command, check) }
+    else
+      super(command, check)
+    end
   end
 end

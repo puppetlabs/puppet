@@ -154,12 +154,12 @@ describe "transformation to Puppet AST for containers" do
 
     it "node foo inherits 'bar' {}" do
       # AST can not differentiate between bare word and string
-      astdump(parse("node foo inherits 'bar' {}")).should == "(node (matches 'foo') (parent 'bar') ())"
+      astdump(parse("node foo inherits 'bar' {}")).should == "(node (matches 'foo') (parent bar) ())"
     end
 
     it "node foo inherits default {}" do
       # AST can not differentiate between bare word and string
-      astdump(parse("node foo inherits default {}")).should == "(node (matches 'foo') (parent :default) ())"
+      astdump(parse("node foo inherits default {}")).should == "(node (matches 'foo') (parent default) ())"
     end
 
     it "node /web.*/ {}" do

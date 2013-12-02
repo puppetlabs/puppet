@@ -40,10 +40,10 @@ class Puppet::Provider
   include Puppet::Util::Warnings
   extend Puppet::Util::Warnings
 
-  require 'puppet/provider/confiner'
+  require 'puppet/confiner'
   require 'puppet/provider/command'
 
-  extend Puppet::Provider::Confiner
+  extend Puppet::Confiner
 
   Puppet::Util.logmethods(self, true)
 
@@ -148,6 +148,7 @@ class Puppet::Provider
   # @raise [Puppet::DevError] if the name does not reference an existing command.
   # @return [String] the absolute path to the found executable for the command
   # @see which
+  # @api public
   def self.command(name)
     name = name.intern
 
@@ -163,7 +164,7 @@ class Puppet::Provider
   end
 
   # Confines this provider to be suitable only on hosts where the given commands are present.
-  # Also see {Puppet::Provider::Confiner#confine} for other types of confinement of a provider by use of other types of
+  # Also see {Puppet::Confiner#confine} for other types of confinement of a provider by use of other types of
   # predicates.
   #
   # @note It is preferred if the commands are not entered with absolute paths as this allows puppet
@@ -173,6 +174,7 @@ class Puppet::Provider
   #   be executing on the system. Each command is specified with a name and the path of the executable.
   # @return [void]
   # @see optional_commands
+  # @api public
   #
   def self.commands(command_specs)
     command_specs.each do |name, path|
@@ -189,6 +191,7 @@ class Puppet::Provider
   #   be executing on the system. Each command is specified with a name and the path of the executable.
   # (@see #has_command)
   # @see commands
+  # @api public
   def self.optional_commands(hash)
     hash.each do |name, target|
       has_command(name, target) do
@@ -221,6 +224,7 @@ class Puppet::Provider
   # @comment a yield [ ] produces {|| ...} in the signature, do not remove the space.
   # @note the name ´has_command´ looks odd in an API context, but makes more sense when seen in the internal
   #   DSL context where a Provider is declaratively defined.
+  # @api public
   #
   def self.has_command(name, path, &block)
     name = name.intern
@@ -485,7 +489,7 @@ class Puppet::Provider
     if @defaults.length > 0
       return "Default for " + @defaults.collect do |f, v|
         "`#{f}` == `#{[v].flatten.join(', ')}`"
-      end.join(" and ") + "."
+      end.sort.join(" and ") + "."
     end
   end
 
@@ -493,7 +497,7 @@ class Puppet::Provider
     if @commands.length > 0
       return "Required binaries: " + @commands.collect do |n, c|
         "`#{c}`"
-      end.join(", ") + "."
+      end.sort.join(", ") + "."
     end
   end
 
@@ -501,7 +505,7 @@ class Puppet::Provider
     if features.length > 0
       return "Supported features: " + features.collect do |f|
         "`#{f}`"
-      end.join(", ") + "."
+      end.sort.join(", ") + "."
     end
   end
 
@@ -602,6 +606,18 @@ class Puppet::Provider
   # fetched state (i.e. what is returned from the {instances} method).
   # @param resources_hash [Hash<{String => Puppet::Resource}>] map from name to resource of resources to prefetch
   # @return [void]
+  # @api public
+
+  # @comment Document post_resource_eval here as it does not exist anywhere else (called from transaction if implemented)
+  # @!method self.post_resource_eval()
+  # @since 3.4.0
+  # @api public
+  # @abstract A subclass may implement this - it is not implemented in the Provider class
+  # This method may be implemented by a provider in order to perform any
+  # cleanup actions needed.  It will be called at the end of the transaction if
+  # any resources in the catalog make use of the provider, regardless of
+  # whether the resources are changed or not and even if resource failures occur.
+  # @return [void]
 
   # @comment Document flush here as it does not exist anywhere (called from transaction if implemented)
   # @!method flush()
@@ -609,5 +625,6 @@ class Puppet::Provider
   # This method may be implemented by a provider in order to flush properties that has not been individually
   # applied to the managed entity's current state.
   # @return [void]
+  # @api public
 end
 

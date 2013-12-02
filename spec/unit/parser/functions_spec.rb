@@ -128,7 +128,7 @@ describe Puppet::Parser::Functions do
 
   describe "::get_function" do
     it "can retrieve a function defined on the *root* environment" do
-      Thread.current[:environment] = nil
+      $environment = nil
       function = Puppet::Parser::Functions.newfunction("atest", :type => :rvalue) do
         nil
       end
@@ -162,7 +162,7 @@ describe Puppet::Parser::Functions do
 
   describe "::merged_functions" do
     it "returns functions in both the current and root environment" do
-      Thread.current[:environment] = nil
+      $environment = nil
       func_a = Puppet::Parser::Functions.newfunction("test_a", :type => :rvalue) do
         nil
       end

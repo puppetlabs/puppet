@@ -180,7 +180,7 @@ module Puppet
         automatically, usually by looking for the service in the process
         table.
 
-        [lsb-exit-codes]: http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html"
+        [lsb-exit-codes]: http://refspecs.linuxfoundation.org/LSB_4.1.0/LSB-Core-generic/LSB-Core-generic/iniscrptact.html"
     end
 
     newparam(:stop) do

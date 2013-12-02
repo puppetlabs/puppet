@@ -96,52 +96,18 @@ Puppet::Type.newtype(:augeas) do
     desc "The changes which should be applied to the filesystem. This
     can be a command or an array of commands. The following commands are supported:
 
-    `set <PATH> <VALUE>`
-    : Sets the value `VALUE` at loction `PATH`
-
-
-    `setm <PATH> <SUB> <VALUE>`
-    : Sets multiple nodes (matching `SUB` relative to `PATH`) to `VALUE`
-
-
-    `rm <PATH>`
-    : Removes the node at location `PATH`
-
-
-    `remove <PATH>`
-    : Synonym for `rm`
-
-
-    `clear <PATH>`
-    : Sets the node at `PATH` to `NULL`, creating it if needed
-
-
-    `clearm <PATH> <SUB>`
-    : Sets multiple nodes (matching `SUB` relative to `PATH`) to `NULL`
-
-
-    `ins <LABEL> (before|after) <PATH>`
-    : Inserts an empty node `LABEL` either before or after `PATH`.
-
-
-    `insert <LABEL> <WHERE> <PATH>`
-    : Synonym for `ins`
-
-
-    `mv <PATH> <OTHER PATH>`
-    : Moves a node at `PATH` to the new location `OTHER PATH`
-
-
-    `move <PATH> <OTHER PATH>`
-    : Synonym for `mv`
-
-
-    `defvar <NAME> <PATH>`
-    : Sets Augeas variable `$NAME` to `PATH`
-
-
-    `defnode <NAME> <PATH> <VALUE>`
-    : Sets Augeas variable `$NAME` to `PATH`, creating it with `VALUE` if needed
+    * `set <PATH> <VALUE>` --- Sets the value `VALUE` at loction `PATH`
+    * `setm <PATH> <SUB> <VALUE>` --- Sets multiple nodes (matching `SUB` relative to `PATH`) to `VALUE`
+    * `rm <PATH>` --- Removes the node at location `PATH`
+    * `remove <PATH>` --- Synonym for `rm`
+    * `clear <PATH>` --- Sets the node at `PATH` to `NULL`, creating it if needed
+    * `clearm <PATH> <SUB>` --- Sets multiple nodes (matching `SUB` relative to `PATH`) to `NULL`
+    * `ins <LABEL> (before|after) <PATH>` --- Inserts an empty node `LABEL` either before or after `PATH`.
+    * `insert <LABEL> <WHERE> <PATH>` --- Synonym for `ins`
+    * `mv <PATH> <OTHER PATH>` --- Moves a node at `PATH` to the new location `OTHER PATH`
+    * `move <PATH> <OTHER PATH>` --- Synonym for `mv`
+    * `defvar <NAME> <PATH>` --- Sets Augeas variable `$NAME` to `PATH`
+    * `defnode <NAME> <PATH> <VALUE>` --- Sets Augeas variable `$NAME` to `PATH`, creating it with `VALUE` if needed
 
     If the `context` parameter is set, that value is prepended to any relative `PATH`s."
   end

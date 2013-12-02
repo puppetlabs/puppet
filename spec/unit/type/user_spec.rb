@@ -339,6 +339,15 @@ describe Puppet::Type.type(:user) do
     end
   end
 
+  describe "when managing comment on Ruby 1.9", :if => String.respond_to?(:encode) do
+    it "should force value encoding to ASCII-8BIT" do
+      value = 'abcd'.encode(Encoding::UTF_8)
+      comment = described_class.new(:name => 'foo', :comment => value)
+      comment[:comment].should == 'abcd'
+      comment[:comment].encoding.should == Encoding::ASCII_8BIT
+    end
+  end
+
   describe "when manages_solaris_rbac is enabled" do
     it "should support a :role value for ensure" do
       expect { described_class.new(:name => 'foo', :ensure => :role) }.to_not raise_error

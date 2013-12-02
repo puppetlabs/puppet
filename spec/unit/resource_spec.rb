@@ -339,8 +339,11 @@ describe Puppet::Resource do
         end
 
         it "should query the injector using a namespaced key" do
-          compiler.injector.expects(:lookup).with(scope, 'apache::port')
+          compiler.injector.expects(:lookup).with(scope, 'apache::port').returns("8081")
+
           resource.set_default_parameters(scope)
+
+          resource[:port].should == "8081"
         end
 
         it "should use the value from the data_binding terminus" do
@@ -376,8 +379,16 @@ describe Puppet::Resource do
           resource[:port].should == '80'
         end
 
+        it "should fail with error message about data binding on a hiera failure" do
+          Puppet::DataBinding.indirection.expects(:find).raises(Puppet::DataBinding::LookupError, 'Forgettabotit')
+          expect {
+            resource.set_default_parameters(scope)
+          }.to raise_error(Puppet::Error, /Error from DataBinding 'hiera' while looking up 'apache::port':.*Forgettabotit/)
+        end
+
         it "should use the default value if the injector returns nil" do
           compiler.injector.expects(:lookup).returns(nil)
+          Puppet::DataBinding.indirection.expects(:find).returns(nil)
 
           resource.set_default_parameters(scope)
 
@@ -607,7 +618,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "when serializing" do
+  describe "when serializing a native type" do
     before do
       @resource = Puppet::Resource.new("file", "/my/file")
       @resource["one"] = "test"
@@ -615,6 +626,31 @@ describe Puppet::Resource do
     end
 
     it "should produce an equivalent yaml object" do
+      text = @resource.render('yaml')
+
+      newresource = Puppet::Resource.convert_from('yaml', text)
+      newresource.should equal_attributes_of @resource
+    end
+  end
+
+  describe "when serializing a defined type" do
+    before do
+      type = Puppet::Resource::Type.new(:definition, "foo::bar")
+      Puppet::Node::Environment.new.known_resource_types.add type
+    end
+
+    before :each do
+      @resource = Puppet::Resource.new('foo::bar', 'xyzzy')
+      @resource['one'] = 'test'
+      @resource['two'] = 'other'
+      @resource.resource_type
+    end
+
+    it "doesn't include transient instance variables (#4506)" do
+      expect(@resource.to_yaml_properties).to_not include :@rstype
+    end
+
+    it "produces an equivalent yaml object" do
       text = @resource.render('yaml')
 
       newresource = Puppet::Resource.convert_from('yaml', text)
@@ -810,9 +846,9 @@ describe Puppet::Resource do
     end
   end
 
-  describe "it should implement to_resource" do
+  describe "it should implement copy_as_resource" do
     resource = Puppet::Resource.new("file", "/my/file")
-    resource.to_resource.should == resource
+    resource.copy_as_resource.should == resource
   end
 
   describe "because it is an indirector model" do

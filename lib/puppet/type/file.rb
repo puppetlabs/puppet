@@ -34,6 +34,9 @@ Puppet::Type.newtype(:file) do
     file, the file resource will autorequire them. If Puppet is managing any
     parent directories of a file, the file resource will autorequire them."
 
+  feature :manages_symlinks,
+    "The provider can manage symbolic links."
+
   def self.title_patterns
     [ [ /^(.*?)\/*\Z/m, [ [ :path ] ] ] ]
   end
@@ -54,7 +57,12 @@ Puppet::Type.newtype(:file) do
     end
 
     munge do |value|
-      ::File.join(::File.split(::File.expand_path(value)))
+      if value.start_with?('//') and ::File.basename(value) == "/"
+        # This is a UNC path pointing to a share, so don't add a trailing slash
+        ::File.expand_path(value)
+      else
+        ::File.join(::File.split(::File.expand_path(value)))
+      end
     end
   end
 
@@ -118,15 +126,16 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:recurse) do
-    desc "Whether and how deeply to do recursive
-      management. Options are:
+    desc "Whether and how to do recursive file management. Options are:
 
       * `inf,true` --- Regular style recursion on both remote and local
-        directory structure.
-      * `remote` --- Descends recursively into the remote directory
-        but not the local directory. Allows copying of
+        directory structure.  See `recurselimit` to specify a limit to the
+        recursion depth.
+      * `remote` --- Descends recursively into the remote (source) directory
+        but not the local (destination) directory. Allows copying of
         a few files into a directory containing many
         unmanaged files without scanning all the local files.
+        This can only be used when a source parameter is specified. 
       * `false` --- Default of no recursion.
     "
 
@@ -682,7 +691,7 @@ Puppet::Type.newtype(:file) do
     end
 
     @stat = begin
-      ::File.send(method, self[:path])
+      Puppet::FileSystem::File.new(self[:path]).send(method)
     rescue Errno::ENOENT => error
       nil
     rescue Errno::ENOTDIR => error
@@ -707,7 +716,7 @@ Puppet::Type.newtype(:file) do
     use_temporary_file = write_temporary_file?
     if use_temporary_file
       path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while ::File.exists?(path) or ::File.symlink?(path)
+      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while Puppet::FileSystem::File.exist?(path) or Puppet::FileSystem::File.new(path).symlink?
     else
       path = self[:path]
     end
@@ -727,7 +736,7 @@ Puppet::Type.newtype(:file) do
         fail "Could not rename temporary file #{path} to #{self[:path]}: #{detail}"
       ensure
         # Make sure the created file gets removed
-        ::File.unlink(path) if FileTest.exists?(path)
+        Puppet::FileSystem::File.unlink(path) if Puppet::FileSystem::File.exist?(path)
       end
     end
 
@@ -777,7 +786,7 @@ Puppet::Type.newtype(:file) do
   # @api private
   def remove_file(current_type, wanted_type)
     debug "Removing existing #{current_type} for replacement with #{wanted_type}"
-    ::File.unlink(self[:path])
+    Puppet::FileSystem::File.unlink(self[:path])
     stat_needed
     true
   end

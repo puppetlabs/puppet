@@ -1,4 +1,3 @@
-require 'monitor'
 require 'puppet/ssl/host'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_signer'
@@ -26,9 +25,8 @@ class Puppet::SSL::CertificateAuthority
   require 'puppet/ssl/inventory'
   require 'puppet/ssl/certificate_revocation_list'
   require 'puppet/ssl/certificate_authority/interface'
+  require 'puppet/ssl/certificate_authority/autosign_command'
   require 'puppet/network/authstore'
-
-  extend MonitorMixin
 
   class CertificateVerificationError < RuntimeError
     attr_accessor :error_code
@@ -39,9 +37,7 @@ class Puppet::SSL::CertificateAuthority
   end
 
   def self.singleton_instance
-    synchronize do
-      @singleton_instance ||= new
-    end
+    @singleton_instance ||= new
   end
 
   class CertificateSigningError < RuntimeError
@@ -53,67 +49,56 @@ class Puppet::SSL::CertificateAuthority
   end
 
   def self.ca?
-    return false unless Puppet[:ca]
-    return false unless Puppet.run_mode.master?
-    true
+    # running as ca? - ensure boolean answer
+    !!(Puppet[:ca] && Puppet.run_mode.master?)
   end
 
-  # If this process can function as a CA, then return a singleton
-  # instance.
+  # If this process can function as a CA, then return a singleton instance.
   def self.instance
-    return nil unless ca?
-
-    singleton_instance
+    ca? ? singleton_instance : nil
   end
 
   attr_reader :name, :host
 
-  # Create and run an applicator.  I wanted to build an interface where you could do
-  # something like 'ca.apply(:generate).to(:all) but I don't think it's really possible.
-  def apply(method, options)
-    raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all" unless options[:to]
-    applier = Interface.new(method, options)
-    applier.apply(self)
-  end
-
-  # If autosign is configured, then autosign all CSRs that match our configuration.
-  def autosign
-    return unless auto = autosign?
-
-    store = nil
-    store = autosign_store(auto) if auto != true
-
-    Puppet::SSL::CertificateRequest.indirection.search("*").each do |csr|
-      if auto == true or store.allowed?(csr.name, "127.1.1.1")
-        Puppet.info "Autosigning #{csr.name}"
-        sign(csr.name)
-      end
+  # If autosign is configured, autosign the csr we are passed.
+  # @param csr [Puppet::SSL::CertificateRequest] The csr to sign.
+  # @return [Void]
+  # @api private
+  def autosign(csr)
+    if autosign?(csr)
+      Puppet.info "Autosigning #{csr.name}"
+      sign(csr.name)
     end
   end
 
-  # Do we autosign?  This returns true, false, or a filename.
-  def autosign?
+  # Determine if a CSR can be autosigned by the autosign store or autosign command
+  #
+  # @param csr [Puppet::SSL::CertificateRequest] The CSR to check
+  # @return [true, false]
+  # @api private
+  def autosign?(csr)
     auto = Puppet[:autosign]
-    return false if ['false', false].include?(auto)
-    return true if ['true', true].include?(auto)
 
-    raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless Puppet::Util.absolute_path?(auto)
-    FileTest.exist?(auto) && auto
+    decider = case auto
+      when 'false', false, nil
+        AutosignNever.new
+      when 'true', true
+        AutosignAlways.new
+      else
+        file = Puppet::FileSystem::File.new(auto)
+        if file.executable?
+          Puppet::SSL::CertificateAuthority::AutosignCommand.new(auto)
+        elsif file.exist?
+          AutosignConfig.new(file)
+        else
+          AutosignNever.new
+        end
+      end
+
+    decider.allowed?(csr)
   end
 
-  # Create an AuthStore for autosigning.
-  def autosign_store(file)
-    auth = Puppet::Network::AuthStore.new
-    File.readlines(file).each do |line|
-      next if line =~ /^\s*#/
-      next if line =~ /^\s*$/
-      auth.allow(line.chomp)
-    end
-
-    auth
-  end
-
-  # Retrieve (or create, if necessary) the certificate revocation list.
+  # Retrieves (or creates, if necessary) the certificate revocation list.
   def crl
     unless defined?(@crl)
       unless @crl = Puppet::SSL::CertificateRevocationList.indirection.find(Puppet::SSL::CA_NAME)
@@ -125,12 +110,12 @@ class Puppet::SSL::CertificateAuthority
     @crl
   end
 
-  # Delegate this to our Host class.
+  # Delegates this to our Host class.
   def destroy(name)
     Puppet::SSL::Host.destroy(name)
   end
 
-  # Generate a new certificate.
+  # Generates a new certificate.
   # @return Puppet::SSL::Certificate
   def generate(name, options = {})
     raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.indirection.find(name)
@@ -187,7 +172,7 @@ class Puppet::SSL::CertificateAuthority
     20.times { pass += (rand(74) + 48).chr }
 
     begin
-      Puppet.settings.write(:capass) { |f| f.print pass }
+      Puppet.settings.setting(:capass).open('w') { |f| f.print pass }
     rescue Errno::EACCES => detail
       raise Puppet::Error, "Could not write CA password: #{detail}"
     end
@@ -222,26 +207,27 @@ class Puppet::SSL::CertificateAuthority
   # Read the next serial from the serial file, and increment the
   # file so this one is considered used.
   def next_serial
-    serial = nil
+    serial = 1
+    Puppet.settings.setting(:serial).exclusive_open('a+') do |f|
+      f.rewind
+      serial = f.read.chomp.hex
+      if serial == 0
+        serial = 1
+      end
 
-    # This is slightly odd.  If the file doesn't exist, our readwritelock creates
-    # it, but with a mode we can't actually read in some cases.  So, use
-    # a default before the lock.
-    serial = 0x1 unless FileTest.exist?(Puppet[:serial])
-
-    Puppet.settings.readwritelock(:serial) { |f|
-      serial ||= File.read(Puppet.settings[:serial]).chomp.hex if FileTest.exist?(Puppet[:serial])
+      f.truncate(0)
+      f.rewind
 
       # We store the next valid serial, not the one we just used.
       f << "%04X" % (serial + 1)
-    }
+    end
 
     serial
   end
 
   # Does the password file exist?
   def password?
-    FileTest.exist? Puppet[:capass]
+    Puppet::FileSystem::File.exist? Puppet[:capass]
   end
 
   # Print a given host's certificate as text.
@@ -323,8 +309,11 @@ class Puppet::SSL::CertificateAuthority
 
   def check_internal_signing_policies(hostname, csr, allow_dns_alt_names)
     # Reject unknown request extensions.
-    unknown_req = csr.request_extensions.
-      reject {|x| RequestExtensionWhitelist.include? x["oid"] }
+    unknown_req = csr.request_extensions.reject do |x|
+      RequestExtensionWhitelist.include? x["oid"] or
+        Puppet::SSL::Oids.subtree_of?('ppRegCertExt', x["oid"], true) or
+        Puppet::SSL::Oids.subtree_of?('ppPrivCertExt', x["oid"], true)
+    end
 
     if unknown_req and not unknown_req.empty?
       names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
@@ -393,7 +382,7 @@ class Puppet::SSL::CertificateAuthority
   #
   # @return [OpenSSL::X509::Store]
   def x509_store(options = {})
-    if (options[:cache]) 
+    if (options[:cache])
       return @x509store unless @x509store.nil?
       @x509store = create_x509_store
     else
@@ -407,11 +396,13 @@ class Puppet::SSL::CertificateAuthority
   #
   # @return [OpenSSL::X509::Store]
   def create_x509_store
-    store = OpenSSL::X509::Store.new
-    store.add_file Puppet[:cacert]
-    store.add_crl crl.content if self.crl
+    store = OpenSSL::X509::Store.new()
+    store.add_file(Puppet[:cacert])
+    store.add_crl(crl.content) if self.crl
     store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-    store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
+    if Puppet.settings[:certificate_revocation]
+      store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL | OpenSSL::X509::V_FLAG_CRL_CHECK
+    end
     store
   end
   private :create_x509_store
@@ -471,5 +462,43 @@ class Puppet::SSL::CertificateAuthority
   # List the waiting certificate requests.
   def waiting?
     Puppet::SSL::CertificateRequest.indirection.search("*").collect { |r| r.name }
+  end
+
+  # @api private
+  class AutosignAlways
+    def allowed?(csr)
+      true
+    end
+  end
+
+  # @api private
+  class AutosignNever
+    def allowed?(csr)
+      false
+    end
+  end
+
+  # @api private
+  class AutosignConfig
+    def initialize(config_file)
+      @config = config_file
+    end
+
+    def allowed?(csr)
+      autosign_store.allowed?(csr.name, '127.1.1.1')
+    end
+
+    private
+
+    def autosign_store
+      auth = Puppet::Network::AuthStore.new
+      @config.each_line do |line|
+        next if line =~ /^\s*#/
+        next if line =~ /^\s*$/
+        auth.allow(line.chomp)
+      end
+
+      auth
+    end
   end
 end

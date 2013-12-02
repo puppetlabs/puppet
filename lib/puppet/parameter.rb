@@ -116,10 +116,13 @@ class Puppet::Parameter
       @doc ||= ""
 
       unless defined?(@addeddocvals)
-        @doc += value_collection.doc
+        @doc = Puppet::Util::Docs.scrub(@doc)
+        if vals = value_collection.doc
+          @doc << "\n\n#{vals}"
+        end
 
         if f = self.required_features
-          @doc += "  Requires features #{f.flatten.collect { |f| f.to_s }.join(" ")}."
+          @doc << "\n\nRequires features #{f.flatten.collect { |f| f.to_s }.join(" ")}."
         end
         @addeddocvals = true
       end
@@ -567,6 +570,16 @@ class Puppet::Parameter
       "'#{value}'"
     end
   end
+
+  # @comment Document post_compile_hook here as it does not exist anywhere (called from type if implemented)
+  # @!method post_compile()
+  # @since 3.4.0
+  # @api public
+  #   @abstract A subclass may implement this - it is not implemented in the Parameter class
+  #   This method may be implemented by a parameter in order to perform actions during compilation
+  #   after all resources have been added to the catalog.
+  #   @see Puppet::Type#finish
+  #   @see Puppet::Parser::Compiler#finish
 end
 
 require 'puppet/parameter/path'

@@ -1,12 +1,9 @@
 # A module to collect utility functions.
 
 require 'English'
-require 'puppet/external/lock'
 require 'puppet/error'
 require 'puppet/util/execution_stub'
 require 'uri'
-require 'sync'
-require 'monitor'
 require 'tempfile'
 require 'pathname'
 require 'ostruct'
@@ -25,9 +22,6 @@ module Util
   extend Puppet::Util::POSIX
 
   extend Puppet::Util::SymbolicFileMode
-
-  @@sync_objects = {}.extend MonitorMixin
-
 
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
@@ -66,20 +60,6 @@ module Util
     end
   end
 
-
-  def self.synchronize_on(x,type)
-    sync_object,users = 0,1
-    begin
-      @@sync_objects.synchronize {
-        (@@sync_objects[x] ||= [Sync.new,0])[users] += 1
-      }
-      @@sync_objects[x][sync_object].synchronize(type) { yield }
-    ensure
-      @@sync_objects.synchronize {
-        @@sync_objects.delete(x) unless (@@sync_objects[x][users] -= 1) > 0
-      }
-    end
-  end
 
   # Change the process to a different user
   def self.chuser
@@ -154,7 +134,6 @@ module Util
     end
   end
 
-
   def benchmark(*args)
     msg = args.pop
     level = args.pop
@@ -187,6 +166,7 @@ module Util
       yield
     end
   end
+  module_function :benchmark
 
   # Resolve a path for an executable to the absolute path. This tries to behave
   # in the same manner as the unix `which` command and uses the `PATH`
@@ -270,7 +250,7 @@ module Util
     if Puppet.features.microsoft_windows?
       path = path.gsub(/\\/, '/')
 
-      if unc = /^\/\/([^\/]+)(\/[^\/]+)/.match(path)
+      if unc = /^\/\/([^\/]+)(\/.+)/.match(path)
         params[:host] = unc[1]
         path = unc[2]
       elsif path =~ /^[a-z]:\//i
@@ -320,13 +300,6 @@ module Util
   end
   module_function :safe_posix_fork
 
-  # Create an exclusive lock.
-  def threadlock(resource, type = Sync::EX)
-    Puppet::Util.synchronize_on(resource,type) { yield }
-  end
-
-  module_function :benchmark
-
   def memory
     unless defined?(@pmap)
       @pmap = which('pmap')
@@ -361,6 +334,7 @@ module Util
 
   # Because IO#binread is only available in 1.9
   def binread(file)
+    Puppet.deprecation_warning("Puppet::Util.binread is deprecated. Read the file without this method as it will be removed in a future version.")
     File.open(file, 'rb') { |f| f.read }
   end
   module_function :binread
@@ -467,7 +441,7 @@ module Util
         # This might race, but there are enough possible cases that there
         # isn't a good, solid "better" way to do this, and the next call
         # should fail in the same way anyhow.
-        raise if have_retried or File.exist?(file)
+        raise if have_retried or Puppet::FileSystem::File.exist?(file)
         have_retried = true
 
         # OK, so, we can't replace a file that doesn't exist, so let us put
@@ -498,7 +472,6 @@ module Util
     file
   end
   module_function :replace_file
-
 
   # Executes a block of code, wrapped with some special exception handling.  Causes the ruby interpreter to
   #  exit if the block throws an exception.

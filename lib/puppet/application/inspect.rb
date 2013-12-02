@@ -8,12 +8,7 @@ class Puppet::Application::Inspect < Puppet::Application
   option("--verbose","-v")
 
   option("--logdest LOGDEST", "-l") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:logset] = true
-    rescue => detail
-      $stderr.puts detail.to_s
-    end
+    handle_logdest_arg(arg)
   end
 
   def help
@@ -86,18 +81,14 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     @report = Puppet::Transaction::Report.new("inspect")
 
     Puppet::Util::Log.newdestination(@report)
-    Puppet::Util::Log.newdestination(:console) unless options[:logset]
+    Puppet::Util::Log.newdestination(:console) unless options[:setdest]
 
     Signal.trap(:INT) do
       $stderr.puts "Exiting"
       exit(1)
     end
 
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
-    end
+    set_log_level
 
     Puppet::Transaction::Report.indirection.terminus_class = :rest
     Puppet::Resource::Catalog.indirection.terminus_class = :yaml

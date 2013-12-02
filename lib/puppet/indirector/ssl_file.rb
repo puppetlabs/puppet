@@ -70,11 +70,11 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # Remove our file.
   def destroy(request)
     path = path(request.key)
-    return false unless FileTest.exist?(path)
+    return false unless Puppet::FileSystem::File.exist?(path)
 
     Puppet.notice "Removing file #{model} #{request.key} at '#{path}'"
     begin
-      File.unlink(path)
+      Puppet::FileSystem::File.unlink(path)
     rescue => detail
       raise Puppet::Error, "Could not remove #{request.key}: #{detail}"
     end
@@ -135,10 +135,10 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # which we'll be EOL'ing at some point.  This method was added at 20080702
   # and should be removed at some point.
   def rename_files_with_uppercase(file)
-    return file if FileTest.exist?(file)
+    return file if Puppet::FileSystem::File.exist?(file)
 
     dir, short = File.split(file)
-    return nil unless FileTest.exist?(dir)
+    return nil unless Puppet::FileSystem::File.exist?(dir)
 
     raise ArgumentError, "Tried to fix SSL files to a file containing uppercase" unless short.downcase == short
     real_file = Dir.entries(dir).reject { |f| f =~ /^\./ }.find do |other|
@@ -159,12 +159,12 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
   # the work or opening a filehandle manually.
   def write(name, path)
     if ca?(name) and ca_location
-      Puppet.settings.write(self.class.ca_setting) { |f| yield f }
+      Puppet.settings.setting(self.class.ca_setting).open('w') { |f| yield f }
     elsif file_location
-      Puppet.settings.write(self.class.file_setting) { |f| yield f }
+      Puppet.settings.setting(self.class.file_setting).open('w') { |f| yield f }
     elsif setting = self.class.directory_setting
       begin
-        Puppet.settings.writesub(setting, path) { |f| yield f }
+        Puppet.settings.setting(setting).open_file(path, 'w') { |f| yield f }
       rescue => detail
         raise Puppet::Error, "Could not write #{path} to #{setting}: #{detail}"
       end

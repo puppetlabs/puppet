@@ -67,12 +67,7 @@ class Puppet::Application::Agent < Puppet::Application
   end
 
   option("--logdest DEST", "-l DEST") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:setdest] = true
-    rescue => detail
-      Puppet.log_exception(detail)
-    end
+    handle_logdest_arg(arg)
   end
 
   option("--waitforcert WAITFORCERT", "-w") do |arg|
@@ -442,7 +437,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def setup_listen(daemon)
     Puppet.warning "Puppet --listen / kick is deprecated. See http://links.puppetlabs.com/puppet-kick-deprecation"
-    unless FileTest.exists?(Puppet[:rest_authconfig])
+    unless Puppet::FileSystem::File.exist?(Puppet[:rest_authconfig])
       Puppet.err "Will not start without authorization file #{Puppet[:rest_authconfig]}"
       exit(14)
     end

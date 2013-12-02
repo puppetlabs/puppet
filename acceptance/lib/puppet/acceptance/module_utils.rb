@@ -15,7 +15,7 @@ module Puppet
       # @param host [String] hostname
       # @return [Array] paths for found modules
       def get_installed_modules_for_host (host)
-        on host, puppet("module list --render-as s")
+        on host, puppet("module list --render-as pson")
         str  = stdout.lines.to_a.last
         pat = /\(([^()]+)\)/
         mods =  str.scan(pat).flatten
@@ -154,7 +154,7 @@ module Puppet
         end
 
         # A module's files should have:
-        #     * a mode of 644 (755, if they're a directory)
+        #     * a mode of 444 (755, if they're a directory)
         #     * owner == owner of moduledir
         #     * group == group of moduledir
         on host, %Q{ls -alR "#{moduledir}/#{module_name}"} do
@@ -163,8 +163,8 @@ module Puppet
           listings = listings.reject { |l| l =~ /\.\.$/ }
 
           listings.each do |line|
-            assert_match /(drwxr-xr-x|[^d]rw-r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
-              "bad permissions for '#{line[/\S+$/]}' - expected 644/755, #{owner}, #{group}"
+            assert_match /(drwxr-xr-x|[^d]r--r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
+              "bad permissions for '#{line[/\S+$/]}' - expected 444/755, #{owner}, #{group}"
           end
         end
       end

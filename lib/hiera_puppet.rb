@@ -71,12 +71,12 @@ module HieraPuppet
 
     if Puppet.settings[:hiera_config].is_a?(String)
       expanded_config_file = File.expand_path(Puppet.settings[:hiera_config])
-      if File.exist?(expanded_config_file)
+      if Puppet::FileSystem::File.exist?(expanded_config_file)
         config_file = expanded_config_file
       end
     elsif Puppet.settings[:confdir].is_a?(String)
       expanded_config_file = File.expand_path(File.join(Puppet.settings[:confdir], '/hiera.yaml'))
-      if File.exist?(expanded_config_file)
+      if Puppet::FileSystem::File.exist?(expanded_config_file)
         config_file = expanded_config_file
       end
     end

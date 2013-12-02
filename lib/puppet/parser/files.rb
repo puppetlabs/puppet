@@ -41,7 +41,7 @@ module Puppet; module Parser; module Files
       template_paths.collect { |path|
         File::join(path, template)
       }.each do |f|
-        return f if FileTest.exist?(f)
+        return f if Puppet::FileSystem::File.exist?(f)
       end
     end
 

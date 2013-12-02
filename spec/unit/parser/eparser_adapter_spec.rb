@@ -365,42 +365,42 @@ describe Puppet::Parser do
   end
   context "when parsing method calls" do
     it "should parse method call with one param lambda" do
-      expect { @parser.parse("$a.foreach {|$a| debug $a }") }.to_not raise_error
+      expect { @parser.parse("$a.each |$a|{ debug $a }") }.to_not raise_error
     end
     it "should parse method call with two param lambda" do
-      expect { @parser.parse("$a.foreach {|$a,$b| debug $a }") }.to_not raise_error
+      expect { @parser.parse("$a.each |$a,$b|{ debug $a }") }.to_not raise_error
     end
     it "should parse method call with two param lambda and default value" do
-      expect { @parser.parse("$a.foreach {|$a,$b=1| debug $a }") }.to_not raise_error
+      expect { @parser.parse("$a.each |$a,$b=1|{ debug $a }") }.to_not raise_error
     end
     it "should parse method call without lambda (statement)" do
-      expect { @parser.parse("$a.foreach") }.to_not raise_error
+      expect { @parser.parse("$a.each") }.to_not raise_error
     end
     it "should parse method call without lambda (expression)" do
-      expect { @parser.parse("$x = $a.foreach + 1") }.to_not raise_error
+      expect { @parser.parse("$x = $a.each + 1") }.to_not raise_error
     end
     context "a receiver expression of type" do
       it "variable should be allowed" do
-        expect { @parser.parse("$a.foreach") }.to_not raise_error
+        expect { @parser.parse("$a.each") }.to_not raise_error
       end
       it "hasharrayaccess should be allowed" do
-        expect { @parser.parse("$a[0][1].foreach") }.to_not raise_error
+        expect { @parser.parse("$a[0][1].each") }.to_not raise_error
       end
       it "quoted text should be allowed" do
-        expect { @parser.parse("\"monkey\".foreach") }.to_not raise_error
-        expect { @parser.parse("'monkey'.foreach") }.to_not raise_error
+        expect { @parser.parse("\"monkey\".each") }.to_not raise_error
+        expect { @parser.parse("'monkey'.each") }.to_not raise_error
       end
       it "selector text should be allowed" do
-        expect { @parser.parse("$a ? { 'banana'=>[1,2,3]}.foreach") }.to_not raise_error
+        expect { @parser.parse("$a ? { 'banana'=>[1,2,3]}.each") }.to_not raise_error
       end
       it "function call should be allowed" do
-        expect { @parser.parse("duh(1,2,3).foreach") }.to_not raise_error
+        expect { @parser.parse("duh(1,2,3).each") }.to_not raise_error
       end
       it "method call should be allowed" do
         expect { @parser.parse("$a.foo.bar") }.to_not raise_error
       end
       it "chained method calls with lambda should be allowed" do
-        expect { @parser.parse("$a.foo{||}.bar{||}") }.to_not raise_error
+        expect { @parser.parse("$a.foo||{}.bar||{}") }.to_not raise_error
       end
     end
   end

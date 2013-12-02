@@ -59,7 +59,9 @@ describe Puppet::Resource::Status do
 
   it "should copy the resource's tags" do
     @resource.expects(:tags).returns %w{foo bar}
-    Puppet::Resource::Status.new(@resource).tags.should == %w{foo bar}
+    status = Puppet::Resource::Status.new(@resource)
+    status.should be_tagged("foo")
+    status.should be_tagged("bar")
   end
 
   it "should always convert the resource to a string" do
@@ -111,6 +113,14 @@ describe Puppet::Resource::Status do
     event = Puppet::Transaction::Event.new(:name => :foobar)
     (@status << event).should equal(@status)
     @status.events.should == [event]
+  end
+
+  it "records an event for a failure caused by an error" do
+    @status.failed_because(StandardError.new("the message"))
+
+    expect(@status.events[0].message).to eq("the message")
+    expect(@status.events[0].status).to eq("failure")
+    expect(@status.events[0].name).to eq(:resource_error)
   end
 
   it "should count the number of successful events and set changed" do

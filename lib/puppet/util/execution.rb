@@ -1,15 +1,33 @@
 module Puppet
   require 'rbconfig'
 
-  # A command failed to execute.
   require 'puppet/error'
+  # A command failed to execute.
+  # @api public
   class ExecutionFailure < Puppet::Error
   end
+end
 
 # This module defines methods for execution of system commands. It is intented for inclusion
 # in classes that needs to execute system commands.
 # @api public
-module Util::Execution
+module Puppet::Util::Execution
+
+  # This is the full output from a process. The object itself (a String) is the
+  # stdout of the process.
+  #
+  # @api public
+  class ProcessOutput < String
+    # @return [Integer] The exit status of the process
+    # @api public
+    attr_reader :exitstatus
+
+    # @api private
+    def initialize(value,exitstatus)
+      super(value)
+      @exitstatus = exitstatus
+    end
+  end
 
   # Executes the provided command with STDIN connected to a pipe, yielding the
   # pipe object.
@@ -27,17 +45,12 @@ module Util::Execution
   # @yield [pipe] to a block executing a subprocess
   # @yieldparam pipe [IO] the opened pipe
   # @yieldreturn [String] the output to return
-  # @raise [ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
+  # @raise [Puppet::ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
   #   `true`.
   # @return [String] a string with the output from the subprocess executed by the given block
+  # @api public
   #
   def self.execpipe(command, failonfail = true)
-    if respond_to? :debug
-      debug "Executing '#{command}'"
-    else
-      Puppet.debug "Executing '#{command}'"
-    end
-
     # Paste together an array with spaces.  We used to paste directly
     # together, no spaces, which made for odd invocations; the user had to
     # include whitespace between arguments.
@@ -46,13 +59,20 @@ module Util::Execution
     # shell anyhow, while no spaces makes for a small developer cost every
     # time this is invoked. --daniel 2012-02-13
     command_str = command.respond_to?(:join) ? command.join(' ') : command
+
+    if respond_to? :debug
+      debug "Executing '#{command_str}'"
+    else
+      Puppet.debug "Executing '#{command_str}'"
+    end
+
     output = open("| #{command_str} 2>&1") do |pipe|
       yield pipe
     end
 
     if failonfail
       unless $CHILD_STATUS == 0
-        raise ExecutionFailure, output
+        raise Puppet::ExecutionFailure, output
       end
     end
 
@@ -62,10 +82,11 @@ module Util::Execution
   # Wraps execution of {execute} with mapping of exception to given exception (and output as argument).
   # @raise [exception] under same conditions as {execute}, but raises the given `exception` with the output as argument
   # @return (see execute)
+  # @api public
   def self.execfail(command, exception)
     output = execute(command)
     return output
-  rescue ExecutionFailure
+  rescue Puppet::ExecutionFailure
     raise exception, output
   end
 
@@ -80,8 +101,8 @@ module Util::Execution
   # @param options [Hash] a Hash of options
   # @option options [Boolean]  :failonfail if this value is set to true, then this method will raise an error if the
   #   command is not executed successfully.
-  # @option options [?] :uid (nil) the user id of the user that the process should be run as
-  # @option options [?] :gid (nil) the group id of the group that the process should be run as
+  # @option options [Integer, String] :uid (nil) the user id of the user that the process should be run as
+  # @option options [Integer, String] :gid (nil) the group id of the group that the process should be run as
   # @option options [Boolean] :combine sets whether or not to combine stdout/stderr in the output
   # @option options [String] :stdinfile (nil) sets a file that can be used for stdin. Passing a string for stdin is not currently
   #   supported.
@@ -92,13 +113,16 @@ module Util::Execution
   #   Passing in a value of false for this option will allow the command to be executed using the user/system locale.
   # @option options [Hash<{String => String}>] :custom_environment ({}) a hash of key/value pairs to set as environment variables for the duration
   #   of the command.
-  # @return [String] output as specified by options
+  # @return [Puppet::Util::Execution::ProcessOutput] output as specified by options
+  # @raise [Puppet::ExecutionFailure] if the executed chiled process did not exit with status == 0 and `failonfail` is
+  #   `true`.
   # @note Unfortunately, the default behavior for failonfail and combine (since
   #   0.22.4 and 0.24.7, respectively) depend on whether options are specified
   #   or not. If specified, then failonfail and combine default to false (even
   #   when the options specified are neither failonfail nor combine). If no
   #   options are specified, then failonfail and combine default to true.
   # @comment See commits efe9a833c and d32d7f30
+  # @api public
   #
   def self.execute(command, options = NoOptionsSpecified)
     # specifying these here rather than in the method signature to allow callers to pass in a partial
@@ -161,15 +185,16 @@ module Util::Execution
     end
 
     if options[:failonfail] and exit_status != 0
-      raise ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
+      raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
     end
 
-    output
+    Puppet::Util::Execution::ProcessOutput.new(output || '', exit_status)
   end
 
   # Returns the path to the ruby executable (available via Config object, even if
   # it's not in the PATH... so this is slightly safer than just using Puppet::Util.which)
   # @return [String] the path to the Ruby executable
+  # @api private
   #
   def self.ruby_path()
     File.join(RbConfig::CONFIG['bindir'],
@@ -261,7 +286,7 @@ module Util::Execution
     #  about a race condition because all of the places that we call this from are preceded by a call to "waitpid2",
     #  meaning that the processes responsible for writing the file have completed before we get here.)
     2.times do |try|
-      if File.exists?(stdout.path)
+      if Puppet::FileSystem::File.exist?(stdout.path)
         stdout.open
         begin
           return stdout.read
@@ -278,5 +303,4 @@ module Util::Execution
     nil
   end
   private_class_method :wait_for_output
-end
 end

@@ -154,7 +154,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:search).with { |key, request| key == "rel/path" }.returns %w{/one /two}
 
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
 
       one = mock 'fileset_one'
       Puppet::FileServing::Fileset.expects(:new).with("/one", @request).returns(one)
@@ -171,7 +171,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:search).with { |key, request| key == "rel/path" }.returns []
 
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
 
       Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one", "two" => "/two")
 
@@ -193,7 +193,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:search).with { |key, request| key == "rel/path" }.returns []
 
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
 
       Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one")
 
@@ -211,7 +211,7 @@ describe Puppet::Indirector::FileServer do
 
       @mount.expects(:search).with { |key, options| key == "rel/path" }.returns []
 
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
 
       Puppet::FileServing::Fileset.expects(:merge).returns("one" => "/one")
 

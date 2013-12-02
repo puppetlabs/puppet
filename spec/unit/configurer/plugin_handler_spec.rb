@@ -19,7 +19,7 @@ describe Puppet::Configurer::PluginHandler do
 
   it "should use an Agent Downloader, with the name, source, destination, ignore, and environment set correctly, to download plugins when downloading is enabled" do
     downloader = mock 'downloader'
-
+    Puppet.features.stubs(:external_facts?).returns(:true)
     # This is needed in order to make sure we pass on windows
     plugindest = File.expand_path("/tmp/pdest")
 
@@ -27,9 +27,14 @@ describe Puppet::Configurer::PluginHandler do
     Puppet[:plugindest] = plugindest
     Puppet[:pluginsignore] = "pignore"
 
+    Puppet[:pluginfactsource] = "psource"
+    Puppet[:pluginfactdest] = plugindest
+
+    Puppet::Configurer::Downloader.expects(:new).with("pluginfacts", plugindest, "psource", "pignore", "myenv").returns downloader
     Puppet::Configurer::Downloader.expects(:new).with("plugin", plugindest, "psource", "pignore", "myenv").returns downloader
 
-    downloader.expects(:evaluate).returns []
+    downloader.stubs(:evaluate).returns([])
+    downloader.expects(:evaluate).twice
 
     @pluginhandler.environment = "myenv"
     @pluginhandler.download_plugins

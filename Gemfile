@@ -1,4 +1,4 @@
-source "https://rubygems.org"
+source ENV['GEM_SOURCE'] || "https://rubygems.org"
 
 def location_for(place, fake_version = nil)
   if place =~ /^(git[:@][^#]*)#(.*)/
@@ -37,6 +37,14 @@ group(:development, :test) do
   gem "mocha", "~> 0.10.5", :require => false
 
   gem "yarjuf", "~> 1.0"
+
+  # json-schema does not support windows, so use the 'ruby' platform to exclude it on windows
+  platforms :ruby do
+    # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
+    gem "multi_json", "1.7.7", :require => false
+    gem "json-schema", "2.1.1", :require => false
+  end
+
 end
 
 group(:extra) do
@@ -48,6 +56,7 @@ group(:extra) do
   gem "sqlite3", :require => false
   gem "stomp", :require => false
   gem "tzinfo", :require => false
+  gem "msgpack", :require => false
 end
 
 platforms :mswin, :mingw do

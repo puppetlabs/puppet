@@ -58,7 +58,7 @@ class Puppet::Provider::Package::Windows
         # REMIND: what about msp, etc
         MsiPackage
       when /\.exe"?\Z/i
-        fail("The source does not exist: '#{resource[:source]}'") unless File.exists?(resource[:source])
+        fail("The source does not exist: '#{resource[:source]}'") unless Puppet::FileSystem::File.exist?(resource[:source])
         ExePackage
       else
         fail("Don't know how to install '#{resource[:source]}'")

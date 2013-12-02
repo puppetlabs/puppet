@@ -37,4 +37,13 @@ describe Puppet::Status do
     new_status = Puppet::Status.convert_from('yaml', status.render('yaml'))
     new_status.should equal_attributes_of(status)
   end
+
+  it "serializes to PSON that conforms to the status schema", :unless => Puppet.features.microsoft_windows? do
+    schema = JSON.parse(File.read('api/schemas/status.json'))
+    status = Puppet::Status.new
+    status.version = Puppet.version
+
+    JSON::Validator.validate!(JSON_META_SCHEMA, schema)
+    JSON::Validator.validate!(schema, status.render('pson'))
+  end
 end

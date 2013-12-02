@@ -165,12 +165,6 @@ describe Puppet::Graph::RelationshipGraph do
       expect(order_resources_traversed_in(relationships)).to(
         include_in_order("Notify[a]", "Notify[b]", "Notify[c]", "Notify[d]"))
     end
-
-    def order_resources_traversed_in(relationships)
-      order_seen = []
-      relationships.traverse { |resource| order_seen << resource.ref }
-      order_seen
-    end
   end
 
   describe "when interrupting traversal" do

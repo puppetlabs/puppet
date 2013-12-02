@@ -5,6 +5,8 @@ require 'puppet/network/format'
 module Puppet::Network::FormatHandler
   class FormatError < Puppet::Error; end
 
+  ALL_MEDIA_TYPES = '*/*'.freeze
+
   @formats = {}
 
   def self.create(*args, &block)
@@ -70,30 +72,33 @@ module Puppet::Network::FormatHandler
   #   that generally conforms to an HTTP Accept header. Any quality specifiers
   #   are ignored and instead the formats are simply in strict preference order
   #   (most preferred is first)
-  # @param supported [Array<Symbol>] the names of the supported formats (order
-  #   does not matter)
+  # @param supported [Array<Symbol>] the names of the supported formats (the
+  #   most preferred format is first)
   # @return [Puppet::Network::Format, nil] the most suitable format
   # @api private
   def self.most_suitable_format_for(accepted, supported)
     format_name = accepted.collect do |accepted|
       accepted.to_s.sub(/;q=.*$/, '')
     end.collect do |accepted|
-      begin
-        if accepted == '*/*'
-          formats
-        else
-          format_to_canonical_name(accepted)
-        end
-      rescue ArgumentError
-        nil
+      if accepted == ALL_MEDIA_TYPES
+        supported.first
+      else
+        format_to_canonical_name_or_nil(accepted)
       end
-    end.flatten.find do |accepted|
+    end.find do |accepted|
       supported.include?(accepted)
     end
 
     if format_name
       format_for(format_name)
     end
+  end
+
+  # @api private
+  def self.format_to_canonical_name_or_nil(format)
+    format_to_canonical_name(format)
+  rescue ArgumentError
+    nil
   end
 end
 

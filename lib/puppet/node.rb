@@ -16,7 +16,7 @@ class Puppet::Node
   indirects :node, :terminus_setting => :node_terminus, :doc => "Where to find node information.
     A node is composed of its name, its facts, and its environment."
 
-  attr_accessor :name, :classes, :source, :ipaddress, :parameters
+  attr_accessor :name, :classes, :source, :ipaddress, :parameters, :trusted_data
   attr_reader :time, :facts
 
   ::PSON.register_document_type('Node',self)
@@ -31,17 +31,25 @@ class Puppet::Node
     node
   end
 
-  def to_pson(*args)
+  def to_data_hash
     result = {
-      'document_type' => "Node",
-      'data' => {}
+      'name' => name,
+      'environment' => environment.name,
     }
-    result['data']['name'] = name
-    result['data']['classes'] = classes unless classes.empty?
-    result['data']['parameters'] = parameters unless parameters.empty?
-    result['data']['environment'] = environment.name
+    result['classes'] = classes unless classes.empty?
+    result['parameters'] = parameters unless parameters.empty?
+    result
+  end
 
-    result.to_pson(*args)
+  def to_pson_data_hash(*args)
+    {
+      'document_type' => "Node",
+      'data' =>  to_data_hash,
+    }
+  end
+
+  def to_pson(*args)
+    to_pson_data_hash.to_pson(*args)
   end
 
   def environment
@@ -84,6 +92,7 @@ class Puppet::Node
   # Merge the node facts with parameters from the node source.
   def fact_merge
     if @facts = Puppet::Node::Facts.indirection.find(name, :environment => environment)
+      @facts.sanitize
       merge(@facts.values)
     end
   rescue => detail
@@ -142,5 +151,12 @@ class Puppet::Node
       tmp << list[0..i].join(".")
     end
     tmp.reverse
+  end
+
+  # Ensures the data is frozen
+  #
+  def trusted_data=(data)
+    Puppet.warning("Trusted node data modified for node #{name}") unless @trusted_data.nil?
+    @trusted_data = data.freeze
   end
 end

@@ -7,7 +7,7 @@
 
 
 module Puppet
-  PUPPETVERSION = '3.3.2'
+  PUPPETVERSION = '3.4.0-rc1'
 
   ##
   # version is a public API method intended to always provide a fast and
@@ -81,7 +81,7 @@ module Puppet
   # @return [String] for example: "1.6.14-6-gea42046" or nil if the VERSION
   #   file does not exist.
   def self.read_version_file(path)
-    if File.exists?(path)
+    if File.exist?(path)
       File.read(path).chomp
     end
   end

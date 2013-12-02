@@ -21,7 +21,7 @@ describe Puppet::Resource::Catalog do
       terminus = Puppet::Resource::Catalog.indirection.terminus(:yaml)
       terminus.expects(:path).with("me").returns "/my/yaml/file"
 
-      FileTest.expects(:exist?).with("/my/yaml/file").returns false
+      Puppet::FileSystem::File.expects(:exist?).with("/my/yaml/file").returns false
       Puppet::Resource::Catalog.indirection.find("me").should be_nil
     end
 

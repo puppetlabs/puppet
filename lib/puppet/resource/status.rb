@@ -1,10 +1,12 @@
 require 'time'
+require 'puppet/network/format_support'
 
 module Puppet
   class Resource
     class Status
       include Puppet::Util::Tagging
       include Puppet::Util::Logging
+      include Puppet::Network::FormatSupport
 
       attr_accessor :resource, :node, :file, :line, :current_values, :status, :evaluation_time
 
@@ -65,7 +67,7 @@ module Puppet
         # will always be accompanied by an event with some explanatory power.  This
         # is useful for reporting/diagnostics/etc.  So synthesize an event here
         # with the exception detail as the message.
-        add_event(@real_resource.event(:status => "failure", :message => detail.to_s))
+        add_event(@real_resource.event(:name => :resource_error, :status => "failure", :message => detail.to_s))
       end
 
       def initialize(resource)
@@ -100,7 +102,7 @@ module Puppet
         @evaluation_time = data['evaluation_time']
         @change_count = data['change_count']
         @out_of_sync_count = data['out_of_sync_count']
-        @tags = data['tags']
+        @tags = Puppet::Util::TagSet.new(data['tags'])
         @time = data['time']
         @time = Time.parse(@time) if @time.is_a? String
         @out_of_sync = data['out_of_sync']
@@ -113,7 +115,7 @@ module Puppet
         end
       end
 
-      def to_pson
+      def to_data_hash
         {
           'title' => @title,
           'file' => @file,
@@ -131,7 +133,11 @@ module Puppet
           'change_count' => @change_count,
           'out_of_sync_count' => @out_of_sync_count,
           'events' => @events,
-        }.to_pson
+        }
+      end
+
+      def to_pson(*args)
+        to_data_hash.to_pson(*args)
       end
 
       def to_yaml_properties

@@ -108,6 +108,38 @@ describe Puppet::Util::Log.desttypes[:syslog] do
   end
 end
 
+describe Puppet::Util::Log.desttypes[:logstash_event] do
+
+  describe "when using structured log format with logstash_event schema" do
+    before :each do
+      @msg = Puppet::Util::Log.new(:level => :info, :message => "So long, and thanks for all the fish.", :source => "a dolphin")
+    end
+
+    it "format should fix the hash to have the correct structure" do
+      dest = described_class.new
+      result = dest.format(@msg)
+      result["version"].should == 1
+      result["level"].should   == :info
+      result["message"].should == "So long, and thanks for all the fish."
+      result["source"].should  == "a dolphin"
+      # timestamp should be within 10 seconds
+      Time.parse(result["@timestamp"]).should >= ( Time.now - 10 )
+    end
+
+    it "format returns a structure that can be converted to json" do
+      dest = described_class.new
+      hash = dest.format(@msg)
+      JSON.parse(hash.to_json)
+    end
+
+    it "handle should send the output to stdout" do
+      $stdout.expects(:puts).once
+      dest = described_class.new
+      dest.handle(@msg)
+    end
+  end
+end
+
 describe Puppet::Util::Log.desttypes[:console] do
   let (:klass) { Puppet::Util::Log.desttypes[:console] }
 

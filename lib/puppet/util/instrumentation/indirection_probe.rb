@@ -15,12 +15,19 @@ class Puppet::Util::Instrumentation::IndirectionProbe
     @probe_name = probe_name
   end
 
-  def to_pson(*args)
-    result = {
+  def to_data_hash
+    { :name => probe_name }
+  end
+
+  def to_pson_data_hash
+    {
       :document_type => "Puppet::Util::Instrumentation::IndirectionProbe",
-      :data => { :name => probe_name }
+      :data => to_data_hash,
     }
-    result.to_pson(*args)
+  end
+
+  def to_pson(*args)
+    to_pson_data_hash.to_pson(*args)
   end
 
   def self.from_pson(data)

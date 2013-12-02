@@ -53,7 +53,7 @@ describe Puppet::Parser do
 
   describe "when parsing files" do
     before do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       File.stubs(:read).returns ""
       @parser.stubs(:watch_file)
     end

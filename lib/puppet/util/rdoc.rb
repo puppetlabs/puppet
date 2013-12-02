@@ -5,44 +5,42 @@ module Puppet::Util::RDoc
   # launch a rdoc documenation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
-    unless Puppet.features.rdoc1?
-      raise "the version of RDoc included in Ruby #{::RUBY_VERSION} is not supported"
-    end
+    Puppet[:ignoreimport] = true
 
-    begin
-      Puppet[:ignoreimport] = true
+    # then rdoc
+    require 'rdoc/rdoc'
+    require 'rdoc/options'
 
-      # then rdoc
-      require 'rdoc/rdoc'
-      require 'rdoc/options'
+    # load our parser
+    require 'puppet/util/rdoc/parser'
 
-      # load our parser
-      require 'puppet/util/rdoc/parser'
+    r = RDoc::RDoc.new
 
-      r = RDoc::RDoc.new
-
+    if Puppet.features.rdoc1?
       RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
-        "puppet/util/rdoc/generators/puppet_generator.rb",
-        :PuppetGenerator,
-        "puppet"
-      )
-
-      # specify our own format & where to output
-      options = [ "--fmt", "puppet",
-                  "--quiet",
-                  "--exclude", "/modules/[^/]*/files/.*$",
-                  "--exclude", "/modules/[^/]*/templates/.*$",
-                  "--op", outputdir ]
-
-      options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
-      options += [ "--charset", charset] if charset
-      options += files
-
-      # launch the documentation process
-      r.document(options)
-    rescue RDoc::RDocError => e
-      raise Puppet::ParseError.new("RDoc error #{e}")
+          "puppet/util/rdoc/generators/puppet_generator.rb",
+          :PuppetGenerator,
+          "puppet"
+        )
     end
+
+    # specify our own format & where to output
+    options = [ "--fmt", "puppet",
+                "--quiet",
+                "--exclude", "/modules/[^/]*/spec/.*$",
+                "--exclude", "/modules/[^/]*/files/.*$",
+                "--exclude", "/modules/[^/]*/tests/.*$",
+                "--exclude", "/modules/[^/]*/templates/.*$",
+                "--op", outputdir ]
+
+    if !Puppet.features.rdoc1? || ::Options::OptionList.options.any? { |o| o[0] == "--force-update" } # Options is a root object in the rdoc1 namespace...
+      options << "--force-update"
+    end
+    options += [ "--charset", charset] if charset
+    options += files
+
+    # launch the documentation process
+    r.document(options)
   end
 
   # launch an output to console manifest doc

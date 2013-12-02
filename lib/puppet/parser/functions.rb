@@ -1,6 +1,5 @@
 require 'puppet/util/autoload'
 require 'puppet/parser/scope'
-require 'monitor'
 
 # A module for managing parser functions.  Each specified function
 # is added to a central module that then gets included into the Scope
@@ -18,8 +17,8 @@ module Puppet::Parser::Functions
   #
   # @api private
   def self.reset
-    @functions = Hash.new { |h,k| h[k] = {} }.extend(MonitorMixin)
-    @modules = Hash.new.extend(MonitorMixin)
+    @functions = Hash.new { |h,k| h[k] = {} }
+    @modules = Hash.new
 
     # Runs a newfunction to create a function for each of the log levels
     Puppet::Util::Log.levels.each do |level|
@@ -46,9 +45,7 @@ module Puppet::Parser::Functions
     if env and ! env.is_a?(Puppet::Node::Environment)
       env = Puppet::Node::Environment.new(env)
     end
-    @modules.synchronize {
-      @modules[ (env || Environment.current || Environment.root).name ] ||= Module.new
-    }
+    @modules[ (env || Environment.current || Environment.root).name ] ||= Module.new
   end
 
   # Create a new Puppet DSL function.
@@ -170,11 +167,9 @@ module Puppet::Parser::Functions
     name = name.intern
 
     func = nil
-    @functions.synchronize do
-      unless func = get_function(name)
-        autoloader.load(name, Environment.current)
-        func = get_function(name)
-      end
+    unless func = get_function(name)
+      autoloader.load(name, Environment.current)
+      func = get_function(name)
     end
 
     if func
@@ -190,14 +185,14 @@ module Puppet::Parser::Functions
     ret = ""
 
     merged_functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
-      ret += "#{name}\n#{"-" * name.to_s.length}\n"
+      ret << "#{name}\n#{"-" * name.to_s.length}\n"
       if hash[:doc]
-        ret += Puppet::Util::Docs.scrub(hash[:doc])
+        ret << Puppet::Util::Docs.scrub(hash[:doc])
       else
-        ret += "Undocumented.\n"
+        ret << "Undocumented.\n"
       end
 
-      ret += "\n\n- *Type*: #{hash[:type]}\n\n"
+      ret << "\n\n- *Type*: #{hash[:type]}\n\n"
     end
 
     ret
@@ -229,9 +224,7 @@ module Puppet::Parser::Functions
     private
 
     def merged_functions
-      @functions.synchronize {
-        @functions[Environment.root].merge(@functions[Environment.current])
-      }
+      @functions[Environment.root].merge(@functions[Environment.current])
     end
 
     def get_function(name)
@@ -241,9 +234,7 @@ module Puppet::Parser::Functions
 
     def add_function(name, func)
       name = name.intern
-      @functions.synchronize {
-        @functions[Environment.current][name] = func
-      }
+      @functions[Environment.current][name] = func
     end
   end
 

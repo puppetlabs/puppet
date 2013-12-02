@@ -10,7 +10,6 @@ describe Puppet::Type.type(:file) do
   let(:catalog) { Puppet::Resource::Catalog.new }
 
   before do
-    @real_posix = Puppet.features.posix?
     Puppet.features.stubs("posix?").returns(true)
   end
 
@@ -78,33 +77,29 @@ describe Puppet::Type.type(:file) do
       end
 
       describe "when using UNC filenames", :if => Puppet.features.microsoft_windows? do
-        before :each do
-          pending("UNC file paths not yet supported")
-        end
-
         it "should remove trailing slashes" do
-          file[:path] = "//server/foo/bar/baz/"
-          file[:path].should == "//server/foo/bar/baz"
+          file[:path] = "//localhost/foo/bar/baz/"
+          file[:path].should == "//localhost/foo/bar/baz"
         end
 
         it "should remove double slashes" do
-          file[:path] = "//server/foo/bar//baz"
-          file[:path].should == "//server/foo/bar/baz"
+          file[:path] = "//localhost/foo/bar//baz"
+          file[:path].should == "//localhost/foo/bar/baz"
         end
 
         it "should remove trailing double slashes" do
-          file[:path] = "//server/foo/bar/baz//"
-          file[:path].should == "//server/foo/bar/baz"
+          file[:path] = "//localhost/foo/bar/baz//"
+          file[:path].should == "//localhost/foo/bar/baz"
         end
 
         it "should remove a trailing slash from a sharename" do
-          file[:path] = "//server/foo/"
-          file[:path].should == "//server/foo"
+          file[:path] = "//localhost/foo/"
+          file[:path].should == "//localhost/foo"
         end
 
         it "should not modify a sharename" do
-          file[:path] = "//server/foo"
-          file[:path].should == "//server/foo"
+          file[:path] = "//localhost/foo"
+          file[:path].should == "//localhost/foo"
         end
       end
     end
@@ -352,7 +347,7 @@ describe Puppet::Type.type(:file) do
       file[:ensure].should == :file
     end
 
-    it "should set a desired 'ensure' value if none is set and 'target' is set" do
+    it "should set a desired 'ensure' value if none is set and 'target' is set", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       file = described_class.new(:path => path, :target => File.expand_path(__FILE__))
       file[:ensure].should == :link
     end
@@ -397,7 +392,7 @@ describe Puppet::Type.type(:file) do
       :target => "some_target",
       :source => File.expand_path("some_source"),
     }.each do |param, value|
-      it "should omit the #{param} parameter" do
+      it "should omit the #{param} parameter", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
         # Make a new file, because we have to set the param at initialization
         # or it wouldn't be copied regardless.
         file = described_class.new(:path => path, param => value)
@@ -603,7 +598,7 @@ describe Puppet::Type.type(:file) do
       file.recurse_link("first" => @resource)
     end
 
-    it "should set the target to the full path of discovered file and set :ensure to :link if the file is not a directory" do
+    it "should set the target to the full path of discovered file and set :ensure to :link if the file is not a directory", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       file.stubs(:perform_recursion).returns [@first, @second]
       file.recurse_link("first" => @resource, "second" => file)
 
@@ -925,20 +920,20 @@ describe Puppet::Type.type(:file) do
 
       file.remove_existing(:directory).should == true
 
-      File.exists?(file[:path]).should == false
+      Puppet::FileSystem::File.exist?(file[:path]).should == false
     end
 
-    it "should remove an existing link", :unless => Puppet.features.microsoft_windows? do
+    it "should remove an existing link", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       file.stubs(:perform_backup).returns true
 
       target = tmpfile('link_target')
       FileUtils.touch(target)
-      FileUtils.symlink(target, path)
+      Puppet::FileSystem::File.new(target).symlink(path)
       file[:target] = target
 
       file.remove_existing(:directory).should == true
 
-      File.exists?(file[:path]).should == false
+      Puppet::FileSystem::File.exist?(file[:path]).should == false
     end
 
     it "should fail if the file is not a file, link, or directory" do
@@ -952,7 +947,7 @@ describe Puppet::Type.type(:file) do
       file.stat
       file.stubs(:stat).returns stub('stat', :ftype => 'file')
 
-      File.stubs(:unlink)
+      Puppet::FileSystem::File.stubs(:unlink)
 
       file.remove_existing(:directory).should == true
       file.instance_variable_get(:@stat).should == :needs_stat
@@ -1010,11 +1005,11 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "#stat", :unless => Puppet.features.microsoft_windows? do
+  describe "#stat", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
     before do
       target = tmpfile('link_target')
       FileUtils.touch(target)
-      FileUtils.symlink(target, path)
+      Puppet::FileSystem::File.new(target).symlink(path)
 
       file[:target] = target
       file[:links] = :manage # so we always use :lstat
@@ -1033,7 +1028,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should return nil if the file does not exist" do
-      file[:path] = '/foo/bar/baz/non-existent'
+      file[:path] = make_absolute('/foo/bar/baz/non-existent')
 
       file.stat.should be_nil
     end
@@ -1207,7 +1202,7 @@ describe Puppet::Type.type(:file) do
 
   describe "when autorequiring" do
     describe "target" do
-      it "should require file resource when specified with the target property" do
+      it "should require file resource when specified with the target property", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
         file = described_class.new(:path => File.expand_path("/foo"), :ensure => :directory)
         link = described_class.new(:path => File.expand_path("/bar"), :ensure => :link, :target => File.expand_path("/foo"))
         catalog.add_resource file
@@ -1229,7 +1224,7 @@ describe Puppet::Type.type(:file) do
         reqs[0].target.must == link
       end
 
-      it "should not require target if target is not managed" do
+      it "should not require target if target is not managed", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
         link = described_class.new(:path => File.expand_path('/foo'), :ensure => :link, :target => '/bar')
         catalog.add_resource link
         link.autorequire.size.should == 0
@@ -1272,8 +1267,8 @@ describe Puppet::Type.type(:file) do
       describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
         describe "when using UNC filenames" do
           it "should autorequire its parent directory" do
-            file[:path] = '//server/foo/bar/baz'
-            dir = described_class.new(:path => "//server/foo/bar")
+            file[:path] = '//localhost/foo/bar/baz'
+            dir = described_class.new(:path => "//localhost/foo/bar")
             catalog.add_resource file
             catalog.add_resource dir
             reqs = file.autorequire
@@ -1282,9 +1277,9 @@ describe Puppet::Type.type(:file) do
           end
 
           it "should autorequire its nearest ancestor directory" do
-            file = described_class.new(:path => "//server/foo/bar/baz/qux")
-            dir = described_class.new(:path => "//server/foo/bar/baz")
-            grandparent = described_class.new(:path => "//server/foo/bar")
+            file = described_class.new(:path => "//localhost/foo/bar/baz/qux")
+            dir = described_class.new(:path => "//localhost/foo/bar/baz")
+            grandparent = described_class.new(:path => "//localhost/foo/bar")
             catalog.add_resource file
             catalog.add_resource dir
             catalog.add_resource grandparent
@@ -1295,13 +1290,13 @@ describe Puppet::Type.type(:file) do
           end
 
           it "should not autorequire anything when there is no nearest ancestor directory" do
-            file = described_class.new(:path => "//server/foo/bar/baz/qux")
+            file = described_class.new(:path => "//localhost/foo/bar/baz/qux")
             catalog.add_resource file
             file.autorequire.should be_empty
           end
 
           it "should not autorequire its parent dir if its parent dir is itself" do
-            file = described_class.new(:path => "//server/foo")
+            file = described_class.new(:path => "//localhost/foo")
             catalog.add_resource file
             puts file.autorequire
             file.autorequire.should be_empty
@@ -1311,49 +1306,46 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "when managing links" do
+  describe "when managing links", :if => Puppet.features.manages_symlinks? do
     require 'tempfile'
 
-    if @real_posix
-      describe "on POSIX systems" do
-        before do
-          Dir.mkdir(path)
-          @target = File.join(path, "target")
-          @link   = File.join(path, "link")
+    before :each do
+      Dir.mkdir(path)
+      @target = File.join(path, "target")
+      @link   = File.join(path, "link")
 
-          File.open(@target, "w", 0644) { |f| f.puts "yayness" }
-          File.symlink(@target, @link)
+      target = described_class.new(
+        :ensure => :file, :path => @target,
+        :catalog => catalog, :content => 'yayness',
+        :mode => 0644)
+      catalog.add_resource target
 
-          file[:path] = @link
-          file[:mode] = 0755
+      @link_resource = described_class.new(
+        :ensure => :link, :path => @link,
+        :target => @target, :catalog => catalog,
+        :mode => 0755)
+      catalog.add_resource @link_resource
 
-          catalog.add_resource file
-        end
-
-        it "should default to managing the link" do
-          catalog.apply
-          # I convert them to strings so they display correctly if there's an error.
-          (File.stat(@target).mode & 007777).to_s(8).should == '644'
-        end
-
-        it "should be able to follow links" do
-          file[:links] = :follow
-          catalog.apply
-
-          (File.stat(@target).mode & 007777).to_s(8).should == '755'
-        end
-      end
-    else # @real_posix
-      # should recode tests using expectations instead of using the filesystem
+      # to prevent the catalog from trying to write state.yaml
+      Puppet::Util::Storage.stubs(:store)
     end
 
-    describe "on Microsoft Windows systems" do
-      before do
-        Puppet.features.stubs(:posix?).returns(false)
-        Puppet.features.stubs(:microsoft_windows?).returns(true)
-      end
+    it "should preserve the original file mode and ignore the one set by the link" do
+      @link_resource[:links] = :manage # default
+      catalog.apply
 
-      it "should refuse to work with links"
+      # I convert them to strings so they display correctly if there's an error.
+      (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '644'
+    end
+
+    it "should manage the mode of the followed link" do
+      pending("Windows cannot presently manage the mode when following symlinks",
+        :if => Puppet.features.microsoft_windows?) do
+        @link_resource[:links] = :follow
+        catalog.apply
+
+        (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '755'
+      end
     end
   end
 
@@ -1436,7 +1428,7 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
-      File.should be_exist(path)
+      Puppet::FileSystem::File.exist?(path).should be_true
       @logs.should_not be_any {|l| l.level != :notice }
     end
   end

@@ -60,7 +60,7 @@ module Puppet::ModuleTool
           when *Puppet::ModuleTool::ARTIFACTS
             next
           else
-            FileUtils.cp_r path, build_path
+            FileUtils.cp_r path, build_path, :preserve => true
           end
         end
       end

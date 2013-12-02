@@ -84,6 +84,13 @@ describe content do
 
       @content.should.must == string
     end
+
+    it "should convert the value to ASCII-8BIT", :if => "".respond_to?(:encode) do
+      @content = content.new(:resource => @resource)
+      @content.should= "Let's make a \u{2603}"
+
+      @content.actual_content.should == "Let's make a \xE2\x98\x83".force_encoding(Encoding::ASCII_8BIT)
+    end
   end
 
   describe "when retrieving the current content" do
@@ -329,8 +336,10 @@ describe content do
       end
 
       it "should copy content from the source to the file" do
+        dest_file = Puppet::FileSystem::File.new(@filename)
         @resource.write(@source)
-        IO.binread(@filename).should == @source_content
+
+        dest_file.binread.should == @source_content
       end
 
       it "should return the checksum computed" do
@@ -358,8 +367,10 @@ describe content do
       end
 
       it "should write the contents to the file" do
+        dest_file = Puppet::FileSystem::File.new(@filename)
         @resource.write(@source)
-        IO.binread(@filename).should == @source_content
+
+        dest_file.binread.should == @source_content
       end
 
       it "should not write anything if source is not found" do

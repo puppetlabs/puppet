@@ -21,7 +21,7 @@ describe Puppet::Node do
 
       terminus.expects(:path).with(@name).returns "/my/yaml/file"
 
-      FileTest.expects(:exist?).with("/my/yaml/file").returns false
+      Puppet::FileSystem::File.expects(:exist?).with("/my/yaml/file").returns false
       Puppet::Node.indirection.find(@name).should be_nil
     end
 

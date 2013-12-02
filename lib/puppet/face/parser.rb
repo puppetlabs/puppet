@@ -35,17 +35,27 @@ Puppet::Face.define(:parser, '0.0.1') do
       if files.empty?
         if not STDIN.tty?
           Puppet[:code] = STDIN.read
-          Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+          validate_manifest
         else
            files << Puppet[:manifest]
            Puppet.notice "No manifest specified. Validating the default manifest #{Puppet[:manifest]}"
         end
       end
+      missing_files = []
       files.each do |file|
+        missing_files << file if ! Puppet::FileSystem::File.exist?(file)
         Puppet[:manifest] = file
-        Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+        validate_manifest
       end
+      raise Puppet::Error, "One or more file(s) specified did not exist:\n#{missing_files.collect {|f| " " * 3 + f + "\n"}}" if ! missing_files.empty?
       nil
     end
+  end
+
+  def validate_manifest
+    Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+  rescue => detail
+    Puppet.log_exception(detail)
+    exit(1)
   end
 end

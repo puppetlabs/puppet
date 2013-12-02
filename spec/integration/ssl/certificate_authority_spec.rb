@@ -6,8 +6,9 @@ require 'puppet/ssl/certificate_authority'
 describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
+  let(:ca) { @ca }
+
   before do
-    # Get a safe temporary file
     dir = tmpdir("ca_integration_testing")
 
     Puppet.settings[:confdir] = dir
@@ -15,103 +16,58 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     Puppet.settings[:group] = Process.gid
 
     Puppet::SSL::Host.ca_location = :local
+
+    # this has the side-effect of creating the various directories that we need
     @ca = Puppet::SSL::CertificateAuthority.new
   end
 
-  after {
-    Puppet::SSL::Host.ca_location = :none
-
-    Puppet.settings.clear
-
-    Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)
-  }
-
-  it "should create a CA host" do
-    @ca.host.should be_ca
-  end
-
-  it "should be able to generate a certificate" do
-    @ca.generate_ca_certificate
-
-    @ca.host.certificate.should be_instance_of(Puppet::SSL::Certificate)
-  end
-
   it "should be able to generate a new host certificate" do
-    @ca.generate("newhost")
+    ca.generate("newhost")
 
     Puppet::SSL::Certificate.indirection.find("newhost").should be_instance_of(Puppet::SSL::Certificate)
   end
 
   it "should be able to revoke a host certificate" do
-    @ca.generate("newhost")
+    ca.generate("newhost")
 
-    @ca.revoke("newhost")
+    ca.revoke("newhost")
 
-    lambda { @ca.verify("newhost") }.should raise_error
-  end
-
-  it "should have a CRL" do
-    @ca.generate_ca_certificate
-    @ca.crl.should_not be_nil
-  end
-
-  it "should be able to read in a previously created CRL" do
-    @ca.generate_ca_certificate
-
-    # Create it to start with.
-    @ca.crl
-
-    Puppet::SSL::CertificateAuthority.new.crl.should_not be_nil
+    expect { ca.verify("newhost") }.to raise_error(Puppet::SSL::CertificateAuthority::CertificateVerificationError, "certificate revoked")
   end
 
   describe "when signing certificates" do
-    before do
-      @host = Puppet::SSL::Host.new("luke.madstop.com")
-
-      # We have to provide the key, since when we're in :ca_only mode, we can only interact
-      # with the CA key.
-      key = Puppet::SSL::Key.new(@host.name)
-      key.generate
-
-      @host.key = key
-      @host.generate_certificate_request
-
-      path = File.join(Puppet[:requestdir], "luke.madstop.com.pem")
-    end
-
-    it "should be able to sign certificates" do
-      @ca.sign("luke.madstop.com")
-    end
-
     it "should save the signed certificate" do
-      @ca.sign("luke.madstop.com")
+      host = certificate_request_for("luke.madstop.com")
+
+      ca.sign("luke.madstop.com")
 
       Puppet::SSL::Certificate.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
     end
 
     it "should be able to sign multiple certificates" do
-      @other = Puppet::SSL::Host.new("other.madstop.com")
-      okey = Puppet::SSL::Key.new(@other.name)
-      okey.generate
-      @other.key = okey
-      @other.generate_certificate_request
+      host = certificate_request_for("luke.madstop.com")
+      other = certificate_request_for("other.madstop.com")
 
-      @ca.sign("luke.madstop.com")
-      @ca.sign("other.madstop.com")
+      ca.sign("luke.madstop.com")
+      ca.sign("other.madstop.com")
 
       Puppet::SSL::Certificate.indirection.find("other.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
       Puppet::SSL::Certificate.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
     end
 
     it "should save the signed certificate to the :signeddir" do
-      @ca.sign("luke.madstop.com")
+      host = certificate_request_for("luke.madstop.com")
+
+      ca.sign("luke.madstop.com")
 
       client_cert = File.join(Puppet[:signeddir], "luke.madstop.com.pem")
       File.read(client_cert).should == Puppet::SSL::Certificate.indirection.find("luke.madstop.com").content.to_s
     end
 
     it "should save valid certificates" do
-      @ca.sign("luke.madstop.com")
+      host = certificate_request_for("luke.madstop.com")
+
+      ca.sign("luke.madstop.com")
 
       unless ssl = Puppet::Util::which('openssl')
         pending "No ssl available"
@@ -124,21 +80,58 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     end
 
     it "should verify proof of possession when signing certificates" do
-      csr = @host.certificate_request
-      wrong_key = Puppet::SSL::Key.new(@host.name)
+      host = certificate_request_for("luke.madstop.com")
+      csr = host.certificate_request
+      wrong_key = Puppet::SSL::Key.new(host.name)
       wrong_key.generate
 
       csr.content.public_key = wrong_key.content.public_key
       # The correct key has to be removed so we can save the incorrect one
-      Puppet::SSL::CertificateRequest.indirection.destroy(@host.name)
+      Puppet::SSL::CertificateRequest.indirection.destroy(host.name)
       Puppet::SSL::CertificateRequest.indirection.save(csr)
 
       expect {
-        @ca.sign(@host.name)
+        ca.sign(host.name)
       }.to raise_error(
         Puppet::SSL::CertificateAuthority::CertificateSigningError,
         "CSR contains a public key that does not correspond to the signing key"
       )
     end
+  end
+
+  it "allows autosigning certificates concurrently", :unless => Puppet::Util::Platform.windows? do
+    Puppet[:autosign] = true
+    hosts = (0..4).collect { |i| certificate_request_for("host#{i}") }
+
+    run_in_parallel(5) do |i|
+      ca.autosign(Puppet::SSL::CertificateRequest.indirection.find(hosts[i].name))
+    end
+
+    certs = hosts.collect { |host| Puppet::SSL::Certificate.indirection.find(host.name).content }
+    serial_numbers = certs.collect(&:serial)
+
+    serial_numbers.sort.should == [2, 3, 4, 5, 6] # serial 1 is the ca certificate
+  end
+
+  def certificate_request_for(hostname)
+    key = Puppet::SSL::Key.new(hostname)
+    key.generate
+
+    host = Puppet::SSL::Host.new(hostname)
+    host.key = key
+    host.generate_certificate_request
+
+    host
+  end
+
+  def run_in_parallel(number)
+    children = []
+    number.times do |i|
+      children << Kernel.fork do
+        yield i
+      end
+    end
+
+    children.each { |pid| Process.wait(pid) }
   end
 end

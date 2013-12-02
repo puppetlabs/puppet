@@ -1,8 +1,8 @@
 require 'spec_helper'
-require 'puppet/ssl/validator'
+require 'puppet/ssl'
 require 'puppet/ssl/configuration'
 
-describe Puppet::SSL::Validator do
+describe Puppet::SSL::Validator::DefaultValidator do
   let(:ssl_context) do
     mock('OpenSSL::X509::StoreContext')
   end
@@ -14,8 +14,16 @@ describe Puppet::SSL::Validator do
       :ca_auth_file  => Puppet[:ssl_client_ca_auth])
   end
 
+  let(:ssl_host) do
+    stub('ssl_host',
+         :ssl_store => nil,
+         :certificate => stub('cert', :content => nil),
+         :key => stub('key', :content => nil))
+  end
+
   subject do
-    described_class.new(:ssl_configuration => ssl_configuration)
+    described_class.new(ssl_configuration,
+                        ssl_host)
   end
 
   before :each do
@@ -49,17 +57,20 @@ describe Puppet::SSL::Validator do
         before :each do
           ssl_context.stubs(:error_string).returns("Something went wrong.")
         end
+
         it 'does not make the error available via #verify_errors' do
           subject.call(true, ssl_context)
           subject.verify_errors.should == []
         end
       end
+
       context 'and the chain is valid' do
         it 'is true for each CA certificate in the chain' do
           (cert_chain.length - 1).times do
             subject.call(true, ssl_context).should be_true
           end
         end
+
         it 'is true for the SSL certificate ending the chain' do
           (cert_chain.length - 1).times do
             subject.call(true, ssl_context)
@@ -67,17 +78,20 @@ describe Puppet::SSL::Validator do
           subject.call(true, ssl_context).should be_true
         end
       end
+
       context 'and the chain is invalid' do
         before :each do
           ssl_configuration.stubs(:read_file).
             with(Puppet[:localcacert]).
             returns(agent_ca)
         end
+
         it 'is true for each CA certificate in the chain' do
           (cert_chain.length - 1).times do
             subject.call(true, ssl_context).should be_true
           end
         end
+
         it 'is false for the SSL certificate ending the chain' do
           (cert_chain.length - 1).times do
             subject.call(true, ssl_context)
@@ -85,13 +99,16 @@ describe Puppet::SSL::Validator do
           subject.call(true, ssl_context).should be_false
         end
       end
+
       context 'an error is raised inside of #call' do
         before :each do
           ssl_context.expects(:current_cert).raises(StandardError, "BOOM!")
         end
+
         it 'is false' do
           subject.call(true, ssl_context).should be_false
         end
+
         it 'makes the error available through #verify_errors' do
           subject.call(true, ssl_context)
           subject.verify_errors.should == ["BOOM!"]
@@ -100,11 +117,28 @@ describe Puppet::SSL::Validator do
     end
   end
 
-  describe '#register_verify_callback' do
-    it 'registers itself using #verify_callback' do
+  describe '#setup_connection' do
+    it 'updates the connection for verification' do
+      subject.stubs(:ssl_certificates_are_present?).returns(true)
       connection = mock('Net::HTTP')
+
+      connection.expects(:cert_store=).with(ssl_host.ssl_store)
+      connection.expects(:ca_file=).with(ssl_configuration.ca_auth_file)
+      connection.expects(:cert=).with(ssl_host.certificate.content)
+      connection.expects(:key=).with(ssl_host.key.content)
       connection.expects(:verify_callback=).with(subject)
-      subject.register_verify_callback(connection)
+      connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_PEER)
+
+      subject.setup_connection(connection)
+    end
+
+    it 'does not perform verification if certificate files are missing' do
+      subject.stubs(:ssl_certificates_are_present?).returns(false)
+      connection = mock('Net::HTTP')
+
+      connection.expects(:verify_mode=).with(OpenSSL::SSL::VERIFY_NONE)
+
+      subject.setup_connection(connection)
     end
   end
 
@@ -120,17 +154,21 @@ describe Puppet::SSL::Validator do
       before :each do
         subject.stubs(:has_authz_peer_cert).returns(true)
       end
+
       it 'is true' do
         subject.valid_peer?.should be_true
       end
     end
+
     context 'when the peer presents an invalid chain' do
       before :each do
         subject.stubs(:has_authz_peer_cert).returns(false)
       end
+
       it 'is false' do
         subject.valid_peer?.should be_false
       end
+
       it 'makes a helpful error message available via #verify_errors' do
         subject.valid_peer?
         subject.verify_errors.should == [expected_authz_error_msg]
@@ -143,22 +181,27 @@ describe Puppet::SSL::Validator do
       it 'returns true when the SSL cert is issued by the Master CA' do
         subject.has_authz_peer_cert(cert_chain, [root_ca_cert]).should be_true
       end
+
       it 'returns true when the SSL cert is issued by the Agent CA' do
         subject.has_authz_peer_cert(cert_chain_agent_ca, [root_ca_cert]).should be_true
       end
     end
+
     context 'when the Master CA is listed as authorized' do
       it 'returns false when the SSL cert is issued by the Master CA' do
         subject.has_authz_peer_cert(cert_chain, [master_ca_cert]).should be_true
       end
+
       it 'returns true when the SSL cert is issued by the Agent CA' do
         subject.has_authz_peer_cert(cert_chain_agent_ca, [master_ca_cert]).should be_false
       end
     end
+
     context 'when the Agent CA is listed as authorized' do
       it 'returns true when the SSL cert is issued by the Master CA' do
         subject.has_authz_peer_cert(cert_chain, [agent_ca_cert]).should be_false
       end
+
       it 'returns true when the SSL cert is issued by the Agent CA' do
         subject.has_authz_peer_cert(cert_chain_agent_ca, [agent_ca_cert]).should be_true
       end

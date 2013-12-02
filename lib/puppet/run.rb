@@ -94,11 +94,15 @@ class Puppet::Run
     new(options)
   end
 
-  def to_pson
+  def to_data_hash
     {
       :options => @options,
       :background => @background,
       :status => @status
-    }.to_pson
+    }
+  end
+
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 end

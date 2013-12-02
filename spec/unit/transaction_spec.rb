@@ -308,7 +308,7 @@ describe Puppet::Transaction do
       transaction.evaluate
 
       generated.each do |res|
-        res.must be_tagged(generator.tags)
+        res.must be_tagged(*generator.tags)
       end
     end
   end
@@ -404,7 +404,6 @@ describe Puppet::Transaction do
     it "should otherwise let the resource determine if it is missing tags" do
       tags = ['one', 'two']
       @transaction.tags = tags
-      @resource.expects(:tagged?).with(*tags).returns(false)
       @transaction.should be_missing_tags(@resource)
     end
   end
@@ -475,6 +474,48 @@ describe Puppet::Transaction do
       resource.provider.class.expects(:prefetch).with('bar' => resource, 'other' => other)
 
       transaction.prefetch_if_necessary(resource)
+    end
+  end
+
+  describe "during teardown" do
+    before :each do
+      @catalog = Puppet::Resource::Catalog.new
+      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    end
+
+    it "should call ::post_resource_eval on provider classes that support it" do
+      @resource = Puppet::Type.type(:notify).new :title => "foo"
+      @catalog.add_resource @resource
+
+      # 'expects' will cause 'respond_to?(:post_resource_eval)' to return true
+      @resource.provider.class.expects(:post_resource_eval)
+      @transaction.evaluate
+    end
+
+    it "should call ::post_resource_eval even if other providers' ::post_resource_eval fails" do
+      @resource3 = Puppet::Type.type(:user).new :title => "bloo"
+      @resource3.provider.class.stubs(:post_resource_eval).raises
+      @resource4 = Puppet::Type.type(:notify).new :title => "blob"
+      @resource4.provider.class.stubs(:post_resource_eval).raises
+      @catalog.add_resource @resource3
+      @catalog.add_resource @resource4
+
+      # ruby's Set does not guarantee ordering, so both resource3 and resource4
+      # need to expect post_resource_eval, rather than just the 'first' one.
+      @resource3.provider.class.expects(:post_resource_eval)
+      @resource4.provider.class.expects(:post_resource_eval)
+
+      @transaction.evaluate
+    end
+
+    it "should call ::post_resource_eval even if one of the resources fails" do
+      @resource3 = Puppet::Type.type(:notify).new :title => "bloo"
+      @resource3.stubs(:retrieve_resource).raises
+      @catalog.add_resource @resource3
+
+      @resource3.provider.class.expects(:post_resource_eval)
+
+      @transaction.evaluate
     end
   end
 
@@ -594,32 +635,37 @@ describe Puppet::Transaction, " when determining tags" do
 
   it "should default to the tags specified in the :tags setting" do
     Puppet[:tags] = "one"
-    @transaction.tags.should == %w{one}
+    @transaction.should be_tagged("one")
   end
 
   it "should split tags based on ','" do
     Puppet[:tags] = "one,two"
-    @transaction.tags.should == %w{one two}
+    @transaction.should be_tagged("one")
+    @transaction.should be_tagged("two")
   end
 
   it "should use any tags set after creation" do
     Puppet[:tags] = ""
     @transaction.tags = %w{one two}
-    @transaction.tags.should == %w{one two}
+    @transaction.should be_tagged("one")
+    @transaction.should be_tagged("two")
   end
 
   it "should always convert assigned tags to an array" do
     @transaction.tags = "one::two"
-    @transaction.tags.should == %w{one::two}
+    @transaction.should be_tagged("one::two")
   end
 
   it "should accept a comma-delimited string" do
     @transaction.tags = "one, two"
-    @transaction.tags.should == %w{one two}
+    @transaction.should be_tagged("one")
+    @transaction.should be_tagged("two")
   end
 
   it "should accept an empty string" do
+    @transaction.tags = "one, two"
+    @transaction.should be_tagged("one")
     @transaction.tags = ""
-    @transaction.tags.should == []
+    @transaction.should_not be_tagged("one")
   end
 end

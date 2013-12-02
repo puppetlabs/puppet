@@ -1,3 +1,6 @@
+require 'puppet/acceptance/common_utils'
+extend Puppet::Acceptance::CAUtils
+
 test_name "Puppet cert generate behavior (#6112)" do
 
   # This acceptance test documents the behavior of `puppet cert generate` calls
@@ -51,15 +54,6 @@ test_name "Puppet cert generate behavior (#6112)" do
     clean_cert(master, test_cn, false)
   end
 
-  def clean_cert(host, cn, check = true)
-    on(host, puppet('cert', 'clean', cn), :acceptable_exit_codes => check ? [0] : [0, 24])
-    if check
-      assert_match(/remov.*Certificate.*#{cn}/i, stdout, "Should see a log message that certificate request was removed.")
-      on(host, puppet('cert', 'list', '--all'))
-      assert_no_match(/#{cn}/, stdout, "Should not see certificate in list anymore.")
-    end
-  end
-
   def generate_and_clean_cert(host, cn, autosign)
     on(host, puppet('cert', 'generate', cn, '--autosign', autosign))
     assert_no_match(/Could not find certificate request for.*cert\.test/i, stderr, "Should not see an error message for a missing certificate request.")
@@ -83,46 +77,6 @@ test_name "Puppet cert generate behavior (#6112)" do
   # @return true if the passed host operates in a master role.
   def host_is_master?(host)
     host['roles'].include?('master')
-  end
-
-  def clear_agent_ssl
-    return if master.is_pe?
-    step "All: Clear agent only ssl settings (do not clear master)"
-    hosts.each do |host|
-      next if host == master
-      ssldir = on(host, puppet('agent --configprint ssldir')).stdout.chomp
-      on( host, host_command("rm -rf '#{ssldir}'") )
-    end
-  end
-
-  def reset_agent_ssl
-    return if master.is_pe?
-    clear_agent_ssl
-
-    hostname = master.execute('facter hostname')
-    fqdn = master.execute('facter fqdn')
-
-    step "Master: Ensure the master bootstraps CA"
-    with_puppet_running_on(master,
-                            :master => {
-                              :dns_alt_names => "puppet,#{hostname},#{fqdn}",
-                              :autosign => true,
-                            }
-                          ) do
-
-      agents.each do |agent|
-        next if agent == master
-
-        step "Clear old agent certificate from master" do
-          agent_cn = on(agent, puppet('agent --configprint certname')).stdout.chomp
-          clean_cert(master, agent_cn, false) if agent_cn
-        end
-        step "Agents: Run agent --test once to obtained auto-signed cert" do
-          on agent, puppet('agent', "--test --server #{master}"), :acceptable_exit_codes => [0,2]
-        end
-      end
-
-    end
   end
 
   ################

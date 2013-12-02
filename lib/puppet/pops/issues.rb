@@ -195,6 +195,10 @@ module Puppet::Pops::Issues
     "Illegal +> operation on attribute #{name}. This operator can not be used in #{label.a_an(parent)}"
   end
 
+  ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
+    "Illegal name. The given name #{name} does not conform to the naming rule \\A((::)?[a-z0-9]\w*)(::[a-z0-9]\w*)*\\z"
+  end
+
   # In case a model is constructed programmatically, it must create valid type references.
   #
   ILLEGAL_CLASSREF = hard_issue :ILLEGAL_CLASSREF, :name do

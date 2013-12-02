@@ -13,28 +13,42 @@ describe Puppet::Pops::Model::AstTransformer do
     it "converts a decimal number to a string Name" do
       ast = transform(QNAME_OR_NUMBER("10"))
 
-      ast.should be_kind_of Puppet::Parser::AST::Name
+      ast.should be_kind_of(Puppet::Parser::AST::Name)
       ast.value.should == "10"
+    end
+
+    it "converts a 0 to a decimal 0" do
+      ast = transform(QNAME_OR_NUMBER("0"))
+
+      ast.should be_kind_of(Puppet::Parser::AST::Name)
+      ast.value.should == "0"
+    end
+
+    it "converts a 00 to an octal 00" do
+      ast = transform(QNAME_OR_NUMBER("0"))
+
+      ast.should be_kind_of(Puppet::Parser::AST::Name)
+      ast.value.should == "0"
     end
 
     it "converts an octal number to a string Name" do
       ast = transform(QNAME_OR_NUMBER("020"))
 
-      ast.should be_kind_of Puppet::Parser::AST::Name
+      ast.should be_kind_of(Puppet::Parser::AST::Name)
       ast.value.should == "020"
     end
 
     it "converts a hex number to a string Name" do
       ast = transform(QNAME_OR_NUMBER("0x20"))
 
-      ast.should be_kind_of Puppet::Parser::AST::Name
+      ast.should be_kind_of(Puppet::Parser::AST::Name)
       ast.value.should == "0x20"
     end
 
     it "converts an unknown radix to an error string" do
       ast = transform(Puppet::Pops::Model::Factory.new(Puppet::Pops::Model::LiteralNumber, 3, 2))
 
-      ast.should be_kind_of Puppet::Parser::AST::Name
+      ast.should be_kind_of(Puppet::Parser::AST::Name)
       ast.value.should == "bad radix:3"
     end
   end

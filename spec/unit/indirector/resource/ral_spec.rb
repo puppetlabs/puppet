@@ -2,6 +2,13 @@
 require 'spec_helper'
 
 describe "Puppet::Resource::Ral" do
+
+  it "is deprecated on the network, but still allows requests" do
+    Puppet.expects(:deprecation_warning)
+
+    expect(Puppet::Resource::Ral.new.allow_remote_requests?).to eq(true)
+  end
+
   describe "find" do
     before do
       @request = stub 'request', :key => "user/root"

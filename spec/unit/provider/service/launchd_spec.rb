@@ -209,29 +209,82 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
   end
 
-  describe "when encountering malformed plists" do
-    let(:plist_without_label) do
-      {
-        'LimitLoadToSessionType' => 'Aqua'
-      }
+  describe "make_label_to_path_map" do
+    before do
+      # clear out this class variable between runs
+      if provider.instance_variable_defined? :@label_to_path_map
+        provider.send(:remove_instance_variable, :@label_to_path_map)
+      end
     end
-    let(:busted_plist_path) { '/Library/LaunchAgents/org.busted.plist' }
+    describe "when encountering malformed plists" do
+      let(:plist_without_label) do
+        {
+          'LimitLoadToSessionType' => 'Aqua'
+        }
+      end
+      let(:busted_plist_path) { '/Library/LaunchAgents/org.busted.plist' }
 
-    it "[17624] should warn that the plist in question is being skipped" do
-      provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
-      provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns([busted_plist_path])
-      provider.expects(:read_plist).with(busted_plist_path).returns(plist_without_label)
-      Puppet.expects(:warning).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
-      provider.jobsearch
+      it "[17624] should warn that the plist in question is being skipped" do
+        provider.expects(:launchd_paths).returns(['/Library/LaunchAgents'])
+        provider.expects(:return_globbed_list_of_file_paths).with('/Library/LaunchAgents').returns([busted_plist_path])
+        provider.expects(:read_plist).with(busted_plist_path).returns(plist_without_label)
+        Puppet.expects(:warning).with("The #{busted_plist_path} plist does not contain a 'label' key; Puppet is skipping it")
+        provider.make_label_to_path_map
+      end
+
+      it "[15929] should skip plists that plutil cannot read" do
+        provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout',
+          busted_plist_path).raises(Puppet::ExecutionFailure, 'boom')
+        Puppet.expects(:warning).with("Cannot read file #{busted_plist_path}; " +
+                                      "Puppet is skipping it. \n" +
+                                      "Details: boom")
+        provider.read_plist(busted_plist_path)
+      end
     end
+    it "should return the cached value when available" do
+      provider.instance_variable_set(:@label_to_path_map, {'xx'=>'yy'})
+      provider.make_label_to_path_map.should eq({'xx'=>'yy'})
+    end
+    describe "when successful" do
+      let(:launchd_dir) { '/Library/LaunchAgents' }
+      let(:plist) { launchd_dir + '/foo.bar.service.plist' }
+      let(:label) { 'foo.bar.service' }
+      before do
+        provider.instance_variable_set(:@label_to_path_map, nil)
+        provider.expects(:launchd_paths).returns([launchd_dir])
+        provider.expects(:return_globbed_list_of_file_paths).with(launchd_dir).returns([plist])
+        provider.expects(:read_plist).with(plist).returns({'Label'=>'foo.bar.service'})
+      end
+      it "should read the plists and return their contents" do
+        provider.make_label_to_path_map.should eq({label=>plist})
+      end
+      it "should re-read the plists and return their contents when refreshed" do
+        provider.instance_variable_set(:@label_to_path_map, {'xx'=>'yy'})
+        provider.make_label_to_path_map(true).should eq({label=>plist})
+      end
+    end
+  end
 
-    it "[15929] should skip plists that plutil cannot read" do
-      provider.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout',
-        busted_plist_path).raises(Puppet::ExecutionFailure, 'boom')
-      Puppet.expects(:warning).with("Cannot read file #{busted_plist_path}; " +
-                                    "Puppet is skipping it. \n" +
-                                    "Details: boom")
-      provider.read_plist(busted_plist_path)
+  describe "jobsearch" do
+    let(:map) { {"org.mozilla.puppet" => "/path/to/puppet.plist",
+                 "org.mozilla.python" => "/path/to/python.plist"} }
+    it "returns the entire map with no args" do
+      provider.expects(:make_label_to_path_map).returns(map)
+      provider.jobsearch.should == map
+    end
+    it "returns a singleton hash when given a label" do
+      provider.expects(:make_label_to_path_map).returns(map)
+      provider.jobsearch("org.mozilla.puppet").should == { "org.mozilla.puppet" => "/path/to/puppet.plist" }
+    end
+    it "refreshes the label_to_path_map when label is not found" do
+      provider.expects(:make_label_to_path_map).with().returns({})
+      provider.expects(:make_label_to_path_map).with(true).returns(map)
+      provider.jobsearch("org.mozilla.puppet").should == { "org.mozilla.puppet" => "/path/to/puppet.plist" }
+    end
+    it "raises Puppet::Error when the label is still not found" do
+      provider.expects(:make_label_to_path_map).with().returns(map)
+      provider.expects(:make_label_to_path_map).with(true).returns(map)
+      expect { provider.jobsearch("NOSUCH") }.to raise_error(Puppet::Error)
     end
   end
 end

@@ -27,12 +27,12 @@ describe Puppet::FileServing::Configuration do
   describe "when initializing" do
 
     it "should work without a configuration file" do
-      FileTest.stubs(:exists?).with(@path).returns(false)
+      Puppet::FileSystem::File.stubs(:exist?).with(@path).returns(false)
       expect { Puppet::FileServing::Configuration.configuration }.to_not raise_error
     end
 
     it "should parse the configuration file if present" do
-      FileTest.stubs(:exists?).with(@path).returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).with(@path).returns(true)
       @parser = mock 'parser'
       @parser.expects(:parse).returns({})
       Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
@@ -47,7 +47,7 @@ describe Puppet::FileServing::Configuration do
   describe "when parsing the configuration file" do
 
     before do
-      FileTest.stubs(:exists?).with(@path).returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).with(@path).returns(true)
       @parser = mock 'parser'
       Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
     end
@@ -84,14 +84,14 @@ describe Puppet::FileServing::Configuration do
     end
 
     it "should add modules and plugins mounts even if the file does not exist" do
-      FileTest.expects(:exists?).returns false # the file doesn't exist
+      Puppet::FileSystem::File.expects(:exist?).returns false # the file doesn't exist
       config = Puppet::FileServing::Configuration.configuration
       config.mounted?("modules").should be_true
       config.mounted?("plugins").should be_true
     end
 
     it "should allow all access to modules and plugins if no fileserver.conf exists" do
-      FileTest.expects(:exists?).returns false # the file doesn't exist
+      Puppet::FileSystem::File.expects(:exist?).returns false # the file doesn't exist
       modules = stub 'modules', :empty? => true
       Puppet::FileServing::Mount::Modules.stubs(:new).returns(modules)
       modules.expects(:allow).with('*')
@@ -104,7 +104,7 @@ describe Puppet::FileServing::Configuration do
     end
 
     it "should not allow access from all to modules and plugins if the fileserver.conf provided some rules" do
-      FileTest.expects(:exists?).returns false # the file doesn't exist
+      Puppet::FileSystem::File.expects(:exist?).returns false # the file doesn't exist
 
       modules = stub 'modules', :empty? => false
       Puppet::FileServing::Mount::Modules.stubs(:new).returns(modules)
@@ -119,7 +119,7 @@ describe Puppet::FileServing::Configuration do
 
     it "should add modules and plugins mounts even if they are not returned by the parser" do
       @parser.expects(:parse).returns("one" => mock("mount"))
-      FileTest.expects(:exists?).returns true # the file doesn't exist
+      Puppet::FileSystem::File.expects(:exist?).returns true # the file doesn't exist
       config = Puppet::FileServing::Configuration.configuration
       config.mounted?("modules").should be_true
       config.mounted?("plugins").should be_true

@@ -1,0 +1,29 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "Catalog facts",
+    "description": "Facts parameter in a POST to retrieve a catalog",
+    "type":        "object",
+    "properties": {
+        "name": {
+            "type": "string"
+        },
+        "values": {
+            "description": "The facts for the specified node",
+            "type": "object",
+            "patternProperties": {
+                "^[a-z][a-z0-9_]*$": {}
+            },
+            "additionalProperties": false
+        },
+        "timestamp": {
+            "description": "When the facts were gathered; NB doesn't adhere to json 'date-time' format.",
+            "type": "string"
+        },
+        "expiration": {
+            "description": "When the facts will expire; NB doesn't adhere to json 'date-time' format",
+            "type": "string"
+        }
+    },
+    "required": ["name", "values", "timestamp", "expiration"],
+    "additionalProperties": false
+}

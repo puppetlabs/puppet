@@ -1,5 +1,18 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'puppet_spec/compiler'
+
+# the json-schema gem doesn't support windows
+if not Puppet.features.microsoft_windows?
+  CATALOG_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/catalog.json')))
+
+  describe "catalog schema" do
+    it "should validate against the json meta-schema" do
+      JSON::Validator.validate!(JSON_META_SCHEMA, CATALOG_SCHEMA)
+    end
+  end
+
+end
 
 describe Puppet::Resource::Catalog, "when compiling" do
   include PuppetSpec::Files
@@ -86,26 +99,28 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should accept tags" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one")
-      config.tags.should == %w{one}
+      config.should be_tagged("one")
     end
 
     it "should accept multiple tags at once" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one", "two")
-      config.tags.should == %w{one two}
+      config.should be_tagged("one")
+      config.should be_tagged("two")
     end
 
     it "should convert all tags to strings" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one", :two)
-      config.tags.should == %w{one two}
+      config.should be_tagged("one")
+      config.should be_tagged("two")
     end
 
     it "should tag with both the qualified name and the split name" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.tag("one::two")
-      config.tags.include?("one").should be_true
-      config.tags.include?("one::two").should be_true
+      config.should be_tagged("one")
+      config.should be_tagged("one::two")
     end
 
     it "should accept classes" do
@@ -119,7 +134,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should tag itself with passed class names" do
       config = Puppet::Resource::Catalog.new("mynode")
       config.add_class("one")
-      config.tags.should == %w{one}
+      config.should be_tagged("one")
     end
   end
 
@@ -204,12 +219,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       @r1 = stub_everything 'r1', :ref => "File[/a]"
       @r1.stubs(:respond_to?).with(:ref).returns(true)
-      @r1.stubs(:dup).returns(@r1)
+      @r1.stubs(:copy_as_resource).returns(@r1)
       @r1.stubs(:is_a?).with(Puppet::Resource).returns(true)
 
       @r2 = stub_everything 'r2', :ref => "File[/b]"
       @r2.stubs(:respond_to?).with(:ref).returns(true)
-      @r2.stubs(:dup).returns(@r2)
+      @r2.stubs(:copy_as_resource).returns(@r2)
       @r2.stubs(:is_a?).with(Puppet::Resource).returns(true)
 
       @resources = [@r1,@r2]
@@ -720,6 +735,60 @@ describe Puppet::Resource::Catalog, "when compiling" do
   end
 end
 
+describe Puppet::Resource::Catalog, "when converting a resource catalog to pson" do
+  include PuppetSpec::Compiler
+
+  def validate_json_for_catalog(catalog)
+    JSON::Validator.validate!(CATALOG_SCHEMA, catalog.to_pson)
+  end
+
+  it "should validate an empty catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+    empty_catalog = compile_to_catalog("")
+    validate_json_for_catalog(empty_catalog)
+  end
+
+  it "should validate a noop catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+    noop_catalog = compile_to_catalog("create_resources('file', {})")
+    validate_json_for_catalog(noop_catalog)
+  end
+
+  it "should validate a single resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+    catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
+    validate_json_for_catalog(catalog)
+  end
+
+  it "should validate a virtual resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+    catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
+    validate_json_for_catalog(catalog)
+  end
+
+  it "should validate a single exported resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+    catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
+    validate_json_for_catalog(catalog)
+  end
+
+  it "should validate a two resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+    catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
+    validate_json_for_catalog(catalog)
+  end
+
+  it "should validate a two parameter class catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      class multi_param_class ($one, $two) {
+        notify {'foo':
+          message => "One is $one, two is $two",
+        }
+      }
+
+      class {'multi_param_class':
+        one => 'hello',
+        two => 'world',
+      }
+    MANIFEST
+    validate_json_for_catalog(catalog)
+  end
+end
+
 describe Puppet::Resource::Catalog, "when converting to pson" do
   before do
     @catalog = Puppet::Resource::Catalog.new("myhost")
@@ -742,11 +811,11 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     PSON.parse @catalog.to_pson
   end
 
-  [:name, :version, :tags, :classes].each do |param|
+  [:name, :version, :classes].each do |param|
     it "should set its #{param} to the #{param} of the resource" do
       @catalog.send(param.to_s + "=", "testing") unless @catalog.send(param)
 
-      pson_output_should { |hash| hash['data'][param.to_s] == @catalog.send(param) }
+      pson_output_should { |hash| hash['data'][param.to_s].should == @catalog.send(param) }
       PSON.parse @catalog.to_pson
     end
   end
@@ -815,7 +884,8 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
   it "should set any provided tags on the catalog" do
     @data['tags'] = %w{one two}
     PSON.parse @pson.to_pson
-    @catalog.tags.should == @data['tags']
+    @catalog.should be_tagged("one")
+    @catalog.should be_tagged("two")
   end
 
   it "should set any provided classes on the catalog" do

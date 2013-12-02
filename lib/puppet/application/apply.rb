@@ -19,12 +19,7 @@ class Puppet::Application::Apply < Puppet::Application
   end
 
   option("--logdest LOGDEST", "-l") do |arg|
-    begin
-      Puppet::Util::Log.newdestination(arg)
-      options[:logset] = true
-    rescue => detail
-      $stderr.puts detail.to_s
-    end
+    handle_logdest_arg(arg)
   end
 
   option("--parseonly") do |args|
@@ -168,7 +163,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet[:code] = options[:code] || STDIN.read
     else
       manifest = command_line.args.shift
-      raise "Could not find file #{manifest}" unless ::File.exist?(manifest)
+      raise "Could not find file #{manifest}" unless Puppet::FileSystem::File.exist?(manifest)
       Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
       Puppet[:manifest] = manifest
     end
@@ -194,7 +189,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # Allow users to load the classes that puppet agent creates.
     if options[:loadclasses]
       file = Puppet[:classfile]
-      if FileTest.exists?(file)
+      if Puppet::FileSystem::File.exist?(file)
         unless FileTest.readable?(file)
           $stderr.puts "#{file} is not readable"
           exit(63)
@@ -238,7 +233,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def setup
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
-    Puppet::Util::Log.newdestination(:console) unless options[:logset]
+    Puppet::Util::Log.newdestination(:console) unless options[:setdest]
 
     Signal.trap(:INT) do
       $stderr.puts "Exiting"
@@ -248,10 +243,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # we want the last report to be persisted locally
     Puppet::Transaction::Report.indirection.cache_class = :yaml
 
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
+    set_log_level
+
+    if Puppet[:profile]
+      Puppet::Util::Profiler.current = Puppet::Util::Profiler::WallClock.new(Puppet.method(:debug), "apply")
     end
   end
 

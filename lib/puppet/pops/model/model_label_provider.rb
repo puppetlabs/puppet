@@ -15,7 +15,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_Factory o                     ; label(o.current)                    end
   def label_Array o                       ; "Array Object"                      end
   def label_LiteralNumber o               ; "Literal Number"                    end
-  def label_ArithmeticExpression o        ; "'#{o_operator}' expression"        end
+  def label_ArithmeticExpression o        ; "'#{o.operator}' expression"        end
   def label_AccessExpression o            ; "'[]' expression"                   end
   def label_MatchExpression o             ; "'#{o.operator}' expression"        end
   def label_CollectExpression o           ; label(o.query)                      end

@@ -32,7 +32,7 @@ module Puppet
 
     # Create our link.
     def mklink
-      raise Puppet::Error, "Cannot symlink on Microsoft Windows" if Puppet.features.microsoft_windows?
+      raise Puppet::Error, "Cannot symlink on this platform version" if !provider.feature?(:manages_symlinks)
 
       target = self.should
 
@@ -40,17 +40,17 @@ module Puppet
       # it doesn't determine what's removed.
       @resource.remove_existing(target)
 
-      raise Puppet::Error, "Could not remove existing file" if FileTest.exists?(@resource[:path])
+      raise Puppet::Error, "Could not remove existing file" if Puppet::FileSystem::File.exist?(@resource[:path])
 
       Dir.chdir(File.dirname(@resource[:path])) do
         Puppet::Util::SUIDManager.asuser(@resource.asuser) do
           mode = @resource.should(:mode)
           if mode
             Puppet::Util.withumask(000) do
-              File.symlink(target, @resource[:path])
+              Puppet::FileSystem::File.new(target).symlink(@resource[:path])
             end
           else
-            File.symlink(target, @resource[:path])
+            Puppet::FileSystem::File.new(target).symlink(@resource[:path])
           end
         end
 
@@ -63,7 +63,7 @@ module Puppet
     def insync?(currentvalue)
       if [:nochange, :notlink].include?(self.should) or @resource.recurse?
         return true
-      elsif ! @resource.replace? and File.exists?(@resource[:path])
+      elsif ! @resource.replace? and Puppet::FileSystem::File.exist?(@resource[:path])
         return true
       else
         return super(currentvalue)
@@ -74,7 +74,7 @@ module Puppet
     def retrieve
       if stat = @resource.stat
         if stat.ftype == "link"
-          return File.readlink(@resource[:path])
+          return Puppet::FileSystem::File.new(@resource[:path]).readlink
         else
           return :notlink
         end

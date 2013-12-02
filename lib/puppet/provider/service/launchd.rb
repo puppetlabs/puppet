@@ -112,40 +112,51 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     array_of_files.compact
   end
 
+  # Get a hash of all launchd plists, keyed by label.  This value is cached, but
+  # the cache will be refreshed if refresh is true.
+  #
+  # @api private
+  def self.make_label_to_path_map(refresh=false)
+    return @label_to_path_map if @label_to_path_map and not refresh
+    @label_to_path_map = {}
+    launchd_paths.each do |path|
+      return_globbed_list_of_file_paths(path).each do |filepath|
+        job = read_plist(filepath)
+        next if job.nil?
+        if job.has_key?("Label")
+          @label_to_path_map[job["Label"]] = filepath
+        else
+          Puppet.warning("The #{filepath} plist does not contain a 'label' key; " +
+                       "Puppet is skipping it")
+          next
+        end
+      end
+    end
+    @label_to_path_map
+  end
+
   # Sets a class instance variable with a hash of all launchd plist files that
   # are found on the system. The key of the hash is the job id and the value
   # is the path to the file. If a label is passed, we return the job id and
   # path for that specific job.
   def self.jobsearch(label=nil)
-    @label_to_path_map ||= {}
-    if @label_to_path_map.empty?
-      launchd_paths.each do |path|
-        return_globbed_list_of_file_paths(path).each do |filepath|
-          job = read_plist(filepath)
-          next if job.nil?
-          if job.has_key?("Label")
-            if job["Label"] == label
-              return { label => filepath }
-            else
-              @label_to_path_map[job["Label"]] = filepath
-            end
-          else
-            Puppet.warning("The #{filepath} plist does not contain a 'label' key; " +
-                         "Puppet is skipping it")
-            next
-          end
-        end
-      end
-    end
+    by_label = make_label_to_path_map
 
     if label
-      if @label_to_path_map.has_key? label
-        return { label => @label_to_path_map[label] }
+      if by_label.has_key? label
+        return { label => by_label[label] }
       else
-        raise Puppet::Error.new("Unable to find launchd plist for job: #{label}")
+        # try refreshing the map, in case a plist has been added in the interim
+        by_label = make_label_to_path_map(true)
+        if by_label.has_key? label
+          return { label => by_label[label] }
+        else
+          raise Puppet::Error, "Unable to find launchd plist for job: #{label}"
+        end
       end
     else
-      @label_to_path_map
+      # caller wants the whole map
+      by_label
     end
   end
 

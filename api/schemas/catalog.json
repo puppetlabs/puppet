@@ -1,0 +1,121 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "Catalog",
+    "description": "A puppet resource catalog",
+    "type":        "object",
+    "properties": {
+        "document_type": {
+            "description": "Only supported value is 'Catalog'",
+            "type": "string",
+            "enum": ["Catalog"]
+        },
+        "metadata": {
+            "description": "Only contents of metadata is api_version",
+            "type": "object",
+            "properties": {
+                "api_version": {
+                    "description": "Only supported api_version is 1",
+                    "type": "integer",
+                    "enum": [1]
+                }
+            },
+            "required": ["api_version"],
+            "additionalProperties": false
+        },
+        "data": {
+            "description": "The catalog data itself",
+            "type": "object",
+            "properties": {
+                "tags": {
+                    "description": "Tags: regex is from http://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9_][a-z0-9_:\.\-]*$"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "integer"
+                },
+                "environment": {
+                    "type": "string"
+                },
+                "resources": {
+                    "description": "The array of resources in the catalog",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                           "type": {
+                               "type": "string"
+                           },
+                            "title": {
+                                "type": "string"
+                            },
+                            "line": {
+                                "type": "integer"
+                            },
+                            "file": {
+                                "type": "string"
+                            },
+                            "exported": {
+                                "type": "boolean"
+                            },
+                            "tags": {
+                                "description": "Tags: regex is from http://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
+                                "type": "array",
+                                "items": {
+                                    "type": "string",
+                                    "pattern": "^[a-z0-9_][a-z0-9_:\.\-]*$"
+                                }
+                            },
+                            "parameters": {
+                                "description": "Parameters: regex is from http://docs.puppetlabs.com/puppet/3/reference/lang_reserved.html",
+                                "type": "object",
+                                "patternProperties": {
+                                    "^[a-z][a-z0-9_]*$": {}
+                                },
+                                "additionalProperties": false
+                            }
+                        },
+                        "required": ["type", "title", "tags", "exported"],
+                        "additionalProperties": false
+                    }
+                },
+                "edges": {
+                    "description": "An array of the containment relationships in the catalog.",
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "source": {
+                                "description": "Containing object",
+                                "type": "string"
+                            },
+                            "target": {
+                                "description": "Contained object",
+                                "type": "string"
+                            }
+                        },
+                        "required": ["source", "target"],
+                        "additionalProperties": false
+                    }
+
+                },
+                "classes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": ["tags", "name", "version", "environment", "resources", "edges", "classes"],
+            "additionalProperties": false
+        }
+    },
+    "required": ["document_type", "metadata", "data"],
+    "additionalProperties": false
+}

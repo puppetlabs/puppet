@@ -1,5 +1,3 @@
-#!/usr/bin/env ruby
-
 # subscriptions are permanent associations determining how different
 # objects react to an event
 
@@ -72,7 +70,7 @@ class Puppet::Relationship
     "{ #{source} => #{target} }"
   end
 
-  def to_pson_data_hash
+  def to_data_hash
     data = {
       'source' => source.to_s,
       'target' => target.to_s
@@ -85,8 +83,13 @@ class Puppet::Relationship
     data
   end
 
+  # This doesn't include document type as it is part of a catalog
+  def to_pson_data_hash
+    to_data_hash
+  end
+
   def to_pson(*args)
-    to_pson_data_hash.to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   def to_s

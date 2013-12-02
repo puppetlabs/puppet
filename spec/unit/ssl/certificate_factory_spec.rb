@@ -115,6 +115,24 @@ describe Puppet::SSL::CertificateFactory do
       end
     end
 
+    it "can add custom extension requests" do
+      csr = Puppet::SSL::CertificateRequest.new(name)
+      csr.generate(key)
+
+      csr.stubs(:request_extensions).returns([
+        {'oid' => '1.3.6.1.4.1.34380.1.2.1', 'value' => 'some-value'},
+        {'oid' => 'pp_uuid', 'value' => 'some-uuid'},
+      ])
+
+      cert = subject.build(:client, csr, issuer, serial)
+
+      priv_ext = cert.extensions.find {|ext| ext.oid == '1.3.6.1.4.1.34380.1.2.1'}
+      uuid_ext = cert.extensions.find {|ext| ext.oid == 'pp_uuid'}
+
+      expect(priv_ext.value).to eq 'some-value'
+      expect(uuid_ext.value).to eq 'some-uuid'
+    end
+
     # Can't check the CA here, since that requires way more infrastructure
     # that I want to build up at this time.  We can verify the critical
     # values, though, which are non-CA certs. --daniel 2011-10-11

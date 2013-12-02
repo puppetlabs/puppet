@@ -133,6 +133,9 @@ module Puppet
 
     # Make sure we're also managing the checksum property.
     def should=(value)
+      # treat the value as a bytestring, in Ruby versions that support it, regardless of the encoding
+      # in which it has been supplied
+      value = value.clone.force_encoding(Encoding::ASCII_8BIT) if value.respond_to?(:force_encoding)
       @resource.newattr(:checksum) unless @resource.parameter(:checksum)
       super
     end

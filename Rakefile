@@ -64,5 +64,5 @@ task :default do
 end
 
 task :spec do
-  sh %{rspec -fd spec}
+  sh %{rspec spec}
 end

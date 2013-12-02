@@ -14,7 +14,7 @@ token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
 token IN UNLESS PIPE
-token LAMBDA SELBRACE
+token SELBRACE
 token LOW
 
 prechigh
@@ -203,36 +203,17 @@ call_method_with_lambda_expression
 #
 # This is a temporary switch while experimenting with concrete syntax
 # One should be picked for inclusion in puppet.
-lambda
-  : lambda_j8
-  | lambda_ruby
 
-# Java8-like lambda with parameters to the left of the body
-lambda_j8
-  : lambda_parameter_list optional_farrow lambda_rest {
-      result = Factory.LAMBDA(val[0], val[2])
+# Lambda with parameters to the left of the body
+lambda
+  : lambda_parameter_list lambda_rest {
+      result = Factory.LAMBDA(val[0], val[1])
 #      loc result, val[1] # TODO
     }
 
 lambda_rest
   : LBRACE statements RBRACE { result = val[1] }
   | LBRACE RBRACE { result = nil }
-
-optional_farrow
-  : nil
-  | FARROW
-
-# Ruby-like lambda with parameters inside the body
-#
-lambda_ruby
-  : LAMBDA lambda_parameter_list statements RBRACE {
-      result = Factory.LAMBDA(val[1], val[2])
-      loc result, val[0], val[3]
-    }
-  | LAMBDA lambda_parameter_list RBRACE {
-      result = Factory.LAMBDA(val[1], nil)
-      loc result, val[0], val[2]
-    }
 
 # Produces Array<Model::Parameter>
 lambda_parameter_list
