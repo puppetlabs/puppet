@@ -33,7 +33,12 @@ module Puppet::Pops::Evaluator::Runtime3Support
     catch(:undefined_variable) {
       return scope.lookupvar(name.to_s)
     }
+    # It is always ok to reference numeric variables even if they are not assigned. They are always undef
+    # if not set by a match expression.
+    #
+    unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
       fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, {:name => name})
+    end
   end
 
   # Returns true if the variable of the given name is set in the given most nested scope. True is returned even if

@@ -81,7 +81,7 @@ class Puppet::Pops::Validation::Checker4_0
 
   def assign_VariableExpression(o, via_index)
     varname_string = varname_to_s(o.expr)
-    if varname_string =~ /^[0-9]+$/
+    if varname_string =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
       acceptor.accept(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o, :varname => varname_string)
     end
     # Can not assign to something in another namespace (i.e. a '::' in the name is not legal)
@@ -206,8 +206,8 @@ class Puppet::Pops::Validation::Checker4_0
   # for 'class' and 'define'
   def check_NamedDefinition(o)
     top(o.eContainer, o)
-    if (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.name.include?('-')
-      acceptor.accept(Issues::NAME_WITH_HYPHEN, o, {:name => o.name})
+    if o.name !~ Puppet::Pops::Patterns::CLASSREF
+      acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
   end
 
@@ -246,15 +246,12 @@ class Puppet::Pops::Validation::Checker4_0
     top(o.eContainer, o)
   end
 
-  # Asserts that value is a valid QualifiedName. No additional checking is made, objects that use
-  # a QualifiedName as a name should check the validity - this since a QualifiedName is used as a BARE WORD
-  # and then additional chars may be valid (like a hyphen).
+  # No checking takes place - all expressions using a QualifiedName need to check. This because the
+  # rules are slightly different depending on the container (A variable allows a numeric start, but not
+  # other names). This means that (if the lexer/parser so chooses) a QualifiedName
+  # can be anything when it represents a Bare Word and evaluates to a String.
   #
   def check_QualifiedName(o)
-    # Is this a valid qualified name?
-    if o.value !~ Puppet::Pops::Patterns::NAME
-      acceptor.accept(Issues::ILLEGAL_NAME, o, {:name=>o.value})
-    end
   end
 
   # Checks that the value is a valid UpperCaseWord (a CLASSREF), and optionally if it contains a hypen.
@@ -263,10 +260,6 @@ class Puppet::Pops::Validation::Checker4_0
     # Is this a valid qualified name?
     if o.value !~ Puppet::Pops::Patterns::CLASSREF
       acceptor.accept(Issues::ILLEGAL_CLASSREF, o, {:name=>o.value})
-# hyphens are not allowed in CLASSREF pattern - if that is changed and it should be flagged instead, change
-# to include this logic:
-#    elsif (acceptor.will_accept? Issues::NAME_WITH_HYPHEN) && o.value.include?('-')
-#      acceptor.accept(Issues::NAME_WITH_HYPHEN, o, {:name => o.value})
     end
   end
 
@@ -352,17 +345,20 @@ class Puppet::Pops::Validation::Checker4_0
     # TODO: Unless may not have an else part that is an IfExpression (grammar denies this though)
   end
 
+  # Checks that variable is either strictly 0, or a non 0 starting decimal number, or a valid VAR_NAME
   def check_VariableExpression(o)
     # The expression must be a qualified name
     if !o.expr.is_a? Model::QualifiedName
       acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, :feature => 'name', :container => o)
     else
-      # Note, that if it later becomes illegal with hyphen in any name, this special check
-      # can be skipped in favor of the check in QualifiedName, which is now not done if contained in
-      # a VariableExpression
+      # name must be either a decimal value, or a valid NAME
       name = o.expr.value
-      if (acceptor.will_accept? Issues::VAR_WITH_HYPHEN) && name.include?('-')
-        acceptor.accept(Issues::VAR_WITH_HYPHEN, o, {:name => name})
+      if name[0,1] =~ /[0-9]/
+        unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
+          acceptor.accept(Issues::ILLEGAL_NUMERIC_VAR_NAME, o, :name => name)
+        end
+      else
+        check(o.expr)
       end
     end
   end

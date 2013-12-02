@@ -230,7 +230,15 @@ module Puppet::Pops::Issues
   end
 
   ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
-    "Illegal name. The given name #{name} does not conform to the naming rule /^((::)?[a-z0-9]\w*)(::[a-z0-9]\w*)*$/"
+    "Illegal name. The given name #{name} does not conform to the naming rule /^((::)?[a-z]\w*)(::[a-z]\w*)*$/"
+  end
+
+  ILLEGAL_VAR_NAME = hard_issue :ILLEGAL_VAR_NAME, :name do
+    "Illegal variable name, The given name '#{name}' does not conform to the naming rule /^(::)?(\w+::)*\w+$/"
+  end
+
+  ILLEGAL_NUMERIC_VAR_NAME = hard_issue :ILLEGAL_NUMERIC_VAR_NAME, :name do
+    "Illegal numeric variable name, The given name '#{name}' must be a decimal value if it starts with a digit 0-9"
   end
 
   # In case a model is constructed programmatically, it must create valid type references.
@@ -363,6 +371,13 @@ module Puppet::Pops::Issues
 
   ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
     "Illegal Class name in class reference. #{label.a_an_uc(name)} cannot be used where a String is expected"
+  end
+
+  # Issues when an expression is used where it is not legal.
+  # E.g. an arithmetic expression where a hostname is expected.
+  #
+  ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINTION_NAME, :name do
+    "Unacceptable name. The name '#{name}' is unacceptable as the name of #{label.a_an(semantic)}"
   end
 
   NOT_NUMERIC = issue :NOT_NUMERIC, :value do

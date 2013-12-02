@@ -614,8 +614,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(result)
         end
       end
+
       context 'with errors' do
         { "Class['fail-whale']" => /Illegal name/,
+          "Class[0]"            => /An Integer cannot be used where a String is expected/,
+          "Class[/.*/]"         => /A Regexp cannot be used where a String is expected/,
+          "Class[4.1415]"       => /A Float cannot be used where a String is expected/,
+          "Class[[1,2,3]]"      => /An Array cannot be used where a String is expected/,
+          "Class[Integer]"      => /An Integer Type cannot be used where a String is expected/,
         }.each do | source, error_pattern|
           it "an error is flagged for '#{source}'" do
             expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(error_pattern)
@@ -756,6 +762,24 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it "a lex error should be raised for '$foo::::bar'" do
       expect { parser.evaluate_string(scope, "$foo::::bar") }.to raise_error(Puppet::LexError, /Illegal fully qualified name at line 1:7/)
+    end
+
+    { '$a = $0'   => nil,
+      '$a = $1'   => nil,
+    }.each do |source, value|
+      it "it is ok to reference numeric unassigned variables '#{source}'" do
+        parser.evaluate_string(scope, source, __FILE__).should == value
+      end
+    end
+
+    { '$00 = 0'   => /must be a decimal value/,
+      '$0xf = 0'  => /must be a decimal value/,
+      '$0777 = 0' => /must be a decimal value/,
+      '$123a = 0' => /must be a decimal value/,
+    }.each do |source, error_pattern|
+      it "should raise an error for '#{source}'" do
+        expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(error_pattern)
+      end
     end
   end
 

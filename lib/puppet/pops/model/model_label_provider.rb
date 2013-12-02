@@ -13,7 +13,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   end
 
   def label_Factory o                     ; label(o.current)                    end
-  def label_Array o                       ; "Array Object"                      end
+  def label_Array o                       ; "Array"                             end
   def label_LiteralInteger o              ; "Literal Integer"                   end
   def label_LiteralFloat o                ; "Literal Float"                     end
   def label_ArithmeticExpression o        ; "'#{o.operator}' expression"        end
@@ -66,7 +66,12 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_ResourceExpression o          ; "Resource Statement"                end
   def label_SelectorExpression o          ; "Selector Expression"               end
   def label_SelectorEntry o               ; "Selector Option"                   end
+  def label_Integer o                     ; "Integer"                           end
+  def label_Fixnum o                      ; "Integer"                           end
+  def label_Bignum o                      ; "Integer"                           end
+  def label_Float o                       ; "Float"                             end
   def label_String o                      ; "String"                            end
+  def label_Regexp o                      ; "Regexp"                            end
   def label_Object o                      ; "Object"                            end
   def label_Hash o                        ; "Hash"                              end
   def label_QualifiedName o               ; "Name"                              end
