@@ -28,7 +28,12 @@ module Puppet::Provider::Mount
     if resource[:remounts] == :true
       mountcmd "-o", "remount", resource[:name]
     elsif ["FreeBSD", "Darwin", "DragonFly", "OpenBSD"].include?(Facter.value(:operatingsystem))
-      mountcmd "-o", "update", resource[:name]
+      if self.options && !self.options.empty?
+        options = self.options + ",update"
+      else
+        options = "update"
+      end
+      mountcmd "-o", options, resource[:name]
     else
       unmount
       mount
