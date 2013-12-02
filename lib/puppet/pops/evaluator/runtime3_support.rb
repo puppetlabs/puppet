@@ -206,12 +206,12 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   # The o is used for source reference
-  # TODO: The line information is wrong - it is cheating atm.
   def create_resource_parameter(o, scope, name, value, operator)
+    file, line = extract_file_line(o)
     Puppet::Parser::Resource::Param.new(
       :name   => name,
       :value  => convert(value, scope), # converted to 3x since 4x supports additional objects / types
-      :source => scope.source, :line => -1, :file => 'TODO:Get file',
+      :source => scope.source, :line => line, :file => file,
       :add    => operator == :'+>'
     )
   end
@@ -224,14 +224,19 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # resolve in scope. TODO: Investigate what happens here - opportunity to optimize?
     fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type_name, resource_titles)
 
+    # Not 100% accurate as this is the resource expression location and each title is processed separately
+    # The titles are however the result of evaluation and they have no location at this point (an array
+    # of positions for the source expressions are required for this to work.
+    # TODO: Revisit and possible improve the accuracy.
+    #
+    file, line = extract_file_line(o)
     # Build a resource for each title
     resource_titles.map do |resource_title|
         resource = Puppet::Parser::Resource.new(
           fully_qualified_type, resource_title,
           :parameters => evaluated_parameters,
-          # TODO: Location
-          :file => 'TODO: file location',
-          :line => -1,
+          :file => file,
+          :line => line,
           :exported => exported,
           :virtual => virtual,
           # WTF is this? Which source is this? The file? The name of the context ?
@@ -399,6 +404,12 @@ module Puppet::Pops::Evaluator::Runtime3Support
     else
       raise ArgumentError, "Cannot split the type #{catalog_type.class}, it is neither a PHostClassType, nor a PResourceClass."
     end
+  end
+
+  def extract_file_line(o)
+    source_pos = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::SourcePosAdapter)
+    return [nil, -1] unless source_pos
+    [source_pos.locator.file, source_pos.line]
   end
 
   # Creates a diagnostic producer
