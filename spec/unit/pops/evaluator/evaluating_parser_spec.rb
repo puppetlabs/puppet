@@ -493,12 +493,15 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     {
-      "{a=>1, b=>2, c=>3}[a]"              => 1,
-      "{a=>1, b=>2, c=>3}[c]"              => 3,
-      "{a=>1, b=>2, c=>3}[x]"              => nil,
-      "{a=>1, b=>2, c=>3}[c,b]"            => [3,2],
-      "{a=>1, b=>2, c=>3}[a,b,c]"          => [1,2,3],
-      "{a=>{b=>{c=>'it works'}}}[a][b][c]" => 'it works'
+      "{a=>1, b=>2, c=>3}[a]"                => 1,
+      "{a=>1, b=>2, c=>3}[c]"                => 3,
+      "{a=>1, b=>2, c=>3}[x]"                => nil,
+      "{a=>1, b=>2, c=>3}[c,b]"              => [3,2],
+      "{a=>1, b=>2, c=>3}[a,b,c]"            => [1,2,3],
+      "{a=>{b=>{c=>'it works'}}}[a][b][c]"   => 'it works',
+      "$a = {undef => 10} $a[free_lunch]"     => nil,
+      "$a = {undef => 10} $a[undef]"          => 10,
+      "$a = {undef => 10} $a[$a[free_lunch]]" => 10,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
         parser.evaluate_string(scope, source, __FILE__).should == result

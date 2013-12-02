@@ -106,7 +106,22 @@ class Puppet::Pops::Evaluator::AccessOperator
   # is an array with each lookup.
   #
   def access_Hash(o, scope, keys)
-    result = keys.collect {|k| o[k] }
+    # Look up key in hash, if key is nil or :undef, try alternate form before giving up.
+    # This makes :undef and nil "be the same key". (The laternative is to always only write one or the other
+    # in all hashes - that is much harder to guarantee since the Hash is a regular Ruby hash.
+    #
+    result = keys.collect do |k|
+      o.fetch(k) do |key|
+        case key
+        when nil
+          o[:undef]
+        when :undef
+          o[:nil]
+        else
+          nil
+        end
+      end
+    end
     case result.size
     when 0
       fail(Puppet::Pops::Issues::BAD_HASH_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
