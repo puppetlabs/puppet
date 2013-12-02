@@ -95,10 +95,6 @@ class Puppet::Pops::Types::TypeCalculator
     @tc_instance ||= new
   end
 
-  def self.extract_type_and_title(t)
-    instance.extract_type_and_title(t)
-  end
-
   # @api public
   #
   def initialize
@@ -177,10 +173,6 @@ class Puppet::Pops::Types::TypeCalculator
   # Returns an enumerable if the t represents something that can be iterated
   def enumerable(t)
     @@enumerable_visitor.visit_this_0(self, t)
-  end
-
-  def extract_type_and_title(t)
-    @@extract_visitor.visit_this_0(self, t)
   end
 
   # Answers 'what is the Puppet Type corresponding to the given Ruby class'
@@ -864,19 +856,6 @@ class Puppet::Pops::Types::TypeCalculator
     # Not enumerable if representing an infinite range
     return nil if t.size == TheInfinity
     t
-  end
-
-  # @api private
-  def extract_Object(o)
-    nil
-  end
-
-  def extract_PResourceType(t)
-    [t.type_name, t.title]
-  end
-
-  def extract_PHostClassType(t)
-    ['class', t.class_name]
   end
 
   private
