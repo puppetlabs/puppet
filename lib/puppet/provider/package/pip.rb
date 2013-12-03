@@ -36,6 +36,7 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
+    Puppet.debug("Provider::Pip VirtualEnv #{@resource[:virtualenv]}")
     if @resource[:virtualenv]
       "#{@resource[:virtualenv]}/bin/pip"
     else
