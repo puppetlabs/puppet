@@ -502,6 +502,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "$a = {undef => 10} $a[free_lunch]"     => nil,
       "$a = {undef => 10} $a[undef]"          => 10,
       "$a = {undef => 10} $a[$a[free_lunch]]" => 10,
+      "$a = {} $a[free_lunch] == undef"       => true,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
         parser.evaluate_string(scope, source, __FILE__).should == result
