@@ -494,20 +494,6 @@ describe Puppet::Type.type(:file) do
       bucket.bucket.getfile(foomd5).should == "fooyay"
       bucket.bucket.getfile(barmd5).should == "baryay"
     end
-
-    it "should propagate failures encountered when renaming the temporary file" do
-      file = described_class.new :path => path, :content => "foo"
-      file.stubs(:perform_backup).returns(true)
-
-      catalog.add_resource file
-
-      File.open(path, "w") { |f| f.print "bar" }
-
-      File.expects(:rename).raises ArgumentError
-
-      expect { file.write(:content) }.to raise_error(Puppet::Error, /Could not rename temporary file/)
-      File.read(path).should == "bar"
-    end
   end
 
   describe "when recursing" do
@@ -1034,6 +1020,7 @@ describe Puppet::Type.type(:file) do
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
       it "should provide valid default values when ACLs are not supported" do
         Puppet::Util::Windows::Security.stubs(:supports_acl?).with(source).returns false
+        Puppet::Util::Windows::Security.stubs(:supports_acl?).with(path).returns true
 
         file = described_class.new(
           :path   => path,
