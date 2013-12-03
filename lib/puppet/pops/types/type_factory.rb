@@ -92,7 +92,7 @@ module Puppet::Pops::Types::TypeFactory
   def self.regexp(pattern = nil)
     t = Types::PRegexpType.new()
     if pattern
-      t.pattern = pattern.is_a?(Regexp) ? pattern.inspect[1..-1] : pattern
+      t.pattern = pattern.is_a?(Regexp) ? pattern.inspect[1..-2] : pattern
     end
     t
   end

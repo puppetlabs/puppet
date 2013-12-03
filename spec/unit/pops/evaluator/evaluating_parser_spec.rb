@@ -565,17 +565,46 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Resource[]"                 => :error,
       "File[]"                     => :error,
       "String[]"                   => :error,
-      "String[0]"                  => :error,
       "1[]"                        => :error,
-      "1[0]"                       => :error,
       "3.14[]"                     => :error,
-      "3.14[0]"                    => :error,
       "/.*/[]"                     => :error,
-      "/.*/[0]"                    => :error,
       "$a=[1] $a[]"                => :error,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
-        expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(Puppet::ParseError)
+        expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(/Syntax error/)
+      end
+    end
+
+    # Errors when wrong number/type of keys are used
+    {
+      "Array[0]"                    => 'Array-Type[] arguments must be types. Got Fixnum',
+      "Hash[0]"                     => 'Hash-Type[] arguments must be types. Got Fixnum',
+      "Hash[Integer, 0]"            => 'Hash-Type[] arguments must be types. Got Fixnum',
+      "Array[Integer,String]"       => 'Array-Type[] accepts 1 argument. Got 2',
+      "Hash[Integer,String, Hash]"  => 'Hash-Type[] accepts 1 to 2 arguments. Got 3',
+      "'abc'[x]"                    => "The value 'x' cannot be converted to Numeric",
+      "'abc'[1.0]"                  => "A String[] cannot use Float where Integer is expected",
+      "'abc'[1,2,3]"                => "String supports [] with one or two arguments. Got 3",
+      "Resource[0]"                 => 'First argument to Resource[] must be a resource type or a String. Got Fixnum',
+      "Resource[a, 0]"              => 'Error creating type specialization of a Resource-Type, Cannot use Fixnum where String is expected',
+      "File[0]"                     => 'Error creating type specialization of a File-Type, Cannot use Fixnum where String is expected',
+      "String[0]"                   => 'Error creating type specialization of a String-Type, Cannot use Fixnum where String is expected',
+      "Pattern[0]"                  => 'Error creating type specialization of a Pattern-Type, Cannot use Fixnum where String or Regexp is expected',
+      "Regexp[0]"                   => 'Error creating type specialization of a Regexp-Type, Cannot use Fixnum where String or Regexp is expected',
+      "Regexp[a,b]"                 => 'A Regexp-Type[] accepts 1 argument. Got 2',
+      "true[0]"                     => "Operator '[]' is not applicable to a Boolean",
+      "1[0]"                        => "Operator '[]' is not applicable to an Integer",
+      "3.14[0]"                     => "Operator '[]' is not applicable to a Float",
+      "/.*/[0]"                     => "Operator '[]' is not applicable to a Regexp",
+      "[1][a]"                      => "The value 'a' cannot be converted to Numeric",
+      "[1][0.0]"                    => "An Array[] cannot use Float where Integer is expected",
+      "[1]['0.0']"                  => "An Array[] cannot use Float where Integer is expected",
+      "[1,2][1, 0.0]"               => "An Array[] cannot use Float where Integer is expected",
+      "[1,2][1.0, -1]"              => "An Array[] cannot use Float where Integer is expected",
+      "[1,2][1, -1.0]"              => "An Array[] cannot use Float where Integer is expected",
+    }.each do |source, result|
+      it "should parse and evaluate the expression '#{source}' to #{result}" do
+        expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(Regexp.new(Regexp.quote(result)))
       end
     end
 
@@ -625,8 +654,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           "Class[/.*/]"         => /A Regexp cannot be used where a String is expected/,
           "Class[4.1415]"       => /A Float cannot be used where a String is expected/,
           "Class[[1,2,3]]"      => /An Array cannot be used where a String is expected/,
-          "Class[Integer]"      => /An Integer Type cannot be used where a String is expected/,
-          "Class[File['tmp']]"   => /A File\['tmp'\] Resource Reference cannot be used where a String is expected/,
+          "Class[Integer]"      => /An Integer-Type cannot be used where a String is expected/,
+          "Class[File['tmp']]"   => /A File\['tmp'\] Resource-Reference cannot be used where a String is expected/,
         }.each do | source, error_pattern|
           it "an error is flagged for '#{source}'" do
             expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(error_pattern)

@@ -136,7 +136,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it "gives an error if parameter is not a type" do
       expr = fqr('Hash')['String']
-      expect { evaluate(expr)}.to raise_error(/Hash\[\] arguments must be types/)
+      expect { evaluate(expr)}.to raise_error(/Hash-Type\[\] arguments must be types/)
     end
 
     # Array
@@ -153,7 +153,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it "gives an error if parameter is not a type" do
       expr = fqr('Array')['String']
-      expect { evaluate(expr)}.to raise_error(/Array\[\] arguments must be types/)
+      expect { evaluate(expr)}.to raise_error(/Array-Type\[\] arguments must be types/)
     end
 
     it 'creates a PPatternType instance when applied to a Pattern' do
@@ -177,7 +177,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'produces same class if no class name is given' do
       expr = fqr('Class')[fqn('apache')][]
-      expect { evaluate(expr) }.to raise_error(/Evaluation Error: Class\[apache\]\[\] requires 1 arguments\. Got 0/)
+      expect { evaluate(expr) }.to raise_error(/Evaluation Error: Class\[apache\]\[\] accepts 1 argument\. Got 0/)
     end
 
     it 'produces a collection of classes when multiple class names are given' do

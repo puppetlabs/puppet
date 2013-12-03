@@ -27,7 +27,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   protected
 
   def access_Object(o, scope, keys)
-    fail("The [] operator is not applicable to the result of the LHS expression: #{o.class}", semantic.left_expr, scope)
+    fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator=>'[]', :left_value => o)
   end
 
   def access_String(o, scope, keys)
@@ -37,6 +37,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     when 1
       # Note that Ruby 1.8.7 requires a length of 1 to produce a String
       k1 = coerce_numeric(keys[0], @semantic.keys, scope)
+      bad_access_key_type(o, 0, k1, Integer) unless k1.is_a?(Integer)
       k2 = 1
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
       # if k1 is outside, a length of 1 always produces an empty string
@@ -48,6 +49,8 @@ class Puppet::Pops::Evaluator::AccessOperator
     when 2
       k1 = coerce_numeric(keys[0], @semantic.keys, scope)
       k2 = coerce_numeric(keys[1], @semantic.keys, scope)
+      [k1, k2].each_with_index { |k,i| bad_access_key_type(o, i, k, Integer) unless k.is_a?(Integer) }
+
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos (negative is count from end)
       k2 = k2 < 0 ? o.length - k1 + k2 + 1 : k2  # abs length (negative k2 is length from pos to end count)
       # if k1 is outside, adjust to first position, and adjust length
@@ -66,7 +69,11 @@ class Puppet::Pops::Evaluator::AccessOperator
   # Parameterizes a PRegexp Type with a pattern string or r ruby egexp
   #
   def access_PRegexpType(o, scope, keys)
-    fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o, :min=>1, :actual => keys.size) unless keys.size == 1
+    unless keys.size == 1
+      blamed = keys.size == 0 ? @semantic : @semantic.keys[2]
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :actual => keys.size)
+    end
+    assert_keys(keys, o, 1, 1, String, Regexp)
     Puppet::Pops::Types::TypeFactory.regexp(*keys)
   end
 
@@ -78,11 +85,16 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
       k = coerce_numeric(keys[0], @semantic.keys[0], scope)
+      unless k.is_a?(Integer)
+        bad_access_key_type(o, 0, k, Integer)
+      end
       o[k]
     when 2
       # A slice [from, to] with support for -1 to mean start, or end respectively.
       k1 = coerce_numeric(keys[0], @semantic.keys[0], scope)
       k2 = coerce_numeric(keys[1], @semantic.keys[1], scope)
+
+      [k1, k2].each_with_index { |k,i| bad_access_key_type(o, i, k, Integer) unless k.is_a?(Integer) }
 
       # Help confused Ruby do the right thing (it truncates to the right, but negative index + length can never overlap
       # the available range.
@@ -134,27 +146,72 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
+  # Ruby does not have an infinity constant.  TODO: Consider having one constant in Puppet. Now it is in several places.
+  INFINITY = 1.0 / 0.0
+
   def access_PEnumType(o, scope, keys)
-    # TODO: Nice error handling
+    assert_keys(keys, o, 1, INFINITY, String)
     Puppet::Pops::Types::TypeFactory.enum(*keys)
   end
 
   def access_PVariantType(o, scope, keys)
-    # TODO: Nice error handling
+    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAbstractType)
     Puppet::Pops::Types::TypeFactory.variant(*keys)
   end
 
   def access_PStringType(o, scope, keys)
-    # TODO: Nice error handling
-    begin
+    assert_keys(keys, o, 1, INFINITY, String)
     Puppet::Pops::Types::TypeFactory.string(*keys)
-    rescue StandardError => e
-      fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, o, :message => e.message)
+  end
+
+  # Asserts type of each key and calls fail with BAD_TYPE_SPECIFICATION
+  # @param keys [Array<Object>] the evaluated keys
+  # @param o [Object] evaluated LHS reported as :base_type
+  # @param min [Integer] the minimum number of keys (typically 1)
+  # @param max [Numeric] the maximum number of keys (use same as min, specific number, or INFINITY)
+  # @param allowed_classes [Class] a variable number of classes that each key must be an instance of (any)
+  # @api private
+  #
+  def assert_keys(keys, o, min, max, *allowed_classes)
+    size = keys.size
+    unless size.between?(min, max || INFINITY)
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :max => max, :actual => keys.size)
+    end
+    keys.each_with_index do |k, i|
+      unless allowed_classes.any? {|clazz| k.is_a?(clazz) }
+        bad_type_specialization_key_type(o, i, k, allowed_classes)
+      end
     end
   end
 
+  def bad_access_key_type(lhs, key_index, actual, *expected_classes)
+    fail(Puppet::Pops::Issues::BAD_SLICE_KEY_TYPE, @semantic.keys[key_index], {
+      :left_value => lhs,
+      :actual => bad_key_type_name(actual),
+      :expected_classes => expected_classes
+    })
+  end
+
+  def bad_key_type_name(actual)
+    case actual
+    when nil, :undef
+      'Undef'
+    when :default
+      'Default'
+    else
+      actual.class.name
+    end
+  end
+
+  def bad_type_specialization_key_type(type, key_index, actual, *expected_classes)
+    fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
+      :type => type,
+      :message => "Cannot use #{bad_key_type_name(actual)} where #{expected_classes.join(' or ')} is expected"
+    })
+  end
+
   def access_PPatternType(o, scope, keys)
-    # TODO: Nice error handling
+    assert_keys(keys, o, 1, INFINITY, String, Regexp)
     Puppet::Pops::Types::TypeFactory.pattern(*keys)
   end
 
@@ -164,7 +221,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
     keys.each_with_index do |x, index|
       fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_TYPE, @semantic.keys[index],
-        {:actual => x.class}) unless (x.is_a?(Numeric) || x == :default)
+        {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
     end
     ranged_integer = Puppet::Pops::Types::PIntegerType.new()
     from, to = keys
@@ -179,7 +236,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PHashType(o, scope, keys)
     keys.each_with_index do |k, index|
       unless k.is_a?(Puppet::Pops::Types::PAbstractType)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash', :actual => k.class})
+        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
       end
     end
     case keys.size
@@ -194,7 +251,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       result.element_type = keys[1]
       result
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Hash', :min => 1, :max => 2, :actual => keys.size})
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Hash-Type', :min => 1, :max => 2, :actual => keys.size})
     end
   end
 
@@ -203,13 +260,13 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PArrayType(o, scope, keys)
     if keys.size == 1
       unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array', :actual => keys[0].class})
+        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
       end
       result = Puppet::Pops::Types::PArrayType.new()
       result.element_type = keys[0]
       result
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Array', :min => 1, :actual => keys.size})
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Array-Type', :min => 1, :actual => keys.size})
     end
   end
 
@@ -247,6 +304,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
 
     # type_name is LHS type_name if set, else the first given arg
+    keys_orig_size = keys.size
     type_name = o.type_name || keys.shift
     type_name = case type_name
     when Puppet::Pops::Types::PResourceType
@@ -254,13 +312,31 @@ class Puppet::Pops::Evaluator::AccessOperator
     when String
       type_name.downcase
     else
-      fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, @semantic.keys, {:actual => type_name.class})
+      blame = keys_orig_size != keys.size ? @semantic.keys[0] : @semantic.left_expr
+      fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => type_name.class})
     end
-    keys = [nil] if keys.size < 1 # if there was only a type_name and it was consumed
-    result = keys.collect do |t|
+
+    keys = [:no_title] if keys.size < 1 # if there was only a type_name and it was consumed
+    result = keys.each_with_index.map do |t, i|
+      unless t.is_a?(String) || t == :no_title
+        type_to_report = case t
+        when nil, :undef
+          'Undef'
+        when :default
+          'Default'
+        else
+          t.class.name
+        end
+        index = keys_orig_size != keys.size ? i+1 : i
+        fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[index], {
+          :type => o,
+          :message => "Cannot use #{type_to_report} where String is expected"
+        })
+      end
+
       rtype = Puppet::Pops::Types::PResourceType.new()
       rtype.type_name = type_name
-      rtype.title = t
+      rtype.title = (t == :no_title ? nil : t)
       rtype
     end
     # returns single type as type, else an array of types

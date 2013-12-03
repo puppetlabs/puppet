@@ -303,7 +303,7 @@ module Puppet::Pops::Issues
   end
 
   # When an attempt is made to use multiple keys (to produce a range in Ruby - e.g. $arr[2,-1]).
-  # This is currently not supported, but may be in future versions
+  # This is not supported in 3x, but it allowed in 4x.
   #
   UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
     "Attempt to use unsupported range in #{label.a_an(semantic)}, #{count} values given for max 1"
@@ -334,15 +334,20 @@ module Puppet::Pops::Issues
   end
 
   BAD_INTEGER_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
-    "Integer supports [] with one or two arguments (from, to). Got #{actual}"
+    "Integer-Type supports [] with one or two arguments (from, to). Got #{actual}"
   end
 
   BAD_INTEGER_SLICE_TYPE = issue :BAD_INTEGER_SLICE_TYPE, :actual do
-    "Integer [] requires all arguments to be integers (or default). Got #{actual}"
+    "Integer-Type [] requires all arguments to be integers (or default). Got #{actual}"
   end
 
-  INTEGER_STEP_0 = issue :INTEGER_STEP_0 do
-    "Integer [] can not step with a '0' increment."
+  BAD_SLICE_KEY_TYPE = issue :BAD_SLICE_KEY_TYPE, :left_value, :expected_classes, :actual do
+    expected_text = if expected_classes.size > 1
+      "one of #{expected_classes.join(', ')} are"
+    else
+      "#{expected_classes[0]} is"
+    end
+    "#{label.a_an_uc(left_value)}[] cannot use #{actual} where #{expected_text} expected"
   end
 
   BAD_TYPE_SLICE_TYPE = issue :BAD_TYPE_SLICE_TYPE, :base_type, :actual do
@@ -350,15 +355,18 @@ module Puppet::Pops::Issues
   end
 
   BAD_TYPE_SLICE_ARITY = issue :BAD_TYPE_SLICE_ARITY, :base_type, :min, :max, :actual do
-    if max
-      "#{base_type}[] requires #{min} to #{max} arguments. Got #{actual}"
+    base_type_label = base_type.is_a?(String) ? base_type : label.a_an_uc(base_type)
+    if max == -1 || max == 1.0 / 0.0 # Infinity
+      "#{base_type_label}[] accepts #{min} or more arguments. Got #{actual}"
+    elsif max
+      "#{base_type_label}[] accepts #{min} to #{max} arguments. Got #{actual}"
     else
-      "#{base_type}[] requires #{min} arguments. Got #{actual}"
+      "#{base_type_label}[] accepts #{min} #{label.plural_s(min, 'argument')}. Got #{actual}"
     end
   end
 
-  BAD_TYPE_SPECIALIZATION = hard_issue :BAD_TYPE_SPECIALIZATION, :message do
-    "Error creating type specialization of #{label.a_an(semantic)}, #{message}"
+  BAD_TYPE_SPECIALIZATION = hard_issue :BAD_TYPE_SPECIALIZATION, :type, :message do
+    "Error creating type specialization of #{label.a_an(type)}, #{message}"
   end
 
   ILLEGAL_TYPE_SPECIALIZATION = issue :ILLEGAL_TYPE_SPECIALIZATION, :kind do
@@ -366,7 +374,7 @@ module Puppet::Pops::Issues
   end
 
   ILLEGAL_RESOURCE_SPECIALIZATION = issue :ILLEGAL_RESOURCE_SPECIALIZATION, :actual do
-    "First argument to Resource[] must be a resource type or a string. Got #{actual}."
+    "First argument to Resource[] must be a resource type or a String. Got #{actual}."
   end
 
   ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
