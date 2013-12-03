@@ -833,6 +833,18 @@ describe "when lexing number, bad input should not go unpunished" do
   #
 end
 
+describe "helps grammar resolve ambiguity" do
+
+  it "treats [] after name without space as RBRACK" do
+    EgrammarLexerSpec.tokens_scanned_from('mary[1]').should be_like(
+      :NAME, :LBRACK, :NAME, :RBRACK)
+  end
+  it "treats [] after name with space as LISTSTART" do
+    EgrammarLexerSpec.tokens_scanned_from('mary [1]').should be_like(
+      :NAME, :LISTSTART, :NAME, :RBRACK)
+  end
+end
+
 describe "when lexing interpolation detailed positioning should be correct" do
   it "should correctly position a string without interpolation" do
     EgrammarLexerSpec.tokens_scanned_from('"not interpolated"').should be_like(

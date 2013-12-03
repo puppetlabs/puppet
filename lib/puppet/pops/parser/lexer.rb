@@ -146,7 +146,7 @@ class Puppet::Pops::Parser::Lexer
 
   TOKENS = TokenList.new
   TOKENS.add_tokens(
-  '['   => :LBRACK,
+#  '['   => :LBRACK,
   ']'   => :RBRACK,
   #    '{'   => :LBRACE, # Specialized to handle lambda and brace count
   #    '}'   => :RBRACE, # Specialized to handle brace count
@@ -194,7 +194,8 @@ class Puppet::Pops::Parser::Lexer
   "<dqstring between two interpolations>" => :DQMID,
   "<dqstring after final interpolation>" => :DQPOST,
   "<boolean>" => :BOOLEAN,
-  "<select start>" => :SELBRACE # A QMARK followed by '{'
+  "<select start>" => :SELBRACE, # A QMARK followed by '{'
+  "<list start>" => :LISTSTART # A '[' preceded by NAME <whitespace>
   )
 
   module Contextual
@@ -297,6 +298,17 @@ class Puppet::Pops::Parser::Lexer
       [TOKENS[:SELBRACE], value]
     else
       [TOKENS[:LBRACE], value]
+    end
+  end
+
+  # LBRACK needs look behind to differentiate between 'axa[1]' (deprecated resource ref), and 'a [1]' (call 'a' with
+  # [1] as argument
+  #
+  TOKENS.add_token :LBRACK, "[" do |lexer, value|
+    if lexer.lexing_context[:after] == :NAME && lexer.locator.string[lexer.lexing_context[:offset]-1,1] =~ /[[:blank:]\r\n]+/
+      [TOKENS[:LISTSTART], value]
+    else
+      [TOKENS[:LBRACK], value]
     end
   end
 
