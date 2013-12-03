@@ -351,9 +351,14 @@ module Puppet
     end
 
     newparam(:virtualenv) do
-      desc "The path to the virtualenv where the python package has to
-        be installed (when using the pip `provider`).  This has the same
-        meaning as the `-E` or `--environment` parameter of `pip install`."
+      desc <<-EOT
+        The path to the virtualenv where the python package has to
+        be installed (when using the pip `provider`).
+      EOT
+
+      validate do |value|
+        raise ArgumentError, "Virtual Environment path does not exist" if ! FileTest.directory?(value)
+      end
     end
 
     autorequire(:file) do
