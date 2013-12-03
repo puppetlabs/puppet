@@ -24,15 +24,9 @@ Puppet::Type.type(:package).provide :pip,
   # Return an array of structured information about every installed package
   # that's managed by `pip` or an empty array if `pip` is not available.
   def self.instances(virtualenv=nil)
-    if virtualenv
-      venv = "--environment=#{virtualenv}"
-    else
-      venv = ""
-    end
-
     packages = []
     pip_cmd = which(cmd) or return []
-    execpipe "#{pip_cmd} freeze #{venv}" do |process|
+    execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
         packages << new(options)
@@ -42,11 +36,10 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
-    case Facter.value(:osfamily)
-      when "RedHat"
-        "pip-python"
-      else
-        "pip"
+    if @resource[:virtualenv]
+      "#{@resource[:virtualenv]}/bin/pip"
+    else
+      "pip"
     end
   end
 
@@ -83,10 +76,6 @@ Puppet::Type.type(:package).provide :pip,
   def install
     args = %w{install -q}
 
-    if @resource[:virtualenv]
-      args << "--environment=#{@resource[:virtualenv]}"
-    end
-
     if @resource[:source]
       if String === @resource[:ensure]
         args << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{
@@ -111,13 +100,7 @@ Puppet::Type.type(:package).provide :pip,
   # unless this issue gets fixed.
   # <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=562544>
   def uninstall
-    if @resource[:virtualenv]
-      venv = "--environment=#{@resource[:virtualenv]}"
-    else
-      venv = ""
-    end
-
-    lazy_pip "uninstall", "-y", "-q", venv, @resource[:name]
+    lazy_pip "uninstall", "-y", "-q", @resource[:name]
   end
 
   def update
