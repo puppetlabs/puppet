@@ -8,8 +8,14 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   end
 
   # Produces a label for the given objects type/operator without article.
+  # If a Class is given, its name is used as label
+  #
   def label o
-   @@label_visitor.visit(o)
+    if o.is_a?(Class)
+      o.name
+    else
+      @@label_visitor.visit(o)
+    end
   end
 
   def label_Factory o                     ; label(o.current)                    end
@@ -34,6 +40,8 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_LiteralHash o                 ; "Hash Expression"                   end
   def label_KeyedEntry o                  ; "Hash Entry"                        end
   def label_LiteralBoolean o              ; "Boolean"                           end
+  def label_TrueClass o                   ; "Boolean"                           end
+  def label_FalseClass o                  ; "Boolean"                           end
   def label_LiteralString o               ; "String"                            end
   def label_LambdaExpression o            ; "Lambda"                            end
   def label_LiteralDefault o              ; "'default' expression"              end
@@ -75,16 +83,14 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_Object o                      ; "Object"                            end
   def label_Hash o                        ; "Hash"                              end
   def label_QualifiedName o               ; "Name"                              end
-  def label_QualifiedReference o          ; "Type Name"                         end
-  def label_PAbstractType o               ; "#{Puppet::Pops::Types::TypeCalculator.string(o)} Type" end
+  def label_QualifiedReference o          ; "Type-Name"                         end
+  def label_PAbstractType o               ; "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type" end
 
   def label_PResourceType o
     if o.title
-      "#{Puppet::Pops::Types::TypeCalculator.string(o)} Resource Reference"
+      "#{Puppet::Pops::Types::TypeCalculator.string(o)} Resource-Reference"
     else
-      "#{Puppet::Pops::Types::TypeCalculator.string(o)} Type"
+      "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type"
     end
   end
-  # TODO: Could use the TypeFactory to infer and output more detailed type information instead of
-  # just printing Object, Hash, Array, etc.
 end
