@@ -25,7 +25,7 @@ Puppet::Type.type(:package).provide :pip,
   # that's managed by `pip` or an empty array if `pip` is not available.
   def self.instances(virtualenv=nil)
     packages = []
-    pip_cmd = which(cmd) or return []
+    pip_cmd = self.cmd
     execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :pip,
     if @resource[:virtualenv]
       "#{@resource[:virtualenv]}/bin/pip"
     else
-      "pip"
+      "/usr/bin/pip"
     end
   end
 
