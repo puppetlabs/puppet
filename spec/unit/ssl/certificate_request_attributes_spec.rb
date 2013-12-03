@@ -28,7 +28,7 @@ describe Puppet::SSL::CertificateRequestAttributes do
     context "with an available attributes file" do
       before do
         Puppet::FileSystem::File.expects(:exist?).with(csr_attributes_path).returns(true)
-        Puppet::Util::Yaml.expects(:load_file).with(csr_attributes_path).returns(csr_attributes_hash)
+        Puppet::Util::Yaml.expects(:load_file).with(csr_attributes_path, {}).returns(csr_attributes_hash)
       end
 
       it "loads csr attributes from a file when the file is present" do
