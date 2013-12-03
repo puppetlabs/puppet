@@ -341,6 +341,14 @@ module Puppet::Pops::Issues
     "Integer-Type [] requires all arguments to be integers (or default). Got #{actual}"
   end
 
+  BAD_FLOAT_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
+    "Float-Type supports [] with one or two arguments (from, to). Got #{actual}"
+  end
+
+  BAD_FLOAT_SLICE_TYPE = issue :BAD_INTEGER_SLICE_TYPE, :actual do
+    "Float-Type [] requires all arguments to be floats, or integers (or default). Got #{actual}"
+  end
+
   BAD_SLICE_KEY_TYPE = issue :BAD_SLICE_KEY_TYPE, :left_value, :expected_classes, :actual do
     expected_text = if expected_classes.size > 1
       "one of #{expected_classes.join(', ')} are"

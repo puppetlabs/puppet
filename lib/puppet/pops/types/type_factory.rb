@@ -13,13 +13,23 @@ module Puppet::Pops::Types::TypeFactory
     Types::PIntegerType.new()
   end
 
-  # Produces the Integer type
+  # Produces an Integer range type
   # @api public
   #
   def self.range(from, to)
     t = Types::PIntegerType.new()
     t.from = from unless from == :default
     t.to = to unless to == :default
+    t
+  end
+
+  # Produces a Float range type
+  # @api public
+  #
+  def self.float_range(from, to)
+    t = Types::PFloatType.new()
+    t.from = Float(from) unless from == :default || from.nil?
+    t.to = Float(to) unless to == :default || to.nil?
     t
   end
 

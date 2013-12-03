@@ -296,11 +296,23 @@ class Puppet::Pops::Types::TypeCalculator
       return result
     end
 
-    # Integers have range, narrow the range to the common range
+    # Integers have range, expand the range to the common range
     if t1.is_a?(Types::PIntegerType) && t2.is_a?(Types::PIntegerType)
       t1range = from_to_ordered(t1.from, t1.to)
       t2range = from_to_ordered(t2.from, t2.to)
       t = Types::PIntegerType.new()
+      from = [t1range[0], t2range[0]].min
+      to = [t1range[1], t2range[1]].max
+      t.from = from unless from == TheInfinity
+      t.to = to unless to == TheInfinity
+      return t
+    end
+
+    # Floats have range, expand the range to the common range
+    if t1.is_a?(Types::PFloatType) && t2.is_a?(Types::PFloatType)
+      t1range = from_to_ordered(t1.from, t1.to)
+      t2range = from_to_ordered(t2.from, t2.to)
+      t = Types::PFloatType.new()
       from = [t1range[0], t2range[0]].min
       to = [t1range[1], t2range[1]].max
       t.from = from unless from == TheInfinity
@@ -468,7 +480,10 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_Float(o)
-    Types::PFloatType.new()
+    t = Types::PFloatType.new()
+    t.from = o
+    t.to = o
+    t
   end
 
   # @api private
@@ -633,7 +648,11 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_PFloatType(t, t2)
-    t2.is_a?(Types::PFloatType)
+    return false unless t2.is_a?(Types::PFloatType)
+    trange =  from_to_ordered(t.from, t.to)
+    t2range = from_to_ordered(t2.from, t2.to)
+    # If t2 min and max are within the range of t
+    trange[0] <= t2range[0] && trange[1] >= t2range[1]
   end
 
   # @api private
@@ -764,8 +783,20 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
-  # @api private
-  def string_PFloatType(t)   ; "Float"   ; end
+  def string_PFloatType(t)
+    result = ["Float"]
+    unless t.from.nil? && t.to.nil?
+      from = t.from.nil? ? 'default' : t.from
+      to = t.to.nil? ? 'default' : t.to
+      if from == to
+        "Float[#{from}]"
+      else
+        "Float[#{from}, #{to}]"
+      end
+    else
+      "Float"
+    end
+  end
 
   # @api private
   def string_PRegexpType(t)

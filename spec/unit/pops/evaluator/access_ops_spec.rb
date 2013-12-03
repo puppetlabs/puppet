@@ -16,6 +16,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     Puppet::Pops::Types::TypeFactory.range(from, to)
   end
 
+  def float_range(from, to)
+    Puppet::Pops::Types::TypeFactory.float_range(from, to)
+  end
+
   context 'The evaluator when operating on a String' do
     it 'can get a single character using a single key index to []' do
       expect(evaluate(literal('abc')[1])).to eql('b')
@@ -112,8 +116,35 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to eql(range(1,0))
     end
 
-    it 'produces an error if there are more than 2 keys' do
+    it 'produces an error for Integer[] if there are more than 2 keys' do
       expr = fqr('Integer')[1,2,3]
+      expect { evaluate(expr)}.to raise_error(/with one or two arguments/)
+    end
+
+    # Float
+    #
+    it 'produces a Float[from, to]' do
+      expr = fqr('Float')[1, 3]
+      expect(evaluate(expr)).to eql(float_range(1.0,3.0))
+    end
+
+    it 'produces a Float[1.0]' do
+      expr = fqr('Float')[1.0]
+      expect(evaluate(expr)).to eql(float_range(1.0,1.0))
+    end
+
+    it 'produces a Float[1]' do
+      expr = fqr('Float')[1]
+      expect(evaluate(expr)).to eql(float_range(1.0,1.0))
+    end
+
+    it 'produces a Float[from, <from]' do
+      expr = fqr('Float')[1.0,0.0]
+      expect(evaluate(expr)).to eql(float_range(1.0,0.0))
+    end
+
+    it 'produces an error for Float[] if there are more than 2 keys' do
+      expr = fqr('Float')[1,2,3]
       expect { evaluate(expr)}.to raise_error(/with one or two arguments/)
     end
 

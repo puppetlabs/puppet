@@ -230,6 +230,21 @@ class Puppet::Pops::Evaluator::AccessOperator
     ranged_integer
   end
 
+  def access_PFloatType(o, scope, keys)
+    unless keys.size.between?(1, 2)
+      fail(Puppet::Pops::Issues::BAD_FLOAT_SLICE_ARITY, @semantic, {:actual => keys.size})
+    end
+    keys.each_with_index do |x, index|
+      fail(Puppet::Pops::Issues::BAD_FLOAT_SLICE_TYPE, @semantic.keys[index],
+        {:actual => x.class}) unless (x.is_a?(Float) || x.is_a?(Integer) || x == :default)
+    end
+    ranged_float = Puppet::Pops::Types::PFloatType.new()
+    from, to = keys
+    ranged_float.from = from == :default || from.nil? ? nil : Float(from)
+    ranged_float.to = to == :default || to.nil? ? nil : Float(to)
+    ranged_float
+  end
+
   # A Hash can create a new Hash type, one arg sets value type, two args sets key and value type in new type
   # It is not possible to create a collection of Hash types.
   #

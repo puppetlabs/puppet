@@ -84,6 +84,10 @@ class Puppet::Pops::Types::TypeParser
     o.value
   end
 
+  def interpret_LiteralFloat(o)
+    o.value
+  end
+
   # @api private
   def interpret_QualifiedReference(name_ast)
     case name_ast.value
@@ -231,7 +235,21 @@ class Puppet::Pops::Types::TypeParser
        TYPES.range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
 
-    when "object", "collection", "data", "catalogentry", "boolean", "float", "literal", "undef", "numeric", "pattern", "string"
+    when "float"
+      if parameters.size == 1
+        case parameters[0]
+        when Integer, Float
+          TYPES.float_range(parameters[0], parameters[0])
+        when :default
+          TYPES.float # unbound
+        end
+      elsif parameters.size != 2
+        raise_invalid_parameters_error("Float", "1 or 2", parameters.size)
+     else
+       TYPES.float_range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
+     end
+
+    when "object", "collection", "data", "catalogentry", "boolean", "literal", "undef", "numeric", "pattern", "string"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
 
     when "ruby", "type"

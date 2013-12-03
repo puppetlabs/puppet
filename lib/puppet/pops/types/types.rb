@@ -171,6 +171,18 @@ module Puppet::Pops::Types
 
   # @api public
   class PFloatType < PNumericType
+    has_attr 'from', Float, :lowerBound => 0
+    has_attr 'to', Float, :lowerBound => 0
+
+    module ClassModule
+      def hash
+        [self.class, from, to].hash
+      end
+
+      def ==(o)
+        self.class == o.class && from == o.from && to == o.to
+      end
+    end
   end
 
   # @api public

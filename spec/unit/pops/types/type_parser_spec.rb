@@ -36,7 +36,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   [
-    'Object', 'Float', 'Collection', 'Data', 'CatalogEntry', 'Boolean', 'Float', 'Literal', 'Undef', 'Numeric',
+    'Object', 'Collection', 'Data', 'CatalogEntry', 'Boolean', 'Literal', 'Undef', 'Numeric',
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
@@ -102,6 +102,14 @@ describe Puppet::Pops::Types::TypeParser do
 
   it "parses a parameterized host class type" do
     expect(parser.parse("Class[foo::bar]")).to be_the_type(types.host_class('foo::bar'))
+  end
+
+  it 'parses an integer range' do
+   expect(parser.parse("Integer[1,2]")).to be_the_type(types.range(1,2))
+  end
+
+  it 'parses a float range' do
+   expect(parser.parse("Float[1.0,2.0]")).to be_the_type(types.float_range(1.0,2.0))
   end
 
   matcher :be_the_type do |type|
