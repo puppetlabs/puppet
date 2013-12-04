@@ -93,6 +93,23 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     end
   end
 
+  describe ".targets" do
+    let(:tabs) { [ described_class.default_target ] + %w{foo bar} }
+    before do
+      File.expects(:readable?).returns true
+      File.stubs(:file?).returns true
+      File.stubs(:writable?).returns true
+    end
+    after do
+      File.unstub :readable?, :file?, :writable?
+      Dir.unstub :foreach
+    end
+    it "should add all crontabs as targets" do
+      Dir.expects(:foreach).multiple_yields(*tabs)
+      described_class.targets.should == tabs
+    end
+  end
+
   describe "when parsing a record" do
     it "should parse a comment" do
       described_class.parse_line("# This is a test").should == {
