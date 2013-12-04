@@ -207,24 +207,28 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
         Facter.stubs(:value).with(:operatingsystem)
       end
 
-      it "should be empty if user has no crontab" do
+      it "should contain no resources for a user who has no crontab" do
         # `crontab...` does only capture stdout here. On vixie-cron-4.1
         # STDERR shows "no crontab for foobar" but stderr is ignored as
         # well as the exitcode.
         described_class.target_object('foobar').expects(:`).with('crontab -u foobar -l 2>/dev/null').returns ""
-        described_class.instances.should be_empty
+        described_class.instances.select { |resource|
+          resource.get('target') == 'foobar'
+        }.should be_empty
       end
 
-      it "should be empty if user is not present" do
+      it "should contain no resources for a user who is absent" do
         # `crontab...` does only capture stdout. On vixie-cron-4.1
         # STDERR shows "crontab:  user `foobar' unknown" but stderr is
         # ignored as well as the exitcode
         described_class.target_object('foobar').expects(:`).with('crontab -u foobar -l 2>/dev/null').returns ""
-        described_class.instances.should be_empty
+        described_class.instances.select { |resource|
+          resource.get('target') == 'foobar'
+        }.should be_empty
       end
 
       it "should be able to create records from not-managed records" do
-        described_class.expects(:target_object).returns File.new(my_fixture('simple'))
+        described_class.stubs(:target_object).returns File.new(my_fixture('simple'))
         parameters = described_class.instances.map do |p|
           h = {:name => p.get(:name)}
           Puppet::Type.type(:cron).validproperties.each do |property|
@@ -260,7 +264,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
       end
 
       it "should be able to parse puppet manged cronjobs" do
-        described_class.expects(:target_object).returns File.new(my_fixture('managed'))
+        described_class.stubs(:target_object).returns File.new(my_fixture('managed'))
         described_class.instances.map do |p|
           h = {:name => p.get(:name)}
           Puppet::Type.type(:cron).validproperties.each do |property|
