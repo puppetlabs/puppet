@@ -31,7 +31,6 @@ $a = "interpolate ${foo} and stuff"
   class MyJSonSerializer < RGen::Serializer::JsonSerializer
     def attributeValue(value, a)
       x = super
-      require 'debugger'; debugger
       puts "#{a.eType} value: <<#{value}>> serialize: <<#{x}>>"
       x
     end
@@ -93,7 +92,6 @@ $a = "interpolate ${foo} and stuff"
   end
 
   it "rgenjson", :profile => true do
-    require 'debugger'; debugger
     parser = Puppet::Pops::Parser::EvaluatingParser.new()
     model = parser.parse_string(code).current
     dumped = json_dump(model)
