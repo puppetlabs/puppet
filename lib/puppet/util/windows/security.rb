@@ -63,6 +63,7 @@
 
 require 'puppet/util/windows'
 require 'pathname'
+require 'ffi'
 
 require 'win32/security'
 
