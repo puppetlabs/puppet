@@ -22,7 +22,7 @@ module Puppet::Pops::Adapters
     attr_accessor :origin
   end
 
-  # A SourcePosAdapter describes hold a reference to something *locateable* (a position in source text).
+  # A SourcePosAdapter holds a reference to something *locateable* (a position in source text).
   # This is represented by an instance of Puppet::Pops::Parser::Locateable (it has an offset, a length, and
   # a Puppet::Pops::Parser::Locator) that are used together to provide derived information (line, and position
   # on line).
