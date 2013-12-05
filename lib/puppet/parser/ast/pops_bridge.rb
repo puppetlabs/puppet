@@ -40,7 +40,7 @@ class Puppet::Parser::AST::PopsBridge
         other
       else
         # When does this happen ? Ever ?
-        require 'debugger'; debugger
+        raise "sequence_with called on Puppet::Parser::AST::PopsBridge::Expression - please report use case"
         Puppet::Parser::AST::BlockExpression.new(:children => [self] + other.children)
       end
     end
