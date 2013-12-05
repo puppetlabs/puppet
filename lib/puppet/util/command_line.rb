@@ -82,7 +82,7 @@ module Puppet
       #
       # @return [void]
       def execute
-        Puppet::Util.exit_on_fail("intialize global default settings") do
+        Puppet::Util.exit_on_fail("initialize global default settings") do
           Puppet.initialize_settings(args)
         end
 
