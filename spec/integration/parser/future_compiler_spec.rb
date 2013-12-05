@@ -337,7 +337,7 @@ describe "Puppet::Parser::Compiler" do
     context 'when working with the trusted data hash' do
       context 'and have opted in to hashed_node_data' do
         before :each do
-          Puppet[:hashed_node_data] = true
+          Puppet[:trusted_node_data] = true
         end
 
         it 'should make $trusted available' do
@@ -367,7 +367,7 @@ describe "Puppet::Parser::Compiler" do
 
       context 'and have not opted in to hashed_node_data' do
         before :each do
-          Puppet[:hashed_node_data] = false
+          Puppet[:trusted_node_data] = false
         end
 
         it 'should not make $trusted available' do
