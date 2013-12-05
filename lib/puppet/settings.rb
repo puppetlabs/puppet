@@ -18,6 +18,7 @@ class Puppet::Settings
   require 'puppet/settings/terminus_setting'
   require 'puppet/settings/duration_setting'
   require 'puppet/settings/priority_setting'
+  require 'puppet/settings/autosign_setting'
   require 'puppet/settings/config_file'
   require 'puppet/settings/value_translator'
 
@@ -634,6 +635,7 @@ class Puppet::Settings
       :duration   => DurationSetting,
       :enum       => EnumSetting,
       :priority   => PrioritySetting,
+      :autosign   => AutosignSetting,
   }
 
   # Create a new setting.  The value is passed in because it's used to determine
