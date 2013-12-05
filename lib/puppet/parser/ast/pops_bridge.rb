@@ -41,7 +41,8 @@ class Puppet::Parser::AST::PopsBridge
       else
         # When does this happen ? Ever ?
         raise "sequence_with called on Puppet::Parser::AST::PopsBridge::Expression - please report use case"
-        Puppet::Parser::AST::BlockExpression.new(:children => [self] + other.children)
+        # What should be done if the above happens (We don't want this to happen).
+        # Puppet::Parser::AST::BlockExpression.new(:children => [self] + other.children)
       end
     end
   end
