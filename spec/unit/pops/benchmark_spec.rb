@@ -37,17 +37,17 @@ $a = "interpolate ${foo} and stuff"
   end
 
   def json_dump(model)
-      output = StringWriter.new
-      ser = MyJSonSerializer.new(output)
-      ser.serialize(model)
-      output
-    end
+    output = StringWriter.new
+    ser = MyJSonSerializer.new(output)
+    ser.serialize(model)
+    output
+  end
 
-    def json_load(string)
-      env = RGen::Environment.new
-      inst = RGen::Instantiator::JsonInstantiator.new(env, Puppet::Pops::Model)
-      inst.instantiate(string)
-    end
+  def json_load(string)
+    env = RGen::Environment.new
+    inst = RGen::Instantiator::JsonInstantiator.new(env, Puppet::Pops::Model)
+    inst.instantiate(string)
+  end
 
   it "transformer", :profile => true do
     parser = Puppet::Pops::Parser::Parser.new()
@@ -122,9 +122,9 @@ $a = "interpolate ${foo} and stuff"
     let(:node) { 'node.example.com' }
     let(:scope) { s = create_test_scope_for_node(node); s }
     it "evaluator", :profile => true do
-    # Do the loop in puppet code since it otherwise drowns in setup
-    puppet_loop =
-      'Integer[0, 1000].each |$i| { if true
+      # Do the loop in puppet code since it otherwise drowns in setup
+      puppet_loop =
+        'Integer[0, 1000].each |$i| { if true
 {
 $a = 10 + 10
 }
