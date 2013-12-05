@@ -25,6 +25,14 @@ Puppet::Parser::Functions::newfunction(
         $a.each {|$entry|       ..."key ${$entry[0]}, value ${$entry[1]}" }
         $a.each {|$key, $value| ..."key ${key}, value ${value}" }
 
+  When the first argument is a Type and the type is Enumerable, the parameterized block should define one
+  or two block parameters.
+  For each application of the block, the next element from the type enumerator is selected, and it is passed to
+  the block if the block has one parameter. If the block has two parameters, the first is the elements
+  index, and the second the value. The index starts from 0.
+
+      Integer[ 10, 20 ].each {|$index, $value| ... }
+
   - Since 3.2
   - requires `parser = future`.
   ENDHEREDOC
