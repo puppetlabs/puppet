@@ -881,6 +881,33 @@ describe Puppet::Settings do
       values.should == ["yay/setval"]
     end
 
+    it "should allow hooks invoked at parse time to be deferred" do
+      hook_invoked = false
+      @settings.define_settings :section, :deferred  => {:desc => '',
+                                                         :hook => proc { |v| hook_invoked = true },
+                                                         :call_hook => :on_initialize_and_write, }
+
+      @settings.define_settings(:main,
+        :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
+        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
+        :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
+
+      text = <<-EOD
+      [main]
+      deferred=$confdir/goose
+      EOD
+
+      @settings.stubs(:read_file).returns(text)
+      @settings.initialize_global_settings
+
+      hook_invoked.should be_false
+
+      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
+
+      hook_invoked.should be_true
+      @settings[:deferred].should eq '/path/to/confdir/goose'
+    end
+
     it "should allow empty values" do
       @settings.define_settings :section, :myarg => { :default => "myfile", :desc => "a" }
 
