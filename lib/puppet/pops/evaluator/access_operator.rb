@@ -290,12 +290,12 @@ class Puppet::Pops::Evaluator::AccessOperator
   # @example
   #   Resource[File]               # => File
   #   Resource[File, 'foo']        # => File[foo]
-  #   Resource[File. 'foo', 'bar]  # => [File[foo], File[bar]]
+  #   Resource[File. 'foo', 'bar'] # => [File[foo], File[bar]]
   #   File['foo', 'bar']           # => [File[foo], File[bar]]
-  #   File['foo']['bar']           # => ERROR
+  #   File['foo']['bar']           # => Value of the 'bar' parameter in the File['foo'] resource
   #   Resource[File]['foo', 'bar'] # => [File[Foo], File[bar]]
   #   Resource[File, 'foo', 'bar'] # => [File[foo], File[bar]]
-  #   Resource[???][]              # => deep copy of the type
+  #   Resource[File, 'foo']['bar'] # => Value of the 'bar' parameter in the File['foo'] resource
   #
   def access_PResourceType(o, scope, keys)
     if keys.size == 0
