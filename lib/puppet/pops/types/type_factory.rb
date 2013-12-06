@@ -13,11 +13,38 @@ module Puppet::Pops::Types::TypeFactory
     Types::PIntegerType.new()
   end
 
+  # Produces an Integer range type
+  # @api public
+  #
+  def self.range(from, to)
+    t = Types::PIntegerType.new()
+    t.from = from unless from == :default
+    t.to = to unless to == :default
+    t
+  end
+
+  # Produces a Float range type
+  # @api public
+  #
+  def self.float_range(from, to)
+    t = Types::PFloatType.new()
+    t.from = Float(from) unless from == :default || from.nil?
+    t.to = Float(to) unless to == :default || to.nil?
+    t
+  end
+
   # Produces the Float type
   # @api public
   #
   def self.float()
     Types::PFloatType.new()
+  end
+
+  # Produces the Numeric type
+  # @api public
+  #
+  def self.numeric()
+    Types::PNumericType.new()
   end
 
   # Produces a string representation of the type
@@ -27,11 +54,31 @@ module Puppet::Pops::Types::TypeFactory
     @type_calculator.string(t)
   end
 
-  # Produces the String type
+  # Produces the String type, optionally with specific string values
   # @api public
   #
-  def self.string()
-    Types::PStringType.new()
+  def self.string(*values)
+    t = Types::PStringType.new()
+    values.each {|v| t.addValues(v) }
+    t
+  end
+
+  # Produces the Enum type, optionally with specific string values
+  # @api public
+  #
+  def self.enum(*values)
+    t = Types::PEnumType.new()
+    values.each {|v| t.addValues(v) }
+    t
+  end
+
+  # Produces the Variant type, optionally with the "one of" types
+  # @api public
+  #
+  def self.variant(*types)
+    t = Types::PVariantType.new()
+    types.each {|v| t.addTypes(type_of(v)) }
+    t
   end
 
   # Produces the Boolean type
@@ -41,11 +88,45 @@ module Puppet::Pops::Types::TypeFactory
     Types::PBooleanType.new()
   end
 
-  # Produces the Pattern type
+  # Produces the Object type
   # @api public
   #
-  def self.pattern()
-    Types::PPatternType.new()
+  def self.object()
+    Types::PObjectType.new()
+  end
+
+  # Produces the Regexp type
+  # @param pattern [Regexp, String, nil] (nil) The regular expression object or a regexp source string, or nil for bare type
+  # @api public
+  #
+  def self.regexp(pattern = nil)
+    t = Types::PRegexpType.new()
+    if pattern
+      t.pattern = pattern.is_a?(Regexp) ? pattern.inspect[1..-2] : pattern
+    end
+    t
+  end
+
+  def self.pattern(*regular_expressions)
+    t = Types::PPatternType.new()
+    regular_expressions.each do |re|
+      case re
+      when String
+        re_T = Types::PRegexpType.new()
+        re_T.pattern = re
+        t.addPatterns(re_T)
+      when Regexp
+        re_T = Type::PRegexpType.new()
+        # Regep.to_s includes options user did not enter and does not escape source
+        # to work either as a string or as a // regexp. The inspect method does a better
+        # job, but includes the //
+        re_T.pattern = re.inspect[1..-2]
+        t.addPatterns(re_T)
+      else
+       raise ArgumentError, "Only String and Regexp are allowed: got '#{re.class}"
+      end
+    end
+    t
   end
 
   # Produces the Literal type
@@ -67,6 +148,40 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.data()
     Types::PDataType.new()
+  end
+
+  # Creates an instance of the Undef type
+  # @api public
+  def self.undef()
+    Types::PNilType.new()
+  end
+
+  # Produces an instance of the abstract type PCatalogEntryType
+  def self.catalog_entry()
+    Types::PCatalogEntryType.new()
+  end
+
+  # Produces a PResourceType with a String type_name
+  # A PResourceType with a nil or empty name is compatible with any other PResourceType.
+  # A PResourceType with a given name is only compatible with a PResourceType with the same name.
+  # (There is no resource-type subtyping in Puppet (yet)).
+  #
+  def self.resource(type_name = nil, title = nil)
+    type = Types::PResourceType.new()
+    type_name = type_name.type_name if type_name.is_a?(Types::PResourceType)
+    type.type_name = type_name.downcase unless type_name.nil?
+    type.title = title
+    type
+  end
+
+  # Produces PHostClassType with a string class_name.
+  # A PHostClassType with nil or empty name is compatible with any other PHostClassType.
+  # A PHostClassType with a given name is only compatible with a PHostClassType with the same name.
+  #
+  def self.host_class(class_name = nil)
+    type = Types::PHostClassType.new()
+    type.class_name = class_name
+    type
   end
 
   # Produces a type for Array[o] where o is either a type, or an instance for which a type is inferred.

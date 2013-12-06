@@ -1,10 +1,13 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet_spec/pops'
+require 'puppet_spec/scope'
+
 
 describe 'The hiera2 bindings provider' do
 
   include PuppetSpec::Pops
+  include PuppetSpec::Scope
 
   def config_dir(config_name)
     File.dirname(my_fixture("#{config_name}/hiera.yaml"))
@@ -18,7 +21,7 @@ describe 'The hiera2 bindings provider' do
 
     let(:node) { 'node.example.com' }
     let(:acceptor) {  Puppet::Pops::Validation::Acceptor.new() }
-    let(:scope) { s = Puppet::Parser::Scope.new_for_test_harness(node); s['a'] = '42'; s['node'] = node; s }
+    let(:scope) { s = create_test_scope_for_node(node); s['a'] = '42'; s['node'] = node; s }
     let(:module_dir) { config_dir('ok') }
     let(:node_binder) {  b = Puppet::Pops::Binder::Binder.new(); b.define_categories(Puppet::Pops::Binder::BindingsFactory.categories(['node', node])); b }
     let(:bindings) { Puppet::Pops::Binder::Hiera2::BindingsProvider.new('test', module_dir, acceptor).load_bindings(scope) }

@@ -33,8 +33,8 @@ ENDHEREDOC
     raise Puppet::ParseError, "The lookup function is only available with settings --binder true, or --parser future" 
   end
   type_parser = Puppet::Pops::Types::TypeParser.new
-  pblock    = args[-1] if args[-1].is_a?(Puppet::Parser::AST::Lambda)
-  type_name = args[1] unless args[1].is_a?(Puppet::Parser::AST::Lambda)
+  pblock    = args[-1] if args[-1].respond_to?(:puppet_lambda)
+  type_name = args[1] unless args[1].respond_to?(:puppet_lambda)
   type = type_parser.parse( type_name || "Data")
   result = compiler.injector.lookup(self, type, args[0])
   if pblock

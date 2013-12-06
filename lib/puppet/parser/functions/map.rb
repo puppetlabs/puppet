@@ -31,7 +31,7 @@ Puppet::Parser::Functions::newfunction(
   receiver = args[0]
   pblock = args[1]
 
-  raise ArgumentError, ("map(): wrong argument type (#{pblock.class}; must be a parameterized block.") unless pblock.is_a? Puppet::Parser::AST::Lambda
+  raise ArgumentError, ("map(): wrong argument type (#{pblock.class}; must be a parameterized block.") unless pblock.respond_to?(:puppet_lambda)
 
   case receiver
   when Array

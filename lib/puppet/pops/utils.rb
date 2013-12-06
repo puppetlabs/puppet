@@ -14,8 +14,8 @@ module Puppet::Pops::Utils
     end
   end
 
-  # To LiteralNumber with radix, or nil if not a number.
-  # If the value is already a number it is returned verbatim with a radix of 10.
+  # To Numeric with radix, or nil if not a number.
+  # If the value is already Numeric it is returned verbatim with a radix of 10.
   # @param o [String, Number] a string containing a number in octal, hex, integer (decimal) or floating point form
   # @return [Array<Number, Integer>, nil] array with converted number and radix, or nil if not possible to convert
   # @api public
@@ -35,10 +35,13 @@ module Puppet::Pops::Utils
           radix = 10
           if match[1].to_s.length > 0
             radix = 16
-          elsif match[2].to_s.length > 1 && match[2][0] == '0'
+          elsif match[2].to_s.length > 1 && match[2][0,1] == '0'
             radix = 8
           end
-          [Integer(match[0], radix), radix]
+          # Ruby 1.8.7 does not have a second argument to Kernel method that creates an
+          # integer from a string, it relies on the prefix 0x, 0X, 0 (and unsupported in puppet binary 'b')
+          # We have the correct string here, match[0] is safe to parse without passing on radix
+          [Integer(match[0]), radix]
         end
       when Numeric, Fixnum, Integer, Float
         # Impossible to calculate radix, assume decimal
@@ -96,7 +99,7 @@ module Puppet::Pops::Utils
   # with true, and Adaptable#adapters.
   #
   def self.find_adapter(o, adapter)
-    return nil unless o
+    return nil if o.nil? || (o.is_a?(Array) && o.empty?)
     a = adapter.get(o)
     return a if a
     return find_adapter(o.eContainer, adapter)

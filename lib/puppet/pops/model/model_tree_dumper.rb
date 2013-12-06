@@ -7,7 +7,11 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     o.collect {|e| do_dump(e) }
   end
 
-  def dump_LiteralNumber o
+  def dump_LiteralFloat o
+    o.value.to_s
+  end
+
+  def dump_LiteralInteger o
     case o.radix
     when 10
       o.value.to_s
@@ -90,10 +94,6 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     ["import"] + o.files.collect {|f| do_dump(f) }
   end
 
-  def dump_InstanceReferences o
-    ["instances", do_dump(o.type_name)] + o.names.collect {|n| do_dump(n) }
-  end
-
   def dump_AssignmentExpression o
     [o.operator.to_s, do_dump(o.left_expr), do_dump(o.right_expr)]
   end
@@ -121,10 +121,6 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_LiteralString o
     "'#{o.value}'"
-  end
-
-  def dump_LiteralText o
-    o.value
   end
 
   def dump_LambdaExpression o
@@ -243,6 +239,12 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_ParenthesizedExpression o
     do_dump(o.expr)
+  end
+
+  # Hides that Program exists in the output (only its body is shown), the definitions are just
+  # references to contained classes, resource types, and nodes
+  def dump_Program(o)
+    dump(o.body)
   end
 
   def dump_IfExpression o

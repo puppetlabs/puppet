@@ -1752,8 +1752,15 @@ EOT
       warnings in case multiple errors have been detected. A value of 0 is the
       same as value 1. The count is per manifest.
     EOT
+    },
+  :strict_variables => {
+    :default => false,
+    :type => :boolean,
+    :desc => <<-'EOT'
+      Makes the parser raise errors when referencing unknown variables. (This does not affect
+      referencing variables that are explicitly set to undef).
+    EOT
     }
-
   )
   define_settings(:puppetdoc,
     :document_all => {

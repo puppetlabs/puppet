@@ -24,11 +24,9 @@ class Puppet::Parser::Scope
 
   Puppet::Util.logmethods(self)
 
-  include Enumerable
   include Puppet::Util::Errors
   attr_accessor :source, :resource
-  attr_accessor :base, :keyword
-  attr_accessor :top, :translated, :compiler
+  attr_accessor :compiler
   attr_accessor :parent
   attr_reader :namespaces
 
@@ -36,95 +34,158 @@ class Puppet::Parser::Scope
   # them frequently enough to justify the extra method call.
   def_delegators :compiler, :catalog, :environment
 
-  # thin wrapper around an ephemeral
-  # symbol table.
-  # when a symbol
-  class Ephemeral
-    extend Forwardable
 
-    def initialize(parent=nil, local=false)
-      @symbols = {}
+  # Abstract base class for LocalScope and MatchScope
+  #
+  class Ephemeral
+
+    attr_reader :parent
+
+    def initialize(parent = nil)
       @parent = parent
-      @local_scope = local
     end
 
-    def_delegators :@symbols, :delete, :[]=, :each
+    def is_local_scope?
+      false
+    end
 
     def [](name)
-      if @symbols.include?(name) or @parent.nil?
-        @symbols[name]
-      else
+      if @parent
         @parent[name]
       end
     end
 
     def include?(name)
-      bound?(name) or (@parent and @parent.include?(name))
+      (@parent and @parent.include?(name))
+    end
+
+    def bound?(name)
+      false
+    end
+
+    def add_entries_to(target = {})
+      @parent.add_entries_to(target) unless @parent.nil?
+      # do not include match data ($0-$n)
+      target
+    end
+  end
+
+  class LocalScope < Ephemeral
+
+    def initialize(parent=nil)
+      super parent
+      @symbols = {}
+    end
+
+    def [](name)
+      if @symbols.include?(name)
+        @symbols[name]
+      else
+        super
+      end
+    end
+
+    def is_local_scope?
+      true
+    end
+
+    def []=(name, value)
+      @symbols[name] = value
+    end
+
+    def include?(name)
+      bound?(name) || super
+    end
+
+    def delete(name)
+      @symbols.delete(name)
     end
 
     def bound?(name)
       @symbols.include?(name)
     end
 
-    def is_local_scope?
-      @local_scope
-    end
-
-    # @return [Ephemeral, Hash, nil]
-    def parent
-      @parent
-    end
-
     def add_entries_to(target = {})
-      @parent.add_entries_to(target) unless @parent.nil?
-      # do not return pure ephemeral ($0-$n)
-      if is_local_scope?
-        @symbols.each do |k, v|
-          if v == :undef
-            target.delete(k)
-          else
-            target[ k ] = v
-          end
+      super
+      @symbols.each do |k, v|
+        if v == :undef
+          target.delete(k)
+        else
+          target[ k ] = v
         end
       end
       target
     end
+  end
+
+  class MatchScope < Ephemeral
+
+    attr_accessor :match_data
+
+    def initialize(parent = nil, match_data = nil)
+      super parent
+      @match_data = match_data
+    end
+
+    def is_local_scope?
+      false
+    end
+
+    def [](name)
+      if bound?(name)
+        @match_data[name.to_i]
+      else
+        super
+      end
+    end
+
+    def include?(name)
+      bound?(name) or super
+    end
+
+    def bound?(name)
+      # A "match variables" scope reports all numeric variables to be bound if the scope has
+      # match_data. Without match data the scope is transparent.
+      #
+      @match_data && name =~ /^\d+$/
+    end
+
+    def []=(name, value)
+      # TODO: Bad choice of exception
+      raise Puppet::ParseError, "Numerical variables cannot be changed. Attempt to set $#{name}"
+    end
+
+    def delete(name)
+      # TODO: Bad choice of exception
+      raise Puppet::ParseError, "Numerical variables cannot be deleted: Attempt to delete: $#{name}"
+    end
+
+    def add_entries_to(target = {})
+      # do not include match data ($0-$n)
+      super
+    end
 
   end
 
-  # Initialize a new scope suitable for parser function testing.  This method
-  # should be considered a public API for external modules.  A shared spec
-  # helper should consume this API method.
+  # Returns true if the variable of the given name has a non nil value.
+  # TODO: This has vague semantics - does the variable exist or not?
+  #       use ['name'] to get nil or value, and if nil check with exist?('name')
+  #       this include? is only useful because of checking against the boolean value false.
   #
-  # @api protected
-  #
-  def self.new_for_test_harness(node_name)
-    node = Puppet::Node.new(node_name)
-    compiler = Puppet::Parser::Compiler.new(node)
-    scope = new(compiler)
-    scope.source = Puppet::Resource::Type.new(:node, node_name)
-    scope.parent = compiler.topscope
-    scope
-  end
-
-  def each
-    to_hash.each { |name, value| yield(name, value) }
-  end
-
-  # Proxy accessors
-  def host
-    compiler.node.name
-  end
-
-  # TODO: 19514 - this is smelly; who uses this? functions? templates?
-  # What about trusted facts ? Should untrusted facts be removed from facts?
-  #
-  def facts
-    compiler.node.facts
-  end
-
   def include?(name)
     ! self[name].nil?
+  end
+
+  # Returns true if the variable of the given name is set to any value (including nil)
+  #
+  def exist?(name)
+    effective_symtable(true).include?(name)
+  end
+
+  # Returns true if the given name is bound in the current (most nested) scope.
+  #
+  def bound?(name)
+    effective_symtable(true).bound?(name)
   end
 
   # Is the value true?  This allows us to control the definition of truth
@@ -199,9 +260,10 @@ class Puppet::Parser::Scope
     extend_with_functions_module
 
     # The symbol table for this scope.  This is where we store variables.
-    @symtable = Ephemeral.new(nil, true)
+    #    @symtable = Ephemeral.new(nil, true)
+    @symtable = LocalScope.new(nil)
 
-    @ephemeral = [ Ephemeral.new(@symtable) ]
+    @ephemeral = [ MatchScope.new(@symtable, nil) ]
 
     # All of the defaults set for types.  It's a hash of hashes,
     # with the first key being the type, then the second key being
@@ -293,6 +355,8 @@ class Puppet::Parser::Scope
       class_name = $1
       variable_name = $2
       lookup_qualified_variable(class_name, variable_name, options)
+
+    # TODO: optimize with an assoc instead, this searches through scopes twice for a hit
     elsif table.include?(name)
       table[name]
     else
@@ -300,11 +364,18 @@ class Puppet::Parser::Scope
       if next_scope
         next_scope.lookupvar(name, options)
       else
-        nil
+        variable_not_found()
       end
     end
   end
 
+  def variable_not_found
+    if Puppet[:strict_variables]
+      throw :undefined_variable
+    else
+      nil
+    end
+  end
   # Retrieves the variable value assigned to the name given as an argument. The name must be a String,
   # and namespace can be qualified with '::'. The value is looked up in this scope, its parent scopes,
   # or in a specific visible named scope.
@@ -378,7 +449,7 @@ class Puppet::Parser::Scope
                    ""
                  end
       warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{e.message}#{location}"
-      nil
+      variable_not_found()
     end
   end
 
@@ -471,7 +542,7 @@ class Puppet::Parser::Scope
   # when you need to set options.
   def setvar(name, value, options = {})
     if name =~ /^[0-9]+$/
-      raise Puppet::ParseError.new("Cannot assign to a numeric match result variable '$#{name}'") unless options[:ephemeral]
+      raise Puppet::ParseError.new("Cannot assign to a numeric match result variable '$#{name}'") # unless options[:ephemeral]
     end
     unless name.is_a? String
       raise Puppet::ParseError, "Scope variable name #{name.inspect} is a #{name.class}, not a string"
@@ -535,6 +606,7 @@ class Puppet::Parser::Scope
     s = @ephemeral.last
     return s if use_ephemeral
 
+    # Why check if ephemeral is a Hash ??? Not needed, a hash cannot be a parent scope ???
     while s && !(s.is_a?(Hash) || s.is_local_scope?())
       s = s.parent
     end
@@ -580,49 +652,54 @@ class Puppet::Parser::Scope
   end
 
   # remove ephemeral scope up to level
+  # TODO: Who uses :all ? Remove ??
+  #
   def unset_ephemeral_var(level=:all)
     if level == :all
-      @ephemeral = [ Ephemeral.new(@symtable)]
+      @ephemeral = [ MatchScope.new(@symtable, nil)]
     else
       @ephemeral.pop(@ephemeral.size - level)
     end
-  end
-
-  # check if name exists in one of the ephemeral scopes.
-  def ephemeral_include?(name)
-    @ephemeral.any? {|eph| eph.include?(name) }
-  end
-
-  # Checks whether the variable should be processed in the ephemeral scope or not.
-  # All numerical variables are processed in ephemeral scope at all times, and all other
-  # variables when the ephemeral scope is a local scope.
-  #
-  def ephemeral?(name)
-    @ephemeral.last.is_local_scope? || name =~ /^\d+$/
   end
 
   def ephemeral_level
     @ephemeral.size
   end
 
+  # TODO: Who calls this?
   def new_ephemeral(local_scope = false)
-    @ephemeral.push(Ephemeral.new(@ephemeral.last, local_scope))
+    if local_scope
+      @ephemeral.push(LocalScope.new(@ephemeral.last))
+    else
+      @ephemeral.push(MatchScope.new(@ephemeral.last, nil))
+    end
+  end
+
+  # Sets match data in the most nested scope (which always is a MatchScope), it clobbers match data already set there
+  #
+  def set_match_data(match_data)
+    @ephemeral.last.match_data = match_data
+  end
+
+  # Nests a match data scope
+  def new_match_scope(match_data)
+    @ephemeral.push(MatchScope.new(@ephemeral.last, match_data))
   end
 
   def ephemeral_from(match, file = nil, line = nil)
     case match
     when Hash
       # Create local scope ephemeral and set all values from hash
-      new_ephemeral true
+      new_ephemeral(true)
       match.each {|k,v| setvar(k, v, :file => file, :line => line, :ephemeral => true) }
+      # Must always have an inner match data scope (that starts out as transparent)
+      # In 3x slightly wasteful, since a new nested scope is created for a match 
+      # (TODO: Fix that problem)
+      new_ephemeral(false)
     else
       raise(ArgumentError,"Invalid regex match data. Got a #{match.class}") unless match.is_a?(MatchData)
       # Create a match ephemeral and set values from match data
-      new_ephemeral false
-      setvar("0", match[0], :file => file, :line => line, :ephemeral => true)
-      match.captures.each_with_index do |m,i|
-        setvar("#{i+1}", m, :file => file, :line => line, :ephemeral => true)
-      end
+      new_match_scope(match)
     end
   end
 
@@ -639,6 +716,7 @@ class Puppet::Parser::Scope
   def find_defined_resource_type(type)
     environment.known_resource_types.find_definition(namespaces, type.to_s.downcase)
   end
+
 
   def method_missing(method, *args, &block)
     method.to_s =~ /^function_(.*)$/

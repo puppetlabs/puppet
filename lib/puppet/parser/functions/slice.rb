@@ -84,7 +84,7 @@ Puppet::Parser::Functions::newfunction(
 
   # the block is optional, ok if nil, function then produces an array
   pblock = args[2]
-  raise ArgumentError, ("slice(): wrong argument type (#{args[2].class}; must be a parameterized block.") unless pblock.is_a?(Puppet::Parser::AST::Lambda) || args.length == 2
+  raise ArgumentError, ("slice(): wrong argument type (#{args[2].class}; must be a parameterized block.") unless pblock.respond_to?(:puppet_lambda) || args.length == 2
 
   case receiver
   when Array

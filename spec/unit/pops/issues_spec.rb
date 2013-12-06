@@ -16,7 +16,7 @@ describe "Puppet::Pops::Issues" do
     x.format(:name => 'Boo-Hoo',
       :label => Puppet::Pops::Model::ModelLabelProvider.new,
       :semantic => "dummy"
-      ).should == "A Ruby String may not have a name containing a hyphen. The name 'Boo-Hoo' is not legal"
+      ).should == "A String may not have a name containing a hyphen. The name 'Boo-Hoo' is not legal"
   end
 
   it "should should format a message that does not require an argument" do

@@ -23,12 +23,48 @@ describe 'The type factory' do
       Puppet::Pops::Types::TypeFactory.pattern().class().should == Puppet::Pops::Types::PPatternType
     end
 
+    it 'regexp() returns PRegexpType' do
+      Puppet::Pops::Types::TypeFactory.regexp().class().should == Puppet::Pops::Types::PRegexpType
+    end
+
+    it 'enum() returns PEnumType' do
+      Puppet::Pops::Types::TypeFactory.enum().class().should == Puppet::Pops::Types::PEnumType
+    end
+
+    it 'variant() returns PVariantType' do
+      Puppet::Pops::Types::TypeFactory.variant().class().should == Puppet::Pops::Types::PVariantType
+    end
+
     it 'literal() returns PLiteralType' do
       Puppet::Pops::Types::TypeFactory.literal().class().should == Puppet::Pops::Types::PLiteralType
     end
 
     it 'data() returns PDataType' do
       Puppet::Pops::Types::TypeFactory.data().class().should == Puppet::Pops::Types::PDataType
+    end
+
+    it 'resource() creates a generic PResourceType' do
+      pr = Puppet::Pops::Types::TypeFactory.resource()
+      pr.class().should == Puppet::Pops::Types::PResourceType
+      pr.type_name.should == nil
+    end
+
+    it 'resource(x) creates a PResourceType[x]' do
+      pr = Puppet::Pops::Types::TypeFactory.resource('x')
+      pr.class().should == Puppet::Pops::Types::PResourceType
+      pr.type_name.should == 'x'
+    end
+
+    it 'host_class() creates a generic PHostClassType' do
+      hc = Puppet::Pops::Types::TypeFactory.host_class()
+      hc.class().should == Puppet::Pops::Types::PHostClassType
+      hc.class_name.should == nil
+    end
+
+    it 'host_class(x) creates a PHostClassType[x]' do
+      hc = Puppet::Pops::Types::TypeFactory.host_class('x')
+      hc.class().should == Puppet::Pops::Types::PHostClassType
+      hc.class_name.should == 'x'
     end
 
     it 'array_of(fixnum) returns PArrayType[PIntegerType]' do

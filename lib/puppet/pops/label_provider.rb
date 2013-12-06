@@ -35,6 +35,11 @@ class Puppet::Pops::LabelProvider
     "The #{label(o)}"
   end
 
+  # Appends 's' to (optional) text if count != 1 else an empty string
+  def plural_s(count, text = '')
+    count == 1 ? text : "#{text}s"
+  end
+
   private
 
   # Produces an *indefinite article* (a/an) for the given text ('a' if

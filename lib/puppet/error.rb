@@ -23,12 +23,13 @@ module Puppet
         pos = nil
       end
       super(message, original)
-      @file = file
+      @file = file unless (file.is_a?(String) && file.empty?)
       @line = line
       @pos = pos
     end
     def to_s
       msg = super
+      @file = nil if (@file.is_a?(String) && @file.empty?)
       if @file and @line and @pos
         "#{msg} at #{@file}:#{@line}:#{@pos}"
       elsif @file and @line

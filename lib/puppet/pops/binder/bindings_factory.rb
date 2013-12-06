@@ -283,7 +283,7 @@ module Puppet::Pops::Binder::BindingsFactory
     end
 
     # Sets the type of the binding to Pattern.
-    # @return [Puppet::Pops::Types::PPatternType] the type
+    # @return [Puppet::Pops::Types::PRegexpType] the type
     # @api public
     def pattern()
       type(T.pattern())

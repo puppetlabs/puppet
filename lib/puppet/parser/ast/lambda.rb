@@ -122,5 +122,10 @@ class Puppet::Parser::AST
       result << "| ... }"
       result.join('')
     end
+
+    # marker method checked with respond_to :puppet_lambda
+    def puppet_lambda()
+      true
+    end
   end
 end

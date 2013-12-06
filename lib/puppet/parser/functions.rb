@@ -71,7 +71,8 @@ module Puppet::Parser::Functions
   #         :doc=>"Doubles an object, typically a number or string."}
   #
   # @example Invoke the double function from irb as is done in RSpec examples:
-  #     >> scope = Puppet::Parser::Scope.new_for_test_harness('example')
+  #     >> require 'puppet_spec/scope'
+  #     >> scope = PuppetSpec::Scope.create_test_scope_for_node('example')
   #     => Scope()
   #     >> scope.function_double([2])
   #     => 4

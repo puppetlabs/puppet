@@ -12,4 +12,5 @@ describe Puppet::Pops::Parser::Parser do
     model = parser.parse_string("$a = 10").current
     model.class.should == Puppet::Pops::Model::AssignmentExpression
   end
+
 end

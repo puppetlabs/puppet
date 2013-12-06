@@ -117,13 +117,13 @@ describe "transformation to Puppet AST for basic expressions" do
     end
 
     context "of regular expressions (parse errors)" do
-      # Not supported in concrete syntax
+      # Not supported in concrete syntax (until Lexer2)
       it "$a = /.*/ == /.*/" do
-        expect {  parse("$a = /.*/ == /.*/") }.to raise_error(Puppet::ParseError)
+        astdump(parse("$a = /.*/ == /.*/")).should == "(= $a (== /.*/ /.*/))"
       end
 
       it "$a = /.*/ != /a.*/" do
-        expect {  parse("$a = /.*/ != /.*/") }.to raise_error(Puppet::ParseError)
+        astdump(parse("$a = /.*/ != /.*/")).should == "(= $a (!= /.*/ /.*/))"
       end
     end
   end
@@ -237,7 +237,7 @@ describe "transformation to Puppet AST for basic expressions" do
     end
 
     it "should interpolate any expression in a text expression, \"${var*2}\"" do
-      astdump(parse("$a = \"yo${var+2}yo\"")).should == "(= $a (cat 'yo' (str (+ $var 2)) 'yo'))"
+      astdump(parse("$a = \"yo${$var+2}yo\"")).should == "(= $a (cat 'yo' (str (+ $var 2)) 'yo'))"
     end
   end
 end

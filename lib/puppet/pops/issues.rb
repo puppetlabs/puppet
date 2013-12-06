@@ -73,10 +73,12 @@ module Puppet::Pops::Issues
     end
 
     # Returns the label provider given as a key in the hash passed to #format.
+    # If given an argument, calls #label on the label provider (caller would otherwise have to
+    # call label.label(it)
     #
-    def label
+    def label(it = nil)
       raise "Label provider key :label must be set to produce the text of the message!" unless @data[:label]
-      @data[:label]
+      it.nil? ? @data[:label] : @data[:label].label(it)
     end
 
     # Returns the label provider given as a key in the hash passed to #format.
@@ -162,6 +164,14 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
   end
 
+  APPEND_FAILED = issue :APPEND_FAILED, :message do
+    "Append assignment += failed with error: #{message}"
+  end
+
+  DELETE_FAILED = issue :DELETE_FAILED, :message do
+    "'Delete' assignment -= failed with error: #{message}"
+  end
+
   # parameters cannot have numeric names, clashes with match result variables
   ILLEGAL_NUMERIC_PARAMETER = issue :ILLEGAL_NUMERIC_PARAMETER, :name do
     "The numeric parameter name '$#{varname}' cannot be used (clashes with numeric match result variables)"
@@ -182,6 +192,30 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to #{label.a_an(semantic)} via [index/key]. Not an assignable reference"
   end
 
+  # For unsupported operators (e.g. -= in puppet 3).
+  #
+  UNSUPPORTED_OPERATOR = hard_issue :UNSUPPORTED_OPERATOR, :operator do
+    "The operator '#{operator}' in #{label.a_an(semantic)} is not supported."
+  end
+
+  # For non applicable operators (e.g. << on Hash).
+  #
+  OPERATOR_NOT_APPLICABLE = hard_issue :OPERATOR_NOT_APPLICABLE, :operator, :left_value do
+    "Operator '#{operator}' is not applicable to #{label.a_an(left_value)}."
+  end
+
+  COMPARISON_NOT_POSSIBLE = hard_issue :COMPARISON_NOT_POSSIBLE, :operator, :left_value, :right_value, :detail do
+    "Comparison of: #{label(left_value)} #{operator} #{label(right_value)}, is not possible. Caused by '#{detail}'."
+  end
+
+  MATCH_NOT_REGEXP = hard_issue :MATCH_NOT_REGEXP, :detail do
+    "Can not convert right match operand to a regular expression. Caused by '#{detail}'."
+  end
+
+  MATCH_NOT_STRING = hard_issue :MATCH_NOT_STRING, :left_value do
+    "Left match operand must result in a String value. Got #{label.a_an(left_value)}."
+  end
+
   # Some expressions/statements may not produce a value (known as right-value, or rvalue).
   # This may vary between puppet versions.
   #
@@ -196,7 +230,15 @@ module Puppet::Pops::Issues
   end
 
   ILLEGAL_NAME = hard_issue :ILLEGAL_NAME, :name do
-    "Illegal name. The given name #{name} does not conform to the naming rule \\A((::)?[a-z0-9]\w*)(::[a-z0-9]\w*)*\\z"
+    "Illegal name. The given name #{name} does not conform to the naming rule /^((::)?[a-z]\w*)(::[a-z]\w*)*$/"
+  end
+
+  ILLEGAL_VAR_NAME = hard_issue :ILLEGAL_VAR_NAME, :name do
+    "Illegal variable name, The given name '#{name}' does not conform to the naming rule /^(::)?(\w+::)*\w+$/"
+  end
+
+  ILLEGAL_NUMERIC_VAR_NAME = hard_issue :ILLEGAL_NUMERIC_VAR_NAME, :name do
+    "Illegal numeric variable name, The given name '#{name}' must be a decimal value if it starts with a digit 0-9"
   end
 
   # In case a model is constructed programmatically, it must create valid type references.
@@ -240,6 +282,13 @@ module Puppet::Pops::Issues
     "Illegal expression. #{label.a_an_uc(semantic)} is unacceptable as #{feature} in #{label.a_an(container)}"
   end
 
+  # Issues when an expression is used where it is not legal.
+  # E.g. an arithmetic expression where a hostname is expected.
+  #
+  ILLEGAL_VARIABLE_EXPRESSION = hard_issue :ILLEGAL_VARIABLE_EXPRESSION do
+    "Illegal variable expression. #{label.a_an_uc(semantic)} did not produce a variable name (String or Numeric)."
+  end
+
   # Issues when an expression is used illegaly in a query.
   # query only supports == and !=, and not <, > etc.
   #
@@ -254,7 +303,7 @@ module Puppet::Pops::Issues
   end
 
   # When an attempt is made to use multiple keys (to produce a range in Ruby - e.g. $arr[2,-1]).
-  # This is currently not supported, but may be in future versions
+  # This is not supported in 3x, but it allowed in 4x.
   #
   UNSUPPORTED_RANGE = issue :UNSUPPORTED_RANGE, :count do
     "Attempt to use unsupported range in #{label.a_an(semantic)}, #{count} values given for max 1"
@@ -262,5 +311,124 @@ module Puppet::Pops::Issues
 
   DEPRECATED_NAME_AS_TYPE = issue :DEPRECATED_NAME_AS_TYPE, :name do
     "Resource references should now be capitalized. The given '#{name}' does not have the correct form"
+  end
+
+  ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
+    "Illegal relationship operand, can not form a relationship with #{label.a_an(operand)}. A Catalog type is required."
+  end
+
+  NOT_CATALOG_TYPE = issue :NOT_CATALOG_TYPE, :type do
+    "Illegal relationship operand, can not form a relationship with something of type #{type}. A Catalog type is required."
+  end
+
+  BAD_STRING_SLICE_ARITY = issue :BAD_STRING_SLICE_ARITY, :actual do
+    "String supports [] with one or two arguments. Got #{actual}"
+  end
+
+  BAD_ARRAY_SLICE_ARITY = issue :BAD_ARRAY_SLICE_ARITY, :actual do
+    "Array supports [] with one or two arguments. Got #{actual}"
+  end
+
+  BAD_HASH_SLICE_ARITY = issue :BAD_HASH_SLICE_ARITY, :actual do
+    "Hash supports [] with one or more arguments. Got #{actual}"
+  end
+
+  BAD_INTEGER_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
+    "Integer-Type supports [] with one or two arguments (from, to). Got #{actual}"
+  end
+
+  BAD_INTEGER_SLICE_TYPE = issue :BAD_INTEGER_SLICE_TYPE, :actual do
+    "Integer-Type [] requires all arguments to be integers (or default). Got #{actual}"
+  end
+
+  BAD_FLOAT_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do
+    "Float-Type supports [] with one or two arguments (from, to). Got #{actual}"
+  end
+
+  BAD_FLOAT_SLICE_TYPE = issue :BAD_INTEGER_SLICE_TYPE, :actual do
+    "Float-Type [] requires all arguments to be floats, or integers (or default). Got #{actual}"
+  end
+
+  BAD_SLICE_KEY_TYPE = issue :BAD_SLICE_KEY_TYPE, :left_value, :expected_classes, :actual do
+    expected_text = if expected_classes.size > 1
+      "one of #{expected_classes.join(', ')} are"
+    else
+      "#{expected_classes[0]} is"
+    end
+    "#{label.a_an_uc(left_value)}[] cannot use #{actual} where #{expected_text} expected"
+  end
+
+  BAD_TYPE_SLICE_TYPE = issue :BAD_TYPE_SLICE_TYPE, :base_type, :actual do
+    "#{base_type}[] arguments must be types. Got #{actual}"
+  end
+
+  BAD_TYPE_SLICE_ARITY = issue :BAD_TYPE_SLICE_ARITY, :base_type, :min, :max, :actual do
+    base_type_label = base_type.is_a?(String) ? base_type : label.a_an_uc(base_type)
+    if max == -1 || max == 1.0 / 0.0 # Infinity
+      "#{base_type_label}[] accepts #{min} or more arguments. Got #{actual}"
+    elsif max
+      "#{base_type_label}[] accepts #{min} to #{max} arguments. Got #{actual}"
+    else
+      "#{base_type_label}[] accepts #{min} #{label.plural_s(min, 'argument')}. Got #{actual}"
+    end
+  end
+
+  BAD_TYPE_SPECIALIZATION = hard_issue :BAD_TYPE_SPECIALIZATION, :type, :message do
+    "Error creating type specialization of #{label.a_an(type)}, #{message}"
+  end
+
+  ILLEGAL_TYPE_SPECIALIZATION = issue :ILLEGAL_TYPE_SPECIALIZATION, :kind do
+    "Cannot specialize an already specialized #{kind} type"
+  end
+
+  ILLEGAL_RESOURCE_SPECIALIZATION = issue :ILLEGAL_RESOURCE_SPECIALIZATION, :actual do
+    "First argument to Resource[] must be a resource type or a String. Got #{actual}."
+  end
+
+  ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
+    "Illegal Class name in class reference. #{label.a_an_uc(name)} cannot be used where a String is expected"
+  end
+
+  # Issues when an expression is used where it is not legal.
+  # E.g. an arithmetic expression where a hostname is expected.
+  #
+  ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINTION_NAME, :name do
+    "Unacceptable name. The name '#{name}' is unacceptable as the name of #{label.a_an(semantic)}"
+  end
+
+  NOT_NUMERIC = issue :NOT_NUMERIC, :value do
+    "The value '#{value}' cannot be converted to Numeric."
+  end
+
+  UNKNOWN_FUNCTION = issue :UNKNOWN_FUNCTION, :name do
+    "Unknown function: '#{name}'."
+  end
+
+  UNKNOWN_VARIABLE = issue :UNKNOWN_VARIABLE, :name do
+    "Unknown variable: '#{name}'."
+  end
+
+  RUNTIME_ERROR = issue :RUNTIME_ERROR, :detail do
+    "Error while evaluating #{label.a_an(semantic)}, #{detail}"
+  end
+
+  UNKNOWN_RESOURCE_TYPE = issue :UNKNOWN_RESOURCE_TYPE, :type_name do
+    "Resource type not found: #{type_name.capitalize}"
+  end
+
+  UNKNOWN_RESOURCE = issue :UNKNOWN_RESOURCE, :type_name, :title do
+    "Resource not found: #{type_name.capitalize}['#{title}']"
+  end
+
+  UNKNOWN_RESOURCE_PARAMETER = issue :UNKNOWN_RESOURCE_PARAMETER, :type_name, :title, :param_name do
+    "The resource #{type_name.capitalize}['#{title}'] does not have a parameter called '#{param_name}'"
+  end
+
+  DIV_BY_ZERO = hard_issue :DIV_BY_ZERO do
+    "Division by 0"
+  end
+
+  RESULT_IS_INFINITY = hard_issue :RESULT_IS_INFINITY, :operator do
+    "The result of the #{operator} expression is Infinity"
   end
 end

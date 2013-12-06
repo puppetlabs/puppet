@@ -138,7 +138,7 @@ describe "Puppet::Parser::Compiler" do
     end
 
     ['class', 'define', 'node'].each do |thing|
-      it "should not allow #{thing} inside evaluated conditional constructs" do
+      it "should not allow '#{thing}' inside evaluated conditional constructs" do
         Puppet[:code] = <<-PP
           if true {
             #{thing} foo {
@@ -408,17 +408,5 @@ describe "Puppet::Parser::Compiler" do
     end
     it_behaves_like 'the compiler' do
     end
-  end
-
-  describe 'using future parser' do
-    # have absolutely no clue to why this is needed - if not required here (even if required by used classes)
-    # the tests will fail with error that rgen/ecore/ruby_to_ecore cannot be found...
-    # TODO: Solve this mystery !
-    require 'rgen/metamodel_builder'
-
-    before :each do
-      Puppet[:parser] = 'future'
-    end
-    it_behaves_like 'the compiler'
   end
 end

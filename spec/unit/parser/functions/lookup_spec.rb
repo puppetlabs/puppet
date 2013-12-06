@@ -1,8 +1,11 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'stringio'
+require 'puppet_spec/scope'
 
 describe "lookup function" do
+  include PuppetSpec::Scope
+
   before(:each) do
     Puppet[:binder] = true
   end
@@ -63,7 +66,7 @@ describe "lookup function" do
 
   def scope_with_injections_from(binder)
     injector = Puppet::Pops::Binder::Injector.new(binder)
-    scope = Puppet::Parser::Scope.new_for_test_harness('testing')
+    scope = create_test_scope_for_node('testing')
     scope.compiler.injector = injector
 
     scope

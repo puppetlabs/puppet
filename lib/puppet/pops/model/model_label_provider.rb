@@ -8,13 +8,20 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   end
 
   # Produces a label for the given objects type/operator without article.
+  # If a Class is given, its name is used as label
+  #
   def label o
-   @@label_visitor.visit(o)
+    if o.is_a?(Class)
+      o.name
+    else
+      @@label_visitor.visit(o)
+    end
   end
 
   def label_Factory o                     ; label(o.current)                    end
-  def label_Array o                       ; "Array Object"                      end
-  def label_LiteralNumber o               ; "Literal Number"                    end
+  def label_Array o                       ; "Array"                             end
+  def label_LiteralInteger o              ; "Literal Integer"                   end
+  def label_LiteralFloat o                ; "Literal Float"                     end
   def label_ArithmeticExpression o        ; "'#{o.operator}' expression"        end
   def label_AccessExpression o            ; "'[]' expression"                   end
   def label_MatchExpression o             ; "'#{o.operator}' expression"        end
@@ -27,15 +34,15 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_OrExpression o                ; "'or' expression"                   end
   def label_InExpression o                ; "'in' expression"                   end
   def label_ImportExpression o            ; "'import' expression"               end
-  def label_InstanceReferences o          ; "Resource Reference"                end
   def label_AssignmentExpression o        ; "'#{o.operator}' expression"        end
   def label_AttributeOperation o          ; "'#{o.operator}' expression"        end
   def label_LiteralList o                 ; "Array Expression"                  end
   def label_LiteralHash o                 ; "Hash Expression"                   end
   def label_KeyedEntry o                  ; "Hash Entry"                        end
   def label_LiteralBoolean o              ; "Boolean"                           end
+  def label_TrueClass o                   ; "Boolean"                           end
+  def label_FalseClass o                  ; "Boolean"                           end
   def label_LiteralString o               ; "String"                            end
-  def label_LiteralText o                 ; "Text in Interpolated String"       end
   def label_LambdaExpression o            ; "Lambda"                            end
   def label_LiteralDefault o              ; "'default' expression"              end
   def label_LiteralUndef o                ; "'undef' expression"                end
@@ -67,9 +74,23 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_ResourceExpression o          ; "Resource Statement"                end
   def label_SelectorExpression o          ; "Selector Expression"               end
   def label_SelectorEntry o               ; "Selector Option"                   end
-  def label_String o                      ; "Ruby String"                       end
-  def label_Object o                      ; "Ruby Object"                       end
+  def label_Integer o                     ; "Integer"                           end
+  def label_Fixnum o                      ; "Integer"                           end
+  def label_Bignum o                      ; "Integer"                           end
+  def label_Float o                       ; "Float"                             end
+  def label_String o                      ; "String"                            end
+  def label_Regexp o                      ; "Regexp"                            end
+  def label_Object o                      ; "Object"                            end
+  def label_Hash o                        ; "Hash"                              end
   def label_QualifiedName o               ; "Name"                              end
-  def label_QualifiedReference o          ; "Type Name"                         end
+  def label_QualifiedReference o          ; "Type-Name"                         end
+  def label_PAbstractType o               ; "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type" end
 
+  def label_PResourceType o
+    if o.title
+      "#{Puppet::Pops::Types::TypeCalculator.string(o)} Resource-Reference"
+    else
+      "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type"
+    end
+  end
 end

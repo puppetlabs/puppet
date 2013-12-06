@@ -108,8 +108,12 @@ module Puppet::Pops::Binder::Hiera2
         end
       when Enumerable
         value.inject(Model::LiteralList.new) {|a,v| a.addValues(build_expr(v, hiera_data_file_path)); a }
-      when Numeric
-        expr = Model::LiteralNumber.new
+      when Integer
+        expr = Model::LiteralInteger.new
+        expr.value = value;
+        expr
+      when Float
+        expr = Model::LiteralFloat.new
         expr.value = value;
         expr
       when TrueClass, FalseClass

@@ -85,8 +85,7 @@ describe 'the map method' do
             file { "/file_$i.$v": ensure => present }
           }
         MANIFEST
-
-        catalog.resource(:file, "/file_0.")['ensure'].should == 'present'
+        catalog.resource(:file, "/file_0.something")['ensure'].should == 'present'
       end
     end
   it_should_behave_like 'all iterative functions argument checks', 'map'

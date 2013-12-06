@@ -16,25 +16,43 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it "rejects an invalid type simple type" do
-    expect { parser.parse("NotAType") }.to raise_type_error_for("NotAType")
+    expect { parser.parse("notAType") }.to raise_error(Puppet::ParseError, /The expression <notAType> is not a valid type specification/)
   end
 
   it "rejects an unknown parameterized type" do
-    expect { parser.parse("NotAType[Integer]") }.to raise_type_error_for("NotAType")
+    expect { parser.parse("notAType[Integer]") }.to raise_error(Puppet::ParseError,
+      /The expression <notAType\[Integer\]> is not a valid type specification/)
+  end
+
+  it "rejects an unknown type parameter" do
+    expect { parser.parse("Array[notAType]") }.to raise_error(Puppet::ParseError,
+      /The expression <Array\[notAType\]> is not a valid type specification/)
   end
 
   it "does not support types that do not make sense in the puppet language" do
-    expect { parser.parse("Object") }.to raise_type_error_for("Object")
-    expect { parser.parse("Collection[Integer]") }.to raise_type_error_for("Collection")
+    # These will/may make sense later, but are not yet implemented and should not be interpreted as a PResourceType
+    expect { parser.parse("Ruby") }.to raise_type_error_for("Ruby")
+    expect { parser.parse("Type") }.to raise_type_error_for("Type")
+  end
+
+  [
+    'Object', 'Collection', 'Data', 'CatalogEntry', 'Boolean', 'Literal', 'Undef', 'Numeric',
+  ].each do |name|
+    it "does not support parameterizing unparameterized type <#{name}" do
+      expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
+    end
   end
 
   it "parses a simple, unparameterized type into the type object" do
+    expect(the_type_parsed_from(types.object)).to be_the_type(types.object)
     expect(the_type_parsed_from(types.integer)).to be_the_type(types.integer)
     expect(the_type_parsed_from(types.float)).to be_the_type(types.float)
     expect(the_type_parsed_from(types.string)).to be_the_type(types.string)
     expect(the_type_parsed_from(types.boolean)).to be_the_type(types.boolean)
     expect(the_type_parsed_from(types.pattern)).to be_the_type(types.pattern)
     expect(the_type_parsed_from(types.data)).to be_the_type(types.data)
+    expect(the_type_parsed_from(types.catalog_entry)).to be_the_type(types.catalog_entry)
+    expect(the_type_parsed_from(types.collection)).to be_the_type(types.collection)
   end
 
   it "interprets an unparameterized Array as an Array of Data" do
@@ -62,6 +80,38 @@ describe Puppet::Pops::Types::TypeParser do
     expect { parser.parse("Hash[Integer, Integer, Integer]") }.to raise_the_parameter_error("Hash", "1 or 2", 3)
   end
 
+  it "interprets anything that is not a built in type to be a resource type" do
+    expect(parser.parse("File")).to be_the_type(types.resource('file'))
+  end
+
+  it "parses a resource type with title" do
+    expect(parser.parse("File['/tmp/foo']")).to be_the_type(types.resource('file', '/tmp/foo'))
+  end
+
+  it "parses a resource type using 'Resource[type]' form" do
+    expect(parser.parse("Resource[File]")).to be_the_type(types.resource('file'))
+  end
+
+  it "parses a resource type with title using 'Resource[type, title]'" do
+    expect(parser.parse("Resource[File, '/tmp/foo']")).to be_the_type(types.resource('file', '/tmp/foo'))
+  end
+
+  it "parses a host class type" do
+    expect(parser.parse("Class")).to be_the_type(types.host_class())
+  end
+
+  it "parses a parameterized host class type" do
+    expect(parser.parse("Class[foo::bar]")).to be_the_type(types.host_class('foo::bar'))
+  end
+
+  it 'parses an integer range' do
+   expect(parser.parse("Integer[1,2]")).to be_the_type(types.range(1,2))
+  end
+
+  it 'parses a float range' do
+   expect(parser.parse("Float[1.0,2.0]")).to be_the_type(types.float_range(1.0,2.0))
+  end
+
   matcher :be_the_type do |type|
     calc = Puppet::Pops::Types::TypeCalculator.new
 
@@ -80,6 +130,10 @@ describe Puppet::Pops::Types::TypeParser do
 
   def raise_type_error_for(type_name)
     raise_error(Puppet::ParseError, /Unknown type <#{type_name}>/)
+  end
+
+  def raise_unparameterized_error_for(type_name)
+    raise_error(Puppet::ParseError, /Not a parameterized type <#{type_name}>/)
   end
 
   def the_type_parsed_from(type)

@@ -71,13 +71,23 @@ module Puppet
     module Parser
       require 'puppet/pops/parser/eparser'
       require 'puppet/pops/parser/parser_support'
+      require 'puppet/pops/parser/locator'
+      require 'puppet/pops/parser/locatable'
       require 'puppet/pops/parser/lexer'
+      require 'puppet/pops/parser/lexer2'
       require 'puppet/pops/parser/evaluating_parser'
     end
 
     module Validation
       require 'puppet/pops/validation/checker3_1'
       require 'puppet/pops/validation/validator_factory_3_1'
+      require 'puppet/pops/validation/checker4_0'
+      require 'puppet/pops/validation/validator_factory_4_0'
+    end
+
+    module Evaluator
+      require 'puppet/pops/evaluator/runtime3_support'
+      require 'puppet/pops/evaluator/evaluator_impl'
     end
   end
 

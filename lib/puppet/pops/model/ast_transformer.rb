@@ -33,6 +33,12 @@ class Puppet::Pops::Model::AstTransformer
     klass.new(merge_location(hash, o))
   end
 
+  # THIS IS AN EXPENSIVE OPERATION
+  # The 3x AST requires line, pos etc. to be recorded directly in the AST nodes and this information
+  # must be computed.
+  # (Newer implementation only computes the information that is actually needed; typically when raising an
+  # exception).
+  #
   def merge_location(hash, o)
     if o
       pos = {}
@@ -49,7 +55,14 @@ class Puppet::Pops::Model::AstTransformer
 
   # Transforms pops expressions into AST 3.1 statements/expressions
   def transform(o)
+    begin
     @@transform_visitor.visit_this(self,o)
+    rescue StandardError => e
+      loc_data = {}
+      merge_location(loc_data, o)
+      raise Puppet::ParseError.new("Error while transforming to Puppet 3 AST: #{e.message}", 
+        loc_data[:file], loc_data[:line], loc_data[:pos], e)
+    end
   end
 
   # Transforms pops expressions into AST 3.1 query expressions
@@ -62,7 +75,12 @@ class Puppet::Pops::Model::AstTransformer
     @@hostname_transform_visitor.visit_this(self, o)
   end
 
-  def transform_LiteralNumber(o)
+  def transform_LiteralFloat(o)
+    # Numbers are Names in the AST !! (Name a.k.a BareWord)
+    ast o, AST::Name, :value => o.value.to_s
+  end
+
+  def transform_LiteralInteger(o)
     s = case o.radix
     when 10
       o.value.to_s
@@ -270,14 +288,16 @@ class Puppet::Pops::Model::AstTransformer
     ast o, AST::Nop, {}
   end
 
-  def transform_InstanceReferences(o)
-    ast o, AST::ResourceReference, :type => o.type_name.value, :title => transform(o.names)
-  end
-
   # Assignment in AST 3.1 is to variable or hasharray accesses !!! See Bug #16116
   def transform_AssignmentExpression(o)
     args = {:value => transform(o.right_expr) }
-    args[:append] = true if o.operator == :'+='
+    case o.operator
+    when :'+='
+      args[:append] = true
+    when :'='
+    else
+      raise "The operator #{o.operator} is not supported by Puppet 3."
+    end
 
     args[:name] = case o.left_expr
     when Model::VariableExpression
@@ -343,11 +363,6 @@ class Puppet::Pops::Model::AstTransformer
   end
 
   def transform_LiteralString(o)
-    ast o, AST::String, :value => o.value
-  end
-
-  # Literal text in a concatenated string
-  def transform_LiteralText(o)
     ast o, AST::String, :value => o.value
   end
 
@@ -531,6 +546,10 @@ class Puppet::Pops::Model::AstTransformer
   # For non query expressions, parentheses can be dropped in the resulting AST.
   def transform_ParenthesizedExpression(o)
     transform(o.expr)
+  end
+
+  def transform_Program(o)
+    transform(o.body)
   end
 
   def transform_IfExpression(o)

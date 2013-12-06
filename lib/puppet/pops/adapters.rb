@@ -22,32 +22,57 @@ module Puppet::Pops::Adapters
     attr_accessor :origin
   end
 
-  # A SourcePosAdapter describes a position relative to an origin. (Typically an {OriginAdapter} is
-  # associated with the root of a model. This origin has a URI to the resource, and a line number.
-  # The offset in the SourcePosAdapter is then relative to this origin.
-  # (This somewhat complex structure makes it possible to correctly refer to a source position
+  # A SourcePosAdapter holds a reference to something *locateable* (a position in source text).
+  # This is represented by an instance of Puppet::Pops::Parser::Locateable (it has an offset, a length, and
+  # a Puppet::Pops::Parser::Locator) that are used together to provide derived information (line, and position
+  # on line).
+  # This somewhat complex structure makes it possible to correctly refer to a source position
   # in source that is embedded in some resource; a parser only sees the embedded snippet of source text
-  # and does not know where it was embedded).
+  # and does not know where it was embedded. It also enables lazy evaluation of source positions (they are
+  # rarely needed - typically just when there is an error to report.
+  #
+  # @note It is relatively expensive to compute line and postion on line - it is not something that
+  #   should be done for every token or model object.
   #
   # @see Puppet::Pops::Utils#find_adapter
   #
   class SourcePosAdapter < Puppet::Pops::Adaptable::Adapter
-    # @return [Fixnum] The start line in source starting from 1
-    attr_accessor :line
+    attr_accessor :locatable
 
-    # @return [Fixnum] The position on the start_line (in characters) starting from 0
-    attr_accessor :pos
+    def locator
+      locatable.locator
+    end
 
-    # @return [Fixnum] The (start) offset of source text characters
-    #   (starting from 0) representing the adapted object.
-    #   Value may be nil
-    attr_accessor :offset
+    def offset
+      locatable.offset
+    end
 
-    # @return [Fixnum] The length (count) of characters of source text
-    #   representing the adapted object from the origin. Not including any
-    #   trailing whitespace.
-    attr_accessor :length
+    def length
+      locatable.length
+    end
 
+    # Produces the line number for the given offset.
+    # @note This is an expensive operation
+    #
+    def line
+      locatable.locator.line_for_offset(offset)
+    end
+
+    # Produces the position on the line of the given offset.
+    # @note This is an expensive operation
+    #
+    def pos
+      locatable.locator.pos_on_line(offset)
+    end
+
+    # Extracts the text represented by this source position (the string is obtained from the locator)
+    def extract_text
+      locatable.locator.string.slice(offset, length)
+    end
+
+    # Extracts the text represented by this source position from a given string (which needs to be identical
+    # to what is held in the locator - why is this needed ? 
+    # TODO:
     def extract_text_from_string(string)
       string.slice(offset, length)
     end
