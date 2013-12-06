@@ -133,7 +133,7 @@ class Puppet::Parser::AST::PopsBridge
       args = { :module_name => modname }
 
       unless is_nop?(o.body)
-        args[:code] = Puppet::AST::Bridge::PopsBridge::Expression.new(:value => o.body)
+        args[:code] = Expression.new(:value => o.body)
       end
 
       unless is_nop?(o.parent)
@@ -148,7 +148,7 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def code()
-      Puppet::AST::Bridge::PopsBridge::Expression.new(:value => @value)
+      Expression.new(:value => @value)
     end
 
     def is_nop?(o)
