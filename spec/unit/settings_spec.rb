@@ -905,7 +905,7 @@ describe Puppet::Settings do
       @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
 
       hook_invoked.should be_true
-      @settings[:deferred].should eq '/path/to/confdir/goose'
+      @settings[:deferred].should eq File.expand_path('/path/to/confdir/goose')
     end
 
     it "should allow empty values" do
