@@ -1,4 +1,5 @@
 require 'puppet/face'
+require 'puppet/settings/ini_file'
 
 Puppet::Face.define(:config, '0.0.1') do
   copyright "Puppet Labs", 2011
@@ -63,7 +64,7 @@ Puppet::Face.define(:config, '0.0.1') do
 
       file = Puppet::FileSystem::File.new(Puppet.settings.which_configuration_file)
       file.open(nil, 'a+') do |file|
-        Puppet::Settings::ConfigFile.update(file) do |config|
+        Puppet::Settings::IniFile.update(file) do |config|
           config.set(name, value)
         end
       end

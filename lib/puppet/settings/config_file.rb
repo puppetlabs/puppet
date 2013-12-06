@@ -1,3 +1,5 @@
+require 'puppet/settings/ini_file'
+
 ##
 # @api private
 #
@@ -12,115 +14,21 @@ class Puppet::Settings::ConfigFile
     @value_converter = value_converter
   end
 
-  def self.update(config_fh, &block)
-    config = Config.parse(config_fh)
-    manipulator = Puppet::Settings::ConfigFile::Manipulator.new(config)
-    yield manipulator
-    config.write(config_fh)
-  end
-
-  class Config
-    Line = Struct.new(:line, :text) do
-      def write(fh)
-        fh.puts(text)
-      end
-    end
-
-    SettingLine = Struct.new(:line, :prefix, :name, :infix, :value, :suffix) do
-      def write(fh)
-        fh.write(prefix)
-        fh.write(name)
-        fh.write(infix)
-        fh.write(value)
-        fh.puts(suffix)
-      end
-    end
-
-    SectionLine = Struct.new(:line, :prefix, :name, :suffix) do
-      def write(fh)
-        fh.write(prefix)
-        fh.write("[")
-        fh.write(name)
-        fh.write("]")
-        fh.puts(suffix)
-      end
-    end
-
-    def self.parse(config_fh)
-      config = Config.new
-      line_number = 1
-      config_fh.each_line do |line|
-        case line
-        when /^(\s*)\[(\w+)\](\s*)$/
-          config << SectionLine.new(line_number, $1, $2, $3)
-        when /^(\s*)(\w+)(\s*=\s*)(.*?)(\s*)$/
-          config << SettingLine.new(line_number, $1, $2, $3, $4, $5)
-        else
-          config << Line.new(line_number, line)
-        end
-      end
-
-      config
-    end
-
-    def initialize
-      @lines = []
-    end
-
-    def <<(line)
-      @lines << line
-    end
-
-    def each(&block)
-      @lines.each(&block)
-    end
-
-    def setting(name)
-      @lines.find do |line|
-        line.is_a?(SettingLine) && line.name == name
-      end
-    end
-
-    def write(fh)
-      fh.truncate(0)
-      fh.rewind
-      @lines.each do |line|
-        line.write(fh)
-      end
-      fh.flush
-    end
-  end
-
-  class Manipulator
-    def initialize(config)
-      @config = config
-    end
-
-    def set(name, value)
-      setting = @config.setting(name)
-      if setting
-        setting.value = value
-      else
-        @config << Config::SettingLine.new("", name, "=", value, "")
-      end
-    end
-  end
-
   def parse_file(file, text)
     result = {}
 
     # Default to 'main' for the section.
     section_name = :main
     result[section_name] = empty_section
-    Config.parse(StringIO.new(text)).each do |line|
+    Puppet::Settings::IniFile.parse(StringIO.new(text)).each do |line|
       case line
-      when Config::SectionLine
+      when Puppet::Settings::IniFile::SectionLine
         section_name = line.name.intern
         fail_when_illegal_section_name(section_name, file, line.line)
         if result[section_name].nil?
           result[section_name] = empty_section
         end
-      when Config::SettingLine
+      when Puppet::Settings::IniFile::SettingLine
         var = line.name.intern
 
         # We don't want to munge modes, because they're specified in octal, so we'll
