@@ -20,9 +20,10 @@ module Puppet
     newproperty(:type) do
       desc "The encryption type used: ssh-dss or ssh-rsa."
 
-      newvalues :'ssh-dss', :'ssh-rsa', :'ecdsa-sha2-nistp256', :'ecdsa-sha2-nistp384', :'ecdsa-sha2-nistp521'
+      newvalues :'ssh-dss', :'ssh-rsa', :'ecdsa-sha2-nistp256', :'ecdsa-sha2-nistp384', :'ecdsa-sha2-nistp521', :'ssh-ed25519'
 
       aliasvalue(:dsa, :'ssh-dss')
+      aliasvalue(:ed25519, :'ssh-ed25519')
       aliasvalue(:rsa, :'ssh-rsa')
     end
 
