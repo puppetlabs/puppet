@@ -33,6 +33,20 @@ describe Puppet::Util::Yaml do
     expect { Puppet::Util::Yaml.load_file("not\0allowed") }.to raise_error(Puppet::Util::Yaml::YamlLoadError, /null byte/)
   end
 
+  context "when the file is empty" do
+    it "returns false" do
+      Puppet::FileSystem::File.new(filename).touch
+
+      expect(Puppet::Util::Yaml.load_file(filename)).to be_false
+    end
+
+    it "allows return value to be overridden" do
+      Puppet::FileSystem::File.new(filename).touch
+
+      expect(Puppet::Util::Yaml.load_file(filename, {})).to eq({})
+    end
+  end
+
   def write_file(name, contents)
     File.open(name, "w") do |fh|
       fh.write(contents)
