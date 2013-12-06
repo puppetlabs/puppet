@@ -9,8 +9,9 @@ module Puppet::Util::Yaml
 
   class YamlLoadError < Puppet::Error; end
 
-  def self.load_file(filename)
-    YAML.load_file(filename)
+  def self.load_file(filename, default_value = false)
+    yaml = YAML.load_file(filename)
+    yaml || default_value
   rescue *YamlLoadExceptions => detail
     raise YamlLoadError.new(detail.message, detail)
   end
