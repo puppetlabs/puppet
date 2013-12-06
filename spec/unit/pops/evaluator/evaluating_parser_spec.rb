@@ -818,10 +818,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   end
 
   context "When evaluating relationships" do
-    it 'should form a relation with ->' do
+    it 'should form a relation with File[a] -> File[b]' do
       source = "File[a] -> File[b]"
       parser.evaluate_string(scope, source, __FILE__)
       scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'b'])
+    end
+
+    it 'should form a relation with resource -> resource' do
+      source = "notify{a:} -> notify{b:}"
+      parser.evaluate_string(scope, source, __FILE__)
+      scope.compiler.should have_relationship(['Notify', 'a', '->', 'Notify', 'b'])
     end
 
     it 'should form a relation with <-' do
