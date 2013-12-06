@@ -42,6 +42,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     }
 
   optional_commands :localadd => "luseradd"
+  optional_commands :localdelete => "luserdel"
   has_feature :libuser if Puppet.features.libuser?
 
   def exists?
