@@ -119,6 +119,8 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
           'AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBJIfxNoVK4FX3RuMlkHOwwxXwAh6Fqx5uAp4ftXrJ+64qYuIzb+/zSAkJV698Sre1b1lb0G4LyDdVAvXwaYK9kN25vy8umV3WdfZeHKXJGCcrplMCbbOERWARlpiPNEblg=='
         when 'ecdsa-sha2-nistp521' #ssh-keygen -t ecdsa -b 521
           'AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBADLK+u12xwB0JOwpmaxYXv8KnPK4p+SE2405qoo+vpAQ569fMwPMgKzltd770amdeuFogw/MJu17PN9LDdrD3o0uwHMjWee6TpHQDkuEetaxiou6K0WAzgbxx9QsY0MsJgXf1BuMLqdK+xT183wOSXwwumv99G7T32dOJZ5tYrH0y4XMw=='
+        when 'ssh-ed25519' #ssh-keygen -t ed25519
+          'AAAAC3NzaC1lZDI1NTE5AAAAIBWvu7D1KHBPaNXQcEuBsp48+JyPelXAq8ds6K5Du9gd'
         else
           pending("No sample key for #{keytype} yet")
       end
