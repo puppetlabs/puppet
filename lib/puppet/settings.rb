@@ -18,6 +18,7 @@ class Puppet::Settings
   require 'puppet/settings/terminus_setting'
   require 'puppet/settings/duration_setting'
   require 'puppet/settings/priority_setting'
+  require 'puppet/settings/autosign_setting'
   require 'puppet/settings/config_file'
   require 'puppet/settings/value_translator'
 
@@ -599,7 +600,11 @@ class Puppet::Settings
           # This results in extra work, but so few of the settings
           # will have associated hooks that it ends up being less work this
           # way overall.
-          setting.handle(self.value(setting.name, env))
+          if setting.call_hook_on_initialize?
+            @hooks_to_call_on_application_initialization << setting
+          else
+            setting.handle(self.value(setting.name, env))
+          end
           break
         end
       end
@@ -634,6 +639,7 @@ class Puppet::Settings
       :duration   => DurationSetting,
       :enum       => EnumSetting,
       :priority   => PrioritySetting,
+      :autosign   => AutosignSetting,
   }
 
   # Create a new setting.  The value is passed in because it's used to determine
@@ -831,7 +837,7 @@ class Puppet::Settings
   def define_settings(section, defs)
     section = section.to_sym
     call = []
-    defs.each { |name, hash|
+    defs.each do |name, hash|
       raise ArgumentError, "setting definition for '#{name}' is not a hash!" unless hash.is_a? Hash
 
       name = name.to_sym
@@ -850,9 +856,12 @@ class Puppet::Settings
       # Collect the settings that need to have their hooks called immediately.
       # We have to collect them so that we can be sure we're fully initialized before
       # the hook is called.
-      call << tryconfig if tryconfig.call_hook_on_define?
-      @hooks_to_call_on_application_initialization << tryconfig if tryconfig.call_hook_on_initialize?
-    }
+      if tryconfig.call_hook_on_define?
+        call << tryconfig
+      elsif tryconfig.call_hook_on_initialize?
+        @hooks_to_call_on_application_initialization << tryconfig
+      end
+    end
 
     call.each { |setting| setting.handle(self.value(setting.name)) }
   end
