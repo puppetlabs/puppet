@@ -82,7 +82,7 @@ describe Puppet::Settings::ConfigFile do
   it "errors when an application_defaults section is created" do
     expect { the_parse_of("[application_defaults]") }.
       to raise_error Puppet::Error,
-        "Illegal section 'application_defaults' in config file #{filename} at line [application_defaults]"
+        "Illegal section 'application_defaults' in config file #{filename} at line 1"
   end
 
   it "transforms values with the given function" do
@@ -134,6 +134,7 @@ describe Puppet::Settings::ConfigFile do
     it "updates existing names and values in place" do
       config = a_config_file_containing(<<-CONFIG)
       # this is the preceeding comment
+       [section]
       name = original value
       # this is the trailing comment
       CONFIG
@@ -144,6 +145,7 @@ describe Puppet::Settings::ConfigFile do
 
       expect(config.string).to eq <<-CONFIG
       # this is the preceeding comment
+       [section]
       name = changed value
       # this is the trailing comment
       CONFIG

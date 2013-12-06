@@ -13,29 +13,56 @@ class Puppet::Settings::ConfigFile
   end
 
   def self.update(config_fh, &block)
-    config = parse(config_fh)
+    config = Config.parse(config_fh)
     manipulator = Puppet::Settings::ConfigFile::Manipulator.new(config)
     yield manipulator
     config.write(config_fh)
   end
 
-  Line = Struct.new(:text) do
-    def write(fh)
-      fh.puts(text)
-    end
-  end
-
-  SettingLine = Struct.new(:prefix, :name, :infix, :value, :suffix) do
-    def write(fh)
-      fh.write(prefix)
-      fh.write(name)
-      fh.write(infix)
-      fh.write(value)
-      fh.puts(suffix)
-    end
-  end
-
   class Config
+    Line = Struct.new(:line, :text) do
+      def write(fh)
+        fh.puts(text)
+      end
+    end
+
+    SettingLine = Struct.new(:line, :prefix, :name, :infix, :value, :suffix) do
+      def write(fh)
+        fh.write(prefix)
+        fh.write(name)
+        fh.write(infix)
+        fh.write(value)
+        fh.puts(suffix)
+      end
+    end
+
+    SectionLine = Struct.new(:line, :prefix, :name, :suffix) do
+      def write(fh)
+        fh.write(prefix)
+        fh.write("[")
+        fh.write(name)
+        fh.write("]")
+        fh.puts(suffix)
+      end
+    end
+
+    def self.parse(config_fh)
+      config = Config.new
+      line_number = 1
+      config_fh.each_line do |line|
+        case line
+        when /^(\s*)\[(\w+)\](\s*)$/
+          config << SectionLine.new(line_number, $1, $2, $3)
+        when /^(\s*)(\w+)(\s*=\s*)(.*?)(\s*)$/
+          config << SettingLine.new(line_number, $1, $2, $3, $4, $5)
+        else
+          config << Line.new(line_number, line)
+        end
+      end
+
+      config
+    end
+
     def initialize
       @lines = []
     end
@@ -44,12 +71,8 @@ class Puppet::Settings::ConfigFile
       @lines << line
     end
 
-    def each_setting
-      @lines.each do |line|
-        if line.is_a?(SettingLine)
-          yield line
-        end
-      end
+    def each(&block)
+      @lines.each(&block)
     end
 
     def setting(name)
@@ -68,20 +91,6 @@ class Puppet::Settings::ConfigFile
     end
   end
 
-  def self.parse(config_fh)
-    config = Config.new
-    config_fh.each_line do |line|
-      case line
-      when /^(\s*)(\w+)(\s*=\s*)(.*?)(\s*)$/ # settings
-        config << SettingLine.new($1, $2, $3, $4, $5)
-      else
-        config << Line.new(line)
-      end
-    end
-
-    config
-  end
-
   class Manipulator
     def initialize(config)
       @config = config
@@ -92,38 +101,34 @@ class Puppet::Settings::ConfigFile
       if setting
         setting.value = value
       else
-        @config << SettingLine.new("", name, "=", value, "")
+        @config << Config::SettingLine.new("", name, "=", value, "")
       end
     end
   end
 
   def parse_file(file, text)
     result = {}
-    count = 0
 
     # Default to 'main' for the section.
     section_name = :main
     result[section_name] = empty_section
-    text.split(/\n/).each do |line|
-      count += 1
+    Config.parse(StringIO.new(text)).each do |line|
       case line
-      when /^\s*\[(\w+)\]\s*$/
-        section_name = $1.intern
-        fail_when_illegal_section_name(section_name, file, line)
+      when Config::SectionLine
+        section_name = line.name.intern
+        fail_when_illegal_section_name(section_name, file, line.line)
         if result[section_name].nil?
           result[section_name] = empty_section
         end
-      when /^\s*#/; next # Skip comments
-      when /^\s*$/; next # Skip blanks
-      when /^\s*(\w+)\s*=\s*(.*?)\s*$/ # settings
-        var = $1.intern
+      when Config::SettingLine
+        var = line.name.intern
 
         # We don't want to munge modes, because they're specified in octal, so we'll
         # just leave them as a String, since Puppet handles that case correctly.
         if var == :mode
-          value = $2
+          value = line.value
         else
-          value = @value_converter[$2]
+          value = @value_converter[line.value]
         end
 
         # Check to see if this is a file argument and it has extra options
@@ -138,7 +143,9 @@ class Puppet::Settings::ConfigFile
           raise Puppet::Settings::ParseError.new(detail.message, file, line, detail)
         end
       else
-        raise Puppet::Settings::ParseError.new("Could not match line #{line}", file, line)
+        if line.text !~ /^\s*#|^\s*$/
+          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line.line)
+        end
       end
     end
 
