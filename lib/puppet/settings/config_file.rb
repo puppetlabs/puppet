@@ -12,6 +12,91 @@ class Puppet::Settings::ConfigFile
     @value_converter = value_converter
   end
 
+  def self.update(config_fh, &block)
+    config = parse(config_fh)
+    manipulator = Puppet::Settings::ConfigFile::Manipulator.new(config)
+    yield manipulator
+    config.write(config_fh)
+  end
+
+  Line = Struct.new(:text) do
+    def write(fh)
+      fh.puts(text)
+    end
+  end
+
+  SettingLine = Struct.new(:prefix, :name, :infix, :value, :suffix) do
+    def write(fh)
+      fh.write(prefix)
+      fh.write(name)
+      fh.write(infix)
+      fh.write(value)
+      fh.puts(suffix)
+    end
+  end
+
+  class Config
+    def initialize
+      @lines = []
+    end
+
+    def <<(line)
+      @lines << line
+    end
+
+    def each_setting
+      @lines.each do |line|
+        if line.is_a?(SettingLine)
+          yield line
+        end
+      end
+    end
+
+    def setting(name)
+      @lines.find do |line|
+        line.is_a?(SettingLine) && line.name == name
+      end
+    end
+
+    def write(fh)
+      fh.truncate(0)
+      fh.rewind
+      @lines.each do |line|
+        line.write(fh)
+      end
+      fh.flush
+    end
+  end
+
+  def self.parse(config_fh)
+    config = Config.new
+    config_fh.each_line do |line|
+      case line
+      when /^(\s*)(\w+)(\s*=\s*)(.*?)(\s*)$/ # settings
+        config << SettingLine.new($1, $2, $3, $4, $5)
+      else
+        config << Line.new(line)
+      end
+    end
+
+    config
+  end
+
+  class Manipulator
+    def initialize(config)
+      @config = config
+    end
+
+    def set(name, value)
+      setting = @config.setting(name)
+      if setting
+        setting.value = value
+      else
+        @config << SettingLine.new("", name, "=", value, "")
+      end
+    end
+  end
+
   def parse_file(file, text)
     result = {}
     count = 0
