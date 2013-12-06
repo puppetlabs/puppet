@@ -31,25 +31,65 @@ describe "autosigning" do
     Puppet::SSL::Key.indirection.termini.clear
   end
 
+  def write_csr_attributes(yaml)
+    File.open(Puppet.settings[:csr_attributes], 'w') do |file|
+      file.puts YAML.dump(yaml)
+    end
+  end
+
+  context "when the csr_attributes file is valid, but empty" do
+    it "generates a CSR when the file is empty" do
+      Puppet::FileSystem::File.new(Puppet.settings[:csr_attributes]).touch
+
+      host.generate_certificate_request
+    end
+
+    it "generates a CSR when the file contains whitespace" do
+      File.open(Puppet.settings[:csr_attributes], 'w') do |file|
+        file.puts "\n\n"
+      end
+
+      host.generate_certificate_request
+    end
+  end
+
+  context "when the csr_attributes file doesn't contain a YAML encoded hash" do
+    it "raises when the file contains a string" do
+      write_csr_attributes('a string')
+
+      expect {
+        host.generate_certificate_request
+      }.to raise_error(Puppet::Error, /invalid CSR attributes, expected instance of Hash, received instance of String/)
+    end
+
+    it "raises when the file contains an empty array" do
+      write_csr_attributes([])
+
+      expect {
+        host.generate_certificate_request
+      }.to raise_error(Puppet::Error, /invalid CSR attributes, expected instance of Hash, received instance of Array/)
+    end
+  end
+
   context "with extension requests from csr_attributes file" do
     let(:ca) { Puppet::SSL::CertificateAuthority.new }
 
-    def write_csr_attributes
-      File.open(Puppet.settings[:csr_attributes], 'w') do |file|
-        file.puts YAML.dump(csr_attributes_content)
-      end
+    it "generates a CSR when the csr_attributes file is an empty hash" do
+      write_csr_attributes(csr_attributes_content)
+
+      host.generate_certificate_request
     end
 
     context "and subjectAltName" do
       it "raises an error if you include subjectAltName in csr_attributes" do
         csr_attributes_content['extension_requests']['subjectAltName'] = 'foo'
-        write_csr_attributes
+        write_csr_attributes(csr_attributes_content)
         expect { host.generate_certificate_request }.to raise_error(Puppet::Error, /subjectAltName.*conflicts with internally used extension request/)
       end
 
       it "properly merges subjectAltName when in settings" do
         Puppet.settings[:dns_alt_names] = 'althostname.nowhere'
-        write_csr_attributes
+        write_csr_attributes(csr_attributes_content)
         host.generate_certificate_request
         csr = Puppet::SSL::CertificateRequest.indirection.find(host.name)
         expect(csr.subject_alt_names).to include('DNS:althostname.nowhere')
@@ -59,7 +99,7 @@ describe "autosigning" do
     context "without subjectAltName" do
 
       before do
-        write_csr_attributes
+        write_csr_attributes(csr_attributes_content)
         host.generate_certificate_request
       end
 
