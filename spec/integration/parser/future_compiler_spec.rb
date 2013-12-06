@@ -15,7 +15,7 @@ describe "Puppet::Parser::Compiler" do
   before :each do
     Puppet[:parser] = 'future'
 
-    # This is in the original test - what is this for? Does not seem to make a differencese at all
+    # This is in the original test - what is this for? Does not seem to make a difference at all
     @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]'
     @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
   end

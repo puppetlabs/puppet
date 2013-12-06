@@ -24,6 +24,7 @@ class Puppet::Pops::Validation::Checker4_0
     @@assignment_visitor  ||= Puppet::Pops::Visitor.new(nil, "assign", 0, 1)
     @@query_visitor       ||= Puppet::Pops::Visitor.new(nil, "query", 0, 0)
     @@top_visitor         ||= Puppet::Pops::Visitor.new(nil, "top", 1, 1)
+    @@relation_visitor    ||= Puppet::Pops::Visitor.new(nil, "relation", 0, 0)
 
     @acceptor = diagnostics_producer
   end
@@ -52,6 +53,11 @@ class Puppet::Pops::Validation::Checker4_0
   # Performs check if this is valid as a query
   def query(o)
     @@query_visitor.visit_this_0(self, o)
+  end
+
+  # Performs check if this is valid as a relationship side
+  def relation(o)
+    @@relation_visitor.visit_this_0(self, o)
   end
 
   # Performs check if this is valid as a rvalue
@@ -261,6 +267,13 @@ class Puppet::Pops::Validation::Checker4_0
     query(o.expr) if o.expr  # is optional
   end
 
+  def relation_Object(o)
+    rvalue(o)
+  end
+
+  def relation_CollectExpression(o); end
+
+  def relation_RelationshipExpression(o); end
 
   def check_Parameter(o)
     if o.name =~ /^[0-9]+$/
@@ -268,9 +281,18 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  #relationship_side: resource
+  #  | resourceref
+  #  | collection
+  #  | variable
+  #  | quotedtext
+  #  | selector
+  #  | casestatement
+  #  | hasharrayaccesses
+
   def check_RelationshipExpression(o)
-    rvalue(o.left_expr)
-    rvalue(o.right_expr)
+    relation(o.left_expr)
+    relation(o.right_expr)
   end
 
   def check_ResourceExpression(o)
@@ -432,14 +454,6 @@ class Puppet::Pops::Validation::Checker4_0
   def rvalue_ImportExpression(o)          ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
   def rvalue_BlockExpression(o)           ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
-
-#  def rvalue_CaseExpression(o)            ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
-
-#  def rvalue_IfExpression(o)              ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
-
-#  def rvalue_UnlessExpression(o)          ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
-
-#  def rvalue_ResourceExpression(o)        ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
   def rvalue_ResourceDefaultsExpression(o); acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
