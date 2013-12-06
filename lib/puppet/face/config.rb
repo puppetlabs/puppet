@@ -63,7 +63,8 @@ Puppet::Face.define(:config, '0.0.1') do
       name, value = args
 
       file = Puppet::FileSystem::File.new(Puppet.settings.which_configuration_file)
-      file.open(nil, 'a+') do |file|
+      file.touch
+      file.open(nil, 'r+') do |file|
         Puppet::Settings::IniFile.update(file) do |config|
           config.set(name, value)
         end

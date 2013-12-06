@@ -16,7 +16,7 @@ agents.each do |agent|
   }
   SITE
 
-  on(agent, puppet('config', 'set', 'logdir', "'#{logdir} { owner = root, group = root, mode = 0700 }'", '--configdir', get_test_file_path(agent, '')))
+  on(agent, puppet('config', 'set', 'logdir', "'#{logdir} { owner = root, group = root, mode = 0700 }'", '--confdir', get_test_file_path(agent, '')))
 
   on(agent, puppet('apply', get_test_file_path(agent, 'site.pp'), '--confdir', get_test_file_path(agent, '')))
 

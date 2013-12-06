@@ -10,46 +10,46 @@ describe Puppet::Settings::IniFile do
     [section]
     name = value
     CONFIG
-    config = a_config_file_containing(original_config)
+    config_fh = a_config_file_containing(original_config)
 
-    Puppet::Settings::IniFile.update(config) do; end
+    Puppet::Settings::IniFile.update(config_fh) do; end
 
-    expect(config.string).to eq original_config
+    expect(config_fh.string).to eq original_config
   end
 
   it "adds a set name and value to an empty file" do
-    config = a_config_file_containing("")
+    config_fh = a_config_file_containing("")
 
-    Puppet::Settings::IniFile.update(config) do |config|
+    Puppet::Settings::IniFile.update(config_fh) do |config|
       config.set("name", "value")
     end
 
-    expect(config.string).to eq "name=value\n"
+    expect(config_fh.string).to eq "name=value\n"
   end
 
   it "preserves comments when writing a new name and value" do
-    config = a_config_file_containing("# this is a comment")
+    config_fh = a_config_file_containing("# this is a comment")
 
-    Puppet::Settings::IniFile.update(config) do |config|
+    Puppet::Settings::IniFile.update(config_fh) do |config|
       config.set("name", "value")
     end
 
-    expect(config.string).to eq "# this is a comment\nname=value\n"
+    expect(config_fh.string).to eq "# this is a comment\nname=value\n"
   end
 
   it "updates existing names and values in place" do
-    config = a_config_file_containing(<<-CONFIG)
+    config_fh = a_config_file_containing(<<-CONFIG)
     # this is the preceeding comment
      [section]
     name = original value
     # this is the trailing comment
     CONFIG
 
-    Puppet::Settings::IniFile.update(config) do |config|
+    Puppet::Settings::IniFile.update(config_fh) do |config|
       config.set("name", "changed value")
     end
 
-    expect(config.string).to eq <<-CONFIG
+    expect(config_fh.string).to eq <<-CONFIG
     # this is the preceeding comment
      [section]
     name = changed value

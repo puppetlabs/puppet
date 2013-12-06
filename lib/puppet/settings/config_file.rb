@@ -20,11 +20,12 @@ class Puppet::Settings::ConfigFile
     # Default to 'main' for the section.
     section_name = :main
     result[section_name] = empty_section
+    line_number = 1
     Puppet::Settings::IniFile.parse(StringIO.new(text)).each do |line|
       case line
       when Puppet::Settings::IniFile::SectionLine
         section_name = line.name.intern
-        fail_when_illegal_section_name(section_name, file, line.line)
+        fail_when_illegal_section_name(section_name, file, line_number)
         if result[section_name].nil?
           result[section_name] = empty_section
         end
@@ -48,13 +49,14 @@ class Puppet::Settings::ConfigFile
           end
           result[section_name][var] = value
         rescue Puppet::Error => detail
-          raise Puppet::Settings::ParseError.new(detail.message, file, line, detail)
+          raise Puppet::Settings::ParseError.new(detail.message, file, line_number, detail)
         end
       else
         if line.text !~ /^\s*#|^\s*$/
-          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line.line)
+          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line_number)
         end
       end
+      line_number += 1
     end
 
     result

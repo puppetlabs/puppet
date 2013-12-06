@@ -9,17 +9,15 @@ class Puppet::Settings::IniFile
 
   def self.parse(config_fh)
     config = new
-    line_number = 1
     config_fh.each_line do |line|
       case line
       when /^(\s*)\[(\w+)\](\s*)$/
-        config << SectionLine.new(line_number, $1, $2, $3)
+        config << SectionLine.new($1, $2, $3)
       when /^(\s*)(\w+)(\s*=\s*)(.*?)(\s*)$/
-        config << SettingLine.new(line_number, $1, $2, $3, $4, $5)
+        config << SettingLine.new($1, $2, $3, $4, $5)
       else
-        config << Line.new(line_number, line)
+        config << Line.new(line)
       end
-      line_number += 1
     end
 
     config
@@ -67,13 +65,13 @@ class Puppet::Settings::IniFile
     end
   end
 
-  Line = Struct.new(:line, :text) do
+  Line = Struct.new(:text) do
     def write(fh)
       fh.puts(text)
     end
   end
 
-  SettingLine = Struct.new(:line, :prefix, :name, :infix, :value, :suffix) do
+  SettingLine = Struct.new(:prefix, :name, :infix, :value, :suffix) do
     def write(fh)
       fh.write(prefix)
       fh.write(name)
@@ -83,7 +81,7 @@ class Puppet::Settings::IniFile
     end
   end
 
-  SectionLine = Struct.new(:line, :prefix, :name, :suffix) do
+  SectionLine = Struct.new(:prefix, :name, :suffix) do
     def write(fh)
       fh.write(prefix)
       fh.write("[")

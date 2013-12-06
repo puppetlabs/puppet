@@ -63,8 +63,7 @@ describe Puppet::Settings::ConfigFile do
 foo=bar
 badline
     EOF
-    expect { the_parse_of(multi_line_config) }
-      .to(
+    expect { the_parse_of(multi_line_config) }.to(
         raise_error(Puppet::Settings::ParseError, /Could not match line/) do |exception|
           expect(exception.line).to eq(3)
         end 
