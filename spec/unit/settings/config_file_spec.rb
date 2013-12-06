@@ -57,6 +57,20 @@ describe Puppet::Settings::ConfigFile do
     expect { the_parse_of("unknown") }.to raise_error Puppet::Settings::ParseError, /Could not match line/
   end
 
+  it "errors providing correct line number when line is not a known form" do
+    multi_line_config = <<-EOF
+[main]
+foo=bar
+badline
+    EOF
+    expect { the_parse_of(multi_line_config) }
+      .to(
+        raise_error(Puppet::Settings::ParseError, /Could not match line/) do |exception|
+          expect(exception.line).to eq(3)
+        end 
+      )
+  end
+
   it "stores file meta information in the _meta section" do
     the_parse_of("var = value { owner = me, group = you, mode = 0666 }").should ==
       { :main => section_containing(:var => "value", :meta => { :var => { :owner => "me",
@@ -83,6 +97,12 @@ describe Puppet::Settings::ConfigFile do
     expect { the_parse_of("[application_defaults]") }.
       to raise_error Puppet::Error,
         "Illegal section 'application_defaults' in config file #{filename} at line 1"
+  end
+
+  it "errors when a global_defaults section is created" do
+    expect { the_parse_of("[main]\n[global_defaults]") }.
+      to raise_error Puppet::Error,
+        "Illegal section 'global_defaults' in config file #{filename} at line 2"
   end
 
   it "transforms values with the given function" do

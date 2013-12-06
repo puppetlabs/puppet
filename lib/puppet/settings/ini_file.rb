@@ -19,6 +19,7 @@ class Puppet::Settings::IniFile
       else
         config << Line.new(line_number, line)
       end
+      line_number += 1
     end
 
     config
