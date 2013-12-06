@@ -740,7 +740,7 @@ EOT
     },
     :autosign => {
       :default => "$confdir/autosign.conf",
-      :type => :file,
+      :type => :autosign,
       :desc => "Whether (and how) to autosign certificate requests. This setting
         is only relevant on a puppet master acting as a certificate authority (CA).
 
@@ -765,11 +765,6 @@ EOT
 
         For info on autosign configuration files, see
         [the guide to Puppet's config files](http://docs.puppetlabs.com/guides/configuring.html).",
-      :hook => proc do |value|
-        unless [false, 'false', true, 'true'].include?(value) or Puppet::Util.absolute_path?(value)
-          raise ArgumentError, "The autosign parameter must be 'true'/'false' or an absolute path"
-        end
-      end
     },
     :allow_duplicate_certs => {
       :default    => false,
