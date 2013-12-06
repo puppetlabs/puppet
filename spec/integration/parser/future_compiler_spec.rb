@@ -7,10 +7,7 @@ require 'puppet_spec/pops'
 require 'puppet_spec/scope'
 require 'rgen/metamodel_builder'
 
-# This is a copy of the compiler_spec, with hacks to try to make it run for the future
-# evaluator.
-# :-(
-#  The first failing test does not fail if executed alone.
+# Test compilation using the future evaluator
 #
 describe "Puppet::Parser::Compiler" do
   include PuppetSpec::Compiler
@@ -18,7 +15,7 @@ describe "Puppet::Parser::Compiler" do
   before :each do
     Puppet[:parser] = 'future'
 
-    # This is in the original test - what is this for? Does not seem to make a differenceself.code
+    # This is in the original test - what is this for? Does not seem to make a differencese at all
     @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]'
     @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
   end
@@ -28,8 +25,6 @@ describe "Puppet::Parser::Compiler" do
     Puppet.settings.clear
   end
 
-  # shared because tests are invoked both for classic and future parser
-  #
   describe "the compiler when using future parser and evaluator" do
     it "should be able to determine the configuration version from a local version control repository" do
       pending("Bug #14071 about semantics of Puppet::Util::Execute on Windows", :if => Puppet.features.microsoft_windows?) do
@@ -60,7 +55,6 @@ describe "Puppet::Parser::Compiler" do
 
       node = Puppet::Node.new("testnodex")
       node.classes = ['foo', 'bar']
-      #node.stubs(:classes).returns(['foo', 'bar'])
       catalog = Puppet::Parser::Compiler.compile(node)
       node.classes = nil
       catalog.resource("Notify[foo_notify]").should_not be_nil
