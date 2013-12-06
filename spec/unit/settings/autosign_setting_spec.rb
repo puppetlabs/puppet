@@ -29,7 +29,8 @@ describe Puppet::Settings::AutosignSetting do
     end
 
     it "passes absolute paths through" do
-      expect(setting.munge('/path/to/autosign.conf')).to eq '/path/to/autosign.conf'
+      path = File.expand_path('/path/to/autosign.conf')
+      expect(setting.munge(path)).to eq path
     end
 
     it "fails if given anything else" do
