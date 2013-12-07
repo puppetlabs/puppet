@@ -91,5 +91,6 @@ module Puppet
     end
   end
 
+  require 'puppet/parser/ast/pops_bridge'
   require 'puppet/bindings'
 end
