@@ -328,7 +328,8 @@ class Puppet::Pops::Types::TypeCalculator
 
     if t1.is_a?(Types::PPatternType) && t2.is_a?(Types::PPatternType)
       t = Types::PPatternType.new()
-      t.patterns = t1.patterns | t2.patterns
+      # must make copies since patterns are contained types, not data-types
+      t.patterns = (t1.patterns | t2.patterns).map {|p| p.copy }
       return t
     end
 
@@ -632,18 +633,16 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PPatternType(t, t2)
     return true if t == t2
-    return false unless t2.is_a? Types::PStringType
+    return false unless t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)
 
     if t2.values.empty?
-      # Strings (unknown which ones) cannot all match a pattern, but if there is no pattern it is ok
+      # Strings / Enums (unknown which ones) cannot all match a pattern, but if there is no pattern it is ok
       # (There should really always be a pattern, but better safe than sorry).
       return t.patterns.empty? ? true : false
     end
-    # all strings in String type must match all patterns in Pattern type
-    t.patterns.all? do |p|
-      re = p.regexp
-      t2.values.all? {|v| re.match(v) }
-    end
+    # all strings in String/Enum type must match one of the patterns in Pattern type
+    regexps = t.patterns.map {|p| p.regexp }
+    t2.values.all? { |v| regexps.any? {|re| re.match(v) } }
   end
 
   # @api private

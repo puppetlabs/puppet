@@ -15,6 +15,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.pattern(*patterns)
   end
 
+  def regexp_t(pattern)
+    Puppet::Pops::Types::TypeFactory.regexp(pattern)
+  end
+
   def string_t(*strings)
     Puppet::Pops::Types::TypeFactory.string(*strings)
   end
@@ -577,29 +581,54 @@ describe 'The type calculator' do
         calculator.assignable?(p_t, p_s).should == true
       end
 
+      it 'should accept a regexp matching a pattern' do
+        p_t = pattern_t(/abc/)
+        p_s = string_t('XabcY')
+        calculator.assignable?(p_t, p_s).should == true
+      end
+
+      it 'should accept a pattern matching a pattern' do
+        p_t = pattern_t(pattern_t('abc'))
+        p_s = string_t('XabcY')
+        calculator.assignable?(p_t, p_s).should == true
+      end
+
+      it 'should accept a regexp matching a pattern' do
+        p_t = pattern_t(regexp_t('abc'))
+        p_s = string_t('XabcY')
+        calculator.assignable?(p_t, p_s).should == true
+      end
+
       it 'should accept a string matching all patterns' do
         p_t = pattern_t('abc', 'ab', 'c')
         p_s = string_t('XabcY')
         calculator.assignable?(p_t, p_s).should == true
       end
 
-      it 'should accept multiple strings if they all match all patterns' do
-        p_t = pattern_t('abc', 'ab', 'c')
-        p_s = string_t('XabcY', 'abcde')
+      it 'should accept multiple strings if they all match any patterns' do
+        p_t = pattern_t('X', 'Y', 'abc')
+        p_s = string_t('Xa', 'aY', 'abc')
         calculator.assignable?(p_t, p_s).should == true
       end
 
-      it 'should reject a string not matching all patterns' do
-        p_t = pattern_t('abc', 'ab', 'c', 'q')
+      it 'should reject a string not matching any patterns' do
+        p_t = pattern_t('abc', 'ab', 'c')
         p_s = string_t('XqqqY')
         calculator.assignable?(p_t, p_s).should == false
       end
 
-      it 'should reject multiple strings if not all match all patterns' do
+      it 'should reject multiple strings if not all match any patterns' do
         p_t = pattern_t('abc', 'ab', 'c', 'q')
-        p_s = string_t('abc', 'XqqqY')
+        p_s = string_t('X', 'Y', 'Z')
         calculator.assignable?(p_t, p_s).should == false
       end
+
+      it 'should accept enum matching patterns as instanceof' do
+        enum = enum_t('XS', 'S', 'M', 'L' 'XL', 'XXL')
+        pattern = pattern_t('S', 'M', 'L')
+        calculator.assignable?(pattern, enum)  == true
+      end
+
     end
 
     it 'should recognize ruby type inheritance' do
