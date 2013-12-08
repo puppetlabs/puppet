@@ -111,7 +111,15 @@ describe 'The type calculator' do
     end
 
     def data_compatible_types
-      literal_types + [Puppet::Pops::Types::PHashType, Puppet::Pops::Types::PArrayType, Puppet::Pops::Types::PDataType]
+      result = literal_types
+      result << Puppet::Pops::Types::PDataType
+      result << array_t(types::PDataType.new)
+      result << types::TypeFactory.hash_of_data
+      result
+    end
+
+    def type_from_class(c)
+      c.is_a?(Class) ? c.new : c
     end
   end
 
@@ -361,7 +369,18 @@ describe 'The type calculator' do
       common_t.should == enum_t('a', 'b', 'c', 'x', 'y', 'z')
     end
 
-    it 'computed variant commonality to type union' do
+    it 'computed variant commonality to type union where added types are not assignable' do
+      a_t1 = integer_t()
+      a_t2 = enum_t('b')
+      v_a = variant_t(a_t1, a_t2)
+      b_t1 = enum_t('a')
+      v_b = variant_t(b_t1)
+      common_t = calculator.common_type(v_a, v_b)
+      common_t.class.should == Puppet::Pops::Types::PVariantType
+      Set.new(common_t.types).should  == Set.new([a_t1, a_t2, b_t1])
+    end
+
+    it 'computed variant commonality to type union where added types are assignable' do
       a_t1 = integer_t()
       a_t2 = string_t()
       v_a = variant_t(a_t1, a_t2)
@@ -369,7 +388,7 @@ describe 'The type calculator' do
       v_b = variant_t(b_t1)
       common_t = calculator.common_type(v_a, v_b)
       common_t.class.should == Puppet::Pops::Types::PVariantType
-      Set.new(common_t.types).should  == Set.new([a_t1, a_t2, b_t1])
+      Set.new(common_t.types).should  == Set.new([a_t1, a_t2])
     end
   end
 
@@ -392,24 +411,24 @@ describe 'The type calculator' do
     context "for Data, such that" do
       it 'all literals + array and hash are assignable to Data' do
         t = Puppet::Pops::Types::PDataType.new()
-        data_compatible_types.each { |t2| t2.new.should be_assignable_to(t) }
+        data_compatible_types.each { |t2| type_from_class(t2).should be_assignable_to(t) }
       end
 
       it 'a Variant of literal, hash, or array is assignable to Data' do
         t = Puppet::Pops::Types::PDataType.new()
-        data_compatible_types.each { |t2| variant_t(t2.new).should be_assignable_to(t) }
+        data_compatible_types.each { |t2| variant_t(type_from_class(t2)).should be_assignable_to(t) }
       end
 
       it 'Data is not assignable to any of its subtypes' do
         t = Puppet::Pops::Types::PDataType.new()
         types_to_test = data_compatible_types- [Puppet::Pops::Types::PDataType]
-        types_to_test.each {|t2| t.should_not be_assignable_to(t2.new) }
+        types_to_test.each {|t2| t.should_not be_assignable_to(type_from_class(t2)) }
       end
 
       it 'Data is not assignable to a Variant of Data subtype' do
         t = Puppet::Pops::Types::PDataType.new()
         types_to_test = data_compatible_types- [Puppet::Pops::Types::PDataType]
-        types_to_test.each { |t2| t.should_not be_assignable_to(variant_t(t2.new)) }
+        types_to_test.each { |t2| t.should_not be_assignable_to(variant_t(type_from_class(t2))) }
       end
 
       it 'Data is not assignable to any disjunct type' do

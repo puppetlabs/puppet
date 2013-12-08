@@ -118,6 +118,14 @@ class Puppet::Pops::Types::TypeCalculator
     @literal_t = Types::PLiteralType.new()
     @numeric_t = Types::PNumericType.new()
     @t = Types::PObjectType.new()
+
+    # Variant type compatible with Data
+    data_variant = Types::PVariantType.new()
+    data_variant.addTypes(@data_hash.copy)
+    data_variant.addTypes(@data_array.copy)
+    data_variant.addTypes(Types::PLiteralType.new)
+    @data_variant_t = data_variant
+
   end
 
   # Convenience method to get a data type for comparisons
@@ -125,6 +133,13 @@ class Puppet::Pops::Types::TypeCalculator
   #
   def data
     @data_t
+  end
+
+  # Convenience method to get a variant compatible with the Data type.
+  # @api private the returned value may not be contained in another element
+  #
+  def data_variant
+    @data_variant_t
   end
 
   # Answers the question 'is it possible to inject an instance of the given class'
@@ -602,8 +617,24 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_PVariantType(t, t2)
-    # A variant is assignable if t2 is assignable to any of its types
-    t.types.any? { |option_t| assignable?(option_t, t2) }
+    # Data is a specific variant
+    t2 = @data_variant_t if t2.is_a?(Types::PDataType)
+    if t2.is_a?(Types::PVariantType)
+      # A variant is assignable if all of its options are assignable to one of this type's options
+      return true if t == t2
+      t2.types.all? do |other|
+        # if the other is a Variant, all if its options, but be assignable to one of this type's options
+        other = other.is_a?(Types::PDataType) ? @data_variant_t : other
+        if other.is_a?(Types::PVariantType)
+          assignable?(t, other)
+        else
+          t.types.any? {|option_t| assignable?(option_t, other) }
+        end
+      end
+    else
+      # A variant is assignable if t2 is assignable to any of its types
+      t.types.any? { |option_t| assignable?(option_t, t2) }
+    end
   end
 
   def assignable_PEnumType(t, t2)
@@ -712,11 +743,12 @@ class Puppet::Pops::Types::TypeCalculator
   # Data is assignable by other Data and by Array[Data] and Hash[Literal, Data]
   # @api private
   def assignable_PDataType(t, t2)
-    t2.is_a?(Types::PDataType) || 
-    t2.is_a?(Types::PLiteralType) ||
-    assignable?(@data_array, t2) ||
-    assignable?(@data_hash, t2) ||
-    (t2.is_a?(Types::PVariantType) && !t2.types.empty? && t2.types.all? {|t| assignable?(data, t) } )
+    t2.is_a?(Types::PDataType) || assignable?(@data_variant_t, t2)
+#      
+#    t2.is_a?(Types::PLiteralType) ||
+#    assignable?(@data_array, t2) ||
+#    assignable?(@data_hash, t2) ||
+#    (t2.is_a?(Types::PVariantType) && !t2.types.empty? && t2.types.all? {|t| assignable?(data, t) } )
   end
 
   # Assignable if t2's ruby class is same or subclass of t1's ruby class
