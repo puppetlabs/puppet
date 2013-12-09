@@ -1035,6 +1035,45 @@ describe 'The type calculator' do
     end
   end
 
+  context "when dealing with different types of inference" do
+    it "an instance specific inference is produced by infer" do
+      calculator.infer(['a','b']).element_type.values.should == ['a', 'b']
+    end
+
+    it "a generic inference is produced using infer_generic" do
+      calculator.infer_generic(['a','b']).element_type.values.should == []
+    end
+
+    it "a generic result is created by generalize! given an instance specific result for an Array" do
+      generic = calculator.infer(['a','b'])
+      generic.element_type.values.should == ['a', 'b']
+      calculator.generalize!(generic)
+      generic.element_type.values.should == []
+    end
+
+    it "a generic result is created by generalize! given an instance specific result for a Hash" do
+      generic = calculator.infer({'a' =>1,'b' => 2})
+      generic.key_type.values.should == ['a', 'b']
+      generic.element_type.from.should == 1
+      generic.element_type.to.should == 2
+      calculator.generalize!(generic)
+      generic.key_type.values.should == []
+      generic.element_type.from.should == nil
+      generic.element_type.to.should == nil
+    end
+
+    it "does not reduce by combining types when using infer_set" do
+      element_type = calculator.infer(['a','b',1,2]).element_type
+      element_type.class.should == Puppet::Pops::Types::PLiteralType
+      element_type = calculator.infer_set(['a','b',1,2]).element_type
+      element_type.class.should == Puppet::Pops::Types::PVariantType
+      element_type.types[0].class.should == Puppet::Pops::Types::PStringType
+      element_type.types[1].class.should == Puppet::Pops::Types::PStringType
+      element_type.types[2].class.should == Puppet::Pops::Types::PIntegerType
+      element_type.types[3].class.should == Puppet::Pops::Types::PIntegerType
+    end
+  end
+
   matcher :be_assignable_to do |type|
     calc = Puppet::Pops::Types::TypeCalculator.new
 

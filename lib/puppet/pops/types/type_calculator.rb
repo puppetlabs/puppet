@@ -10,6 +10,21 @@
 # Inference
 # ---------
 # The `infer(o)` method infers a Puppet type for literal Ruby objects, and for Arrays and Hashes.
+# The inference result is instance specific for single typed collections
+# and allows answering questions about its embedded type. It does not however preserve multiple types in
+# a collection, and can thus not answer questions like `[1,a].infer() =~ Array[Integer, String]` since the inference
+# computes the common type Literal when combining Integer and String.
+#
+# The `infer_generic(o)` method infers a generic Puppet type for literal Ruby object, Arrays and Hashes.
+# This inference result does not contain instance specific information; e.g. Array[Integer] where the integer
+# range is the generic default. Just `infer` it also combines types into a common type.
+#
+# The `infer_set(o)` method works like `infer` but preserves all type information. It does not do any
+# reduction into common types or ranges. This method of inference is best suited for answering questions
+# about an object being an instance of a type. It correctly answers: `[1,a].infer_set() =~ Array[Integer, String]`
+#
+# The `generalize!(t)` method modifies an instance specific inference result to a generic. The method mutates
+# the given argument. Basically, this removes string instances from String, and range from Integer and Float.
 #
 # Assignability
 # -------------
@@ -34,6 +49,9 @@
 #   contained object can only be in one container at a time. Also, the type system may include more details in each type
 #   instance, such as if it may be nil, be empty, contain a certain count etc. Or put differently, the puppet types are not
 #   singletons.
+#
+# All types support `copy` which should be used when assigning a type where it is unknown if it is bound or not
+# to a parent type. A check can be made with `t.eContainer().nil?`
 #
 # Equality and Hash
 # -----------------
@@ -64,6 +82,14 @@
 # @see Puppet::Pops::Types::TypeParser TypeParser how to construct a type instance from a String
 # @see Puppet::Pops::Types Types for details about the type model
 #
+# Using the Type Calculator
+# -----
+# The type calculator can be directly used via its class methods. If doing time critical work and doing many
+# calls to the type calculator, it is more performant to create an instance and invoke the corresponding
+# instance methods. Note that inference is an expensive operation, rather than infering the same thing
+# several times, it is in general better to infer once and then copy the result if mutation to a more generic form is
+# required.
+#
 # @api public
 #
 class Puppet::Pops::Types::TypeCalculator
@@ -71,27 +97,43 @@ class Puppet::Pops::Types::TypeCalculator
   Types = Puppet::Pops::Types
   TheInfinity = 1.0 / 0.0 # because the Infinity symbol is not defined
 
+  # @api public
   def self.assignable?(t1, t2)
-    instance.assignable?(t1,t2)
+    singleton.assignable?(t1,t2)
   end
 
+  # @api public
   def self.string(t)
-    instance.string(t)
+    singleton.string(t)
   end
 
+  # @api public
   def self.infer(o)
-    instance.infer(o)
+    singleton.infer(o)
   end
 
+  # @api public
+  def self.generalize!(o)
+    singleton.generalize!(o)
+  end
+
+  # @api public
+  def self.infer_set(o)
+    singleton.infer_set(o)
+  end
+
+  # @api public
   def self.debug_string(t)
-    instance.debug_string(t)
+    singleton.debug_string(t)
   end
 
+  # @api public
   def self.enumerable(t)
-    instance.enumerable(t)
+    singleton.enumerable(t)
   end
 
-  def self.instance()
+  # @api private
+  def self.singleton()
     @tc_instance ||= new
   end
 
@@ -100,10 +142,13 @@ class Puppet::Pops::Types::TypeCalculator
   def initialize
     @@assignable_visitor ||= Puppet::Pops::Visitor.new(nil,"assignable",1,1)
     @@infer_visitor ||= Puppet::Pops::Visitor.new(nil,"infer",0,0)
+    @@infer_set_visitor ||= Puppet::Pops::Visitor.new(nil,"infer_set",0,0)
+    @@instance_of_visitor ||= Puppet::Pops::Visitor.new(nil,"instance_of",1,1)
     @@string_visitor ||= Puppet::Pops::Visitor.new(nil,"string",0,0)
     @@inspect_visitor ||= Puppet::Pops::Visitor.new(nil,"debug_string",0,0)
     @@enumerable_visitor ||= Puppet::Pops::Visitor.new(nil,"enumerable",0,0)
     @@extract_visitor ||= Puppet::Pops::Visitor.new(nil,"extract",0,0)
+    @@generalize_visitor ||= Puppet::Pops::Visitor.new(nil,"generalize",0,0)
 
     da = Types::PArrayType.new()
     da.element_type = Types::PDataType.new()
@@ -140,6 +185,10 @@ class Puppet::Pops::Types::TypeCalculator
   #
   def data_variant
     @data_variant_t
+  end
+
+  def self.data_variant
+    singleton.data_variant
   end
 
   # Answers the question 'is it possible to inject an instance of the given class'
@@ -231,18 +280,88 @@ class Puppet::Pops::Types::TypeCalculator
     type
   end
 
-  # Answers 'what is the Puppet Type of o'
+  # Generalizes value specific types. The given type is mutated and returned.
+  # @api public
+  def generalize!(o)
+    @@generalize_visitor.visit_this_0(self, o)
+    o.eAllContents.each { |x| @@generalize_visitor.visit_this_0(self, x) }
+    o
+  end
+
+  def generalize_Object(o)
+    # do nothing, there is nothing to change for most types
+  end
+
+  def generalize_PStringType(o)
+    o.values = []
+    []
+  end
+
+  def generalize_PFloatTye(o)
+    o.to = nil
+    o.from = nil
+  end
+
+  def generalize_PIntegerType(o)
+    o.to = nil
+    o.from = nil
+  end
+
+  # Answers 'what is the single common Puppet Type describing o', or if o is an Array or Hash, what is the
+  # single common type of the elements (or keys and elements for a Hash).
   # @api public
   #
   def infer(o)
     @@infer_visitor.visit_this_0(self, o)
   end
 
+  def infer_generic(o)
+    result = generalize!(infer(o))
+    result
+  end
+
+  # Answers 'what is the set of Puppet Types of o'
+  # @api public
+  #
+  def infer_set(o)
+    @@infer_set_visitor.visit_this_0(self, o)
+  end
+
+  def instance_of(t, o)
+    return true if o.nil?
+    @@instance_of_visitor.visit_this_1(self, t, o)
+  end
+
+  def instance_of_Object(t, o)
+    assignable?(t, infer(o))
+  end
+
+  def instance_of_PArrayType(t, o)
+    return false unless o.is_a?(Array)
+    o.all? {|element| instance_of(t.element_type, element) }
+  end
+
+  def instance_of_PHashType(t, o)
+    return false unless o.is_a?(Hash)
+    key_t = t.key_type
+    element_t = t.element_type
+    o.keys.all? {|key| instance_of(key_t, key) } && o.values.all? {|value| instance_of(element_t, value) }
+  end
+
+  def instance_of_PDataType(t, o)
+    instance_of(@data_variant_t, o)
+  end
+
+  def instance_of_PVariableType(t, o)
+    # calculate types without reducing, Array and Hash will have Variant type as parameters
+    assignable?(t, infer_set(o))
+  end
+
   # Answers 'is o an instance of type t'
   # @api public
   #
   def instance?(t, o)
-    assignable?(t, infer(o))
+    instance_of(t,o)
   end
 
   # Answers if t is a puppet type
@@ -568,6 +687,46 @@ class Puppet::Pops::Types::TypeCalculator
     type
   end
 
+  # Common case for everything that intrinsically only has a single type
+  def infer_set_Object(o)
+    infer(o)
+  end
+
+  def infer_set_Array(o)
+    type = Types::PArrayType.new()
+    type.element_type = if o.empty?
+      Types::PNilType.new()
+    else
+      t = Types::PVariantType.new()
+      t.types = o.map() {|x| infer_set(x) }
+      t.types.size == 1 ? t.types[0] : t
+    end
+    type
+  end
+
+  def infer_set_Hash(o)
+    type = Types::PHashType.new()
+    if o.empty?
+      ktype = Types::PNilType.new()
+      etype = Types::PNilType.new()
+    else
+      ktype = Types::PVariantType.new()
+      ktype.types = o.keys.map() {|k| infer_set(k) }
+      etype = Types::PVariantType.new()
+      etype.types = o.values.map() {|e| infer_set(e) }
+    end
+    type.key_type = unwrap_single_variant(ktype)
+    type.element_type = unwrap_single_variant(vtype)
+    type
+  end
+
+  def unwrap_single_variant(possible_variant)
+    if possible_variant.is_a?(Types::PVariantType) && possible_variant.types.size == 1
+      possible_variant.types[0]
+    else
+      possible_variant
+    end
+  end
   # False in general type calculator
   # @api private
   def assignable_Object(t, t2)

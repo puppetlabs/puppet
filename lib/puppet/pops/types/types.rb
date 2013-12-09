@@ -75,7 +75,7 @@ module Puppet::Pops::Types
     module ClassModule
       def ==(o)
         self.class == o.class ||
-          o.class == PVariantType && o == Puppet::Pops::Types::TypeCalculator.instance.data_variant()
+          o.class == PVariantType && o == Puppet::Pops::Types::TypeCalculator.data_variant()
       end
     end
   end
@@ -93,7 +93,7 @@ module Puppet::Pops::Types
 
       def ==(o)
         (self.class == o.class && Set.new(types) == Set.new(o.types)) ||
-          (o.class == PDataType && self == Puppet::Pops::Types::TypeCalculator.instance.data_variant())
+          (o.class == PDataType && self == Puppet::Pops::Types::TypeCalculator.data_variant())
       end
     end
   end

@@ -245,7 +245,7 @@ module Puppet::Pops::Types::TypeFactory
       type.ruby_class = o
       type
     else
-      @type_calculator.infer(o)
+      @type_calculator.infer_generic(o)
     end
   end
 
