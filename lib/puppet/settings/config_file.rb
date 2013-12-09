@@ -1,3 +1,5 @@
+require 'puppet/settings/ini_file'
+
 ##
 # @api private
 #
@@ -14,31 +16,28 @@ class Puppet::Settings::ConfigFile
 
   def parse_file(file, text)
     result = {}
-    count = 0
 
     # Default to 'main' for the section.
     section_name = :main
     result[section_name] = empty_section
-    text.split(/\n/).each do |line|
-      count += 1
+    line_number = 1
+    Puppet::Settings::IniFile.parse(StringIO.new(text)).each do |line|
       case line
-      when /^\s*\[(\w+)\]\s*$/
-        section_name = $1.intern
-        fail_when_illegal_section_name(section_name, file, line)
+      when Puppet::Settings::IniFile::SectionLine
+        section_name = line.name.intern
+        fail_when_illegal_section_name(section_name, file, line_number)
         if result[section_name].nil?
           result[section_name] = empty_section
         end
-      when /^\s*#/; next # Skip comments
-      when /^\s*$/; next # Skip blanks
-      when /^\s*(\w+)\s*=\s*(.*?)\s*$/ # settings
-        var = $1.intern
+      when Puppet::Settings::IniFile::SettingLine
+        var = line.name.intern
 
         # We don't want to munge modes, because they're specified in octal, so we'll
         # just leave them as a String, since Puppet handles that case correctly.
         if var == :mode
-          value = $2
+          value = line.value
         else
-          value = @value_converter[$2]
+          value = @value_converter[line.value]
         end
 
         # Check to see if this is a file argument and it has extra options
@@ -50,11 +49,14 @@ class Puppet::Settings::ConfigFile
           end
           result[section_name][var] = value
         rescue Puppet::Error => detail
-          raise Puppet::Settings::ParseError.new(detail.message, file, line, detail)
+          raise Puppet::Settings::ParseError.new(detail.message, file, line_number, detail)
         end
       else
-        raise Puppet::Settings::ParseError.new("Could not match line #{line}", file, line)
+        if line.text !~ /^\s*#|^\s*$/
+          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line_number)
+        end
       end
+      line_number += 1
     end
 
     result
