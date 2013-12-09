@@ -1,4 +1,5 @@
 require 'puppet/face'
+require 'puppet/settings/ini_file'
 
 Puppet::Face.define(:config, '0.0.1') do
   copyright "Puppet Labs", 2011
@@ -42,6 +43,32 @@ Puppet::Face.define(:config, '0.0.1') do
 
       Puppet.settings[:configprint] = args.join(",")
       Puppet.settings.print_config_options
+      nil
+    end
+  end
+
+  action(:set) do
+    summary "Set Puppet's configuration settings."
+    arguments "[setting_name] [setting_value]"
+    description <<-'EOT'
+      Update values in the `puppet.conf` configuration file.
+    EOT
+    examples <<-'EOT'
+      Set puppet's runfile directory:
+
+      $ puppet config set rundir /var/run/puppet
+    EOT
+
+    when_invoked do |*args|
+      name, value = args
+
+      file = Puppet::FileSystem::File.new(Puppet.settings.which_configuration_file)
+      file.touch
+      file.open(nil, 'r+') do |file|
+        Puppet::Settings::IniFile.update(file) do |config|
+          config.set(name, value)
+        end
+      end
       nil
     end
   end
