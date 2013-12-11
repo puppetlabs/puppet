@@ -12,6 +12,13 @@ describe tidy do
     Puppet.settings.stubs(:use)
   end
 
+  context "when normalizing 'path' on windows", :as_platform => :windows do
+    it "replaces backslashes with forward slashes" do
+      resource = tidy.new(:path => 'c:\directory')
+      expect(resource[:path]).to eq('c:/directory')
+    end
+  end
+
   it "should use :lstat when stating a file" do
     path = '/foo/bar'
     resource = tidy.new :path => path, :age => "1d"
