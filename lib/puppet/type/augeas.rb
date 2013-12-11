@@ -139,7 +139,8 @@ Puppet::Type.newtype(:augeas) do
 
   newparam(:lens) do
     desc "Use a specific lens, e.g. `Hosts.lns`. When this parameter is set, you
-      must also set the `incl` parameter to indicate which file to load."
+      must also set the `incl` parameter to indicate which file to load.
+      The Augeas documentation includes [a list of available lenses](http://augeas.net/stock_lenses.html)."
   end
 
   newparam(:incl) do
