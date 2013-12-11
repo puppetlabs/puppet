@@ -1053,7 +1053,7 @@ describe 'The type calculator' do
 
     it "a generic result is created by generalize! given an instance specific result for a Hash" do
       generic = calculator.infer({'a' =>1,'b' => 2})
-      generic.key_type.values.should == ['a', 'b']
+      generic.key_type.values.sort.should == ['a', 'b']
       generic.element_type.from.should == 1
       generic.element_type.to.should == 2
       calculator.generalize!(generic)
