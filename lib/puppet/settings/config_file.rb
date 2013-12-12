@@ -15,17 +15,18 @@ class Puppet::Settings::ConfigFile
   end
 
   def parse_file(file, text)
-    result = {}
+    result = Conf.new
 
     ini = Puppet::Settings::IniFile.parse(StringIO.new(text))
     ini.sections.each do |section|
       section_name = section.name.intern
       fail_when_illegal_section_name(section_name, file, section.line_number)
-      result[section_name] = empty_section
+      section_config = Section.new(section_name)
+      result.with_section(section_config)
 
       ini.lines_in(section.name).each do |line|
         if line.is_a?(Puppet::Settings::IniFile::SettingLine)
-          parse_setting(line, result[section_name])
+          parse_setting(line, section_config)
         elsif line.text !~ /^\s*#|^\s*$/
           raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line.line_number)
         end
@@ -35,9 +36,35 @@ class Puppet::Settings::ConfigFile
     result
   end
 
+  Conf = Struct.new(:sections) do
+    def initialize
+      super({})
+    end
+
+    def with_section(section)
+      sections[section.name] = section
+      self
+    end
+  end
+
+  Section = Struct.new(:name, :settings) do
+    def initialize(name)
+      super(name, [])
+    end
+
+    def with_setting(name, value, meta)
+      settings << Setting.new(name, value, meta)
+      self
+    end
+  end
+
+  Setting = Struct.new(:name, :value, :meta)
+  Meta = Struct.new(:owner, :group, :mode)
+  NO_META = Meta.new(nil, nil, nil)
+
 private
 
-  def parse_setting(setting, result)
+  def parse_setting(setting, section)
     var = setting.name.intern
 
     # We don't want to munge modes, because they're specified in octal, so we'll
@@ -51,11 +78,12 @@ private
     # Check to see if this is a file argument and it has extra options
     begin
       if value.is_a?(String) and options = extract_fileinfo(value)
-        value = options[:value]
-        options.delete(:value)
-        result[:_meta][var] = options
+        section.with_setting(var, options[:value], Meta.new(options[:owner],
+                                                            options[:group],
+                                                            options[:mode]))
+      else
+        section.with_setting(var, value, NO_META)
       end
-      result[var] = value
     rescue Puppet::Error => detail
       raise Puppet::Settings::ParseError.new(detail.message, file, setting.line_number, detail)
     end

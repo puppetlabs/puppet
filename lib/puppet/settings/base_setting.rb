@@ -159,4 +159,7 @@ class Puppet::Settings::BaseSetting
   def munge(value)
     value
   end
+
+  def set_meta(meta)
+  end
 end

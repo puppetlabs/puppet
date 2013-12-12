@@ -106,6 +106,12 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     @owner.value
   end
 
+  def set_meta(meta)
+    self.owner = meta.owner if meta.owner
+    self.group = meta.group if meta.group
+    self.mode = meta.mode if meta.mode
+  end
+
   def munge(value)
     if value.is_a?(String) and value != ':memory:' # for sqlite3 in-memory tests
       value = File.expand_path(value)

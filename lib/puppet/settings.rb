@@ -548,21 +548,10 @@ class Puppet::Settings
 
   # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
   def unsafe_parse(file)
-    # build up a single data structure that contains the values from all of the parsed files.
-    data = {}
+    data = nil
     if Puppet::FileSystem::File.exist?(file)
       begin
-        file_data = parse_file(file)
-
-        # This is a little kludgy; basically we are merging a hash of hashes.  We can't use "merge" at the
-        # outermost level or we risking losing data from the hash we're merging into.
-        file_data.keys.each do |key|
-          if data.has_key?(key)
-            data[key].merge!(file_data[key])
-          else
-            data[key] = file_data[key]
-          end
-        end
+        data = parse_file(file)
       rescue => detail
         Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
         return
@@ -570,17 +559,19 @@ class Puppet::Settings
     end
 
     # If we get here and don't have any data, we just return and don't muck with the current state of the world.
-    return if data.empty?
+    return if data.nil?
 
     # If we get here then we have some data, so we need to clear out any previous settings that may have come from
     #  config files.
     unsafe_clear(false, false)
 
     # And now we can repopulate with the values from our last parsing of the config files.
-    data.each do |area, values|
-      @metas[area] = values.delete(:_meta)
-      values.each do |key,value|
-        set_value(key, value, area, :dont_trigger_handles => true, :ignore_bad_settings => true )
+    data.sections.each do |name, section|
+      section.settings.each do |setting|
+        set_value(setting.name, setting.value, name, :dont_trigger_handles => true, :ignore_bad_settings => true )
+        if type = @config[setting.name]
+          type.set_meta(setting.meta)
+        end
       end
     end
 
@@ -609,9 +600,6 @@ class Puppet::Settings
         end
       end
     end
-
-    # Take a best guess at metadata based on uninitialized run_mode
-    apply_metadata
   end
   private :unsafe_parse
 
