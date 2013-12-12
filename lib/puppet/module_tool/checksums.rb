@@ -41,12 +41,9 @@ module Puppet::ModuleTool
       data.each(&block)
     end
 
-    # Update +Metadata+'s checksums with this object's.
-    def annotate(metadata)
-      metadata.checksums.replace(data)
+    # Return the PSON record representing this instance.
+    def to_pson(*args)
+      return data.to_pson(*args)
     end
-
-    # TODO: Move the Checksummer#run checksum checking to here?
-
   end
 end

@@ -31,37 +31,38 @@ module Puppet::ModuleTool
         end
       end
 
-      def metadata(require_modulefile = false)
+      def metadata(require_metadata = false)
         unless @metadata
           unless @path
             raise ArgumentError, "Could not determine module path"
           end
-          @metadata = Puppet::ModuleTool::Metadata.new
-          contents = ContentsDescription.new(@path)
-          contents.annotate(@metadata)
-          checksums = Checksums.new(@path)
-          checksums.annotate(@metadata)
           modulefile_path = File.join(@path, 'Modulefile')
-          if File.file?(modulefile_path)
-            Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
-          elsif require_modulefile
-            raise ArgumentError, "No Modulefile found."
-          end
-          extra_metadata_path = File.join(@path, 'metadata.json')
-          if File.file?(extra_metadata_path)
-            File.open(extra_metadata_path) do |f|
+          metadata_path = File.join(@path, 'metadata.json')
+          if File.file?(metadata_path)
+            File.open(metadata_path) do |f|
               begin
-                @metadata.extra_metadata = PSON.load(f)
+                @metadata = Puppet::ModuleTool::Metadata.new(PSON.load(f))
               rescue PSON::ParserError
-                raise ArgumentError, "Could not parse JSON #{extra_metadata_path}"
+                raise ArgumentError, "Could not parse JSON #{metadata_path}"
               end
             end
+            if File.file?(modulefile_path)
+              Puppet.warning "Modulefile is deprecated. Using metadata.json."
+            end
+          elsif File.file?(modulefile_path)
+            @metadata = Puppet::ModuleTool::Metadata.new
+            Puppet.warning "Modulefile is deprecated. Building metadata.json from modulefile."
+            Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
+          elsif require_metadata
+            raise ArgumentError, "No metadata found for module #{@path}"
           end
+          contents = ContentsDescription.new(@path)
+          contents.annotate(@metadata)
         end
         @metadata
       end
 
-      def load_modulefile!
+      def load_metadata!
         @metadata = nil
         metadata(true)
       end
