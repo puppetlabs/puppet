@@ -1132,7 +1132,27 @@ EOT
     :noop => {
       :default    => false,
       :type       => :boolean,
-      :desc       => "Whether puppet agent should be run in noop mode.",
+      :desc       => "Whether to apply catalogs in noop mode, which allows Puppet to
+        partially simulate a normal run. This setting affects puppet agent and
+        puppet apply.
+
+        When running in noop mode, Puppet will check whether each resource is in sync,
+        like it does when running normally. However, if a resource attribute is not in
+        the desired state (as declared in the catalog), Puppet will take no
+        action, and will instead report the changes it _would_ have made. These
+        simulated changes will appear in the report sent to the puppet master, or
+        be shown on the console if running puppet agent or puppet apply in the
+        foreground. The simulated changes will not send refresh events to any
+        subscribing or notified resources, although Puppet will log that a refresh
+        event _would_ have been sent.
+
+        **Important note:**
+        [The `noop` metaparameter](http://docs.puppetlabs.com/references/latest/metaparameter.html#noop)
+        allows you to apply individual resources in noop mode, and will override
+        the global value of the `noop` setting. This means a resource with
+        `noop => false` _will_ be changed if necessary, even when running puppet
+        agent with `noop = true` or `--noop`. (Conversely, a resource with
+        `noop => true` will only be simulated, even when noop mode is globally disabled.)",
     },
     :runinterval => {
       :default  => "30m",
