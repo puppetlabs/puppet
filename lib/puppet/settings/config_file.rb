@@ -17,52 +17,49 @@ class Puppet::Settings::ConfigFile
   def parse_file(file, text)
     result = {}
 
-    # Default to 'main' for the section.
-    section_name = :main
-    result[section_name] = empty_section
-    line_number = 1
-    Puppet::Settings::IniFile.parse(StringIO.new(text)).each do |line|
-      case line
-      when Puppet::Settings::IniFile::SectionLine
-        section_name = line.name.intern
-        fail_when_illegal_section_name(section_name, file, line_number)
-        if result[section_name].nil?
-          result[section_name] = empty_section
-        end
-      when Puppet::Settings::IniFile::SettingLine
-        var = line.name.intern
+    ini = Puppet::Settings::IniFile.parse(StringIO.new(text))
+    ini.sections.each do |section|
+      section_name = section.name.intern
+      fail_when_illegal_section_name(section_name, file, section.line_number)
+      result[section_name] = empty_section
 
-        # We don't want to munge modes, because they're specified in octal, so we'll
-        # just leave them as a String, since Puppet handles that case correctly.
-        if var == :mode
-          value = line.value
-        else
-          value = @value_converter[line.value]
-        end
-
-        # Check to see if this is a file argument and it has extra options
-        begin
-          if value.is_a?(String) and options = extract_fileinfo(value)
-            value = options[:value]
-            options.delete(:value)
-            result[section_name][:_meta][var] = options
-          end
-          result[section_name][var] = value
-        rescue Puppet::Error => detail
-          raise Puppet::Settings::ParseError.new(detail.message, file, line_number, detail)
-        end
-      else
-        if line.text !~ /^\s*#|^\s*$/
-          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line_number)
+      ini.lines_in(section.name).each do |line|
+        if line.is_a?(Puppet::Settings::IniFile::SettingLine)
+          parse_setting(line, result[section_name])
+        elsif line.text !~ /^\s*#|^\s*$/
+          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line.line_number)
         end
       end
-      line_number += 1
     end
 
     result
   end
 
 private
+
+  def parse_setting(setting, result)
+    var = setting.name.intern
+
+    # We don't want to munge modes, because they're specified in octal, so we'll
+    # just leave them as a String, since Puppet handles that case correctly.
+    if var == :mode
+      value = setting.value
+    else
+      value = @value_converter[setting.value]
+    end
+
+    # Check to see if this is a file argument and it has extra options
+    begin
+      if value.is_a?(String) and options = extract_fileinfo(value)
+        value = options[:value]
+        options.delete(:value)
+        result[:_meta][var] = options
+      end
+      result[var] = value
+    rescue Puppet::Error => detail
+      raise Puppet::Settings::ParseError.new(detail.message, file, setting.line_number, detail)
+    end
+  end
 
   def empty_section
     { :_meta => {} }
