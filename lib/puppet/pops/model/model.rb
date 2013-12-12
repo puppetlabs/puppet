@@ -72,7 +72,7 @@ module Puppet::Pops::Model
   class ParenthesizedExpression < UnaryExpression; end
 
   # An import of one or several files.
-  #
+  # @deprecated, to be removed in Puppet 4
   class ImportExpression < Expression
     contains_many_uni 'files', Expression, :lowerBound => 1
   end

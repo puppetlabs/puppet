@@ -338,10 +338,6 @@ case_expression
   selector_entry
     : expression FARROW expression { result = Factory.MAP(val[0], val[2]) ; loc result, val[1] }
 
-# --- IMPORT
-#     IMPORT is handled as a non parenthesized call and is transformed to an ImportExpression.
-#     i.e. there is no special grammar for it - it is just a "call statement".
-
 #---RESOURCE
 #
 # Produces [Model::ResourceExpression, Model::ResourceDefaultsExpression]

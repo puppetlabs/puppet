@@ -120,13 +120,4 @@ describe "transformation to Puppet AST for conditionals" do
     end
   end
 
-  context "When transforming imports" do
-    it "import 'foo'" do
-      astdump(parse("import 'foo'")).should == ":nop"
-    end
-
-    it "import 'foo', 'bar'" do
-      astdump(parse("import 'foo', 'bar'")).should == ":nop"
-    end
-  end
 end

@@ -180,6 +180,7 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  # @deprecated, to be removed in Puppet 4
   def build_ImportExpression(o, files)
     # The argument files has already been built
     files.each {|f| o.addFiles(to_ops(f)) }
@@ -639,6 +640,7 @@ class Puppet::Pops::Model::Factory
 #    new(Model::CollectExpression, Puppet::Pops::Model::Factory.fqr(type_expr), query_expr, attribute_operations)
   end
 
+  # @deprecated, to be removed in Puppet 4
   def self.IMPORT(files)
     new(Model::ImportExpression, files)
   end
@@ -700,16 +702,12 @@ class Puppet::Pops::Model::Factory
       expr = expr.current if expr.is_a?(Puppet::Pops::Model::Factory)
       name = memo[-1]
       if name.is_a? Model::QualifiedName
-        if name.value() == 'import'
-          memo[-1] = Puppet::Pops::Model::Factory.IMPORT(expr.is_a?(Array) ? expr : [expr])
-        else
-          memo[-1] = Puppet::Pops::Model::Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
-          if expr.is_a?(Model::CallNamedFunctionExpression)
-            # Patch statement function call to expression style
-            # This is needed because it is first parsed as a "statement" and the requirement changes as it becomes
-            # an argument to the name to call transform above.
-            expr.rval_required = true
-          end
+        memo[-1] = Puppet::Pops::Model::Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
+        if expr.is_a?(Model::CallNamedFunctionExpression)
+          # Patch statement function call to expression style
+          # This is needed because it is first parsed as a "statement" and the requirement changes as it becomes
+          # an argument to the name to call transform above.
+          expr.rval_required = true
         end
       else
         memo << expr
