@@ -80,19 +80,61 @@ describe "Puppet::Parser::Parser" do
 #    @parser = Puppet::Parser::Parser.new "development"
   end
   shared_examples_for 'a puppet parser' do
-    describe "when parsing comments before statement" do
+    describe "when parsing comments before a statement" do
       it "should associate the documentation to the statement AST node" do
         if Puppet[:parser] == 'future'
           pending "egrammar does not yet process comments"
         end
         ast = @parser.parse("""
         # comment
-        class test {}
+        class test {
+          $foo = {bar => 23}
+          $bar = [23, 42]
+          $x   = 'argument'
+          # this comment should not be returned
+          some_function('with', {a => 'hash'},
+                        ['and', 1, 'array', $argument],
+                      ) # not?
+        }
         """)
 
         ast.code[0].should be_a(Puppet::Parser::AST::Hostclass)
         ast.code[0].name.should == 'test'
         ast.code[0].instantiate('')[0].doc.should == "comment\n"
+      end
+
+      { "an empty hash" => "{}",
+        "a simple hash" => "{ 'key' => 'value' }",
+        "a nested hash" => "{ 'first' => $x, 'second' => { a => 1, b => 2 } }"
+      }.each_pair do |hash_desc, hash_expr|
+        context "in the presence of #{hash_desc}" do
+          { "a parameter default" => "class test($param = #{hash_expr}) { }",
+            "a parameter value"   => "foo { 'bar': options => #{hash_expr} }",
+            "an plusignment rvalue" => "Foo['bar'] { options +> #{hash_expr} }",
+            "an assignment rvalue" => "$x = #{hash_expr}",
+            "an inequality rvalue" => "if $x != #{hash_expr} { }",
+            "an function argument in parenthesis"    => "flatten(#{hash_expr})",
+            "a second argument" => "merge($x, #{hash_expr})",
+          }.each_pair do |dsl_desc, dsl_expr|
+            context "as #{dsl_desc}" do
+              it "should associate the docstring to the container" do
+                ast = @parser.parse("# comment\nclass container { #{dsl_expr} }\n")
+                ast.code[0].instantiate('')[0].doc.should == "comment\n"
+              end
+            end
+          end
+          # Pending, these syntaxes are not yet supported in 3.x
+          #
+          # @todo Merge these into the test above after the migration to the new
+          #   parser is complete.
+          { "a selector alternative" => "$opt ? { { 'a' => 1 } => true, default => false }",
+            "an argument without parenthesis" => "flatten { 'a' => 1 }",
+          }.each_pair do |dsl_desc, dsl_expr|
+            context "as #{dsl_desc}" do
+              it "should associate the docstring to the container"
+            end
+          end
+        end
       end
     end
 
