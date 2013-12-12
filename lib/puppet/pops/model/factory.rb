@@ -180,13 +180,6 @@ class Puppet::Pops::Model::Factory
     o
   end
 
-  # @deprecated, to be removed in Puppet 4
-  def build_ImportExpression(o, files)
-    # The argument files has already been built
-    files.each {|f| o.addFiles(to_ops(f)) }
-    o
-  end
-
   def build_IfExpression(o, t, ift, els)
     o.test = build(t)
     o.then_expr = build(ift)
@@ -638,11 +631,6 @@ class Puppet::Pops::Model::Factory
   def self.COLLECT(type_expr, query_expr, attribute_operations)
     new(Model::CollectExpression, type_expr, query_expr, attribute_operations)
 #    new(Model::CollectExpression, Puppet::Pops::Model::Factory.fqr(type_expr), query_expr, attribute_operations)
-  end
-
-  # @deprecated, to be removed in Puppet 4
-  def self.IMPORT(files)
-    new(Model::ImportExpression, files)
   end
 
   def self.NAMED_ACCESS(type_name, bodies)
