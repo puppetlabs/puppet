@@ -50,10 +50,11 @@ module Puppet
       passed to the installer command."
     feature :uninstall_options, "The provider accepts options to be
       passed to the uninstaller command."
-    feature :package_options, "The provider accepts options to be ensured for
-      the given package. The meaning and format of the options is defined by
-      provider.",
-      :methods => [:package_options_insync?, :package_options, :package_options=]
+    feature :build_options, "The provider accepts build_options to be ensured
+      for the given package. The meaning and format of the options is defined
+      by provider.",
+      :methods => [:build_options_insync?, :build_options, :build_options=]
+
 
     ensurable do
       desc <<-EOT
@@ -237,71 +238,72 @@ module Puppet
       end
     end
 
-    newproperty(:package_options, :required_features=>:package_options) do
-      desc "Package options. The definition of package options is provider
+    newproperty(:build_options, :required_features=>:build_options) do
+      desc "Build options. The definition of build options is provider
         specific. In general, these are certain properties which alter contents
-        of a package being installed. An example of package options are
-        compilation options for packages which are compiled from sources
-        (FreeBSD ports for example).
+        of a package being installed. An example of build options are the
+        FreeBSD ports options.
 
-        The package_option attribute is a property, what means options can be
-        enforced during installation and verified/retrieved after installation.
+        The build_options attribute is a property. This means that the options
+        can be enforced during package installation and verified/retrieved
+        for packages that are already installed.
 
-        For example, ports provider maps the package options to port options
-        (the ones you normally set with make config). There is a simple
-        example of the package with package_options for FreeBSD ports:
+        For example, ports provider on FreeBSD implements the build options as
+        port options (the ones you normally set with make config). There is a
+        simple usage example for this particular type of build options (that is
+        for ports provider):
 
-            package  { 'apache22':
-              provider => ports,
-              package_options => { 'SUEXEC' => false }
+            package { 'apache22':
+              build_options => { 'SUEXEC' => false }
             }
 
-        This manifest ensures, that apache22 is compiled without SUEXEC module.
+        The above manifest ensures, that apache22 is compiled without SUEXEC
+        module.
 
-        Note, that typical behavior, when you change package options, shall be
-        to reinstall package with new options (this is similar to changing
-        package version with versionable providers in your manifest).
+        Despite the build_options are provider specific, the typical behavior,
+        when you change package's build_options in  your manifest, is to
+        rebuild/reinstall package with new options.
         "
 
       validate do |value|
-        if provider.respond_to?(:package_options_validate)
-          provider.package_options_validate(value)
+        if provider.respond_to?(:build_options_validate)
+          provider.build_options_validate(value)
         else
           super
         end
       end
 
       munge do |value|
-        if provider.respond_to?(:package_options_munge)
-          provider.package_options_munge(value)
+        if provider.respond_to?(:build_options_munge)
+          provider.build_options_munge(value)
         else
           super
         end
       end
 
       def insync?(is)
-        provider.package_options_insync?(should, is)
+        provider.build_options_insync?(should, is)
       end
 
       def should_to_s(newvalue)
-        if provider.respond_to?(:package_options_should_to_s)
-          provider.package_options_should_to_s(should, newvalue)
+        if provider.respond_to?(:build_options_should_to_s)
+          provider.build_options_should_to_s(should, newvalue)
         else
           super
         end
       end
 
       def is_to_s(currentvalue)
-        if provider.respond_to?(:package_options_is_to_s)
-          provider.package_options_is_to_s(should, currentvalue)
+        if provider.respond_to?(:build_options_is_to_s)
+          provider.build_options_is_to_s(should, currentvalue)
         else
           super
         end
       end
 
       def change_to_s(currentvalue, newvalue)
-        if provider.respond_to?(:package_options_change_to_s)
-          provider.package_options_change_to_s(currentvalue, newvalue)
+        if provider.respond_to?(:build_options_change_to_s)
+          provider.build_options_change_to_s(currentvalue, newvalue)
         else
           super
         end
@@ -309,7 +311,7 @@ module Puppet
     end
 
     newparam(:source) do
-      desc "Where to find the actual package.  This must be a local file
+      desc "Where to find the actual package. This must be a local file
         (or on a network file system) or a URL that your specific
         packaging type understands; Puppet will not retrieve files for you,
         although you can manage packages as `file` resources."
