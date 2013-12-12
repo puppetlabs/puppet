@@ -1,5 +1,7 @@
 # @api private
 class Puppet::Settings::IniFile
+  DEFAULT_SECTION_NAME = "main"
+
   def self.update(config_fh, &block)
     config = parse(config_fh)
     manipulator = Manipulator.new(config)
@@ -35,10 +37,24 @@ class Puppet::Settings::IniFile
     @lines.each(&block)
   end
 
-  def setting(name)
-    @lines.find do |line|
+  def setting(section, name)
+    settings_in(section).find do |line|
       line.is_a?(SettingLine) && line.name == name
     end
+  end
+
+  def settings_in(section)
+    section_lines = []
+    current_section = DEFAULT_SECTION_NAME
+    @lines.each do |line|
+      if line.is_a?(SectionLine)
+        current_section = line.name
+      elsif current_section == section
+        section_lines << line
+      end
+    end
+
+    section_lines
   end
 
   def write(fh)
@@ -55,11 +71,12 @@ class Puppet::Settings::IniFile
       @config = config
     end
 
-    def set(name, value)
-      setting = @config.setting(name)
+    def set(section, name, value)
+      setting = @config.setting(section, name)
       if setting
         setting.value = value
       else
+        @config << SectionLine.new("", section, "")
         @config << SettingLine.new("", name, "=", value, "")
       end
     end
@@ -90,5 +107,4 @@ class Puppet::Settings::IniFile
       fh.puts(suffix)
     end
   end
-
 end

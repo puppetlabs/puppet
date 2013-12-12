@@ -59,14 +59,17 @@ Puppet::Face.define(:config, '0.0.1') do
       $ puppet config set rundir /var/run/puppet
     EOT
 
-    when_invoked do |*args|
-      name, value = args
+    option "--section SECTION_NAME" do
+      default_to { "main" }
+      summary "The section of the configuration file to change."
+    end
 
+    when_invoked do |name, value, options|
       file = Puppet::FileSystem::File.new(Puppet.settings.which_configuration_file)
       file.touch
       file.open(nil, 'r+') do |file|
         Puppet::Settings::IniFile.update(file) do |config|
-          config.set(name, value)
+          config.set(options[:section], name, value)
         end
       end
       nil
