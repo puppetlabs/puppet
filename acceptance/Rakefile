@@ -10,8 +10,8 @@ module HarnessOptions
 
   DEFAULTS = {
     :type => 'git',
-    :helper => ['../../lib/helper.rb'],
-    :tests  => ['../../tests'],
+    :helper => ['lib/helper.rb'],
+    :tests  => ['tests'],
     :debug => true,
     :color => false,
     :root_keys => true,

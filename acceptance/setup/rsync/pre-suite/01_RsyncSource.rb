@@ -14,7 +14,7 @@ test_name "Rsync Source" do
         else
           raise "We should actually do some #{host['platform']} platform specific rsyncing here..."
         end
-        cmd = "rsync -r --exclude '.*.swp' #{filter_opt} --size-only -i -e'ssh -i id_rsa-acceptance' ../../../lib/* root@#{host}:#{destination_dir}"
+        cmd = "rsync -r --exclude '.*.swp' #{filter_opt} --size-only -i -e'ssh -i id_rsa-acceptance' ../lib/* root@#{host}:#{destination_dir}"
         puts "RSYNC: #{cmd}"
         result = `#{cmd}`
         raise("Failed rsync execution:\n#{result}") if $? != 0
