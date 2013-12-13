@@ -12,6 +12,13 @@ test_name "add parser=#{ENV['PARSER']} to all puppet.conf (only if $PARSER is se
         }
       }
       lay_down_new_puppet_conf(host, opts, temp)
+
+      if !options[:install].empty? and parser == 'future'
+        # We are installing from source rather than packages and need the following:
+        on(host, "gem install rgen")
+        # deprecated - remove when binder is removed from pops
+        on(host, "gem install json")
+      end
     end
   end
 end
