@@ -269,7 +269,7 @@ describe Puppet::Settings do
 
     describe "setbycli" do
       it "should generate a deprecation warning" do
-        Puppet.expects(:deprecation_warning)
+        Puppet.expects(:deprecation_warning).at_least(1)
         @settings.setting(:myval).setbycli = true
       end
       it "should set the value" do
@@ -1064,7 +1064,7 @@ describe Puppet::Settings do
       it "reparses if the file has changed" do
         @watched_file.expects(:changed?).returns true
 
-        @settings.expects(:unsafe_parse).with(@file)
+        @settings.expects(:parse_config_files)
 
         @settings.reparse_config_files
       end

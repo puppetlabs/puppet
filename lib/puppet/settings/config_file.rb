@@ -56,6 +56,10 @@ class Puppet::Settings::ConfigFile
       settings << Setting.new(name, value, meta)
       self
     end
+
+    def setting(name)
+      settings.find { |setting| setting.name == name }
+    end
   end
 
   Setting = Struct.new(:name, :value, :meta)
