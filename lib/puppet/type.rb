@@ -1212,21 +1212,24 @@ class Type
   end
 
   newmetaparam(:schedule) do
-    desc "On what schedule the object should be managed.  You must create a
-      schedule object, and then reference the name of that object to use
-      that for your schedule:
+    desc "A schedule to govern when Puppet is allowed to manage this resource.
+      The value of this metaparameter must be the `name` of a `schedule`
+      resource. This means you must declare a schedule resource, then
+      refer to it by name; see
+      [the docs for the `schedule` type](http://docs.puppetlabs.com/references/latest/type.html#schedule)
+      for more info.
 
-          schedule { 'daily':
+          schedule { 'everyday':
             period => daily,
             range  => \"2-4\"
           }
 
           exec { \"/usr/bin/apt-get update\":
-            schedule => 'daily'
+            schedule => 'everyday'
           }
 
-      The creation of the schedule object does not need to appear in the
-      configuration before objects that use it."
+      Note that you can declare the schedule resource anywhere in your
+      manifests, as long as it ends up in the final compiled catalog."
   end
 
   newmetaparam(:audit) do
