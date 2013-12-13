@@ -1379,12 +1379,9 @@ class Type
           }
 
       Tags are useful for things like applying a subset of a host's configuration
-      with [the `tags` setting](/references/latest/configuration.html#tags):
-
-          puppet agent --test --tags bootstrap
-
-      This way, you can easily isolate the portion of the configuration you're
-      trying to test."
+      with [the `tags` setting](/references/latest/configuration.html#tags)
+      (e.g. `puppet agent --test --tags bootstrap`) or filtering alerts with
+      [the `tagmail` report processor](http://docs.puppetlabs.com/references/latest/report.html#tagmail)."
 
     munge do |tags|
       tags = [tags] unless tags.is_a? Array
@@ -1499,105 +1496,67 @@ class Type
   # solution, but it works.
 
   newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
-    desc "References to one or more objects that this object depends on.
-      This is used purely for guaranteeing that changes to required objects
-      happen before the dependent object.  For instance:
+    desc "One or more resources that this resource depends on, expressed as
+      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_datatypes.html#resource-references).
+      Multiple resources can be specified as an array of references. When this
+      attribute is present:
 
-          # Create the destination directory before you copy things down
-          file { \"/usr/local/scripts\":
-            ensure => directory
-          }
+      * The required resource(s) will be applied **before** this resource.
 
-          file { \"/usr/local/scripts/myscript\":
-            source  => \"puppet://server/module/myscript\",
-            mode    => 755,
-            require => File[\"/usr/local/scripts\"]
-          }
-
-      Multiple dependencies can be specified by providing a comma-separated list
-      of resources, enclosed in square brackets:
-
-          require => [ File[\"/usr/local\"], File[\"/usr/local/scripts\"] ]
-
-      Note that Puppet will autorequire everything that it can, and
-      there are hooks in place so that it's easy for resources to add new
-      ways to autorequire objects, so if you think Puppet could be
-      smarter here, let us know.
-
-      In fact, the above code was redundant --- Puppet will autorequire
-      any parent directories that are being managed; it will
-      automatically realize that the parent directory should be created
-      before the script is pulled down.
-
-      Currently, exec resources will autorequire their CWD (if it is
-      specified) plus any fully qualified paths that appear in the
-      command.   For instance, if you had an `exec` command that ran
-      the `myscript` mentioned above, the above code that pulls the
-      file down would be automatically listed as a requirement to the
-      `exec` code, so that you would always be running againts the
-      most recent version.
-      "
+      This is one of the four relationship metaparameters, along with
+      `before`, `notify`, and `subscribe`. For more context, including the
+      alternate chaining arrow (`->` and `~>`) syntax, see
+      [the language page on relationships](http://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
   end
 
   newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
-    desc "References to one or more objects that this object depends on. This
-      metaparameter creates a dependency relationship like **require,**
-      and also causes the dependent object to be refreshed when the
-      subscribed object is changed. For instance:
+    desc "One or more resources that this resource depends on, expressed as
+      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_datatypes.html#resource-references).
+      Multiple resources can be specified as an array of references. When this
+      attribute is present:
 
-          class nagios {
-            file { 'nagconf':
-              path   => \"/etc/nagios/nagios.conf\"
-              source => \"puppet://server/module/nagios.conf\",
-            }
-            service { 'nagios':
-              ensure    => running,
-              subscribe => File['nagconf']
-            }
-          }
+      * The subscribed resource(s) will be applied _before_ this resource.
+      * If Puppet makes changes to any of the subscribed resources, it will cause
+        this resource to _refresh._ (Refresh behavior varies by resource
+        type: services will restart, mounts will unmount and re-mount, etc. Not
+        all types can refresh.)
 
-      Currently the `exec`, `mount` and `service` types support
-      refreshing.
-      "
+      This is one of the four relationship metaparameters, along with
+      `before`, `require`, and `notify`. For more context, including the
+      alternate chaining arrow (`->` and `~>`) syntax, see
+      [the language page on relationships](http://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
   end
 
   newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
-    desc %{References to one or more objects that depend on this object. This
-      parameter is the opposite of **require** --- it guarantees that
-      the specified object is applied later than the specifying object:
+    desc "One or more resources that depend on this resource, expressed as
+      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_datatypes.html#resource-references).
+      Multiple resources can be specified as an array of references. When this
+      attribute is present:
 
-          file { "/var/nagios/configuration":
-            source  => "...",
-            recurse => true,
-            before  => Exec["nagios-rebuid"]
-          }
+      * This resource will be applied _before_ the dependent resource(s).
 
-          exec { "nagios-rebuild":
-            command => "/usr/bin/make",
-            cwd     => "/var/nagios/configuration"
-          }
-
-      This will make sure all of the files are up to date before the
-      make command is run.}
+      This is one of the four relationship metaparameters, along with
+      `require`, `notify`, and `subscribe`. For more context, including the
+      alternate chaining arrow (`->` and `~>`) syntax, see
+      [the language page on relationships](http://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
   end
 
   newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
-    desc %{References to one or more objects that depend on this object. This
-    parameter is the opposite of **subscribe** --- it creates a
-    dependency relationship like **before,** and also causes the
-    dependent object(s) to be refreshed when this object is changed. For
-    instance:
+    desc "One or more resources that depend on this resource, expressed as
+      [resource references](http://docs.puppetlabs.com/puppet/latest/reference/lang_datatypes.html#resource-references).
+      Multiple resources can be specified as an array of references. When this
+      attribute is present:
 
-          file { "/etc/sshd_config":
-            source => "....",
-            notify => Service['sshd']
-          }
+      * This resource will be applied _before_ the notified resource(s).
+      * If Puppet makes changes to this resource, it will cause all of the
+        notified resources to _refresh._ (Refresh behavior varies by resource
+        type: services will restart, mounts will unmount and re-mount, etc. Not
+        all types can refresh.)
 
-          service { 'sshd':
-            ensure => running
-          }
-
-      This will restart the sshd service if the sshd config file changes.}
+      This is one of the four relationship metaparameters, along with
+      `before`, `require`, and `subscribe`. For more context, including the
+      alternate chaining arrow (`->` and `~>`) syntax, see
+      [the language page on relationships](http://docs.puppetlabs.com/puppet/latest/reference/lang_relationships.html)."
   end
 
   newmetaparam(:stage) do
