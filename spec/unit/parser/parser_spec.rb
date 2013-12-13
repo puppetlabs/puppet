@@ -528,4 +528,12 @@ describe Puppet::Parser do
     @parser.known_resource_types.hostclass('funtest').
       should == @parser.find_hostclass("", "fUntEst")
   end
+
+  context "deprecations" do
+    it "should flag use of import as deprecated" do
+      Puppet.expects(:deprecation_warning).once
+      @parser.known_resource_types.loader.expects(:import).with('foo', Dir.pwd)
+      @parser.parse("import 'foo'")
+    end
+  end
 end
