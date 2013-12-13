@@ -72,8 +72,9 @@ describe Puppet::Settings::AutosignSetting do
 
   describe "converting the setting to a resource" do
     it "converts the file path to a file resource" do
-      settings.stubs(:value).with('autosign').returns('/path/to/autosign.conf')
-      Puppet::FileSystem::File.stubs(:exist?).with('/path/to/autosign.conf').returns true
+      path = File.expand_path('/path/to/autosign.conf')
+      settings.stubs(:value).with('autosign').returns(path)
+      Puppet::FileSystem::File.stubs(:exist?).with(path).returns true
       Puppet.stubs(:features).returns(stub(:root? => true, :microsoft_windows? => false))
 
       setting.mode = '0664'
@@ -82,7 +83,7 @@ describe Puppet::Settings::AutosignSetting do
 
       resource = setting.to_resource
 
-      expect(resource.title).to eq '/path/to/autosign.conf'
+      expect(resource.title).to eq path
       expect(resource[:ensure]).to eq :file
       expect(resource[:mode]).to eq '664'
       expect(resource[:owner]).to eq 'puppet'
