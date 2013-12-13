@@ -62,7 +62,12 @@ class Puppet::Settings::ConfigFile
     end
   end
 
-  Setting = Struct.new(:name, :value, :meta)
+  Setting = Struct.new(:name, :value, :meta) do
+    def has_metadata?
+      meta != NO_META
+    end
+  end
+
   Meta = Struct.new(:owner, :group, :mode)
   NO_META = Meta.new(nil, nil, nil)
 

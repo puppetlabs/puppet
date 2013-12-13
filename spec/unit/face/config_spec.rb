@@ -3,29 +3,38 @@ require 'spec_helper'
 require 'puppet/face'
 
 describe Puppet::Face[:config, '0.0.1'] do
-  it "should use Settings#print_config_options when asked to print" do
-    Puppet.settings.stubs(:puts)
-    Puppet.settings.expects(:print_config_options)
-    subject.print
+  it "prints a single setting without the name" do
+    Puppet[:trace] = true
+
+    subject.expects(:puts).with(true)
+
+    subject.print("trace").should be_nil
   end
 
-  it "should set 'configprint' to all desired values and call print_config_options when a specific value is provided" do
-    Puppet.settings.stubs(:puts)
-    Puppet.settings.expects(:print_config_options)
-    subject.print("libdir", "ssldir")
-    Puppet.settings[:configprint].should == "libdir,ssldir"
+  it "prints multiple settings with the names" do
+    Puppet[:trace] = true
+    Puppet[:syslogfacility] = "file"
+
+    subject.expects(:puts).with("trace = true")
+    subject.expects(:puts).with("syslogfacility = file")
+
+    subject.print("trace", "syslogfacility")
   end
 
-  it "should always return nil" do
-    Puppet.settings.stubs(:puts)
-    Puppet.settings.expects(:print_config_options)
-    subject.print("libdir").should be_nil
+  it "prints the setting from the selected section" do
+    Puppet.settings.parse_config(<<-CONF)
+    [other]
+    syslogfacility = file
+    CONF
+
+    subject.expects(:puts).with("file")
+
+    subject.print("syslogfacility", :section => "other")
   end
 
   it "should default to all when no arguments are given" do
-    Puppet.settings.stubs(:puts)
-    Puppet.settings.expects(:print_config_options)
+    subject.expects(:puts).times(Puppet.settings.to_a.length)
+
     subject.print
-    Puppet.settings[:configprint].should == "all"
   end
 end

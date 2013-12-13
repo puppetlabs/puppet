@@ -305,26 +305,6 @@ class Puppet::Settings
   end
   private :call_hooks_deferred_to_application_initialization
 
-  # Do variable interpolation on the value.
-  def convert(value, environment = nil)
-    return nil if value.nil?
-    return value unless value.is_a? String
-    newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
-      varname = $2 || $1
-      if varname == "environment" and environment
-        environment
-      elsif varname == "run_mode"
-        preferred_run_mode
-      elsif pval = self.value(varname, environment)
-        pval
-      else
-        raise InterpolationError, "Could not find value for #{value}"
-      end
-    end
-
-    newval
-  end
-
   # Return a value's description.
   def description(name)
     if obj = @config[name.to_sym]
@@ -531,7 +511,7 @@ class Puppet::Settings
     @configuration_file = data
     data.sections.each do |name, section|
       section.settings.each do |setting|
-        if type = @config[setting.name]
+        if setting.has_metadata? && type = @config[setting.name]
           type.set_meta(setting.meta)
         end
       end
@@ -546,7 +526,7 @@ class Puppet::Settings
 
     # Call any hooks we should be calling.
     @config.values.each do |setting|
-      value_sets_for(env).each do |source|
+      value_sets_for(env, self.preferred_run_mode).each do |source|
         if source.include?(setting.name)
           # We still have to use value to retrieve the value, since
           # we want the fully interpolated value, not $vardir/lib or whatever.
@@ -946,22 +926,28 @@ Generated on #{Time.now}.
   end
 
   def uninterpolated_value(param, environment = nil)
+    Puppet.deprecation_warning("Puppet.settings.uninterpolated_value is deprecated. Use Puppet.settings.value instead")
     param = param.to_sym
     environment &&= environment.to_sym
 
-    # See if we can find it within our searchable list of values
-    val = find_value(environment, param)
-
-    # If we didn't get a value, use the default
-    val = @config[param].default if val.nil?
-
-    val
+    values(environment, self.preferred_run_mode).lookup(param)
   end
 
-  def find_value(environment, param)
-    ChainedValues.new(value_sets_for(environment) + [ValuesFromDefaults.new(@config)]).lookup(param)
+  # Retrieve an object that can be used for looking up values of configuration
+  # settings.
+  #
+  # @param environment [Symbol] The name of the environment in which to lookup
+  # @param section [Symbol] The name of the configuration section in which to lookup
+  # @return [Puppet::Settings::ChainedValues] An object to perform lookups
+  # @api public
+  def values(environment, section)
+    ChainedValues.new(
+      section,
+      environment,
+      value_sets_for(environment, section) +
+      [ValuesFromDefaults.new(@config)],
+      @config)
   end
-  private :find_value
 
   # Find the correct value using our search path.
   #
@@ -979,37 +965,19 @@ Generated on #{Time.now}.
     setting = @config[param]
 
     # Short circuit to nil for undefined parameters.
-    return nil unless @config.include?(param)
-
-    # Yay, recursion.
-    #self.reparse unless [:config, :filetimeout].include?(param)
+    return nil if setting.nil?
 
     # Check the cache first.  It needs to be a per-environment
     # cache so that we don't spread values from one env
     # to another.
     if @cache[environment||"none"].has_key?(param)
       return @cache[environment||"none"][param]
+    elsif bypass_interpolation
+      val = values(environment, self.preferred_run_mode).lookup(param)
+    else
+      val = values(environment, self.preferred_run_mode).interpolate(param)
     end
 
-    val = uninterpolated_value(param, environment)
-
-    return val if bypass_interpolation
-    if param == :code
-      # if we interpolate code, all hell breaks loose.
-      return val
-    end
-
-    # Convert it if necessary
-    begin
-      val = convert(val, environment)
-    rescue InterpolationError => err
-      # This happens because we don't have access to the param name when the
-      # exception is originally raised, but we want it in the message
-      raise InterpolationError, "Error converting value for param '#{param}': #{err}", err.backtrace
-    end
-
-    val = setting.munge(val) if setting.respond_to?(:munge)
-    # And cache it
     @cache[environment||"none"][param] = val
     val
   end
@@ -1070,16 +1038,16 @@ Generated on #{Time.now}.
   end
 
   # Yield each search source in turn.
-  def value_sets_for(environment)
+  def value_sets_for(environment, mode)
     searchpath(environment).collect do |name|
       case name
       when :cli, :memory, :application_defaults
         @value_sets[name]
       when :run_mode
         if @configuration_file
-          section = @configuration_file.sections[self.preferred_run_mode]
+          section = @configuration_file.sections[mode]
           if section
-            ValuesFromSection.new(self.preferred_run_mode, section)
+            ValuesFromSection.new(mode, section)
           end
         end
       else
@@ -1143,11 +1111,24 @@ Generated on #{Time.now}.
   end
   private :explicit_config_file?
 
+  # Lookup configuration setting value through a chain of different value sources.
+  #
+  # @api public
   class ChainedValues
-    def initialize(value_sets)
+    # @see Puppet::Settings.values
+    # @api private
+    def initialize(mode, environment, value_sets, defaults)
+      @mode = mode
+      @environment = environment
       @value_sets = value_sets
+      @defaults = defaults
     end
 
+    # Lookup the uninterpolated value.
+    #
+    # @param name [Symbol] The configuration setting name to look up
+    # @return [Object] The configuration setting value or nil if the setting is not known
+    # @api public
     def lookup(name)
       @value_sets.each do |set|
         if set.include?(name)
@@ -1155,6 +1136,58 @@ Generated on #{Time.now}.
         end
       end
       nil
+    end
+
+    # Lookup the interpolated value. All instances of `$name` in the value will
+    # be replaced by performing a lookup of `name` and substituting the text
+    # for `$name` in the original value. This interpolation is only performed
+    # if the looked up value is a String.
+    #
+    # @param name [Symbol] The configuration setting name to look up
+    # @return [Object] The configuration setting value or nil if the setting is not known
+    # @api public
+    def interpolate(name)
+      setting = @defaults[name]
+
+      if setting
+        val = lookup(name)
+        # if we interpolate code, all hell breaks loose.
+        if name == :code
+          val
+        else
+          # Convert it if necessary
+          begin
+            val = convert(val)
+          rescue InterpolationError => err
+            # This happens because we don't have access to the param name when the
+            # exception is originally raised, but we want it in the message
+            raise InterpolationError, "Error converting value for param '#{name}': #{err}", err.backtrace
+          end
+
+          setting.munge(val)
+        end
+      else
+        nil
+      end
+    end
+
+    private
+
+    def convert(value)
+      return nil if value.nil?
+      return value unless value.is_a? String
+      value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
+        varname = $2 || $1
+        if varname == "environment"
+          @environment
+        elsif varname == "run_mode"
+          @mode
+        elsif pval = interpolate(varname.to_sym)
+          pval
+        else
+          raise InterpolationError, "Could not find value for #{value}"
+        end
+      end
     end
   end
 
