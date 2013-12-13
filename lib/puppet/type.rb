@@ -1560,32 +1560,29 @@ class Type
   end
 
   newmetaparam(:stage) do
-    desc %{Which run stage a given resource should reside in.  This just creates
-      a dependency on or from the named milestone.  For instance, saying that
-      this is in the 'bootstrap' stage creates a dependency on the 'bootstrap'
-      milestone.
+    desc %{Which run stage this class should reside in.
 
-      By default, all classes get directly added to the
-      'main' stage.  You can create new stages as resources:
+      **Note: This metaparameter can only be used on classes,** and only when
+      declaring them with the resource-like syntax. It cannot be used on normal
+      resources or on classes declared with `include`.
 
-          stage { ['pre', 'post']: }
+      By default, all classes are declared in the `main` stage. To assign a class
+      to a different stage, you must:
 
-      To order stages, use standard relationships:
+      * Declare the new stage as a [`stage` resource](http://docs.puppetlabs.com/references/latest/type.html#stage).
+      * Declare an order relationship between the new stage and the `main` stage.
+      * Use the resource-like syntax to declare the class, and set the `stage`
+        metaparameter to the name of the desired stage.
 
-          stage { 'pre': before => Stage['main'] }
+      For example:
 
-      Or use the new relationship syntax:
+          stage { 'pre':
+            before => Stage['main'],
+          }
 
-          Stage['pre'] -> Stage['main'] -> Stage['post']
-
-      Then use the new class parameters to specify a stage:
-
-          class { 'foo': stage => 'pre' }
-
-      Stages can only be set on classes, not individual resources.  This will
-      fail:
-
-          file { '/foo': stage => 'pre', ensure => file }
+          class { 'apt-updates':
+            stage => 'pre',
+          }
     }
   end
 
