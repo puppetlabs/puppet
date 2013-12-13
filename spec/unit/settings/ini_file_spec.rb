@@ -24,7 +24,7 @@ describe Puppet::Settings::IniFile do
       config.set("the_section", "name", "value")
     end
 
-    expect(config_fh.string).to eq "[the_section]\nname=value\n"
+    expect(config_fh.string).to eq "[the_section]\nname = value\n"
   end
 
   it "preserves comments when writing a new name and value" do
@@ -34,7 +34,7 @@ describe Puppet::Settings::IniFile do
       config.set("the_section", "name", "value")
     end
 
-    expect(config_fh.string).to eq "# this is a comment\n[the_section]\nname=value\n"
+    expect(config_fh.string).to eq "# this is a comment\n[the_section]\nname = value\n"
   end
 
   it "updates existing names and values in place" do
@@ -88,6 +88,50 @@ describe Puppet::Settings::IniFile do
 
     expect(config_fh.string).to eq <<-CONFIG
     name = changed value
+    CONFIG
+  end
+
+  it "adds new settings to an existing section" do
+    config_fh = a_config_file_containing(<<-CONFIG)
+    [section]
+    original = value
+
+    # comment about 'other' section
+    [other]
+    dont = change
+    CONFIG
+
+    Puppet::Settings::IniFile.update(config_fh) do |config|
+      config.set("section", "updated", "new")
+    end
+
+    expect(config_fh.string).to eq <<-CONFIG
+    [section]
+    original = value
+updated = new
+
+    # comment about 'other' section
+    [other]
+    dont = change
+    CONFIG
+  end
+
+  it "adds a new setting into an existing, yet empty section" do
+    config_fh = a_config_file_containing(<<-CONFIG)
+    [section]
+    [other]
+    dont = change
+    CONFIG
+
+    Puppet::Settings::IniFile.update(config_fh) do |config|
+      config.set("section", "updated", "new")
+    end
+
+    expect(config_fh.string).to eq <<-CONFIG
+    [section]
+updated = new
+    [other]
+    dont = change
     CONFIG
   end
 

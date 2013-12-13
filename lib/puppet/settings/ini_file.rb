@@ -10,44 +10,59 @@ class Puppet::Settings::IniFile
   end
 
   def self.parse(config_fh)
-    lines = [DefaultSection.new]
+    config = new([DefaultSection.new])
     config_fh.each_line do |line|
       case line
       when /^(\s*)\[(\w+)\](\s*)$/
-        lines << SectionLine.new(lines[-1], $1, $2, $3)
+        config.append(SectionLine.new($1, $2, $3))
       when /^(\s*)(\w+)(\s*=\s*)(.*?)(\s*)$/
-        lines << SettingLine.new(lines[-1], $1, $2, $3, $4, $5)
+        config.append(SettingLine.new($1, $2, $3, $4, $5))
       else
-        lines << Line.new(lines[-1], line)
+        config.append(Line.new(line))
       end
     end
 
-    new(lines)
+    config
   end
 
   def initialize(lines = [])
     @lines = lines
   end
 
-  def add_section(name)
-    @lines << SectionLine.new(@lines[-1], "", name, "")
+  def append(line)
+    line.previous = @lines.last
+    @lines << line
   end
 
-  def add_setting(name, value)
-    @lines << SettingLine.new(@lines[-1], "", name, "=", value, "")
+  def insert_after(line, new_line)
+    new_line.previous = line
+
+    insertion_point = @lines.index(line) || @lines.index(section)
+    @lines.insert(insertion_point + 1, new_line)
+    if @lines.length > insertion_point + 2
+      @lines[insertion_point + 2].previous = new_line
+    end
+  end
+
+  def last
+    @lines.last
   end
 
   def each(&block)
     @lines.each(&block)
   end
 
+  def section(name)
+    sections.find { |section| section.name == name }
+  end
+
   def sections
-    sections = @lines.select { |line| line.is_a?(SectionLine) }
+    @lines.select { |line| line.is_a?(SectionLine) }
   end
 
   def setting(section, name)
-    lines_in(section).find do |line|
-      line.is_a?(SettingLine) && line.name == name
+    settings_in(lines_in(section)).find do |line|
+      line.name == name
     end
   end
 
@@ -63,6 +78,10 @@ class Puppet::Settings::IniFile
     end
 
     section_lines
+  end
+
+  def settings_in(lines)
+    lines.select { |line| line.is_a?(SettingLine) }
   end
 
   def write(fh)
@@ -84,13 +103,28 @@ class Puppet::Settings::IniFile
       if setting
         setting.value = value
       else
-        @config.add_section(section)
-        @config.add_setting(name, value)
+        add_setting(section, name, value)
       end
+    end
+
+    private
+
+    def add_setting(section_name, name, value)
+      section = @config.section(section_name)
+      if section.nil?
+        previous_line = SectionLine.new("", section_name, "")
+        @config.append(previous_line)
+      else
+        previous_line = @config.settings_in(@config.lines_in(section_name)).last || section
+      end
+
+      @config.insert_after(previous_line, SettingLine.new("", name, " = ", value, ""))
     end
   end
 
   module LineNumber
+    attr_accessor :previous
+
     def line_number
       line = 0
       previous_line = previous
@@ -102,7 +136,7 @@ class Puppet::Settings::IniFile
     end
   end
 
-  Line = Struct.new(:previous, :text) do
+  Line = Struct.new(:text) do
     include LineNumber
 
     def write(fh)
@@ -110,7 +144,7 @@ class Puppet::Settings::IniFile
     end
   end
 
-  SettingLine = Struct.new(:previous, :prefix, :name, :infix, :value, :suffix) do
+  SettingLine = Struct.new(:prefix, :name, :infix, :value, :suffix) do
     include LineNumber
 
     def write(fh)
@@ -122,7 +156,7 @@ class Puppet::Settings::IniFile
     end
   end
 
-  SectionLine = Struct.new(:previous, :prefix, :name, :suffix) do
+  SectionLine = Struct.new(:prefix, :name, :suffix) do
     include LineNumber
 
     def write(fh)
@@ -136,7 +170,7 @@ class Puppet::Settings::IniFile
 
   class DefaultSection < SectionLine
     def initialize
-      super(nil, "", DEFAULT_SECTION_NAME, "")
+      super("", DEFAULT_SECTION_NAME, "")
     end
 
     def write(fh)
