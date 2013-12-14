@@ -205,7 +205,6 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def bad_type_specialization_key_type(type, key_index, actual, *expected_classes)
     label_provider = Puppet::Pops::Model::ModelLabelProvider.new()
-    # require 'debugger'; debugger
     expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
     fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
       :type => type,
