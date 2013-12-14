@@ -56,7 +56,7 @@ describe Puppet::Node::Environment do
     mods[0].path.should == File.join(base, "dir1", "mod")
   end
 
-  shared_examples_for 'the environment' do
+  shared_examples_for "the environment's initial import" do
     include PuppetSpec::Scope
 
     let(:node) { Puppet::Node.new('testnode') }
@@ -90,7 +90,7 @@ describe Puppet::Node::Environment do
       # and combined in the right order or an error will be raised if 'b' is evaluated before 'a').
       Puppet[:strict_variables] = true
     end
-    it_behaves_like 'the environment' do
+    it_behaves_like "the environment's initial import" do
     end
   end
   describe 'using future parser' do
@@ -101,7 +101,7 @@ describe Puppet::Node::Environment do
       # This can be turned back on when the binder is taken out of the equation.
       # Puppet[:strict_variables] = true
     end
-    it_behaves_like 'the environment' do
+    it_behaves_like "the environment's initial import" do
     end
 end
 
