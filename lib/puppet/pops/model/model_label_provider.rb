@@ -33,7 +33,6 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_AndExpression o               ; "'and' expression"                  end
   def label_OrExpression o                ; "'or' expression"                   end
   def label_InExpression o                ; "'in' expression"                   end
-  def label_ImportExpression o            ; "'import' expression"               end
   def label_AssignmentExpression o        ; "'#{o.operator}' expression"        end
   def label_AttributeOperation o          ; "'#{o.operator}' expression"        end
   def label_LiteralList o                 ; "Array Expression"                  end

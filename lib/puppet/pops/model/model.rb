@@ -71,12 +71,6 @@ module Puppet::Pops::Model
   #
   class ParenthesizedExpression < UnaryExpression; end
 
-  # An import of one or several files.
-  #
-  class ImportExpression < Expression
-    contains_many_uni 'files', Expression, :lowerBound => 1
-  end
-
   # A boolean not expression, reversing the truth of the unary expr.
   #
   class NotExpression < UnaryExpression; end

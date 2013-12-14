@@ -90,10 +90,6 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     ["in", do_dump(o.left_expr), do_dump(o.right_expr)]
   end
 
-  def dump_ImportExpression o
-    ["import"] + o.files.collect {|f| do_dump(f) }
-  end
-
   def dump_AssignmentExpression o
     [o.operator.to_s, do_dump(o.left_expr), do_dump(o.right_expr)]
   end
