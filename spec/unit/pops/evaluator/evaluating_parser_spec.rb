@@ -839,7 +839,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       scope.compiler.should have_relationship(['File', 'b', '->', 'File', 'y'])
     end
 
-    it 'should tolerate (eliminiate) duplicates in operands' do
+    it 'should tolerate (eliminate) duplicates in operands' do
       source = "[File[a], File[a]] -> File[x]"
       parser.evaluate_string(scope, source, __FILE__)
       scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'x'])
