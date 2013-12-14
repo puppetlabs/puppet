@@ -830,6 +830,22 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       scope.compiler.should have_relationship(['Notify', 'a', '->', 'Notify', 'b'])
     end
 
+    it 'should form a relation with [File[a], File[b]] -> [File[x], File[y]]' do
+      source = "[File[a], File[b]] -> [File[x], File[y]]"
+      parser.evaluate_string(scope, source, __FILE__)
+      scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'x'])
+      scope.compiler.should have_relationship(['File', 'b', '->', 'File', 'x'])
+      scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'y'])
+      scope.compiler.should have_relationship(['File', 'b', '->', 'File', 'y'])
+    end
+
+    it 'should tolerate (eliminate) duplicates in operands' do
+      source = "[File[a], File[a]] -> File[x]"
+      parser.evaluate_string(scope, source, __FILE__)
+      scope.compiler.should have_relationship(['File', 'a', '->', 'File', 'x'])
+      scope.compiler.relationships.size.should == 1
+    end
+
     it 'should form a relation with <-' do
       source = "File[a] <- File[b]"
       parser.evaluate_string(scope, source, __FILE__)

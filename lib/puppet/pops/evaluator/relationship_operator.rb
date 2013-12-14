@@ -75,6 +75,11 @@ class Puppet::Pops::Evaluator::RelationshipOperator
     o
   end
 
+  # Array content needs to be transformed
+  def transform_Array(o, scope)
+    o.map{|x| transform(x, scope) }
+  end
+
   # Asserts (and returns) the type if it is a PCatalogEntryType
   # (A PCatalogEntryType is the base class of PHostClassType, and PResourceType).
   #
@@ -122,10 +127,13 @@ class Puppet::Pops::Evaluator::RelationshipOperator
       # real is [left, right], and both the left and right may be a single value or an array. In each case all content
       # should be flattened, and then transformed to a type. left or right may also be a value that is transformed
       # into an array, and thus the resulting left and right must be flattened individually
+      # Once flattened, the operands should be sets (to remove duplicate entries)
       #
       real = left_right_evaluated.collect {|x| [x].flatten.collect {|x| transform(x, scope) }}
       real[0].flatten!
       real[1].flatten!
+      real[0].uniq!
+      real[1].uniq!
 
       # reverse order if operator is Right to Left
       source, target = reverse_operator?(relationship_expression) ? real.reverse : real
