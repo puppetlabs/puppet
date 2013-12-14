@@ -22,6 +22,8 @@ module Puppet::Parser
     #
     def self.classic_parser(environment)
       require 'puppet/parser'
+      require 'puppet/parser/code_merger'
+
       Puppet::Parser::Parser.new(environment)
     end
 
@@ -32,6 +34,7 @@ module Puppet::Parser
       assert_rgen_installed() unless @@asserted
       @@asserted = true
       require 'puppet/parser/e4_parser_adapter'
+      require 'puppet/pops/parser/code_merger'
       E4ParserAdapter.new()
     end
 
@@ -69,6 +72,16 @@ module Puppet::Parser
         raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.1 is required when using '--parser future'. An older version is installed, please update.")
       end
     end
+
+    def self.code_merger
+      case Puppet[:parser]
+      when 'future'
+        Puppet::Pops::Parser::CodeMerger.new
+      else
+        Puppet::Parser::CodeMerger.new
+      end
+    end
+
   end
 
 end

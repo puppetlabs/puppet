@@ -455,15 +455,26 @@ class Puppet::Node::Environment
   #   representing the 'main' hostclass
   def perform_initial_import
     return empty_parse_result if Puppet.settings[:ignoreimport]
-#    parser = Puppet::Parser::Parser.new(self)
     parser = Puppet::Parser::ParserFactory.parser(self)
     if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""
       parser.string = code
+      parser.parse
     else
       file = Puppet.settings.value(:manifest, name.to_s)
-      parser.file = file
+      # if the manifest file is a reference to a directory, parse and combine all .pp files in that
+      # directory
+      if File.directory?(file)
+        parse_results = Dir.entries(file).find_all { |f| f =~ /\.pp$/ }.sort.map do |pp_file|
+          parser.file = File.join(file, pp_file)
+          parser.parse
+        end
+        # Use a parser type specific merger to concatenate the results
+        Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results)
+      else
+        parser.file = file
+        parser.parse
+      end
     end
-    parser.parse
   rescue => detail
     known_resource_types.parse_failed = true
 
