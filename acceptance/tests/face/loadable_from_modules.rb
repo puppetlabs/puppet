@@ -12,15 +12,10 @@ agents.each do |agent|
   user_modulepath = get_test_file_path(agent, 'user/modules')
 
   # make sure that we use the modulepath from the dev environment
-  create_test_file(agent, 'puppet.conf', <<"END")
-[user]
-environment=dev
-modulepath=#{user_modulepath}
-
-[dev]
-modulepath=#{dev_modulepath}
-END
   puppetconf = get_test_file_path(agent, 'puppet.conf')
+  on agent, puppet("config", "set", "environment", "dev", "--section", "user", "--config", puppetconf)
+  on agent, puppet("config", "set", "modulepath", user_modulepath, "--section", "user", "--config", puppetconf)
+  on agent, puppet("config", "set", "modulepath", dev_modulepath, "--section", "user", "--config", puppetconf)
 
   on agent, 'rm -rf puppetlabs-helloworld'
   on agent, puppet("module", "generate", "puppetlabs-helloworld")
