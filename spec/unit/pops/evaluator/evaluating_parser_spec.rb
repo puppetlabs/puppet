@@ -552,6 +552,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Resource['File']"           => types.resource(types.resource('File')),
       "File[foo]"                  => types.resource('file', 'foo'),
       "File[foo, bar]"             => [types.resource('file', 'foo'), types.resource('file', 'bar')],
+      "Pattern[a, /b/, Pattern[c], Regexp[d]]"  => types.pattern('a', 'b', 'c', 'd'),
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
         parser.evaluate_string(scope, source, __FILE__).should == result
@@ -589,7 +590,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "Resource[a, 0]"              => 'Error creating type specialization of a Resource-Type, Cannot use Fixnum where String is expected',
       "File[0]"                     => 'Error creating type specialization of a File-Type, Cannot use Fixnum where String is expected',
       "String[0]"                   => 'Error creating type specialization of a String-Type, Cannot use Fixnum where String is expected',
-      "Pattern[0]"                  => 'Error creating type specialization of a Pattern-Type, Cannot use Fixnum where String or Regexp is expected',
+      "Pattern[0]"                  => 'Error creating type specialization of a Pattern-Type, Cannot use Fixnum where String or Regexp or Pattern-Type or Regexp-Type is expected',
       "Regexp[0]"                   => 'Error creating type specialization of a Regexp-Type, Cannot use Fixnum where String or Regexp is expected',
       "Regexp[a,b]"                 => 'A Regexp-Type[] accepts 1 argument. Got 2',
       "true[0]"                     => "Operator '[]' is not applicable to a Boolean",

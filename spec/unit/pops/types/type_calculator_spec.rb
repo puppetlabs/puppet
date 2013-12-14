@@ -15,6 +15,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.pattern(*patterns)
   end
 
+  def regexp_t(pattern)
+    Puppet::Pops::Types::TypeFactory.regexp(pattern)
+  end
+
   def string_t(*strings)
     Puppet::Pops::Types::TypeFactory.string(*strings)
   end
@@ -107,7 +111,15 @@ describe 'The type calculator' do
     end
 
     def data_compatible_types
-      literal_types + [Puppet::Pops::Types::PHashType, Puppet::Pops::Types::PArrayType, Puppet::Pops::Types::PDataType]
+      result = literal_types
+      result << Puppet::Pops::Types::PDataType
+      result << array_t(types::PDataType.new)
+      result << types::TypeFactory.hash_of_data
+      result
+    end
+
+    def type_from_class(c)
+      c.is_a?(Class) ? c.new : c
     end
   end
 
@@ -357,7 +369,18 @@ describe 'The type calculator' do
       common_t.should == enum_t('a', 'b', 'c', 'x', 'y', 'z')
     end
 
-    it 'computed variant commonality to type union' do
+    it 'computed variant commonality to type union where added types are not assignable' do
+      a_t1 = integer_t()
+      a_t2 = enum_t('b')
+      v_a = variant_t(a_t1, a_t2)
+      b_t1 = enum_t('a')
+      v_b = variant_t(b_t1)
+      common_t = calculator.common_type(v_a, v_b)
+      common_t.class.should == Puppet::Pops::Types::PVariantType
+      Set.new(common_t.types).should  == Set.new([a_t1, a_t2, b_t1])
+    end
+
+    it 'computed variant commonality to type union where added types are assignable' do
       a_t1 = integer_t()
       a_t2 = string_t()
       v_a = variant_t(a_t1, a_t2)
@@ -365,7 +388,7 @@ describe 'The type calculator' do
       v_b = variant_t(b_t1)
       common_t = calculator.common_type(v_a, v_b)
       common_t.class.should == Puppet::Pops::Types::PVariantType
-      Set.new(common_t.types).should  == Set.new([a_t1, a_t2, b_t1])
+      Set.new(common_t.types).should  == Set.new([a_t1, a_t2])
     end
   end
 
@@ -388,24 +411,24 @@ describe 'The type calculator' do
     context "for Data, such that" do
       it 'all literals + array and hash are assignable to Data' do
         t = Puppet::Pops::Types::PDataType.new()
-        data_compatible_types.each { |t2| t2.new.should be_assignable_to(t) }
+        data_compatible_types.each { |t2| type_from_class(t2).should be_assignable_to(t) }
       end
 
       it 'a Variant of literal, hash, or array is assignable to Data' do
         t = Puppet::Pops::Types::PDataType.new()
-        data_compatible_types.each { |t2| variant_t(t2.new).should be_assignable_to(t) }
+        data_compatible_types.each { |t2| variant_t(type_from_class(t2)).should be_assignable_to(t) }
       end
 
       it 'Data is not assignable to any of its subtypes' do
         t = Puppet::Pops::Types::PDataType.new()
         types_to_test = data_compatible_types- [Puppet::Pops::Types::PDataType]
-        types_to_test.each {|t2| t.should_not be_assignable_to(t2.new) }
+        types_to_test.each {|t2| t.should_not be_assignable_to(type_from_class(t2)) }
       end
 
       it 'Data is not assignable to a Variant of Data subtype' do
         t = Puppet::Pops::Types::PDataType.new()
         types_to_test = data_compatible_types- [Puppet::Pops::Types::PDataType]
-        types_to_test.each { |t2| t.should_not be_assignable_to(variant_t(t2.new)) }
+        types_to_test.each { |t2| t.should_not be_assignable_to(variant_t(type_from_class(t2))) }
       end
 
       it 'Data is not assignable to any disjunct type' do
@@ -577,29 +600,54 @@ describe 'The type calculator' do
         calculator.assignable?(p_t, p_s).should == true
       end
 
+      it 'should accept a regexp matching a pattern' do
+        p_t = pattern_t(/abc/)
+        p_s = string_t('XabcY')
+        calculator.assignable?(p_t, p_s).should == true
+      end
+
+      it 'should accept a pattern matching a pattern' do
+        p_t = pattern_t(pattern_t('abc'))
+        p_s = string_t('XabcY')
+        calculator.assignable?(p_t, p_s).should == true
+      end
+
+      it 'should accept a regexp matching a pattern' do
+        p_t = pattern_t(regexp_t('abc'))
+        p_s = string_t('XabcY')
+        calculator.assignable?(p_t, p_s).should == true
+      end
+
       it 'should accept a string matching all patterns' do
         p_t = pattern_t('abc', 'ab', 'c')
         p_s = string_t('XabcY')
         calculator.assignable?(p_t, p_s).should == true
       end
 
-      it 'should accept multiple strings if they all match all patterns' do
-        p_t = pattern_t('abc', 'ab', 'c')
-        p_s = string_t('XabcY', 'abcde')
+      it 'should accept multiple strings if they all match any patterns' do
+        p_t = pattern_t('X', 'Y', 'abc')
+        p_s = string_t('Xa', 'aY', 'abc')
         calculator.assignable?(p_t, p_s).should == true
       end
 
-      it 'should reject a string not matching all patterns' do
-        p_t = pattern_t('abc', 'ab', 'c', 'q')
+      it 'should reject a string not matching any patterns' do
+        p_t = pattern_t('abc', 'ab', 'c')
         p_s = string_t('XqqqY')
         calculator.assignable?(p_t, p_s).should == false
       end
 
-      it 'should reject multiple strings if not all match all patterns' do
+      it 'should reject multiple strings if not all match any patterns' do
         p_t = pattern_t('abc', 'ab', 'c', 'q')
-        p_s = string_t('abc', 'XqqqY')
+        p_s = string_t('X', 'Y', 'Z')
         calculator.assignable?(p_t, p_s).should == false
       end
+
+      it 'should accept enum matching patterns as instanceof' do
+        enum = enum_t('XS', 'S', 'M', 'L' 'XL', 'XXL')
+        pattern = pattern_t('S', 'M', 'L')
+        calculator.assignable?(pattern, enum)  == true
+      end
+
     end
 
     it 'should recognize ruby type inheritance' do
@@ -984,6 +1032,45 @@ describe 'The type calculator' do
       [Object, Numeric, Float, String, Regexp, Array, Hash].each do |t|
         calculator.enumerable(calculator.type(t)).should == nil
       end
+    end
+  end
+
+  context "when dealing with different types of inference" do
+    it "an instance specific inference is produced by infer" do
+      calculator.infer(['a','b']).element_type.values.should == ['a', 'b']
+    end
+
+    it "a generic inference is produced using infer_generic" do
+      calculator.infer_generic(['a','b']).element_type.values.should == []
+    end
+
+    it "a generic result is created by generalize! given an instance specific result for an Array" do
+      generic = calculator.infer(['a','b'])
+      generic.element_type.values.should == ['a', 'b']
+      calculator.generalize!(generic)
+      generic.element_type.values.should == []
+    end
+
+    it "a generic result is created by generalize! given an instance specific result for a Hash" do
+      generic = calculator.infer({'a' =>1,'b' => 2})
+      generic.key_type.values.sort.should == ['a', 'b']
+      generic.element_type.from.should == 1
+      generic.element_type.to.should == 2
+      calculator.generalize!(generic)
+      generic.key_type.values.should == []
+      generic.element_type.from.should == nil
+      generic.element_type.to.should == nil
+    end
+
+    it "does not reduce by combining types when using infer_set" do
+      element_type = calculator.infer(['a','b',1,2]).element_type
+      element_type.class.should == Puppet::Pops::Types::PLiteralType
+      element_type = calculator.infer_set(['a','b',1,2]).element_type
+      element_type.class.should == Puppet::Pops::Types::PVariantType
+      element_type.types[0].class.should == Puppet::Pops::Types::PStringType
+      element_type.types[1].class.should == Puppet::Pops::Types::PStringType
+      element_type.types[2].class.should == Puppet::Pops::Types::PIntegerType
+      element_type.types[3].class.should == Puppet::Pops::Types::PIntegerType
     end
   end
 

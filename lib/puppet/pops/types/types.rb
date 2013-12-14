@@ -35,7 +35,7 @@ module Puppet::Pops::Types
       alias eql? ==
 
       def to_s
-        Puppet::Pops::Types::TypeCalculator.new.string(self)
+        Puppet::Pops::Types::TypeCalculator.string(self)
       end
     end
   end
@@ -72,6 +72,12 @@ module Puppet::Pops::Types
   #
   # @api public
   class PDataType < PObjectType
+    module ClassModule
+      def ==(o)
+        self.class == o.class ||
+          o.class == PVariantType && o == Puppet::Pops::Types::TypeCalculator.data_variant()
+      end
+    end
   end
 
   # A flexible type describing an any? of other types
@@ -86,14 +92,15 @@ module Puppet::Pops::Types
       end
 
       def ==(o)
-        self.class == o.class && Set.new(types) == Set.new(o.types)
+        (self.class == o.class && Set.new(types) == Set.new(o.types)) ||
+          (o.class == PDataType && self == Puppet::Pops::Types::TypeCalculator.data_variant())
       end
     end
   end
 
   # Type that is PDataType compatible, but is not a PCollectionType.
   # @api public
-  class PLiteralType < PDataType
+  class PLiteralType < PObjectType
   end
 
   # A string type describing the set of strings having one of the given values

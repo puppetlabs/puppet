@@ -11,11 +11,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   # If a Class is given, its name is used as label
   #
   def label o
-    if o.is_a?(Class)
-      o.name
-    else
-      @@label_visitor.visit(o)
-    end
+    @@label_visitor.visit(o)
   end
 
   def label_Factory o                     ; label(o.current)                    end
@@ -90,6 +86,15 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
       "#{Puppet::Pops::Types::TypeCalculator.string(o)} Resource-Reference"
     else
       "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type"
+    end
+  end
+
+  def label_Class o
+    if o <= Puppet::Pops::Types::PAbstractType
+      simple_name = o.name.split('::').last
+      simple_name[1..-5] + "-Type"
+    else
+      o.name
     end
   end
 end

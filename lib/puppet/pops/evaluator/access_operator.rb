@@ -179,7 +179,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
     keys.each_with_index do |k, i|
       unless allowed_classes.any? {|clazz| k.is_a?(clazz) }
-        bad_type_specialization_key_type(o, i, k, allowed_classes)
+        bad_type_specialization_key_type(o, i, k, *allowed_classes)
       end
     end
   end
@@ -204,14 +204,16 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def bad_type_specialization_key_type(type, key_index, actual, *expected_classes)
+    label_provider = Puppet::Pops::Model::ModelLabelProvider.new()
+    expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
     fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
       :type => type,
-      :message => "Cannot use #{bad_key_type_name(actual)} where #{expected_classes.join(' or ')} is expected"
+      :message => "Cannot use #{bad_key_type_name(actual)} where #{expected} is expected"
     })
   end
 
   def access_PPatternType(o, scope, keys)
-    assert_keys(keys, o, 1, INFINITY, String, Regexp)
+    assert_keys(keys, o, 1, INFINITY, String, Regexp, Puppet::Pops::Types::PPatternType, Puppet::Pops::Types::PRegexpType)
     Puppet::Pops::Types::TypeFactory.pattern(*keys)
   end
 

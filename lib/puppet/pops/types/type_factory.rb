@@ -115,15 +115,25 @@ module Puppet::Pops::Types::TypeFactory
         re_T = Types::PRegexpType.new()
         re_T.pattern = re
         t.addPatterns(re_T)
+
       when Regexp
-        re_T = Type::PRegexpType.new()
+        re_T = Types::PRegexpType.new()
         # Regep.to_s includes options user did not enter and does not escape source
         # to work either as a string or as a // regexp. The inspect method does a better
         # job, but includes the //
         re_T.pattern = re.inspect[1..-2]
         t.addPatterns(re_T)
-      else
-       raise ArgumentError, "Only String and Regexp are allowed: got '#{re.class}"
+
+      when Types::PRegexpType
+        t.addPatterns(re.copy)
+
+      when Types::PPatternType
+        re.patterns.each do |p|
+          t.addPatterns(p.copy)
+        end
+
+     else
+       raise ArgumentError, "Only String, Regexp, Pattern-Type, and Regexp-Type are allowed: got '#{re.class}"
       end
     end
     t
@@ -235,7 +245,7 @@ module Puppet::Pops::Types::TypeFactory
       type.ruby_class = o
       type
     else
-      @type_calculator.infer(o)
+      @type_calculator.infer_generic(o)
     end
   end
 
