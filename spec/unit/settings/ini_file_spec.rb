@@ -27,6 +27,24 @@ describe Puppet::Settings::IniFile do
     expect(config_fh.string).to eq "[the_section]\nname = value\n"
   end
 
+  it "does not add a [main] section to a file when it isn't needed" do
+    config_fh = a_config_file_containing(<<-CONF)
+    [section]
+    name = different value
+    CONF
+
+
+    Puppet::Settings::IniFile.update(config_fh) do |config|
+      config.set("main", "name", "value")
+    end
+
+    expect(config_fh.string).to eq(<<-CONF)
+name = value
+    [section]
+    name = different value
+    CONF
+  end
+
   it "preserves comments when writing a new name and value" do
     config_fh = a_config_file_containing("# this is a comment")
 
