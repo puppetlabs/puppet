@@ -25,7 +25,6 @@ tar -xzvf ../acceptance-artifacts.tar.gz
 echo "===== This artifact is from ====="
 cat creator.txt
 
-cd config/el6
 bundle install --without=development --path=.bundle/gems
 
 if [[ "${platform}" =~ 'solaris' ]]; then
