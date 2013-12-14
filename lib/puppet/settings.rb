@@ -510,11 +510,7 @@ class Puppet::Settings
     # And now we can repopulate with the values from our last parsing of the config files.
     @configuration_file = data
     data.sections.each do |name, section|
-      section.settings.each do |setting|
-        if setting.has_metadata? && type = @config[setting.name]
-          type.set_meta(setting.meta)
-        end
-      end
+      apply_metadata_from_section(section)
     end
 
     # Determine our environment, if we have one.
@@ -605,14 +601,20 @@ class Puppet::Settings
       searchpath.reverse.each do |source|
         source = preferred_run_mode if source == :run_mode
         if section = @configuration_file.sections[source]
-          section.settings.each do |setting|
-            @config[setting.name].set_meta(setting.meta)
-          end
+          apply_metadata_from_section(section)
         end
       end
     end
   end
   private :apply_metadata
+
+  def apply_metadata_from_section(section)
+    section.settings.each do |setting|
+      if setting.has_metadata? && type = @config[setting.name]
+        type.set_meta(setting.meta)
+      end
+    end
+  end
 
   SETTING_TYPES = {
       :string     => StringSetting,
