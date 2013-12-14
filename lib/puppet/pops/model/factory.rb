@@ -683,7 +683,7 @@ class Puppet::Pops::Model::Factory
   end
 
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
-  # expression, or expression list. Also transforms a "call" to `import` into an ImportExpression.
+  # expression, or expression list.
   #
   def self.transform_calls(expressions)
     expressions.reduce([]) do |memo, expr|
