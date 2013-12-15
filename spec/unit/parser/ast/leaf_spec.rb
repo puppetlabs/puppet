@@ -280,6 +280,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
 
   describe "when assigning" do
     it "should add a new key and value" do
+      Puppet.expects(:warning).once
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
       scope    = Puppet::Parser::Scope.new(compiler)
@@ -301,6 +302,7 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
     end
 
     it "should be able to return an array member when index is a stringified number" do
+      Puppet.expects(:warning).once
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
       scope    = Puppet::Parser::Scope.new(compiler)
