@@ -28,7 +28,7 @@ cat creator.txt
 bundle install --without=development --path=.bundle/gems
 
 if [[ "${platform}" =~ 'solaris' ]]; then
-  repo_proxy="  :repo_proxy => false,\n"
+  repo_proxy="  :repo_proxy => false,"
 fi
 
 cat > local_options.rb <<-EOF
