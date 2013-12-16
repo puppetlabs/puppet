@@ -53,7 +53,7 @@ class WindowsDaemon < Win32::Daemon
     #   )
     # end
 
-    log_notice("Starting service: #{args}")
+    log_notice("Starting service with arguments: #{args}")
 
     while running? do
       return if state != RUNNING
@@ -83,7 +83,7 @@ class WindowsDaemon < Win32::Daemon
 
       log_debug("Service waiting for #{runinterval} seconds")
       sleep(runinterval)
-      log_debug('Service resuming')
+      log_debug('Service woken up')
     end
 
     log_notice('Service stopped')
@@ -95,6 +95,26 @@ class WindowsDaemon < Win32::Daemon
     log_notice('Service stopping')
     Thread.main.wakeup
   end
+
+  def service_pause
+    # The service will not stay in a paused stated, instead it will go back into a running state after a short period of time.  This is an issue in the Win32-Service ruby code
+    # Raised bug https://github.com/djberg96/win32-service/issues/11 and is fixed in version 0.8.3.
+    # Because the Pause feature is so rarely used, there is no point in creating a workaround until puppet uses 0.8.3.
+    log_notice('Service pausing. The service will not stay paused and will eventually go back into a running state.')
+  end
+
+  def service_resume
+    log_notice('Service resuming')
+  end
+
+  def service_shutdown
+    log_notice('Host shutting down')
+  end
+
+  # Interrogation handler is just for debug.  Can be commented out or removed entirely.
+  # def service_interrogate
+  #   log_debug('Service is being interrogated')
+  # end
 
   def log_exception(e)
     log_err(e.message)
@@ -109,30 +129,32 @@ class WindowsDaemon < Win32::Daemon
 
       case level
         when :debug
-          raise_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
+          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
         when :info
-          raise_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
+          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
         when :notice
-          raise_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
+          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
         when :err
-          raise_windows_event(Win32::EventLog::ERR,0x03,msg.to_s)
+          report_windows_event(Win32::EventLog::ERR,0x03,msg.to_s)
         else
-          raise_windows_event(Win32::EventLog::WARN,0x02,msg.to_s)
+          report_windows_event(Win32::EventLog::WARN,0x02,msg.to_s)
       end
     end
   end
 
-  def raise_windows_event(type,id,message)
+  def report_windows_event(type,id,message)
     begin
       eventlog = Win32::EventLog.open("Application")
       eventlog.report_event(
-        :source      => "Puppet Agent",
+        :source      => "Puppet",
         :event_type  => type,   # Win32::EventLog::INFO or WARN, ERROR
         :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
         :data        => message # "the message"
       )
     rescue Exception => e
       # Ignore all errors
+    ensure
+      eventlog.close
     end
   end
 end
