@@ -23,9 +23,11 @@ Puppet::Type.type(:package).provide :pip,
 
   # Return an array of structured information about every installed package
   # that's managed by `pip` or an empty array if `pip` is not available.
+  # unfortunately this will only include system-wide packages, not ones
+  # installed within a virtualenv
   def self.instances(virtualenv=nil)
     packages = []
-    pip_cmd = self.cmd
+    pip_cmd = self.cmd or return []
     execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
@@ -36,16 +38,21 @@ Puppet::Type.type(:package).provide :pip,
   end
 
   def self.cmd
+    case Facter.value(:osfamily)
+      when "RedHat"
+        which("pip-python")
+      else
+        which("pip")
+    end
+  end
+
+  # venv pip if called with a venv, else self.cmd (system-wide)
+  def venvcmd
     Puppet.debug("Provider::Pip VirtualEnv #{@resource[:virtualenv]}")
     if @resource[:virtualenv]
       "#{@resource[:virtualenv]}/bin/pip"
     else
-      case Facter.value(:osfamily)
-        when "RedHat"
-          which("pip-python")
-        else
-          which("pip")
-      end
+      self.cmd
     end
   end
 
@@ -119,7 +126,7 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if pathname = which(self.class.cmd)
+    if pathname = venvcmd
       self.class.commands :pip => pathname
       pip *args
     else
