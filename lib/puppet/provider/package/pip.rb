@@ -56,6 +56,15 @@ Puppet::Type.type(:package).provide :pip,
     end
   end
 
+  # yes, the difference between self. and plain methods confuses me
+  def alsoparse(line)
+    if line.chomp =~ /^([^=]+)==([^=]+)$/
+      {:ensure => $2, :name => $1, :provider => name}
+    else
+      nil
+    end
+  end
+
   # Return structured information about a particular package or `nil` if
   # it is not installed or `pip` itself is not available.
   def query
@@ -63,7 +72,21 @@ Puppet::Type.type(:package).provide :pip,
     # anyway)
     name = @resource[:name].downcase
 
-    self.class.instances(@resource[:virtualenv]).each do |provider_pip|
+    if @resource[:virtualenv]
+      packages = []
+      pip_cmd = venvcmd
+      execpipe "#{pip_cmd} freeze" do |process|
+        process.collect do |line|
+          next unless options = alsoparse(line)
+          Puppet.debug("options #{options}")
+          packages << options
+        end
+      end
+    else
+      packages = self.class.instances
+    end
+
+    packages.each do |provider_pip|
       return provider_pip.properties if name == provider_pip.name.downcase
     end
     return nil
