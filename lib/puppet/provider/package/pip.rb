@@ -48,7 +48,7 @@ Puppet::Type.type(:package).provide :pip,
 
   # venv pip if called with a venv, else self.cmd (system-wide)
   def venvcmd
-    Puppet.debug("Provider::Pip VirtualEnv #{@resource[:virtualenv]}")
+    Puppet.debug("Provider::Pip using virtualenv #{@resource[:virtualenv]}")
     if @resource[:virtualenv]
       "#{@resource[:virtualenv]}/bin/pip"
     else
@@ -64,7 +64,7 @@ Puppet::Type.type(:package).provide :pip,
   # yes, the difference between self. and plain methods confuses me
   def alsoparse(line)
     if line.chomp =~ /^([^=]+)==([^=]+)$/
-      {:ensure => $2, :name => $1, :provider => name}
+      {:ensure => $2, :name => $1, :provider => :pip}
     else
       nil
     end
@@ -78,22 +78,17 @@ Puppet::Type.type(:package).provide :pip,
     name = @resource[:name].downcase
 
     if @resource[:virtualenv]
-      packages = []
       pip_cmd = venvcmd
       execpipe "#{pip_cmd} freeze" do |process|
         process.collect do |line|
           next unless options = alsoparse(line)
-          Puppet.debug("options #{options}")
-          packages << options
+          return options if name == options[:name].downcase
         end
       end
     else
-      packages = self.class.instances
-    end
-
-    packages.each do |provider_pip|
-      Puppet.debug("query each provider_pip=#{provider_pip.properties} name=#{provider_pip.name.downcase}")
-      return provider_pip.properties if name == provider_pip.name.downcase
+      self.class.instances.each do |provider_pip|
+        return provider_pip.properties if name == provider_pip.name.downcase
+      end
     end
     return nil
   end
