@@ -40,7 +40,12 @@ Puppet::Type.type(:package).provide :pip,
     if @resource[:virtualenv]
       "#{@resource[:virtualenv]}/bin/pip"
     else
-      "/usr/bin/pip"
+      case Facter.value(:osfamily)
+        when "RedHat"
+          which("pip-python")
+        else
+          which("pip")
+      end
     end
   end
 
