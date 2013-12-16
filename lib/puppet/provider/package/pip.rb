@@ -52,7 +52,12 @@ Puppet::Type.type(:package).provide :pip,
     if @resource[:virtualenv]
       "#{@resource[:virtualenv]}/bin/pip"
     else
-      self.cmd
+      case Facter.value(:osfamily)
+        when "RedHat"
+          which("pip-python")
+        else
+          which("pip")
+      end
     end
   end
 
@@ -87,6 +92,7 @@ Puppet::Type.type(:package).provide :pip,
     end
 
     packages.each do |provider_pip|
+      Puppet.debug("query each provider_pip=#{provider_pip.properties} name=#{provider_pip.name.downcase}")
       return provider_pip.properties if name == provider_pip.name.downcase
     end
     return nil
