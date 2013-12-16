@@ -32,7 +32,7 @@ shared_examples_for 'all iterative functions argument checks' do |func|
       compile_to_catalog(<<-MANIFEST)
         "not correct".#{func} |$v| {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /must be an Array or a Hash/)
+    end.to raise_error(Puppet::Error, /must be an Array.*Hash/)
   end
 
   it 'raises an error when called with any parameters besides a block' do

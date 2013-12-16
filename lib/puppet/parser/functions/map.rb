@@ -8,13 +8,13 @@ Puppet::Parser::Functions::newfunction(
   Applies a parameterized block to each element in a sequence of entries from the first
   argument and returns an array with the result of each invocation of the parameterized block.
 
-  This function takes two mandatory arguments: the first should be an Array or a Hash, and the second
-  a parameterized block as produced by the puppet syntax:
+  This function takes two mandatory arguments: the first should be an Array, Hash, or enumerable type,
+  and the second a parameterized block as produced by the puppet syntax:
 
         $a.map |$x| { ... }
 
-  When the first argument `$a` is an Array, the block is called with each entry in turn. When the first argument
-  is a hash the entry is an array with `[key, value]`.
+  When the first argument `$a` is an Array or enumerable type, the block is called with each entry in turn.
+  When the first argument is a hash the entry is an array with `[key, value]`.
 
   *Examples*
 
@@ -36,8 +36,15 @@ Puppet::Parser::Functions::newfunction(
   case receiver
   when Array
   when Hash
+  when Puppet::Pops::Types::PAbstractType
+    tc = Puppet::Pops::Types::TypeCalculator.new()
+    enumerable = tc.enumerable(receiver)
+    if enumerable.nil?
+      raise ArgumentError, ("map(): given type '#{tc.string(receiver)}' is not enumerable")
+    end
+    receiver = enumerable.each
   else
-    raise ArgumentError, ("map(): wrong argument type (#{receiver.class}; must be an Array or a Hash.")
+    raise ArgumentError, ("map(): wrong argument type (#{receiver.class}; must be an Array, Hash, or enumerable type.")
   end
 
   receiver.to_a.map {|x| pblock.call(self, x) }

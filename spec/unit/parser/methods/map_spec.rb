@@ -25,6 +25,19 @@ describe 'the map method' do
       catalog.resource(:file, "/file_6")['ensure'].should == 'present'
     end
 
+    it 'map on an enumerable type (multiplying each value by 2)' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = Integer[1,3]
+        $a.map |$x|{ $x*2}.each |$v|{
+          file { "/file_$v": ensure => present }
+        }
+      MANIFEST
+
+      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_4")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+    end
+
     it 'map on a hash selecting keys' do
       catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'a'=>1,'b'=>2,'c'=>3}
