@@ -40,7 +40,7 @@ class WindowsDaemon < Win32::Daemon
     basedir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
 
     # The puppet installer registers a 'Puppet' event source.  For the moment events will be logged with this key, but
-    # it may be a good idea to split the Service and Puppet evnts later so it's easier to read in the windows Event Log.
+    # it may be a good idea to split the Service and Puppet events later so it's easier to read in the windows Event Log.
     #
     # Example code to register an event source;
     # eventlogdll =  File.expand_path(File.join(basedir, 'puppet', 'ext', 'windows', 'eventlog', 'puppetres.dll'))
