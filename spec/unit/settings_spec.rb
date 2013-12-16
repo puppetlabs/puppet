@@ -1372,13 +1372,20 @@ describe Puppet::Settings do
 
       @trans.expects(:any_failed?).returns(true)
 
-      report = mock 'report'
+      resource = Puppet::Type.type(:notify).new(:title => 'failed')
+      status = Puppet::Resource::Status.new(resource)
+      event = Puppet::Transaction::Event.new(
+        :name => 'failure',
+        :status => 'failure',
+        :message => 'My failure')
+      status.add_event(event)
+
+      report = Puppet::Transaction::Report.new('apply')
+      report.add_resource_status(status)
+
       @trans.expects(:report).returns report
 
-      log = mock 'log', :to_s => "My failure", :level => :err
-      report.expects(:logs).returns [log]
-
-      @settings.expects(:raise).with { |msg| msg.include?("My failure") }
+      @settings.expects(:raise).with(includes("My failure"))
       @settings.use(:whatever)
     end
   end
