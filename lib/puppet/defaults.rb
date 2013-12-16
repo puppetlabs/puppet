@@ -840,7 +840,8 @@ EOT
     :manifest => {
       :default    => "$manifestdir/site.pp",
       :type       => :file,
-      :desc       => "The entry-point manifest for puppet master.",
+      :desc       => "The entry-point manifest file for puppet master or a directory of manifests
+        to be evaluated in alphabetical order.",
     },
     :code => {
       :default    => "",

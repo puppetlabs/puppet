@@ -87,7 +87,7 @@ class Puppet::Parser::Parser
         file = file + ".pp"
       end
     end
-    raise Puppet::AlreadyImportedError, "Import loop detected" if known_resource_types.watching_file?(file)
+    raise Puppet::AlreadyImportedError, "Import loop detected for #{file}" if known_resource_types.watching_file?(file)
 
     watch_file(file)
     @lexer.file = file

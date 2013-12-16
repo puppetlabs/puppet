@@ -439,12 +439,14 @@ describe Puppet::Node::Environment do
       end
     end
   end
+
   describe 'with classic parser' do
     before :each do
       Puppet[:parser] = 'current'
     end
     it_behaves_like 'the environment'
   end
+
   describe 'with future parser' do
     before :each do
       Puppet[:parser] = 'future'
