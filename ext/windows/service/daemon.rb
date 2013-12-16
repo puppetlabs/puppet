@@ -35,6 +35,7 @@ class WindowsDaemon < Win32::Daemon
 
     if (@LOG_TO_FILE)
       FileUtils.mkdir_p(File.dirname(LOG_FILE))
+      args = args.gsub("--logtofile","")
     end
     basedir = File.expand_path(File.join(File.dirname(__FILE__), '..'))
 
