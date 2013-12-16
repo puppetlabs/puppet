@@ -169,12 +169,27 @@ class Puppet::Parser::AST
         raise Puppet::ParseError, "Assigning to the hash '#{variable}' with an existing key '#{accesskey}' is forbidden"
       end
 
+      mutation_deprecation()
+
       # assign to hash or array
       object[array_index_or_key(object, accesskey)] = value
     end
 
     def to_s
       "\$#{variable.to_s}[#{key.to_s}]"
+    end
+
+    def mutation_deprecation
+      deprecation_location_text =
+      if file && line
+        " at #{file}:#{line}"
+      elsif file
+        " in file #{file}"
+      elsif line
+        " at #{line}"
+      end
+      Puppet.warning(["The use of mutating operations on Array/Hash is deprecated#{deprecation_location_text}.",
+         " See http://links.puppetlabs.com/puppet-mutation-deprecation"].join(''))
     end
   end
 
