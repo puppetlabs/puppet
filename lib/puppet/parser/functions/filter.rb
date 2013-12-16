@@ -33,11 +33,11 @@ Puppet::Parser::Functions::newfunction(
         Integer[1,10].filter |$x| { ... }
         Integer[1,10].filter |$index, $x| { ... }
 
-  The first form will give the block each element from the enumeration, and the second will get the index
-  and value for each element from the enumeration. The index always starts from 0.
+  The first form will pass each element from the enumeration to the block, and the second will pass the index
+  and value for each element. The index always starts from 0.
 
   - Since 3.4
-  - requires `parser = future`.
+  - requires `parser = future`
   ENDHEREDOC
 
   def filter_Type(o, scope, pblock)
