@@ -151,7 +151,7 @@ module Puppet::Pops::Types
       # Returns Float.Infinity if one end of the range is unbound
       def size
         return 1.0 / 0.0 if from.nil? || to.nil?
-        (to-from).abs
+        1+(to-from).abs
       end
 
       # Returns Enumerator if no block is given

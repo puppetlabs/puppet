@@ -7,8 +7,8 @@ Puppet::Parser::Functions::newfunction(
   argument and returns the first argument, or if no block is given returns a new array with a concatenation of
   the slices.
 
-  This function takes two mandatory arguments: the first, `$a`, should be an Array or a Hash, and the second, `$n`,
-  the number of elements to include in each slice. The optional third argument should be a
+  This function takes two mandatory arguments: the first, `$a`, should be an Array, Hash, or enumerable type,
+  and the second, `$n`, the number of elements to include in each slice. The optional third argument should be a
   a parameterized block as produced by the puppet syntax:
 
       $a.slice($n) |$x| { ... }
@@ -16,8 +16,8 @@ Puppet::Parser::Functions::newfunction(
   The parameterized block should have either one parameter (receiving an array with the slice), or the same number
   of parameters as specified by the slice size (each parameter receiving its part of the slice).
   In case there are fewer remaining elements than the slice size for the last slice it will contain the remaining
-  elements. When the block has multiple parameters, excess parameters are set to :undef for an array, and to
-  empty arrays for a Hash.
+  elements. When the block has multiple parameters, excess parameters are set to :undef for an array or
+  enumerable type, and to empty arrays for a Hash.
 
       $a.slice(2) |$first, $second| { ... }
 
@@ -29,7 +29,8 @@ Puppet::Parser::Functions::newfunction(
 
   When called without a block, the function produces a concatenated result of the slices.
 
-      slice($[1,2,3,4,5,6], 2) # produces [[1,2], [3,4], [5,6]]
+      slice([1,2,3,4,5,6], 2) # produces [[1,2], [3,4], [5,6]]
+      slice(Integer[1,6], 2)  # produces [[1,2], [3,4], [5,6]]
 
   - Since 3.2
   - requires `parser = future`.
@@ -37,7 +38,7 @@ Puppet::Parser::Functions::newfunction(
   require 'puppet/parser/ast/lambda'
   require 'puppet/parser/scope'
 
-  def each_Common(o, slice_size, filler, scope, pblock)
+  def each_Common(o, size, slice_size, filler, scope, pblock)
     serving_size = pblock ? pblock.parameter_count : 1
     if serving_size == 0
       raise ArgumentError, "Block must define at least one parameter."
@@ -48,7 +49,7 @@ Puppet::Parser::Functions::newfunction(
     enumerator = o.each_slice(slice_size)
     result = []
     if serving_size == 1
-      ((o.size.to_f / slice_size).ceil).times do
+      ((size.to_f / slice_size).ceil).times do
         if pblock
           pblock.call(scope, enumerator.next)
         else
@@ -56,7 +57,7 @@ Puppet::Parser::Functions::newfunction(
         end
       end
     else
-      ((o.size.to_f / slice_size).ceil).times do
+      ((size.to_f / slice_size).ceil).times do
         a = enumerator.next
         if a.size < serving_size
           a = a.dup.fill(filler, a.length...serving_size)
@@ -88,9 +89,17 @@ Puppet::Parser::Functions::newfunction(
 
   case receiver
   when Array
-    each_Common(receiver, slice_size, :undef, self, pblock)
+    each_Common(receiver, receiver.size, slice_size, :undef, self, pblock)
   when Hash
-    each_Common(receiver, slice_size, [], self, pblock)
+    each_Common(receiver, receiver.size, slice_size, [], self, pblock)
+  when Puppet::Pops::Types::PAbstractType
+    tc = Puppet::Pops::Types::TypeCalculator.new()
+    enumerable = tc.enumerable(receiver)
+    if enumerable.nil?
+      raise ArgumentError, ("slice(): given type '#{tc.string(receiver)}' is not enumerable")
+    end
+    result = each_Common(enumerable.each, receiver.size, slice_size, [], self, pblock)
+    pblock ? receiver : result
   else
     raise ArgumentError, ("slice(): wrong argument type (#{args[0].class}; must be an Array or a Hash.")
   end

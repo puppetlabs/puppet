@@ -35,6 +35,16 @@ describe 'the reduce method' do
       catalog.resource(:file, "/file_6")['ensure'].should == 'present'
     end
 
+    it 'reduce on enumerable type' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = Integer[1,3]
+        $b = $a.reduce |$memo, $x| { $memo + $x }
+        file { "/file_$b": ensure => present }
+      MANIFEST
+
+      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+    end
+
     it 'reduce on an array with start value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]

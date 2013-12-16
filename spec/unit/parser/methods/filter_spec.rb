@@ -23,6 +23,32 @@ describe 'the filter method' do
     catalog.resource(:file, "/file_blueberry")['ensure'].should == 'present'
   end
 
+  it 'should filter on enumerable type (Integer)' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $a = Integer[1,10]
+      $a.filter |$x|{ $x  % 3 == 0}.each |$v|{
+        file { "/file_$v": ensure => present }
+      }
+    MANIFEST
+
+    catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+    catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+    catalog.resource(:file, "/file_9")['ensure'].should == 'present'
+  end
+
+  it 'should filter on enumerable type (Integer) using two args index/value' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $a = Integer[10,18]
+      $a.filter |$i, $x|{ $i  % 3 == 0}.each |$v|{
+        file { "/file_$v": ensure => present }
+      }
+    MANIFEST
+
+    catalog.resource(:file, "/file_10")['ensure'].should == 'present'
+    catalog.resource(:file, "/file_13")['ensure'].should == 'present'
+    catalog.resource(:file, "/file_16")['ensure'].should == 'present'
+  end
+
   it 'should produce an array when acting on an array' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = ['strawberry','blueberry','orange']
