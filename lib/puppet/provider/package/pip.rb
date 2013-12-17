@@ -27,7 +27,7 @@ Puppet::Type.type(:package).provide :pip,
   # installed within a virtualenv
   def self.instances(virtualenv=nil)
     packages = []
-    pip_cmd = self.cmd or return []
+    pip_cmd = which(cmd) or return []
     execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
@@ -40,9 +40,9 @@ Puppet::Type.type(:package).provide :pip,
   def self.cmd
     case Facter.value(:osfamily)
       when "RedHat"
-        which("pip-python")
+        "pip-python"
       else
-        which("pip")
+        "pip"
     end
   end
 
@@ -54,19 +54,10 @@ Puppet::Type.type(:package).provide :pip,
     else
       case Facter.value(:osfamily)
         when "RedHat"
-          which("pip-python")
+          "pip-python"
         else
-          which("pip")
+          "pip"
       end
-    end
-  end
-
-  # yes, the difference between self. and plain methods confuses me
-  def alsoparse(line)
-    if line.chomp =~ /^([^=]+)==([^=]+)$/
-      {:ensure => $2, :name => $1, :provider => :pip}
-    else
-      nil
     end
   end
 
@@ -78,10 +69,10 @@ Puppet::Type.type(:package).provide :pip,
     name = @resource[:name].downcase
 
     if @resource[:virtualenv]
-      pip_cmd = venvcmd
+      pip_cmd = which(venvcmd)
       execpipe "#{pip_cmd} freeze" do |process|
         process.collect do |line|
-          next unless options = alsoparse(line)
+          next unless options = self.class.parse(line)
           return options if name == options[:name].downcase
         end
       end
@@ -150,7 +141,7 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if pathname = venvcmd
+    if pathname = which(venvcmd)
       self.class.commands :pip => pathname
       pip *args
     else
