@@ -212,8 +212,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def call_function(name, args, o, scope)
-    # Should arguments be mapped from :undef to '' (3x functions expects this - but it is bad)
-    mapped_args = args.map {|a| a == :undef ? '' : a }
+    # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
+    mapped_args = args.map {|a| convert(a, scope) }
     scope.send("function_#{name}", mapped_args)
   end
 
@@ -401,6 +401,15 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
     # source form
     o.inspect
+  end
+
+  def convert_Symbol(o, scope)
+    case o
+    when :undef
+      ''  # 3x wants :undef as empty string in function
+    else
+      o   # :default, and all others are verbatim since they are new in future evaluator
+    end
   end
 
   def convert_PAbstractType(o, scope)
