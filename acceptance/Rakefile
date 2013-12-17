@@ -12,7 +12,7 @@ module HarnessOptions
     :type => 'git',
     :helper => ['lib/helper.rb'],
     :tests  => ['tests'],
-    :debug => true,
+    :log_level => 'debug',
     :color => false,
     :root_keys => true,
     :ssh => {
