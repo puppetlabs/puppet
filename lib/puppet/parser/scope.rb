@@ -179,13 +179,15 @@ class Puppet::Parser::Scope
   # Returns true if the variable of the given name is set to any value (including nil)
   #
   def exist?(name)
-    effective_symtable(true).include?(name)
+    next_scope = inherited_scope || enclosing_scope
+    effective_symtable(true).include?(name) || next_scope && next_scope.exist?(name)
   end
 
-  # Returns true if the given name is bound in the current (most nested) scope.
+  # Returns true if the given name is bound in the current (most nested) scope for assignments.
   #
   def bound?(name)
-    effective_symtable(true).bound?(name)
+    # Do not look in ephemeral (match scope), the semantics is to answer if an assignable variable is bound
+    effective_symtable(false).bound?(name)
   end
 
   # Is the value true?  This allows us to control the definition of truth
@@ -604,7 +606,7 @@ class Puppet::Parser::Scope
   # @param use_ephemeral [Boolean] whether the top most ephemeral (of any kind) should be used or not
   def effective_symtable use_ephemeral
     s = @ephemeral.last
-    return s if use_ephemeral
+    return s || @symtable if use_ephemeral
 
     # Why check if ephemeral is a Hash ??? Not needed, a hash cannot be a parent scope ???
     while s && !(s.is_a?(Hash) || s.is_local_scope?())
