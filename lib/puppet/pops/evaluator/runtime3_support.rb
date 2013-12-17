@@ -32,7 +32,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # TODO: Improve the messy implementation in Scope.
     #
     if scope.bound?(name)
-      fail(Puppet::Pops::Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
+      if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
+        fail(Puppet::Pops::Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+      else
+        fail(Puppet::Pops::Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
+      end
     end
     scope.setvar(name, value)
   end

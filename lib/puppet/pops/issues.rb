@@ -164,6 +164,10 @@ module Puppet::Pops::Issues
     "Cannot reassign variable #{name}"
   end
 
+  ILLEGAL_RESERVED_ASSIGNMENT = hard_issue :ILLEGAL_RESERVED_ASSIGNMENT, :name do
+    "Attempt to assign to a reserved variable name: '#{name}'"
+  end
+
   # Assignment cannot be made to numeric match result variables
   ILLEGAL_NUMERIC_ASSIGNMENT = issue :ILLEGAL_NUMERIC_ASSIGNMENT, :varname do
     "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
