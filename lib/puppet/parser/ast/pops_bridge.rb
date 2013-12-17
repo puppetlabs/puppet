@@ -20,7 +20,7 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def to_s
-      Puppet::Pops::Model::ModelTreeDumper.new(dump(@value))
+      Puppet::Pops::Model::ModelTreeDumper.new.dump(@value)
     end
 
     def evaluate(scope)
