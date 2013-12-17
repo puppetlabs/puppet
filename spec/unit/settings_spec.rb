@@ -269,7 +269,7 @@ describe Puppet::Settings do
 
     describe "setbycli" do
       it "should generate a deprecation warning" do
-        Puppet.expects(:deprecation_warning)
+        Puppet.expects(:deprecation_warning).at_least(1)
         @settings.setting(:myval).setbycli = true
       end
       it "should set the value" do
@@ -542,20 +542,6 @@ describe Puppet::Settings do
       @settings[:two].should == "one TWO"
     end
 
-    describe "caching values that evaluate to false" do
-      it "caches nil" do
-        @settings.expects(:convert).once.returns nil
-        @settings[:five].should be_nil
-        @settings[:five].should be_nil
-      end
-
-      it "caches false" do
-        @settings.expects(:convert).once.returns false
-        @settings[:five].should == false
-        @settings[:five].should == false
-      end
-    end
-
     it "should not cache values such that information from one environment is returned for another environment" do
       text = "[env1]\none = oneval\n[env2]\none = twoval\n"
       @settings.stubs(:read_file).returns(text)
@@ -777,11 +763,11 @@ describe Puppet::Settings do
       @settings.define_settings :section, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
       otherfile = make_absolute("/other/file")
-      text = "[main]
+      @settings.parse_config(<<-CONF)
+      [main]
       myfile = #{otherfile} {owner = service, group = service, mode = 644}
-      "
-      @settings.expects(:read_file).returns(text)
-      @settings.send(:parse_config_files)
+      CONF
+
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser", :group => "sgroup", :mode => "644"}
     end
@@ -790,11 +776,11 @@ describe Puppet::Settings do
       @settings.define_settings :section, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
       otherfile = make_absolute("/other/file")
-      text = "[main]
+      @settings.parse_config(<<-CONF)
+      [main]
       myfile = #{otherfile} {owner = service}
-      "
-      @settings.expects(:read_file).returns(text)
-      @settings.send(:parse_config_files)
+      CONF
+
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser"}
     end
@@ -824,6 +810,37 @@ describe Puppet::Settings do
       # initializing the app should have reloaded the metadata based on run_mode
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:mode => "664"}
+    end
+
+    it "does not use the metadata from the same setting in a different section" do
+      default_values = {}
+      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
+        default_values[key] = 'default value'
+      end
+
+      file = make_absolute("/file")
+      default_mode = "0600"
+      @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
+      @settings.define_settings :master, :myfile => { :type => :file, :default => file, :desc => "a", :mode => default_mode }
+
+      text = "[master]
+      myfile = #{file}/foo
+      [agent]
+      myfile = #{file} {mode = 664}
+      "
+      @settings.expects(:read_file).returns(text)
+
+      # will start initialization as user
+      @settings.preferred_run_mode.should == :user
+      @settings.send(:parse_config_files)
+
+      # change app run_mode to master
+      @settings.initialize_app_defaults(default_values.merge(:run_mode => :master))
+      @settings.preferred_run_mode.should == :master
+
+      # initializing the app should have reloaded the metadata based on run_mode
+      @settings[:myfile].should == "#{file}/foo"
+      @settings.metadata(:myfile).should == { :mode => default_mode }
     end
 
     it "should call hooks associated with values set in the configuration file" do
@@ -1064,7 +1081,7 @@ describe Puppet::Settings do
       it "reparses if the file has changed" do
         @watched_file.expects(:changed?).returns true
 
-        @settings.expects(:unsafe_parse).with(@file)
+        @settings.expects(:parse_config_files)
 
         @settings.reparse_config_files
       end
