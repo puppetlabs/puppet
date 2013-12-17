@@ -401,6 +401,11 @@ resource_expression
       end
       loc result, val[0], val[4]
     }
+  | at CLASS LBRACE resourceinstances endsemi RBRACE {
+        result = Factory.RESOURCE(Factory.fqn(token_text(val[1])), val[3])
+        result.form = val[0]
+        loc result, val[1], val[5]
+    }
   | CLASS LBRACE resourceinstances endsemi RBRACE {
         result = Factory.RESOURCE(Factory.fqn(token_text(val[0])), val[2])
         loc result, val[0], val[4]
