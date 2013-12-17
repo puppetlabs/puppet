@@ -18,15 +18,13 @@ class Puppet::Settings::ConfigFile
     result = Conf.new
 
     ini = Puppet::Settings::IniFile.parse(StringIO.new(text))
-    ini.sections.each do |section|
-      section_name = section.name.intern
-      fail_when_illegal_section_name(section_name, file, section.line_number)
-      section_config = Section.new(section_name)
-      result.with_section(section_config)
+    unique_sections_in(ini, file).each do |section_name|
+      section = Section.new(section_name.to_sym)
+      result.with_section(section)
 
-      ini.lines_in(section.name).each do |line|
+      ini.lines_in(section_name).each do |line|
         if line.is_a?(Puppet::Settings::IniFile::SettingLine)
-          parse_setting(line, section_config)
+          parse_setting(line, section)
         elsif line.text !~ /^\s*#|^\s*$/
           raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line.line_number)
         end
@@ -73,6 +71,15 @@ class Puppet::Settings::ConfigFile
 
 private
 
+  def unique_sections_in(ini, file)
+    ini.section_lines.collect do |section|
+      if section.name == "application_defaults" || section.name == "global_defaults"
+        raise Puppet::Error, "Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}"
+      end
+      section.name
+    end.uniq
+  end
+
   def parse_setting(setting, section)
     var = setting.name.intern
 
@@ -100,12 +107,6 @@ private
 
   def empty_section
     { :_meta => {} }
-  end
-
-  def fail_when_illegal_section_name(section, file, line)
-    if section == :application_defaults or section == :global_defaults
-      raise Puppet::Error, "Illegal section '#{section}' in config file #{file} at line #{line}"
-    end
   end
 
   def extract_fileinfo(string)

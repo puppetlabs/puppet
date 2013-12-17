@@ -44,12 +44,12 @@ class Puppet::Settings::IniFile
     end
   end
 
-  def sections
+  def section_lines
     @lines.select { |line| line.is_a?(SectionLine) }
   end
 
-  def section(name)
-    sections.find { |section| section.name == name }
+  def section_line(name)
+    section_lines.find { |section| section.name == name }
   end
 
   def setting(section, name)
@@ -102,7 +102,7 @@ class Puppet::Settings::IniFile
     private
 
     def add_setting(section_name, name, value)
-      section = @config.section(section_name)
+      section = @config.section_line(section_name)
       if section.nil?
         previous_line = SectionLine.new("", section_name, "")
         @config.append(previous_line)
