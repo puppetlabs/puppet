@@ -15,63 +15,98 @@ class Puppet::Settings::ConfigFile
   end
 
   def parse_file(file, text)
-    result = {}
+    result = Conf.new
 
-    # Default to 'main' for the section.
-    section_name = :main
-    result[section_name] = empty_section
-    line_number = 1
-    Puppet::Settings::IniFile.parse(StringIO.new(text)).each do |line|
-      case line
-      when Puppet::Settings::IniFile::SectionLine
-        section_name = line.name.intern
-        fail_when_illegal_section_name(section_name, file, line_number)
-        if result[section_name].nil?
-          result[section_name] = empty_section
-        end
-      when Puppet::Settings::IniFile::SettingLine
-        var = line.name.intern
+    ini = Puppet::Settings::IniFile.parse(StringIO.new(text))
+    unique_sections_in(ini, file).each do |section_name|
+      section = Section.new(section_name.to_sym)
+      result.with_section(section)
 
-        # We don't want to munge modes, because they're specified in octal, so we'll
-        # just leave them as a String, since Puppet handles that case correctly.
-        if var == :mode
-          value = line.value
-        else
-          value = @value_converter[line.value]
-        end
-
-        # Check to see if this is a file argument and it has extra options
-        begin
-          if value.is_a?(String) and options = extract_fileinfo(value)
-            value = options[:value]
-            options.delete(:value)
-            result[section_name][:_meta][var] = options
-          end
-          result[section_name][var] = value
-        rescue Puppet::Error => detail
-          raise Puppet::Settings::ParseError.new(detail.message, file, line_number, detail)
-        end
-      else
-        if line.text !~ /^\s*#|^\s*$/
-          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line_number)
+      ini.lines_in(section_name).each do |line|
+        if line.is_a?(Puppet::Settings::IniFile::SettingLine)
+          parse_setting(line, section)
+        elsif line.text !~ /^\s*#|^\s*$/
+          raise Puppet::Settings::ParseError.new("Could not match line #{line.text}", file, line.line_number)
         end
       end
-      line_number += 1
     end
 
     result
   end
 
+  Conf = Struct.new(:sections) do
+    def initialize
+      super({})
+    end
+
+    def with_section(section)
+      sections[section.name] = section
+      self
+    end
+  end
+
+  Section = Struct.new(:name, :settings) do
+    def initialize(name)
+      super(name, [])
+    end
+
+    def with_setting(name, value, meta)
+      settings << Setting.new(name, value, meta)
+      self
+    end
+
+    def setting(name)
+      settings.find { |setting| setting.name == name }
+    end
+  end
+
+  Setting = Struct.new(:name, :value, :meta) do
+    def has_metadata?
+      meta != NO_META
+    end
+  end
+
+  Meta = Struct.new(:owner, :group, :mode)
+  NO_META = Meta.new(nil, nil, nil)
+
 private
+
+  def unique_sections_in(ini, file)
+    ini.section_lines.collect do |section|
+      if section.name == "application_defaults" || section.name == "global_defaults"
+        raise Puppet::Error, "Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}"
+      end
+      section.name
+    end.uniq
+  end
+
+  def parse_setting(setting, section)
+    var = setting.name.intern
+
+    # We don't want to munge modes, because they're specified in octal, so we'll
+    # just leave them as a String, since Puppet handles that case correctly.
+    if var == :mode
+      value = setting.value
+    else
+      value = @value_converter[setting.value]
+    end
+
+    # Check to see if this is a file argument and it has extra options
+    begin
+      if value.is_a?(String) and options = extract_fileinfo(value)
+        section.with_setting(var, options[:value], Meta.new(options[:owner],
+                                                            options[:group],
+                                                            options[:mode]))
+      else
+        section.with_setting(var, value, NO_META)
+      end
+    rescue Puppet::Error => detail
+      raise Puppet::Settings::ParseError.new(detail.message, file, setting.line_number, detail)
+    end
+  end
 
   def empty_section
     { :_meta => {} }
-  end
-
-  def fail_when_illegal_section_name(section, file, line)
-    if section == :application_defaults or section == :global_defaults
-      raise Puppet::Error, "Illegal section '#{section}' in config file #{file} at line #{line}"
-    end
   end
 
   def extract_fileinfo(string)

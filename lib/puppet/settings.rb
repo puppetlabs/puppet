@@ -73,13 +73,14 @@ class Puppet::Settings
     @shortnames = {}
 
     @created = []
-    @searchpath = nil
 
     # Keep track of set values.
-    @values = Hash.new { |hash, key| hash[key] = {} }
-
-    # Hold parsed metadata until run_mode is known
-    @metas = {}
+    @value_sets = {
+      :cli => Values.new(:cli, @config),
+      :memory => Values.new(:memory, @config),
+      :application_defaults => Values.new(:application_defaults, @config),
+    }
+    @configuration_file = nil
 
     # And keep a per-environment cache
     @cache = Hash.new { |hash, key| hash[key] = {} }
@@ -106,7 +107,8 @@ class Puppet::Settings
 
   # Set a config value.  This doesn't set the defaults, it sets the value itself.
   def []=(param, value)
-    set_value(param, value, :memory)
+    @value_sets[:memory].set(param, value)
+    unsafe_flush_cache
   end
 
   # Generate the list of valid arguments, in a format that GetoptLong can
@@ -144,18 +146,21 @@ class Puppet::Settings
 
   # Remove all set values, potentially skipping cli values.
   def unsafe_clear(clear_cli = true, clear_application_defaults = false)
-    @values.each do |name, values|
-      next if ((name == :application_defaults) and !clear_application_defaults)
-      next if ((name == :cli) and !clear_cli)
-      @values.delete(name)
+    if clear_application_defaults
+      @value_sets[:application_defaults] = Values.new(:application_defaults, @config)
+      @app_defaults_initialized = false
     end
 
-    # Only clear the 'used' values if we were explicitly asked to clear out
-    #  :cli values; otherwise, it may be just a config file reparse,
-    #  and we want to retain this cli values.
-    @used = [] if clear_cli
+    if clear_cli
+      @value_sets[:cli] = Values.new(:cli, @config)
 
-    @app_defaults_initialized = false if clear_application_defaults
+      # Only clear the 'used' values if we were explicitly asked to clear out
+      #  :cli values; otherwise, it may be just a config file reparse,
+      #  and we want to retain this cli values.
+      @used = []
+    end
+
+    @value_sets[:memory] = Values.new(:memory, @config)
 
     @cache.clear
   end
@@ -277,7 +282,8 @@ class Puppet::Settings
       if key == :run_mode
         self.preferred_run_mode = value
       else
-        set_value(key, value, :application_defaults)
+        @value_sets[:application_defaults].set(key, value)
+        unsafe_flush_cache
       end
     end
     apply_metadata
@@ -298,26 +304,6 @@ class Puppet::Settings
     end
   end
   private :call_hooks_deferred_to_application_initialization
-
-  # Do variable interpolation on the value.
-  def convert(value, environment = nil)
-    return nil if value.nil?
-    return value unless value.is_a? String
-    newval = value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
-      varname = $2 || $1
-      if varname == "environment" and environment
-        environment
-      elsif varname == "run_mode"
-        preferred_run_mode
-      elsif pval = self.value(varname, environment)
-        pval
-      else
-        raise InterpolationError, "Could not find value for #{value}"
-      end
-    end
-
-    newval
-  end
 
   # Return a value's description.
   def description(name)
@@ -379,7 +365,8 @@ class Puppet::Settings
       end
     end
 
-    set_value(str, value, :cli)
+    @value_sets[:cli].set(str, value)
+    unsafe_flush_cache
   end
 
   def include?(name)
@@ -449,12 +436,11 @@ class Puppet::Settings
   # Return a given object's file metadata.
   def metadata(param)
     if obj = @config[param.to_sym] and obj.is_a?(FileSetting)
-      return [:owner, :group, :mode].inject({}) do |meta, p|
-        if v = obj.send(p)
-          meta[p] = v
-        end
-        meta
-      end
+      {
+        :owner => obj.owner,
+        :group => obj.group,
+        :mode => obj.mode
+      }.delete_if { |key, value| value.nil? }
     else
       nil
     end
@@ -505,11 +491,69 @@ class Puppet::Settings
     end
   end
 
-  # Parse the configuration file.  Just provides thread safety.
-  def parse_config_files
-    unsafe_parse(which_configuration_file)
+  def parse_config(text, file = "text")
+    begin
+      data = @config_file_parser.parse_file(file, text)
+    rescue => detail
+      Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
+      return
+    end
+
+    # If we get here and don't have any data, we just return and don't muck with the current state of the world.
+    return if data.nil?
+
+    # If we get here then we have some data, so we need to clear out any previous settings that may have come from
+    #  config files.
+    unsafe_clear(false, false)
+
+    # And now we can repopulate with the values from our last parsing of the config files.
+    @configuration_file = data
+
+    # Determine our environment, if we have one.
+    if @config[:environment]
+      env = self.value(:environment).to_sym
+    else
+      env = "none"
+    end
+
+    # Call any hooks we should be calling.
+    @config.values.each do |setting|
+      value_sets_for(env, self.preferred_run_mode).each do |source|
+        if source.include?(setting.name)
+          # We still have to use value to retrieve the value, since
+          # we want the fully interpolated value, not $vardir/lib or whatever.
+          # This results in extra work, but so few of the settings
+          # will have associated hooks that it ends up being less work this
+          # way overall.
+          if setting.call_hook_on_initialize?
+            @hooks_to_call_on_application_initialization << setting
+          else
+            setting.handle(self.value(setting.name, env))
+          end
+          break
+        end
+      end
+    end
 
     call_hooks_deferred_to_application_initialization :ignore_interpolation_dependency_errors => true
+    apply_metadata
+  end
+
+  # Parse the configuration file.  Just provides thread safety.
+  def parse_config_files
+    file = which_configuration_file
+    if Puppet::FileSystem::File.exist?(file)
+      begin
+        text = read_file(file)
+      rescue => detail
+        Puppet.log_exception(detail, "Could not load #{file}: #{detail}")
+        return
+      end
+    else
+      return
+    end
+
+    parse_config(text, file)
   end
   private :parse_config_files
 
@@ -546,88 +590,28 @@ class Puppet::Settings
   end
   private :config_file_name
 
-  # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
-  def unsafe_parse(file)
-    # build up a single data structure that contains the values from all of the parsed files.
-    data = {}
-    if Puppet::FileSystem::File.exist?(file)
-      begin
-        file_data = parse_file(file)
-
-        # This is a little kludgy; basically we are merging a hash of hashes.  We can't use "merge" at the
-        # outermost level or we risking losing data from the hash we're merging into.
-        file_data.keys.each do |key|
-          if data.has_key?(key)
-            data[key].merge!(file_data[key])
-          else
-            data[key] = file_data[key]
-          end
-        end
-      rescue => detail
-        Puppet.log_exception(detail, "Could not parse #{file}: #{detail}")
-        return
-      end
-    end
-
-    # If we get here and don't have any data, we just return and don't muck with the current state of the world.
-    return if data.empty?
-
-    # If we get here then we have some data, so we need to clear out any previous settings that may have come from
-    #  config files.
-    unsafe_clear(false, false)
-
-    # And now we can repopulate with the values from our last parsing of the config files.
-    data.each do |area, values|
-      @metas[area] = values.delete(:_meta)
-      values.each do |key,value|
-        set_value(key, value, area, :dont_trigger_handles => true, :ignore_bad_settings => true )
-      end
-    end
-
-    # Determine our environment, if we have one.
-    if @config[:environment]
-      env = self.value(:environment).to_sym
-    else
-      env = "none"
-    end
-
-    # Call any hooks we should be calling.
-    settings_with_hooks.each do |setting|
-      each_source(env) do |source|
-        if @values[source][setting.name]
-          # We still have to use value to retrieve the value, since
-          # we want the fully interpolated value, not $vardir/lib or whatever.
-          # This results in extra work, but so few of the settings
-          # will have associated hooks that it ends up being less work this
-          # way overall.
-          if setting.call_hook_on_initialize?
-            @hooks_to_call_on_application_initialization << setting
-          else
-            setting.handle(self.value(setting.name, env))
-          end
-          break
-        end
-      end
-    end
-
-    # Take a best guess at metadata based on uninitialized run_mode
-    apply_metadata
-  end
-  private :unsafe_parse
-
   def apply_metadata
     # We have to do it in the reverse of the search path,
     # because multiple sections could set the same value
     # and I'm too lazy to only set the metadata once.
-    searchpath.reverse.each do |source|
-      source = preferred_run_mode if source == :run_mode
-      source = @name if (@name && source == :name)
-      if meta = @metas[source]
-        set_metadata(meta)
+    if @configuration_file
+      searchpath.reverse.each do |source|
+        source = preferred_run_mode if source == :run_mode
+        if section = @configuration_file.sections[source]
+          apply_metadata_from_section(section)
+        end
       end
     end
   end
   private :apply_metadata
+
+  def apply_metadata_from_section(section)
+    section.settings.each do |setting|
+      if setting.has_metadata? && type = @config[setting.name]
+        type.set_meta(setting.meta)
+      end
+    end
+  end
 
   SETTING_TYPES = {
       :string     => StringSetting,
@@ -773,31 +757,15 @@ class Puppet::Settings
   # `dns_alt_names` option during cert generate. --daniel 2011-10-18
   def set_by_cli?(param)
     param = param.to_sym
-    !@values[:cli][param].nil?
+    !@value_sets[:cli].lookup(param).nil?
   end
 
   def set_value(param, value, type, options = {})
-    param = param.to_sym
-
-    if !(setting = @config[param])
-      if options[:ignore_bad_settings]
-        return
-      else
-        raise ArgumentError,
-          "Attempt to assign a value to unknown configuration parameter #{param.inspect}"
-      end
+    Puppet.deprecation_warning("Puppet.settings.set_value is deprecated. Use Puppet[]= instead.")
+    if @value_sets[type]
+      @value_sets[type].set(param, value)
     end
-
-    setting.handle(value) if setting.has_hook? and not options[:dont_trigger_handles]
-
-    @values[type][param] = value
-    unsafe_flush_cache
-
-    value
   end
-
-
-
 
   # Deprecated; use #define_settings instead
   def setdefaults(section, defs)
@@ -963,27 +931,28 @@ Generated on #{Time.now}.
   end
 
   def uninterpolated_value(param, environment = nil)
+    Puppet.deprecation_warning("Puppet.settings.uninterpolated_value is deprecated. Use Puppet.settings.value instead")
     param = param.to_sym
     environment &&= environment.to_sym
 
-    # See if we can find it within our searchable list of values
-    val = find_value(environment, param)
-
-    # If we didn't get a value, use the default
-    val = @config[param].default if val.nil?
-
-    val
+    values(environment, self.preferred_run_mode).lookup(param)
   end
 
-  def find_value(environment, param)
-      each_source(environment) do |source|
-        # Look for the value.  We have to test the hash for whether
-        # it exists, because the value might be false.
-        return @values[source][param] if @values[source].include?(param)
-      end
-      return nil
+  # Retrieve an object that can be used for looking up values of configuration
+  # settings.
+  #
+  # @param environment [Symbol] The name of the environment in which to lookup
+  # @param section [Symbol] The name of the configuration section in which to lookup
+  # @return [Puppet::Settings::ChainedValues] An object to perform lookups
+  # @api public
+  def values(environment, section)
+    ChainedValues.new(
+      section,
+      environment,
+      value_sets_for(environment, section) +
+      [ValuesFromDefaults.new(@config)],
+      @config)
   end
-  private :find_value
 
   # Find the correct value using our search path.
   #
@@ -1001,37 +970,19 @@ Generated on #{Time.now}.
     setting = @config[param]
 
     # Short circuit to nil for undefined parameters.
-    return nil unless @config.include?(param)
-
-    # Yay, recursion.
-    #self.reparse unless [:config, :filetimeout].include?(param)
+    return nil if setting.nil?
 
     # Check the cache first.  It needs to be a per-environment
     # cache so that we don't spread values from one env
     # to another.
     if @cache[environment||"none"].has_key?(param)
       return @cache[environment||"none"][param]
+    elsif bypass_interpolation
+      val = values(environment, self.preferred_run_mode).lookup(param)
+    else
+      val = values(environment, self.preferred_run_mode).interpolate(param)
     end
 
-    val = uninterpolated_value(param, environment)
-
-    return val if bypass_interpolation
-    if param == :code
-      # if we interpolate code, all hell breaks loose.
-      return val
-    end
-
-    # Convert it if necessary
-    begin
-      val = convert(val, environment)
-    rescue InterpolationError => err
-      # This happens because we don't have access to the param name when the
-      # exception is originally raised, but we want it in the message
-      raise InterpolationError, "Error converting value for param '#{param}': #{err}", err.backtrace
-    end
-
-    val = setting.munge(val) if setting.respond_to?(:munge)
-    # And cache it
     @cache[environment||"none"][param] = val
     val
   end
@@ -1092,19 +1043,27 @@ Generated on #{Time.now}.
   end
 
   # Yield each search source in turn.
-  def each_source(environment)
-    searchpath(environment).each do |source|
-
-      # Modify the source as necessary.
-      source = self.preferred_run_mode if source == :run_mode
-      yield source
-    end
-  end
-
-  # Return all settings that have associated hooks; this is so
-  # we can call them after parsing the configuration file.
-  def settings_with_hooks
-    @config.values.find_all { |setting| setting.has_hook? }
+  def value_sets_for(environment, mode)
+    searchpath(environment).collect do |name|
+      case name
+      when :cli, :memory, :application_defaults
+        @value_sets[name]
+      when :run_mode
+        if @configuration_file
+          section = @configuration_file.sections[mode]
+          if section
+            ValuesFromSection.new(mode, section)
+          end
+        end
+      else
+        if @configuration_file
+          section = @configuration_file.sections[name]
+          if section
+            ValuesFromSection.new(name, section)
+          end
+        end
+      end
+    end.compact
   end
 
   # This method just turns a file in to a hash of hashes.
@@ -1120,15 +1079,6 @@ Generated on #{Time.now}.
       raise ArgumentError, "No such file #{file}"
     rescue Errno::EACCES
       raise ArgumentError, "Permission denied to file #{file}"
-    end
-  end
-
-  # Set file metadata.
-  def set_metadata(meta)
-    meta.each do |var, values|
-      values.each do |param, value|
-        @config[var].send(param.to_s + "=", value)
-      end
     end
   end
 
@@ -1166,4 +1116,139 @@ Generated on #{Time.now}.
   end
   private :explicit_config_file?
 
+  # Lookup configuration setting value through a chain of different value sources.
+  #
+  # @api public
+  class ChainedValues
+    # @see Puppet::Settings.values
+    # @api private
+    def initialize(mode, environment, value_sets, defaults)
+      @mode = mode
+      @environment = environment
+      @value_sets = value_sets
+      @defaults = defaults
+    end
+
+    # Lookup the uninterpolated value.
+    #
+    # @param name [Symbol] The configuration setting name to look up
+    # @return [Object] The configuration setting value or nil if the setting is not known
+    # @api public
+    def lookup(name)
+      @value_sets.each do |set|
+        if set.include?(name)
+          return set.lookup(name)
+        end
+      end
+      nil
+    end
+
+    # Lookup the interpolated value. All instances of `$name` in the value will
+    # be replaced by performing a lookup of `name` and substituting the text
+    # for `$name` in the original value. This interpolation is only performed
+    # if the looked up value is a String.
+    #
+    # @param name [Symbol] The configuration setting name to look up
+    # @return [Object] The configuration setting value or nil if the setting is not known
+    # @api public
+    def interpolate(name)
+      setting = @defaults[name]
+
+      if setting
+        val = lookup(name)
+        # if we interpolate code, all hell breaks loose.
+        if name == :code
+          val
+        else
+          # Convert it if necessary
+          begin
+            val = convert(val)
+          rescue InterpolationError => err
+            # This happens because we don't have access to the param name when the
+            # exception is originally raised, but we want it in the message
+            raise InterpolationError, "Error converting value for param '#{name}': #{err}", err.backtrace
+          end
+
+          setting.munge(val)
+        end
+      else
+        nil
+      end
+    end
+
+    private
+
+    def convert(value)
+      return nil if value.nil?
+      return value unless value.is_a? String
+      value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
+        varname = $2 || $1
+        if varname == "environment"
+          @environment
+        elsif varname == "run_mode"
+          @mode
+        elsif pval = interpolate(varname.to_sym)
+          pval
+        else
+          raise InterpolationError, "Could not find value for #{value}"
+        end
+      end
+    end
+  end
+
+  class ValuesFromDefaults
+    def initialize(defaults)
+      @defaults = defaults
+    end
+
+    def include?(name)
+      @defaults.include?(name)
+    end
+
+    def lookup(name)
+      @defaults[name].default
+    end
+  end
+
+  class Values
+    def initialize(name, defaults)
+      @name = name
+      @values = {}
+      @defaults = defaults
+    end
+
+    def include?(name)
+      @values.include?(name)
+    end
+
+    def set(name, value)
+      if !@defaults[name]
+        raise ArgumentError,
+          "Attempt to assign a value to unknown configuration parameter #{name.inspect}"
+      end
+
+      @defaults[name].handle(value)
+
+      @values[name] = value
+    end
+
+    def lookup(name)
+      @values[name]
+    end
+  end
+
+  class ValuesFromSection
+    def initialize(name, section)
+      @name = name
+      @section = section
+    end
+
+    def include?(name)
+      !@section.setting(name).nil?
+    end
+
+    def lookup(name)
+      @section.setting(name).value
+    end
+  end
 end

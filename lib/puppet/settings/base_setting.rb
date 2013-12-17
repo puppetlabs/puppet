@@ -72,12 +72,11 @@ class Puppet::Settings::BaseSetting
     end
   end
 
-  def has_hook?
-    respond_to? :handle
-  end
-
   def hook=(block)
     meta_def :handle, &block
+  end
+
+  def handle(value)
   end
 
   # Create the new element.  Pretty much just sets the name.
@@ -158,5 +157,9 @@ class Puppet::Settings::BaseSetting
   # Modify the value when it is first evaluated
   def munge(value)
     value
+  end
+
+  def set_meta(meta)
+    Puppet.notice("#{name} does not support meta data. Ignoring.")
   end
 end
