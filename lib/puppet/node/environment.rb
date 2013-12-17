@@ -469,7 +469,7 @@ class Puppet::Node::Environment
           parser.parse
         end
         # Use a parser type specific merger to concatenate the results
-        Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results)
+        Puppet::Parser::AST::Hostclass.new('', :code => Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results))
       else
         parser.file = file
         parser.parse

@@ -179,7 +179,8 @@ class Puppet::Resource::Type
       return
     end
 
-    self.code = self.code.sequence_with(other.code)
+    self.code = Puppet::Parser::ParserFactory.code_merger.concatenate([self, other])
+#    self.code = self.code.sequence_with(other.code)
   end
 
   # Make an instance of the resource type, and place it in the catalog
@@ -382,4 +383,3 @@ class Puppet::Resource::Type
     end
   end
 end
-
