@@ -40,7 +40,7 @@ Puppet::Face.define(:config, '0.0.1') do
     when_invoked do |*args|
       options = args.pop
 
-      args = Puppet.settings.to_a.collect(&:first) if args.empty?
+      args = Puppet.settings.to_a.collect(&:first) if args.empty? || args == ['all']
 
       values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
       if args.length == 1

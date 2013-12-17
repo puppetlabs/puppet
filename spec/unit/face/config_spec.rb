@@ -37,4 +37,10 @@ describe Puppet::Face[:config, '0.0.1'] do
 
     subject.print
   end
+
+  it "prints out all of the settings when asked for 'all'" do
+    subject.expects(:puts).times(Puppet.settings.to_a.length)
+
+    subject.print('all')
+  end
 end
