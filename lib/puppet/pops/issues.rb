@@ -159,6 +159,11 @@ module Puppet::Pops::Issues
     "Illegal attempt to assign to '#{label.a_an(semantic)}'. Not an assignable reference"
   end
 
+  # Variables are immutable, cannot reassign in the same assignment scope
+  ILLEGAL_REASSIGNMENT = hard_issue :ILLEGAL_REASSIGNMENT, :name do
+    "Cannot reassign variable #{name}"
+  end
+
   # Assignment cannot be made to numeric match result variables
   ILLEGAL_NUMERIC_ASSIGNMENT = issue :ILLEGAL_NUMERIC_ASSIGNMENT, :varname do
     "Illegal attempt to assign to the numeric match result variable '$#{varname}'. Numeric variables are not assignable"
