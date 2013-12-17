@@ -761,7 +761,7 @@ class Puppet::Settings
   end
 
   def set_value(param, value, type, options = {})
-    Puppet.deprecation_warning("Puppet.settings.set_value is deprecated. Use Puppet[] instead.")
+    Puppet.deprecation_warning("Puppet.settings.set_value is deprecated. Use Puppet[]= instead.")
     if @value_sets[type]
       @value_sets[type].set(param, value)
     end
