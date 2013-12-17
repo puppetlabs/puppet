@@ -31,6 +31,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'can get a substring by giving two keys' do
       expect(evaluate(literal('abcd')[1,2])).to eql('bc')
+      # flattens keys
+      expect(evaluate(literal('abcd')[[1,2]])).to eql('bc')
     end
 
     it 'produces empty string for a substring out of range' do
@@ -58,6 +60,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it 'can get a slice of elements using two keys' do
       expect(evaluate(literal([1,2,3,4])[1,2])).to eql([2,3])
+      # flattens keys
+      expect(evaluate(literal([1,2,3,4])[[1,2]])).to eql([2,3])
     end
 
     it 'produces nil for a missing entry' do
@@ -73,6 +77,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
   context 'The evaluator when operating on a Hash' do
     it 'can get a single element giving a single key to []' do
       expect(evaluate(literal({'a'=>1,'b'=>2,'c'=>3})['b'])).to eql(2)
+    end
+
+    it 'can lookup an array' do
+      expect(evaluate(literal({[1]=>10,[2]=>20})[[2]])).to eql(20)
     end
 
     it 'produces nil for a missing key' do
@@ -104,6 +112,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it 'produces an Integer[from, to]' do
       expr = fqr('Integer')[1, 3]
       expect(evaluate(expr)).to eql(range(1,3))
+
+      # arguments are flattened
+      expr = fqr('Integer')[[1, 3]]
+      expect(evaluate(expr)).to eql(range(1,3))
     end
 
     it 'produces an Integer[1]' do
@@ -125,6 +137,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     #
     it 'produces a Float[from, to]' do
       expr = fqr('Float')[1, 3]
+      expect(evaluate(expr)).to eql(float_range(1.0,3.0))
+
+      # arguments are flattened
+      expr = fqr('Float')[[1, 3]]
       expect(evaluate(expr)).to eql(float_range(1.0,3.0))
     end
 
@@ -148,10 +164,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect { evaluate(expr)}.to raise_error(/with one or two arguments/)
     end
 
-    # Hash
+    # Hash Type
     #
     it 'produces a Hash[Literal,String] from the expression Hash[String]' do
       expr = fqr('Hash')[fqr('String')]
+      expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.literal))
+
+      # arguments are flattened
+      expr = fqr('Hash')[[fqr('String')]]
       expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.literal))
     end
 
@@ -170,10 +190,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect { evaluate(expr)}.to raise_error(/Hash-Type\[\] arguments must be types/)
     end
 
-    # Array
+    # Array Type
     #
     it 'produces an Array[String] from the expression Array[String]' do
       expr = fqr('Array')[fqr('String')]
+      expect(evaluate(expr)).to be_the_type(types.array_of(types.string))
+
+      # arguments are flattened
+      expr = fqr('Array')[[fqr('String')]]
       expect(evaluate(expr)).to be_the_type(types.array_of(types.string))
     end
 
@@ -195,6 +219,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it 'creates a Regexp instance when applied to a Pattern' do
       regexp_expr = fqr('Regexp')['foo']
       expect(evaluate(regexp_expr)).to eql(Puppet::Pops::Types::TypeFactory.regexp('foo'))
+
+      # arguments are flattened
+      regexp_expr = fqr('Regexp')[['foo']]
+      expect(evaluate(regexp_expr)).to eql(Puppet::Pops::Types::TypeFactory.regexp('foo'))
     end
 
     # Class
@@ -204,7 +232,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
       expr = fqr('Class')[literal('apache')]
       expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
-    end
+
+      # arguments are flattened
+      expr = fqr('Class')[[fqn('apache')]]
+      expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
+      end
 
     it 'produces same class if no class name is given' do
       expr = fqr('Class')[fqn('apache')][]
@@ -228,6 +260,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expr = fqr('Resource')[fqr('File')]
       expect(evaluate(expr)).to be_the_type(types.resource('File'))
       expr = fqr('Resource')[literal('File')]
+      expect(evaluate(expr)).to be_the_type(types.resource('File'))
+
+      # arguments are flattened
+      expr = fqr('Resource')[[fqr('File')]]
       expect(evaluate(expr)).to be_the_type(types.resource('File'))
     end
 
