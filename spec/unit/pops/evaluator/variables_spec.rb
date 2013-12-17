@@ -53,10 +53,10 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
         # Also see collections_ops_spec.rb where delete via - is fully tested, here only the
         # the -= operation itself is tested (there are many combinations)
         #
-        it 'deleting from non existing value produces nil, nil -= ?' do
+        it 'deleting from non existing value produces :undef, nil -= ?' do
           top_scope_block = var('b').set([1,2,3])
-          local_scope_block = var('a').minus_set([4])
-          evaluate_l(top_scope_block, local_scope_block).should == nil
+          local_scope_block = block(var('a').minus_set([4]), fqn('a').var)
+          evaluate_l(top_scope_block, local_scope_block).should == :undef
         end
 
         it 'deletes from a list' do

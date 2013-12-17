@@ -26,6 +26,18 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # setting (extraction is somewhat expensive since 3x requires line instead of offset).
   #
   def set_variable(name, value, o, scope)
+    # Scope also checks this but requires that location information are passed as options.
+    # Those are expensive to calculate and a test is instead made here to enable failing with better information.
+    # The error is not specific enough to allow catching it - need to check the actual message text.
+    # TODO: Improve the messy implementation in Scope.
+    #
+    if scope.bound?(name)
+      if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
+        fail(Puppet::Pops::Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
+      else
+        fail(Puppet::Pops::Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
+      end
+    end
     scope.setvar(name, value)
   end
 
@@ -367,6 +379,10 @@ module Puppet::Pops::Evaluator::Runtime3Support
     @@convert_visitor.visit_this_1(self, o, scope)
   end
 
+  def convert_NilClass(o, scope)
+    :undef
+  end
+
   def convert_Object(o, scope)
     o
   end
@@ -444,4 +460,5 @@ module Puppet::Pops::Evaluator::Runtime3Support
       raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
     end
   end
+
 end
