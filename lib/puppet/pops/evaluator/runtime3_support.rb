@@ -413,8 +413,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def convert_PAbstractType(o, scope)
-    # Convert all other types to their string forms
-    o.to_s
+    o
   end
 
   def convert_PResourceType(o,scope)
