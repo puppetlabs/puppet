@@ -109,6 +109,33 @@ describe provider_class do
       @provider.query.should == nil
     end
 
+    # this one should work? - jantman
+    it "should return a hash when pip and the package are present in a venv" do
+      @resource[:virtualenv] = "/path/to/virtualenv"
+      @provider.expects(:venvcmd).returns("/path/to/virtualenv/bin/pip")
+      @provider.expects(:which).with("/path/to/virtualenv/bin/pip").returns("/path/to/virtualenv/bin/pip")
+      p = stub("process")
+      p.expects(:collect).yields("real_package==1.2.5")
+      @provider.expects(:execpipe).with("/path/to/virtualenv/bin/pip freeze").yields(p)
+
+      @provider.query.should == {
+        :ensure   => "1.2.5",
+        :name     => "real_package",
+        :provider => :pip,
+      }
+    end
+
+    # this one shouldnt - jantman
+    it "should return nil when the package is missing from a venv" do
+      @resource[:virtualenv] = "/path/to/virtualenv"
+      @provider.expects(:venvcmd).returns("/path/to/virtualenv/bin/pip")
+      @provider.expects(:which).with("/path/to/virtualenv/bin/pip").returns("/path/to/virtualenv/bin/pip")
+      p = stub("process")
+      p.expects(:collect).yields("fake_package==1.2.5")
+      @provider.expects(:execpipe).with("/path/to/virtualenv/bin/pip freeze").yields(p)
+      @provider.query.should == nil
+    end
+
     it "should be case insensitive" do
       @resource[:name] = "Real_Package"
 
