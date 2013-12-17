@@ -57,8 +57,7 @@ class Puppet::Transaction::Report
   attr_accessor :environment
 
   # A hash with a map from resource to status
-  # @return [Hash<{String => String}>] Resource name to status string.
-  # @todo Uncertain if the types in the hash are correct...
+  # @return [Hash{String => Puppet::Resource::Status}] Resource name to status.
   attr_reader :resource_statuses
 
   # A list of log messages.

@@ -942,8 +942,14 @@ Generated on #{Time.now}.
     catalog.apply do |transaction|
       if transaction.any_failed?
         report = transaction.report
-        failures = report.logs.find_all { |log| log.level == :err }
-        raise "Got #{failures.length} failure(s) while initializing: #{failures.collect { |l| l.to_s }.join("; ")}"
+        status_failures = report.resource_statuses.values.select { |r| r.failed? }
+        status_fail_msg = status_failures.
+          collect(&:events).
+          flatten.
+          select { |event| event.status == 'failure' }.
+          collect { |event| "#{event.resource}: #{event.message}" }.join("; ")
+
+        raise "Got #{status_failures.length} failure(s) while initializing: #{status_fail_msg}"
       end
     end
 
