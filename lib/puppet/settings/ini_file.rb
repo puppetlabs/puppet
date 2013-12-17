@@ -37,27 +37,19 @@ class Puppet::Settings::IniFile
   def insert_after(line, new_line)
     new_line.previous = line
 
-    insertion_point = @lines.index(line) || @lines.index(section)
+    insertion_point = @lines.index(line)
     @lines.insert(insertion_point + 1, new_line)
     if @lines.length > insertion_point + 2
       @lines[insertion_point + 2].previous = new_line
     end
   end
 
-  def last
-    @lines.last
-  end
-
-  def each(&block)
-    @lines.each(&block)
+  def sections
+    @lines.select { |line| line.is_a?(SectionLine) }
   end
 
   def section(name)
     sections.find { |section| section.name == name }
-  end
-
-  def sections
-    @lines.select { |line| line.is_a?(SectionLine) }
   end
 
   def setting(section, name)
@@ -66,13 +58,13 @@ class Puppet::Settings::IniFile
     end
   end
 
-  def lines_in(section)
+  def lines_in(section_name)
     section_lines = []
-    current_section = DEFAULT_SECTION_NAME
+    current_section_name = DEFAULT_SECTION_NAME
     @lines.each do |line|
       if line.is_a?(SectionLine)
-        current_section = line.name
-      elsif current_section == section
+        current_section_name = line.name
+      elsif current_section_name == section_name
         section_lines << line
       end
     end
