@@ -25,6 +25,10 @@ class Puppet::Pops::Model::AstTreeDumper < Puppet::Pops::Model::TreeDumper
     end
   end
 
+  def dump_Expression(o)
+    "(pops-expression #{Puppet::Pops::Model::ModelTreeDumper.new().dump(o.value)})"
+  end
+
   def dump_Factory o
     do_dump(o.current)
   end
