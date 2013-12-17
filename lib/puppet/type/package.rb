@@ -357,7 +357,7 @@ module Puppet
       EOT
 
       validate do |value|
-        raise ArgumentError, "Virtual Environment path does not exist" if ! FileTest.directory?(value)
+        raise ArgumentError, "Virtual Environment path does not exist: #{value}" if ! FileTest.directory?(value)
       end
     end
 
