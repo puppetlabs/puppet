@@ -44,6 +44,25 @@ describe provider_class do
 
   end
 
+  describe "venvcmd" do
+
+    it "should return venv pip path when virtualenv specified" do
+      @resource[:virtualenv] = "/path/to/virtualenv"
+      @provider.venvcmd.should == "/path/to/virtualenv/bin/pip"
+    end
+
+    it "should return pip-python on RedHat systems" do
+      Facter.stubs(:value).with(:osfamily).returns("RedHat")
+      @provider.venvcmd.should == 'pip-python'
+    end
+
+    it "should return pip by default" do
+      Facter.stubs(:value).with(:osfamily).returns("Not RedHat")
+      @provider.venvcmd.should == 'pip'
+    end
+
+  end
+
   describe "instances" do
 
     osfamilies.each do |osfamily, pip_cmd|
@@ -189,7 +208,7 @@ describe provider_class do
       @resource[:source] = nil
       @resource[:virtualenv] = "/path/to/virtualenv"
       @provider.expects(:lazy_pip).
-        with("install", "--environment='/path/to/virtualenv'", '-q', "sdsfdssdhdfyjymdgfcjdfjxdrssf")
+        with("install", '-q', "fake_package")
       @provider.install
     end
 
@@ -204,11 +223,11 @@ describe provider_class do
       @provider.uninstall
     end
 
-    it "should install from a virtualenv" do
-      @resource[:name] = "sdsfdssdhdfyjymdgfcjdfjxdrssf"
+    it "should uninstall from a virtualenv" do
       @resource[:virtualenv] = "/path/to/virtualenv"
+      @resource[:name] = "fake_package"
       @provider.expects(:lazy_pip).
-        with('uninstall', '-y', '-q', '--environment=/path/to/virtualenv', 'sdsfdssdhdfyjymdgfcjdfjxdrssf')
+        with('uninstall', '-y', '-q', 'fake_package')
       @provider.uninstall
     end
 
