@@ -436,12 +436,11 @@ class Puppet::Settings
   # Return a given object's file metadata.
   def metadata(param)
     if obj = @config[param.to_sym] and obj.is_a?(FileSetting)
-      return [:owner, :group, :mode].inject({}) do |meta, p|
-        if v = obj.send(p)
-          meta[p] = v
-        end
-        meta
-      end
+      {
+        :owner => obj.owner,
+        :group => obj.group,
+        :mode => obj.mode
+      }.delete_if { |key, value| value.nil? }
     else
       nil
     end
@@ -509,9 +508,6 @@ class Puppet::Settings
 
     # And now we can repopulate with the values from our last parsing of the config files.
     @configuration_file = data
-    data.sections.each do |name, section|
-      apply_metadata_from_section(section)
-    end
 
     # Determine our environment, if we have one.
     if @config[:environment]
@@ -540,6 +536,7 @@ class Puppet::Settings
     end
 
     call_hooks_deferred_to_application_initialization :ignore_interpolation_dependency_errors => true
+    apply_metadata
   end
 
   # Parse the configuration file.  Just provides thread safety.
