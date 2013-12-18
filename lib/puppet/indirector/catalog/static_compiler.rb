@@ -60,6 +60,12 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     catalog
   end
 
+  # filter-out a catalog to remove exported resources
+  def filter(catalog)
+    return catalog.filter { |r| r.virtual? } if catalog.respond_to?(:filter)
+    catalog
+  end
+
   # Take a resource with a fileserver based file source remove the source
   # parameter, and insert the file metadata into the resource.
   #
