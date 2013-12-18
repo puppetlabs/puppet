@@ -16,7 +16,6 @@ platforms :ruby do
   gem 'yard', :group => :development
   gem 'redcarpet', '~> 2.0', :group => :development
   gem "racc", "1.4.9", :group => :development
-  gem "ruby-augeas", '~> 0.3', :require => false, :group => :extra
 end
 
 gem "puppet", :path => File.dirname(__FILE__), :require => false
