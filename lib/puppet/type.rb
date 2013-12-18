@@ -1199,8 +1199,24 @@ class Type
   ###############################
   # Add all of the meta-parameters.
   newmetaparam(:noop) do
-    desc "Boolean flag indicating whether work should actually
-      be done."
+    desc "Whether to apply this resource in noop mode.
+
+      When applying a resource in noop mode, Puppet will check whether it is in sync,
+      like it does when running normally. However, if a resource attribute is not in
+      the desired state (as declared in the catalog), Puppet will take no
+      action, and will instead report the changes it _would_ have made. These
+      simulated changes will appear in the report sent to the puppet master, or
+      be shown on the console if running puppet agent or puppet apply in the
+      foreground. The simulated changes will not send refresh events to any
+      subscribing or notified resources, although Puppet will log that a refresh
+      event _would_ have been sent.
+
+      **Important note:**
+      [The `noop` setting](http://docs.puppetlabs.com/references/latest/configuration.html#noop)
+      allows you to globally enable or disable noop mode, but it will _not_ override
+      the `noop` metaparameter on individual resources. That is, the value of the
+      global `noop` setting will _only_ affect resources that do not have an explicit
+      value set for their `noop` attribute."
 
     newvalues(:true, :false)
     munge do |value|

@@ -4,10 +4,19 @@ require 'puppet/settings'
 require 'puppet/settings/autosign_setting'
 
 describe Puppet::Settings::AutosignSetting do
-  let(:setting) { described_class.new(:settings => mock('settings'), :desc => "test") }
+  let(:settings) do
+    s = stub('settings')
+    s.stubs(:[]).with(:mkusers).returns true
+    s.stubs(:[]).with(:user).returns 'puppet'
+    s.stubs(:[]).with(:group).returns 'puppet'
+    s.stubs(:[]).with(:manage_internal_file_permissions).returns true
+    s
+  end
 
-  it "is of type :autosign" do
-    expect(setting.type).to eq :autosign
+  let(:setting) { described_class.new(:name => 'autosign', :section => 'section', :settings => settings, :desc => "test") }
+
+  it "is of type :file" do
+    expect(setting.type).to eq :file
   end
 
   describe "when munging the setting" do
@@ -41,6 +50,54 @@ describe Puppet::Settings::AutosignSetting do
           setting.munge(invalid)
         }.to raise_error Puppet::Settings::ValidationError, /Invalid autosign value/
       end
+    end
+  end
+
+  describe "setting additional setting values" do
+    it "can set the file mode" do
+      setting.mode = '0664'
+      expect(setting.mode).to eq '0664'
+    end
+
+    it "can set the file owner" do
+      setting.owner = 'service'
+      expect(setting.owner).to eq 'puppet'
+    end
+
+    it "can set the file group" do
+      setting.group = 'service'
+      expect(setting.group).to eq 'puppet'
+    end
+  end
+
+  describe "converting the setting to a resource" do
+    it "converts the file path to a file resource" do
+      path = File.expand_path('/path/to/autosign.conf')
+      settings.stubs(:value).with('autosign').returns(path)
+      Puppet::FileSystem::File.stubs(:exist?).with(path).returns true
+      Puppet.stubs(:features).returns(stub(:root? => true, :microsoft_windows? => false))
+
+      setting.mode = '0664'
+      setting.owner = 'service'
+      setting.group = 'service'
+
+      resource = setting.to_resource
+
+      expect(resource.title).to eq path
+      expect(resource[:ensure]).to eq :file
+      expect(resource[:mode]).to eq '664'
+      expect(resource[:owner]).to eq 'puppet'
+      expect(resource[:group]).to eq 'puppet'
+    end
+
+    it "returns nil when the setting is a boolean" do
+      settings.stubs(:value).with('autosign').returns 'true'
+
+      setting.mode = '0664'
+      setting.owner = 'service'
+      setting.group = 'service'
+
+      expect(setting.to_resource).to be_nil
     end
   end
 end
