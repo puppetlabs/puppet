@@ -654,7 +654,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           "Class[0]"            => /An Integer cannot be used where a String is expected/,
           "Class[/.*/]"         => /A Regexp cannot be used where a String is expected/,
           "Class[4.1415]"       => /A Float cannot be used where a String is expected/,
-          "Class[[1,2,3]]"      => /An Array cannot be used where a String is expected/,
           "Class[Integer]"      => /An Integer-Type cannot be used where a String is expected/,
           "Class[File['tmp']]"   => /A File\['tmp'\] Resource-Reference cannot be used where a String is expected/,
         }.each do | source, error_pattern|

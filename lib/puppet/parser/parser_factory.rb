@@ -22,7 +22,6 @@ module Puppet::Parser
     #
     def self.classic_parser(environment)
       require 'puppet/parser'
-      require 'puppet/parser/code_merger'
 
       Puppet::Parser::Parser.new(environment)
     end

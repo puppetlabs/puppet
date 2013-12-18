@@ -31,6 +31,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def access_String(o, scope, keys)
+    keys.flatten!
     result = case keys.size
     when 0
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
@@ -69,6 +70,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   # Parameterizes a PRegexp Type with a pattern string or r ruby egexp
   #
   def access_PRegexpType(o, scope, keys)
+    keys.flatten!
     unless keys.size == 1
       blamed = keys.size == 0 ? @semantic : @semantic.keys[2]
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :actual => keys.size)
@@ -80,6 +82,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   # Evaluates <ary>[] with 1 or 2 arguments. One argument is an index lookup, two arguments is a slice from/to.
   #
   def access_Array(o, scope, keys)
+    keys.flatten!
     case keys.size
     when 0
       fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
@@ -116,10 +119,12 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   # Evaluates <hsh>[] with support for one or more arguments. If more than one argument is used, the result
   # is an array with each lookup.
+  # @note
+  #   Does not flatten its keys to enable looking up with a structure
   #
   def access_Hash(o, scope, keys)
     # Look up key in hash, if key is nil or :undef, try alternate form before giving up.
-    # This makes :undef and nil "be the same key". (The laternative is to always only write one or the other
+    # This makes :undef and nil "be the same key". (The alternative is to always only write one or the other
     # in all hashes - that is much harder to guarantee since the Hash is a regular Ruby hash.
     #
     result = keys.collect do |k|
@@ -150,16 +155,19 @@ class Puppet::Pops::Evaluator::AccessOperator
   INFINITY = 1.0 / 0.0
 
   def access_PEnumType(o, scope, keys)
+    keys.flatten!
     assert_keys(keys, o, 1, INFINITY, String)
     Puppet::Pops::Types::TypeFactory.enum(*keys)
   end
 
   def access_PVariantType(o, scope, keys)
+    keys.flatten!
     assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAbstractType)
     Puppet::Pops::Types::TypeFactory.variant(*keys)
   end
 
   def access_PStringType(o, scope, keys)
+    keys.flatten!
     assert_keys(keys, o, 1, INFINITY, String)
     Puppet::Pops::Types::TypeFactory.string(*keys)
   end
@@ -213,11 +221,13 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def access_PPatternType(o, scope, keys)
+    keys.flatten!
     assert_keys(keys, o, 1, INFINITY, String, Regexp, Puppet::Pops::Types::PPatternType, Puppet::Pops::Types::PRegexpType)
     Puppet::Pops::Types::TypeFactory.pattern(*keys)
   end
 
   def access_PIntegerType(o, scope, keys)
+    keys.flatten!
     unless keys.size.between?(1, 2)
       fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_ARITY, @semantic, {:actual => keys.size})
     end
@@ -233,6 +243,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def access_PFloatType(o, scope, keys)
+    keys.flatten!
     unless keys.size.between?(1, 2)
       fail(Puppet::Pops::Issues::BAD_FLOAT_SLICE_ARITY, @semantic, {:actual => keys.size})
     end
@@ -251,6 +262,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   # It is not possible to create a collection of Hash types.
   #
   def access_PHashType(o, scope, keys)
+    keys.flatten!
     keys.each_with_index do |k, index|
       unless k.is_a?(Puppet::Pops::Types::PAbstractType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
@@ -275,6 +287,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   # An Array can create a new Array type. It is not possible to create a collection of Array types.
   #
   def access_PArrayType(o, scope, keys)
+    keys.flatten!
     if keys.size == 1
       unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
@@ -300,6 +313,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   #   Resource[File, 'foo']['bar'] # => Value of the 'bar' parameter in the File['foo'] resource
   #
   def access_PResourceType(o, scope, keys)
+    keys.flatten!
     if keys.size == 0
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
         :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)
@@ -361,6 +375,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def access_PHostClassType(o, scope, keys)
+    keys.flatten!
     if keys.size == 0
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
         :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)

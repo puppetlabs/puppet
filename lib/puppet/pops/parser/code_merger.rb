@@ -1,7 +1,9 @@
 
 class Puppet::Pops::Parser::CodeMerger
 
-  # Concatenates the logic in the array of parse results into one parse result
+  # Concatenates the logic in the array of parse results into one parse result.
+  # @return Puppet::Parser::AST::BlockExpression
+  #
   def concatenate(parse_results)
     # this is a bit brute force as the result is already 3x ast with wrapped 4x content
     # this could be combined in a more elegant way, but it is only used to process a handful of files
@@ -11,6 +13,5 @@ class Puppet::Pops::Parser::CodeMerger
       memo << parsed_class.code
     end
     main = Puppet::Parser::AST::BlockExpression.new(:children => children)
-    Puppet::Parser::AST::Hostclass.new('', :code => main)
   end
 end
