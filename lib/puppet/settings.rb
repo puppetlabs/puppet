@@ -517,7 +517,7 @@ class Puppet::Settings
     end
 
     # Call any hooks we should be calling.
-    @config.values.each do |setting|
+    @config.values.select(&:has_hook?).each do |setting|
       value_sets_for(env, self.preferred_run_mode).each do |source|
         if source.include?(setting.name)
           # We still have to use value to retrieve the value, since
@@ -824,14 +824,18 @@ class Puppet::Settings
       # Collect the settings that need to have their hooks called immediately.
       # We have to collect them so that we can be sure we're fully initialized before
       # the hook is called.
-      if tryconfig.call_hook_on_define?
-        call << tryconfig
-      elsif tryconfig.call_hook_on_initialize?
-        @hooks_to_call_on_application_initialization << tryconfig
+      if tryconfig.has_hook?
+        if tryconfig.call_hook_on_define?
+          call << tryconfig
+        elsif tryconfig.call_hook_on_initialize?
+          @hooks_to_call_on_application_initialization << tryconfig
+        end
       end
     end
 
-    call.each { |setting| setting.handle(self.value(setting.name)) }
+    call.each do |setting|
+      setting.handle(self.value(setting.name))
+    end
   end
 
   # Convert the settings we manage into a catalog full of resources that model those settings.
@@ -1217,7 +1221,9 @@ Generated on #{Time.now}.
           "Attempt to assign a value to unknown configuration parameter #{name.inspect}"
       end
 
-      @defaults[name].handle(value)
+      if @defaults[name].has_hook?
+        @defaults[name].handle(value)
+      end
 
       @values[name] = value
     end

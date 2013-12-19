@@ -73,10 +73,12 @@ class Puppet::Settings::BaseSetting
   end
 
   def hook=(block)
+    @has_hook = true
     meta_def :handle, &block
   end
 
-  def handle(value)
+  def has_hook?
+    @has_hook
   end
 
   # Create the new element.  Pretty much just sets the name.
@@ -91,6 +93,7 @@ class Puppet::Settings::BaseSetting
 
     #set the default value for call_hook
     @call_hook = :on_write_only if args[:hook] and not args[:call_hook]
+    @has_hook = false
 
     raise ArgumentError, "Cannot reference :call_hook for :#{@name} if no :hook is defined" if args[:call_hook] and not args[:hook]
 
