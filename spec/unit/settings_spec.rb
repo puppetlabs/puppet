@@ -939,6 +939,27 @@ describe Puppet::Settings do
       @settings[:deferred].should eq File.expand_path('/path/to/confdir/goose')
     end
 
+    it "does not require the value for a setting without a hook to resolve during global setup" do
+      hook_invoked = false
+      @settings.define_settings :section, :can_cause_problems  => {:desc => '' }
+
+      @settings.define_settings(:main,
+        :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
+        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
+        :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
+
+      text = <<-EOD
+      [main]
+      can_cause_problems=$confdir/goose
+      EOD
+
+      @settings.stubs(:read_file).returns(text)
+      @settings.initialize_global_settings
+      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
+
+      @settings[:can_cause_problems].should eq File.expand_path('/path/to/confdir/goose')
+    end
+
     it "should allow empty values" do
       @settings.define_settings :section, :myarg => { :default => "myfile", :desc => "a" }
 
