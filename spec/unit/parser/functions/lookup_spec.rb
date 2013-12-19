@@ -23,6 +23,11 @@ describe "lookup function" do
     expect(scope.function_lookup(['a_value'])).to eq('something')
   end
 
+  it "searches for first found if given several names" do
+    scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
+    expect(scope.function_lookup([['b_value', 'a_value', 'c_value']])).to eq('something')
+  end
+
   it "override wins over bound" do
     scope = scope_with_injections_from(bound(bind_single("a_value", "something")))
     options = {:override => { 'a_value' => 'something_overridden' }}
