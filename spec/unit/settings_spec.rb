@@ -510,8 +510,16 @@ describe Puppet::Settings do
     end
 
     it "setting a value to nil causes it to return to its default" do
+      default_values = { :one => "skipped value" }
+      [:logdir, :confdir, :vardir].each do |key|
+        default_values[key] = 'default value'
+      end
+      @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
+      @settings.initialize_app_defaults(default_values)
       @settings[:one] = "value will disappear"
+
       @settings[:one] = nil
+
       @settings[:one].should == "ONE"
     end
 

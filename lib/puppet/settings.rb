@@ -949,8 +949,7 @@ Generated on #{Time.now}.
     ChainedValues.new(
       section,
       environment,
-      value_sets_for(environment, section) +
-      [ValuesFromDefaults.new(@config)],
+      value_sets_for(environment, section),
       @config)
   end
 
@@ -1135,11 +1134,17 @@ Generated on #{Time.now}.
     # @return [Object] The configuration setting value or nil if the setting is not known
     # @api public
     def lookup(name)
-      @value_sets.each do |set|
-        value = set.lookup(name)
-        return value if !value.nil?
+      set = @value_sets.find do |set|
+        set.include?(name)
       end
-      nil
+      if set
+        value = set.lookup(name)
+        if !value.nil?
+          return value
+        end
+      end
+
+      @defaults[name].default
     end
 
     # Lookup the interpolated value. All instances of `$name` in the value will
@@ -1192,20 +1197,6 @@ Generated on #{Time.now}.
           raise InterpolationError, "Could not find value for #{value}"
         end
       end
-    end
-  end
-
-  class ValuesFromDefaults
-    def initialize(defaults)
-      @defaults = defaults
-    end
-
-    def include?(name)
-      @defaults.include?(name)
-    end
-
-    def lookup(name)
-      @defaults[name].default
     end
   end
 
