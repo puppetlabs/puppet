@@ -8,6 +8,7 @@ describe Puppet::Configurer do
 
   describe "when downloading plugins" do
     it "should use the :pluginsignore setting, split on whitespace, for ignoring remote files" do
+      Puppet.settings.stubs(:use)
       resource = Puppet::Type.type(:notify).new :name => "yay"
       Puppet::Type.type(:file).expects(:new).at_most(2).with do |args|
         args[:ignore] == Puppet[:pluginsignore].split(/\s+/)
@@ -24,7 +25,7 @@ describe Puppet::Configurer do
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource(Puppet::Type.type(:notify).new(:title => "testing"))
 
-      # Make sure we don't try to persist the local state after the transaction ran, 
+      # Make sure we don't try to persist the local state after the transaction ran,
       # because it will fail during test (the state file is in a not-existing directory)
       # and we need the transaction to be successful to be able to produce a summary report
       @catalog.host_config = false

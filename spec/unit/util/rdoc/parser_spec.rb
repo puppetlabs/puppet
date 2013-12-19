@@ -27,7 +27,9 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       Puppet::Parser::Parser.stubs(:new).returns(parser)
       parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new('')).at_least_once
       parser.expects(:file=).with("module/manifests/init.pp")
-      parser.expects(:file=).with(File.expand_path("/dev/null/manifests/site.pp"))
+      parser.expects(:file=).with do |args|
+        args =~ /.*\/etc\/manifests\/site.pp/
+      end
 
       @parser.scan
     end

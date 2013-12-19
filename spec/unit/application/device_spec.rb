@@ -127,7 +127,6 @@ describe Puppet::Application::Device do
     before :each do
       @device.options.stubs(:[])
       Puppet.stubs(:info)
-      Puppet::FileSystem::File.stubs(:exist?).returns(true)
       Puppet[:libdir] = "/dev/null/lib"
       Puppet::SSL::Host.stubs(:ca_location=)
       Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
