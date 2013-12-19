@@ -1136,9 +1136,8 @@ Generated on #{Time.now}.
     # @api public
     def lookup(name)
       @value_sets.each do |set|
-        if set.include?(name)
-          return set.lookup(name)
-        end
+        value = set.lookup(name)
+        return value if !value.nil?
       end
       nil
     end
@@ -1248,7 +1247,10 @@ Generated on #{Time.now}.
     end
 
     def lookup(name)
-      @section.setting(name).value
+      setting = @section.setting(name)
+      if setting
+        setting.value
+      end
     end
   end
 end
