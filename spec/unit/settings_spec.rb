@@ -509,6 +509,12 @@ describe Puppet::Settings do
       @settings[:one].should == "other"
     end
 
+    it "setting a value to nil causes it to return to its default" do
+      @settings[:one] = "value will disappear"
+      @settings[:one] = nil
+      @settings[:one].should == "ONE"
+    end
+
     it "should interpolate default values for other parameters into returned parameter values" do
       @settings[:one].should == "ONE"
       @settings[:two].should == "ONE TWO"
