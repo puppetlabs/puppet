@@ -12,6 +12,11 @@
 
 set -x
 
+# Use our internal rubygems mirror for the bundle install
+if [ -z $GEM_SOURCE ]; then
+  export GEM_SOURCE='http://rubygems.delivery.puppetlabs.net'
+fi
+
 echo "SHA: ${SHA}"
 echo "FORK: ${FORK}"
 echo "BUILD_SELECTOR: ${BUILD_SELECTOR}"
