@@ -6,7 +6,9 @@ module Puppet; module Parser; end; end;
 #
 class Puppet::Parser::E4ParserAdapter
 
-  def initialize()
+  # @param file_watcher [#watch_file] something that can watch a file
+  def initialize(file_watcher = nil)
+    @file_watcher = file_watcher
     @file = ''
     @string = ''
     @use = :undefined
@@ -16,6 +18,8 @@ class Puppet::Parser::E4ParserAdapter
   def file=(file)
     @file = file
     @use = :file
+    # watch if possible, but only if the file is something worth watching
+    @file_watcher.watch_file(file) if @file_watcher.respond_to?(:watch_file) && !file.nil? && file != ''
   end
 
   def parse(string = nil)
