@@ -22,6 +22,8 @@ echo "FORK: ${FORK}"
 echo "BUILD_SELECTOR: ${BUILD_SELECTOR}"
 echo "PACKAGE_BUILD_STATUS: ${PACKAGE_BUILD_STATUS}"
 
+[[ (-z "${PACKAGE_BUILD_STATUS}") || ("${PACKAGE_BUILD_STATUS}" = "success") ]] || exit 1
+
 rm -rf acceptance
 mkdir acceptance
 cd acceptance
@@ -45,5 +47,3 @@ cat > local_options.rb <<-EOF
 ${repo_proxy}
 }
 EOF
-
-[[ (-z "${PACKAGE_BUILD_STATUS}") || ("${PACKAGE_BUILD_STATUS}" = "success") ]] || exit 1
