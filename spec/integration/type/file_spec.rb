@@ -1179,6 +1179,19 @@ describe Puppet::Type.type(:file) do
             catalog.add_resource @directory
           end
 
+          def grant_everyone_full_access(path)
+            sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
+            sd.dacl.allow(
+              'S-1-1-0', #everyone
+              Windows::File::FILE_ALL_ACCESS,
+              Windows::File::OBJECT_INHERIT_ACE | Windows::File::CONTAINER_INHERIT_ACE)
+            Puppet::Util::Windows::Security.set_security_descriptor(path, sd)
+          end
+
+          after :each do
+            grant_everyone_full_access(dir)
+          end
+
           describe "when source permissions are ignored" do
             before :each do
               @directory[:source_permissions] = :ignore
