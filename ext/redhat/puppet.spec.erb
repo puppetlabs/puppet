@@ -253,6 +253,10 @@ cp -pr ext/puppet-nm-dispatcher \
 %defattr(-, puppet, puppet, 0750)
 %{_localstatedir}/log/puppet
 %{_localstatedir}/lib/puppet
+# Return the default attributes to 0755 to
+# prevent incorrect permission assignment on EL6
+%defattr(-, root, root, 0755)
+
 
 %files server
 %defattr(-, root, root, 0755)
