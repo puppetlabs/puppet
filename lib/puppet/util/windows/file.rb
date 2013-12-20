@@ -148,8 +148,9 @@ module Puppet::Util::Windows::File
 
     return out_buffer if result
     raise Puppet::Util::Windows::Error.new(
-      "DeviceIoControl(#{handle}, #{io_control_code}, #{in_buffer}, #{in_buffer.size}, " +
-      "#{out_buffer}, #{out_buffer.size}")
+      "DeviceIoControl(#{handle}, #{io_control_code}, " +
+      "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
+      "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}")
   end
 
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400

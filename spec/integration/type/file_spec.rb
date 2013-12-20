@@ -1154,6 +1154,20 @@ describe Puppet::Type.type(:file) do
               system_aces.size.should == 1
             end
           end
+
+          describe "with :links set to :follow" do
+            it "should not fail to apply" do
+              # at minimal, we need an owner and/or group
+              @file[:owner] = @sids[:users]
+              @file[:links] = :follow
+
+              catalog.apply do |transaction|
+                if transaction.any_failed?
+                  pretty_transaction_error(transaction)
+                end
+              end
+            end
+          end
         end
 
         describe "on directories" do
@@ -1247,6 +1261,20 @@ describe Puppet::Type.type(:file) do
                 system_aces.size.should == 1
               end
             end
+
+            describe "with :links set to :follow" do
+              it "should not fail to apply" do
+                # at minimal, we need an owner and/or group
+                @directory[:owner] = @sids[:users]
+                @directory[:links] = :follow
+
+                catalog.apply do |transaction|
+                  if transaction.any_failed?
+                    pretty_transaction_error(transaction)
+                  end
+                end
+              end
+            end
           end
         end
       end
@@ -1312,5 +1340,17 @@ describe Puppet::Type.type(:file) do
     full_name = File.join(dir, name)
     File.open(full_name, "w") { |f| f.write contents }
     full_name
+  end
+
+  def pretty_transaction_error(transaction)
+    report = transaction.report
+    status_failures = report.resource_statuses.values.select { |r| r.failed? }
+    status_fail_msg = status_failures.
+      collect(&:events).
+      flatten.
+      select { |event| event.status == 'failure' }.
+      collect { |event| "#{event.resource}: #{event.message}" }.join("; ")
+
+    raise "Got #{status_failures.length} failure(s) while applying: #{status_fail_msg}"
   end
 end
