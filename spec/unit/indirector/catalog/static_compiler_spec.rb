@@ -10,6 +10,11 @@ describe Puppet::Resource::Catalog::StaticCompiler do
     @num_file_resources = 10
   end
 
+  before :each do
+    Facter.stubs(:to_hash).returns({})
+    Facter.stubs(:value)
+  end
+
   let(:request) do
     Puppet::Indirector::Request.new(:the_indirection_named_foo,
                                     :find,
@@ -23,10 +28,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
     end
 
     it "returns nil if there is no compiled catalog" do
-      compiler = mock('compiler indirection')
-      compiler.expects(:find).with(request).returns(nil)
-
-      subject.expects(:compiler).returns(compiler)
+      subject.expects(:compile).returns(nil)
       subject.find(request).should be_nil
     end
 
@@ -67,9 +69,6 @@ describe Puppet::Resource::Catalog::StaticCompiler do
 
   describe "(#15193) when storing content to the filebucket" do
     it "explicitly uses the indirection method" do
-      # Do not stub the store_content method which is stubbed by default in the
-      # value of the stub_methods option.
-      stub_the_compiler(:stub_methods => false)
 
       # We expect the content to be retrieved from the FileServer ...
       fake_content = mock('FileServer Content')
@@ -96,6 +95,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
       end
 
       # Obtain the Static Catalog
+      subject.stubs(:compile).returns(build_catalog)
       resource_catalog = subject.find(request)
 
       # Ensure all of the file resources were filtered
@@ -169,6 +169,35 @@ describe Puppet::Resource::Catalog::StaticCompiler do
 
     # Return the resource catalog
     catalog
+  end
+
+  describe "(#22744) when filtering resources" do
+    let(:catalog) { stub_everything 'catalog' }
+
+    it "should delegate to the catalog instance filtering" do
+      catalog.expects(:filter)
+      subject.filter(catalog)
+    end
+
+    it "should filter out virtual resources" do
+      resource = mock 'resource', :virtual? => true
+      catalog.stubs(:filter).yields(resource)
+
+      subject.filter(catalog)
+    end
+
+    it "should return the same catalog if it doesn't support filtering" do
+      catalog.stubs(:respond_to?).with(:filter)
+      subject.filter(catalog).should == catalog
+    end
+
+    it "should return the filtered catalog" do
+      filtered_catalog = stub 'filtered catalog'
+      catalog.stubs(:filter).returns(filtered_catalog)
+
+      subject.filter(catalog).should == filtered_catalog
+    end
+
   end
 
   def fileserver_metadata(options = {})
