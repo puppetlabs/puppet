@@ -353,6 +353,9 @@ describe Puppet::FileSystem::File do
       stat = symlink.stat
       stat.should be_instance_of(File::Stat)
       stat.ftype.should == 'directory'
+
+      # on Windows, this won't get cleaned up if still linked
+      symlink.unlink
     end
 
     it "should return a File::Stat of ftype 'file' when calling stat on a symlink pointing to another symlink" do

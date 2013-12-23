@@ -115,17 +115,22 @@ module Puppet::Rails
   def self.teardown
     raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails" unless Puppet.features.rails?
 
-    Puppet.settings.use(:master, :rails)
-
     begin
-      ActiveRecord::Base.establish_connection(database_arguments)
-    rescue => detail
-      Puppet.log_exception(detail)
-      raise Puppet::Error, "Could not connect to database: #{detail}"
-    end
+      Puppet.settings.use(:master, :rails)
 
-    ActiveRecord::Base.connection.tables.each do |t|
-      ActiveRecord::Base.connection.drop_table t
+      begin
+        ActiveRecord::Base.establish_connection(database_arguments)
+      rescue => detail
+        Puppet.log_exception(detail)
+        raise Puppet::Error, "Could not connect to database: #{detail}"
+      end
+
+      ActiveRecord::Base.connection.tables.each do |t|
+        ActiveRecord::Base.connection.drop_table t
+      end
+    ensure
+      # allow temp files to get cleaned up
+      ActiveRecord::Base.logger.close if ActiveRecord::Base.logger
     end
   end
 end

@@ -12,6 +12,10 @@ describe "Puppet::Rails::ParamValue", :if => can_use_scratch_database? do
     Puppet::Rails::ParamName.stubs(:find_or_create_by_name).returns(name)
   end
 
+  after do
+    Puppet::Rails.teardown
+  end
+
   describe "when creating initial parameter values" do
     it "should return an array of hashes" do
       Puppet::Rails::ParamValue.from_parser_param(:myparam, %w{a b})[0].should be_instance_of(Hash)

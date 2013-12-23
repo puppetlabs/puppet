@@ -106,6 +106,10 @@ describe "the generate function" do
     cmd
   end
 
+  after :each do
+    File.delete(command) if Puppet::FileSystem::File.exist?(command)
+  end
+
   it "should call generator with no arguments" do
     scope.function_generate([command]).should == "a- b-\n"
   end

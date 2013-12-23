@@ -137,8 +137,14 @@ RSpec.configure do |config|
 
     @log_level = Puppet::Util::Log.level
 
-    Puppet::Test::TestHelper.before_each_test()
+    base = PuppetSpec::Files.tmpdir('tmp_settings')
+    Puppet[:vardir] = File.join(base, 'var')
+    Puppet[:confdir] = File.join(base, 'etc')
+    Puppet[:logdir] = "$vardir/log"
+    Puppet[:rundir] = "$vardir/run"
+    Puppet[:hiera_config] = File.join(base, 'hiera')
 
+    Puppet::Test::TestHelper.before_each_test()
   end
 
   config.after :each do
