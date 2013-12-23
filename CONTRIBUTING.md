@@ -9,7 +9,7 @@ top of things.
 
 ## Getting Started
 
-* Make sure you have a [Redmine account](http://projects.puppetlabs.com)
+* Make sure you have a [Jira account](http://tickets.puppetlabs.com)
 * Make sure you have a [GitHub account](https://github.com/signup/free)
 * Submit a ticket for your issue, assuming one does not already exist.
   * Clearly describe the issue including steps to reproduce when it is a bug.
@@ -31,7 +31,7 @@ top of things.
 * Make sure your commit messages are in the proper format.
 
 ````
-    (#99999) Make the example in CONTRIBUTING imperative and concrete
+    (PUP-1234) Make the example in CONTRIBUTING imperative and concrete
 
     Without this patch applied the example commit message in the CONTRIBUTING
     document is not a concrete example.  This is a problem because the
@@ -52,7 +52,7 @@ top of things.
 ### Documentation
 
 For changes of a trivial nature to comments and documentation, it is not
-always necessary to create a new ticket in Redmine. In this case, it is
+always necessary to create a new ticket in Jira. In this case, it is
 appropriate to start the first line of a commit with '(doc)' instead of
 a ticket number. 
 
@@ -74,13 +74,13 @@ a ticket number.
 * Sign the [Contributor License Agreement](http://links.puppetlabs.com/cla).
 * Push your changes to a topic branch in your fork of the repository.
 * Submit a pull request to the repository in the puppetlabs organization.
-* Update your Redmine ticket to mark that you have submitted code and are ready for it to be reviewed.
-  * Include a link to the pull request in the ticket
+* Update your Jira ticket to mark that you have submitted code and are ready for it to be reviewed (Status: Ready for Merge).
+  * Include a link to the pull request in the ticket.
 
 # Additional Resources
 
 * [More information on contributing](http://links.puppetlabs.com/contribute-to-puppet)
-* [Bug tracker (Redmine)](http://projects.puppetlabs.com)
+* [Bug tracker (Jira)](http://tickets.puppetlabs.com)
 * [Contributor License Agreement](http://links.puppetlabs.com/cla)
 * [General GitHub documentation](http://help.github.com/)
 * [GitHub pull request documentation](http://help.github.com/send-pull-requests/)
