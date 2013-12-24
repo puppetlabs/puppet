@@ -329,4 +329,20 @@ module Puppet::Pops::Types
     end
   end
 
+  # Represents a type that accept PNilType instead of the type parameter
+  # required_type - is a short hand for Variant[T, Undef]
+  #
+  class POptionalType < PAbstractType
+    contains_one_uni 'optional_type', PAbstractType
+    module ClassModule
+      def hash
+        [self.class, optional_type].hash
+      end
+
+      def ==(o)
+        self.class == o.class && optional_type == o.optional_type
+      end
+    end
+  end
+
 end
