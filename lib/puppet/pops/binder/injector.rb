@@ -406,6 +406,7 @@ module Private
     # @api private
     def lookup_type(scope, type, name='')
       val = lookup_key(scope, named_key(type, name))
+      return nil if val.nil?
       unless key_factory.type_calculator.instance?(type, val)
         raise ArgumentError, "Type error: incompatible type, #{type_error_detail(type, val)}"
       end
