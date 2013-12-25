@@ -226,6 +226,20 @@ class Puppet::Pops::Evaluator::AccessOperator
     Puppet::Pops::Types::TypeFactory.pattern(*keys)
   end
 
+  def access_POptionalType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => keys[0].class})
+      end
+      result = Puppet::Pops::Types::POptionalType.new()
+      result.optional_type = keys[0]
+      result
+    else
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Optional-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_PIntegerType(o, scope, keys)
     keys.flatten!
     unless keys.size.between?(1, 2)

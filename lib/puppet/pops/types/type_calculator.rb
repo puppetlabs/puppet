@@ -169,6 +169,7 @@ class Puppet::Pops::Types::TypeCalculator
     data_variant.addTypes(@data_hash.copy)
     data_variant.addTypes(@data_array.copy)
     data_variant.addTypes(Types::PLiteralType.new)
+    data_variant.addTypes(Types::PNilType.new)
     @data_variant_t = data_variant
 
   end
@@ -218,10 +219,8 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def assignable?(t, t2)
-    # nil is assignable to anything
-    if is_pnil?(t2)
-      return true
-    end
+    # nil is assignable to anything except to required types
+    return true if is_pnil?(t2)
 
     if t.is_a?(Class)
       t = type(t)
@@ -328,11 +327,13 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of(t, o)
-    return true if o.nil?
+#    return true if o.nil? && !t.is_a?(Types::PRequiredType)
     @@instance_of_visitor.visit_this_1(self, t, o)
   end
 
   def instance_of_Object(t, o)
+    # Undef is Undef and Object, but nothing else when checking instance?
+    return false if (o.nil? || o == :undef) && t.class != Types::PObjectType
     assignable?(t, infer(o))
   end
 
@@ -352,9 +353,18 @@ class Puppet::Pops::Types::TypeCalculator
     instance_of(@data_variant_t, o)
   end
 
-  def instance_of_PVariableType(t, o)
-    # calculate types without reducing, Array and Hash will have Variant type as parameters
-    assignable?(t, infer_set(o))
+  def instance_of_PNilType(t, o)
+    return o.nil? || o == :undef
+  end
+
+  def instance_of_POptionalType(t, o)
+    return true if (o.nil? || o == :undef)
+    instance_of(t.optional_type, o)
+  end
+
+  def instance_of_PVariantType(t, o)
+    # instance of variant if o is instance? of any of variant's types
+    t.types.any? { |option_t| instance_of(option_t, o) }
   end
 
   # Answers 'is o an instance of type t'
@@ -641,6 +651,12 @@ class Puppet::Pops::Types::TypeCalculator
     Types::PNilType.new()
   end
 
+  # Inference of :undef as PNilType, all other are Ruby[Symbol]
+  # @api private
+  def infer_Symbol(o)
+    o == :undef ? infer_NilClass(o) : infer_Object(o)
+  end
+
   # @api private
   def infer_TrueClass(o)
     Types::PBooleanType.new()
@@ -793,6 +809,15 @@ class Puppet::Pops::Types::TypeCalculator
     else
       # A variant is assignable if t2 is assignable to any of its types
       t.types.any? { |option_t| assignable?(option_t, t2) }
+    end
+  end
+
+  def assignable_POptionalType(t, t2)
+    return true if t2.is_a(Types::PNilType)
+    if t2.is_a?(Types::POptionalType)
+      assignable?(t.optional_type, t2.optional_type)
+    else
+      assignable?(t.optional_type, t2)
     end
   end
 
@@ -1064,6 +1089,10 @@ class Puppet::Pops::Types::TypeCalculator
     else
       "Resource"
     end
+  end
+
+  def string_POptionalType(t)
+    "Optional[#{string(t.optional_type)}]"
   end
 
   # Catches all non enumerable types
