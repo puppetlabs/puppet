@@ -63,6 +63,13 @@ module Puppet::Pops::Types::TypeFactory
     t
   end
 
+  # Produces the Optional type, i.e. a short hand for Variant[T, Undef]
+  def self.optional(optional_type = nil)
+    t = Types::POptionalType.new
+    t.optional_type = optional_type
+    t
+  end
+
   # Produces the Enum type, optionally with specific string values
   # @api public
   #

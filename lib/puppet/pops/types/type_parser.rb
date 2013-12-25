@@ -149,6 +149,9 @@ class Puppet::Pops::Types::TypeParser
     when "variant"
         TYPES.variant()
 
+    when "optional"
+        TYPES.optional()
+
     when "ruby", "type"
       # should not be interpreted as Resource type
       # TODO: these should not be errors
@@ -248,6 +251,13 @@ class Puppet::Pops::Types::TypeParser
      else
        TYPES.float_range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
+
+    when "optional"
+      if parameters.size != 1
+        raise_invalid_parameters_error("Optional", 1, parameters.size)
+      end
+      assert_type(parameters[0])
+      TYPES.optional(parameters[0])
 
     when "object", "collection", "data", "catalogentry", "boolean", "literal", "undef", "numeric", "pattern", "string"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
