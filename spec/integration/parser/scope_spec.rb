@@ -58,6 +58,23 @@ describe "Two step scoping for variables" do
         end.to raise_error(/The value 'top_msg' cannot be converted to Numeric/)
       end
     end
+
+    it "when using a template ignores the dynamic value of the var when using the @varname syntax" do
+      expect_the_message_to_be('node_msg') do <<-MANIFEST
+          node default {
+            $var = "node_msg"
+            include foo
+          }
+          class foo {
+            $var = "foo_msg"
+            include bar
+          }
+          class bar {
+            notify { 'something': message => inline_template("<%= @var %>"), }
+          }
+        MANIFEST
+      end
+    end
   end
 
   shared_examples_for "the scope" do
@@ -575,41 +592,22 @@ describe "Two step scoping for variables" do
         end
       end
 
-      context "when using a template" do
-        it "ignores the dynamic value of the var when using scope.lookupvar" do
-          expect_the_message_to_be('node_msg') do <<-MANIFEST
-              node default {
-                $var = "node_msg"
-                include foo
-              }
-              class foo {
-                $var = "foo_msg"
-                include bar
-              }
-              class bar {
-                notify { 'something': message => inline_template("<%= scope.lookupvar('var') %>"), }
-              }
-            MANIFEST
-          end
-        end
-        it "ignores the dynamic value of the var when using the @varname syntax" do
-          expect_the_message_to_be('node_msg') do <<-MANIFEST
-              node default {
-                $var = "node_msg"
-                include foo
-              }
-              class foo {
-                $var = "foo_msg"
-                include bar
-              }
-              class bar {
-                notify { 'something': message => inline_template("<%= @var %>"), }
-              }
-            MANIFEST
-          end
+      it "when using a template ignores the dynamic value of the var when using scope.lookupvar" do
+        expect_the_message_to_be('node_msg') do <<-MANIFEST
+            node default {
+              $var = "node_msg"
+              include foo
+            }
+            class foo {
+              $var = "foo_msg"
+              include bar
+            }
+            class bar {
+              notify { 'something': message => inline_template("<%= scope.lookupvar('var') %>"), }
+            }
+          MANIFEST
         end
       end
-
     end
 
     describe "using plussignment to change in a new scope" do
