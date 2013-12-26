@@ -146,6 +146,10 @@ module RDoc
       @childs = []
     end
 
+    def aref_prefix
+      'puppet_class'
+    end
+
     def add_resource(resource)
       add_to(@resource_list, resource)
     end
