@@ -713,36 +713,25 @@ Puppet::Type.newtype(:file) do
   def write(property)
     remove_existing(:file)
 
-    use_temporary_file = write_temporary_file?
-    if use_temporary_file
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while Puppet::FileSystem::File.exist?(path) or Puppet::FileSystem::File.new(path).symlink?
-    else
-      path = self[:path]
-    end
+    assumed_default_mode = 0644
 
     mode = self.should(:mode) # might be nil
-    umask = mode ? 000 : 022
-    mode_int = mode ? symbolic_mode_to_int(mode, 0644) : nil
+    mode_int = mode ? symbolic_mode_to_int(mode, assumed_default_mode) : nil
 
-    content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'wb', mode_int ) { |f| write_content(f) } }
-
-    # And put our new file in place
-    if use_temporary_file # This is only not true when our file is empty.
-      begin
-        fail_if_checksum_is_wrong(path, content_checksum) if validate_checksum?
-        ::File.rename(path, self[:path])
-      rescue => detail
-        fail "Could not rename temporary file #{path} to #{self[:path]}: #{detail}"
-      ensure
-        # Make sure the created file gets removed
-        Puppet::FileSystem::File.unlink(path) if Puppet::FileSystem::File.exist?(path)
+    if write_temporary_file?
+      Puppet::Util.replace_file(self[:path], mode_int) do |file|
+        file.binmode
+        content_checksum = write_content(file)
+        file.flush
+        fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
       end
+    else
+      umask = mode ? 000 : 022
+      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| write_content(f) } }
     end
 
     # make sure all of the modes are actually correct
     property_fix
-
   end
 
   private

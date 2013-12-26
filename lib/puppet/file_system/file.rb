@@ -78,6 +78,12 @@ class Puppet::FileSystem::File
     Puppet::FileSystem::File.new(@path.dirname)
   end
 
+  # @return [String] the name of the file
+  # @api public
+  def basename
+    @path.basename.to_s
+  end
+
   # @return [Num] The size of this file
   # @api public
   def size
@@ -257,5 +263,9 @@ class Puppet::FileSystem::File
     open(0, 'rb') do |this|
       FileUtils.compare_stream(this, stream)
     end
+  end
+
+  def to_s
+    @path.to_s
   end
 end

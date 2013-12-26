@@ -1066,35 +1066,6 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "#write" do
-    it "should propagate failures encountered when renaming the temporary file" do
-      File.stubs(:open)
-      File.expects(:rename).raises ArgumentError
-
-      file[:backup] = 'puppet'
-
-      file.stubs(:validate_checksum?).returns(false)
-
-      property = stub('content_property', :actual_content => "something", :length => "something".length)
-      file.stubs(:property).with(:content).returns(property)
-
-      expect { file.write(:content) }.to raise_error(Puppet::Error)
-    end
-
-    it "should delegate writing to the content property" do
-      filehandle = stub_everything 'fh'
-      File.stubs(:open).yields(filehandle)
-      File.stubs(:rename)
-      property = stub('content_property', :actual_content => "something", :length => "something".length)
-      file[:backup] = 'puppet'
-
-      file.stubs(:validate_checksum?).returns(false)
-      file.stubs(:property).with(:content).returns(property)
-
-      property.expects(:write).with(filehandle)
-
-      file.write(:content)
-    end
-
     describe "when validating the checksum" do
       before { file.stubs(:validate_checksum?).returns(true) }
 
