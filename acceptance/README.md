@@ -1,12 +1,25 @@
-Local Use
-=========
+Running Acceptance Tests Yourself
+=================================
 
-CI
----
+Table of Contents
+-----------------
 
-There are two ways to run the ci tests locally: against packages, or against git clones.
+* [General Notes](#general-notes)
+* [Running Tests on the vcloud](#running-tests-on-the-vcloud)
+* [Running Tests on Vagrant Boxen](#running-tests-on-vagrant-boxen)
 
-`rake -T` will give short descriptions, and a `rake -D` will give full descriptions with information on ENV options required and optional for the various tasks.
+General Notes
+-------------
+
+The rake tasks for running the tests are defined by the Rakefile in the same directory as this file.
+These tasks come with some documentation: `rake -T` will give short descriptions, and a `rake -D` will give full descriptions with information on ENV options required and optional for the various tasks.
+
+
+Running Tests on the vcloud
+---------------------------
+
+In order to use the Puppet Labs vcloud, you'll need to be a Puppet Labs employee.
+Community members should see the [guide to running the tests on vagrant boxen](#running-tests-on-local-vagrant-boxen).
 
 ### Authentication
 
@@ -74,3 +87,103 @@ If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hos
     bundle exec ci:destroy_preserved_hosts
 
 to clean them up sooner and free resources.
+
+
+Running Tests on Vagrant Boxen
+------------------------------
+
+This guide assumes that you have an acceptable Ruby (i.e. 1.9+) installed along with the bundler gem, that you have the puppet repo checked out locally somewhere, and that the name of the checkout folder is `puppet`.
+I used Ruby 1.9.3-p484
+
+Change to the `acceptance` directory in the root of the puppet repo:
+```sh
+cd /path/to/repo/puppet/acceptance
+```
+Install the necessary gems with bundler:
+```sh
+bundle install
+```
+
+Now you can get a list of test-related tasks you can run via rake:
+```sh
+bundle exec rake -T
+```
+and view detailed information on the tasks with
+```sh
+bundle exec rake -D
+```
+
+As an example, let's try running the acceptance tests using git as the code deployment mechanism.
+First, we'll have to create a beaker configuration file for a local vagrant box on which to run the tests.
+Here's what such a file could look like:
+```yaml
+HOSTS:
+  all-in-one:
+    roles:
+      - master
+      - agent
+    platform: centos-64-x64
+    hypervisor: vagrant
+    ip: 192.168.80.100
+    box: centos-64-x64-vbox4210-nocm
+    box_url: http://puppet-vagrant-boxes.puppetlabs.com/centos-64-x64-vbox4210-nocm.box
+
+CONFIG:
+```
+This defines a 64-bit CentOS 6.4 vagrant box that serves as both a puppet master and a puppet agent for the test roles.
+(For more information on beaker config files, see [beaker's README](https://github.com/puppetlabs/beaker/blob/master/README.md).)
+Save this file as `config/nodes/centos6-local.yaml`; we'll be needing it later.
+
+Since we have only provided a CentOS box, we don't have anywhere to run windows tests, therefore we'll have to skip those tests.
+That means we want to pass beaker a --tests argument that contains every directory and file in the `tests` directory besides the one called `windows`.
+We could pass this option on the command line, but it will be gigantic, so instead let's create a `local_options.rb` file that beaker will automatically read in.
+This file should contain a ruby hash of beaker's command-line flags to the corresponding flag arguments.
+Our hash will only contain the `tests` key, and its value will be a comma-seperated list of the other files and directories in `tests`.
+Here's an easy way to generate this file:
+```sh
+echo "{tests: \"$(echo tests/* | sed -e 's| *tests/windows *||' -e 's/ /,/g')\"}" > local_options.rb"
+```
+
+The last thing that needs to be done before we can run the tests is to set up a way for the test box to check out our local changes for testing.
+We'll do this by starting a git daemon on our host.
+In another session, navigate to the folder that contains your checkout of the puppet repo, and then create the following symlink:
+```sh
+ln -s . puppet.git
+```
+This works around the inflexible checkout path used by the test prep code.
+
+Now start the git daemon with
+```sh
+git daemon --verbose --informative-errors --reuseaddr --export-all --base-path=.
+```
+after which you should see a message like `[32963] Ready to rumble` echoed to the console.
+
+Now we can finally run the tests!
+The rake task that we'll use is `ci:test:git`.
+Run
+```
+bundle exec rake -D ci:test:git
+```
+to read the full description of this task.
+From the description, we can see that we'll need to set a few environment variables:
+  + CONFIG should be set to point to the CentOS beaker config file we created above.
+  + SHA should be the SHA of the commit we want to test.
+  + GIT_SERVER should be the IP address of the host (i.e. your machine) in the vagrant private network created for the test box.
+    This is derived from the test box's ip by replacing the last octet with 1.
+    For our example above, the host IP is 192.168.80.1
+  + FORK should be the path to a 'puppet.git' directory that points to the repo.
+    In our case, this is the path to the symlink we created before, which is inside your puppet repo checkout, so FORK should just be the name of your checkout.
+    We'll assume that the name is `puppet`.
+
+Putting it all together, we construct the following command-line invocation to run the tests:
+```sh
+CONFIG=config/nodes/centos6-local.yaml SHA=#{test-commit-sha} GIT_SERVER='192.168.80.1' FORK='puppet' bundle exec rake --trace ci:test:git
+```
+Go ahead and run that sucker!
+
+Testing will take some time.
+After the testing finishes, you'll either see this line
+```
+systest completed successfully, thanks.
+```
+near the end of the output, indicating that all tests completed succesfully, or you'll see the end of a stack trace, indicating failed tests further up.
