@@ -84,6 +84,12 @@ describe Puppet::FileServing::Configuration::Parser do
 
       lambda { @parser.parse }.should raise_error(RuntimeError)
     end
+
+    it "should return comprehensible error message, if invalid line detected" do
+      write_config_file "[one]\n\xc2\xa0\xc2\xa0path /etc/puppet/files\n\xc2\xa0\xc2\xa0allow *\n"
+
+      proc { @parser.parse }.should raise_error(ArgumentError, /Invalid line.*in.*, line.*/)
+    end
   end
 
   describe Puppet::FileServing::Configuration::Parser, " when parsing mount attributes" do
@@ -131,6 +137,12 @@ describe Puppet::FileServing::Configuration::Parser do
 
       proc { @parser.parse }.should raise_error(ArgumentError)
     end
+    it "should return comprehensible error message, if failed on invalid attribute" do
+      write_config_file "[one]\ndo something\n"
+
+      proc { @parser.parse }.should raise_error(ArgumentError, /Invalid argument 'do' in.*, line.*/)
+    end
+
   end
 
   describe Puppet::FileServing::Configuration::Parser, " when parsing the modules mount" do
