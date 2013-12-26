@@ -11,7 +11,8 @@ module Puppet::Parser
     def self.parser(environment)
       case Puppet[:parser]
       when 'future'
-        evaluating_parser()
+        # must check if the given environment is real or just a string, in which case watching is not supported
+        evaluating_parser(environment.respond_to?(:known_resource_types) ? environment.known_resource_types : nil)
 #        eparser(environment)
       else
         classic_parser(environment)
@@ -27,14 +28,14 @@ module Puppet::Parser
     end
 
     # Returns an instance of an EvaluatingParser
-    def self.evaluating_parser
+    def self.evaluating_parser(file_watcher)
       # Since RGen is optional, test that it is installed
       @@asserted ||= false
       assert_rgen_installed() unless @@asserted
       @@asserted = true
       require 'puppet/parser/e4_parser_adapter'
       require 'puppet/pops/parser/code_merger'
-      E4ParserAdapter.new()
+      E4ParserAdapter.new(file_watcher)
     end
 
     # Creates an instance of the expression based parser 'eparser'
