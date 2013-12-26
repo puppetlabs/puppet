@@ -37,10 +37,10 @@ class Puppet::FileServing::Configuration::Parser
           when "deny"
             deny(mount, value)
           else
-            raise ArgumentError.new("Invalid argument '#{var}'", @count, @file)
+            raise ArgumentError.new("Invalid argument '#{var}' in #{@file.filename}, line #{@count}")
           end
         else
-          raise ArgumentError.new("Invalid line '#{line.chomp}'", @count, @file)
+          raise ArgumentError.new("Invalid line '#{line.chomp}' at #{@file.filename}, line #{@count}")
         end
       }
     }
