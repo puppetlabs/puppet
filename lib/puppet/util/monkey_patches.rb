@@ -72,7 +72,7 @@ class Symbol
   # time it was called, rather than caching (in Ruby 1.8.7 and earlier).
   #
   # In Ruby 1.9.3 and later Symbol#to_proc does implement a cache so we skip
-  # the change in behavior.  our monkey patch.
+  # our monkey patch.
   #
   # Changing this means we can see XX memory reduction...
   if RUBY_VERSION < "1.9.3"
