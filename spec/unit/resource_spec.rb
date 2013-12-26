@@ -338,33 +338,8 @@ describe Puppet::Resource do
           resource.set_default_parameters(scope)
         end
 
-        it "should query the injector using a namespaced key" do
-          compiler.injector.expects(:lookup).with(scope, 'apache::port').returns("8081")
-
-          resource.set_default_parameters(scope)
-
-          resource[:port].should == "8081"
-        end
-
         it "should use the value from the data_binding terminus" do
           Puppet::DataBinding.indirection.expects(:find).returns('443')
-
-          resource.set_default_parameters(scope)
-
-          resource[:port].should == '443'
-        end
-
-        it "should use the value from the injector" do
-          compiler.injector.expects(:lookup).with(scope, 'apache::port').returns('443')
-
-          resource.set_default_parameters(scope)
-
-          resource[:port].should == '443'
-        end
-
-        it "should not call the DataBinding terminus when injector produces a value" do
-          compiler.injector.expects(:lookup).with(scope, 'apache::port').returns('443')
-          Puppet::DataBinding.indirection.expects(:find).never()
 
           resource.set_default_parameters(scope)
 
@@ -386,14 +361,6 @@ describe Puppet::Resource do
           }.to raise_error(Puppet::Error, /Error from DataBinding 'hiera' while looking up 'apache::port':.*Forgettabotit/)
         end
 
-        it "should use the default value if the injector returns nil" do
-          compiler.injector.expects(:lookup).returns(nil)
-          Puppet::DataBinding.indirection.expects(:find).returns(nil)
-
-          resource.set_default_parameters(scope)
-
-          resource[:port].should == '80'
-        end
       end
 
       context "when a value is provided" do

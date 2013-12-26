@@ -339,16 +339,7 @@ class Puppet::Resource
     return nil unless resource_type.type == :hostclass
 
     name = "#{resource_type.name}::#{param}"
-    # Lookup with injector (optionally), and if no value bound, lookup with "classic hiera"
-    result = nil
-    if scope.compiler.is_binder_active?
-      result = scope.compiler.injector.lookup(scope, name)
-    end
-    if result.nil?
-      lookup_with_databinding(name, scope)
-    else
-      result
-    end
+    lookup_with_databinding(name, scope)
   end
 
   private :lookup_external_default_for

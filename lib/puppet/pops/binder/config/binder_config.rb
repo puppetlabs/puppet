@@ -24,15 +24,13 @@ module Puppet::Pops::Binder::Config
     # @return <Hash<String, String>] ({}) optional mapping of bindings-scheme to handler class name
     attr_reader :scheme_extensions
 
-    # @return <Hash<String, String>] ({}) optional mapping of hiera backend name to backend class name
-    attr_reader :hiera_backends
 
     # @return [String] the loaded config file
     attr_accessor :config_file
 
     DEFAULT_LAYERS = [
-      { 'name' => 'site',    'include' => ['confdir-hiera:/', 'confdir:/default?optional']  },
-      { 'name' => 'modules', 'include' => ['module-hiera:/*/', 'module:/*::default'] },
+      { 'name' => 'site',    'include' => [ 'confdir:/default?optional'] },
+      { 'name' => 'modules', 'include' => [ 'module:/*::default'] },
     ]
 
     DEFAULT_CATEGORIES = [
@@ -43,8 +41,6 @@ module Puppet::Pops::Binder::Config
     ]
 
     DEFAULT_SCHEME_EXTENSIONS = {}
-
-    DEFAULT_HIERA_BACKENDS_EXTENSIONS = {}
 
     def default_config()
       # This is hardcoded now, but may be a user supplied default configuration later
@@ -105,12 +101,10 @@ module Puppet::Pops::Binder::Config
         @layering_config   = data['layers'] or default_layers
         @categorization    = data['categories'] or default_categories
         @scheme_extensions = (data['extensions'] and data['extensions']['scheme_handlers'] or default_scheme_extensions)
-        @hiera_backends    = (data['extensions'] and data['extensions']['hiera_backends'] or default_hiera_backends_extensions)
       else
         @layering_config = []
         @categorization = {}
         @scheme_extensions = {}
-        @hiera_backends = {}
       end
     end
 
@@ -129,11 +123,6 @@ module Puppet::Pops::Binder::Config
     # @api private
     def default_scheme_extensions
       DEFAULT_SCHEME_EXTENSIONS
-    end
-
-    # @api private
-    def default_hiera_backends_extensions
-      DEFAULT_HIERA_BACKENDS_EXTENSIONS
     end
   end
 end

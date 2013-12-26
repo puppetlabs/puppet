@@ -54,11 +54,11 @@ module Puppet
       require 'puppet/pops/binder/injector_entry'
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'
-      require 'puppet/pops/binder/hiera2'
       require 'puppet/pops/binder/bindings_composer'
       require 'puppet/pops/binder/bindings_model_dumper'
       require 'puppet/pops/binder/system_bindings'
       require 'puppet/pops/binder/bindings_loader'
+      require 'puppet/pops/binder/lookup'
 
       module Config
         require 'puppet/pops/binder/config/binder_config'

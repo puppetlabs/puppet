@@ -161,7 +161,7 @@ module Puppet::Pops::Binder::Config
       end
       # check known extensions
       extensions.each_key do |key|
-        unless ['scheme_handlers', 'hiera_backends'].include? key
+        unless ['scheme_handlers'].include? key
           accept(Issues::UNKNOWN_EXTENSION, config_file, :extension => key)
         end
       end
@@ -171,13 +171,6 @@ module Puppet::Pops::Binder::Config
           accept(Issues::EXTENSION_BINDING_NOT_HASH, config_file, :extension => 'scheme_handlers', :actual => binding_schemes.class.name)
         end
       end
-
-      if hiera_backends = extensions['hiera_backends']
-        unless hiera_backends.is_a?(Hash)
-          accept(Issues::EXTENSION_BINDING_NOT_HASH, config_file, :extension => 'hiera_backends', :actual => hiera_backends.class.name)
-        end
-      end
-
     end
   end
 end

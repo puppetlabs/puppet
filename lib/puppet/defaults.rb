@@ -266,8 +266,9 @@ module Puppet
     },
     :binder => {
       :default => false,
-      :desc    => "Turns the binding system on or off. This includes hiera-2 and data in modules.  The binding system aggregates data from
-      modules and other locations and makes them available for lookup.  The binding system is experimental and any or all of it may change.",
+      :desc    => "Turns the binding system on or off. This includes bindings in modules.
+        The binding system aggregates data from modules and other locations and makes them available for lookup.
+        The binding system is experimental and any or all of it may change.",
       :type    => :boolean,
     },
     :binder_config => {
