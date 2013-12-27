@@ -716,7 +716,7 @@ class Puppet::Parser::Scope
   end
 
   def find_defined_resource_type(type)
-    environment.known_resource_types.find_definition(namespaces, type.to_s.downcase)
+    known_resource_types.find_definition(namespaces, type.to_s.downcase)
   end
 
 
