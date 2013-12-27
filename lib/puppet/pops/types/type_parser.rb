@@ -171,23 +171,60 @@ class Puppet::Pops::Types::TypeParser
 
     case parameterized_ast.left_expr.value
     when "array"
-      if parameters.size != 1
-        raise_invalid_parameters_error("Array", 1, parameters.size)
+      case parameters.size
+      when 1
+      when 2
+        size_type =
+        if parameters[1].is_a?(Puppet::Pops::Types::PIntegerType)
+          parameters[1].copy
+        else
+          assert_range_parameter(parameters[1])
+          TYPES.range(parameters[1], :default)
+        end
+      when 3
+        assert_range_parameter(parameters[1])
+        assert_range_parameter(parameters[2])
+        size_type = TYPES.range(parameters[1], parameters[2])
+      else
+        raise_invalid_parameters_error("Array", "1 to 3", parameters.size)
       end
       assert_type(parameters[0])
-      TYPES.array_of(parameters[0])
+      t = TYPES.array_of(parameters[0])
+      t.size_type = size_type if size_type
+      t
 
     when "hash"
-      if parameters.size == 1
+      result = case parameters.size
+      when 1
         assert_type(parameters[0])
         TYPES.hash_of(parameters[0])
-      elsif parameters.size != 2
-        raise_invalid_parameters_error("Hash", "1 or 2", parameters.size)
-      else
+      when 2
         assert_type(parameters[0])
         assert_type(parameters[1])
         TYPES.hash_of(parameters[1], parameters[0])
+      when 3
+        size_type =
+        if parameters[2].is_a?(Puppet::Pops::Types::PIntegerType)
+          parameters[2].copy
+        else
+          assert_range_parameter(parameters[2])
+          TYPES.range(parameters[2], :default)
+        end
+        assert_type(parameters[0])
+        assert_type(parameters[1])
+        TYPES.hash_of(parameters[1], parameters[0])
+      when 4
+        assert_range_parameter(parameters[2])
+        assert_range_parameter(parameters[3])
+        size_type = TYPES.range(parameters[2], parameters[3])
+        assert_type(parameters[0])
+        assert_type(parameters[1])
+        TYPES.hash_of(parameters[1], parameters[0])
+      else
+        raise_invalid_parameters_error("Hash", "1 to 4", parameters.size)
       end
+      result.size_type = size_type if size_type
+      result
 
     when "class"
       if parameters.size != 1
@@ -281,6 +318,10 @@ class Puppet::Pops::Types::TypeParser
 
   def assert_type(t)
     raise_invalid_type_specification_error unless t.is_a?(Puppet::Pops::Types::PObjectType)
+  end
+
+  def assert_range_parameter(t)
+    raise_invalid_type_speification_error unless t.is_a?(Integer) || t == 'default' || t == :default
   end
 
   def raise_invalid_type_specification_error

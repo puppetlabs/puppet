@@ -39,8 +39,20 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.array_of(t)
   end
 
+  def hash_t(k,v)
+    Puppet::Pops::Types::TypeFactory.hash_of(v, k)
+  end
+
   def data_t()
     Puppet::Pops::Types::TypeFactory.data()
+  end
+
+  def factory()
+    Puppet::Pops::Types::TypeFactory
+  end
+
+  def collection_t()
+    Puppet::Pops::Types::TypeFactory.collection()
   end
 
   def types
@@ -763,6 +775,46 @@ describe 'The type calculator' do
       calculator.instance?(range, 11).should == false
     end
 
+    it 'should consider string in length range' do
+      range = factory.constrain_size(string_t, 1,3)
+      calculator.instance?(range, 'a').should    == true
+      calculator.instance?(range, 'abc').should  == true
+      calculator.instance?(range, '').should     == false
+      calculator.instance?(range, 'abcd').should == false
+    end
+
+    it 'should consider array in length range' do
+      range = factory.constrain_size(array_t(integer_t), 1,3)
+      calculator.instance?(range, [1]).should    == true
+      calculator.instance?(range, [1,2,3]).should  == true
+      calculator.instance?(range, []).should     == false
+      calculator.instance?(range, [1,2,3,4]).should == false
+    end
+
+    it 'should consider hash in length range' do
+      range = factory.constrain_size(hash_t(integer_t, integer_t), 1,2)
+      calculator.instance?(range, {1=>1}).should             == true
+      calculator.instance?(range, {1=>1, 2=>2}).should       == true
+      calculator.instance?(range, {}).should                 == false
+      calculator.instance?(range, {1=>1, 2=>2, 3=>3}).should == false
+    end
+
+    it 'should consider collection in length range for array ' do
+      range = factory.constrain_size(collection_t, 1,3)
+      calculator.instance?(range, [1]).should    == true
+      calculator.instance?(range, [1,2,3]).should  == true
+      calculator.instance?(range, []).should     == false
+      calculator.instance?(range, [1,2,3,4]).should == false
+    end
+
+    it 'should consider collection in length range for hash' do
+      range = factory.constrain_size(collection_t, 1,2)
+      calculator.instance?(range, {1=>1}).should             == true
+      calculator.instance?(range, {1=>1, 2=>2}).should       == true
+      calculator.instance?(range, {}).should                 == false
+      calculator.instance?(range, {1=>1, 2=>2, 3=>3}).should == false
+    end
+
     it 'should consider string matching enum as instanceof' do
       enum = enum_t('XS', 'S', 'M', 'L', 'XL', '0')
       calculator.instance?(enum, 'XS').should  == true
@@ -902,7 +954,7 @@ describe 'The type calculator' do
       int = int_T.new()
       int.from = 1
       int.to = 1
-      calculator.string(int).should == 'Integer[1]'
+      calculator.string(int).should == 'Integer[1, 1]'
       int = int_T.new()
       int.from = 1
       int.to = 2
@@ -939,10 +991,34 @@ describe 'The type calculator' do
       calculator.string(string_t('a', 'b', 'c')).should == 'String'
     end
 
+    it 'should yield \'String\' and from/to for PStringType' do
+      string_T = Puppet::Pops::Types::PStringType
+      calculator.string(factory.constrain_size(string_T.new(), 1,1)).should == 'String[1, 1]'
+      calculator.string(factory.constrain_size(string_T.new(), 1,2)).should == 'String[1, 2]'
+      calculator.string(factory.constrain_size(string_T.new(), :default, 2)).should == 'String[default, 2]'
+      calculator.string(factory.constrain_size(string_T.new(), 2, :default)).should == 'String[2, default]'
+    end
+
     it 'should yield \'Array[Integer]\' for PArrayType[PIntegerType]' do
       t = Puppet::Pops::Types::PArrayType.new()
       t.element_type = Puppet::Pops::Types::PIntegerType.new()
       calculator.string(t).should == 'Array[Integer]'
+    end
+
+    it 'should yield \'Collection\' and from/to for PCollectionType' do
+      col = collection_t()
+      calculator.string(factory.constrain_size(col.copy, 1,1)).should == 'Collection[1, 1]'
+      calculator.string(factory.constrain_size(col.copy, 1,2)).should == 'Collection[1, 2]'
+      calculator.string(factory.constrain_size(col.copy, :default, 2)).should == 'Collection[default, 2]'
+      calculator.string(factory.constrain_size(col.copy, 2, :default)).should == 'Collection[2, default]'
+    end
+
+    it 'should yield \'Array\' and from/to for PArrayType' do
+      arr = array_t(string_t)
+      calculator.string(factory.constrain_size(arr.copy, 1,1)).should == 'Array[String, 1, 1]'
+      calculator.string(factory.constrain_size(arr.copy, 1,2)).should == 'Array[String, 1, 2]'
+      calculator.string(factory.constrain_size(arr.copy, :default, 2)).should == 'Array[String, default, 2]'
+      calculator.string(factory.constrain_size(arr.copy, 2, :default)).should == 'Array[String, 2, default]'
     end
 
     it 'should yield \'Hash[String, Integer]\' for PHashType[PStringType, PIntegerType]' do
@@ -950,6 +1026,14 @@ describe 'The type calculator' do
       t.key_type = Puppet::Pops::Types::PStringType.new()
       t.element_type = Puppet::Pops::Types::PIntegerType.new()
       calculator.string(t).should == 'Hash[String, Integer]'
+    end
+
+    it 'should yield \'Hash\' and from/to for PHashType' do
+      hsh = hash_t(string_t, string_t)
+      calculator.string(factory.constrain_size(hsh.copy, 1,1)).should == 'Hash[String, String, 1, 1]'
+      calculator.string(factory.constrain_size(hsh.copy, 1,2)).should == 'Hash[String, String, 1, 2]'
+      calculator.string(factory.constrain_size(hsh.copy, :default, 2)).should == 'Hash[String, String, default, 2]'
+      calculator.string(factory.constrain_size(hsh.copy, 2, :default)).should == 'Hash[String, String, 2, default]'
     end
 
     it "should yield 'Class' for a PHostClassType" do
@@ -1055,8 +1139,8 @@ describe 'The type calculator' do
     it "computes the common type of PType's type parameter" do
       int_t    = Puppet::Pops::Types::PIntegerType.new()
       string_t = Puppet::Pops::Types::PStringType.new()
-      calculator.string(calculator.infer([int_t])).should == "Array[Type[Integer]]"
-      calculator.string(calculator.infer([int_t, string_t])).should == "Array[Type[Literal]]"
+      calculator.string(calculator.infer([int_t])).should == "Array[Type[Integer], 1, 1]"
+      calculator.string(calculator.infer([int_t, string_t])).should == "Array[Type[Literal], 2, 2]"
     end
 
     it 'should infer PType as the type of ruby classes' do

@@ -43,6 +43,50 @@ describe 'The type factory' do
       Puppet::Pops::Types::TypeFactory.data().class().should == Puppet::Pops::Types::PDataType
     end
 
+    it 'optional() returns POptionalType' do
+      Puppet::Pops::Types::TypeFactory.optional().class().should == Puppet::Pops::Types::POptionalType
+    end
+
+    it 'collection() returns PCollectionType' do
+      Puppet::Pops::Types::TypeFactory.collection().class().should == Puppet::Pops::Types::PCollectionType
+    end
+
+    it 'catalog_entry() returns PCatalogEntryType' do
+      Puppet::Pops::Types::TypeFactory.catalog_entry().class().should == Puppet::Pops::Types::PCatalogEntryType
+    end
+
+    it 'undef() returns PNilType' do
+      Puppet::Pops::Types::TypeFactory.undef().class().should == Puppet::Pops::Types::PNilType
+    end
+
+    it 'range(to, from) returns PIntegerType' do
+      t = Puppet::Pops::Types::TypeFactory.range(1,2)
+      t.class().should == Puppet::Pops::Types::PIntegerType
+      t.from.should == 1
+      t.to.should == 2
+    end
+
+    it 'range(default, default) returns PIntegerType' do
+      t = Puppet::Pops::Types::TypeFactory.range(:default,:default)
+      t.class().should == Puppet::Pops::Types::PIntegerType
+      t.from.should == nil
+      t.to.should == nil
+    end
+
+    it 'float_range(to, from) returns PFloatType' do
+      t = Puppet::Pops::Types::TypeFactory.float_range(1.0, 2.0)
+      t.class().should == Puppet::Pops::Types::PFloatType
+      t.from.should == 1.0
+      t.to.should == 2.0
+    end
+
+    it 'float_range(default, default) returns PFloatType' do
+      t = Puppet::Pops::Types::TypeFactory.float_range(:default, :default)
+      t.class().should == Puppet::Pops::Types::PFloatType
+      t.from.should == nil
+      t.to.should == nil
+    end
+
     it 'resource() creates a generic PResourceType' do
       pr = Puppet::Pops::Types::TypeFactory.resource()
       pr.class().should == Puppet::Pops::Types::PResourceType
@@ -96,6 +140,22 @@ describe 'The type factory' do
       ht = Puppet::Pops::Types::TypeFactory.ruby(1)
       ht.class().should == Puppet::Pops::Types::PRubyType
       ht.ruby_class.should == 'Fixnum'
+    end
+
+    it 'a size constrained collection can be created from array' do
+      t = Puppet::Pops::Types::TypeFactory.array_of_data()
+      Puppet::Pops::Types::TypeFactory.constrain_size(t, 1,2).should == t
+      t.size_type.class.should == Puppet::Pops::Types::PIntegerType
+      t.size_type.from.should == 1
+      t.size_type.to.should == 2
+    end
+
+    it 'a size constrained collection can be created from hash' do
+      t = Puppet::Pops::Types::TypeFactory.hash_of_data()
+      Puppet::Pops::Types::TypeFactory.constrain_size(t, 1,2).should == t
+      t.size_type.class.should == Puppet::Pops::Types::PIntegerType
+      t.size_type.from.should == 1
+      t.size_type.to.should == 2
     end
   end
 end

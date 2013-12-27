@@ -75,9 +75,29 @@ describe Puppet::Pops::Types::TypeParser do
     expect(the_type_parsed_from(parameterized_hash)).to be_the_type(parameterized_hash)
   end
 
-  it "rejects an array spec with the wrong number of parameters" do
-    expect { parser.parse("Array[Integer, Integer]") }.to raise_the_parameter_error("Array", 1, 2)
-    expect { parser.parse("Hash[Integer, Integer, Integer]") }.to raise_the_parameter_error("Hash", "1 or 2", 3)
+  it "parses a size constrained collection using capped range" do
+    parameterized_array = types.array_of(types.integer)
+    types.constrain_size(parameterized_array, 1,2)
+    parameterized_hash = types.hash_of(types.integer, types.boolean)
+    types.constrain_size(parameterized_hash, 1,2)
+
+    expect(the_type_parsed_from(parameterized_array)).to be_the_type(parameterized_array)
+    expect(the_type_parsed_from(parameterized_hash)).to be_the_type(parameterized_hash)
+  end
+
+  it "parses a size constrained collection with open range" do
+    parameterized_array = types.array_of(types.integer)
+    types.constrain_size(parameterized_array, 1,:default)
+    parameterized_hash = types.hash_of(types.integer, types.boolean)
+    types.constrain_size(parameterized_hash, 1,:default)
+
+    expect(the_type_parsed_from(parameterized_array)).to be_the_type(parameterized_array)
+    expect(the_type_parsed_from(parameterized_hash)).to be_the_type(parameterized_hash)
+  end
+
+  it "rejects an collection spec with the wrong number of parameters" do
+    expect { parser.parse("Array[Integer, 1,2,3]") }.to raise_the_parameter_error("Array", "1 to 3", 4)
+    expect { parser.parse("Hash[Integer, Integer, 1,2,3]") }.to raise_the_parameter_error("Hash", "1 to 4", 5)
   end
 
   it "interprets anything that is not a built in type to be a resource type" do

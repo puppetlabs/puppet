@@ -335,6 +335,10 @@ module Puppet::Pops::Issues
     "String supports [] with one or two arguments. Got #{actual}"
   end
 
+  BAD_STRING_SLICE_TYPE = issue :BAD_STRING_SLICE_TYPE, :actual do
+    "String-Type [] requires all arguments to be integers (or default). Got #{actual}"
+  end
+
   BAD_ARRAY_SLICE_ARITY = issue :BAD_ARRAY_SLICE_ARITY, :actual do
     "Array supports [] with one or two arguments. Got #{actual}"
   end
@@ -349,6 +353,10 @@ module Puppet::Pops::Issues
 
   BAD_INTEGER_SLICE_TYPE = issue :BAD_INTEGER_SLICE_TYPE, :actual do
     "Integer-Type [] requires all arguments to be integers (or default). Got #{actual}"
+  end
+
+  BAD_COLLECTION_SLICE_TYPE = issue :BAD_COLLECTION_SLICE_TYPE, :actual do
+    "A Type's size constraint arguments must be a single Integer type, or 1-2 integers (or default). Got #{label.a_an(actual)}"
   end
 
   BAD_FLOAT_SLICE_ARITY = issue :BAD_INTEGER_SLICE_ARITY, :actual do

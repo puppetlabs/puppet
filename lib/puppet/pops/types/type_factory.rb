@@ -276,4 +276,12 @@ module Puppet::Pops::Types::TypeFactory
       type
     end
   end
+
+  # Sets the accepted size range of a collection if something other than the default 0 to Infinity
+  # is wanted. The semantics for from/to are the same as for #range
+  #
+  def self.constrain_size(collection_t, from, to)
+    collection_t.size_type = range(from, to)
+    collection_t
+  end
 end
