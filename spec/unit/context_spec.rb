@@ -25,6 +25,10 @@ describe Puppet::Context do
     expect { Puppet::Context.lookup("a") }.to raise_error(Puppet::Context::UndefinedBindingError)
   end
 
+  it "calls a provided block for a default value when none is found" do
+    expect(Puppet::Context.lookup("a") { "default" }).to eq("default")
+  end
+
   it "allows rebinding values in a nested context" do
     Puppet::Context.bind("a", 1)
 

@@ -18,11 +18,13 @@ module Puppet::Context
       end
     end
 
-    def lookup(name)
+    def lookup(name, block)
       if @table.include?(name)
         @table[name]
       elsif @parent
-        @parent.lookup(name)
+        @parent.lookup(name, block)
+      elsif block
+        block.call
       else
         raise UndefinedBindingError, name
       end
@@ -43,8 +45,8 @@ module Puppet::Context
     @bindings.bind(name, value)
   end
 
-  def self.lookup(name)
-    @bindings.lookup(name)
+  def self.lookup(name, &block)
+    @bindings.lookup(name, block)
   end
 
   def self.override(bindings)
