@@ -264,6 +264,6 @@ describe Puppet::Network::HTTP::WEBrickREST do
 
         @handler.params(@request)[:node].should == :resolved_node
       end
-   end
+    end
   end
 end

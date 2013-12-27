@@ -101,7 +101,10 @@ module Puppet::Network::HTTP::Handler
         raise HTTPNotFoundError, "No handler for #{indirection.name}"
       end
 
-      send("do_#{method}", indirection, key, params, request, response)
+      trusted = Puppet::Indirector::TrustedInformation.remote(params[:authenticated], params[:node])
+      Puppet::Context.override(:trusted_information => trusted) do
+        send("do_#{method}", indirection, key, params, request, response)
+      end
     end
   rescue HTTPError => e
     return do_http_control_exception(response, e)
