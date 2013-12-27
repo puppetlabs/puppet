@@ -393,6 +393,13 @@ class Puppet::Node::Environment
     deps
   end
 
+  # Set a periodic watcher on the file, so we can tell if it has changed.
+  # @param filename [File,String] File instance or filename
+  # @api private
+  def watch_file(file)
+    known_resource_types.watch_file(file.to_s)
+  end
+
   # @return [String] The stringified value of the `name` instance variable
   # @api public
   def to_s

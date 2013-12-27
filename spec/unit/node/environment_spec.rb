@@ -47,6 +47,21 @@ describe Puppet::Node::Environment do
       Puppet::Node::Environment.new(one).should equal(one)
     end
 
+    describe "watching a file" do
+      let(:filename) { "filename" }
+
+      it "accepts a File" do
+        file = tmpfile(filename)
+        env.known_resource_types.expects(:watch_file).with(file.to_s)
+        env.watch_file(file)
+      end
+
+      it "accepts a String" do
+        env.known_resource_types.expects(:watch_file).with(filename)
+        env.watch_file(filename)
+      end
+    end
+
     describe "when managing known resource types" do
       before do
         @collection = Puppet::Resource::TypeCollection.new(env)
@@ -387,8 +402,9 @@ describe Puppet::Node::Environment do
     end
 
     describe "when performing initial import" do
+      let(:env) { Puppet::Node::Environment.new("test") }
       before do
-        @parser = Puppet::Parser::ParserFactory.parser("test")
+        @parser = Puppet::Parser::ParserFactory.parser(env)
 #        @parser = Puppet::Parser::EParserAdapter.new(Puppet::Parser::Parser.new("test")) # TODO: FIX PARSER FACTORY
         Puppet::Parser::ParserFactory.stubs(:parser).returns @parser
       end

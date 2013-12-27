@@ -11,9 +11,7 @@ module Puppet::Parser
     def self.parser(environment)
       case Puppet[:parser]
       when 'future'
-        # must check if the given environment is real or just a string, in which case watching is not supported
-        evaluating_parser(environment.respond_to?(:known_resource_types) ? environment.known_resource_types : nil)
-#        eparser(environment)
+        evaluating_parser(environment)
       else
         classic_parser(environment)
       end
