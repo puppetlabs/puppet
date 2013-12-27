@@ -213,7 +213,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   def call_function(name, args, o, scope)
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-    mapped_args = args.map {|a| convert(a, scope) }
+    # NOTE: Passing an empty string last converts :undef to empty string
+    mapped_args = args.map {|a| convert(a, scope, '') }
     scope.send("function_#{name}", mapped_args)
   end
 
@@ -227,7 +228,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     file, line = extract_file_line(o)
     Puppet::Parser::Resource::Param.new(
       :name   => name,
-      :value  => convert(value, scope), # converted to 3x since 4x supports additional objects / types
+      :value  => convert(value, scope, :undef), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
       :add    => operator == :'+>'
     )
@@ -367,7 +368,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def initialize
-    @@convert_visitor   ||= Puppet::Pops::Visitor.new(self, "convert", 1, 1)
+    @@convert_visitor   ||= Puppet::Pops::Visitor.new(self, "convert", 2, 2)
   end
 
   # Converts 4x supported values to 3x values. This is required because
@@ -375,55 +376,56 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # regular expressions. Unfortunately this has to be done for array and hash as well.
   # A complication is that catalog types needs to be resolved against the scope.
   #
-  def convert(o, scope)
-    @@convert_visitor.visit_this_1(self, o, scope)
+  def convert(o, scope, undef_value)
+    @@convert_visitor.visit_this_2(self, o, scope, undef_value)
   end
 
-  def convert_NilClass(o, scope)
-    :undef
+
+  def convert_NilClass(o, scope, undef_value)
+    undef_value
   end
 
-  def convert_Object(o, scope)
+  def convert_Object(o, scope, undef_value)
     o
   end
 
-  def convert_Array(o, scope)
-    o.map {|x| convert(x, scope) }
+  def convert_Array(o, scope, undef_value)
+    o.map {|x| convert(x, scope, undef_value) }
   end
 
-  def convert_Hash(o, scope)
+  def convert_Hash(o, scope, undef_value)
     result = {}
-    o.each {|k,v| result[convert(k, scope)] = convert(v, scope) }
+    o.each {|k,v| result[convert(k, scope, undef_value)] = convert(v, scope, undef_value) }
     result
   end
 
-  def convert_Regexp(o, scope)
+  def convert_Regexp(o, scope, undef_value)
     # Puppet 3x cannot handle parameter values that are reqular expressions. Turn into regexp string in
     # source form
     o.inspect
   end
 
-  def convert_Symbol(o, scope)
+  def convert_Symbol(o, scope, undef_value)
     case o
     when :undef
-      ''  # 3x wants :undef as empty string in function
+      undef_value  # 3x wants :undef as empty string in function
     else
       o   # :default, and all others are verbatim since they are new in future evaluator
     end
   end
 
-  def convert_PAbstractType(o, scope)
+  def convert_PAbstractType(o, scope, undef_value)
     o
   end
 
-  def convert_PResourceType(o,scope)
+  def convert_PResourceType(o,scope, undef_value)
     # Needs conversion by calling scope to resolve the name and possibly return a different name
     # Resolution can only be called with an array, and returns an array. Here there is only one name
     type, titles = scope.resolve_type_and_titles(o.type_name, [o.title])
     Puppet::Resource.new(type, titles[0])
   end
 
-  def convert_PHostClassType(o, scope)
+  def convert_PHostClassType(o, scope, undef_value)
     # Needs conversion by calling scope to resolve the name and possibly return a different name
     # Resolution can only be called with an array, and returns an array. Here there is only one name
     type, titles = scope.resolve_type_and_titles('class', [o.class_name])
