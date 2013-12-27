@@ -1093,6 +1093,78 @@ describe Puppet::Type.type(:file) do
         expect { file.write :NOTUSED }.to_not raise_error
       end
     end
+
+    describe "when resource mode is supplied" do
+      before { file.stubs(:property_fix) }
+
+      context "and writing temporary files" do
+        before { file.stubs(:write_temporary_file?).returns(true) }
+
+        it "should convert symbolic mode to int" do
+          file[:mode] = 'oga=r'
+          Puppet::Util.expects(:replace_file).with(file[:path], 0444)
+          file.write :NOTUSED
+        end
+
+        it "should support int modes" do
+          file[:mode] = '0444'
+          Puppet::Util.expects(:replace_file).with(file[:path], 0444)
+          file.write :NOTUSED
+        end
+      end
+
+      context "and not writing temporary files" do
+        before { file.stubs(:write_temporary_file?).returns(false) }
+
+        it "should set a umask of 0" do
+          file[:mode] = 'oga=r'
+          Puppet::Util.expects(:withumask).with(0)
+          file.write :NOTUSED
+        end
+
+        it "should convert symbolic mode to int" do
+          file[:mode] = 'oga=r'
+          File.expects(:open).with(file[:path], anything, 0444)
+          file.write :NOTUSED
+        end
+
+        it "should support int modes" do
+          file[:mode] = '0444'
+          File.expects(:open).with(file[:path], anything, 0444)
+          file.write :NOTUSED
+        end
+      end
+    end
+
+    describe "when resource mode is not supplied" do
+      before do
+        file.stubs(:property_fix)
+        file.delete(:mode) if file[:mode]
+      end
+
+      context "and writing temporary files" do
+        before { file.stubs(:write_temporary_file?).returns(true) }
+
+        it "should default to 0644 mode" do
+          Puppet::Util.expects(:replace_file).with(file[:path], 0644)
+          file.write :NOTUSED
+        end
+      end
+
+      context "and not writing temporary files" do
+        before { file.stubs(:write_temporary_file?).returns(false) }
+
+        it "should set a umask of 022" do
+          Puppet::Util.expects(:withumask).with(022)
+          file.write :NOTUSED
+        end
+
+        it "should supply no mode to default to umask" do
+          File.expects(:open).with(file[:path], anything, nil)
+          file.write :NOTUSED
+        end
+      end
+    end
   end
 
   describe "#fail_if_checksum_is_wrong" do
