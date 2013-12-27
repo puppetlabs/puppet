@@ -102,8 +102,11 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     cert = request.env['SSL_CLIENT_CERT']
     # NOTE: The SSL_CLIENT_CERT environment variable will be the empty string
     # when Puppet agent nodes have not yet obtained a signed certificate.
-    return nil if cert.nil? or cert.empty?
-    OpenSSL::X509::Certificate.new(cert)
+    if cert.nil? || cert.empty?
+      nil
+    else
+      Puppet::SSL::Certificate.from_instance(OpenSSL::X509::Certificate.new(cert))
+    end
   end
 
   # Passenger freaks out if we finish handling the request without reading any

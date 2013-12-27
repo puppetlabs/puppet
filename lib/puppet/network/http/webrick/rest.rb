@@ -60,7 +60,11 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
   end
 
   def client_cert(request)
-    request.client_cert
+    if cert = request.client_cert
+      Puppet::SSL::Certificate.from_instance(cert)
+    else
+      nil
+    end
   end
 
   # Set the specified format as the content type of the response.

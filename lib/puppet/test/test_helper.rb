@@ -94,7 +94,7 @@ module Puppet::Test
       Puppet::DataBinding::Hiera.instance_variable_set("@hiera", nil)
 
       Puppet::Context.bind(:trusted_information,
-                           Puppet::Indirector::TrustedInformation.new('local', 'testing'))
+                           Puppet::Indirector::TrustedInformation.new('local', 'testing', {}))
     end
 
     # Call this method once per test, after execution of each individual test.

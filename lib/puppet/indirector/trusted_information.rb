@@ -11,16 +11,25 @@ class Puppet::Indirector::TrustedInformation
   # @return [String]
   attr_reader :certname
 
-  def initialize(authenticated, certname)
+  # Extra information that comes from the trusted certificate's extensions.
+  #
+  # @return [Hash{Object => Object}]
+  attr_reader :extensions
+
+  def initialize(authenticated, certname, extensions)
     @authenticated = authenticated.freeze
     @certname = certname.freeze
+    @extensions = extensions.freeze
   end
 
-  def self.remote(authenticated, node_name)
+  def self.remote(authenticated, node_name, certificate)
     if authenticated
-      new('remote', node_name)
+      extensions = Hash[certificate.custom_extensions.collect do |ext|
+        [ext['oid'].freeze, ext['value'].freeze]
+      end]
+      new('remote', node_name, extensions)
     else
-      new(false, nil)
+      new(false, nil, {})
     end
   end
 
@@ -28,13 +37,14 @@ class Puppet::Indirector::TrustedInformation
     # Always trust local data by picking up the available parameters.
     client_cert = node ? node.parameters['clientcert'] : nil
 
-    new('local', client_cert)
+    new('local', client_cert, {})
   end
 
   def to_h
     {
       'authenticated'.freeze => authenticated,
-      'certname'.freeze => certname
+      'certname'.freeze => certname,
+      'extensions'.freeze => extensions
     }.freeze
   end
 end
