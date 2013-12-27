@@ -25,7 +25,7 @@ echo "PACKAGE_BUILD_STATUS: ${PACKAGE_BUILD_STATUS}"
 rm -rf acceptance
 mkdir acceptance
 cd acceptance
-tar -xzvf ../acceptance-artifacts.tar.gz
+tar -xzf ../acceptance-artifacts.tar.gz
 
 echo "===== This artifact is from ====="
 cat creator.txt
