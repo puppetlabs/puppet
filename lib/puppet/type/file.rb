@@ -719,7 +719,7 @@ Puppet::Type.newtype(:file) do
     mode_int = mode ? symbolic_mode_to_int(mode, assumed_default_mode) : nil
 
     if write_temporary_file?
-      Puppet::Util.replace_file(self[:path], mode_int) do |file|
+      Puppet::Util.replace_file(self[:path], mode ? mode_int : assumed_default_mode) do |file|
         file.binmode
         content_checksum = write_content(file)
         file.flush
