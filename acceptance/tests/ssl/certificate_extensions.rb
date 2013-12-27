@@ -57,10 +57,18 @@ test_name "certificate extensions available as trusted data" do
         :acceptable_exit_codes => [0, 2])
 
       trusted_data = YAML.load(on(agent, "cat #{get_test_file_path(agent, 'trusted.yaml')}").stdout)
-      assert_equal('b5e63090-5167-11e3-8f96-0800200c9a66', trusted_data['pp_uuid'])
-      assert_equal('i-3fkva', trusted_data['pp_instance_id'])
-      assert_equal('db-server', trusted_data['1.3.6.1.4.1.34380.1.2.1'])
-      assert_equal('webops', trusted_data['1.3.6.1.4.1.34380.1.2.2'])
+
+      assert_equal({
+          'authenticated' => 'remote',
+          'certname' => fact_on(agent, 'fqdn'),
+          'extensions' => {
+            'pp_uuid' => 'b5e63090-5167-11e3-8f96-0800200c9a66',
+            'pp_instance_id' => 'i-3fkva',
+            '1.3.6.1.4.1.34380.1.2.1' => 'db-server',
+            '1.3.6.1.4.1.34380.1.2.2' => 'webops'
+          }
+        },
+        trusted_data)
     end
   end
 end
