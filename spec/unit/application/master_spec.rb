@@ -252,14 +252,14 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       it "should exit with error code 30 if no catalog can be found" do
         @master.options[:node] = "foo"
         Puppet::Resource::Catalog.indirection.expects(:find).returns nil
-        $stderr.expects(:puts)
+        Puppet.expects(:log_exception)
         expect { @master.compile }.to exit_with 30
       end
 
       it "should exit with error code 30 if there's a failure" do
         @master.options[:node] = "foo"
         Puppet::Resource::Catalog.indirection.expects(:find).raises ArgumentError
-        $stderr.expects(:puts)
+        Puppet.expects(:log_exception)
         expect { @master.compile }.to exit_with 30
       end
     end
