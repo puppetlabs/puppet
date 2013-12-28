@@ -295,6 +295,18 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect {evaluate(expr)}.to raise_error(/Resource not found: File\['x'\]/)
     end
 
+    # Type Type
+    #
+    it 'creates a Type instance when applied to a Type' do
+      type_expr = fqr('Type')[fqr('Integer')]
+      tf = Puppet::Pops::Types::TypeFactory
+      expect(evaluate(type_expr)).to eql(tf.type_type(tf.integer))
+
+      # arguments are flattened
+      type_expr = fqr('Type')[[fqr('Integer')]]
+      expect(evaluate(type_expr)).to eql(tf.type_type(tf.integer))
+    end
+
   end
 
   matcher :be_the_type do |type|
