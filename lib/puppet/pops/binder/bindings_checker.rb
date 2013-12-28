@@ -71,30 +71,10 @@ class Puppet::Pops::Binder::BindingsChecker
     check_Bindings(b)
   end
 
-  # Check that the category has a categorization and a value
-  # @api private
-  def check_Category(c)
-    acceptor.accept(Issues::MISSING_CATEGORIZATION, binding_parent(c)) unless has_chars?(c.categorization)
-    acceptor.accept(Issues::MISSING_CATEGORY_VALUE, binding_parent(c)) unless has_chars?(c.value)
-  end
-
-  # Check that the binding contains at least one predicate and that all predicates are categorized and has a value
-  # @api private
-  def check_CategorizedBindings(b)
-    acceptor.accept(Issues::MISSING_PREDICATES, b) unless has_entries?(b.predicates)
-    check_Bindings(b)
-  end
-
-  # @api private
-  def check_EffectiveCategories(ec)
-  end
-
   # Check layer has a name
   # @api private
   def check_NamedLayer(l)
     acceptor.accept(Issues::MISSING_LAYER_NAME, binding_parent(l)) unless has_chars?(l.name)
-# It is ok to have an empty layer
-#    acceptor.accept(Issues::MISSING_BINDINGS_IN_LAYER, binding_parent(l), { :layer => l.name }) unless has_entries?(l.bindings)
   end
 
   # Checks that the binding has layers and that each layer has a name and at least one binding

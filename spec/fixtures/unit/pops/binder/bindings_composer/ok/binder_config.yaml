@@ -5,12 +5,6 @@ layers:
    {name: test, include: 'echo:/quick/brown/fox'},
    {name: modules, include: ['module:/*::default'], exclude: 'module:/bad::default/' }
   ]
-categories:
-  [['node', '$fqdn'],
-   ['environment', '${environment}'],
-   ['osfamily', '${osfamily}'],
-   ['common', 'true']
-  ]
 extensions:
   scheme_handlers:
     echo: 'Puppetx::Awesome2::EchoSchemeHandler'

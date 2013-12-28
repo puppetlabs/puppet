@@ -249,7 +249,6 @@ class Puppet::Parser::Compiler
     boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution(env_boot_bindings)
     final_contribution = Puppet::Pops::Binder::SystemBindings.final_contribution
     binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_categories(boot_contribution.effective_categories)
     binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
     @boot_injector = Puppet::Pops::Binder::Injector.new(binder)
   end
@@ -545,7 +544,6 @@ class Puppet::Parser::Compiler
     composer = Puppet::Pops::Binder::BindingsComposer.new()
     layered_bindings = composer.compose(topscope)
     binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_categories(composer.effective_categories(topscope))
     binder.define_layers(layered_bindings)
     @injector = Puppet::Pops::Binder::Injector.new(binder)
   end
