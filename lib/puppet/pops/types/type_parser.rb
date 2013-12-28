@@ -228,6 +228,26 @@ class Puppet::Pops::Types::TypeParser
       result.size_type = size_type if size_type
       result
 
+    when "collection"
+      size_type = case parameters.size
+      when 1
+        if parameters[0].is_a?(Puppet::Pops::Types::PIntegerType)
+          parameters[0].copy
+        else
+          assert_range_parameter(parameters[0])
+          TYPES.range(parameters[0], :default)
+        end
+      when 2
+        assert_range_parameter(parameters[0])
+        assert_range_parameter(parameters[1])
+        TYPES.range(parameters[0], parameters[1])
+      else
+        raise_invalid_parameters_error("Collection", "1 to 2", parameters.size)
+      end
+      result = TYPES.collection
+      result.size_type = size_type
+      result
+
     when "class"
       if parameters.size != 1
         raise_invalid_parameters_error("Class", 1, parameters.size)
