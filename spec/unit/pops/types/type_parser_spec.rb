@@ -29,11 +29,6 @@ describe Puppet::Pops::Types::TypeParser do
       /The expression <Array\[notAType\]> is not a valid type specification/)
   end
 
-  it "does not support types that do not make sense in the puppet language" do
-    # This will/may make sense later, but are not yet implemented and should not be interpreted as a PResourceType
-    expect { parser.parse("Ruby") }.to raise_type_error_for("Ruby")
-  end
-
   [
     'Object', 'Collection', 'Data', 'CatalogEntry', 'Boolean', 'Literal', 'Undef', 'Numeric',
   ].each do |name|
@@ -133,6 +128,10 @@ describe Puppet::Pops::Types::TypeParser do
 
   it 'parses a type type' do
     expect(parser.parse("Type[Integer]")).to be_the_type(types.type_type(types.integer))
+  end
+
+  it 'parses a ruby type' do
+    expect(parser.parse("Ruby['Integer']")).to be_the_type(types.ruby_type('Integer'))
   end
 
   matcher :be_the_type do |type|

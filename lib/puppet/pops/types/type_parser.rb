@@ -309,9 +309,8 @@ class Puppet::Pops::Types::TypeParser
       TYPES.type_type(parameters[0])
 
     when "ruby"
-      # TODO: Add Stage, Node (they are not Resource Type)
-      # should not be interpreted as Resource type
-      raise_unknown_type_error(parameterized_ast.left_expr)
+      raise_invalid_parameters_error("Ruby", "1", parameters.size) unless parameters.size == 1
+      TYPES.ruby_type(parameters[0])
 
     else
       # It is a resource such a File['/tmp/foo']
