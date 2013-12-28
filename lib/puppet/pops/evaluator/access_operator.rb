@@ -263,6 +263,13 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
+  def access_PRubyType(o, scope, keys)
+    keys.flatten!
+    assert_keys(keys, o, 1, 1, String)
+    # create ruby type based on name of class, not inference of key's type
+    Puppet::Pops::Types::TypeFactory.ruby_type(keys[0])
+  end
+
   def access_PIntegerType(o, scope, keys)
     keys.flatten!
     unless keys.size.between?(1, 2)

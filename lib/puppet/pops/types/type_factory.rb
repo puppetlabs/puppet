@@ -286,6 +286,15 @@ module Puppet::Pops::Types::TypeFactory
     end
   end
 
+  # Generic creator of a RubyType - allows creating the Ruby type with nil name, or String name.
+  # Also see ruby(o) which performs inference, or mapps a Ruby Class to its name.
+  #
+  def self.ruby_type(class_name = nil)
+    type = Types::PRubyType.new()
+    type.ruby_class = class_name
+    type
+  end
+
   # Sets the accepted size range of a collection if something other than the default 0 to Infinity
   # is wanted. The semantics for from/to are the same as for #range
   #

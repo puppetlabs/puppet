@@ -153,7 +153,7 @@ class Puppet::Pops::Types::TypeParser
         TYPES.optional()
 
     when "ruby"
-      raise_unknown_type_error(name_ast)
+      TYPES.ruby_type()
 
     when "type"
       TYPES.type_type()

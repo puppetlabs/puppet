@@ -1002,6 +1002,8 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PRubyType(t1, t2)
     return false unless t2.is_a?(Types::PRubyType)
+    return true if t1.ruby_class.nil?   # t1 is wider
+    return false if t2.ruby_class.nil?  # t1 not nil, so t2 can not be wider
     c1 = class_from_string(t1.ruby_class)
     c2 = class_from_string(t2.ruby_class)
     return false unless c1.is_a?(Class) && c2.is_a?(Class)
@@ -1183,8 +1185,12 @@ class Puppet::Pops::Types::TypeCalculator
   private
 
   def class_from_string(str)
-    str.split('::').inject(Object) do |memo, name_segment|
-      memo.const_get(name_segment)
+    begin
+      str.split('::').inject(Object) do |memo, name_segment|
+        memo.const_get(name_segment)
+      end
+    rescue NameError
+      return nil
     end
   end
 
