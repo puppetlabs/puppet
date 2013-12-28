@@ -1154,6 +1154,29 @@ describe 'The type calculator' do
     it 'should infer PType as the type of PType (meta regression short-circuit)' do
       calculator.infer(Puppet::Pops::Types::PType.new()).is_a?(Puppet::Pops::Types::PType).should() == true
     end
+
+    it 'computes instance? to be true if parameterized and type match' do
+      int_t    = Puppet::Pops::Types::PIntegerType.new()
+      type_t   = Puppet::Pops::Types::TypeFactory.type_type(int_t)
+      type_type_t   = Puppet::Pops::Types::TypeFactory.type_type(type_t)
+      calculator.instance?(type_type_t, type_t).should == true
+    end
+
+    it 'computes instance? to be false if parameterized and type do not match' do
+      int_t    = Puppet::Pops::Types::PIntegerType.new()
+      string_t = Puppet::Pops::Types::PStringType.new()
+      type_t   = Puppet::Pops::Types::TypeFactory.type_type(int_t)
+      type_t2   = Puppet::Pops::Types::TypeFactory.type_type(string_t)
+      type_type_t   = Puppet::Pops::Types::TypeFactory.type_type(type_t)
+      # i.e. Type[Integer] =~ Type[Type[Integer]] # false
+      calculator.instance?(type_type_t, type_t2).should == false
+    end
+
+    it 'computes instance? to be true if unparameterized and matched against a type[?]' do
+      int_t    = Puppet::Pops::Types::PIntegerType.new()
+      type_t   = Puppet::Pops::Types::TypeFactory.type_type(int_t)
+      calculator.instance?(Puppet::Pops::Types::PType.new, type_t).should == true
+    end
   end
 
   context "when asking for an enumerable " do
