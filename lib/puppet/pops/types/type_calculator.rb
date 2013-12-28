@@ -950,6 +950,8 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PType(t, t2)
     return false unless t2.is_a?(Types::PType)
+    return true if t.type.nil? # wide enough to handle all types
+    return false if t2.type.nil? # wider than t
     assignable?(t.type, t2.type)
   end
 
