@@ -63,6 +63,13 @@ module Puppet::Pops::Types::TypeFactory
     t
   end
 
+  # Produces the Optional type, i.e. a short hand for Variant[T, Undef]
+  def self.optional(optional_type = nil)
+    t = Types::POptionalType.new
+    t.optional_type = optional_type
+    t
+  end
+
   # Produces the Enum type, optionally with specific string values
   # @api public
   #
@@ -268,5 +275,13 @@ module Puppet::Pops::Types::TypeFactory
       type.ruby_class = o.class.name
       type
     end
+  end
+
+  # Sets the accepted size range of a collection if something other than the default 0 to Infinity
+  # is wanted. The semantics for from/to are the same as for #range
+  #
+  def self.constrain_size(collection_t, from, to)
+    collection_t.size_type = range(from, to)
+    collection_t
   end
 end

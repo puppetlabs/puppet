@@ -168,8 +168,17 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def access_PStringType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, INFINITY, String)
-    Puppet::Pops::Types::TypeFactory.string(*keys)
+    case keys.size
+    when 1
+      size_t = collection_size_t(0, keys[0])
+    when 2
+      size_t = collection_size_t(0, keys[0], keys[1])
+    else
+      fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic, {:actual => keys.size})
+    end
+    string_t = Puppet::Pops::Types::TypeFactory.string()
+    string_t.size_type = size_t
+    string_t
   end
 
   # Asserts type of each key and calls fail with BAD_TYPE_SPECIFICATION
@@ -226,6 +235,20 @@ class Puppet::Pops::Evaluator::AccessOperator
     Puppet::Pops::Types::TypeFactory.pattern(*keys)
   end
 
+  def access_POptionalType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => keys[0].class})
+      end
+      result = Puppet::Pops::Types::POptionalType.new()
+      result.optional_type = keys[0]
+      result
+    else
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Optional-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_PIntegerType(o, scope, keys)
     keys.flatten!
     unless keys.size.between?(1, 2)
@@ -258,12 +281,13 @@ class Puppet::Pops::Evaluator::AccessOperator
     ranged_float
   end
 
-  # A Hash can create a new Hash type, one arg sets value type, two args sets key and value type in new type
-  # It is not possible to create a collection of Hash types.
+  # A Hash can create a new Hash type, one arg sets value type, two args sets key and value type in new type.
+  # With 3 or 4 arguments, these are used to create a size constraint.
+  # It is not possible to create a collection of Hash types directly.
   #
   def access_PHashType(o, scope, keys)
     keys.flatten!
-    keys.each_with_index do |k, index|
+    keys[0,2].each_with_index do |k, index|
       unless k.is_a?(Puppet::Pops::Types::PAbstractType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
       end
@@ -271,7 +295,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     case keys.size
     when 1
       result = Puppet::Pops::Types::PHashType.new()
-      result.key_type = Marshal.load(Marshal.dump(o.key_type))
+      result.key_type = o.key_type.copy
       result.element_type = keys[0]
       result
     when 2
@@ -279,24 +303,82 @@ class Puppet::Pops::Evaluator::AccessOperator
       result.key_type = keys[0]
       result.element_type = keys[1]
       result
+    when 3
+      result = Puppet::Pops::Types::PHashType.new()
+      result.key_type = keys[0]
+      result.element_type = keys[1]
+      size_t = collection_size_t(1, keys[2])
+      result
+    when 4
+      result = Puppet::Pops::Types::PHashType.new()
+      result.key_type = keys[0]
+      result.element_type = keys[1]
+      size_t = collection_size_t(1, keys[2], keys[3])
+      result
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Hash-Type', :min => 1, :max => 2, :actual => keys.size})
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {
+        :base_type => 'Hash-Type', :min => 1, :max => 4, :actual => keys.size
+      })
     end
+    result.size_type = size_t if size_t
+    result
+  end
+
+  # CollectionType is parameterized with a range
+  def access_PCollectionType(o, scope, keys)
+    keys.flatten!
+    case keys.size
+    when 1
+      size_t = collection_size_t(1, keys[0])
+    when 2
+      size_t = collection_size_t(1, keys[0], keys[1])
+    else
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
+        {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
+    end
+    result = Puppet::Pops::Types::PCollectionType.new()
+    result.size_type = size_t
+    result
   end
 
   # An Array can create a new Array type. It is not possible to create a collection of Array types.
   #
   def access_PArrayType(o, scope, keys)
     keys.flatten!
-    if keys.size == 1
-      unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
-      end
-      result = Puppet::Pops::Types::PArrayType.new()
-      result.element_type = keys[0]
-      result
+    case keys.size
+    when 1
+      size_t = nil
+    when 2
+      size_t = collection_size_t(1, keys[1])
+    when 3
+      size_t = collection_size_t(1, keys[1], keys[2])
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Array-Type', :min => 1, :actual => keys.size})
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
+        {:base_type => 'Array-Type', :min => 1, :max => 3, :actual => keys.size})
+    end
+    unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
+    end
+    result = Puppet::Pops::Types::PArrayType.new()
+    result.element_type = keys[0]
+    result.size_type = size_t
+    result
+  end
+
+  # Produces an PIntegerType (range) given one or two keys.
+  def collection_size_t(start_index, *keys)
+    if keys.size == 1 && keys[0].is_a?(Puppet::Pops::Types::PIntegerType)
+      keys[0].copy
+    else
+      keys.each_with_index do |x, index|
+        fail(Puppet::Pops::Issues::BAD_COLLECTION_SLICE_TYPE, @semantic.keys[start_index + index],
+          {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
+      end
+      ranged_integer = Puppet::Pops::Types::PIntegerType.new()
+      from, to = keys
+      ranged_integer.from = from == :default ? nil : from
+      ranged_integer.to = to == :default ? nil : to
+      ranged_integer
     end
   end
 

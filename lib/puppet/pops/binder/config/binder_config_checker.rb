@@ -108,6 +108,7 @@ module Puppet::Pops::Binder::Config
     def check_category(category, config_file)
       type = @type_calculator.infer(category)
       unless @type_calculator.assignable?(@array_of_string_type, type)
+        require 'debugger'; debugger
         accept(Issues::CATEGORY_IS_NOT_ARRAY, config_file, :type => @type_calculator.string(type))
         return
       end

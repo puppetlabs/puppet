@@ -120,22 +120,6 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PStringType < PLiteralType
-    has_many_attr 'values', String, :lowerBound => 0, :upperBound => -1, :unique => true
-
-    module ClassModule
-
-      def hash
-        [self.class, Set.new(self.values)].hash
-      end
-
-      def ==(o)
-        self.class == o.class && Set.new(values) == Set.new(o.values)
-      end
-    end
-  end
-
-  # @api public
   class PNumericType < PLiteralType
   end
 
@@ -193,6 +177,23 @@ module Puppet::Pops::Types
   end
 
   # @api public
+  class PStringType < PLiteralType
+    has_many_attr 'values', String, :lowerBound => 0, :upperBound => -1, :unique => true
+    contains_one_uni 'size_type', PIntegerType
+
+    module ClassModule
+
+      def hash
+        [self.class, self.size_type, Set.new(self.values)].hash
+      end
+
+      def ==(o)
+        self.class == o.class && self.size_type == o.size_type && Set.new(values) == Set.new(o.values)
+      end
+    end
+  end
+
+  # @api public
   class PRegexpType < PLiteralType
     has_attr 'pattern', String, :lowerBound => 1
     has_attr 'regexp', Object, :derived => true
@@ -239,13 +240,14 @@ module Puppet::Pops::Types
   # @api public
   class PCollectionType < PObjectType
     contains_one_uni 'element_type', PAbstractType
+    contains_one_uni 'size_type', PIntegerType
     module ClassModule
       def hash
-        [self.class, element_type].hash
+        [self.class, element_type, size].hash
       end
 
       def ==(o)
-        self.class == o.class && element_type == o.element_type
+        self.class == o.class && element_type == o.element_type && size_type == o.size_type
       end
     end
   end
@@ -254,11 +256,11 @@ module Puppet::Pops::Types
   class PArrayType < PCollectionType
     module ClassModule
       def hash
-        [self.class, self.element_type].hash
+        [self.class, self.element_type, self.size_type].hash
       end
 
       def ==(o)
-        self.class == o.class && self.element_type == o.element_type
+        self.class == o.class && self.element_type == o.element_type && self.size_type == o.size_type
       end
     end
   end
@@ -268,11 +270,14 @@ module Puppet::Pops::Types
     contains_one_uni 'key_type', PAbstractType
     module ClassModule
       def hash
-        [self.class, key_type, self.element_type].hash
+        [self.class, key_type, self.element_type, self.size_type].hash
       end
 
       def ==(o)
-        self.class == o.class && key_type == o.key_type && self.element_type == o.element_type
+        self.class        == o.class         &&
+        key_type          == o.key_type      &&
+        self.element_type == o.element_type  &&
+        self.size_type    == o.size_type
       end
     end
   end
@@ -325,6 +330,22 @@ module Puppet::Pops::Types
       end
       def ==(o)
         self.class == o.class && type_name == o.type_name && title == o.title
+      end
+    end
+  end
+
+  # Represents a type that accept PNilType instead of the type parameter
+  # required_type - is a short hand for Variant[T, Undef]
+  #
+  class POptionalType < PAbstractType
+    contains_one_uni 'optional_type', PAbstractType
+    module ClassModule
+      def hash
+        [self.class, optional_type].hash
+      end
+
+      def ==(o)
+        self.class == o.class && optional_type == o.optional_type
       end
     end
   end
