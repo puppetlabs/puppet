@@ -249,6 +249,20 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
+  def access_PType(o, scope, keys)
+    keys.flatten!
+    if keys.size == 1
+      unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Type-Type', :actual => keys[0].class})
+      end
+      result = Puppet::Pops::Types::PType.new()
+      result.type = keys[0]
+      result
+    else
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Type-Type', :min => 1, :actual => keys.size})
+    end
+  end
+
   def access_PIntegerType(o, scope, keys)
     keys.flatten!
     unless keys.size.between?(1, 2)
