@@ -239,6 +239,15 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
+  # Produces a type for Type[T]
+  # @api public
+  #
+  def self.type_type(inst_type = nil)
+    type = Types::PType.new()
+    type.type = inst_type
+    type
+  end
+
   # Produce a type corresponding to the class of given unless given is a String, Class or a PObjectType.
   # When a String is given this is taken as a classname.
   #
