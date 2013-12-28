@@ -30,9 +30,8 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it "does not support types that do not make sense in the puppet language" do
-    # These will/may make sense later, but are not yet implemented and should not be interpreted as a PResourceType
+    # This will/may make sense later, but are not yet implemented and should not be interpreted as a PResourceType
     expect { parser.parse("Ruby") }.to raise_type_error_for("Ruby")
-    expect { parser.parse("Type") }.to raise_type_error_for("Type")
   end
 
   [
@@ -130,6 +129,10 @@ describe Puppet::Pops::Types::TypeParser do
 
   it 'parses a float range' do
    expect(parser.parse("Float[1.0,2.0]")).to be_the_type(types.float_range(1.0,2.0))
+  end
+
+  it 'parses a type type' do
+    expect(parser.parse("Type[Integer]")).to be_the_type(types.type_type(types.integer))
   end
 
   matcher :be_the_type do |type|

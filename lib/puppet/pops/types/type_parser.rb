@@ -152,10 +152,12 @@ class Puppet::Pops::Types::TypeParser
     when "optional"
         TYPES.optional()
 
-    when "ruby", "type"
-      # should not be interpreted as Resource type
-      # TODO: these should not be errors
+    when "ruby"
       raise_unknown_type_error(name_ast)
+
+    when "type"
+      TYPES.type_type()
+
     else
       TYPES.resource(name_ast.value)
     end
@@ -299,7 +301,14 @@ class Puppet::Pops::Types::TypeParser
     when "object", "collection", "data", "catalogentry", "boolean", "literal", "undef", "numeric", "pattern", "string"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
 
-    when "ruby", "type"
+    when "type"
+      if parameters.size != 1
+        raise_invalid_parameters_error("Type", 1, parameters.size)
+      end
+      assert_type(parameters[0])
+      TYPES.type_type(parameters[0])
+
+    when "ruby"
       # TODO: Add Stage, Node (they are not Resource Type)
       # should not be interpreted as Resource type
       raise_unknown_type_error(parameterized_ast.left_expr)
