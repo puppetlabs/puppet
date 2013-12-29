@@ -152,10 +152,12 @@ class Puppet::Pops::Types::TypeParser
     when "optional"
         TYPES.optional()
 
-    when "ruby", "type"
-      # should not be interpreted as Resource type
-      # TODO: these should not be errors
-      raise_unknown_type_error(name_ast)
+    when "ruby"
+      TYPES.ruby_type()
+
+    when "type"
+      TYPES.type_type()
+
     else
       TYPES.resource(name_ast.value)
     end
@@ -224,6 +226,26 @@ class Puppet::Pops::Types::TypeParser
         raise_invalid_parameters_error("Hash", "1 to 4", parameters.size)
       end
       result.size_type = size_type if size_type
+      result
+
+    when "collection"
+      size_type = case parameters.size
+      when 1
+        if parameters[0].is_a?(Puppet::Pops::Types::PIntegerType)
+          parameters[0].copy
+        else
+          assert_range_parameter(parameters[0])
+          TYPES.range(parameters[0], :default)
+        end
+      when 2
+        assert_range_parameter(parameters[0])
+        assert_range_parameter(parameters[1])
+        TYPES.range(parameters[0], parameters[1])
+      else
+        raise_invalid_parameters_error("Collection", "1 to 2", parameters.size)
+      end
+      result = TYPES.collection
+      result.size_type = size_type
       result
 
     when "class"
@@ -299,10 +321,16 @@ class Puppet::Pops::Types::TypeParser
     when "object", "collection", "data", "catalogentry", "boolean", "literal", "undef", "numeric", "pattern", "string"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
 
-    when "ruby", "type"
-      # TODO: Add Stage, Node (they are not Resource Type)
-      # should not be interpreted as Resource type
-      raise_unknown_type_error(parameterized_ast.left_expr)
+    when "type"
+      if parameters.size != 1
+        raise_invalid_parameters_error("Type", 1, parameters.size)
+      end
+      assert_type(parameters[0])
+      TYPES.type_type(parameters[0])
+
+    when "ruby"
+      raise_invalid_parameters_error("Ruby", "1", parameters.size) unless parameters.size == 1
+      TYPES.ruby_type(parameters[0])
 
     else
       # It is a resource such a File['/tmp/foo']

@@ -239,6 +239,15 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
+  # Produces a type for Type[T]
+  # @api public
+  #
+  def self.type_type(inst_type = nil)
+    type = Types::PType.new()
+    type.type = inst_type
+    type
+  end
+
   # Produce a type corresponding to the class of given unless given is a String, Class or a PObjectType.
   # When a String is given this is taken as a classname.
   #
@@ -275,6 +284,15 @@ module Puppet::Pops::Types::TypeFactory
       type.ruby_class = o.class.name
       type
     end
+  end
+
+  # Generic creator of a RubyType - allows creating the Ruby type with nil name, or String name.
+  # Also see ruby(o) which performs inference, or mapps a Ruby Class to its name.
+  #
+  def self.ruby_type(class_name = nil)
+    type = Types::PRubyType.new()
+    type.ruby_class = class_name
+    type
   end
 
   # Sets the accepted size range of a collection if something other than the default 0 to Infinity
