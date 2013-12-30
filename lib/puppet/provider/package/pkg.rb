@@ -26,7 +26,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   defaultfor :osfamily => :solaris, :kernelrelease => '5.11'
 
   def self.instances
-    pkg(:list, '-H').split("\n").map{|l| new(parse_line(l))}
+    pkg(:list, '-Hv').split("\n").map{|l| new(parse_line(l))}
   end
 
   # The IFO flag field is just what it names, the first field can have ether
@@ -90,23 +90,15 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # formats of output for different pkg versions.
   def self.parse_line(line)
     (case line.chomp
-    # NAME (PUBLISHER)            VERSION           IFO  (new:630e1ffc7a19)
-    # system/core-os              0.5.11-0.169      i--
-    when /^(\S+) +(\S+) +(...)$/
-      {:name => $1, :ensure => $2}.merge ifo_flag($3)
+    # FMRI                                                                         IFO
+    # pkg://omnios/SUNWcs@0.5.11,5.11-0.151008:20131204T022241Z                    ---
+    when %r'^pkg://([^/]+)/([^@]+)@(\S+) +(...)$'
+      {:publisher => $1, :name => $2, :ensure => $3}.merge ifo_flag($4)
 
-    # x11/wm/fvwm (fvwm.org)      2.6.1-3           i--
-    when /^(\S+) \((.+)\) +(\S+) +(...)$/
-      {:name => $1, :publisher => $2, :ensure => $3}.merge ifo_flag($4)
-
-    # NAME (PUBLISHER)                  VERSION          STATE      UFOXI (dvd:052adf36c3f4)
-    # SUNWcs                            0.5.11-0.126     installed  -----
-    when /^(\S+) +(\S+) +(\S+) +(.....)$/
-      {:name => $1, :ensure => $2}.merge pkg_state($3).merge(ufoxi_flag($4))
-
-    # web/firefox/plugin/flash (extra)  10.0.32.18-0.111 installed  -----
-    when /^(\S+) \((.+)\) +(\S+) +(\S+) +(.....)$/
-      {:name => $1, :publisher => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
+    # FMRI                                                             STATE      UFOXI
+    # pkg://solaris/SUNWcs@0.5.11,5.11-0.151.0.1:20101105T001108Z      installed  u----
+    when %r'^pkg://([^/]+)/([^@]+)@(\S+) +(\S+) +(.....)$'
+      {:publisher => $1, :name => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
 
     else
       raise ArgumentError, 'Unknown line format %s: %s' % [self.name, line]
@@ -126,7 +118,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # http://defect.opensolaris.org/bz/show_bug.cgi?id=19159%
   # notes that we can't use -Ha for the same even though the manual page reads that way.
   def latest
-    lst = pkg(:list, "-Hn", @resource[:name]).split("\n").map{|l|self.class.parse_line(l)}
+    lst = pkg(:list, "-Hvn", @resource[:name]).split("\n").map{|l|self.class.parse_line(l)}
 
     # Now we know there is a newer version. But is that installable? (i.e are there any constraints?)
     # return the first known we find. The only way that is currently available is to do a dry run of
@@ -178,7 +170,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   # list a specific package
   def query
-    r = exec_cmd(command(:pkg), 'list', '-H', @resource[:name])
+    r = exec_cmd(command(:pkg), 'list', '-Hv', @resource[:name])
     return {:ensure => :absent, :name => @resource[:name]} if r[:exit] != 0
     self.class.parse_line(r[:out])
   end
