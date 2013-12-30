@@ -139,13 +139,16 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     unless should.is_a? Symbol
       name += "@#{should}"
       is = self.query
-      unless is[:ensure].to_sym == :absent
-        self.uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+      if is[:ensure].to_sym == :absent
+        command = 'install'
+      else
+        command = 'update'
       end
+      r = exec_cmd(command(:pkg), command, '--accept', name)
     end
-    r = exec_cmd(command(:pkg), 'install', '--accept', name)
     return r if nofail
-    raise Puppet::Error, "Unable to update #{r[:out]}" if r[:exit] != 0
+    # exit status 4 means that no changes were made, but it's not a failure
+    raise Puppet::Error, "Unable to update #{r[:out]}" unless [0,4].include? r[:exit]
   end
 
   # uninstall the package. The complication comes from the -r_ecursive flag which is no longer
