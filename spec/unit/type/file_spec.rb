@@ -1137,31 +1137,26 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "when resource mode is not supplied" do
-      before do
-        file.stubs(:property_fix)
-        file.delete(:mode) if file[:mode]
-      end
-
-      context "and writing temporary files" do
-        before { file.stubs(:write_temporary_file?).returns(true) }
-
+      context "and content is supplied" do
         it "should default to 0644 mode" do
-          Puppet::Util.expects(:replace_file).with(file[:path], 0644)
+          file = described_class.new(:path => path, :content => "file content")
+
           file.write :NOTUSED
+
+          expect(File.stat(file[:path]).mode & 0777).to eq(0644)
         end
       end
 
-      context "and not writing temporary files" do
-        before { file.stubs(:write_temporary_file?).returns(false) }
+      context "and no content is supplied" do
+        it "should use puppet's default umask of 022" do
+          file = described_class.new(:path => path)
 
-        it "should set a umask of 022" do
-          Puppet::Util.expects(:withumask).with(022)
-          file.write :NOTUSED
-        end
+          umask_from_the_user = 0777
+          Puppet::Util.withumask(umask_from_the_user) do
+            file.write :NOTUSED
+          end
 
-        it "should supply no mode to default to umask" do
-          File.expects(:open).with(file[:path], anything, nil)
-          file.write :NOTUSED
+          expect(File.stat(file[:path]).mode & 0777).to eq(0644)
         end
       end
     end
