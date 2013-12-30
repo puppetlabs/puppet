@@ -713,10 +713,8 @@ Puppet::Type.newtype(:file) do
   def write(property)
     remove_existing(:file)
 
-    assumed_default_mode = 0644
-
     mode = self.should(:mode) # might be nil
-    mode_int = mode ? symbolic_mode_to_int(mode, assumed_default_mode) : nil
+    mode_int = mode ? symbolic_mode_to_int(mode, Puppet::Util::DEFAULT_POSIX_MODE) : nil
 
     if write_temporary_file?
       Puppet::Util.replace_file(self[:path], mode_int) do |file|
