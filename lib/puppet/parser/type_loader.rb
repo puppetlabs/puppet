@@ -95,7 +95,16 @@ class Puppet::Parser::TypeLoader
     @loaded ||= {}
     loaded_asts = []
     files.reject { |file| @loaded[file] }.each do |file|
-      loaded_asts << parse_file(file)
+      begin
+        loaded_asts << parse_file(file)
+      rescue => e
+        # Resume from errors so that all parseable files would
+        # still be parsed. Mark this file as loaded so that
+        # it would not be parsed next time (handle it as if
+        # it was successfully parsed).
+        Puppet.debug("Unable to parse '#{file}': #{e.message}")
+      end
+
       @loaded[file] = true
     end
 
