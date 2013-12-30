@@ -103,27 +103,23 @@ describe 'Injector' do
   let(:scope)     { null_scope()}
   let(:duck_type) { type_factory.ruby(InjectorSpecModule::TestDuck) }
 
-  let(:binder)    { Puppet::Pops::Binder::Binder.new()}
+  let(:binder)    { Puppet::Pops::Binder::Binder }
 
   let(:lbinder)   do
-    binder.define_layers(layered_bindings)
+    binder.new(layered_bindings)
   end
 
 
   let(:layered_bindings) { factory.layered_bindings(test_layer_with_bindings(bindings.model)) }
 
   context 'When created' do
-    it 'should raise an error when given binder is not configured at all' do
-      expect { Puppet::Pops::Binder::Injector.new(binder()) }.to raise_error(/Given Binder is not configured/)
-    end
-
     it 'should not raise an error if binder is configured' do
-      lbinder.configured?().should == true # of something is very wrong
+#      lbinder.configured?().should == true # of something is very wrong
       expect { injector(lbinder) }.to_not raise_error
     end
 
     it 'should create an empty injector given an empty binder' do
-      expect { binder.define_layers(layered_bindings) }.to_not raise_exception
+      expect { binder.new(layered_bindings) }.to_not raise_exception
     end
 
     it "should be possible to reference the TypeCalculator" do
@@ -203,8 +199,6 @@ describe 'Injector' do
     end
 
     context "and multiple layers are in use" do
-      let(:binder) { configured_binder()}
-
       it "a higher layer shadows anything in a lower layer" do
         bindings1 = factory.named_bindings('test1')
         bindings1.bind().name('a_string').to('bad stuff')
@@ -214,15 +208,13 @@ describe 'Injector' do
         bindings2.bind().name('a_string').to('good stuff')
         higher_layer =  factory.named_layer('higher-layer', bindings2.model)
 
-        binder.define_layers(factory.layered_bindings(higher_layer, lower_layer))
-        injector = injector(binder)
+        injector = injector(binder.new(factory.layered_bindings(higher_layer, lower_layer)))
         injector.lookup(scope,'a_string').should == 'good stuff'
       end
     end
 
     context "and dealing with Data types" do
-      let(:binder)  { configured_binder()}
-      let(:lbinder) { binder.define_layers(layered_bindings) }
+      let(:lbinder) { binder.new(layered_bindings) }
 
       it "should treat all data as same type w.r.t. key" do
         bindings.bind().name('a_string').to('42')
@@ -551,9 +543,7 @@ describe 'Injector' do
         mb = bindings.multibind(ids[2]).type(hash_of_integer).name('broken_family2')
         mb.producer_options(:uniq => :true)
 
-
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
+        injector = injector(binder.new(factory.layered_bindings(test_layer_with_bindings(bindings.model))))
         expect { injector.lookup(scope, 'broken_family0')}.to raise_error(/:conflict_resolution => :append/)
         expect { injector.lookup(scope, 'broken_family1')}.to raise_error(/:flatten/)
         expect { injector.lookup(scope, 'broken_family2')}.to raise_error(/:uniq/)
@@ -590,9 +580,7 @@ describe 'Injector' do
         mb2 = bindings.bind.in_multibind(multibind_id)
         mb2.name('nephew').to({'name' => 'Dewey', 'is' => 'looser', 'has' => 'cap'})
 
-        binder.define_layers(layered_bindings)
-
-        the_ducks = injector(binder).lookup(scope, "donalds_nephews");
+        the_ducks = injector(binder.new(layered_bindings)).lookup(scope, "donalds_nephews");
         the_ducks['nephew']['name'].should == 'Huey'
         the_ducks['nephew']['is'].should == 'winner'
         the_ducks['nephew']['has'].should == 'cap'
@@ -713,8 +701,7 @@ describe 'Injector' do
     end
   end
   context "When there are problems with configuration" do
-    let(:binder) { configured_binder()}
-    let(:lbinder) { binder.define_layers(layered_bindings) }
+    let(:lbinder) { binder.new(layered_bindings) }
 
     it "reports error for surfacing abstract bindings" do
       bindings.bind.abstract.name('an_int')

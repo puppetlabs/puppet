@@ -248,8 +248,7 @@ class Puppet::Parser::Compiler
     assert_binder_active()
     boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution(env_boot_bindings)
     final_contribution = Puppet::Pops::Binder::SystemBindings.final_contribution
-    binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
+    binder = Puppet::Pops::Binder::Binder.new(Puppet::Pops::Binder::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
     @boot_injector = Puppet::Pops::Binder::Injector.new(binder)
   end
 

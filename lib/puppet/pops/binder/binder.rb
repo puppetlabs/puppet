@@ -15,28 +15,26 @@ class Puppet::Pops::Binder::Binder
   # @api private
   attr_reader :key_factory
 
-  # Whether the binder is fully configured or not
-  # @api public
-  #
-  attr_reader :configured
+  # A parent Binder or nil
+  # @api private
+  attr_reader :parent
+
+  # The next anonymous key to use
+  # @api private
+  attr_reader :anonymous_key
 
   # @api public
-  def initialize
+  def initialize(layered_bindings, parent_binder=nil)
+    @parent = parent_binder
+
     @key_factory = Puppet::Pops::Binder::KeyFactory.new()
 
     # Resulting hash of all key -> binding
     @injector_entries = {}
 
-    # Not configured until the fat lady sings
-    @configured = false
-
-    @next_anonymous_key = 0
-  end
-
-  # Answers the question 'is this binder configured?' to the point it can be used to instantiate an Injector
-  # @api public
-  def configured?()
-    configured()
+    # First anonymous key is the parent's next (non incremented key)
+    @anonymous_key = 0 + (@parent.nil? ? 0 : @parent.anonymous_key)
+    define_layers(layered_bindings)
   end
 
   # Binds layers from highest to lowest as defined by the given LayeredBindings.
@@ -53,7 +51,6 @@ class Puppet::Pops::Binder::Binder
   # @api public
   #
   def define_layers(layered_bindings)
-    raise ArgumentError, "This binder is already configured. Cannot redefine its content." if configured?()
 
     LayerProcessor.new(self, key_factory).bind(layered_bindings)
     injector_entries.each  do |k,v|
@@ -61,15 +58,13 @@ class Puppet::Pops::Binder::Binder
         raise ArgumentError, "Binding with unresolved 'override' detected: #{self.class.format_binding(v.binding)}}"
       end
     end
-    # and the fat lady has sung
-    @configured = true
-    self
   end
+  private :define_layers
 
   # @api private
   def next_anonymous_key
-    tmp = @next_anonymous_key
-    @next_anonymous_key += 1
+    tmp = @anonymous_key
+    @anonymous_key += 1
     tmp
   end
 

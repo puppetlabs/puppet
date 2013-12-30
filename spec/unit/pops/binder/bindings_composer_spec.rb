@@ -46,8 +46,7 @@ describe 'BinderComposer' do
       the_scope['environment'] = 'production'
       layered_bindings = composer.compose(scope)
       # puts Puppet::Pops::Binder::BindingsModelDumper.new().dump(layered_bindings)
-      binder = Puppet::Pops::Binder::Binder.new()
-      binder.define_layers(layered_bindings)
+      binder = Puppet::Pops::Binder::Binder.new(layered_bindings)
       injector = Puppet::Pops::Binder::Injector.new(binder)
       expect(injector.lookup(scope, 'awesome_x')).to be == 'golden'
       expect(injector.lookup(scope, 'good_x')).to be == 'golden'
