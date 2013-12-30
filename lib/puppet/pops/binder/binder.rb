@@ -23,6 +23,10 @@ class Puppet::Pops::Binder::Binder
   # @api private
   attr_reader :anonymous_key
 
+  # This binder's precedence
+  # @api private
+  attr_reader :binder_precedence
+
   # @api public
   def initialize(layered_bindings, parent_binder=nil)
     @parent = parent_binder
@@ -32,8 +36,15 @@ class Puppet::Pops::Binder::Binder
     # Resulting hash of all key -> binding
     @injector_entries = {}
 
-    # First anonymous key is the parent's next (non incremented key)
-    @anonymous_key = 0 + (@parent.nil? ? 0 : @parent.anonymous_key)
+    if @parent.nil?
+      @anonymous_key = 0
+      @binder_precedence = 0
+    else
+      # First anonymous key is the parent's next (non incremented key). (The parent can not change, it is
+      # the final, free key).
+      @anonymous_key = @parent.anonymous_key
+      @binder_precedence = @parent.binder_precedence + 1
+    end
     define_layers(layered_bindings)
   end
 
@@ -66,6 +77,17 @@ class Puppet::Pops::Binder::Binder
     tmp = @anonymous_key
     @anonymous_key += 1
     tmp
+  end
+
+  def lookup_in_parent(key)
+    @parent.nil? ? nil : @parent.lookup(key)
+  end
+
+  def lookup(key)
+    if x = injector_entries[key]
+      return x
+    end
+    @parent ?  @parent.lookup(key) :  nil
   end
 
   # @api private
@@ -105,9 +127,11 @@ class Puppet::Pops::Binder::Binder
     attr :binder
     attr :key_factory
     attr :contributions
+    attr :binder_precedence
 
     def initialize(binder, key_factory)
       @binder = binder
+      @binder_precedence = binder.binder_precedence
       @key_factory = key_factory
       @bindings = []
       @contributions = []
@@ -118,14 +142,14 @@ class Puppet::Pops::Binder::Binder
     # @api private
     #
     def add(b)
-      bindings << Puppet::Pops::Binder::InjectorEntry.new(b)
+      bindings << Puppet::Pops::Binder::InjectorEntry.new(b, binder_precedence)
     end
 
     # Add a multibind contribution
     # @api private
     #
     def add_contribution(b)
-      contributions << Puppet::Pops::Binder::InjectorEntry.new(b)
+      contributions << Puppet::Pops::Binder::InjectorEntry.new(b, binder_precedence)
     end
 
     # Bind given abstract binding
@@ -135,40 +159,41 @@ class Puppet::Pops::Binder::Binder
       @@bind_visitor.visit_this(self, binding)
     end
 
-    # @return [Puppet::Pops::Binder::InjectorEntry] the entry with the highest (category) precedence
+    # @return [Puppet::Pops::Binder::InjectorEntry] the entry with the highest precedence
     # @api private
     def highest(b1, b2)
       if b1.is_abstract? != b2.is_abstract?
         # if one is abstract and the other is not, the non abstract wins
         b1.is_abstract? ? b2 : b1
       else
-#      case b1.precedence <=> b2.precedence
-#      when 1
-#        b1
-#      when -1
-#        b2
-#      when 0
-
-        raise_conflicting_binding(b1, b2)
+        case b1.precedence <=> b2.precedence
+        when 1
+          b1
+        when -1
+          b2
+        when 0
+          raise_conflicting_binding(b1, b2)
+        end
       end
     end
 
     # Raises a conflicting bindings error given two InjectorEntry's with same precedence in the same layer
     # (if they are in different layers, something is seriously wrong)
     def raise_conflicting_binding(b1, b2)
-      b1_layer_name, b1_bindings_name = Puppet::Pops::Binder::Binder.get_named_binding_layer_and_name(b1.binding)
-      b2_layer_name, b2_bindings_name = Puppet::Pops::Binder::Binder.get_named_binding_layer_and_name(b2.binding)
+      b1_layer_name, b1_bindings_name = binder.class.get_named_binding_layer_and_name(b1.binding)
+      b2_layer_name, b2_bindings_name = binder.class.get_named_binding_layer_and_name(b2.binding)
 
-      # The resolution is per layer, and if they differ something is serious wrong as a higher layer
-      # overrides a lower; so no such conflict should be possible:
+      finality_msg = (b1.is_final? || b2.is_final?) ? ". Override of final binding not allowed" : ''
+
+      # TODO: Use of layer_name is not very good, it is not guaranteed to be unique
       unless b1_layer_name == b2_layer_name
         raise ArgumentError, [
-          'Internal Error: Conflicting binding for',
+          'Conflicting binding for',
           "'#{b1.binding.name}'",
           'being resolved across layers',
           "'#{b1_layer_name}' and",
           "'#{b2_layer_name}'"
-          ].join(' ')
+          ].join(' ')+finality_msg
       end
 
       # Conflicting bindings made from the same source
@@ -180,7 +205,7 @@ class Puppet::Pops::Binder::Binder
           "'#{b1_layer_name}', ",
           'both from:',
           "'#{b1_bindings_name}'"
-          ].join(' ')
+          ].join(' ')+finality_msg
       end
 
       # Conflicting bindings from different sources
@@ -192,7 +217,7 @@ class Puppet::Pops::Binder::Binder
         'from:',
         "'#{b1_bindings_name}', and",
         "'#{b2_bindings_name}'"
-        ].join(' ')
+        ].join(' ')+finality_msg
     end
 
 
@@ -271,15 +296,24 @@ class Puppet::Pops::Binder::Binder
       bindings.each do |b|
         bkey = key(b.binding)
 
-        # ignore if a higher layer defined it, but ensure override gets resolved
+        # ignore if a higher layer defined it (unless the lower is final), but ensure override gets resolved
+        # (override is not resolved across binders)
         if x = binder.injector_entries[bkey]
+          if b.is_final?
+            raise_conflicting_binding(x, b)
+          end
           x.mark_override_resolved()
           next
         end
 
+        # If a lower (parent) binder exposes a final binding it may not be overridden
+        #
+        if (x = binder.lookup_in_parent(bkey)) && x.is_final?
+          raise_conflicting_binding(x, b)
+        end
+
         # if already found in this layer, one wins (and resolves override), or it is an error
         existing = this_layer[bkey]
-        # TODO: highest is not really needed - it is an error at all times when there are no categories
         winner = existing ? highest(existing, b) : b
         this_layer[bkey] = winner
         if existing

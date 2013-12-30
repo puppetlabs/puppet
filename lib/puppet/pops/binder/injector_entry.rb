@@ -42,6 +42,10 @@ class Puppet::Pops::Binder::InjectorEntry
     binding.abstract
   end
 
+  def is_final?
+    binding.final
+  end
+
   # Compares against another InjectorEntry by comparing precedence.
   # @param injector_entry [InjectorEntry] entry to compare against.
   # @return [Integer] 1, if this entry has higher precedence, 0 if equal, and -1 if given entry has higher precedence.

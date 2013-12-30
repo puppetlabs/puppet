@@ -194,6 +194,13 @@ module Puppet::Pops::Binder::BindingsFactory
       self
     end
 
+    # Sets the binding to be final (it may not be overridden)
+    # @api public
+    def final
+      model.final = true
+      self
+    end
+
     # Makes the binding a multibind contribution to the given multibind id
     # @param id [String] the multibind id to contribute this binding to
     # @api public

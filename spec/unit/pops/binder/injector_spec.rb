@@ -210,6 +210,19 @@ describe 'Injector' do
         injector = injector(binder.new(factory.layered_bindings(higher_layer, lower_layer)))
         injector.lookup(scope,'a_string').should == 'good stuff'
       end
+
+      it "a higher layer may not shadow a lower layer binding that is final" do
+        bindings1 = factory.named_bindings('test1')
+        bindings1.bind().final.name('a_string').to('required stuff')
+        lower_layer =  factory.named_layer('lower-layer', bindings1.model)
+
+        bindings2 = factory.named_bindings('test2')
+        bindings2.bind().name('a_string').to('contraband')
+        higher_layer =  factory.named_layer('higher-layer', bindings2.model)
+        expect {
+         injector = injector(binder.new(factory.layered_bindings(higher_layer, lower_layer)))
+        }.to raise_error(/Override of final binding not allowed/)
+      end
     end
 
     context "and dealing with Data types" do
