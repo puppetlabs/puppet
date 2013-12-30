@@ -17,8 +17,6 @@ test_name "add parser=#{ENV['PARSER']} to all puppet.conf (only if $PARSER is se
         # We are installing from source rather than packages and need the following:
         win_cmd_prefix = 'cmd /c ' if host['platform'] =~ /windows/
         on(host, "#{win_cmd_prefix}gem install rgen")
-        # deprecated - remove when binder is removed from pops
-        on(host, "#{win_cmd_prefix}gem install json")
       end
     end
   end
