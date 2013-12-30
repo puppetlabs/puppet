@@ -38,20 +38,6 @@ describe 'The bindings checker' do
     b
   end
 
-#  def category(name, value)
-#    b = Bindings::Category.new()
-#    b.categorization = name
-#    b.value = value
-#    b
-#  end
-#
-#  def categorized_bindings(bindings, *predicates)
-#    b = Bindings::CategorizedBindings.new()
-#    b.bindings = bindings
-#    b.predicates = predicates
-#    b
-#  end
-
   def layer(name, *bindings)
     l = Bindings::NamedLayer.new()
     l.name = name

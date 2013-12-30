@@ -114,7 +114,6 @@ describe 'Injector' do
 
   context 'When created' do
     it 'should not raise an error if binder is configured' do
-#      lbinder.configured?().should == true # of something is very wrong
       expect { injector(lbinder) }.to_not raise_error
     end
 
