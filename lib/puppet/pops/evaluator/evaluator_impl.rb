@@ -951,7 +951,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       matched = right.match(left)
       set_match_data(matched, o, scope) # creates or clears ephemeral
       !!matched # convert to boolean
-    elsif right.is_a?(Puppet::Pops::Types::PAbstractType) && !left.is_a?(Puppet::Pops::Types::PAbstractType)
+    elsif right.is_a?(Puppet::Pops::Types::PAbstractType)
       # right is a type and left is not - check if left is an instance of the given type
       # (The reverse is not terribly meaningful - computing which of the case options that first produces
       # an instance of a given type).

@@ -444,6 +444,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
          Array[String] : { no }
          Array[Integer]: { yes }
       }"                                                     => 'yes',
+      "case 1 {
+         Integer : { yes }
+         Type[Integer] : { no } }"                           => 'yes',
+      "case Integer {
+         Integer : { no }
+         Type[Integer] : { yes } }"                          => 'yes',
+
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
