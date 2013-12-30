@@ -375,6 +375,10 @@ module Util
   # exist; if the file is present we copy the existing mode/owner/group values
   # across. The default_mode can be expressed as an octal integer, a numeric string (ie '0664')
   # or a symbolic file mode.
+
+  DEFAULT_POSIX_MODE = 0644
+  DEFAULT_WINDOWS_MODE = nil
+
   def replace_file(file, default_mode, &block)
     raise Puppet::DevError, "replace_file requires a block" unless block_given?
 
@@ -384,6 +388,12 @@ module Util
       end
 
       mode = symbolic_mode_to_int(normalize_symbolic_mode(default_mode))
+    else
+      if Puppet.features.microsoft_windows?
+        mode = DEFAULT_WINDOWS_MODE
+      else
+        mode = DEFAULT_POSIX_MODE
+      end
     end
 
     file     = Puppet::FileSystem::File.new(file)
