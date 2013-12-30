@@ -69,3 +69,8 @@ desc "Run the unit tests"
 task :unit do
   Dir.chdir("test") { sh "rake" }
 end
+
+desc "Run the spec tests on windows"
+task :windows_spec do
+  sh %{rspec --tag ~fails_on_windows #{ENV['TESTS'] || 'spec'}}
+end
