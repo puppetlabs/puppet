@@ -175,6 +175,10 @@ module Puppet
           # supports providers that can have multiple versions installed
           when *Array(is)
             return true
+          else
+            # We have version numbers, and no match. If the provider has
+            # additional logic, run it here.
+            return provider.insync?(is) if provider.respond_to?(:insync?)
           end
         }
 

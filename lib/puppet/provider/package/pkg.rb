@@ -26,7 +26,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   defaultfor :osfamily => :solaris, :kernelrelease => '5.11'
 
   def self.instances
-    pkg(:list, '-H').split("\n").map{|l| new(parse_line(l))}
+    pkg(:list, '-Hv').split("\n").map{|l| new(parse_line(l))}
   end
 
   # The IFO flag field is just what it names, the first field can have ether
@@ -90,23 +90,15 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # formats of output for different pkg versions.
   def self.parse_line(line)
     (case line.chomp
-    # NAME (PUBLISHER)            VERSION           IFO  (new:630e1ffc7a19)
-    # system/core-os              0.5.11-0.169      i--
-    when /^(\S+) +(\S+) +(...)$/
-      {:name => $1, :ensure => $2}.merge ifo_flag($3)
+    # FMRI                                                                         IFO
+    # pkg://omnios/SUNWcs@0.5.11,5.11-0.151008:20131204T022241Z                    ---
+    when %r'^pkg://([^/]+)/([^@]+)@(\S+) +(...)$'
+      {:publisher => $1, :name => $2, :ensure => $3}.merge ifo_flag($4)
 
-    # x11/wm/fvwm (fvwm.org)      2.6.1-3           i--
-    when /^(\S+) \((.+)\) +(\S+) +(...)$/
-      {:name => $1, :publisher => $2, :ensure => $3}.merge ifo_flag($4)
-
-    # NAME (PUBLISHER)                  VERSION          STATE      UFOXI (dvd:052adf36c3f4)
-    # SUNWcs                            0.5.11-0.126     installed  -----
-    when /^(\S+) +(\S+) +(\S+) +(.....)$/
-      {:name => $1, :ensure => $2}.merge pkg_state($3).merge(ufoxi_flag($4))
-
-    # web/firefox/plugin/flash (extra)  10.0.32.18-0.111 installed  -----
-    when /^(\S+) \((.+)\) +(\S+) +(\S+) +(.....)$/
-      {:name => $1, :publisher => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
+    # FMRI                                                             STATE      UFOXI
+    # pkg://solaris/SUNWcs@0.5.11,5.11-0.151.0.1:20101105T001108Z      installed  u----
+    when %r'^pkg://([^/]+)/([^@]+)@(\S+) +(\S+) +(.....)$'
+      {:publisher => $1, :name => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
 
     else
       raise ArgumentError, 'Unknown line format %s: %s' % [self.name, line]
@@ -122,11 +114,62 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     raise Puppet::Error, "Unable to unfreeze #{r[:out]}" unless [0,4].include? r[:exit]
   end
 
+  def insync?(is)
+    # this is called after the generic version matching logic (insync? for the
+    # type), so we only get here if should != is, and both are version numbers.
+    should = @resource[:ensure]
+    # NB: it is apparently possible for repository administrators to publish
+    # packages which do not include build or branch versions, but component
+    # version must always be present, and the timestamp is added by pkgsend
+    # publish.
+    if /^[0-9.]+(,[0-9.]+)?(-[0-9.]+)?:[0-9]+T[0-9]+Z$/ !~ should
+      # We have a less-than-explicit version string, which we must accept for
+      # backward compatibility. We can find the real version this would match
+      # by asking pkg for the all matching versions, and selecting the first
+      # installable one [0]; this can change over time when remote repositories
+      # are updated, but the principle of least astonishment should still hold:
+      # if we allow users to specify less-than-explicit versions, the
+      # functionality should match that of the package manager.
+      #
+      # [0]: we could simply get the newest matching version with 'pkg list
+      # -n', but that isn't always correct, since it might not be installable.
+      # If that were the case we could potentially end up returning false for
+      # insync? here but not actually changing the package version in install
+      # (ie. if the currently installed version is the latest matching version
+      # that is installable, we would falsely conclude here that since the
+      # installed version is not the latest matching version, we're not in
+      # sync).  'pkg list -a' instead of '-n' would solve this, but
+      # unfortunately it doesn't consider downgrades 'available' (eg. with
+      # installed foo@1.0, list -a foo@0.9 would fail).
+      name = @resource[:name]
+      potential_matches = pkg(:list, '-Hvfa', "#{name}@#{should}").split("\n").map{|l|self.class.parse_line(l)}
+      n = potential_matches.length
+      if n > 1
+        warning("Implicit version #{should} has #{n} possible matches")
+      end
+      potential_matches.each{ |p|
+        status = exec_cmd(command(:pkg), 'update', '-n', "#{name}@#{p[:ensure]}")[:exit]
+        case status
+        when 4
+          # if the first installable match would cause no changes, we're in sync
+          return true
+        when 0
+          warning("Selecting version '#{p[:ensure]}' for implicit '#{should}'")
+          @resource[:ensure] = p[:ensure]
+          return false
+        end
+      }
+      raise Puppet::DevError, "No version of #{name} matching #{should} is installable, even though the package is currently installed"
+    end
+
+    false
+  end
+
   # Return the version of the package. Note that the bug
   # http://defect.opensolaris.org/bz/show_bug.cgi?id=19159%
   # notes that we can't use -Ha for the same even though the manual page reads that way.
   def latest
-    lines = pkg(:list, "-Hn", @resource[:name]).split("\n")
+    lines = pkg(:list, "-Hvn", @resource[:name]).split("\n")
 
     # remove certificate expiration warnings from the output, but report them
     # Note: we'd like to use select! here to modify the lines array and avoid
@@ -191,7 +234,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   # list a specific package
   def query
-    r = exec_cmd(command(:pkg), 'list', '-H', @resource[:name])
+    r = exec_cmd(command(:pkg), 'list', '-Hv', @resource[:name])
     return {:ensure => :absent, :name => @resource[:name]} if r[:exit] != 0
     self.class.parse_line(r[:out])
   end
