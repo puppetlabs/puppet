@@ -78,7 +78,6 @@
 # @example Create a NamedBinding with content
 #   result = Puppet::Pops::Binder::BindingsFactory.named_bindings("mymodule::mybindings") do
 #     bind.name("foo").to(42)
-#     when_in_category("node", "kermit.example.com").bind.name("foo").to(43)
 #     bind.string.name("site url").to("http://www.example.com")
 #   end
 #   result.model()

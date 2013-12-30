@@ -70,7 +70,7 @@
 #
 # Access to key factory and type calculator
 # -----------------------------------------
-# It is important to use the same key factory, and type calculator as the binder. It is therefor possible to obtaint
+# It is important to use the same key factory, and type calculator as the binder. It is therefor possible to obtain
 # these with the methods {#key_factory}, and {#type_calculator}.
 #
 # Special support for producers
@@ -346,7 +346,8 @@ module Private
     attr_reader :type_calculator
 
     def initialize(configured_binder)
-      raise ArgumentError, "Given Binder is not configured" unless configured_binder && configured_binder.configured?()
+      # TODO: Different error message
+      raise ArgumentError, "Given Binder is not configured" unless configured_binder #&& configured_binder.configured?()
       @entries             = configured_binder.injector_entries()
 
       # It is essential that the injector uses the same key factory as the binder since keys must be
