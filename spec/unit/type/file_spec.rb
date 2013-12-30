@@ -1093,6 +1093,73 @@ describe Puppet::Type.type(:file) do
         expect { file.write :NOTUSED }.to_not raise_error
       end
     end
+
+    describe "when resource mode is supplied" do
+      before { file.stubs(:property_fix) }
+
+      context "and writing temporary files" do
+        before { file.stubs(:write_temporary_file?).returns(true) }
+
+        it "should convert symbolic mode to int" do
+          file[:mode] = 'oga=r'
+          Puppet::Util.expects(:replace_file).with(file[:path], 0444)
+          file.write :NOTUSED
+        end
+
+        it "should support int modes" do
+          file[:mode] = '0444'
+          Puppet::Util.expects(:replace_file).with(file[:path], 0444)
+          file.write :NOTUSED
+        end
+      end
+
+      context "and not writing temporary files" do
+        before { file.stubs(:write_temporary_file?).returns(false) }
+
+        it "should set a umask of 0" do
+          file[:mode] = 'oga=r'
+          Puppet::Util.expects(:withumask).with(0)
+          file.write :NOTUSED
+        end
+
+        it "should convert symbolic mode to int" do
+          file[:mode] = 'oga=r'
+          File.expects(:open).with(file[:path], anything, 0444)
+          file.write :NOTUSED
+        end
+
+        it "should support int modes" do
+          file[:mode] = '0444'
+          File.expects(:open).with(file[:path], anything, 0444)
+          file.write :NOTUSED
+        end
+      end
+    end
+
+    describe "when resource mode is not supplied" do
+      context "and content is supplied" do
+        it "should default to 0644 mode" do
+          file = described_class.new(:path => path, :content => "file content")
+
+          file.write :NOTUSED
+
+          expect(File.stat(file[:path]).mode & 0777).to eq(0644)
+        end
+      end
+
+      context "and no content is supplied" do
+        it "should use puppet's default umask of 022" do
+          file = described_class.new(:path => path)
+
+          umask_from_the_user = 0777
+          Puppet::Util.withumask(umask_from_the_user) do
+            file.write :NOTUSED
+          end
+
+          expect(File.stat(file[:path]).mode & 0777).to eq(0644)
+        end
+      end
+    end
   end
 
   describe "#fail_if_checksum_is_wrong" do
