@@ -136,16 +136,15 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     should = @resource[:ensure]
     # always unhold if explicitly told to install/update
     self.unhold
+    command = 'update'
     unless should.is_a? Symbol
       name += "@#{should}"
       is = self.query
       if is[:ensure].to_sym == :absent
         command = 'install'
-      else
-        command = 'update'
       end
-      r = exec_cmd(command(:pkg), command, '--accept', name)
     end
+    r = exec_cmd(command(:pkg), command, '--accept', name)
     return r if nofail
     # exit status 4 means that no changes were made, but it's not a failure
     raise Puppet::Error, "Unable to update #{r[:out]}" unless [0,4].include? r[:exit]
