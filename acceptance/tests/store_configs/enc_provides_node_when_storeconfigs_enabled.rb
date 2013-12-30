@@ -55,7 +55,7 @@ if $osfamily == "Debian" {
   }
 } elsif $osfamily == "RedHat" {
   $sqlite_gem_pkg_name = $operatingsystem ? {
-    Fedora => "rubygem-sqlite3",
+    "Fedora" => "rubygem-sqlite3",
     default => "rubygem-sqlite3-ruby"
   }
 
