@@ -538,8 +538,20 @@ module Util
   # The default_mode is the mode to use when the target file doesn't already
   # exist; if the file is present we copy the existing mode/owner/group values
   # across.
+
+  DEFAULT_POSIX_MODE = 0644
+  DEFAULT_WINDOWS_MODE = nil
+
   def replace_file(file, default_mode, &block)
     raise Puppet::DevError, "replace_file requires a block" unless block_given?
+
+    unless default_mode
+      if Puppet.features.microsoft_windows?
+        default_mode = DEFAULT_WINDOWS_MODE
+      else
+        default_mode = DEFAULT_POSIX_MODE
+      end
+    end
 
     file     = Pathname(file)
     tempfile = Tempfile.new(file.basename.to_s, file.dirname.to_s)
