@@ -90,9 +90,10 @@ module Puppet::Network::HTTP::Handler
 
     Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
       indirection_name, method, key, params = uri2indirection(request_method, request_path, request_params)
+      certificate = client_cert(request)
 
       check_authorization(indirection_name, method, key, params)
-      warn_if_near_expiration(client_cert(request))
+      warn_if_near_expiration(certificate)
 
       indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
       raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
@@ -101,7 +102,10 @@ module Puppet::Network::HTTP::Handler
         raise HTTPNotFoundError, "No handler for #{indirection.name}"
       end
 
-      send("do_#{method}", indirection, key, params, request, response)
+      trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
+      Puppet::Context.override(:trusted_information => trusted) do
+        send("do_#{method}", indirection, key, params, request, response)
+      end
     end
   rescue HTTPError => e
     return do_http_control_exception(response, e)

@@ -14,6 +14,8 @@ class Puppet::Indirector::Request
 
   attr_reader :indirection_name
 
+  # trusted_information is specifically left out because we can't serialize it
+  # and keep it "trusted"
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
 
   ::PSON.register_document_type('IndirectorRequest',self)
@@ -141,7 +143,6 @@ class Puppet::Indirector::Request
   def indirection_name=(name)
     @indirection_name = name.to_sym
   end
-
 
   def model
     raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless i = indirection

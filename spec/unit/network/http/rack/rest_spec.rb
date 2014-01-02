@@ -31,6 +31,17 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       Rack::Request.new(env)
     end
 
+    let(:minimal_certificate) do
+        cert = OpenSSL::X509::Certificate.new
+        cert.version = 2
+        cert.serial = 0
+        cert.not_before = Time.now
+        cert.not_after = Time.now + 3600
+        cert.public_key = OpenSSL::PKey::RSA.new(512)
+        cert.subject = OpenSSL::X509::Name.parse("/CN=testing")
+        cert
+    end
+
     describe "#headers" do
       it "should return the headers (parsed from env with prefix 'HTTP_')" do
         req = mk_req('/', {'HTTP_Accept' => 'myaccept',
@@ -67,24 +78,15 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
         @handler.body(req).should == "mybody"
       end
 
-      it "should return the an OpenSSL::X509::Certificate instance as the client_cert" do
-        cert = stub 'cert'
-        req = mk_req('/foo/bar', 'SSL_CLIENT_CERT' => 'certificate in pem format')
-        OpenSSL::X509::Certificate.expects(:new).with('certificate in pem format').returns(cert)
-        @handler.client_cert(req).should == cert
+      it "should return the an Puppet::SSL::Certificate instance as the client_cert" do
+        req = mk_req('/foo/bar', 'SSL_CLIENT_CERT' => minimal_certificate.to_pem)
+        expect(@handler.client_cert(req).content.to_pem).to eq(minimal_certificate.to_pem)
       end
 
       it "returns nil when SSL_CLIENT_CERT is empty" do
-        cert = stub 'cert'
         req = mk_req('/foo/bar', 'SSL_CLIENT_CERT' => '')
-        OpenSSL::X509::Certificate.expects(:new).never
-        @handler.client_cert(req).should be_nil
-      end
 
-      it "(#16769) does not raise error 'header too long'" do
-        cert = stub 'cert'
-        req = mk_req('/foo/bar', 'SSL_CLIENT_CERT' => '')
-        lambda { @handler.client_cert(req) }.should_not raise_error
+        @handler.client_cert(req).should be_nil
       end
 
       it "should set the response's content-type header when setting the content type" do

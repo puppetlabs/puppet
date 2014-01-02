@@ -101,8 +101,6 @@ custom_attributes:
     END
 
     agents.each do |agent|
-#      next if agent == master
-
       agent_csr_attributes[agent] = "#{testdirs[agent]}/csr_attributes.yaml"
       create_remote_file(agent, agent_csr_attributes[agent], csr_attributes)
     end
