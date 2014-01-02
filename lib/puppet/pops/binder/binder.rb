@@ -13,6 +13,9 @@ class Puppet::Pops::Binder::Binder
   attr_reader :injector_entries
 
   # @api private
+  attr :id_index
+
+  # @api private
   attr_reader :key_factory
 
   # A parent Binder or nil
@@ -30,6 +33,7 @@ class Puppet::Pops::Binder::Binder
   # @api public
   def initialize(layered_bindings, parent_binder=nil)
     @parent = parent_binder
+    @id_index = Hash.new() { |k, v| [] }
 
     @key_factory = Puppet::Pops::Binder::KeyFactory.new()
 
@@ -64,10 +68,33 @@ class Puppet::Pops::Binder::Binder
   def define_layers(layered_bindings)
 
     LayerProcessor.new(self, key_factory).bind(layered_bindings)
-    injector_entries.each  do |k,v|
-      unless key_factory.is_contributions_key?(k) || v.is_resolved?()
+    contribution_keys = []
+    # make one pass over entries to collect contributions, and check overrides
+    injector_entries.each do |k,v|
+      if key_factory.is_contributions_key?(k)
+        contribution_keys << [k,v]
+      elsif !v.is_resolved?()
         raise ArgumentError, "Binding with unresolved 'override' detected: #{self.class.format_binding(v.binding)}}"
+      else
+        # if binding has an id, add it to the index
+        add_id_to_index(v.binding)
       end
+    end
+
+    # If a lower level binder has contributions for a key also contributed to in this binder
+    # they must included in the higher shadowing contribution.
+    # If a contribution is made to an id that is defined in a parent
+    # contribute to an id that is defined in a lower binder, it must be promoted to this binder (copied) or
+    # there is risk of making the lower level injector dirty.
+    #
+    contribution_keys.each do |kv|
+      parent_contribution = lookup_in_parent(kv[0])
+      next unless parent_contribution
+      injector_entries[kv[0]] = kv[1] + parent_contributions
+
+      # key the multibind_id from the contribution key
+      multibind_id = key_factory.multibind_contribution_key_to_id(kv[0])
+      promote_matching_bindings(self, @parent, multibind_id)
     end
   end
   private :define_layers
@@ -77,6 +104,25 @@ class Puppet::Pops::Binder::Binder
     tmp = @anonymous_key
     @anonymous_key += 1
     tmp
+  end
+
+  def add_id_to_index(binding)
+    return unless binding.is_a?(Puppet::Pops::Binder::Bindings::Multibinding) && !(id = binding.id).nil?
+    @id_index[id] = @id_index[id] << binding
+  end
+
+  def promote_matching_bindings(to_binder, from_binder, multibind_id)
+    return if from_binder.nil?
+    from_binder.id_index[ multibind_id ].each do |binding|
+      key = key_factory.binding_key(binding)
+      entry = lookup(key)
+      unless entry.precedence == @binder_precedence
+        # it is from a lower layer it must be promoted
+        injector_entries[ key ] = Puppet::Pops::Binder::InjectorEntry.new(binding, binder_precedence)
+      end
+    end
+    # recursive "up the parent chain" to promote all
+    promote_matching_bindings(to_binder, from_binder.parent, multibind_id)
   end
 
   def lookup_in_parent(key)
