@@ -58,6 +58,10 @@ describe Puppet::Util do
       :if => Puppet.features.microsoft_windows? do
 
       dir = tmpdir('DACL_playground')
+      protected_sd = Puppet::Util::Windows::Security.get_security_descriptor(dir)
+      protected_sd.protect = true
+      Puppet::Util::Windows::Security.set_security_descriptor(dir, protected_sd)
+
       sibling_path = File.join(dir, 'sibling_file')
       FileUtils.touch(sibling_path)
 
