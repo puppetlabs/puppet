@@ -30,9 +30,6 @@
 #      rc_reset         clear local rc status (overall remains)
 #      rc_exit          exit appropriate to overall rc status
 
-lockfile=/var/lock/subsys/puppetmaster
-pidfile=/var/run/puppet/master.pid
-
 # Source function library.
 [ -f /etc/rc.status ] && . /etc/rc.status
 
@@ -97,7 +94,7 @@ case "$1" in
         # already running to match LSB spec.
         # Confirm the manifest exists
         if [ -r $PUPPETMASTER_MANIFEST ]; then
-            startproc -p ${pidfile} $PUPPETMASTER $PUPPETMASTER_OPTS && touch "$lockfile"
+            startproc $PUPPETMASTER $PUPPETMASTER_OPTS
         else
             rc_failed
             echo "Manifest does not exist: $PUPPETMASTER_MANIFEST"
@@ -110,7 +107,7 @@ case "$1" in
         ## Stop daemon with killproc(8) and if this fails
         ## set echo the echo return value.
 
-        killproc -QUIT -p ${pidfile} $PUPPETMASTER && rm -f ${lockfile} ${pidfile}
+        killproc -QUIT $PUPPETMASTER
 
         # Remember status and be verbose
         rc_status -v
@@ -139,7 +136,7 @@ case "$1" in
 
         echo -n "Reload service puppet"
         ## if it supports it:
-        killproc -HUP -p ${pidfile} $PUPPETMASTER
+        killproc -QUIT $PUPPETMASTER
         rc_status -v
         ;;
     reload)
@@ -148,7 +145,7 @@ case "$1" in
 
         # If it supports signalling:
         echo -n "Reload puppet services."
-        killproc -HUP -p ${pidfile} $PUPPETMASTER
+        killproc -QUIT $PUPPETMASTER
         rc_status -v
         ;;
     status)
@@ -163,7 +160,7 @@ case "$1" in
         # 3 - service not running
 
         # NOTE: checkproc returns LSB compliant status values.
-        checkproc -p ${pidfile} $PUPPETMASTER
+        checkproc $PUPPETMASTER
         rc_status -v
         ;;
     *)
