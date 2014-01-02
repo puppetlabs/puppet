@@ -3,7 +3,6 @@ require 'uri'
 require 'puppet/indirector'
 require 'puppet/util/pson'
 require 'puppet/network/resolver'
-require 'puppet/indirector/trusted_information'
 
 # This class encapsulates all of the information you need to make an
 # Indirection call, and as a result also handles REST calls.  It's somewhat

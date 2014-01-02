@@ -1,4 +1,6 @@
 module Puppet::Context
+  require 'puppet/context/trusted_information'
+
   class UndefinedBindingError < Puppet::Error; end
 
   # @api private

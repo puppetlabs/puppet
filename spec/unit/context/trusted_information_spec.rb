@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Puppet::Indirector::TrustedInformation do
+describe Puppet::Context::TrustedInformation do
   let(:key) do
     key = Puppet::SSL::Key.new("myname")
     key.generate
@@ -24,7 +24,7 @@ describe Puppet::Indirector::TrustedInformation do
 
   context "when remote" do
     it "has no cert information when it isn't authenticated" do
-      trusted = Puppet::Indirector::TrustedInformation.remote(false, 'ignored', nil)
+      trusted = Puppet::Context::TrustedInformation.remote(false, 'ignored', nil)
 
       expect(trusted.authenticated).to eq(false)
       expect(trusted.certname).to be_nil
@@ -32,7 +32,7 @@ describe Puppet::Indirector::TrustedInformation do
     end
 
     it "is remote and has certificate information when it is authenticated" do
-      trusted = Puppet::Indirector::TrustedInformation.remote(true, 'cert name', cert)
+      trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', cert)
 
       expect(trusted.authenticated).to eq('remote')
       expect(trusted.certname).to eq('cert name')
@@ -47,22 +47,24 @@ describe Puppet::Indirector::TrustedInformation do
     it "is authenticated local with the nodes clientcert" do
       node = Puppet::Node.new('testing', :parameters => { 'clientcert' => 'cert name' })
 
-      trusted = Puppet::Indirector::TrustedInformation.local(node)
+      trusted = Puppet::Context::TrustedInformation.local(node)
 
       expect(trusted.authenticated).to eq('local')
       expect(trusted.certname).to eq('cert name')
+      expect(trusted.extensions).to eq({})
     end
 
     it "is authenticated local with no clientcert when there is no node" do
-      trusted = Puppet::Indirector::TrustedInformation.local(nil)
+      trusted = Puppet::Context::TrustedInformation.local(nil)
 
       expect(trusted.authenticated).to eq('local')
       expect(trusted.certname).to be_nil
+      expect(trusted.extensions).to eq({})
     end
   end
 
   it "converts itself to a hash" do
-    trusted = Puppet::Indirector::TrustedInformation.remote(true, 'cert name', cert)
+    trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', cert)
 
     expect(trusted.to_h).to eq({
       'authenticated' => 'remote',
@@ -75,7 +77,7 @@ describe Puppet::Indirector::TrustedInformation do
   end
 
   it "freezes the hash" do
-    trusted = Puppet::Indirector::TrustedInformation.remote(true, 'cert name', cert)
+    trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', cert)
 
     expect(trusted.to_h).to be_deeply_frozen
   end

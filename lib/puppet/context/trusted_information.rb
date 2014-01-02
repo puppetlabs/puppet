@@ -1,6 +1,7 @@
-class Puppet::Indirector::TrustedInformation
+# @api private
+class Puppet::Context::TrustedInformation
   # one of 'remote', 'local', or false, where 'remote' is authenticated via cert,
-  # 'local' is trusted by virtue of running on the same machine (not a remove
+  # 'local' is trusted by virtue of running on the same machine (not a remote
   # request), and false is an unauthenticated remote request.
   #
   # @return [String, Boolean]
