@@ -1,59 +1,60 @@
 module Puppet::Context
-  class ValueAlreadyBoundError < Puppet::Error; end
   class UndefinedBindingError < Puppet::Error; end
 
+  # @api private
   class Bindings
     attr_reader :parent
 
-    def initialize(parent)
+    def initialize(parent, overrides = {})
+      overrides ||= {}
       @parent = parent
-      @table = {}
+      @table = parent ? parent.table.merge(overrides) : overrides
     end
 
-    def bind(name, value)
-      if @table.include?(name)
-        raise ValueAlreadyBoundError, name
-      else
-        @table[name] = value
-      end
-    end
-
-    def lookup(name, block)
+    def lookup(name, default_proc)
       if @table.include?(name)
         @table[name]
-      elsif @parent
-        @parent.lookup(name, block)
-      elsif block
-        block.call
+      elsif default_proc
+        default_proc.call
       else
         raise UndefinedBindingError, name
       end
     end
+
+    def root?
+      @parent.nil?
+    end
+
+    protected
+
+    attr_reader :table
   end
 
   @bindings = Bindings.new(nil)
 
-  def self.push
-    @bindings = Bindings.new(@bindings)
+  # @param overrides [Hash] A hash of bindings to be merged with the parent context.
+  # @api private
+  def self.push(overrides)
+    @bindings = Bindings.new(@bindings, overrides)
   end
 
+  # @api private
   def self.pop
-    @bindings = @bindings.parent
+    @bindings = @bindings.parent if !@bindings.root?
+    @bindings
   end
 
-  def self.bind(name, value)
-    @bindings.bind(name, value)
-  end
-
+  # Lookup a binding by name or return a default value provided by a passed block (if given).
+  # @api public
   def self.lookup(name, &block)
     @bindings.lookup(name, block)
   end
 
+  # @param bindings [Hash] A hash of bindings to be merged with the parent context.
+  # @yield [] A block executed in the context of the temporarily pushed bindings.
+  # @api public
   def self.override(bindings)
-    push
-    bindings.each do |name, value|
-      bind(name, value)
-    end
+    push(bindings)
 
     yield
   ensure

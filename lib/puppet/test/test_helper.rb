@@ -53,7 +53,7 @@ module Puppet::Test
     # Call this method once per test, prior to execution of each invididual test.
     # @return nil
     def self.before_each_test()
-      Puppet::Context.push
+
       # We need to preserve the current state of all our indirection cache and
       # terminus classes.  This is pretty important, because changes to these
       # are global and lead to order dependencies in our testing.
@@ -93,7 +93,7 @@ module Puppet::Test
 
       Puppet::DataBinding::Hiera.instance_variable_set("@hiera", nil)
 
-      Puppet::Context.bind(:trusted_information,
+      Puppet::Context.push(:trusted_information =>
                            Puppet::Indirector::TrustedInformation.new('local', 'testing', {}))
     end
 
