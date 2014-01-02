@@ -1759,7 +1759,7 @@ EOT
         be used.
 
         The `future` parser is a "time travel to the future" allowing early
-        exposure to new language features. What these fatures are will vary from
+        exposure to new language features. What these features are will vary from
         release to release and they may be invididually configurable.
 
         Available Since Puppet 3.2.
@@ -1783,7 +1783,7 @@ EOT
         evaluator.
 
         The `future` evaluator is a "time travel to the future" allowing early
-        exposure to new language features. What these fatures are will vary from
+        exposure to new language features. What these features are will vary from
         release to release and they may be invididually configurable.
 
         The default for this parameter is 'future', which means that the flag is
