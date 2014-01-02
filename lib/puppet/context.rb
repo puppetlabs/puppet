@@ -2,6 +2,7 @@ module Puppet::Context
   require 'puppet/context/trusted_information'
 
   class UndefinedBindingError < Puppet::Error; end
+  class StackUnderflow < Puppet::Error; end
 
   # @api private
   class Bindings
@@ -42,8 +43,8 @@ module Puppet::Context
 
   # @api private
   def self.pop
-    @bindings = @bindings.parent if !@bindings.root?
-    @bindings
+    raise(StackUnderflow, "Attempted to pop, but lready at root of the context stack.") if @bindings.root?
+    @bindings = @bindings.parent
   end
 
   # Lookup a binding by name or return a default value provided by a passed block (if given).
