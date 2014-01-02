@@ -136,7 +136,7 @@ case "$1" in
 
         echo -n "Reload service puppet"
         ## if it supports it:
-        killproc -QUIT $PUPPETMASTER
+        killproc -HUP $PUPPETMASTER
         rc_status -v
         ;;
     reload)
@@ -145,7 +145,7 @@ case "$1" in
 
         # If it supports signalling:
         echo -n "Reload puppet services."
-        killproc -QUIT $PUPPETMASTER
+        killproc -HUP $PUPPETMASTER
         rc_status -v
         ;;
     status)
