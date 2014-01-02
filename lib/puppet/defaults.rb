@@ -1767,6 +1767,11 @@ EOT
     },
     :evaluator => {
       :default => "future",
+      :hook => proc do |value|
+        if !['future', 'current'].include?(value)
+          raise "evaluator can only be set to 'future' or 'current', got '#{value}'"
+        end
+      end,
       :desc => <<-'EOT'
         Selects the evaluator to use for evaluation of puppet manifests parsed
         with the option "parser = future". Available choices are `current`,
