@@ -128,6 +128,50 @@ describe 'Injector' do
     it "should be possible to reference the KeyFactory" do
       injector(lbinder).key_factory.is_a?(Puppet::Pops::Binder::KeyFactory).should == true
     end
+
+    it "can be created using a model" do
+      bindings.bind.name('a_string').to('42')
+      injector = Puppet::Pops::Binder::Injector.create_from_model(layered_bindings)
+      injector.lookup(scope, 'a_string').should == '42'
+    end
+
+    it 'can be created using a block' do
+      injector = Puppet::Pops::Binder::Injector.create('test') do
+        bind.name('a_string').to('42')
+      end
+      injector.lookup(scope, 'a_string').should == '42'
+    end
+
+    it 'can be created using a hash' do
+      injector = Puppet::Pops::Binder::Injector.create_from_hash('test', 'a_string' => '42')
+      injector.lookup(scope, 'a_string').should == '42'
+    end
+
+    it 'can be created using an overriding injector with block' do
+      injector = Puppet::Pops::Binder::Injector.create('test') do
+        bind.name('a_string').to('42')
+      end
+      injector2 = injector.override('override') do
+        bind.name('a_string').to('43')
+      end
+      injector.lookup(scope, 'a_string').should == '42'
+      injector2.lookup(scope, 'a_string').should == '43'
+    end
+
+    it 'can be created using an overriding injector with hash' do
+      injector = Puppet::Pops::Binder::Injector.create_from_hash('test', 'a_string' => '42')
+      injector2 = injector.override_with_hash('override', 'a_string' => '43')
+      injector.lookup(scope, 'a_string').should == '42'
+      injector2.lookup(scope, 'a_string').should == '43'
+    end
+
+    it "can be created using an overriding injector with a model" do
+      injector = Puppet::Pops::Binder::Injector.create_from_hash('test', 'a_string' => '42')
+      bindings.bind.name('a_string').to('43')
+      injector2 = injector.override_with_model(layered_bindings)
+      injector.lookup(scope, 'a_string').should == '42'
+      injector2.lookup(scope, 'a_string').should == '43'
+    end
   end
 
   context "When looking up objects" do
@@ -712,6 +756,7 @@ describe 'Injector' do
       end
     end
   end
+
   context "When there are problems with configuration" do
     let(:lbinder) { binder.new(layered_bindings) }
 
