@@ -1759,10 +1759,42 @@ EOT
         be used.
 
         The `future` parser is a "time travel to the future" allowing early
-        exposure to new language features. What these fatures are will vary from
+        exposure to new language features. What these features are will vary from
         release to release and they may be invididually configurable.
 
         Available Since Puppet 3.2.
+      EOT
+    },
+    :evaluator => {
+      :default => "future",
+      :hook => proc do |value|
+        if !['future', 'current'].include?(value)
+          raise "evaluator can only be set to 'future' or 'current', got '#{value}'"
+        end
+      end,
+      :desc => <<-'EOT'
+        Selects the evaluator to use for evaluation of puppet manifests parsed
+        with the option "parser = future". Available choices are `current`,
+        and `future` (the default).
+
+        The `future` evaluator means that the new evaluator (experimental) will
+        be used, whereas 'current' means that the "parser future" option will
+        transform the parsed result to Puppet 3x and use the regular
+        evaluator.
+
+        The `future` evaluator is a "time travel to the future" allowing early
+        exposure to new language features. What these features are will vary from
+        release to release and they may be invididually configurable.
+
+        The default for this parameter is 'future', which means that the flag is
+        there to turn off the future evaluator for A / B testing.
+
+        The experimental features "parser future, evaluator future" are expected
+        to become what is released as the standard / current in Puppet 4.x.
+
+        The evaluator option has no effect unless parser is set to 'future'.
+
+        Available Since Puppet 3.5.
       EOT
     },
    :max_errors => {

@@ -11,7 +11,11 @@ module Puppet::Parser
     def self.parser(environment)
       case Puppet[:parser]
       when 'future'
-        evaluating_parser(environment)
+        if Puppet[:evaluator] == 'future'
+          evaluating_parser(environment)
+        else
+          eparser(environment)
+        end
       else
         classic_parser(environment)
       end
