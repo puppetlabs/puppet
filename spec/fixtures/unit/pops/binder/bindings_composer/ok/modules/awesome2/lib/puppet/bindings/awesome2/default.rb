@@ -13,10 +13,8 @@ Puppet::Bindings.newbindings('awesome2::default') do |scope|
     name 'has_funny_hat'
     to 'kkk'
   }
-  when_in_category('node', 'localhost') {
-    bind {
-      name 'good_x'
-      to 'golden'
-    }
+  bind {
+    name 'good_x'
+    to 'golden'
   }
 end

@@ -78,7 +78,6 @@
 # @example Create a NamedBinding with content
 #   result = Puppet::Pops::Binder::BindingsFactory.named_bindings("mymodule::mybindings") do
 #     bind.name("foo").to(42)
-#     when_in_category("node", "kermit.example.com").bind.name("foo").to(43)
 #     bind.string.name("site url").to("http://www.example.com")
 #   end
 #   result.model()
@@ -154,39 +153,6 @@ module Puppet::Pops::Binder::BindingsFactory
       builder.instance_eval(&block) if block_given?
       builder
     end
-
-    # Adds a categorized bindings to this container. Returns a BindingsContainerBuilder to allow adding
-    # bindings in the newly created container. An optional block may be given which is evaluated using `instance_eval`.
-    # @param categorization [String] the name of the categorization e.g. 'node'
-    # @param category_value [String] the value in that category e.g. 'kermit.example.com'
-    # @return [BindingsContainerBuilder] the builder for the created categorized bindings container
-    # @api public
-    #
-    def when_in_category(categorization, category_value, &block)
-      when_in_categories({categorization => category_value}, &block)
-    end
-
-    # Adds a categorized bindings to this container. Returns a BindingsContainerBuilder to allow adding
-    # bindings in the newly created container.
-    # The result is that a processed request must match all the given categorizations
-    # with the given values. An optional block may be given which is evaluated using `instance_eval`.
-    # @param categories_hash Hash[String, String] a hash with categorization and categorization value entries
-    # @return [BindingsContainerBuilder] the builder for the created categorized bindings container
-    # @api public
-    #
-    def when_in_categories(categories_hash, &block)
-      binding = Puppet::Pops::Binder::Bindings::CategorizedBindings.new()
-      categories_hash.each do |k,v|
-          pred = Puppet::Pops::Binder::Bindings::Category.new()
-          pred.categorization = k
-          pred.value = v
-          binding.addPredicates(pred)
-        end
-      model.addBindings(binding)
-      builder = BindingsContainerBuilder.new(binding)
-      builder.instance_eval(&block) if block_given?
-      builder
-    end
   end
 
   # Builds a Binding via convenience methods.
@@ -225,6 +191,13 @@ module Puppet::Pops::Binder::BindingsFactory
     # @api public
     def override
       model.override = true
+      self
+    end
+
+    # Sets the binding to be final (it may not be overridden)
+    # @api public
+    def final
+      model.final = true
       self
     end
 
@@ -619,15 +592,12 @@ module Puppet::Pops::Binder::BindingsFactory
   # @param name [String] the name of the contributed bindings (for human use in messages/logs only)
   # @param named_bindings [Puppet::Pops::Binder::Bindings::NamedBindings, Array<Puppet::Pops::Binder::Bindings::NamedBindings>] the
   #   named bindings to include
-  # @param effective_categories [Puppet::Pops::Binder::Bindings::EffectiveCategories] the contributors opinion about categorization
-  #   this is used to ensure consistent use of categories.
   #
-  def self.contributed_bindings(name, named_bindings, effective_categories)
+  def self.contributed_bindings(name, named_bindings)
     cb = Puppet::Pops::Binder::Bindings::ContributedBindings.new()
     cb.name = name
     named_bindings = [named_bindings] unless named_bindings.is_a?(Array)
     named_bindings.each {|b| cb.addBindings(b) }
-    cb.effective_categories = effective_categories
     cb
   end
 
@@ -776,21 +746,6 @@ module Puppet::Pops::Binder::BindingsFactory
     p = Puppet::Pops::Binder::Bindings::EvaluatingProducerDescriptor.new()
     p.expression = expression
     p
-  end
-
-  # Creates an EffectiveCategories from a list of tuples `[categorization category ...]`, or `[[categorization category] ...]`
-  # This method is used by backends to create a model of the effective categories.
-  # @api public
-  #
-  def self.categories(tuple_array)
-    result = Puppet::Pops::Binder::Bindings::EffectiveCategories.new()
-    tuple_array.flatten.each_slice(2) do |c|
-      cat = Puppet::Pops::Binder::Bindings::Category.new()
-      cat.categorization = c[0]
-      cat.value = c[1]
-      result.addCategories(cat)
-    end
-    result
   end
 
   # Creates a NamedLayer. This is used by the bindings system to create a model of the layers.

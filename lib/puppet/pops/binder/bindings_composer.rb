@@ -68,7 +68,7 @@ class Puppet::Pops::Binder::BindingsComposer
       scheme_extensions.each_pair do |scheme, class_name|
         # turn each scheme => class_name into a binding (contribute to the buildings-schemes multibind).
         # do this in category 'extensions' to allow them to override the 'default'
-        when_in_category('extension', 'true').bind do
+        bind do
           name(scheme)
           instance_of(::Puppetx::BINDINGS_SCHEMES_TYPE)
           in_multibind(::Puppetx::BINDINGS_SCHEMES)
@@ -95,19 +95,13 @@ class Puppet::Pops::Binder::BindingsComposer
     factory = Puppet::Pops::Binder::BindingsFactory
     contributions = []
     configured_layers = @config.layering_config.collect do |  layer_config |
-      # get contributions with effective categories
+      # get contributions
       contribs = configure_layer(layer_config, scope, diagnostics)
       # collect the contributions separately for later checking of category precedence
       contributions.concat(contribs)
       # create a named layer with all the bindings for this layer
       factory.named_layer(layer_config['name'], *contribs.collect {|c| c.bindings }.flatten)
     end
-
-    # must check all contributions are based on compatible category precedence
-    # (Note that contributions no longer contains the bindings as a side effect of setting them in the collected
-    # layer. The effective categories and the name remains in the contributed model; this is enough for checking
-    # and error reporting).
-    check_contribution_precedence(contributions)
 
     # Add the two system layers; the final - highest ("can not be overridden" layer), and the lowest
     # Everything here can be overridden 'default' layer.
@@ -119,56 +113,7 @@ class Puppet::Pops::Binder::BindingsComposer
     factory.layered_bindings(*configured_layers)
   end
 
-  # Evaluates configured categorization and returns the result.
-  # The result is not cached.
-  # @api public
-  #
-  def effective_categories(scope)
-    unevaluated_categories = @config.categorization
-    parser = Puppet::Pops::Parser::EvaluatingParser.new()
-    file_source = @config.config_file or "defaults in: #{__FILE__}"
-    evaluated_categories = unevaluated_categories.collect do |category_tuple|
-      evaluated_categories = [ category_tuple[0], parser.evaluate_string( scope, parser.quote( category_tuple[1] ), file_source ) ]
-      if evaluated_categories[1].is_a?(String)
-        # category values are always in lower case
-        evaluated_categories[1] = evaluated_categories[1].downcase
-      else
-        raise ArgumentError, "Categorization value must be a string, category #{evaluated_categories[0]} evaluation resulted in a: '#{result[1].class}'"
-      end
-      evaluated_categories
-    end
-    Puppet::Pops::Binder::BindingsFactory::categories(evaluated_categories)
-  end
-
   private
-
-  # Checks that contribution's effective categorization is in the same relative order as in the overall
-  # categorization precedence.
-  #
-  def check_contribution_precedence(contributions)
-    cat_prec = { }
-    @config.categorization.each_with_index {|c, i| cat_prec[ c[0] ] = i }
-    contributions.each() do |contrib|
-      # Contributions that do not specify their opinion about categorization silently accepts the precedence
-      # set in the root configuration - and may thus produce an unexpected result
-      #
-      next unless ec = contrib.effective_categories
-      next unless categories = ec.categories
-      prev_prec = -1
-      categories.each do |c|
-        prec = cat_prec[c.categorization]
-        issues = Puppet::Pops::Binder::BinderIssues
-        unless prec
-          diagnostics.accept(issues::MISSING_CATEGORY_PRECEDENCE, c, :categorization => c.categorization)
-          next
-        end
-        unless prec > prev_prec
-          diagnostics.accept(issues::PRECEDENCE_MISMATCH_IN_CONTRIBUTION, c, :categorization => c.categorization)
-        end
-        prev_prec = prec
-      end
-    end
-  end
 
   def configure_layer(layer_description, scope, diagnostics)
     name = layer_description['name']

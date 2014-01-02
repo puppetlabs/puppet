@@ -133,10 +133,8 @@ describe "lookup function" do
   end
 
   def bound(local_bindings)
-    binder = Puppet::Pops::Binder::Binder.new
-    binder.define_categories(Puppet::Pops::Binder::BindingsFactory.categories([]))
-    binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(Puppet::Pops::Binder::BindingsFactory.named_layer('test layer', local_bindings.model)))
-    binder
+    layered_bindings = Puppet::Pops::Binder::BindingsFactory.layered_bindings(Puppet::Pops::Binder::BindingsFactory.named_layer('test layer', local_bindings.model))
+    Puppet::Pops::Binder::Binder.new(layered_bindings)
   end
 
   def ast_lambda(puppet_source)

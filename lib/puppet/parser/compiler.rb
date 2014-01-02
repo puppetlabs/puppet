@@ -246,12 +246,11 @@ class Puppet::Parser::Compiler
   #
   def create_boot_injector(env_boot_bindings)
     assert_binder_active()
-    boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution(env_boot_bindings)
-    final_contribution = Puppet::Pops::Binder::SystemBindings.final_contribution
-    binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_categories(boot_contribution.effective_categories)
-    binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
-    @boot_injector = Puppet::Pops::Binder::Injector.new(binder)
+    pb = Puppet::Pops::Binder
+    boot_contribution = pb::SystemBindings.injector_boot_contribution(env_boot_bindings)
+    final_contribution = pb::SystemBindings.final_contribution
+    binder = pb::Binder.new(pb::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
+    @boot_injector = pb::Injector.new(binder)
   end
 
   # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
@@ -544,10 +543,7 @@ class Puppet::Parser::Compiler
     assert_binder_active()
     composer = Puppet::Pops::Binder::BindingsComposer.new()
     layered_bindings = composer.compose(topscope)
-    binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_categories(composer.effective_categories(topscope))
-    binder.define_layers(layered_bindings)
-    @injector = Puppet::Pops::Binder::Injector.new(binder)
+    @injector = Puppet::Pops::Binder::Injector.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
   end
 
   def assert_binder_active
