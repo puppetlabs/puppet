@@ -20,7 +20,11 @@ end
 require 'rake'
 
 Dir['tasks/**/*.rake'].each { |t| load t }
-Dir['ext/packaging/tasks/**/*'].sort.each { |t| load t }
+
+begin
+  load File.join(File.dirname(__FILE__), 'ext', 'packaging', 'packaging.rake')
+rescue LoadError
+end
 
 build_defs_file = 'ext/build_defaults.yaml'
 if File.exist?(build_defs_file)
