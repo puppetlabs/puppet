@@ -45,7 +45,7 @@ class Puppet::Util::Autoload
       file, old_mtime = loaded[name]
       return true unless file == get_file(name)
       begin
-        old_mtime != File.mtime(file)
+        old_mtime.to_i != File.mtime(file).to_i
       rescue Errno::ENOENT
         true
       end
