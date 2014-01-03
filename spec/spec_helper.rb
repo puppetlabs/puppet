@@ -179,7 +179,7 @@ RSpec.configure do |config|
     # Clean up switch of TMPDIR, don't know if needed after this, so needs to reset it
     # to old before removing it
     ENV['TMPDIR'] = oldtmpdir
-    FileUtils.rm_rf(tmpdir) if Puppet::FileSystem::File.exist?(tmpdir) && tmpdir.to_s.start_with?(oldtmpdir)
+    FileUtils.rm_rf(tmpdir) if Puppet::FileSystem.exist?(tmpdir) && tmpdir.to_s.start_with?(oldtmpdir)
   end
 
   if ENV['PROFILE']
