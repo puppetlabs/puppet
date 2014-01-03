@@ -14,7 +14,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # If yaourt is installed, we can make use of it
   def yaourt?
-    return Puppet::FileSystem::File.exist? '/usr/bin/yaourt'
+    return Puppet::FileSystem.exist?('/usr/bin/yaourt')
   end
 
   # Install a package using 'pacman', or 'yaourt' if available.

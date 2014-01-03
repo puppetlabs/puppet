@@ -1,9 +1,10 @@
-module Puppet::FileSystem
-  require 'puppet/file_system/path_pattern'
-  require 'puppet/file_system/file_impl'
-  require 'puppet/file_system/memory_file'
-  require 'puppet/file_system/tempfile'
-
+# An abstraction over the ruby file system operations for a single file.
+#
+# For the time being this is being kept private so that we can evolve it for a
+# while.
+#
+# @api private
+class Puppet::FileSystem::File
 
   # create instance of the file system implementation to use for the current platform
   @impl = if RUBY_VERSION =~ /^1\.8/
@@ -41,18 +42,8 @@ module Puppet::FileSystem
   #
   # @api public
   #
-  def self.dir(path)
+  def dir(path)
     @impl.dir(assert_path(path))
-  end
-
-  # @return [Boolean] Does the directory of the given path exist?
-  def self.dir_exist?(path)
-    @impl.exist?(@impl.dir(assert_path(path)))
-  end
-
-  # Creates all directories down to (inclusive) the dir of the given path
-  def self.dir_mkpath(path)
-    @impl.mkpath(@impl.dir(assert_path(path)))
   end
 
   # @return [String] the name of the file
@@ -232,14 +223,6 @@ module Puppet::FileSystem
   #
   def stat(path)
     @impl.stat(assert_path(path))
-  end
-
-  # @return [Integer] the size of the file
-  #
-  # @api public
-  #
-  def size(path)
-    @impl.size(assert_path(path))
   end
 
   # @return [File::Stat] Same as stat, but does not follow the last symbolic

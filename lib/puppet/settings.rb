@@ -542,7 +542,7 @@ class Puppet::Settings
   # Parse the configuration file.  Just provides thread safety.
   def parse_config_files
     file = which_configuration_file
-    if Puppet::FileSystem::File.exist?(file)
+    if Puppet::FileSystem.exist?(file)
       begin
         text = read_file(file)
       rescue => detail
@@ -680,7 +680,7 @@ class Puppet::Settings
     return @files if @files
     @files = []
     [main_config_file, user_config_file].each do |path|
-      if Puppet::FileSystem::File.exist?(path)
+      if Puppet::FileSystem.exist?(path)
         @files << Puppet::Util::WatchedFile.new(path)
       end
     end

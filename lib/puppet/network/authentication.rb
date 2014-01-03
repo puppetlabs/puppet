@@ -17,7 +17,7 @@ module Puppet::Network::Authentication
     # master or the agent. Don't load the certificate if the CA cert is not
     # present: infinite recursion will occur as another authenticated request
     # will be spawned to download the CA cert.
-    if Puppet::FileSystem::File.exist?(Puppet[:hostcert]) && Puppet::FileSystem::File.exist?(Puppet[:localcacert])
+    if [Puppet[:hostcert], Puppet[:localcacert]].all? {|path| Puppet::FileSystem.exist?(path) }
       certs << Puppet::SSL::Host.localhost.certificate
     end
 

@@ -37,7 +37,7 @@ Puppet::Type.newtype(:k5login) do
 
     # Does this file exist?
     def exists?
-      Puppet::FileSystem::File.exist?(@resource[:name])
+      Puppet::FileSystem.exist?(@resource[:name])
     end
 
     # create the file
@@ -51,12 +51,12 @@ Puppet::Type.newtype(:k5login) do
 
     # remove the file
     def destroy
-      Puppet::FileSystem::File.unlink(@resource[:name])
+      Puppet::FileSystem.unlink(@resource[:name])
     end
 
     # Return the principals
     def principals(dummy_argument=:work_arround_for_ruby_GC_bug)
-      if Puppet::FileSystem::File.exist?(@resource[:name])
+      if Puppet::FileSystem.exist?(@resource[:name])
         File.readlines(@resource[:name]).collect { |line| line.chomp }
       else
         :absent
@@ -70,7 +70,7 @@ Puppet::Type.newtype(:k5login) do
 
     # Return the mode as an octal string, not as an integer
     def mode
-      "%o" % (Puppet::FileSystem::File.new(@resource[:name]).stat.mode & 007777)
+      "%o" % (Puppet::FileSystem.stat(@resource[:name]).mode & 007777)
     end
 
     # Set the file mode, converting from a string to an integer.

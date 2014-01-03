@@ -353,7 +353,7 @@ module Puppet
       # If the file exists, return false (i.e., don't run the command),
       # else return true
       def check(value)
-        ! Puppet::FileSystem::File.exist?(value)
+        ! Puppet::FileSystem.exist?(value)
       end
     end
 

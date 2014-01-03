@@ -451,7 +451,7 @@ describe Puppet::Application::Agent do
 
     describe "when setting up listen" do
       before :each do
-        Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(true)
         @puppetd.options[:serve] = []
         @server = stub_everything 'server'
         Puppet::Network::Server.stubs(:new).returns(@server)
@@ -461,7 +461,7 @@ describe Puppet::Application::Agent do
       it "should exit if no authorization file" do
         Puppet[:listen] = true
         Puppet.stubs(:err)
-        Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(false)
+        Puppet::FileSystem.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(false)
 
         expect do
           execute_agent
