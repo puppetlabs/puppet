@@ -25,9 +25,14 @@ class Puppet::Context::TrustedInformation
 
   def self.remote(authenticated, node_name, certificate)
     if authenticated
-      extensions = Hash[certificate.custom_extensions.collect do |ext|
-        [ext['oid'].freeze, ext['value'].freeze]
-      end]
+      extensions = {}
+      if certificate.nil?
+        Puppet.info('TrustedInformation expected a certificate, but none was given.')
+      else
+        extensions = Hash[certificate.custom_extensions.collect do |ext|
+          [ext['oid'].freeze, ext['value'].freeze]
+        end]
+      end
       new('remote', node_name, extensions)
     else
       new(false, nil, {})
