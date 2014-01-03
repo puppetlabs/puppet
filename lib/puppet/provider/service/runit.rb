@@ -57,7 +57,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   def servicedir
     unless @servicedir
       ["/service", "/etc/service","/var/service"].each do |path|
-        if Puppet::FileSystem::File.exist?(path)
+        if Puppet::FileSystem.exist?(path)
           @servicedir = path
           break
         end
@@ -105,7 +105,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   # before a disable
   def disable
     # unlink the daemon symlink to disable it
-    Puppet::FileSystem::File.unlink(self.service) if Puppet::FileSystem::File.new(self.service).symlink?
+    Puppet::FileSystem.unlink(self.service) if Puppet::FileSystem.symlink?(self.service)
   end
 end
 

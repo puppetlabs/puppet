@@ -4,7 +4,7 @@
 # while.
 #
 # @api private
-class Puppet::FileSystem::File
+class Puppet::FileSystem::FileXXX
   attr_reader :path
 
   IMPL = if RUBY_VERSION =~ /^1\.8/

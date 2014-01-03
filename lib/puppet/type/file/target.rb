@@ -40,17 +40,17 @@ module Puppet
       # it doesn't determine what's removed.
       @resource.remove_existing(target)
 
-      raise Puppet::Error, "Could not remove existing file" if Puppet::FileSystem::File.exist?(@resource[:path])
+      raise Puppet::Error, "Could not remove existing file" if Puppet::FileSystem.exist?(@resource[:path])
 
       Dir.chdir(File.dirname(@resource[:path])) do
         Puppet::Util::SUIDManager.asuser(@resource.asuser) do
           mode = @resource.should(:mode)
           if mode
             Puppet::Util.withumask(000) do
-              Puppet::FileSystem::File.new(target).symlink(@resource[:path])
+              Puppet::FileSystem.symlink(target, @resource[:path])
             end
           else
-            Puppet::FileSystem::File.new(target).symlink(@resource[:path])
+            Puppet::FileSystem.symlink(target, @resource[:path])
           end
         end
 
@@ -63,7 +63,7 @@ module Puppet
     def insync?(currentvalue)
       if [:nochange, :notlink].include?(self.should) or @resource.recurse?
         return true
-      elsif ! @resource.replace? and Puppet::FileSystem::File.exist?(@resource[:path])
+      elsif ! @resource.replace? and Puppet::FileSystem.exist?(@resource[:path])
         return true
       else
         return super(currentvalue)
@@ -74,7 +74,7 @@ module Puppet
     def retrieve
       if stat = @resource.stat
         if stat.ftype == "link"
-          return Puppet::FileSystem::File.new(@resource[:path]).readlink
+          return Puppet::FileSystem.readlink(@resource[:path])
         else
           return :notlink
         end

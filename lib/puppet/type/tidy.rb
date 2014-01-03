@@ -312,7 +312,7 @@ Puppet::Type.newtype(:tidy) do
 
   def stat(path)
     begin
-      Puppet::FileSystem::File.new(path).lstat
+      Puppet::FileSystem.lstat(path)
     rescue Errno::ENOENT => error
       info "File does not exist"
       return nil

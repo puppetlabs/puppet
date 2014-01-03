@@ -141,7 +141,7 @@ module Puppet
         when :ignore
           next
         when :use_when_creating
-          next if Puppet::FileSystem::File.exist?(resource[:path])
+          next if Puppet::FileSystem.exist?(resource[:path])
         end
 
         copy_source_value(metadata_method)

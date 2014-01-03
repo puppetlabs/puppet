@@ -134,7 +134,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     # Make sure the paths are fully qualified.
     path = File.expand_path(path)
 
-    return nil unless type == :directory or create_files? or Puppet::FileSystem::File.exist?(path)
+    return nil unless type == :directory or create_files? or Puppet::FileSystem.exist?(path)
     return nil if path =~ /^\/dev/ or path =~ /^[A-Z]:\/dev/i
 
     resource = Puppet::Resource.new(:file, path)
@@ -187,7 +187,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   # @api private
   def exclusive_open(option = 'r', &block)
     controlled_access do |mode|
-      file.exclusive_open(mode, option, &block)
+      Puppet::FileSystem.exclusive_open(file(), mode, option, &block)
     end
   end
 
@@ -198,9 +198,10 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     end
   end
 
-private
+  private
+
   def file
-    Puppet::FileSystem::File.new(value)
+    Puppet::FileSystem.pathname(value)
   end
 
   def unknown_value(parameter, value)
