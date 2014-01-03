@@ -8,6 +8,7 @@ describe Puppet::Network::HTTP::Connection do
   let (:host) { "me" }
   let (:port) { 54321 }
   subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator) }
+  let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
   context "when providing HTTP connections" do
     after do
@@ -66,7 +67,6 @@ describe Puppet::Network::HTTP::Connection do
     let (:host) { "my_server" }
     let (:port) { 8140 }
     let (:subject) { Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator) }
-    let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
     before :each do
       httpok.stubs(:body).returns ""
@@ -101,7 +101,6 @@ describe Puppet::Network::HTTP::Connection do
 
     let (:host) { "my_server" }
     let (:port) { 8140 }
-    let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
     it "should provide a useful error message when one is available and certificate validation fails", :unless => Puppet.features.microsoft_windows? do
       connection = Puppet::Network::HTTP::Connection.new(
@@ -151,7 +150,7 @@ describe Puppet::Network::HTTP::Connection do
         host, port,
         :verify => NoProblemsValidator.new(cert))
 
-      Net::HTTP.any_instance.stubs(:get).returns(httpok)
+      Net::HTTP.any_instance.stubs(:request).returns(httpok)
 
       connection.expects(:warn_if_near_expiration).with(cert)
 
@@ -166,7 +165,7 @@ describe Puppet::Network::HTTP::Connection do
       end
 
       def setup_connection(connection)
-        connection.stubs(:get).with do
+        connection.stubs(:request).with do
           true
         end.raises(OpenSSL::SSL::SSLError.new(@fails_with))
       end
@@ -204,7 +203,6 @@ describe Puppet::Network::HTTP::Connection do
     let (:other_path) { "other-path" }
     let (:subject) { Puppet::Network::HTTP::Connection.new("my_server", 8140, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator) }
     let (:httpredirection) { Net::HTTPFound.new('1.1', 302, 'Moved Temporarily') }
-    let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
     before :each do
       httpredirection['location'] = "http://#{other_host}:#{other_port}/#{other_path}"
@@ -233,5 +231,41 @@ describe Puppet::Network::HTTP::Connection do
         subject.get("/foo")
       }.to raise_error(Puppet::Network::HTTP::RedirectionLimitExceededException)
     end
+  end
+
+  it "allows setting basic auth on get requests" do
+    expect_request_with_basic_auth
+
+    subject.get('/path', nil, :basic_auth => { :user => 'user', :password => 'password' })
+  end
+
+  it "allows setting basic auth on post requests" do
+    expect_request_with_basic_auth
+
+    subject.post('/path', 'data', nil, :basic_auth => { :user => 'user', :password => 'password' })
+  end
+
+  it "allows setting basic auth on head requests" do
+    expect_request_with_basic_auth
+
+    subject.head('/path', nil, :basic_auth => { :user => 'user', :password => 'password' })
+  end
+
+  it "allows setting basic auth on delete requests" do
+    expect_request_with_basic_auth
+
+    subject.delete('/path', nil, :basic_auth => { :user => 'user', :password => 'password' })
+  end
+
+  it "allows setting basic auth on put requests" do
+    expect_request_with_basic_auth
+
+    subject.put('/path', 'data', nil, :basic_auth => { :user => 'user', :password => 'password' })
+  end
+
+  def expect_request_with_basic_auth
+    Net::HTTP.any_instance.expects(:request).with do |request|
+      expect(request['authorization']).to match(/^Basic/)
+    end.returns(httpok)
   end
 end
