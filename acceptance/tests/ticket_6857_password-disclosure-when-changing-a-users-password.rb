@@ -1,10 +1,12 @@
 test_name "#6857: redact password hashes when applying in noop mode"
 
 hosts_to_test = agents.reject do |agent|
-  if agent['platform'].match /(?:ubuntu|centos|debian|el-|fc-)/
-    result = on(agent, %Q{#{agent['puppetbindir']}/ruby -e 'require "shadow" or raise'}, :silent => true)
+  if agent['platform'].match /(?:ubuntu|centos|debian|el-|fedora)/
+    result = on(agent, %Q{#{agent['puppetbindir']}/ruby -e 'require "shadow" or raise'}, :acceptable_exit_codes => [0,1])
     result.exit_code != 0
   else
+    # Non-linux platforms do not rely on ruby-libshadow for password management
+    # and so we don't reject them from testing
     false
   end
 end
