@@ -25,6 +25,13 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       :none => Win32::Security::SID::Nobody,
       :everyone => Win32::Security::SID::Everyone
     }
+    # The TCP/IP NetBIOS Helper service (aka 'lmhosts') has ended up
+    # disabled on some VMs for reasons we couldn't track down. This
+    # condition causes tests which rely on resolving UNC style paths
+    # (like \\localhost) to fail with unhelpful error messages.
+    # Put a check for this upfront to aid debug should this strike again.
+    service = Puppet::Type.type(:service).new(:name => 'lmhosts')
+    service.provider.status.should == :running
   end
 
   let (:sids) { @sids }
