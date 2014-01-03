@@ -230,7 +230,7 @@ module Puppet::FileSystem
   #
   # @api public
   #
-  def stat(path)
+  def self.stat(path)
     @impl.stat(assert_path(path))
   end
 
@@ -238,7 +238,7 @@ module Puppet::FileSystem
   #
   # @api public
   #
-  def size(path)
+  def self.size(path)
     @impl.size(assert_path(path))
   end
 
@@ -247,7 +247,7 @@ module Puppet::FileSystem
   #
   # @api public
   #
-  def lstat(path)
+  def self.lstat(path)
     @impl.lstat(assert_path(path))
   end
 
@@ -258,7 +258,7 @@ module Puppet::FileSystem
   #
   # @api public
   #
-  def compare_stream(path, stream)
+  def self.compare_stream(path, stream)
     @impl.compare_stream(assert_path(path), stream)
   end
 
