@@ -201,13 +201,13 @@ describe Puppet::FileServing::Metadata do
         let(:path) { tmpfile('file_serving_metadata_link') }
         let(:target) { tmpfile('file_serving_metadata_target') }
         let(:checksum) { Digest::MD5.hexdigest("some content\n") }
-        let(:fmode) { Puppet::FileSystem::File.new(path).lstat.mode & 0777 }
+        let(:fmode) { Puppet::FileSystem.lstat(path).mode & 0777 }
 
         before :each do
           File.open(target, "wb") {|f| f.print("some content\n")}
           set_mode(0644, target)
 
-          Puppet::FileSystem::File.new(target).symlink(path)
+          Puppet::FileSystem.symlink(target, path)
         end
 
         it "should read links instead of returning their checksums" do
@@ -325,7 +325,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
       @file = Puppet::FileServing::Metadata.new(path, :links => :manage)
       stat = stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
       stub_file = stub(:readlink => "/some/other/path", :lstat => stat)
-      Puppet::FileSystem::File.expects(:new).with(path).at_least_once.returns stub_file
+      Puppet::FileSystem.expects(:lstat).with(path).at_least_once.returns stat
+      Puppet::FileSystem.expects(:readlink).with(path).at_least_once.returns "/some/other/path"
       @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
       @file.stubs(:md5_file).returns(@checksum)           #
 
@@ -356,9 +357,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
       path = "/base/path/my/file"
       @file = Puppet::FileServing::Metadata.new(path, :links => :follow)
       stat = stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
-      mocked_file = mock(path, :stat => stat)
-      Puppet::FileSystem::File.expects(:new).with(path).at_least_once.returns mocked_file
-      mocked_file.expects(:readlink).never
+      Puppet::FileSystem.expects(:stat).with(path).at_least_once.returns stat
+      Puppet::FileSystem.expects(:readlink).never
 
       if Puppet.features.microsoft_windows?
         win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
