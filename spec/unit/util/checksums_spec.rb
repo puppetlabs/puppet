@@ -131,9 +131,7 @@ describe Puppet::Util::Checksums do
       it "should use the '#{sum}' on the file to determine the ctime" do
         file = "/my/file"
         stat = mock 'stat', sum => "mysum"
-
-        stub_file = stub(file, :stat => stat)
-        Puppet::FileSystem::File.expects(:new).with(file).returns stub_file
+        Puppet::FileSystem.expects(:stat).with(file).returns(stat)
 
         @summer.send(sum.to_s + "_file", file).should == "mysum"
       end
