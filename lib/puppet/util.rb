@@ -397,7 +397,7 @@ module Util
     end
 
     file     = Puppet::FileSystem.pathname(file)
-    tempfile = Tempfile.new(file.basename, Puppet::FileSystem.path_string(Puppet::FileSystem.dir(file)))
+    tempfile = Tempfile.new(Puppet::FileSystem.path_string(Puppet::FileSystem.basename(file)), Puppet::FileSystem.path_string(Puppet::FileSystem.dir(file)))
 
     # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just

@@ -67,7 +67,7 @@ module Puppet::FileSystem
   #
   # @api public
   #
-  def self.basename(path)
+  def self.size(path)
     @impl.size(assert_path(path.basename))
   end
 
