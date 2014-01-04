@@ -26,8 +26,7 @@ describe Puppet::FileServing::Content do
     content = Puppet::FileServing::Content.new(path)
 
     result = "foo"
-    stub_file = stub(path, :lstat => stub('stat', :ftype => "file"))
-    Puppet::FileSystem.expects(:new).with(path).returns stub_file
+    Puppet::FileSystem.expects(:lstat).with(path).returns stub('stat', :ftype => "file")
     File.expects(:read).with(path).never
     content.collect
 
@@ -38,8 +37,7 @@ describe Puppet::FileServing::Content do
     content = Puppet::FileServing::Content.new(path)
 
     result = "foo"
-    stub_file = stub(path, :lstat => stub('stat', :ftype => "directory"))
-    Puppet::FileSystem.expects(:new).with(path).returns stub_file
+    Puppet::FileSystem.expects(:lstat).with(path).returns stub('stat', :ftype => "directory")
     File.expects(:read).with(path).never
     content.collect
 
@@ -84,10 +82,8 @@ describe Puppet::FileServing::Content, "when returning the contents" do
   let(:content) { Puppet::FileServing::Content.new(path, :links => :follow) }
 
   it "should fail if the file is a symlink and links are set to :manage" do
-    pending "HELP FIX MOCKING CRAP"
     content.links = :manage
-    stub_file = stub(path, :lstat => stub("stat", :ftype => "symlink"))
-    Puppet::FileSystem::File.expects(:new).with(path).returns stub_file
+    Puppet::FileSystem.expects(:lstat).with(path).returns stub("stat", :ftype => "symlink")
     proc { content.content }.should raise_error(ArgumentError)
   end
 
@@ -101,18 +97,14 @@ describe Puppet::FileServing::Content, "when returning the contents" do
   end
 
   it "should return the contents of the path if the file exists" do
-    pending "HELP FIX MOCKING CRAP"
-    mocked_file = mock(path, :stat => stub('stat', :ftype => 'file'))
-    Puppet::FileSystem::File.expects(:new).with(path).twice.returns(mocked_file)
-    mocked_file.expects(:binread).returns(:mycontent)
+    Puppet::FileSystem.expects(:stat).with(path).returns(stub('stat', :ftype => 'file'))
+    Puppet::FileSystem.expects(:binread).with(path).returns(:mycontent)
     content.content.should == :mycontent
   end
 
   it "should cache the returned contents" do
-    pending "HELP FIX MOCKING CRAP"
-    mocked_file = mock(path, :stat => stub('stat', :ftype => 'file'))
-    Puppet::FileSystem::File.expects(:new).with(path).twice.returns(mocked_file)
-    mocked_file.expects(:binread).returns(:mycontent)
+    Puppet::FileSystem.expects(:stat).with(path).returns(stub('stat', :ftype => 'file'))
+    Puppet::FileSystem.expects(:binread).with(path).returns(:mycontent)
     content.content
     # The second run would throw a failure if the content weren't being cached.
     content.content
