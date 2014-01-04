@@ -131,9 +131,7 @@ describe Puppet::FileServing::Fileset do
   context "when recursing" do
     before do
       @path = make_absolute("/my/path")
-#      @stub_file = stub(@path, :lstat => stub('stat', :directory? => true))
-#      Puppet::FileSystem::File.stubs(:new).with(@path).returns @stub_file
-      Puppet::FileSystem.expects(:lstat).with(@path).returns stub('stat', :directory? => true)
+      Puppet::FileSystem.stubs(:lstat).with(@path).returns stub('stat', :directory? => true)
 
       @fileset = Puppet::FileServing::Fileset.new(@path)
 
@@ -143,7 +141,6 @@ describe Puppet::FileServing::Fileset do
 
     def mock_dir_structure(path, stat_method = :lstat)
       Puppet::FileSystem.expects(stat_method).with(@path).returns @dirstat
-#      @stub_file.stubs(stat_method).returns(@dirstat)
       Dir.stubs(:entries).with(path).returns(%w{one two .svn CVS})
 
       # Keep track of the files we're stubbing.
@@ -152,13 +149,11 @@ describe Puppet::FileServing::Fileset do
       %w{one two .svn CVS}.each do |subdir|
         @files << subdir # relative path
         subpath = File.join(path, subdir)
-#        stub_subpath = stub(subpath, stat_method => @dirstat)
         Puppet::FileSystem.stubs(stat_method).with(subpath).returns @dirstat
         Dir.stubs(:entries).with(subpath).returns(%w{.svn CVS file1 file2})
         %w{file1 file2 .svn CVS}.each do |file|
           @files << File.join(subdir, file) # relative path
           subfile_path = File.join(subpath, file)
-#          stub_subfile_path = stub(subfile_path, stat_method => @filestat)
           Puppet::FileSystem.stubs(stat_method).with(subfile_path).returns(@filestat)
         end
       end
@@ -175,8 +170,7 @@ describe Puppet::FileServing::Fileset do
       def mock(base_path)
         extend Mocha::API
         path = File.join(base_path, name)
-        stub_dir = stub(path, :lstat => MockStat.new(path, true))
-        Puppet::FileSystem::File.stubs(:new).with(path).returns stub_dir
+        Puppet::FileSystem.stubs(:lstat).with(path).returns MockStat.new(path, true)
         Dir.stubs(:entries).with(path).returns(['.', '..'] + entries.map(&:name))
         entries.each do |entry|
           entry.mock(path)
@@ -188,7 +182,6 @@ describe Puppet::FileServing::Fileset do
       def mock(base_path)
         extend Mocha::API
         path = File.join(base_path, name)
-#        stub_file = stub(path, :lstat => MockStat.new(path, false))
         Puppet::FileSystem.stubs(:lstat).with(path).returns MockStat.new(path, false)
       end
     end
@@ -281,13 +274,11 @@ describe Puppet::FileServing::Fileset do
     path = make_absolute("/my/path")
     stat = stub 'stat', :directory? => true
 
-    mock_file = mock(path, :lstat => stat, :stat => stat)
-    Puppet::FileSystem::File.expects(:new).with(path).twice.returns mock_file
+    Puppet::FileSystem.expects(:stat).with(path).returns stat
+    Puppet::FileSystem.expects(:lstat).with(path).returns stat
 
     link_path = File.join(path, "mylink")
-    mock_link = mock(link_path)
-    Puppet::FileSystem::File.expects(:new).with(link_path).returns mock_link
-    mock_link.expects(:stat).raises(Errno::ENOENT)
+    Puppet::FileSystem.expects(:stat).with(link_path).raises(Errno::ENOENT)
 
     Dir.stubs(:entries).with(path).returns(["mylink"])
 
@@ -302,12 +293,10 @@ describe Puppet::FileServing::Fileset do
   context "when merging other filesets" do
     before do
       @paths = [make_absolute("/first/path"), make_absolute("/second/path"), make_absolute("/third/path")]
-      stub_file = stub(:lstat => stub('stat', :directory? => false))
-      Puppet::FileSystem::File.stubs(:new).returns stub_file
+      Puppet::FileSystem.stubs(:lstat).returns stub('stat', :directory? => false)
 
       @filesets = @paths.collect do |path|
-        stub_dir = stub(path, :lstat => stub('stat', :directory? => true))
-        Puppet::FileSystem::File.stubs(:new).with(path).returns stub_dir
+        Puppet::FileSystem.stubs(:lstat).with(path).returns stub('stat', :directory? => true)
         Puppet::FileServing::Fileset.new(path, :recurse => true)
       end
 
