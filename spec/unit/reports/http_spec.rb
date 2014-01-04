@@ -51,6 +51,15 @@ describe processor do
       subject.process
     end
 
+    it "should use the username and password specified by the 'reporturl' setting" do
+      Puppet[:reporturl] = "https://user:pass@myhost.mydomain:1234/report/upload"
+      http.expects(:post).with {|path,data,headers|
+        headers['Authorization'].should == "Basic dXNlcjpwYXNz"
+      }.returns(httpok)
+
+      subject.process
+    end
+
     it "should give the body as the report as YAML" do
       connection.expects(:post).with(anything, subject.to_yaml, anything).returns(httpok)
 
