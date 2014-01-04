@@ -270,7 +270,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
         context "when managing an existing file" do
           before :each do
-            Puppet::FileSystem::File.stubs(:exist?).with(@resource[:path]).returns(true)
+            Puppet::FileSystem.stubs(:exist?).with(@resource[:path]).returns(true)
           end
 
           it "should not copy owner, group or mode from local sources" do

@@ -16,7 +16,7 @@ describe Puppet::Type.type(:file).attrclass(:ctime) do
     @resource[:audit] = [:ctime]
 
     # this .to_resource audit behavior is magical :-(
-    @resource.to_resource[:ctime].should == Puppet::FileSystem::File.new(@filename).stat.ctime
+    @resource.to_resource[:ctime].should == Puppet::FileSystem.stat(@filename).ctime
   end
 
   it "should return absent if auditing an absent file" do
