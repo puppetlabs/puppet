@@ -260,15 +260,12 @@ class Puppet::Pops::Validation::Checker3_1
     top(o.eContainer, o)
   end
 
-  # Asserts that value is a valid QualifiedName. No additional checking is made, objects that use
-  # a QualifiedName as a name should check the validity - this since a QualifiedName is used as a BARE WORD
-  # and then additional chars may be valid (like a hyphen).
+  # No checking takes place - all expressions using a QualifiedName need to check. This because the
+  # rules are slightly different depending on the container (A variable allows a numeric start, but not
+  # other names). This means that (if the lexer/parser so chooses) a QualifiedName
+  # can be anything when it represents a Bare Word and evaluates to a String.
   #
   def check_QualifiedName(o)
-    # Is this a valid qualified name?
-    if o.value !~ Puppet::Pops::Patterns::NAME
-      acceptor.accept(Issues::ILLEGAL_NAME, o, {:name=>o.value})
-    end
   end
 
   # Checks that the value is a valid UpperCaseWord (a CLASSREF), and optionally if it contains a hypen.
