@@ -114,7 +114,7 @@ module Puppet::FileSystem
   #
   # @api public
   #
-  def binread(path)
+  def self.binread(path)
     @impl.binread(assert_path(path))
   end
 
