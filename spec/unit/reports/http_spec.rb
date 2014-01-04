@@ -46,19 +46,30 @@ describe processor do
 
     it "should use the path specified by the 'reporturl' setting" do
       report_path = URI.parse(Puppet[:reporturl]).path
-      connection.expects(:post).with(report_path, anything, anything).returns(httpok)
+      connection.expects(:post).with(report_path, anything, anything, {}).returns(httpok)
+
+      subject.process
+    end
+
+    it "should use the username and password specified by the 'reporturl' setting" do
+      Puppet[:reporturl] = "https://user:pass@myhost.mydomain:1234/report/upload"
+
+      connection.expects(:post).with(anything, anything, anything, :basic_auth => {
+        :user => 'user',
+        :password => 'pass'
+      }).returns(httpok)
 
       subject.process
     end
 
     it "should give the body as the report as YAML" do
-      connection.expects(:post).with(anything, subject.to_yaml, anything).returns(httpok)
+      connection.expects(:post).with(anything, subject.to_yaml, anything, {}).returns(httpok)
 
       subject.process
     end
 
     it "should set content-type to 'application/x-yaml'" do
-      connection.expects(:post).with(anything, anything, has_entry("Content-Type" => "application/x-yaml")).returns(httpok)
+      connection.expects(:post).with(anything, anything, has_entry("Content-Type" => "application/x-yaml"), {}).returns(httpok)
 
       subject.process
     end
