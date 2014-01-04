@@ -16,7 +16,7 @@ class Puppet::FileSystem::MemoryFile
   end
 
   def initialize(path, options)
-    @path = Pathname.new(path)
+    @path = path
     @exist = options[:exist?]
     @executable = options[:executable?]
     @content = options[:content]
