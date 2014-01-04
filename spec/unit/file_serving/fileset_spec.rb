@@ -188,8 +188,8 @@ describe Puppet::FileServing::Fileset do
       def mock(base_path)
         extend Mocha::API
         path = File.join(base_path, name)
-        stub_file = stub(path, :lstat => MockStat.new(path, false))
-        Puppet::FileSystem::File.stubs(:new).with(path).returns stub_file
+#        stub_file = stub(path, :lstat => MockStat.new(path, false))
+        Puppet::FileSystem.stubs(:lstat).with(path).returns MockStat.new(path, false)
       end
     end
 
@@ -269,7 +269,7 @@ describe Puppet::FileServing::Fileset do
       @path = make_absolute("/my/path/rV1x2DafFr0R6tGG+1bbk++++TM")
       stat = stub('dir_stat', :directory? => true)
       stub_file = stub(@path, :stat => stat, :lstat => stat)
-      Puppet::FileSystem::File.expects(:new).with(@path).twice.returns stub_file
+      Puppet::FileSystem.expects(:lstat).with(@path).returns stub(@path, :stat => stat, :lstat => stat)
       @fileset = Puppet::FileServing::Fileset.new(@path)
       mock_dir_structure(@path)
       @fileset.recurse = true
