@@ -194,7 +194,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   # @api private
   def open(option = 'r', &block)
     controlled_access do |mode|
-      file.open(mode, option, &block)
+      Puppet::FileSystem.open(file, mode, option, &block)
     end
   end
 

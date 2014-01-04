@@ -2,8 +2,8 @@ module Puppet::FileSystem
   require 'puppet/file_system/path_pattern'
   require 'puppet/file_system/file_impl'
   require 'puppet/file_system/memory_file'
+  require 'puppet/file_system/memory_impl'
   require 'puppet/file_system/tempfile'
-
 
   # create instance of the file system implementation to use for the current platform
   @impl = if RUBY_VERSION =~ /^1\.8/
@@ -17,16 +17,18 @@ module Puppet::FileSystem
            Puppet::FileSystem::File19
          end.new()
 
-  # Overrides the automatic file system implementation selection that is based on the current platform
-  # Should only be used for testing.
-  # @return [Object] the previous file system implementation (to allow it to be restored)
+  # Allows overriding the filesystem for the duration of the given block. The filesystem will contain only the file(s) provided.
+  #
+  # @param files [Puppet::FileSystem::MemoryFile] the files to have available
   #
   # @api private
   #
-  def self.set_file_system_implementation(impl)
-    tmp = @impl
-    @impl = impl
-    tmp
+  def self.overlay(*files, &block)
+    old_impl = @impl
+    @impl = Puppet::FileSystem::MemoryImpl.new(*files)
+    yield
+  ensure
+    @impl = old_impl
   end
 
   # Opens the given path with given mode, and options and optionally yields it to the given block.
@@ -34,7 +36,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.open(path, mode, options, &block)
-    @impl.open(assert_path(path), options, mode, &block)
+    @impl.open(assert_path(path), mode, options, &block)
   end
 
   # @return [Pathname] The directory of this file
