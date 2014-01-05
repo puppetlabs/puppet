@@ -99,7 +99,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
       if File.directory?(path)
         true
       else
-        if Puppet::FileSystem::File.exist?(path)
+        if Puppet::FileSystem.exist?(path)
           self.debug "Search path #{path} is not a directory"
         else
           self.debug "Search path #{path} does not exist"
