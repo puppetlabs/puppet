@@ -2,7 +2,7 @@ module Puppet::FileSystem
   require 'puppet/file_system/path_pattern'
   require 'puppet/file_system/file_impl'
   require 'puppet/file_system/memory_file'
-  #require 'puppet/file_system/memory_impl'
+  require 'puppet/file_system/memory_impl'
   require 'puppet/file_system/tempfile'
 
   # create instance of the file system implementation to use for the current platform
