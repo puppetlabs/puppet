@@ -140,7 +140,7 @@ describe Puppet::FileServing::Fileset do
     end
 
     def mock_dir_structure(path, stat_method = :lstat)
-      Puppet::FileSystem.expects(stat_method).with(@path).returns @dirstat
+      Puppet::FileSystem.stubs(stat_method).with(@path).returns @dirstat
       Dir.stubs(:entries).with(path).returns(%w{one two .svn CVS})
 
       # Keep track of the files we're stubbing.
