@@ -334,7 +334,7 @@ class Puppet::Pops::Validation::Checker4_0
   # Checks that variable is either strictly 0, or a non 0 starting decimal number, or a valid VAR_NAME
   def check_VariableExpression(o)
     # The expression must be a qualified name
-    if !o.expr.is_a? Model::QualifiedName
+    if !o.expr.is_a?(Model::QualifiedName)
       acceptor.accept(Issues::ILLEGAL_EXPRESSION, o, :feature => 'name', :container => o)
     else
       # name must be either a decimal value, or a valid NAME
@@ -344,7 +344,9 @@ class Puppet::Pops::Validation::Checker4_0
           acceptor.accept(Issues::ILLEGAL_NUMERIC_VAR_NAME, o, :name => name)
         end
       else
-        check(o.expr)
+        unless name =~ Puppet::Pops::Patterns::VAR_NAME
+          acceptor.accept(Issues::ILLEGAL_VAR_NAME, o, :name => name)
+        end
       end
     end
   end

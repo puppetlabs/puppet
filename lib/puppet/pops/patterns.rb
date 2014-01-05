@@ -35,7 +35,7 @@ module Puppet::Pops::Patterns
   DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
 
   # VAR_NAME matches the name part of a variable (The $ character is not included)
-  VAR_NAME       = %r{(::)?(\w+::)*\w+}
+  VAR_NAME = %r{\A((::)?[a-z_]\w*)(::[a-z]\w*)*\z}
 
   # A Numeric var name must be the decimal number 0, or a decimal number not starting with 0
   NUMERIC_VAR_NAME = %r{\A(?:0|(?:[1-9][0-9]*))\z}
