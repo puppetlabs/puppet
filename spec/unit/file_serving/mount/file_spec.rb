@@ -141,7 +141,7 @@ describe Puppet::FileServing::Mount::File do
     include FileServingMountTesting
 
     before do
-      Puppet::FileSystem::File.stubs(:exist?).returns(true)
+      Puppet::FileSystem.stubs(:exist?).returns(true)
       FileTest.stubs(:directory?).returns(true)
       FileTest.stubs(:readable?).returns(true)
       @mount = Puppet::FileServing::Mount::File.new("test")
