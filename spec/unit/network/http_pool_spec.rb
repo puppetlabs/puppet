@@ -67,7 +67,7 @@ describe Puppet::Network::HttpPool do
 
     it "should not cache http instances" do
       Puppet::Network::HttpPool.http_instance("me", 54321).
-        should_not equal Puppet::Network::HttpPool.http_instance("me", 54321)
+        should_not equal(Puppet::Network::HttpPool.http_instance("me", 54321))
     end
   end
 
