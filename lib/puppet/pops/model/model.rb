@@ -33,8 +33,18 @@ module Puppet::Pops::Model
     abstract
   end
 
+  # A locateable object has an offset measured in characters from the start of a source text (starting
+  # from 0), and a length measured in number of characters.
+  # The offset and length are optional if the source of the model is not from parsed text.
+  #
+  class Locatable < PopsObject
+    abstract
+    has_attr 'offset', Integer
+    has_attr 'length', Integer
+  end
+
   # @abstract base class for expressions
-  class Expression < PopsObject
+  class Expression < Locatable
     abstract
   end
 
@@ -145,7 +155,7 @@ module Puppet::Pops::Model
 
   # A Keyed entry has a key and a value expression. It it typically used as an entry in a Hash.
   #
-  class KeyedEntry < PopsObject
+  class KeyedEntry < Locatable
     contains_one_uni 'key', Expression, :lowerBound => 1
     contains_one_uni 'value', Expression, :lowerBound => 1
   end
@@ -199,7 +209,7 @@ module Puppet::Pops::Model
 
   # An attribute operation sets or appends a value to a named attribute.
   #
-  class AttributeOperation < PopsObject
+  class AttributeOperation < Locatable
     has_attr 'attribute_name', String, :lowerBound => 1
     has_attr 'operator', RGen::MetamodelBuilder::DataTypes::Enum.new([:'=>', :'+>', ]), :lowerBound => 1
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
@@ -214,7 +224,7 @@ module Puppet::Pops::Model
     contains_many_uni 'operations', AttributeOperation
   end
 
-  class Parameter < PopsObject
+  class Parameter < Locatable
     has_attr 'name', String, :lowerBound => 1
     contains_one_uni 'value', Expression
   end
@@ -410,7 +420,7 @@ module Puppet::Pops::Model
 
   # A resource body describes one resource instance
   #
-  class ResourceBody < PopsObject
+  class ResourceBody < Locatable
     contains_one_uni 'title', Expression
     contains_many_uni 'operations', AttributeOperation
   end
@@ -463,7 +473,7 @@ module Puppet::Pops::Model
 
   # A selector entry describes a map from matching_expr to value_expr.
   #
-  class SelectorEntry < PopsObject
+  class SelectorEntry < Locatable
     contains_one_uni 'matching_expr', Expression, :lowerBound => 1
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
   end
@@ -482,5 +492,7 @@ module Puppet::Pops::Model
   class Program < PopsObject
     contains_one_uni 'body', Expression
     has_many 'definitions', Definition
+    has_attr 'source_text', String
+    has_many_attr 'line_offsets', Integer
   end
 end
