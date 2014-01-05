@@ -149,15 +149,15 @@ describe Puppet::Indirector::Yaml do
       end
 
       it "should unlink the right yaml file if it exists" do
-        Puppet::FileSystem::File.expects(:exist?).with(path).returns true
-        Puppet::FileSystem::File.expects(:unlink).with(path)
+        Puppet::FileSystem.expects(:exist?).with(path).returns true
+        Puppet::FileSystem.expects(:unlink).with(path)
 
         @store.destroy(@request)
       end
 
       it "should not unlink the yaml file if it does not exists" do
-        Puppet::FileSystem::File.expects(:exist?).with(path).returns false
-        Puppet::FileSystem::File.expects(:unlink).with(path).never
+        Puppet::FileSystem.expects(:exist?).with(path).returns false
+        Puppet::FileSystem.expects(:unlink).with(path).never
 
         @store.destroy(@request)
       end
