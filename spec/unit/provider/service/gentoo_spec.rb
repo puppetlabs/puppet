@@ -14,8 +14,8 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
     # before it even tries to execute an initscript. We use sshd in all the
     # tests so make sure it is considered present.
     sshd_path = '/etc/init.d/sshd'
-    stub_file = stub(sshd_path, :stat => stub('stat'))
-    Puppet::FileSystem::File.stubs(:new).with(sshd_path).returns stub_file
+#    stub_file = stub(sshd_path, :stat => stub('stat'))
+    Puppet::FileSystem.stubs(:stat).with(sshd_path).returns stub('stat')
   end
 
   let :initscripts do
@@ -45,7 +45,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
   describe ".instances" do
 
     it "should have an instances method" do
-      described_class.should respond_to :instances
+      described_class.should respond_to(:instances)
     end
 
     it "should get a list of services from /etc/init.d but exclude helper scripts" do
@@ -58,7 +58,7 @@ describe Puppet::Type.type(:service).provider(:gentoo) do
         FileTest.expects(:executable?).with("/etc/init.d/#{script}").never
       end
 
-      Puppet::FileSystem::File.stubs(:new).returns stub('file', :symlink? => false)
+      Puppet::FileSystem.stubs(:symlink?).returns false # stub('file', :symlink? => false)
       described_class.instances.map(&:name).should == [
         'alsasound',
         'bootmisc',

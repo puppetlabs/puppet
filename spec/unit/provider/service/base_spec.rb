@@ -34,15 +34,15 @@ describe "base service provider" do
     end
 
     before :each do
-      Puppet::FileSystem::File.unlink(flag) if Puppet::FileSystem::File.exist?(flag)
+      Puppet::FileSystem.unlink(flag) if Puppet::FileSystem.exist?(flag)
     end
 
     it { should be }
 
     it "should invoke the start command if not running" do
-      File.should_not be_file flag
+      File.should_not be_file(flag)
       subject.start
-      File.should be_file flag
+      File.should be_file(flag)
     end
 
     it "should be stopped before being started" do
@@ -59,7 +59,7 @@ describe "base service provider" do
       subject.status.should == :running
       subject.stop
       subject.status.should == :stopped
-      File.should_not be_file flag
+      File.should_not be_file(flag)
     end
 
     it "should start again even if already running" do
