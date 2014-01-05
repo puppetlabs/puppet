@@ -32,12 +32,12 @@ describe Puppet::Network::HttpPool do
         ca_cert_file = File.expand_path('/path/to/ssl/certs/ca_cert.pem')
 
         Puppet[:ssl_client_ca_auth] = ca_cert_file
-        Puppet::FileSystem::File.stubs(:exist?).with(ca_cert_file).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(ca_cert_file).returns(true)
       end
 
       def setup_standard_hostcert
         host_cert_file = File.expand_path('/path/to/ssl/certs/host_cert.pem')
-        Puppet::FileSystem::File.stubs(:exist?).with(host_cert_file).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(host_cert_file).returns(true)
 
         Puppet[:hostcert] = host_cert_file
       end
