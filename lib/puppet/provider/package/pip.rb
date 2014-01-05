@@ -25,7 +25,7 @@ Puppet::Type.type(:package).provide :pip,
   # that's managed by `pip` or an empty array if `pip` is not available.
   # unfortunately this will only include system-wide packages, not ones
   # installed within a virtualenv
-  def self.instances(virtualenv=nil)
+  def self.instances
     packages = []
     pip_cmd = which(cmd) or return []
     execpipe "#{pip_cmd} freeze" do |process|
