@@ -8,7 +8,6 @@ describe "Puppet::FileSystem" do
   context "#exclusive_open" do
     it "opens ands allows updating of an existing file" do
       file = file_containing("file_to_update", "the contents")
-#      file = Puppet::FileSystem::File.new(file_containing("file_to_update", "the contents"))
 
       Puppet::FileSystem.exclusive_open(file, 0660, 'r+') do |fh|
         old = fh.read

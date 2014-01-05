@@ -244,14 +244,14 @@ describe Puppet::FileServing::Fileset do
       @fileset.files.find { |file| file.include?(".svn") or file.include?("CVS") }.should be_nil
     end
 
-    it "uses Puppet::FileSystem::File#stat if :links is set to :follow" do
+    it "uses Puppet::FileSystem#stat if :links is set to :follow" do
       mock_dir_structure(@path, :stat)
       @fileset.recurse = true
       @fileset.links = :follow
       @fileset.files.sort.should == @files.sort
     end
 
-    it "uses Puppet::FileSystem::File#lstat if :links is set to :manage" do
+    it "uses Puppet::FileSystem#lstat if :links is set to :manage" do
       mock_dir_structure(@path, :lstat)
       @fileset.recurse = true
       @fileset.links = :manage
