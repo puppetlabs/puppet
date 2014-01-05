@@ -339,7 +339,7 @@ describe Puppet::Provider do
 
   context "provider commands" do
     it "should raise for unknown commands" do
-      expect { subject.command(:something) }.to raise_error Puppet::DevError
+      expect { subject.command(:something) }.to raise_error(Puppet::DevError)
     end
 
     it "should handle command inheritance" do
@@ -349,10 +349,10 @@ describe Puppet::Provider do
       command = Puppet::Util.which('sh') || Puppet::Util.which('cmd.exe')
       parent.commands :sh => command
 
-      Puppet::FileSystem::File.exist?(parent.command(:sh)).should be_true
+      Puppet::FileSystem.exist?(parent.command(:sh)).should be_true
       parent.command(:sh).should =~ /#{Regexp.escape(command)}$/
 
-      Puppet::FileSystem::File.exist?(child.command(:sh)).should be_true
+      Puppet::FileSystem.exist?(child.command(:sh)).should be_true
       child.command(:sh).should =~ /#{Regexp.escape(command)}$/
     end
 
@@ -381,7 +381,7 @@ describe Puppet::Provider do
       end
 
       it "should define a wrapper for the command" do
-        subject.should respond_to :cmd
+        subject.should respond_to(:cmd)
       end
 
       it "should return nil if the command is requested" do
@@ -389,7 +389,7 @@ describe Puppet::Provider do
       end
 
       it "should raise if the command is invoked" do
-        expect { subject.cmd }.to raise_error Puppet::Error, /Command cmd is missing/
+        expect { subject.cmd }.to raise_error(Puppet::Error, /Command cmd is missing/)
       end
     end
   end
@@ -545,18 +545,18 @@ describe Puppet::Provider do
 
         subject { provider }
 
-        it { should respond_to :has_features }
-        it { should respond_to :has_feature }
+        it { should respond_to(:has_features) }
+        it { should respond_to(:has_feature) }
 
         context "provider class" do
-          it { should respond_to :nomethods? }
+          it { should respond_to(:nomethods?) }
           it { should_not be_nomethods }
 
-          it { should respond_to :numeric? }
+          it { should respond_to(:numeric?) }
           it { subject.send(numeric?, be_numeric) }
           it { subject.send(numeric?, be_satisfies(:numeric)) }
 
-          it { should respond_to :alpha? }
+          it { should respond_to(:alpha?) }
           it { subject.send(alpha?, be_alpha) }
           it { subject.send(alpha?, be_satisfies(:alpha)) }
         end
@@ -564,11 +564,11 @@ describe Puppet::Provider do
         context "provider instance" do
           subject { provider.new }
 
-          it { should respond_to :numeric? }
+          it { should respond_to(:numeric?) }
           it { subject.send(numeric?, be_numeric) }
           it { subject.send(numeric?, be_satisfies(:numeric)) }
 
-          it { should respond_to :alpha? }
+          it { should respond_to(:alpha?) }
           it { subject.send(alpha?, be_alpha) }
           it { subject.send(alpha?, be_satisfies(:alpha)) }
         end
@@ -580,11 +580,11 @@ describe Puppet::Provider do
         type.feature :undemanding, ''
       end
 
-      it { should respond_to :undemanding? }
+      it { should respond_to(:undemanding?) }
 
       context "when the feature is not declared" do
         it { should_not be_undemanding }
-        it { should_not be_satisfies :undemanding }
+        it { should_not be_satisfies(:undemanding) }
       end
 
       context "when the feature is declared" do
@@ -593,7 +593,7 @@ describe Puppet::Provider do
         end
 
         it { should be_undemanding }
-        it { should be_satisfies :undemanding }
+        it { should be_satisfies(:undemanding) }
       end
     end
 
@@ -618,13 +618,13 @@ describe Puppet::Provider do
       }.each do |name, data|
         data[:yes].each do |param|
           it "should support #{param} with provider #{name}" do
-            providers[name].should be_supports_parameter param
+            providers[name].should be_supports_parameter(param)
           end
         end
 
         data[:no].each do |param|
           it "should not support #{param} with provider #{name}" do
-            providers[name].should_not be_supports_parameter param
+            providers[name].should_not be_supports_parameter(param)
           end
         end
       end
