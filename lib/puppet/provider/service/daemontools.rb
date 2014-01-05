@@ -147,18 +147,18 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   end
 
   def enable
-      if ! FileTest.directory?(self.daemon)
-        Puppet.notice "No daemon dir, calling setupservice for #{resource[:name]}"
-        self.setupservice
+    if ! FileTest.directory?(self.daemon)
+      Puppet.notice "No daemon dir, calling setupservice for #{resource[:name]}"
+      self.setupservice
+    end
+    if self.daemon
+      if ! Puppet::FileSystem.symlink?(self.service)
+        Puppet.notice "Enabling #{self.service}: linking #{self.daemon} -> #{self.service}"
+        Puppet::FileSystem.symlink(self.daemon, self.service)
       end
-      if self.daemon
-        if ! Puppet::FileSystem.symlink?(self.service)
-          Puppet.notice "Enabling #{self.service}: linking #{self.daemon} -> #{self.service}"
-          Puppet::FileSystem.symlink(self.daemon, self.service)
-        end
-      end
-  rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new( "No daemon directory found for #{self.service}")
+    end
+rescue Puppet::ExecutionFailure
+    raise Puppet::Error.new( "No daemon directory found for #{self.service}")
   end
 
   def disable

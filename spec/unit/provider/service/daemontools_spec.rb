@@ -101,13 +101,10 @@ describe provider_class do
   describe "when enabling" do
     it "should create a symlink between daemon dir and service dir", :if => Puppet.features.manages_symlinks?  do
       daemon_path = File.join(@daemondir, "myservice")
-#      stub_daemon = stub(daemon_path, :symlink? => false)
-      Puppet::FileSystem.expects(:symlink?).with(daemon_path).returns(false) # stub_daemon)
       service_path = File.join(@servicedir, "myservice")
-#      mock_service = mock(service_path, :symlink? => false)
-      Puppet::FileSystem.expects(:symlink?).with(service_path).returns(false) #mock_service)
-      Puppet::FileSystem.expects(:symlink).returns(0) #mock_service)
-#      stub_daemon.expects(:symlink).returns(0)
+      Puppet::FileSystem.expects(:symlink?).with(service_path).returns(false)
+      Puppet::FileSystem.expects(:symlink).with(daemon_path, service_path).returns(0)
+
       @provider.enable
     end
   end
