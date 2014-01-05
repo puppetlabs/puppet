@@ -56,8 +56,7 @@ describe Puppet::FileServing::Base do
   end
 
   it "should correctly indicate if the file is present" do
-    mock_file = mock(file, :lstat => stub('stat'))
-    Puppet::FileSystem.expects(:new).with(file).returns mock_file
+    Puppet::FileSystem.expects(:lstat).with(file).returns stub('stat')
     Puppet::FileServing::Base.new(file).exist?.should be_true
   end
 
@@ -127,7 +126,7 @@ describe Puppet::FileServing::Base do
     let(:stubbed_file) { stub(path, :stat => stat, :lstat => stat)}
 
     it "should stat the file's full path" do
-      Puppet::FileSystem.expects(:stat).with(path).returns stat
+      Puppet::FileSystem.expects(:lstat).with(path).returns stat
       file.stat
     end
 
