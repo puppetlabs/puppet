@@ -435,7 +435,7 @@ describe Puppet::Node::Environment do
       end
 
       it "should fail helpfully if there is an error importing" do
-        Puppet::FileSystem::File.stubs(:exist?).returns true
+        Puppet::FileSystem.stubs(:exist?).returns true
         env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(env)
         @parser.expects(:file=).once
         @parser.expects(:parse).raises ArgumentError
