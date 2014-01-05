@@ -109,7 +109,6 @@ describe provider_class do
       @provider.query.should == nil
     end
 
-    # this one should work? - jantman
     it "should return a hash when pip and the package are present in a venv" do
       @resource[:virtualenv] = "/path/to/virtualenv"
       @provider.expects(:venvcmd).returns("/path/to/virtualenv/bin/pip")
@@ -125,7 +124,6 @@ describe provider_class do
       }
     end
 
-    # this one shouldnt - jantman
     it "should return nil when the package is missing from a venv" do
       @resource[:virtualenv] = "/path/to/virtualenv"
       @provider.expects(:venvcmd).returns("/path/to/virtualenv/bin/pip")
