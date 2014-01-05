@@ -87,7 +87,7 @@ module Puppet::FileBucketFile
             Puppet::FileSystem.touch(contents_file)
           else
             Puppet::FileSystem.open(contents_file, 0440, 'wb') do |of|
-              of.write(Puppet::FileSystem.contents(bucket_file))
+              of.write(bucket_file.contents)
             end
           end
 

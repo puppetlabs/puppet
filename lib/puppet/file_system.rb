@@ -70,7 +70,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.size(path)
-    @impl.size(assert_path(path.basename))
+    @impl.size(assert_path(path))
   end
 
   # Allows exclusive updates to a file to be made by excluding concurrent
@@ -148,7 +148,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.writable?(path)
-    @impl.writeable?(assert_path(path))
+    @impl.writable?(assert_path(path))
   end
 
   # Touches the file. On most systems this updates the mtime of the file.
