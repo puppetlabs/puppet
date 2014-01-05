@@ -2,7 +2,7 @@ module Puppet::FileSystem
   require 'puppet/file_system/path_pattern'
   require 'puppet/file_system/file_impl'
   require 'puppet/file_system/memory_file'
-  require 'puppet/file_system/memory_impl'
+  #require 'puppet/file_system/memory_impl'
   require 'puppet/file_system/tempfile'
 
   # create instance of the file system implementation to use for the current platform
@@ -62,7 +62,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.basename(path)
-    @impl.basename(assert_path(path.basename))
+    @impl.basename(assert_path(path))
   end
 
   # @return [Integer] the size of the file
@@ -109,7 +109,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.read(path)
-    path.read
+    @impl.read(assert_path(path))
   end
 
   # @return [String] The binary contents of the file
@@ -224,8 +224,7 @@ module Puppet::FileSystem
   # @api public
   #
   def self.unlink(*paths)
-    paths.each {|p| assert_path(p) }
-    @impl.unlink(*paths)
+    @impl.unlink(*(paths.map {|p| assert_path(p) }))
   end
 
   # @return [File::Stat] object for the named file.
