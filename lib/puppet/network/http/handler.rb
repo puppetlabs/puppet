@@ -39,6 +39,12 @@ module Puppet::Network::HTTP::Handler
     end
   end
 
+  class HTTPNotAuthorizedError < HTTPError
+    def initialize(message)
+      super("Not Authorized: " + message, 403)
+    end
+  end
+
   attr_reader :server, :handler
 
   # Retrieve all headers from the http request, as a hash with the header names
@@ -87,24 +93,27 @@ module Puppet::Network::HTTP::Handler
     response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
 
     configure_profiler(request_headers, request_params)
+    if request_path == "/v2/environments"
+      raise HTTPNotAuthorizedError, "You shall not pass!"
+    else
+      Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
+        indirection_name, method, key, params = uri2indirection(request_method, request_path, request_params)
+        certificate = client_cert(request)
 
-    Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
-      indirection_name, method, key, params = uri2indirection(request_method, request_path, request_params)
-      certificate = client_cert(request)
+        check_authorization(indirection_name, method, key, params)
+        warn_if_near_expiration(certificate)
 
-      check_authorization(indirection_name, method, key, params)
-      warn_if_near_expiration(certificate)
+        indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
+        raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
 
-      indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
-      raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
+        if !indirection.allow_remote_requests?
+          raise HTTPNotFoundError, "No handler for #{indirection.name}"
+        end
 
-      if !indirection.allow_remote_requests?
-        raise HTTPNotFoundError, "No handler for #{indirection.name}"
-      end
-
-      trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
-      Puppet::Context.override(:trusted_information => trusted) do
-        send("do_#{method}", indirection, key, params, request, response)
+        trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
+        Puppet::Context.override(:trusted_information => trusted) do
+          send("do_#{method}", indirection, key, params, request, response)
+        end
       end
     end
   rescue HTTPError => e
