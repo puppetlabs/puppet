@@ -297,10 +297,12 @@ class Puppet::Pops::Model::Factory
     o
   end
 
-  def build_Program(o, body, definitions)
+  def build_Program(o, body, definitions, source_text, line_index)
     o.body = to_ops(body)
     # non containment
     definitions.each { |d| o.addDefinitions(d) }
+    o.source_text = source_text
+    o.line_offsets = line_index
     o
   end
 
@@ -450,14 +452,6 @@ class Puppet::Pops::Model::Factory
       else
         a.locatable = Puppet::Pops::Parser::Locatable::Lazy.new(start_locatable)
       end
-
-#      a.line   = start_pos.line
-#      a.offset = start_pos.offset
-#      a.pos    = start_pos.pos
-#      a.length = start_pos.length
-#      if(end_pos.offset && end_pos.length)
-#        a.length = end_pos.offset + end_pos.length - start_pos.offset
-#      end
     end
     self
   end
@@ -653,8 +647,8 @@ class Puppet::Pops::Model::Factory
     new(Model::ResourceBody, resource_title, attribute_operations)
   end
 
-  def self.PROGRAM(body, definitions)
-    new(Model::Program, body, definitions)
+  def self.PROGRAM(body, definitions, source_text, line_index)
+    new(Model::Program, body, definitions, source_text, line_index)
   end
 
   # Builds a BlockExpression if args size > 1, else the single expression/value in args
