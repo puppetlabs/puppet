@@ -41,6 +41,16 @@ describe Puppet::Context::TrustedInformation do
         '1.3.6.1.4.1.34380.1.2.2' => 'more CSR specific info',
       })
     end
+
+    it "is remote but lacks certificate information when it is authenticated" do
+      Puppet.expects(:info).once.with("TrustedInformation expected a certificate, but none was given.")
+
+      trusted = Puppet::Context::TrustedInformation.remote(true, 'cert name', nil)
+
+      expect(trusted.authenticated).to eq('remote')
+      expect(trusted.certname).to eq('cert name')
+      expect(trusted.extensions).to eq({})
+    end
   end
 
   context "when local" do

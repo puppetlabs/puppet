@@ -35,6 +35,26 @@ fixture_dir = File.expand_path('../fixtures', __FILE__)
 testdir = master.tmpdir('apache_external_root_ca')
 fixtures = PuppetX::Acceptance::ExternalCertFixtures.new(fixture_dir, testdir)
 
+# We need this variable in scope.
+disable_and_reenable_selinux = nil
+
+# Register our cleanup steps early in a teardown so that they will happen even
+# if execution aborts part way.
+teardown do
+  step "Cleanup Apache (httpd) and /etc/hosts"
+  # Restore /etc/hosts
+  on master, "cp -p '#{testdir}/hosts' /etc/hosts"
+  # stop the service before moving files around
+  on master, "/etc/init.d/httpd stop"
+  on master, "mv --force /etc/httpd/conf/httpd.conf{,.external_ca_test}"
+  on master, "mv --force /etc/httpd/conf/httpd.conf{.orig,}"
+
+  if disable_and_reenable_selinux
+    step "Restore the original state of SELinux"
+    on master, "setenforce 1"
+  end
+end
+
 # Read all of the CA certificates.
 
 # Copy all of the x.509 fixture data over to the master.
@@ -78,7 +98,6 @@ create_remote_file master, "#{testdir}/etc/master/config.ru", fixtures.config_ru
 
 step "Set filesystem permissions and ownership for the master"
 # These permissions are required for Passenger to start Puppet as puppet
-on master, "chown puppet:puppet #{testdir}/etc/master/config.ru"
 on master, "chown -R puppet:puppet #{testdir}/etc/master"
 
 # These permissions are just for testing, end users should protect their
@@ -86,7 +105,6 @@ on master, "chown -R puppet:puppet #{testdir}/etc/master"
 on master, "chmod -R a+rX #{testdir}"
 
 agent_cmd_prefix = "--confdir #{testdir}/etc/agent --vardir #{testdir}/etc/agent/var"
-master_cmd_prefix = "--confdir #{testdir}/etc/master --vardir #{testdir}/etc/master/var"
 
 step "Configure EPEL"
 epel_release_path = "http://mirror.us.leaseweb.net/epel/6/i386/epel-release-6-8.noarch.rpm"
@@ -104,8 +122,6 @@ on master, "cat #{testdir}/etc/httpd.conf > /etc/httpd/conf/httpd.conf"
 
 step "Make SELinux and Apache play nicely together..."
 
-# We need this variable in scope.
-disable_and_reenable_selinux = 'UNKNOWN'
 on master, "sestatus" do
   if stdout.match(/Current mode:.*enforcing/)
     disable_and_reenable_selinux = true
@@ -161,7 +177,6 @@ on master, puppet_agent("#{agent_cmd_prefix} --test"), :acceptable_exit_codes =>
   assert exit_code == 0
 end
 
-
 step "Agent refuses to connect to revoked master"
 on master, "cp #{testdir}/etc/agent/puppet.conf{,.no_crl}"
 on master, "cp #{testdir}/etc/agent/puppet.conf{.crl,}"
@@ -170,19 +185,6 @@ revoke_opts = "--hostcrl #{testdir}/ca_master.crl"
 on master, puppet_agent("#{agent_cmd_prefix} #{revoke_opts} --test"), :acceptable_exit_codes => (0..255) do
   assert_match /certificate revoked.*?example.org/, stderr
   assert exit_code == 1
-end
-
-step "Cleanup Apache (httpd) and /etc/hosts"
-# Restore /etc/hosts
-on master, "cp -p '#{testdir}/hosts' /etc/hosts"
-# stop the service before moving files around
-on master, "/etc/init.d/httpd stop"
-on master, "mv --force /etc/httpd/conf/httpd.conf{,.external_ca_test}"
-on master, "mv --force /etc/httpd/conf/httpd.conf{.orig,}"
-
-if disable_and_reenable_selinux
-  step "Restore the original state of SELinux"
-  on master, "setenforce 1"
 end
 
 step "Finished testing External Certificates"
