@@ -61,6 +61,11 @@ class Puppet::Pops::Types::TypeParser
   end
 
   # @api private
+  def interpret_Program(o)
+    interpret(o.body)
+  end
+
+  # @api private
   def interpret_QualifiedName(o)
     o.value
   end
@@ -311,6 +316,26 @@ class Puppet::Pops::Types::TypeParser
        TYPES.float_range(parameters[0] == :default ? nil : parameters[0], parameters[1] == :default ? nil : parameters[1])
      end
 
+    when "string"
+      size_type = case parameters.size
+      when 1
+        if parameters[0].is_a?(Puppet::Pops::Types::PIntegerType)
+          parameters[0].copy
+        else
+          assert_range_parameter(parameters[0])
+          TYPES.range(parameters[0], :default)
+        end
+      when 2
+        assert_range_parameter(parameters[0])
+        assert_range_parameter(parameters[1])
+        TYPES.range(parameters[0], parameters[1])
+      else
+        raise_invalid_parameters_error("String", "1 to 2", parameters.size)
+      end
+      result = TYPES.string
+      result.size_type = size_type
+      result
+
     when "optional"
       if parameters.size != 1
         raise_invalid_parameters_error("Optional", 1, parameters.size)
@@ -318,7 +343,7 @@ class Puppet::Pops::Types::TypeParser
       assert_type(parameters[0])
       TYPES.optional(parameters[0])
 
-    when "object", "collection", "data", "catalogentry", "boolean", "literal", "undef", "numeric", "pattern", "string"
+    when "object", "data", "catalogentry", "boolean", "literal", "undef", "numeric"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
 
     when "type"
