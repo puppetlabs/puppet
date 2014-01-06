@@ -691,6 +691,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
+      :mode => 0660,
       :desc => "The CA public key."
     },
     :cacrl => {
@@ -698,8 +699,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0664,
-
+      :mode => 0660,
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
     },
     :caprivatedir => {
@@ -715,6 +715,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
+      :mode  => 0770,
       :desc => "Where the CA stores certificate requests"
     },
     :signeddir => {
@@ -738,7 +739,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0644,
+      :mode => 0660,
       :desc => "Where the serial number for certificates is stored."
     },
     :autosign => {
@@ -792,7 +793,7 @@ EOT
     :cert_inventory => {
       :default => "$cadir/inventory.txt",
       :type => :file,
-      :mode => 0644,
+      :mode => 0660,
       :owner => "service",
       :group => "service",
       :desc => "The inventory file. This is a text file to which the CA writes a
