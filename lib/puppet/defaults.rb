@@ -541,6 +541,7 @@ EOT
       :type   => :directory,
       :mode => 0755,
       :owner => "service",
+      :group => "service",
       :desc => "The certificate directory."
     },
     :ssldir => {
@@ -548,6 +549,7 @@ EOT
       :type   => :directory,
       :mode => 0771,
       :owner => "service",
+      :group => "service",
       :desc => "Where SSL certificates are kept."
     },
     :publickeydir => {
@@ -555,6 +557,7 @@ EOT
       :type   => :directory,
       :mode => 0755,
       :owner => "service",
+      :group => "service",
       :desc => "The public key directory."
     },
     :requestdir => {
@@ -562,6 +565,7 @@ EOT
       :type => :directory,
       :mode => 0755,
       :owner => "service",
+      :group => "service",
       :desc => "Where host certificate requests are stored."
     },
     :privatekeydir => {
@@ -577,6 +581,7 @@ EOT
       :type   => :directory,
       :mode => 0750,
       :owner => "service",
+      :group => "service",
       :desc => "Where the client stores private certificate information."
     },
     :passfile => {
@@ -584,6 +589,7 @@ EOT
       :type   => :file,
       :mode => 0640,
       :owner => "service",
+      :group => "service",
       :desc => "Where puppet agent stores the password for its private key.
         Generally unused."
     },
@@ -592,6 +598,7 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where individual hosts store and look for their certificate requests."
     },
     :hostcert => {
@@ -599,6 +606,7 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where individual hosts store and look for their certificates."
     },
     :hostprivkey => {
@@ -614,6 +622,7 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where individual hosts store and look for their public key."
     },
     :localcacert => {
@@ -621,14 +630,16 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where each client stores the CA certificate."
     },
     :ssl_client_ca_auth => {
       :type  => :file,
       :mode  => 0644,
       :owner => "service",
+      :group => "service",
       :desc  => "Certificate authorities who issue server certificates.  SSL servers will not be
-        considered authentic unless they posses a certificate issued by an authority
+        considered authentic unless they possess a certificate issued by an authority
         listed in this file.  If this setting has no value then the Puppet master's CA
         certificate (localcacert) will be used."
     },
@@ -636,8 +647,9 @@ EOT
       :type  => :file,
       :mode  => 0644,
       :owner => "service",
+      :group => "service",
       :desc  => "Certificate authorities who issue client certificates.  SSL clients will not be
-        considered authentic unless they posses a certificate issued by an authority
+        considered authentic unless they possess a certificate issued by an authority
         listed in this file.  If this setting has no value then the Puppet master's CA
         certificate (localcacert) will be used."
     },
@@ -646,6 +658,7 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where the host's certificate revocation list can be found.
         This is distinct from the certificate authority's CRL."
     },
