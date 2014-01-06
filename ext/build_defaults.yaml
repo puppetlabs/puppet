@@ -13,7 +13,7 @@ final_mocks: 'pl-el-5-i386 pl-el-6-i386 pl-fedora-17-i386'
 yum_host: 'burji.puppetlabs.com'
 yum_repo_path: '/opt/repository/yum/'
 build_gem: FALSE
-build_dmg: TRUE
+build_dmg: FALSE
 apt_host: 'burji.puppetlabs.com'
 apt_repo_url: 'http://apt.puppetlabs.com'
 apt_repo_path: '/opt/repository/incoming'
