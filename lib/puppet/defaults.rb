@@ -561,6 +561,7 @@ EOT
       :type   => :directory,
       :mode => 0750,
       :owner => "service",
+      :group => "service",
       :desc => "The private key directory."
     },
     :privatedir => {
@@ -595,8 +596,9 @@ EOT
     :hostprivkey => {
       :default => "$privatekeydir/$certname.pem",
       :type   => :file,
-      :mode => 0600,
+      :mode => 0640,
       :owner => "service",
+      :group => "service",
       :desc => "Where individual hosts store and look for their private key."
     },
     :hostpubkey => {
