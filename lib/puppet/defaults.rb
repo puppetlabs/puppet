@@ -539,6 +539,7 @@ EOT
     :certdir => {
       :default => "$ssldir/certs",
       :type   => :directory,
+      :mode => 0755,
       :owner => "service",
       :desc => "The certificate directory."
     },
@@ -552,12 +553,14 @@ EOT
     :publickeydir => {
       :default => "$ssldir/public_keys",
       :type   => :directory,
+      :mode => 0755,
       :owner => "service",
       :desc => "The public key directory."
     },
     :requestdir => {
       :default => "$ssldir/certificate_requests",
       :type => :directory,
+      :mode => 0755,
       :owner => "service",
       :desc => "Where host certificate requests are stored."
     },
