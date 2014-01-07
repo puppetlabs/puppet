@@ -8,11 +8,11 @@ describe provider_class do
 
   let (:packages) do
     <<-RPM_OUTPUT
-    cracklib-dicts 0 2.8.9 3.3 x86_64 :DESC: The standard CrackLib dictionaries
-    basesystem 0 8.0 5.1.1.el5.centos noarch :DESC: The skeleton package which defines a simple Red Hat Enterprise Linux system
-    chkconfig 0 1.3.30.2 2.el5 x86_64 :DESC: A system tool for maintaining the /etc/rc*.d hierarchy
-    myresource 0 1.2.3.4 5.el4 noarch :DESC: Now with summary
-    mysummaryless 0 1.2.3.4 5.el4 noarch :DESC:
+    cracklib-dicts 0 2.8.9 3.3 x86_64
+    basesystem 0 8.0 5.1.1.el5.centos noarch
+    chkconfig 0 1.3.30.2 2.el5 x86_64
+    myresource 0 1.2.3.4 5.el4 noarch
+    mysummaryless 0 1.2.3.4 5.el4 noarch
     RPM_OUTPUT
   end
 
@@ -31,7 +31,7 @@ describe provider_class do
     provider
   end
 
-  let(:nevra_format) { %Q{%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} :DESC: %{SUMMARY}\\n} }
+  let(:nevra_format) { %Q{%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n} }
   let(:execute_options) do
     {:failonfail => true, :combine => true, :custom_environment => {}}
   end
@@ -86,7 +86,6 @@ describe provider_class do
           :release => "3.3",
           :arch => "x86_64",
           :ensure => "2.8.9-3.3",
-          :description => "The standard CrackLib dictionaries",
         }
       )
       expect(installed_packages[1].properties).to eq(
@@ -98,7 +97,6 @@ describe provider_class do
           :release => "5.1.1.el5.centos",
           :arch => "noarch",
           :ensure => "8.0-5.1.1.el5.centos",
-          :description => "The skeleton package which defines a simple Red Hat Enterprise Linux system",
         }
       )
       expect(installed_packages[2].properties).to eq(
@@ -110,7 +108,6 @@ describe provider_class do
           :release => "2.el5",
           :arch => "x86_64",
           :ensure => "1.3.30.2-2.el5",
-          :description => "A system tool for maintaining the /etc/rc*.d hierarchy",
         }
       )
       expect(installed_packages.last.properties).to eq(
@@ -122,7 +119,6 @@ describe provider_class do
           :release     => "5.el4",
           :arch        => "noarch",
           :ensure      => "1.2.3.4-5.el4",
-          :description => "",
         }
       )
     end
@@ -178,7 +174,7 @@ describe provider_class do
   describe "#latest" do
     it "should retrieve version string after querying rpm for version from source file" do
       resource.expects(:[]).with(:source).returns('source-string')
-      Puppet::Util::Execution.expects(:execfail).with(["/bin/rpm", "-q", "--qf", nevra_format, "-p", "source-string"], Puppet::Error).returns("myresource 0 1.2.3.4 5.el4 noarch :DESC:\n")
+      Puppet::Util::Execution.expects(:execfail).with(["/bin/rpm", "-q", "--qf", nevra_format, "-p", "source-string"], Puppet::Error).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
       expect(provider.latest).to eq("1.2.3.4-5.el4")
     end
   end
@@ -193,7 +189,7 @@ describe provider_class do
 
     describe "on a modern RPM" do
       before(:each) do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '--nosignature', '--nodigest', "--qf", nevra_format], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch :DESC:\n")
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '--nosignature', '--nodigest', "--qf", nevra_format], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
       end
 
       let(:rpm_version) { "RPM version 4.10.0\n" }
@@ -206,7 +202,7 @@ describe provider_class do
 
     describe "on an ancient RPM" do
       before(:each) do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '', '', '--qf', nevra_format], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch :DESC:\n")
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '', '', '--qf', nevra_format], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
       end
 
       let(:rpm_version) { "RPM version 3.0.6\n" }
@@ -235,12 +231,11 @@ describe provider_class do
         :version => 'version',
         :release => 'release',
         :arch => 'arch',
-        :description => 'a description',
         :provider => :rpm,
         :ensure => 'version-release',
       }
     end
-    let(:line) { 'name epoch version release arch :DESC: a description' }
+    let(:line) { 'name epoch version release arch' }
 
     ['name', 'epoch', 'version', 'release', 'arch'].each do |field|
 
@@ -254,27 +249,6 @@ describe provider_class do
         )
       end
 
-    end
-
-    it "should still parse if missing description" do
-      parser_test(
-        line.gsub(/#{delimiter} .+$/, delimiter),
-        package_hash.merge(:description => '')
-      )
-    end
-
-    it "should still parse if missing delimeter and description entirely" do
-      parser_test(
-        line.gsub(/ #{delimiter} .+$/, ''),
-        package_hash.merge(:description => nil)
-      )
-    end
-
-    it "should still parse if description contains a new line" do
-      parser_test(
-        line.gsub(/#{delimiter} .+$/, "#{delimiter} whoops\nnewline"),
-        package_hash.merge(:description => 'whoops')
-      )
     end
 
     it "should warn but not fail if line is unparseable" do
