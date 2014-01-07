@@ -82,5 +82,59 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
 
       subject.values(key).should == {}
     end
+
+    context "when reading non-ASCII values" do
+      # registered trademark symbol
+      let(:data) do
+        str = [0xAE].pack("C")
+        str.force_encoding('US-ASCII')
+        str
+      end
+
+      def expects_registry_value(array)
+        key.expects(:each_value).multiple_yields(array)
+
+        subject.values(key).first[1]
+      end
+
+      # The win32console gem applies this regex to strip out ANSI escape
+      # sequences. If the registered trademark had encoding US-ASCII,
+      # the regex would fail with 'invalid byte sequence in US-ASCII'
+      def strip_ansi_escapes(value)
+        value.sub(/([^\e]*)?\e([\[\(])([0-9\;\=]*)([a-zA-Z@])(.*)/, '\5')
+      end
+
+      it "encodes REG_SZ according to the current code page" do
+        reg_value = ['string', Win32::Registry::REG_SZ, data]
+
+        value = expects_registry_value(reg_value)
+
+        strip_ansi_escapes(value)
+      end
+
+      it "encodes REG_EXPAND_SZ based on the current code page" do
+        reg_value = ['expand', Win32::Registry::REG_EXPAND_SZ, "%SYSTEMROOT%\\#{data}"]
+
+        value = expects_registry_value(reg_value)
+
+        strip_ansi_escapes(value)
+      end
+
+      it "encodes REG_MULTI_SZ based on the current code page" do
+        reg_value = ['multi', Win32::Registry::REG_MULTI_SZ, ["one#{data}", "two#{data}"]]
+
+        value = expects_registry_value(reg_value)
+
+        value.each { |str| strip_ansi_escapes(str) }
+      end
+
+      it "passes REG_DWORD through" do
+        reg_value = ['dword', Win32::Registry::REG_DWORD, '1']
+
+        value = expects_registry_value(reg_value)
+
+        Integer(value).should == 1
+      end
+    end
   end
 end
