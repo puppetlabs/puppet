@@ -93,10 +93,12 @@ module Puppet::Pops::Utils
     is_absolute?(name) ? name[2..-1] : name
   end
 
-  # Finds an adapter for o or for one of its containers, or nil, if none of the containers
+  # Finds an existing adapter for o or for one of its containers, or nil, if none of the containers
   # was adapted with the given adapter.
   # This method can only be used with objects that respond to `:eContainer`.
-  # with true, and Adaptable#adapters.
+  # with true.
+  #
+  # @see #find_closest_positioned
   #
   def self.find_adapter(o, adapter)
     return nil if o.nil? || (o.is_a?(Array) && o.empty?)
@@ -104,4 +106,15 @@ module Puppet::Pops::Utils
     return a if a
     return find_adapter(o.eContainer, adapter)
   end
+
+  # Finds the closest positioned Puppet::Pops::Model::Positioned object, or object decorated with
+  # a SourcePosAdapter, and returns
+  # a SourcePosAdapter for the first found, or nil if not found.
+  #
+  def self.find_closest_positioned(o)
+    return nil if o.nil? || o.is_a?(Puppet::Pops::Model::Program) || (o.is_a?(Array) && o.empty?)
+    return find_adapter(o, Puppet::Pops::Adapters::SourcePosAdapter) unless o.is_a?(Puppet::Pops::Model::Positioned)
+    o.offset.nil? ? find_closest_positioned(o.eContainer) : Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
+  end
+
 end

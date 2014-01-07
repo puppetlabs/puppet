@@ -55,7 +55,9 @@ describe Puppet::Pops::Model::AstTransformer do
 
   it "preserves the file location" do
     model = literal(1)
-    model.record_position(location(3, 1, 10, 1), nil)
+    adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(model.current)
+    adapter.locator = Puppet::Pops::Parser::Locator.locator("\n\n1",filename)
+    model.record_position(location(2, 1), nil)
 
     ast = transform(model)
 
@@ -68,7 +70,7 @@ describe Puppet::Pops::Model::AstTransformer do
     transformer.transform(model)
   end
 
-  def location(line, column, offset, length)
-    Puppet::Pops::Parser::Locatable::Fixed.new(line, column, offset, length)
+  def location(offset, length)
+    Puppet::Pops::Parser::Locatable::Fixed.new(offset, length)
   end
 end

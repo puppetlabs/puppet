@@ -33,8 +33,22 @@ module Puppet::Pops::Model
     abstract
   end
 
+  # A Positioned object has an offset measured in an opaque unit (representing characters) from the start
+  # of a source text (starting
+  # from 0), and a length measured in the same opaque unit. The resolution of the opaque unit requires the
+  # aid of a Locator instance that knows about the measure. This information is stored in the model's
+  # root node - a Program.
+  #
+  # The offset and length are optional if the source of the model is not from parsed text.
+  #
+  class Positioned < PopsObject
+    abstract
+    has_attr 'offset', Integer
+    has_attr 'length', Integer
+  end
+
   # @abstract base class for expressions
-  class Expression < PopsObject
+  class Expression < Positioned
     abstract
   end
 
@@ -145,7 +159,7 @@ module Puppet::Pops::Model
 
   # A Keyed entry has a key and a value expression. It it typically used as an entry in a Hash.
   #
-  class KeyedEntry < PopsObject
+  class KeyedEntry < Positioned
     contains_one_uni 'key', Expression, :lowerBound => 1
     contains_one_uni 'value', Expression, :lowerBound => 1
   end
@@ -199,7 +213,7 @@ module Puppet::Pops::Model
 
   # An attribute operation sets or appends a value to a named attribute.
   #
-  class AttributeOperation < PopsObject
+  class AttributeOperation < Positioned
     has_attr 'attribute_name', String, :lowerBound => 1
     has_attr 'operator', RGen::MetamodelBuilder::DataTypes::Enum.new([:'=>', :'+>', ]), :lowerBound => 1
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
@@ -214,7 +228,7 @@ module Puppet::Pops::Model
     contains_many_uni 'operations', AttributeOperation
   end
 
-  class Parameter < PopsObject
+  class Parameter < Positioned
     has_attr 'name', String, :lowerBound => 1
     contains_one_uni 'value', Expression
   end
@@ -410,7 +424,7 @@ module Puppet::Pops::Model
 
   # A resource body describes one resource instance
   #
-  class ResourceBody < PopsObject
+  class ResourceBody < Positioned
     contains_one_uni 'title', Expression
     contains_many_uni 'operations', AttributeOperation
   end
@@ -463,7 +477,7 @@ module Puppet::Pops::Model
 
   # A selector entry describes a map from matching_expr to value_expr.
   #
-  class SelectorEntry < PopsObject
+  class SelectorEntry < Positioned
     contains_one_uni 'matching_expr', Expression, :lowerBound => 1
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
   end
@@ -479,8 +493,32 @@ module Puppet::Pops::Model
   #
   class NamedAccessExpression < BinaryExpression; end
 
+  # A Program is the top level construct returned by the parser
+  # it contains the parsed result in the body, and has a reference to the full source text,
+  # and its origin. The line_offset's is an array with the start offset of each line.
+  #
   class Program < PopsObject
     contains_one_uni 'body', Expression
     has_many 'definitions', Definition
+    has_attr 'source_text', String
+    has_attr 'source_ref', String
+    has_many_attr 'line_offsets', Integer
+    has_attr 'locator', Object, :lowerBound => 1, :transient => true
+
+    module ClassModule
+      # Go through the gymnastics of making either value or pattern settable
+      # with synchronization to the other form. A derived value cannot be serialized
+      # and we want to serialize the pattern. When recreating the object we need to
+      # recreate it from the pattern string.
+      # The below sets both values if one is changed.
+      #
+      def locator
+        unless result = getLocator
+          setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets))
+        end
+        result
+      end
+    end
+
   end
 end

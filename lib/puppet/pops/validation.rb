@@ -198,9 +198,9 @@ module Puppet::Pops::Validation
       # TODO: this support is questionable, it requires knowledge that :detail is special
       arguments[:detail] ||= ''
 
-      origin_adapter = Puppet::Pops::Utils.find_adapter(semantic, Puppet::Pops::Adapters::OriginAdapter)
-      file = origin_adapter ? origin_adapter.origin : nil
-      source_pos = Puppet::Pops::Utils.find_adapter(semantic, Puppet::Pops::Adapters::SourcePosAdapter)
+      source_pos = Puppet::Pops::Utils.find_closest_positioned(semantic)
+      file = source_pos ? source_pos.locator.file : nil
+
       severity = @severity_producer.severity(issue)
       @acceptor.accept(Diagnostic.new(severity, issue, file, source_pos, arguments))
     end

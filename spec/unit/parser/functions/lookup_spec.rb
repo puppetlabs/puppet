@@ -140,7 +140,7 @@ describe "lookup function" do
   def ast_lambda(puppet_source)
     puppet_source = "fake_func() " + puppet_source
     model = Puppet::Pops::Parser::EvaluatingParser.new().parse_string(puppet_source, __FILE__).current
-    model = model.lambda
+    model = model.body.lambda
     Puppet::Pops::Model::AstTransformer.new(@file_source, nil).transform(model)
   end
 end

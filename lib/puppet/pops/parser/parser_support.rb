@@ -184,7 +184,8 @@ class Puppet::Pops::Parser::Parser
 
   # If there are definitions that require initialization a Program is produced, else the body
   def create_program(body)
-    definitions.empty? ? body : Factory.PROGRAM(body, definitions)
+    locator = @lexer.locator
+    Factory.PROGRAM(body, definitions, locator)
   end
 
   # Performs the parsing and returns the resulting model.
@@ -211,7 +212,6 @@ class Puppet::Pops::Parser::Parser
       #      rescue => except
       #        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, @lexer.pos, except)
     end
-    main.record_origin(@lexer.file) if main
     return main
   ensure
     @lexer.clear

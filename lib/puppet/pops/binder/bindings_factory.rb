@@ -356,6 +356,9 @@ module Puppet::Pops::Binder::BindingsFactory
       case producer
       when Class
         producer = Puppet::Pops::Binder::BindingsFactory.instance_producer(producer.name, *args)
+      when Puppet::Pops::Model::Program
+        # program is not an expression
+        producer = Puppet::Pops::Binder::BindingsFactory.evaluating_producer(producer.body)
       when Puppet::Pops::Model::Expression
         producer = Puppet::Pops::Binder::BindingsFactory.evaluating_producer(producer)
       when Puppet::Pops::Binder::Bindings::ProducerDescriptor

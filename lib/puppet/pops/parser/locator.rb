@@ -24,12 +24,15 @@ class Puppet::Pops::Parser::Locator
   # Constant set to true if multibyte is supported (includes multibyte extended regular expressions)
   MULTIBYTE = !!(LOCATOR_VERSION == :ruby19 || LOCATOR_VERSION == :ruby20)
 
-  def self.locator(string, file)
+  # Creates, or recreates a Locator. A Locator is created if index is not given (a scan is then
+  # performed of the given source string.
+  #
+  def self.locator(string, file, index = nil)
     case LOCATOR_VERSION
     when :ruby20, :ruby19
-      Locator19.new(string, file)
+      Locator19.new(string, file, index)
     else
-      Locator18.new(string, file)
+      Locator18.new(string, file, index)
     end
   end
 
@@ -62,6 +65,12 @@ class Puppet::Pops::Parser::Locator
   def char_length(offset, end_offset)
   end
 
+  # Returns the line index - an array of line offsets for the start position of each line, starting at 0 for
+  # the first line.
+  #
+  def line_index()
+  end
+
   private
 
   class AbstractLocator < Puppet::Pops::Parser::Locator
@@ -75,12 +84,13 @@ class Puppet::Pops::Parser::Locator
     # Create a locator based on a content string, and a boolean indicating if ruby version support multi-byte strings
     # or not.
     #
-    def initialize(string, file)
+    def initialize(string, file, index = nil)
       @string = string.freeze
       @file = file.freeze
       @prev_offset = nil
       @prev_line = nil
-      compute_line_index
+      @line_index = index
+      compute_line_index unless !index.nil?
     end
 
     # Returns the position on line (first position on a line is 1)
@@ -101,7 +111,7 @@ class Puppet::Pops::Parser::Locator
     # the corresponding method in C in Ruby 2.0.0 - the main benefit to use this method over
     # the Ruby C version is that it returns the index (not the value) which means there is not need
     # to have an additional structure to get the index (or record the index in the structure). This
-    # saes both memory and CPU. It also does not require passing a block that is called since this
+    # saves both memory and CPU. It also does not require passing a block that is called since this
     # method is specialized to search the line index.
     #
     def ary_bsearch_i(ary, value)
@@ -143,7 +153,7 @@ class Puppet::Pops::Parser::Locator
       while scanner.scan_until(/\n/)
         result << scanner.pos
       end
-      self.line_index = result
+      self.line_index = result.freeze
     end
 
     # Returns the line number (first line is 1) for the given offset

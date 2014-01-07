@@ -152,7 +152,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # until the relationship is evaluated by the compiler (at the end). When evaluation takes place, the (empty reference) Resource instances
     # are converted to String (!?! WTF) on the simple format "#{type}[#{title}]", and the catalog is told to find a resource, by giving
     # it this string. If it cannot find the resource it fails, else the before/notify parameter is appended with the target.
-    # The search for the resource being with (you guessed it) again creating an (empty reference) resource from type and title (WTF?!?!).
+    # The search for the resource begin with (you guessed it) again creating an (empty reference) resource from type and title (WTF?!?!).
     # The catalog now uses the reference resource to compute a key [r.type, r.title.to_s] and also gets a uniqueness key from the
     # resource (This is only a reference type created from title and type). If it cannot find it with the first key, it uses the
     # uniqueness key to lookup.
@@ -449,9 +449,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
   end
 
   def extract_file_line(o)
-    source_pos = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::SourcePosAdapter)
+    source_pos = Puppet::Pops::Utils.find_closest_positioned(o)
     return [nil, -1] unless source_pos
     [source_pos.locator.file, source_pos.line]
+  end
+
+  def find_closest_positioned(o)
+    return nil if o.nil? || o.is_a?(Puppet::Pops::Model::Program)
+    o.offset.nil? ? find_closest_positioned(o.eContainer) : Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
   end
 
   # Creates a diagnostic producer
