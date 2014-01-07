@@ -156,6 +156,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     # and comparisons up to here are equal, return equal. We need to
     # evaluate to whatever level of detail the user specified, so we
     # don't end up upgrading or *downgrading* when not intended.
+    #
+    # This should NOT be triggered if we're trying to ensure latest.
     return 0 if should_hash[:release].nil?
 
     rc = compare_values(should_hash[:release], is_hash[:release])
