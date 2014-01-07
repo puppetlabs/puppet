@@ -1,5 +1,3 @@
-require 'puppet/util/package'
-
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   desc "Support via `yum`.
 
@@ -68,7 +66,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       # Add the package version
       wanted += "-#{should}"
       is = self.query
-      if is && Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+      if is && yumversioncmp(should, is[:ensure]) < 0
         self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
         operation = :downgrade
       end
@@ -107,4 +105,44 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   def purge
     yum "-y", :erase, @resource[:name]
   end
+
+  # parse a yum "version" specification
+  # this re-implements yum's
+  # rpmUtils.miscutils.stringToVersion() in ruby
+  def yum_parse_evr(s)
+    ei = s.index(':')
+    if ei
+      e = s[0,ei]
+      s = s[ei+1,s.length]
+    else
+      e = nil
+    end
+    e = String(Bignum(e)) rescue '0'
+    ri = s.index('-')
+    if ri
+      v = s[0,ri]
+      r = s[ri+1,s.length]
+    else
+      v = s
+      r = nil
+    end
+    return { :epoch => e, :version => v, :release => r }
+  end
+
+  # how yum compares two package versions:
+  # rpmUtils.miscutils.compareEVR(), which massages data types and then calls
+  # rpm.labelCompare(), found in rpm.git/python/header-py.c, which
+  # sets epoch to 0 if null, then compares epoch, then ver, then rel
+  # using compare_values() and returns the first non-0 result, else 0
+  #
+  # TODO: this is the place to hook in PUP-1365 (globbing)
+  #
+  # "version_should" can be v, v-r, or e:v-r.
+  # "version_is" will always be at least v-r, can be e:v-r
+  def yum_compareEVR(should, is)
+    should_hash = yum_parse_evr(should)
+    is_hash = yum_parse_evr(is)
+    return nil
+  end
+
 end
