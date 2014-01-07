@@ -26,8 +26,8 @@ describe Puppet::Type.type(:package) do
     Puppet::Type.type(:package).provider_feature(:versionable).should_not be_nil
   end
 
-  it "should have a :build_options feature that requires :build_options_insync?, :build_options and :build_options=" do
-    Puppet::Type.type(:package).provider_feature(:build_options).methods.should == [:build_options_insync?, :build_options, :build_options=]
+  it "should have a :package_settings feature that requires :package_settings_insync?, :package_settings and :package_settings=" do
+    Puppet::Type.type(:package).provider_feature(:package_settings).methods.should == [:package_settings_insync?, :package_settings, :package_settings=]
   end
 
   it "should default to being installed" do
@@ -46,8 +46,8 @@ describe Puppet::Type.type(:package) do
       Puppet::Type.type(:package).attrtype(:ensure).should == :property
     end
 
-    it "should have a build_options property" do
-      Puppet::Type.type(:package).attrtype(:build_options).should == :property
+    it "should have a package_settings property" do
+      Puppet::Type.type(:package).attrtype(:package_settings).should == :property
     end
   end
 
