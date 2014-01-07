@@ -745,7 +745,7 @@ describe 'Injector' do
 
       it "should be possible to post process lookup with a puppet lambda" do
         model = parser.parse_string('fake() |$value| {$value + 1 }').current
-        bindings.bind.name('an_int').to(42).producer_options( :transformer => model.lambda)
+        bindings.bind.name('an_int').to(42).producer_options( :transformer => model.body.lambda)
         injector(lbinder).lookup(scope, 'an_int').should == 43
       end
 

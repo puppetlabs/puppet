@@ -46,6 +46,7 @@ class Puppet::Pops::Types::TypeParser
   # @api private
   def interpret(ast)
     result = @type_transformer.visit_this_0(self, ast)
+    result = result.body if result.is_a?(Puppet::Pops::Model::Program)
     raise_invalid_type_specification_error unless result.is_a?(Puppet::Pops::Types::PAbstractType)
     result
   end
@@ -317,7 +318,8 @@ class Puppet::Pops::Types::TypeParser
      end
 
     when "string"
-      size_type = case parameters.size
+      size_type =
+      case parameters.size
       when 1
         if parameters[0].is_a?(Puppet::Pops::Types::PIntegerType)
           parameters[0].copy
@@ -396,6 +398,6 @@ class Puppet::Pops::Types::TypeParser
 
   def original_text_of(ast)
     position = Puppet::Pops::Adapters::SourcePosAdapter.adapt(ast)
-    position.extract_text_from_string(@string || position.locator.string)
+    position.extract_text()
   end
 end

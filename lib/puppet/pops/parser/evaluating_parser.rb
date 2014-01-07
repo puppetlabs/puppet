@@ -66,9 +66,8 @@ class Puppet::Pops::Parser::EvaluatingParser
 
   def assert_and_report(parse_result)
     return nil unless parse_result
-    # make sure the result has an origin (if parsed from a string)
-    unless Puppet::Pops::Adapters::OriginAdapter.get(parse_result.model)
-      Puppet::Pops::Adapters::OriginAdapter.adapt(parse_result.model).origin = @file_source
+    if parse_result.source_ref.nil? or parse_result.source_ref == ''
+      parse_result.source_ref = @file_source
     end
     validation_result = validate(parse_result)
 

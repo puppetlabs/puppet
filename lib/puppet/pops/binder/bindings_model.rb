@@ -47,11 +47,16 @@ module Puppet::Pops::Binder::Bindings
     has_attr 'value', Object
   end
 
-  # Produces a value by evaluating a Puppet DSL expression
+  # Produces a value by evaluating a Puppet DSL expression.
+  # Note that the expression is not contained as it is part of a Puppet::Pops::Model::Program.
+  # To include the expression in the serialization, the Program it is contained in must be
+  # contained in the same serialization. This can be achieved by containing it in the
+  # ContributedBindings that is the top of a BindingsModel produced and given to the Injector.
+  #
   # @api public
   #
   class EvaluatingProducerDescriptor < ProducerDescriptor
-    contains_one_uni 'expression', Puppet::Pops::Model::Expression
+    has_one 'expression', Puppet::Pops::Model::Expression
   end
 
   # An InstanceProducer creates an instance of the given class
@@ -183,8 +188,14 @@ module Puppet::Pops::Binder::Bindings
   # as opposed to the names of the different set of bindings. The ContributorBindings name is typically
   # a technical name that indicates their source (a service).
   #
+  # When EvaluatingProducerDescriptor is used, it holds a reference to an Expression. That expression
+  # should be contained in the programs referenced in the ContributedBindings that contains that producer.
+  # While the bindings model will still work if this is not the case, it will not serialize and deserialize
+  # correctly.
+  #
   # @api public
   #
   class ContributedBindings < NamedLayer
+    contains_many_uni 'programs', Puppet::Pops::Model::Program
   end
 end

@@ -42,7 +42,7 @@ class Puppet::Pops::Model::AstTransformer
   def merge_location(hash, o)
     if o
       pos = {}
-      source_pos = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::SourcePosAdapter)
+      source_pos = Puppet::Pops::Utils.find_closest_positioned(o)
       if source_pos
         pos[:line] = source_pos.line
         pos[:pos]  = source_pos.pos

@@ -44,7 +44,6 @@ class Puppet::Pops::Parser::EppParser < Puppet::Pops::Parser::Parser
       #      rescue => except
       #        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, @lexer.pos, except)
     end
-    main.record_origin(@lexer.file) if main
     return main
   ensure
     @lexer.clear
