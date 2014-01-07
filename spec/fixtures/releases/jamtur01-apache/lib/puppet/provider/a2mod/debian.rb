@@ -16,6 +16,6 @@ Puppet::Type.type(:a2mod).provide(:debian) do
 
     def exists?
         mod= "/etc/apache2/mods-enabled/" + resource[:name] + ".load"
-        Puppet::FileSystem::File.exist?(mod)
+        Puppet::FileSystem.exist?(mod)
     end
 end

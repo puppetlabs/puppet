@@ -25,7 +25,7 @@ describe Puppet::Util::Lockfile do
     it "should create a lock file" do
       @lock.lock
 
-      Puppet::FileSystem::File.exist?(@lockfile).should be_true
+      Puppet::FileSystem.exist?(@lockfile).should be_true
     end
 
     it "should create a lock file containing a string" do
@@ -49,7 +49,7 @@ describe Puppet::Util::Lockfile do
     it "should clear the lock file" do
       File.open(@lockfile, 'w') { |fd| fd.print("locked") }
       @lock.unlock
-      Puppet::FileSystem::File.exist?(@lockfile).should be_false
+      Puppet::FileSystem.exist?(@lockfile).should be_false
     end
   end
 

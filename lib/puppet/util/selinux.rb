@@ -216,7 +216,7 @@ module Puppet::Util::SELinux
   #
   # @return [File::Stat] File.lstat result
   def file_lstat(path)
-    Puppet::FileSystem::File.new(path).lstat
+    Puppet::FileSystem.lstat(path)
   end
   private :file_lstat
 end

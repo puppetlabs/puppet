@@ -24,10 +24,11 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
   def destroy(request)
     super
 
-    return unless Puppet::FileSystem::File.exist?(public_key_path(request.key))
+    key_path = Puppet::FileSystem.pathname(public_key_path(request.key))
+    return unless Puppet::FileSystem.exist?(key_path)
 
     begin
-      Puppet::FileSystem::File.unlink(public_key_path(request.key))
+      Puppet::FileSystem.unlink(key_path)
     rescue => detail
       raise Puppet::Error, "Could not remove #{request.key} public key: #{detail}"
     end
@@ -38,7 +39,9 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     super
 
     begin
-      Puppet.settings.setting(:publickeydir).open_file(public_key_path(request.key), 'w') { |f| f.print request.instance.content.public_key.to_pem }
+      Puppet.settings.setting(:publickeydir).open_file(public_key_path(request.key), 'w') do |f|
+        f.print request.instance.content.public_key.to_pem
+      end
     rescue => detail
       raise Puppet::Error, "Could not write #{request.key}: #{detail}"
     end

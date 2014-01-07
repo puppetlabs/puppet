@@ -33,7 +33,7 @@ describe Puppet::Type.type(:exec) do
     catalog.add_resource exec
     catalog.apply
 
-    Puppet::FileSystem::File.exist?(path).should be_false
+    Puppet::FileSystem.exist?(path).should be_false
   end
 
   it "should execute the command if onlyif returns zero" do
@@ -72,6 +72,6 @@ describe Puppet::Type.type(:exec) do
     catalog.add_resource exec
     catalog.apply
 
-    Puppet::FileSystem::File.exist?(path).should be_false
+    Puppet::FileSystem.exist?(path).should be_false
   end
 end

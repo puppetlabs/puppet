@@ -76,20 +76,20 @@ describe Puppet::SSL::Key::File do
     end
 
     it "should destroy the public key when destroying the private key" do
-      Puppet::FileSystem::File.stubs(:unlink).with(@private_key_path)
-      Puppet::FileSystem::File.stubs(:exist?).with(@private_key_path).returns true
-      Puppet::FileSystem::File.expects(:exist?).with(@public_key_path).returns true
-      Puppet::FileSystem::File.expects(:unlink).with(@public_key_path)
+      Puppet::FileSystem.expects(:unlink).with(Puppet::FileSystem.pathname(@private_key_path))
+      Puppet::FileSystem.expects(:exist?).with(Puppet::FileSystem.pathname(@private_key_path)).returns true
+      Puppet::FileSystem.expects(:exist?).with(Puppet::FileSystem.pathname(@public_key_path)).returns true
+      Puppet::FileSystem.expects(:unlink).with(Puppet::FileSystem.pathname(@public_key_path))
 
       @searcher.destroy(@request)
     end
 
     it "should not fail if the public key does not exist when deleting the private key" do
-      Puppet::FileSystem::File.stubs(:unlink).with(@private_key_path)
+      Puppet::FileSystem.stubs(:unlink).with(Puppet::FileSystem.pathname(@private_key_path))
 
-      Puppet::FileSystem::File.stubs(:exist?).with(@private_key_path).returns true
-      Puppet::FileSystem::File.expects(:exist?).with(@public_key_path).returns false
-      Puppet::FileSystem::File.expects(:unlink).with(@public_key_path).never
+      Puppet::FileSystem.stubs(:exist?).with(Puppet::FileSystem.pathname(@private_key_path)).returns true
+      Puppet::FileSystem.expects(:exist?).with(Puppet::FileSystem.pathname(@public_key_path)).returns false
+      Puppet::FileSystem.expects(:unlink).with(Puppet::FileSystem.pathname(@public_key_path)).never
 
       @searcher.destroy(@request)
     end
