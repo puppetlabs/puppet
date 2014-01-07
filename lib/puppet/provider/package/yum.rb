@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       # Add the package version
       wanted += "-#{should}"
       is = self.query
-      if is && yumversioncmp(should, is[:ensure]) < 0
+      if is && yum_compareEVR(should, is[:ensure]) < 0
         self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
         operation = :downgrade
       end
@@ -133,7 +133,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # rpmUtils.miscutils.compareEVR(), which massages data types and then calls
   # rpm.labelCompare(), found in rpm.git/python/header-py.c, which
   # sets epoch to 0 if null, then compares epoch, then ver, then rel
-  # using compare_values() and returns the first non-0 result, else 0
+  # using compare_values() and returns the first non-0 result, else 0.
+  # This function combines the logic of compareEVR() and labelCompare().
+  # 
   #
   # TODO: this is the place to hook in PUP-1365 (globbing)
   #
@@ -142,7 +144,36 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   def yum_compareEVR(should, is)
     should_hash = yum_parse_evr(should)
     is_hash = yum_parse_evr(is)
-    return nil
+
+    # pass on to rpm labelCompare
+    rc = compare_values(should_hash[:epoch], is_hash[:epoch])
+    return rc unless rc != 0
+    rc = compare_values(should_hash[:version], is_hash[:version])
+    return rc unless rc != 0
+
+    # here is our special case, PUP-1244.
+    # if should_hash[:release] is nil (not specified by the user),
+    # and comparisons up to here are equal, return equal. We need to
+    # evaluate to whatever level of detail the user specified, so we
+    # don't end up upgrading or *downgrading* when not intended.
+    return 0 if should_hash[:release].nil?
+
+    rc = compare_values(should_hash[:release], is_hash[:release])
+    return rc
+  end
+
+  # this method is a native implementation of the
+  # compare_values function in rpm's python bindings,
+  # found in python/header-py.c, as used by yum.
+  def compare_values(s1, s2)
+    if s1.nil? and s2.nil?
+      return 0
+    elsif ( not s1.nil? ) and s2.nil?
+      return 1
+    elsif s1.nil? and (not s2.nil?)
+      return -1
+    end
+    return rpmvercmp(s1, s2)
   end
 
 end
