@@ -194,4 +194,12 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     return hash
   end
+
+  # This is a ruby port of rpm's own rpmvercmp() function
+  # from lib/rpmvercmp.c. It's responsible for comparing
+  # individual alphanumeric segments of two epochs, versions
+  # or releases.
+  def rpmvercmp(a, b)
+    return nil
+  end
 end
