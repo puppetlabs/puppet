@@ -8,7 +8,6 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   include Puppet::Network::HTTP::Handler
 
-  HEADER_ACCEPT = 'HTTP_ACCEPT'.freeze
   ContentType = 'Content-Type'.freeze
 
   CHUNK_SIZE = 8192
@@ -51,20 +50,12 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   # Retrieve all headers from the http request, as a map.
   def headers(request)
-    request.env.select {|k,v| k.start_with? 'HTTP_'}.inject({}) do |m, (k,v)|
+    headers = request.env.select {|k,v| k.start_with? 'HTTP_'}.inject({}) do |m, (k,v)|
       m[k.sub(/^HTTP_/, '').gsub('_','-').downcase] = v
       m
     end
-  end
-
-  # Retrieve the accept header from the http request.
-  def accept_header(request)
-    request.env[HEADER_ACCEPT]
-  end
-
-  # Retrieve the accept header from the http request.
-  def content_type_header(request)
-    request.content_type
+    headers['content-type'] = request.content_type
+    headers
   end
 
   # Return which HTTP verb was used in this request.

@@ -1,6 +1,9 @@
+require 'puppet/network/authorization'
 require 'puppet/network/http/api'
 
-module Puppet::Network::HTTP::API::V1
+class Puppet::Network::HTTP::API::V1
+  include Puppet::Network::Authorization
+
   # How we map http methods and the indirection name in the URI
   # to an indirection method.
   METHOD_MAP = {
@@ -22,6 +25,31 @@ module Puppet::Network::HTTP::API::V1
     }
   }
 
+
+  # handle an HTTP request
+  def process(request, response)
+    indirection_name, method, key, params = uri2indirection(request.method, request.path, request.params)
+    certificate = request.client_cert
+
+    check_authorization(indirection_name, method, key, params)
+
+    indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
+    raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
+
+    if !indirection.allow_remote_requests?
+      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, "No handler for #{indirection.name}"
+    end
+
+    trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
+    Puppet::Context.override(:trusted_information => trusted) do
+      send("do_#{method}", indirection, key, params, request, response)
+    end
+  rescue Puppet::Network::HTTP::Handler::HTTPError => e
+    return do_http_control_exception(response, e)
+  rescue Exception => e
+    return do_exception(response, e)
+  end
+
   def uri2indirection(http_method, uri, params)
     environment, indirection, key = uri.split("/", 4)[1..-1] # the first field is always nil because of the leading slash
 
@@ -40,14 +68,103 @@ module Puppet::Network::HTTP::API::V1
     [indirection, method, key, params]
   end
 
-  def indirection2uri(request)
-    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    "/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}#{request.query_string}"
+  private
+
+  def do_http_control_exception(response, exception)
+    msg = exception.message
+    Puppet.info(msg)
+    response.respond_with(exception.status, "text/plain", msg)
   end
 
-  def request_to_uri_and_body(request)
-    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
-    ["/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}", request.query_string.sub(/^\?/,'')]
+  def do_exception(response, exception, status=400)
+    if exception.is_a?(Puppet::Network::AuthorizationError)
+      # make sure we return the correct status code
+      # for authorization issues
+      status = 403 if status == 400
+    end
+
+    Puppet.log_exception(exception)
+
+    response.respond_with(status, "text/plain", exception.to_s)
+  end
+
+  # Execute our find.
+  def do_find(indirection, key, params, request, response)
+    unless result = indirection.find(key, params)
+      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
+    end
+
+    format = accepted_response_formatter_for(indirection.model, request)
+
+    rendered_result = result
+    if result.respond_to?(:render)
+      Puppet::Util::Profiler.profile("Rendered result in #{format}") do
+        rendered_result = result.render(format)
+      end
+    end
+
+    Puppet::Util::Profiler.profile("Sent response") do
+      response.respond_with(200, format, rendered_result)
+    end
+  end
+
+  # Execute our head.
+  def do_head(indirection, key, params, request, response)
+    unless indirection.head(key, params)
+      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
+    end
+
+    # No need to set a response because no response is expected from a
+    # HEAD request.  All we need to do is not die.
+  end
+
+  # Execute our search.
+  def do_search(indirection, key, params, request, response)
+    result = indirection.search(key, params)
+
+    if result.nil?
+      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, "Could not find instances in #{indirection.name} with '#{key}'"
+    end
+
+    format = accepted_response_formatter_for(indirection.model, request)
+
+    response.respond_with(200, format, indirection.model.render_multiple(format, result))
+  end
+
+  # Execute our destroy.
+  def do_destroy(indirection, key, params, request, response)
+    formatter = accepted_response_formatter_or_yaml_for(indirection.model, request)
+
+    result = indirection.destroy(key, params)
+
+    response.respond_with(200, formatter, formatter.render(result))
+  end
+
+  # Execute our save.
+  def do_save(indirection, key, params, request, response)
+    formatter = accepted_response_formatter_or_yaml_for(indirection.model, request)
+    sent_object = read_body_into_model(indirection.model, request)
+
+    result = indirection.save(sent_object, key)
+
+    response.respond_with(200, formatter, formatter.render(result))
+  end
+
+  def accepted_response_formatter_for(model_class, request)
+    accepted_formats = request.headers['accept'] or raise Puppet::Network::HTTP::Handler::HTTPNotAcceptableError, "Missing required Accept header"
+    request.response_formatter_for(model_class.supported_formats, accepted_formats)
+  end
+
+  def accepted_response_formatter_or_yaml_for(model_class, request)
+    accepted_formats = request.headers['accept'] || "yaml"
+    request.response_formatter_for(model_class.supported_formats, accepted_formats)
+  end
+
+  def read_body_into_model(model_class, request)
+    data = request.body.to_s
+
+    format = request.format
+    model_class.convert_from(format, data)
   end
 
   def indirection_method(http_method, indirection)
@@ -60,7 +177,17 @@ module Puppet::Network::HTTP::API::V1
     method
   end
 
-  def pluralize(indirection)
+  def self.indirection2uri(request)
+    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
+    "/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}#{request.query_string}"
+  end
+
+  def self.request_to_uri_and_body(request)
+    indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
+    ["/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}", request.query_string.sub(/^\?/,'')]
+  end
+
+  def self.pluralize(indirection)
     return(indirection == "status" ? "statuses" : indirection + "s")
   end
 

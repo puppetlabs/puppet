@@ -39,14 +39,6 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     result
   end
 
-  def accept_header(request)
-    request["accept"]
-  end
-
-  def content_type_header(request)
-    request["content-type"]
-  end
-
   def http_method(request)
     request.request_method
   end

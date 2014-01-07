@@ -3,15 +3,12 @@ end
 
 require 'puppet/network/http'
 require 'puppet/network/http/api/v1'
-require 'puppet/network/authorization'
 require 'puppet/network/authentication'
 require 'puppet/network/rights'
 require 'puppet/util/profiler'
 require 'resolv'
 
 module Puppet::Network::HTTP::Handler
-  include Puppet::Network::HTTP::API::V1
-  include Puppet::Network::Authorization
   include Puppet::Network::Authentication
 
   # These shouldn't be allowed to be set by clients
@@ -28,20 +25,23 @@ module Puppet::Network::HTTP::Handler
   end
 
   class HTTPNotAcceptableError < HTTPError
+    CODE = 406
     def initialize(message)
-      super("Not Acceptable: " + message, 406)
+      super("Not Acceptable: " + message, CODE)
     end
   end
 
   class HTTPNotFoundError < HTTPError
+    CODE = 404
     def initialize(message)
-      super("Not Found: " + message, 404)
+      super("Not Found: " + message, CODE)
     end
   end
 
   class HTTPNotAuthorizedError < HTTPError
+    CODE = 403
     def initialize(message)
-      super("Not Authorized: " + message, 403)
+      super("Not Authorized: " + message, CODE)
     end
   end
 
@@ -53,34 +53,81 @@ module Puppet::Network::HTTP::Handler
     raise NotImplementedError
   end
 
-  # Retrieve the accept header from the http request.
-  def accept_header(request)
-    raise NotImplementedError
-  end
-
-  # Retrieve the Content-Type header from the http request.
-  def content_type_header(request)
-    raise NotImplementedError
-  end
-
-  def request_format(request)
-    if header = content_type_header(request)
-      header.gsub!(/\s*;.*$/,'') # strip any charset
-      format = Puppet::Network::FormatHandler.mime(header)
-      raise "Client sent a mime-type (#{header}) that doesn't correspond to a format we support" if format.nil?
-      report_if_deprecated(format)
-      return format.name.to_s if format.suitable?
-    end
-
-    raise "No Content-Type header was received, it isn't possible to unserialize the request"
-  end
-
   def format_to_mime(format)
     format.is_a?(Puppet::Network::Format) ? format.mime : format
   end
 
   def initialize_for_puppet(server)
     @server = server
+  end
+
+  Request = Struct.new(:headers, :params, :method, :path, :client_cert, :body) do
+    def self.from_hash(hash)
+      symbol_members = members.collect(&:intern)
+      unknown = hash.keys - symbol_members
+      if unknown.empty?
+        new(*(symbol_members.collect { |m| hash[m] }))
+      else
+        raise ArgumentError, "Unknown arguments: #{unknown.collect(&:inspect).join(', ')}"
+      end
+    end
+
+    def format
+      if header = headers['content-type']
+        header.gsub!(/\s*;.*$/,'') # strip any charset
+        format = Puppet::Network::FormatHandler.mime(header)
+        if format.nil?
+          raise "Client sent a mime-type (#{header}) that doesn't correspond to a format we support"
+        else
+          report_if_deprecated(format)
+          return format.name.to_s if format.suitable?
+        end
+      end
+
+      raise "No Content-Type header was received, it isn't possible to unserialize the request"
+    end
+
+    def response_formatter_for(supported_formats, accepted_formats = headers['accept'])
+      formatter = Puppet::Network::FormatHandler.most_suitable_format_for(
+        accepted_formats.split(/\s*,\s*/),
+        supported_formats)
+
+      if formatter.nil?
+        raise HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
+      end
+
+      report_if_deprecated(formatter)
+
+      formatter
+    end
+
+    def report_if_deprecated(format)
+      if format.name == :yaml || format.name == :b64_zlib_yaml
+        Puppet.deprecation_warning("YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network")
+      end
+    end
+  end
+
+  class Response
+    def initialize(handler, response)
+      @handler = handler
+      @response = response
+    end
+
+    def respond_with(code, type, body)
+      @handler.set_content_type(@response, type)
+      @handler.set_response(@response, body, code)
+    end
+  end
+
+  class MemoryResponse
+    attr_reader :code, :type, :body
+
+    def respond_with(code, type, body)
+      @code = code
+      @type = type
+      @body = body
+    end
   end
 
   # handle an HTTP request
@@ -90,36 +137,26 @@ module Puppet::Network::HTTP::Handler
     request_method = http_method(request)
     request_path = path(request)
 
+    new_request = Request.new(request_headers, request_params, request_method, request_path, client_cert(request), body(request))
+    new_response = Response.new(self, response)
+
     response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
 
     configure_profiler(request_headers, request_params)
+    warn_if_near_expiration(new_request.client_cert)
+
     if request_path == "/v2/environments"
       raise HTTPNotAuthorizedError, "You shall not pass!"
+      check_authorization(request_method, request_path, request_params)
     else
       Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
-        indirection_name, method, key, params = uri2indirection(request_method, request_path, request_params)
-        certificate = client_cert(request)
-
-        check_authorization(indirection_name, method, key, params)
-        warn_if_near_expiration(certificate)
-
-        indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
-        raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
-
-        if !indirection.allow_remote_requests?
-          raise HTTPNotFoundError, "No handler for #{indirection.name}"
-        end
-
-        trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
-        Puppet::Context.override(:trusted_information => trusted) do
-          send("do_#{method}", indirection, key, params, request, response)
-        end
+        Puppet::Network::HTTP::API::V1.new.process(new_request, new_response)
       end
     end
   rescue HTTPError => e
-    return do_http_control_exception(response, e)
-  rescue Exception => e
-    return do_exception(response, e)
+    msg = e.message
+    Puppet.info(msg)
+    new_response.respond_with(e.status, "text/plain", msg)
   ensure
     cleanup(request)
   end
@@ -134,85 +171,6 @@ module Puppet::Network::HTTP::Handler
     raise NotImplementedError
   end
 
-  def do_exception(response, exception, status=400)
-    if exception.is_a?(Puppet::Network::AuthorizationError)
-      # make sure we return the correct status code
-      # for authorization issues
-      status = 403 if status == 400
-    end
-
-    Puppet.log_exception(exception)
-
-    set_content_type(response, "text/plain")
-    set_response(response, exception.to_s, status)
-  end
-
-  # Execute our find.
-  def do_find(indirection, key, params, request, response)
-    unless result = indirection.find(key, params)
-      raise HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
-    end
-
-    format = accepted_response_formatter_for(indirection.model, request)
-    set_content_type(response, format)
-
-    rendered_result = result
-    if result.respond_to?(:render)
-      Puppet::Util::Profiler.profile("Rendered result in #{format}") do
-        rendered_result = result.render(format)
-      end
-    end
-
-    Puppet::Util::Profiler.profile("Sent response") do
-      set_response(response, rendered_result)
-    end
-  end
-
-  # Execute our head.
-  def do_head(indirection, key, params, request, response)
-    unless indirection.head(key, params)
-      raise HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
-    end
-
-    # No need to set a response because no response is expected from a
-    # HEAD request.  All we need to do is not die.
-  end
-
-  # Execute our search.
-  def do_search(indirection, key, params, request, response)
-    result = indirection.search(key, params)
-
-    if result.nil?
-      raise HTTPNotFoundError, "Could not find instances in #{indirection.name} with '#{key}'"
-    end
-
-    format = accepted_response_formatter_for(indirection.model, request)
-    set_content_type(response, format)
-
-    set_response(response, indirection.model.render_multiple(format, result))
-  end
-
-  # Execute our destroy.
-  def do_destroy(indirection, key, params, request, response)
-    formatter = accepted_response_formatter_or_yaml_for(indirection.model, request)
-
-    result = indirection.destroy(key, params)
-
-    set_content_type(response, formatter)
-    set_response(response, formatter.render(result))
-  end
-
-  # Execute our save.
-  def do_save(indirection, key, params, request, response)
-    formatter = accepted_response_formatter_or_yaml_for(indirection.model, request)
-    sent_object = read_body_into_model(indirection.model, request)
-
-    result = indirection.save(sent_object, key)
-
-    set_content_type(response, formatter)
-    set_response(response, formatter.render(result))
-  end
-
   # resolve node name from peer's ip address
   # this is used when the request is unauthenticated
   def resolve_node(result)
@@ -225,61 +183,6 @@ module Puppet::Network::HTTP::Handler
   end
 
   private
-
-  def do_http_control_exception(response, exception)
-    msg = exception.message
-    Puppet.info(msg)
-    set_content_type(response, "text/plain")
-    set_response(response, msg, exception.status)
-  end
-
-  def report_if_deprecated(format)
-    if format.name == :yaml || format.name == :b64_zlib_yaml
-      Puppet.deprecation_warning("YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network")
-    end
-  end
-
-  def accepted_response_formatter_for(model_class, request)
-    accepted_formats = accept_header(request) or raise HTTPNotAcceptableError, "Missing required Accept header"
-    response_formatter_for(model_class, request, accepted_formats)
-  end
-
-  def accepted_response_formatter_or_yaml_for(model_class, request)
-    accepted_formats = accept_header(request) || "yaml"
-    response_formatter_for(model_class, request, accepted_formats)
-  end
-
-  def response_formatter_for(model_class, request, accepted_formats)
-    formatter = Puppet::Network::FormatHandler.most_suitable_format_for(
-      accepted_formats.split(/\s*,\s*/),
-      model_class.supported_formats)
-
-    if formatter.nil?
-      raise HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
-    end
-
-    report_if_deprecated(formatter)
-    formatter
-  end
-
-  def read_body_into_model(model_class, request)
-    data = body(request).to_s
-
-    format = request_format(request)
-    model_class.convert_from(format, data)
-  end
-
-  def get?(request)
-    http_method(request) == 'GET'
-  end
-
-  def put?(request)
-    http_method(request) == 'PUT'
-  end
-
-  def delete?(request)
-    http_method(request) == 'DELETE'
-  end
 
   # methods to be overridden by the including web server class
 

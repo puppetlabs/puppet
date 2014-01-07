@@ -48,19 +48,15 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
                            'HTTP_X_Custom_Header' => 'mycustom',
                            'NOT_HTTP_foo' => 'not an http header'})
         @handler.headers(req).should == {"accept" => 'myaccept',
-                                         "x-custom-header" => 'mycustom'}
+                                         "x-custom-header" => 'mycustom',
+                                         "content-type" => nil }
       end
     end
 
     describe "and using the HTTP Handler interface" do
-      it "should return the HTTP_ACCEPT parameter as the accept header" do
-        req = mk_req('/', 'HTTP_ACCEPT' => 'myaccept')
-        @handler.accept_header(req).should == "myaccept"
-      end
-
       it "should return the CONTENT_TYPE parameter as the content type header" do
         req = mk_req('/', 'CONTENT_TYPE' => 'mycontent')
-        @handler.content_type_header(req).should == "mycontent"
+        @handler.headers(req)['content-type'].should == "mycontent"
       end
 
       it "should use the REQUEST_METHOD as the http method" do
