@@ -10,7 +10,6 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
   def initialize(server, handler)
     raise ArgumentError, "server is required" unless server
     super(server)
-    initialize_for_puppet(:server => server, :handler => handler)
   end
 
   # Retrieve the request parameters, including authentication information.

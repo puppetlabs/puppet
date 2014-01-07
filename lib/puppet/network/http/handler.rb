@@ -57,10 +57,6 @@ module Puppet::Network::HTTP::Handler
     format.is_a?(Puppet::Network::Format) ? format.mime : format
   end
 
-  def initialize_for_puppet(server)
-    @server = server
-  end
-
   Request = Struct.new(:headers, :params, :method, :path, :client_cert, :body) do
     def self.from_hash(hash)
       symbol_members = members.collect(&:intern)
@@ -132,13 +128,14 @@ module Puppet::Network::HTTP::Handler
 
   # handle an HTTP request
   def process(request, response)
+    new_response = Response.new(self, response)
+
     request_headers = headers(request)
     request_params = params(request)
     request_method = http_method(request)
     request_path = path(request)
 
     new_request = Request.new(request_headers, request_params, request_method, request_path, client_cert(request), body(request))
-    new_response = Response.new(self, response)
 
     response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
 
@@ -157,6 +154,10 @@ module Puppet::Network::HTTP::Handler
     msg = e.message
     Puppet.info(msg)
     new_response.respond_with(e.status, "text/plain", msg)
+  rescue Exception => e
+    msg = e.message
+    Puppet.err(msg)
+    new_response.respond_with(500, "text/plain", msg)
   ensure
     cleanup(request)
   end

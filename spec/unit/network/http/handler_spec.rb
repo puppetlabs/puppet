@@ -29,17 +29,6 @@ describe Puppet::Network::HTTP::Handler do
 
   let(:handler) { TestingHandler.new }
 
-  describe "when initializing" do
-    it "should fail when no server type has been provided" do
-      lambda { handler.initialize_for_puppet }.should raise_error(ArgumentError)
-    end
-
-    it "should set server type" do
-      handler.initialize_for_puppet("foo")
-      handler.server.should == "foo"
-    end
-  end
-
   describe "when processing a request" do
     let(:response) do
       { :status => 200 }

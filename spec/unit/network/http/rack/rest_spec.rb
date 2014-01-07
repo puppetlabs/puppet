@@ -8,13 +8,6 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
     Puppet::Network::HTTP::RackREST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
   end
 
-  describe "when initializing" do
-    it "should call the Handler's initialization hook with its provided arguments" do
-      Puppet::Network::HTTP::RackREST.any_instance.expects(:initialize_for_puppet).with(:server => "my", :handler => "arguments")
-      Puppet::Network::HTTP::RackREST.new(:server => "my", :handler => "arguments")
-    end
-  end
-
   describe "when serving a request" do
     before :all do
       @model_class = stub('indirected model class')
@@ -132,7 +125,8 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "should ensure the body has been partially read on failure" do
         req = mk_req('/production/report/foo')
         req.body.expects(:read).with(1)
-        req.stubs(:check_authorization).raises(Exception)
+
+        @handler.stubs(:headers).raises(Exception)
 
         @handler.process(req, @response)
       end

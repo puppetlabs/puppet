@@ -9,23 +9,6 @@ describe Puppet::Network::HTTP::WEBrickREST do
     Puppet::Network::HTTP::WEBrickREST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
   end
 
-  describe "when initializing" do
-    it "should call the Handler's initialization hook with its provided arguments as the server and handler" do
-      server = WEBrick::HTTPServer.new(:BindAddress => '127.0.0.1',
-                                       # Probablistically going to succeed
-                                       # even if we run more than one test
-                                       # instance at once.
-                                       :Port        => 40000 + rand(10000),
-                                       # Just discard any log output, thanks.
-                                       :Logger      => stub_everything('logger'))
-
-      Puppet::Network::HTTP::WEBrickREST.any_instance.
-        expects(:initialize_for_puppet).with(:server => server, :handler => "arguments")
-
-      Puppet::Network::HTTP::WEBrickREST.new(server, "arguments")
-    end
-  end
-
   describe "when receiving a request" do
     before do
       @request     = stub('webrick http request', :query => {}, :peeraddr => %w{eh boo host ip}, :client_cert => nil)

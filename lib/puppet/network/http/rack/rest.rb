@@ -30,7 +30,6 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   def initialize(args={})
     super()
-    initialize_for_puppet(args)
   end
 
   def set_content_type(response, format)
