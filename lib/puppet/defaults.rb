@@ -688,7 +688,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0775,
+      :mode => 0755,
       :desc => "The root directory for the certificate authority."
     },
     :cacert => {
@@ -696,7 +696,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0664,
+      :mode => 0644,
       :desc => "The CA certificate."
     },
     :cakey => {
@@ -704,7 +704,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "The CA private key."
     },
     :capub => {
@@ -712,6 +712,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
+      :mode => 0644,
       :desc => "The CA public key."
     },
     :cacrl => {
@@ -719,8 +720,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0664,
-
+      :mode => 0644,
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
     },
     :caprivatedir => {
@@ -728,7 +728,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0750,
       :desc => "Where the CA stores private certificate information."
     },
     :csrdir => {
@@ -736,7 +736,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0775,
+      :mode  => 0755,
       :desc => "Where the CA stores certificate requests"
     },
     :signeddir => {
@@ -744,7 +744,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0775,
+      :mode => 0755,
       :desc => "Where the CA stores signed certificates."
     },
     :capass => {
@@ -752,7 +752,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "Where the CA stores the password for the private key."
     },
     :serial => {
