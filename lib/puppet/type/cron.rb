@@ -234,9 +234,7 @@ Puppet::Type.newtype(:cron) do
     end
 
     def munge(value)
-      value.sub!(/^\s+/, '')
-      value.sub!(/\s+$/, '')
-      value
+      value.strip
     end
   end
 
