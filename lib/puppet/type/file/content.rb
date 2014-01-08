@@ -3,7 +3,7 @@ require 'uri'
 require 'tempfile'
 
 require 'puppet/util/checksums'
-require 'puppet/network/http/api/v1'
+require 'puppet/network/http'
 require 'puppet/network/http/compression'
 
 module Puppet

@@ -16,7 +16,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
       @model_class = stub('indirected model class')
       @webrick     = stub('webrick http server', :mount => true, :[] => {})
       Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@model_class)
-      @handler = Puppet::Network::HTTP::WEBrickREST.new(@webrick, :foo)
+      @handler = Puppet::Network::HTTP::WEBrickREST.new(@webrick)
     end
 
     it "should delegate its :service method to its :process method" do

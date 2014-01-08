@@ -1,5 +1,4 @@
 require 'puppet/network/authorization'
-require 'puppet/network/http/api'
 
 class Puppet::Network::HTTP::API::V1
   include Puppet::Network::Authorization
@@ -25,9 +24,12 @@ class Puppet::Network::HTTP::API::V1
     }
   }
 
+  def self.routes
+    [Puppet::Network::HTTP::Route.any(/.*/, new)]
+  end
 
   # handle an HTTP request
-  def process(request, response)
+  def call(request, response)
     indirection_name, method, key, params = uri2indirection(request.method, request.path, request.params)
     certificate = request.client_cert
 

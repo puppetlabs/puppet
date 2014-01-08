@@ -45,7 +45,14 @@ module Puppet::Network::HTTP::Handler
     end
   end
 
-  attr_reader :server, :handler
+  def register(routes)
+    @routes = routes
+
+    Puppet.debug("Routes Registered:")
+    @routes.each do |route|
+      Puppet.debug(route.inspect)
+    end
+  end
 
   # Retrieve all headers from the http request, as a hash with the header names
   # (lower-cased) as the keys
@@ -57,99 +64,30 @@ module Puppet::Network::HTTP::Handler
     format.is_a?(Puppet::Network::Format) ? format.mime : format
   end
 
-  Request = Struct.new(:headers, :params, :method, :path, :client_cert, :body) do
-    def self.from_hash(hash)
-      symbol_members = members.collect(&:intern)
-      unknown = hash.keys - symbol_members
-      if unknown.empty?
-        new(*(symbol_members.collect { |m| hash[m] }))
-      else
-        raise ArgumentError, "Unknown arguments: #{unknown.collect(&:inspect).join(', ')}"
-      end
-    end
-
-    def format
-      if header = headers['content-type']
-        header.gsub!(/\s*;.*$/,'') # strip any charset
-        format = Puppet::Network::FormatHandler.mime(header)
-        if format.nil?
-          raise "Client sent a mime-type (#{header}) that doesn't correspond to a format we support"
-        else
-          report_if_deprecated(format)
-          return format.name.to_s if format.suitable?
-        end
-      end
-
-      raise "No Content-Type header was received, it isn't possible to unserialize the request"
-    end
-
-    def response_formatter_for(supported_formats, accepted_formats = headers['accept'])
-      formatter = Puppet::Network::FormatHandler.most_suitable_format_for(
-        accepted_formats.split(/\s*,\s*/),
-        supported_formats)
-
-      if formatter.nil?
-        raise HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
-      end
-
-      report_if_deprecated(formatter)
-
-      formatter
-    end
-
-    def report_if_deprecated(format)
-      if format.name == :yaml || format.name == :b64_zlib_yaml
-        Puppet.deprecation_warning("YAML in network requests is deprecated and will be removed in a future version. See http://links.puppetlabs.com/deprecate_yaml_on_network")
-      end
-    end
-  end
-
-  class Response
-    def initialize(handler, response)
-      @handler = handler
-      @response = response
-    end
-
-    def respond_with(code, type, body)
-      @handler.set_content_type(@response, type)
-      @handler.set_response(@response, body, code)
-    end
-  end
-
-  class MemoryResponse
-    attr_reader :code, :type, :body
-
-    def respond_with(code, type, body)
-      @code = code
-      @type = type
-      @body = body
-    end
-  end
-
   # handle an HTTP request
   def process(request, response)
-    new_response = Response.new(self, response)
+    new_response = Puppet::Network::HTTP::Response.new(self, response)
 
     request_headers = headers(request)
     request_params = params(request)
     request_method = http_method(request)
     request_path = path(request)
 
-    new_request = Request.new(request_headers, request_params, request_method, request_path, client_cert(request), body(request))
+    new_request = Puppet::Network::HTTP::Request.new(request_headers, request_params, request_method, request_path, client_cert(request), body(request))
 
     response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
 
     configure_profiler(request_headers, request_params)
     warn_if_near_expiration(new_request.client_cert)
 
-    if request_path == "/v2/environments"
-      raise HTTPNotAuthorizedError, "You shall not pass!"
-      check_authorization(request_method, request_path, request_params)
-    else
-      Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
-        Puppet::Network::HTTP::API::V1.new.process(new_request, new_response)
+    Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
+      if route = @routes.find { |route| route.matches?(new_request) }
+        route.process(new_request, new_response)
+      else
+        raise HTTPNotFoundError, "No route for #{new_request.method} #{new_request.path}"
       end
     end
+
   rescue HTTPError => e
     msg = e.message
     Puppet.info(msg)

@@ -1,11 +1,9 @@
 require 'openssl'
 require 'cgi'
 require 'puppet/network/http/handler'
-require 'puppet/network/http/rack/httphandler'
 require 'puppet/util/ssl'
 
-class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
-
+class Puppet::Network::HTTP::RackREST
   include Puppet::Network::HTTP::Handler
 
   ContentType = 'Content-Type'.freeze
@@ -30,6 +28,7 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   def initialize(args={})
     super()
+    register(Puppet::Network::HTTP::API::V2.routes + Puppet::Network::HTTP::API::V1.routes)
   end
 
   def set_content_type(response, format)

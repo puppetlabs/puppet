@@ -2,10 +2,10 @@
 require 'spec_helper'
 require 'puppet/indirector_testing'
 
-require 'puppet/network/http'
-require 'puppet/network/http/handler'
 require 'puppet/network/authorization'
 require 'puppet/network/authentication'
+
+require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::Handler do
   before :each do
@@ -14,12 +14,12 @@ describe Puppet::Network::HTTP::Handler do
 
   let(:indirection) { Puppet::IndirectorTesting.indirection }
 
-  def a_request
+  def a_request(method = "HEAD", path = "/production/#{indirection.name}/unknown")
     {
       :accept_header => "pson",
       :content_type_header => "text/yaml",
-      :http_method => "HEAD",
-      :path => "/production/#{indirection.name}/unknown",
+      :http_method => method,
+      :path => path,
       :params => {},
       :client_cert => nil,
       :headers => {},
@@ -27,7 +27,97 @@ describe Puppet::Network::HTTP::Handler do
     }
   end
 
-  let(:handler) { TestingHandler.new }
+  let(:handler) { TestingHandler.new(nil) }
+
+  describe "when creating a handler" do
+    def respond(text)
+      lambda { |req, res| res.respond_with(200, "text/plain", text) }
+    end
+
+    it "hands the request to the first handler that matches the request path" do
+      handler = TestingHandler.new(
+        Puppet::Network::HTTP::Route.get(%r{^/foo}, respond("skipped")),
+        Puppet::Network::HTTP::Route.get(%r{^/vtest}, respond("used")),
+        Puppet::Network::HTTP::Route.get(%r{^/vtest/foo}, respond("never consulted")))
+
+      req = a_request("GET", "/vtest/foo")
+      res = {}
+
+      handler.process(req, res)
+
+      expect(res[:body]).to eq("used")
+    end
+
+    it "does not hand requests to routes that specify a different HTTP method than the request" do
+      handler = TestingHandler.new(
+        Puppet::Network::HTTP::Route.post(%r{^/vtest}, respond("skipped")),
+        Puppet::Network::HTTP::Route.get(%r{^/vtest}, respond("used")))
+
+      req = a_request("GET", "/vtest/foo")
+      res = {}
+
+      handler.process(req, res)
+
+      expect(res[:body]).to eq("used")
+    end
+
+    it "allows routes to match any HTTP method" do
+      handler = TestingHandler.new(
+        Puppet::Network::HTTP::Route.post(%r{^/vtest/foo}, respond("skipped")),
+        Puppet::Network::HTTP::Route.any(%r{^/vtest/foo}, respond("used")),
+        Puppet::Network::HTTP::Route.get(%r{^/vtest/foo}, respond("ignored")))
+
+        req = a_request("GET", "/vtest/foo")
+        res = {}
+
+        handler.process(req, res)
+
+        expect(res[:body]).to eq("used")
+    end
+
+    it "raises an HTTP not found error if no routes match" do
+      handler = TestingHandler.new
+
+      req = a_request("GET", "/vtest/foo")
+      res = {}
+
+      handler.process(req, res)
+
+      expect(res[:body]).to eq("Not Found: No route for GET /vtest/foo")
+      expect(res[:status]).to eq(404)
+    end
+
+    it "calls each route's handlers in turn" do
+      call_count = 0
+      route_handler = lambda { |request, response| call_count += 1 }
+      handler = TestingHandler.new(
+        Puppet::Network::HTTP::Route.get(%r{^/vtest/foo}, route_handler, route_handler))
+
+      req = a_request("GET", "/vtest/foo")
+      res = {}
+
+      handler.process(req, res)
+
+      expect(call_count).to eq(2)
+    end
+
+    it "stops calling handlers if one of them raises an error" do
+      ignored_called = false
+      ignored = lambda { |req, res| ignored_called = true }
+      raise_error = lambda { |req, res| raise Puppet::Network::HTTP::Handler::HTTPNotAuthorizedError, "go away" }
+
+      handler = TestingHandler.new(
+        Puppet::Network::HTTP::Route.get(%r{^/vtest/foo}, raise_error, ignored))
+
+      req = a_request("GET", "/vtest/foo")
+      res = {}
+
+      handler.process(req, res)
+
+      expect(res[:status]).to eq(403)
+      expect(ignored_called).to be_false
+    end
+  end
 
   describe "when processing a request" do
     let(:response) do
@@ -72,8 +162,8 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     it "should still find the correct format if content type contains charset information" do
-      request = Puppet::Network::HTTP::Handler::Request.new({ 'content-type' => "text/plain; charset=UTF-8" },
-                                                            {}, 'GET', '/', nil)
+      request = Puppet::Network::HTTP::Request.new({ 'content-type' => "text/plain; charset=UTF-8" },
+                                                   {}, 'GET', '/', nil)
       request.format.should == "s"
     end
 
@@ -118,12 +208,8 @@ describe Puppet::Network::HTTP::Handler do
   class TestingHandler
     include Puppet::Network::HTTP::Handler
 
-    def accept_header(request)
-      request[:accept_header]
-    end
-
-    def content_type_header(request)
-      request[:content_type_header]
+    def initialize(* routes)
+      register(routes)
     end
 
     def set_content_type(response, format)

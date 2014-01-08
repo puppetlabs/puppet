@@ -7,8 +7,9 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   include Puppet::Network::HTTP::Handler
 
-  def initialize(server, handler)
+  def initialize(server)
     raise ArgumentError, "server is required" unless server
+    register(Puppet::Network::HTTP::API::V2.routes + Puppet::Network::HTTP::API::V1.routes)
     super(server)
   end
 

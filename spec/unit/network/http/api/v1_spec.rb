@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/network/http/handler'
+require 'puppet/network/http'
 require 'puppet/network/http/api/v1'
 require 'puppet/indirector_testing'
 
@@ -12,10 +12,10 @@ describe Puppet::Network::HTTP::API::V1 do
 
   let(:indirection) { Puppet::IndirectorTesting.indirection }
   let(:handler) { Puppet::Network::HTTP::API::V1.new }
-  let(:response) { Puppet::Network::HTTP::Handler::MemoryResponse.new }
+  let(:response) { Puppet::Network::HTTP::MemoryResponse.new }
 
   def a_request_that_heads(data, request = {})
-    Puppet::Network::HTTP::Handler::Request.from_hash({
+    Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
         'content-type' => "text/yaml", },
@@ -26,7 +26,7 @@ describe Puppet::Network::HTTP::API::V1 do
   end
 
   def a_request_that_submits(data, request = {})
-    Puppet::Network::HTTP::Handler::Request.from_hash({
+    Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
         'content-type' => request[:content_type_header] || "text/yaml", },
@@ -38,7 +38,7 @@ describe Puppet::Network::HTTP::API::V1 do
   end
 
   def a_request_that_destroys(data, request = {})
-    Puppet::Network::HTTP::Handler::Request.from_hash({
+    Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
         'content-type' => "text/yaml", },
@@ -50,7 +50,7 @@ describe Puppet::Network::HTTP::API::V1 do
   end
 
   def a_request_that_finds(data, request = {})
-    Puppet::Network::HTTP::Handler::Request.from_hash({
+    Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
         'content-type' => "text/yaml", },
@@ -62,7 +62,7 @@ describe Puppet::Network::HTTP::API::V1 do
   end
 
   def a_request_that_searches(key, request = {})
-    Puppet::Network::HTTP::Handler::Request.from_hash({
+    Puppet::Network::HTTP::Request.from_hash({
       :headers => {
         'accept' => request[:accept_header],
         'content-type' => "text/yaml", },
@@ -277,7 +277,7 @@ describe Puppet::Network::HTTP::API::V1 do
 
       handler.expects(:check_authorization).raises(Puppet::Network::AuthorizationError.new("forbidden"))
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(not_authorized_code)
     end
@@ -287,7 +287,7 @@ describe Puppet::Network::HTTP::API::V1 do
 
       indirection.expects(:allow_remote_requests?).returns(false)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(not_found_code)
     end
@@ -296,7 +296,7 @@ describe Puppet::Network::HTTP::API::V1 do
       request = a_request_that_finds(Puppet::IndirectorTesting.new("key"))
       handler.expects(:do_find).raises(ArgumentError, "The exception")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(400)
       expect(response.body).to eq("The exception")
@@ -310,7 +310,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => "unknown, pson, yaml")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.body).to eq(data.render(:pson))
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
@@ -321,7 +321,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => nil)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(not_acceptable_code)
     end
@@ -331,7 +331,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_finds(data, :accept_header => "unknown, also/unknown")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(not_acceptable_code)
     end
@@ -342,7 +342,7 @@ describe Puppet::Network::HTTP::API::V1 do
       request = a_request_that_finds(data, :accept_header => "pson")
       indirection.expects(:find).returns(data_string)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.body).to eq(data_string)
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
@@ -352,7 +352,7 @@ describe Puppet::Network::HTTP::API::V1 do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_finds(data, :accept_header => "unknown, pson, yaml")
 
-      handler.process(request, response)
+      handler.call(request, response)
       expect(response.code).to eq(not_found_code)
     end
   end
@@ -363,7 +363,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_searches("my", :accept_header => "unknown, pson, yaml")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
       expect(response.body).to eq(Puppet::IndirectorTesting.render_multiple(:pson, [data]))
@@ -372,7 +372,7 @@ describe Puppet::Network::HTTP::API::V1 do
     it "should return [] when searching returns an empty array" do
       request = a_request_that_searches("nothing", :accept_header => "unknown, pson, yaml")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.body).to eq("[]")
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
@@ -382,7 +382,7 @@ describe Puppet::Network::HTTP::API::V1 do
       request = a_request_that_searches("nothing", :accept_header => "unknown, pson, yaml")
       indirection.expects(:search).returns(nil)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(not_found_code)
     end
@@ -394,7 +394,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_destroys(data)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       Puppet::IndirectorTesting.indirection.find("my data").should be_nil
     end
@@ -404,7 +404,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_destroys(data, :accept_header => nil)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.body).to eq(data.render(:yaml))
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:yaml))
@@ -415,7 +415,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_destroys(data, :accept_header => "unknown, pson, yaml")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.body).to eq(data.render(:pson))
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
@@ -426,7 +426,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(not_acceptable_code)
       Puppet::IndirectorTesting.indirection.find("my data").should_not be_nil
@@ -448,7 +448,7 @@ describe Puppet::Network::HTTP::API::V1 do
                                        :content_type_header => "application/x-raw",
                                        :body => '')
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       Puppet::IndirectorTesting.indirection.find("test").name.should == ''
     end
@@ -457,7 +457,7 @@ describe Puppet::Network::HTTP::API::V1 do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       saved = Puppet::IndirectorTesting.indirection.find("my data")
       expect(saved.name).to eq(data.name)
@@ -467,7 +467,7 @@ describe Puppet::Network::HTTP::API::V1 do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :accept_header => nil)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.body).to eq(data.render(:yaml))
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:yaml))
@@ -477,7 +477,7 @@ describe Puppet::Network::HTTP::API::V1 do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :accept_header => "unknown, pson, yaml")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.body).to eq(data.render(:pson))
       expect(response.type).to eq(Puppet::Network::FormatHandler.format(:pson))
@@ -487,7 +487,7 @@ describe Puppet::Network::HTTP::API::V1 do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_submits(data, :accept_header => "unknown, also/unknown")
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(Puppet::IndirectorTesting.indirection.find("my data")).to be_nil
       expect(response.code).to eq(not_acceptable_code)
@@ -500,7 +500,7 @@ describe Puppet::Network::HTTP::API::V1 do
       indirection.save(data, "my data")
       request = a_request_that_heads(data)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(nil)
     end
@@ -509,7 +509,7 @@ describe Puppet::Network::HTTP::API::V1 do
       data = Puppet::IndirectorTesting.new("my data")
       request = a_request_that_heads(data)
 
-      handler.process(request, response)
+      handler.call(request, response)
 
       expect(response.code).to eq(not_found_code)
       expect(response.type).to eq("text/plain")
