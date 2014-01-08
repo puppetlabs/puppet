@@ -1,19 +1,27 @@
 Puppet::Type.newtype(:stage) do
-  desc "A resource type for specifying run stages.  The actual stage should
-  be specified on resources:
+  desc "A resource type for creating new run stages.  Once a stage is available,
+    classes can be assigned to it by declaring them with the resource-like syntax
+    and using
+    [the `stage` metaparameter](http://docs.puppetlabs.com/references/latest/metaparameter.html#stage).
 
-      class { foo: stage => pre }
+    Note that new stages are not useful unless you also declare their order
+    in relation to the default `main` stage.
 
-  And you must manually control stage order:
+    A complete run stage example:
 
-      stage { pre: before => Stage[main] }
+        stage { 'pre':
+          before => Stage['main'],
+        }
 
-  You automatically get a 'main' stage created, and by default all resources
-  get inserted into that stage.
+        class { 'apt-updates':
+          stage => 'pre',
+        }
 
-  You can only set stages on class resources, not normal builtin resources."
+    Individual resources cannot be assigned to run stages; you can only set stages
+    for classes."
 
   newparam :name do
-    desc "The name of the stage. This will be used as the 'stage' for each resource."
+    desc "The name of the stage. Use this as the value for the `stage` metaparameter
+      when assigning classes to this stage."
   end
 end
