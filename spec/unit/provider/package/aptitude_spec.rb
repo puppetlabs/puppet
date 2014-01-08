@@ -14,12 +14,12 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
       described_class.stubs(:command).with(:dpkgquery).returns 'myquery'
     end
 
-    { :absent   => "deinstall ok config-files faff 1.2.3-1 :DESC: faff summary\n:DESC:\n",
-      "1.2.3-1" => "install ok installed faff 1.2.3-1 :DESC: faff summary\n:DESC:\n",
+    { :absent   => "deinstall ok config-files faff 1.2.3-1\n",
+      "1.2.3-1" => "install ok installed faff 1.2.3-1\n",
     }.each do |expect, output|
       it "should detect #{expect} packages" do
         Puppet::Util::Execution.expects(:execpipe).
-          with(['myquery', '-W', '--showformat', "'${Status} ${Package} ${Version} :DESC: ${Description}\\n:DESC:\\n'", 'faff']).
+          with(['myquery', '-W', '--showformat', "'${Status} ${Package} ${Version}\\n'", 'faff']).
           yields(StringIO.new(output))
 
         pkg.property(:ensure).retrieve.should == expect
