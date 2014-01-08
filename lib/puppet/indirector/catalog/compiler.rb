@@ -83,6 +83,10 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     str += " in environment #{node.environment}" if node.environment
     config = nil
 
+    if Puppet[:gratuitous_function_parsing]
+      Puppet::Parser::Functions.forget_all(node.environment)
+    end
+
     benchmark(:notice, str) do
       Puppet::Util::Profiler.profile(str) do
         begin

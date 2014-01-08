@@ -198,4 +198,29 @@ describe Puppet::Parser::Functions do
       Puppet::Parser::Functions.instance_variable_get(:@functions)[Puppet::Node::Environment.current].should include(:testfunc)
     end
   end
+
+  describe "::forget_all" do
+
+    before :each do
+      Puppet::Parser::Functions.newfunction(:in_root, :type => :rvalue) { |args| }
+      Puppet::Node::Environment.current = "add_function_test"
+      Puppet::Parser::Functions.newfunction(:in_env, :type => :rvalue) { |args| }
+      Puppet::Node::Environment.current = "clear_test"
+      Puppet::Parser::Functions.newfunction(:in_env, :type => :rvalue) { |args| }
+      Puppet::Parser::Functions.forget_all
+    end
+
+    it "should clear functions added to the current environment" do
+      Puppet::Parser::Functions.instance_variable_get(:@functions)[Puppet::Node::Environment.current].should be_empty
+    end
+
+    it "should not touch functions in the root environment" do
+      Puppet::Parser::Functions.instance_variable_get(:@functions)[Puppet::Node::Environment.root].should_not be_empty
+    end
+
+    it "should not touch functions in other environments" do
+      Puppet::Node::Environment.current = "add_function_test"
+      Puppet::Parser::Functions.instance_variable_get(:@functions)[Puppet::Node::Environment.current].should include(:in_env)
+    end
+  end
 end

@@ -996,6 +996,13 @@ EOT
       :desc       => "Whether to only search for the complete
             hostname as it is in the certificate when searching for node information
             in the catalogs.",
+    },
+    :gratuitous_function_parsing => {
+      :default    => false,
+      :desc       => "Whether to discard known functions prior to
+        any catalog compilation. This eases debugging of functions added in plugins
+        in modules. WARNING: Setting this to true breaks thread safety of the master
+        process(es).",
     }
   )
 
