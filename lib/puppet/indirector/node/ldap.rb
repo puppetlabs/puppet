@@ -3,7 +3,7 @@ require 'puppet/indirector/ldap'
 
 class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   desc "Search in LDAP for node configuration information.  See
-  the [LDAP Nodes](http://projects.puppetlabs.com/projects/puppet/wiki/Ldap_Nodes) page for more information.  This will first
+  the [LDAP Nodes](http://docs.puppetlabs.com/guides/ldap_nodes.html) page for more information.  This will first
   search for whatever the certificate name is, then (if that name
   contains a `.`) for the short name, then `default`."
 
