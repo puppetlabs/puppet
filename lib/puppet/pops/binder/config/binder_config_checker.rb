@@ -42,12 +42,6 @@ module Puppet::Pops::Binder::Config
         accept(Issues::CONFIG_LAYERS_MISSING, config_file)
       end
 
-      if categories = (data['categories'] || data[:categories])
-        check_categories(categories, config_file)
-      else
-        accept(Issues::CONFIG_CATEGORIES_MISSING, config_file)
-      end
-
       if version = (data['version'] or data[:version])
         accept(Issues::CONFIG_WRONG_VERSION, config_file, {:expected => 1, :actual => version}) unless version == 1
       else
@@ -97,29 +91,6 @@ module Puppet::Pops::Binder::Config
       end
     end
 
-    def check_categories(categories, config_file)
-      unless categories.is_a?(Array)
-        accept(Issues::CATEGORIES_IS_NOT_ARRAY, config_file, :klass => categories.class)
-      else
-        categories.each { |entry| check_category(entry, config_file) }
-      end
-    end
-
-    def check_category(category, config_file)
-      type = @type_calculator.infer(category)
-      unless @type_calculator.assignable?(@array_of_string_type, type)
-        accept(Issues::CATEGORY_IS_NOT_ARRAY, config_file, :type => @type_calculator.string(type))
-        return
-      end
-      unless category.size == 2
-        accept(Issues::CATEGORY_NOT_TWO_STRINGS, config_file, :count => category.size)
-        return
-      end
-      unless category[0] =~ /[a-z][a-zA-Z0-9_]*/
-        accept(Issues::INVALID_CATEGORY_NAME, config_file, :name => category[0])
-      end
-    end
-
     # references to bindings is a single String URI, or an array of String URI
     # @param kind [String] 'include' or 'exclude' (used in issue messages)
     # @param value [String, Array<String>] one or more String URI binding references
@@ -131,12 +102,7 @@ module Puppet::Pops::Binder::Config
       value.each {|ref| check_reference(ref, kind, config_file) }
     end
 
-    # A reference is a URI in string form having one of the schemes:
-    # - module-hiera
-    # - confdir-hiera
-    # - enc
-    #
-    # and with a path (at least '/')
+    # A reference is a URI in string form having a scheme and a path (at least '/')
     #
     def check_reference(value, kind, config_file)
       begin
@@ -161,7 +127,7 @@ module Puppet::Pops::Binder::Config
       end
       # check known extensions
       extensions.each_key do |key|
-        unless ['scheme_handlers', 'hiera_backends'].include? key
+        unless ['scheme_handlers'].include? key
           accept(Issues::UNKNOWN_EXTENSION, config_file, :extension => key)
         end
       end
@@ -171,13 +137,6 @@ module Puppet::Pops::Binder::Config
           accept(Issues::EXTENSION_BINDING_NOT_HASH, config_file, :extension => 'scheme_handlers', :actual => binding_schemes.class.name)
         end
       end
-
-      if hiera_backends = extensions['hiera_backends']
-        unless hiera_backends.is_a?(Hash)
-          accept(Issues::EXTENSION_BINDING_NOT_HASH, config_file, :extension => 'hiera_backends', :actual => hiera_backends.class.name)
-        end
-      end
-
     end
   end
 end

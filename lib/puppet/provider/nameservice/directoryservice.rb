@@ -251,7 +251,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
              Please check your password and try again.")
       end
 
-      if File.exists?("#{users_plist_dir}/#{resource_name}.plist")
+      if Puppet::FileSystem::File.exist?("#{users_plist_dir}/#{resource_name}.plist")
         # If a plist already exists in /var/db/dslocal/nodes/Default/users, then
         # we will need to extract the binary plist from the 'ShadowHashData'
         # key, log the new password into the resultant plist's 'SALTED-SHA512'
@@ -296,7 +296,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
       password_hash = nil
       password_hash_file = "#{password_hash_dir}/#{guid}"
-      if File.exists?(password_hash_file) and File.file?(password_hash_file)
+      if Puppet::FileSystem::File.exist?(password_hash_file) and File.file?(password_hash_file)
         fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
         f = File.new(password_hash_file)
         password_hash = f.read
@@ -304,7 +304,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       end
       password_hash
     else
-      if File.exists?("#{users_plist_dir}/#{username}.plist")
+      if Puppet::FileSystem::File.exist?("#{users_plist_dir}/#{username}.plist")
         # If a plist exists in /var/db/dslocal/nodes/Default/users, we will
         # extract the binary plist from the 'ShadowHashData' key, decode the
         # salted-SHA512 password hash, and then return it.

@@ -1,8 +1,10 @@
 # included so we can test object types
 require 'puppet'
+require 'puppet/network/format_support'
 
 # A class for handling metrics.  This is currently ridiculously hackish.
 class Puppet::Util::Metric
+  include Puppet::Network::FormatSupport
 
   attr_accessor :type, :name, :value, :label
   attr_writer :values
@@ -15,12 +17,16 @@ class Puppet::Util::Metric
     metric
   end
 
-  def to_pson
+  def to_data_hash
     {
       'name' => @name,
       'label' => @label,
       'values' => @values
-    }.to_pson
+    }
+  end
+
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
   end
 
   # Return a specific value
@@ -155,7 +161,7 @@ class Puppet::Util::Metric
       Puppet.warning "RRD library is missing; cannot store metrics"
       return
     end
-    self.create(time - 5) unless FileTest.exists?(self.path)
+    self.create(time - 5) unless Puppet::FileSystem::File.exist?(self.path)
 
     if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
       @rrd ||= RRDtool.new(self.path)

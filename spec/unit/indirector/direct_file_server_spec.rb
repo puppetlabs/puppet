@@ -26,12 +26,12 @@ describe Puppet::Indirector::DirectFileServer do
   describe Puppet::Indirector::DirectFileServer, "when finding a single file" do
 
     it "should return nil if the file does not exist" do
-      FileTest.expects(:exists?).with(@path).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(@path).returns false
       @server.find(@request).should be_nil
     end
 
     it "should return a Content instance created with the full path to the file if the file exists" do
-      FileTest.expects(:exists?).with(@path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@path).returns true
       @model.expects(:new).returns(:mycontent)
       @server.find(@request).should == :mycontent
     end
@@ -42,7 +42,7 @@ describe Puppet::Indirector::DirectFileServer do
     before do
       @data = mock 'content'
       @data.stubs(:collect)
-      FileTest.expects(:exists?).with(@path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@path).returns true
     end
 
     it "should pass the full path to the instance" do
@@ -61,18 +61,18 @@ describe Puppet::Indirector::DirectFileServer do
 
   describe Puppet::Indirector::DirectFileServer, "when searching for multiple files" do
     it "should return nil if the file does not exist" do
-      FileTest.expects(:exists?).with(@path).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(@path).returns false
       @server.find(@request).should be_nil
     end
 
     it "should use :path2instances from the terminus_helper to return instances if the file exists" do
-      FileTest.expects(:exists?).with(@path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@path).returns true
       @server.expects(:path2instances)
       @server.search(@request)
     end
 
     it "should pass the original request to :path2instances" do
-      FileTest.expects(:exists?).with(@path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@path).returns true
       @server.expects(:path2instances).with(@request, @path)
       @server.search(@request)
     end

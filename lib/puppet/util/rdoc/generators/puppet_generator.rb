@@ -246,7 +246,7 @@ module Generators
     end
 
     def gen_composite_index(collection, template, filename)\
-      return if FileTest.exists?(filename)
+      return if Puppet::FileSystem::File.exist?(filename)
 
       template = TemplatePage.new(RDoc::Page::FR_INDEX_BODY, template)
       res1 = []

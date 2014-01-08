@@ -46,7 +46,7 @@ describe Puppet::Pops::Model::AstTransformer do
     end
 
     it "converts an unknown radix to an error string" do
-      ast = transform(Puppet::Pops::Model::Factory.new(Puppet::Pops::Model::LiteralNumber, 3, 2))
+      ast = transform(Puppet::Pops::Model::Factory.new(Puppet::Pops::Model::LiteralInteger, 3, 2))
 
       ast.should be_kind_of(Puppet::Parser::AST::Name)
       ast.value.should == "bad radix:3"
@@ -55,7 +55,9 @@ describe Puppet::Pops::Model::AstTransformer do
 
   it "preserves the file location" do
     model = literal(1)
-    model.record_position(location(3, 1, 10), location(3, 2, 11))
+    adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(model.current)
+    adapter.locator = Puppet::Pops::Parser::Locator.locator("\n\n1",filename)
+    model.record_position(location(2, 1), nil)
 
     ast = transform(model)
 
@@ -68,12 +70,7 @@ describe Puppet::Pops::Model::AstTransformer do
     transformer.transform(model)
   end
 
-  def location(line, column, offset)
-    position = Puppet::Pops::Adapters::SourcePosAdapter.new
-    position.line = line
-    position.pos = column
-    position.offset = offset
-
-    position
+  def location(offset, length)
+    Puppet::Pops::Parser::Locatable::Fixed.new(offset, length)
   end
 end

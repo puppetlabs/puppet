@@ -67,19 +67,24 @@ class Object
 end
 
 class Symbol
-  # So, it turns out that one of the biggest memory allocation hot-spots in
-  # our code was using symbol-to-proc - because it allocated a new instance
-  # every time it was called, rather than caching.
+  # So, it turns out that one of the biggest memory allocation hot-spots in our
+  # code was using symbol-to-proc - because it allocated a new instance every
+  # time it was called, rather than caching (in Ruby 1.8.7 and earlier).
+  #
+  # In Ruby 1.9.3 and later Symbol#to_proc does implement a cache so we skip
+  # our monkey patch.
   #
   # Changing this means we can see XX memory reduction...
-  if method_defined? :to_proc
-    alias __original_to_proc to_proc
-    def to_proc
-      @my_proc ||= __original_to_proc
-    end
-  else
-    def to_proc
-      @my_proc ||= Proc.new {|*args| args.shift.__send__(self, *args) }
+  if RUBY_VERSION < "1.9.3"
+    if method_defined? :to_proc
+      alias __original_to_proc to_proc
+      def to_proc
+        @my_proc ||= __original_to_proc
+      end
+    else
+      def to_proc
+        @my_proc ||= Proc.new {|*args| args.shift.__send__(self, *args) }
+      end
     end
   end
 
@@ -105,6 +110,7 @@ class IO
   end
 
   def self.binread(name, length = nil, offset = 0)
+    Puppet.deprecation_warning("This is a monkey-patched implementation of IO.binread on ruby 1.8 and is deprecated. Read the file without this method as it will be removed in a future version.")
     File.open(name, 'rb') do |f|
       f.seek(offset) if offset > 0
       f.read(length)
@@ -194,8 +200,12 @@ if Puppet::Util::Platform.windows?
     def set_default_paths
       # This can be removed once openssl integrates with windows
       # cert store, see http://rt.openssl.org/Ticket/Display.html?id=2158
-      Puppet::Util::Windows::RootCerts.instance.each do |x509|
-        add_cert(x509)
+      Puppet::Util::Windows::RootCerts.instance.to_a.uniq.each do |x509|
+        begin
+          add_cert(x509)
+        rescue OpenSSL::X509::StoreError => e
+          warn "Failed to add #{x509.subject.to_s}"
+        end
       end
 
       __original_set_default_paths

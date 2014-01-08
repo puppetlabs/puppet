@@ -2,17 +2,10 @@
 require 'spec_helper'
 
 require 'puppet/indirector/file_bucket_file/file'
+require 'puppet/util/platform'
 
 describe Puppet::FileBucketFile::File do
   include PuppetSpec::Files
-
-  it "should be a subclass of the Code terminus class" do
-    Puppet::FileBucketFile::File.superclass.should equal(Puppet::Indirector::Code)
-  end
-
-  it "should have documentation" do
-    Puppet::FileBucketFile::File.doc.should be_instance_of(String)
-  end
 
   describe "non-stubbing tests" do
     include PuppetSpec::Files
@@ -23,7 +16,7 @@ describe Puppet::FileBucketFile::File do
 
     def save_bucket_file(contents, path = "/who_cares")
       bucket_file = Puppet::FileBucket::File.new(contents)
-      Puppet::FileBucket::File.indirection.save(bucket_file, "md5/#{Digest::MD5.hexdigest(contents)}#{path}")
+      Puppet::FileBucket::File.indirection.save(bucket_file, "#{bucket_file.name}#{path}")
       bucket_file.checksum_data
     end
 
@@ -34,17 +27,58 @@ describe Puppet::FileBucketFile::File do
         result.contents.should be_empty
       end
 
+      it "deals with multiple processes saving at the same time", :unless => Puppet::Util::Platform.windows? do
+        bucket_file = Puppet::FileBucket::File.new("contents")
+
+        children = []
+        5.times do |count|
+          children << Kernel.fork do
+            save_bucket_file("contents", "/testing")
+            exit(0)
+          end
+        end
+        children.each { |child| Process.wait(child) }
+
+        paths = File.read("#{Puppet[:bucketdir]}/9/8/b/f/7/d/8/c/98bf7d8c15784f0a3d63204441e1e2aa/paths").lines.to_a
+        paths.length.should == 1
+        Puppet::FileBucket::File.indirection.head("#{bucket_file.checksum_type}/#{bucket_file.checksum_data}/testing").should be_true
+      end
+
+      it "fails if the contents collide with existing contents" do
+        # This is the shortest known MD5 collision. See http://eprint.iacr.org/2010/643.pdf
+        first_contents = [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,
+                          0x6503cf04,0x854f709e,0xfb0fc034,0x874c9c65,
+                          0x2f94cc40,0x15a12deb,0x5c15f4a3,0x490786bb,
+                          0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("I" * 16)
+
+        collision_contents = [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,
+                              0x6503cf04,0x854f749e,0xfb0fc034,0x874c9c65,
+                              0x2f94cc40,0x15a12deb,0xdc15f4a3,0x490786bb,
+                              0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a].pack("I" * 16)
+
+        save_bucket_file(first_contents, "/foo/bar")
+
+        expect do
+          save_bucket_file(collision_contents, "/foo/bar")
+        end.to raise_error(Puppet::FileBucket::BucketError, /Got passed new contents/)
+      end
+
       describe "when supplying a path" do
         it "should store the path if not already stored" do
           checksum = save_bucket_file("stuff\r\n", "/foo/bar")
+
           dir_path = "#{Puppet[:bucketdir]}/f/c/7/7/7/c/0/b/fc777c0bc467e1ab98b4c6915af802ec"
-          IO.binread("#{dir_path}/contents").should == "stuff\r\n"
-          File.read("#{dir_path}/paths").should == "foo/bar\n"
+          contents_file = Puppet::FileSystem::File.new("#{dir_path}/contents")
+          paths_file = Puppet::FileSystem::File.new("#{dir_path}/paths")
+          contents_file.binread.should == "stuff\r\n"
+          paths_file.read.should == "foo/bar\n"
         end
 
         it "should leave the paths file alone if the path is already stored" do
           checksum = save_bucket_file("stuff", "/foo/bar")
+
           checksum = save_bucket_file("stuff", "/foo/bar")
+
           dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
           File.read("#{dir_path}/contents").should == "stuff"
           File.read("#{dir_path}/paths").should == "foo/bar\n"
@@ -52,7 +86,9 @@ describe Puppet::FileBucketFile::File do
 
         it "should store an additional path if the new path differs from those already stored" do
           checksum = save_bucket_file("stuff", "/foo/bar")
+
           checksum = save_bucket_file("stuff", "/foo/baz")
+
           dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
           File.read("#{dir_path}/contents").should == "stuff"
           File.read("#{dir_path}/paths").should == "foo/bar\nfoo/baz\n"
@@ -62,6 +98,7 @@ describe Puppet::FileBucketFile::File do
       describe "when not supplying a path" do
         it "should save the file and create an empty paths file" do
           checksum = save_bucket_file("stuff", "")
+
           dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
           File.read("#{dir_path}/contents").should == "stuff"
           File.read("#{dir_path}/paths").should == ""
@@ -78,16 +115,18 @@ describe Puppet::FileBucketFile::File do
 
         it "should return false/nil if the file is bucketed but with a different path" do
           checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
+
           Puppet::FileBucket::File.indirection.head("md5/#{checksum}/foo/baz").should == false
           Puppet::FileBucket::File.indirection.find("md5/#{checksum}/foo/baz").should == nil
         end
 
         it "should return true/file if the file is already bucketed with the given path" do
           contents = "I'm the contents of a file"
+
           checksum = save_bucket_file(contents, '/foo/bar')
+
           Puppet::FileBucket::File.indirection.head("md5/#{checksum}/foo/bar").should == true
           find_result = Puppet::FileBucket::File.indirection.find("md5/#{checksum}/foo/bar")
-          find_result.should be_a(Puppet::FileBucket::File)
           find_result.checksum.should == "{md5}#{checksum}"
           find_result.to_s.should == contents
         end
@@ -105,10 +144,11 @@ describe Puppet::FileBucketFile::File do
 
             it "should return true/file if the file is already bucketed" do
               contents = "I'm the contents of a file"
+
               checksum = save_bucket_file(contents, '/foo/bar')
+
               Puppet::FileBucket::File.indirection.head("md5/#{checksum}#{trailing_string}").should == true
               find_result = Puppet::FileBucket::File.indirection.find("md5/#{checksum}#{trailing_string}")
-              find_result.should be_a(Puppet::FileBucket::File)
               find_result.checksum.should == "{md5}#{checksum}"
               find_result.to_s.should == contents
             end
@@ -126,6 +166,7 @@ describe Puppet::FileBucketFile::File do
       it "should generate a proper diff if there is a diff" do
         checksum1 = save_bucket_file("foo\nbar\nbaz")
         checksum2 = save_bucket_file("foo\nbiz\nbaz")
+
         diff = Puppet::FileBucket::File.indirection.find("md5/#{checksum1}", :diff_with => checksum2)
         diff.should == <<HERE
 2c2
@@ -136,26 +177,22 @@ HERE
       end
 
       it "should raise an exception if the hash to diff against isn't found" do
-        checksum = save_bucket_file("whatever")
         bogus_checksum = "d1bf072d0e2c6e20e3fbd23f022089a1"
-        lambda { Puppet::FileBucket::File.indirection.find("md5/#{checksum}", :diff_with => bogus_checksum) }.should raise_error "could not find diff_with #{bogus_checksum}"
+        checksum = save_bucket_file("whatever")
+
+        expect do
+          Puppet::FileBucket::File.indirection.find("md5/#{checksum}", :diff_with => bogus_checksum)
+        end.to raise_error "could not find diff_with #{bogus_checksum}"
       end
 
       it "should return nil if the hash to diff from isn't found" do
-        checksum = save_bucket_file("whatever")
         bogus_checksum = "d1bf072d0e2c6e20e3fbd23f022089a1"
+        checksum = save_bucket_file("whatever")
+
         Puppet::FileBucket::File.indirection.find("md5/#{bogus_checksum}", :diff_with => checksum).should == nil
       end
     end
   end
-
-  describe "when initializing" do
-    it "should use the filebucket settings section" do
-      Puppet.settings.expects(:use).with(:filebucket)
-      Puppet::FileBucketFile::File.new
-    end
-  end
-
 
   [true, false].each do |override_bucket_path|
     describe "when bucket path #{if override_bucket_path then 'is' else 'is not' end} overridden" do
@@ -243,34 +280,6 @@ HERE
           end
         end
       end
-    end
-  end
-
-  describe "when verifying identical files" do
-    let(:contents) { "file\r\n contents" }
-    let(:digest) { "8b3702ad1aed1ace7e32bde76ffffb2d" }
-    let(:checksum) { "{md5}#{@digest}" }
-    let(:bucketdir) { tmpdir('file_bucket_file') }
-    let(:destdir) { "#{bucketdir}/8/b/3/7/0/2/a/d/8b3702ad1aed1ace7e32bde76ffffb2d" }
-    let(:bucket) { Puppet::FileBucket::File.new(contents) }
-
-    before :each do
-      Puppet[:bucketdir] = bucketdir
-      FileUtils.mkdir_p(destdir)
-    end
-
-    it "should raise an error if the files don't match" do
-      File.open(File.join(destdir, 'contents'), 'wb') { |f| f.print "corrupt contents" }
-
-      lambda{
-        Puppet::FileBucketFile::File.new.send(:verify_identical_file!, bucket)
-      }.should raise_error(Puppet::FileBucket::BucketError)
-    end
-
-    it "should do nothing if the files match" do
-      File.open(File.join(destdir, 'contents'), 'wb') { |f| f.print contents }
-
-      Puppet::FileBucketFile::File.new.send(:verify_identical_file!, bucket)
     end
   end
 end

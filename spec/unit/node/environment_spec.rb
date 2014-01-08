@@ -47,6 +47,21 @@ describe Puppet::Node::Environment do
       Puppet::Node::Environment.new(one).should equal(one)
     end
 
+    describe "watching a file" do
+      let(:filename) { "filename" }
+
+      it "accepts a File" do
+        file = tmpfile(filename)
+        env.known_resource_types.expects(:watch_file).with(file.to_s)
+        env.watch_file(file)
+      end
+
+      it "accepts a String" do
+        env.known_resource_types.expects(:watch_file).with(filename)
+        env.watch_file(filename)
+      end
+    end
+
     describe "when managing known resource types" do
       before do
         @collection = Puppet::Resource::TypeCollection.new(env)
@@ -144,7 +159,11 @@ describe Puppet::Node::Environment do
       end
 
       it "should ask the Puppet settings instance for the setting qualified with the environment name" do
-        Puppet.settings.set_value(:server, "myval", :testing)
+        Puppet.settings.parse_config(<<-CONF)
+        [testing]
+        server = myval
+        CONF
+
         env[:server].should == "myval"
       end
 
@@ -383,8 +402,9 @@ describe Puppet::Node::Environment do
     end
 
     describe "when performing initial import" do
+      let(:env) { Puppet::Node::Environment.new("test") }
       before do
-        @parser = Puppet::Parser::ParserFactory.parser("test")
+        @parser = Puppet::Parser::ParserFactory.parser(env)
 #        @parser = Puppet::Parser::EParserAdapter.new(Puppet::Parser::Parser.new("test")) # TODO: FIX PARSER FACTORY
         Puppet::Parser::ParserFactory.stubs(:parser).returns @parser
       end
@@ -415,7 +435,7 @@ describe Puppet::Node::Environment do
       end
 
       it "should fail helpfully if there is an error importing" do
-        File.stubs(:exist?).returns true
+        Puppet::FileSystem::File.stubs(:exist?).returns true
         env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(env)
         @parser.expects(:file=).once
         @parser.expects(:parse).raises ArgumentError
@@ -439,12 +459,14 @@ describe Puppet::Node::Environment do
       end
     end
   end
+
   describe 'with classic parser' do
     before :each do
       Puppet[:parser] = 'current'
     end
     it_behaves_like 'the environment'
   end
+
   describe 'with future parser' do
     before :each do
       Puppet[:parser] = 'future'

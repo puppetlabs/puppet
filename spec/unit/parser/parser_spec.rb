@@ -53,7 +53,7 @@ describe Puppet::Parser do
 
   describe "when parsing files" do
     before do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       File.stubs(:read).returns ""
       @parser.stubs(:watch_file)
     end
@@ -527,5 +527,13 @@ describe Puppet::Parser do
     @parser.known_resource_types.import_ast(@parser.parse("define funtest {}"), '')
     @parser.known_resource_types.hostclass('funtest').
       should == @parser.find_hostclass("", "fUntEst")
+  end
+
+  context "deprecations" do
+    it "should flag use of import as deprecated" do
+      Puppet.expects(:deprecation_warning).once
+      @parser.known_resource_types.loader.expects(:import).with('foo', Dir.pwd)
+      @parser.parse("import 'foo'")
+    end
   end
 end

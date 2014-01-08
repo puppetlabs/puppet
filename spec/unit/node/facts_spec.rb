@@ -152,12 +152,8 @@ describe Puppet::Node::Facts, "when indirecting" do
         result = PSON.parse(facts.to_pson)
         result['name'].should == facts.name
         result['values'].should == facts.values.reject { |key, value| key.to_s =~ /_/ }
-        result['timestamp'].should == facts.timestamp.to_s
-        result['expiration'].should == facts.expiration.to_s
-      end
-
-      def validate_as_json(facts)
-        JSON::Validator.validate!(FACTS_SCHEMA, facts)
+        result['timestamp'].should == facts.timestamp.iso8601(9)
+        result['expiration'].should == facts.expiration.iso8601(9)
       end
 
       it "should generate valid facts data against the facts schema", :unless => Puppet.features.microsoft_windows? do
@@ -165,7 +161,7 @@ describe Puppet::Node::Facts, "when indirecting" do
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
 
-        validate_as_json(facts.to_pson)
+        JSON::Validator.validate!(FACTS_SCHEMA, facts.to_pson)
       end
 
       it "should not include nil values" do

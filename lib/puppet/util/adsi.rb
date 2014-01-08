@@ -41,6 +41,11 @@ module Puppet::Util::ADSI
       "winmgmts:{impersonationLevel=impersonate}!//#{host}/root/cimv2"
     end
 
+    def sid_uri(sid)
+      raise Puppet::Error.new( "Must use a valid SID object" ) if !sid.kind_of?(Win32::Security::SID)
+      "WinNT://#{sid.to_s}"
+    end
+
     def uri(resource_name, resource_type, host = '.')
       "#{computer_uri(host)}/#{resource_name},#{resource_type}"
     end
@@ -64,22 +69,40 @@ module Puppet::Util::ADSI
     extend Enumerable
 
     attr_accessor :native_user
-    attr_reader :name
+    attr_reader :name, :sid
     def initialize(name, native_user = nil)
       @name = name
       @native_user = native_user
     end
 
+    def self.parse_name(name)
+      if name =~ /\//
+        raise Puppet::Error.new( "Value must be in DOMAIN\\user style syntax" )
+      end
+
+      matches = name.scan(/((.*)\\)?(.*)/)
+      domain = matches[0][1] || '.'
+      account = matches[0][2]
+
+      return account, domain
+    end
+
     def native_user
-      @native_user ||= Puppet::Util::ADSI.connect(uri)
+      @native_user ||= Puppet::Util::ADSI.connect(self.class.uri(*self.class.parse_name(@name)))
+    end
+
+    def sid
+      @sid ||= Puppet::Util::Windows::Security.octet_string_to_sid_object(native_user.objectSID)
     end
 
     def self.uri(name, host = '.')
+      host = '.' if ['NT AUTHORITY', 'BUILTIN', Socket.gethostname].include?(host)
+
       Puppet::Util::ADSI.uri(name, 'user', host)
     end
 
     def uri
-      self.class.uri(name)
+      self.class.uri(sid.account, sid.domain)
     end
 
     def self.logon(name, password)
@@ -131,14 +154,14 @@ module Puppet::Util::ADSI
 
     def add_to_groups(*group_names)
       group_names.each do |group_name|
-        Puppet::Util::ADSI::Group.new(group_name).add_member(@name)
+        Puppet::Util::ADSI::Group.new(group_name).add_member_sids(sid)
       end
     end
     alias add_to_group add_to_groups
 
     def remove_from_groups(*group_names)
       group_names.each do |group_name|
-        Puppet::Util::ADSI::Group.new(group_name).remove_member(@name)
+        Puppet::Util::ADSI::Group.new(group_name).remove_member_sids(sid)
       end
     end
     alias remove_from_group remove_from_groups
@@ -167,7 +190,7 @@ module Puppet::Util::ADSI
     end
 
     def self.exists?(name)
-      Puppet::Util::ADSI::connectable?(User.uri(name))
+      Puppet::Util::ADSI::connectable?(User.uri(*User.parse_name(name)))
     end
 
     def self.delete(name)
@@ -175,7 +198,7 @@ module Puppet::Util::ADSI
     end
 
     def self.each(&block)
-      wql = Puppet::Util::ADSI.execquery("select name from win32_useraccount")
+      wql = Puppet::Util::ADSI.execquery('select name from win32_useraccount where localaccount = "TRUE"')
 
       users = []
       wql.each do |u|
@@ -233,19 +256,43 @@ module Puppet::Util::ADSI
       self
     end
 
-    def add_members(*names)
-      names.each do |name|
-        native_group.Add(Puppet::Util::ADSI::User.uri(name, Puppet::Util::ADSI.computer_name))
+    def self.name_sid_hash(names)
+      return [] if names.nil? or names.empty?
+
+      sids = names.map do |name|
+        sid = Puppet::Util::Windows::Security.name_to_sid_object(name)
+        raise Puppet::Error.new( "Could not resolve username: #{name}" ) if !sid
+        [sid.to_s, sid]
       end
+
+      Hash[ sids ]
+    end
+
+    def add_members(*names)
+      Puppet.deprecation_warning('Puppet::Util::ADSI::Group#add_members is deprecated; please use Puppet::Util::ADSI::Group#add_member_sids')
+      sids = self.class.name_sid_hash(names)
+      add_member_sids(*sids.values)
     end
     alias add_member add_members
 
     def remove_members(*names)
-      names.each do |name|
-        native_group.Remove(Puppet::Util::ADSI::User.uri(name, Puppet::Util::ADSI.computer_name))
-      end
+      Puppet.deprecation_warning('Puppet::Util::ADSI::Group#remove_members is deprecated; please use Puppet::Util::ADSI::Group#remove_member_sids')
+      sids = self.class.name_sid_hash(names)
+      remove_member_sids(*sids.values)
     end
     alias remove_member remove_members
+
+    def add_member_sids(*sids)
+      sids.each do |sid|
+        native_group.Add(Puppet::Util::ADSI.sid_uri(sid))
+      end
+    end
+
+    def remove_member_sids(*sids)
+      sids.each do |sid|
+        native_group.Remove(Puppet::Util::ADSI.sid_uri(sid))
+      end
+    end
 
     def members
       # WIN32OLE objects aren't enumerable, so no map
@@ -254,18 +301,27 @@ module Puppet::Util::ADSI
       members
     end
 
+    def member_sids
+      sids = []
+      native_group.Members.each do |m|
+        sids << Puppet::Util::Windows::Security.octet_string_to_sid_object(m.objectSID)
+      end
+      sids
+    end
+
     def set_members(desired_members)
       return if desired_members.nil? or desired_members.empty?
 
-      current_members = self.members
+      current_hash = Hash[ self.member_sids.map { |sid| [sid.to_s, sid] } ]
+      desired_hash = self.class.name_sid_hash(desired_members)
 
       # First we add all missing members
-      members_to_add = desired_members - current_members
-      add_members(*members_to_add)
+      members_to_add = (desired_hash.keys - current_hash.keys).map { |sid| desired_hash[sid] }
+      add_member_sids(*members_to_add)
 
       # Then we remove all extra members
-      members_to_remove = current_members - desired_members
-      remove_members(*members_to_remove)
+      members_to_remove = (current_hash.keys - desired_hash.keys).map { |sid| current_hash[sid] }
+      remove_member_sids(*members_to_remove)
     end
 
     def self.create(name)
@@ -283,7 +339,7 @@ module Puppet::Util::ADSI
     end
 
     def self.each(&block)
-      wql = Puppet::Util::ADSI.execquery( "select name from win32_group" )
+      wql = Puppet::Util::ADSI.execquery( 'select name from win32_group where localaccount = "TRUE"' )
 
       groups = []
       wql.each do |g|

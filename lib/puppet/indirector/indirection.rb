@@ -85,7 +85,7 @@ class Puppet::Indirector::Indirection
   def doc
     text = ""
 
-    text += scrub(@doc) + "\n\n" if @doc
+    text << scrub(@doc) << "\n\n" if @doc
 
     text << "* **Indirected Class**: `#{@indirected_class}`\n";
     if terminus_setting
@@ -178,6 +178,10 @@ class Puppet::Indirector::Indirection
     instance.expiration = Time.now - 60
 
     cache.save(request(:save, nil, instance, options))
+  end
+
+  def allow_remote_requests?
+    terminus.allow_remote_requests?
   end
 
   # Search for an instance in the appropriate terminus, caching the

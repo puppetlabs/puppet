@@ -231,6 +231,13 @@ describe Puppet::Util::SUIDManager do
         output.first.should == 'output'
         output.last.should be_a(Process::Status)
       end
+
+      it "should log a deprecation notice" do
+        Puppet::Util::Execution.stubs(:execute).returns("success")
+        Puppet.expects(:deprecation_warning).with('Puppet::Util::SUIDManager.run_and_capture is deprecated; please use Puppet::Util::Execution.execute instead.')
+
+        output = Puppet::Util::SUIDManager.run_and_capture 'yay', user[:uid], user[:gid]
+      end
     end
   end
 

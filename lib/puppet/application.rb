@@ -381,13 +381,17 @@ class Application
       Puppet::Util::Log.newdestination(:console)
     end
 
+    set_log_level
+
+    Puppet::Util::Log.setup_default unless options[:setdest]
+  end
+
+  def set_log_level
     if options[:debug]
       Puppet::Util::Log.level = :debug
     elsif options[:verbose]
       Puppet::Util::Log.level = :info
     end
-
-    Puppet::Util::Log.setup_default unless options[:setdest]
   end
 
   def handle_logdest_arg(arg)
@@ -401,7 +405,7 @@ class Application
 
   def configure_indirector_routes
     route_file = Puppet[:route_file]
-    if ::File.exists?(route_file)
+    if Puppet::FileSystem::File.exist?(route_file)
       routes = YAML.load_file(route_file)
       application_routes = routes[name.to_s]
       Puppet::Indirector.configure_routes(application_routes) if application_routes

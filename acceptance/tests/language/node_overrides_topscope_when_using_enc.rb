@@ -2,14 +2,6 @@ test_name "ENC still allows a node to override a topscope var"
 
 testdir = master.tmpdir('scoping_deprecation')
 
-create_remote_file(master, "#{testdir}/puppet.conf", <<END)
-[main]
-node_terminus = exec
-external_nodes = "#{testdir}/enc"
-manifest = "#{testdir}/site.pp"
-modulepath = "#{testdir}/modules"
-END
-
 on master, "mkdir -p #{testdir}/modules/a/manifests"
 
 create_remote_file(master, "#{testdir}/enc", <<-PP)
@@ -43,7 +35,7 @@ class a {
 }
 PP
 
-on master, "chown -R root:puppet #{testdir}"
+on master, "chown -R #{master['user']}:#{master['group']} #{testdir}"
 on master, "chmod -R g+rwX #{testdir}"
 on master, "chmod -R a+x #{testdir}/enc"
 
@@ -55,7 +47,16 @@ assert_log_on_master_does_not_contain = lambda do |string|
   on master, "grep -v '#{string}' #{testdir}/log"
 end
 
-with_master_running_on(master, "--config #{testdir}/puppet.conf --debug --verbose --daemonize --dns_alt_names=\"puppet,$(facter hostname),$(facter fqdn)\" --autosign true") do
+master_opts = {
+  'master' => {
+    'node_terminus' => 'exec',
+    'external_nodes' => "#{testdir}/enc",
+    'manifest' => "#{testdir}/site.pp",
+    'modulepath' => "#{testdir}/modules"
+  }
+}
+
+with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
     run_agent_on(agent, "--no-daemonize --onetime --verbose --server #{master}")
 
@@ -63,5 +64,3 @@ with_master_running_on(master, "--config #{testdir}/puppet.conf --debug --verbos
     assert_match("ENC overridden in default node.", stdout)
   end
 end
-
-on master, "rm -rf #{testdir}"

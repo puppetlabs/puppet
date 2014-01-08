@@ -1,3 +1,5 @@
+require 'puppet/indirector/data_binding/hiera'
+
 module Puppet::Test
   # This class is intended to provide an API to be used by external projects
   #  when they are running tests that depend on puppet core.  This should
@@ -51,6 +53,7 @@ module Puppet::Test
     # Call this method once per test, prior to execution of each invididual test.
     # @return nil
     def self.before_each_test()
+
       # We need to preserve the current state of all our indirection cache and
       # terminus classes.  This is pretty important, because changes to these
       # are global and lead to order dependencies in our testing.
@@ -87,6 +90,11 @@ module Puppet::Test
       Puppet::Util::Profiler.clear
 
       Puppet.clear_deprecation_warnings
+
+      Puppet::DataBinding::Hiera.instance_variable_set("@hiera", nil)
+
+      Puppet::Context.push(:trusted_information =>
+                           Puppet::Context::TrustedInformation.new('local', 'testing', {}))
     end
 
     # Call this method once per test, after execution of each individual test.
@@ -133,6 +141,7 @@ module Puppet::Test
       $LOAD_PATH.clear
       $old_load_path.each {|x| $LOAD_PATH << x }
 
+      Puppet::Context.pop
     end
 
 

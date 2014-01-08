@@ -6,15 +6,16 @@ class Puppet::Pops::Parser::Parser
 
 token STRING DQPRE DQMID DQPOST
 token LBRACK  RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
-token FALSE EQUALS APPENDS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
+token FALSE EQUALS APPENDS DELETES LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE
 token DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
-token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
+token NAME SEMIC CASE DEFAULT AT ATAT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
 token IN UNLESS PIPE
 token LAMBDA SELBRACE
+token NUMBER
 token LOW
 
 prechigh
@@ -23,10 +24,11 @@ prechigh
   left  PIPE
   left  LPAREN
   left  RPAREN
-  left  AT
+  left  AT ATAT
   left  DOT
   left  CALL
-  left  LBRACK
+  left  LBRACK LISTSTART
+  left  RBRACK
   left  QMARK
   left  LCOLLECT LLCOLLECT
   right NOT
@@ -40,7 +42,7 @@ prechigh
   left  GREATEREQUAL GREATERTHAN LESSTHAN LESSEQUAL
   left  AND
   left  OR
-  right APPENDS EQUALS
+  right APPENDS DELETES EQUALS
   left  LBRACE
   left  SELBRACE
   left  RBRACE
@@ -55,7 +57,7 @@ preclow
 rule
 # Produces [Model::BlockExpression, Model::Expression, nil] depending on multiple statements, single statement or empty
 program
-  : statements { result = Factory.block_or_expression(*val[0]) }
+  : statements { result = create_program(Factory.block_or_expression(*val[0])) }
   | nil
 
 # Produces a semantic model (non validated, but semantically adjusted).
@@ -92,8 +94,8 @@ expression
   : higher_precedence
   | expression LBRACK       expressions RBRACK =LBRACK { result = val[0][*val[2]]         ; loc result, val[0], val[3] }
   | expression IN           expression                 { result = val[0].in val[2]        ; loc result, val[1] }
-  | expression MATCH        match_rvalue               { result = val[0] =~  val[2]       ; loc result, val[1] }
-  | expression NOMATCH      match_rvalue               { result = val[0].mne val[2]       ; loc result, val[1] }
+  | expression MATCH        expression                 { result = val[0] =~  val[2]       ; loc result, val[1] }
+  | expression NOMATCH      expression                 { result = val[0].mne val[2]       ; loc result, val[1] }
   | expression PLUS         expression                 { result = val[0] +   val[2]       ; loc result, val[1] }
   | expression MINUS        expression                 { result = val[0] -   val[2]       ; loc result, val[1] }
   | expression DIV          expression                 { result = val[0] /   val[2]       ; loc result, val[1] }
@@ -113,6 +115,7 @@ expression
   | expression OR           expression                 { result = val[0].or  val[2]       ; loc result, val[1] }
   | expression EQUALS       expression                 { result = val[0].set(val[2])      ; loc result, val[1] }
   | expression APPENDS      expression                 { result = val[0].plus_set(val[2]) ; loc result, val[1] }
+  | expression DELETES      expression                 { result = val[0].minus_set(val[2]); loc result, val[1] }
   | expression QMARK selector_entries                  { result = val[0].select(*val[2])  ; loc result, val[0] }
   |            LPAREN       expression RPAREN          { result = val[1].paren()          ; loc result, val[0] }
 
@@ -148,7 +151,8 @@ literal_expression
   | default
   | hash
   | regex
-  | text_or_name =LOW # resolves hash key ambiguity (racc W U require this?)
+  | text_or_name
+  | number
   | type
   | undef
 
@@ -203,36 +207,17 @@ call_method_with_lambda_expression
 #
 # This is a temporary switch while experimenting with concrete syntax
 # One should be picked for inclusion in puppet.
-lambda
-  : lambda_j8
-  | lambda_ruby
 
-# Java8-like lambda with parameters to the left of the body
-lambda_j8
-  : lambda_parameter_list optional_farrow lambda_rest {
-      result = Factory.LAMBDA(val[0], val[2])
+# Lambda with parameters to the left of the body
+lambda
+  : lambda_parameter_list lambda_rest {
+      result = Factory.LAMBDA(val[0], val[1])
 #      loc result, val[1] # TODO
     }
 
 lambda_rest
   : LBRACE statements RBRACE { result = val[1] }
   | LBRACE RBRACE { result = nil }
-
-optional_farrow
-  : nil
-  | FARROW
-
-# Ruby-like lambda with parameters inside the body
-#
-lambda_ruby
-  : LAMBDA lambda_parameter_list statements RBRACE {
-      result = Factory.LAMBDA(val[1], val[2])
-      loc result, val[0], val[3]
-    }
-  | LAMBDA lambda_parameter_list RBRACE {
-      result = Factory.LAMBDA(val[1], nil)
-      loc result, val[0], val[2]
-    }
 
 # Produces Array<Model::Parameter>
 lambda_parameter_list
@@ -353,10 +338,6 @@ case_expression
   selector_entry
     : expression FARROW expression { result = Factory.MAP(val[0], val[2]) ; loc result, val[1] }
 
-# --- IMPORT
-#     IMPORT is handled as a non parenthesized call and is transformed to an ImportExpression.
-#     i.e. there is no special grammar for it - it is just a "call statement".
-
 #---RESOURCE
 #
 # Produces [Model::ResourceExpression, Model::ResourceDefaultsExpression]
@@ -376,24 +357,20 @@ resource_expression
         tmp.form = val[0]
         tmp
       when :defaults
-        error "A resource default can not be virtual or exported"
+        error val[1], "A resource default can not be virtual or exported"
       when :override
-        error "A resource override can not be virtual or exported"
+        error val[1], "A resource override can not be virtual or exported"
       else
-        error "Expression is not valid as a resource, resource-default, or resource-override"
+        error val[1], "Expression is not valid as a resource, resource-default, or resource-override"
       end
       loc result, val[1], val[4]
     }
   | at expression LBRACE attribute_operations endcomma RBRACE {
       result = case Factory.resource_shape(val[1])
-      when :resource, :class
-        error "Defaults are not virtualizable"
-      when :defaults
-        error "Defaults are not virtualizable"
-      when :override
-        error "Defaults are not virtualizable"
+      when :resource, :class, :defaults, :override
+        error val[1], "Defaults are not virtualizable"
       else
-        error "Expression is not valid as a resource, resource-default, or resource-override"
+        error val[1], "Expression is not valid as a resource, resource-default, or resource-override"
       end
     }
   | expression LBRACE resourceinstances endsemi RBRACE {
@@ -401,11 +378,11 @@ resource_expression
       when :resource, :class
         Factory.RESOURCE(Factory.fqn(token_text(val[0])), val[2])
       when :defaults
-        error "A resource default can not specify a resource name"
+        error val[1], "A resource default can not specify a resource name"
       when :override
-        error "A resource override does not allow override of name of resource"
+        error val[1], "A resource override does not allow override of name of resource"
       else
-        error "Expression is not valid as a resource, resource-default, or resource-override"
+        error val[1], "Expression is not valid as a resource, resource-default, or resource-override"
       end
       loc result, val[0], val[4]
     }
@@ -413,16 +390,21 @@ resource_expression
       result = case Factory.resource_shape(val[0])
       when :resource, :class
         # This catches deprecated syntax.
-        error "All resource specifications require names"
+        error val[1], "All resource specifications require names"
       when :defaults
         Factory.RESOURCE_DEFAULTS(val[0], val[2])
       when :override
         # This was only done for override in original - TODO shuld it be here at all
         Factory.RESOURCE_OVERRIDE(val[0], val[2])
       else
-        error "Expression is not valid as a resource, resource-default, or resource-override"
+        error val[0], "Expression is not valid as a resource, resource-default, or resource-override"
       end
       loc result, val[0], val[4]
+    }
+  | at CLASS LBRACE resourceinstances endsemi RBRACE {
+        result = Factory.RESOURCE(Factory.fqn(token_text(val[1])), val[3])
+        result.form = val[0]
+        loc result, val[1], val[5]
     }
   | CLASS LBRACE resourceinstances endsemi RBRACE {
         result = Factory.RESOURCE(Factory.fqn(token_text(val[0])), val[2])
@@ -443,6 +425,7 @@ resource_expression
   at
     : AT    { result = :virtual  }
     | AT AT { result = :exported }
+    | ATAT  { result = :exported }
 
 #---COLLECTION
 #
@@ -508,36 +491,36 @@ attribute_operations
 # Produces Model::Definition
 #
 definition_expression
-  : DEFINE classname parameter_list LBRACE statements RBRACE {
-      result = Factory.DEFINITION(classname(val[1][:value]), val[2], val[4])
+  : DEFINE classname parameter_list LBRACE opt_statements RBRACE {
+      result = add_definition(Factory.DEFINITION(classname(val[1][:value]), val[2], val[4]))
       loc result, val[0], val[5]
-      @lexer.indefine = false
-    }
-  | DEFINE classname parameter_list LBRACE RBRACE {
-      result = Factory.DEFINITION(classname(val[1][:value]), val[2], nil)
-      loc result, val[0], val[4]
-      @lexer.indefine = false
+      # New lexer does not keep track of this, this is done in validation
+      if @lexer.respond_to?(:'indefine=')
+        @lexer.indefine = false
+      end
     }
 
 #---HOSTCLASS
-# ORIGINAL COMMENT: Our class gets defined in the parent namespace, not our own.
-#    WAT ??! This is way odd; should get its complete name, classnames do not nest
-#    Seems like the call to classname makes use of the name scope
-#    (This is uneccesary, since the parent name is known when evaluating)
 #
 # Produces Model::HostClassDefinition
 #
 hostclass_expression
-  : CLASS classname parameter_list classparent LBRACE statements RBRACE {
-      @lexer.namepop
-      result = Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), val[5])
+  : CLASS stacked_classname parameter_list classparent LBRACE opt_statements RBRACE {
+      # Remove this class' name from the namestack as all nested classes have been parsed
+      namepop
+      result = add_definition(Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), val[5]))
       loc result, val[0], val[6]
     }
-  | CLASS classname parameter_list classparent LBRACE RBRACE {
-      @lexer.namepop
-      result = Factory.HOSTCLASS(classname(val[1][:value]), val[2], token_text(val[3]), nil)
-      loc result, val[0], val[5]
-      }
+
+  # Record the classname so nested classes gets a fully qualified name at parse-time
+  # This is a separate rule since racc does not support intermediate actions.
+  #
+  stacked_classname
+    : classname { namestack(val[0][:value]) ; result = val[0] }
+
+  opt_statements
+    : statements
+    | nil
 
   # Produces String, name or nil result
   classparent
@@ -559,11 +542,11 @@ hostclass_expression
 #
 node_definition_expression
   : NODE hostnames nodeparent LBRACE statements RBRACE {
-      result = Factory.NODE(val[1], val[2], val[4])
+      result = add_definition(Factory.NODE(val[1], val[2], val[4]))
       loc result, val[0], val[5]
     }
   | NODE hostnames nodeparent LBRACE RBRACE {
-      result = Factory.NODE(val[1], val[2], nil)
+      result = add_definition(Factory.NODE(val[1], val[2], nil))
       loc result, val[0], val[4]
     }
 
@@ -579,21 +562,26 @@ node_definition_expression
   # Produces a LiteralExpression (string, :default, or regexp)
   # String with interpolation is validated for better error message
   hostname
-    : NAME        { result = Factory.fqn(val[0][:value]); loc result, val[0] }
-    | quotedtext  { result = val[0] } 
+    : dotted_name { result = val[0] }
+    | quotedtext  { result = val[0] }
     | DEFAULT     { result = Factory.literal(:default); loc result, val[0] }
     | regex
+
+  dotted_name
+    : NAME        { result = Factory.literal(val[0][:value]); loc result, val[0] }
+    | dotted_name DOT NAME { result = Factory.concat(val[0], '.', val[2][:value]); loc result, val[0], val[2] }
 
   # Produces Expression, since hostname is an Expression
   nodeparent
     : nil
     | INHERITS hostname { result = val[1] }
 
-#---NAMES AND PARAMTERS COMMON TO SEVERAL RULES
-# String result
+#---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
+#   Produces String
+#
 classname
   : NAME  { result = val[0] }
-  | CLASS { result = val[0] }
+  | CLASS { error val[0], "'class' is not a valid classname" }
 
 # Produces Array<Model::Parameter>
 parameter_list
@@ -614,10 +602,10 @@ parameter
 #--RESTRICTED EXPRESSIONS
 #  i.e. where one could have expected an expression, but the set is limited
 
-# What is allowed RHS of match operators (see expression)
-match_rvalue
-  : regex
-  | text_or_name
+## What is allowed RHS of match operators (see expression)
+#match_rvalue
+#  : regex
+#  | text_or_name
 
 #--VARIABLE
 #
@@ -631,6 +619,9 @@ array
   : LBRACK expressions       RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[2] }
   | LBRACK expressions COMMA RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
   | LBRACK                   RBRACK { result = Factory.literal([]) ; loc result, val[0] }
+  | LISTSTART expressions       RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[2] }
+  | LISTSTART expressions COMMA RBRACK { result = Factory.LIST(val[1]); loc result, val[0], val[3] }
+  | LISTSTART                   RBRACK { result = Factory.literal([]) ; loc result, val[0] }
 
 hash
   : LBRACE hashpairs RBRACE       { result = Factory.HASH(val[1]); loc result, val[0], val[2] }
@@ -642,7 +633,7 @@ hash
     | hashpairs COMMA hashpair { result = val[0].push val[2] }
 
   hashpair
-    : text_or_name FARROW expression { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
+    : expression FARROW expression { result = Factory.KEY_ENTRY(val[0], val[2]); loc result, val[1] }
 
 quotedtext
   : string
@@ -660,6 +651,7 @@ dqtail
   : dqpost        { result = [val[0]] }
   | dqmid dqrval  { result = [val[0]] + val[1] }
 
+number   : NUMBER   { result = Factory.NUMBER(val[0][:value]) ; loc result, val[0] }
 name     : NAME     { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }
 type     : CLASSREF { result = Factory.QREF(val[0][:value])  ; loc result, val[0] }
 undef    : UNDEF    { result = Factory.literal(:undef); loc result, val[0] }

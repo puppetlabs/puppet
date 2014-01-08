@@ -68,7 +68,7 @@ Puppet::Util::Log.newdesttype :file do
     # first make sure the directory exists
     # We can't just use 'Config.use' here, because they've
     # specified a "special" destination.
-    unless FileTest.exist?(File.dirname(path))
+    unless Puppet::FileSystem::File.exist?(File.dirname(path))
       FileUtils.mkdir_p(File.dirname(path), :mode => 0755)
       Puppet.info "Creating log directory #{File.dirname(path)}"
     end

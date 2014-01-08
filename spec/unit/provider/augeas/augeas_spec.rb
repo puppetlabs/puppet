@@ -276,6 +276,61 @@ describe provider_class do
       @provider.need_to_run?.should == true
     end
 
+    describe "performing numeric comparisons (#22617)" do
+      it "should return true when a get string compare is true" do
+        @resource[:onlyif] = "get bpath > a"
+        @augeas.stubs("get").returns("b")
+        @provider.need_to_run?.should == true
+      end
+
+      it "should return false when a get string compare is false" do
+        @resource[:onlyif] = "get a19path > a2"
+        @augeas.stubs("get").returns("a19")
+        @provider.need_to_run?.should == false
+      end
+
+      it "should return true when a get int gt compare is true" do
+        @resource[:onlyif] = "get path19 > 2"
+        @augeas.stubs("get").returns("19")
+        @provider.need_to_run?.should == true
+      end
+
+      it "should return true when a get int ge compare is true" do
+        @resource[:onlyif] = "get path19 >= 2"
+        @augeas.stubs("get").returns("19")
+        @provider.need_to_run?.should == true
+      end
+
+      it "should return true when a get int lt compare is true" do
+        @resource[:onlyif] = "get path2 < 19"
+        @augeas.stubs("get").returns("2")
+        @provider.need_to_run?.should == true
+      end
+
+      it "should return false when a get int le compare is false" do
+        @resource[:onlyif] = "get path39 <= 4"
+        @augeas.stubs("get").returns("39")
+        @provider.need_to_run?.should == false
+      end
+    end
+    describe "performing is_numeric checks (#22617)" do
+      it "should return false for nil" do
+        @provider.is_numeric?(nil).should == false
+      end
+      it "should return true for Fixnums" do
+        @provider.is_numeric?(9).should == true
+      end
+      it "should return true for numbers in Strings" do
+        @provider.is_numeric?('9').should == true
+      end
+      it "should return false for non-number Strings" do
+        @provider.is_numeric?('x9').should == false
+      end
+      it "should return false for other types" do
+        @provider.is_numeric?([true]).should == false
+      end
+    end
+
     it "should return false when a get filter does not match" do
       @resource[:onlyif] = "get path == another value"
       @augeas.stubs("get").returns("value")
@@ -619,7 +674,7 @@ describe provider_class do
       link = tmpfile('link')
       target = tmpfile('target')
       FileUtils.touch(target)
-      FileUtils.symlink(target, link)
+      Puppet::FileSystem::File.new(target).symlink(link)
 
       resource = Puppet::Type.type(:augeas).new(
         :name => 'test',
@@ -634,7 +689,7 @@ describe provider_class do
       catalog.apply
 
       File.ftype(link).should == 'link'
-      File.readlink(link).should == target
+      Puppet::FileSystem::File.new(link).readlink().should == target
       File.read(target).should =~ /PermitRootLogin no/
     end
   end
@@ -655,25 +710,34 @@ describe provider_class do
         @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
       end
 
-      it "and output to debug" do
+      it "and output only to debug when no path supplied" do
         @provider.expects(:debug).times(5)
-        @provider.print_load_errors
+        @provider.expects(:warning).never()
+        @provider.print_load_errors(nil)
       end
 
-      it "and output a warning and to debug" do
+      it "and output a warning and to debug when path supplied" do
+        @augeas.expects(:match).with("/augeas/files/foo//error").returns(["/augeas/files/foo/error"])
         @provider.expects(:warning).once()
         @provider.expects(:debug).times(4)
-        @provider.print_load_errors(:warning => true)
+        @provider.print_load_errors('/augeas/files/foo//error')
+      end
+
+      it "and output only to debug when path doesn't match" do
+        @augeas.expects(:match).with("/augeas/files/foo//error").returns([])
+        @provider.expects(:warning).never()
+        @provider.expects(:debug).times(5)
+        @provider.print_load_errors('/augeas/files/foo//error')
       end
     end
 
     it "should find load errors from lenses" do
-      @augeas.expects(:match).with("/augeas//error").returns(["/augeas/load/Xfm/error"])
+      @augeas.expects(:match).with("/augeas//error").twice.returns(["/augeas/load/Xfm/error"])
       @augeas.expects(:match).with("/augeas/load/Xfm/error/*").returns([])
       @augeas.expects(:get).with("/augeas/load/Xfm/error").returns(["Could not find lens php.aug"])
       @provider.expects(:warning).once()
       @provider.expects(:debug).twice()
-      @provider.print_load_errors(:warning => true)
+      @provider.print_load_errors('/augeas//error')
     end
 
     it "should find save errors and output to debug" do
@@ -701,7 +765,7 @@ describe provider_class do
     end
 
     it "should report load errors to debug only" do
-      @provider.expects(:print_load_errors).with(:warning => false)
+      @provider.expects(:print_load_errors).with(nil)
       aug = @provider.open_augeas
       aug.should_not == nil
     end
@@ -711,7 +775,7 @@ describe provider_class do
       @resource[:incl] = "/etc/hosts"
       @resource[:lens] = "Hosts.lns"
 
-      @provider.expects(:print_load_errors).with(:warning => true)
+      @provider.expects(:print_load_errors).with('/augeas//error')
       aug = @provider.open_augeas
       aug.should_not == nil
       aug.match("/files/etc/fstab").should == []
@@ -744,7 +808,7 @@ describe provider_class do
       it "should only load one file if relevant context given" do
         @resource[:context] = "/files/etc/fstab"
 
-        @provider.expects(:print_load_errors).with(:warning => true)
+        @provider.expects(:print_load_errors).with('/augeas/files/etc/fstab//error')
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
@@ -755,7 +819,7 @@ describe provider_class do
         @resource[:context] = "/files/etc/test"
         @resource[:load_path] = my_fixture_dir
 
-        @provider.expects(:print_load_errors).with(:warning => true)
+        @provider.expects(:print_load_errors).with('/augeas/files/etc/test//error')
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == []
@@ -766,7 +830,7 @@ describe provider_class do
       it "should load standard files if context isn't specific" do
         @resource[:context] = "/files/etc"
 
-        @provider.expects(:print_load_errors).with(:warning => false)
+        @provider.expects(:print_load_errors).with(nil)
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
@@ -776,7 +840,7 @@ describe provider_class do
       it "should not optimise if the context is a complex path" do
         @resource[:context] = "/files/*[label()='etc']"
 
-        @provider.expects(:print_load_errors).with(:warning => false)
+        @provider.expects(:print_load_errors).with(nil)
         aug = @provider.open_augeas
         aug.should_not == nil
         aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]

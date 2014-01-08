@@ -539,15 +539,18 @@ rspec ./test.rb:16 # fixture data using instance variables should not keep state
 
 ### Puppet-acceptance
 
-[puppet-acceptance]: https://github.com/puppetlabs/puppet-acceptance
+[beaker]: https://github.com/puppetlabs/beaker
 [test::unit]: http://test-unit.rubyforge.org/
 
-Puppet has a custom acceptance testing framework called
-[puppet-acceptance][puppet-acceptance] for running acceptance tests.
-Puppet-acceptance runs the tests by configuring one or more VMs, copying the
-test cases onto the VMs, performing the tests and collecting the results, and
-ensuring that the results match the intended behavior. It uses
-[test::unit][test::unit] to perform the actual assertions.
+Puppet has a custom acceptance testing framework called [beaker][beaker] for
+running acceptance tests.
+Beaker runs the tests by configuring one or more VMs, copying the test cases
+onto the VMs, performing the tests and collecting the results, and ensuring that
+the results match the intended behavior. It uses [test::unit][test::unit] to
+perform the actual assertions.
+
+For a detailed guide to running the acceptance tests locally on vagrant boxes,
+see the `acceptance/README.md` document in this repo.
 
 # UTF-8 Handling #
 
@@ -693,7 +696,7 @@ When Puppet master is started from Rack, Puppet 3.x will read from
 ~/.puppet/puppet.conf by default.  This is intended behavior.  Rack
 configurations should start Puppet master with an explicit configuration
 directory using `ARGV << "--confdir" << "/etc/puppet"`.  Please see the
-`ext/rack/files/config.ru` file for an up-to-date example.
+`ext/rack/config.ru` file for an up-to-date example.
 
 # Determining the Puppet Version
 

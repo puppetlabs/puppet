@@ -71,7 +71,8 @@ module Puppet::Parser::Functions
   #         :doc=>"Doubles an object, typically a number or string."}
   #
   # @example Invoke the double function from irb as is done in RSpec examples:
-  #     >> scope = Puppet::Parser::Scope.new_for_test_harness('example')
+  #     >> require 'puppet_spec/scope'
+  #     >> scope = PuppetSpec::Scope.create_test_scope_for_node('example')
   #     => Scope()
   #     >> scope.function_double([2])
   #     => 4
@@ -185,14 +186,14 @@ module Puppet::Parser::Functions
     ret = ""
 
     merged_functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
-      ret += "#{name}\n#{"-" * name.to_s.length}\n"
+      ret << "#{name}\n#{"-" * name.to_s.length}\n"
       if hash[:doc]
-        ret += Puppet::Util::Docs.scrub(hash[:doc])
+        ret << Puppet::Util::Docs.scrub(hash[:doc])
       else
-        ret += "Undocumented.\n"
+        ret << "Undocumented.\n"
       end
 
-      ret += "\n\n- *Type*: #{hash[:type]}\n\n"
+      ret << "\n\n- *Type*: #{hash[:type]}\n\n"
     end
 
     ret

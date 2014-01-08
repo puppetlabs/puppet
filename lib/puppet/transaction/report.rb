@@ -57,8 +57,7 @@ class Puppet::Transaction::Report
   attr_accessor :environment
 
   # A hash with a map from resource to status
-  # @return [Hash<{String => String}>] Resource name to status string.
-  # @todo Uncertain if the types in the hash are correct...
+  # @return [Hash{String => Puppet::Resource::Status}] Resource name to status.
   attr_reader :resource_statuses
 
   # A list of log messages.
@@ -216,7 +215,7 @@ class Puppet::Transaction::Report
     end
   end
 
-  def to_pson
+  def to_data_hash
     {
       'host' => @host,
       'time' => @time.iso8601(9),
@@ -231,7 +230,11 @@ class Puppet::Transaction::Report
       'logs' => @logs,
       'metrics' => @metrics,
       'resource_statuses' => @resource_statuses,
-    }.to_pson
+    }
+  end
+
+  def to_pson
+    to_data_hash.to_pson
   end
 
   # @return [String] the host name

@@ -2,6 +2,7 @@ require 'puppet/file_bucket'
 require 'puppet/indirector'
 require 'puppet/util/checksums'
 require 'digest/md5'
+require 'stringio'
 
 class Puppet::FileBucket::File
   # This class handles the abstract notion of a file in a filebucket.
@@ -34,6 +35,16 @@ class Puppet::FileBucket::File
     raise ArgumentError.new("Unknown option(s): #{options.keys.join(', ')}") unless options.empty?
   end
 
+  # @return [Num] The size of the contents
+  def size
+    contents.size
+  end
+
+  # @return [IO] A stream that reads the contents
+  def stream
+    StringIO.new(contents)
+  end
+
   def checksum_type
     'md5'
   end
@@ -60,7 +71,11 @@ class Puppet::FileBucket::File
 
   def to_pson
     Puppet.deprecation_warning("Serializing Puppet::FileBucket::File objects to pson is deprecated.")
-    { "contents" => contents }.to_pson
+    to_data_hash.to_pson
+  end
+
+  def to_data_hash
+    { "contents" => contents }
   end
 
   # This method is deprecated, but cannot be removed for awhile, otherwise
@@ -69,4 +84,5 @@ class Puppet::FileBucket::File
     Puppet.deprecation_warning("Deserializing Puppet::FileBucket::File objects from pson is deprecated. Upgrade to a newer version.")
     self.new(pson["contents"])
   end
+
 end

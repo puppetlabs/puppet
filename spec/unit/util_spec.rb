@@ -19,7 +19,7 @@ describe Puppet::Util do
     end
 
     def get_mode(file)
-      File.lstat(file).mode & 07777
+      Puppet::FileSystem::File.new(file).lstat.mode & 07777
     end
   end
 
@@ -449,7 +449,7 @@ describe Puppet::Util do
 
     it "should copy the permissions of the source file before yielding on Unix", :if => !Puppet.features.microsoft_windows? do
       set_mode(0555, target.path)
-      inode = File.stat(target.path).ino
+      inode = Puppet::FileSystem::File.new(target.path).stat.ino
 
       yielded = false
       subject.replace_file(target.path, 0600) do |fh|
@@ -458,19 +458,19 @@ describe Puppet::Util do
       end
       yielded.should be_true
 
-      File.stat(target.path).ino.should_not == inode
+      Puppet::FileSystem::File.new(target.path).stat.ino.should_not == inode
       get_mode(target.path).should == 0555
     end
 
     it "should use the default permissions if the source file doesn't exist" do
       new_target = target.path + '.foo'
-      File.should_not be_exist(new_target)
+      Puppet::FileSystem::File.exist?(new_target).should be_false
 
       begin
         subject.replace_file(new_target, 0555) {|fh| fh.puts "foo" }
         get_mode(new_target).should == 0555
       ensure
-        File.unlink(new_target) if File.exists?(new_target)
+        Puppet::FileSystem::File.unlink(new_target) if Puppet::FileSystem::File.exist?(new_target)
       end
     end
 
@@ -502,14 +502,14 @@ describe Puppet::Util do
     {:string => '664', :number => 0664, :symbolic => "ug=rw-,o=r--" }.each do |label,mode|
       it "should support #{label} format permissions" do
         new_target = target.path + "#{mode}.foo"
-        File.should_not be_exist(new_target)
+        Puppet::FileSystem::File.exist?(new_target).should be_false
 
         begin
           subject.replace_file(new_target, mode) {|fh| fh.puts "this is an interesting content" }
 
           get_mode(new_target).should == 0664
         ensure
-          File.unlink(new_target) if File.exists?(new_target)
+          Puppet::FileSystem::File.unlink(new_target) if Puppet::FileSystem::File.exist?(new_target)
         end
       end
     end

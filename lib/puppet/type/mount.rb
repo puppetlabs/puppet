@@ -8,7 +8,11 @@ module Puppet
       on the value of the 'ensure' parameter.
 
       Note that if a `mount` receives an event from another resource,
-      it will try to remount the filesystems if `ensure` is set to `mounted`."
+      it will try to remount the filesystems if `ensure` is set to `mounted`.
+
+      **Autorequires:** If Puppet is managing any parents of a mount resource ---
+      that is, other mount points higher up in the filesystem --- the child
+      mount will autorequire them."
 
     feature :refreshable, "The provider can remount the filesystem.",
       :methods => [:remount]
@@ -249,7 +253,7 @@ module Puppet
       newvalues(:true, :false)
       defaultto do
         case Facter.value(:operatingsystem)
-        when "FreeBSD", "Darwin", "AIX", "DragonFly"
+        when "FreeBSD", "Darwin", "AIX", "DragonFly", "OpenBSD"
           false
         else
           true

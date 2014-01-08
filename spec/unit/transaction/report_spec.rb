@@ -405,14 +405,10 @@ describe Puppet::Transaction::Report do
     expect_equivalent_reports(tripped, report)
   end
 
-  def validate_as_json(report)
-    JSON::Validator.validate!(REPORT_SCHEMA, report)
-  end
-
   it "generates pson which validates against the report schema", :unless => Puppet.features.microsoft_windows? do
     Puppet[:report_serialization_format] = "pson"
     report = generate_report
-    validate_as_json(report.render)
+    JSON::Validator.validate!(REPORT_SCHEMA, report.render)
   end
 
   it "can make a round trip through yaml" do

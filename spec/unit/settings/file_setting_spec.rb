@@ -139,14 +139,14 @@ describe Puppet::Settings::FileSetting do
     it "should skip non-existent files if 'create_files' is not enabled" do
       @file.expects(:create_files?).returns false
       @file.expects(:type).returns :file
-      File.expects(:exist?).with(@basepath).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(@basepath).returns false
       @file.to_resource.should be_nil
     end
 
     it "should manage existent files even if 'create_files' is not enabled" do
       @file.expects(:create_files?).returns false
       @file.expects(:type).returns :file
-      File.expects(:exist?).with(@basepath).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@basepath).returns true
       @file.to_resource.should be_instance_of(Puppet::Resource)
     end
 

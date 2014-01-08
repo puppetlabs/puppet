@@ -19,25 +19,33 @@ module Puppet::Network::HTTP
   #   certificate configuration for their authentication, and
   # * Provides some useful error handling for any SSL errors that occur
   #   during a request.
+  # @api public
   class Connection
     include Puppet::Network::Authentication
 
     OPTION_DEFAULTS = {
       :use_ssl => true,
-      :verify_peer => true,
-      :redirect_limit => 10
+      :verify => nil,
+      :redirect_limit => 10,
     }
 
-    # Creates a new HTTP client connection to `host`:`port`. 
+    # Creates a new HTTP client connection to `host`:`port`.
     # @param host [String] the host to which this client will connect to
     # @param port [Fixnum] the port to which this client will connect to
-    # @param options [Hash] options influencing the properties of the created connection,
-    #   the following options are recognized:
-    #     :use_ssl [Boolean] true to connect with SSL, false otherwise, defaults to true
-    #     :verify_peer [Boolean] true to verify the peer's certificate, false otherwise, defaults to true
-    #     :redirect_limit [Fixnum] the number of allowed redirections, defaults to 10
-    #   passing any other option in the options hash results in a Puppet::Error exception
-    # @note the HTTP connection itself happens lazily only when {#request}, or one of the {#get}, {#post}, {#delete}, {#head} or {#put} is called
+    # @param options [Hash] options influencing the properties of the created
+    #   connection,
+    # @option options [Boolean] :use_ssl true to connect with SSL, false
+    #   otherwise, defaults to true
+    # @option options [#setup_connection] :verify An object that will configure
+    #   any verification to do on the connection
+    # @option options [Fixnum] :redirect_limit the number of allowed
+    #   redirections, defaults to 10 passing any other option in the options
+    #   hash results in a Puppet::Error exception
+    #
+    # @note the HTTP connection itself happens lazily only when {#request}, or
+    #   one of the {#get}, {#post}, {#delete}, {#head} or {#put} is called
+    # @note The correct way to obtain a connection is to use one of the factory
+    #   methods on {Puppet::Network::HttpPool}
     # @api private
     def initialize(host, port, options = {})
       @host = host
@@ -48,45 +56,63 @@ module Puppet::Network::HTTP
 
       options = OPTION_DEFAULTS.merge(options)
       @use_ssl = options[:use_ssl]
-      @verify_peer = options[:verify_peer]
+      @verify = options[:verify]
       @redirect_limit = options[:redirect_limit]
     end
 
-    def get(*args)
-      request(:get, *args)
+    # @!macro [new] common_options
+    #   @param options [Hash] options influencing the request made
+    #   @option options [Hash{Symbol => String}] :basic_auth The basic auth
+    #     :username and :password to use for the request
+
+    # @param path [String]
+    # @param headers [Hash{String => String}]
+    # @!macro common_options
+    # @api public
+    def get(path, headers = {}, options = {})
+      request_with_redirects(Net::HTTP::Get.new(path, headers), options)
     end
 
-    def post(*args)
-      request(:post, *args)
+    # @param path [String]
+    # @param data [String]
+    # @param headers [Hash{String => String}]
+    # @!macro common_options
+    # @api public
+    def post(path, data, headers = nil, options = {})
+      request = Net::HTTP::Post.new(path, headers)
+      request.body = data
+      request_with_redirects(request, options)
     end
 
-    def head(*args)
-      request(:head, *args)
+    # @param path [String]
+    # @param headers [Hash{String => String}]
+    # @!macro common_options
+    # @api public
+    def head(path, headers = {}, options = {})
+      request_with_redirects(Net::HTTP::Head.new(path, headers), options)
     end
 
-    def delete(*args)
-      request(:delete, *args)
+    # @param path [String]
+    # @param headers [Hash{String => String}]
+    # @!macro common_options
+    # @api public
+    def delete(path, headers = {'Depth' => 'Infinity'}, options = {})
+      request_with_redirects(Net::HTTP::Delete.new(path, headers), options)
     end
 
-    def put(*args)
-      request(:put, *args)
+    # @param path [String]
+    # @param data [String]
+    # @param headers [Hash{String => String}]
+    # @!macro common_options
+    # @api public
+    def put(path, data, headers = nil, options = {})
+      request = Net::HTTP::Put.new(path, headers)
+      request.body = data
+      request_with_redirects(request, options)
     end
 
     def request(method, *args)
-      current_args = args.dup
-      @redirect_limit.times do |redirection|
-        response = execute_request(method, *args)
-        return response unless [301, 302, 307].include?(response.code.to_i)
-
-        # handle the redirection
-        location = URI.parse(response['location'])
-        @connection = initialize_connection(location.host, location.port, location.scheme == 'https')
-
-        # update to the current request path
-        current_args = [location.path] + current_args.drop(1)
-        # and try again...
-      end
-      raise RedirectionLimitExceededException, "Too many HTTP redirections for #{@host}:#{@port}"
+      self.send(method, *args)
     end
 
     # TODO: These are proxies for the Net::HTTP#request_* methods, which are
@@ -123,28 +149,54 @@ module Puppet::Network::HTTP
 
     private
 
+    def request_with_redirects(request, options)
+      current_request = request
+      @redirect_limit.times do |redirection|
+        apply_options_to(current_request, options)
+
+        response = execute_request(current_request)
+        return response unless [301, 302, 307].include?(response.code.to_i)
+
+        # handle the redirection
+        location = URI.parse(response['location'])
+        @connection = initialize_connection(location.host, location.port, location.scheme == 'https')
+
+        # update to the current request path
+        current_request = current_request.class.new(location.path)
+        current_request.body = request.body
+        request.each do |header, value|
+          current_request[header] = value
+        end
+
+        # and try again...
+      end
+      raise RedirectionLimitExceededException, "Too many HTTP redirections for #{@host}:#{@port}"
+    end
+
+    def apply_options_to(request, options)
+      if options[:basic_auth]
+        request.basic_auth(options[:basic_auth][:user], options[:basic_auth][:password])
+      end
+    end
+
     def connection
       @connection || initialize_connection(@host, @port, @use_ssl)
     end
 
-    def execute_request(method, *args)
-      ssl_validator = Puppet::SSL::Validator.new(:ssl_configuration => ssl_configuration)
-      # Perform our own validation of the SSL connection in addition to OpenSSL
-      ssl_validator.register_verify_callback(connection)
-
-      response = connection.send(method, *args)
+    def execute_request(request)
+      response = connection.request(request)
 
       # Check the peer certs and warn if they're nearing expiration.
-      warn_if_near_expiration(*ssl_validator.peer_certs)
+      warn_if_near_expiration(*@verify.peer_certs)
 
       response
     rescue OpenSSL::SSL::SSLError => error
       if error.message.include? "certificate verify failed"
         msg = error.message
-        msg << ": [" + ssl_validator.verify_errors.join('; ') + "]"
+        msg << ": [" + @verify.verify_errors.join('; ') + "]"
         raise Puppet::Error, msg
       elsif error.message =~ /hostname (\w+ )?not match/
-        leaf_ssl_cert = ssl_validator.peer_certs.last
+        leaf_ssl_cert = @verify.peer_certs.last
 
         valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
         msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
@@ -181,42 +233,13 @@ module Puppet::Network::HTTP
 
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
-      if @verify_peer and FileTest.exist?(Puppet[:hostcert]) and FileTest.exist?(ssl_configuration.ca_auth_file)
-        @connection.cert_store  = ssl_host.ssl_store
-        @connection.ca_file     = ssl_configuration.ca_auth_file
-        @connection.cert        = ssl_host.certificate.content
-        @connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        @connection.key         = ssl_host.key.content
-      else
-        # We don't have the local certificates, so we don't do any verification
-        # or setup at this early stage.  REVISIT: Shouldn't we supply the local
-        # certificate details if we have them?  The original code didn't.
-        # --daniel 2012-06-03
-
-        # Ruby 1.8 defaulted to this, but 1.9 defaults to peer verify,
-        # and we almost always talk to a dedicated, not-standard CA that
-        # isn't trusted out of the box.  This forces the expected state.
-        @connection.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      end
+      @verify.setup_connection(@connection)
     end
 
     # This method largely exists for testing purposes, so that we can
     # mock the actual HTTP connection.
     def create_connection(*args)
       Net::HTTP.new(*args)
-    end
-
-    # Use the global localhost instance.
-    def ssl_host
-      Puppet::SSL::Host.localhost
-    end
-
-    def ssl_configuration
-      @ssl_configuration ||= Puppet::SSL::Configuration.new(
-          Puppet[:localcacert],
-          :ca_chain_file => Puppet[:ssl_client_ca_chain],
-          :ca_auth_file  => Puppet[:ssl_client_ca_auth]
-      )
     end
   end
 end

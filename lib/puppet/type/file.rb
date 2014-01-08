@@ -34,6 +34,9 @@ Puppet::Type.newtype(:file) do
     file, the file resource will autorequire them. If Puppet is managing any
     parent directories of a file, the file resource will autorequire them."
 
+  feature :manages_symlinks,
+    "The provider can manage symbolic links."
+
   def self.title_patterns
     [ [ /^(.*?)\/*\Z/m, [ [ :path ] ] ] ]
   end
@@ -123,15 +126,16 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:recurse) do
-    desc "Whether and how deeply to do recursive
-      management. Options are:
+    desc "Whether and how to do recursive file management. Options are:
 
       * `inf,true` --- Regular style recursion on both remote and local
-        directory structure.
-      * `remote` --- Descends recursively into the remote directory
-        but not the local directory. Allows copying of
+        directory structure.  See `recurselimit` to specify a limit to the
+        recursion depth.
+      * `remote` --- Descends recursively into the remote (source) directory
+        but not the local (destination) directory. Allows copying of
         a few files into a directory containing many
         unmanaged files without scanning all the local files.
+        This can only be used when a source parameter is specified. 
       * `false` --- Default of no recursion.
     "
 
@@ -687,7 +691,7 @@ Puppet::Type.newtype(:file) do
     end
 
     @stat = begin
-      ::File.send(method, self[:path])
+      Puppet::FileSystem::File.new(self[:path]).send(method)
     rescue Errno::ENOENT => error
       nil
     rescue Errno::ENOTDIR => error
@@ -709,36 +713,23 @@ Puppet::Type.newtype(:file) do
   def write(property)
     remove_existing(:file)
 
-    use_temporary_file = write_temporary_file?
-    if use_temporary_file
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while ::File.exists?(path) or ::File.symlink?(path)
-    else
-      path = self[:path]
-    end
-
     mode = self.should(:mode) # might be nil
-    umask = mode ? 000 : 022
-    mode_int = mode ? symbolic_mode_to_int(mode, 0644) : nil
+    mode_int = mode ? symbolic_mode_to_int(mode, Puppet::Util::DEFAULT_POSIX_MODE) : nil
 
-    content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'wb', mode_int ) { |f| write_content(f) } }
-
-    # And put our new file in place
-    if use_temporary_file # This is only not true when our file is empty.
-      begin
-        fail_if_checksum_is_wrong(path, content_checksum) if validate_checksum?
-        ::File.rename(path, self[:path])
-      rescue => detail
-        fail "Could not rename temporary file #{path} to #{self[:path]}: #{detail}"
-      ensure
-        # Make sure the created file gets removed
-        ::File.unlink(path) if FileTest.exists?(path)
+    if write_temporary_file?
+      Puppet::Util.replace_file(self[:path], mode_int) do |file|
+        file.binmode
+        content_checksum = write_content(file)
+        file.flush
+        fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
       end
+    else
+      umask = mode ? 000 : 022
+      Puppet::Util.withumask(umask) { ::File.open(self[:path], 'wb', mode_int ) { |f| write_content(f) } }
     end
 
     # make sure all of the modes are actually correct
     property_fix
-
   end
 
   private
@@ -782,7 +773,7 @@ Puppet::Type.newtype(:file) do
   # @api private
   def remove_file(current_type, wanted_type)
     debug "Removing existing #{current_type} for replacement with #{wanted_type}"
-    ::File.unlink(self[:path])
+    Puppet::FileSystem::File.unlink(self[:path])
     stat_needed
     true
   end

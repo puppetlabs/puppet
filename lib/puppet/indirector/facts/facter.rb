@@ -6,6 +6,8 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     between Puppet and Facter.  It's only `somewhat` abstract because it always
     returns the local host's facts, regardless of what you attempt to find."
 
+  private
+
   def self.reload_facter
     Facter.clear
     Facter.loadfacts
@@ -22,6 +24,26 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     dirs.uniq.each do |dir|
       load_facts_in_dir(dir)
     end
+  end
+
+  def self.setup_external_facts(request)
+    # Add any per-module fact directories to the factpath
+    external_facts_dirs = []
+    request.environment.modules.each do |m|
+         if m.has_external_facts?
+            Puppet.info "Loading external facts from #{m.plugin_fact_directory}"
+            external_facts_dirs << m.plugin_fact_directory
+         end
+    end
+
+    # Add system external fact directory if it exists
+    if File.directory?(Puppet[:pluginfactdest])
+      external_facts_dirs << Puppet[:pluginfactdest]
+    end
+
+    # Add to facter config
+    Facter::Util::Config.external_facts_dirs += external_facts_dirs
+
   end
 
   def self.load_facts_in_dir(dir)
@@ -44,12 +66,15 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     end
   end
 
+  public
+
   def destroy(facts)
     raise Puppet::DevError, "You cannot destroy facts in the code store; it is only used for getting facts from Facter"
   end
 
   # Look a host's facts up in Facter.
   def find(request)
+    self.class.setup_external_facts(request) if Puppet.features.external_facts?
     self.class.reload_facter
     self.class.load_fact_plugins
     result = Puppet::Node::Facts.new(request.key, Facter.to_hash)

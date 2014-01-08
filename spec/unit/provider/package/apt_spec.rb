@@ -63,7 +63,7 @@ Version table:
 
   it "should preseed with the provided responsefile when preseeding is called for" do
     @resource.expects(:[]).with(:responsefile).returns "/my/file"
-    FileTest.expects(:exist?).with("/my/file").returns true
+    Puppet::FileSystem::File.expects(:exist?).with("/my/file").returns true
 
     @provider.expects(:info)
     @provider.expects(:preseed).with("/my/file")

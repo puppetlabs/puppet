@@ -9,7 +9,6 @@ describe processor do
   include PuppetSpec::Files
   before do
     Puppet[:rrddir] = tmpdir('rrdgraph')
-    Puppet.settings.use :master
   end
 
   after do

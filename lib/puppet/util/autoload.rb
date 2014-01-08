@@ -45,7 +45,7 @@ class Puppet::Util::Autoload
       file, old_mtime = loaded[name]
       return true unless file == get_file(name)
       begin
-        old_mtime != File.mtime(file)
+        old_mtime.to_i != File.mtime(file).to_i
       rescue Errno::ENOENT
         true
       end
@@ -85,7 +85,7 @@ class Puppet::Util::Autoload
     # returns nil if no file is found
     def get_file(name, env=nil)
       name = name + '.rb' unless name =~ /\.rb$/
-      path = search_directories(env).find { |dir| File.exist?(File.join(dir, name)) }
+      path = search_directories(env).find { |dir| Puppet::FileSystem::File.exist?(File.join(dir, name)) }
       path and File.join(path, name)
     end
 

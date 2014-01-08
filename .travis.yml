@@ -1,6 +1,9 @@
+before_install:
+  - gem update --system 2.1.11
+  - gem --version
 language: ruby
 bundler_args: --without development
-script: "bundle exec rake spec SPEC_OPTS='--color --format documentation'"
+script: "bundle exec rake spec"
 notifications:
   email: false
 rvm:

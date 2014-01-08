@@ -1,0 +1,28 @@
+HOSTS:
+  redhat-5-i386-master:
+    roles:
+      - master
+      - agent
+    platform: el-5-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/redhat-5-i386
+    hypervisor: vcloud
+  redhat-5-i386-dashboard:
+    roles:
+      - dashboard
+      - agent
+    platform: el-5-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/redhat-5-i386
+    hypervisor: vcloud
+  redhat-5-i386-database:
+    roles:
+      - database
+      - agent
+    platform: el-5-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/redhat-5-i386
+    hypervisor: vcloud
+CONFIG:
+  nfs_server: none
+  consoleport: 443
+  datastore: instance0
+  folder: Delivery/Quality Assurance/Enterprise/Dynamic
+  resourcepool: delivery/Quality Assurance/Enterprise/Dynamic

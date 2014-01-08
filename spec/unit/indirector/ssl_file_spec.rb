@@ -121,9 +121,9 @@ describe Puppet::Indirector::SslFile do
     describe "when finding certificates on disk" do
       describe "and no certificate is present" do
         it "should return nil" do
-          FileTest.expects(:exist?).with(@path).returns(true)
+          Puppet::FileSystem::File.expects(:exist?).with(@path).returns(true)
           Dir.expects(:entries).with(@path).returns([])
-          FileTest.expects(:exist?).with(@certpath).returns(false)
+          Puppet::FileSystem::File.expects(:exist?).with(@certpath).returns(false)
 
           @searcher.find(@request).should be_nil
         end
@@ -139,7 +139,7 @@ describe Puppet::Indirector::SslFile do
 
         context "is readable" do
           it "should return an instance of the model, which it should use to read the certificate" do
-            FileTest.expects(:exist?).with(@certpath).returns true
+            Puppet::FileSystem::File.expects(:exist?).with(@certpath).returns true
 
             model.expects(:new).with("myname").returns cert
             cert.expects(:read).with(@certpath)
@@ -150,7 +150,7 @@ describe Puppet::Indirector::SslFile do
 
         context "is unreadable" do
           it "should raise an exception" do
-            FileTest.expects(:exist?).with(@certpath).returns(true)
+            Puppet::FileSystem::File.expects(:exist?).with(@certpath).returns(true)
 
             model.expects(:new).with("myname").returns cert
             cert.expects(:read).with(@certpath).raises(Errno::EACCES)
@@ -171,9 +171,9 @@ describe Puppet::Indirector::SslFile do
         # the support for upper-case certs can be removed around mid-2009.
         it "should rename the existing file to the lower-case path" do
           @path = @searcher.path("myhost")
-          FileTest.expects(:exist?).with(@path).returns(false)
+          Puppet::FileSystem::File.expects(:exist?).with(@path).returns(false)
           dir, file = File.split(@path)
-          FileTest.expects(:exist?).with(dir).returns true
+          Puppet::FileSystem::File.expects(:exist?).with(dir).returns true
           Dir.expects(:entries).with(dir).returns [".", "..", "something.pem", file.upcase]
 
           File.expects(:rename).with(File.join(dir, file.upcase), @path)
@@ -221,7 +221,7 @@ describe Puppet::Indirector::SslFile do
           @searcher.class.store_in @setting
           fh = mock 'filehandle'
           fh.stubs :print
-          Puppet.settings.expects(:writesub).with(@setting, @certpath).yields fh
+          Puppet.settings.setting(@setting).expects(:open_file).with(@certpath, 'w').yields fh
 
           @searcher.save(@request)
         end
@@ -233,7 +233,7 @@ describe Puppet::Indirector::SslFile do
 
           fh = mock 'filehandle'
           fh.stubs :print
-          Puppet.settings.expects(:write).with(@setting).yields fh
+          Puppet.settings.setting(@setting).expects(:open).with('w').yields fh
           @searcher.save(@request)
         end
       end
@@ -246,7 +246,7 @@ describe Puppet::Indirector::SslFile do
 
           fh = mock 'filehandle'
           fh.stubs :print
-          Puppet.settings.expects(:write).with(:cakey).yields fh
+          Puppet.settings.setting(:cakey).expects(:open).with('w').yields fh
           @searcher.stubs(:ca?).returns true
           @searcher.save(@request)
         end
@@ -256,7 +256,7 @@ describe Puppet::Indirector::SslFile do
     describe "when destroying certificates" do
       describe "that do not exist" do
         before do
-          FileTest.expects(:exist?).with(@certpath).returns false
+          Puppet::FileSystem::File.expects(:exist?).with(@certpath).returns false
         end
 
         it "should return false" do
@@ -265,18 +265,15 @@ describe Puppet::Indirector::SslFile do
       end
 
       describe "that exist" do
-        before do
-          FileTest.expects(:exist?).with(@certpath).returns true
-        end
-
         it "should unlink the certificate file" do
-          File.expects(:unlink).with(@certpath)
+          Puppet::FileSystem::File.expects(:exist?).with(@certpath).returns true
+          Puppet::FileSystem::File.expects(:unlink).with(@certpath)
           @searcher.destroy(@request)
         end
 
         it "should log that is removing the file" do
-          File.stubs(:exist?).returns true
-          File.stubs(:unlink)
+          Puppet::FileSystem::File.stubs(:exist?).returns true
+          Puppet::FileSystem::File.stubs(:unlink)
           Puppet.expects(:notice)
           @searcher.destroy(@request)
         end

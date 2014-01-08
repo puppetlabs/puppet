@@ -18,9 +18,9 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2,
   the configuration, and the following code will not work:
 
       if defined(File['/tmp/foo']) {
-          notify(\"This configuration includes the /tmp/foo file.\")
+          notify { \"This configuration includes the /tmp/foo file.\":}
       }
-      file {\"/tmp/foo\":
+      file { \"/tmp/foo\":
           ensure => present,
       }
 

@@ -223,18 +223,18 @@ describe Puppet::Application::Doc do
           @doc.unknown_args = [ { :opt => "--modulepath", :arg => "path" } ]
           Puppet.settings.stubs(:handlearg)
 
-          File.expects(:expand_path).with("path")
-
           @doc.setup_rdoc
+
+          @doc.unknown_args[0][:arg].should == File.expand_path('path')
         end
 
         it "should expand --manifestdir if any" do
           @doc.unknown_args = [ { :opt => "--manifestdir", :arg => "path" } ]
           Puppet.settings.stubs(:handlearg)
 
-          File.expects(:expand_path).with("path")
-
           @doc.setup_rdoc
+
+          @doc.unknown_args[0][:arg].should == File.expand_path('path')
         end
 
         it "should give them to Puppet.settings" do

@@ -70,7 +70,7 @@
 #
 # Access to key factory and type calculator
 # -----------------------------------------
-# It is important to use the same key factory, and type calculator as the binder. It is therefor possible to obtaint
+# It is important to use the same key factory, and type calculator as the binder. It is therefor possible to obtain
 # these with the methods {#key_factory}, and {#type_calculator}.
 #
 # Special support for producers
@@ -86,6 +86,73 @@ class Puppet::Pops::Binder::Injector
 
   Producers = Puppet::Pops::Binder::Producers
 
+  def self.create_from_model(layered_bindings_model)
+    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings_model))
+  end
+
+  def self.create_from_hash(name, key_value_hash)
+    factory = Puppet::Pops::Binder::BindingsFactory
+    named_bindings = factory.named_bindings(name) { key_value_hash.each {|k,v| bind.name(k).to(v) }}
+    layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',named_bindings.model))
+    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
+  end
+
+  # Creates an injector with a single bindings layer created with the given name, and the bindings
+  # produced by the given block. The block is evaluated with self bound to a BindingsContainerBuilder.
+  #
+  # @example
+  #   Injector.create('mysettings') do
+  #     bind('name').to(42)
+  #   end
+  #
+  # @api public
+  #
+  def self.create(name, &block)
+    factory = Puppet::Pops::Binder::BindingsFactory
+    layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',factory.named_bindings(name, &block).model))
+    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
+  end
+
+  # Creates an overriding injector with a single bindings layer
+  # created with the given name, and the bindings produced by the given block.
+  # The block is evaluated with self bound to a BindingsContainerBuilder.
+  #
+  # @example
+  #   an_injector.override('myoverrides') do
+  #     bind('name').to(43)
+  #   end
+  #
+  # @api public
+  #
+  def override(name, &block)
+    factory = Puppet::Pops::Binder::BindingsFactory
+    layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',factory.named_bindings(name, &block).model))
+    self.class.new(Puppet::Pops::Binder::Binder.new(layered_bindings, @impl.binder))
+  end
+
+  # Creates an overriding injector with bindings from a bindings model (a LayeredBindings) which
+  # may consists of multiple layers of bindings.
+  #
+  # @api public
+  #
+  def override_with_model(layered_bindings)
+    unless layered_bindings.is_a?(Puppet::Pops::Binder::Bindings::LayeredBindings)
+      raise ArgumentError, "Expected a LayeredBindings model, got '#{bindings_model.class}'"
+    end
+    self.class.new(Puppet::Pops::Binder::Binder.new(layered_bindings, @impl.binder))
+  end
+
+  # Creates an overriding injector with a single bindings layer
+  # created with the given name, and the bindings given in the key_value_hash
+  # @api public
+  #
+  def override_with_hash(name, key_value_hash)
+    factory = Puppet::Pops::Binder::BindingsFactory
+    named_bindings = factory.named_bindings(name) { key_value_hash.each {|k,v| bind.name(k).to(v) }}
+    layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',named_bindings.model))
+    self.class.new(Puppet::Pops::Binder::Binder.new(layered_bindings, @impl.binder))
+  end
+
   # An Injector is initialized with a configured {Puppet::Pops::Binder::Binder Binder}.
   #
   # @param configured_binder [Puppet::Pops::Binder::Binder,nil] The configured binder containing effective bindings. A given value
@@ -94,11 +161,11 @@ class Puppet::Pops::Binder::Injector
   #
   # @api public
   #
-  def initialize(configured_binder)
+  def initialize(configured_binder, parent_injector = nil)
     if configured_binder.nil?
       @impl = Private::NullInjectorImpl.new()
     else
-      @impl = Private::InjectorImpl.new(configured_binder)
+      @impl = Private::InjectorImpl.new(configured_binder, parent_injector)
     end
   end
 
@@ -305,7 +372,11 @@ module Private
       else
         val
       end
+    end
 
+    # @api private
+    def binder
+      nil
     end
 
     # @api private
@@ -345,8 +416,14 @@ module Private
 
     attr_reader :type_calculator
 
-    def initialize(configured_binder)
-      raise ArgumentError, "Given Binder is not configured" unless configured_binder && configured_binder.configured?()
+    attr_reader :binder
+
+    def initialize(configured_binder, parent_injector = nil)
+      @binder = configured_binder
+      @parent = parent_injector
+
+      # TODO: Different error message
+      raise ArgumentError, "Given Binder is not configured" unless configured_binder #&& configured_binder.configured?()
       @entries             = configured_binder.injector_entries()
 
       # It is essential that the injector uses the same key factory as the binder since keys must be
@@ -406,6 +483,7 @@ module Private
     # @api private
     def lookup_type(scope, type, name='')
       val = lookup_key(scope, named_key(type, name))
+      return nil if val.nil?
       unless key_factory.type_calculator.instance?(type, val)
         raise ArgumentError, "Type error: incompatible type, #{type_error_detail(type, val)}"
       end
@@ -427,7 +505,8 @@ module Private
         @recursion_lock.push(key)
         case entry = get_entry(key)
         when NilClass
-          nil
+          @parent ? @parent.lookup_key(scope, key) : nil
+
         when Puppet::Pops::Binder::InjectorEntry
           val = produce(scope, entry)
           return nil if val.nil?

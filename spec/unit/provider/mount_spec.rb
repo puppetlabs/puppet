@@ -79,11 +79,22 @@ describe Puppet::Provider::Mount do
       @mounter.remount
     end
 
+    it "should mount with '-o update' on OpenBSD" do
+      @mounter.stubs(:info)
+      @mounter.stubs(:options)
+      @resource.stubs(:[]).with(:remounts).returns(false)
+      Facter.expects(:value).with(:operatingsystem).returns 'OpenBSD'
+      @mounter.expects(:mountcmd).with("-o", "update", @name)
+      @mounter.remount
+    end
+
     it "should unmount and mount if the resource does not specify it supports remounting" do
       @mounter.stubs(:info)
+      @mounter.stubs(:options)
       @resource.stubs(:[]).with(:remounts).returns(false)
-      @mounter.expects(:unmount)
+      Facter.expects(:value).with(:operatingsystem).returns 'AIX'
       @mounter.expects(:mount)
+      @mounter.expects(:unmount)
       @mounter.remount
     end
 

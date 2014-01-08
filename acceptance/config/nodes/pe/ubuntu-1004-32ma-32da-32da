@@ -1,0 +1,28 @@
+HOSTS:
+  ubuntu-1004-i386-master:
+    roles:
+      - master
+      - agent
+    platform: ubuntu-10.04-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-i386
+    hypervisor: vcloud
+  ubuntu-1004-i386-dashboard:
+    roles:
+      - dashboard
+      - agent
+    platform: ubuntu-10.04-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-i386
+    hypervisor: vcloud
+  ubuntu-1004-i386-database:
+    roles:
+      - database
+      - agent
+    platform: ubuntu-10.04-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-i386
+    hypervisor: vcloud
+CONFIG:
+  nfs_server: none
+  consoleport: 443
+  datastore: instance0
+  folder: Delivery/Quality Assurance/Enterprise/Dynamic
+  resourcepool: delivery/Quality Assurance/Enterprise/Dynamic

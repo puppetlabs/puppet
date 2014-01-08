@@ -103,7 +103,7 @@ class Puppet::Parser::Collector
 
       # key is '#{type}/#{name}', and host and filter.
       found = Puppet::Resource.indirection.
-        search(@type, :host => @scope.host, :filter => @equery, :scope => @scope)
+        search(@type, :host => @scope.compiler.node.name, :filter => @equery, :scope => @scope)
 
       found_resources = found.map {|x| x.is_a?(Puppet::Parser::Resource) ? x : x.to_resource(@scope)}
 

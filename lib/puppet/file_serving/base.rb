@@ -68,17 +68,21 @@ class Puppet::FileServing::Base
   # Stat our file, using the appropriate link-sensitive method.
   def stat
     @stat_method ||= self.links == :manage ? :lstat : :stat
-    File.send(@stat_method, full_path)
+    Puppet::FileSystem::File.new(full_path).send(@stat_method)
+  end
+
+  def to_data_hash
+    {
+      'path'          => @path,
+      'relative_path' => @relative_path,
+      'links'         => @links
+    }
   end
 
   def to_pson_data_hash
     {
       # No 'document_type' since we don't send these bare
-      'data'       => {
-        'path'          => @path,
-        'relative_path' => @relative_path,
-        'links'         => @links
-        },
+      'data'       => to_data_hash,
       'metadata' => {
         'api_version' => 1
         }

@@ -1,14 +1,16 @@
 require 'spec_helper'
 require 'puppet/pops'
 require 'puppet_spec/pops'
+require 'puppet_spec/scope'
 
-describe 'The hiera2 string evaluator' do
+describe 'The Evaluating Parser' do
 
   include PuppetSpec::Pops
+  include PuppetSpec::Scope
 
   let(:acceptor) {  Puppet::Pops::Validation::Acceptor.new() }
   let(:diag) { Puppet::Pops::Binder::Hiera2::DiagnosticProducer.new(acceptor) }
-  let(:scope) { s = Puppet::Parser::Scope.new_for_test_harness(node); s }
+  let(:scope) { s = create_test_scope_for_node(node); s }
   let(:node) { 'node.example.com' }
 
   def quote(x)

@@ -1,9 +1,10 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
+require 'puppet_spec/compiler'
 
 describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
+  include PuppetSpec::Compiler
 
   it "should be Comparable" do
     a = Puppet::Type.type(:notify).new(:name => "a")
@@ -131,6 +132,36 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     Puppet::Type.type(:mount).new(:name => "foo").version.should == 0
   end
 
+  it "reports the correct path even after path is used during setup of the type" do
+    Puppet::Type.newtype(:testing) do
+      newparam(:name) do
+        isnamevar
+        validate do |value|
+          path # forces the computation of the path
+        end
+      end
+    end
+
+    ral = compile_to_ral(<<-MANIFEST)
+      class something {
+        testing { something: }
+      }
+      include something
+    MANIFEST
+
+    ral.resource("Testing[something]").path.should == "/Stage[main]/Something/Testing[something]"
+  end
+
+  context "alias metaparam" do
+    it "creates a new name that can be used for resource references" do
+      ral = compile_to_ral(<<-MANIFEST)
+        notify { a: alias => c }
+      MANIFEST
+
+      expect(ral.resource("Notify[a]")).to eq(ral.resource("Notify[c]"))
+    end
+  end
+
   context "resource attributes" do
     let(:resource) {
       resource = Puppet::Type.type(:mount).new(:name => "foo")
@@ -145,7 +176,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should have tags" do
-      resource.tags.should == ["mount", "foo"]
+      expect(resource).to be_tagged("mount")
+      expect(resource).to be_tagged("foo")
     end
 
     it "should have a path" do
@@ -187,11 +219,17 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       @resource.event.default_log_level.should == :warning
     end
 
-    {:file => "/my/file", :line => 50, :tags => %{foo bar}}.each do |attr, value|
+    {:file => "/my/file", :line => 50}.each do |attr, value|
       it "should set the #{attr}" do
         @resource.stubs(attr).returns value
         @resource.event.send(attr).should == value
       end
+    end
+
+    it "should set the tags" do
+      @resource.tag("abc", "def")
+      @resource.event.should be_tagged("abc")
+      @resource.event.should be_tagged("def")
     end
 
     it "should allow specification of event attributes" do
@@ -308,6 +346,17 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       type.defaultprovider.should equal(greater)
     end
   end
+
+
+  describe "when defining a parent on a newtype" do
+    it "prints a deprecation message" do
+      Puppet.expects(:deprecation_warning)
+      type = Puppet::Type.newtype(:test_with_parent, :parent => Puppet::Type) do
+        newparam(:name) do end
+      end
+    end
+  end
+
 
   describe "when initializing" do
     describe "and passed a Puppet::Resource instance" do
@@ -632,7 +681,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       resource.should be_a Puppet::Resource
       resource[:fstype].should   == 15
       resource[:remounts].should == :true
-      resource.tags.should       =~ %w{foo bar baz mount}
+      resource.tags.should == Puppet::Util::TagSet.new(%w{foo bar baz mount})
     end
   end
 

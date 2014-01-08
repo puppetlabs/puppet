@@ -3,15 +3,22 @@ require 'puppet/provider/package'
 # RPM packaging.  Should work anywhere that has rpm installed.
 Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Provider::Package do
   desc "RPM packaging support; should work anywhere with a working `rpm`
-    binary."
+    binary.
+
+    This provider supports the `install_options` attribute, which allows
+    command-line flags to be passed to the RPM binary. Install options should be
+    specified as an array, where each element is either a string or a
+    `{'--flag' => 'value'}` hash. (That hash example would be equivalent to a
+    `'--flag=value'` string; the hash syntax is available as a convenience.)"
 
   has_feature :versionable
+  has_feature :install_options
 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderRpm class.
   self::RPM_DESCRIPTION_DELIMITER = ':DESC:'
   # The query format by which we identify installed packages
-  self::NEVRA_FORMAT = %Q{'%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} #{self::RPM_DESCRIPTION_DELIMITER} %{SUMMARY}\\n'}
+  self::NEVRA_FORMAT = %Q{%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} #{self::RPM_DESCRIPTION_DELIMITER} %{SUMMARY}\\n}
   self::NEVRA_REGEX  = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)(?: #{self::RPM_DESCRIPTION_DELIMITER} ?(.*))?$}
   self::RPM_PACKAGE_NOT_FOUND_REGEX = /package .+ is not installed/
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch, :description]
@@ -49,7 +56,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     # list out all of the packages
     begin
-      execpipe("#{command(:rpm)} -qa #{nosignature} #{nodigest} --qf #{self::NEVRA_FORMAT}") { |process|
+      execpipe("#{command(:rpm)} -qa #{nosignature} #{nodigest} --qf '#{self::NEVRA_FORMAT}'") { |process|
         # now turn each returned line into a package object
         process.each_line { |line|
           hash = nevra_to_hash(line)
@@ -107,9 +114,10 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
       return
     end
 
-    flag = "-i"
+    flag = ["-i"]
     flag = ["-U", "--oldpackage"] if @property_hash[:ensure] and @property_hash[:ensure] != :absent
 
+    flag = flag + install_options
     rpm flag, source
   end
 
@@ -139,7 +147,35 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     self.install
   end
 
+  def install_options
+    join_options(resource[:install_options])
+  end
+
   private
+
+  # Turns a array of options into flags to be passed to rpm install(8) and
+  # The options can be passed as a string or hash. Note that passing a hash
+  # should only be used in case -Dfoo=bar must be passed,
+  # which can be accomplished with:
+  #     install_options => [ { '-Dfoo' => 'bar' } ]
+  # Regular flags like '-L' must be passed as a string.
+  # @param options [Array]
+  # @return Concatenated list of options
+  # @api private
+  def join_options(options)
+    return [] unless options
+
+    options.collect do |val|
+      case val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k}=#{val[k]}"
+        end.join(' ')
+      else
+        val
+      end
+    end
+  end
 
   # @param line [String] one line of rpm package query information
   # @return [Hash] of NEVRA_FIELDS strings parsed from package info

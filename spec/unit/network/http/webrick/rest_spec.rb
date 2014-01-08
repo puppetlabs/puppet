@@ -135,6 +135,12 @@ describe Puppet::Network::HTTP::WEBrickREST do
         @request
       end
 
+      def certificate_with_subject(subj)
+        cert = OpenSSL::X509::Certificate.new
+        cert.subject = OpenSSL::X509::Name.parse(subj)
+        cert
+      end
+
       it "has no parameters when there is no query string" do
         only_server_side_information = [:authenticated, :ip, :node]
         @request.stubs(:query).returns(nil)
@@ -238,10 +244,8 @@ describe Puppet::Network::HTTP::WEBrickREST do
       end
 
       it "should pass the client's certificate name to model method if a certificate is present" do
-        subj = stub 'subj'
-        cert = stub 'cert', :subject => subj
-        @request.stubs(:client_cert).returns cert
-        Puppet::Util::SSL.expects(:cn_from_subject).with(subj).returns 'host.domain.com'
+        @request.stubs(:client_cert).returns(certificate_with_subject("/CN=host.domain.com"))
+
         @handler.params(@request)[:node].should == "host.domain.com"
       end
 
@@ -254,15 +258,12 @@ describe Puppet::Network::HTTP::WEBrickREST do
       end
 
       it "should resolve the node name with an ip address look-up if CN parsing fails" do
-        subj = stub 'subj'
-        cert = stub 'cert', :subject => subj
-        @request.stubs(:client_cert).returns cert
-        Puppet::Util::SSL.expects(:cn_from_subject).with(subj).returns nil
+        @request.stubs(:client_cert).returns(certificate_with_subject("/C=company"))
 
         @handler.expects(:resolve_node).returns(:resolved_node)
 
         @handler.params(@request)[:node].should == :resolved_node
       end
-   end
+    end
   end
 end

@@ -1,0 +1,22 @@
+HOSTS:
+  ubuntu-1004-amd64:
+    roles:
+      - master
+      - dashboard
+      - database
+      - agent
+    platform: ubuntu-10.04-amd64
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-x86_64
+    hypervisor: vcloud
+  ubuntu-1004-agent:
+    roles:
+      - agent
+    platform: ubuntu-10.04-amd64
+    template: Delivery/Quality Assurance/Templates/vCloud/ubuntu-1004-x86_64
+    hypervisor: vcloud
+CONFIG:
+  nfs_server: none
+  consoleport: 443
+  datastore: instance0
+  folder: Delivery/Quality Assurance/Enterprise/Dynamic
+  resourcepool: delivery/Quality Assurance/Enterprise/Dynamic

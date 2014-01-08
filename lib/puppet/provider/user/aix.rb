@@ -7,7 +7,7 @@
 #   but puppet does not allow it. There is a ticket open for that (#5431)
 # - AIX maximum password age is in WEEKs, not days
 #
-# See  http://projects.puppetlabs.com/projects/puppet/wiki/Development_Provider_Development
+# See  http://docs.puppetlabs.com/guides/provider_development.html
 # for more information
 #
 # Author::    Hector Rivas Gandara <keymon@gmail.com>

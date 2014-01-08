@@ -4,8 +4,8 @@ shared_examples_for "Puppet::Indirector::FileServerTerminus" do
   # the 'before' block in the including context.
   before do
     Puppet::FileServing::Configuration.instance_variable_set(:@configuration, nil)
-    FileTest.stubs(:exists?).returns true
-    FileTest.stubs(:exists?).with(Puppet[:fileserverconfig]).returns(true)
+    Puppet::FileSystem::File.stubs(:exist?).returns true
+    Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
 
     @path = Tempfile.new("file_server_testing")
     path = @path.path

@@ -40,7 +40,7 @@ GET
 
 ### Supported Formats
 
-Accept: pson, text/pson
+PSON
 
 ### Parameters
 
@@ -197,33 +197,7 @@ List matching a regular expression:
 Schema
 ------
 
-A resource_type response body has has the following fields, of which only name
-and kind are guaranteed to be present:
-
-    doc: string
-        Any documentation comment from the type definition
-
-    line: integer
-        The line number where the type is defined
-
-    file: string
-        The full path of the file where the type is defined
-
-    name: string
-        The fully qualified name
-
-    kind: string, one of "class", "node", or "defined_type"
-        The kind of object the type represents
-
-    parent: string
-        If the type inherits from another type, the name of that type
-
-    parameters: hash{string => (string or "null")}
-        The default arguments to the type. If an argument has no default value,
-        the value is represented by a literal "null" (without quotes in pson).
-        Default values are the string representation of that value, even for more
-        complex structures (e.g. the hash { key => 'val', key2 => 'val2' } would
-        be represented in pson as "{key => \"val\", key2 => \"val2\"}".
+A `resource_type` response body conforms to the schema at {file:api/schemas/resource_type.json api/schemas/resource_type.json}.
 
 Source
 ------

@@ -1,8 +1,11 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/parser/parser_factory'
+require 'puppet_spec/compiler'
 
 describe "Puppet::Parser::Compiler" do
+  include PuppetSpec::Compiler
+
   before :each do
     @node = Puppet::Node.new "testnode"
 
@@ -135,7 +138,7 @@ describe "Puppet::Parser::Compiler" do
     end
 
     ['class', 'define', 'node'].each do |thing|
-      it "should not allow #{thing} inside evaluated conditional constructs" do
+      it "should not allow '#{thing}' inside evaluated conditional constructs" do
         Puppet[:code] = <<-PP
           if true {
             #{thing} foo {
@@ -310,6 +313,93 @@ describe "Puppet::Parser::Compiler" do
         expected_subscriptions << ['b', 'c'] << ['e', 'd']
       end
     end
+
+    context 'when working with the trusted data hash' do
+      context 'and have opted in to trusted_node_data' do
+        before :each do
+          Puppet[:trusted_node_data] = true
+        end
+
+        it 'should make $trusted available' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            notify { 'test': message => $trusted[data] }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == "value"
+        end
+
+        it 'should not allow assignment to $trusted' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          expect do
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+              $trusted = 'changed'
+              notify { 'test': message => $trusted == 'changed' }
+            MANIFEST
+            catalog.resource("Notify[test]")[:message].should == true
+          end.to raise_error(Puppet::Error, /Attempt to assign to a reserved variable name: 'trusted'/)
+        end
+
+        it 'should not allow addition to $trusted hash' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          expect do
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+              $trusted['extra'] = 'added'
+              notify { 'test': message => $trusted['extra'] == 'added' }
+            MANIFEST
+            catalog.resource("Notify[test]")[:message].should == true
+            # different errors depending on regular or future parser
+          end.to raise_error(Puppet::Error, /(can't modify frozen [hH]ash)|(Illegal attempt to assign)/)
+        end
+
+        it 'should not allow addition to $trusted hash via Ruby inline template' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          expect do
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+            $dummy = inline_template("<% @trusted['extra'] = 'added' %> lol")
+              notify { 'test': message => $trusted['extra'] == 'added' }
+            MANIFEST
+            catalog.resource("Notify[test]")[:message].should == true
+          end.to raise_error(Puppet::Error, /can't modify frozen [hH]ash/)
+        end
+      end
+
+      context 'and have not opted in to trusted_node_data' do
+        before :each do
+          Puppet[:trusted_node_data] = false
+        end
+
+        it 'should not make $trusted available' do
+          node = Puppet::Node.new("testing")
+          node.trusted_data = { "data" => "value" }
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            notify { 'test': message => $trusted == undef }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == true
+        end
+
+        it 'should allow assignment to $trusted' do
+          node = Puppet::Node.new("testing")
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            $trusted = 'changed'
+            notify { 'test': message => $trusted == 'changed' }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == true
+        end
+      end
+    end
   end
 
   describe 'using classic parser' do
@@ -318,17 +408,5 @@ describe "Puppet::Parser::Compiler" do
     end
     it_behaves_like 'the compiler' do
     end
-  end
-
-  describe 'using future parser' do
-    # have absolutely no clue to why this is needed - if not required here (even if required by used classes)
-    # the tests will fail with error that rgen/ecore/ruby_to_ecore cannot be found...
-    # TODO: Solve this mystery !
-    require 'rgen/metamodel_builder'
-
-    before :each do
-      Puppet[:parser] = 'future'
-    end
-    it_behaves_like 'the compiler'
   end
 end

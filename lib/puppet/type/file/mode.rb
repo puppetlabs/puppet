@@ -39,8 +39,12 @@ module Puppet
           * g (group's current permissions)
           * o (other's current permissions)
 
-      Thus, mode `0664` could be represented symbolically as either `a=r,ug+w` or
-      `ug=rw,o=r`. See the manual page for GNU or BSD `chmod` for more details
+      Thus, mode `0664` could be represented symbolically as either `a=r,ug+w`
+      or `ug=rw,o=r`.  However, symbolic modes are more expressive than numeric
+      modes: a mode only affects the specified bits, so `mode => 'ug+w'` will
+      set the user and group write bits, without affecting any other bits.
+
+      See the manual page for GNU or BSD `chmod` for more details
       on numeric and symbolic modes.
 
       On Windows, permissions are translated as follows:

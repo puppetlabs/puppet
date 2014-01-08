@@ -25,9 +25,10 @@ class WindowsDaemon < Win32::Daemon
     FileUtils.mkdir_p(File.dirname(LOG_FILE))
   end
 
-  def service_main(*argv)
-    args = argv.join(' ')
-    @loglevel = LEVELS.index(argv.index('--debug') ? :debug : :notice)
+  def service_main(*argsv)
+    argsv = (argsv << ARGV).flatten.compact
+    args = argsv.join(' ')
+    @loglevel = LEVELS.index(argsv.index('--debug') ? :debug : :notice)
 
     log_notice("Starting service: #{args}")
 

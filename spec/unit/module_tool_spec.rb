@@ -217,11 +217,12 @@ TREE
         let (:options) { {:environment => :pmttestenv} }
 
         before(:each) do
+          Puppet.settings.parse_config(<<-CONF)
+          [pmttestenv]
+          modulepath = #{["/foo", "/bar", "/no"].join(File::PATH_SEPARATOR)}
+          CONF
           Puppet[:modulepath] = "/no"
           Puppet[:environment] = :pmttestenv
-          Puppet.settings.set_value(:modulepath,
-                                    ["/foo", "/bar", "/no"].join(File::PATH_SEPARATOR),
-                                    :pmttestenv)
         end
 
         it 'Puppet[:modulepath] should be reset to the module path of the current environment' do

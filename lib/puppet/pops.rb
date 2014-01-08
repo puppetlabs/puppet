@@ -54,11 +54,11 @@ module Puppet
       require 'puppet/pops/binder/injector_entry'
       require 'puppet/pops/binder/key_factory'
       require 'puppet/pops/binder/injector'
-      require 'puppet/pops/binder/hiera2'
       require 'puppet/pops/binder/bindings_composer'
       require 'puppet/pops/binder/bindings_model_dumper'
       require 'puppet/pops/binder/system_bindings'
       require 'puppet/pops/binder/bindings_loader'
+      require 'puppet/pops/binder/lookup'
 
       module Config
         require 'puppet/pops/binder/config/binder_config'
@@ -71,15 +71,26 @@ module Puppet
     module Parser
       require 'puppet/pops/parser/eparser'
       require 'puppet/pops/parser/parser_support'
+      require 'puppet/pops/parser/locator'
+      require 'puppet/pops/parser/locatable'
       require 'puppet/pops/parser/lexer'
+      require 'puppet/pops/parser/lexer2'
       require 'puppet/pops/parser/evaluating_parser'
     end
 
     module Validation
       require 'puppet/pops/validation/checker3_1'
       require 'puppet/pops/validation/validator_factory_3_1'
+      require 'puppet/pops/validation/checker4_0'
+      require 'puppet/pops/validation/validator_factory_4_0'
+    end
+
+    module Evaluator
+      require 'puppet/pops/evaluator/runtime3_support'
+      require 'puppet/pops/evaluator/evaluator_impl'
     end
   end
 
+  require 'puppet/parser/ast/pops_bridge'
   require 'puppet/bindings'
 end

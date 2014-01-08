@@ -1,0 +1,22 @@
+HOSTS:
+  oracle-6-i386:
+    roles:
+      - master
+      - dashboard
+      - database
+      - agent
+    platform: el-6-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/oracle-6-i386
+    hypervisor: vcloud
+  oracle-6-i386-agent:
+    roles:
+      - agent
+    platform: el-6-i386
+    template: Delivery/Quality Assurance/Templates/vCloud/oracle-6-i386
+    hypervisor: vcloud
+CONFIG:
+  nfs_server: none
+  consoleport: 443
+  datastore: instance0
+  folder: Delivery/Quality Assurance/Enterprise/Dynamic
+  resourcepool: delivery/Quality Assurance/Enterprise/Dynamic

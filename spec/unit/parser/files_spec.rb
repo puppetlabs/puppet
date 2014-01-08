@@ -28,7 +28,7 @@ describe Puppet::Parser::Files do
       Puppet[:templatedir] = "/my/templates"
       Puppet[:modulepath] = "/one:/two"
       File.stubs(:directory?).returns(true)
-      FileTest.stubs(:exist?).returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).returns(true)
       Puppet::Parser::Files.find_template("mymod/mytemplate").should == File.join(Puppet[:templatedir], "mymod/mytemplate")
     end
 
@@ -43,59 +43,59 @@ describe Puppet::Parser::Files do
     end
 
     it "should return unqualified templates if they exist in the template dir" do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       Puppet::Parser::Files.stubs(:templatepath).with(nil).returns(["/my/templates"])
       Puppet::Parser::Files.find_template("mytemplate").should == "/my/templates/mytemplate"
     end
 
     it "should only return templates if they actually exist" do
-      FileTest.expects(:exist?).with("/my/templates/mytemplate").returns true
+      Puppet::FileSystem::File.expects(:exist?).with("/my/templates/mytemplate").returns true
       Puppet::Parser::Files.stubs(:templatepath).with(nil).returns(["/my/templates"])
       Puppet::Parser::Files.find_template("mytemplate").should == "/my/templates/mytemplate"
     end
 
     it "should return nil when asked for a template that doesn't exist" do
-      FileTest.expects(:exist?).with("/my/templates/mytemplate").returns false
+      Puppet::FileSystem::File.expects(:exist?).with("/my/templates/mytemplate").returns false
       Puppet::Parser::Files.stubs(:templatepath).with(nil).returns(["/my/templates"])
       Puppet::Parser::Files.find_template("mytemplate").should be_nil
     end
 
     it "should search in the template directories before modules" do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       Puppet::Parser::Files.stubs(:templatepath).with(nil).returns(["/my/templates"])
       Puppet::Module.expects(:find).never
       Puppet::Parser::Files.find_template("mytemplate")
     end
 
     it "should accept relative templatedirs" do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       Puppet[:templatedir] = "my/templates"
       File.expects(:directory?).with(File.expand_path("my/templates")).returns(true)
       Puppet::Parser::Files.find_template("mytemplate").should == File.expand_path("my/templates/mytemplate")
     end
 
     it "should use the environment templatedir if no module is found and an environment is specified" do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       Puppet::Parser::Files.stubs(:templatepath).with("myenv").returns(["/myenv/templates"])
       Puppet::Parser::Files.find_template("mymod/mytemplate", "myenv").should == "/myenv/templates/mymod/mytemplate"
     end
 
     it "should use first dir from environment templatedir if no module is found and an environment is specified" do
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       Puppet::Parser::Files.stubs(:templatepath).with("myenv").returns(["/myenv/templates", "/two/templates"])
       Puppet::Parser::Files.find_template("mymod/mytemplate", "myenv").should == "/myenv/templates/mymod/mytemplate"
     end
 
     it "should use a valid dir when templatedir is a path for unqualified templates and the first dir contains template" do
       Puppet::Parser::Files.stubs(:templatepath).returns(["/one/templates", "/two/templates"])
-      FileTest.expects(:exist?).with("/one/templates/mytemplate").returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with("/one/templates/mytemplate").returns(true)
       Puppet::Parser::Files.find_template("mytemplate").should == "/one/templates/mytemplate"
     end
 
     it "should use a valid dir when templatedir is a path for unqualified templates and only second dir contains template" do
       Puppet::Parser::Files.stubs(:templatepath).returns(["/one/templates", "/two/templates"])
-      FileTest.expects(:exist?).with("/one/templates/mytemplate").returns(false)
-      FileTest.expects(:exist?).with("/two/templates/mytemplate").returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with("/one/templates/mytemplate").returns(false)
+      Puppet::FileSystem::File.expects(:exist?).with("/two/templates/mytemplate").returns(true)
       Puppet::Parser::Files.find_template("mytemplate").should == "/two/templates/mytemplate"
     end
 

@@ -122,10 +122,12 @@ describe Puppet::Application::Cert => true do
       @ca = stub_everything 'ca'
       @cert_app.ca = @ca
       @cert_app.command_line.stubs(:args).returns([])
+      @iface = stub_everything 'iface'
+      Puppet::SSL::CertificateAuthority::Interface.stubs(:new).returns(@iface)
     end
 
     it "should delegate to the CertificateAuthority" do
-      @ca.expects(:apply)
+      @iface.expects(:apply)
 
       @cert_app.main
     end
@@ -133,7 +135,7 @@ describe Puppet::Application::Cert => true do
     it "should delegate with :all if option --all was given" do
       @cert_app.handle_all(0)
 
-      @ca.expects(:apply).with { |cert_mode,to| to[:to] == :all }
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| to[:to] == :all }
 
       @cert_app.main
     end
@@ -141,7 +143,7 @@ describe Puppet::Application::Cert => true do
     it "should delegate to ca.apply with the hosts given on command line" do
       @cert_app.command_line.stubs(:args).returns(["host"])
 
-      @ca.expects(:apply).with { |cert_mode,to| to[:to] == ["host"]}
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| to[:to] == ["host"]}
 
       @cert_app.main
     end
@@ -150,7 +152,7 @@ describe Puppet::Application::Cert => true do
       @cert_app.command_line.stubs(:args).returns(["host"])
       @cert_app.handle_digest(:digest)
 
-      @ca.expects(:apply).with { |cert_mode,to| to[:digest] == :digest}
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| to[:digest] == :digest}
 
       @cert_app.main
     end
@@ -159,8 +161,8 @@ describe Puppet::Application::Cert => true do
       @cert_app.subcommand = :destroy
       @cert_app.command_line.stubs(:args).returns(["host"])
 
-      @ca.expects(:apply).with { |cert_mode,to| cert_mode == :revoke }
-      @ca.expects(:apply).with { |cert_mode,to| cert_mode == :destroy }
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| cert_mode == :revoke }
+      Puppet::SSL::CertificateAuthority::Interface.expects(:new).returns(@iface).with { |cert_mode,to| cert_mode == :destroy }
 
       @cert_app.main
     end

@@ -2,18 +2,6 @@ require 'spec_helper'
 require 'puppet/indirector/data_binding/hiera'
 
 describe Puppet::DataBinding::Hiera do
-  it "should have documentation" do
-    Puppet::DataBinding::Hiera.doc.should_not be_nil
-  end
-
-  it "should be registered with the data_binding indirection" do
-    indirection = Puppet::Indirector::Indirection.instance(:data_binding)
-    Puppet::DataBinding::Hiera.indirection.should equal(indirection)
-  end
-
-  it "should have its name set to :hiera" do
-    Puppet::DataBinding::Hiera.name.should == :hiera
-  end
   include PuppetSpec::Files
 
   def write_hiera_config(config_file, datadir)
@@ -28,12 +16,32 @@ describe Puppet::DataBinding::Hiera do
     end
   end
 
+  def request(key)
+    Puppet::Indirector::Request.new(:hiera, :find, key, nil)
+  end
+
   before do
     hiera_config_file = tmpfile("hiera.yaml")
     Puppet.settings[:hiera_config] = hiera_config_file
     write_hiera_config(hiera_config_file, my_fixture_dir)
   end
 
+  after do
+    Puppet::DataBinding::Hiera.instance_variable_set(:@hiera, nil)
+  end
+
+  it "should have documentation" do
+    Puppet::DataBinding::Hiera.doc.should_not be_nil
+  end
+
+  it "should be registered with the data_binding indirection" do
+    indirection = Puppet::Indirector::Indirection.instance(:data_binding)
+    Puppet::DataBinding::Hiera.indirection.should equal(indirection)
+  end
+
+  it "should have its name set to :hiera" do
+    Puppet::DataBinding::Hiera.name.should == :hiera
+  end
   it "should be the default data_binding terminus" do
     Puppet.settings[:data_binding_terminus].should == :hiera
   end
@@ -102,9 +110,5 @@ describe Puppet::DataBinding::Hiera do
         data_binder.find(request('invalid'))
       end.to raise_error(Puppet::DataBinding::LookupError)
     end
-  end
-
-  def request(key)
-    Puppet::Indirector::Request.new(:hiera, :find, key, nil)
   end
 end

@@ -11,6 +11,16 @@ module Puppet::Configurer::PluginHandler
       Puppet[:pluginsignore],
       @environment
     )
+    if Puppet.features.external_facts?
+       plugin_fact_downloader = Puppet::Configurer::Downloader.new(
+          "pluginfacts",
+          Puppet[:pluginfactdest],
+          Puppet[:pluginfactsource],
+          Puppet[:pluginsignore],
+          @environment
+       )
+       plugin_fact_downloader.evaluate
+    end
 
     plugin_downloader.evaluate
     Puppet::Util::Autoload.reload_changed

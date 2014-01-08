@@ -8,7 +8,11 @@ class Puppet::Pops::Model::AstTreeDumper < Puppet::Pops::Model::TreeDumper
   AST = Puppet::Parser::AST
   Model = Puppet::Pops::Model
 
-  def dump_LiteralNumber o
+  def dump_LiteralFloat o
+    o.value.to_s
+  end
+
+  def dump_LiteralInteger o
     case o.radix
     when 10
       o.value.to_s
@@ -19,6 +23,10 @@ class Puppet::Pops::Model::AstTreeDumper < Puppet::Pops::Model::TreeDumper
     else
       "bad radix:" + o.value.to_s
     end
+  end
+
+  def dump_Expression(o)
+    "(pops-expression #{Puppet::Pops::Model::ModelTreeDumper.new().dump(o.value)})"
   end
 
   def dump_Factory o

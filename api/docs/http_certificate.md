@@ -4,8 +4,6 @@ Certificate
 The `certificate` endpoint returns the certificate for the specified name,
 which might be either a standard certname or `ca`.
 
-The returned certificate is always in the `.pem` format.
-
 Find
 ----
 
@@ -18,9 +16,11 @@ Get a certificate.
 
 GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: s
+s (denotes a string of text)
+
+The returned certificate is always in the `.pem` format.
 
 ### Parameters
 
@@ -104,5 +104,5 @@ The environment field is ignored.
 Schema
 ------
 
-A certificate response body is not structured data according to any standard scheme such as
+A `certificate` response body is not structured data according to any standard scheme such as
 json/pson/yaml, so no schema is applicable.

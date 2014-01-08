@@ -51,7 +51,7 @@ describe Puppet::Type.type(:package) do
         :clear           => nil,
         :validate_source => nil
       )
-      Puppet::Type.type(:package).defaultprovider.expects(:new).returns(@provider)
+      Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
     end
 
     it "should support :present as a value to :ensure" do
@@ -99,6 +99,12 @@ describe Puppet::Type.type(:package) do
 
     it "should accept any string as an argument to :source" do
       expect { Puppet::Type.type(:package).new(:name => "yay", :source => "stuff") }.to_not raise_error
+    end
+
+    it "should not accept a non-string name" do
+      expect do
+        Puppet::Type.type(:package).new(:name => ["error"])
+      end.to raise_error(Puppet::ResourceError, /Name must be a String/)
     end
   end
 

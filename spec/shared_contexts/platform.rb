@@ -6,6 +6,7 @@
 shared_context "windows", :as_platform => :windows do
   before :each do
     Facter.stubs(:value).with(:operatingsystem).returns 'Windows'
+    Facter.stubs(:value).with(:osfamily).returns 'windows'
     Puppet.features.stubs(:microsoft_windows?).returns(true)
     Puppet.features.stubs(:posix?).returns(false)
   end

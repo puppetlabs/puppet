@@ -28,11 +28,8 @@ class Puppet::Pops::Binder::BindingsLabelProvider < Puppet::Pops::LabelProvider
   def label_HashMultibindProducerDescriptor o   ; "Hash Multibind Producer"                      end
   def label_Bindings o                          ; "Bindings"                                     end
   def label_NamedBindings o                     ; "Named Bindings"                               end
-  def label_Category o                          ; "Category '#{o.categorization}/#{o.value}'"    end
-  def label_CategorizedBindings o               ; "Categorized Bindings"                         end
   def label_LayeredBindings o                   ; "Layered Bindings"                             end
   def label_NamedLayer o                        ; "Layer '#{o.name}'"                            end
-  def label_EffectiveCategories o               ; "Effective Categories"                         end
   def label_ContributedBindings o               ; "Contributed Bindings"                         end
   def label_NamedArgument o                     ; "Named Argument"                               end
 

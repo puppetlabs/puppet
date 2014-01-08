@@ -138,8 +138,27 @@ class Puppet::Parser::Compiler
   end
 
   # Evaluate all of the classes specified by the node.
+  # Classes with parameters are evaluated as if they were declared.
+  # Classes without parameters or with an empty set of parameters are evaluated
+  # as if they were included. This means classes with an empty set of
+  # parameters won't conflict even if the class has already been included.
   def evaluate_node_classes
-    evaluate_classes(@node.classes, @node_scope || topscope)
+    if @node.classes.is_a? Hash
+      classes_with_params, classes_without_params = @node.classes.partition {|name,params| params and !params.empty?}
+
+      # The results from Hash#partition are arrays of pairs rather than hashes,
+      # so we have to convert to the forms evaluate_classes expects (Hash, and
+      # Array of class names)
+      classes_with_params = Hash[classes_with_params]
+      classes_without_params.map!(&:first)
+    else
+      classes_with_params = {}
+      classes_without_params = @node.classes
+    end
+
+    evaluate_classes(classes_without_params, @node_scope || topscope)
+
+    evaluate_classes(classes_with_params, @node_scope || topscope)
   end
 
   # Evaluate each specified class in turn.  If there are any classes we can't
@@ -227,12 +246,11 @@ class Puppet::Parser::Compiler
   #
   def create_boot_injector(env_boot_bindings)
     assert_binder_active()
-    boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution(env_boot_bindings)
-    final_contribution = Puppet::Pops::Binder::SystemBindings.final_contribution
-    binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_categories(boot_contribution.effective_categories)
-    binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
-    @boot_injector = Puppet::Pops::Binder::Injector.new(binder)
+    pb = Puppet::Pops::Binder
+    boot_contribution = pb::SystemBindings.injector_boot_contribution(env_boot_bindings)
+    final_contribution = pb::SystemBindings.final_contribution
+    binder = pb::Binder.new(pb::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
+    @boot_injector = pb::Injector.new(binder)
   end
 
   # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
@@ -482,10 +500,12 @@ class Puppet::Parser::Compiler
     node.parameters.each do |param, value|
       @topscope[param.to_s] = value
     end
-
     # These might be nil.
     catalog.client_version = node.parameters["clientversion"]
     catalog.server_version = node.parameters["serverversion"]
+    if Puppet[:trusted_node_data]
+      @topscope.set_trusted(node.trusted_data)
+    end
   end
 
   def create_settings_scope
@@ -523,10 +543,7 @@ class Puppet::Parser::Compiler
     assert_binder_active()
     composer = Puppet::Pops::Binder::BindingsComposer.new()
     layered_bindings = composer.compose(topscope)
-    binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_categories(composer.effective_categories(topscope))
-    binder.define_layers(layered_bindings)
-    @injector = Puppet::Pops::Binder::Injector.new(binder)
+    @injector = Puppet::Pops::Binder::Injector.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
   end
 
   def assert_binder_active

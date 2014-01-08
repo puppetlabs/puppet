@@ -47,11 +47,16 @@ module Puppet::Pops::Binder::Bindings
     has_attr 'value', Object
   end
 
-  # Produces a value by evaluating a Puppet DSL expression
+  # Produces a value by evaluating a Puppet DSL expression.
+  # Note that the expression is not contained as it is part of a Puppet::Pops::Model::Program.
+  # To include the expression in the serialization, the Program it is contained in must be
+  # contained in the same serialization. This can be achieved by containing it in the
+  # ContributedBindings that is the top of a BindingsModel produced and given to the Injector.
+  #
   # @api public
   #
   class EvaluatingProducerDescriptor < ProducerDescriptor
-    contains_one_uni 'expression', Puppet::Pops::Model::Expression
+    has_one 'expression', Puppet::Pops::Model::Expression
   end
 
   # An InstanceProducer creates an instance of the given class
@@ -133,6 +138,7 @@ module Puppet::Pops::Binder::Bindings
     has_attr 'name', String
     has_attr 'override', Boolean
     has_attr 'abstract', Boolean
+    has_attr 'final', Boolean
     # If set is a contribution in a multibind
     has_attr 'multibind_id', String, :lowerBound => 0
     # Invariant: Only multibinds may have lowerBound 0, all regular Binding must have a producer.
@@ -163,23 +169,6 @@ module Puppet::Pops::Binder::Bindings
     has_attr 'name', String
   end
 
-  # A category predicate (the request has to be in this category).
-  # @api public
-  #
-  class Category < Puppet::Pops::Model::PopsObject
-    has_attr 'categorization', String, :lowerBound => 1
-    has_attr 'value', String, :lowerBound => 1
-  end
-
-  # A container of Binding instances that are in effect when the
-  # predicates (min one) evaluates to true. Multiple predicates are handles as an 'and'.
-  # Note that 'or' semantics are handled by repeating the same rules.
-  # @api public
-  #
-  class CategorizedBindings < Bindings
-    contains_many_uni 'predicates', Category, :lowerBound => 1
-  end
-
   # A named layer of bindings having the same priority.
   # @api public
   class NamedLayer < Puppet::Pops::Model::PopsObject
@@ -194,22 +183,19 @@ module Puppet::Pops::Binder::Bindings
     contains_many_uni 'layers', NamedLayer
   end
 
-  # A list of categories consisting of categroization name and category value (i.e. the *state of the request*)
-  # @api public
-  #
-  class EffectiveCategories < Puppet::Pops::Model::PopsObject
-    # The order is from highest precedence to lowest
-    contains_many_uni 'categories', Category
-  end
-
   # ContributedBindings is a named container of one or more NamedBindings.
-  # The intent is that a bindings producer returns a ContributedBindings which in addition to the bindings
-  # may optionally contain provider's opinion about the precedence of categories, and their category values.
-  # This enables merging of bindings, and validation of consistency.
+  # The intent is that a bindings producer returns a ContributedBindings that identifies the contributor
+  # as opposed to the names of the different set of bindings. The ContributorBindings name is typically
+  # a technical name that indicates their source (a service).
+  #
+  # When EvaluatingProducerDescriptor is used, it holds a reference to an Expression. That expression
+  # should be contained in the programs referenced in the ContributedBindings that contains that producer.
+  # While the bindings model will still work if this is not the case, it will not serialize and deserialize
+  # correctly.
   #
   # @api public
   #
   class ContributedBindings < NamedLayer
-    contains_one_uni 'effective_categories', EffectiveCategories
+    contains_many_uni 'programs', Puppet::Pops::Model::Program
   end
 end

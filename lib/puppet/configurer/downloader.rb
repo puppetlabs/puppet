@@ -58,7 +58,9 @@ class Puppet::Configurer::Downloader
       :backup => false,
       :noop => false
     }.merge(
-      Puppet.features.microsoft_windows? ? {} :
+      Puppet.features.microsoft_windows? ? {
+        :source_permissions => :ignore
+      } :
       {
         :owner => Process.uid,
         :group => Process.gid

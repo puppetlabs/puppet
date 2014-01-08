@@ -43,7 +43,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       end
       missing_files = []
       files.each do |file|
-        missing_files << file if ! File.exists?(file)
+        missing_files << file if ! Puppet::FileSystem::File.exist?(file)
         Puppet[:manifest] = file
         validate_manifest
       end

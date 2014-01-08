@@ -20,8 +20,15 @@ describe Puppet::Settings::ConfigFile do
 
   let(:filename) { "a/fake/filename.conf" }
 
+  Conf = Puppet::Settings::ConfigFile::Conf
+  Section = Puppet::Settings::ConfigFile::Section
+  Meta = Puppet::Settings::ConfigFile::Meta
+  NO_META = Puppet::Settings::ConfigFile::NO_META
+
   it "interprets an empty file to contain a main section with no entries" do
-    the_parse_of("").should == { :main => section_containing(NOTHING) }
+    result = the_parse_of("")
+
+    expect(result).to eq(Conf.new.with_section(Section.new(:main)))
   end
 
   it "interprets an empty main section the same as an empty file" do
@@ -29,39 +36,71 @@ describe Puppet::Settings::ConfigFile do
   end
 
   it "places an entry in no section in main" do
-    the_parse_of("var = value").should == { :main => section_containing(:var => "value") }
+    result = the_parse_of("var = value")
+
+    expect(result).to eq(Conf.new.with_section(Section.new(:main).with_setting(:var, "value", NO_META)))
   end
 
   it "places an entry after a section header in that section" do
-    the_parse_of("[section]", "var = value").should == { :main => section_containing(NOTHING),
-                                                       :section => section_containing(:var => "value") }
+    result = the_parse_of("[section]", "var = value")
+
+    expect(result).to eq(Conf.new.
+                         with_section(Section.new(:main)).
+                         with_section(Section.new(:section).
+                                      with_setting(:var, "value", NO_META)))
   end
 
   it "does not include trailing whitespace in the value" do
-    the_parse_of("var = value\t ").should == { :main => section_containing(:var => "value") }
+    result = the_parse_of("var = value\t ")
+
+    expect(result).to eq(Conf.new.
+                         with_section(Section.new(:main).
+                                      with_setting(:var, "value", NO_META)))
   end
 
   it "does not include leading whitespace in the name" do
-    the_parse_of("  \t var=value").should == { :main => section_containing(:var => "value") }
+    result = the_parse_of("  \t var=value")
+
+    expect(result).to eq(Conf.new.
+                         with_section(Section.new(:main).
+                                      with_setting(:var, "value", NO_META)))
   end
 
   it "skips lines that are commented out" do
-    the_parse_of("#var = value").should == { :main => section_containing(NOTHING) }
+    result = the_parse_of("#var = value")
+
+    expect(result).to eq(Conf.new.with_section(Section.new(:main)))
   end
 
   it "skips lines that are entirely whitespace" do
-    the_parse_of("   \t ").should == { :main => section_containing(NOTHING) }
+    result = the_parse_of("   \t ")
+
+    expect(result).to eq(Conf.new.with_section(Section.new(:main)))
   end
 
   it "errors when a line is not a known form" do
     expect { the_parse_of("unknown") }.to raise_error Puppet::Settings::ParseError, /Could not match line/
   end
 
+  it "errors providing correct line number when line is not a known form" do
+    multi_line_config = <<-EOF
+[main]
+foo=bar
+badline
+    EOF
+    expect { the_parse_of(multi_line_config) }.to(
+        raise_error(Puppet::Settings::ParseError, /Could not match line/) do |exception|
+          expect(exception.line).to eq(3)
+        end
+      )
+  end
+
   it "stores file meta information in the _meta section" do
-    the_parse_of("var = value { owner = me, group = you, mode = 0666 }").should ==
-      { :main => section_containing(:var => "value", :meta => { :var => { :owner => "me",
-                                                                          :group => "you",
-                                                                          :mode => "0666" } }) }
+    result = the_parse_of("var = value { owner = me, group = you, mode = 0666 }")
+
+    expect(result).to eq(Conf.new.with_section(Section.new(:main).
+                                               with_setting(:var, "value",
+                                                            Meta.new("me", "you", "0666"))))
   end
 
   it "errors when there is unknown meta information" do
@@ -82,19 +121,33 @@ describe Puppet::Settings::ConfigFile do
   it "errors when an application_defaults section is created" do
     expect { the_parse_of("[application_defaults]") }.
       to raise_error Puppet::Error,
-        "Illegal section 'application_defaults' in config file #{filename} at line [application_defaults]"
+        "Illegal section 'application_defaults' in config file #{filename} at line 1"
+  end
+
+  it "errors when a global_defaults section is created" do
+    expect { the_parse_of("[main]\n[global_defaults]") }.
+      to raise_error Puppet::Error,
+        "Illegal section 'global_defaults' in config file #{filename} at line 2"
   end
 
   it "transforms values with the given function" do
     config = Puppet::Settings::ConfigFile.new(Proc.new { |value| value + " changed" })
 
-    config.parse_file(filename, "var = value").should == { :main => section_containing(:var => "value changed") }
+    result = config.parse_file(filename, "var = value")
+
+    expect(result).to eq(Conf.new.
+                            with_section(Section.new(:main).
+                                         with_setting(:var, "value changed", NO_META)))
   end
 
   it "does not try to transform an entry named 'mode'" do
     config = Puppet::Settings::ConfigFile.new(Proc.new { raise "Should not transform" })
 
-    config.parse_file(filename, "mode = value").should == { :main => section_containing(:mode => "value") }
+    result = config.parse_file(filename, "mode = value")
+
+    expect(result).to eq(Conf.new.
+                            with_section(Section.new(:main).
+                                         with_setting(:mode, "value", NO_META)))
   end
 end
 

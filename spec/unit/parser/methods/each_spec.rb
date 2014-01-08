@@ -26,7 +26,7 @@ describe 'the each method' do
     it 'each on an array selecting each value - function call style' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
-        each ($a) |$index, $v| => {
+        each ($a) |$index, $v| {
           file { "/file_$v": ensure => present }
         }
       MANIFEST

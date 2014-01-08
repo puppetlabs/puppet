@@ -13,7 +13,9 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
   include PuppetSpec::Files
 
   before :each do
-    File.stubs(:stat).with("init.pp")
+    stub_file = stub('init.pp', :stat => stub())
+    # Ruby 1.8.7 needs the following call to be stubs and not expects
+    Puppet::FileSystem::File.stubs(:new).with('init.pp').returns stub_file
     @top_level = stub_everything 'toplevel', :file_relative_name => "init.pp"
     @parser = RDoc::Parser.new(@top_level, "module/manifests/init.pp", nil, Options.instance, RDoc::Stats.new)
   end
@@ -25,7 +27,9 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       Puppet::Parser::Parser.stubs(:new).returns(parser)
       parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new('')).at_least_once
       parser.expects(:file=).with("module/manifests/init.pp")
-      parser.expects(:file=).with(File.expand_path("/dev/null/manifests/site.pp"))
+      parser.expects(:file=).with do |args|
+        args =~ /.*\/etc\/manifests\/site.pp/
+      end
 
       @parser.scan
     end
@@ -82,7 +86,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       File.stubs(:open).returns("readme")
       @parser.stubs(:parse_elements)
 
-      @module.expects(:comment=).with("readme")
+      @module.expects(:add_comment).with("readme", "module/manifests/init.pp")
 
       @parser.scan_top_level(@topcontainer)
     end
@@ -93,7 +97,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       File.stubs(:open).returns("readme")
       @parser.stubs(:parse_elements)
 
-      @module.expects(:comment=).with("readme")
+      @module.expects(:add_comment).with("readme", "module/manifests/init.pp")
 
       @parser.scan_top_level(@topcontainer)
     end
@@ -105,7 +109,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       File.stubs(:open).with("module/README.rdoc", "r").returns("readme.rdoc")
       @parser.stubs(:parse_elements)
 
-      @module.expects(:comment=).with("readme.rdoc")
+      @module.expects(:add_comment).with("readme.rdoc", "module/manifests/init.pp")
 
       @parser.scan_top_level(@topcontainer)
     end
@@ -311,7 +315,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
     end
 
     it "should associate the node documentation to the rdoc node" do
-      @rdoc_node.expects(:comment=).with("mydoc")
+      @rdoc_node.expects(:add_comment).with("mydoc", "file")
       @parser.document_node("mynode", @node, @class)
     end
 
@@ -360,7 +364,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
     end
 
     it "should associate the node documentation to the rdoc class" do
-      @rdoc_class.expects(:comment=).with("mydoc")
+      @rdoc_class.expects(:add_comment).with("mydoc", "file")
       @parser.document_class("mynode", @class, @module)
     end
 
@@ -397,7 +401,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
     before(:each) do
       @class = stub_everything 'class'
       @code = stub_everything 'code'
-      @code.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(true)
+      @code.stubs(:is_a?).with(Puppet::Parser::AST::BlockExpression).returns(true)
     end
 
     it "should also scan mono-instruction code" do
@@ -435,7 +439,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
     before(:each) do
       @class = stub_everything 'class'
       @code = stub_everything 'code'
-      @code.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(true)
+      @code.stubs(:is_a?).with(Puppet::Parser::AST::BlockExpression).returns(true)
     end
 
     it "should also scan mono-instruction code" do
@@ -457,11 +461,11 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       @class = stub_everything 'class'
 
       @stmt = stub_everything 'stmt', :name => "myvar", :value => "myvalue", :doc => "mydoc"
-      @stmt.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
+      @stmt.stubs(:is_a?).with(Puppet::Parser::AST::BlockExpression).returns(false)
       @stmt.stubs(:is_a?).with(Puppet::Parser::AST::VarDef).returns(true)
 
       @code = stub_everything 'code'
-      @code.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(true)
+      @code.stubs(:is_a?).with(Puppet::Parser::AST::BlockExpression).returns(true)
     end
 
     it "should recursively register variables to the current container" do
@@ -483,17 +487,17 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       @class = stub_everything 'class'
       @stmt = Puppet::Parser::AST::Resource.new(
         :type       => "File",
-        :instances  => Puppet::Parser::AST::ASTArray.new(:children => [
+        :instances  => Puppet::Parser::AST::BlockExpression.new(:children => [
           Puppet::Parser::AST::ResourceInstance.new(
             :title => Puppet::Parser::AST::Name.new(:value => "myfile"),
-            :parameters => Puppet::Parser::AST::ASTArray.new(:children => [])
+            :parameters => Puppet::Parser::AST::BlockExpression.new(:children => [])
           )
         ]),
         :doc        => 'mydoc'
       )
 
       @code = stub_everything 'code'
-      @code.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(true)
+      @code.stubs(:is_a?).with(Puppet::Parser::AST::BlockExpression).returns(true)
     end
 
     it "should register a PuppetResource to the current container" do

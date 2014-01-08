@@ -38,20 +38,6 @@ describe 'The bindings checker' do
     b
   end
 
-  def category(name, value)
-    b = Bindings::Category.new()
-    b.categorization = name
-    b.value = value
-    b
-  end
-
-  def categorized_bindings(bindings, *predicates)
-    b = Bindings::CategorizedBindings.new()
-    b.bindings = bindings
-    b.predicates = predicates
-    b
-  end
-
   def layer(name, *bindings)
     l = Bindings::NamedLayer.new()
     l.name = name
@@ -141,33 +127,6 @@ describe 'The bindings checker' do
 
     it 'should do generic bindings check' do
       validate(named_bindings('garfield'))
-      acceptor.should have_issue(Issues::MISSING_BINDINGS)
-    end
-  end
-
-  context 'when checking categorized bindings' do
-    it 'should accept non-zero predicates' do
-      validate(categorized_bindings([ok_binding], category('foo', 'bar')))
-      acceptor.errors_or_warnings?.should() == false
-    end
-
-    it 'should not accept zero predicates' do
-      validate(categorized_bindings([ok_binding]))
-      acceptor.should have_issue(Issues::MISSING_PREDICATES)
-    end
-
-    it 'should not accept predicates that has no categorization' do
-      validate(categorized_bindings([ok_binding], category(nil, 'bar')))
-      acceptor.should have_issue(Issues::MISSING_CATEGORIZATION)
-    end
-
-    it 'should not accept predicates that has no value' do
-      validate(categorized_bindings([ok_binding], category('foo', nil)))
-      acceptor.should have_issue(Issues::MISSING_CATEGORY_VALUE)
-    end
-
-    it 'should do generic bindings check' do
-      validate(categorized_bindings([], category('foo', 'bar')))
       acceptor.should have_issue(Issues::MISSING_BINDINGS)
     end
   end

@@ -269,7 +269,7 @@ describe Puppet::Settings do
 
     describe "setbycli" do
       it "should generate a deprecation warning" do
-        Puppet.expects(:deprecation_warning)
+        Puppet.expects(:deprecation_warning).at_least(1)
         @settings.setting(:myval).setbycli = true
       end
       it "should set the value" do
@@ -485,7 +485,7 @@ describe Puppet::Settings do
           :three  => { :default => "$one $two THREE", :desc => "c"},
           :four   => { :default => "$two $three FOUR", :desc => "d"},
           :five   => { :default => nil, :desc => "e" }
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
     end
 
     describe "call_on_define" do
@@ -507,6 +507,20 @@ describe Puppet::Settings do
     it "should provide a mechanism for returning set values" do
       @settings[:one] = "other"
       @settings[:one].should == "other"
+    end
+
+    it "setting a value to nil causes it to return to its default" do
+      default_values = { :one => "skipped value" }
+      [:logdir, :confdir, :vardir].each do |key|
+        default_values[key] = 'default value'
+      end
+      @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
+      @settings.initialize_app_defaults(default_values)
+      @settings[:one] = "value will disappear"
+
+      @settings[:one] = nil
+
+      @settings[:one].should == "ONE"
     end
 
     it "should interpolate default values for other parameters into returned parameter values" do
@@ -542,20 +556,6 @@ describe Puppet::Settings do
       @settings[:two].should == "one TWO"
     end
 
-    describe "caching values that evaluate to false" do
-      it "caches nil" do
-        @settings.expects(:convert).once.returns nil
-        @settings[:five].should be_nil
-        @settings[:five].should be_nil
-      end
-
-      it "caches false" do
-        @settings.expects(:convert).once.returns false
-        @settings[:five].should == false
-        @settings[:five].should == false
-      end
-    end
-
     it "should not cache values such that information from one environment is returned for another environment" do
       text = "[env1]\none = oneval\n[env2]\none = twoval\n"
       @settings.stubs(:read_file).returns(text)
@@ -589,7 +589,7 @@ describe Puppet::Settings do
         :config => { :type => :file, :default => "/my/file", :desc => "a" },
         :one => { :default => "ONE", :desc => "a" },
         :two => { :default => "TWO", :desc => "b" }
-      FileTest.stubs(:exist?).returns true
+      Puppet::FileSystem::File.stubs(:exist?).returns true
       @settings.preferred_run_mode = :agent
     end
 
@@ -666,8 +666,8 @@ describe Puppet::Settings do
     describe "when root" do
       it "should look for the main config file default location config settings haven't been overridden'" do
         Puppet.features.stubs(:root?).returns(true)
-        FileTest.expects(:exist?).with(main_config_file_default_location).returns(false)
-        FileTest.expects(:exist?).with(user_config_file_default_location).never
+        Puppet::FileSystem::File.expects(:exist?).with(main_config_file_default_location).returns(false)
+        Puppet::FileSystem::File.expects(:exist?).with(user_config_file_default_location).never
 
         @settings.send(:parse_config_files)
       end
@@ -678,7 +678,7 @@ describe Puppet::Settings do
         Puppet.features.stubs(:root?).returns(false)
 
         seq = sequence "load config files"
-        FileTest.expects(:exist?).with(user_config_file_default_location).returns(false).in_sequence(seq)
+        Puppet::FileSystem::File.expects(:exist?).with(user_config_file_default_location).returns(false).in_sequence(seq)
 
         @settings.send(:parse_config_files)
       end
@@ -699,8 +699,8 @@ describe Puppet::Settings do
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
       @settings.stubs(:user_config_file).returns(@userconfig)
-      FileTest.stubs(:exist?).with(@file).returns true
-      FileTest.stubs(:exist?).with(@userconfig).returns false
+      Puppet::FileSystem::File.stubs(:exist?).with(@file).returns true
+      Puppet::FileSystem::File.stubs(:exist?).with(@userconfig).returns false
     end
 
     it "should not ignore the report setting" do
@@ -712,7 +712,7 @@ describe Puppet::Settings do
         [puppetd]
           report=true
       CONF
-      FileTest.expects(:exist?).with(myfile).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(myfile).returns(true)
       @settings.expects(:read_file).returns(text)
       @settings.send(:parse_config_files)
       @settings[:report].should be_true
@@ -722,7 +722,7 @@ describe Puppet::Settings do
       myfile = make_absolute("/my/file") # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
       @settings[:config] = myfile
 
-      FileTest.expects(:exist?).with(myfile).returns(true)
+      Puppet::FileSystem::File.expects(:exist?).with(myfile).returns(true)
 
       File.expects(:read).with(myfile).returns "[main]"
 
@@ -730,7 +730,7 @@ describe Puppet::Settings do
     end
 
     it "should not try to parse non-existent files" do
-      FileTest.expects(:exist?).with(@file).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(@file).returns false
 
       File.expects(:read).with(@file).never
 
@@ -777,11 +777,11 @@ describe Puppet::Settings do
       @settings.define_settings :section, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
       otherfile = make_absolute("/other/file")
-      text = "[main]
+      @settings.parse_config(<<-CONF)
+      [main]
       myfile = #{otherfile} {owner = service, group = service, mode = 644}
-      "
-      @settings.expects(:read_file).returns(text)
-      @settings.send(:parse_config_files)
+      CONF
+
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser", :group => "sgroup", :mode => "644"}
     end
@@ -790,11 +790,11 @@ describe Puppet::Settings do
       @settings.define_settings :section, :myfile => { :type => :file, :default => make_absolute("/myfile"), :desc => "a" }
 
       otherfile = make_absolute("/other/file")
-      text = "[main]
+      @settings.parse_config(<<-CONF)
+      [main]
       myfile = #{otherfile} {owner = service}
-      "
-      @settings.expects(:read_file).returns(text)
-      @settings.send(:parse_config_files)
+      CONF
+
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser"}
     end
@@ -824,6 +824,37 @@ describe Puppet::Settings do
       # initializing the app should have reloaded the metadata based on run_mode
       @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:mode => "664"}
+    end
+
+    it "does not use the metadata from the same setting in a different section" do
+      default_values = {}
+      PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS.keys.each do |key|
+        default_values[key] = 'default value'
+      end
+
+      file = make_absolute("/file")
+      default_mode = "0600"
+      @settings.define_settings :main, PuppetSpec::Settings::TEST_APP_DEFAULT_DEFINITIONS
+      @settings.define_settings :master, :myfile => { :type => :file, :default => file, :desc => "a", :mode => default_mode }
+
+      text = "[master]
+      myfile = #{file}/foo
+      [agent]
+      myfile = #{file} {mode = 664}
+      "
+      @settings.expects(:read_file).returns(text)
+
+      # will start initialization as user
+      @settings.preferred_run_mode.should == :user
+      @settings.send(:parse_config_files)
+
+      # change app run_mode to master
+      @settings.initialize_app_defaults(default_values.merge(:run_mode => :master))
+      @settings.preferred_run_mode.should == :master
+
+      # initializing the app should have reloaded the metadata based on run_mode
+      @settings[:myfile].should == "#{file}/foo"
+      @settings.metadata(:myfile).should == { :mode => default_mode }
     end
 
     it "should call hooks associated with values set in the configuration file" do
@@ -881,6 +912,54 @@ describe Puppet::Settings do
       values.should == ["yay/setval"]
     end
 
+    it "should allow hooks invoked at parse time to be deferred" do
+      hook_invoked = false
+      @settings.define_settings :section, :deferred  => {:desc => '',
+                                                         :hook => proc { |v| hook_invoked = true },
+                                                         :call_hook => :on_initialize_and_write, }
+
+      @settings.define_settings(:main,
+        :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
+        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
+        :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
+
+      text = <<-EOD
+      [main]
+      deferred=$confdir/goose
+      EOD
+
+      @settings.stubs(:read_file).returns(text)
+      @settings.initialize_global_settings
+
+      hook_invoked.should be_false
+
+      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
+
+      hook_invoked.should be_true
+      @settings[:deferred].should eq File.expand_path('/path/to/confdir/goose')
+    end
+
+    it "does not require the value for a setting without a hook to resolve during global setup" do
+      hook_invoked = false
+      @settings.define_settings :section, :can_cause_problems  => {:desc => '' }
+
+      @settings.define_settings(:main,
+        :logdir       => { :type => :directory, :default => nil, :desc => "logdir" },
+        :confdir      => { :type => :directory, :default => nil, :desc => "confdir" },
+        :vardir       => { :type => :directory, :default => nil, :desc => "vardir" })
+
+      text = <<-EOD
+      [main]
+      can_cause_problems=$confdir/goose
+      EOD
+
+      @settings.stubs(:read_file).returns(text)
+      @settings.initialize_global_settings
+      @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
+
+      @settings[:can_cause_problems].should eq File.expand_path('/path/to/confdir/goose')
+    end
+
     it "should allow empty values" do
       @settings.define_settings :section, :myarg => { :default => "myfile", :desc => "a" }
 
@@ -925,7 +1004,7 @@ describe Puppet::Settings do
     context "running non-root without explicit config file" do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
-        FileTest.expects(:exist?).
+        Puppet::FileSystem::File.expects(:exist?).
           with(user_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -947,7 +1026,7 @@ describe Puppet::Settings do
     context "running as root without explicit config file" do
       before :each do
         Puppet.features.stubs(:root?).returns(true)
-        FileTest.expects(:exist?).
+        Puppet::FileSystem::File.expects(:exist?).
           with(main_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -970,7 +1049,7 @@ describe Puppet::Settings do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
         @settings[:confdir] = File.dirname(main_config_file_default_location)
-        FileTest.expects(:exist?).
+        Puppet::FileSystem::File.expects(:exist?).
           with(main_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -1000,13 +1079,13 @@ describe Puppet::Settings do
           :one => { :default => "ONE", :desc => "a" },
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
-      FileTest.stubs(:exist?).with(@file).returns true
-      FileTest.stubs(:exist?).with(@userconfig).returns false
+      Puppet::FileSystem::File.stubs(:exist?).with(@file).returns true
+      Puppet::FileSystem::File.stubs(:exist?).with(@userconfig).returns false
       @settings.stubs(:user_config_file).returns(@userconfig)
     end
 
     it "does not create the WatchedFile instance and should not parse if the file does not exist" do
-      FileTest.expects(:exist?).with(@file).returns false
+      Puppet::FileSystem::File.expects(:exist?).with(@file).returns false
       Puppet::Util::WatchedFile.expects(:new).never
 
       @settings.expects(:parse_config_files).never
@@ -1037,7 +1116,7 @@ describe Puppet::Settings do
       it "reparses if the file has changed" do
         @watched_file.expects(:changed?).returns true
 
-        @settings.expects(:unsafe_parse).with(@file)
+        @settings.expects(:parse_config_files)
 
         @settings.reparse_config_files
       end
@@ -1285,10 +1364,6 @@ describe Puppet::Settings do
       @settings.define_settings :files, :myfile => {:type => :file, :default => make_absolute("/myfile"), :desc => "a", :mode => 0755}
     end
 
-    it "should provide a method that writes files with the correct modes" do
-      @settings.should respond_to(:write)
-    end
-
     it "should provide a method that creates directories with the correct modes" do
       Puppet::Util::SUIDManager.expects(:asuser).with("suser", "sgroup").yields
       Dir.expects(:mkdir).with(make_absolute("/otherdir"), 0755)
@@ -1349,13 +1424,20 @@ describe Puppet::Settings do
 
       @trans.expects(:any_failed?).returns(true)
 
-      report = mock 'report'
+      resource = Puppet::Type.type(:notify).new(:title => 'failed')
+      status = Puppet::Resource::Status.new(resource)
+      event = Puppet::Transaction::Event.new(
+        :name => 'failure',
+        :status => 'failure',
+        :message => 'My failure')
+      status.add_event(event)
+
+      report = Puppet::Transaction::Report.new('apply')
+      report.add_resource_status(status)
+
       @trans.expects(:report).returns report
 
-      log = mock 'log', :to_s => "My failure", :level => :err
-      report.expects(:logs).returns [log]
-
-      @settings.expects(:raise).with { |msg| msg.include?("My failure") }
+      @settings.expects(:raise).with(includes("My failure"))
       @settings.use(:whatever)
     end
   end
@@ -1566,17 +1648,6 @@ describe Puppet::Settings do
       settings.should be_service_group_available
     end
   end
-
-  describe "#writesub" do
-    it "should only pass valid arguments to File.open" do
-      settings = Puppet::Settings.new
-      settings.stubs(:get_config_file_default).with(:privatekeydir).returns(OpenStruct.new(:mode => "750"))
-
-      File.expects(:open).with("/path/to/keydir", "w", 750).returns true
-      settings.writesub(:privatekeydir, "/path/to/keydir")
-    end
-  end
-
 
   describe "when dealing with command-line options" do
     let(:settings) { Puppet::Settings.new }

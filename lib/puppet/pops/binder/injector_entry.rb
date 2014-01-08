@@ -3,7 +3,7 @@
 # @api public
 #
 class Puppet::Pops::Binder::InjectorEntry
-  # @return [Object] An opaque object representing the precedence
+  # @return [Object] An opaque (comparable) object representing the precedence
   # @api public
   attr_reader :precedence
 
@@ -18,7 +18,7 @@ class Puppet::Pops::Binder::InjectorEntry
   attr_accessor :cached_producer
 
   # @api private
-  def initialize(precedence, binding)
+  def initialize(binding, precedence = 0)
     @precedence = precedence.freeze
     @binding = binding
     @cached_producer = nil
@@ -40,6 +40,10 @@ class Puppet::Pops::Binder::InjectorEntry
 
   def is_abstract?
     binding.abstract
+  end
+
+  def is_final?
+    binding.final
   end
 
   # Compares against another InjectorEntry by comparing precedence.

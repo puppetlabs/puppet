@@ -14,6 +14,8 @@ class Puppet::Indirector::Request
 
   attr_reader :indirection_name
 
+  # trusted_information is specifically left out because we can't serialize it
+  # and keep it "trusted"
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
 
   ::PSON.register_document_type('IndirectorRequest',self)
@@ -37,16 +39,12 @@ class Puppet::Indirector::Request
     request
   end
 
-  def to_pson(*args)
+  def to_data_hash
     result = {
-      'document_type' => 'IndirectorRequest',
-      'data' => {
-        'type' => indirection_name,
-        'method' => method,
-        'key' => key
-      }
+      'type' => indirection_name,
+      'method' => method,
+      'key' => key
     }
-    data = result['data']
     attributes = {}
     OPTION_ATTRIBUTES.each do |key|
       next unless value = send(key)
@@ -57,10 +55,20 @@ class Puppet::Indirector::Request
       attributes[opt] = value
     end
 
-    data['attributes'] = attributes unless attributes.empty?
-    data['instance'] = instance if instance
+    result['attributes'] = attributes unless attributes.empty?
+    result['instance'] = instance if instance
+    result
+  end
 
-    result.to_pson(*args)
+  def to_pson_data_hash
+    {
+      'document_type' => 'IndirectorRequest',
+      'data' => to_data_hash,
+    }
+  end
+
+  def to_pson(*args)
+    to_pson_data_hash.to_pson(*args)
   end
 
   # Is this an authenticated request?
@@ -135,7 +143,6 @@ class Puppet::Indirector::Request
   def indirection_name=(name)
     @indirection_name = name.to_sym
   end
-
 
   def model
     raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless i = indirection

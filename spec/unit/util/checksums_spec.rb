@@ -132,7 +132,8 @@ describe Puppet::Util::Checksums do
         file = "/my/file"
         stat = mock 'stat', sum => "mysum"
 
-        File.expects(:stat).with(file).returns(stat)
+        stub_file = stub(file, :stat => stat)
+        Puppet::FileSystem::File.expects(:new).with(file).returns stub_file
 
         @summer.send(sum.to_s + "_file", file).should == "mysum"
       end

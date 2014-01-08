@@ -15,7 +15,7 @@ module Puppet
       # @param host [String] hostname
       # @return [Array] paths for found modules
       def get_installed_modules_for_host (host)
-        on host, puppet("module list --render-as s")
+        on host, puppet("module list --render-as pson")
         str  = stdout.lines.to_a.last
         pat = /\(([^()]+)\)/
         mods =  str.scan(pat).flatten
@@ -74,7 +74,7 @@ module Puppet
       # @param ending_hash [Hash] paths for found modules indexed
       #   by hostname. Taken in the teardown stage of a test.
       def rm_installed_modules_from_hosts (beginning_hash, ending_hash)
-        ending_hash.each do |host, mod_array|3
+        ending_hash.each do |host, mod_array|
           mod_array.each do |mod|
             if ! beginning_hash[host].include? mod
               on host, "rm -rf #{mod}"
@@ -143,28 +143,28 @@ module Puppet
       # @param module_name [String] the name portion of a module name
       def assert_module_installed_on_disk ( host, moduledir, module_name )
         # module directory should exist
-        on host, "[ -d #{moduledir}/#{module_name} ]"
+        on host, %Q{[ -d "#{moduledir}/#{module_name}" ]}
 
         owner = ''
         group = ''
-        on host, "ls -ld #{moduledir}" do
+        on host, %Q{ls -ld "#{moduledir}"} do
           listing = stdout.split(' ')
           owner = listing[2]
           group = listing[3]
         end
 
         # A module's files should have:
-        #     * a mode of 644 (755, if they're a directory)
+        #     * a mode of 444 (755, if they're a directory)
         #     * owner == owner of moduledir
         #     * group == group of moduledir
-        on host, "ls -alR #{moduledir}/#{module_name}" do
+        on host, %Q{ls -alR "#{moduledir}/#{module_name}"} do
           listings = stdout.split("\n")
           listings = listings.grep(/^[bcdlsp-]/)
           listings = listings.reject { |l| l =~ /\.\.$/ }
 
           listings.each do |line|
-            assert_match /(drwxr-xr-x|[^d]rw-r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
-              "bad permissions for '#{line[/\S+$/]}' - expected 644/755, #{owner}, #{group}"
+            assert_match /(drwxr-xr-x|[^d]r--r--r--)[^\d]+\d+\s+#{owner}\s+#{group}/, line,
+              "bad permissions for '#{line[/\S+$/]}' - expected 444/755, #{owner}, #{group}"
           end
         end
       end
@@ -175,7 +175,7 @@ module Puppet
       # @param moduledir [String] the path where the module should be
       # @param module_name [String] the name portion of a module name
       def assert_module_not_installed_on_disk ( host, moduledir, module_name )
-        on host, "[ ! -d #{moduledir}/#{module_name} ]"
+        on host, %Q{[ ! -d "#{moduledir}/#{module_name}" ]}
       end
 
     end

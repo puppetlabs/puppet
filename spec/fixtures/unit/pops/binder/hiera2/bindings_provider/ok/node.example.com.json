@@ -1,9 +1,0 @@
-{
-  "a_json_number": 142,
-  "a_string": "don't want this to override",
-  "a_json_string": "one hundred and forty two",
-  "a_json_eval": "the answer from \"json\" is ${a} and \\${a}.",
-  "a_json_eval2": "the answer\nfrom \\\"json\\\" is $a and \\$a",
-  "a_json_array": ["a", "b", 100],
-  "a_json_hash": { "a": 1, "b": 2 }
-}

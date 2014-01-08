@@ -1,4 +1,3 @@
-
 require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
 
@@ -85,7 +84,7 @@ module Puppet
 
     def change_to_s(currentvalue, newvalue)
       # newvalue = "{md5}#{@metadata.checksum}"
-      if @resource.property(:ensure).retrieve == :absent
+      if resource.property(:ensure).retrieve == :absent
         return "creating from source #{metadata.source} with contents #{metadata.checksum}"
       else
         return "replacing from source #{metadata.source} with contents #{metadata.checksum}"
@@ -111,37 +110,53 @@ module Puppet
     def copy_source_values
       devfail "Somehow got asked to copy source values without any metadata" unless metadata
 
+      # conditionally copy :checksum
+      if metadata.ftype != "directory" && !(metadata.ftype == "link" && metadata.links == :manage)
+        copy_source_value(:checksum)
+      end
+
       # Take each of the stats and set them as states on the local file
       # if a value has not already been provided.
-      [:owner, :mode, :group, :checksum].each do |metadata_method|
-        param_name = (metadata_method == :checksum) ? :content : metadata_method
+      [:owner, :mode, :group].each do |metadata_method|
         next if metadata_method == :owner and !Puppet.features.root?
-        next if metadata_method == :checksum and metadata.ftype == "directory"
-        next if metadata_method == :checksum and metadata.ftype == "link" and metadata.links == :manage
+        next if metadata_method == :group and !Puppet.features.root?
 
         if Puppet.features.microsoft_windows?
-          next if [:owner, :group].include?(metadata_method) and !local?
+          # Warn on Windows if source permissions are being used and the file resource
+          # does not have mode owner and group all set (which would take precedence).
+          if [:use, :use_when_creating].include?(resource[:source_permissions]) &&
+            (resource[:owner] == nil || resource[:group] == nil || resource[:mode] == nil)
+
+            warning = "Copying %s from the source" <<
+                      " file on Windows is deprecated;" <<
+                      " use source_permissions => ignore."
+            Puppet.deprecation_warning(warning % 'owner/mode/group')
+            resource.debug(warning % metadata_method.to_s)
+          end
+          # But never try to copy remote owner/group on Windows
+          next if [:owner, :group].include?(metadata_method) && !local?
         end
 
-        if resource[param_name].nil? or resource[param_name] == :absent
-          resource[param_name] = metadata.send(metadata_method)
+        case resource[:source_permissions]
+        when :ignore
+          next
+        when :use_when_creating
+          next if Puppet::FileSystem::File.exist?(resource[:path])
         end
+
+        copy_source_value(metadata_method)
       end
 
       if resource[:ensure] == :absent
         # We know all we need to
       elsif metadata.ftype != "link"
         resource[:ensure] = metadata.ftype
-      elsif @resource[:links] == :follow
+      elsif resource[:links] == :follow
         resource[:ensure] = :present
       else
         resource[:ensure] = "link"
         resource[:target] = metadata.destination
       end
-    end
-
-    def found?
-      ! (metadata.nil? or metadata.ftype.nil?)
     end
 
     attr_writer :metadata
@@ -195,5 +210,41 @@ module Puppet
     def uri
       @uri ||= URI.parse(URI.escape(metadata.source))
     end
+
+    private
+    def found?
+      ! (metadata.nil? or metadata.ftype.nil?)
+    end
+
+    def copy_source_value(metadata_method)
+      param_name = (metadata_method == :checksum) ? :content : metadata_method
+      if resource[param_name].nil? or resource[param_name] == :absent
+        resource[param_name] = metadata.send(metadata_method)
+      end
+    end
+  end
+
+  Puppet::Type.type(:file).newparam(:source_permissions) do
+    desc <<-'EOT'
+      Whether (and how) Puppet should copy owner, group, and mode permissions from
+      the `source` to `file` resources when the permissions are not explicitly
+      specified. (In all cases, explicit permissions will take precedence.)
+      Valid values are `use`, `use_when_creating`, and `ignore`:
+
+      * `use` (the default) will cause Puppet to apply the owner, group,
+        and mode from the `source` to any files it is managing.
+      * `use_when_creating` will only apply the owner, group, and mode from the
+        `source` when creating a file; existing files will not have their permissions
+        overwritten.
+      * `ignore` will never apply the owner, group, or mode from the `source` when
+        managing a file. When creating new files without explicit permissions,
+        the permissions they receive will depend on platform-specific behavior.
+        On POSIX, Puppet will use the umask of the user it is running as. On
+        Windows, Puppet will use the default DACL associated with the user it is
+        running as.
+    EOT
+
+    defaultto :use
+    newvalues(:use, :use_when_creating, :ignore)
   end
 end

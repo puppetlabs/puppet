@@ -119,6 +119,8 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
           'AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBJIfxNoVK4FX3RuMlkHOwwxXwAh6Fqx5uAp4ftXrJ+64qYuIzb+/zSAkJV698Sre1b1lb0G4LyDdVAvXwaYK9kN25vy8umV3WdfZeHKXJGCcrplMCbbOERWARlpiPNEblg=='
         when 'ecdsa-sha2-nistp521' #ssh-keygen -t ecdsa -b 521
           'AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBADLK+u12xwB0JOwpmaxYXv8KnPK4p+SE2405qoo+vpAQ569fMwPMgKzltd770amdeuFogw/MJu17PN9LDdrD3o0uwHMjWee6TpHQDkuEetaxiou6K0WAzgbxx9QsY0MsJgXf1BuMLqdK+xT183wOSXwwumv99G7T32dOJZ5tYrH0y4XMw=='
+        when 'ssh-ed25519' #ssh-keygen -t ed25519
+          'AAAAC3NzaC1lZDI1NTE5AAAAIBWvu7D1KHBPaNXQcEuBsp48+JyPelXAq8ds6K5Du9gd'
         else
           pending("No sample key for #{keytype} yet")
       end
@@ -162,7 +164,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should create the directory" do
-        File.stubs(:exist?).with("/tmp/.ssh_dir").returns false
+        Puppet::FileSystem::File.stubs(:exist?).with("/tmp/.ssh_dir").returns false
         Dir.expects(:mkdir).with("/tmp/.ssh_dir", 0700)
         @provider.flush
       end
@@ -199,19 +201,19 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should create the directory if it doesn't exist" do
-        File.stubs(:exist?).with(@dir).returns false
+        Puppet::FileSystem::File.stubs(:exist?).with(@dir).returns false
         Dir.expects(:mkdir).with(@dir,0700)
         @provider.flush
       end
 
       it "should not create or chown the directory if it already exist" do
-        File.stubs(:exist?).with(@dir).returns false
+        Puppet::FileSystem::File.stubs(:exist?).with(@dir).returns false
         Dir.expects(:mkdir).never
         @provider.flush
       end
 
       it "should absolutely not chown the directory to the user if it creates it" do
-        File.stubs(:exist?).with(@dir).returns false
+        Puppet::FileSystem::File.stubs(:exist?).with(@dir).returns false
         Dir.stubs(:mkdir).with(@dir,0700)
         uid = Puppet::Util.uid("nobody")
         File.expects(:chown).never
@@ -219,7 +221,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
       end
 
       it "should not create or chown the directory if it already exist" do
-        File.stubs(:exist?).with(@dir).returns false
+        Puppet::FileSystem::File.stubs(:exist?).with(@dir).returns false
         Dir.expects(:mkdir).never
         File.expects(:chown).never
         @provider.flush

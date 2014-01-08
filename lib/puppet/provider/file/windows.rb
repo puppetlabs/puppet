@@ -2,6 +2,7 @@ Puppet::Type.type(:file).provide :windows do
   desc "Uses Microsoft Windows functionality to manage file ownership and permissions."
 
   confine :operatingsystem => :windows
+  has_feature :manages_symlinks if Puppet.features.manages_symlinks?
 
   include Puppet::Util::Warnings
 
@@ -35,33 +36,33 @@ Puppet::Type.type(:file).provide :windows do
   alias :name2uid :name2id
 
   def owner
-    return :absent unless resource.exist?
+    return :absent unless resource.stat
     get_owner(resource[:path])
   end
 
   def owner=(should)
     begin
-      set_owner(should, resource[:path])
+      set_owner(should, resolved_path)
     rescue => detail
       raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}"
     end
   end
 
   def group
-    return :absent unless resource.exist?
+    return :absent unless resource.stat
     get_group(resource[:path])
   end
 
   def group=(should)
     begin
-      set_group(should, resource[:path])
+      set_group(should, resolved_path)
     rescue => detail
       raise Puppet::Error, "Failed to set group to '#{should}': #{detail}"
     end
   end
 
   def mode
-    if resource.exist?
+    if resource.stat
       mode = get_mode(resource[:path])
       mode ? mode.to_s(8) : :absent
     else
@@ -84,5 +85,20 @@ Puppet::Type.type(:file).provide :windows do
     if [:owner, :group, :mode].any?{|p| resource[p]} and !supports_acl?(resource[:path])
       resource.fail("Can only manage owner, group, and mode on filesystems that support Windows ACLs, such as NTFS")
     end
+  end
+
+  attr_reader :file
+  private
+  def file
+    @file ||= Puppet::FileSystem::File.new(resource[:path])
+  end
+
+  def resolved_path
+    # under POSIX, :manage means use lchown - i.e. operate on the link
+    return file.path.to_s if resource[:links] == :manage
+
+    # otherwise, use chown -- that will resolve the link IFF it is a link
+    # otherwise it will operate on the path
+    file.symlink? ? file.readlink : file.path.to_s
   end
 end

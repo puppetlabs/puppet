@@ -25,6 +25,14 @@ Puppet::Parser::Functions::newfunction(
         $a.each {|$entry|       ..."key ${$entry[0]}, value ${$entry[1]}" }
         $a.each {|$key, $value| ..."key ${key}, value ${value}" }
 
+  When the first argument is a Type and the type is Enumerable, the parameterized block should define one
+  or two block parameters.
+  For each application of the block, the next element from the type enumerator is selected, and it is passed to
+  the block if the block has one parameter. If the block has two parameters, the first is the elements
+  index, and the second the value. The index starts from 0.
+
+      Integer[ 10, 20 ].each {|$index, $value| ... }
+
   - Since 3.2
   - requires `parser = future`.
   ENDHEREDOC
@@ -79,10 +87,43 @@ Puppet::Parser::Functions::newfunction(
     o
   end
 
+  def foreach_Type(o, scope, pblock)
+    return nil unless pblock
+    tc = Puppet::Pops::Types::TypeCalculator.new()
+    enumerable = tc.enumerable(o)
+    if enumerable.nil?
+      raise ArgumentError, ("each(): given type '#{tc.string(o)}' is not enumerable")
+    end
+    serving_size = pblock.parameter_count
+    if serving_size == 0
+      raise ArgumentError, "Block must define at least one parameter; value."
+    end
+    if serving_size > 2
+      raise ArgumentError, "Block must define at most two parameters; index, value"
+    end
+    enumerator = enumerable.each
+    index = 0
+    if serving_size == 1
+      begin
+        loop { pblock.call(scope, enumerator.next) }
+      rescue StopIteration
+      end
+    else
+      begin
+        loop do
+          pblock.call(scope, index, enumerator.next)
+          index = index +1
+        end
+      rescue StopIteration
+      end
+    end
+    o
+  end
+
   raise ArgumentError, ("each(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
   receiver = args[0]
   pblock = args[1]
-  raise ArgumentError, ("each(): wrong argument type (#{args[1].class}; must be a parameterized block.") unless pblock.is_a? Puppet::Parser::AST::Lambda
+  raise ArgumentError, ("each(): wrong argument type (#{args[1].class}; must be a parameterized block.") unless pblock.respond_to?(:puppet_lambda)
 
   case receiver
   when Array
@@ -90,6 +131,10 @@ Puppet::Parser::Functions::newfunction(
   when Hash
     foreach_Hash(receiver, self, pblock)
   else
-    raise ArgumentError, ("each(): wrong argument type (#{args[0].class}; must be an Array or a Hash.")
+    if receiver.is_a?(Puppet::Pops::Types::PAbstractType)
+      foreach_Type(receiver, self, pblock)
+    else
+      raise ArgumentError, ("each(): wrong argument type (#{args[0].class}; must be an Array, Hash, or Enumerable Type.")
+    end
   end
 end

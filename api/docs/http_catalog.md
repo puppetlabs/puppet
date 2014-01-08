@@ -15,9 +15,9 @@ Retrieve a catalog.
 
 POST, GET
 
-### Supported Format
+### Supported Response Formats
 
-Accept: pson, text/pson
+PSON
 
 ### Notes
 
@@ -154,6 +154,6 @@ Schema
 ------
 
 In the POST request body (or the GET query), the facts parameter should adhere to the
-api/schemas/facts.json schema.
+{file:api/schemas/facts.json api/schemas/facts.json} schema.
 
-A catalog response body should adhere to the api/schemas/catalog.json schema.
+A catalog response body should adhere to the {file:api/schemas/catalog.json api/schemas/catalog.json} schema.

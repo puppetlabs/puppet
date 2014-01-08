@@ -5,17 +5,35 @@ module Puppet
     require 'puppet/util/symbolic_file_mode'
     include Puppet::Util::SymbolicFileMode
 
-    desc <<-'EOT'
-      Whether to create files that don't currently exist.
-      Possible values are `absent`, `present`, `file`, `directory`, and `link`.
-      Specifying `present` will match any form of file existence, and
-      if the file is missing will create an empty file. Specifying
-      `absent` will delete the file (or directory, if `recurse => true` and
-      `force => true`). Specifying `link` requires that you also set the `target`
-      attribute; note that symlinks cannot be managed on Windows.
+    desc <<-EOT
+      Whether the file should exist, and if so what kind of file it should be.
+      Possible values are `present`, `absent`, `file`, `directory`, and `link`.
 
-      If you specify the path to another file as the ensure value, it is
-      equivalent to specifying `link` and using that path as the `target`:
+      * `present` will accept any form of file existence, and will create a
+        normal file if the file is missing. (The file will have no content
+        unless the `content` or `source` attribute is used.)
+      * `absent` will make sure the file doesn't exist, deleting it
+        if necessary.
+      * `file` will make sure it's a normal file, and enables use of the
+        `content` or `source` attribute.
+      * `directory` will make sure it's a directory, and enables use of the
+        `source`, `recurse`, `recurselimit`, `ignore`, and `purge` attributes.
+      * `link` will make sure the file is a symlink, and **requires** that you
+        also set the `target` attribute. Symlinks are supported on all Posix
+        systems and on Windows Vista / 2008 and higher. On Windows, managing
+        symlinks requires puppet agent's user account to have the "Create
+        Symbolic Links" privilege; this can be configured in the "User Rights
+        Assignment" section in the Windows policy editor. By default, puppet
+        agent runs as the Administrator account, which does have this privilege.
+
+      Puppet avoids destroying directories unless the `force` attribute is set
+      to `true`. This means that if a file is currently a directory, setting
+      `ensure` to anything but `directory` or `present` will cause Puppet to
+      skip managing the resource and log either a notice or an error.
+
+      There is one other non-standard value for `ensure`. If you specify the
+      path to another file as the ensure value, it is equivalent to specifying
+      `link` and using that path as the `target`:
 
           # Equivalent resources:
 
@@ -36,7 +54,7 @@ module Puppet
     nodefault
 
     newvalue(:absent) do
-      File.unlink(@resource[:path])
+      Puppet::FileSystem::File.unlink(@resource[:path])
     end
 
     aliasvalue(:false, :absent)
@@ -61,7 +79,7 @@ module Puppet
     newvalue(:directory, :event => :directory_created) do
       mode = @resource.should(:mode)
       parent = File.dirname(@resource[:path])
-      unless FileTest.exists? parent
+      unless Puppet::FileSystem::File.exist? parent
         raise Puppet::Error,
           "Cannot create #{@resource[:path]}; parent directory #{parent} does not exist"
       end
@@ -77,7 +95,7 @@ module Puppet
     end
 
 
-    newvalue(:link, :event => :link_created) do
+    newvalue(:link, :event => :link_created, :required_features => :manages_symlinks) do
       fail "Cannot create a symlink without a target" unless property = resource.property(:target)
       property.retrieve
       property.mklink
@@ -121,7 +139,7 @@ module Puppet
     def check
       basedir = File.dirname(@resource[:path])
 
-      if ! FileTest.exists?(basedir)
+      if ! Puppet::FileSystem::File.exist?(basedir)
         raise Puppet::Error,
           "Can not create #{@resource.title}; parent directory does not exist"
       elsif ! FileTest.directory?(basedir)

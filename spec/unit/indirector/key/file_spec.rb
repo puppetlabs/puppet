@@ -64,33 +64,32 @@ describe Puppet::SSL::Key::File do
     end
 
     it "should save the public key when saving the private key" do
-      Puppet.settings.stubs(:writesub)
+      fh = StringIO.new
 
-      fh = mock 'filehandle'
-
-      Puppet.settings.expects(:writesub).with(:publickeydir, @public_key_path).yields fh
+      Puppet.settings.setting(:publickeydir).expects(:open_file).with(@public_key_path, 'w').yields fh
+      Puppet.settings.setting(:privatekeydir).stubs(:open_file)
       @public_key.expects(:to_pem).returns "my pem"
 
-      fh.expects(:print).with "my pem"
-
       @searcher.save(@request)
+
+      expect(fh.string).to eq("my pem")
     end
 
     it "should destroy the public key when destroying the private key" do
-      File.stubs(:unlink).with(@private_key_path)
-      FileTest.stubs(:exist?).with(@private_key_path).returns true
-      FileTest.expects(:exist?).with(@public_key_path).returns true
-      File.expects(:unlink).with(@public_key_path)
+      Puppet::FileSystem::File.stubs(:unlink).with(@private_key_path)
+      Puppet::FileSystem::File.stubs(:exist?).with(@private_key_path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@public_key_path).returns true
+      Puppet::FileSystem::File.expects(:unlink).with(@public_key_path)
 
       @searcher.destroy(@request)
     end
 
     it "should not fail if the public key does not exist when deleting the private key" do
-      File.stubs(:unlink).with(@private_key_path)
+      Puppet::FileSystem::File.stubs(:unlink).with(@private_key_path)
 
-      FileTest.stubs(:exist?).with(@private_key_path).returns true
-      FileTest.expects(:exist?).with(@public_key_path).returns false
-      File.expects(:unlink).with(@public_key_path).never
+      Puppet::FileSystem::File.stubs(:exist?).with(@private_key_path).returns true
+      Puppet::FileSystem::File.expects(:exist?).with(@public_key_path).returns false
+      Puppet::FileSystem::File.expects(:unlink).with(@public_key_path).never
 
       @searcher.destroy(@request)
     end

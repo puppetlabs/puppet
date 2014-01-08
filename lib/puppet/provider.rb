@@ -40,10 +40,10 @@ class Puppet::Provider
   include Puppet::Util::Warnings
   extend Puppet::Util::Warnings
 
-  require 'puppet/provider/confiner'
+  require 'puppet/confiner'
   require 'puppet/provider/command'
 
-  extend Puppet::Provider::Confiner
+  extend Puppet::Confiner
 
   Puppet::Util.logmethods(self, true)
 
@@ -164,7 +164,7 @@ class Puppet::Provider
   end
 
   # Confines this provider to be suitable only on hosts where the given commands are present.
-  # Also see {Puppet::Provider::Confiner#confine} for other types of confinement of a provider by use of other types of
+  # Also see {Puppet::Confiner#confine} for other types of confinement of a provider by use of other types of
   # predicates.
   #
   # @note It is preferred if the commands are not entered with absolute paths as this allows puppet

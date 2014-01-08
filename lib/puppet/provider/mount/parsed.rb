@@ -23,7 +23,6 @@ Puppet::Type.type(:mount).provide(
     @fields = [:device, :blockdevice, :name, :fstype, :pass, :atboot, :options]
   else
     @fields = [:device, :name, :fstype, :options, :dump, :pass]
-    @fielddefaults = [ nil ] * 4 + [ "0", "2" ]
   end
 
   text_line :comment, :match => /^\s*#/

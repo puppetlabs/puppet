@@ -10,7 +10,7 @@
 --tag dsl:"DSL"
 --no-transitive-tag api
 --template-path yardoc/templates
---files README_DEVELOPER.md,CO*.md,api_docs/**/*.md
+--files README_DEVELOPER.md,CO*.md,api/**/*.md
 --api public
 --api private
 --hide-void-return

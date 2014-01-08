@@ -22,8 +22,8 @@ describe Puppet::Settings::PathSetting do
       end
 
       it "should work with UNC paths" do
-        subject.munge('//server/some/path').should == '//server/some/path'
-        subject.munge('\\\\server\some\path').should == '//server/some/path'
+        subject.munge('//localhost/some/path').should == '//localhost/some/path'
+        subject.munge('\\\\localhost\some\path').should == '//localhost/some/path'
       end
     end
   end

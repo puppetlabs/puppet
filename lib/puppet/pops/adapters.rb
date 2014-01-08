@@ -10,46 +10,70 @@ module Puppet::Pops::Adapters
     attr_accessor :documentation
   end
 
-  # An origin adapter adapts an object with where it came from. This origin
-  # describes the resource (a file, etc.) where source text originates.
-  # Instances of SourcePosAdapter is then used on other objects in a model to
-  # describe their relative position versus the origin.
-  #
-  # @see Puppet::Pops::Utils#find_adapter
-  #
-  class OriginAdapter < Puppet::Pops::Adaptable::Adapter
-    # @return [String] the origin of the adapted (usually a filename)
-    attr_accessor :origin
-  end
-
-  # A SourcePosAdapter describes a position relative to an origin. (Typically an {OriginAdapter} is
-  # associated with the root of a model. This origin has a URI to the resource, and a line number.
-  # The offset in the SourcePosAdapter is then relative to this origin.
-  # (This somewhat complex structure makes it possible to correctly refer to a source position
+  # A SourcePosAdapter holds a reference to  a *Positioned* object (object that has offset and length).
+  # This somewhat complex structure makes it possible to correctly refer to a source position
   # in source that is embedded in some resource; a parser only sees the embedded snippet of source text
-  # and does not know where it was embedded).
+  # and does not know where it was embedded. It also enables lazy evaluation of source positions (they are
+  # rarely needed - typically just when there is an error to report.
   #
-  # @see Puppet::Pops::Utils#find_adapter
+  # @note It is relatively expensive to compute line and position on line - it is not something that
+  #   should be done for every token or model object.
+  #
+  # @see Puppet::Pops::Utils#find_adapter, Puppet::Pops::Utils#find_closest_positioned
   #
   class SourcePosAdapter < Puppet::Pops::Adaptable::Adapter
-    # @return [Fixnum] The start line in source starting from 1
-    attr_accessor :line
+    attr_accessor :locator
 
-    # @return [Fixnum] The position on the start_line (in characters) starting from 0
-    attr_accessor :pos
+    def self.create_adapter(o)
+      new(o)
+    end
 
-    # @return [Fixnum] The (start) offset of source text characters
-    #   (starting from 0) representing the adapted object.
-    #   Value may be nil
-    attr_accessor :offset
+    def initialize(o)
+      @adapted = o
+    end
 
-    # @return [Fixnum] The length (count) of characters of source text
-    #   representing the adapted object from the origin. Not including any
-    #   trailing whitespace.
-    attr_accessor :length
+    def locator
+      @locator ||= find_locator(@adapted.eContainer)
+    end
 
-    def extract_text_from_string(string)
-      string.slice(offset, length)
+    def find_locator(o)
+      if o.nil?
+        raise ArgumentError, "InternalError: SourcePosAdapter for something that has no locator among parents"
+      end
+      return o.locator if o.is_a?(Puppet::Pops::Model::Program)
+      if adapter = self.class.get(o)
+        return adapter.locator
+      else
+        find_locator(o.eContainer)
+      end
+    end
+    private :find_locator
+
+    def offset
+      @adapted.offset
+    end
+
+    def length
+      @adapted.length
+    end
+
+    # Produces the line number for the given offset.
+    # @note This is an expensive operation
+    #
+    def line
+      locator.line_for_offset(offset)
+    end
+
+    # Produces the position on the line of the given offset.
+    # @note This is an expensive operation
+    #
+    def pos
+      locator.pos_on_line(offset)
+    end
+
+    # Extracts the text represented by this source position (the string is obtained from the locator)
+    def extract_text
+      locator.string.slice(offset, length)
     end
   end
 

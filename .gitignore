@@ -19,3 +19,4 @@ Gemfile.local
 .bundle/
 puppet-acceptance/
 /.project
+.idea/

@@ -13,7 +13,7 @@ class Puppet::Pops::IssueReporter
     max_warnings = Puppet[:max_warnings] + 1
     max_deprecations = Puppet[:max_deprecations] + 1
     emit_warnings = options[:emit_warnings] || false
-    emit_errors = options[:emit_errors] || true
+    emit_errors = options[:emit_errors].nil? ? true : !!options[:emit_errors]
     emit_message = options[:message]
     emit_exception = options[:exception_class] || Puppet::ParseError
 

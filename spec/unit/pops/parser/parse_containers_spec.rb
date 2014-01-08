@@ -23,6 +23,10 @@ describe "egrammar parsing containers" do
       dump(parse("class foo {}")).should == "(class foo ())"
     end
 
+    it "class foo { class bar {} }" do
+      dump(parse("class foo { class bar {}}")).should == "(class foo (block (class foo::bar ())))"
+    end
+
     it "class foo::bar {}" do
       dump(parse("class foo::bar {}")).should == "(class foo::bar ())"
     end
@@ -57,7 +61,9 @@ describe "egrammar parsing containers" do
         # a very confusing effect when resolving relative names, getting the global hardwired "Class"
         # instead of some foo::class etc.
         # This is allowed in 3.x.
-        dump(parse("class class {}")).should == "(class class ())"
+        expect {
+          dump(parse("class class {}")).should == "(class class ())"
+        }.to raise_error(/not a valid classname/)
       end
 
       it "class default {} # a class named 'default'" do
@@ -72,7 +78,9 @@ describe "egrammar parsing containers" do
       end
 
       it "class class inherits default {} # inherits default", :broken => true do
-        dump(parse("class class inherits default {}")).should == "(class class (inherits default) ())"
+        expect {
+          dump(parse("class class inherits default {}")).should == "(class class (inherits default) ())"
+        }.to raise_error(/not a valid classname/)
       end
 
       it "class class inherits default {} # inherits default" do
@@ -80,12 +88,16 @@ describe "egrammar parsing containers" do
         # this because a class is named at parse time (since class evaluation is lazy, the model must have the
         # full class name for nested classes - only, it gets this wrong when a class is named "class" - or at least
         # I think it is wrong.)
-        #
+        # 
+        expect {
         dump(parse("class class inherits default {}")).should == "(class class::class (inherits default) ())"
+          }.to raise_error(/not a valid classname/)
       end
 
       it "class foo inherits class" do
-        dump(parse("class foo inherits class {}")).should == "(class foo (inherits class) ())"
+        expect {
+          dump(parse("class foo inherits class {}")).should == "(class foo (inherits class) ())"
+        }.to raise_error(/not a valid classname/)
       end
     end
   end
@@ -93,6 +105,15 @@ describe "egrammar parsing containers" do
   context "When the parser parses define" do
     it "define foo {}" do
       dump(parse("define foo {}")).should == "(define foo ())"
+    end
+
+    it "class foo { define bar {}}" do
+      dump(parse("class foo {define bar {}}")).should == "(class foo (block (define foo::bar ())))"
+    end
+
+    it "define foo { define bar {}}" do
+      # This is illegal, but handled as part of validation
+      dump(parse("define foo { define bar {}}")).should == "(define foo (block (define bar ())))"
     end
 
     it "define foo::bar {}" do
@@ -119,7 +140,9 @@ describe "egrammar parsing containers" do
       it "define class {} # a define named 'class'" do
         # This is weird because Class already exists, and instantiating this define will probably not
         # work
-        dump(parse("define class {}")).should == "(define class ())"
+        expect {
+          dump(parse("define class {}")).should == "(define class ())"
+          }.to raise_error(/not a valid classname/)
       end
 
       it "define default {} # a define named 'default'" do
@@ -133,11 +156,19 @@ describe "egrammar parsing containers" do
 
   context "When parsing node" do
     it "node foo {}" do
-      dump(parse("node foo {}")).should == "(node (matches foo) ())"
+      dump(parse("node foo {}")).should == "(node (matches 'foo') ())"
+    end
+
+    it "node kermit.example.com {}" do
+      dump(parse("node kermit.example.com {}")).should == "(node (matches 'kermit.example.com') ())"
+    end
+
+    it "node kermit . example . com {}" do
+      dump(parse("node kermit . example . com {}")).should == "(node (matches 'kermit.example.com') ())"
     end
 
     it "node foo, x::bar, default {}" do
-      dump(parse("node foo, x::bar, default {}")).should == "(node (matches foo x::bar :default) ())"
+      dump(parse("node foo, x::bar, default {}")).should == "(node (matches 'foo' 'x::bar' :default) ())"
     end
 
     it "node 'foo' {}" do
@@ -145,15 +176,15 @@ describe "egrammar parsing containers" do
     end
 
     it "node foo inherits x::bar {}" do
-      dump(parse("node foo inherits x::bar {}")).should == "(node (matches foo) (parent x::bar) ())"
+      dump(parse("node foo inherits x::bar {}")).should == "(node (matches 'foo') (parent 'x::bar') ())"
     end
 
     it "node foo inherits 'bar' {}" do
-      dump(parse("node foo inherits 'bar' {}")).should == "(node (matches foo) (parent 'bar') ())"
+      dump(parse("node foo inherits 'bar' {}")).should == "(node (matches 'foo') (parent 'bar') ())"
     end
 
     it "node foo inherits default {}" do
-      dump(parse("node foo inherits default {}")).should == "(node (matches foo) (parent :default) ())"
+      dump(parse("node foo inherits default {}")).should == "(node (matches 'foo') (parent :default) ())"
     end
 
     it "node /web.*/ {}" do
@@ -165,11 +196,11 @@ describe "egrammar parsing containers" do
     end
 
     it "node wat inherits /apache.*/ {}" do
-      expect { parse("node wat inherits /apache.*/ {}")}.to raise_error(Puppet::ParseError)
+      dump(parse("node wat inherits /apache.*/ {}")).should == "(node (matches 'wat') (parent /apache.*/) ())"
     end
 
     it "node foo inherits bar {$a = 10 $b = 20}" do
-      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == "(node (matches foo) (parent bar) (block (= $a 10) (= $b 20)))"
+      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == "(node (matches 'foo') (parent 'bar') (block (= $a 10) (= $b 20)))"
     end
   end
 end

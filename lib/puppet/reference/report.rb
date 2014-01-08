@@ -9,7 +9,7 @@ Puppet clients can report back to the server after each transaction.  This
 transaction report is sent as a YAML dump of the
 `Puppet::Transaction::Report` class and includes every log message that was
 generated during the transaction along with as many metrics as Puppet knows how
-to collect.  See [Reports and Reporting](http://projects.puppetlabs.com/projects/puppet/wiki/Reports_And_Reporting) for more information on how to use reports.
+to collect.  See [Reports and Reporting](http://docs.puppetlabs.com/guides/reporting.html) for more information on how to use reports.
 
 Currently, clients default to not sending in reports; you can enable reporting
 by setting the `report` parameter to true.

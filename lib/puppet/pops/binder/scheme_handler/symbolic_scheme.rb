@@ -21,8 +21,7 @@ class Puppet::Pops::Binder::SchemeHandler::SymbolicScheme < Puppetx::Puppet::Bin
     raise ArgumentError, "Cannot load bindings '#{uri}' - no bindings found." unless bindings
     # Must clone as the the rest mutates the model
     cloned_bindings = Marshal.load(Marshal.dump(bindings))
-    # Give no effective categories (i.e. ok with whatever categories there is)
-    Puppet::Pops::Binder::BindingsFactory.contributed_bindings(fqn, cloned_bindings, nil)
+    Puppet::Pops::Binder::BindingsFactory.contributed_bindings(fqn, cloned_bindings)
   end
 
   # @api private

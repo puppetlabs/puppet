@@ -1,0 +1,62 @@
+HOSTS:
+  master:
+    roles:
+      - master
+      - agent
+    platform: el-6-i386
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/redhat-6-i386
+  agent-2003-i386:
+    roles:
+      - agent
+    platform: windows-2003-32
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2003-i386
+  agent-2003-x86_64:
+    roles:
+      - agent
+    platform: windows-2003-64
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2003-x86_64
+  agent-2003r2-i386:
+    roles:
+      - agent
+    platform: windows-2003r2-32
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2003r2-i386
+  agent-2003r2-x86_64:
+    roles:
+      - agent
+    platform: windows-2003r2-64
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2003r2-x86_64
+  agent-2008r2-x86_64:
+    roles:
+      - agent
+    platform: windows-2008r2-64
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2008r2-x86_64
+  agent-2008-x86_64:
+    roles:
+      - agent
+    platform: windows-2008-64
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2008-x86_64
+  agent-2012r2-x86_64:
+    roles:
+      - agent
+    platform: windows-2012r2-64
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2012r2-x86_64
+  agent-2012-x86_64:
+    roles:
+      - agent
+    platform: windows-2012-64
+    hypervisor: vcloud
+    template: Delivery/Quality Assurance/Templates/vCloud/win-2012-x86_64
+CONFIG:
+  filecount: 12
+  datastore: instance0
+  resourcepool: delivery/Quality Assurance/FOSS/Dynamic
+  folder: Delivery/Quality Assurance/FOSS/Dynamic
+  pooling_api: http://vcloud.delivery.puppetlabs.net/

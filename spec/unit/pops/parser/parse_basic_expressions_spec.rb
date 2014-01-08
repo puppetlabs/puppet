@@ -118,11 +118,11 @@ describe "egrammar parsing basic expressions" do
     context "of regular expressions (parse errors)" do
       # Not supported in concrete syntax
       it "$a = /.*/ == /.*/" do
-        expect {  parse("$a = /.*/ == /.*/") }.to raise_error(Puppet::ParseError)
+        dump(parse("$a = /.*/ == /.*/")).should == "(= $a (== /.*/ /.*/))"
       end
 
       it "$a = /.*/ != /a.*/" do
-        expect {  parse("$a = /.*/ != /.*/") }.to raise_error(Puppet::ParseError)
+        dump(parse("$a = /.*/ != /.*/")).should == "(= $a (!= /.*/ /.*/))"
       end
     end
   end
@@ -177,6 +177,14 @@ describe "egrammar parsing basic expressions" do
   context "When parsing assignments" do
     it "Should allow simple assignment" do
       dump(parse("$a = 10")).should == "(= $a 10)"
+    end
+
+    it "Should allow append assignment" do
+      dump(parse("$a += 10")).should == "(+= $a 10)"
+    end
+
+    it "Should allow without assignment" do
+      dump(parse("$a -= 10")).should == "(-= $a 10)"
     end
 
     it "Should allow chained assignment" do
@@ -241,8 +249,25 @@ describe "egrammar parsing basic expressions" do
       dump(parse("$a = \"yo${var}yo\"")).should == "(= $a (cat 'yo' (str $var) 'yo'))"
     end
 
-    it "should interpolate any expression in a text expression, \"${var*2}\"" do
-      dump(parse("$a = \"yo${var+2}yo\"")).should == "(= $a (cat 'yo' (str (+ $var 2)) 'yo'))"
+    it "should interpolate any expression in a text expression, \"${$var*2}\"" do
+      dump(parse("$a = \"yo${$var+2}yo\"")).should == "(= $a (cat 'yo' (str (+ $var 2)) 'yo'))"
+    end
+
+    it "should not interpolate names as variable in expression, \"${notvar*2}\"" do
+      dump(parse("$a = \"yo${notvar+2}yo\"")).should == "(= $a (cat 'yo' (str (+ notvar 2)) 'yo'))"
+    end
+
+    it "should interpolate name as variable in access expression, \"${var[0]}\"" do
+      dump(parse("$a = \"yo${var[0]}yo\"")).should == "(= $a (cat 'yo' (str (slice $var 0)) 'yo'))"
+    end
+
+    it "should interpolate name as variable in method call, \"${var.foo}\"" do
+      dump(parse("$a = \"yo${$var.foo}yo\"")).should == "(= $a (cat 'yo' (str (call-method (. $var foo))) 'yo'))"
+    end
+
+    it "should interpolate name as variable in method call, \"${var.foo}\"" do
+      dump(parse("$a = \"yo${var.foo}yo\"")).should == "(= $a (cat 'yo' (str (call-method (. $var foo))) 'yo'))"
+      dump(parse("$a = \"yo${var.foo.bar}yo\"")).should == "(= $a (cat 'yo' (str (call-method (. (call-method (. $var foo)) bar))) 'yo'))"
     end
   end
 end

@@ -64,7 +64,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
         provider.resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
-        Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == filename) && (arguments.is_a? Hash) }
+        Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == filename) && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
         provider.run(filename)
       end
@@ -95,7 +95,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       provider.resource[:path] = ['/bogus/bin']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == "#{command} bar --sillyarg=true --blah") && (arguments.is_a? Hash) }
+      Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == "#{command} bar --sillyarg=true --blah") && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
       provider.run("#{command} bar --sillyarg=true --blah")
     end
 
@@ -110,7 +110,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == command) && (arguments.is_a? Hash) }
+      Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == command) && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
       provider.run(command)
       @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end

@@ -34,8 +34,11 @@ class Puppet::Util::JsonLockfile < Puppet::Util::Lockfile
   def lock_data
     return nil unless file_locked?
     file_contents = super
-    return nil if file_contents.nil?
+    return nil if file_contents.nil? or file_contents.empty?
     PSON.parse(file_contents)
+  rescue PSON::ParserError => e
+    Puppet.warning "Unable to read lockfile data from #{@file_path}: not in PSON"
+    nil
   end
 
 end

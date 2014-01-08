@@ -51,8 +51,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
   describe "#search" do
     it "searches through paths to find a matching conf file" do
       File.stubs(:directory?).returns(true)
-      File.stubs(:exists?).returns(false)
-      File.expects(:exists?).with("/etc/init/foo-bar.conf").returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).returns(false)
+      Puppet::FileSystem::File.expects(:exist?).with("/etc/init/foo-bar.conf").returns(true)
       resource = Puppet::Type.type(:service).new(:name => "foo-bar", :provider => :upstart)
       provider = provider_class.new(resource)
 
@@ -61,8 +61,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
     it "searches for just the name of a compound named service" do
       File.stubs(:directory?).returns(true)
-      File.stubs(:exists?).returns(false)
-      File.expects(:exists?).with("/etc/init/network-interface.conf").returns(true)
+      Puppet::FileSystem::File.stubs(:exist?).returns(false)
+      Puppet::FileSystem::File.expects(:exist?).with("/etc/init/network-interface.conf").returns(true)
       resource = Puppet::Type.type(:service).new(:name => "network-interface INTERFACE=lo", :provider => :upstart)
       provider = provider_class.new(resource)
 
