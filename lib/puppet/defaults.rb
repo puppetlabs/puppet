@@ -683,7 +683,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0750,
       :desc => "The root directory for the certificate authority."
     },
     :cacert => {
@@ -691,7 +691,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "The CA certificate."
     },
     :cakey => {
@@ -699,7 +699,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "The CA private key."
     },
     :capub => {
@@ -707,7 +707,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "The CA public key."
     },
     :cacrl => {
@@ -715,7 +715,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
     },
     :caprivatedir => {
@@ -723,7 +723,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0750,
       :desc => "Where the CA stores private certificate information."
     },
     :csrdir => {
@@ -731,7 +731,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode  => 0770,
+      :mode  => 0750,
       :desc => "Where the CA stores certificate requests"
     },
     :signeddir => {
@@ -739,7 +739,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0750,
       :desc => "Where the CA stores signed certificates."
     },
     :capass => {
@@ -747,7 +747,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "Where the CA stores the password for the private key."
     },
     :serial => {
@@ -755,7 +755,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "Where the serial number for certificates is stored."
     },
     :autosign => {
@@ -809,7 +809,7 @@ EOT
     :cert_inventory => {
       :default => "$cadir/inventory.txt",
       :type => :file,
-      :mode => 0660,
+      :mode => 0640,
       :owner => "service",
       :group => "service",
       :desc => "The inventory file. This is a text file to which the CA writes a
