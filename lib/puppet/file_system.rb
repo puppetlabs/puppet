@@ -17,7 +17,8 @@ module Puppet::FileSystem
            Puppet::FileSystem::File19
          end.new()
 
-  # Allows overriding the filesystem for the duration of the given block. The filesystem will contain only the file(s) provided.
+  # Allows overriding the filesystem for the duration of the given block.
+  # The filesystem will only contain the given file(s).
   #
   # @param files [Puppet::FileSystem::MemoryFile] the files to have available
   #
@@ -39,12 +40,20 @@ module Puppet::FileSystem
     @impl.open(assert_path(path), mode, options, &block)
   end
 
-  # @return [Pathname] The directory of this file
+  # @return [Object] The directory of this file as an opaque handle
   #
   # @api public
   #
   def self.dir(path)
     @impl.dir(assert_path(path))
+  end
+
+  # @return [String] The directory of this file as a String
+  #
+  # @api public
+  #
+  def self.dir_string(path)
+    @impl.path_string(@impl.dir(assert_path(path)))
   end
 
   # @return [Boolean] Does the directory of the given path exist?
@@ -57,12 +66,20 @@ module Puppet::FileSystem
     @impl.mkpath(@impl.dir(assert_path(path)))
   end
 
-  # @return [String] the name of the file
+  # @return [Object] the name of the file as a opaque handle
   #
   # @api public
   #
   def self.basename(path)
     @impl.basename(assert_path(path))
+  end
+
+  # @return [String] the name of the file
+  #
+  # @api public
+  #
+  def self.basename_string(path)
+    @impl.path_string(@impl.basename(assert_path(path)))
   end
 
   # @return [Integer] the size of the file

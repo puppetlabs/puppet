@@ -65,7 +65,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   end
 
   # Retrieve the attributes for this file, relative to a base directory.
-  # Note that Puppet::FileSystemstat(path) raises Errno::ENOENT
+  # Note that Puppet::FileSystem.stat(path) raises Errno::ENOENT
   # if the file is absent and this method does not catch that exception.
   def collect
     real_path = full_path

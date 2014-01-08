@@ -397,7 +397,7 @@ module Util
     end
 
     file     = Puppet::FileSystem.pathname(file)
-    tempfile = Tempfile.new(Puppet::FileSystem.path_string(Puppet::FileSystem.basename(file)), Puppet::FileSystem.path_string(Puppet::FileSystem.dir(file)))
+    tempfile = Tempfile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
 
     # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just
@@ -454,7 +454,7 @@ module Util
       end
       # Yes, the arguments are reversed compared to the rename in the rest
       # of the world.
-      Puppet::Util::Windows::File.replace_file(file, tempfile.path)
+      Puppet::Util::Windows::File.replace_file(FileSystem.path_string(file), tempfile.path)
 
     else
       File.rename(tempfile.path, Puppet::FileSystem.path_string(file))
