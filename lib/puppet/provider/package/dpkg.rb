@@ -68,6 +68,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         hash[:ensure] = :absent
       end
       hash[:ensure] = :held if hash[:desired] == 'hold'
+    else 
+      Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
 
     return hash
@@ -112,15 +114,13 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     # list out our specific package
     begin
-      self.class.dpkgquery_piped(
+      output = dpkgquery(
         "-W",
         "--showformat",
         self.class::DPKG_QUERY_FORMAT_STRING,
         @resource[:name]
-      ) do |pipe|
-        line = pipe.gets
-        hash = self.class.parse_line(line)
-      end
+      )
+      hash = self.class.parse_line(output)
     rescue Puppet::ExecutionFailure
       # dpkg-query exits 1 if the package is not found.
       return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}

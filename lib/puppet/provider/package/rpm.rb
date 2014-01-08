@@ -19,7 +19,6 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   # The query format by which we identify installed packages
   self::NEVRA_FORMAT = %Q{%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n}
   self::NEVRA_REGEX  = %r{^(\S+) (\S+) (\S+) (\S+) (\S+)$}
-  self::RPM_PACKAGE_NOT_FOUND_REGEX = /package .+ is not installed/
   self::NEVRA_FIELDS = [:name, :epoch, :version, :release, :arch]
 
   commands :rpm => "rpm"
@@ -81,6 +80,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     begin
       output = rpm(*cmd)
     rescue Puppet::ExecutionFailure
+      # rpm -q exits 1 if package not found
       return nil
     end
     # FIXME: We could actually be getting back multiple packages
@@ -178,21 +178,18 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
   # @param line [String] one line of rpm package query information
   # @return [Hash] of NEVRA_FIELDS strings parsed from package info
-  # if we failed to parse
-  # @note warns if failed to match a line, and returns an empty Hash.
+  # or an empty hash if we failed to parse
   # @api private
   def self.nevra_to_hash(line)
     line.strip!
     hash = {}
 
-    if self::RPM_PACKAGE_NOT_FOUND_REGEX.match(line)
-      # pass through, package was not found
-    elsif match = self::NEVRA_REGEX.match(line)
+    if match = self::NEVRA_REGEX.match(line)
       self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
       hash[:provider] = self.name
       hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
     else
-      Puppet.warning "Failed to match rpm line #{line}"
+      Puppet.debug("Failed to match rpm line #{line}")
     end
 
     return hash
