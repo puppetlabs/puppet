@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       # Add the package version
       wanted += "-#{should}"
       is = self.query
-      if is && yum_compareEVR(should, is[:ensure]) < 0
+      if is && yum_compareEVR(yum_parse_evr(should), yum_parse_evr(is[:ensure])) < 0
         self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
         operation = :downgrade
       end
@@ -141,10 +141,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   #
   # "version_should" can be v, v-r, or e:v-r.
   # "version_is" will always be at least v-r, can be e:v-r
-  def yum_compareEVR(should, is)
-    should_hash = yum_parse_evr(should)
-    is_hash = yum_parse_evr(is)
-
+  def yum_compareEVR(should_hash, is_hash)
     # pass on to rpm labelCompare
     rc = compare_values(should_hash[:epoch], is_hash[:epoch])
     return rc unless rc != 0

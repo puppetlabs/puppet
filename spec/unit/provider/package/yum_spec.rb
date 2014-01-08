@@ -24,7 +24,7 @@ describe provider do
     end
   end
 
-  describe 'package version parsing' do
+  describe 'package evr parsing' do
 
     it 'should parse full simple evr' do
       v = @provider.yum_parse_evr('0:1.2.3-4.el5')
@@ -75,16 +75,17 @@ describe provider do
       v[:release].should == 'SNAPSHOT20140107'
     end
 
+    # test cases for PUP-682
     it 'should parse revisions with text and numbers' do
-      v = @provider.yum_parse_evr('1.2.3-4.SNAPSHOT20140107')
+      v = @provider.yum_parse_evr('2.2-SNAPSHOT20121119105647')
       v[:epoch].should == '0'
-      v[:version].should == '1.2.3'
-      v[:release].should == '4.SNAPSHOT20140107'
+      v[:version].should == '2.2'
+      v[:release].should == 'SNAPSHOT20121119105647'
     end
 
   end
 
-  describe 'package version comparison' do
+  describe 'yum evr comparison' do
 
     # currently passing tests
     it 'should evaluate identical version-release as equal' do
@@ -124,9 +125,15 @@ describe provider do
       v.should == 0
     end
 
+    # test cases for PUP-682
+    it 'should evaluate same-length numeric revisions numerically' do
+      @provider.yum_compareEVR({:epoch => '0', :version => '2.2', :release => '405'},
+                               {:epoch => '0', :version => '2.2', :release => '406'}).should == -1
+    end
+
   end
 
-  describe 'yum value comparison' do
+  describe 'yum version segment comparison' do
 
     it 'should treat two nil values as equal' do
       v = @provider.compare_values(nil, nil)

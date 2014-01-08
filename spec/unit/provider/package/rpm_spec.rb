@@ -393,6 +393,10 @@ describe provider_class do
     it { provider.rpmvercmp("1.0~rc1~git123", "1.0~rc1~git123").should == 0 }
     it { provider.rpmvercmp("1.0~rc1~git123", "1.0~rc1").should == -1 }
     it { provider.rpmvercmp("1.0~rc1", "1.0~rc1~git123").should == 1 }
+
+    # non-upstream test cases
+    it { provider.rpmvercmp("405", "406").should == -1 }
+    it { provider.rpmvercmp("1", "0").should == 1 }
   end
 
 end
