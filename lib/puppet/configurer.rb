@@ -148,20 +148,23 @@ class Puppet::Configurer
         query_options = get_facts(options)
       end
 
-      begin
-        if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-            :environment => @environment, :ignore_cache => true)
-          if node.environment.to_s != @environment
-            Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
-            @environment = node.environment.to_s
-            query_options = nil
+      # We only need to find out the environment to run in if we don't already have a catalog
+      unless options[:catalog]
+        begin
+          if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
+              :environment => @environment, :ignore_cache => true)
+            if node.environment.to_s != @environment
+              Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
+              @environment = node.environment.to_s
+              query_options = nil
+            end
           end
+        rescue SystemExit,NoMemoryError
+          raise
+        rescue Exception => detail
+          Puppet.warning("Unable to fetch my node definition, but the agent run will continue:")
+          Puppet.warning(detail)
         end
-      rescue SystemExit,NoMemoryError
-        raise
-      rescue Exception => detail
-        Puppet.warning("Unable to fetch my node definition, but the agent run will continue:")
-        Puppet.warning(detail)
       end
 
       query_options = get_facts(options) unless query_options
