@@ -35,13 +35,13 @@ describe Puppet::Util::Yaml do
 
   context "when the file is empty" do
     it "returns false" do
-      Puppet::FileSystem::File.new(filename).touch
+      Puppet::FileSystem.touch(filename)
 
       expect(Puppet::Util::Yaml.load_file(filename)).to be_false
     end
 
     it "allows return value to be overridden" do
-      Puppet::FileSystem::File.new(filename).touch
+      Puppet::FileSystem.touch(filename)
 
       expect(Puppet::Util::Yaml.load_file(filename, {})).to eq({})
     end

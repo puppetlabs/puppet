@@ -70,7 +70,7 @@ describe Puppet::SSL::Host do
       @ca = Puppet::SSL::Host.new(Puppet::SSL::Host.ca_name)
       @ca.generate_key
 
-      Puppet::FileSystem::File.exist?(File.join(Puppet[:privatekeydir], "ca.pem")).should be_false
+      Puppet::FileSystem.exist?(File.join(Puppet[:privatekeydir], "ca.pem")).should be_false
     end
   end
 

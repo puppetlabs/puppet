@@ -88,7 +88,7 @@ class Puppet::FileServing::Configuration
   def readconfig(check = true)
     config = Puppet[:fileserverconfig]
 
-    return unless Puppet::FileSystem::File.exist?(config)
+    return unless Puppet::FileSystem.exist?(config)
 
     @parser ||= Puppet::FileServing::Configuration::Parser.new(config)
 

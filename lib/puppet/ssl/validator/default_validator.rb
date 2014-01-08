@@ -148,6 +148,6 @@ class Puppet::SSL::Validator::DefaultValidator #< class Puppet::SSL::Validator
   # @api private
   #
   def ssl_certificates_are_present?
-    Puppet::FileSystem::File.exist?(Puppet[:hostcert]) && Puppet::FileSystem::File.exist?(@ssl_configuration.ca_auth_file)
+    Puppet::FileSystem.exist?(Puppet[:hostcert]) && Puppet::FileSystem.exist?(@ssl_configuration.ca_auth_file)
   end
 end

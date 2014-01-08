@@ -110,7 +110,7 @@ describe 'DirectoryService password behavior' do
 
   it 'should execute convert_binary_to_xml once when getting the password on >= 10.7' do
     subject.expects(:convert_binary_to_xml).returns({'SALTED-SHA512' => StringIO.new(pw_string)})
-    Puppet::FileSystem::File.expects(:exist?).with(plist_path).once.returns(true)
+    Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
     Plist.expects(:parse_xml).returns(shadow_hash_data)
     # On Mac OS X 10.7 we first need to convert to xml when reading the password
     subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
@@ -126,7 +126,7 @@ describe 'DirectoryService password behavior' do
   it 'should convert xml-to-binary and binary-to-xml when setting the pw on >= 10.7' do
     subject.expects(:convert_binary_to_xml).returns({'SALTED-SHA512' => StringIO.new(pw_string)})
     subject.expects(:convert_xml_to_binary).returns(binary_plist)
-    Puppet::FileSystem::File.expects(:exist?).with(plist_path).once.returns(true)
+    Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
     Plist.expects(:parse_xml).returns(shadow_hash_data)
     # On Mac OS X 10.7 we first need to convert to xml
     subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
@@ -138,7 +138,7 @@ describe 'DirectoryService password behavior' do
 
   it '[#13686] should handle an empty ShadowHashData field in the users plist' do
     subject.expects(:convert_xml_to_binary).returns(binary_plist)
-    Puppet::FileSystem::File.expects(:exist?).with(plist_path).once.returns(true)
+    Puppet::FileSystem.expects(:exist?).with(plist_path).once.returns(true)
     Plist.expects(:parse_xml).returns({'ShadowHashData' => nil})
     subject.expects(:plutil).with('-convert', 'xml1', '-o', '/dev/stdout', plist_path)
     subject.expects(:plutil).with('-convert', 'binary1', plist_path)

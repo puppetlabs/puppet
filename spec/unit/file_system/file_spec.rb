@@ -2,47 +2,47 @@ require 'spec_helper'
 require 'puppet/file_system'
 require 'puppet/util/platform'
 
-describe Puppet::FileSystem::File do
+describe "Puppet::FileSystem" do
   include PuppetSpec::Files
 
   context "#exclusive_open" do
     it "opens ands allows updating of an existing file" do
-      file = Puppet::FileSystem::File.new(file_containing("file_to_update", "the contents"))
+      file = file_containing("file_to_update", "the contents")
 
-      file.exclusive_open(0660, 'r+') do |fh|
+      Puppet::FileSystem.exclusive_open(file, 0660, 'r+') do |fh|
         old = fh.read
         fh.truncate(0)
         fh.rewind
         fh.write("updated #{old}")
       end
 
-      expect(file.read).to eq("updated the contents")
+      expect(Puppet::FileSystem.read(file)).to eq("updated the contents")
     end
 
     it "opens, creates ands allows updating of a new file" do
-      file = Puppet::FileSystem::File.new(tmpfile("file_to_update"))
+      file = tmpfile("file_to_update")
 
-      file.exclusive_open(0660, 'w') do |fh|
+      Puppet::FileSystem.exclusive_open(file, 0660, 'w') do |fh|
         fh.write("updated new file")
       end
 
-      expect(file.read).to eq("updated new file")
+      expect(Puppet::FileSystem.read(file)).to eq("updated new file")
     end
 
     it "excludes other processes from updating at the same time", :unless => Puppet::Util::Platform.windows? do
-      file = Puppet::FileSystem::File.new(file_containing("file_to_update", "0"))
+      file = file_containing("file_to_update", "0")
 
       increment_counter_in_multiple_processes(file, 5, 'r+')
 
-      expect(file.read).to eq("5")
+      expect(Puppet::FileSystem.read(file)).to eq("5")
     end
 
     it "excludes other processes from updating at the same time even when creating the file", :unless => Puppet::Util::Platform.windows? do
-      file = Puppet::FileSystem::File.new(tmpfile("file_to_update"))
+      file = tmpfile("file_to_update")
 
       increment_counter_in_multiple_processes(file, 5, 'a+')
 
-      expect(file.read).to eq("5")
+      expect(Puppet::FileSystem.read(file)).to eq("5")
     end
 
     it "times out if the lock cannot be aquired in a specified amount of time", :unless => Puppet::Util::Platform.windows? do
@@ -51,7 +51,7 @@ describe Puppet::FileSystem::File do
       child = spawn_process_that_locks(file)
 
       expect do
-        Puppet::FileSystem::File.new(file).exclusive_open(0666, 'a', 0.1) do |f|
+        Puppet::FileSystem.exclusive_open(file, 0666, 'a', 0.1) do |f|
         end
       end.to raise_error(Timeout::Error)
 
@@ -63,7 +63,7 @@ describe Puppet::FileSystem::File do
 
       child = Kernel.fork do
         read.close
-        Puppet::FileSystem::File.new(file).exclusive_open(0666, 'a') do |fh|
+        Puppet::FileSystem.exclusive_open(file, 0666, 'a') do |fh|
           write.write(true)
           write.close
           sleep 10
@@ -81,7 +81,7 @@ describe Puppet::FileSystem::File do
       children = []
       5.times do |number|
         children << Kernel.fork do
-          file.exclusive_open(0660, options) do |fh|
+          Puppet::FileSystem.exclusive_open(file, 0660, options) do |fh|
             fh.rewind
             contents = (fh.read || 0).to_i
             fh.truncate(0)
@@ -100,194 +100,191 @@ describe Puppet::FileSystem::File do
     :if => ! Puppet.features.manages_symlinks? &&
     Puppet.features.microsoft_windows? do
 
-    let (:file) { Puppet::FileSystem::File.new(tmpfile("somefile")) }
-    let (:missing_file) { Puppet::FileSystem::File.new(tmpfile("missingfile")) }
-    let (:expected_msg) { "This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required." }
+    let(:file)         { tmpfile("somefile") }
+    let(:missing_file) { tmpfile("missingfile") }
+    let(:expected_msg) { "This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required." }
 
     before :each do
-      FileUtils.touch(file.path)
+      FileUtils.touch(file)
     end
 
     it "should raise an error when trying to create a symlink" do
-      expect { file.symlink('foo') }.to raise_error(Puppet::Util::Windows::Error)
+      expect { Puppet::FileSystem.symlink(file, 'foo') }.to raise_error(Puppet::Util::Windows::Error)
     end
 
     it "should return false when trying to check if a path is a symlink" do
-      file.symlink?.should be_false
+      Puppet::FileSystem.symlink?(file).should be_false
     end
 
     it "should raise an error when trying to read a symlink" do
-      expect { file.readlink }.to raise_error(Puppet::Util::Windows::Error)
+      expect { Puppet::FileSystem.readlink(file) }.to raise_error(Puppet::Util::Windows::Error)
     end
 
     it "should return a File::Stat instance when calling stat on an existing file" do
-      file.stat.should be_instance_of(File::Stat)
+      Puppet::FileSystem.stat(file).should be_instance_of(File::Stat)
     end
 
     it "should raise Errno::ENOENT when calling stat on a missing file" do
-      expect { missing_file.stat }.to raise_error(Errno::ENOENT)
+      expect { Puppet::FileSystem.stat(missing_file) }.to raise_error(Errno::ENOENT)
     end
 
     it "should fall back to stat when trying to lstat a file" do
-      Puppet::Util::Windows::File.expects(:stat).with(file.path)
+      Puppet::Util::Windows::File.expects(:stat).with(file)
 
-      file.lstat
+      Puppet::FileSystem.lstat(file)
     end
   end
 
   describe "symlink", :if => Puppet.features.manages_symlinks? do
 
-    let (:file) { Puppet::FileSystem::File.new(tmpfile("somefile")) }
-    let (:missing_file) { Puppet::FileSystem::File.new(tmpfile("missingfile")) }
-    let (:dir) { Puppet::FileSystem::File.new(tmpdir("somedir")) }
+    let(:file)          { tmpfile("somefile") }
+    let(:missing_file)  { tmpfile("missingfile") }
+    let(:dir)           { tmpdir("somedir") }
 
     before :each do
-      FileUtils.touch(file.path)
+      FileUtils.touch(file)
     end
 
     it "should return true for exist? on a present file" do
-      file.exist?.should be_true
-      Puppet::FileSystem::File.exist?(file.path).should be_true
+      Puppet::FileSystem.exist?(file).should be_true
     end
 
     it "should return false for exist? on a non-existant file" do
-      missing_file.exist?.should be_false
-      Puppet::FileSystem::File.exist?(missing_file.path).should be_false
+      Puppet::FileSystem.exist?(missing_file).should be_false
     end
 
     it "should return true for exist? on a present directory" do
-      dir.exist?.should be_true
-      Puppet::FileSystem::File.exist?(dir.path).should be_true
+      Puppet::FileSystem.exist?(dir).should be_true
     end
 
     it "should return false for exist? on a dangling symlink" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      missing_file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(missing_file, symlink)
 
-      missing_file.exist?.should be_false
-      symlink.exist?.should be_false
+      Puppet::FileSystem.exist?(missing_file).should be_false
+      Puppet::FileSystem.exist?(symlink).should be_false
     end
 
     it "should return true for exist? on valid symlinks" do
       [file, dir].each do |target|
-        symlink = Puppet::FileSystem::File.new(tmpfile("#{target.path.basename.to_s}_link"))
-        target.symlink(symlink.path)
+        symlink = tmpfile("#{Puppet::FileSystem.basename(target).to_s}_link")
+        Puppet::FileSystem.symlink(target, symlink)
 
-        target.exist?.should be_true
-        symlink.exist?.should be_true
+        Puppet::FileSystem.exist?(target).should be_true
+        Puppet::FileSystem.exist?(symlink).should be_true
       end
     end
 
     it "should not create a symlink when the :noop option is specified" do
       [file, dir].each do |target|
-        symlink = Puppet::FileSystem::File.new(tmpfile("#{target.path.basename.to_s}_link"))
-        target.symlink(symlink.path, { :noop => true })
+        symlink = tmpfile("#{Puppet::FileSystem.basename(target)}_link")
+        Puppet::FileSystem.symlink(target, symlink, { :noop => true })
 
-        target.exist?.should be_true
-        symlink.exist?.should be_false
+        Puppet::FileSystem.exist?(target).should be_true
+        Puppet::FileSystem.exist?(symlink).should be_false
       end
     end
 
     it "should raise Errno::EEXIST if trying to create a file / directory symlink when the symlink path already exists as a file" do
-      existing_file = Puppet::FileSystem::File.new(tmpfile("#{file.path.basename.to_s}_link"))
-      FileUtils.touch(existing_file.path)
+      existing_file = tmpfile("#{Puppet::FileSystem.basename(file)}_link")
+      FileUtils.touch(existing_file)
 
       [file, dir].each do |target|
-        expect { target.symlink(existing_file.path) }.to raise_error(Errno::EEXIST)
+        expect { Puppet::FileSystem.symlink(target, existing_file) }.to raise_error(Errno::EEXIST)
 
-        existing_file.exist?.should be_true
-        existing_file.symlink?.should be_false
+        Puppet::FileSystem.exist?(existing_file).should be_true
+        Puppet::FileSystem.symlink?(existing_file).should be_false
       end
     end
 
     it "should silently fail if trying to create a file / directory symlink when the symlink path already exists as a directory" do
-      existing_dir = Puppet::FileSystem::File.new(tmpdir("#{file.path.basename.to_s}_dir"))
+      existing_dir = tmpdir("#{Puppet::FileSystem.basename(file)}_dir")
 
       [file, dir].each do |target|
-        target.symlink(existing_dir.path).should == 0
+        Puppet::FileSystem.symlink(target, existing_dir).should == 0
 
-        existing_dir.exist?.should be_true
-        File.directory?(existing_dir.path).should be_true
-        existing_dir.symlink?.should be_false
+        Puppet::FileSystem.exist?(existing_dir).should be_true
+        File.directory?(existing_dir).should be_true
+        Puppet::FileSystem.symlink?(existing_dir).should be_false
       end
     end
 
     it "should silently fail to modify an existing directory symlink to reference a new file or directory" do
       [file, dir].each do |target|
-        existing_dir = Puppet::FileSystem::File.new(tmpdir("#{target.path.basename.to_s}_dir"))
-        symlink = Puppet::FileSystem::File.new(tmpfile("#{existing_dir.path.basename.to_s}_link"))
-        existing_dir.symlink(symlink.path)
+        existing_dir = tmpdir("#{Puppet::FileSystem.basename(target)}_dir")
+        symlink = tmpfile("#{Puppet::FileSystem.basename(existing_dir)}_link")
+        Puppet::FileSystem.symlink(existing_dir, symlink)
 
-        symlink.readlink.should == existing_dir.path.to_s
+        Puppet::FileSystem.readlink(symlink).should == Puppet::FileSystem.path_string(existing_dir)
 
         # now try to point it at the new target, no error raised, but file system unchanged
-        target.symlink(symlink.path).should == 0
-        symlink.readlink.should == existing_dir.path.to_s
+        Puppet::FileSystem.symlink(target, symlink).should == 0
+        Puppet::FileSystem.readlink(symlink).should == existing_dir.to_s
       end
     end
 
     it "should raise Errno::EEXIST if trying to modify a file symlink to reference a new file or directory" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("#{file.path.basename.to_s}_link"))
-      file_2 = Puppet::FileSystem::File.new(tmpfile("#{file.path.basename.to_s}_2"))
-      FileUtils.touch(file_2.path)
+      symlink = tmpfile("#{Puppet::FileSystem.basename(file)}_link")
+      file_2 = tmpfile("#{Puppet::FileSystem.basename(file)}_2")
+      FileUtils.touch(file_2)
       # symlink -> file_2
-      file_2.symlink(symlink.path)
+      Puppet::FileSystem.symlink(file_2, symlink)
 
       [file, dir].each do |target|
-        expect { target.symlink(symlink.path) }.to raise_error(Errno::EEXIST)
-        symlink.readlink.should == file_2.path.to_s
+        expect { Puppet::FileSystem.symlink(target, symlink) }.to raise_error(Errno::EEXIST)
+        Puppet::FileSystem.readlink(symlink).should == file_2.to_s
       end
     end
 
     it "should delete the existing file when creating a file / directory symlink with :force when the symlink path exists as a file" do
       [file, dir].each do |target|
-        existing_file = Puppet::FileSystem::File.new(tmpfile("#{target.path.basename.to_s}_existing"))
-        FileUtils.touch(existing_file.path)
-        existing_file.symlink?.should be_false
+        existing_file = tmpfile("#{Puppet::FileSystem.basename(target)}_existing")
+        FileUtils.touch(existing_file)
+        Puppet::FileSystem.symlink?(existing_file).should be_false
 
-        target.symlink(existing_file.path, { :force => true })
+        Puppet::FileSystem.symlink(target, existing_file, { :force => true })
 
-        existing_file.symlink?.should be_true
-        existing_file.readlink.should == target.path.to_s
+        Puppet::FileSystem.symlink?(existing_file).should be_true
+        Puppet::FileSystem.readlink(existing_file).should == target.to_s
       end
     end
 
     it "should modify an existing file symlink when using :force to reference a new file or directory" do
       [file, dir].each do |target|
-        existing_file = Puppet::FileSystem::File.new(tmpfile("#{target.path.basename.to_s}_existing"))
-        FileUtils.touch(existing_file.path)
-        existing_symlink = Puppet::FileSystem::File.new(tmpfile("#{existing_file.path.basename.to_s}_link"))
-        existing_file.symlink(existing_symlink.path)
+        existing_file = tmpfile("#{Puppet::FileSystem.basename(target)}_existing")
+        FileUtils.touch(existing_file)
+        existing_symlink = tmpfile("#{Puppet::FileSystem.basename(existing_file)}_link")
+        Puppet::FileSystem.symlink(existing_file, existing_symlink)
 
-        existing_symlink.readlink.should == existing_file.path.to_s
+        Puppet::FileSystem.readlink(existing_symlink).should == existing_file.to_s
 
-        target.symlink(existing_symlink.path, { :force => true })
+        Puppet::FileSystem.symlink(target, existing_symlink, { :force => true })
 
-        existing_symlink.readlink.should == target.path.to_s
+        Puppet::FileSystem.readlink(existing_symlink).should == target.to_s
       end
     end
 
     it "should silently fail if trying to overwrite an existing directory with a new symlink when using :force to reference a file or directory" do
       [file, dir].each do |target|
-        existing_dir = Puppet::FileSystem::File.new(tmpdir("#{target.path.basename.to_s}_existing"))
+        existing_dir = tmpdir("#{Puppet::FileSystem.basename(target)}_existing")
 
-        target.symlink(existing_dir.path, { :force => true }).should == 0
+        Puppet::FileSystem.symlink(target, existing_dir, { :force => true }).should == 0
 
-        existing_dir.symlink?.should be_false
+        Puppet::FileSystem.symlink?(existing_dir).should be_false
       end
     end
 
     it "should silently fail if trying to modify an existing directory symlink when using :force to reference a new file or directory" do
       [file, dir].each do |target|
-        existing_dir = Puppet::FileSystem::File.new(tmpdir("#{target.path.basename.to_s}_existing"))
-        existing_symlink = Puppet::FileSystem::File.new(tmpfile("#{existing_dir.path.basename.to_s}_link"))
-        existing_dir.symlink(existing_symlink.path)
+        existing_dir = tmpdir("#{Puppet::FileSystem.basename(target)}_existing")
+        existing_symlink = tmpfile("#{Puppet::FileSystem.basename(existing_dir)}_link")
+        Puppet::FileSystem.symlink(existing_dir, existing_symlink)
 
-        existing_symlink.readlink.should == existing_dir.path.to_s
+        Puppet::FileSystem.readlink(existing_symlink).should == existing_dir.to_s
 
-        target.symlink(existing_symlink.path, { :force => true }).should == 0
+        Puppet::FileSystem.symlink(target, existing_symlink, { :force => true }).should == 0
 
-        existing_symlink.readlink.should == existing_dir.path.to_s
+        Puppet::FileSystem.readlink(existing_symlink).should == existing_dir.to_s
       end
     end
 
@@ -295,184 +292,184 @@ describe Puppet::FileSystem::File do
       [ tmpfile('bogus1'),
         Pathname.new(tmpfile('bogus2')),
         Puppet::Util::WatchedFile.new(tmpfile('bogus3'))
-        ].each { |f| Puppet::FileSystem::File.exist?(f).should be_false  }
+        ].each { |f| Puppet::FileSystem.exist?(f).should be_false  }
     end
 
     it "should return a File::Stat instance when calling stat on an existing file" do
-      file.stat.should be_instance_of(File::Stat)
+      Puppet::FileSystem.stat(file).should be_instance_of(File::Stat)
     end
 
     it "should raise Errno::ENOENT when calling stat on a missing file" do
-      expect { missing_file.stat }.to raise_error(Errno::ENOENT)
+      expect { Puppet::FileSystem.stat(missing_file) }.to raise_error(Errno::ENOENT)
     end
 
     it "should be able to create a symlink, and verify it with symlink?" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
 
-      symlink.symlink?.should be_true
+      Puppet::FileSystem.symlink?(symlink).should be_true
     end
 
     it "should report symlink? as false on file, directory and missing files" do
       [file, dir, missing_file].each do |f|
-        f.symlink?.should be_false
+      Puppet::FileSystem.symlink?(f).should be_false
       end
     end
 
     it "should return a File::Stat with ftype 'link' when calling lstat on a symlink pointing to existing file" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
 
-      stat = symlink.lstat
+      stat = Puppet::FileSystem.lstat(symlink)
       stat.should be_instance_of(File::Stat)
       stat.ftype.should == 'link'
     end
 
     it "should return a File::Stat of ftype 'link' when calling lstat on a symlink pointing to missing file" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      missing_file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(missing_file, symlink)
 
-      stat = symlink.lstat
+      stat = Puppet::FileSystem.lstat(symlink)
       stat.should be_instance_of(File::Stat)
       stat.ftype.should == 'link'
     end
 
     it "should return a File::Stat of ftype 'file' when calling stat on a symlink pointing to existing file" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
 
-      stat = symlink.stat
+      stat = Puppet::FileSystem.stat(symlink)
       stat.should be_instance_of(File::Stat)
       stat.ftype.should == 'file'
     end
 
     it "should return a File::Stat of ftype 'directory' when calling stat on a symlink pointing to existing directory" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      dir.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(dir, symlink)
 
-      stat = symlink.stat
+      stat = Puppet::FileSystem.stat(symlink)
       stat.should be_instance_of(File::Stat)
       stat.ftype.should == 'directory'
 
       # on Windows, this won't get cleaned up if still linked
-      symlink.unlink
+      Puppet::FileSystem.unlink(symlink)
     end
 
     it "should return a File::Stat of ftype 'file' when calling stat on a symlink pointing to another symlink" do
       # point symlink -> file
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
 
       # point symlink2 -> symlink
-      symlink2 = Puppet::FileSystem::File.new(tmpfile("somefile_link2"))
-      symlink.symlink(symlink2.path)
+      symlink2 = tmpfile("somefile_link2")
+      Puppet::FileSystem.symlink(symlink, symlink2)
 
-      symlink2.stat.ftype.should == 'file'
+      Puppet::FileSystem.stat(symlink2).ftype.should == 'file'
     end
 
 
     it "should raise Errno::ENOENT when calling stat on a dangling symlink" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      missing_file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(missing_file, symlink)
 
-      expect { symlink.stat }.to raise_error(Errno::ENOENT)
+      expect { Puppet::FileSystem.stat(symlink) }.to raise_error(Errno::ENOENT)
     end
 
     it "should be able to readlink to resolve the physical path to a symlink" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
 
-      file.exist?.should be_true
-      symlink.readlink.should == file.path.to_s
+      Puppet::FileSystem.exist?(file).should be_true
+      Puppet::FileSystem.readlink(symlink).should == file.to_s
     end
 
     it "should not resolve entire symlink chain with readlink on a symlink'd symlink" do
       # point symlink -> file
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(file, symlink)
 
       # point symlink2 -> symlink
-      symlink2 = Puppet::FileSystem::File.new(tmpfile("somefile_link2"))
-      symlink.symlink(symlink2.path)
+      symlink2 = tmpfile("somefile_link2")
+      Puppet::FileSystem.symlink(symlink, symlink2)
 
-      file.exist?.should be_true
-      symlink2.readlink.should == symlink.path.to_s
+      Puppet::FileSystem.exist?(file).should be_true
+      Puppet::FileSystem.readlink(symlink2).should == symlink.to_s
     end
 
     it "should be able to readlink to resolve the physical path to a dangling symlink" do
-      symlink = Puppet::FileSystem::File.new(tmpfile("somefile_link"))
-      missing_file.symlink(symlink.path)
+      symlink = tmpfile("somefile_link")
+      Puppet::FileSystem.symlink(missing_file, symlink)
 
-      missing_file.exist?.should be_false
-      symlink.readlink.should == missing_file.path.to_s
+      Puppet::FileSystem.exist?(missing_file).should be_false
+      Puppet::FileSystem.readlink(symlink).should == missing_file.to_s
     end
 
     it "should delete only the symlink and not the target when calling unlink instance method" do
       [file, dir].each do |target|
-        symlink = Puppet::FileSystem::File.new(tmpfile("#{target.path.basename.to_s}_link"))
-        target.symlink(symlink.path)
+        symlink = tmpfile("#{Puppet::FileSystem.basename(target)}_link")
+        Puppet::FileSystem.symlink(target, symlink)
 
-        target.exist?.should be_true
-        symlink.readlink.should == target.path.to_s
+        Puppet::FileSystem.exist?(target).should be_true
+        Puppet::FileSystem.readlink(symlink).should == target.to_s
 
-        symlink.unlink.should == 1 # count of files
+        Puppet::FileSystem.unlink(symlink).should == 1 # count of files
 
-        target.exist?.should be_true
-        symlink.exist?.should be_false
+        Puppet::FileSystem.exist?(target).should be_true
+        Puppet::FileSystem.exist?(symlink).should be_false
       end
     end
 
     it "should delete only the symlink and not the target when calling unlink class method" do
       [file, dir].each do |target|
-        symlink = Puppet::FileSystem::File.new(tmpfile("#{target.path.basename.to_s}_link"))
-        target.symlink(symlink.path)
+        symlink = tmpfile("#{Puppet::FileSystem.basename(target)}_link")
+        Puppet::FileSystem.symlink(target, symlink)
 
-        target.exist?.should be_true
-        symlink.readlink.should == target.path.to_s
+        Puppet::FileSystem.exist?(target).should be_true
+        Puppet::FileSystem.readlink(symlink).should == target.to_s
 
-        Puppet::FileSystem::File.unlink(symlink.path).should == 1  # count of files
+        Puppet::FileSystem.unlink(symlink).should == 1  # count of files
 
-        target.exist?.should be_true
-        symlink.exist?.should be_false
+        Puppet::FileSystem.exist?(target).should be_true
+        Puppet::FileSystem.exist?(symlink).should be_false
       end
     end
 
     describe "unlink" do
       it "should delete files with unlink" do
-        file.exist?.should be_true
+        Puppet::FileSystem.exist?(file).should be_true
 
-        file.unlink.should == 1  # count of files
+        Puppet::FileSystem.unlink(file).should == 1  # count of files
 
-        file.exist?.should be_false
+        Puppet::FileSystem.exist?(file).should be_false
       end
 
       it "should delete files with unlink class method" do
-        file.exist?.should be_true
+        Puppet::FileSystem.exist?(file).should be_true
 
-        Puppet::FileSystem::File.unlink(file.path).should == 1  # count of files
+        Puppet::FileSystem.unlink(file).should == 1  # count of files
 
-        file.exist?.should be_false
+        Puppet::FileSystem.exist?(file).should be_false
       end
 
       it "should delete multiple files with unlink class method" do
         paths = (1..3).collect do |i|
-          f = Puppet::FileSystem::File.new(tmpfile("somefile_#{i}"))
-          FileUtils.touch(f.path)
-          f.exist?.should be_true
-          f.path.to_s
+          f = tmpfile("somefile_#{i}")
+          FileUtils.touch(f)
+          Puppet::FileSystem.exist?(f).should be_true
+          f.to_s
         end
 
-        Puppet::FileSystem::File.unlink(*paths).should == 3  # count of files
+        Puppet::FileSystem.unlink(*paths).should == 3  # count of files
 
-        paths.each { |p| Puppet::FileSystem::File.exist?(p).should be_false  }
+        paths.each { |p| Puppet::FileSystem.exist?(p).should be_false  }
       end
 
       it "should raise Errno::EPERM or Errno::EISDIR when trying to delete a directory with the unlink class method" do
-        dir.exist?.should be_true
+        Puppet::FileSystem.exist?(dir).should be_true
 
         ex = nil
         begin
-          Puppet::FileSystem::File.unlink(dir.path)
+          Puppet::FileSystem.unlink(dir)
         rescue Exception => e
           ex = e
         end
@@ -480,9 +477,9 @@ describe Puppet::FileSystem::File do
         [
           Errno::EPERM, # Windows and OSX
           Errno::EISDIR # Linux
-        ].should include ex.class
+        ].should include(ex.class)
 
-        dir.exist?.should be_true
+        Puppet::FileSystem.exist?(dir).should be_true
       end
     end
   end

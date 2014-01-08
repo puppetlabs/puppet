@@ -7,7 +7,7 @@ module Puppet::Util::Watcher
     def self.file_ctime_change_watcher(filename)
       Puppet::Util::Watcher::ChangeWatcher.watch(lambda do
         begin
-          Puppet::FileSystem::File.new(filename).stat.ctime
+          Puppet::FileSystem.stat(filename).ctime
         rescue Errno::ENOENT, Errno::ENOTDIR
           :absent
         end
