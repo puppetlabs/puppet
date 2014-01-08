@@ -14,6 +14,12 @@ General Notes
 The rake tasks for running the tests are defined by the Rakefile in the same directory as this file.
 These tasks come with some documentation: `rake -T` will give short descriptions, and a `rake -D` will give full descriptions with information on ENV options required and optional for the various tasks.
 
+If you are setting up a new repository for acceptance, you will need to bundle install first.  This step assumes you have ruby and the bundler gem installed.
+
+```sh
+cd /path/to/repo/acceptance
+bundle install --path=.bundle/gems
+```
 
 Running Tests on the vcloud
 ---------------------------
@@ -38,9 +44,11 @@ You will also need QA credentials to vsphere in a ~/.fog file.  These credential
 
 In order to run the tests on hosts provisioned from packages produced by Delivery, you will need to reference a Puppet commit sha that has been packaged using Delivery's pl:jenkins:uber_build task.  This is the snippet used by 'Puppet Packaging' Jenkins jobs:
 
-    rake --trace package:implode
-    rake --trace package:bootstrap
-    rake --trace pl:jenkins:uber_build
+```sh
+rake --trace package:implode
+rake --trace package:bootstrap
+rake --trace pl:jenkins:uber_build
+```
 
 The above Rake tasks were run from the root of a Puppet checkout.  They are quoted just for reference.  Typically if you are investigating a failure, you will have a SHA from a failed jenkins run which should correspond to a successful pipeline run, and you should not need to run the pipeline manually.
 
@@ -48,15 +56,31 @@ A finished pipeline will have repository information available at http://builds.
 
 When executing the ci:test:packages task, you must set the SHA, and also set CONFIG to point to a valid Beaker hosts_file.  Configurations used in the Jenkins jobs are available under config/nodes
 
-    bundle exec rake ci:test:packages SHA=abcdef CONFIG=config/nodes/rhel.yaml
+```sh
+bundle exec rake ci:test:packages SHA=abcdef CONFIG=config/nodes/rhel.yaml
+```
 
 Optionally you may set the TEST (TEST=a/test.rb,and/another/test.rb), and may pass additional OPTIONS to beaker (OPTIONS='--opt foo').
 
-You may also edit a ./local_options.rb hash which will override config/ options, and in turn be oferriden by commandline options set in the environment variables CONFIG, TEST and OPTIONS.  This file is a ruby file containing a Ruby hash with configuration expected by Beaker.  See Beaker source, and examples in config/.
+You may also edit a ./local_options.rb hash which will override config/ options, and in turn be overriden by commandline options set in the environment variables CONFIG, TEST and OPTIONS.  This file is a ruby file containing a Ruby hash with configuration expected by Beaker.  See Beaker source, and examples in config/.
 
 ### Git
 
-Alternatively you may provision via git clone by calling the ci:test:git task.  Currently we don't have packages for Windows or Solaris from the Delivery pipeline, and must use ci:test:git to privision and test these platforms.
+Alternatively you may provision via git clone by calling the ci:test:git task.  Currently we don't have packages for Windows or Solaris from the Delivery pipeline, and must use ci:test:git to provision and test these platforms.
+
+#### Source Checkout for Different Fork
+
+If you have a branch pushed to your fork which you wish to test prior to merging into puppetlabs/puppet, you can do so be setting the FORK environment variable.  So, if I have a branch 'issue/master/wonder-if-this-explodes' pushed to my jpartlow puppet fork that I want to test on Windows, I could invoke the following:
+
+```sh
+bundle exec ci:test:git CONFIG=config/nodes/win2008r2.yaml SHA=issue/master/wonder-if-this-explodes FORK=jpartlow
+```
+
+#### Source Checkout for Local Branch
+
+See notes on running acceptance with Vagrant for more details on using a local git daemon.
+
+TODO Fix up the Rakefile's handling of git urls so that there is a simple way to specify both a branch on a github fork, and a branch on some other git server daemon, so that you have fewer steps when serving from a local git daemon. 
 
 ### Preserving Hosts
 
