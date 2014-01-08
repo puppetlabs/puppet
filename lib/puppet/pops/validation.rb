@@ -202,7 +202,7 @@ module Puppet::Pops::Validation
       file = source_pos ? source_pos.locator.file : nil
 
       severity = @severity_producer.severity(issue)
-      @acceptor.accept(Diagnostic.new(severity, issue, file, source_pos, arguments))
+      @acceptor.accept(Diagnostic.new(severity, issue, file, source_pos, arguments, except))
     end
 
     def will_accept? issue
