@@ -45,6 +45,13 @@ module Puppet::Network::HTTP::Handler
     end
   end
 
+  class HTTPMethodNotAllowedError < HTTPError
+    CODE = 405
+    def initialize(message)
+      super("Method Not Allowed: " + message, CODE)
+    end
+  end
+
   def register(routes)
     @routes = routes
 
