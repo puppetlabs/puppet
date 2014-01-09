@@ -11,22 +11,18 @@ Get the list of known environments.
 
     GET /v2/environments
 
-### Supported Response Formats
-
-PSON
-
 ### Parameters
 
 None
 
 ### Example Request & Response
 
-* Note: module lists shortened for readability.
+Note: module lists shortened for readability.
 
     GET /v2/environments
 
     HTTP 200 OK
-    Content-Type: text/pson
+    Content-Type: application/json
 
     {
       "search_paths": ["/etc/puppet/environments"]
