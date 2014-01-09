@@ -90,15 +90,16 @@ Puppet::Type.type(:file).provide :windows do
   attr_reader :file
   private
   def file
-    @file ||= Puppet::FileSystem::File.new(resource[:path])
+    @file ||= Puppet::FileSystem.pathname(resource[:path])
   end
 
   def resolved_path
+    path = file()
     # under POSIX, :manage means use lchown - i.e. operate on the link
-    return file.path.to_s if resource[:links] == :manage
+    return path.to_s if resource[:links] == :manage
 
     # otherwise, use chown -- that will resolve the link IFF it is a link
     # otherwise it will operate on the path
-    file.symlink? ? file.readlink : file.path.to_s
+    Puppet::FileSystem.symlink?(path) ? Puppet::FileSystem.readlink(path) : path.to_s
   end
 end

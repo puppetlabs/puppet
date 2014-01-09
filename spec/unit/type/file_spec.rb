@@ -920,7 +920,7 @@ describe Puppet::Type.type(:file) do
 
       file.remove_existing(:directory).should == true
 
-      Puppet::FileSystem::File.exist?(file[:path]).should == false
+      Puppet::FileSystem.exist?(file[:path]).should == false
     end
 
     it "should remove an existing link", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
@@ -928,12 +928,12 @@ describe Puppet::Type.type(:file) do
 
       target = tmpfile('link_target')
       FileUtils.touch(target)
-      Puppet::FileSystem::File.new(target).symlink(path)
+      Puppet::FileSystem.symlink(target, path)
       file[:target] = target
 
       file.remove_existing(:directory).should == true
 
-      Puppet::FileSystem::File.exist?(file[:path]).should == false
+      Puppet::FileSystem.exist?(file[:path]).should == false
     end
 
     it "should fail if the file is not a file, link, or directory" do
@@ -947,7 +947,7 @@ describe Puppet::Type.type(:file) do
       file.stat
       file.stubs(:stat).returns stub('stat', :ftype => 'file')
 
-      Puppet::FileSystem::File.stubs(:unlink)
+      Puppet::FileSystem.stubs(:unlink)
 
       file.remove_existing(:directory).should == true
       file.instance_variable_get(:@stat).should == :needs_stat
@@ -1009,7 +1009,7 @@ describe Puppet::Type.type(:file) do
     before do
       target = tmpfile('link_target')
       FileUtils.touch(target)
-      Puppet::FileSystem::File.new(target).symlink(path)
+      Puppet::FileSystem.symlink(target, path)
 
       file[:target] = target
       file[:links] = :manage # so we always use :lstat
@@ -1373,7 +1373,7 @@ describe Puppet::Type.type(:file) do
       catalog.apply
 
       # I convert them to strings so they display correctly if there's an error.
-      (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '644'
+      (Puppet::FileSystem.stat(@target).mode & 007777).to_s(8).should == '644'
     end
 
     it "should manage the mode of the followed link" do
@@ -1382,7 +1382,7 @@ describe Puppet::Type.type(:file) do
         @link_resource[:links] = :follow
         catalog.apply
 
-        (Puppet::FileSystem::File.new(@target).stat.mode & 007777).to_s(8).should == '755'
+        (Puppet::FileSystem.stat(@target).mode & 007777).to_s(8).should == '755'
       end
     end
   end
@@ -1466,7 +1466,7 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
-      Puppet::FileSystem::File.exist?(path).should be_true
+      Puppet::FileSystem.exist?(path).should be_true
       @logs.should_not be_any {|l| l.level != :notice }
     end
   end

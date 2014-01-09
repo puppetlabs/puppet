@@ -133,7 +133,7 @@ class Puppet::FileServing::Fileset
     end
 
     def directory?
-      Puppet::FileSystem::File.new(path).send(stat_method).directory?
+      Puppet::FileSystem.send(stat_method, path).directory?
     rescue Errno::ENOENT, Errno::EACCES
       false
     end
@@ -159,7 +159,7 @@ class Puppet::FileServing::Fileset
   end
 
   def valid?(path)
-    Puppet::FileSystem::File.new(path).send(@stat_method)
+    Puppet::FileSystem.send(@stat_method, path)
     true
   rescue Errno::ENOENT, Errno::EACCES
     false

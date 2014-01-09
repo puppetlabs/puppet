@@ -48,7 +48,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     def defpath(dummy_argument=:work_arround_for_ruby_GC_bug)
       unless @defpath
         ["/var/lib/service", "/etc"].each do |path|
-          if Puppet::FileSystem::File.exist?(path)
+          if Puppet::FileSystem.exist?(path)
             @defpath = path
             break
           end
@@ -74,7 +74,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     # or don't contain a run file
     Dir.entries(path).reject { |e|
       fullpath = File.join(path, e)
-      e =~ /^\./ or ! FileTest.directory?(fullpath) or ! Puppet::FileSystem::File.exist?(File.join(fullpath,"run"))
+      e =~ /^\./ or ! FileTest.directory?(fullpath) or ! Puppet::FileSystem.exist?(File.join(fullpath,"run"))
     }.collect do |name|
       new(:name => name, :path => path)
     end
@@ -89,7 +89,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   def servicedir
     unless @servicedir
       ["/service", "/etc/service","/var/lib/svscan"].each do |path|
-        if Puppet::FileSystem::File.exist?(path)
+        if Puppet::FileSystem.exist?(path)
           @servicedir = path
           break
         end
@@ -142,23 +142,23 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
       return :true
     else
       # the service is enabled if it is linked
-      return Puppet::FileSystem::File.new(self.service).symlink? ? :true : :false
+      return Puppet::FileSystem.symlink?(self.service) ? :true : :false
     end
   end
 
   def enable
-      if ! FileTest.directory?(self.daemon)
-        Puppet.notice "No daemon dir, calling setupservice for #{resource[:name]}"
-        self.setupservice
+    if ! FileTest.directory?(self.daemon)
+      Puppet.notice "No daemon dir, calling setupservice for #{resource[:name]}"
+      self.setupservice
+    end
+    if self.daemon
+      if ! Puppet::FileSystem.symlink?(self.service)
+        Puppet.notice "Enabling #{self.service}: linking #{self.daemon} -> #{self.service}"
+        Puppet::FileSystem.symlink(self.daemon, self.service)
       end
-      if self.daemon
-        if ! Puppet::FileSystem::File.new(self.service).symlink?
-          Puppet.notice "Enabling #{self.service}: linking #{self.daemon} -> #{self.service}"
-          Puppet::FileSystem::File.new(self.daemon).symlink(self.service)
-        end
-      end
-  rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new( "No daemon directory found for #{self.service}")
+    end
+rescue Puppet::ExecutionFailure
+    raise Puppet::Error.new( "No daemon directory found for #{self.service}")
   end
 
   def disable
@@ -168,9 +168,9 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         self.setupservice
       end
       if self.daemon
-        if Puppet::FileSystem::File.new(self.service).symlink?
+        if Puppet::FileSystem.symlink?(self.service)
           Puppet.notice "Disabling #{self.service}: removing link #{self.daemon} -> #{self.service}"
-          Puppet::FileSystem::File.unlink(self.service)
+          Puppet::FileSystem.unlink(self.service)
         end
       end
     rescue Puppet::ExecutionFailure

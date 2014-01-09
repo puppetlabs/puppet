@@ -14,10 +14,11 @@ describe tidy do
 
   it "should use :lstat when stating a file" do
     path = '/foo/bar'
-    resource = tidy.new :path => path, :age => "1d"
     stat = mock 'stat'
-    stub_file = stub(path, :lstat => stat)
-    Puppet::FileSystem::File.expects(:new).with(path).returns stub_file
+    Puppet::FileSystem.expects(:lstat).with(path).returns stat
+
+    resource = tidy.new :path => path, :age => "1d"
+
     resource.stat(path).should == stat
   end
 
@@ -128,8 +129,7 @@ describe tidy do
     before do
       @tidy = Puppet::Type.type(:tidy).new :path => @basepath
       @stat = stub 'stat', :ftype => "directory"
-      @stub_file = stub(@basepath, :lstat => @stat)
-      Puppet::FileSystem::File.stubs(:new).with(@basepath).returns @stub_file
+      lstat_is(@basepath, @stat)
     end
 
     describe "and generating files" do
@@ -159,7 +159,7 @@ describe tidy do
       end
 
       it "should do nothing if the targeted file does not exist" do
-        @stub_file.expects(:lstat).raises Errno::ENOENT
+        lstat_raises(@basepath, Errno::ENOENT)
 
         @tidy.generate.should == []
       end
@@ -310,33 +310,32 @@ describe tidy do
       before do
         @tidy = Puppet::Type.type(:tidy).new :path => @basepath
         @stat = stub 'stat', :ftype => "file"
-        @stub_file = stub(@basepath, :lstat => @stat)
-        Puppet::FileSystem::File.expects(:new).with(@basepath).returns @stub_file
+        lstat_is(@basepath, @stat)
       end
 
       it "should not try to recurse if the file does not exist" do
         @tidy[:recurse] = true
 
-        @stub_file.stubs(:lstat).returns nil
+        lstat_is(@basepath, nil)
 
         @tidy.generate.should == []
       end
 
       it "should not be tidied if the file does not exist" do
-        @stub_file.expects(:lstat).raises Errno::ENOENT
+        lstat_raises(@basepath, Errno::ENOENT)
 
         @tidy.should_not be_tidy(@basepath)
       end
 
       it "should not be tidied if the user has no access to the file" do
-        @stub_file.expects(:lstat).raises Errno::EACCES
+        lstat_raises(@basepath, Errno::EACCES)
 
         @tidy.should_not be_tidy(@basepath)
       end
 
       it "should not be tidied if it is a directory and rmdirs is set to false" do
         stat = mock 'stat', :ftype => "directory"
-        @stub_file.expects(:lstat).returns stat
+        lstat_is(@basepath, stat)
 
         @tidy.should_not be_tidy(@basepath)
       end
@@ -422,5 +421,13 @@ describe tidy do
         end
       end
     end
+  end
+
+  def lstat_is(path, stat)
+    Puppet::FileSystem.stubs(:lstat).with(path).returns(stat)
+  end
+
+  def lstat_raises(path, error_class)
+    Puppet::FileSystem.expects(:lstat).with(path).raises Errno::ENOENT
   end
 end

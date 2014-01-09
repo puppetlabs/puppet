@@ -20,7 +20,7 @@ describe Puppet::Network::Authentication do
   describe "when warning about upcoming expirations" do
     before do
       Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
-      Puppet::FileSystem::File.stubs(:exist?).returns(false)
+      Puppet::FileSystem.stubs(:exist?).returns(false)
     end
 
     it "should check the expiration of the CA certificate" do
@@ -34,19 +34,19 @@ describe Puppet::Network::Authentication do
     context "when examining the local host" do
       before do
         Puppet::SSL::Host.stubs(:localhost).returns(host)
-        Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:hostcert]).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(Puppet[:hostcert]).returns(true)
       end
 
       it "should not load the localhost certificate if the local CA certificate is missing" do
         # Redmine-21869: Infinite recursion occurs if CA cert is missing.
-        Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:localcacert]).returns(false)
+        Puppet::FileSystem.stubs(:exist?).with(Puppet[:localcacert]).returns(false)
         host.unstub(:certificate)
         host.expects(:certificate).never
         subject.warn_if_near_expiration
       end
 
       it "should check the expiration of the localhost certificate if the local CA certificate is present" do
-        Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:localcacert]).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(Puppet[:localcacert]).returns(true)
         cert.expects(:near_expiration?).returns(false)
         subject.warn_if_near_expiration
       end

@@ -65,7 +65,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   end
 
   # Retrieve the attributes for this file, relative to a base directory.
-  # Note that Puppet::FileSystem::File.new(path).stat raises Errno::ENOENT
+  # Note that Puppet::FileSystem.stat(path) raises Errno::ENOENT
   # if the file is absent and this method does not catch that exception.
   def collect
     real_path = full_path
@@ -85,7 +85,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       @checksum_type = "ctime"
       @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", path).to_s
     when "link"
-      @destination = Puppet::FileSystem::File.new(real_path).readlink
+      @destination = Puppet::FileSystem.readlink(real_path)
       @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s rescue nil
     else
       raise ArgumentError, "Cannot manage files of type #{stat.ftype}"

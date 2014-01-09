@@ -692,10 +692,10 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
         provider.class.get_salted_sha512_pbkdf2('iterations', pbkdf2_embedded_bplist_hash).should == pbkdf2_iterations_value
     end
     it "should return a Fixnum value when looking up the PBKDF2 iterations value" do
-        provider.class.get_salted_sha512_pbkdf2('iterations', pbkdf2_embedded_bplist_hash).should be_a_kind_of Fixnum
+        provider.class.get_salted_sha512_pbkdf2('iterations', pbkdf2_embedded_bplist_hash).should be_a_kind_of(Fixnum)
     end
     it "should raise an error if a field other than 'entropy', 'salt', or 'iterations' is passed" do
-      expect { provider.class.get_salted_sha512_pbkdf2('othervalue', pbkdf2_embedded_bplist_hash) }.to raise_error Puppet::Error, /Puppet has tried to read an incorrect value from the SALTED-SHA512-PBKDF2 hash. Acceptable fields are 'salt', 'entropy', or 'iterations'/
+      expect { provider.class.get_salted_sha512_pbkdf2('othervalue', pbkdf2_embedded_bplist_hash) }.to raise_error(Puppet::Error, /Puppet has tried to read an incorrect value from the SALTED-SHA512-PBKDF2 hash. Acceptable fields are 'salt', 'entropy', or 'iterations'/)
     end
   end
 
@@ -704,7 +704,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     let(:stub_password_file) { stub('connection') }
 
     it 'should return a sha1 hash read from disk' do
-      Puppet::FileSystem::File.expects(:exist?).with(password_hash_file).returns(true)
+      Puppet::FileSystem.expects(:exist?).with(password_hash_file).returns(true)
       File.expects(:file?).with(password_hash_file).returns(true)
       File.expects(:readable?).with(password_hash_file).returns(true)
       File.expects(:new).with(password_hash_file).returns(stub_password_file)
@@ -714,21 +714,21 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     end
 
     it 'should return nil if the password_hash_file does not exist' do
-      Puppet::FileSystem::File.expects(:exist?).with(password_hash_file).returns(false)
+      Puppet::FileSystem.expects(:exist?).with(password_hash_file).returns(false)
       provider.class.get_sha1('user_guid').should == nil
     end
 
     it 'should return nil if the password_hash_file is not a file' do
-      Puppet::FileSystem::File.expects(:exist?).with(password_hash_file).returns(true)
+      Puppet::FileSystem.expects(:exist?).with(password_hash_file).returns(true)
       File.expects(:file?).with(password_hash_file).returns(false)
       provider.class.get_sha1('user_guid').should == nil
     end
 
     it 'should raise an error if the password_hash_file is not readable' do
-      Puppet::FileSystem::File.expects(:exist?).with(password_hash_file).returns(true)
+      Puppet::FileSystem.expects(:exist?).with(password_hash_file).returns(true)
       File.expects(:file?).with(password_hash_file).returns(true)
       File.expects(:readable?).with(password_hash_file).returns(false)
-      expect { provider.class.get_sha1('user_guid').should == nil }.to raise_error Puppet::Error, /Could not read password hash file at #{password_hash_file}/
+      expect { provider.class.get_sha1('user_guid').should == nil }.to raise_error(Puppet::Error, /Could not read password hash file at #{password_hash_file}/)
     end
   end
 

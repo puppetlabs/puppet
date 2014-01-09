@@ -5,8 +5,7 @@ require 'puppet/network/authconfig'
 
 describe Puppet::Network::AuthConfig do
   before :each do
-    stub_file = stub('file', :stat => stub('stat', :ctime => :now))
-    Puppet::FileSystem::File.stubs(:new).returns stub_file
+    Puppet::FileSystem.stubs(:stat).returns stub('stat', :ctime => :now)
     Time.stubs(:now).returns Time.now
 
     Puppet::Network::AuthConfig.any_instance.stubs(:exists?).returns(true)

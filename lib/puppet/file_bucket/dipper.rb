@@ -31,9 +31,9 @@ class Puppet::FileBucket::Dipper
 
   # Back up a file to our bucket
   def backup(file)
-    file_handle = Puppet::FileSystem::File.new(file)
-    raise(ArgumentError, "File #{file} does not exist") unless file_handle.exist?
-    contents = file_handle.binread
+    file_handle = Puppet::FileSystem.pathname(file)
+    raise(ArgumentError, "File #{file} does not exist") unless Puppet::FileSystem.exist?(file_handle)
+    contents = Puppet::FileSystem.binread(file_handle)
     begin
       file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path)
       files_original_path = absolutize_path(file)
@@ -66,9 +66,9 @@ class Puppet::FileBucket::Dipper
   # Restore the file
   def restore(file,sum)
     restore = true
-    file_handle = Puppet::FileSystem::File.new(file)
-    if file_handle.exist?
-      cursum = Digest::MD5.hexdigest(file_handle.binread)
+    file_handle = Puppet::FileSystem.pathname(file)
+    if Puppet::FileSystem.exist?(file_handle)
+      cursum = Digest::MD5.hexdigest(Puppet::FileSystem.binread(file_handle))
 
       # if the checksum has changed...
       # this might be extra effort
@@ -81,8 +81,8 @@ class Puppet::FileBucket::Dipper
       if newcontents = getfile(sum)
         newsum = Digest::MD5.hexdigest(newcontents)
         changed = nil
-        if file_handle.exist? and ! file_handle.writable?
-          changed = Puppet::FileSystem::File.new(file).stat.mode
+        if Puppet::FileSystem.exist?(file_handle) and ! Puppet::FileSystem.writable?(file_handle)
+          changed = Puppet::FileSystem.stat(file_handle).mode
           ::File.chmod(changed | 0200, file)
         end
         ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|

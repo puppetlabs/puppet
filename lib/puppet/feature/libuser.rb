@@ -4,5 +4,5 @@ require 'puppet/util/libuser'
 Puppet.features.add(:libuser) {
    File.executable?("/usr/sbin/lgroupadd") and
    File.executable?("/usr/sbin/luseradd")  and
-   Puppet::FileSystem::File.exist?(Puppet::Util::Libuser.getconf)
+   Puppet::FileSystem.exist?(Puppet::Util::Libuser.getconf)
 }

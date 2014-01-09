@@ -55,7 +55,7 @@ describe 'HieraPuppet' do
         pending("This example does not apply to Puppet #{Puppet.version} because it does not have this setting")
       end
 
-      Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:hiera_config]).returns(true)
+      Puppet::FileSystem.stubs(:exist?).with(Puppet[:hiera_config]).returns(true)
       HieraPuppet.send(:hiera_config_file).should == Puppet[:hiera_config]
     end
 
@@ -67,7 +67,7 @@ describe 'HieraPuppet' do
       end
       Puppet.settings[:confdir] = "/dev/null/puppet"
       hiera_config = File.join(Puppet[:confdir], 'hiera.yaml')
-      Puppet::FileSystem::File.stubs(:exist?).with(hiera_config).returns(true)
+      Puppet::FileSystem.stubs(:exist?).with(hiera_config).returns(true)
 
       HieraPuppet.send(:hiera_config_file).should == hiera_config
     end

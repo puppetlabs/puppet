@@ -54,7 +54,7 @@ module Puppet
     nodefault
 
     newvalue(:absent) do
-      Puppet::FileSystem::File.unlink(@resource[:path])
+      Puppet::FileSystem.unlink(@resource[:path])
     end
 
     aliasvalue(:false, :absent)
@@ -79,7 +79,7 @@ module Puppet
     newvalue(:directory, :event => :directory_created) do
       mode = @resource.should(:mode)
       parent = File.dirname(@resource[:path])
-      unless Puppet::FileSystem::File.exist? parent
+      unless Puppet::FileSystem.exist? parent
         raise Puppet::Error,
           "Cannot create #{@resource[:path]}; parent directory #{parent} does not exist"
       end
@@ -139,7 +139,7 @@ module Puppet
     def check
       basedir = File.dirname(@resource[:path])
 
-      if ! Puppet::FileSystem::File.exist?(basedir)
+      if ! Puppet::FileSystem.exist?(basedir)
         raise Puppet::Error,
           "Can not create #{@resource.title}; parent directory does not exist"
       elsif ! FileTest.directory?(basedir)
