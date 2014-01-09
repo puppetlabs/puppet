@@ -18,6 +18,7 @@ gem_runtime_dependencies:
   facter: '~> 1.6'
   hiera: '~> 1.0'
   rgen: '~> 0.6.5'
+  json_pure:
 gem_rdoc_options:
   - --title
   - "Puppet - Configuration Management"
