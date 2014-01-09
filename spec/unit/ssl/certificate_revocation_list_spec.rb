@@ -5,8 +5,11 @@ require 'puppet/ssl/certificate_revocation_list'
 
 describe Puppet::SSL::CertificateRevocationList do
   before do
-    @cert = stub 'cert', :subject => "mysubject"
-    @key = stub 'key', :private? => true
+    # let's not mock this to make sure that OpenSSL actually does the right stuff
+    ca = Puppet::SSL::CertificateAuthority.new
+    ca.generate_ca_certificate
+    @cert = ca.instance_variable_get(:@certificate).content
+    @key = ca.instance_variable_get(:@host).key.content
 
     @class = Puppet::SSL::CertificateRevocationList
   end
@@ -47,63 +50,45 @@ describe Puppet::SSL::CertificateRevocationList do
 
   describe "when generating the crl" do
     before do
-      @real_crl = mock 'crl'
-      @real_crl.stub_everything
-
-      OpenSSL::X509::CRL.stubs(:new).returns(@real_crl)
-
-      @class.any_instance.stubs(:read_or_generate)
-
       @crl = @class.new("crl")
     end
 
     it "should set its issuer to the subject of the passed certificate" do
-      @real_crl.expects(:issuer=).with(@cert.subject)
-
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).issuer.should == @cert.subject
     end
 
     it "should set its version to 1" do
-      @real_crl.expects(:version=).with(1)
-
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).version.should == 1
     end
 
     it "should create an instance of OpenSSL::X509::CRL" do
-      OpenSSL::X509::CRL.expects(:new).returns(@real_crl)
-
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).should be_an_instance_of(OpenSSL::X509::CRL)
     end
 
-    # The next three tests aren't good, but at least they
-    # specify the behaviour.
+    # taken from certificate_factory_spec.rb
     it "should add an extension for the CRL number" do
-      @real_crl.expects(:extensions=)
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).extensions.map { |x| x.to_h }.find { |x| x["oid"] == "crlNumber" }.should ==
+        { "oid"       => "crlNumber",
+          "value"     => "0",
+          "critical"  => false }
     end
 
     it "should set the last update time" do
-      @real_crl.expects(:last_update=)
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).last_update.should_not == nil
     end
 
     it "should set the next update time" do
-      @real_crl.expects(:next_update=)
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).next_update.should_not == nil
     end
 
-    it "should sign the CRL" do
-      @real_crl.expects(:sign).with { |key, digest| key == @key }
-      @crl.generate(@cert, @key)
+    it "should verify using the CA public_key" do
+      @crl.generate(@cert, @key).verify(@key.public_key).should == true
     end
 
     it "should set the content to the generated crl" do
+      # this test shouldn't be needed since we test the return of generate() which should be the content field
       @crl.generate(@cert, @key)
-      @crl.content.should equal(@real_crl)
-    end
-
-    it "should return the generated crl" do
-      @crl.generate(@cert, @key).should equal(@real_crl)
+      @crl.content.should be_an_instance_of(OpenSSL::X509::CRL)
     end
   end
 
@@ -111,16 +96,11 @@ describe Puppet::SSL::CertificateRevocationList do
   # SSL stuff is very complicated.  It just hits the high points.
   describe "when revoking a certificate" do
     before do
-      @class.wrapped_class.any_instance.stubs(:issuer=)
-      @class.wrapped_class.any_instance.stubs(:sign)
-
       @crl = @class.new("crl")
       @crl.generate(@cert, @key)
-      @crl.content.stubs(:sign)
 
       Puppet::SSL::CertificateRevocationList.indirection.stubs :save
 
-      @key = mock 'key'
     end
 
     it "should require a serial number and the CA's private key" do
