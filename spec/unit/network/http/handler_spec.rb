@@ -27,18 +27,18 @@ describe Puppet::Network::HTTP::Handler do
     }
   end
 
-  let(:handler) { TestingHandler.new(nil) }
+  let(:handler) { TestingHandler.new() }
 
-  describe "when creating a handler" do
+  describe "the HTTP Handler" do
     def respond(text)
       lambda { |req, res| res.respond_with(200, "text/plain", text) }
     end
 
-    it "hands the request to the first handler that matches the request path" do
+    it "hands the request to the first route that matches the request path" do
       handler = TestingHandler.new(
-        Puppet::Network::HTTP::Route.get(%r{^/foo}, respond("skipped")),
-        Puppet::Network::HTTP::Route.get(%r{^/vtest}, respond("used")),
-        Puppet::Network::HTTP::Route.get(%r{^/vtest/foo}, respond("never consulted")))
+        Puppet::Network::HTTP::Route.path(%r{^/foo}).get(respond("skipped")),
+        Puppet::Network::HTTP::Route.path(%r{^/vtest}).get(respond("used")),
+        Puppet::Network::HTTP::Route.path(%r{^/vtest/foo}).get(respond("ignored")))
 
       req = a_request("GET", "/vtest/foo")
       res = {}
@@ -48,31 +48,12 @@ describe Puppet::Network::HTTP::Handler do
       expect(res[:body]).to eq("used")
     end
 
-    it "does not hand requests to routes that specify a different HTTP method than the request" do
-      handler = TestingHandler.new(
-        Puppet::Network::HTTP::Route.post(%r{^/vtest}, respond("skipped")),
-        Puppet::Network::HTTP::Route.get(%r{^/vtest}, respond("used")))
-
-      req = a_request("GET", "/vtest/foo")
-      res = {}
-
-      handler.process(req, res)
-
-      expect(res[:body]).to eq("used")
-    end
-
-    it "allows routes to match any HTTP method" do
-      handler = TestingHandler.new(
-        Puppet::Network::HTTP::Route.post(%r{^/vtest/foo}, respond("skipped")),
-        Puppet::Network::HTTP::Route.any(%r{^/vtest/foo}, respond("used")),
-        Puppet::Network::HTTP::Route.get(%r{^/vtest/foo}, respond("ignored")))
-
-        req = a_request("GET", "/vtest/foo")
-        res = {}
-
-        handler.process(req, res)
-
-        expect(res[:body]).to eq("used")
+    it "raises an error if multiple routes with the same path regex are registered" do
+      expect do
+        handler = TestingHandler.new(
+          Puppet::Network::HTTP::Route.path(%r{^/foo}).get(respond("ignored")),
+          Puppet::Network::HTTP::Route.path(%r{^/foo}).post(respond("also ignored")))
+      end.to raise_error(ArgumentError)
     end
 
     it "raises an HTTP not found error if no routes match" do
@@ -85,37 +66,6 @@ describe Puppet::Network::HTTP::Handler do
 
       expect(res[:body]).to eq("Not Found: No route for GET /vtest/foo")
       expect(res[:status]).to eq(404)
-    end
-
-    it "calls each route's handlers in turn" do
-      call_count = 0
-      route_handler = lambda { |request, response| call_count += 1 }
-      handler = TestingHandler.new(
-        Puppet::Network::HTTP::Route.get(%r{^/vtest/foo}, route_handler, route_handler))
-
-      req = a_request("GET", "/vtest/foo")
-      res = {}
-
-      handler.process(req, res)
-
-      expect(call_count).to eq(2)
-    end
-
-    it "stops calling handlers if one of them raises an error" do
-      ignored_called = false
-      ignored = lambda { |req, res| ignored_called = true }
-      raise_error = lambda { |req, res| raise Puppet::Network::HTTP::Handler::HTTPNotAuthorizedError, "go away" }
-
-      handler = TestingHandler.new(
-        Puppet::Network::HTTP::Route.get(%r{^/vtest/foo}, raise_error, ignored))
-
-      req = a_request("GET", "/vtest/foo")
-      res = {}
-
-      handler.process(req, res)
-
-      expect(res[:status]).to eq(403)
-      expect(ignored_called).to be_false
     end
   end
 
