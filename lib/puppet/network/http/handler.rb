@@ -53,8 +53,15 @@ module Puppet::Network::HTTP::Handler
   end
 
   def register(routes)
-    @routes = routes
+    # There's got to be a simpler way to do this, right?
+    dupes = {}
+    routes.each { |r| dupes[r.path_matcher] = (dupes[r.path_matcher] || 0) + 1 }
+    dupes = dupes.collect { |pm, count| pm if count > 1 }.compact
+    if dupes.count > 0
+      raise ArgumentError, "Given multiple routes with identical path regexes: #{dupes.map{ |rgx| rgx.inspect }.join(', ')}"
+    end
 
+    @routes = routes
     Puppet.debug("Routes Registered:")
     @routes.each do |route|
       Puppet.debug(route.inspect)

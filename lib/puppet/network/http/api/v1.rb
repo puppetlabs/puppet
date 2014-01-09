@@ -25,7 +25,7 @@ class Puppet::Network::HTTP::API::V1
   }
 
   def self.routes
-    [Puppet::Network::HTTP::Route.any(/.*/, new)]
+    [Puppet::Network::HTTP::Route.path(/.*/).any(new)]
   end
 
   # handle an HTTP request
