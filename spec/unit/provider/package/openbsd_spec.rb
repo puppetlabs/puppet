@@ -10,22 +10,22 @@ describe provider_class do
 
   def expect_read_from_pkgconf(lines)
     pkgconf = stub(:readlines => lines)
-    Puppet::FileSystem::File.expects(:exist?).with('/etc/pkg.conf').returns(true)
+    Puppet::FileSystem.expects(:exist?).with('/etc/pkg.conf').returns(true)
     File.expects(:open).with('/etc/pkg.conf', 'rb').returns(pkgconf)
   end
 
   def expect_pkgadd_with_source(source)
     provider.expects(:pkgadd).with do |fullname|
-      ENV.should_not be_key 'PKG_PATH'
+      ENV.should_not be_key('PKG_PATH')
       fullname.should == source
     end
   end
 
   def expect_pkgadd_with_env_and_name(source, &block)
-    ENV.should_not be_key 'PKG_PATH'
+    ENV.should_not be_key('PKG_PATH')
 
     provider.expects(:pkgadd).with do |fullname|
-      ENV.should be_key 'PKG_PATH'
+      ENV.should be_key('PKG_PATH')
       ENV['PKG_PATH'].should == source
 
       fullname.should == provider.resource[:name]
@@ -34,7 +34,7 @@ describe provider_class do
 
     yield
 
-    ENV.should_not be_key 'PKG_PATH'
+    ENV.should_not be_key('PKG_PATH')
   end
 
   before :each do
@@ -76,27 +76,27 @@ describe provider_class do
 
   context "#install" do
     it "should fail if the resource doesn't have a source" do
-      Puppet::FileSystem::File.expects(:exist?).with('/etc/pkg.conf').returns(false)
+      Puppet::FileSystem.expects(:exist?).with('/etc/pkg.conf').returns(false)
 
       expect {
         provider.install
-      }.to raise_error Puppet::Error, /must specify a package source/
+      }.to raise_error(Puppet::Error, /must specify a package source/)
     end
 
     it "should fail if /etc/pkg.conf exists, but is not readable" do
-      Puppet::FileSystem::File.expects(:exist?).with('/etc/pkg.conf').returns(true)
+      Puppet::FileSystem.expects(:exist?).with('/etc/pkg.conf').returns(true)
       File.expects(:open).with('/etc/pkg.conf', 'rb').raises(Errno::EACCES)
 
       expect {
         provider.install
-      }.to raise_error Errno::EACCES, /Permission denied/
+      }.to raise_error(Errno::EACCES, /Permission denied/)
     end
 
     it "should fail if /etc/pkg.conf exists, but there is no installpath" do
       expect_read_from_pkgconf([])
       expect {
         provider.install
-      }.to raise_error Puppet::Error, /No valid installpath found in \/etc\/pkg\.conf and no source was set/
+      }.to raise_error(Puppet::Error, /No valid installpath found in \/etc\/pkg\.conf and no source was set/)
     end
 
     it "should install correctly when given a directory-unlike source" do

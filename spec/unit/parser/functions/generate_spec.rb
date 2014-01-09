@@ -107,7 +107,7 @@ describe "the generate function" do
   end
 
   after :each do
-    File.delete(command) if Puppet::FileSystem::File.exist?(command)
+    File.delete(command) if Puppet::FileSystem.exist?(command)
   end
 
   it "should call generator with no arguments" do
@@ -123,10 +123,10 @@ describe "the generate function" do
   end
 
   it "should fail if generator is not absolute" do
-    expect { scope.function_generate(['boo']) }.to raise_error Puppet::ParseError
+    expect { scope.function_generate(['boo']) }.to raise_error(Puppet::ParseError)
   end
 
   it "should fail if generator fails" do
-    expect { scope.function_generate(['/boo']) }.to raise_error Puppet::ParseError
+    expect { scope.function_generate(['/boo']) }.to raise_error(Puppet::ParseError)
   end
 end

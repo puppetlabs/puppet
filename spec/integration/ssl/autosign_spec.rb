@@ -39,7 +39,7 @@ describe "autosigning" do
 
   context "when the csr_attributes file is valid, but empty" do
     it "generates a CSR when the file is empty" do
-      Puppet::FileSystem::File.new(Puppet.settings[:csr_attributes]).touch
+      Puppet::FileSystem.touch(Puppet.settings[:csr_attributes])
 
       host.generate_certificate_request
     end

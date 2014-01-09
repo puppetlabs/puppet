@@ -64,7 +64,7 @@ describe Puppet::Transaction do
     catalog.add_resource resource
 
     catalog.apply
-    Puppet::FileSystem::File.exist?(path).should be_true
+    Puppet::FileSystem.exist?(path).should be_true
   end
 
   it "should not apply virtual exported resources" do
@@ -189,8 +189,8 @@ describe Puppet::Transaction do
 
     catalog = mk_catalog(file, exec1, exec2)
     catalog.apply
-    Puppet::FileSystem::File.exist?(file1).should be_true
-    Puppet::FileSystem::File.exist?(file2).should be_true
+    Puppet::FileSystem.exist?(file1).should be_true
+    Puppet::FileSystem.exist?(file2).should be_true
   end
 
   it "should not let one failed refresh result in other refreshes failing" do
@@ -223,7 +223,7 @@ describe Puppet::Transaction do
 
     catalog = mk_catalog(file, exec1, exec2)
     catalog.apply
-    Puppet::FileSystem::File.exist?(newfile).should be_true
+    Puppet::FileSystem.exist?(newfile).should be_true
   end
 
   it "should still trigger skipped resources" do
@@ -251,18 +251,18 @@ describe Puppet::Transaction do
 
     # Run it once
     catalog.apply
-    Puppet::FileSystem::File.exist?(fname).should be_true
+    Puppet::FileSystem.exist?(fname).should be_true
 
     # Now remove it, so it can get created again
-    Puppet::FileSystem::File.unlink(fname)
+    Puppet::FileSystem.unlink(fname)
 
     file[:content] = "some content"
 
     catalog.apply
-    Puppet::FileSystem::File.exist?(fname).should be_true
+    Puppet::FileSystem.exist?(fname).should be_true
 
     # Now remove it, so it can get created again
-    Puppet::FileSystem::File.unlink(fname)
+    Puppet::FileSystem.unlink(fname)
 
     # And tag our exec
     exec.tag("testrun")
@@ -275,7 +275,7 @@ describe Puppet::Transaction do
     file[:content] = "totally different content"
 
     catalog.apply
-    Puppet::FileSystem::File.exist?(fname).should be_true
+    Puppet::FileSystem.exist?(fname).should be_true
   end
 
   it "should not attempt to evaluate resources with failed dependencies" do
@@ -302,8 +302,8 @@ describe Puppet::Transaction do
     catalog = mk_catalog(exec, file1, file2)
     catalog.apply
 
-    Puppet::FileSystem::File.exist?(file1[:path]).should be_false
-    Puppet::FileSystem::File.exist?(file2[:path]).should be_false
+    Puppet::FileSystem.exist?(file1[:path]).should be_false
+    Puppet::FileSystem.exist?(file2[:path]).should be_false
   end
 
   it "should not trigger subscribing resources on failure" do
@@ -328,8 +328,8 @@ describe Puppet::Transaction do
     catalog = mk_catalog(exec, create_file1, create_file2)
     catalog.apply
 
-    Puppet::FileSystem::File.exist?(file1).should be_false
-    Puppet::FileSystem::File.exist?(file2).should be_false
+    Puppet::FileSystem.exist?(file1).should be_false
+    Puppet::FileSystem.exist?(file2).should be_false
   end
 
   # #801 -- resources only checked in noop should be rescheduled immediately.

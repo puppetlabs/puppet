@@ -85,10 +85,10 @@ class Puppet::SSL::CertificateAuthority
       when 'true', true
         AutosignAlways.new
       else
-        file = Puppet::FileSystem::File.new(auto)
-        if file.executable?
+        file = Puppet::FileSystem.pathname(auto)
+        if Puppet::FileSystem.executable?(file)
           Puppet::SSL::CertificateAuthority::AutosignCommand.new(auto)
-        elsif file.exist?
+        elsif Puppet::FileSystem.exist?(file)
           AutosignConfig.new(file)
         else
           AutosignNever.new
@@ -227,7 +227,7 @@ class Puppet::SSL::CertificateAuthority
 
   # Does the password file exist?
   def password?
-    Puppet::FileSystem::File.exist? Puppet[:capass]
+    Puppet::FileSystem.exist?(Puppet[:capass])
   end
 
   # Print a given host's certificate as text.
@@ -492,7 +492,7 @@ class Puppet::SSL::CertificateAuthority
 
     def autosign_store
       auth = Puppet::Network::AuthStore.new
-      @config.each_line do |line|
+      Puppet::FileSystem.each_line(@config) do |line|
         next if line =~ /^\s*#/
         next if line =~ /^\s*$/
         auth.allow(line.chomp)

@@ -5,9 +5,8 @@ class Puppet::Settings::DirectorySetting < Puppet::Settings::FileSetting
 
   # @api private
   def open_file(filename, option = 'r', &block)
-    file = Puppet::FileSystem::File.new(filename)
     controlled_access do |mode|
-      file.open(mode, option, &block)
+      Puppet::FileSystem.open(filename, mode, option, &block)
     end
   end
 end

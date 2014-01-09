@@ -13,13 +13,27 @@ require 'facter/util/plist'
 require 'puppet/util/http_proxy'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
-  desc "Package management based on Apple's Installer.app and
-    DiskUtility.app.  This package works by checking the contents of a
-    DMG image for Apple pkg or mpkg files. Any number of pkg or mpkg
-    files may exist in the root directory of the DMG file system.
-    Subdirectories are not checked for packages.  See
-    [the wiki docs on this provider](http://projects.puppetlabs.com/projects/puppet/wiki/Package_Management_With_Dmg_Patterns)
-    for more detail."
+  desc "Package management based on Apple's Installer.app and DiskUtility.app.
+
+    This provider works by checking the contents of a DMG image for Apple pkg or
+    mpkg files. Any number of pkg or mpkg files may exist in the root directory
+    of the DMG file system, and Puppet will install all of them. Subdirectories
+    are not checked for packages.
+
+    This provider can also accept plain .pkg (but not .mpkg) files in addition
+    to .dmg files.
+
+    Notes:
+
+    * The `source` attribute is mandatory. It must be either a local disk path
+      or an HTTP, HTTPS, or FTP URL to the package.
+    * The `name` of the resource must be the filename (without path) of the DMG file.
+    * When installing the packages from a DMG, this provider writes a file to
+      disk at `/var/db/.puppet_pkgdmg_installed_NAME`. If that file is present,
+      Puppet assumes all packages from that DMG are already installed.
+    * This provider is not versionable and uses DMG filenames to determine
+      whether a package has been installed. Thus, to install new a version of a
+      package, you must create a new DMG with a different filename."
 
   confine :operatingsystem => :darwin
   defaultfor :operatingsystem => :darwin
@@ -60,7 +74,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     unless source =~ /\.dmg$/i || source =~ /\.pkg$/i
       raise Puppet::Error.new("Mac OS X PKG DMG's must specify a source string ending in .dmg or flat .pkg file")
     end
-    require 'open-uri'
+    require 'open-uri' # Dead code; this is never used. The File.open call 20-ish lines south of here used to be Kernel.open but changed in '09. -NF
     cached_source = source
     tmpdir = Dir.mktmpdir
     ext = /(\.dmg|\.pkg)$/i.match(source)[0]
@@ -77,12 +91,13 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
         curl *args
           Puppet.debug "Success: curl transfered [#{name}] (via: curl #{args.join(" ")})"
         rescue Puppet::ExecutionFailure
-          Puppet.debug "curl #{args.join(" ")} did not transfer [#{name}].  Falling back to slower open-uri transfer methods."
+          Puppet.debug "curl #{args.join(" ")} did not transfer [#{name}].  Falling back to local file." # This used to fall back to open-uri. -NF
           cached_source = source
         end
       end
 
       if source =~ /\.dmg$/i
+        # If you fix this to use open-uri again, you must update the docs above. -NF
         File.open(cached_source) do |dmg|
           xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path
           hdiutil_info = Plist::parse_xml(xml_str)
@@ -113,7 +128,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
   end
 
   def query
-    if Puppet::FileSystem::File.exist?("/var/db/.puppet_pkgdmg_installed_#{@resource[:name]}")
+    if Puppet::FileSystem.exist?("/var/db/.puppet_pkgdmg_installed_#{@resource[:name]}")
       Puppet.debug "/var/db/.puppet_pkgdmg_installed_#{@resource[:name]} found"
       return {:name => @resource[:name], :ensure => :present}
     else

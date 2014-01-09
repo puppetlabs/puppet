@@ -691,7 +691,7 @@ Puppet::Type.newtype(:file) do
     end
 
     @stat = begin
-      Puppet::FileSystem::File.new(self[:path]).send(method)
+      Puppet::FileSystem.send(method, self[:path])
     rescue Errno::ENOENT => error
       nil
     rescue Errno::ENOTDIR => error
@@ -773,7 +773,7 @@ Puppet::Type.newtype(:file) do
   # @api private
   def remove_file(current_type, wanted_type)
     debug "Removing existing #{current_type} for replacement with #{wanted_type}"
-    Puppet::FileSystem::File.unlink(self[:path])
+    Puppet::FileSystem.unlink(self[:path])
     stat_needed
     true
   end

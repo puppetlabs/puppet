@@ -661,7 +661,7 @@ describe provider_class do
       @augeas.expects(:respond_to?).with("clearm").returns(false)
       @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
       @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
-      expect { @provider.execute_changes }.to raise_error RuntimeError, /command 'clearm' not supported/
+      expect { @provider.execute_changes }.to raise_error(RuntimeError, /command 'clearm' not supported/)
     end
   end
 
@@ -674,7 +674,7 @@ describe provider_class do
       link = tmpfile('link')
       target = tmpfile('target')
       FileUtils.touch(target)
-      Puppet::FileSystem::File.new(target).symlink(link)
+      Puppet::FileSystem.symlink(target, link)
 
       resource = Puppet::Type.type(:augeas).new(
         :name => 'test',
@@ -689,7 +689,7 @@ describe provider_class do
       catalog.apply
 
       File.ftype(link).should == 'link'
-      Puppet::FileSystem::File.new(link).readlink().should == target
+      Puppet::FileSystem.readlink(link).should == target
       File.read(target).should =~ /PermitRootLogin no/
     end
   end

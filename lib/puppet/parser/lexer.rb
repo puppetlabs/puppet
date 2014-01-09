@@ -347,7 +347,7 @@ class Puppet::Parser::Lexer
   def file=(file)
     @file = file
     @line = 1
-    contents = Puppet::FileSystem::File.exist?(file) ? File.read(file) : ""
+    contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file) : ""
     @scanner = StringScanner.new(contents)
   end
 

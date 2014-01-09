@@ -54,7 +54,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       versions = $2.split(/,\s*/)
       {
         :name     => name,
-        :ensure   => versions,
+        :ensure   => versions.map{|v| v.split[0]},
         :provider => :gem
       }
     else

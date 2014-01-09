@@ -103,8 +103,8 @@ describe Puppet::Settings do
   end
 
   describe "#call_hooks_deferred_to_application_initialization" do
-    let (:good_default) { "yay" }
-    let (:bad_default) { "$doesntexist" }
+    let(:good_default) { "yay" }
+    let(:bad_default) { "$doesntexist" }
     before(:each) do
       @settings = Puppet::Settings.new
     end
@@ -148,7 +148,7 @@ describe Puppet::Settings do
             )
             expect do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
-            end.to raise_error Puppet::Settings::InterpolationError
+            end.to raise_error(Puppet::Settings::InterpolationError)
           end
           it "should contain the setting name in error message" do
             hook_values = []
@@ -163,7 +163,7 @@ describe Puppet::Settings do
             )
             expect do
               @settings.send(:call_hooks_deferred_to_application_initialization, options)
-            end.to raise_error Puppet::Settings::InterpolationError, /badhook/
+            end.to raise_error(Puppet::Settings::InterpolationError, /badhook/)
           end
         end
         describe "if no interpolation error" do
@@ -281,7 +281,7 @@ describe Puppet::Settings do
         @settings.handlearg("--myval", "blah")
         expect do
           @settings.setting(:myval).setbycli = nil
-        end.to raise_error ArgumentError, /unset/
+        end.to raise_error(ArgumentError, /unset/)
       end
     end
 
@@ -318,12 +318,12 @@ describe Puppet::Settings do
             it "should raise error if no hook defined" do
               expect do
                 @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
-              end.to raise_error ArgumentError, /no :hook/
+              end.to raise_error(ArgumentError, /no :hook/)
             end
             it "should include the setting name in the error message" do
               expect do
                 @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => val})
-              end.to raise_error ArgumentError, /for :hooker/
+              end.to raise_error(ArgumentError, /for :hooker/)
             end
           end
           describe "and definition valid" do
@@ -360,7 +360,7 @@ describe Puppet::Settings do
         it "should raise an error" do
           expect do
             @settings.define_settings(:section, :hooker => {:default => "yay", :desc => "boo", :call_hook => :foo, :hook => lambda { |v| hook_values << v  }})
-          end.to raise_error ArgumentError, /invalid.*call_hook/i
+          end.to raise_error(ArgumentError, /invalid.*call_hook/i)
         end
       end
 
@@ -485,7 +485,7 @@ describe Puppet::Settings do
           :three  => { :default => "$one $two THREE", :desc => "c"},
           :four   => { :default => "$two $three FOUR", :desc => "d"},
           :five   => { :default => nil, :desc => "e" }
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
     end
 
     describe "call_on_define" do
@@ -589,7 +589,7 @@ describe Puppet::Settings do
         :config => { :type => :file, :default => "/my/file", :desc => "a" },
         :one => { :default => "ONE", :desc => "a" },
         :two => { :default => "TWO", :desc => "b" }
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
       @settings.preferred_run_mode = :agent
     end
 
@@ -666,8 +666,8 @@ describe Puppet::Settings do
     describe "when root" do
       it "should look for the main config file default location config settings haven't been overridden'" do
         Puppet.features.stubs(:root?).returns(true)
-        Puppet::FileSystem::File.expects(:exist?).with(main_config_file_default_location).returns(false)
-        Puppet::FileSystem::File.expects(:exist?).with(user_config_file_default_location).never
+        Puppet::FileSystem.expects(:exist?).with(main_config_file_default_location).returns(false)
+        Puppet::FileSystem.expects(:exist?).with(user_config_file_default_location).never
 
         @settings.send(:parse_config_files)
       end
@@ -678,7 +678,7 @@ describe Puppet::Settings do
         Puppet.features.stubs(:root?).returns(false)
 
         seq = sequence "load config files"
-        Puppet::FileSystem::File.expects(:exist?).with(user_config_file_default_location).returns(false).in_sequence(seq)
+        Puppet::FileSystem.expects(:exist?).with(user_config_file_default_location).returns(false).in_sequence(seq)
 
         @settings.send(:parse_config_files)
       end
@@ -699,8 +699,8 @@ describe Puppet::Settings do
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
       @settings.stubs(:user_config_file).returns(@userconfig)
-      Puppet::FileSystem::File.stubs(:exist?).with(@file).returns true
-      Puppet::FileSystem::File.stubs(:exist?).with(@userconfig).returns false
+      Puppet::FileSystem.stubs(:exist?).with(@file).returns true
+      Puppet::FileSystem.stubs(:exist?).with(@userconfig).returns false
     end
 
     it "should not ignore the report setting" do
@@ -712,7 +712,7 @@ describe Puppet::Settings do
         [puppetd]
           report=true
       CONF
-      Puppet::FileSystem::File.expects(:exist?).with(myfile).returns(true)
+      Puppet::FileSystem.expects(:exist?).with(myfile).returns(true)
       @settings.expects(:read_file).returns(text)
       @settings.send(:parse_config_files)
       @settings[:report].should be_true
@@ -722,7 +722,7 @@ describe Puppet::Settings do
       myfile = make_absolute("/my/file") # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
       @settings[:config] = myfile
 
-      Puppet::FileSystem::File.expects(:exist?).with(myfile).returns(true)
+      Puppet::FileSystem.expects(:exist?).with(myfile).returns(true)
 
       File.expects(:read).with(myfile).returns "[main]"
 
@@ -730,7 +730,7 @@ describe Puppet::Settings do
     end
 
     it "should not try to parse non-existent files" do
-      Puppet::FileSystem::File.expects(:exist?).with(@file).returns false
+      Puppet::FileSystem.expects(:exist?).with(@file).returns false
 
       File.expects(:read).with(@file).never
 
@@ -936,7 +936,7 @@ describe Puppet::Settings do
       @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
 
       hook_invoked.should be_true
-      @settings[:deferred].should eq File.expand_path('/path/to/confdir/goose')
+      @settings[:deferred].should eq(File.expand_path('/path/to/confdir/goose'))
     end
 
     it "does not require the value for a setting without a hook to resolve during global setup" do
@@ -957,7 +957,7 @@ describe Puppet::Settings do
       @settings.initialize_global_settings
       @settings.initialize_app_defaults(:logdir => '/path/to/logdir', :confdir => '/path/to/confdir', :vardir => '/path/to/vardir')
 
-      @settings[:can_cause_problems].should eq File.expand_path('/path/to/confdir/goose')
+      @settings[:can_cause_problems].should eq(File.expand_path('/path/to/confdir/goose'))
     end
 
     it "should allow empty values" do
@@ -1004,7 +1004,7 @@ describe Puppet::Settings do
     context "running non-root without explicit config file" do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
-        Puppet::FileSystem::File.expects(:exist?).
+        Puppet::FileSystem.expects(:exist?).
           with(user_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -1026,7 +1026,7 @@ describe Puppet::Settings do
     context "running as root without explicit config file" do
       before :each do
         Puppet.features.stubs(:root?).returns(true)
-        Puppet::FileSystem::File.expects(:exist?).
+        Puppet::FileSystem.expects(:exist?).
           with(main_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -1049,7 +1049,7 @@ describe Puppet::Settings do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
         @settings[:confdir] = File.dirname(main_config_file_default_location)
-        Puppet::FileSystem::File.expects(:exist?).
+        Puppet::FileSystem.expects(:exist?).
           with(main_config_file_default_location).
           returns(true).in_sequence(seq)
         @settings.expects(:read_file).
@@ -1079,13 +1079,13 @@ describe Puppet::Settings do
           :one => { :default => "ONE", :desc => "a" },
           :two => { :default => "$one TWO", :desc => "b" },
           :three => { :default => "$one $two THREE", :desc => "c" }
-      Puppet::FileSystem::File.stubs(:exist?).with(@file).returns true
-      Puppet::FileSystem::File.stubs(:exist?).with(@userconfig).returns false
+      Puppet::FileSystem.stubs(:exist?).with(@file).returns true
+      Puppet::FileSystem.stubs(:exist?).with(@userconfig).returns false
       @settings.stubs(:user_config_file).returns(@userconfig)
     end
 
     it "does not create the WatchedFile instance and should not parse if the file does not exist" do
-      Puppet::FileSystem::File.expects(:exist?).with(@file).returns false
+      Puppet::FileSystem.expects(:exist?).with(@file).returns false
       Puppet::Util::WatchedFile.expects(:new).never
 
       @settings.expects(:parse_config_files).never

@@ -130,6 +130,18 @@ describe provider_class do
       ]
     end
 
+    it "should ignore platform specifications" do
+      provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
+        systemu (1.2.0)
+        nokogiri (1.6.1 ruby java x86-mingw32 x86-mswin32-60, 1.4.4.1 x86-mswin32)
+      HEREDOC
+
+      provider_class.instances.map {|p| p.properties}.should == [
+        {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
+        {:ensure => ["1.6.1", "1.4.4.1"], :provider => :gem, :name => 'nokogiri'}
+      ]
+    end
+
     it "should not fail when an unmatched line is returned" do
       provider_class.expects(:execute).with(%w{/my/gem list --local}).
         returns(File.read(my_fixture('line-with-1.8.5-warning')))
