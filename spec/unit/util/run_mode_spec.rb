@@ -6,6 +6,15 @@ describe Puppet::Util::RunMode do
     @run_mode = Puppet::Util::RunMode.new('fake')
   end
 
+  describe ".override_path (public API)" do
+    it "provides the path to a confdir override file" do
+      described_class.override_path('confdir').should match %r{lib/puppet/util/default_system_confdir\.override$}
+    end
+    it "provides the path to a vardir override file" do
+      described_class.override_path('vardir').should match %r{lib/puppet/util/default_system_vardir\.override$}
+    end
+  end
+
   it "has rundir depend on vardir" do
     @run_mode.run_dir.should == '$vardir/run'
   end
@@ -17,7 +26,13 @@ describe Puppet::Util::RunMode do
 
     describe "#conf_dir" do
       it "has confdir /etc/puppet when run as root" do
+        @run_mode.stubs(:system_confdir_override).returns(false)
         as_root { @run_mode.conf_dir.should == File.expand_path('/etc/puppet') }
+      end
+
+      it "has confdir of the value returned by the override file when run as root" do
+        @run_mode.stubs(:system_confdir_override).returns("/etc/example/puppet")
+        as_root { @run_mode.conf_dir.should == "/etc/example/puppet" }
       end
 
       it "has confdir ~/.puppet when run as non-root" do
@@ -44,7 +59,13 @@ describe Puppet::Util::RunMode do
 
     describe "#var_dir" do
       it "has vardir /var/lib/puppet when run as root" do
+        @run_mode.stubs(:system_vardir_override).returns(false)
         as_root { @run_mode.var_dir.should == File.expand_path('/var/lib/puppet') }
+      end
+
+      it "has vardir of the value returned by the override file when run as root" do
+        @run_mode.stubs(:system_vardir_override).returns("/var/lib/example/puppet")
+        as_root { @run_mode.var_dir.should == File.expand_path('/var/lib/example/puppet') }
       end
 
       it "has vardir ~/.puppet/var when run as non-root" do
@@ -78,6 +99,7 @@ describe Puppet::Util::RunMode do
 
     describe "#conf_dir" do
       it "has confdir /etc/puppet when run as root" do
+        @run_mode.stubs(:system_confdir_override).returns(false)
         as_root { @run_mode.conf_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")) }
       end
 
@@ -100,6 +122,7 @@ describe Puppet::Util::RunMode do
 
     describe "#var_dir" do
       it "has vardir /var/lib/puppet when run as root" do
+        @run_mode.stubs(:system_vardir_override).returns(false)
         as_root { @run_mode.var_dir.should == File.expand_path(File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var")) }
       end
 
