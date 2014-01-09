@@ -73,6 +73,12 @@ describe Puppet::SSL::CertificateRevocationList do
           "critical"  => false }
     end
 
+    it "should add an extension for the authority key identifier" do
+      ef = OpenSSL::X509::ExtensionFactory.new(@cert)
+      @crl.generate(@cert, @key).extensions.map { |x| x.to_h }.find { |x| x["oid"] == "authorityKeyIdentifier" }.should ==
+        ef.create_extension("authorityKeyIdentifier", "keyid:always", false).to_h
+    end
+
     it "should set the last update time" do
       @crl.generate(@cert, @key).last_update.should_not == nil
     end
