@@ -7,10 +7,10 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   include Puppet::Network::HTTP::Handler
 
-  def initialize(server, handler)
+  def initialize(server)
     raise ArgumentError, "server is required" unless server
+    register(Puppet::Network::HTTP::API::V2.routes + Puppet::Network::HTTP::API::V1.routes)
     super(server)
-    initialize_for_puppet(:server => server, :handler => handler)
   end
 
   # Retrieve the request parameters, including authentication information.
@@ -37,14 +37,6 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
       result[k.downcase] = v
     end
     result
-  end
-
-  def accept_header(request)
-    request["accept"]
-  end
-
-  def content_type_header(request)
-    request["content-type"]
   end
 
   def http_method(request)

@@ -8,8 +8,14 @@ class Puppet::IndirectorTesting
   # We should have some way to identify if we got a valid object back with the
   # current values, no?
   attr_accessor :value
+  alias_method :name, :value
+  alias_method :name=, :value=
   def initialize(value)
     self.value = value
+  end
+
+  def self.from_raw(raw)
+    new(raw)
   end
 
   PSON.register_document_type('IndirectorTesting',self)

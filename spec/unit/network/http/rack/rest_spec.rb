@@ -8,13 +8,6 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
     Puppet::Network::HTTP::RackREST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
   end
 
-  describe "when initializing" do
-    it "should call the Handler's initialization hook with its provided arguments" do
-      Puppet::Network::HTTP::RackREST.any_instance.expects(:initialize_for_puppet).with(:server => "my", :handler => "arguments")
-      Puppet::Network::HTTP::RackREST.new(:server => "my", :handler => "arguments")
-    end
-  end
-
   describe "when serving a request" do
     before :all do
       @model_class = stub('indirected model class')
@@ -48,19 +41,15 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
                            'HTTP_X_Custom_Header' => 'mycustom',
                            'NOT_HTTP_foo' => 'not an http header'})
         @handler.headers(req).should == {"accept" => 'myaccept',
-                                         "x-custom-header" => 'mycustom'}
+                                         "x-custom-header" => 'mycustom',
+                                         "content-type" => nil }
       end
     end
 
     describe "and using the HTTP Handler interface" do
-      it "should return the HTTP_ACCEPT parameter as the accept header" do
-        req = mk_req('/', 'HTTP_ACCEPT' => 'myaccept')
-        @handler.accept_header(req).should == "myaccept"
-      end
-
       it "should return the CONTENT_TYPE parameter as the content type header" do
         req = mk_req('/', 'CONTENT_TYPE' => 'mycontent')
-        @handler.content_type_header(req).should == "mycontent"
+        @handler.headers(req)['content-type'].should == "mycontent"
       end
 
       it "should use the REQUEST_METHOD as the http method" do
@@ -136,7 +125,8 @@ describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
       it "should ensure the body has been partially read on failure" do
         req = mk_req('/production/report/foo')
         req.body.expects(:read).with(1)
-        req.stubs(:check_authorization).raises(Exception)
+
+        @handler.stubs(:headers).raises(Exception)
 
         @handler.process(req, @response)
       end
