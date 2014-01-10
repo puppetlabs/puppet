@@ -6,9 +6,9 @@ require 'puppet/network/http/api/v1'
 require 'puppet/indirector_testing'
 
 describe Puppet::Network::HTTP::API::V1 do
-  let(:not_found_code) { Puppet::Network::HTTP::Handler::HTTPNotFoundError::CODE }
-  let(:not_acceptable_code) { Puppet::Network::HTTP::Handler::HTTPNotAcceptableError::CODE }
-  let(:not_authorized_code) { Puppet::Network::HTTP::Handler::HTTPNotAuthorizedError::CODE }
+  let(:not_found_code) { Puppet::Network::HTTP::Error::HTTPNotFoundError::CODE }
+  let(:not_acceptable_code) { Puppet::Network::HTTP::Error::HTTPNotAcceptableError::CODE }
+  let(:not_authorized_code) { Puppet::Network::HTTP::Error::HTTPNotAuthorizedError::CODE }
 
   let(:indirection) { Puppet::IndirectorTesting.indirection }
   let(:handler) { Puppet::Network::HTTP::API::V1.new }

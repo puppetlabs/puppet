@@ -30,7 +30,7 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
       supported_formats)
 
       if formatter.nil?
-        raise Puppet::Network::HTTP::Handler::HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
+        raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
       end
 
       report_if_deprecated(formatter)

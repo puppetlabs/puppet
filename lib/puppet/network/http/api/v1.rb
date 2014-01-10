@@ -39,14 +39,14 @@ class Puppet::Network::HTTP::API::V1
     raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
 
     if !indirection.allow_remote_requests?
-      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, "No handler for #{indirection.name}"
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError, "No handler for #{indirection.name}"
     end
 
     trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
     Puppet::Context.override(:trusted_information => trusted) do
       send("do_#{method}", indirection, key, params, request, response)
     end
-  rescue Puppet::Network::HTTP::Handler::HTTPError => e
+  rescue Puppet::Network::HTTP::Error::HTTPError => e
     return do_http_control_exception(response, e)
   rescue Exception => e
     return do_exception(response, e)
@@ -93,7 +93,7 @@ class Puppet::Network::HTTP::API::V1
   # Execute our find.
   def do_find(indirection, key, params, request, response)
     unless result = indirection.find(key, params)
-      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
     end
 
     format = accepted_response_formatter_for(indirection.model, request)
@@ -113,7 +113,7 @@ class Puppet::Network::HTTP::API::V1
   # Execute our head.
   def do_head(indirection, key, params, request, response)
     unless indirection.head(key, params)
-      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError, "Could not find #{indirection.name} #{key}"
     end
 
     # No need to set a response because no response is expected from a
@@ -125,7 +125,7 @@ class Puppet::Network::HTTP::API::V1
     result = indirection.search(key, params)
 
     if result.nil?
-      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, "Could not find instances in #{indirection.name} with '#{key}'"
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError, "Could not find instances in #{indirection.name} with '#{key}'"
     end
 
     format = accepted_response_formatter_for(indirection.model, request)
@@ -153,7 +153,7 @@ class Puppet::Network::HTTP::API::V1
   end
 
   def accepted_response_formatter_for(model_class, request)
-    accepted_formats = request.headers['accept'] or raise Puppet::Network::HTTP::Handler::HTTPNotAcceptableError, "Missing required Accept header"
+    accepted_formats = request.headers['accept'] or raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError, "Missing required Accept header"
     request.response_formatter_for(model_class.supported_formats, accepted_formats)
   end
 

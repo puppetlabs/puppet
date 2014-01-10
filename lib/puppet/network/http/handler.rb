@@ -15,43 +15,6 @@ module Puppet::Network::HTTP::Handler
   # in the query string, for security reasons.
   DISALLOWED_KEYS = ["node", "ip"]
 
-  class HTTPError < Exception
-    attr_reader :status
-
-    def initialize(message, status)
-      super(message)
-      @status = status
-    end
-  end
-
-  class HTTPNotAcceptableError < HTTPError
-    CODE = 406
-    def initialize(message)
-      super("Not Acceptable: " + message, CODE)
-    end
-  end
-
-  class HTTPNotFoundError < HTTPError
-    CODE = 404
-    def initialize(message)
-      super("Not Found: " + message, CODE)
-    end
-  end
-
-  class HTTPNotAuthorizedError < HTTPError
-    CODE = 403
-    def initialize(message)
-      super("Not Authorized: " + message, CODE)
-    end
-  end
-
-  class HTTPMethodNotAllowedError < HTTPError
-    CODE = 405
-    def initialize(message)
-      super("Method Not Allowed: " + message, CODE)
-    end
-  end
-
   def register(routes)
     # There's got to be a simpler way to do this, right?
     dupes = {}
@@ -98,11 +61,11 @@ module Puppet::Network::HTTP::Handler
       if route = @routes.find { |route| route.matches?(new_request) }
         route.process(new_request, new_response)
       else
-        raise HTTPNotFoundError, "No route for #{new_request.method} #{new_request.path}"
+        raise Puppet::Network::HTTP::Error::HTTPNotFoundError, "No route for #{new_request.method} #{new_request.path}"
       end
     end
 
-  rescue HTTPError => e
+  rescue Puppet::Network::HTTP::Error::HTTPError => e
     msg = e.message
     Puppet.info(msg)
     new_response.respond_with(e.status, "text/plain", msg)

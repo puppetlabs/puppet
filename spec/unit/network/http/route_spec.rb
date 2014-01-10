@@ -26,7 +26,7 @@ describe Puppet::Network::HTTP::Route do
       route = Puppet::Network::HTTP::Route.path(%r{^/vtest}).post(respond("ignored"))
       expect do
         route.process(req, res)
-      end.to raise_error(Puppet::Network::HTTP::Handler::HTTPMethodNotAllowedError)
+      end.to raise_error(Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError)
     end
 
     it "can match any HTTP method" do
@@ -50,12 +50,12 @@ describe Puppet::Network::HTTP::Route do
     it "stops calling handlers if one of them raises an error" do
       ignored_called = false
       ignored = lambda { |req, res| ignored_called = true }
-      raise_error = lambda { |req, res| raise Puppet::Network::HTTP::Handler::HTTPNotAuthorizedError, "go away" }
+      raise_error = lambda { |req, res| raise Puppet::Network::HTTP::Error::HTTPNotAuthorizedError, "go away" }
       route = Puppet::Network::HTTP::Route.path(%r{^/vtest/foo}).get(raise_error, ignored)
 
       expect do
         route.process(req, res)
-      end.to raise_error(Puppet::Network::HTTP::Handler::HTTPNotAuthorizedError)
+      end.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAuthorizedError)
       expect(ignored_called).to be_false
     end
   end
