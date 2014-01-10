@@ -99,7 +99,13 @@ module Puppet::SSL::CertificateFactory
     # certificate through where the CA constraint was true, though, if
     # something went wrong up there. --daniel 2011-10-11
     defaults = { "nsComment" => "Puppet Ruby/OpenSSL Internal Certificate" }
-    override = { "subjectKeyIdentifier" => "hash" }
+
+    # See http://www.openssl.org/docs/apps/x509v3_config.html
+    # for information about the special meanings of 'hash', 'keyid', 'issuer'
+    override = {
+      "subjectKeyIdentifier"   => "hash",
+      "authorityKeyIdentifier" => "keyid,issuer"
+    }
 
     exts = [defaults, requested_exts, extensions, override].
       inject({}) {|ret, val| ret.merge(val) }
