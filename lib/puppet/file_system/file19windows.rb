@@ -24,7 +24,7 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
   def symlink(path, dest, options = {})
     raise_if_symlinks_unsupported
 
-    dest_exists = self.class.exist?(dest) # returns false on dangling symlink
+    dest_exists = exist?(dest) # returns false on dangling symlink
     dest_stat = Puppet::Util::Windows::File.stat(dest) if dest_exists
     dest_symlink = Puppet::Util::Windows::File.symlink?(dest)
 
