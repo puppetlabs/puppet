@@ -50,7 +50,7 @@ module Puppet::Network::HTTP::Handler
     request_method = http_method(request)
     request_path = path(request)
 
-    new_request = Puppet::Network::HTTP::Request.new(request_headers, request_params, request_method, request_path, client_cert(request), body(request))
+    new_request = Puppet::Network::HTTP::Request.new(request_headers, request_params, request_method, request_path, request_path, client_cert(request), body(request))
 
     response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
 

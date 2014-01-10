@@ -53,10 +53,10 @@ These services are all in support of Puppet's PKI system.
 V2 HTTP API
 -----------
 
-The V2 HTTP API is accessed by prefixing requests with `/v2`. Authorization for
+The V2 HTTP API is accessed by prefixing requests with `/v2.0`. Authorization for
 these endpoints is still controlled with the `auth.conf` authorization system
 in puppet. When specifying the authorization of the V2 endpoints in `auth.conf`
-the `/v2` prefix of the path should be left off.
+the `/v2.0` prefix on V2 API paths must be retained; the full request path is used.
 
 The V2 API will only accept payloads formatted as JSON and respond with JSON
 (MIME application/json).
@@ -80,12 +80,12 @@ use standard HTTP response code to signify those errors.
   return a 406 Unacceptable response.
 * When the server encounters an unexpected error during the handling of a
   request, it will return a 500 Server Error response.
+* When the server is unable to find an endpoint handler for the request that
+  starts with `/v2.0`, it will return a 404 Not Found response
 
-Note that the V1 API is a fallback for the V2 API, meaning that if a request
-does not match a V2 API endpoint, that request will be handed off to the V1
-API. This means that the V2 API is not able to return 404 Not Found responses for
-requests that do not match a V2 endpoint; instead you will receive a 400 Bad
-Request response from the V1 API.
+The V2 API paths are prefixed with `/v2.0` instead of `/v2` so that it is able
+to respond with 404, but not interfere with any environments in the V1 API.
+`v2` is a valid environment name, but `v2.0` is not.
 
 All error responses will contain a body, except when it is a HEAD request. The
 error responses will uniformly be a JSON object with the following properties:

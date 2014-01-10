@@ -5,16 +5,19 @@ require 'puppet/indirector_testing'
 require 'puppet/network/http'
 
 describe Puppet::Network::HTTP::Route do
-  def new_request(method, path)
-    Puppet::Network::HTTP::Request.new({'accept' => 'pson', 'content-type' => 'text/yaml'}, {}, method, path, nil, nil)
+  def request(method, path)
+    Puppet::Network::HTTP::Request.from_hash({
+      :method => method,
+      :path => path,
+      :routing_path => path })
   end
 
   def respond(text)
     lambda { |req, res| res.respond_with(200, "text/plain", text) }
   end
 
-  let(:req) { new_request("GET", "/vtest/foo") }
-  let(:res) { Puppet::Network::HTTP::Response.new(TestingHandler.new(), {}) }
+  let(:req) { request("GET", "/vtest/foo") }
+  let(:res) { Puppet::Network::HTTP::MemoryResponse.new }
 
   describe "an HTTP Route" do
     it "can match a request" do
@@ -35,7 +38,7 @@ describe Puppet::Network::HTTP::Route do
 
       route.process(req, res)
 
-      expect(res.fields[:body]).to eq("used")
+      expect(res.body).to eq("used")
     end
 
     it "calls the method handlers in turn" do
@@ -58,26 +61,15 @@ describe Puppet::Network::HTTP::Route do
       end.to raise_error(Puppet::Network::HTTP::Error::HTTPNotAuthorizedError)
       expect(ignored_called).to be_false
     end
-  end
 
-  class TestingHandler
-    include Puppet::Network::HTTP::Handler
-    def initialize(* routes)
-      register(routes)
-    end
+    it "chains to other routes after calling its handlers" do
+      inner_route = Puppet::Network::HTTP::Route.path(%r{^/inner}).any(respond("inner"))
+      unused_inner_route = Puppet::Network::HTTP::Route.path(%r{^/unused_inner}).any(respond("unused"))
 
-    def set_content_type(response, format)
-    end
+      top_route = Puppet::Network::HTTP::Route.path(%r{^/vtest}).any(respond("top")).chain(unused_inner_route, inner_route)
+      top_route.process(request("GET", "/vtest/inner"), res)
 
-    def set_response(response, body, status = 200)
-      response[:body] = body
-      response[:status] = status
-    end
-  end
-
-  class Puppet::Network::HTTP::Response
-    def fields
-      return @response
+      expect(res.body).to eq("topinner")
     end
   end
 end

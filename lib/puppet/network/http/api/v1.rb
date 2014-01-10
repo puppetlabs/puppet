@@ -33,7 +33,7 @@ class Puppet::Network::HTTP::API::V1
     indirection_name, method, key, params = uri2indirection(request.method, request.path, request.params)
     certificate = request.client_cert
 
-    check_authorization(indirection_name, method, key, params)
+    check_authorization(method, "/#{indirection_name}/#{key}", params)
 
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
     raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection

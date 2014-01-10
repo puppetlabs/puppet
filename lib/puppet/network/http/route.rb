@@ -18,6 +18,7 @@ class Puppet::Network::HTTP::Route
       :POST => [MethodNotAllowedHandler],
       :PUT => [MethodNotAllowedHandler]
     }
+    @chained = []
   end
 
   def get(*handlers)
@@ -26,12 +27,12 @@ class Puppet::Network::HTTP::Route
   end
 
   def head(*handlers)
-    @method_handlers[:GET] = handlers
+    @method_handlers[:HEAD] = handlers
     return self
   end
 
   def options(*handlers)
-    @method_handlers[:GET] = handlers
+    @method_handlers[:OPTIONS] = handlers
     return self
   end
 
@@ -41,7 +42,7 @@ class Puppet::Network::HTTP::Route
   end
 
   def put(*handlers)
-    @method_handlers[:POST] = handlers
+    @method_handlers[:PUT] = handlers
     return self
   end
 
@@ -52,12 +53,17 @@ class Puppet::Network::HTTP::Route
     return self
   end
 
+  def chain(*routes)
+    @chained = routes
+    self
+  end
+
   def matches?(request)
     Puppet.debug("Evaluating match for #{self.inspect}")
-    if @path_matcher.match(request.path)
+    if m = @path_matcher.match(request.routing_path)
       return true
     else
-      Puppet.debug("Did not match path (#{request.path.inspect})")
+      Puppet.debug("Did not match path (#{request.routing_path.inspect})")
     end
     return false
   end
@@ -65,6 +71,11 @@ class Puppet::Network::HTTP::Route
   def process(request, response)
     @method_handlers[request.method.upcase.intern].each do |handler|
       handler.call(request, response)
+    end
+
+    subrequest = request.route_into(@path_matcher.match(request.routing_path).to_s)
+    if chained_route = @chained.find { |route| route.matches?(subrequest) }
+      chained_route.process(subrequest, response)
     end
   end
 

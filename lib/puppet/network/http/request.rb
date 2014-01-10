@@ -1,4 +1,4 @@
-Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :client_cert, :body) do
+Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :routing_path, :client_cert, :body) do
   def self.from_hash(hash)
     symbol_members = members.collect(&:intern)
     unknown = hash.keys - symbol_members
@@ -7,6 +7,10 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
     else
       raise ArgumentError, "Unknown arguments: #{unknown.collect(&:inspect).join(', ')}"
     end
+  end
+
+  def route_into(prefix)
+    self.class.new(headers, params, method, path, routing_path.sub(prefix, ''), client_cert, body)
   end
 
   def format

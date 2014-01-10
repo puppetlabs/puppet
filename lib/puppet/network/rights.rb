@@ -13,7 +13,7 @@ class Rights
     !is_forbidden_and_why?(name, :node => args[0], :ip => args[1])
   end
 
-  def is_request_forbidden_and_why?(indirection, method, key, params)
+  def is_request_forbidden_and_why?(method, path, params)
     methods_to_check = if method == :head
                          # :head is ok if either :find or :save is ok.
                          [:find, :save]
@@ -21,7 +21,7 @@ class Rights
                          [method]
                        end
     authorization_failure_exceptions = methods_to_check.map do |method|
-      is_forbidden_and_why?("/#{indirection}/#{key}", params.merge({:method => method}))
+      is_forbidden_and_why?(path, params.merge({:method => method}))
     end
     if authorization_failure_exceptions.include? nil
       # One of the methods we checked is ok, therefore this request is ok.
