@@ -3,7 +3,13 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
     symbol_members = members.collect(&:intern)
     unknown = hash.keys - symbol_members
     if unknown.empty?
-      new(*(symbol_members.collect { |m| hash[m] }))
+      new(hash[:headers] || {},
+          hash[:params] || {},
+          hash[:method] || "GET",
+          hash[:path],
+          hash[:routing_path] || hash[:path],
+          hash[:client_cert],
+          hash[:body])
     else
       raise ArgumentError, "Unknown arguments: #{unknown.collect(&:inspect).join(', ')}"
     end
