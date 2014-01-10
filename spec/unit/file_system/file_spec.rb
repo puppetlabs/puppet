@@ -129,7 +129,7 @@ describe "Puppet::FileSystem" do
     end
 
     it "should fall back to stat when trying to lstat a file" do
-      Puppet::Util::Windows::File.expects(:stat).with(file)
+      Puppet::Util::Windows::File.expects(:stat).with(Puppet::FileSystem.assert_path(file))
 
       Puppet::FileSystem.lstat(file)
     end
