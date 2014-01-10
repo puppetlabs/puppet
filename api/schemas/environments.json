@@ -1,0 +1,40 @@
+{
+    "$schema":     "http://json-schema.org/draft-04/schema#",
+    "title":       "Environment Enumeration",
+    "description": "An enumeration of environments and their modules",
+    "type":        "object",
+    "properties": {
+        "search_paths": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "minItems": 1,
+            "description": "An array of the paths where the master looked for environments."
+        },
+        "environments": {
+            "type": "object",
+            "patternProperties": {
+                "^[a-z0-9_]+$": {
+                    "type": "object",
+                    "properties": {
+                        "modules" : {
+                            "type": "object",
+                            "patternProperties": {
+                                "^[a-z0-9_\-]+$": {
+                                    "type": "object",
+                                    "properties": {
+                                        "version": { "type": "string" }
+                                    },
+                                    "required": ["version"]
+                                }
+                            }
+                        }
+                    },
+                    "required": ["modules"]
+                }
+            }
+        }
+    },
+    "required": ["search_path", "environments"]
+}

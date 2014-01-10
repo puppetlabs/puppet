@@ -11,7 +11,7 @@ Homepage: http://projects.puppetlabs.com/projects/puppet
 
 Package: puppet-common
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, libxmlrpc-ruby, libopenssl-ruby, ruby-shadow | libshadow-ruby1.8, libaugeas-ruby | libaugeas-ruby1.9.1 | libaugeas-ruby1.8, adduser, lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 1.0.0), facter (>= 1.6.12), ruby-rgen (>= 0.6.5)
+Depends: ${misc:Depends}, ruby | ruby-interpreter, libxmlrpc-ruby, libopenssl-ruby, ruby-shadow | libshadow-ruby1.8, libaugeas-ruby | libaugeas-ruby1.9.1 | libaugeas-ruby1.8, adduser, lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 1.0.0), facter (>= 1.6.12), ruby-rgen (>= 0.6.5), libjson-ruby | ruby-json
 Recommends: lsb-release, debconf-utils
 Suggests: ruby-selinux | libselinux-ruby1.8, librrd-ruby1.9.1 | librrd-ruby1.8
 Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
