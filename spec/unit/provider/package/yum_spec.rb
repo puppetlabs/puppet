@@ -114,11 +114,11 @@ describe provider do
 
     let(:packages) do
       <<-RPM_OUTPUT
-      cracklib-dicts 0 2.8.9 3.3 x86_64 :DESC: The standard CrackLib dictionaries
-      basesystem 0 8.0 5.1.1.el5.centos noarch :DESC: The skeleton package which defines a simple Red Hat Enterprise Linux system
-      chkconfig 0 1.3.30.2 2.el5 x86_64 :DESC: A system tool for maintaining the /etc/rc*.d hierarchy
-      myresource 0 1.2.3.4 5.el4 noarch :DESC: Now with summary
-      mysummaryless 0 1.2.3.4 5.el4 noarch :DESC:
+      cracklib-dicts 0 2.8.9 3.3 x86_64
+      basesystem 0 8.0 5.1.1.el5.centos noarch
+      chkconfig 0 1.3.30.2 2.el5 x86_64
+      myresource 0 1.2.3.4 5.el4 noarch
+      mysummaryless 0 1.2.3.4 5.el4 noarch
       RPM_OUTPUT
     end
 
@@ -187,7 +187,6 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
         :version=>"1.2.3.4",
         :release=>"5.el4",
         :arch=>"noarch",
-        :description=>nil,
         :provider=>:yum,
         :ensure=>"1.2.3.4-5.el4"
       })
