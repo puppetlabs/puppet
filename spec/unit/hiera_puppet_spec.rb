@@ -5,6 +5,10 @@ require 'puppet_spec/scope'
 describe 'HieraPuppet' do
   include PuppetSpec::Scope
 
+  after(:all) do
+    HieraPuppet.instance_variable_set(:@hiera, nil)
+  end
+
   describe 'HieraPuppet#hiera_config' do
     let(:hiera_config_data) do
       { :backend => 'yaml' }
