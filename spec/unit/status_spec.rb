@@ -39,7 +39,7 @@ describe Puppet::Status do
   end
 
   it "serializes to PSON that conforms to the status schema", :unless => Puppet.features.microsoft_windows? do
-    schema = JSON.parse(File.read('api/schemas/status.json'))
+    schema = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../api/schemas/status.json')))
     status = Puppet::Status.new
     status.version = Puppet.version
 
