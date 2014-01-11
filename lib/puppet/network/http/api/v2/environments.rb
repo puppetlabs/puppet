@@ -19,17 +19,4 @@ class Puppet::Network::HTTP::API::V2::Environments
       end]
     }))
   end
-
-  class OnlyProductionLoder
-    def search_paths
-      []
-    end
-
-    def list
-      [Puppet::Node::Environment.new(:production)]
-    end
-  end
-
-  ROUTE = Puppet::Network::HTTP::Route.path(%r{^/environments$}).get(
-    new(OnlyProductionLoder.new))
 end

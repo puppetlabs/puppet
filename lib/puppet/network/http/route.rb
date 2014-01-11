@@ -60,7 +60,7 @@ class Puppet::Network::HTTP::Route
 
   def matches?(request)
     Puppet.debug("Evaluating match for #{self.inspect}")
-    if m = @path_matcher.match(request.routing_path)
+    if match(request.routing_path)
       return true
     else
       Puppet.debug("Did not match path (#{request.routing_path.inspect})")
@@ -73,7 +73,7 @@ class Puppet::Network::HTTP::Route
       handler.call(request, response)
     end
 
-    subrequest = request.route_into(@path_matcher.match(request.routing_path).to_s)
+    subrequest = request.route_into(match(request.routing_path).to_s)
     if chained_route = @chained.find { |route| route.matches?(subrequest) }
       chained_route.process(subrequest, response)
     end
@@ -81,5 +81,11 @@ class Puppet::Network::HTTP::Route
 
   def inspect
     "Route #{@path_matcher.inspect}"
+  end
+
+  private
+
+  def match(path)
+    @path_matcher.match(path)
   end
 end
