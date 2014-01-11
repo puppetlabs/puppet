@@ -71,7 +71,14 @@ describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
 
     describe "for type" do
 
-      [:'ssh-dss', :'ssh-rsa', :rsa, :dsa, :'ecdsa-sha2-nistp256', :'ecdsa-sha2-nistp384', :'ecdsa-sha2-nistp521'].each do |keytype|
+      [
+        :'ssh-dss', :dsa,
+        :'ssh-rsa', :rsa,
+        :'ecdsa-sha2-nistp256',
+        :'ecdsa-sha2-nistp384',
+        :'ecdsa-sha2-nistp521',
+        :ed25519, :'ssh-ed25519',
+      ].each do |keytype|
         it "should support #{keytype}" do
           proc { @class.new(:name => "whev", :type => keytype, :user => "nobody") }.should_not raise_error
         end
