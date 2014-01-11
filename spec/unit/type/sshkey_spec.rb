@@ -28,7 +28,14 @@ describe sshkey do
 
   describe "when validating values" do
 
-    [:'ssh-dss', :'ssh-rsa', :rsa, :dsa, :'ecdsa-sha2-nistp256', :'ecdsa-sha2-nistp384', :'ecdsa-sha2-nistp521'].each do |keytype|
+    [
+      :'ssh-dss', :dsa,
+      :'ssh-rsa', :rsa,
+      :'ecdsa-sha2-nistp256',
+      :'ecdsa-sha2-nistp384',
+      :'ecdsa-sha2-nistp521',
+      :'ssh-ed25519', :ed25519,
+    ].each do |keytype|
       it "should support #{keytype} as a type value" do
         proc { @class.new(:name => "foo", :type => keytype) }.should_not raise_error
       end
