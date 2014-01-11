@@ -34,7 +34,7 @@ class Puppet::Pops::Binder::Lookup
       options[ :type ] = args[ 1 ]
       options[ :default ] = args[ 2 ]
     else
-      raise Puppet::PareError, "The lookup function accepts 1-3 arguments, got #{args.size}"
+      raise Puppet::ParseError, "The lookup function accepts 1-3 arguments, got #{args.size}"
     end
     options[:pblock] = pblock
     options
@@ -58,7 +58,7 @@ class Puppet::Pops::Binder::Lookup
   def self.fail_lookup(names)
     name_part = if names.size == 1
       "the name '#{names[0]}'"
-    else 
+    else
       "any of the names ['" + names.join(', ') + "']"
     end
     fail("did not find a value for #{name_part}")
