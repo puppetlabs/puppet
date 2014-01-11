@@ -51,8 +51,15 @@ Puppet::Type.newtype(:file) do
     isnamevar
 
     validate do |value|
+      if value.nil?
+        fail Puppet::Error, "Got nil value for path, please provide a file path"
+      end
       unless Puppet::Util.absolute_path?(value)
-        fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
+        if defined?(value)
+          fail Puppet::Error, "File cannot be undefined, please provide a file path"
+        else
+          fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
+        end
       end
     end
 
