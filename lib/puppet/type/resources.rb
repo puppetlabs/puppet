@@ -21,7 +21,9 @@ Puppet::Type.newtype(:resources) do
   newparam(:purge, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Purge unmanaged resources.  This will delete any resource
       that is not specified in your configuration
-      and is not required by any specified resources."
+      and is not required by any specified resources.
+      Purging ssh_authorized_keys this way is deprecated; see the
+      purge_ssh_keys parameter of the user type for a better alternative."
 
     defaultto :false
 
