@@ -778,7 +778,7 @@ EOT
     :ca_ttl => {
       :default    => "5y",
       :type       => :duration,
-      :desc       => "The default TTL for new certificates. If this setting is set, ca_days is ignored.
+      :desc       => "The default TTL for new certificates.
       #{AS_DURATION}"
     },
     :req_bits => {
