@@ -19,12 +19,15 @@ module Puppet
       need to set `hasstatus` to false and possibly specify a custom status
       command in the `status` attribute.
 
-      Note that if a `service` receives an event from another resource,
-      the service will get restarted. The actual command to restart the
-      service depends on the platform. You can provide an explicit command for
-      restarting with the `restart` attribute, or you can set `hasrestart` to
-      true to use the init script's restart command; if you do neither, the
-      service's stop and start commands will be used."
+      **Refresh:** `service` resources can respond to refresh events (via
+      `notify`, `subscribe`, or the `~>` arrow). If a `service` receives an
+      event from another resource, Puppet will restart the service it manages.
+      The actual command used to restart the service depends on the platform and
+      can be configured:
+
+      * If you set `hasrestart` to true, Puppet will use the init script's restart command.
+      * You can provide an explicit command for restarting with the `restart` attribute.
+      * If you do neither, the service's stop and start commands will be used."
 
     feature :refreshable, "The provider can restart the service.",
       :methods => [:restart]

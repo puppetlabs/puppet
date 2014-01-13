@@ -19,7 +19,7 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
     def rpm
       pkg.provider.expects(:rpm).
         with('-q', 'faff', '--nosignature', '--nodigest', '--qf',
-             "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH} :DESC: %{SUMMARY}\\n")
+             "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n")
     end
 
     it "should report absent packages" do
@@ -28,7 +28,7 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
     end
 
     it "should report present packages correctly" do
-      rpm.returns("faff-1.2.3-1 0 1.2.3-1 5 i686 :DESC: faff desc\n")
+      rpm.returns("faff-1.2.3-1 0 1.2.3-1 5 i686\n")
       pkg.property(:ensure).retrieve.should == "1.2.3-1-5"
     end
   end
