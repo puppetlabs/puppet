@@ -28,9 +28,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     # list out all of the packages
     dpkgquery_piped('-W', '--showformat', self::DPKG_QUERY_FORMAT_STRING) do |pipe|
-      until pipe.eof?
-        hash = parse_multi_line(pipe)
-        packages << new(hash) if hash
+      # now turn each returned line into a package object
+      pipe.each_line do |line|
+        if hash = parse_line(line)
+          packages << new(hash)
+        end
       end
     end
 
@@ -41,33 +43,9 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderDpkg class.
-  self::DPKG_DESCRIPTION_DELIMITER = ':DESC:'
-  self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version} #{self::DPKG_DESCRIPTION_DELIMITER} ${Description}\\n#{self::DPKG_DESCRIPTION_DELIMITER}\\n'}
-  self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*) #{self::DPKG_DESCRIPTION_DELIMITER} (.*)$}
-  self::DPKG_PACKAGE_NOT_FOUND_REGEX = /no package.*match/i
-  self::FIELDS= [:desired, :error, :status, :name, :ensure, :description]
-  self::END_REGEX = %r{^#{self::DPKG_DESCRIPTION_DELIMITER}$}
-
-  # Handles parsing one package's worth of multi-line dpkg-query output.  Will
-  # emit warnings if it encounters an initial line that does not match
-  # DPKG_QUERY_FORMAT_STRING.  Swallows extra description lines silently.
-  #
-  # @param pipe [IO] the pipe yielded while processing dpkg output
-  # @return [Hash,nil] parsed dpkg-query entry as a hash of FIELDS strings or
-  # nil if we failed to parse
-  # @api private
-  def self.parse_multi_line(pipe)
-
-    line = pipe.gets
-    unless hash = parse_line(line)
-      Puppet.warning "Failed to match dpkg-query line #{line.inspect}" if !self::DPKG_PACKAGE_NOT_FOUND_REGEX.match(line)
-      return nil
-    end
-
-    consume_excess_description(pipe)
-
-    return hash
-  end
+  self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version}\\n'}
+  self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
+  self::FIELDS= [:desired, :error, :status, :name, :ensure]
 
   # @param line [String] one line of dpkg-query output
   # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
@@ -90,29 +68,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         hash[:ensure] = :absent
       end
       hash[:ensure] = :held if hash[:desired] == 'hold'
+    else 
+      Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
 
     return hash
-  end
-
-  # Silently consumes the extra description lines from dpkg-query and brings
-  # us to the next package entry start.
-  #
-  # @note dpkg-query Description field has a one line summary and a multi-line
-  # description.  dpkg-query binary:Summary is what we want to use but was
-  # introduced in 2012 dpkg 1.16.2
-  # (https://launchpad.net/debian/+source/dpkg/1.16.2) and is not not available
-  # in older Debian versions.  So we're placing a delimiter marker at the end
-  # of the description so we can consume and ignore the multiline description
-  # without issuing warnings
-  #
-  # @param pipe [IO] the pipe yielded while processing dpkg output
-  # @return nil
-  def self.consume_excess_description(pipe)
-    until pipe.eof?
-      break if self::END_REGEX.match(pipe.gets)
-    end
-    return nil
   end
 
   public
@@ -154,14 +114,13 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     # list out our specific package
     begin
-      self.class.dpkgquery_piped(
+      output = dpkgquery(
         "-W",
         "--showformat",
         self.class::DPKG_QUERY_FORMAT_STRING,
         @resource[:name]
-      ) do |pipe|
-        hash = self.class.parse_multi_line(pipe)
-      end
+      )
+      hash = self.class.parse_line(output)
     rescue Puppet::ExecutionFailure
       # dpkg-query exits 1 if the package is not found.
       return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}

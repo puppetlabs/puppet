@@ -3,26 +3,48 @@ module Puppet
     include Puppet::Util::Execution
     require 'timeout'
 
-    @doc = "Executes external commands.  It is critical that all commands
-      executed using this mechanism can be run multiple times without
-      harm, i.e., they are *idempotent*.  One useful way to create idempotent
-      commands is to use the checks like `creates` to avoid running the
-      command unless some condition is met.
+    @doc = "Executes external commands.
 
-      Note that you can restrict an `exec` to only run when it receives
-      events by using the `refreshonly` parameter; this is a useful way to
-      have your configuration respond to events with arbitrary commands.
+      Any command in an `exec` resource **must** be able to run multiple times
+      without causing harm --- that is, it must be *idempotent*. There are three
+      main ways for an exec to be idempotent:
 
-      Note also that if an `exec` receives an event from another resource,
-      it will get executed again (or execute the command specified in `refresh`, if there is one).
+      * The command itself is already idempotent. (For example, `apt-get update`.)
+      * The exec has an `onlyif`, `unless`, or `creates` attribute, which prevents
+        Puppet from running the command unless some condition is met.
+      * The exec has `refreshonly => true`, which only allows Puppet to run the
+        command when some other resource is changed. (See the notes on refreshing
+        below.)
 
-      There is a strong tendency to use `exec` to do whatever work Puppet
-      can't already do; while this is obviously acceptable (and unavoidable)
-      in the short term, it is highly recommended to migrate work from `exec`
-      to native Puppet types as quickly as possible.  If you find that
-      you are doing a lot of work with `exec`, please at least notify
-      us at Puppet Labs what you are doing, and hopefully we can work with
-      you to get a native resource type for the work you are doing.
+      A caution: There's a widespread tendency to use collections of execs to
+      manage resources that aren't covered by an existing resource type. This
+      works fine for simple tasks, but once your exec pile gets complex enough
+      that you really have to think to understand what's happening, you should
+      consider developing a custom resource type instead, as it will be much
+      more predictable and maintainable.
+
+      **Refresh:** `exec` resources can respond to refresh events (via
+      `notify`, `subscribe`, or the `~>` arrow). The refresh behavior of execs
+      is non-standard, and can be affected by the `refresh` and
+      `refreshonly` attributes:
+
+      * If `refreshonly` is set to true, the exec will _only_ run when it receives an
+        event. This is the most reliable way to use refresh with execs.
+      * If the exec already would have run and receives an event, it will run its
+        command **up to two times.** (If an `onlyif`, `unless`, or `creates` condition
+        is no longer met after the first run, the second run will not occur.)
+      * If the exec already would have run, has a `refresh` command, and receives an
+        event, it will run its normal command, then run its `refresh` command
+        (as long as any `onlyif`, `unless`, or `creates` conditions are still met
+        after the normal command finishes).
+      * If the exec would **not** have run (due to an `onlyif`, `unless`, or `creates`
+        attribute) and receives an event, it still will not run.
+      * If the exec has `noop => true`, would otherwise have run, and receives
+        an event from a non-noop resource, it will run once (or run its `refresh`
+        command instead, if it has one).
+
+      In short: If there's a possibility of your exec receiving refresh events,
+      it becomes doubly important to make sure the run conditions are restricted.
 
       **Autorequires:** If Puppet is managing an exec's cwd or the executable
       file used in an exec's command, the exec resource will autorequire those
