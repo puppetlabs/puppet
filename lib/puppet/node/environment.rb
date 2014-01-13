@@ -208,12 +208,25 @@ class Puppet::Node::Environment
     # per environment semantics with an efficient most common cases; we almost
     # always just return our thread's known-resource types.  Only at the start
     # of a compilation (after our thread var has been set to nil) or when the
-    # environment has changed do we delve deeper.
-    $known_resource_types = nil if $known_resource_types && $known_resource_types.environment != self
+    # environment has changed or when the known resource types have become stale
+    # do we delve deeper.
+    $known_resource_types = nil if $known_resource_types &&
+      ($known_resource_types.environment != self || !@known_resource_types_being_imported && $known_resource_types.stale?)
     $known_resource_types ||=
       if @known_resource_types.nil? or @known_resource_types.require_reparse?
-        @known_resource_types = Puppet::Resource::TypeCollection.new(self)
-        @known_resource_types.import_ast(perform_initial_import, '')
+        #set the global variable $known_resource_types immediately as it will be queried
+        #resursively from the parser which would set it anyway, just executing more code in vain
+        @known_resource_types = $known_resource_types = Puppet::Resource::TypeCollection.new(self)
+
+        #avoid an infinite recursion (called from the parser) if Puppet[:filetimeout] is set to -1 and
+        #$known_resource_types.stale? returns always true; let's set a flag that we're importing
+        #so if this method is called recursively we'll skip testing the stale status
+        begin
+          @known_resource_types_being_imported = true
+          @known_resource_types.import_ast(perform_initial_import, '')
+        ensure
+          @known_resource_types_being_imported = false
+        end
         @known_resource_types
       else
         @known_resource_types
