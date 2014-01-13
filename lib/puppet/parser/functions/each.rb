@@ -9,21 +9,21 @@ Puppet::Parser::Functions::newfunction(
   This function takes two mandatory arguments: the first should be an Array or a Hash, and the second
   a parameterized block as produced by the puppet syntax:
 
-        $a.each {|$x| ... }
+        $a.each |$x| { ... }
 
   When the first argument is an Array, the parameterized block should define one or two block parameters.
   For each application of the block, the next element from the array is selected, and it is passed to
   the block if the block has one parameter. If the block has two parameters, the first is the elements
   index, and the second the value. The index starts from 0.
 
-        $a.each {|$index, $value| ... }
+        $a.each |$index, $value| { ... }
 
   When the first argument is a Hash, the parameterized block should define one or two parameters.
   When one parameter is defined, the iteration is performed with each entry as an array of `[key, value]`,
   and when two parameters are defined the iteration is performed with key and value.
 
-        $a.each {|$entry|       ..."key ${$entry[0]}, value ${$entry[1]}" }
-        $a.each {|$key, $value| ..."key ${key}, value ${value}" }
+        $a.each |$entry|       { ..."key ${$entry[0]}, value ${$entry[1]}" }
+        $a.each |$key, $value| { ..."key ${key}, value ${value}" }
 
   - Since 3.2
   - requires `parser = future`.
