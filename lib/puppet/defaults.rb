@@ -672,7 +672,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0775,
       :desc => "The root directory for the certificate authority."
     },
     :cacert => {
@@ -680,7 +680,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0664,
       :desc => "The CA certificate."
     },
     :cakey => {
@@ -720,6 +720,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
+      :mode => 0775,
       :desc => "Where the CA stores certificate requests"
     },
     :signeddir => {
@@ -727,7 +728,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0775,
       :desc => "Where the CA stores signed certificates."
     },
     :capass => {
