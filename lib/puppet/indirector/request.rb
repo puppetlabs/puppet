@@ -149,15 +149,6 @@ class Puppet::Indirector::Request
     i.model
   end
 
-  # Should we allow use of the cached object?
-  def use_cache?
-    if defined?(@use_cache)
-      ! ! use_cache
-    else
-      true
-    end
-  end
-
   # Are we trying to interact with multiple resources, or just one?
   def plural?
     method == :search
