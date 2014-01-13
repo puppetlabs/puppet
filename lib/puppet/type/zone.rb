@@ -6,7 +6,7 @@ Puppet::Type.newtype(:zone) do
 the zone's filesystem (with the `path` attribute), the zone resource will
 autorequire that directory."
 
-  class Puppet::StateMachine
+  class Puppet::Zone::StateMachine
     # A silly little state machine.
     def initialize
       @state = {}
@@ -57,7 +57,7 @@ autorequire that directory."
 
     def self.fsm
       return @fsm if @fsm
-      @fsm = Puppet::StateMachine.new
+      @fsm = Puppet::Zone::StateMachine.new
     end
 
     def self.alias_state(values)
