@@ -26,8 +26,12 @@ describe "Pure ruby manifests" do
     path
   end
 
-  def compile(contents)
-    Puppet[:code] = contents
+  def compile(contents = nil)
+    # Note: calling without contents means recompiling
+    # with the recently used contents, without
+    # setting Puppet[:code], which would clears out all cached
+    # environments.
+    Puppet[:code] = contents if !contents.nil?
     Dir.chdir(@test_dir) do
       Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
     end
@@ -89,28 +93,20 @@ describe "Pure ruby manifests" do
   end
 
   it "should be properly cached for multiple compiles" do
-    # Note: we can't test this by calling compile() twice, because
-    # that sets Puppet[:code], which clears out all cached
-    # environments.
     Puppet[:filetimeout] = 1000
     write_file('foo.rb', "hostclass 'bar' do notify('success') end")
-    Puppet[:code] = "import 'foo'\ninclude bar"
 
     # Compile the catalog and check it
-    catalog = Dir.chdir(@test_dir) do
-      Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
-    end
+    catalog = compile("import 'foo'\ninclude bar")
     catalog.resource("Notify[success]").should_not be_nil
 
     # Secretly change the file to make it invalid.  This change
     # shouldn't be noticed because the we've set a high
     # Puppet[:filetimeout].
-    write_file('foo.rb', "raise 'should not be executed'")
+    write_file('foo.rb', "hostclass 'bar' do raise 'should not be executed' end")
 
     # Compile the catalog a second time and make sure it's still ok.
-    catalog = Dir.chdir(@test_dir) do
-      Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
-    end
+    catalog = compile
     catalog.resource("Notify[success]").should_not be_nil
   end
 
@@ -119,9 +115,9 @@ describe "Pure ruby manifests" do
     write_file('foo.rb', "hostclass 'bar' do notify('version1') end")
     catalog = compile("import 'foo'\ninclude bar")
     catalog.resource("Notify[version1]").should_not be_nil
-    sleep 1 # so that timestamp will change forcing file reload
+    #no sleep needed since the file timeout is set to -1
     write_file('foo.rb', "hostclass 'bar' do notify('version2') end")
-    catalog = compile("import 'foo'\ninclude bar")
+    catalog = compile
     catalog.resource("Notify[version1]").should be_nil
     catalog.resource("Notify[version2]").should_not be_nil
   end
