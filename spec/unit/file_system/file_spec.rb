@@ -79,7 +79,7 @@ describe "Puppet::FileSystem" do
 
     def increment_counter_in_multiple_processes(file, num_procs, options)
       children = []
-      5.times do |number|
+      num_procs.times do
         children << Kernel.fork do
           Puppet::FileSystem.exclusive_open(file, 0660, options) do |fh|
             fh.rewind
