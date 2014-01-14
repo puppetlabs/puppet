@@ -326,7 +326,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         assign(name, delete(get_variable_value(name, o, scope), value), o, scope)
       end
       rescue ArgumentError => e
-        fail(Issues::APPEND_FAILED, o, {:message => e.message})
+        fail(Issues::APPEND_FAILED, o, {:message => e.message}, e)
       end
     else
       fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
@@ -461,7 +461,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         :operator => o.operator,
         :left_value => left,
         :right_value => right,
-        :detail => e.message})
+        :detail => e.message}, e)
     end
   end
 
@@ -497,7 +497,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     begin
       pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)
     rescue StandardError => e
-      fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message})
+      fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message}, e)
     end
     unless left.is_a?(String)
       fail(Issues::MATCH_NOT_STRING, o.left_expr, {:left_value => left})

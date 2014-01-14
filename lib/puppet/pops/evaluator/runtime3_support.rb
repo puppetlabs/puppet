@@ -13,6 +13,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
   def fail(issue, semantic, options={}, except=nil)
+    if except.nil?
+      # Want a stacktrace, and it must be passed as an exception
+      begin
+       raise EvaluationError.new()
+      rescue EvaluationError => e
+        except = e
+      end
+    end
     diagnostic_producer.accept(issue, semantic, options, except)
   end
 
@@ -476,4 +484,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     end
   end
 
+  class EvaluationError < StandardError
+  end
 end
