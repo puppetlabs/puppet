@@ -5,7 +5,7 @@ def master_port(agent)
 end
 
 def setting_on(host, section, name)
-  on(host, puppet("config", "pring", name, "--section", section)).stdout.chomp
+  on(host, puppet("config", "print", name, "--section", section)).stdout.chomp
 end
 
 def curl_master_from(agent, path, headers = '', &block)
