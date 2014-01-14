@@ -2,19 +2,11 @@
 require 'spec_helper'
 require 'puppet/resource/type'
 
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  RESOURCE_TYPE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/resource_type.json')))
-
-  describe "resource type schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, RESOURCE_TYPE_SCHEMA)
-    end
-  end
-
-end
+require 'matchers/json'
 
 describe Puppet::Resource::Type do
+  include JSONMatchers
+
   it "should have a 'name' attribute" do
     Puppet::Resource::Type.new(:hostclass, "foo").name.should == "foo"
   end
@@ -42,10 +34,6 @@ describe Puppet::Resource::Type do
   end
 
   describe "when converting to json" do
-    def validate_json_for_type(type)
-      JSON::Validator.validate!(RESOURCE_TYPE_SCHEMA, type.to_pson)
-    end
-
     before do
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
     end
@@ -63,18 +51,18 @@ describe Puppet::Resource::Type do
       double_convert.type.should == @type.type
     end
 
-    it "should validate with only name and kind", :unless => Puppet.features.microsoft_windows? do
-      validate_json_for_type(@type)
+    it "should validate with only name and kind" do
+      expect(@type.to_pson).to validate_against('api/schemas/resource_type.json')
     end
 
-    it "should validate with all fields set", :unless => Puppet.features.microsoft_windows? do
+    it "should validate with all fields set" do
       @type.set_arguments("one" => nil, "two" => "foo")
       @type.line = 100
       @type.doc = "A weird type"
       @type.file = "/etc/manifests/thing.pp"
       @type.parent = "one::two"
 
-      validate_json_for_type(@type)
+      expect(@type.to_pson).to validate_against('api/schemas/resource_type.json')
     end
 
     it "should include any arguments" do

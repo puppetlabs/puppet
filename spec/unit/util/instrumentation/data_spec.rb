@@ -6,6 +6,8 @@ require 'puppet/util/instrumentation'
 require 'puppet/util/instrumentation/data'
 
 describe Puppet::Util::Instrumentation::Data do
+  include JSONMatchers
+
   Puppet::Util::Instrumentation::Data
 
   before(:each) do

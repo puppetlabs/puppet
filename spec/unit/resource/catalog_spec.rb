@@ -2,19 +2,10 @@
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  CATALOG_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/catalog.json')))
-
-  describe "catalog schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, CATALOG_SCHEMA)
-    end
-  end
-
-end
+require 'matchers/json'
 
 describe Puppet::Resource::Catalog, "when compiling" do
+  include JSONMatchers
   include PuppetSpec::Files
 
   before do
@@ -736,43 +727,40 @@ describe Puppet::Resource::Catalog, "when compiling" do
 end
 
 describe Puppet::Resource::Catalog, "when converting a resource catalog to pson" do
+  include JSONMatchers
   include PuppetSpec::Compiler
 
-  def validate_json_for_catalog(catalog)
-    JSON::Validator.validate!(CATALOG_SCHEMA, catalog.to_pson)
-  end
-
-  it "should validate an empty catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+  it "should validate an empty catalog against the schema" do
     empty_catalog = compile_to_catalog("")
-    validate_json_for_catalog(empty_catalog)
+    expect(empty_catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
-  it "should validate a noop catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+  it "should validate a noop catalog against the schema" do
     noop_catalog = compile_to_catalog("create_resources('file', {})")
-    validate_json_for_catalog(noop_catalog)
+    expect(noop_catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
-  it "should validate a single resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+  it "should validate a single resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
-    validate_json_for_catalog(catalog)
+    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
-  it "should validate a virtual resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+  it "should validate a virtual resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
-    validate_json_for_catalog(catalog)
+    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
-  it "should validate a single exported resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+  it "should validate a single exported resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
-    validate_json_for_catalog(catalog)
+    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
-  it "should validate a two resource catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+  it "should validate a two resource catalog against the schema" do
     catalog = compile_to_catalog("create_resources('notify', {'foo'=>{'message'=>'one'}, 'bar'=>{'message'=>'two'}})")
-    validate_json_for_catalog(catalog)
+    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
-  it "should validate a two parameter class catalog against the schema", :unless => Puppet.features.microsoft_windows? do
+  it "should validate a two parameter class catalog against the schema" do
     catalog = compile_to_catalog(<<-MANIFEST)
       class multi_param_class ($one, $two) {
         notify {'foo':
@@ -785,7 +773,7 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
         two => 'world',
       }
     MANIFEST
-    validate_json_for_catalog(catalog)
+    expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 end
 

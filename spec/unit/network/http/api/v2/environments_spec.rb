@@ -2,8 +2,11 @@ require 'spec_helper'
 
 require 'puppet/node/environment'
 require 'puppet/network/http'
+require 'matchers/json'
 
 describe Puppet::Network::HTTP::API::V2::Environments do
+  include JSONMatchers
+
   it "responds with all of the available environments environments" do
     handler = Puppet::Network::HTTP::API::V2::Environments.new(TestingEnvironmentLoader.new)
     response = Puppet::Network::HTTP::MemoryResponse.new
@@ -32,15 +35,7 @@ describe Puppet::Network::HTTP::API::V2::Environments do
 
     handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
 
-    expect(response.body).to validates_against('api/schemas/environments.json')
-  end
-
-  matcher :validates_against do |schema_file|
-    match do |json|
-      schema = JSON.parse(File.read(schema_file))
-      JSON::Validator.validate!(JSON_META_SCHEMA, schema)
-      JSON::Validator.validate!(schema, json)
-    end
+    expect(response.body).to validate_against('api/schemas/environments.json')
   end
 
   class TestingEnvironmentLoader

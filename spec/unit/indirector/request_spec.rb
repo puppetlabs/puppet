@@ -5,6 +5,7 @@ require 'puppet/indirector/request'
 require 'puppet/util/pson'
 
 describe Puppet::Indirector::Request do
+  include JSONMatchers
 
   describe "when registering the document type" do
     it "should register its document type with JSON" do

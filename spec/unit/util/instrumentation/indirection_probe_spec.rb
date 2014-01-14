@@ -6,6 +6,8 @@ require 'puppet/util/instrumentation'
 require 'puppet/util/instrumentation/indirection_probe'
 
 describe Puppet::Util::Instrumentation::IndirectionProbe do
+  include JSONMatchers
+
   Puppet::Util::Instrumentation::IndirectionProbe
 
   it "should indirect instrumentation_probe" do
