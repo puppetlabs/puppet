@@ -350,14 +350,16 @@ module Puppet
       EOT
     end
 
-    newparam(:virtualenv) do
+    newparam(:prefix) do
       desc <<-EOT
-        The path to the virtualenv where the python package has to
-        be installed (when using the pip `provider`).
+        Absolute path to an isolated environment or installation
+        prefix to install the package under. Currently only supported
+        by the pip provider, which expects this to the path to a Python
+        virtual environment (created by the virtualenv command).
       EOT
 
       validate do |value|
-        raise ArgumentError, "virtualenv parameter must be an absolute path: #{value}" if ! absolute_path?(value)
+        raise ArgumentError, "prefix parameter must be an absolute path: #{value}" if ! absolute_path?(value)
       end
     end
 

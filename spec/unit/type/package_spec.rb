@@ -101,9 +101,9 @@ describe Puppet::Type.type(:package) do
       expect { Puppet::Type.type(:package).new(:name => "yay", :source => "stuff") }.to_not raise_error
     end
 
-    it "should require :virtualenv to be an absolute path" do
-      expect { Puppet::Type.type(:package).new(:name => "yay", :virtualenv => "path/to/venv") }.to raise_error(Puppet::Error)
-      expect { Puppet::Type.type(:package).new(:name => "yay", :virtualenv => "/path/to/venv") }.to_not raise_error
+    it "should require :prefix to be an absolute path" do
+      expect { Puppet::Type.type(:package).new(:name => "yay", :prefix => "path/to/venv") }.to raise_error(Puppet::Error)
+      expect { Puppet::Type.type(:package).new(:name => "yay", :prefix => "/path/to/venv") }.to_not raise_error
     end
 
     it "should not accept a non-string name" do

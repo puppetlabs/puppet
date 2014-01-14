@@ -48,9 +48,9 @@ Puppet::Type.type(:package).provide :pip,
 
   # venv pip if called with a venv, else self.cmd (system-wide)
   def venvcmd
-    Puppet.debug("Provider::Pip using virtualenv #{@resource[:virtualenv]}")
-    if @resource[:virtualenv]
-      "#{@resource[:virtualenv]}/bin/pip"
+    Puppet.debug("Provider::Pip using virtualenv #{@resource[:prefix]}")
+    if @resource[:prefix]
+      "#{@resource[:prefix]}/bin/pip"
     else
       case Facter.value(:osfamily)
         when "RedHat"
@@ -68,7 +68,7 @@ Puppet::Type.type(:package).provide :pip,
     # anyway)
     name = @resource[:name].downcase
 
-    if @resource[:virtualenv]
+    if @resource[:prefix]
       pip_cmd = which(venvcmd)
       execpipe "#{pip_cmd} freeze" do |process|
         process.collect do |line|

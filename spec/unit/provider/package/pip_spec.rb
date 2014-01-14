@@ -46,9 +46,9 @@ describe provider_class do
 
   describe "venvcmd" do
 
-    it "should return venv pip path when virtualenv specified" do
-      @resource[:virtualenv] = "/path/to/virtualenv"
-      @provider.venvcmd.should == "/path/to/virtualenv/bin/pip"
+    it "should return venv pip path when prefix specified" do
+      @resource[:prefix] = "/path/to/prefix"
+      @provider.venvcmd.should == "/path/to/prefix/bin/pip"
     end
 
     it "should return pip-python on RedHat systems" do
@@ -110,7 +110,7 @@ describe provider_class do
     end
 
     it "should return a hash when pip and the package are present in a venv" do
-      @resource[:virtualenv] = "/path/to/virtualenv"
+      @resource[:prefix] = "/path/to/virtualenv"
       @provider.expects(:venvcmd).returns("/path/to/virtualenv/bin/pip")
       @provider.expects(:which).with("/path/to/virtualenv/bin/pip").returns("/path/to/virtualenv/bin/pip")
       p = stub("process")
@@ -125,7 +125,7 @@ describe provider_class do
     end
 
     it "should return nil when the package is missing from a venv" do
-      @resource[:virtualenv] = "/path/to/virtualenv"
+      @resource[:prefix] = "/path/to/virtualenv"
       @provider.expects(:venvcmd).returns("/path/to/virtualenv/bin/pip")
       @provider.expects(:which).with("/path/to/virtualenv/bin/pip").returns("/path/to/virtualenv/bin/pip")
       p = stub("process")
@@ -231,7 +231,7 @@ describe provider_class do
     it "should install into a virtualenv" do
       @resource[:ensure] = :installed
       @resource[:source] = nil
-      @resource[:virtualenv] = "/path/to/virtualenv"
+      @resource[:prefix] = "/path/to/virtualenv"
       @provider.expects(:lazy_pip).
         with("install", '-q', "fake_package")
       @provider.install
@@ -249,7 +249,7 @@ describe provider_class do
     end
 
     it "should uninstall from a virtualenv" do
-      @resource[:virtualenv] = "/path/to/virtualenv"
+      @resource[:prefix] = "/path/to/virtualenv"
       @resource[:name] = "fake_package"
       @provider.expects(:lazy_pip).
         with('uninstall', '-y', '-q', 'fake_package')
