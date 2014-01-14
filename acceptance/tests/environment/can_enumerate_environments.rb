@@ -8,10 +8,18 @@ def setting_on(host, section, name)
   on(host, puppet("config", "print", name, "--section", section)).stdout.chomp
 end
 
+def full_path(host, path)
+  if host['platform'] =~ /win/
+    on(host, "cygpath '#{path}'").stdout.chomp
+  else
+    path
+  end
+end
+
 def curl_master_from(agent, path, headers = '', &block)
   url = "https://#{master}:#{master_port(agent)}#{path}"
-  cert_path = setting_on(agent, "agent", "hostcert")
-  key_path = setting_on(agent, "agent", "hostprivkey")
+  cert_path = full_path(agent, setting_on(agent, "agent", "hostcert"))
+  key_path = full_path(agent, setting_on(agent, "agent", "hostprivkey"))
   curl_base = "curl -g --cert \"#{cert_path}\" --key \"#{key_path}\" -k -H '#{headers}'"
 
   on agent, "#{curl_base} '#{url}'", &block
