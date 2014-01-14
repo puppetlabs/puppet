@@ -7,6 +7,7 @@ require 'puppet/util/instrumentation'
 require 'puppet/util/instrumentation/listener'
 
 describe Puppet::Util::Instrumentation::Listener do
+  include JSONMatchers
 
   Listener = Puppet::Util::Instrumentation::Listener
 

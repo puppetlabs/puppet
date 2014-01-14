@@ -3,22 +3,12 @@ require 'spec_helper'
 
 require 'puppet'
 require 'puppet/transaction/report'
-
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  REPORT_SCHEMA_URI = File.join(File.dirname(__FILE__),    '../../../api/schemas/report.json')
-  REPORT_SCHEMA = JSON.parse(File.read(REPORT_SCHEMA_URI))
-
-  describe "report schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, REPORT_SCHEMA)
-    end
-  end
-
-end
+require 'matchers/json'
 
 describe Puppet::Transaction::Report do
+  include JSONMatchers
   include PuppetSpec::Files
+
   before do
     Puppet::Util::Storage.stubs(:store)
   end
@@ -405,10 +395,10 @@ describe Puppet::Transaction::Report do
     expect_equivalent_reports(tripped, report)
   end
 
-  it "generates pson which validates against the report schema", :unless => Puppet.features.microsoft_windows? do
+  it "generates pson which validates against the report schema" do
     Puppet[:report_serialization_format] = "pson"
     report = generate_report
-    JSON::Validator.validate!(REPORT_SCHEMA, report.render)
+    expect(report.render).to validate_against('api/schemas/report.json')
   end
 
   it "can make a round trip through yaml" do

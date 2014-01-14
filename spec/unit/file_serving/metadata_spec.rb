@@ -1,22 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/file_serving/metadata'
-
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  FILE_METADATA_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/file_metadata.json')))
-
-  describe "catalog schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, FILE_METADATA_SCHEMA)
-    end
-  end
-
-  def validate_json_for_file_metadata(file_metadata)
-    JSON::Validator.validate!(FILE_METADATA_SCHEMA, file_metadata.to_pson)
-  end
-end
+require 'matchers/json'
 
 describe Puppet::FileServing::Metadata do
   let(:foobar) { File.expand_path('/foo/bar') }
@@ -103,6 +88,7 @@ describe Puppet::FileServing::Metadata do
 end
 
 describe Puppet::FileServing::Metadata do
+  include JSONMatchers
   include PuppetSpec::Files
 
   shared_examples_for "metadata collector" do
@@ -154,8 +140,8 @@ describe Puppet::FileServing::Metadata do
           end
         end
 
-        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-          validate_json_for_file_metadata(metadata)
+        it "should validate against the schema" do
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
       end
 
@@ -179,9 +165,9 @@ describe Puppet::FileServing::Metadata do
           metadata.checksum.should == "{ctime}#{time}"
         end
 
-        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+        it "should validate against the schema" do
           metadata.collect
-          validate_json_for_file_metadata(metadata)
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
       end
     end
@@ -214,8 +200,8 @@ describe Puppet::FileServing::Metadata do
           metadata.destination.should == target
         end
 
-        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-          validate_json_for_file_metadata(metadata)
+        it "should validate against the schema" do
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
       end
     end
@@ -248,8 +234,8 @@ describe Puppet::FileServing::Metadata do
         proc { metadata.collect}.should raise_error(Errno::ENOENT)
       end
 
-      it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-        validate_json_for_file_metadata(metadata)
+      it "should validate against the schema" do
+        expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
       end
     end
   end

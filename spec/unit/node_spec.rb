@@ -2,18 +2,9 @@
 require 'spec_helper'
 require 'matchers/json'
 
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  NODE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../api/schemas/node.json')))
-
-  describe "node schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, NODE_SCHEMA)
-    end
-  end
-end
-
 describe Puppet::Node do
+  include JSONMatchers
+
   it "should register its document type as Node" do
     PSON.registered_document_types["Node"].should equal(Puppet::Node)
   end
@@ -87,7 +78,7 @@ describe Puppet::Node do
                             :classes => ['erth', 'aiu'],
                             :parameters => {"hostname"=>"food"}
                            )
-    JSON::Validator.validate!(NODE_SCHEMA, node.to_pson)
+    expect(node.to_pson).to validate_against('api/schemas/node.json')
   end
 
   it "when missing optional parameters validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
@@ -95,7 +86,7 @@ describe Puppet::Node do
     node = Puppet::Node.new("hello",
                             :environment => 'kjhgrg'
                            )
-    JSON::Validator.validate!(NODE_SCHEMA, node.to_pson)
+    expect(node.to_pson).to validate_against('api/schemas/node.json')
   end
 
   describe "when converting to json" do

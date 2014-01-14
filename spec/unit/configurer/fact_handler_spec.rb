@@ -2,16 +2,7 @@
 require 'spec_helper'
 require 'puppet/configurer'
 require 'puppet/configurer/fact_handler'
-
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  describe "catalog facts schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, FACTS_SCHEMA)
-    end
-  end
-
- end
+require 'matchers/json'
 
 class FactHandlerTester
   include Puppet::Configurer::FactHandler
@@ -22,6 +13,8 @@ class FactHandlerTester
 end
 
 describe Puppet::Configurer::FactHandler do
+  include JSONMatchers
+
   before :each do
     @facthandler = FactHandlerTester.new
     Puppet::Node::Facts.indirection.terminus_class = :memory
@@ -85,15 +78,11 @@ describe Puppet::Configurer::FactHandler do
     @facthandler.facts_for_uploading.should == {:facts_format => :pson, :facts => text}
   end
 
-  def validate_json_for_facts(catalog_facts)
-    JSON::Validator.validate!(FACTS_SCHEMA, catalog_facts)
-  end
-
-  it "should generate valid facts data against the facts schema", :unless => Puppet.features.microsoft_windows? do
+  it "should generate valid facts data against the facts schema" do
     facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
     Puppet::Node::Facts.indirection.save(facts)
 
-    validate_json_for_facts(CGI.unescape(@facthandler.facts_for_uploading[:facts]))
+    expect(CGI.unescape(@facthandler.facts_for_uploading[:facts])).to validate_against('api/schemas/facts.json')
   end
 
 end
