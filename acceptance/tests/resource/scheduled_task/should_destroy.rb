@@ -9,10 +9,10 @@ agents.each do |agent|
   version = '/v1'
   # query only supports /tn parameter on Vista and later
   query_cmd = "schtasks.exe /query /v /fo list /tn #{name}"
-  on agents, facter('kernelmajversion') do
+  on agent, facter('kernelmajversion') do
     if stdout.chomp.to_f < 6.0
       version = ''
-      query_cmd = "schtasks.exe /query /v /fo list | grep -vq #{name}"
+      query_cmd = "schtasks.exe /query /v /fo list | grep #{name}"
     end
   end
 
@@ -23,5 +23,13 @@ agents.each do |agent|
   on agent, puppet_resource('scheduled_task', name, 'ensure=absent')
 
   step "verify the task was deleted"
-  on agent, query_cmd
+  Timeout.timeout(5) do
+    loop do
+      step "Win32::TaskScheduler#delete call seems to be asynchronous, so we my need to test multiple times"
+      on agent, query_cmd, :acceptable_exit_codes => [0,1]
+      break if exit_code == 1
+      sleep 1
+    end
+  end
+  fail_test "Unable to verify that scheduled task was removed" unless exit_code == 1
 end
