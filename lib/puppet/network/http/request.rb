@@ -1,12 +1,22 @@
-Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :client_cert, :body) do
+Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :routing_path, :client_cert, :body) do
   def self.from_hash(hash)
     symbol_members = members.collect(&:intern)
     unknown = hash.keys - symbol_members
     if unknown.empty?
-      new(*(symbol_members.collect { |m| hash[m] }))
+      new(hash[:headers] || {},
+          hash[:params] || {},
+          hash[:method] || "GET",
+          hash[:path],
+          hash[:routing_path] || hash[:path],
+          hash[:client_cert],
+          hash[:body])
     else
       raise ArgumentError, "Unknown arguments: #{unknown.collect(&:inspect).join(', ')}"
     end
+  end
+
+  def route_into(prefix)
+    self.class.new(headers, params, method, path, routing_path.sub(prefix, ''), client_cert, body)
   end
 
   def format
@@ -30,7 +40,7 @@ Puppet::Network::HTTP::Request = Struct.new(:headers, :params, :method, :path, :
       supported_formats)
 
       if formatter.nil?
-        raise Puppet::Network::HTTP::Handler::HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
+        raise Puppet::Network::HTTP::Error::HTTPNotAcceptableError, "No supported formats are acceptable (Accept: #{accepted_formats})"
       end
 
       report_if_deprecated(formatter)

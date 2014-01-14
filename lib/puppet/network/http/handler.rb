@@ -1,6 +1,7 @@
 module Puppet::Network::HTTP
 end
 
+require 'puppet/environments'
 require 'puppet/network/http'
 require 'puppet/network/http/api/v1'
 require 'puppet/network/authentication'
@@ -14,43 +15,6 @@ module Puppet::Network::HTTP::Handler
   # These shouldn't be allowed to be set by clients
   # in the query string, for security reasons.
   DISALLOWED_KEYS = ["node", "ip"]
-
-  class HTTPError < Exception
-    attr_reader :status
-
-    def initialize(message, status)
-      super(message)
-      @status = status
-    end
-  end
-
-  class HTTPNotAcceptableError < HTTPError
-    CODE = 406
-    def initialize(message)
-      super("Not Acceptable: " + message, CODE)
-    end
-  end
-
-  class HTTPNotFoundError < HTTPError
-    CODE = 404
-    def initialize(message)
-      super("Not Found: " + message, CODE)
-    end
-  end
-
-  class HTTPNotAuthorizedError < HTTPError
-    CODE = 403
-    def initialize(message)
-      super("Not Authorized: " + message, CODE)
-    end
-  end
-
-  class HTTPMethodNotAllowedError < HTTPError
-    CODE = 405
-    def initialize(message)
-      super("Method Not Allowed: " + message, CODE)
-    end
-  end
 
   def register(routes)
     # There's got to be a simpler way to do this, right?
@@ -87,22 +51,24 @@ module Puppet::Network::HTTP::Handler
     request_method = http_method(request)
     request_path = path(request)
 
-    new_request = Puppet::Network::HTTP::Request.new(request_headers, request_params, request_method, request_path, client_cert(request), body(request))
+    new_request = Puppet::Network::HTTP::Request.new(request_headers, request_params, request_method, request_path, request_path, client_cert(request), body(request))
 
     response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
 
     configure_profiler(request_headers, request_params)
     warn_if_near_expiration(new_request.client_cert)
 
-    Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
-      if route = @routes.find { |route| route.matches?(new_request) }
-        route.process(new_request, new_response)
-      else
-        raise HTTPNotFoundError, "No route for #{new_request.method} #{new_request.path}"
+    Puppet::Context.override(request_bindings()) do
+      Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
+        if route = @routes.find { |route| route.matches?(new_request) }
+          route.process(new_request, new_response)
+        else
+          raise Puppet::Network::HTTP::Error::HTTPNotFoundError, "No route for #{new_request.method} #{new_request.path}"
+        end
       end
     end
 
-  rescue HTTPError => e
+  rescue Puppet::Network::HTTP::Error::HTTPError => e
     msg = e.message
     Puppet.info(msg)
     new_response.respond_with(e.status, "text/plain", msg)
@@ -213,5 +179,11 @@ module Puppet::Network::HTTP::Handler
     else
       Puppet::Util::Profiler.current = Puppet::Util::Profiler::NONE
     end
+  end
+
+  def request_bindings
+    {
+      :environments => Puppet::Environments::OnlyProduction.new
+    }
   end
 end

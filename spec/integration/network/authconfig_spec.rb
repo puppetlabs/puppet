@@ -7,7 +7,7 @@ RSpec::Matchers.define :allow do |params|
 
   match do |auth|
     begin
-      auth.check_authorization(params[0], params[1], params[2], params[3])
+      auth.check_authorization(*params)
       true
     rescue Puppet::Network::AuthorizationError
       false
@@ -15,11 +15,11 @@ RSpec::Matchers.define :allow do |params|
   end
 
   failure_message_for_should do |instance|
-    "expected #{params[3][:node]}/#{params[3][:ip]} to be allowed"
+    "expected #{params[2][:node]}/#{params[2][:ip]} to be allowed"
   end
 
   failure_message_for_should_not do |instance|
-    "expected #{params[3][:node]}/#{params[3][:ip]} to be forbidden"
+    "expected #{params[2][:node]}/#{params[2][:ip]} to be forbidden"
   end
 end
 
@@ -54,7 +54,7 @@ describe Puppet::Network::AuthConfig do
       :ip => '10.1.1.1',
       :authenticated => true
     }.merge(args)
-    ['test', :find, args[:key], args]
+    [:find, "/test/#{args[:key]}", args]
   end
 
   describe "allow" do

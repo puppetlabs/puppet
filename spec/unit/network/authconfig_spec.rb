@@ -101,9 +101,9 @@ describe Puppet::Network::AuthConfig do
         :authenticated => true
       }
 
-      Puppet::Network::Rights.any_instance.expects(:is_request_forbidden_and_why?).with("path", :save, "to/resource", params)
+      Puppet::Network::Rights.any_instance.expects(:is_request_forbidden_and_why?).with(:save, "/path/to/resource", params)
 
-      described_class.new.check_authorization("path", :save, "to/resource", params)
+      described_class.new.check_authorization(:save, "/path/to/resource", params)
     end
   end
 end

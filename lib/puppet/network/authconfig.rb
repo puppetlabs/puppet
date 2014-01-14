@@ -19,6 +19,9 @@ module Puppet
       { :acl => "/certificate/", :method => :find, :authenticated => :any },
       { :acl => "/certificate_request", :method => [:find, :save], :authenticated => :any },
       { :acl => "/status", :method => [:find], :authenticated => true },
+
+      # API V2.0
+      { :acl => "/v2.0/environments", :method => :find, :allow => '*', :authenticated => true },
     ]
 
     # Just proxy the setting methods to our rights stuff
@@ -58,8 +61,8 @@ module Puppet
     # check whether this request is allowed in our ACL
     # raise an Puppet::Network::AuthorizedError if the request
     # is denied.
-    def check_authorization(indirection, method, key, params)
-      if authorization_failure_exception = @rights.is_request_forbidden_and_why?(indirection, method, key, params)
+    def check_authorization(method, path, params)
+      if authorization_failure_exception = @rights.is_request_forbidden_and_why?(method, path, params)
         Puppet.warning("Denying access: #{authorization_failure_exception}")
         raise authorization_failure_exception
       end

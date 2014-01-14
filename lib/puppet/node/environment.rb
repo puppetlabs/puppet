@@ -75,12 +75,6 @@ class Puppet::Node::Environment
 
   include Puppet::Util::Cacher
 
-  # @!attribute seen
-  #   @scope class
-  #   @api private
-  #   @return [Hash<Symbol, Puppet::Node::Environment>] All memoized environments
-  @seen = {}
-
   # Create a new environment with the given name, or return an existing one
   #
   # The environment class memoizes instances so that attempts to instantiate an
@@ -111,6 +105,7 @@ class Puppet::Node::Environment
 
     symbol = name.to_sym
 
+    @seen ||= {}
     return @seen[symbol] if @seen[symbol]
 
     obj = self.allocate
