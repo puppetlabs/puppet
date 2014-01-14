@@ -69,7 +69,7 @@ describe Puppet::Util::SELinux do
       find_fs('/mnt/nfs/testfile/foobar').should == "nfs"
     end
 
-    it "should reture true for a capable filesystem" do
+    it "should return true for a capable filesystem" do
       selinux_label_support?('/etc/puppet/testfile').should be_true
     end
 
