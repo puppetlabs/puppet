@@ -51,7 +51,7 @@ module Puppet
     feature :uninstall_options, "The provider accepts options to be
       passed to the uninstaller command."
     feature :package_settings, "The provider accepts package_settings to be
-      ensured for the given package. The meaning and format of these settins is
+      ensured for the given package. The meaning and format of these settings is
       provider-specific.",
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
 
@@ -239,7 +239,7 @@ module Puppet
     end
 
     newproperty(:package_settings, :required_features=>:package_settings) do
-      desc "Package settins. The definition of package settings is provider
+      desc "Package settings. The definition of package settings is provider
         specific. In general, these are certain properties which alter contents
         of a package being installed. An example of package settings are the
         FreeBSD ports options.
