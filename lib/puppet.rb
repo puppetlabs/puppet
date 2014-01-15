@@ -148,6 +148,7 @@ module Puppet
     Puppet.settings.initialize_global_settings(args)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
+    Puppet::Parser::Functions.reset
   end
   private_class_method :do_initialize_settings_for_run_mode
 
@@ -172,9 +173,10 @@ end
 #  anywhere besides the very top of a file.  That would not be possible at the moment without a great deal of
 #  effort, but I think we should strive for it and revisit this at some point.  --cprice 2012-03-16
 
+require 'puppet/indirector'
 require 'puppet/type'
-require 'puppet/parser'
 require 'puppet/resource'
+require 'puppet/parser'
 require 'puppet/network'
 require 'puppet/ssl'
 require 'puppet/module'

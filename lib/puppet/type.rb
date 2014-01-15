@@ -2420,6 +2420,3 @@ end
 end
 
 require 'puppet/provider'
-
-# Always load these types.
-Puppet::Type.type(:component)

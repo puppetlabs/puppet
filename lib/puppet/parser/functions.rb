@@ -45,7 +45,7 @@ module Puppet::Parser::Functions
     if env and ! env.is_a?(Puppet::Node::Environment)
       env = Puppet::Node::Environment.new(env)
     end
-    @modules[ (env || Environment.current || Environment.root).name ] ||= Module.new
+    @modules[ (env || Environment.current).name ] ||= Module.new
   end
 
   # Create a new Puppet DSL function.
@@ -238,6 +238,4 @@ module Puppet::Parser::Functions
       @functions[Environment.current][name] = func
     end
   end
-
-  reset  # initialize the class instance variables
 end

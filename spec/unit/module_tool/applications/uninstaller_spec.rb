@@ -120,8 +120,8 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       context "when the module has local changes" do
 
         it "should not uninstall the module" do
-          PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
-          Puppet::Module.any_instance.stubs(:has_local_changes?).returns(true)
+          mod = PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
+          Puppet::ModuleTool::Applications::Checksummer.expects(:run).with(mod.path).returns(['change'])
 
           @uninstaller.new("puppetlabs-foo", options).run[:result].should == :failure
         end

@@ -75,6 +75,11 @@ class Puppet::Node::Environment
 
   include Puppet::Util::Cacher
 
+  # @api private
+  def self.seen
+    @seen ||= {}
+  end
+
   # Create a new environment with the given name, or return an existing one
   #
   # The environment class memoizes instances so that attempts to instantiate an
@@ -105,12 +110,11 @@ class Puppet::Node::Environment
 
     symbol = name.to_sym
 
-    @seen ||= {}
-    return @seen[symbol] if @seen[symbol]
+    return seen[symbol] if seen[symbol]
 
     obj = self.allocate
     obj.send :initialize, symbol
-    @seen[symbol] = obj
+    seen[symbol] = obj
   end
 
   # Retrieve the environment for the current thread
@@ -149,14 +153,14 @@ class Puppet::Node::Environment
   #
   # @api private
   def self.root
-    @root
+    @root ||= new(:'*root*')
   end
 
   # Clear all memoized environments and the 'current' environment
   #
   # @api private
   def self.clear
-    @seen.clear
+    seen.clear
     $environment = nil
   end
 
@@ -165,6 +169,11 @@ class Puppet::Node::Environment
   #   @return [Symbol] the human readable environment name that serves as the
   #     environment identifier
   attr_reader :name
+
+  # @!attribute [r] manifest
+  #   @api public
+  #   @return [String] path to the manifest file or directory.
+  attr_reader :manifest
 
   # Return an environment-specific Puppet setting.
   #
@@ -185,6 +194,8 @@ class Puppet::Node::Environment
   # @param name [Symbol] The environment name
   def initialize(name)
     @name = name
+    @modulepath = Puppet.settings.value(:modulepath, name)
+    @manifest = Puppet.settings.value(:manifest, name)
   end
 
   # The current global TypeCollection
@@ -274,7 +285,7 @@ class Puppet::Node::Environment
   #   @api public
   #   @return [Array<String>] All directories present in the modulepath
   cached_attr(:modulepath, Puppet[:filetimeout]) do
-    dirs = self[:modulepath].split(File::PATH_SEPARATOR)
+    dirs = @modulepath.split(File::PATH_SEPARATOR)
     dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs if ENV["PUPPETLIB"]
     validate_dirs(dirs)
   end
@@ -469,13 +480,13 @@ class Puppet::Node::Environment
   # @return [Puppet::Parser::AST::Hostclass] The AST hostclass object
   #   representing the 'main' hostclass
   def perform_initial_import
-    return empty_parse_result if Puppet.settings[:ignoreimport]
+    return empty_parse_result if Puppet[:ignoreimport]
     parser = Puppet::Parser::ParserFactory.parser(self)
-    if code = Puppet.settings.value(:code, name.to_s) and code != ""
+    if code = Puppet[:code] and code != ""
       parser.string = code
       parser.parse
     else
-      file = Puppet.settings.value(:manifest, name.to_s)
+      file = self.manifest
       # if the manifest file is a reference to a directory, parse and combine all .pp files in that
       # directory
       if File.directory?(file)
@@ -508,6 +519,4 @@ class Puppet::Node::Environment
   def empty_parse_result
     return Puppet::Parser::AST::Hostclass.new('')
   end
-
-  @root = new(:'*root*')
 end

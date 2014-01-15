@@ -91,7 +91,7 @@ module Puppet::ModuleTool
             :module_name       => @module_name,
             :installed_version => @installed[@module_name].first.version,
             :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-            :local_changes     => @installed[@module_name].first.local_changes
+            :local_changes     => Puppet::ModuleTool::Applications::Checksummer.run(@installed[@module_name].first.path)
         end
 
         if @ignore_dependencies && @source == :filesystem

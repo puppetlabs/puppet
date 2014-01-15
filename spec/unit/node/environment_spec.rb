@@ -117,12 +117,14 @@ describe Puppet::Node::Environment do
     end
 
     it "should prefix the value of the 'PUPPETLIB' environment variable to the module path if present" do
-      Puppet::Util.withenv("PUPPETLIB" => %w{/l1 /l2}.join(File::PATH_SEPARATOR)) do
-        module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-        env.expects(:validate_dirs).with(%w{/l1 /l2 /one /two}).returns %w{/l1 /l2 /one /two}
-        env.expects(:[]).with(:modulepath).returns module_path
+      first_puppetlib = tmpdir('puppetlib1')
+      second_puppetlib = tmpdir('puppetlib2')
+      first_moduledir = tmpdir('moduledir1')
+      second_moduledir = tmpdir('moduledir2')
+      Puppet::Util.withenv("PUPPETLIB" => [first_puppetlib, second_puppetlib].join(File::PATH_SEPARATOR)) do
+        Puppet[:modulepath] = [first_moduledir, second_moduledir].join(File::PATH_SEPARATOR)
 
-        env.modulepath.should == %w{/l1 /l2 /one /two}
+        env.modulepath.should == [first_puppetlib, second_puppetlib, first_moduledir, second_moduledir]
       end
     end
 
@@ -402,59 +404,80 @@ describe Puppet::Node::Environment do
     end
 
     describe "when performing initial import" do
-      let(:env) { Puppet::Node::Environment.new("test") }
-      before do
-        @parser = Puppet::Parser::ParserFactory.parser(env)
-#        @parser = Puppet::Parser::EParserAdapter.new(Puppet::Parser::Parser.new("test")) # TODO: FIX PARSER FACTORY
-        Puppet::Parser::ParserFactory.stubs(:parser).returns @parser
+      def parser_and_environment(name)
+        env = Puppet::Node::Environment.new(name)
+        parser = Puppet::Parser::ParserFactory.parser(env)
+        Puppet::Parser::ParserFactory.stubs(:parser).returns(parser)
+
+        [parser, env]
       end
 
       it "should set the parser's string to the 'code' setting and parse if code is available" do
-        Puppet.settings[:code] = "my code"
-        @parser.expects(:string=).with "my code"
-        @parser.expects(:parse)
+        Puppet[:code] = "my code"
+        parser, env = parser_and_environment('testing')
+
+        parser.expects(:string=).with "my code"
+        parser.expects(:parse)
+
         env.instance_eval { perform_initial_import }
       end
 
       it "should set the parser's file to the 'manifest' setting and parse if no code is available and the manifest is available" do
         filename = tmpfile('myfile')
-        File.open(filename, 'w'){|f| }
-        Puppet.settings[:manifest] = filename
-        @parser.expects(:file=).with filename
-        @parser.expects(:parse)
+        Puppet[:manifest] = filename
+        parser, env = parser_and_environment('testing')
+
+        parser.expects(:file=).with filename
+        parser.expects(:parse)
+
         env.instance_eval { perform_initial_import }
       end
 
       it "should pass the manifest file to the parser even if it does not exist on disk" do
         filename = tmpfile('myfile')
-        Puppet.settings[:code] = ""
-        Puppet.settings[:manifest] = filename
-        @parser.expects(:file=).with(filename).once
-        @parser.expects(:parse).once
+        Puppet[:code] = ""
+        Puppet[:manifest] = filename
+        parser, env = parser_and_environment('testing')
+
+        parser.expects(:file=).with(filename).once
+        parser.expects(:parse).once
+
         env.instance_eval { perform_initial_import }
       end
 
       it "should fail helpfully if there is an error importing" do
         Puppet::FileSystem.stubs(:exist?).returns true
         env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(env)
-        @parser.expects(:file=).once
-        @parser.expects(:parse).raises ArgumentError
-        lambda { env.instance_eval { perform_initial_import } }.should raise_error(Puppet::Error)
+        parser, env = parser_and_environment('testing')
+
+        parser.expects(:file=).once
+        parser.expects(:parse).raises ArgumentError
+
+        expect do
+          env.instance_eval { perform_initial_import }
+        end.to raise_error(Puppet::Error)
       end
 
       it "should not do anything if the ignore_import settings is set" do
-        Puppet.settings[:ignoreimport] = true
-        @parser.expects(:string=).never
-        @parser.expects(:file=).never
-        @parser.expects(:parse).never
+        Puppet[:ignoreimport] = true
+        parser, env = parser_and_environment('testing')
+
+        parser.expects(:string=).never
+        parser.expects(:file=).never
+        parser.expects(:parse).never
+
         env.instance_eval { perform_initial_import }
       end
 
       it "should mark the type collection as needing a reparse when there is an error parsing" do
-        @parser.expects(:parse).raises Puppet::ParseError.new("Syntax error at ...")
+        parser, env = parser_and_environment('testing')
         env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(env)
 
-        lambda { env.instance_eval { perform_initial_import } }.should raise_error(Puppet::Error, /Syntax error at .../)
+        parser.expects(:parse).raises Puppet::ParseError.new("Syntax error at ...")
+
+        expect do
+          env.instance_eval { perform_initial_import }
+        end.to raise_error(Puppet::Error, /Syntax error at .../)
         env.known_resource_types.require_reparse?.should be_true
       end
     end

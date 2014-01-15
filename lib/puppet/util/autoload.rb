@@ -107,8 +107,6 @@ class Puppet::Util::Autoload
       # world testing. --daniel 2012-07-10
       require 'puppet/node/environment' unless defined?(Puppet::Node::Environment)
 
-      real_env = Puppet::Node::Environment.new(env)
-
       # We're using a per-thread cache of module directories so that we don't
       # scan the filesystem each time we try to load something. This is reset
       # at the beginning of compilation and at the end of an agent run.
@@ -135,6 +133,8 @@ class Puppet::Util::Autoload
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
       if Puppet.settings.app_defaults_initialized?
+        real_env = Puppet::Node::Environment.new(env)
+
         # if the app defaults have been initialized then it should be safe to access the module path setting.
         $env_module_directories[real_env] ||= real_env.modulepath.collect do |dir|
           Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }

@@ -40,7 +40,7 @@ module Puppet::Test
     #  any individual tests.
     # @return nil
     def self.before_all_tests()
-
+      Puppet::Parser::Functions.reset
     end
 
     # Call this method once, at the end of a test run, when no more tests
