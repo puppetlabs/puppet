@@ -10,7 +10,7 @@ describe Puppet::Util::Execution do
 
     it "should set LC_ALL to C avoid localized output" do
       out = ""
-      Puppet::Util::Execution.execpipe('echo $LANG'){ |line| out << line.read.chomp }
+      Puppet::Util::Execution.execpipe('echo $LC_ALL'){ |line| out << line.read.chomp }
       expect(out).to eq("C")
     end
   end
