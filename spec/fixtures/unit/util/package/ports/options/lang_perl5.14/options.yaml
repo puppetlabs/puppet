@@ -1,0 +1,10 @@
+---
+ :DEBUG: false
+ :GDBM: false
+ :MULTIPLICITY: false
+ :PERL_64BITINT: true
+ :PERL_MALLOC: false
+ :PTHREAD: true
+ :SITECUSTOMIZE: false
+ :THREADS: true
+ :USE_PERL: true
