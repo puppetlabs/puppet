@@ -77,4 +77,35 @@ describe Puppet::Util do
       new_sd.dacl.should == expected_sd.dacl
     end
   end
+
+  it "replace_file should work with filenames that include - and . (PUP-1389)", :if => Puppet.features.microsoft_windows? do
+    expected_content = 'some content'
+    dir = tmpdir('ReplaceFile_playground')
+    destination_file = File.join(dir, 'some-file.xml')
+
+    Puppet::Util.replace_file(destination_file, nil) do |temp_file|
+        temp_file.open
+        temp_file.write(expected_content)
+    end
+
+    actual_content = File.read(destination_file)
+    actual_content.should == expected_content
+  end
+
+  it "replace_file should work with filenames that include special characters (PUP-1389)", :if => Puppet.features.microsoft_windows? do
+    expected_content = 'some content'
+    dir = tmpdir('ReplaceFile_playground')
+    # http://www.fileformat.info/info/unicode/char/00e8/index.htm
+    # dest_name = "somèfile.xml"
+    dest_name = "som\u00E8file.xml"
+    destination_file = File.join(dir, dest_name)
+
+    Puppet::Util.replace_file(destination_file, nil) do |temp_file|
+        temp_file.open
+        temp_file.write(expected_content)
+    end
+
+    actual_content = File.read(destination_file)
+    actual_content.should == expected_content
+  end
 end

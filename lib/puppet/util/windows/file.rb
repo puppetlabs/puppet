@@ -3,22 +3,31 @@ require 'puppet/util/windows'
 module Puppet::Util::Windows::File
   require 'ffi'
   require 'windows/api'
-  require 'windows/wide_string'
 
-  ReplaceFileWithoutBackupW = Windows::API.new('ReplaceFileW', 'PPVLVV', 'B')
   def replace_file(target, source)
-    result = ReplaceFileWithoutBackupW.call(WideString.new(target.to_s),
-                                   WideString.new(source.to_s),
-                                   0, 0x1, 0, 0)
-    return true unless result == 0
+    target_encoded = Puppet::Util::Windows::String.wide_string(target.to_s)
+    source_encoded = Puppet::Util::Windows::String.wide_string(source.to_s)
+
+    flags = 0x1
+    backup_file = nil
+    result = API.replace_file(
+      target_encoded,
+      source_encoded,
+      backup_file,
+      flags,
+      0,
+      0
+    )
+
+    return true if result
     raise Puppet::Util::Windows::Error.new("ReplaceFile(#{target}, #{source})")
   end
   module_function :replace_file
 
   MoveFileEx = Windows::API.new('MoveFileExW', 'PPL', 'B')
   def move_file_ex(source, target, flags = 0)
-    result = MoveFileEx.call(WideString.new(source.to_s),
-                             WideString.new(target.to_s),
+    result = MoveFileEx.call(Puppet::Util::Windows::String.wide_string(source.to_s),
+                             Puppet::Util::Windows::String.wide_string(target.to_s),
                              flags)
     return true unless result == 0
     raise Puppet::Util::Windows::Error.
@@ -30,6 +39,20 @@ module Puppet::Util::Windows::File
     extend FFI::Library
     ffi_lib 'kernel32'
     ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365512(v=vs.85).aspx
+    # BOOL WINAPI ReplaceFile(
+    #   _In_        LPCTSTR lpReplacedFileName,
+    #   _In_        LPCTSTR lpReplacementFileName,
+    #   _In_opt_    LPCTSTR lpBackupFileName,
+    #   _In_        DWORD dwReplaceFlags - 0x1 REPLACEFILE_WRITE_THROUGH,
+    #                                      0x2 REPLACEFILE_IGNORE_MERGE_ERRORS,
+    #                                      0x4 REPLACEFILE_IGNORE_ACL_ERRORS
+    #   _Reserved_  LPVOID lpExclude,
+    #   _Reserved_  LPVOID lpReserved
+    # );
+    attach_function :replace_file, :ReplaceFileW,
+      [:buffer_in, :buffer_in, :buffer_in, :uint, :uint, :uint], :bool
 
     # BOOLEAN WINAPI CreateSymbolicLink(
     #   _In_  LPTSTR lpSymlinkFileName, - symbolic link to be created
@@ -102,8 +125,8 @@ module Puppet::Util::Windows::File
 
   def symlink(target, symlink)
     flags = File.directory?(target) ? 0x1 : 0x0
-    result = API.create_symbolic_link(WideString.new(symlink.to_s),
-      WideString.new(target.to_s), flags)
+    result = API.create_symbolic_link(Puppet::Util::Windows::String.wide_string(symlink.to_s),
+      Puppet::Util::Windows::String.wide_string(target.to_s), flags)
     return true if result
     raise Puppet::Util::Windows::Error.new(
       "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})")
@@ -112,7 +135,7 @@ module Puppet::Util::Windows::File
 
   INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
   def self.get_file_attributes(file_name)
-    result = API.get_file_attributes(WideString.new(file_name.to_s))
+    result = API.get_file_attributes(Puppet::Util::Windows::String.wide_string(file_name.to_s))
     return result unless result == INVALID_FILE_ATTRIBUTES
     raise Puppet::Util::Windows::Error.new("GetFileAttributes(#{file_name})")
   end
@@ -121,7 +144,7 @@ module Puppet::Util::Windows::File
   def self.create_file(file_name, desired_access, share_mode, security_attributes,
     creation_disposition, flags_and_attributes, template_file_handle)
 
-    result = API.create_file(WideString.new(file_name.to_s),
+    result = API.create_file(Puppet::Util::Windows::String.wide_string(file_name.to_s),
       desired_access, share_mode, security_attributes, creation_disposition,
       flags_and_attributes, template_file_handle)
 
@@ -173,7 +196,7 @@ module Puppet::Util::Windows::File
   def self.open_symlink(link_name)
     begin
       yield handle = create_file(
-      WideString.new(link_name.to_s),
+      Puppet::Util::Windows::String.wide_string(link_name.to_s),
       GENERIC_READ,
       FILE_SHARE_READ,
       nil, # security_attributes

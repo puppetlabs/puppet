@@ -52,8 +52,8 @@ module Puppet::Util::Windows::Process
     #   _In_      LPCTSTR lpName,
     #   _Out_     PLUID lpLuid
     # );
-    attach_function :lookup_privilege_value, :LookupPrivilegeValueW,
-      [:buffer_in, :buffer_in, :pointer], :bool
+    attach_function :lookup_privilege_value, :LookupPrivilegeValueA,
+      [:string, :string, :pointer], :bool
 
     Token_Information = enum(
         :token_user, 1,
@@ -169,8 +169,11 @@ module Puppet::Util::Windows::Process
 
   def lookup_privilege_value(name, system_name = '')
     luid = FFI::MemoryPointer.new(API::LUID.size)
-    result = API.lookup_privilege_value(WideString.new(system_name),
-      WideString.new(name.to_s), luid)
+    result = API.lookup_privilege_value(
+      system_name,
+      name.to_s,
+      luid
+      )
 
     return API::LUID.new(luid) if result
     raise Puppet::Util::Windows::Error.new(
