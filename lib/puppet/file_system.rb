@@ -311,4 +311,15 @@ module Puppet::FileSystem
     @impl.path_string(path)
   end
 
+  # Create and open a file for write only if it doesn't exist.
+  #
+  # @see Puppet::FileSystem::open
+  #
+  # @raise [Errno::EEXIST] path already exists.
+  #
+  # @api public
+  #
+  def self.exclusive_create(path, mode, &block)
+    @impl.exclusive_create(assert_path(path), mode, &block)
+  end
 end
