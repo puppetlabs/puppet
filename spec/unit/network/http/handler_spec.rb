@@ -64,9 +64,33 @@ describe Puppet::Network::HTTP::Handler do
 
       handler.process(req, res)
 
-      expect(res[:body]).to eq("Not Found: No route for GET /vtest/foo")
+      res_body = JSON(res[:body])
+
+      expect(res[:content_type_header]).to eq("application/json")
+      expect(res_body["issue_kind"]).to eq("HANDLER_NOT_FOUND")
+      expect(res_body["message"]).to eq("Not Found: No route for GET /vtest/foo")
       expect(res[:status]).to eq(404)
     end
+
+    it "returns a structured error response with a stacktrace when the server encounters an internal error" do
+      handler = TestingHandler.new(
+        Puppet::Network::HTTP::Route.path(/.*/).get(lambda { |_, _| raise Exception.new("the sky is falling!")}))
+
+      req = a_request("GET", "/vtest/foo")
+      res = {}
+
+      handler.process(req, res)
+
+      res_body = JSON(res[:body])
+
+      expect(res[:content_type_header]).to eq("application/json")
+      expect(res_body["issue_kind"]).to eq(Puppet::Network::HTTP::Issues::RUNTIME_ERROR.to_s)
+      expect(res_body["message"]).to eq("Server Error: the sky is falling!")
+      expect(res_body["stacktrace"].is_a?(Array) && !res_body["stacktrace"].empty?).to be_true
+      expect(res_body["stacktrace"][0]).to match("spec/unit/network/http/handler_spec.rb")
+      expect(res[:status]).to eq(500)
+    end
+
   end
 
   describe "when processing a request" do
@@ -163,7 +187,7 @@ describe Puppet::Network::HTTP::Handler do
     end
 
     def set_content_type(response, format)
-      "my_result"
+     response[:content_type_header] = format
     end
 
     def set_response(response, body, status = 200)

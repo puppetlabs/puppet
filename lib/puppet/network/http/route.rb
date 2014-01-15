@@ -1,6 +1,6 @@
 class Puppet::Network::HTTP::Route
   MethodNotAllowedHandler = lambda do |req, res|
-    raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError, "method #{req.method} not allowed for route #{req.path}"
+    raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new("method #{req.method} not allowed for route #{req.path}", Puppet::Network::HTTP::Issues::UNSUPPORTED_METHOD)
   end
 
   attr_reader :path_matcher

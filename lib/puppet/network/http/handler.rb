@@ -8,9 +8,11 @@ require 'puppet/network/authentication'
 require 'puppet/network/rights'
 require 'puppet/util/profiler'
 require 'resolv'
+require 'json'
 
 module Puppet::Network::HTTP::Handler
   include Puppet::Network::Authentication
+  include Puppet::Network::HTTP::Issues
 
   # These shouldn't be allowed to be set by clients
   # in the query string, for security reasons.
@@ -63,7 +65,7 @@ module Puppet::Network::HTTP::Handler
         if route = @routes.find { |route| route.matches?(new_request) }
           route.process(new_request, new_response)
         else
-          raise Puppet::Network::HTTP::Error::HTTPNotFoundError, "No route for #{new_request.method} #{new_request.path}"
+          raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("No route for #{new_request.method} #{new_request.path}", HANDLER_NOT_FOUND)
         end
       end
     end
@@ -71,11 +73,13 @@ module Puppet::Network::HTTP::Handler
   rescue Puppet::Network::HTTP::Error::HTTPError => e
     msg = e.message
     Puppet.info(msg)
-    new_response.respond_with(e.status, "text/plain", msg)
+    structured_msg = JSON({:message => msg, :issue_kind => e.issue_kind})
+    new_response.respond_with(e.status, "application/json", structured_msg)
   rescue Exception => e
-    msg = e.message
-    Puppet.err(msg)
-    new_response.respond_with(500, "text/plain", msg)
+    http_e = Puppet::Network::HTTP::Error::HTTPServerError.new(e.message)
+    Puppet.err(http_e.message)
+    structured_msg = JSON({:message => http_e.message, :issue_kind => http_e.issue_kind, :stacktrace => e.backtrace})
+    new_response.respond_with(500, "application/json", structured_msg)
   ensure
     cleanup(request)
   end
