@@ -482,5 +482,23 @@ describe "Puppet::FileSystem" do
         Puppet::FileSystem.exist?(dir).should be_true
       end
     end
+
+    describe "exclusive_create" do
+      it "should create a file that doesn't exist" do
+        Puppet::FileSystem.exist?(missing_file).should be_false
+
+        Puppet::FileSystem.exclusive_create(missing_file, nil) {}
+
+        Puppet::FileSystem.exist?(missing_file).should be_true
+      end
+
+      it "should raise Errno::EEXIST creating a file that does exist" do
+        Puppet::FileSystem.exist?(file).should be_true
+
+        expect do
+          Puppet::FileSystem.exclusive_create(file, nil) {}
+        end.to raise_error(Errno::EEXIST)
+      end
+    end
   end
 end

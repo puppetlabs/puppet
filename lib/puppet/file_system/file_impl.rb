@@ -38,6 +38,11 @@ class Puppet::FileSystem::FileImpl
     path.size
   end
 
+  def exclusive_create(path, mode, &block)
+    opt = File::CREAT | File::EXCL | File::WRONLY
+    self.open(path, mode, opt, &block)
+  end
+
   def exclusive_open(path, mode, options = 'r', timeout = 300, &block)
     wait = 0.001 + (Kernel.rand / 1000)
     written = false
