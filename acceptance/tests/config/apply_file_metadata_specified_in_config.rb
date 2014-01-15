@@ -1,8 +1,5 @@
 test_name "#17371 file metadata specified in puppet.conf needs to be applied"
 
-# when owner/group works on windows for settings, this confine should be removed.
-confine :except, :platform => 'windows'
-
 require 'puppet/acceptance/temp_file_utils'
 extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs()

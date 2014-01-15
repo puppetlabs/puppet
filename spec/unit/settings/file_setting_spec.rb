@@ -36,10 +36,11 @@ describe Puppet::Settings::FileSetting do
 
         setting = FileSetting.new(:settings => settings, :owner => "root", :desc => "a setting")
 
-        setting.owner.should == "root"
+        setting.owner.should == FileSetting::Root.new.value
       end
 
-      it "is the service user if we are making users" do
+      it "is the service user if we are making users",
+        :unless => Puppet.features.microsoft_windows? do
         settings = settings(:user => "the_service", :mkusers => true, :service_user_available? => false)
 
         setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
@@ -60,7 +61,7 @@ describe Puppet::Settings::FileSetting do
 
         setting = FileSetting.new(:settings => settings, :owner => "service", :desc => "a setting")
 
-        setting.owner.should == "root"
+        setting.owner.should == FileSetting::Root.new.value
       end
 
       it "is unspecified when no specific owner is wanted" do
@@ -85,7 +86,7 @@ describe Puppet::Settings::FileSetting do
 
         setting = FileSetting.new(:settings => settings, :group => "root", :desc => "a setting")
 
-        setting.group.should == "root"
+        setting.group.should == FileSetting::Root.new.value
       end
 
       it "is the service group if we are making users" do
@@ -104,12 +105,14 @@ describe Puppet::Settings::FileSetting do
         setting.group.should == "the_service"
       end
 
-      it "is unspecified when the setting specifies service and the group is not available on the system" do
+      it "is a fallback default value (unspecified on POSIX, 'Service' on Windows) when the setting specifies service and the group is not available on the system" do
         settings = settings(:group => "the_service", :mkusers => false, :service_group_available? => false)
 
         setting = FileSetting.new(:settings => settings, :group => "service", :desc => "a setting")
 
-        setting.group.should be_nil
+        group = Puppet.features.microsoft_windows? ? Win32::Security::SID::Service : nil
+
+        setting.group.should == group
       end
 
       it "does not allow other groups" do
@@ -196,7 +199,6 @@ describe Puppet::Settings::FileSetting do
 
     it "should set the owner if running as root and the owner is provided" do
       Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
 
       @file.stubs(:owner).returns "foo"
       @file.to_resource[:owner].should == "foo"
@@ -212,7 +214,6 @@ describe Puppet::Settings::FileSetting do
 
     it "should set the group if running as root and the group is provided" do
       Puppet.features.expects(:root?).returns true
-      Puppet.features.stubs(:microsoft_windows?).returns false
 
       @file.stubs(:group).returns "foo"
       @file.to_resource[:group].should == "foo"
@@ -226,35 +227,16 @@ describe Puppet::Settings::FileSetting do
       @file.to_resource[:group].should == nil
     end
 
-
     it "should not set owner if not running as root" do
       Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
       @file.stubs(:owner).returns "foo"
       @file.to_resource[:owner].should be_nil
     end
 
     it "should not set group if not running as root" do
       Puppet.features.expects(:root?).returns false
-      Puppet.features.stubs(:microsoft_windows?).returns false
       @file.stubs(:group).returns "foo"
       @file.to_resource[:group].should be_nil
-    end
-
-    describe "on Microsoft Windows systems" do
-      before :each do
-        Puppet.features.stubs(:microsoft_windows?).returns true
-      end
-
-      it "should not set owner" do
-        @file.stubs(:owner).returns "foo"
-        @file.to_resource[:owner].should be_nil
-      end
-
-      it "should not set group" do
-        @file.stubs(:group).returns "foo"
-        @file.to_resource[:group].should be_nil
-      end
     end
 
     it "should set :ensure to the file type" do

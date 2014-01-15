@@ -138,6 +138,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
   end
 
   it "should be able to test whether a group exists" do
+    Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
     Puppet::Util::ADSI.stubs(:connect).returns stub('connection')
     provider.should be_exists
 
