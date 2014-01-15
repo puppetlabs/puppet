@@ -144,9 +144,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   def yum_compareEVR(should_hash, is_hash)
     # pass on to rpm labelCompare
     rc = compare_values(should_hash[:epoch], is_hash[:epoch])
-    return rc unless rc != 0
+    return rc unless rc == 0
     rc = compare_values(should_hash[:version], is_hash[:version])
-    return rc unless rc != 0
+    return rc unless rc == 0
 
     # here is our special case, PUP-1244.
     # if should_hash[:release] is nil (not specified by the user),
