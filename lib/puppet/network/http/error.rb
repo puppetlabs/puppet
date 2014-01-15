@@ -1,3 +1,5 @@
+require 'json'
+
 module Puppet::Network::HTTP::Error
   Issues = Puppet::Network::HTTP::Issues
 
@@ -8,6 +10,10 @@ module Puppet::Network::HTTP::Error
       super(message)
       @status = status
       @issue_kind = issue_kind
+    end
+
+    def to_json
+      JSON({:message => message, :issue_kind => @issue_kind})
     end
   end
 
@@ -48,8 +54,16 @@ module Puppet::Network::HTTP::Error
 
   class HTTPServerError < HTTPError
     CODE = 500
-    def initialize(message, issue_kind = Issues::RUNTIME_ERROR)
-      super("Server Error: " + message, CODE, issue_kind)
+
+    attr_reader :backtrace
+
+    def initialize(original_error, issue_kind = Issues::RUNTIME_ERROR)
+      super("Server Error: " + original_error.message, CODE, issue_kind)
+      @backtrace = original_error.backtrace
+    end
+
+    def to_json
+      JSON({:message => message, :issue_kind => @issue_kind, :stacktrace => self.backtrace})
     end
   end
 end

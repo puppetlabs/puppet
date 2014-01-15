@@ -8,7 +8,6 @@ require 'puppet/network/authentication'
 require 'puppet/network/rights'
 require 'puppet/util/profiler'
 require 'resolv'
-require 'json'
 
 module Puppet::Network::HTTP::Handler
   include Puppet::Network::Authentication
@@ -71,15 +70,12 @@ module Puppet::Network::HTTP::Handler
     end
 
   rescue Puppet::Network::HTTP::Error::HTTPError => e
-    msg = e.message
-    Puppet.info(msg)
-    structured_msg = JSON({:message => msg, :issue_kind => e.issue_kind})
-    new_response.respond_with(e.status, "application/json", structured_msg)
+    Puppet.info(e.message)
+    new_response.respond_with(e.status, "application/json", e.to_json)
   rescue Exception => e
-    http_e = Puppet::Network::HTTP::Error::HTTPServerError.new(e.message)
+    http_e = Puppet::Network::HTTP::Error::HTTPServerError.new(e)
     Puppet.err(http_e.message)
-    structured_msg = JSON({:message => http_e.message, :issue_kind => http_e.issue_kind, :stacktrace => e.backtrace})
-    new_response.respond_with(500, "application/json", structured_msg)
+    new_response.respond_with(http_e.status, "application/json", http_e.to_json)
   ensure
     cleanup(request)
   end
