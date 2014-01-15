@@ -66,8 +66,15 @@ module Puppet::Util::Execution
       Puppet.debug "Executing '#{command_str}'"
     end
 
-    output = open("| #{command_str} 2>&1") do |pipe|
-      yield pipe
+    # force the run of the command with
+    # the user/system locale to "C" (via environment variables LANG and LC_*)
+    # it enables to have non localized output for some commands and therefore
+    # a predictable output
+    english_env = ENV.to_hash.merge( {'LANG' => 'C', 'LC_ALL' => 'C'} )
+    output = Puppet::Util.withenv(english_env) do
+      open("| #{command_str} 2>&1") do |pipe|
+        yield pipe
+      end
     end
 
     if failonfail
