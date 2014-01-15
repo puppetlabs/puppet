@@ -350,6 +350,19 @@ module Puppet
       EOT
     end
 
+    newparam(:prefix) do
+      desc <<-EOT
+        Absolute path to an isolated environment or installation
+        prefix to install the package under. Currently only supported
+        by the pip provider, which expects this to the path to a Python
+        virtual environment (created by the virtualenv command).
+      EOT
+
+      validate do |value|
+        raise ArgumentError, "prefix parameter must be an absolute path: #{value}" if ! absolute_path?(value)
+      end
+    end
+
     autorequire(:file) do
       autos = []
       [:responsefile, :adminfile].each { |param|

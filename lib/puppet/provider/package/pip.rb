@@ -1,5 +1,5 @@
 # Puppet package provider for Python's `pip` package management frontend.
-# <http://pip.openplans.org/>
+# <http://www.pip-installer.org/>
 
 require 'puppet/provider/package'
 require 'xmlrpc/client'
@@ -23,6 +23,8 @@ Puppet::Type.type(:package).provide :pip,
 
   # Return an array of structured information about every installed package
   # that's managed by `pip` or an empty array if `pip` is not available.
+  # unfortunately this will only include system-wide packages, not ones
+  # installed within a virtualenv
   def self.instances
     packages = []
     pip_cmd = which(cmd) or return []
@@ -44,11 +46,40 @@ Puppet::Type.type(:package).provide :pip,
     end
   end
 
+  # venv pip if called with a venv, else self.cmd (system-wide)
+  def venvcmd
+    Puppet.debug("Provider::Pip using virtualenv #{@resource[:prefix]}")
+    if @resource[:prefix]
+      "#{@resource[:prefix]}/bin/pip"
+    else
+      case Facter.value(:osfamily)
+        when "RedHat"
+          "pip-python"
+        else
+          "pip"
+      end
+    end
+  end
+
   # Return structured information about a particular package or `nil` if
   # it is not installed or `pip` itself is not available.
   def query
-    self.class.instances.each do |provider_pip|
-      return provider_pip.properties if @resource[:name].downcase == provider_pip.name.downcase
+    # Lowercase comparison of python packages (pip treats them as equivalent
+    # anyway)
+    name = @resource[:name].downcase
+
+    if @resource[:prefix]
+      pip_cmd = which(venvcmd)
+      execpipe "#{pip_cmd} freeze" do |process|
+        process.collect do |line|
+          next unless options = self.class.parse(line)
+          return options if name == options[:name].downcase
+        end
+      end
+    else
+      self.class.instances.each do |provider_pip|
+        return provider_pip.properties if name == provider_pip.name.downcase
+      end
     end
     return nil
   end
@@ -72,6 +103,7 @@ Puppet::Type.type(:package).provide :pip,
   # gives the fully-qualified URL to the repository.
   def install
     args = %w{install -q}
+
     if @resource[:source]
       if String === @resource[:ensure]
         args << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{
@@ -109,7 +141,7 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if pathname = which(self.class.cmd)
+    if pathname = which(venvcmd)
       self.class.commands :pip => pathname
       pip *args
     else

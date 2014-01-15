@@ -44,6 +44,25 @@ describe provider_class do
 
   end
 
+  describe "venvcmd" do
+
+    it "should return venv pip path when prefix specified" do
+      @resource[:prefix] = "/path/to/prefix"
+      @provider.venvcmd.should == "/path/to/prefix/bin/pip"
+    end
+
+    it "should return pip-python on RedHat systems" do
+      Facter.stubs(:value).with(:osfamily).returns("RedHat")
+      @provider.venvcmd.should == 'pip-python'
+    end
+
+    it "should return pip by default" do
+      Facter.stubs(:value).with(:osfamily).returns("Not RedHat")
+      @provider.venvcmd.should == 'pip'
+    end
+
+  end
+
   describe "instances" do
 
     osfamilies.each do |osfamily, pip_cmd|
@@ -87,6 +106,31 @@ describe provider_class do
 
     it "should return nil when the package is missing" do
       provider_class.expects(:instances).returns []
+      @provider.query.should == nil
+    end
+
+    it "should return a hash when pip and the package are present in a venv" do
+      @resource[:prefix] = "/path/to/virtualenv"
+      @provider.expects(:venvcmd).returns("/path/to/virtualenv/bin/pip")
+      @provider.expects(:which).with("/path/to/virtualenv/bin/pip").returns("/path/to/virtualenv/bin/pip")
+      p = stub("process")
+      p.expects(:collect).yields("real_package==1.2.5")
+      @provider.expects(:execpipe).with("/path/to/virtualenv/bin/pip freeze").yields(p)
+
+      @provider.query.should == {
+        :ensure   => "1.2.5",
+        :name     => "real_package",
+        :provider => :pip,
+      }
+    end
+
+    it "should return nil when the package is missing from a venv" do
+      @resource[:prefix] = "/path/to/virtualenv"
+      @provider.expects(:venvcmd).returns("/path/to/virtualenv/bin/pip")
+      @provider.expects(:which).with("/path/to/virtualenv/bin/pip").returns("/path/to/virtualenv/bin/pip")
+      p = stub("process")
+      p.expects(:collect).yields("fake_package==1.2.5")
+      @provider.expects(:execpipe).with("/path/to/virtualenv/bin/pip freeze").yields(p)
       @provider.query.should == nil
     end
 
@@ -184,11 +228,28 @@ describe provider_class do
       @provider.install
     end
 
+    it "should install into a virtualenv" do
+      @resource[:ensure] = :installed
+      @resource[:source] = nil
+      @resource[:prefix] = "/path/to/virtualenv"
+      @provider.expects(:lazy_pip).
+        with("install", '-q', "fake_package")
+      @provider.install
+    end
+
   end
 
   describe "uninstall" do
 
     it "should uninstall" do
+      @resource[:name] = "fake_package"
+      @provider.expects(:lazy_pip).
+        with('uninstall', '-y', '-q', 'fake_package')
+      @provider.uninstall
+    end
+
+    it "should uninstall from a virtualenv" do
+      @resource[:prefix] = "/path/to/virtualenv"
       @resource[:name] = "fake_package"
       @provider.expects(:lazy_pip).
         with('uninstall', '-y', '-q', 'fake_package')
