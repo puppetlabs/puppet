@@ -11,6 +11,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
 
   let(:subject)      { SIDTester.new }
   let(:sid)          { Win32::Security::SID::LocalSystem }
+  let(:service_sid)  { Win32::Security::SID::Service }
   let(:invalid_sid)  { 'bogus' }
   let(:unknown_sid)  { 'S-0-0-0' }
   let(:unknown_name) { 'chewbacca' }
@@ -77,6 +78,11 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
 
     it "should be the identity function for any sid" do
       subject.name_to_sid(sid).should == sid
+    end
+
+    it "should map Puppet 'service' user to service group" do
+      # this test is only kept around to ensure the mapping never breaks
+      subject.name_to_sid('service').should == service_sid
     end
   end
 

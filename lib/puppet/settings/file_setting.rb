@@ -16,7 +16,11 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   # @api private
   class Root
     def value
-      "root"
+      if Puppet.features.microsoft_windows?
+        return Win32::Security::SID::BuiltinAdministrators
+      end
+
+      'root'
     end
   end
 
@@ -75,7 +79,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
              when "service"
                # Group falls back to `nil` because we cannot assume that a "root" group exists.
                # Some systems have root group, others have wheel, others have something else.
-               Service.new(:group, nil, @settings, :service_group_available?)
+               Service.new(:group, service_group_fallback, @settings, :service_group_available?)
              else
                unknown_value(':group', value)
              end
@@ -88,7 +92,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
              when "root"
                Root.new
              when "service"
-               Service.new(:user, "root", @settings, :service_user_available?)
+               Service.new(:user, service_owner_fallback, @settings, :service_user_available?)
              else
                unknown_value(':owner', value)
              end
@@ -155,8 +159,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
         resource[:mode] = mode
       end
 
-      # REMIND fails on Windows because chown/chgrp functionality not supported yet
-      if Puppet.features.root? and !Puppet.features.microsoft_windows?
+      if Puppet.features.root?
         resource[:owner] = self.owner if self.owner
         resource[:group] = self.group if self.group
       end
@@ -198,7 +201,22 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     end
   end
 
-  private
+private
+  def service_owner_fallback
+    if Puppet.features.microsoft_windows?
+      return Win32::Security::SID::BuiltinAdministrators
+    end
+    'root'
+  end
+
+  def service_group_fallback
+    # Service group includes all security principals that have logged on as a service.
+    # Membership is controlled by the operating system.
+    if Puppet.features.microsoft_windows?
+      return Win32::Security::SID::Service
+    end
+    nil
+  end
 
   def file
     Puppet::FileSystem.pathname(value)
