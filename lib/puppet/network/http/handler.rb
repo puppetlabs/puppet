@@ -1,7 +1,6 @@
 module Puppet::Network::HTTP
 end
 
-require 'puppet/environments'
 require 'puppet/network/http'
 require 'puppet/network/http/api/v1'
 require 'puppet/network/authentication'

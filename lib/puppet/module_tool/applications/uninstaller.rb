@@ -10,7 +10,7 @@ module Puppet::ModuleTool
         @unfiltered  = []
         @installed   = []
         @suggestions = []
-        @environment = Puppet::Node::Environment.new(options[:environment])
+        @environment = Puppet::Context.lookup(:environments).get(options[:environment])
       end
 
       def run

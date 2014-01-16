@@ -112,9 +112,40 @@ class Puppet::Node::Environment
 
     return seen[symbol] if seen[symbol]
 
-    obj = self.allocate
-    obj.send :initialize, symbol
+    obj = self.create(symbol,
+             split_path(Puppet.settings.value(:modulepath, symbol)),
+             Puppet.settings.value(:manifest, symbol))
     seen[symbol] = obj
+  end
+
+  # Create a new environment with the given name
+  #
+  # @param name [Symbol] the name of the
+  # @param modulepath [Array<String>] the list of paths from which to load modules
+  # @param manifest [String] the path to the manifest for the environment
+  # @return [Puppet::Node::Environment]
+  #
+  # @api public
+  def self.create(name, modulepath, manifest)
+    obj = self.allocate
+    obj.send(:initialize,
+             name,
+             validate_dirs(extralibs() + modulepath),
+             manifest)
+    obj
+  end
+
+  # Instantiate a new environment
+  #
+  # @note {Puppet::Node::Environment.new} is overridden to return memoized
+  #   objects, so this will not be invoked with the normal Ruby initialization
+  #   semantics.
+  #
+  # @param name [Symbol] The environment name
+  def initialize(name, modulepath, manifest)
+    @name = name
+    @modulepath = modulepath
+    @manifest = manifest
   end
 
   # Retrieve the environment for the current thread
@@ -153,7 +184,7 @@ class Puppet::Node::Environment
   #
   # @api private
   def self.root
-    @root ||= new(:'*root*')
+    @root ||= create(:'*root*', split_path(Puppet[:modulepath]), Puppet[:manifest])
   end
 
   # Clear all memoized environments and the 'current' environment
@@ -170,6 +201,11 @@ class Puppet::Node::Environment
   #     environment identifier
   attr_reader :name
 
+  # @!attribute [r] modulepath
+  #   @api public
+  #   @return [Array<String>] All directories present in the modulepath
+  attr_reader :modulepath
+
   # @!attribute [r] manifest
   #   @api public
   #   @return [String] path to the manifest file or directory.
@@ -183,19 +219,6 @@ class Puppet::Node::Environment
   # @return [Object] The resolved setting value
   def [](param)
     Puppet.settings.value(param, self.name)
-  end
-
-  # Instantiate a new environment
-  #
-  # @note {Puppet::Node::Environment.new} is overridden to return memoized
-  #   objects, so this will not be invoked with the normal Ruby initialization
-  #   semantics.
-  #
-  # @param name [Symbol] The environment name
-  def initialize(name)
-    @name = name
-    @modulepath = Puppet.settings.value(:modulepath, name)
-    @manifest = Puppet.settings.value(:manifest, name)
   end
 
   # The current global TypeCollection
@@ -273,21 +296,6 @@ class Puppet::Node::Environment
     found_mod and found_mod.forge_name == forge_name ?
       found_mod :
       nil
-  end
-
-  # @!attribute [r] modulepath
-  #   Return all existent directories in the modulepath for this environment
-  #   @note This value is cached so that the filesystem doesn't have to be
-  #     re-enumerated every time this method is invoked, since that
-  #     enumeration could be a costly operation and this method is called
-  #     frequently. The cache expiry is determined by `Puppet[:filetimeout]`.
-  #   @see Puppet::Util::Cacher.cached_attr
-  #   @api public
-  #   @return [Array<String>] All directories present in the modulepath
-  cached_attr(:modulepath, Puppet[:filetimeout]) do
-    dirs = @modulepath.split(File::PATH_SEPARATOR)
-    dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs if ENV["PUPPETLIB"]
-    validate_dirs(dirs)
   end
 
   # @!attribute [r] modules
@@ -447,21 +455,30 @@ class Puppet::Node::Environment
     self.to_s.to_zaml(z)
   end
 
+  private
+
+  def self.split_path(path_string)
+    path_string.split(File::PATH_SEPARATOR)
+  end
+
+  def self.extralibs()
+    if ENV["PUPPETLIB"]
+      split_path(ENV["PUPPETLIB"])
+    else
+      []
+    end
+  end
+
   # Validate a list of file paths and return the paths that are directories on the filesystem
-  #
-  # @api private
-  #
   # @param dirs [Array<String>] The file paths to validate
   # @return [Array<String>] All file paths that exist and are directories
-  def validate_dirs(dirs)
+  def self.validate_dirs(dirs)
     dirs.collect do |dir|
       File.expand_path(dir)
     end.find_all do |p|
       FileTest.directory?(p)
     end
   end
-
-  private
 
   # Reparse the manifests for the given environment
   #

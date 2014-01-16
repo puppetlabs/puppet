@@ -17,10 +17,6 @@ describe Puppet::Node::Environment do
   end
 
   shared_examples_for 'the environment' do
-    it "should use the filetimeout for the ttl for the modulepath" do
-      Puppet::Node::Environment.attr_ttl(:modulepath).should == Integer(Puppet[:filetimeout])
-    end
-
     it "should use the filetimeout for the ttl for the module list" do
       Puppet::Node::Environment.attr_ttl(:modules).should == Integer(Puppet[:filetimeout])
     end
@@ -128,29 +124,6 @@ describe Puppet::Node::Environment do
       end
     end
 
-    describe "when validating modulepath or manifestdir directories" do
-      before :each do
-        @path_one = tmpdir("path_one")
-        @path_two = tmpdir("path_one")
-        sep = File::PATH_SEPARATOR
-        Puppet[:modulepath] = "#{@path_one}#{sep}#{@path_two}"
-      end
-
-      it "should not return non-directories" do
-        FileTest.expects(:directory?).with(@path_one).returns true
-        FileTest.expects(:directory?).with(@path_two).returns false
-
-        env.validate_dirs([@path_one, @path_two]).should == [@path_one]
-      end
-
-      it "should use the current working directory to fully-qualify unqualified paths" do
-        FileTest.stubs(:directory?).returns true
-        two = File.expand_path("two")
-
-        env.validate_dirs([@path_one, 'two']).should == [@path_one, two]
-      end
-    end
-
     describe "when modeling a specific environment" do
       it "should have a method for returning the environment name" do
         Puppet::Node::Environment.new("testing").name.should == :testing
@@ -185,7 +158,7 @@ describe Puppet::Node::Environment do
 
       it "should return nil if asked for a module that does not exist in its path" do
         modpath = tmpdir('modpath')
-        env.modulepath = [modpath]
+        env = Puppet::Node::Environment.create(:testing, [modpath], '')
 
         env.module("one").should be_nil
       end
@@ -370,14 +343,6 @@ describe Puppet::Node::Environment do
           end
 
         end
-      end
-
-      it "should cache the module list" do
-        env.modulepath = %w{/a}
-        Dir.expects(:entries).once.with("/a").returns %w{foo}
-
-        env.modules
-        env.modules
       end
     end
 
