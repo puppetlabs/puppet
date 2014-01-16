@@ -130,7 +130,7 @@ class Puppet::Node::Environment
     obj = self.allocate
     obj.send(:initialize,
              name,
-             validate_dirs(extralibs() + modulepath),
+             expand_dirs(extralibs() + modulepath),
              manifest)
     obj
   end
@@ -201,10 +201,19 @@ class Puppet::Node::Environment
   #     environment identifier
   attr_reader :name
 
-  # @!attribute [r] modulepath
-  #   @api public
-  #   @return [Array<String>] All directories present in the modulepath
-  attr_reader :modulepath
+  # @api public
+  # @return [Array<String>] All directories present on disk in the modulepath
+  def modulepath
+    @modulepath.find_all do |p|
+      FileTest.directory?(p)
+    end
+  end
+
+  # @api public
+  # @return [Array<String>] All directories in the modulepath (even if they are not present on disk)
+  def full_modulepath
+    @modulepath
+  end
 
   # @!attribute [r] manifest
   #   @api public
@@ -469,14 +478,9 @@ class Puppet::Node::Environment
     end
   end
 
-  # Validate a list of file paths and return the paths that are directories on the filesystem
-  # @param dirs [Array<String>] The file paths to validate
-  # @return [Array<String>] All file paths that exist and are directories
-  def self.validate_dirs(dirs)
+  def self.expand_dirs(dirs)
     dirs.collect do |dir|
       File.expand_path(dir)
-    end.find_all do |p|
-      FileTest.directory?(p)
     end
   end
 

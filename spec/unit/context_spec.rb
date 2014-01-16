@@ -18,10 +18,9 @@ describe Puppet::Context do
     end
 
     it "fails if you try to pop off the top of the stack" do
-      root = Puppet::Context.pop
-      expect(root).to be_root
+      while !Puppet::Context.pop.root?; end
       expect { Puppet::Context.pop }.to raise_error(Puppet::Context::StackUnderflow)
-      # TestHelper expects to have something to pop in its after_each_test() 
+      # TestHelper expects to have something to pop in its after_each_test()
       Puppet::Context.push({})
     end
 
