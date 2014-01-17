@@ -50,4 +50,4 @@ is an active #puppet channel on Freenode.
 
 HTTP API
 --------
-{file:api/docs/http_api_index.md HTTP API Index}
+[HTTP API Index](api/docs/http_api_index.md)
