@@ -37,7 +37,7 @@ Documentation](https://github.com/puppetlabs/puppet/blob/master/README_DEVELOPER
 License
 -------
 
-See [LICENCE](LICENCE) file.
+See [LICENSE](LICENSE) file.
 
 Support
 -------
