@@ -10,7 +10,7 @@ describe Puppet::Type.type(:yumrepo) do
       Puppet::Type.type(:yumrepo).new(:name => "puppetlabs")[:name].should == "puppetlabs"
     end
 
-    [:baseurl, :cost, :descr, :enabled, :enablegroups, :exclude, :failovermethod, :gpgcheck, :gpgkey, :http_caching, 
+    [:baseurl, :cost, :descr, :enabled, :enablegroups, :exclude, :failovermethod, :gpgcheck, :repo_gpgcheck, :gpgkey, :http_caching, 
        :include, :includepkgs, :keepalive, :metadata_expire, :mirrorlist, :priority, :protect, :proxy, :proxy_username, :proxy_password, :timeout, 
        :sslcacert, :sslverify, :sslclientcert, :sslclientkey, :s3_enabled].each do |param|
       it "should have a '#{param}' parameter" do
@@ -20,19 +20,19 @@ describe Puppet::Type.type(:yumrepo) do
   end
 
   describe "When validating attribute values" do
-    [:cost, :enabled, :enablegroups, :failovermethod, :gpgcheck, :http_caching, :keepalive, :metadata_expire, :priority, :protect, :timeout].each do |param|
+    [:cost, :enabled, :enablegroups, :failovermethod, :gpgcheck, :repo_gpgcheck, :http_caching, :keepalive, :metadata_expire, :priority, :protect, :timeout].each do |param|
       it "should support :absent as a value to '#{param}' parameter" do
         Puppet::Type.type(:yumrepo).new(:name => "puppetlabs.repo", param => :absent)
       end
     end
 
-    [:cost, :enabled, :enablegroups, :gpgcheck, :keepalive, :metadata_expire, :priority, :protect, :timeout].each do |param|
+    [:cost, :enabled, :enablegroups, :gpgcheck, :repo_gpgcheck, :keepalive, :metadata_expire, :priority, :protect, :timeout].each do |param|
       it "should fail if '#{param}' is not a number" do
         lambda { Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "notanumber") }.should raise_error
       end
     end
 
-    [:enabled, :enabledgroups, :gpgcheck, :keepalive, :protect, :s3_enabled].each do |param|
+    [:enabled, :enabledgroups, :gpgcheck, :repo_gpgcheck, :keepalive, :protect, :s3_enabled].each do |param|
       it "should fail if '#{param}' does not have one of the following values (0|1)" do
         lambda { Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "2") }.should raise_error
       end
@@ -97,6 +97,7 @@ describe Puppet::Type.type(:yumrepo) do
           :baseurl => "http://example.com/yum/$releasever/$basearch/os/",
           :enabled => "1",
           :gpgcheck => "1",
+          :repo_gpgcheck => "1",
           :includepkgs => "absent",
           :gpgkey => "file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora",
           :proxy => "http://proxy.example.com:80/",
@@ -175,6 +176,7 @@ name=Fedora Core $releasever - $basearch - Base
 baseurl=http://example.com/yum/$releasever/$basearch/os/
 enabled=1
 gpgcheck=1
+repo_gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora
 proxy=http://proxy.example.com:80/
 proxy_username=username
@@ -187,6 +189,7 @@ name=Fedora Core $releasever - $basearch - Base
 mirrorlist=http://fedora.redhat.com/download/mirrors/fedora-core-$releasever
 enabled=1
 gpgcheck=1
+repo_gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora
 exclude=foo
   bar
