@@ -268,6 +268,20 @@ describe Puppet::Parser::Scope do
         @scope["other::deep::klass::var"].should be_nil
       end
     end
+
+    context "and strict_variables is true" do
+      before(:each) do
+        Puppet[:strict_variables] = true
+      end
+
+      it "should raise an error when unknown variable is looked up" do
+        expect { @scope['john_doe'] }.to raise_error(/Undefined variable/)
+      end
+
+      it "should raise an error when unknown qualified variable is looked up" do
+        expect { @scope['nowhere::john_doe'] }.to raise_error(/Undefined variable/)
+      end
+    end
   end
 
   describe "when variables are set with append=true" do
