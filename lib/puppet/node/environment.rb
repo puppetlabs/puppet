@@ -148,7 +148,7 @@ class Puppet::Node::Environment
     @manifest = manifest
   end
 
-  # Retrieve the environment for the current thread
+  # Retrieve the environment for the current process.
   #
   # @note This should only used when a catalog is being compiled.
   #
@@ -157,25 +157,9 @@ class Puppet::Node::Environment
   # @return [Puppet::Node::Environment] the currently set environment if one
   #   has been explicitly set, else it will return the '*root*' environment
   def self.current
-    $environment || root
+    Puppet.deprecation_warning("Remove me.")
+    Puppet::Context.lookup(:current_environment)
   end
-
-  # Set the environment for the current thread
-  #
-  # @note This should only set when a catalog is being compiled. Under normal
-  #   This value is initially set in {Puppet::Parser::Compiler#environment}
-  #
-  # @note Setting this affects global state during catalog compilation, and
-  #   changing the current environment during compilation can cause unexpected
-  #   and generally very bad behaviors.
-  #
-  # @api private
-  #
-  # @param env [Puppet::Node::Environment]
-  def self.current=(env)
-    $environment = new(env)
-  end
-
 
   # @return [Puppet::Node::Environment] The `*root*` environment.
   #

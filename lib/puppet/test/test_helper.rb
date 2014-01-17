@@ -40,7 +40,9 @@ module Puppet::Test
     #  any individual tests.
     # @return nil
     def self.before_all_tests()
-      Puppet::Parser::Functions.reset
+      # Make sure that all of the setup is also done for any before(:all) blocks
+      Puppet::Context.push(Puppet::Context.initial_context, "Initial for specs")
+      self.before_each_test()
     end
 
     # Call this method once, at the end of a test run, when no more tests
@@ -84,17 +86,21 @@ module Puppet::Test
 
       initialize_settings_before_each()
 
-      Puppet::Node::Environment.clear
+      Puppet::Context.push(
+        {
+          :trusted_information =>
+            Puppet::Context::TrustedInformation.new('local', 'testing', {}),
+        },
+        "Context for specs")
+
       Puppet::Parser::Functions.reset
+      Puppet::Node::Environment.clear
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
 
       Puppet.clear_deprecation_warnings
 
       Puppet::DataBinding::Hiera.instance_variable_set("@hiera", nil)
-
-      Puppet::Context.push(:trusted_information =>
-                           Puppet::Context::TrustedInformation.new('local', 'testing', {}))
     end
 
     # Call this method once per test, after execution of each individual test.
