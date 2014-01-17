@@ -65,6 +65,28 @@ Puppet::Type.newtype(:resources) do
     }
   end
 
+  newparam(:unless_uid) do
+     desc "This keeps specific uids or ranges of uids from being purged when purge is true.
+       Accepts ranges, integers and (mixed) arrays of both."
+
+     munge do |value|
+       case value
+       when /^\d+/
+         [Integer(value)]
+       when Integer
+         [value]
+       when Range
+         [value]
+       when Array
+         value
+       when /^\[\d+/
+         value.split(',').collect{|x| x.include?('..') ? Integer(x.split('..')[0])..Integer(x.split('..')[1]) : Integer(x) }
+       else
+         raise ArgumentError, "Invalid value #{value.inspect}"
+       end
+     end
+   end
+
   def check(resource)
     @checkmethod ||= "#{self[:name]}_check"
     @hascheck ||= respond_to?(@checkmethod)
@@ -112,18 +134,25 @@ Puppet::Type.newtype(:resources) do
     @resource_type
   end
 
-  # Make sure we don't purge users below a certain uid, if the check
-  # is enabled.
+  # Make sure we don't purge users with specific uids
   def user_check(resource)
     return true unless self[:name] == "user"
     return true unless self[:unless_system_user]
-
     resource[:audit] = :uid
+    current_values = resource.retrieve_resource
+    current_uid = current_values[resource.property(:uid)]
+    unless_uids = self[:unless_uid]
 
     return false if system_users.include?(resource[:name])
 
-    current_values = resource.retrieve_resource
-    current_values[resource.property(:uid)] > self[:unless_system_user]
+    if unless_uids && unless_uids.length > 0
+      unless_uids.each do |unless_uid|
+        return false if unless_uid == current_uid
+        return false if unless_uid.respond_to?('include?') && unless_uid.include?(current_uid)
+      end
+    end
+
+    current_uid > self[:unless_system_user]
   end
 
   def system_users
