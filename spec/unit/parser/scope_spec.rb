@@ -190,18 +190,6 @@ describe Puppet::Parser::Scope do
       @scope.should_not be_include("var")
     end
 
-#    it "should support iteration over its variables" do
-#      @scope["one"] = "two"
-#      @scope["three"] = "four"
-#      hash = {}
-#      @scope.each { |name, value| hash[name] = value }
-#      hash.should == {"one" => "two", "three" => "four" }
-#    end
-
-#    it "should include Enumerable" do
-#      @scope.singleton_class.ancestors.should be_include(Enumerable)
-#    end
-
     describe "and the variable is qualified" do
       before :each do
         @known_resource_types = @scope.known_resource_types
@@ -278,6 +266,20 @@ describe Puppet::Parser::Scope do
         @scope.stubs(:warning)
         klass = newclass("other::deep::klass")
         @scope["other::deep::klass::var"].should be_nil
+      end
+    end
+
+    context "and strict_variables is true" do
+      before(:each) do
+        Puppet[:strict_variables] = true
+      end
+
+      it "should raise an error when unknown variable is looked up" do
+        expect { @scope['john_doe'] }.to raise_error(/Undefined variable/)
+      end
+
+      it "should raise an error when unknown qualified variable is looked up" do
+        expect { @scope['nowhere::john_doe'] }.to raise_error(/Undefined variable/)
       end
     end
   end
@@ -463,19 +465,6 @@ describe Puppet::Parser::Scope do
         @scope.set_match_data({0 => :value2})
         @scope.include?("1").should be_false
       end
-
-#      # TODO: Stupid test - nothing but tests use the remove all ephemeral
-#      describe "when calling unset_ephemeral_var without a level" do
-#        it "should remove all the variables values"  do
-#          @scope.setvar("1", :value1, :ephemeral => true)
-#          @scope.new_ephemeral
-#          @scope.setvar("1", :value2, :ephemeral => true)
-#
-#          @scope.unset_ephemeral_var
-#
-#          @scope["1"].should be_nil
-#        end
-#      end
 
       describe "when calling unset_ephemeral_var with a level" do
         it "should remove ephemeral scopes up to this level" do

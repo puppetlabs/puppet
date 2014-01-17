@@ -366,14 +366,19 @@ class Puppet::Parser::Scope
       if next_scope
         next_scope.lookupvar(name, options)
       else
-        variable_not_found()
+        variable_not_found(name)
       end
     end
   end
 
-  def variable_not_found
+  def variable_not_found(name, reason=nil)
     if Puppet[:strict_variables]
-      throw :undefined_variable
+      if Puppet[:evaluator] == 'future' && Puppet[:parser] == 'future'
+        throw :undefined_variable
+      else
+        reason_msg = reason.nil? ? '' : "; #{reason}"
+        raise Puppet::ParseError, "Undefined variable #{name.inspect}#{reason_msg}"
+      end
     else
       nil
     end
@@ -443,15 +448,18 @@ class Puppet::Parser::Scope
         qualified_scope(class_name).lookupvar(variable_name, position)
       end
     rescue RuntimeError => e
-      location = if position[:lineproc]
-                   " at #{position[:lineproc].call}"
-                 elsif position[:file] && position[:line]
-                   " at #{position[:file]}:#{position[:line]}"
-                 else
-                   ""
-                 end
-      warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{e.message}#{location}"
-      variable_not_found()
+      unless Puppet[:strict_variables]
+        # Do not issue warning if strict variables are on, as an error will be raised by variable_not_found
+        location = if position[:lineproc]
+                     " at #{position[:lineproc].call}"
+                   elsif position[:file] && position[:line]
+                     " at #{position[:file]}:#{position[:line]}"
+                   else
+                     ""
+                   end
+        warning "Could not look up qualified variable '#{class_name}::#{variable_name}'; #{e.message}#{location}"
+      end
+      variable_not_found("#{class_name}::#{variable_name}", e.message)
     end
   end
 
