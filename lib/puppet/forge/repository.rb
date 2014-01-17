@@ -2,7 +2,6 @@ require 'net/https'
 require 'digest/sha1'
 require 'uri'
 require 'puppet/util/http_proxy'
-require 'puppet/forge/errors'
 
 if Puppet.features.zlib? && Puppet[:zlib]
   require 'zlib'

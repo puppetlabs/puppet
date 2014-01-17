@@ -1,9 +1,7 @@
 # encoding: utf-8
 require 'spec_helper'
 require 'net/http'
-require 'puppet/forge/repository'
-require 'puppet/forge/cache'
-require 'puppet/forge/errors'
+require 'puppet/forge'
 
 describe Puppet::Forge::Repository do
   let(:consumer_version) { "Test/1.0" }
