@@ -99,7 +99,7 @@ class Puppet::Parser::Compiler
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile
-    Puppet::Context.override({ :current_environment => environment }, "For compiling #{node.name}") do
+    Puppet.override({ :current_environment => environment }, "For compiling #{node.name}") do
       # Set the client's parameters into the top scope.
       Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
 

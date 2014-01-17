@@ -18,7 +18,7 @@ module Puppet::ModuleTool
       def initialize(name, forge, install_dir, options = {})
         super(options)
         @action              = :install
-        @environment         = Puppet::Context.lookup(:environments).get(Puppet[:environment])
+        @environment         = Puppet.lookup(:environments).get(Puppet[:environment])
         @force               = options[:force]
         @ignore_dependencies = options[:force] || options[:ignore_dependencies]
         @name                = name

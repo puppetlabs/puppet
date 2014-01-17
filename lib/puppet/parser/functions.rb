@@ -41,7 +41,7 @@ module Puppet::Parser::Functions
   # environment
   #
   # @api private
-  def self.environment_module(env = Puppet::Context.lookup(:current_environment))
+  def self.environment_module(env = Puppet.lookup(:current_environment))
     if env and ! env.is_a?(Puppet::Node::Environment)
       env = Puppet::Node::Environment.new(env)
     end
@@ -118,7 +118,7 @@ module Puppet::Parser::Functions
   # @api public
   def self.newfunction(name, options = {}, &block)
     name = name.intern
-    environment = Puppet::Context.lookup(:current_environment)
+    environment = Puppet.lookup(:current_environment)
 
     Puppet.warning "Overwriting previous definition for function #{name}" if get_function(name, environment)
 
@@ -166,7 +166,7 @@ module Puppet::Parser::Functions
   #   otherwise false.
   #
   # @api public
-  def self.function(name, environment = Puppet::Context.lookup(:current_environment))
+  def self.function(name, environment = Puppet.lookup(:current_environment))
     name = name.intern
 
     func = nil
@@ -182,7 +182,7 @@ module Puppet::Parser::Functions
     end
   end
 
-  def self.functiondocs(environment = Puppet::Context.lookup(:current_environment))
+  def self.functiondocs(environment = Puppet.lookup(:current_environment))
     autoloader.loadall
 
     ret = ""
@@ -208,7 +208,7 @@ module Puppet::Parser::Functions
   # @return [Boolean] whether it is an rvalue function
   #
   # @api public
-  def self.rvalue?(name, environment = Puppet::Context.lookup(:current_environment))
+  def self.rvalue?(name, environment = Puppet.lookup(:current_environment))
     func = get_function(name, environment)
     func ? func[:type] == :rvalue : false
   end
@@ -221,7 +221,7 @@ module Puppet::Parser::Functions
   #   the meaning of negative values.
   #
   # @api public
-  def self.arity(name, environment = Puppet::Context.lookup(:current_environment))
+  def self.arity(name, environment = Puppet.lookup(:current_environment))
     func = get_function(name, environment)
     func ? func[:arity] : -1
   end

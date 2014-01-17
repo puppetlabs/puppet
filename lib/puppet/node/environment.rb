@@ -47,10 +47,6 @@ end
 # that are not bound to a specific environment. The main case for this is for
 # logging functions. Logging functions are attached to the 'root' environment
 # when {Puppet::Parser::Functions.reset} is called.
-#
-# The root environment is also used as a fallback environment when the
-# current environment has been requested by {Puppet::Node::Environment.current}
-# requested and no environment was set by {Puppet::Node::Environment.current=}
 class Puppet::Node::Environment
 
   # This defines a mixin for classes that have an environment. It implements
@@ -158,7 +154,7 @@ class Puppet::Node::Environment
   #   has been explicitly set, else it will return the '*root*' environment
   def self.current
     Puppet.deprecation_warning("Remove me.")
-    Puppet::Context.lookup(:current_environment)
+    Puppet.lookup(:current_environment)
   end
 
   # @return [Puppet::Node::Environment] The `*root*` environment.

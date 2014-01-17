@@ -167,7 +167,7 @@ Puppet::Face.define(:module, '1.0.0') do
   end
 
   def environment_from_options(options)
-    environments = Puppet::Context.lookup(:environments)
+    environments = Puppet.lookup(:environments)
     if options[:modulepath]
       environments.for(options[:modulepath], '')
     elsif options[:environment]

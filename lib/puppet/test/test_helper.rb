@@ -41,7 +41,7 @@ module Puppet::Test
     # @return nil
     def self.before_all_tests()
       # Make sure that all of the setup is also done for any before(:all) blocks
-      Puppet::Context.push(Puppet::Context.initial_context, "Initial for specs")
+      Puppet.push_context(Puppet.initial_context, "Initial for specs")
       self.before_each_test()
     end
 
@@ -86,7 +86,7 @@ module Puppet::Test
 
       initialize_settings_before_each()
 
-      Puppet::Context.push(
+      Puppet.push_context(
         {
           :trusted_information =>
             Puppet::Context::TrustedInformation.new('local', 'testing', {}),
@@ -147,7 +147,7 @@ module Puppet::Test
       $LOAD_PATH.clear
       $old_load_path.each {|x| $LOAD_PATH << x }
 
-      Puppet::Context.pop
+      Puppet.pop_context
     end
 
 

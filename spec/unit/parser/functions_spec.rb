@@ -6,7 +6,7 @@ describe Puppet::Parser::Functions do
     Class.new { include mod }.new
   end
 
-  let(:function_module) { Puppet::Parser::Functions.environment_module(Puppet::Context.lookup(:current_environment)) }
+  let(:function_module) { Puppet::Parser::Functions.environment_module(Puppet.lookup(:current_environment)) }
 
   before do
     Puppet::Parser::Functions.reset
@@ -73,12 +73,12 @@ describe Puppet::Parser::Functions do
     end
 
     it "combines functions from the root with those from the current environment" do
-      Puppet::Context.override(:current_environment => Puppet::Node::Environment.root) do
+      Puppet.override(:current_environment => Puppet::Node::Environment.root) do
         Puppet::Parser::Functions.newfunction("onlyroot", :type => :rvalue) do |args|
         end
       end
 
-      Puppet::Context.override(:current_environment => Puppet::Node::Environment.create(:other, [''], '')) do
+      Puppet.override(:current_environment => Puppet::Node::Environment.create(:other, [''], '')) do
         Puppet::Parser::Functions.newfunction("other_env", :type => :rvalue) do |args|
         end
 

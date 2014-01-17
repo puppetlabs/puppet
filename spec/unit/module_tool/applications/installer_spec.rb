@@ -26,7 +26,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
   end
 
   around :each do |example|
-    Puppet::Context.override(:environments => Puppet::Environments::Static.new(env)) do
+    Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
       example.run
     end
   end

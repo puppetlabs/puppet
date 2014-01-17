@@ -28,7 +28,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
     let(:uninstaller) { Puppet::ModuleTool::Applications::Uninstaller.new("puppetlabs-foo", options) }
 
     around :each do |example|
-      Puppet::Context.override(:environments => Puppet::Environments::Static.new(env)) do
+      Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
         example.run
       end
     end

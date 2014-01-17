@@ -21,7 +21,7 @@ describe "puppet module list" do
   end
 
   around do |example|
-    Puppet::Context.override(:environments => Puppet::Environments::Legacy.new()) do
+    Puppet.override(:environments => Puppet::Environments::Legacy.new()) do
       example.run
     end
   end
@@ -56,7 +56,7 @@ describe "puppet module list" do
 
     usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2], '')
 
-    Puppet::Context.override(:environments => Puppet::Environments::Static.new(usedenv)) do
+    Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
       Puppet::Face[:module, :current].list(:environment => 'useme').should == {
         @modpath1 => [
           Puppet::Module.new('bar', barmod.path, usedenv),

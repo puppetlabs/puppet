@@ -27,6 +27,6 @@ module Puppet::Network::HTTP::API::V2
     end)
 
   ENVIRONMENTS = path(%r{^/environments$}).get(provide do
-    Environments.new(Puppet::Context.lookup(:environments))
+    Environments.new(Puppet.lookup(:environments))
   end)
 end
