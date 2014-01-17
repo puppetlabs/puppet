@@ -202,7 +202,7 @@ module Puppet
   end
 
   # Lookup a binding by name or return a default value provided by a passed block (if given).
-  # @api public
+  # @api private
   def self.lookup(name, &block)
     @context.lookup(name, &block)
   end
@@ -210,7 +210,7 @@ module Puppet
   # @param bindings [Hash] A hash of bindings to be merged with the parent context.
   # @param description [String] A description of the context.
   # @yield [] A block executed in the context of the temporarily pushed bindings.
-  # @api public
+  # @api private
   def self.override(bindings, description = "", &block)
     @context.override(bindings, description, &block)
   end
