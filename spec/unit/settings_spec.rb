@@ -1229,8 +1229,7 @@ describe Puppet::Settings do
       @settings.to_catalog
     end
 
-    describe "on Microsoft Windows",
-      :if => Puppet.features.microsoft_windows? do
+    describe "on Microsoft Windows" do
       before :each do
         Puppet.features.stubs(:root?).returns true
         Puppet.features.stubs(:microsoft_windows?).returns true
