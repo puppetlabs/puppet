@@ -5,9 +5,17 @@ require 'spec_helper'
 require 'puppet/util/windows'
 
 describe "Puppet::Util::Windows::String", :if => Puppet.features.microsoft_windows? do
+  UTF16_NULL = [0, 0]
 
   def wide_string(str)
     Puppet::Util::Windows::String.wide_string(str)
+  end
+
+  def converts_to_wide_string(string_value)
+    expected = string_value.encode(Encoding::UTF_16LE)
+    expected_bytes = expected.bytes.to_a + UTF16_NULL
+
+    wide_string(string_value).bytes.to_a.should == expected_bytes
   end
 
   context "wide_string" do
@@ -20,51 +28,27 @@ describe "Puppet::Util::Windows::String", :if => Puppet.features.microsoft_windo
     end
 
     it "should convert an ASCII string" do
-      string_value = "bob".encode(Encoding::US_ASCII)
-      result = wide_string(string_value)
-      expected = string_value.encode(Encoding::UTF_16LE)
-
-      result.bytes.to_a.should == expected.bytes.to_a
+      converts_to_wide_string("bob".encode(Encoding::US_ASCII))
     end
 
     it "should convert a UTF-8 string" do
-      string_value = "bob".encode(Encoding::UTF_8)
-      result = wide_string(string_value)
-      expected = string_value.encode(Encoding::UTF_16LE)
-
-      result.bytes.to_a.should == expected.bytes.to_a
+      converts_to_wide_string("bob".encode(Encoding::UTF_8))
     end
 
     it "should convert a UTF-16LE string" do
-      string_value = "bob\u00E8".encode(Encoding::UTF_16LE)
-      result = wide_string(string_value)
-      expected = string_value.encode(Encoding::UTF_16LE)
-
-      result.bytes.to_a.should == expected.bytes.to_a
+      converts_to_wide_string("bob\u00E8".encode(Encoding::UTF_16LE))
     end
 
     it "should convert a UTF-16BE string" do
-      string_value = "bob\u00E8".encode(Encoding::UTF_16BE)
-      result = wide_string(string_value)
-      expected = string_value.encode(Encoding::UTF_16LE)
-
-      result.bytes.to_a.should == expected.bytes.to_a
+      converts_to_wide_string("bob\u00E8".encode(Encoding::UTF_16BE))
     end
 
     it "should convert an UTF-32LE string" do
-      string_value = "bob\u00E8".encode(Encoding::UTF_32LE)
-      result = wide_string(string_value)
-      expected = string_value.encode(Encoding::UTF_16LE)
-
-      result.bytes.to_a.should == expected.bytes.to_a
+      converts_to_wide_string("bob\u00E8".encode(Encoding::UTF_32LE))
     end
 
     it "should convert an UTF-32BE string" do
-      string_value = "bob\u00E8".encode(Encoding::UTF_32BE)
-      result = wide_string(string_value)
-      expected = string_value.encode(Encoding::UTF_16LE)
-
-      result.bytes.to_a.should == expected.bytes.to_a
+      converts_to_wide_string("bob\u00E8".encode(Encoding::UTF_32BE))
     end
   end
 end
