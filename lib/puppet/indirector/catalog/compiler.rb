@@ -41,7 +41,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     extract_facts_from_request(request)
 
     node = node_from_request(request)
-    node.trusted_data = Puppet::Context.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
+    node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
     if catalog = compile(node)
       return catalog

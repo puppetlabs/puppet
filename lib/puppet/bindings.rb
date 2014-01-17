@@ -74,7 +74,7 @@ class Puppet::Bindings
   end
 
   def self.register_proc(name, block)
-    adapter = NamedBindingsAdapter.adapt(Environment.current)
+    adapter = NamedBindingsAdapter.adapt(Puppet.lookup(:current_environment))
     adapter[name] = block
   end
 
@@ -83,7 +83,7 @@ class Puppet::Bindings
   # @api public
   #
   def self.register(named_bindings)
-    adapter = NamedBindingsAdapter.adapt(Environment.current)
+    adapter = NamedBindingsAdapter.adapt(Puppet.lookup(:current_environment))
     adapter[named_bindings.name] = named_bindings
   end
 
@@ -91,7 +91,7 @@ class Puppet::Bindings
     entry = get(name)
     return entry unless entry.is_a?(Proc)
     named_bindings = Puppet::Pops::Binder::BindingsFactory.safe_named_bindings(name, scope, &entry).model
-    adapter = NamedBindingsAdapter.adapt(Environment.current)
+    adapter = NamedBindingsAdapter.adapt(Puppet.lookup(:current_environment))
     adapter[named_bindings.name] = named_bindings
     named_bindings
   end
@@ -102,7 +102,7 @@ class Puppet::Bindings
   # @api public
   #
   def self.get(name)
-    adapter = NamedBindingsAdapter.adapt(Environment.current)
+    adapter = NamedBindingsAdapter.adapt(Puppet.lookup(:current_environment))
     adapter[name]
   end
 
@@ -112,7 +112,7 @@ class Puppet::Bindings
 
   # Supports Enumerable iteration (k,v) over the named bindings hash.
   def self.each
-    adapter = NamedBindingsAdapter.adapt(Environment.current)
+    adapter = NamedBindingsAdapter.adapt(Puppet.lookup(:current_environment))
     adapter.each_pair {|k,v| yield k,v }
   end
 

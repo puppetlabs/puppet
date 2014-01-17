@@ -10,7 +10,7 @@ module Puppet::ModuleTool
         @unfiltered  = []
         @installed   = []
         @suggestions = []
-        @environment = Puppet::Node::Environment.new(options[:environment])
+        @environment = Puppet.lookup(:environments).get(options[:environment])
       end
 
       def run
@@ -86,12 +86,15 @@ module Puppet::ModuleTool
       def validate_module
         mod = @installed.first
 
-        if !@options[:force] && mod.has_metadata? && mod.has_local_changes?
-          raise LocalChangesError,
-            :action            => :uninstall,
-            :module_name       => (mod.forge_name || mod.name).gsub('/', '-'),
-            :requested_version => @options[:version],
-            :installed_version => mod.version
+        if !@options[:force] && mod.has_metadata?
+          changes = Puppet::ModuleTool::Applications::Checksummer.run(mod.path)
+          if !changes.empty?
+            raise LocalChangesError,
+              :action            => :uninstall,
+              :module_name       => (mod.forge_name || mod.name).gsub('/', '-'),
+              :requested_version => @options[:version],
+              :installed_version => mod.version
+          end
         end
 
         if !@options[:force] && !mod.required_by.empty?

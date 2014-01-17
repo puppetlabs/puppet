@@ -6,19 +6,30 @@ require 'semver'
 describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
-  before do
-    FileUtils.mkdir_p(modpath1)
-    fake_env.modulepath = [modpath1]
-    FileUtils.touch(stdlib_pkg)
-    Puppet.settings[:modulepath] = modpath1
-  end
-
   let(:unpacker)        { stub(:run) }
   let(:installer_class) { Puppet::ModuleTool::Applications::Installer }
-  let(:modpath1)        { File.join(tmpdir("installer"), "modpath1") }
-  let(:stdlib_pkg)      { File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz") }
-  let(:fake_env)        { Puppet::Node::Environment.new('fake_env') }
+  let(:modpath1) do
+    path = File.join(tmpdir("installer"), "modpath1")
+    FileUtils.mkdir_p(path)
+    path
+  end
+  let(:stdlib_pkg) do
+    mod = File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz")
+    FileUtils.touch(mod)
+    mod
+  end
+  let(:env)             { Puppet::Node::Environment.create(:env, [modpath1], '') }
   let(:options)         { { :target_dir => modpath1 } }
+
+  before do
+    Puppet[:environment] = :env
+  end
+
+  around :each do |example|
+    Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
+      example.run
+    end
+  end
 
   let(:forge) do
     forge = mock("Puppet::Forge")

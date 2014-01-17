@@ -303,11 +303,8 @@ class Puppet::Resource
   # Convert our resource to a RAL resource instance.  Creates component
   # instances for resource types that don't exist.
   def to_ral
-    if typeklass = Puppet::Type.type(self.type)
-      return typeklass.new(self)
-    else
-      return Puppet::Type::Component.new(self)
-    end
+    typeklass = Puppet::Type.type(self.type) || Puppet::Type.type(:component)
+    typeklass.new(self)
   end
 
   def name

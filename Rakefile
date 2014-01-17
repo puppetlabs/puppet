@@ -64,5 +64,5 @@ task :default do
 end
 
 task :spec do
-  sh %{rspec #{ENV['TESTS'] || 'spec'}}
+  sh %{rspec #{ENV['TEST'] || ENV['TESTS'] || 'spec'}}
 end

@@ -156,7 +156,7 @@ module Manager
     end
 
     # Try loading the type.
-    if typeloader.load(name, Puppet::Node::Environment.current)
+    if typeloader.load(name, Puppet.lookup(:current_environment))
       Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
     end
 

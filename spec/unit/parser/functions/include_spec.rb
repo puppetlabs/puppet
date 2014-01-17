@@ -7,7 +7,6 @@ describe "the 'include' function" do
   end
 
   before :each do
-    Puppet::Node::Environment.stubs(:current).returns(nil)
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
     @scope = Puppet::Parser::Scope.new(@compiler)
   end

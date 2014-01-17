@@ -99,42 +99,40 @@ class Puppet::Parser::Compiler
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile
-    # Set the client's parameters into the top scope.
-    Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
+    Puppet.override({ :current_environment => environment }, "For compiling #{node.name}") do
+      # Set the client's parameters into the top scope.
+      Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
 
-    Puppet::Util::Profiler.profile("Compile: Created settings scope") { create_settings_scope }
+      Puppet::Util::Profiler.profile("Compile: Created settings scope") { create_settings_scope }
 
-    if is_binder_active?
-      Puppet::Util::Profiler.profile("Compile: Created injector") { create_injector }
+      if is_binder_active?
+        Puppet::Util::Profiler.profile("Compile: Created injector") { create_injector }
+      end
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
+
+      Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
+
+      fail_on_unevaluated
+
+      @catalog
     end
-
-    Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
-
-    Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
-
-    Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
-
-    Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
-
-    Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
-
-    fail_on_unevaluated
-
-    @catalog
   end
 
   def_delegator :@collections, :delete, :delete_collection
 
   # Return the node's environment.
   def environment
-    unless defined?(@environment)
-      unless node.environment.is_a? Puppet::Node::Environment
-        raise Puppet::DevError, "node #{node} has an invalid environment!"
-      end
-      @environment = node.environment
+    unless node.environment.is_a? Puppet::Node::Environment
+      raise Puppet::DevError, "node #{node} has an invalid environment!"
     end
-    Puppet::Node::Environment.current = @environment
-    @environment
+    node.environment
   end
 
   # Evaluate all of the classes specified by the node.

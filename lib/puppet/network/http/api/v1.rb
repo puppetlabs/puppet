@@ -43,7 +43,7 @@ class Puppet::Network::HTTP::API::V1
     end
 
     trusted = Puppet::Context::TrustedInformation.remote(params[:authenticated], params[:node], certificate)
-    Puppet::Context.override(:trusted_information => trusted) do
+    Puppet.override(:trusted_information => trusted) do
       send("do_#{method}", indirection, key, params, request, response)
     end
   rescue Puppet::Network::HTTP::Error::HTTPError => e

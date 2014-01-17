@@ -18,7 +18,7 @@ module Puppet::ModuleTool
       def initialize(name, forge, install_dir, options = {})
         super(options)
         @action              = :install
-        @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
+        @environment         = Puppet.lookup(:environments).get(Puppet[:environment])
         @force               = options[:force]
         @ignore_dependencies = options[:force] || options[:ignore_dependencies]
         @name                = name
@@ -91,7 +91,7 @@ module Puppet::ModuleTool
             :module_name       => @module_name,
             :installed_version => @installed[@module_name].first.version,
             :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-            :local_changes     => @installed[@module_name].first.local_changes
+            :local_changes     => Puppet::ModuleTool::Applications::Checksummer.run(@installed[@module_name].first.path)
         end
 
         if @ignore_dependencies && @source == :filesystem

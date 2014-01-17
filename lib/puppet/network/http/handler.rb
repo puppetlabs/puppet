@@ -1,7 +1,6 @@
 module Puppet::Network::HTTP
 end
 
-require 'puppet/environments'
 require 'puppet/network/http'
 require 'puppet/network/http/api/v1'
 require 'puppet/network/authentication'
@@ -58,7 +57,7 @@ module Puppet::Network::HTTP::Handler
     configure_profiler(request_headers, request_params)
     warn_if_near_expiration(new_request.client_cert)
 
-    Puppet::Context.override(request_bindings()) do
+    Puppet.override(request_bindings()) do
       Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
         if route = @routes.find { |route| route.matches?(new_request) }
           route.process(new_request, new_response)

@@ -58,17 +58,12 @@ Puppet::Face.define(:module, '1.0.0') do
     EOT
 
     when_invoked do |options|
-      Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
-      environment = Puppet::Node::Environment.new(options[:environment])
-
-      environment.modules_by_path
+      environment_from_options(options).modules_by_path
     end
 
     when_rendering :console do |modules_by_path, options|
       output = ''
-
-      Puppet[:modulepath] = options[:modulepath] if options[:modulepath]
-      environment = Puppet::Node::Environment.new(options[:environment])
+      environment = environment_from_options(options)
 
       error_types = {
         :non_semantic_version => {
@@ -168,6 +163,17 @@ Puppet::Face.define(:module, '1.0.0') do
       end
 
       output
+    end
+  end
+
+  def environment_from_options(options)
+    environments = Puppet.lookup(:environments)
+    if options[:modulepath]
+      environments.for(options[:modulepath], '')
+    elsif options[:environment]
+      environments.get(options[:environment])
+    else
+      environments.get(Puppet[:environment])
     end
   end
 

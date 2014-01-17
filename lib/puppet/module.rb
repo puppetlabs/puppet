@@ -1,6 +1,5 @@
 require 'puppet/util/logging'
 require 'semver'
-require 'puppet/module_tool/applications'
 
 # Support for modules
 class Puppet::Module
@@ -209,11 +208,15 @@ class Puppet::Module
   end
 
   def has_local_changes?
+    Puppet.deprecation_warning("This method is being removed.")
+    require 'puppet/module_tool/applications'
     changes = Puppet::ModuleTool::Applications::Checksummer.run(path)
     !changes.empty?
   end
 
   def local_changes
+    Puppet.deprecation_warning("This method is being removed.")
+    require 'puppet/module_tool/applications'
     Puppet::ModuleTool::Applications::Checksummer.run(path)
   end
 

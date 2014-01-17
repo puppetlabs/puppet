@@ -28,6 +28,8 @@ require 'puppet/external/pson/pure'
 # @api public
 module Puppet
   require 'puppet/file_system'
+  require 'puppet/context'
+  require 'puppet/environments'
 
   class << self
     include Puppet::Util
@@ -148,6 +150,8 @@ module Puppet
     Puppet.settings.initialize_global_settings(args)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
+    Puppet.push_context(Puppet.initial_context, "Initial context after settings initialization")
+    Puppet::Parser::Functions.reset
   end
   private_class_method :do_initialize_settings_for_run_mode
 
@@ -166,15 +170,65 @@ module Puppet
   # Set default for YAML.load to unsafe so we don't affect programs
   # requiring puppet -- in puppet we will call safe explicitly
   SafeYAML::OPTIONS[:default_mode] = :unsafe
+
+  # The bindings used for initialization of puppet
+  # @api private
+  def self.initial_context
+    {
+      :environments => Puppet::Environments::Legacy.new,
+      :current_environment => Puppet::Node::Environment.root,
+    }
+  end
+
+  # A simple set of bindings that is just enough to limp along to
+  # initialization where the {#initial_context} bindings are put in place
+  # @api private
+  def self.bootstrap_context
+    { :current_environment => Puppet::Node::Environment.create(:'*bootstrap*', [], '') }
+  end
+
+  # @param overrides [Hash] A hash of bindings to be merged with the parent context.
+  # @param description [String] A description of the context.
+  # @api private
+  def self.push_context(overrides, description = "")
+    @context.push(overrides, description)
+  end
+
+  # Return to the previous context.
+  # @raise [StackUnderflow] if the current context is the root
+  # @api private
+  def self.pop_context
+    @context.pop
+  end
+
+  # Lookup a binding by name or return a default value provided by a passed block (if given).
+  # @api private
+  def self.lookup(name, &block)
+    @context.lookup(name, &block)
+  end
+
+  # @param bindings [Hash] A hash of bindings to be merged with the parent context.
+  # @param description [String] A description of the context.
+  # @yield [] A block executed in the context of the temporarily pushed bindings.
+  # @api private
+  def self.override(bindings, description = "", &block)
+    @context.override(bindings, description, &block)
+  end
+
+  require 'puppet/node'
+
+  # The single instance used for normal operation
+  @context = Puppet::Context.new(bootstrap_context)
 end
 
 # This feels weird to me; I would really like for us to get to a state where there is never a "require" statement
 #  anywhere besides the very top of a file.  That would not be possible at the moment without a great deal of
 #  effort, but I think we should strive for it and revisit this at some point.  --cprice 2012-03-16
 
+require 'puppet/indirector'
 require 'puppet/type'
-require 'puppet/parser'
 require 'puppet/resource'
+require 'puppet/parser'
 require 'puppet/network'
 require 'puppet/ssl'
 require 'puppet/module'
@@ -182,4 +236,3 @@ require 'puppet/data_binding'
 require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'
-require 'puppet/context'

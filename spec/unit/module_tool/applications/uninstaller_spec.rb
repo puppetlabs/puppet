@@ -20,18 +20,24 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
   end
 
   describe "the behavior of the instances" do
+    let(:working_dir) { tmpdir("uninstaller") }
+    let(:modpath1) { create_temp_dir("modpath1") }
+    let(:modpath2) { create_temp_dir("modpath2") }
+    let(:env) { Puppet::Node::Environment.create(:env, [modpath1, modpath2], '') }
+    let(:options)  { {:environment => "env"} }
+    let(:uninstaller) { Puppet::ModuleTool::Applications::Uninstaller.new("puppetlabs-foo", options) }
 
-    before do
-      @uninstaller = Puppet::ModuleTool::Applications::Uninstaller
-      FileUtils.mkdir_p(modpath1)
-      FileUtils.mkdir_p(modpath2)
-      fake_env.modulepath = [modpath1, modpath2]
+    around :each do |example|
+      Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
+        example.run
+      end
     end
 
-    let(:modpath1) { File.join(tmpdir("uninstaller"), "modpath1") }
-    let(:modpath2) { File.join(tmpdir("uninstaller"), "modpath2") }
-    let(:fake_env) { Puppet::Node::Environment.new('fake_env') }
-    let(:options)  { {:environment => "fake_env"} }
+    def create_temp_dir(name)
+      path = File.join(working_dir, name)
+      FileUtils.mkdir_p(path)
+      path
+    end
 
     let(:foo_metadata) do
       {
@@ -57,7 +63,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
 
     context "when the module is not installed" do
       it "should fail" do
-        @uninstaller.new('fakemod_not_installed', options).run[:result].should == :failure
+        Puppet::ModuleTool::Applications::Uninstaller.new('fakemod_not_installed', options).run[:result].should == :failure
       end
     end
 
@@ -66,7 +72,8 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       it "should uninstall the module" do
         PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
 
-        results = @uninstaller.new("puppetlabs-foo", options).run
+        results = uninstaller.run
+
         results[:affected_modules].first.forge_name.should == "puppetlabs/foo"
       end
 
@@ -74,7 +81,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
         PuppetSpec::Modules.create('bar', modpath1, :metadata => bar_metadata)
 
-        results = @uninstaller.new("puppetlabs-foo", options).run
+        results = uninstaller.run
         results[:affected_modules].length == 1
         results[:affected_modules].first.forge_name.should == "puppetlabs/foo"
       end
@@ -83,7 +90,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
         PuppetSpec::Modules.create('foo', modpath2, :metadata => foo_metadata)
 
-        @uninstaller.new('puppetlabs-foo', options).run[:result].should == :failure
+        uninstaller.run[:result].should == :failure
       end
 
       context "when options[:version] is specified" do
@@ -93,7 +100,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
 
           options[:version] = "1.0.0"
 
-          results = @uninstaller.new("puppetlabs-foo", options).run
+          results = uninstaller.run
           results[:affected_modules].length.should == 1
           results[:affected_modules].first.forge_name.should == "puppetlabs/foo"
           results[:affected_modules].first.version.should == "1.0.0"
@@ -104,7 +111,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
 
           options[:version] = "2.0.0"
 
-          @uninstaller.new("puppetlabs-foo", options).run[:result].should == :failure
+          uninstaller.run[:result].should == :failure
         end
       end
 
@@ -113,17 +120,17 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         it "should not uninstall the module" do
           PuppetSpec::Modules.create('foo', modpath1)
 
-          @uninstaller.new("puppetlabs-foo", options).run[:result].should == :failure
+          uninstaller.run[:result].should == :failure
         end
       end
 
       context "when the module has local changes" do
 
         it "should not uninstall the module" do
-          PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
-          Puppet::Module.any_instance.stubs(:has_local_changes?).returns(true)
+          mod = PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
+          Puppet::ModuleTool::Applications::Checksummer.expects(:run).with(mod.path).returns(['change'])
 
-          @uninstaller.new("puppetlabs-foo", options).run[:result].should == :failure
+          uninstaller.run[:result].should == :failure
         end
 
       end
@@ -133,7 +140,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
         it "should uninstall the module" do
           PuppetSpec::Modules.create('foo', modpath1, :metadata => foo_metadata)
 
-          results = @uninstaller.new("puppetlabs-foo", options).run
+          results = uninstaller.run
           results[:affected_modules].length.should == 1
           results[:affected_modules].first.forge_name.should == "puppetlabs/foo"
         end
@@ -156,7 +163,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
             }
           )
 
-          @uninstaller.new("puppetlabs-foo", options).run[:result].should == :failure
+          uninstaller.run[:result].should == :failure
         end
       end
 
@@ -174,7 +181,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
           foo = mkmod("foo", modpath1, foo_metadata)
           options[:force] = true
 
-          results = @uninstaller.new("puppetlabs-foo", options).run
+          results = uninstaller.run
           results[:affected_modules].length.should == 1
           results[:affected_modules].first.forge_name.should == "puppetlabs/foo"
         end
@@ -196,7 +203,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
           )
           options[:force] = true
 
-          results = @uninstaller.new("puppetlabs-foo", options).run
+          results = uninstaller.run
           results[:affected_modules].length.should == 1
           results[:affected_modules].first.forge_name.should == "puppetlabs/foo"
         end

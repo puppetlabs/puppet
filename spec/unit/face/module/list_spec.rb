@@ -20,6 +20,12 @@ describe "puppet module list" do
     FileUtils.mkdir_p(@modpath2)
   end
 
+  around do |example|
+    Puppet.override(:environments => Puppet::Environments::Legacy.new()) do
+      example.run
+    end
+  end
+
   it "should return an empty list per dir in path if there are no modules" do
     Puppet.settings[:modulepath] = @modulepath
     Puppet::Face[:module, :current].list.should == {
@@ -48,43 +54,51 @@ describe "puppet module list" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath1)
 
-    usedenv = Puppet::Node::Environment.new('useme')
-    usedenv.modulepath = [@modpath1, @modpath2]
+    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2], '')
 
-    Puppet::Face[:module, :current].list(:environment => 'useme').should == {
-      @modpath1 => [
-        Puppet::Module.new('bar', barmod.path, usedenv),
-        Puppet::Module.new('foo', foomod.path, usedenv)
-      ],
-      @modpath2 => []
-    }
+    Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
+      Puppet::Face[:module, :current].list(:environment => 'useme').should == {
+        @modpath1 => [
+          Puppet::Module.new('bar', barmod.path, usedenv),
+          Puppet::Module.new('foo', foomod.path, usedenv)
+        ],
+        @modpath2 => []
+      }
+    end
   end
 
   it "should use the specified modulepath" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath2)
 
-    Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}").should == {
-      @modpath1 => [ Puppet::Module.new('foo', foomod.path, Puppet::Node::Environment.new) ],
-      @modpath2 => [ Puppet::Module.new('bar', barmod.path, Puppet::Node::Environment.new) ]
-    }
+    modules = Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")
+
+    expect(modules[@modpath1].first.name).to eq('foo')
+    expect(modules[@modpath1].first.path).to eq(foomod.path)
+    expect(modules[@modpath1].first.environment.modulepath).to eq([@modpath1, @modpath2])
+
+    expect(modules[@modpath2].first.name).to eq('bar')
+    expect(modules[@modpath2].first.path).to eq(barmod.path)
+    expect(modules[@modpath2].first.environment.modulepath).to eq([@modpath1, @modpath2])
   end
 
-  it "should use the specified modulepath over the specified environment in place of the environment's default path" do
-    foomod1 = PuppetSpec::Modules.create('foo', @modpath1)
-    barmod2 = PuppetSpec::Modules.create('bar', @modpath2)
-    env = Puppet::Node::Environment.new('myenv')
-    env.modulepath = ['/tmp/notused']
+  it "prefers a given modulepath over the modulepath from the given environment" do
+    foomod = PuppetSpec::Modules.create('foo', @modpath1)
+    barmod = PuppetSpec::Modules.create('bar', @modpath2)
+    env = Puppet::Node::Environment.create(:myenv, ['/tmp/notused'], '')
+    Puppet[:modulepath] = ""
 
-    list = Puppet::Face[:module, :current].list(:environment => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")
+    modules = Puppet::Face[:module, :current].list(:environment => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")
 
-    # Changing Puppet[:modulepath] causes Puppet::Node::Environment.new('myenv')
-    # to have a different object_id than the env above
-    env = Puppet::Node::Environment.new('myenv')
-    list.should == {
-      @modpath1 => [ Puppet::Module.new('foo', foomod1.path, env) ],
-      @modpath2 => [ Puppet::Module.new('bar', barmod2.path, env) ]
-    }
+    expect(modules[@modpath1].first.name).to eq('foo')
+    expect(modules[@modpath1].first.path).to eq(foomod.path)
+    expect(modules[@modpath1].first.environment.modulepath).to eq([@modpath1, @modpath2])
+    expect(modules[@modpath1].first.environment.name).to_not eq(:myenv)
+
+    expect(modules[@modpath2].first.name).to eq('bar')
+    expect(modules[@modpath2].first.path).to eq(barmod.path)
+    expect(modules[@modpath2].first.environment.modulepath).to eq([@modpath1, @modpath2])
+    expect(modules[@modpath2].first.environment.name).to_not eq(:myenv)
   end
 
   describe "inline documentation" do
