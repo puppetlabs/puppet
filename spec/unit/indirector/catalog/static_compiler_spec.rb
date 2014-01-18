@@ -149,7 +149,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
     # Create some File resources with source parameters.
     1.upto(@num_file_resources) do |idx|
       parameters = {
-        :ensure  => 'file',
+        :making_sure  => 'file',
         :source  => options[:source],
         :require => "Notify[alpha]",
         :before  => "Notify[omega]"

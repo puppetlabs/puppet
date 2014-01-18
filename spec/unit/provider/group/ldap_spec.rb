@@ -47,8 +47,8 @@ describe provider_class do
 
         resource = stub 'resource', :should => %w{whatever}
         resource.stubs(:should).with(:gid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
-        instance = provider_class.new(:name => "luke", :ensure => :absent)
+        resource.stubs(:should).with(:making_sure).returns :present
+        instance = provider_class.new(:name => "luke", :making_sure => :absent)
         instance.stubs(:resource).returns resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["641"] }
@@ -62,8 +62,8 @@ describe provider_class do
 
         resource = stub 'resource', :should => %w{whatever}
         resource.stubs(:should).with(:gid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
-        instance = provider_class.new(:name => "luke", :ensure => :absent)
+        resource.stubs(:should).with(:making_sure).returns :present
+        instance = provider_class.new(:name => "luke", :making_sure => :absent)
         instance.stubs(:resource).returns resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["501"] }

@@ -57,7 +57,7 @@ module Puppet
     feature :manages_shell,
       "The provider allows for setting shell and validates if possible"
 
-    newproperty(:ensure, :parent => Puppet::Property::Ensure) do
+    newproperty(:making_sure, :parent => Puppet::Property::MakingSure) do
       newvalue(:present, :event => :user_created) do
         provider.create
       end
@@ -307,8 +307,8 @@ module Puppet
 
     newparam(:managehome, :boolean => true, :parent => Puppet::Parameter::Boolean) do
       desc "Whether to manage the home directory when managing the user.
-        This will create the home directory when `ensure => present`, and
-        delete the home directory when `ensure => absent`. Defaults to `false`."
+        This will create the home directory when `making_sure => present`, and
+        delete the home directory when `making_sure => absent`. Defaults to `false`."
 
       defaultto false
 
@@ -390,7 +390,7 @@ module Puppet
           prophash[property] = current_value
         end
 
-        if property.name == :ensure and current_value == :absent
+        if property.name == :making_sure and current_value == :absent
           absent = true
         end
         prophash

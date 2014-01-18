@@ -29,7 +29,7 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
     else
       # up2date didn't find updates, pretend the current
       # version is the latest
-      return @property_hash[:ensure]
+      return @property_hash[:making_sure]
     end
   end
 

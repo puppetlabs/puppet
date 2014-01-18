@@ -56,14 +56,14 @@ module Puppet
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
 
 
-    ensurable do
+    making_surable do
       desc <<-EOT
         What state the package should be in. On packaging systems that can
         retrieve new packages on their own, you can choose which package to
-        retrieve by specifying a version number or `latest` as the ensure
+        retrieve by specifying a version number or `latest` as the making_sure
         value. On packaging systems that manage configuration files separately
         from "normal" system files, you can uninstall config files by
-        specifying `purged` as the ensure value. This defaults to `installed`.
+        specifying `purged` as the making_sure value. This defaults to `installed`.
       EOT
 
       attr_accessor :latest
@@ -180,7 +180,7 @@ module Puppet
 
       # This retrieves the current state. LAK: I think this method is unused.
       def retrieve
-        provider.properties[:ensure]
+        provider.properties[:making_sure]
       end
 
       # Provide a bit more information when logging upgrades.
@@ -209,7 +209,7 @@ module Puppet
           # It is not an error to set an alias to the same value as the
           # object name.
           package { $ssl:
-            ensure => installed,
+            making_sure => installed,
             alias  => openssl
           }
 
@@ -223,7 +223,7 @@ module Puppet
           # Use the alias to specify a dependency, rather than
           # having another selector to figure it out again.
           package { $ssh:
-            ensure  => installed,
+            making_sure  => installed,
             alias   => openssh,
             require => Package[openssl]
           }
@@ -387,7 +387,7 @@ module Puppet
         vendor.  One commonly implemented option is `INSTALLDIR`:
 
             package { 'mysql':
-              ensure          => installed,
+              making_sure          => installed,
               source          => 'N:/packages/mysql-5.5.16-winx64.msi',
               install_options => [ '/S', { 'INSTALLDIR' => 'C:\\mysql-5.5' } ],
             }
@@ -410,7 +410,7 @@ module Puppet
         vendor.  For example:
 
             package { 'VMware Tools':
-              ensure            => absent,
+              making_sure            => absent,
               uninstall_options => [ { 'REMOVE' => 'Sync,VSS' } ],
             }
 
@@ -442,7 +442,7 @@ module Puppet
 
     # This only exists for testing.
     def clear
-      if obj = @parameters[:ensure]
+      if obj = @parameters[:making_sure]
         obj.latest = nil
       end
     end
@@ -450,7 +450,7 @@ module Puppet
     # The 'query' method returns a hash of info if the package
     # exists and returns nil if it does not.
     def exists?
-      @provider.get(:ensure) != :absent
+      @provider.get(:making_sure) != :absent
     end
   end
 end

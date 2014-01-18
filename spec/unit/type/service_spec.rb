@@ -18,7 +18,7 @@ describe Puppet::Type.type(:service), "when validating attributes" do
     end
   end
 
-  [:ensure, :enable].each do |param|
+  [:making_sure, :enable].each do |param|
     it "should have an #{param} property" do
       Puppet::Type.type(:service).attrtype(param).should == :property
     end
@@ -31,22 +31,22 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     Puppet::Type.type(:service).defaultprovider.stubs(:new).returns(@provider)
   end
 
-  it "should support :running as a value to :ensure" do
-    Puppet::Type.type(:service).new(:name => "yay", :ensure => :running)
+  it "should support :running as a value to :making_sure" do
+    Puppet::Type.type(:service).new(:name => "yay", :making_sure => :running)
   end
 
-  it "should support :stopped as a value to :ensure" do
-    Puppet::Type.type(:service).new(:name => "yay", :ensure => :stopped)
+  it "should support :stopped as a value to :making_sure" do
+    Puppet::Type.type(:service).new(:name => "yay", :making_sure => :stopped)
   end
 
-  it "should alias the value :true to :running in :ensure" do
-    svc = Puppet::Type.type(:service).new(:name => "yay", :ensure => true)
-    svc.should(:ensure).should == :running
+  it "should alias the value :true to :running in :making_sure" do
+    svc = Puppet::Type.type(:service).new(:name => "yay", :making_sure => true)
+    svc.should(:making_sure).should == :running
   end
 
-  it "should alias the value :false to :stopped in :ensure" do
-    svc = Puppet::Type.type(:service).new(:name => "yay", :ensure => false)
-    svc.should(:ensure).should == :stopped
+  it "should alias the value :false to :stopped in :making_sure" do
+    svc = Puppet::Type.type(:service).new(:name => "yay", :making_sure => false)
+    svc.should(:making_sure).should == :stopped
   end
 
   describe "the enable property" do
@@ -170,8 +170,8 @@ describe Puppet::Type.type(:service), "when retrieving the host's current state"
 
   it "should use the provider's status to determine whether the service is running" do
     @service.provider.expects(:status).returns(:yepper)
-    @service[:ensure] = :running
-    @service.property(:ensure).retrieve.should == :yepper
+    @service[:making_sure] = :running
+    @service.property(:making_sure).retrieve.should == :yepper
   end
 
   it "should ask the provider whether it is enabled" do
@@ -188,15 +188,15 @@ describe Puppet::Type.type(:service), "when changing the host" do
   end
 
   it "should start the service if it is supposed to be running" do
-    @service[:ensure] = :running
+    @service[:making_sure] = :running
     @service.provider.expects(:start)
-    @service.property(:ensure).sync
+    @service.property(:making_sure).sync
   end
 
   it "should stop the service if it is supposed to be stopped" do
-    @service[:ensure] = :stopped
+    @service[:making_sure] = :stopped
     @service.provider.expects(:stop)
-    @service.property(:ensure).sync
+    @service.property(:making_sure).sync
   end
 
   it "should enable the service if it is supposed to be enabled" do
@@ -213,10 +213,10 @@ describe Puppet::Type.type(:service), "when changing the host" do
     @service.property(:enable).sync
   end
 
-  it "should sync the service's enable state when changing the state of :ensure if :enable is being managed" do
+  it "should sync the service's enable state when changing the state of :making_sure if :enable is being managed" do
     @service.provider.class.stubs(:supports_parameter?).returns(true)
     @service[:enable] = false
-    @service[:ensure] = :stopped
+    @service[:making_sure] = :stopped
 
     @service.property(:enable).expects(:retrieve).returns("whatever")
     @service.property(:enable).expects(:insync?).returns(false)
@@ -224,7 +224,7 @@ describe Puppet::Type.type(:service), "when changing the host" do
 
     @service.provider.stubs(:stop)
 
-    @service.property(:ensure).sync
+    @service.property(:making_sure).sync
   end
 end
 
@@ -234,26 +234,26 @@ describe Puppet::Type.type(:service), "when refreshing the service" do
   end
 
   it "should restart the service if it is running" do
-    @service[:ensure] = :running
+    @service[:making_sure] = :running
     @service.provider.expects(:status).returns(:running)
     @service.provider.expects(:restart)
     @service.refresh
   end
 
   it "should restart the service if it is running, even if it is supposed to stopped" do
-    @service[:ensure] = :stopped
+    @service[:making_sure] = :stopped
     @service.provider.expects(:status).returns(:running)
     @service.provider.expects(:restart)
     @service.refresh
   end
 
   it "should not restart the service if it is not running" do
-    @service[:ensure] = :running
+    @service[:making_sure] = :running
     @service.provider.expects(:status).returns(:stopped)
     @service.refresh
   end
 
-  it "should add :ensure as a property if it is not being managed" do
+  it "should add :making_sure as a property if it is not being managed" do
     @service.provider.expects(:status).returns(:running)
     @service.provider.expects(:restart)
     @service.refresh

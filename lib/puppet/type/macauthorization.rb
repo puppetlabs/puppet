@@ -11,7 +11,7 @@ Puppet::Type.newtype(:macauthorization) do
     **Autorequires:** If Puppet is managing the `/etc/authorization` file, each
     macauthorization resource will autorequire it."
 
-  ensurable
+  making_surable
 
   autorequire(:file) do
     ["/etc/authorization"]

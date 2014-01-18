@@ -26,7 +26,7 @@ module Puppet
       "Allows local groups to be managed on systems that also use some other
        remote NSS method of managing accounts."
 
-    ensurable do
+    making_surable do
       desc "Create or remove the group."
 
       newvalue(:present) do

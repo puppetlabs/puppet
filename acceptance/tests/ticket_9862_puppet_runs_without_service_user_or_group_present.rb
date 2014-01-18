@@ -21,13 +21,13 @@ end
 
 teardown do
   agents.each do |agent|
-    step "ensure puppet resets it's user/group settings"
+    step "making_sure puppet resets it's user/group settings"
     on agent, puppet('apply', '-e', '"notify { puppet_run: }"')
     on agent, "find #{agent['puppetvardir']} -user existinguser" do
       assert_equal('',stdout)
     end
-    on agent, puppet('resource', 'user', 'existinguser', 'ensure=absent')
-    on agent, puppet('resource', 'group', 'existinggroup', 'ensure=absent')
+    on agent, puppet('resource', 'user', 'existinguser', 'making_sure=absent')
+    on agent, puppet('resource', 'group', 'existinggroup', 'making_sure=absent')
   end
 end
 
@@ -50,8 +50,8 @@ step "when the user and group exist"
 agents.each do |agent|
   logdir = missing_directory_for(agent, 'log')
 
-  on agent, puppet('resource', 'user', 'existinguser', 'ensure=present')
-  on agent, puppet('resource', 'group', 'existinggroup', 'ensure=present')
+  on agent, puppet('resource', 'user', 'existinguser', 'making_sure=present')
+  on agent, puppet('resource', 'group', 'existinggroup', 'making_sure=present')
 
   on agent, puppet('apply',
                    '-e', '"notify { puppet_run: }"',

@@ -380,14 +380,14 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   end
 
 
-  def ensure=(ensure_value)
+  def making_sure=(making_sure_value)
     super
     # We need to loop over all valid properties for the type we're
     # managing and call the method which sets that property value
     # dscl can't create everything at once unfortunately.
-    if ensure_value == :present
+    if making_sure_value == :present
       @resource.class.validproperties.each do |name|
-        next if name == :ensure
+        next if name == :making_sure
         # LAK: We use property.sync here rather than directly calling
         # the settor method because the properties might do some kind
         # of conversion.  In particular, the user gid property might
@@ -480,7 +480,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
     # Now we create all the standard properties
     Puppet::Type.type(@resource.class.name).validproperties.each do |property|
-      next if property == :ensure
+      next if property == :making_sure
       value = @resource.should(property)
       if property == :gid and value.nil?
         value = self.class.next_system_id(id_type='gid')
@@ -571,12 +571,12 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # Puppet::Type.
       #
       # So... something like [:comment, :home, :password, :shell, :uid,
-      # :groups, :ensure, :gid]
+      # :groups, :making_sure, :gid]
       #
-      # Ultimately, we add :name to the list, delete :ensure from the
+      # Ultimately, we add :name to the list, delete :making_sure from the
       # list, then report on the remaining list. Pretty whacky, ehh?
       type_properties = [:name] + self.class.resource_type.validproperties
-      type_properties.delete(:ensure) if type_properties.include? :ensure
+      type_properties.delete(:making_sure) if type_properties.include? :making_sure
       type_properties << :guid  # append GeneratedUID so we just get the report here
       @property_value_cache_hash = self.class.single_report(@resource[:name], *type_properties)
       [:uid, :gid].each do |param|

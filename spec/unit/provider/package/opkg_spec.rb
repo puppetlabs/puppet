@@ -17,7 +17,7 @@ describe Puppet::Type.type(:package).provider(:opkg) do
 
   describe "when installing" do
     before do
-      provider.stubs(:query).returns({ :ensure => '1.0' })
+      provider.stubs(:query).returns({ :making_sure => '1.0' })
     end
 
     context "when the package list is absent" do
@@ -144,19 +144,19 @@ OPKG_OUTPUT
           {
             :provider => :opkg,
             :name => "dropbear",
-            :ensure => "2011.54-2"
+            :making_sure => "2011.54-2"
           }
         installed_packages[1].properties.should ==
           {
             :provider => :opkg,
             :name => "kernel",
-            :ensure => "3.3.8-1-ba5cdb2523b4fc7722698b4a7ece6702"
+            :making_sure => "3.3.8-1-ba5cdb2523b4fc7722698b4a7ece6702"
           }
         installed_packages[2].properties.should ==
           {
             :provider => :opkg,
             :name => "uhttpd",
-            :ensure => "2012-10-30-e57bf6d8bfa465a50eea2c30269acdfe751a46fd"
+            :making_sure => "2012-10-30-e57bf6d8bfa465a50eea2c30269acdfe751a46fd"
           }
       end
     end
@@ -169,7 +169,7 @@ OPKG_OUTPUT
     it "should return a hash indicating that the package is missing on error" do
       Puppet::Util::Execution.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
       provider.query.should == {
-        :ensure => :purged,
+        :making_sure => :purged,
         :status => 'missing',
         :name => resource[:name],
         :error => 'ok',

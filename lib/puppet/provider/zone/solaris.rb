@@ -8,7 +8,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
   # Convert the output of a list into a hash
   def self.line2hash(line)
-    fields = [:id, :name, :ensure, :path, :uuid, :brand, :iptype]
+    fields = [:id, :name, :making_sure, :path, :uuid, :brand, :iptype]
     properties = Hash[fields.zip(line.split(':'))]
 
     del_id = [:brand, :uuid]
@@ -16,7 +16,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     del_id << :id if properties[:id] == "-"
     del_id.each { |p| properties.delete(p) }
 
-    properties[:ensure] = properties[:ensure].intern
+    properties[:making_sure] = properties[:making_sure].intern
     properties[:iptype] = 'exclusive' if properties[:iptype] == 'excl'
 
     properties
@@ -132,7 +132,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
   end
 
   def exists?
-    properties[:ensure] != :absent
+    properties[:making_sure] != :absent
   end
 
   # We cannot use the execpipe in util because the pipe is not opened in
@@ -174,7 +174,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     if @property_hash.empty?
       @property_hash = status || {}
       if @property_hash.empty?
-        @property_hash[:ensure] = :absent
+        @property_hash[:making_sure] = :absent
       else
         @resource.class.validproperties.each do |name|
           @property_hash[name] ||= :absent
@@ -184,12 +184,12 @@ Puppet::Type.type(:zone).provide(:solaris) do
     @property_hash.dup
   end
 
-  # We need a way to test whether a zone is in process.  Our 'ensure'
+  # We need a way to test whether a zone is in process.  Our 'making_sure'
   # property models the static states, but we need to handle the temporary ones.
   def processing?
     hash = status
     return false unless hash
-    ["incomplete", "ready", "shutting_down"].include? hash[:ensure]
+    ["incomplete", "ready", "shutting_down"].include? hash[:making_sure]
   end
 
   # Collect the configuration of the zone. The output looks like:

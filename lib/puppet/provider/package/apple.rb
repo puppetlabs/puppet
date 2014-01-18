@@ -16,7 +16,7 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
       self.new(
         :name     => name,
         :provider => :apple,
-        :ensure   => :installed
+        :making_sure   => :installed
       )
     end
   end
@@ -33,7 +33,7 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
   end
 
   def query
-    Puppet::FileSystem.exist?("/Library/Receipts/#{@resource[:name]}.pkg") ? {:name => @resource[:name], :ensure => :present} : nil
+    Puppet::FileSystem.exist?("/Library/Receipts/#{@resource[:name]}.pkg") ? {:name => @resource[:name], :making_sure => :present} : nil
   end
 
   def install

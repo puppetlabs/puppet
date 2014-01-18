@@ -6,7 +6,7 @@ Puppet::Type.newtype(:k5login) do
     the `.k5login` file as the name, and an array of principals as the
     `principals` attribute."
 
-  ensurable
+  making_surable
 
   # Principals that should exist in the file
   newproperty(:principals, :array_matching => :all) do

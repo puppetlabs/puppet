@@ -33,7 +33,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     cmd = []
     Puppet::Type.type(:user).validproperties.each do |property|
       #skip the password because we can't create it with the solaris useradd
-      next if [:ensure, :password, :password_min_age, :password_max_age].include?(property)
+      next if [:making_sure, :password, :password_min_age, :password_max_age].include?(property)
       # 1680 Now you can set the hashed passwords on solaris:lib/puppet/provider/user/user_role_add.rb
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
@@ -57,7 +57,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def command(cmd)
-    cmd = ("role_#{cmd}").intern if is_role? or (!exists? and @resource[:ensure] == :role)
+    cmd = ("role_#{cmd}").intern if is_role? or (!exists? and @resource[:making_sure] == :role)
     super(cmd)
   end
 

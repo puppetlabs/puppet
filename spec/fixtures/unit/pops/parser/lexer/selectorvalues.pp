@@ -40,10 +40,10 @@ $mode7 = "test regex" ? {
 }
 
 
-file { "/tmp/selectorvalues1": ensure => file, mode => $mode1 }
-file { "/tmp/selectorvalues2": ensure => file, mode => $mode2 }
-file { "/tmp/selectorvalues3": ensure => file, mode => $mode3 }
-file { "/tmp/selectorvalues4": ensure => file, mode => $mode4 }
-file { "/tmp/selectorvalues5": ensure => file, mode => $mode5 }
-file { "/tmp/selectorvalues6": ensure => file, mode => $mode6 }
-file { "/tmp/selectorvalues7": ensure => file, mode => $mode7 }
+file { "/tmp/selectorvalues1": making_sure => file, mode => $mode1 }
+file { "/tmp/selectorvalues2": making_sure => file, mode => $mode2 }
+file { "/tmp/selectorvalues3": making_sure => file, mode => $mode3 }
+file { "/tmp/selectorvalues4": making_sure => file, mode => $mode4 }
+file { "/tmp/selectorvalues5": making_sure => file, mode => $mode5 }
+file { "/tmp/selectorvalues6": making_sure => file, mode => $mode6 }
+file { "/tmp/selectorvalues7": making_sure => file, mode => $mode7 }

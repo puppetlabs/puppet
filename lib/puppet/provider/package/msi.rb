@@ -36,8 +36,8 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
           :name        => inst.ProductInfo(guid, 'ProductName'),
           # although packages have a version, the provider isn't versionable,
           # so we can't return a version
-          # :ensure      => inst.ProductInfo(guid, 'VersionString'),
-          :ensure      => :installed,
+          # :making_sure      => inst.ProductInfo(guid, 'VersionString'),
+          :making_sure      => :installed,
           :provider    => :msi,
           :productcode => guid,
           :packagecode => inst.ProductInfo(guid, 'PackageCode')
@@ -92,7 +92,7 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
   # reboot, or something else entirely. Reboot requests mean the package was installed
   # successfully, but we warn since we don't have a good reboot strategy.
   def check_result(hr)
-    operation = resource[:ensure] == :absent ? 'uninstall' : 'install'
+    operation = resource[:making_sure] == :absent ? 'uninstall' : 'install'
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa368542(v=vs.85).aspx
     case hr

@@ -120,19 +120,19 @@ Puppet::Face.define(:node, '0.0.1') do
     query = {:include => {:param_values => :param_name}}
     query[:conditions] = [ "exported=? AND host_id=?", true, node.id ]
     Puppet::Rails::Resource.find(:all, query).each do |resource|
-      if type_is_ensurable(resource)
+      if type_is_making_surable(resource)
         line = 0
-        param_name = Puppet::Rails::ParamName.find_or_create_by_name("ensure")
+        param_name = Puppet::Rails::ParamName.find_or_create_by_name("making_sure")
 
-        if ensure_param = resource.param_values.find(
+        if making_sure_param = resource.param_values.find(
           :first,
           :conditions => [ 'param_name_id = ?', param_name.id ]
         )
-          line = ensure_param.line.to_i
-          Puppet::Rails::ParamValue.delete(ensure_param.id);
+          line = making_sure_param.line.to_i
+          Puppet::Rails::ParamValue.delete(making_sure_param.id);
         end
 
-        # force ensure parameter to "absent"
+        # force making_sure parameter to "absent"
         resource.param_values.create(
           :value => "absent",
           :line => line,
@@ -147,12 +147,12 @@ Puppet::Face.define(:node, '0.0.1') do
     @environment ||= Puppet::Node::Environment.new
   end
 
-  def type_is_ensurable(resource)
-    if (type = Puppet::Type.type(resource.restype)) && type.validattr?(:ensure)
+  def type_is_making_surable(resource)
+    if (type = Puppet::Type.type(resource.restype)) && type.validattr?(:making_sure)
       return true
     else
       type = environment.known_resource_types.find_definition('', resource.restype)
-      return true if type && type.arguments.keys.include?('ensure')
+      return true if type && type.arguments.keys.include?('making_sure')
     end
     return false
   end

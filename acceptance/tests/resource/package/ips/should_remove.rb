@@ -23,8 +23,8 @@ agents.each do |agent|
     assert_match( /mypkg@0.0.1/, result.stdout, "err: #{agent}")
   end
 
-  step "IPS: ensure removed."
-  apply_manifest_on(agent, 'package {mypkg : ensure=>absent}') do
+  step "IPS: making_sure removed."
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>absent}') do
     assert_match( /Finished catalog run in .*/, result.stdout, "err: #{agent}")
   end
 

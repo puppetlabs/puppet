@@ -20,7 +20,7 @@ Puppet::Type.newtype(:file) do
   @doc = "Manages files, including their content, ownership, and permissions.
 
     The `file` type can manage normal files, directories, and symlinks; the
-    type should be specified in the `ensure` attribute. Note that symlinks cannot
+    type should be specified in the `making_sure` attribute. Note that symlinks cannot
     be managed on Windows systems.
 
     File contents can be managed directly with the `content` attribute, or
@@ -185,7 +185,7 @@ Puppet::Type.newtype(:file) do
 
       * `purge` subdirectories
       * Replace directories with files or links
-      * Remove a directory when `ensure => absent`"
+      * Remove a directory when `making_sure => absent`"
     defaultto false
   end
 
@@ -406,11 +406,11 @@ Puppet::Type.newtype(:file) do
 
     # If they've specified a source, we get our 'should' values
     # from it.
-    unless self[:ensure]
+    unless self[:making_sure]
       if self[:target]
-        self[:ensure] = :link
+        self[:making_sure] = :link
       elsif self[:content]
-        self[:ensure] = :file
+        self[:making_sure] = :file
       end
     end
 
@@ -421,7 +421,7 @@ Puppet::Type.newtype(:file) do
   def mark_children_for_purging(children)
     children.each do |name, child|
       next if child[:source]
-      child[:ensure] = :absent
+      child[:making_sure] = :absent
     end
   end
 
@@ -442,7 +442,7 @@ Puppet::Type.newtype(:file) do
     options = @original_parameters.merge(:path => full_path).reject { |param, value| value.nil? }
 
     # These should never be passed to our children.
-    [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].each do |param|
+    [:parent, :making_sure, :recurse, :recurselimit, :target, :alias, :source].each do |param|
       options.delete(param) if options.include?(param)
     end
 
@@ -521,15 +521,15 @@ Puppet::Type.newtype(:file) do
   def recurse_link(children)
     perform_recursion(self[:target]).each do |meta|
       if meta.relative_path == "."
-        self[:ensure] = :directory
+        self[:making_sure] = :directory
         next
       end
 
       children[meta.relative_path] ||= newchild(meta.relative_path)
       if meta.ftype == "directory"
-        children[meta.relative_path][:ensure] = :directory
+        children[meta.relative_path][:making_sure] = :directory
       else
-        children[meta.relative_path][:ensure] = :link
+        children[meta.relative_path][:making_sure] = :link
         children[meta.relative_path][:target] = meta.full_path
       end
     end
@@ -655,18 +655,18 @@ Puppet::Type.newtype(:file) do
   # way of determining whether we're trying to create a normal file,
   # and it's here so that the logic isn't visible in the content property.
   def should_be_file?
-    return true if self[:ensure] == :file
+    return true if self[:making_sure] == :file
 
     # I.e., it's set to something like "directory"
-    return false if e = self[:ensure] and e != :present
+    return false if e = self[:making_sure] and e != :present
 
     # The user doesn't really care, apparently
-    if self[:ensure] == :present
+    if self[:making_sure] == :present
       return true unless s = stat
       return(s.ftype == "file" ? true : false)
     end
 
-    # If we've gotten here, then :ensure isn't set
+    # If we've gotten here, then :making_sure isn't set
     return true if self[:content]
     return true if stat and stat.ftype == "file"
     false
@@ -839,7 +839,7 @@ require 'puppet/type/file/checksum'
 require 'puppet/type/file/content'     # can create the file
 require 'puppet/type/file/source'      # can create the file
 require 'puppet/type/file/target'      # creates a different type of file
-require 'puppet/type/file/ensure'      # can create the file
+require 'puppet/type/file/making_sure'      # can create the file
 require 'puppet/type/file/owner'
 require 'puppet/type/file/group'
 require 'puppet/type/file/mode'

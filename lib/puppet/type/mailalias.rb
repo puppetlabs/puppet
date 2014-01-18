@@ -2,7 +2,7 @@ module Puppet
   newtype(:mailalias) do
     @doc = "Creates an email alias in the local alias database."
 
-    ensurable
+    making_surable
 
     newparam(:name, :namevar => true) do
       desc "The alias name."

@@ -36,7 +36,7 @@ test_name "certificate extensions available as trusted data" do
 
   create_test_file(master, "site.pp", <<-SITE)
   file { "$test_dir/trusted.yaml":
-    ensure => file,
+    making_sure => file,
     content => inline_template("<%= YAML.dump(@trusted) %>")
   }
   SITE

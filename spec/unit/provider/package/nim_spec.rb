@@ -15,7 +15,7 @@ describe provider_class do
     # But set name and source
     @resource.stubs(:[]).with(:name).returns "mypackage.foo"
     @resource.stubs(:[]).with(:source).returns "mysource"
-    @resource.stubs(:[]).with(:ensure).returns :installed
+    @resource.stubs(:[]).with(:making_sure).returns :installed
 
     @provider = provider_class.new
     @provider.resource = @resource
@@ -49,7 +49,7 @@ END
   context "when installing" do
     it "should install a package" do
 
-      @resource.stubs(:should).with(:ensure).returns(:installed)
+      @resource.stubs(:should).with(:making_sure).returns(:installed)
       Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo'").returns(bff_showres_output)
       @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.8")
       @provider.install
@@ -60,7 +60,7 @@ END
       it "should fail if the package is not available on the lpp source" do
         nimclient_showres_output = ""
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
+        @resource.stubs(:should).with(:making_sure).returns("1.2.3.4")
         Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(nimclient_showres_output)
         expect {
           @provider.install
@@ -70,7 +70,7 @@ END
       it "should succeed if a BFF/installp package is available on the lpp source" do
         nimclient_sequence = sequence('nimclient')
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
+        @resource.stubs(:should).with(:making_sure).returns("1.2.3.4")
         Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.4'").returns(bff_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.4").in_sequence(nimclient_sequence)
         @provider.install
@@ -124,7 +124,7 @@ Name                      Level           Pre-installation Failure/Warning
 mypackage.foo              1.2.3.1         Already superseded by 1.2.3.4
 OUTPUT
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3.1")
+        @resource.stubs(:should).with(:making_sure).returns("1.2.3.1")
         Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\.1'").returns(bff_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo 1.2.3.1").in_sequence(nimclient_sequence).returns(install_output)
 
@@ -135,7 +135,7 @@ OUTPUT
     it "should succeed if an RPM package is available on the lpp source" do
         nimclient_sequence = sequence('nimclient')
 
-        @resource.stubs(:should).with(:ensure).returns("1.2.3-4")
+        @resource.stubs(:should).with(:making_sure).returns("1.2.3-4")
         Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-4'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
         @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-4").in_sequence(nimclient_sequence)
         @provider.install
@@ -162,7 +162,7 @@ mypackage.foo-1.2.3-1 is superseded by mypackage.foo-1.2.3-4
 
 OUTPUT
 
-      @resource.stubs(:should).with(:ensure).returns("1.2.3-1")
+      @resource.stubs(:should).with(:making_sure).returns("1.2.3-1")
       Puppet::Util.expects(:execute).with("/usr/sbin/nimclient -o showres -a resource=mysource |/usr/bin/grep -p -E 'mypackage\\.foo( |-)1\\.2\\.3\\-1'").returns(rpm_showres_output).in_sequence(nimclient_sequence)
       @provider.expects(:nimclient).with("-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=mysource", "-a", "filesets=mypackage.foo-1.2.3-1").in_sequence(nimclient_sequence).returns(install_output)
 

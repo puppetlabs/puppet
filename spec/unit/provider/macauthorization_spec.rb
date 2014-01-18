@@ -31,9 +31,9 @@ describe provider_class do
     # A catch all; no parameters set
     @resource.stubs(:[]).returns(nil)
 
-    # But set name, ensure
+    # But set name, making_sure
     @resource.stubs(:[]).with(:name).returns @authname
-    @resource.stubs(:[]).with(:ensure).returns :present
+    @resource.stubs(:[]).with(:making_sure).returns :present
     @resource.stubs(:ref).returns "MacAuthorization[#{@authname}]"
 
     @provider = provider_class.new(@resource)

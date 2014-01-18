@@ -11,7 +11,7 @@ describe Puppet::Util::NagiosMaker do
     Nagios::Base.stubs(:type).with(:test).returns(@nagtype)
 
     @provider = stub 'provider', :nagios_type => nil
-    @type = stub 'type', :newparam => nil, :newproperty => nil, :provide => @provider, :desc => nil, :ensurable => nil
+    @type = stub 'type', :newparam => nil, :newproperty => nil, :provide => @provider, :desc => nil, :making_surable => nil
   end
 
   it "should be able to create a new nagios type" do
@@ -29,8 +29,8 @@ describe Puppet::Util::NagiosMaker do
     @module.create_nagios_type(:test)
   end
 
-  it "should mark the created type as ensurable" do
-    @type.expects(:ensurable)
+  it "should mark the created type as making_surable" do
+    @type.expects(:making_surable)
 
     Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
     @module.create_nagios_type(:test)
@@ -90,7 +90,7 @@ describe Puppet::Util::NagiosMaker, " when creating the naginator provider" do
     @nagtype = stub 'nagios type', :parameters => [], :namevar => :name
     Nagios::Base.stubs(:type).with(:test).returns(@nagtype)
 
-    @type = stub 'type', :newparam => nil, :ensurable => nil, :newproperty => nil, :desc => nil
+    @type = stub 'type', :newparam => nil, :making_surable => nil, :newproperty => nil, :desc => nil
     Puppet::Type.stubs(:newtype).with(:nagios_test).returns(@type)
   end
 

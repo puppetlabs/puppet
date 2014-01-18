@@ -13,7 +13,7 @@ describe provider_class do
 
     # But set name and source
     @resource.stubs(:[]).with(:name).returns "mypackage"
-    @resource.stubs(:[]).with(:ensure).returns :installed
+    @resource.stubs(:[]).with(:making_sure).returns :installed
     @resource.stubs(:command).with(:zypper).returns "/usr/bin/zypper"
 
     @provider = provider_class.new(@resource)
@@ -46,7 +46,7 @@ describe provider_class do
 
   describe "when installing with zypper version >= 1.0" do
     it "should use a command-line with versioned package'" do
-      @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
+      @resource.stubs(:should).with(:making_sure).returns "1.2.3-4.5.6"
       @provider.stubs(:zypper_version).returns "1.2.8"
 
       @provider.expects(:zypper).with('--quiet', :install,
@@ -56,7 +56,7 @@ describe provider_class do
     end
 
     it "should use a command-line without versioned package" do
-      @resource.stubs(:should).with(:ensure).returns :latest
+      @resource.stubs(:should).with(:making_sure).returns :latest
       @provider.stubs(:zypper_version).returns "1.2.8"
       @provider.expects(:zypper).with('--quiet', :install,
         '--auto-agree-with-licenses', '--no-confirm', nil, 'mypackage')
@@ -67,7 +67,7 @@ describe provider_class do
 
   describe "when installing with zypper version = 0.6.104" do
     it "should use a command-line with versioned package'" do
-      @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
+      @resource.stubs(:should).with(:making_sure).returns "1.2.3-4.5.6"
       @provider.stubs(:zypper_version).returns "0.6.104"
 
       @provider.expects(:zypper).with('--terse', :install,
@@ -77,7 +77,7 @@ describe provider_class do
     end
 
     it "should use a command-line without versioned package" do
-      @resource.stubs(:should).with(:ensure).returns :latest
+      @resource.stubs(:should).with(:making_sure).returns :latest
       @provider.stubs(:zypper_version).returns "0.6.104"
       @provider.expects(:zypper).with('--terse', :install,
         '--auto-agree-with-licenses', '--no-confirm', nil, 'mypackage')
@@ -88,7 +88,7 @@ describe provider_class do
 
   describe "when installing with zypper version = 0.6.13" do
     it "should use a command-line with versioned package'" do
-      @resource.stubs(:should).with(:ensure).returns "1.2.3-4.5.6"
+      @resource.stubs(:should).with(:making_sure).returns "1.2.3-4.5.6"
       @provider.stubs(:zypper_version).returns "0.6.13"
 
       @provider.expects(:zypper).with('--terse', :install,
@@ -98,7 +98,7 @@ describe provider_class do
     end
 
     it "should use a command-line without versioned package" do
-      @resource.stubs(:should).with(:ensure).returns :latest
+      @resource.stubs(:should).with(:making_sure).returns :latest
       @provider.stubs(:zypper_version).returns "0.6.13"
       @provider.expects(:zypper).with('--terse', :install,
         '--no-confirm', nil, 'mypackage')
@@ -128,7 +128,7 @@ describe provider_class do
     it "should install the package without checking keys" do
       @resource.stubs(:[]).with(:name).returns "php5"
       @resource.stubs(:should).with(:install_options).returns ['--no-gpg-check', {'-p' => '/vagrant/files/localrepo/'}]
-      @resource.stubs(:should).with(:ensure).returns "5.4.10-4.5.6"
+      @resource.stubs(:should).with(:making_sure).returns "5.4.10-4.5.6"
       @provider.stubs(:zypper_version).returns "1.2.8"
 
       @provider.expects(:install_options).returns "--no-gpg-check -p \"/vagrant/files/localrepo/\""

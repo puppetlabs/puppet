@@ -106,7 +106,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         return list[-1]
       end
     else
-      list.reject! { |h| h[:ensure] == :absent }
+      list.reject! { |h| h[:making_sure] == :absent }
       return list
     end
   end
@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
       hash = {}
       hash[:name] = $1
-      hash[:ensure] = if $2 == "notinst"
+      hash[:making_sure] = if $2 == "notinst"
         :absent
       else
         $2
@@ -134,7 +134,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       hash[:avail] = $3
 
       if hash[:avail] =~ /^SAME\s*$/
-        hash[:avail] = hash[:ensure]
+        hash[:avail] = hash[:making_sure]
       end
 
       # Use the name method, so it works with subclasses.
@@ -172,7 +172,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     if hash = pkgsingle(@resource)
       hash
     else
-      {:ensure => :absent}
+      {:making_sure => :absent}
     end
   end
 

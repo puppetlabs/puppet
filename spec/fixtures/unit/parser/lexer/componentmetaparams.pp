@@ -1,9 +1,9 @@
 file { "/tmp/component1":
-    ensure => file
+    making_sure => file
 }
 
 define thing {
-    file { $name: ensure => file }
+    file { $name: making_sure => file }
 }
 
 thing { "/tmp/component2":

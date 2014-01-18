@@ -12,7 +12,7 @@ Puppet::Type.newtype(:selmodule) do
     attribute or will be found at {`selmoduledir`}/{`name`}.pp), the selmodule
     resource will autorequire that file."
 
-  ensurable
+  making_surable
 
   newparam(:name) do
     desc "The name of the SELinux policy to be managed.  You should not

@@ -11,7 +11,7 @@ agents.each do |agent|
   end
 
   step "create the task"
-  args = ['ensure=present',
+  args = ['making_sure=present',
           'command=c:\\\\windows\\\\system32\\\\notepad.exe',
           'arguments="foo bar baz"',
           'working_dir=c:\\\\windows']

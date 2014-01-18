@@ -1,7 +1,7 @@
 # im a class
 class foo {
   file { '/tmp/foo' :
-    ensure => present,
+    making_sure => present,
   }
 }
 

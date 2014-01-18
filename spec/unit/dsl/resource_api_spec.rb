@@ -159,22 +159,22 @@ describe Puppet::DSL::ResourceAPI do
   end
 
   it "should mark the specified resource as exported when creating a single exported resource" do
-    resources = @api.export @api.file("/my/file", :ensure => :present)
+    resources = @api.export @api.file("/my/file", :making_sure => :present)
     resources[0].should be_exported
   end
 
   it "should mark all created resources as exported when creating exported resources using a block" do
     @compiler.expects(:add_resource).with { |s, res| res.exported == true }
-    @api.export { file "/my/file", :ensure => :present }
+    @api.export { file "/my/file", :making_sure => :present }
   end
 
   it "should mark the specified resource as virtual when creating a single virtual resource" do
-    resources = @api.virtual @api.file("/my/file", :ensure => :present)
+    resources = @api.virtual @api.file("/my/file", :making_sure => :present)
     resources[0].should be_virtual
   end
 
   it "should mark all created resources as virtual when creating virtual resources using a block" do
     @compiler.expects(:add_resource).with { |s, res| res.virtual == true }
-    @api.virtual { file "/my/file", :ensure => :present }
+    @api.virtual { file "/my/file", :making_sure => :present }
   end
 end

@@ -14,14 +14,14 @@ skip_test "No suitable hosts found" if hosts_to_test.empty?
 
 adduser_manifest = <<MANIFEST
 user { 'passwordtestuser':
-  ensure   => 'present',
+  making_sure   => 'present',
   password => 'apassword',
 }
 MANIFEST
 
 changepass_manifest = <<MANIFEST
 user { 'passwordtestuser':
-  ensure   => 'present',
+  making_sure   => 'present',
   password => 'newpassword',
   noop     => true,
 }

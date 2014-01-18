@@ -51,7 +51,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
       return list[0]
     else
       list.reject! { |h|
-        h[:ensure] == :absent
+        h[:making_sure] == :absent
       }
       return list
     end
@@ -63,14 +63,14 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     if line =~ /\s*(\S+)\s+((\[Not installed\])|(\S+))\s+(\S+)/
       hash = {}
       hash[:name] = $1
-      hash[:ensure] = if $2 == "[Not installed]"
+      hash[:making_sure] = if $2 == "[Not installed]"
         :absent
       else
         $2
       end
       hash[:avail] = $5
 
-      hash[:avail] = hash[:ensure] if hash[:avail] == "SAME"
+      hash[:avail] = hash[:making_sure] if hash[:avail] == "SAME"
 
       # Use the name method, so it works with subclasses.
       hash[:provider] = self.name
@@ -96,7 +96,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     if hash = self.class.blastlist(:justme => @resource[:name])
       hash
     else
-      {:ensure => :absent}
+      {:making_sure => :absent}
     end
   end
 

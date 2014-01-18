@@ -39,15 +39,15 @@ describe provider_class do
 
   describe "when an instance is being flushed" do
     it "should call the device update_vlan method with its vlan id, current attributes, and desired attributes" do
-      @instance = provider_class.new(@device, :ensure => :present, :name => "200", :description => "myvlan")
+      @instance = provider_class.new(@device, :making_sure => :present, :name => "200", :description => "myvlan")
       @instance.description = "myvlan2"
       @instance.resource = @resource
       @resource.stubs(:[]).with(:name).returns("200")
       device = stub_everything 'device'
       @instance.stubs(:device).returns(device)
       device.expects(:command).yields(device)
-      device.expects(:update_vlan).with(@instance.name, {:ensure => :present, :name => "200", :description => "myvlan"},
-                                                   {:ensure => :present, :name => "200", :description => "myvlan2"})
+      device.expects(:update_vlan).with(@instance.name, {:making_sure => :present, :name => "200", :description => "myvlan"},
+                                                   {:making_sure => :present, :name => "200", :description => "myvlan2"})
 
       @instance.flush
     end

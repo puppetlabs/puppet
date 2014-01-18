@@ -5,11 +5,11 @@ module Puppet
   newtype(:mount, :self_refresh => true) do
     @doc = "Manages mounted filesystems, including putting mount
       information into the mount table. The actual behavior depends
-      on the value of the 'ensure' parameter.
+      on the value of the 'making_sure' parameter.
 
       **Refresh:** `mount` resources can respond to refresh events (via
       `notify`, `subscribe`, or the `~>` arrow). If a `mount` receives an event
-      from another resource **and** its `ensure` attribute is set to `mounted`,
+      from another resource **and** its `making_sure` attribute is set to `mounted`,
       Puppet will try to unmount then remount that filesystem.
 
       **Autorequires:** If Puppet is managing any parents of a mount resource ---
@@ -21,7 +21,7 @@ module Puppet
 
     # Use the normal parent class, because we actually want to
     # call code when sync is called.
-    newproperty(:ensure) do
+    newproperty(:making_sure) do
       desc "Control what to do with this mount. Set this attribute to
         `unmounted` to make sure the filesystem is in the filesystem table
         but not mounted (if the filesystem is currently mounted, it will be
@@ -111,7 +111,7 @@ module Puppet
           unless currentvalues.include?(prop)
             raise Puppet::DevError, "Parent has property %s but it doesn't appear in the current values", [prop.name]
           end
-          if prop.name == :ensure
+          if prop.name == :making_sure
             false
           else
             ! prop.safe_insync?(currentvalues[prop])

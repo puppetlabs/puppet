@@ -12,7 +12,7 @@ Puppet::Type.newtype(:interface) do
 
     apply_to_device
 
-    ensurable do
+    making_surable do
       defaultvalues
 
       aliasvalue :shutdown, :absent

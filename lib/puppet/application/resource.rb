@@ -115,7 +115,7 @@ the user `luke`:
     user { 'luke':
      home => '/home/luke',
      uid => '100',
-     ensure => 'present',
+     making_sure => 'present',
      comment => 'Luke Kanies,,,',
      gid => '1000',
      shell => '/bin/bash',

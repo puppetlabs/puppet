@@ -29,14 +29,14 @@ agents.each do |agent|
     agent.group_absent(name)
   end
 
-  step "ensure the user is present with managehome"
-  on agent, puppet_resource('user', name, ["ensure=present", "managehome=true", "password=#{pw}", home_prop].compact)
+  step "making_sure the user is present with managehome"
+  on agent, puppet_resource('user', name, ["making_sure=present", "managehome=true", "password=#{pw}", home_prop].compact)
 
   step "find the current home dir"
   home_dir = get_home_dir(agent, name)
 
   step "modify the user"
-  on agent, puppet_resource('user', name, ["ensure=present", "managehome=true", "home='#{home_dir}_foo'"]) do |result|
+  on agent, puppet_resource('user', name, ["making_sure=present", "managehome=true", "home='#{home_dir}_foo'"]) do |result|
     # SHOULD: user resource output should contain the new home directory
     pending_test "when #19542 is reimplemented correctly"
   end

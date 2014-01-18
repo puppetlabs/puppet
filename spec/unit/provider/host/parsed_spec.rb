@@ -135,7 +135,7 @@ describe provider_class do
       host = mkhost(
         :name   => 'localhost',
         :ip     => '127.0.0.1',
-        :ensure => :present
+        :making_sure => :present
       )
       genhost(host).should == "127.0.0.1\tlocalhost\n"
     end
@@ -145,7 +145,7 @@ describe provider_class do
         :name   => 'localhost.localdomain',
         :ip     => '127.0.0.1',
         :host_aliases => 'localhost',
-        :ensure => :present
+        :making_sure => :present
       )
       genhost(host).should == "127.0.0.1\tlocalhost.localdomain\tlocalhost\n"
     end
@@ -155,7 +155,7 @@ describe provider_class do
         :name       => 'host',
         :ip         => '192.0.0.1',
         :host_aliases => [ 'a1','a2','a3','a4' ],
-        :ensure     => :present
+        :making_sure     => :present
       )
       genhost(host).should == "192.0.0.1\thost\ta1 a2 a3 a4\n"
     end
@@ -165,7 +165,7 @@ describe provider_class do
         :name    => 'localhost',
         :ip      => '127.0.0.1',
         :comment => 'Bazinga!',
-        :ensure  => :present
+        :making_sure  => :present
       )
       genhost(host).should == "127.0.0.1\tlocalhost\t# Bazinga!\n"
     end
@@ -176,7 +176,7 @@ describe provider_class do
         :ip     => '127.0.0.1',
         :host_aliases => 'localhost',
         :comment => 'Bazinga!',
-        :ensure => :present
+        :making_sure => :present
       )
       genhost(host).should == "127.0.0.1\tlocalhost.localdomain\tlocalhost\t# Bazinga!\n"
     end
@@ -187,7 +187,7 @@ describe provider_class do
         :ip           => '192.0.0.1',
         :host_aliases => [ 'a1','a2','a3','a4' ],
         :comment      => 'Bazinga!',
-        :ensure       => :present
+        :making_sure       => :present
       )
       genhost(host).should == "192.0.0.1\thost\ta1 a2 a3 a4\t# Bazinga!\n"
     end

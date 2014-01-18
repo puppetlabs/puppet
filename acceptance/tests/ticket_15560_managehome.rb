@@ -6,7 +6,7 @@ username = "pl#{rand(99999).to_i}"
 
 manifest_present = <<-EOM
 user { '#{username}':
-  ensure     => present,
+  making_sure     => present,
   managehome => true,
   password   => 'Password123!!',
 }
@@ -14,7 +14,7 @@ EOM
 
 manifest_absent = <<-EOM
 user { '#{username}':
-  ensure     => absent,
+  making_sure     => absent,
   managehome => true,
 }
 EOM

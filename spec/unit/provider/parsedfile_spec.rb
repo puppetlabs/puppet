@@ -60,10 +60,10 @@ describe Puppet::Provider::ParsedFile do
         {:name => 'target3_record2'}
       ]
       Puppet.expects(:err).with('Could not prefetch parsedfile_type provider \'parsedfile_provider\' target \'/two\': some error. Treating as empty')
-      provider.expects(:new).with(:name => 'target1_record1', :on_disk => true, :target => '/one', :ensure => :present).returns 'r1'
-      provider.expects(:new).with(:name => 'target1_record2', :on_disk => true, :target => '/one', :ensure => :present).returns 'r2'
-      provider.expects(:new).with(:name => 'target3_record1', :on_disk => true, :target => '/three', :ensure => :present).returns 'r3'
-      provider.expects(:new).with(:name => 'target3_record2', :on_disk => true, :target => '/three', :ensure => :present).returns 'r4'
+      provider.expects(:new).with(:name => 'target1_record1', :on_disk => true, :target => '/one', :making_sure => :present).returns 'r1'
+      provider.expects(:new).with(:name => 'target1_record2', :on_disk => true, :target => '/one', :making_sure => :present).returns 'r2'
+      provider.expects(:new).with(:name => 'target3_record1', :on_disk => true, :target => '/three', :making_sure => :present).returns 'r3'
+      provider.expects(:new).with(:name => 'target3_record2', :on_disk => true, :target => '/three', :making_sure => :present).returns 'r4'
 
       provider.instances.should == %w{r1 r2 r3 r4}
     end

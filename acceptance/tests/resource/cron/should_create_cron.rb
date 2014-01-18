@@ -12,12 +12,12 @@ teardown do
 end
 
 agents.each do |host|
-    step "ensure the user exist via puppet"
+    step "making_sure the user exist via puppet"
     setup host
 
     step "apply the resource on the host using puppet resource"
     on(host, puppet_resource("cron", "crontest", "user=tstuser",
-                  "command=/bin/true", "ensure=present")) do
+                  "command=/bin/true", "making_sure=present")) do
       assert_match(/created/, stdout, "Did not create crontab for tstuser on #{host}")
     end
 

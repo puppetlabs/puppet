@@ -8,7 +8,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
   context "the type class" do
     subject { described_class }
-    it { should be_validattr :ensure }
+    it { should be_validattr :making_sure }
     it { should be_validattr :path }
     it { should be_validattr :principals }
     it { should be_validattr :mode }
@@ -20,7 +20,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
 
   def resource(attrs = {})
     attrs = {
-      :ensure     => 'present',
+      :making_sure     => 'present',
       :path       => path,
       :principals => 'fred@EXAMPLE.COM'
     }.merge(attrs)
@@ -41,11 +41,11 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
     context "when the file is missing" do
       it "should initially be absent" do
         File.delete(path)
-        resource.retrieve[:ensure].must == :absent
+        resource.retrieve[:making_sure].must == :absent
       end
 
       it "should create the file when synced" do
-        resource(:ensure => 'present').parameter(:ensure).sync
+        resource(:making_sure => 'present').parameter(:making_sure).sync
         Puppet::FileSystem.exist?(path).should be_true
       end
     end
@@ -55,7 +55,7 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
         subject { resource.retrieve }
 
         it "should retrieve its properties correctly with zero principals" do
-          subject[:ensure].should == :present
+          subject[:making_sure].should == :present
           subject[:principals].should == []
           # We don't really care what the mode is, just that it got it
           subject[:mode].should_not be_nil
@@ -81,8 +81,8 @@ describe Puppet::Type.type(:k5login), :unless => Puppet.features.microsoft_windo
         end
       end
 
-      it "should remove the file ensure is absent" do
-        resource(:ensure => 'absent').property(:ensure).sync
+      it "should remove the file making_sure is absent" do
+        resource(:making_sure => 'absent').property(:making_sure).sync
         Puppet::FileSystem.exist?(path).should be_false
       end
 

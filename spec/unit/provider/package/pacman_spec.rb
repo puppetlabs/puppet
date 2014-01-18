@@ -19,7 +19,7 @@ describe provider do
   describe "when installing" do
     before do
       @provider.stubs(:query).returns({
-        :ensure => '1.0'
+        :making_sure => '1.0'
       })
     end
 
@@ -167,7 +167,7 @@ Description    : A library-based package manager with dependency support
 EOF
 
       executor.expects(:execute).returns(query_output)
-      @provider.query.should == {:ensure => "1.01.3-2"}
+      @provider.query.should == {:making_sure => "1.01.3-2"}
     end
 
     it "should return a nil if the package isn't found" do
@@ -178,7 +178,7 @@ EOF
     it "should return a hash indicating that the package is missing on error" do
       executor.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
       @provider.query.should == {
-        :ensure => :purged,
+        :making_sure => :purged,
         :status => 'missing',
         :name => @resource[:name],
         :error => 'ok',
@@ -200,13 +200,13 @@ EOF
 
       packages[0].properties.should == {
         :provider => :pacman,
-        :ensure => '1.23-4',
+        :making_sure => '1.23-4',
         :name => 'package1'
       }
 
       packages[1].properties.should == {
         :provider => :pacman,
-        :ensure => '2.00',
+        :making_sure => '2.00',
         :name => 'package2'
       }
     end

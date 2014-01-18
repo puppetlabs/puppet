@@ -216,19 +216,19 @@ Puppet::Type.newtype(:tidy) do
   # Make a file resource to remove a given file.
   def mkfile(path)
     # Force deletion, so directories actually get deleted.
-    Puppet::Type.type(:file).new :path => path, :backup => self[:backup], :ensure => :absent, :force => true
+    Puppet::Type.type(:file).new :path => path, :backup => self[:backup], :making_sure => :absent, :force => true
   end
 
   def retrieve
-    # Our ensure property knows how to retrieve everything for us.
-    if obj = @parameters[:ensure]
+    # Our making_sure property knows how to retrieve everything for us.
+    if obj = @parameters[:making_sure]
       return obj.retrieve
     else
       return {}
     end
   end
 
-  # Hack things a bit so we only ever check the ensure property.
+  # Hack things a bit so we only ever check the making_sure property.
   def properties
     []
   end

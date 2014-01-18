@@ -55,7 +55,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def install
-    should = @resource.should(:ensure)
+    should = @resource.should(:making_sure)
     name = package_name
     unless should == :present or should == :latest
       # We must install a specific version
@@ -103,7 +103,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
           result_fields.zip(match.captures) do |field, value|
             package[field] = value unless !value or value.empty?
           end
-          package[:ensure] = package[:ensure] ? package[:ensure] : :absent
+          package[:making_sure] = package[:making_sure] ? package[:making_sure] : :absent
           packages << package
         end
       end
@@ -136,7 +136,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def self.eix_result_fields
-    [:category, :name, :ensure, :version_available, :vendor, :description]
+    [:category, :name, :making_sure, :version_available, :vendor, :description]
   end
 
   def self.eix_version_format

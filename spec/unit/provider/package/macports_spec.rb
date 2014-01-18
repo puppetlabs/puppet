@@ -18,7 +18,7 @@ describe provider_class do
   end
 
   let :current_hash do
-    {:name => resource_name, :ensure => "1.2.3", :revision => "1", :provider => :macports}
+    {:name => resource_name, :making_sure => "1.2.3", :revision => "1", :provider => :macports}
   end
 
   describe "provider features" do
@@ -48,30 +48,30 @@ describe provider_class do
 
     it "should ignore variants" do
       provider_class.parse_installed_query_line("bar @1.0beta2_38_1+x11+java (active)").
-        should == {:provider=>:macports, :revision=>"1", :name=>"bar", :ensure=>"1.0beta2_38"}
+        should == {:provider=>:macports, :revision=>"1", :name=>"bar", :making_sure=>"1.0beta2_38"}
     end
 
   end
 
   describe "when installing" do
-   it "should not specify a version when ensure is set to latest" do
-     resource[:ensure] = :latest
+   it "should not specify a version when making_sure is set to latest" do
+     resource[:making_sure] = :latest
      provider.expects(:port).with { |flag, method, name, version|
        version.should be_nil
      }
      provider.install
    end
 
-   it "should not specify a version when ensure is set to present" do
-     resource[:ensure] = :present
+   it "should not specify a version when making_sure is set to present" do
+     resource[:making_sure] = :present
      provider.expects(:port).with { |flag, method, name, version|
        version.should be_nil
      }
      provider.install
    end
 
-   it "should specify a version when ensure is set to a version" do
-     resource[:ensure] = "1.2.3"
+   it "should specify a version when making_sure is set to a version" do
+     resource[:making_sure] = "1.2.3"
      provider.expects(:port).with { |flag, method, name, version|
        version.should be
      }
@@ -102,7 +102,7 @@ describe provider_class do
       current_hash[:revision] = "2"
       provider.expects(:execute).with(infoargs, arguments).returns(new_info_line)
       provider.expects(:query).returns(current_hash)
-      provider.latest.should == current_hash[:ensure]
+      provider.latest.should == current_hash[:making_sure]
     end
 
     it "should return the new version_revision if the installed port has a lower revision" do
@@ -123,7 +123,7 @@ describe provider_class do
   describe "when updating a port" do
     it "should execute port install if the port is installed" do
       resource[:name] = resource_name
-      resource[:ensure] = :present
+      resource[:making_sure] = :present
       provider.stubs(:query).returns(current_hash)
       provider.expects(:port).with("-q", :install, resource_name)
       provider.update
@@ -131,7 +131,7 @@ describe provider_class do
 
     it "should execute port install if the port is not installed" do
       resource[:name] = resource_name
-      resource[:ensure] = :present
+      resource[:making_sure] = :present
       provider.stubs(:query).returns("")
       provider.expects(:port).with("-q", :install, resource_name)
       provider.update

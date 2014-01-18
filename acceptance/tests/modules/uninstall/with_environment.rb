@@ -17,7 +17,7 @@ apply_manifest_on master, %Q{
       '#{master['puppetpath']}/testenv/modules',
       '#{master['puppetpath']}/testenv/modules/crakorn',
     ]:
-      ensure => directory,
+      making_sure => directory,
   }
   file {
     '#{master['puppetpath']}/testenv/modules/crakorn/metadata.json':

@@ -9,7 +9,7 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
 
   it { should be_versionable }
 
-  context "when retrieving ensure" do
+  context "when retrieving making_sure" do
     let(:dpkgquery_path) { '/bin/dpkg-query' }
 
     before do
@@ -25,7 +25,7 @@ describe Puppet::Type.type(:package).provider(:aptitude) do
           {:failonfail => true, :combine => true, :custom_environment => {}}
         ).returns(output)
 
-        expect(pkg.property(:ensure).retrieve).to eq(expect)
+        expect(pkg.property(:making_sure).retrieve).to eq(expect)
       end
     end
   end

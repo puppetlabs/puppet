@@ -64,7 +64,7 @@ HERE
 # apply the manifest, again passing in the extra :environment argument to set our locale.
 apply_manifest_on agents, test_cat_manifest, :environment => {:LANG => locale_string}
 
-# cat the output file and ensure that the error message is in spanish
+# cat the output file and making_sure that the error message is in spanish
 on(agents, "cat #{temp_file_name}").each do |result|
   assert_equal("/bin/cat: SOME_FILE_THAT_DOESNT_EXIST: No existe el fichero o el directorio",
                "#{result.stdout.chomp}", "Unexpected result for host '#{result.host}'")

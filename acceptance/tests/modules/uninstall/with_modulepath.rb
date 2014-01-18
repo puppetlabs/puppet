@@ -11,7 +11,7 @@ file {
     '#{master['puppetpath']}/modules2',
     '#{master['puppetpath']}/modules2/crakorn',
     '#{master['puppetpath']}/modules2/absolute',
-  ]: ensure => directory;
+  ]: making_sure => directory;
   '#{master['puppetpath']}/modules2/crakorn/metadata.json':
     content => '{
       "name": "jimmy/crakorn",

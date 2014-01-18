@@ -13,7 +13,7 @@ describe provider_class, :as_platform => :posix do
   before(:each) do
     # Create a mock resource
     @resource = Puppet::Type.type(:service).new(
-      :name => "/system/myservice", :ensure => :running, :enable => :true)
+      :name => "/system/myservice", :making_sure => :running, :enable => :true)
     @provider = provider_class.new(@resource)
 
     FileTest.stubs(:file?).with('/usr/sbin/svcadm').returns true
@@ -29,11 +29,11 @@ describe provider_class, :as_platform => :posix do
 
     it "should get a list of services (excluding legacy)" do
       provider_class.expects(:svcs).with().returns File.read(my_fixture('svcs.out'))
-      instances = provider_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances = provider_class.instances.map { |p| {:name => p.get(:name), :making_sure => p.get(:making_sure)} }
       # we dont manage legacy
       instances.size.should == 2
-      instances[0].should == {:name => 'svc:/system/svc/restarter:default', :ensure => :running }
-      instances[1].should == {:name => 'svc:/network/cswrsyncd:default', :ensure => :maintenance }
+      instances[0].should == {:name => 'svc:/system/svc/restarter:default', :making_sure => :running }
+      instances[1].should == {:name => 'svc:/network/cswrsyncd:default', :making_sure => :maintenance }
     end
   end
 
@@ -118,7 +118,7 @@ describe provider_class, :as_platform => :posix do
 
   describe "when starting a service with a manifest" do
     before(:each) do
-      @resource = Puppet::Type.type(:service).new(:name => "/system/myservice", :ensure => :running, :enable => :true, :manifest => "/tmp/myservice.xml")
+      @resource = Puppet::Type.type(:service).new(:name => "/system/myservice", :making_sure => :running, :enable => :true, :manifest => "/tmp/myservice.xml")
       @provider = provider_class.new(@resource)
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
     end

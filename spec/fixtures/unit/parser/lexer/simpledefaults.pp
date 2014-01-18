@@ -2,4 +2,4 @@
 
 File { mode => 755 }
 
-file { "/tmp/defaulttest": ensure => file }
+file { "/tmp/defaulttest": making_sure => file }

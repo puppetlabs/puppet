@@ -20,7 +20,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
     This provider supports:
 
-    * ensure => running/stopped,
+    * making_sure => running/stopped,
     * enable => true/false
     * status
     * restart
@@ -206,8 +206,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   def exists?
-    Puppet.debug("Puppet::Provider::Launchd:Ensure for #{@property_hash[:name]}: #{@property_hash[:ensure]}")
-    @property_hash[:ensure] != :absent
+    Puppet.debug("Puppet::Provider::Launchd:MakingSure for #{@property_hash[:name]}: #{@property_hash[:making_sure]}")
+    @property_hash[:making_sure] != :absent
   end
 
   def self.get_macosx_version_major

@@ -44,7 +44,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     key = mkkey(:name    => "Just_Testing",
                 :key     => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
                 :type    => "ssh-dss",
-                :ensure  => :present,
+                :making_sure  => :present,
                 :options => [:absent]
               )
 
@@ -56,7 +56,7 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     key = mkkey(:name    => "root@localhost",
                 :key     => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
                 :type    => "ssh-rsa",
-                :ensure  => :present,
+                :making_sure  => :present,
                 :options => ['from="192.168.1.1"', "no-pty", "no-X11-forwarding"]
                 )
 

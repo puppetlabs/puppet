@@ -73,11 +73,11 @@ module Puppet
         when /debian/
           on host, 'iptables -F'
         when /fedora/
-          on host, puppet('resource', 'service', 'firewalld', 'ensure=stopped')
+          on host, puppet('resource', 'service', 'firewalld', 'making_sure=stopped')
         when /el|centos/
-          on host, puppet('resource', 'service', 'iptables', 'ensure=stopped')
+          on host, puppet('resource', 'service', 'iptables', 'making_sure=stopped')
         when /ubuntu/
-          on host, puppet('resource', 'service', 'ufw', 'ensure=stopped')
+          on host, puppet('resource', 'service', 'ufw', 'making_sure=stopped')
         else
           logger.notify("Not sure how to clear firewall on #{host['platform']}")
         end

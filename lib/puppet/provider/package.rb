@@ -16,8 +16,8 @@ class Puppet::Provider::Package < Puppet::Provider
   # Look up the current status.
   def properties
     if @property_hash.empty?
-      @property_hash = query || {:ensure => :absent}
-      @property_hash[:ensure] = :absent if @property_hash.empty?
+      @property_hash = query || {:making_sure => :absent}
+      @property_hash[:making_sure] = :absent if @property_hash.empty?
     end
     @property_hash.dup
   end

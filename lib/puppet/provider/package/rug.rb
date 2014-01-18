@@ -10,7 +10,7 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
 
   # Install a package using 'rug'.
   def install
-    should = @resource.should(:ensure)
+    should = @resource.should(:making_sure)
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
 
@@ -41,7 +41,7 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
     else
       # rug didn't find updates, pretend the current
       # version is the latest
-      return @property_hash[:ensure]
+      return @property_hash[:making_sure]
     end
   end
 

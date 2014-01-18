@@ -1,16 +1,16 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-require 'puppet/type/file/ensure'
+require 'puppet/type/file/making_sure'
 
-describe Puppet::Type::File::Ensure do
+describe Puppet::Type::File::MakingSure do
   include PuppetSpec::Files
 
   let(:path) { tmpfile('file_ensure') }
-  let(:resource) { Puppet::Type.type(:file).new(:ensure => 'file', :path => path, :replace => true) }
-  let(:property) { resource.property(:ensure) }
+  let(:resource) { Puppet::Type.type(:file).new(:making_sure => 'file', :path => path, :replace => true) }
+  let(:property) { resource.property(:making_sure) }
 
-  it "should be a subclass of Ensure" do
-    described_class.superclass.must == Puppet::Property::Ensure
+  it "should be a subclass of MakingSure" do
+    described_class.superclass.must == Puppet::Property::MakingSure
   end
 
   describe "when retrieving the current state" do
@@ -28,44 +28,44 @@ describe Puppet::Type::File::Ensure do
     end
   end
 
-  describe "when testing whether :ensure is in sync" do
+  describe "when testing whether :making_sure is in sync" do
     it "should always be in sync if replace is 'false' unless the file is missing" do
       property.should = :file
       resource.expects(:replace?).returns false
       property.safe_insync?(:link).should be_true
     end
 
-    it "should be in sync if :ensure is set to :absent and the file does not exist" do
+    it "should be in sync if :making_sure is set to :absent and the file does not exist" do
       property.should = :absent
 
       property.must be_safe_insync(:absent)
     end
 
-    it "should not be in sync if :ensure is set to :absent and the file exists" do
+    it "should not be in sync if :making_sure is set to :absent and the file exists" do
       property.should = :absent
 
       property.should_not be_safe_insync(:file)
     end
 
-    it "should be in sync if a normal file exists and :ensure is set to :present" do
+    it "should be in sync if a normal file exists and :making_sure is set to :present" do
       property.should = :present
 
       property.must be_safe_insync(:file)
     end
 
-    it "should be in sync if a directory exists and :ensure is set to :present" do
+    it "should be in sync if a directory exists and :making_sure is set to :present" do
       property.should = :present
 
       property.must be_safe_insync(:directory)
     end
 
-    it "should be in sync if a symlink exists and :ensure is set to :present" do
+    it "should be in sync if a symlink exists and :making_sure is set to :present" do
       property.should = :present
 
       property.must be_safe_insync(:link)
     end
 
-    it "should not be in sync if :ensure is set to :file and a directory exists" do
+    it "should not be in sync if :making_sure is set to :file and a directory exists" do
       property.should = :file
 
       property.should_not be_safe_insync(:directory)
@@ -75,7 +75,7 @@ describe Puppet::Type::File::Ensure do
   describe "#sync" do
     context "directory" do
       before :each do
-        resource[:ensure] = :directory
+        resource[:making_sure] = :directory
       end
 
       it "should raise if the parent directory doesn't exist" do

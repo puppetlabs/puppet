@@ -45,7 +45,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   # eventually become this Puppet::Type::Package::ProviderDpkg class.
   self::DPKG_QUERY_FORMAT_STRING = %Q{'${Status} ${Package} ${Version}\\n'}
   self::FIELDS_REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
-  self::FIELDS= [:desired, :error, :status, :name, :ensure]
+  self::FIELDS= [:desired, :error, :status, :name, :making_sure]
 
   # @param line [String] one line of dpkg-query output
   # @return [Hash,nil] a hash of FIELDS or nil if we failed to match
@@ -63,11 +63,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       hash[:provider] = self.name
 
       if hash[:status] == 'not-installed'
-        hash[:ensure] = :purged
+        hash[:making_sure] = :purged
       elsif ['config-files', 'half-installed', 'unpacked', 'half-configured'].include?(hash[:status])
-        hash[:ensure] = :absent
+        hash[:making_sure] = :absent
       end
-      hash[:ensure] = :held if hash[:desired] == 'hold'
+      hash[:making_sure] = :held if hash[:desired] == 'hold'
     else 
       Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
@@ -123,14 +123,14 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
       hash = self.class.parse_line(output)
     rescue Puppet::ExecutionFailure
       # dpkg-query exits 1 if the package is not found.
-      return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
+      return {:making_sure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
     end
 
-    hash ||= {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
+    hash ||= {:making_sure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
 
     if hash[:error] != "ok"
       raise Puppet::Error.new(
-        "Package #{hash[:name]}, version #{hash[:ensure]} is in error state: #{hash[:error]}"
+        "Package #{hash[:name]}, version #{hash[:making_sure]} is in error state: #{hash[:error]}"
       )
     end
 

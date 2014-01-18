@@ -119,7 +119,7 @@ Puppet::Type.type(:user).provide :directoryservice do
       end
       attribute_hash[ds_to_ns_attribute_map[ds_attribute]] = ds_value
     end
-    attribute_hash[:ensure]         = :present
+    attribute_hash[:making_sure]         = :present
     attribute_hash[:provider]       = :directoryservice
     attribute_hash[:shadowhashdata] = get_attribute_from_dscl('Users', attribute_hash[:name], 'ShadowHashData')
 
@@ -265,7 +265,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     true
   end
 
-  # This method is called if ensure => present is passed and the exists?
+  # This method is called if making_sure => present is passed and the exists?
   # method returns false. Dscl will directly set most values, but the
   # setter methods will be used for any exceptions.
   def create
@@ -279,7 +279,7 @@ Puppet::Type.type(:user).provide :directoryservice do
 
     # Iterate through valid User type properties
     valid_properties.each do |attribute|
-      next if attribute == :ensure
+      next if attribute == :making_sure
       value = @resource.should(attribute)
 
       # Value defaults
@@ -327,7 +327,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     end
   end
 
-  # This method is called when ensure => absent has been set.
+  # This method is called when making_sure => absent has been set.
   # Deleting a user is handled by dscl
   def delete
     dscl '.', '-delete', "/Users/#{@resource.name}"

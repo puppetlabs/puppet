@@ -19,7 +19,7 @@ describe Puppet::Provider::Mount do
   describe Puppet::Provider::Mount, " when mounting" do
 
     before :each do
-      @mounter.stubs(:get).with(:ensure).returns(:mounted)
+      @mounter.stubs(:get).with(:making_sure).returns(:mounted)
     end
 
     it "should use the 'mountcmd' method to mount" do
@@ -52,19 +52,19 @@ describe Puppet::Provider::Mount do
       @mounter.mount
     end
 
-    it "should update the :ensure state to :mounted if it was :unmounted before" do
+    it "should update the :making_sure state to :mounted if it was :unmounted before" do
       @mounter.expects(:mountcmd)
       @mounter.stubs(:options).returns(nil)
-      @mounter.expects(:get).with(:ensure).returns(:unmounted)
-      @mounter.expects(:set).with(:ensure => :mounted)
+      @mounter.expects(:get).with(:making_sure).returns(:unmounted)
+      @mounter.expects(:set).with(:making_sure => :mounted)
       @mounter.mount
     end
 
-    it "should update the :ensure state to :ghost if it was :absent before" do
+    it "should update the :making_sure state to :ghost if it was :absent before" do
       @mounter.expects(:mountcmd)
       @mounter.stubs(:options).returns(nil)
-      @mounter.expects(:get).with(:ensure).returns(:absent)
-      @mounter.expects(:set).with(:ensure => :ghost)
+      @mounter.expects(:get).with(:making_sure).returns(:absent)
+      @mounter.expects(:set).with(:making_sure => :ghost)
       @mounter.mount
     end
 
@@ -109,7 +109,7 @@ describe Puppet::Provider::Mount do
   describe Puppet::Provider::Mount, " when unmounting" do
 
     before :each do
-      @mounter.stubs(:get).with(:ensure).returns(:unmounted)
+      @mounter.stubs(:get).with(:making_sure).returns(:unmounted)
     end
 
     it "should call the :umount command with the resource name" do
@@ -117,17 +117,17 @@ describe Puppet::Provider::Mount do
       @mounter.unmount
     end
 
-    it "should update the :ensure state to :absent if it was :ghost before" do
+    it "should update the :making_sure state to :absent if it was :ghost before" do
       @mounter.expects(:umount).with(@name).returns true
-      @mounter.expects(:get).with(:ensure).returns(:ghost)
-      @mounter.expects(:set).with(:ensure => :absent)
+      @mounter.expects(:get).with(:making_sure).returns(:ghost)
+      @mounter.expects(:set).with(:making_sure => :absent)
       @mounter.unmount
     end
 
-    it "should update the :ensure state to :unmounted if it was :mounted before" do
+    it "should update the :making_sure state to :unmounted if it was :mounted before" do
       @mounter.expects(:umount).with(@name).returns true
-      @mounter.expects(:get).with(:ensure).returns(:mounted)
-      @mounter.expects(:set).with(:ensure => :unmounted)
+      @mounter.expects(:get).with(:making_sure).returns(:mounted)
+      @mounter.expects(:set).with(:making_sure => :unmounted)
       @mounter.unmount
     end
 
@@ -136,27 +136,27 @@ describe Puppet::Provider::Mount do
   describe Puppet::Provider::Mount, " when determining if it is mounted" do
 
     it "should query the property_hash" do
-      @mounter.expects(:get).with(:ensure).returns(:mounted)
+      @mounter.expects(:get).with(:making_sure).returns(:mounted)
       @mounter.mounted?
     end
 
     it "should return true if prefetched value is :mounted" do
-      @mounter.stubs(:get).with(:ensure).returns(:mounted)
+      @mounter.stubs(:get).with(:making_sure).returns(:mounted)
       @mounter.mounted? == true
     end
 
     it "should return true if prefetched value is :ghost" do
-      @mounter.stubs(:get).with(:ensure).returns(:ghost)
+      @mounter.stubs(:get).with(:making_sure).returns(:ghost)
       @mounter.mounted? == true
     end
 
     it "should return false if prefetched value is :absent" do
-      @mounter.stubs(:get).with(:ensure).returns(:absent)
+      @mounter.stubs(:get).with(:making_sure).returns(:absent)
       @mounter.mounted? == false
     end
 
     it "should return false if prefetched value is :unmounted" do
-      @mounter.stubs(:get).with(:ensure).returns(:unmounted)
+      @mounter.stubs(:get).with(:making_sure).returns(:unmounted)
       @mounter.mounted? == false
     end
 

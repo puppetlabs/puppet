@@ -21,7 +21,7 @@ file {
     '#{master['distmoduledir']}',
     '#{master['sitemoduledir']}',
     '#{master['sitemoduledir']}/#{module_name}',
-  ]: ensure => directory;
+  ]: making_sure => directory;
   '#{master['sitemoduledir']}/#{module_name}/metadata.json':
     content => '{
       "name": "#{module_author}/#{module_name}",

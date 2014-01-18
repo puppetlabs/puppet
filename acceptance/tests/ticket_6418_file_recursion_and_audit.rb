@@ -9,11 +9,11 @@ agents.each do |agent|
   dir = agent.tmpdir('6418-recurse-audit')
 
 manifest = %Q{
-    file { "#{dir}/6418": ensure => directory }
-    file { "#{dir}/6418/dir": ensure => directory}
-    file { "#{dir}/6418/dir/dir": ensure => directory}
-    file { "#{dir}/6418/dir/dir/dir": ensure => directory}
-    file { "#{dir}/6418-copy": ensure => present, source => "#{dir}/6418/" }
+    file { "#{dir}/6418": making_sure => directory }
+    file { "#{dir}/6418/dir": making_sure => directory}
+    file { "#{dir}/6418/dir/dir": making_sure => directory}
+    file { "#{dir}/6418/dir/dir/dir": making_sure => directory}
+    file { "#{dir}/6418-copy": making_sure => present, source => "#{dir}/6418/" }
 
     File["#{dir}/6418"] -> File["#{dir}/6418/dir"] -> File["#{dir}/6418/dir/dir"] -> File["#{dir}/6418/dir/dir/dir"] -> File["#{dir}/6418-copy"]
 }
@@ -29,6 +29,6 @@ manifest = %Q{
     apply_manifest_on agent, manifest
 
     step "Verify correct file recursion and audit state"
-    on(agent, "grep ensure.*directory '#{statefile}'", :acceptable_exit_codes => [ 1 ])
+    on(agent, "grep making_sure.*directory '#{statefile}'", :acceptable_exit_codes => [ 1 ])
   end
 end

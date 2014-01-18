@@ -42,7 +42,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
       :name   => 'dummy',
       :target => fake_userfile,
       :user   => 'nobody',
-      :ensure => :absent
+      :making_sure => :absent
     )
   end
 
@@ -98,7 +98,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
 
   describe "when managing one resource" do
 
-    describe "with ensure set to absent" do
+    describe "with making_sure set to absent" do
       let :example do
         Puppet::Type.type(:ssh_authorized_key).new(
           :name     => 'root@hostname',
@@ -106,7 +106,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
           :key      => sample_rsa_keys[0],
           :target   => fake_rootfile,
           :user     => 'root',
-          :ensure   => :absent
+          :making_sure   => :absent
         )
       end
 
@@ -123,7 +123,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
       end
     end
 
-    describe "when ensure is present" do
+    describe "when making_sure is present" do
       let :example do
         Puppet::Type.type(:ssh_authorized_key).new(
           :name     => 'root@hostname',
@@ -131,7 +131,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
           :key      => sample_rsa_keys[0],
           :target   => fake_rootfile,
           :user     => 'root',
-          :ensure   => :present
+          :making_sure   => :present
         )
       end
 
@@ -190,7 +190,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
         :key      => sample_rsa_keys[0],
         :target   => fake_rootfile,
         :user     => 'root',
-        :ensure   => :present
+        :making_sure   => :present
       )
       resources << Puppet::Type.type(:ssh_authorized_key).new(
         :name   => 'user@hostname',
@@ -198,7 +198,7 @@ describe Puppet::Type.type(:ssh_authorized_key).provider(:parsed), '(integration
         :type   => :rsa,
         :target => fake_userfile,
         :user   => 'nobody',
-        :ensure => :present
+        :making_sure => :present
       )
       resources
     end

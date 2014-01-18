@@ -115,7 +115,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   def interface(name)
     ifname = canonalize_ifname(name)
     interface = parse_interface(ifname)
-    return { :ensure => :absent } if interface.empty?
+    return { :making_sure => :absent } if interface.empty?
     interface.merge!(parse_trunking(ifname))
     interface.merge!(parse_interface_config(ifname))
   end
@@ -131,7 +131,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
     lines.shift; lines.pop
     lines.each do |l|
       if l =~ /#{name} is (.+), line protocol is /
-        resource[:ensure] = ($1 == 'up' ? :present : :absent);
+        resource[:making_sure] = ($1 == 'up' ? :present : :absent);
       end
       if l =~ /Auto Speed \(.+\),/ or l =~ /Auto Speed ,/ or l =~ /Auto-speed/
         resource[:speed] = :auto
@@ -201,7 +201,7 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
   end
 
   def update_vlan(id, is = {}, should = {})
-    if should[:ensure] == :absent
+    if should[:making_sure] == :absent
       Puppet.info "Removing #{id} from device vlan"
       execute("conf t")
       execute("no vlan #{id}")

@@ -112,7 +112,7 @@ module Manager
 
     # If they've got all the necessary methods defined and they haven't
     # already added the property, then do so now.
-    klass.ensurable if klass.ensurable? and ! klass.validproperty?(:ensure)
+    klass.making_surable if klass.making_surable? and ! klass.validproperty?(:making_sure)
 
     # Now set up autoload any providers that might exist for this type.
 

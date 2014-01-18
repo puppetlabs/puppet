@@ -144,7 +144,7 @@ describe content do
 
   describe "when testing whether the content is in sync" do
     before do
-      @resource[:ensure] = :file
+      @resource[:making_sure] = :file
       @content = content.new(:resource => @resource)
     end
 
@@ -154,8 +154,8 @@ describe content do
       @content.must be_safe_insync("whatever")
     end
 
-    it "should warn that no content will be synced to links when ensure is :present" do
-      @resource[:ensure] = :present
+    it "should warn that no content will be synced to links when making_sure is :present" do
+      @resource[:making_sure] = :present
       @resource[:content] = 'foo'
       @resource.stubs(:should_be_file?).returns false
       @resource.stubs(:stat).returns mock("stat", :ftype => "link")
@@ -415,14 +415,14 @@ describe content do
         @content.each_chunk_from(source) { |chunk| chunk.should == 'from_source' }
       end
 
-      it "when no content, source, but ensure present" do
-        @resource[:ensure] = :present
+      it "when no content, source, but making_sure present" do
+        @resource[:making_sure] = :present
         @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
       end
 
       # you might do this if you were just auditing
-      it "when no content, source, but ensure file" do
-        @resource[:ensure] = :file
+      it "when no content, source, but making_sure file" do
+        @resource[:making_sure] = :file
         @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
       end
 

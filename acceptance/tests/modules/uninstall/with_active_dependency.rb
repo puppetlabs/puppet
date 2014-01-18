@@ -6,7 +6,7 @@ file {
   [
     '#{master['distmoduledir']}/crakorn',
     '#{master['distmoduledir']}/appleseed',
-  ]: ensure => directory;
+  ]: making_sure => directory;
   '#{master['distmoduledir']}/crakorn/metadata.json':
     content => '{
       "name": "jimmy/crakorn",

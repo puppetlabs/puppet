@@ -26,7 +26,7 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
       end
     end
 
-    [:type, :key, :user, :target, :options, :ensure].each do |property|
+    [:type, :key, :user, :target, :options, :making_sure].each do |property|
       it "has a #{property} property" do
         expect(described_class.attrtype(property)).to eq :property
       end
@@ -39,28 +39,28 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
     describe "for name" do
 
       it "supports valid names" do
-        described_class.new(:name => "username", :ensure => :present, :user => "nobody")
-        described_class.new(:name => "username@hostname", :ensure => :present, :user => "nobody")
+        described_class.new(:name => "username", :making_sure => :present, :user => "nobody")
+        described_class.new(:name => "username@hostname", :making_sure => :present, :user => "nobody")
       end
 
       it "supports whitespace" do
-        described_class.new(:name => "my test", :ensure => :present, :user => "nobody")
+        described_class.new(:name => "my test", :making_sure => :present, :user => "nobody")
       end
 
     end
 
-    describe "for ensure" do
+    describe "for making_sure" do
 
       it "supports :present" do
-        described_class.new(:name => "whev", :ensure => :present, :user => "nobody")
+        described_class.new(:name => "whev", :making_sure => :present, :user => "nobody")
       end
 
       it "supports :absent" do
-        described_class.new(:name => "whev", :ensure => :absent, :user => "nobody")
+        described_class.new(:name => "whev", :making_sure => :absent, :user => "nobody")
       end
 
       it "nots support other values" do
-        expect { described_class.new(:name => "whev", :ensure => :foo, :user => "nobody") }.to raise_error(Puppet::Error, /Invalid value/)
+        expect { described_class.new(:name => "whev", :making_sure => :foo, :user => "nobody") }.to raise_error(Puppet::Error, /Invalid value/)
       end
 
     end
@@ -203,7 +203,7 @@ describe Puppet::Type.type(:ssh_authorized_key), :unless => Puppet.features.micr
           :name   => "Test",
           :key    => "AAA",
           :type   => "ssh-rsa",
-          :ensure => :present)
+          :making_sure => :present)
       end.to raise_error(Puppet::Error,/user.*or.*target.*mandatory/)
     end
 

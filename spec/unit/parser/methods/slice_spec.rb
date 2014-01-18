@@ -32,38 +32,38 @@ describe 'methods' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, present, 2, absent, 3, present]
         $a.slice(2) |$k,$v| {
-          file { "/file_${$k}": ensure => $v }
+          file { "/file_${$k}": making_sure => $v }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_1")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'absent'
+      catalog.resource(:file, "/file_3")['making_sure'].should == 'present'
     end
 
     it 'slice with one parameter' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, present, 2, absent, 3, present]
         $a.slice(2) |$k| {
-          file { "/file_${$k[0]}": ensure => $k[1] }
+          file { "/file_${$k[0]}": making_sure => $k[1] }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_1")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'absent'
+      catalog.resource(:file, "/file_3")['making_sure'].should == 'present'
     end
 
     it 'slice with shorter last slice' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, present, 2, present, 3, absent]
         $a.slice(4) |$a, $b, $c, $d| {
-          file { "/file_$a.$c": ensure => $b }
+          file { "/file_$a.$c": making_sure => $b }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1.2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3.")['ensure'].should == 'absent'
+      catalog.resource(:file, "/file_1.2")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_3.")['making_sure'].should == 'absent'
     end
   end
 
@@ -72,12 +72,12 @@ describe 'methods' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {1=>present, 2=>present, 3=>absent}
         $a.slice(2) |$a,$b| {
-          file { "/file_${a[0]}.${b[0]}": ensure => $a[1] }
+          file { "/file_${a[0]}.${b[0]}": making_sure => $a[1] }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1.2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3.")['ensure'].should == 'absent'
+      catalog.resource(:file, "/file_1.2")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_3.")['making_sure'].should == 'absent'
     end
   end
 
@@ -86,12 +86,12 @@ describe 'methods' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = Integer[1,4]
         $a.slice(2) |$a,$b| {
-          file { "/file_${a}.${b}": ensure => present }
+          file { "/file_${a}.${b}": making_sure => present }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1.2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3.4")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_1.2")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_3.4")['making_sure'].should == 'present'
     end
   end
 
@@ -100,13 +100,13 @@ describe 'methods' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, present, 2, absent, 3, present]
         $a.slice(2).each |$k| {
-          file { "/file_${$k[0]}": ensure => $k[1] }
+          file { "/file_${$k[0]}": making_sure => $k[1] }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_1")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'absent'
+      catalog.resource(:file, "/file_3")['making_sure'].should == 'present'
 
     end
   end

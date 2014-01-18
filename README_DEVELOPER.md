@@ -36,7 +36,7 @@ using something like this:
       catalog = Puppet::Resource::Catalog.new("node-name-val") # NOT certname!
       rsrc = Puppet::Resource.new("file", "sshd_config",
         :parameters => {
-          :ensure => 'file',
+          :making_sure => 'file',
           :source => 'puppet:///modules/filetest/sshd_config',
         }
       )
@@ -149,7 +149,7 @@ To run puppet itself (for a resource lookup say):
 which should return something like:
 
     host { 'localhost':
-      ensure => 'present',
+      making_sure => 'present',
       ip     => '127.0.0.1',
       target => '/etc/hosts',
     }

@@ -345,7 +345,7 @@ module Puppet::Util::FileParsing
     if record = record_type(type) and record.fields.include?(attr.intern)
       return true
     else
-      if attr.intern == :ensure
+      if attr.intern == :making_sure
         return true
       else
         false

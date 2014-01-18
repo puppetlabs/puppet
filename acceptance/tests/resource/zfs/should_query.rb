@@ -15,13 +15,13 @@ end
 agents.each do |agent|
   step "ZFS: setup"
   setup agent
-  step "ZFS: basic - ensure it is created"
-  apply_manifest_on(agent, 'zfs {"tstpool/tstfs": ensure=>present}') do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  step "ZFS: basic - making_sure it is created"
+  apply_manifest_on(agent, 'zfs {"tstpool/tstfs": making_sure=>present}') do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
   step "query one."
   on(agent, 'puppet resource zfs tstpool/tstfs') do
-    assert_match( /ensure *=> *'present'/, result.stdout, "err: #{agent}")
+    assert_match( /making_sure *=> *'present'/, result.stdout, "err: #{agent}")
   end
   step "query all."
   on(agent, 'puppet resource zfs') do

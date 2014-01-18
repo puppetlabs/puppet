@@ -18,7 +18,7 @@ MCX settings refer to, the MCX resource will autorequire that user, group, or co
     "The provider can manage MCXSettings as a string.",
     :methods => [:content, :content=]
 
-  ensurable do
+  making_surable do
     desc "Create or remove the MCX setting."
 
     newvalue(:present) do

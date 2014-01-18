@@ -3,7 +3,7 @@ test_name "test that we can query and find a group that exists."
 name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
-  step "ensure that our test group exists"
+  step "making_sure that our test group exists"
   agent.group_present(name)
 
   step "query for the resource and verify it was found"

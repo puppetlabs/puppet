@@ -30,7 +30,7 @@ Puppet::Type.newtype(:resources) do
         unless @resource.resource_type.respond_to?(:instances)
           raise ArgumentError, "Purging resources of type #{@resource[:name]} is not supported, since they cannot be queried from the system"
         end
-        raise ArgumentError, "Purging is only supported on types that accept 'ensure'" unless @resource.resource_type.validproperty?(:ensure)
+        raise ArgumentError, "Purging is only supported on types that accept 'making_sure'" unless @resource.resource_type.validproperty?(:making_sure)
       end
     end
   end
@@ -98,9 +98,9 @@ Puppet::Type.newtype(:resources) do
   end
 
   def able_to_ensure_absent?(resource)
-      resource[:ensure] = :absent
+      resource[:making_sure] = :absent
   rescue ArgumentError, Puppet::Error
-      err "The 'ensure' attribute on #{self[:name]} resources does not accept 'absent' as a value"
+      err "The 'making_sure' attribute on #{self[:name]} resources does not accept 'absent' as a value"
       false
   end
 
@@ -111,7 +111,7 @@ Puppet::Type.newtype(:resources) do
     resource_type.instances.
       reject { |r| catalog.resource_refs.include? r.ref }.
       select { |r| check(r) }.
-      select { |r| r.class.validproperty?(:ensure) }.
+      select { |r| r.class.validproperty?(:making_sure) }.
       select { |r| able_to_ensure_absent?(r) }.
       each { |resource|
         @parameters.each do |name, param|

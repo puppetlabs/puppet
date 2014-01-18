@@ -67,7 +67,7 @@ module Puppet
     end
 
     # Handle whether the service should actually be running right now.
-    newproperty(:ensure) do
+    newproperty(:making_sure) do
       desc "Whether a service should be running."
 
       newvalue(:stopped, :event => :service_stopped) do
@@ -214,7 +214,7 @@ module Puppet
     # to events.
     def refresh
       # Only restart if we're actually running
-      if (@parameters[:ensure] || newattr(:ensure)).retrieve == :running
+      if (@parameters[:making_sure] || newattr(:making_sure)).retrieve == :running
         provider.restart
       else
         debug "Skipping restart; service is not running"

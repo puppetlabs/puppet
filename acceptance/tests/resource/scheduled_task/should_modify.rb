@@ -15,7 +15,7 @@ agents.each do |agent|
   on agent, "schtasks.exe /create #{version} /tn #{name} /tr c:\\\\windows\\\\system32\\\\notepad.exe /sc daily /ru system"
 
   step "modify the task"
-  on agent, puppet_resource('scheduled_task', name, ['ensure=present', 'command=c:\\\\windows\\\\system32\\\\notepad2.exe', "arguments=args-#{name}"])
+  on agent, puppet_resource('scheduled_task', name, ['making_sure=present', 'command=c:\\\\windows\\\\system32\\\\notepad2.exe', "arguments=args-#{name}"])
 
   step "verify the arguments were updated"
   on agent, puppet_resource('scheduled_task', name) do

@@ -20,24 +20,24 @@ agents.each do |agent|
   send_pkg agent, :pkg => 'mypkg@0.0.2'
   set_publisher agent
   step "IPS: basic - it should create a specific version"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>"0.0.1"}') do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>"0.0.1"}') do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list mypkg" do
     assert_match( /0.0.1/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: it should upgrade if asked for next version"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>"0.0.2"}') do
-    assert_match( /ensure changed/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>"0.0.2"}') do
+    assert_match( /making_sure changed/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list mypkg" do
     assert_no_match( /0.0.1/, result.stdout, "err: #{agent}")
     assert_match( /0.0.2/, result.stdout, "err: #{agent}")
   end
   step "IPS: it should downpgrade if asked for previous version"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>"0.0.1"}') do
-    assert_match( /ensure changed/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>"0.0.1"}') do
+    assert_match( /making_sure changed/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list mypkg" do
     assert_no_match( /0.0.2/, result.stdout, "err: #{agent}")

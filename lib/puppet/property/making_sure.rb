@@ -7,8 +7,8 @@ require 'puppet/property'
 #
 # @api public
 #
-class Puppet::Property::Ensure < Puppet::Property
-  @name = :ensure
+class Puppet::Property::MakingSure < Puppet::Property
+  @name = :making_sure
 
   def self.defaultvalues
     newvalue(:present) do
@@ -63,7 +63,7 @@ class Puppet::Property::Ensure < Puppet::Property
     end
   end
 
-  # Retrieves the _is_ value for the ensure property.
+  # Retrieves the _is_ value for the making_sure property.
   # The existence of the resource is checked by first consulting the provider (if it responds to
   # `:exists`), and secondly the resource. A a value of `:present` or `:absent` is returned
   # depending on if the managed entity exists or not.

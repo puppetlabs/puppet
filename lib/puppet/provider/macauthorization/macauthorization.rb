@@ -88,7 +88,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     new_values = {}
     validprops = Puppet::Type.type(resource.class.name).validproperties
     validprops.each do |prop|
-      next if prop == :ensure
+      next if prop == :making_sure
       if value = resource.should(prop) and value != ""
         new_values[prop] = value
       end
@@ -115,7 +115,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
   def flush
     # deletion happens in the destroy methods
-    if resource[:ensure] != :absent
+    if resource[:making_sure] != :absent
       case resource[:auth_type]
       when :right
         flush_right
@@ -219,7 +219,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # if they come in as a symbol.
     newplist = {}
     propertylist.each_pair do |key, value|
-      next if key == :ensure     # not part of the auth db schema.
+      next if key == :making_sure     # not part of the auth db schema.
       next if key == :auth_type  # not part of the auth db schema.
       case value
       when true, :true

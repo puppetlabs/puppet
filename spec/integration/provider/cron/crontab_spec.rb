@@ -48,11 +48,11 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
   end
 
   describe "when managing a cron entry" do
-    describe "with ensure absent" do
+    describe "with making_sure absent" do
       it "should do nothing if entry already absent" do
         resource = Puppet::Type.type(:cron).new(
           :name   => 'no_such_entry',
-          :ensure => :absent,
+          :making_sure => :absent,
           :target => crontab_user1,
           :user   => crontab_user1
         )
@@ -63,7 +63,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
       it "should remove the resource from crontab if present" do
         resource = Puppet::Type.type(:cron).new(
           :name   => 'My daily failure',
-          :ensure => :absent,
+          :making_sure => :absent,
           :target => crontab_user1,
           :user   => crontab_user1
         )
@@ -74,7 +74,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
       it "should remove a matching cronentry if present" do
         resource = Puppet::Type.type(:cron).new(
           :name     => 'no_such_named_resource_in_crontab',
-          :ensure   => :absent,
+          :making_sure   => :absent,
           :minute   => [ '17-19', '22' ],
           :hour     => [ '0-23/2' ],
           :weekday  => 'Tue',
@@ -87,7 +87,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
       end
     end
 
-    describe "with ensure present" do
+    describe "with making_sure present" do
       it "should do nothing if entry already present" do
         resource = Puppet::Type.type(:cron).new(
           :name    => 'My daily failure',
@@ -103,7 +103,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
       it "should do nothing if a matching entry already present" do
         resource = Puppet::Type.type(:cron).new(
           :name     => 'no_such_named_resource_in_crontab',
-          :ensure   => :present,
+          :making_sure   => :present,
           :minute   => [ '17-19', '22' ],
           :hour     => [ '0-23/2' ],
           :command  => '/bin/unnamed_regular_command',
@@ -117,7 +117,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
       it "should add a new normal entry if currently absent" do
         resource = Puppet::Type.type(:cron).new(
           :name        => 'new entry',
-          :ensure      => :present,
+          :making_sure      => :present,
           :minute      => '12',
           :weekday     => 'Tue',
           :command     => '/bin/new',
@@ -135,7 +135,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
       it "should add a new special entry if currently absent" do
         resource = Puppet::Type.type(:cron).new(
           :name        => 'new special entry',
-          :ensure      => :present,
+          :making_sure      => :present,
           :special     => 'reboot',
           :command     => 'echo "Booted" 1>&2',
           :environment => 'MAILTO=bob@company.com',
@@ -149,7 +149,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
       it "should change existing entry if out of sync" do
         resource = Puppet::Type.type(:cron).new(
           :name        => 'Monthly job',
-          :ensure      => :present,
+          :making_sure      => :present,
           :special     => 'monthly',
 #          :minute => ['22'],
           :command     => '/usr/bin/monthly',
@@ -175,7 +175,7 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
         # force the parsedfile provider to also parse user1's crontab
         random_resource = Puppet::Type.type(:cron).new(
           :name   => 'foo',
-          :ensure => :absent,
+          :making_sure => :absent,
           :target => crontab_user1,
           :user   => crontab_user1
         )

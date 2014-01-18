@@ -6,14 +6,14 @@ Puppet::Type.type(:zfs).provide(:zfs) do
   def self.instances
     zfs(:list, '-H').split("\n").collect do |line|
       name,used,avail,refer,mountpoint = line.split(/\s+/)
-      new({:name => name, :ensure => :present})
+      new({:name => name, :making_sure => :present})
     end
   end
 
   def add_properties
     properties = []
     Puppet::Type.type(:zfs).validproperties.each do |property|
-      next if property == :ensure
+      next if property == :making_sure
       if value = @resource[property] and value != ""
         properties << "-o" << "#{property}=#{value}"
       end

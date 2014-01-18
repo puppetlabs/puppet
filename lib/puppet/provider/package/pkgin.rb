@@ -15,7 +15,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
     #   vim-7.2.446 =        Vim editor (vi clone) without GUI
     match, name, version, status = *package.match(/(\S+)-(\S+)(?: (=|>|<))?\s+.+$/)
     if match
-      ensure_status = if force_status
+      making_sure_status = if force_status
         force_status
       elsif status
         :present
@@ -25,7 +25,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
       {
         :name     => name,
-        :ensure   => ensure_status,
+        :making_sure   => making_sure_status,
         :provider => :pkgin
       }
     end

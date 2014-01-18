@@ -8,7 +8,7 @@ on master, "if [ -f #{master['puppetpath']}/hiera.yaml ]; then cp #{master['pupp
 
 apply_manifest_on master, <<-PP
 file { '#{master['puppetpath']}/hiera.yaml':
-  ensure  => present,
+  making_sure  => present,
   content => '---
     :backends:
       - "yaml"
@@ -26,7 +26,7 @@ PP
 
 apply_manifest_on master, <<-PP
 file { '#{testdir}/hieradata/global.yaml':
-  ensure  => present,
+  making_sure  => present,
   content => "---
     port: 8080
   "

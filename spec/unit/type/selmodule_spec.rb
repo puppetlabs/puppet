@@ -8,7 +8,7 @@ describe Puppet::Type.type(:selmodule), "when validating attributes" do
     end
   end
 
-  [:ensure, :syncversion].each do |param|
+  [:making_sure, :syncversion].each do |param|
     it "should have a #{param} property" do
       Puppet::Type.type(:selmodule).attrtype(param).should == :property
     end

@@ -41,7 +41,7 @@ syn match   puppetTypeDefault   "[A-Z]\w*" contained
 syn match   puppetParam         "\w\+\s*[=+]>" contains=puppetParamName
 syn match   puppetParamName     "\w\+" contained
 
-" match 'present' in 'ensure => present'
+" match 'present' in 'making_sure => present'
 " match '2755' in 'mode => 2755'
 " don't match 'bar' in 'foo => bar'
 syn match   puppetParam         "\w\+\s*[=+]>\s*[a-z0-9]\+" contains=puppetParamString,puppetParamName

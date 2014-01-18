@@ -6,4 +6,4 @@ tag yayness, rahness
 
 tag booness, $variable
 
-file { "/tmp/settestingness": ensure => file }
+file { "/tmp/settestingness": making_sure => file }

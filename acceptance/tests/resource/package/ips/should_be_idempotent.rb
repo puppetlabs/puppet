@@ -19,38 +19,38 @@ agents.each do |agent|
   send_pkg agent, :pkg => 'mypkg@0.0.1'
   set_publisher agent
   step "IPS: it should create"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>present}') do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>present}') do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
   step "IPS: should be idempotent (present)"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>present}') do
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>present}') do
     assert_no_match( /created/, result.stdout, "err: #{agent}")
     assert_no_match( /changed/, result.stdout, "err: #{agent}")
   end
   send_pkg agent, :pkg => 'mypkg@0.0.2'
   step "IPS: ask for latest version"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>latest}') do
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>latest}') do
     assert_match( /Finished catalog run in .*/, result.stdout, "err: #{agent}")
   end
   step "IPS: should be idempotent (latest)"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>latest}') do
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>latest}') do
     assert_no_match( /created/, result.stdout, "err: #{agent}")
     assert_match( /Finished catalog run in .*/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: ask for specific version"
   send_pkg agent,:pkg => 'mypkg@0.0.3'
-  apply_manifest_on(agent, 'package {mypkg : ensure=>"0.0.3"}') do
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>"0.0.3"}') do
     assert_match( /changed/, result.stdout, "err: #{agent}")
   end
   step "IPS: should be idempotent (version)"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>"0.0.3"}') do
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>"0.0.3"}') do
     assert_no_match( /created/, result.stdout, "err: #{agent}")
     assert_no_match( /changed/, result.stdout, "err: #{agent}")
     assert_match( /Finished catalog run in .*/, result.stdout, "err: #{agent}")
   end
-  step "IPS: ensure removed."
-  apply_manifest_on(agent, 'package {mypkg : ensure=>absent}') do
+  step "IPS: making_sure removed."
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>absent}') do
     assert_match( /Finished catalog run in .*/, result.stdout, "err: #{agent}")
   end
 end

@@ -5,7 +5,7 @@ agents.each do |agent|
   name = "test-#{Time.new.to_i}-host"
 
 manifest = %Q{
-  @host{'#{name}': ip=>'127.0.0.2', target=>'#{out}', ensure=>present}
+  @host{'#{name}': ip=>'127.0.0.2', target=>'#{out}', making_sure=>present}
   realize(Host['#{name}'])
 }
 

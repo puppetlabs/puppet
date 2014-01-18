@@ -23,7 +23,7 @@ begin
 # script (tty2), upstart linked to an init script (rsyslog), and no upstart
 # script - only an init script (apache2)
   %w(tty2 rsyslog apache2).each do |pkg|
-    on agent, puppet_resource("package #{pkg} ensure=present")
+    on agent, puppet_resource("package #{pkg} making_sure=present")
 
     step "Ensure #{pkg} has started"
     on agent, "service #{pkg} start", :acceptable_exit_codes => [0,1]
@@ -32,21 +32,21 @@ begin
     check_service_for(pkg, "start", agent)
 
     step "Stop #{pkg} with `puppet resource'"
-    on agent, puppet_resource("service #{pkg} ensure=stopped")
+    on agent, puppet_resource("service #{pkg} making_sure=stopped")
 
     step "Check that status for stopped #{pkg}"
     check_service_for(pkg, "stop", agent)
 
     step "Start #{pkg} with `puppet resource'"
-    on agent, puppet_resource("service #{pkg} ensure=running")
+    on agent, puppet_resource("service #{pkg} making_sure=running")
 
     step "Check that status for started #{pkg}"
     check_service_for(pkg, "start", agent)
   end
 
   on agent, puppet_resource("service") do
-    assert_match(/service \{ 'ssh':\n.*  ensure => 'running',/, stdout, "SSH isn't running, something is wrong with upstart.")
+    assert_match(/service \{ 'ssh':\n.*  making_sure => 'running',/, stdout, "SSH isn't running, something is wrong with upstart.")
   end
 ensure
-  on agent, puppet_resource("package apache2 ensure=absent")
+  on agent, puppet_resource("package apache2 making_sure=absent")
 end

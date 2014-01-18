@@ -1,7 +1,7 @@
 # $Id$
 
 define mytype {
-    file { "/tmp/classtest": ensure => file, mode => 755 }
+    file { "/tmp/classtest": making_sure => file, mode => 755 }
 }
 
 class testing {

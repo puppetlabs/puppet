@@ -1,7 +1,7 @@
 test_name "the agent --disable/--enable functionality should manage the agent lockfile properly"
 
 #
-# This test is intended to ensure that puppet agent --enable/--disable
+# This test is intended to making_sure that puppet agent --enable/--disable
 #  work properly, both in terms of complying with our public "API" around
 #  lockfile semantics ( http://links.puppetlabs.com/agent_lockfiles ), and
 #  in terms of actually restricting or allowing new agent runs to begin.

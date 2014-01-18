@@ -15,7 +15,7 @@ file {
   [
     '#{master['distmoduledir']}/appleseed',
     '#{master['sitemoduledir']}/crakorn',
-  ]: ensure => directory,
+  ]: making_sure => directory,
      recurse => true,
      purge => true,
      force => true;

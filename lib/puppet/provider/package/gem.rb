@@ -54,7 +54,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       versions = $2.split(/,\s*/)
       {
         :name     => name,
-        :ensure   => versions.map{|v| v.split[0]},
+        :making_sure   => versions.map{|v| v.split[0]},
         :provider => :gem
       }
     else
@@ -71,7 +71,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def install(useversion = true)
     command = [command(:gemcmd), "install"]
-    command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
+    command << "-v" << resource[:making_sure] if (! resource[:making_sure].is_a? Symbol) and useversion
 
     if source = resource[:source]
       begin
@@ -108,7 +108,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     gemlist_options.merge!({:source => resource[:source]}) unless resource[:source].nil?
     hash = self.class.gemlist(gemlist_options)
 
-    hash[:ensure][0]
+    hash[:making_sure][0]
   end
 
   def query

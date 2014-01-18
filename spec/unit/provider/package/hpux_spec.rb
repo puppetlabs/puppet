@@ -14,7 +14,7 @@ describe provider_class do
     # But set name and source
     @resource.stubs(:[]).with(:name).returns "mypackage"
     @resource.stubs(:[]).with(:source).returns "mysource"
-    @resource.stubs(:[]).with(:ensure).returns :installed
+    @resource.stubs(:[]).with(:making_sure).returns :installed
 
     @provider = provider_class.new
     @provider.stubs(:resource).returns @resource

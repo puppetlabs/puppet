@@ -27,7 +27,7 @@ agents.each do |agent|
 
   step "query file that does not exist, which should report the file is absent"
   on(agent, puppet_resource('file', '/this/does/notexist')) do
-    assert_match(/ensure\s+=>\s+'absent'/, stdout)
+    assert_match(/making_sure\s+=>\s+'absent'/, stdout)
   end
 
   step "remove UNIX domain socket"

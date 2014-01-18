@@ -3,11 +3,11 @@ class apache {
   include apache::params
   package{'httpd':
     name   => $apache::params::apache_name,
-    ensure => present,
+    making_sure => present,
   }
   service { 'httpd':
     name      => $apache::params::apache_name,
-    ensure    => running,
+    making_sure    => running,
     enable    => true,
     subscribe => Package['httpd'],
   }
@@ -17,16 +17,16 @@ class apache {
   #
   A2mod { require => Package['httpd'], notify => Service['httpd']}
   @a2mod {
-   'rewrite' : ensure => present;
-   'headers' : ensure => present;
-   'expires' : ensure => present;
+   'rewrite' : making_sure => present;
+   'headers' : making_sure => present;
+   'expires' : making_sure => present;
   }
   $vdir = $operatingsystem? {
     'ubuntu' => '/etc/apache2/sites-enabled/',
     default => '/etc/httpd/conf.d',
   }
   file { $vdir:
-    ensure => directory,
+    making_sure => directory,
     recurse => true,
     purge => true,
     notify => Service['httpd'],

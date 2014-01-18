@@ -19,7 +19,7 @@ describe provider_class do
   let(:resource) do
     Puppet::Type.type(:package).new(
       :name     => resource_name,
-      :ensure   => :installed,
+      :making_sure   => :installed,
       :provider => 'rpm'
     )
   end
@@ -84,7 +84,7 @@ describe provider_class do
           :version => "2.8.9",
           :release => "3.3",
           :arch => "x86_64",
-          :ensure => "2.8.9-3.3",
+          :making_sure => "2.8.9-3.3",
         }
       )
       expect(installed_packages[1].properties).to eq(
@@ -95,7 +95,7 @@ describe provider_class do
           :version => "8.0",
           :release => "5.1.1.el5.centos",
           :arch => "noarch",
-          :ensure => "8.0-5.1.1.el5.centos",
+          :making_sure => "8.0-5.1.1.el5.centos",
         }
       )
       expect(installed_packages[2].properties).to eq(
@@ -106,7 +106,7 @@ describe provider_class do
           :version => "1.3.30.2",
           :release => "2.el5",
           :arch => "x86_64",
-          :ensure => "1.3.30.2-2.el5",
+          :making_sure => "1.3.30.2-2.el5",
         }
       )
       expect(installed_packages.last.properties).to eq(
@@ -117,7 +117,7 @@ describe provider_class do
           :version     => "1.2.3.4",
           :release     => "5.el4",
           :arch        => "noarch",
-          :ensure      => "1.2.3.4-5.el4",
+          :making_sure      => "1.2.3.4-5.el4",
         }
       )
     end
@@ -127,7 +127,7 @@ describe provider_class do
     let(:resource) do
       Puppet::Type.type(:package).new(
         :name     => 'myresource',
-        :ensure   => :installed,
+        :making_sure   => :installed,
         :source   => '/path/to/package'
       )
     end
@@ -143,7 +143,7 @@ describe provider_class do
       let(:resource) do
         Puppet::Type.type(:package).new(
           :name            => resource_name,
-          :ensure          => :installed,
+          :making_sure          => :installed,
           :provider        => 'rpm',
           :source          => '/path/to/package',
           :install_options => ['-D', {'--test' => 'value'}, '-Q']
@@ -160,7 +160,7 @@ describe provider_class do
       before(:each) do
         # Force the provider to think a version of the package is already installed
         # This is real hacky. I'm sorry.  --jeffweiss 25 Jan 2013
-        provider.instance_variable_get('@property_hash')[:ensure] = '1.2.3.3'
+        provider.instance_variable_get('@property_hash')[:making_sure] = '1.2.3.3'
       end
 
       it "includes the '-U --oldpackage' flags" do
@@ -182,7 +182,7 @@ describe provider_class do
     let(:resource) do
       Puppet::Type.type(:package).new(
         :name     => 'myresource',
-        :ensure   => :installed
+        :making_sure   => :installed
       )
     end
 
@@ -231,7 +231,7 @@ describe provider_class do
         :release => 'release',
         :arch => 'arch',
         :provider => :rpm,
-        :ensure => 'version-release',
+        :making_sure => 'version-release',
       }
     end
     let(:line) { 'name epoch version release arch' }
@@ -243,7 +243,7 @@ describe provider_class do
           line.gsub(field, delimiter),
           package_hash.merge(
             field.to_sym => delimiter,
-            :ensure => 'version-release'.gsub(field, delimiter)
+            :making_sure => 'version-release'.gsub(field, delimiter)
           )
         )
       end

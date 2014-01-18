@@ -94,6 +94,6 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def self.instances
-    Puppet::Util::ADSI::User.map { |u| new(:ensure => :present, :name => u.name) }
+    Puppet::Util::ADSI::User.map { |u| new(:making_sure => :present, :name => u.name) }
   end
 end

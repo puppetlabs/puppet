@@ -16,52 +16,52 @@ describe 'the map method' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
         $a.map |$x|{ $x*2}.each |$v|{
-          file { "/file_$v": ensure => present }
+          file { "/file_$v": making_sure => present }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_4")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_4")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_6")['making_sure'].should == 'present'
     end
 
     it 'map on an enumerable type (multiplying each value by 2)' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = Integer[1,3]
         $a.map |$x|{ $x*2}.each |$v|{
-          file { "/file_$v": ensure => present }
+          file { "/file_$v": making_sure => present }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_4")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_4")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_6")['making_sure'].should == 'present'
     end
 
     it 'map on a hash selecting keys' do
       catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'a'=>1,'b'=>2,'c'=>3}
       $a.map |$x|{ $x[0]}.each |$k|{
-          file { "/file_$k": ensure => present }
+          file { "/file_$k": making_sure => present }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_a")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_b")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_c")['making_sure'].should == 'present'
     end
 
     it 'each on a hash selecting value' do
       catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'a'=>1,'b'=>2,'c'=>3}
       $a.map |$x|{ $x[1]}.each |$k|{
-          file { "/file_$k": ensure => present }
+          file { "/file_$k": making_sure => present }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_1")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_3")['making_sure'].should == 'present'
     end
 
     context "handles data type corner cases" do
@@ -69,12 +69,12 @@ describe 'the map method' do
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = [false,false]
           $a.map |$x| { $x }.each |$i, $v| {
-            file { "/file_$i.$v": ensure => present }
+            file { "/file_$i.$v": making_sure => present }
           }
         MANIFEST
 
-        catalog.resource(:file, "/file_0.false")['ensure'].should == 'present'
-        catalog.resource(:file, "/file_1.false")['ensure'].should == 'present'
+        catalog.resource(:file, "/file_0.false")['making_sure'].should == 'present'
+        catalog.resource(:file, "/file_1.false")['making_sure'].should == 'present'
       end
 
       it "map gets values that are nil" do
@@ -84,21 +84,21 @@ describe 'the map method' do
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = nil_array()
           $a.map |$x| { $x }.each |$i, $v| {
-            file { "/file_$i.$v": ensure => present }
+            file { "/file_$i.$v": making_sure => present }
           }
         MANIFEST
 
-        catalog.resource(:file, "/file_0.")['ensure'].should == 'present'
+        catalog.resource(:file, "/file_0.")['making_sure'].should == 'present'
       end
 
       it "map gets values that are undef" do
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = [$does_not_exist]
           $a.map |$x = "something"| { $x }.each |$i, $v| {
-            file { "/file_$i.$v": ensure => present }
+            file { "/file_$i.$v": making_sure => present }
           }
         MANIFEST
-        catalog.resource(:file, "/file_0.something")['ensure'].should == 'present'
+        catalog.resource(:file, "/file_0.something")['making_sure'].should == 'present'
       end
     end
   it_should_behave_like 'all iterative functions argument checks', 'map'

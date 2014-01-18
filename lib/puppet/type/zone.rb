@@ -50,7 +50,7 @@ module Puppet::Zone
   end
 end
 
-  ensurable do
+  making_surable do
     desc "The running state of the zone.  The valid states directly reflect
       the states that `zoneadm` provides.  The states are linear,
       in that a zone must be `configured`, then `installed`, and
@@ -88,11 +88,11 @@ end
       fsm.sequence(first, second)
     end
 
-    # Why override it? because property/ensure.rb has a default retrieve method
+    # Why override it? because property/making_sure.rb has a default retrieve method
     # that knows only about :present and :absent. That method just calls
     # provider.exists? and returns :present if a result was returned.
     def retrieve
-      provider.properties[:ensure]
+      provider.properties[:making_sure]
     end
 
     def provider_sync_send(method)
@@ -163,7 +163,7 @@ end
       and may include a default router)."
 
     # The default action of list should is to lst.join(' '). By specifying
-    # @should, we ensure the should remains an array. If we override should, we
+    # @should, we making_sure the should remains an array. If we override should, we
     # should also override insync?() -- property/list.rb
     def should
       @should
@@ -361,7 +361,7 @@ end
   def retrieve
     provider.flush
     hash = provider.properties
-    return setstatus(hash) unless hash.nil? or hash[:ensure] == :absent
+    return setstatus(hash) unless hash.nil? or hash[:making_sure] == :absent
     # Return all properties as absent.
     return Hash[properties.map{|p| [p, :absent]} ]
   end

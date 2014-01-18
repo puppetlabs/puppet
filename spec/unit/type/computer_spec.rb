@@ -15,7 +15,7 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
         
             :ip_address => "1.2.3.4")
     @properties = {}
-    @ensure = Puppet::Type::Computer.attrclass(:ensure).new(:resource => @resource)
+    @making_sure = Puppet::Type::Computer.attrclass(:making_sure).new(:resource => @resource)
   end
 
   it "should be able to create an instance" do
@@ -68,13 +68,13 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
     end
   end
 
-  describe "when managing the ensure property" do
+  describe "when managing the making_sure property" do
     it "should support a :present value" do
-      lambda { @ensure.should = :present }.should_not raise_error
+      lambda { @making_sure.should = :present }.should_not raise_error
     end
 
     it "should support an :absent value" do
-      lambda { @ensure.should = :absent }.should_not raise_error
+      lambda { @making_sure.should = :absent }.should_not raise_error
     end
   end
 end

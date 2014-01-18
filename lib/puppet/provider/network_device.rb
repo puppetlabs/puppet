@@ -14,16 +14,16 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
     resources.each do |name, resource|
       device = Puppet::Util::NetworkDevice.current || device(resource[:device_url])
       if result = lookup(device, name)
-        result[:ensure] = :present
+        result[:making_sure] = :present
         resource.provider = new(device, result)
       else
-        resource.provider = new(device, :ensure => :absent)
+        resource.provider = new(device, :making_sure => :absent)
       end
     end
   end
 
   def exists?
-    @property_hash[:ensure] != :absent
+    @property_hash[:making_sure] != :absent
   end
 
   attr_accessor :device
@@ -39,7 +39,7 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
   end
 
   def create
-    @property_hash[:ensure] = :present
+    @property_hash[:making_sure] = :present
     self.class.resource_type.validproperties.each do |property|
       if val = resource.should(property)
         @property_hash[property] = val
@@ -48,7 +48,7 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
   end
 
   def destroy
-    @property_hash[:ensure] = :absent
+    @property_hash[:making_sure] = :absent
   end
 
   def flush

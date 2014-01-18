@@ -4,7 +4,7 @@ module Puppet
       only knows how to install keys into `/etc/ssh/ssh_known_hosts`.  See
       the `ssh_authorized_key` type to manage authorized keys."
 
-    ensurable
+    making_surable
 
     newproperty(:type) do
       desc "The encryption type used.  Probably ssh-dss or ssh-rsa."

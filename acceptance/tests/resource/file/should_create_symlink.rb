@@ -17,7 +17,7 @@ agents.each do |agent|
   on agent, "echo '#{message}' > #{target}"
 
   step "verify we can create a symlink"
-  on(agent, puppet_resource("file", link, "ensure=#{target}"))
+  on(agent, puppet_resource("file", link, "making_sure=#{target}"))
 
   step "verify the symlink was created"
   on agent, "test -L #{link} && test -f #{link}"

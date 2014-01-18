@@ -5,7 +5,7 @@ require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils
 
 agents.each do |host|
-    step "ensure the user exist via puppet"
+    step "making_sure the user exist via puppet"
     setup host
 
     step "create the existing job by hand..."
@@ -17,7 +17,7 @@ agents.each do |host|
     end
 
     step "apply the resource change on the host"
-    on(host, puppet_resource("cron", "crontest", "user=tstuser", "command=/bin/true", "ensure=present", "hour='0-6'")) do
+    on(host, puppet_resource("cron", "crontest", "user=tstuser", "command=/bin/true", "making_sure=present", "hour='0-6'")) do
         assert_match(/hour\s+=>\s+\['0-6'\]/, stdout, "Modifying cron entry failed for tstuser on #{host}")
     end
 

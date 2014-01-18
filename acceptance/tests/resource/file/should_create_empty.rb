@@ -7,7 +7,7 @@ agents.each do |agent|
   on(agent, "rm -rf #{target}")
 
   step "verify we can create an empty file"
-  on(agent, puppet_resource("file", target, 'ensure=present'))
+  on(agent, puppet_resource("file", target, 'making_sure=present'))
 
   step "verify the target was created"
   on(agent, "test -f #{target} && test ! -s #{target}")

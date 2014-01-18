@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:sun) do
-  let(:resource) { Puppet::Type.type(:package).new(:name => 'dummy', :ensure => :installed, :provider => :sun) }
+  let(:resource) { Puppet::Type.type(:package).new(:name => 'dummy', :making_sure => :installed, :provider => :sun) }
   let(:provider) { resource.provider }
 
   describe 'provider features' do
@@ -20,7 +20,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
 
   context '#install' do
     it "should install a package" do
-      resource[:ensure] = :installed
+      resource[:making_sure] = :installed
       resource[:source] = '/cdrom'
       provider.expects(:pkgadd).with(['-d', '/cdrom', '-n', 'dummy'])
       provider.install
@@ -34,7 +34,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
     end
 
      it "should install a package on global zone if -G specified" do
-      resource[:ensure] = :installed
+      resource[:making_sure] = :installed
       resource[:source] = '/cdrom'
       resource[:install_options] = '-G'
       provider.expects(:pkgadd).with(['-d', '/cdrom', '-G', '-n', 'dummy'])
@@ -51,14 +51,14 @@ describe Puppet::Type.type(:package).provider(:sun) do
 
   context '#update' do
     it "should call uninstall if not :absent on info2hash" do
-      provider.stubs(:info2hash).returns({:name => 'SUNWdummy', :ensure => "11.11.0,REV=2010.10.12.04.23"})
+      provider.stubs(:info2hash).returns({:name => 'SUNWdummy', :making_sure => "11.11.0,REV=2010.10.12.04.23"})
       provider.expects(:uninstall)
       provider.expects(:install)
       provider.update
     end
 
     it "should not call uninstall if :absent on info2hash" do
-      provider.stubs(:info2hash).returns({:name => 'SUNWdummy', :ensure => :absent})
+      provider.stubs(:info2hash).returns({:name => 'SUNWdummy', :making_sure => :absent})
       provider.expects(:install)
       provider.update
     end
@@ -71,7 +71,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
         :name     => 'SUNWdummy',
         :category=>"system",
         :platform=>"i386",
-        :ensure   => "11.11.0,REV=2010.10.12.04.23",
+        :making_sure   => "11.11.0,REV=2010.10.12.04.23",
         :root=>"/",
         :description=>"Dummy server (9.6.1-P3)",
         :vendor => "Oracle Corporation",
@@ -80,7 +80,7 @@ describe Puppet::Type.type(:package).provider(:sun) do
 
     it "shouldn't find the package on query if it is not present" do
       provider.expects(:pkginfo).with('-l', 'dummy').raises Puppet::ExecutionFailure, "Execution of 'pkginfo -l dummy' returned 3: ERROR: information for \"dummy\" not found."
-      provider.query.should == {:ensure => :absent}
+      provider.query.should == {:making_sure => :absent}
     end
 
     it "unknown message should raise error." do
@@ -92,15 +92,15 @@ describe Puppet::Type.type(:package).provider(:sun) do
   context '#instance' do
     it "should list instances when there are packages in the system" do
       described_class.expects(:pkginfo).with('-l').returns File.read(my_fixture('simple'))
-      instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances = provider.class.instances.map { |p| {:name => p.get(:name), :making_sure => p.get(:making_sure)} }
       instances.size.should == 2
       instances[0].should == {
         :name     => 'SUNWdummy',
-        :ensure   => "11.11.0,REV=2010.10.12.04.23",
+        :making_sure   => "11.11.0,REV=2010.10.12.04.23",
       }
       instances[1].should == {
         :name     => 'SUNWdummyc',
-        :ensure   => "11.11.0,REV=2010.10.12.04.24",
+        :making_sure   => "11.11.0,REV=2010.10.12.04.24",
       }
     end
 

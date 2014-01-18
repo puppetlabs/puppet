@@ -20,7 +20,7 @@ file {
   [
     '#{master['distmoduledir']}/#{module_name}',
     '#{master['distmoduledir']}/apache',
-  ]: ensure => directory;
+  ]: making_sure => directory;
   '#{master['distmoduledir']}/#{module_name}/metadata.json':
     content => '{
       "name": "not#{module_author}/#{module_name}",

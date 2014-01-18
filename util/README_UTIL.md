@@ -66,7 +66,7 @@ Now you should be able to:
 
 ```bash
 jpartlow@percival:~/work/puppet$ curl -k -H 'Accept: text/pson' https://puppetmaster:8140/main/resource/user/nobody
-{"type":"User","title":"nobody","tags":["user","nobody"],"exported":false,"parameters":{"ensure":"present","home":"/nonexistent","uid":65534,"gid":65534,"comment":"nobody","shell":"/bin/sh","groups":[],"expiry":"absent","provider":"useradd","membership":"minimum","role_membership":"minimum","auth_membership":"minimum","profile_membership":"minimum","key_membership":"minimum","attribute_membership":"minimum","loglevel":"notice"}}
+{"type":"User","title":"nobody","tags":["user","nobody"],"exported":false,"parameters":{"making_sure":"present","home":"/nonexistent","uid":65534,"gid":65534,"comment":"nobody","shell":"/bin/sh","groups":[],"expiry":"absent","provider":"useradd","membership":"minimum","role_membership":"minimum","auth_membership":"minimum","profile_membership":"minimum","key_membership":"minimum","attribute_membership":"minimum","loglevel":"notice"}}
 ```
 
 For more complex authorization cases you will need to reference the agents keys:

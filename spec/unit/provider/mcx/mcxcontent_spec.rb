@@ -19,9 +19,9 @@ describe provider_class do
     # A catch all; no parameters set
     @resource.stubs(:[]).returns(nil)
 
-    # But set name, ensure and enable
+    # But set name, making_sure and enable
     @resource.stubs(:[]).with(:name).returns @attached_to
-    @resource.stubs(:[]).with(:ensure).returns :present
+    @resource.stubs(:[]).with(:making_sure).returns :present
     @resource.stubs(:ref).returns "Mcx[#{@attached_to}]"
 
     # stub out the provider methods that actually touch the filesystem

@@ -16,7 +16,7 @@ describe Puppet::Type.type(:service).provider(:init) do
   let :resource do
     Puppet::Type.type(:service).new(
       :name     => 'myservice',
-      :ensure   => :running,
+      :making_sure   => :running,
       :path     => paths
     )
   end

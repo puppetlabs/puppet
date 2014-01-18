@@ -32,7 +32,7 @@ describe provider do
     end
 
     it 'should call yum install for :installed' do
-      @resource.stubs(:should).with(:ensure).returns :installed
+      @resource.stubs(:should).with(:making_sure).returns :installed
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage')
       @provider.install
     end
@@ -43,16 +43,16 @@ describe provider do
     end
 
     it 'should be able to set version' do
-      @resource.stubs(:should).with(:ensure).returns '1.2'
+      @resource.stubs(:should).with(:making_sure).returns '1.2'
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage-1.2')
-      @provider.stubs(:query).returns :ensure => '1.2'
+      @provider.stubs(:query).returns :making_sure => '1.2'
       @provider.install
     end
 
     it 'should be able to downgrade' do
-      @resource.stubs(:should).with(:ensure).returns '1.0'
+      @resource.stubs(:should).with(:making_sure).returns '1.0'
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, 'mypackage-1.0')
-      @provider.stubs(:query).returns(:ensure => '1.2').then.returns(:ensure => '1.0')
+      @provider.stubs(:query).returns(:making_sure => '1.2').then.returns(:making_sure => '1.0')
       @provider.install
     end
   end
@@ -74,8 +74,8 @@ describe provider do
         @provider.stubs(:latest_info).returns(nil)
       end
 
-      it 'raises if ensure is absent and latest_info is nil' do
-        @provider.stubs(:properties).returns({:ensure => :absent})
+      it 'raises if making_sure is absent and latest_info is nil' do
+        @provider.stubs(:properties).returns({:making_sure => :absent})
 
         expect { @provider.latest }.to raise_error(
           Puppet::DevError,
@@ -83,8 +83,8 @@ describe provider do
         )
       end
 
-      it 'returns the ensure value if the package is not already installed' do
-        @provider.stubs(:properties).returns({:ensure => '3.4.5'})
+      it 'returns the making_sure value if the package is not already installed' do
+        @provider.stubs(:properties).returns({:making_sure => '3.4.5'})
 
         @provider.latest.should == '3.4.5'
       end
@@ -99,7 +99,7 @@ describe provider do
           :release  => '5',
           :arch     => 'i686',
           :provider => :yum,
-          :ensure   => '2.3.4-5'
+          :making_sure   => '2.3.4-5'
         })
       end
 
@@ -163,7 +163,7 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
     def a_package_type_instance_with_yum_provider_and_ensure_latest(name)
       type_instance = package_type.new(:name => name)
       type_instance.provider = yum_provider.new
-      type_instance[:ensure] = :latest
+      type_instance[:making_sure] = :latest
       return type_instance
     end
 
@@ -188,7 +188,7 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
         :release=>"5.el4",
         :arch=>"noarch",
         :provider=>:yum,
-        :ensure=>"1.2.3.4-5.el4"
+        :making_sure=>"1.2.3.4-5.el4"
       })
     end
   end

@@ -84,7 +84,7 @@ module Puppet
 
     def change_to_s(currentvalue, newvalue)
       # newvalue = "{md5}#{@metadata.checksum}"
-      if resource.property(:ensure).retrieve == :absent
+      if resource.property(:making_sure).retrieve == :absent
         return "creating from source #{metadata.source} with contents #{metadata.checksum}"
       else
         return "replacing from source #{metadata.source} with contents #{metadata.checksum}"
@@ -147,14 +147,14 @@ module Puppet
         copy_source_value(metadata_method)
       end
 
-      if resource[:ensure] == :absent
+      if resource[:making_sure] == :absent
         # We know all we need to
       elsif metadata.ftype != "link"
-        resource[:ensure] = metadata.ftype
+        resource[:making_sure] = metadata.ftype
       elsif resource[:links] == :follow
-        resource[:ensure] = :present
+        resource[:making_sure] = :present
       else
-        resource[:ensure] = "link"
+        resource[:making_sure] = "link"
         resource[:target] = metadata.destination
       end
     end

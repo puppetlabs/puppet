@@ -48,8 +48,8 @@ end
 
 step "Remove system users" do
   hosts.each do |host|
-    on host, puppet('resource', 'user', original_state[host][:user], 'ensure=absent')
-    on host, puppet('resource', 'group', original_state[host][:group], 'ensure=absent')
+    on host, puppet('resource', 'user', original_state[host][:user], 'making_sure=absent')
+    on host, puppet('resource', 'group', original_state[host][:group], 'making_sure=absent')
   end
 end
 

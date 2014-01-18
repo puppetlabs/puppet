@@ -3,11 +3,11 @@ test_name "should modify a user"
 name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
-  step "ensure the user is present"
+  step "making_sure the user is present"
   agent.user_present(name)
 
   step "modify the user"
-  on agent, puppet_resource('user', name, ["ensure=present", "comment=comment#{name}"])
+  on agent, puppet_resource('user', name, ["making_sure=present", "comment=comment#{name}"])
 
   step "verify the user was modified"
   agent.user_get(name) do |result|

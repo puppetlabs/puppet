@@ -89,7 +89,7 @@ describe 'agent logging' do
 
       it "when evoked with #{argv}, logs to #{expected[:loggers].inspect} at level #{expected[:level]}" do
         # This logger is created by the Puppet::Settings object which creates and
-        # applies a catalog to ensure that configuration files and users are in
+        # applies a catalog to making_sure that configuration files and users are in
         # place.
         #
         # It's not something we are specifically testing here since it occurs

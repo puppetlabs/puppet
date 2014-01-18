@@ -13,9 +13,9 @@ Puppet::Type.newtype(:cron) do
     If you specify a cron resource that duplicates the scheduling and command
     used by an existing crontab entry, then Puppet will take no action and
     defers to the existing crontab entry.  If the duplicate cron resource
-    specifies `ensure => absent`, all existing duplicated crontab entries will
+    specifies `making_sure => absent`, all existing duplicated crontab entries will
     be removed.  Specifying multiple duplicate cron resources with different
-    `ensure` states will result in undefined behavior.
+    `making_sure` states will result in undefined behavior.
 
     Example:
 
@@ -51,7 +51,7 @@ Puppet::Type.newtype(:cron) do
     `minute => absent` because Puppet only manages parameters that are out of
     sync with manifest entries.
   EOT
-  ensurable
+  making_surable
 
   # A base class for all of the Cron parameters, since they all have
   # similar argument checking going on.
@@ -427,7 +427,7 @@ Puppet::Type.newtype(:cron) do
     unless ret
       case name
       when :command
-        devfail "No command, somehow" unless @parameters[:ensure].value == :absent
+        devfail "No command, somehow" unless @parameters[:making_sure].value == :absent
       when :special
         # nothing
       else

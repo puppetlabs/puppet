@@ -7,7 +7,7 @@ describe provider do
   before(:each) do
     @resource = Puppet::Type.type(:package).new(
       :name     => "TESTpkg",
-      :ensure   => :present,
+      :making_sure   => :present,
       :provider => :pkgutil
     )
     @provider = provider.new(@resource)
@@ -34,20 +34,20 @@ describe provider do
 
   describe "when installing" do
     it "should use a command without versioned package" do
-      @resource[:ensure] = :latest
+      @resource[:making_sure] = :latest
       @provider.expects(:pkguti).with('-y', '-i', 'TESTpkg')
       @provider.install
     end
 
     it "should support a single temp repo URL" do
-      @resource[:ensure] = :latest
+      @resource[:making_sure] = :latest
       @resource[:source] = "http://example.net/repo"
       @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-y', '-i', 'TESTpkg')
       @provider.install
     end
 
     it "should support multiple temp repo URLs as array" do
-      @resource[:ensure] = :latest
+      @resource[:making_sure] = :latest
       @resource[:source] = [ 'http://example.net/repo', 'http://example.net/foo' ]
       @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-i', 'TESTpkg')
       @provider.install
@@ -157,27 +157,27 @@ REALpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
     it "should return TESTpkg's version string" do
       fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:ensure].should == "1.4.5,REV=2007.11.18"
+      @provider.query[:making_sure].should == "1.4.5,REV=2007.11.18"
     end
 
     it "should handle a package that isn't installed" do
       fake_data = "TESTpkg  notinst  1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:ensure].should == :absent
+      @provider.query[:making_sure].should == :absent
     end
 
     it "should handle a non-existent package" do
       fake_data = "noisy output here
 Not in catalog"
       provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:ensure].should == :absent
+      @provider.query[:making_sure].should == :absent
     end
 
     it "should support a temp repo URL" do
       @resource[:source] = "http://example.net/repo"
       fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-c', '--single', 'TESTpkg').returns fake_data
-      @provider.query[:ensure].should == "1.4.5,REV=2007.11.18"
+      @provider.query[:making_sure].should == "1.4.5,REV=2007.11.18"
     end
   end
 
@@ -198,7 +198,7 @@ Not in catalog"
       provider.expects(:pkguti).with(['-c']).returns fake_data
 
       testpkg = mock 'pkg1'
-      provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
+      provider.expects(:new).with(:making_sure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
       provider.instances.should == [testpkg]
     end
 
@@ -210,10 +210,10 @@ Not in catalog"
       provider.expects(:pkguti).with(['-c']).returns fake_data
 
       testpkg = mock 'pkg1'
-      provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
+      provider.expects(:new).with(:making_sure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
 
       aliaspkg = mock 'pkg2'
-      provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "mypkg", :provider => :pkgutil).returns aliaspkg
+      provider.expects(:new).with(:making_sure => "1.4.5,REV=2007.11.18", :name => "mypkg", :provider => :pkgutil).returns aliaspkg
 
       provider.instances.should == [testpkg,aliaspkg]
     end
@@ -226,7 +226,7 @@ Not in catalog"
       provider.expects(:pkguti).with(['-c']).returns fake_data
 
       testpkg = mock 'pkg1'
-      provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
+      provider.expects(:new).with(:making_sure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
 
       provider.instances.should == [testpkg]
     end

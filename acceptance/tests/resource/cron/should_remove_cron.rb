@@ -5,7 +5,7 @@ require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils
 
 agents.each do |host|
-    step "ensure the user exist via puppet"
+    step "making_sure the user exist via puppet"
     setup host
 
     step "create the existing job by hand..."
@@ -13,8 +13,8 @@ agents.each do |host|
 
     step "apply the resource on the host using puppet resource"
     on(host, puppet_resource("cron", "crontest", "user=tstuser",
-                  "command=/bin/true", "ensure=absent")) do
-      assert_match(/crontest\D+ensure:\s+removed/, stdout, "Didn't remove crobtab entry for tstuser on #{host}")
+                  "command=/bin/true", "making_sure=absent")) do
+      assert_match(/crontest\D+making_sure:\s+removed/, stdout, "Didn't remove crobtab entry for tstuser on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"

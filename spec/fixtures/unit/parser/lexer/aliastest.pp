@@ -1,16 +1,16 @@
 file { "a file":
     path => "/tmp/aliastest",
-    ensure => file
+    making_sure => file
 }
 
 file { "another":
     path => "/tmp/aliastest2",
-    ensure => file,
+    making_sure => file,
     require => File["a file"]
 }
 
 file { "a third":
     path => "/tmp/aliastest3",
-    ensure => file,
+    making_sure => file,
     require => File["/tmp/aliastest"]
 }

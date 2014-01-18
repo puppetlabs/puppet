@@ -32,7 +32,7 @@ step "setup manifests for testing"
 
 version1_manifest = <<-MANIFEST
 package { '#{package}':
-  ensure   => '#{version1}',
+  making_sure   => '#{version1}',
   provider => aix,
   source   => '#{dir}',
 }
@@ -40,7 +40,7 @@ MANIFEST
 
 version2_manifest = <<-MANIFEST
 package { '#{package}':
-  ensure   => '#{version2}',
+  making_sure   => '#{version2}',
   provider => aix,
   source   => '#{dir}',
 }
@@ -48,7 +48,7 @@ MANIFEST
 
 absent_manifest = <<-MANIFEST
 package { '#{package}':
-  ensure   => absent,
+  making_sure   => absent,
   provider => aix,
   source   => '#{dir}',
 }

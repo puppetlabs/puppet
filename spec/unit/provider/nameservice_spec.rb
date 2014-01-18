@@ -44,7 +44,7 @@ describe Puppet::Provider::NameService do
   let :faketype do
     Puppet::Type.newtype(:nameservice_dummytype) do
       newparam(:name)
-      ensurable
+      making_surable
       newproperty(:foo)
       newproperty(:bar)
     end
@@ -55,7 +55,7 @@ describe Puppet::Provider::NameService do
   end
 
   let :resource do
-    resource = faketype.new(:name => 'bob', :ensure => :present)
+    resource = faketype.new(:name => 'bob', :making_sure => :present)
     resource.provider = provider
     resource
   end
@@ -211,7 +211,7 @@ describe Puppet::Provider::NameService do
       # provides values for :foo and :bar) TODO: Fix that
       provider.expects(:posixmethod).with(:foo).returns(:foo).twice
       provider.expects(:posixmethod).with(:bar).returns(:bar).twice
-      provider.expects(:posixmethod).with(:ensure).returns :ensure
+      provider.expects(:posixmethod).with(:making_sure).returns :making_sure
       provider.info2hash(fakeetcobject).should == { :foo => 'fooval', :bar => 'barval' }
     end
   end

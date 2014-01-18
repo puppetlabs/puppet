@@ -23,7 +23,7 @@ module Puppet
 #     a file's owner, group and mode). A property describes two states; the 'is' (current state) and the 'should' (wanted
 #     state).
 #       * **Ensurable** - a set of traits that control the lifecycle (create, remove, etc.) of a managed entity.
-#         There is a default set of operations associated with being _ensurable_, but this can be changed.
+#         There is a default set of operations associated with being _making_surable, but this can be changed.
 #       * **Name/Identity** - one property is the name/identity of a resource, the _namevar_ that uniquely identifies
 #         one instance of a type from all others.
 #   * **Parameters** - additional attributes of the type (that does not directly related to an instance of the managed
@@ -161,45 +161,45 @@ class Type
     @@metaparams.each { |p| yield p.name }
   end
 
-  # Creates a new `ensure` property with configured default values or with configuration by an optional block.
-  # This method is a convenience method for creating a property `ensure` with default accepted values.
-  # If no block is specified, the new `ensure` property will accept the default symbolic
-  # values `:present`, and `:absent` - see {Puppet::Property::Ensure}.
+  # Creates a new `making_sure` property with configured default values or with configuration by an optional block.
+  # This method is a convenience method for creating a property `making_sure` with default accepted values.
+  # If no block is specified, the new `making_sure` property will accept the default symbolic
+  # values `:present`, and `:absent` - see {Puppet::Property::MakingSure}.
   # If something else is wanted, pass a block and make calls to {Puppet::Property.newvalue} from this block
   # to define each possible value. If a block is passed, the defaults are not automatically added to the set of
   # valid values.
   #
   # @note This method will be automatically called without a block if the type implements the methods
-  #   specified by {ensurable?}. It is recommended to always call this method and not rely on this automatic
-  #   specification to clearly state that the type is ensurable.
+  #   specified by {making_surable?}. It is recommended to always call this method and not rely on this automatic
+  #   specification to clearly state that the type is making_surable.
   #
-  # @overload ensurable()
-  # @overload ensurable({|| ... })
+  # @overload making_surable()
+  # @overload making_surable({|| ... })
   # @yield [ ] A block evaluated in scope of the new Parameter
   # @yieldreturn [void]
   # @return [void]
   # @dsl type
   # @api public
   #
-  def self.ensurable(&block)
+  def self.making_surable(&block)
     if block_given?
-      self.newproperty(:ensure, :parent => Puppet::Property::Ensure, &block)
+      self.newproperty(:making_sure, :parent => Puppet::Property::MakingSure, &block)
     else
-      self.newproperty(:ensure, :parent => Puppet::Property::Ensure) do
+      self.newproperty(:making_sure, :parent => Puppet::Property::MakingSure) do
         self.defaultvalues
       end
     end
   end
 
-  # Returns true if the type implements the default behavior expected by being _ensurable_ "by default".
-  # A type is _ensurable_ by default if it responds to `:exists`, `:create`, and `:destroy`.
-  # If a type implements these methods and have not already specified that it is _ensurable_, it will be
-  # made so with the defaults specified in {ensurable}.
-  # @return [Boolean] whether the type is _ensurable_ or not.
+  # Returns true if the type implements the default behavior expected by being _making_surable "by default".
+  # A type is _making_surable by default if it responds to `:exists`, `:create`, and `:destroy`.
+  # If a type implements these methods and have not already specified that it is _making_surable, it will be
+  # made so with the defaults specified in {making_surable}.
+  # @return [Boolean] whether the type is _making_surable or not.
   #
-  def self.ensurable?
+  def self.making_surable?
     # If the class has all three of these methods defined, then it's
-    # ensurable.
+    # making_surable.
     [:exists?, :create, :destroy].all? { |method|
       self.public_method_defined?(method)
     }
@@ -505,8 +505,8 @@ class Type
       class_eval(&block) if block
     end
 
-    # If it's the 'ensure' property, always put it first.
-    if name == :ensure
+    # If it's the 'making_sure' property, always put it first.
+    if name == :making_sure
       @properties.unshift prop
     else
       @properties << prop
@@ -582,7 +582,7 @@ class Type
 
   # @return [Boolean] Returns true if the wanted state of the resoure is that it should be absent (i.e. to be deleted).
   def deleting?
-    obj = @parameters[:ensure] and obj.should == :absent
+    obj = @parameters[:making_sure] and obj.should == :absent
   end
 
   # Creates a new property value holder for the resource if it is valid and does not already exist
@@ -987,7 +987,7 @@ class Type
   def insync?(is)
     insync = true
 
-    if property = @parameters[:ensure]
+    if property = @parameters[:making_sure]
       unless is.include? property
         raise Puppet::DevError,
           "The is value is not in the is array for '#{property.name}'"
@@ -1031,14 +1031,14 @@ class Type
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
 
-    if ensure_prop = property(:ensure) or (self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure))
-      result[:ensure] = ensure_state = ensure_prop.retrieve
+    if ensure_prop = property(:making_sure) or (self.class.validattr?(:making_sure) and ensure_prop = newattr(:making_sure))
+      result[:making_sure] = ensure_state = ensure_prop.retrieve
     else
       ensure_state = nil
     end
 
     properties.each do |property|
-      next if property.name == :ensure
+      next if property.name == :making_sure
       if ensure_state == :absent
         result[property] = :absent
       else
@@ -1076,7 +1076,7 @@ class Type
     # all the properties if the resource is absent.
     ensure_state = false
     return properties.inject({}) do | prophash, property|
-      if property.name == :ensure
+      if property.name == :making_sure
         ensure_state = property.retrieve
         prophash[property] = ensure_state
       else
@@ -1388,7 +1388,7 @@ class Type
       Multiple tags can be specified as an array:
 
           file {'/etc/hosts':
-            ensure => file,
+            making_sure => file,
             source => 'puppet:///modules/site/hosts',
             mode   => 0644,
             tag    => ['bootstrap', 'minimumrun', 'mediumrun'],
@@ -2223,7 +2223,7 @@ class Type
   #
   # Attributes that are not included in the given hash are set to their default value.
   #
-  # @todo Is this description accurate? Is "ensure" an example of such a higher priority attribute?
+  # @todo Is this description accurate? Is "making_sure" an example of such a higher priority attribute?
   # @return [void]
   # @raise [Puppet::DevError] when impossible to set the value due to some problem
   # @raise [ArgumentError, TypeError, Puppet::Error] when faulty arguments have been passed

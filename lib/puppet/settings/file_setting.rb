@@ -162,7 +162,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
       end
     end
 
-    resource[:ensure] = type
+    resource[:making_sure] = type
     resource[:loglevel] = :debug
     resource[:links] = :follow
     resource[:backup] = false

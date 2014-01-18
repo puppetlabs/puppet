@@ -1,6 +1,6 @@
 
 module Puppet
-  Puppet::Type.type(:file).ensurable do
+  Puppet::Type.type(:file).making_surable do
     require 'etc'
     require 'puppet/util/symbolic_file_mode'
     include Puppet::Util::SymbolicFileMode
@@ -28,21 +28,21 @@ module Puppet
 
       Puppet avoids destroying directories unless the `force` attribute is set
       to `true`. This means that if a file is currently a directory, setting
-      `ensure` to anything but `directory` or `present` will cause Puppet to
+      `making_sure` to anything but `directory` or `present` will cause Puppet to
       skip managing the resource and log either a notice or an error.
 
-      There is one other non-standard value for `ensure`. If you specify the
-      path to another file as the ensure value, it is equivalent to specifying
+      There is one other non-standard value for `making_sure`. If you specify the
+      path to another file as the making_sure value, it is equivalent to specifying
       `link` and using that path as the `target`:
 
           # Equivalent resources:
 
           file { "/etc/inetd.conf":
-            ensure => "/etc/inet/inetd.conf",
+            making_sure => "/etc/inet/inetd.conf",
           }
 
           file { "/etc/inetd.conf":
-            ensure => link,
+            making_sure => link,
             target => "/etc/inet/inetd.conf",
           }
 
@@ -50,7 +50,7 @@ module Puppet
       behavior can be harder to read.
     EOT
 
-    # Most 'ensure' properties have a default, but with files we, um, don't.
+    # Most 'making_sure' properties have a default, but with files we, um, don't.
     nodefault
 
     newvalue(:absent) do
@@ -64,7 +64,7 @@ module Puppet
       if property = @resource.property(:content)
         property.sync
       else
-        @resource.write(:ensure)
+        @resource.write(:making_sure)
         @resource.should(:mode)
       end
     end
@@ -120,7 +120,7 @@ module Puppet
       return super unless property = @resource.property(:content)
 
       # We know that content is out of sync if we're here, because
-      # it's essentially equivalent to 'ensure' in the transaction.
+      # it's essentially equivalent to 'making_sure' in the transaction.
       if source = @resource.parameter(:source)
         should = source.checksum
       else

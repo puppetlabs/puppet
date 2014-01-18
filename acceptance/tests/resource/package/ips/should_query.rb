@@ -19,8 +19,8 @@ agents.each do |agent|
   send_pkg agent, :pkg => 'mypkg@0.0.1'
   set_publisher agent
   step "IPS: basic - it should create"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>"present"}') do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>"present"}') do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
 
   on agent, "puppet resource package mypkg" do

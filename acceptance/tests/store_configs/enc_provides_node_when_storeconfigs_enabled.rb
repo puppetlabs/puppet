@@ -36,10 +36,10 @@ $active_record_version = $osfamily ? {
 
 package {
   rubygems:
-    ensure => present;
+    making_sure => present;
 
   activerecord:
-    ensure => $active_record_version,
+    making_sure => $active_record_version,
     provider => 'gem',
     require => Package[rubygems]
 }
@@ -47,10 +47,10 @@ package {
 if $osfamily == "Debian" {
   package {
     sqlite3:
-      ensure => present;
+      making_sure => present;
 
     libsqlite3-ruby:
-      ensure => present,
+      making_sure => present,
       require => Package[sqlite3]
   }
 } elsif $osfamily == "RedHat" {
@@ -61,10 +61,10 @@ if $osfamily == "Debian" {
 
   package {
     sqlite:
-      ensure => present;
+      making_sure => present;
 
     $sqlite_gem_pkg_name:
-      ensure => present,
+      making_sure => present,
       require => Package[sqlite]
   }
 } else {

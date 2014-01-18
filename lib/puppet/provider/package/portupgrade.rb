@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     # regex to match output from pkg_info
     regex = %r{^(\S+)-([^-\s]+):(\S+)$}
     # Corresponding field names
-    fields = [:portname, :ensure, :portorigin]
+    fields = [:portname, :making_sure, :portorigin]
     # define Temporary hash used, packages array of hashes
     hash = Hash.new
     packages = []
@@ -184,7 +184,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
       hash = Hash.new
       hash[:portorigin] = self.name
       hash[:portname]   = $1
-      hash[:ensure]     = $2
+      hash[:making_sure]     = $2
 
       # If more details are required, then we can do another pkg_info
       # query here and parse out that output and add to the hash

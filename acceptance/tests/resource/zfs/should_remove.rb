@@ -18,8 +18,8 @@ agents.each do |agent|
 
   step "ZFS: create"
   on agent, 'zfs create tstpool/tstfs'
-  step "ZFS: ensure can be removed."
-  apply_manifest_on(agent, 'zfs { "tstpool/tstfs": ensure=>absent}') do
-    assert_match( /ensure: removed/, result.stdout, "err: #{agent}")
+  step "ZFS: making_sure can be removed."
+  apply_manifest_on(agent, 'zfs { "tstpool/tstfs": making_sure=>absent}') do
+    assert_match( /making_sure: removed/, result.stdout, "err: #{agent}")
   end
 end

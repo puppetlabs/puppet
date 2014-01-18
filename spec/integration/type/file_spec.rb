@@ -86,17 +86,17 @@ describe Puppet::Type.type(:file) do
     Puppet::FileSystem.exist?(source).should be_false
   end
 
-  describe "when ensure is absent" do
+  describe "when making_sure is absent" do
     it "should remove the file if present" do
       FileUtils.touch(path)
-      catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
+      catalog.add_resource(described_class.new(:path => path, :making_sure => :absent, :backup => :false))
       report = catalog.apply.report
       report.resource_statuses["File[#{path}]"].should_not be_failed
       Puppet::FileSystem.exist?(path).should be_false
     end
 
     it "should do nothing if file is not present" do
-      catalog.add_resource(described_class.new(:path => path, :ensure => :absent, :backup => :false))
+      catalog.add_resource(described_class.new(:path => path, :making_sure => :absent, :backup => :false))
       report = catalog.apply.report
       report.resource_statuses["File[#{path}]"].should_not be_failed
       Puppet::FileSystem.exist?(path).should be_false
@@ -105,7 +105,7 @@ describe Puppet::Type.type(:file) do
     # issue #14599
     it "should not fail if parts of path aren't directories" do
       FileUtils.touch(path)
-      catalog.add_resource(described_class.new(:path => File.join(path,'no_such_file'), :ensure => :absent, :backup => :false))
+      catalog.add_resource(described_class.new(:path => File.join(path,'no_such_file'), :making_sure => :absent, :backup => :false))
       report = catalog.apply.report
       report.resource_statuses["File[#{File.join(path,'no_such_file')}]"].should_not be_failed
     end
@@ -145,7 +145,7 @@ describe Puppet::Type.type(:file) do
         let(:target) { tmpdir('dir_mode') }
 
         it "should set executable bits for newly created directories" do
-          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0600)
+          catalog.add_resource described_class.new(:path => target, :making_sure => :directory, :mode => 0600)
 
           catalog.apply
 
@@ -155,7 +155,7 @@ describe Puppet::Type.type(:file) do
         it "should set executable bits for existing readable directories" do
           set_mode(0600, target)
 
-          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0644)
+          catalog.add_resource described_class.new(:path => target, :making_sure => :directory, :mode => 0644)
           catalog.apply
 
           (get_mode(target) & 07777).should == 0755
@@ -163,7 +163,7 @@ describe Puppet::Type.type(:file) do
 
         it "should not set executable bits for unreadable directories" do
           begin
-            catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0300)
+            catalog.add_resource described_class.new(:path => target, :making_sure => :directory, :mode => 0300)
 
             catalog.apply
 
@@ -175,7 +175,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it "should set user, group, and other executable bits" do
-          catalog.add_resource described_class.new(:path => target, :ensure => :directory, :mode => 0664)
+          catalog.add_resource described_class.new(:path => target, :making_sure => :directory, :mode => 0664)
 
           catalog.apply
 
@@ -186,7 +186,7 @@ describe Puppet::Type.type(:file) do
           target_path = tmpfile_with_contents('executable', '')
           set_mode(0444, target_path)
 
-          catalog.add_resource described_class.new(:path => target_path, :ensure => :directory, :mode => 0666, :backup => false)
+          catalog.add_resource described_class.new(:path => target_path, :making_sure => :directory, :mode => 0666, :backup => false)
           catalog.apply
 
           (get_mode(target_path) & 07777).should == 0777
@@ -196,7 +196,7 @@ describe Puppet::Type.type(:file) do
 
       describe "for files" do
         it "should not set executable bits" do
-          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666)
+          catalog.add_resource described_class.new(:path => path, :making_sure => :file, :mode => 0666)
           catalog.apply
 
           (get_mode(path) & 07777).should == 0666
@@ -208,7 +208,7 @@ describe Puppet::Type.type(:file) do
           FileUtils.mkdir(path)
           set_mode(0777, path)
 
-          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666, :backup => false, :force => true)
+          catalog.add_resource described_class.new(:path => path, :making_sure => :file, :mode => 0666, :backup => false, :force => true)
           catalog.apply
 
           (get_mode(path) & 07777).should == 0666
@@ -229,7 +229,7 @@ describe Puppet::Type.type(:file) do
           end
 
           it "should not set the executable bit on the link nor the target" do
-            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => link_target, :links => :manage)
+            catalog.add_resource described_class.new(:path => link, :making_sure => :link, :mode => 0666, :target => link_target, :links => :manage)
 
             catalog.apply
 
@@ -240,13 +240,13 @@ describe Puppet::Type.type(:file) do
           it "should ignore dangling symlinks (#6856)" do
             File.delete(link_target)
 
-            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => link_target, :links => :manage)
+            catalog.add_resource described_class.new(:path => link, :making_sure => :link, :mode => 0666, :target => link_target, :links => :manage)
             catalog.apply
 
             Puppet::FileSystem.exist?(link).should be_false
           end
 
-          it "should create a link to the target if ensure is omitted" do
+          it "should create a link to the target if making_sure is omitted" do
             FileUtils.touch(link_target)
             catalog.add_resource described_class.new(:path => link, :target => link_target)
             catalog.apply
@@ -453,7 +453,7 @@ describe Puppet::Type.type(:file) do
       dest1 = tmpfile("dest1")
       dest2 = tmpfile("dest2")
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-      file = described_class.new :path => link, :target => dest2, :ensure => :link, :backup => "mybucket"
+      file = described_class.new :path => link, :target => dest2, :making_sure => :link, :backup => "mybucket"
       catalog.add_resource file
       catalog.add_resource bucket
 
@@ -578,7 +578,7 @@ describe Puppet::Type.type(:file) do
 
       dest = tmpfile("file_link_integration_dest")
 
-      @file = described_class.new(:name => dest, :target => source, :recurse => true, :ensure => :link, :backup => false)
+      @file = described_class.new(:name => dest, :target => source, :recurse => true, :making_sure => :link, :backup => false)
 
       catalog.add_resource @file
 
@@ -672,7 +672,7 @@ describe Puppet::Type.type(:file) do
 
             catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
-                               :ensure  => :directory,
+                               :making_sure  => :directory,
                                :backup  => false,
                                :recurse => true,
                                :sourceselect => :first,
@@ -694,7 +694,7 @@ describe Puppet::Type.type(:file) do
 
             catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
-                               :ensure  => :directory,
+                               :making_sure  => :directory,
                                :backup  => false,
                                :recurse => true,
                                :sourceselect => :first,
@@ -718,7 +718,7 @@ describe Puppet::Type.type(:file) do
 
             catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
-                               :ensure  => :directory,
+                               :making_sure  => :directory,
                                :backup  => false,
                                :recurse => true,
                                :recurselimit => 1,
@@ -742,7 +742,7 @@ describe Puppet::Type.type(:file) do
 
             catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
-                               :ensure  => :file,
+                               :making_sure  => :file,
                                :backup  => false,
                                :sourceselect => :first,
                                :source => [one, two, three]
@@ -760,7 +760,7 @@ describe Puppet::Type.type(:file) do
 
             catalog.add_resource Puppet::Type.newfile(
                                :path    => path,
-                               :ensure  => :file,
+                               :making_sure  => :file,
                                :backup  => false,
                                :sourceselect => :first,
                                :source => [one, two, three]
@@ -790,7 +790,7 @@ describe Puppet::Type.type(:file) do
 
             obj = Puppet::Type.newfile(
                                :path    => dest,
-                               :ensure  => :directory,
+                               :making_sure  => :directory,
                                :backup  => false,
                                :recurse => true,
                                :sourceselect => :all,
@@ -816,7 +816,7 @@ describe Puppet::Type.type(:file) do
 
             obj = Puppet::Type.newfile(
                                :path    => path,
-                               :ensure  => :directory,
+                               :making_sure  => :directory,
                                :backup  => false,
                                :recurse => true,
                                :recurselimit => 1,
@@ -908,7 +908,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  it "should create a file with content if ensure is omitted" do
+  it "should create a file with content if making_sure is omitted" do
     catalog.add_resource described_class.new(
       :path => path,
       :content => "this is some content, yo"
@@ -919,10 +919,10 @@ describe Puppet::Type.type(:file) do
     File.read(path).should == "this is some content, yo"
   end
 
-  it "should create files with content if both content and ensure are set" do
+  it "should create files with content if both content and making_sure are set" do
     file = described_class.new(
       :path    => path,
-      :ensure  => "file",
+      :making_sure  => "file",
       :content => "this is some content, yo"
     )
 
@@ -938,7 +938,7 @@ describe Puppet::Type.type(:file) do
 
     file = described_class.new(
       :path   => dest,
-      :ensure => :absent,
+      :making_sure => :absent,
       :source => source,
       :backup => false
     )
@@ -957,7 +957,7 @@ describe Puppet::Type.type(:file) do
 
       file = described_class.new(
         :path   => path,
-        :ensure => :file,
+        :making_sure => :file,
         :source => source,
         :backup => false
       )
@@ -975,7 +975,7 @@ describe Puppet::Type.type(:file) do
 
       file = described_class.new(
          :path   => path,
-         :ensure => :file,
+         :making_sure => :file,
          :source => source,
          :backup => false,
          :mode => 0440
@@ -1025,7 +1025,7 @@ describe Puppet::Type.type(:file) do
 
         file = described_class.new(
           :path   => path,
-          :ensure => :file,
+          :making_sure => :file,
           :source => source,
           :backup => false
         )
@@ -1055,7 +1055,7 @@ describe Puppet::Type.type(:file) do
           before :each do
             @file = described_class.new(
               :path   => path,
-              :ensure => :file,
+              :making_sure => :file,
               :source => source,
               :backup => false
             )
@@ -1160,7 +1160,7 @@ describe Puppet::Type.type(:file) do
           before :each do
             @directory = described_class.new(
               :path   => dir,
-              :ensure => :directory
+              :making_sure => :directory
             )
             catalog.add_resource @directory
           end
@@ -1299,7 +1299,7 @@ describe Puppet::Type.type(:file) do
         :title   => "localfile",
         :path    => @localfile,
         :content => "rahtest",
-        :ensure  => :file,
+        :making_sure  => :file,
         :backup  => false
       )
 

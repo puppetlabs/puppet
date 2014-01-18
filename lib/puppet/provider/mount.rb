@@ -17,9 +17,9 @@ module Puppet::Provider::Mount
     args << resource[:name]
 
     mountcmd(*args)
-    case get(:ensure)
-    when :absent; set(:ensure => :ghost)
-    when :unmounted; set(:ensure => :mounted)
+    case get(:making_sure)
+    when :absent; set(:making_sure => :ghost)
+    when :unmounted; set(:making_sure => :mounted)
     end
   end
 
@@ -45,14 +45,14 @@ module Puppet::Provider::Mount
     umount(resource[:name])
 
     # Update property hash for future queries (e.g. refresh is called)
-    case get(:ensure)
-    when :mounted; set(:ensure => :unmounted)
-    when :ghost; set(:ensure => :absent)
+    case get(:making_sure)
+    when :mounted; set(:making_sure => :unmounted)
+    when :ghost; set(:making_sure => :absent)
     end
   end
 
   # Is the mount currently mounted?
   def mounted?
-    [:mounted, :ghost].include?(get(:ensure))
+    [:mounted, :ghost].include?(get(:making_sure))
   end
 end

@@ -15,7 +15,7 @@ describe Puppet::Type.type(:sshkey) do
       end
     end
 
-    [:host_aliases, :ensure, :key, :type].each do |property|
+    [:host_aliases, :making_sure, :key, :type].each do |property|
       it "has a #{property} property" do
         expect(described_class.attrtype(property)).to eq :property
       end

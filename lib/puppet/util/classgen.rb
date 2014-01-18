@@ -205,6 +205,7 @@ module Puppet::Util::ClassGen
   # Convert our name to a constant.
   # @api private
   def name2const(name)
+    return "MakingSure" if name == :making_sure
     name.to_s.capitalize
   end
 

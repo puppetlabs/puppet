@@ -32,7 +32,7 @@ describe resources do
       instance[:purge] = 'false'
     end
 
-    it "cannot be set to true for a resource type that does not accept ensure" do
+    it "cannot be set to true for a resource type that does not accept making_sure" do
       instance.resource_type.stubs(:respond_to?).returns true
       instance.resource_type.stubs(:validproperty?).returns false
       expect { instance[:purge] = 'yes' }.to raise_error Puppet::Error
@@ -44,7 +44,7 @@ describe resources do
       expect { instance[:purge] = 'yes' }.to raise_error Puppet::Error
     end
 
-    it "can be set to true for a resource type that has instances and can accept ensure" do
+    it "can be set to true for a resource type that has instances and can accept making_sure" do
       instance.resource_type.stubs(:respond_to?).returns true
       instance.resource_type.stubs(:validproperty?).returns true
       expect { instance[:purge] = 'yes' }.not_to raise_error Puppet::Error
@@ -255,7 +255,7 @@ describe resources do
           end
         end
 
-        describe "when the instance's do not have an ensure property" do
+        describe "when the instance's do not have an making_sure property" do
           it "should not be included in the generated resources" do
             @no_ensure_resource = Puppet::Type.type(:exec).new(:name => "#{File.expand_path('/usr/bin/env')} echo")
             Puppet::Type.type(:host).stubs(:instances).returns [@no_ensure_resource]
