@@ -31,7 +31,7 @@ class WindowsDaemon < Win32::Daemon
     args = argsv.join(' ')
     @loglevel = LEVELS.index(argsv.index('--debug') ? :debug : :notice)
 
-    @LOG_TO_FILE = (argv.index('--logtofile') ? true : false)
+    @LOG_TO_FILE = (argsv.index('--logtofile') ? true : false)
 
     if (@LOG_TO_FILE)
       FileUtils.mkdir_p(File.dirname(LOG_FILE))
