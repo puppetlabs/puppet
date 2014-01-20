@@ -139,7 +139,7 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
       expect(catalog).to contain_resources_equally('Generator[thing]', 'Notify[hello]')
     end
 
-    it "should return false if an error occured when generating resources" do
+    it "should return false if an error occurred when generating resources" do
       catalog = compile_to_ral(<<-MANIFEST)
         generator { thing:
           code => 'fail("not a good generation")'

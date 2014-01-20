@@ -107,7 +107,7 @@ describe Puppet::Indirector::Queue do
       expect { @store_class.subscribe {|o| o } }.to_not raise_error
 
       @logs.length.should == 1
-      @logs.first.message.should =~ /Error occured with subscription to queue my_queue for indirection my_queue: ArgumentError/
+      @logs.first.message.should =~ /Error occurred with subscription to queue my_queue for indirection my_queue: ArgumentError/
       @logs.first.level.should == :err
     end
   end
