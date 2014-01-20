@@ -145,6 +145,7 @@ class WindowsDaemon < Win32::Daemon
 
   def report_windows_event(type,id,message)
     begin
+      eventlog = nil
       eventlog = Win32::EventLog.open("Application")
       eventlog.report_event(
         :source      => "Puppet",
@@ -155,7 +156,9 @@ class WindowsDaemon < Win32::Daemon
     rescue Exception => e
       # Ignore all errors
     ensure
-      eventlog.close
+      if (!eventlog.nil?)
+        eventlog.close
+      end
     end
   end
 end
