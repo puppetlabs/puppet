@@ -144,17 +144,11 @@ class Puppet::Node::Environment
     @manifest = manifest
   end
 
-  # Retrieve the environment for the current process.
-  #
-  # @note This should only used when a catalog is being compiled.
-  #
-  # @api private
-  #
-  # @return [Puppet::Node::Environment] the currently set environment if one
-  #   has been explicitly set, else it will return the '*root*' environment
-  def self.current
-    Puppet.deprecation_warning("Remove me.")
-    Puppet.lookup(:current_environment)
+  # @param [String] name Environment name to check for valid syntax.
+  # @return [Boolean] true if name is valid
+  # @api public
+  def self.valid_name?(name)
+    !!name.match(/\A\w+\Z/)
   end
 
   # @return [Puppet::Node::Environment] The `*root*` environment.
@@ -172,7 +166,6 @@ class Puppet::Node::Environment
   # @api private
   def self.clear
     seen.clear
-    $environment = nil
   end
 
   # @!attribute [r] name

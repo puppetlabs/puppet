@@ -1,4 +1,6 @@
 module Puppet::Environments
+  class NotFoundError < Puppet::Error; end
+
   module EnvironmentCreator
     def for(module_path, manifest)
       Puppet::Node::Environment.create(:anonymous,
@@ -52,6 +54,34 @@ module Puppet::Environments
 
     def get(name)
       Puppet::Node::Environment.new(name)
+    end
+  end
+
+  class Directories
+    def initialize(environment_dir)
+      @environment_dir = environment_dir
+      @environments = []
+    end
+
+    def search_paths
+      ["environments://directories/#{@environment_dir}"]
+    end
+
+    def list
+      Puppet::FileSystem.children(@environment_dir).inject(Set.new) do |envs,child|
+        if Puppet::FileSystem.directory?(child) &&
+           Puppet::Node::Environment.valid_name?(Puppet::FileSystem.basename_string(child))
+
+          envs << Puppet::Node::Environment.create(
+            Puppet::FileSystem.path_string(child).intern,
+            [], '')
+        end
+        envs
+      end
+    end
+
+    def get(name)
+      list.find { |env| env.name == name.intern } or raise NotFoundError, "Unable to find environment #{name}"
     end
   end
 

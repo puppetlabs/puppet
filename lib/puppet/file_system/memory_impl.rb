@@ -4,19 +4,35 @@ class Puppet::FileSystem::MemoryImpl
   end
 
   def exist?(path)
-    find(path).exist?
+    path.exist?
+  end
+
+  def directory?(path)
+    path.directory?
   end
 
   def executable?(path)
-    find(path).executable?
+    path.executable?
+  end
+
+  def children(path)
+    path.children
   end
 
   def each_line(path, &block)
-    find(path).each_line(&block)
+    path.each_line(&block)
   end
 
   def pathname(path)
-    path.to_s
+    find(path)
+  end
+
+  def basename(path)
+    path.duplicate_as(path_string(path).split(File::PATH_SEPARATOR).last)
+  end
+
+  def path_string(object)
+    object.path
   end
 
   def assert_path(path)

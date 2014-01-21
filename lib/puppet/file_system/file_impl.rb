@@ -80,7 +80,11 @@ class Puppet::FileSystem::FileImpl
   end
 
   def exist?(path)
-    File.exist?(path)
+    ::File.exist?(path)
+  end
+
+  def directory?(path)
+    ::File.directory?(path)
   end
 
   def executable?(path)
@@ -97,6 +101,10 @@ class Puppet::FileSystem::FileImpl
 
   def mkpath(path)
     path.mkpath
+  end
+
+  def children(path)
+    path.children
   end
 
   def symlink(path, dest, options = {})

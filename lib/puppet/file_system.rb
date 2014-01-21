@@ -148,6 +148,15 @@ module Puppet::FileSystem
     @impl.exist?(assert_path(path))
   end
 
+  # Determines if a file is a directory.
+  #
+  # @return [Boolean] true if the given file is a directory.
+  #
+  # @api public
+  def self.directory?(path)
+    @impl.directory?(assert_path(path))
+  end
+
   # Determines if a file is executable.
   #
   # @todo Should this take into account extensions on the windows platform?
@@ -182,6 +191,13 @@ module Puppet::FileSystem
   #
   def self.mkpath(path)
     @impl.mkpath(assert_path(path))
+  end
+
+  # @return [Array<Object>] references to all of the children of the given
+  #   directory path, excluding `.` and `..`.
+  # @api public
+  def self.children(path)
+    @impl.children(assert_path(path))
   end
 
   # Creates a symbolic link dest which points to the current file.
@@ -285,6 +301,7 @@ module Puppet::FileSystem
   # objects. The produced "handle" should be used in all other operations
   # that take a "path". No operation should be directly invoked on the returned opaque object
   #
+  # @param path [String] The string representation of the path
   # @return [Object] An opaque path handle on which no operations should be directly performed
   #
   # @api public
@@ -305,6 +322,7 @@ module Puppet::FileSystem
 
   # Produces a string representation of the opaque path handle.
   #
+  # @param path [Object] a path handle produced by {#pathname}
   # @return [String] a string representation of the path
   #
   def self.path_string(path)
