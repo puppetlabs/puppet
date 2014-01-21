@@ -10,6 +10,7 @@ require 'resolv'
 
 module Puppet::Network::HTTP::Handler
   include Puppet::Network::Authentication
+  include Puppet::Network::HTTP::Issues
 
   # These shouldn't be allowed to be set by clients
   # in the query string, for security reasons.
@@ -62,19 +63,18 @@ module Puppet::Network::HTTP::Handler
         if route = @routes.find { |route| route.matches?(new_request) }
           route.process(new_request, new_response)
         else
-          raise Puppet::Network::HTTP::Error::HTTPNotFoundError, "No route for #{new_request.method} #{new_request.path}"
+          raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("No route for #{new_request.method} #{new_request.path}", HANDLER_NOT_FOUND)
         end
       end
     end
 
   rescue Puppet::Network::HTTP::Error::HTTPError => e
-    msg = e.message
-    Puppet.info(msg)
-    new_response.respond_with(e.status, "text/plain", msg)
+    Puppet.info(e.message)
+    new_response.respond_with(e.status, "application/json", e.to_json)
   rescue Exception => e
-    msg = e.message
-    Puppet.err(msg)
-    new_response.respond_with(500, "text/plain", msg)
+    http_e = Puppet::Network::HTTP::Error::HTTPServerError.new(e)
+    Puppet.err(http_e.message)
+    new_response.respond_with(http_e.status, "application/json", http_e.to_json)
   ensure
     cleanup(request)
   end

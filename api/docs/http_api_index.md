@@ -91,8 +91,11 @@ All error responses will contain a body, except when it is a HEAD request. The
 error responses will uniformly be a JSON object with the following properties:
 
   * `message`: [String] A human readable message explaining the error.
-  * `code`: [String] A unique code to identify the error condition.
+  * `issue_kind`: [String] A unique label to identify the error class.
   * `stacktrace` (only for 5xx errors): [Array<String>] A stacktrace to where the error occurred.
+
+A {file:api/schemas/error.json JSON schema for the error objects} is also available.
+
 
 Serialization Formats
 ---------------------

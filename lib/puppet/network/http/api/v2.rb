@@ -23,7 +23,7 @@ module Puppet::Network::HTTP::API::V2
   NOT_FOUND = Puppet::Network::HTTP::Route.
     path(/.*/).
     any(lambda do |req, res|
-      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError, req.path
+      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError.new(req.path, Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
     end)
 
   ENVIRONMENTS = path(%r{^/environments$}).get(provide do
