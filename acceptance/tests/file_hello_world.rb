@@ -6,12 +6,12 @@ agents.each do |agent|
   content  = "Hello, World"
   manifest = "file { '#{filename}': content => '#{content}' }"
 
-  step "ensure we are clean before testing..."
+  step "making_sure we are clean before testing..."
   on(agent, "rm -f #{filename}")
 
   step "run the manifest itself"
   apply_manifest_on(agent, manifest) do
-    assert_match("File[#{filename}]/ensure: defined content as", stdout, "the expected notice of action was missing")
+    assert_match("File[#{filename}]/making_sure: defined content as", stdout, "the expected notice of action was missing")
   end
 
   step "verify the content of the generated files."

@@ -8,7 +8,7 @@ file {
     '#{master['puppetpath']}/modules2/crakorn',
     '#{master['puppetpath']}/modules2/appleseed',
     '#{master['puppetpath']}/modules2/thelock',
-  ]: ensure => directory,
+  ]: making_sure => directory,
      recurse => true,
      purge => true,
      force => true;

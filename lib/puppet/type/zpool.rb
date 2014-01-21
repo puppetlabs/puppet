@@ -34,7 +34,7 @@ module Puppet
 
       Supports vdevs with mirrors, raidz, logs and spares."
 
-    ensurable
+    making_surable
 
     newproperty(:disk, :array_matching => :all, :parent => Puppet::Property::VDev) do
       desc "The disk(s) for this pool. Can be an array or a space separated string."

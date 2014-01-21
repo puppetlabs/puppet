@@ -16,7 +16,7 @@ describe "Puppet::Application::Secret_agent" do
     Puppet[:confdir]  = dirname
     Puppet[:certname] = "foo"
     @catalog = Puppet::Resource::Catalog.new
-    @file = Puppet::Resource.new(:file, File.join(dirname, "tmp_dir_resource"), :parameters => {:ensure => :present})
+    @file = Puppet::Resource.new(:file, File.join(dirname, "tmp_dir_resource"), :parameters => {:making_sure => :present})
     @catalog.add_resource(@file)
 
     @report = Puppet::Transaction::Report.new("apply")

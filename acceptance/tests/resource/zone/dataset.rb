@@ -38,31 +38,31 @@ agents.each do |agent|
   #-----------------------------------
   step "Zone: dataset - make it configured"
   # Make it configured
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, path=>"/tstzones/mnt" }') do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'zone {tstzone : making_sure=>configured, path=>"/tstzones/mnt" }') do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - basic test, a single data set"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, dataset=>"tstpool/xx", path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent, 'zone {tstzone : making_sure=>configured, dataset=>"tstpool/xx", path=>"/tstzones/mnt" }') do
     assert_match(/defined 'dataset' as .'tstpool.xx'./, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - basic test, a single data set should change to another"
-  apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>"tstpool/yy", path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent,'zone {tstzone : making_sure=>configured, dataset=>"tstpool/yy", path=>"/tstzones/mnt" }') do
     assert_match(/dataset changed 'tstpool.xx' to .'tstpool.yy'./, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - basic test, idempotency"
-  apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>"tstpool/yy", path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent,'zone {tstzone : making_sure=>configured, dataset=>"tstpool/yy", path=>"/tstzones/mnt" }') do
     assert_no_match(/dataset changed 'tstpool.xx' to .'tstpool.yy'./, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - array test, should change to an array"
-  apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>["tstpool/yy","tstpool/zz"], path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent,'zone {tstzone : making_sure=>configured, dataset=>["tstpool/yy","tstpool/zz"], path=>"/tstzones/mnt" }') do
     assert_match(/dataset changed 'tstpool.yy' to .'tstpool.yy', 'tstpool.zz'./, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - array test, should change one single element"
-  apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>["tstpool/xx","tstpool/zz"], path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent,'zone {tstzone : making_sure=>configured, dataset=>["tstpool/xx","tstpool/zz"], path=>"/tstzones/mnt" }') do
     assert_match(/dataset changed 'tstpool.yy,tstpool.zz' to .'tstpool.xx', 'tstpool.zz'./, result.stdout, "err: #{agent}")
   end
   step "Zone: dataset - array test, should remove elements"
-  apply_manifest_on(agent,'zone {tstzone : ensure=>configured, dataset=>[], path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent,'zone {tstzone : making_sure=>configured, dataset=>[], path=>"/tstzones/mnt" }') do
     assert_match(/dataset changed 'tstpool.zz,tstpool.xx' to ../, result.stdout, "err: #{agent}")
   end
 end

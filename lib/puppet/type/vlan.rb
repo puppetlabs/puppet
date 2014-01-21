@@ -7,7 +7,7 @@ Puppet::Type.newtype(:vlan) do
 
     apply_to_device
 
-    ensurable
+    making_surable
 
     newparam(:name) do
       desc "The numeric VLAN ID."

@@ -39,7 +39,7 @@ describe provider_class do
 
   describe "when an instance is being flushed" do
     it "should call the device interface update method with current and past properties" do
-      @instance = provider_class.new(@device, :ensure => :present, :name => "Fa0/1", :description => "myinterface")
+      @instance = provider_class.new(@device, :making_sure => :present, :name => "Fa0/1", :description => "myinterface")
       @instance.description = "newdesc"
       @instance.resource = @resource
       @resource.stubs(:[]).with(:name).returns("Fa0/1")
@@ -48,8 +48,8 @@ describe provider_class do
       device.expects(:command).yields(device)
       interface = stub 'interface'
       device.expects(:new_interface).with("Fa0/1").returns(interface)
-      interface.expects(:update).with( {:ensure => :present, :name => "Fa0/1", :description => "myinterface"},
-                                       {:ensure => :present, :name => "Fa0/1", :description => "newdesc"})
+      interface.expects(:update).with( {:making_sure => :present, :name => "Fa0/1", :description => "myinterface"},
+                                       {:making_sure => :present, :name => "Fa0/1", :description => "newdesc"})
 
       @instance.flush
     end

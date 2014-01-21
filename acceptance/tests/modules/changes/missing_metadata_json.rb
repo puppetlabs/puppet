@@ -6,8 +6,8 @@ stub_forge_on(master)
 testdir = master.tmpdir('module_changes_on_invalid_metadata')
 
 apply_manifest_on master, %Q{
-  file { '#{testdir}/nginx': ensure => directory;
-         '#{testdir}/nginx/Modulefile': ensure => present }
+  file { '#{testdir}/nginx': making_sure => directory;
+         '#{testdir}/nginx/Modulefile': making_sure => present }
 }
 
 step 'Run module changes on a module witch is missing metadata.json'

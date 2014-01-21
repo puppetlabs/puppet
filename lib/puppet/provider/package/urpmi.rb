@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
   has_feature :versionable
 
   def install
-    should = @resource.should(:ensure)
+    should = @resource.should(:making_sure)
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
 
@@ -36,7 +36,7 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
     else
       # urpmi didn't find updates, pretend the current
       # version is the latest
-      return @resource[:ensure]
+      return @resource[:making_sure]
     end
   end
 

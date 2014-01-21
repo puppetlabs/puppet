@@ -59,7 +59,7 @@ describe Puppet::Type.type(:package).provider(:msi) do
   context '#query' do
     let (:package) do {
         :name        => name,
-        :ensure      => :installed,
+        :making_sure      => :installed,
         :provider    => :msi,
         :productcode => productcode,
         :packagecode => packagecode.upcase
@@ -135,7 +135,7 @@ describe Puppet::Type.type(:package).provider(:msi) do
     let (:command) { "msiexec.exe /qn /norestart /x #{productcode}" }
 
     before :each do
-      resource[:ensure] = :absent
+      resource[:making_sure] = :absent
       provider.set(:productcode => productcode)
     end
 

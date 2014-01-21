@@ -33,9 +33,9 @@ Puppet::Type.newtype(:computer) do
     end
   end
 
-  newproperty(:ensure, :parent => Puppet::Property::Ensure) do
+  newproperty(:making_sure, :parent => Puppet::Property::MakingSure) do
     desc "Control the existences of this computer record. Set this attribute to
-      `present` to ensure the computer record exists.  Set it to `absent`
+      `present` to making_sure the computer record exists.  Set it to `absent`
       to delete any computer records with this name"
     newvalue(:present) do
       provider.create

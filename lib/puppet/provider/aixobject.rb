@@ -289,16 +289,16 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def self.instances
     objects=[]
     list_all.each { |entry|
-      objects << new(:name => entry, :ensure => :present)
+      objects << new(:name => entry, :making_sure => :present)
     }
     objects
   end
 
-  #- **ensure**
+  #- **making_sure**
   #    The basic state that the object should be in.  Valid values are
   #    `present`, `absent`, `role`.
   # From ensurable: exists?, create, delete
-  def ensure
+  def making_sure
     if exists?
       :present
     else
@@ -342,7 +342,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # If setter or getter already defined it will not be overwritten
   def self.mk_resource_methods
     [resource_type.validproperties, resource_type.parameters].flatten.each do |prop|
-      next if prop == :ensure
+      next if prop == :making_sure
       define_method(prop) { get(prop) || :absent} unless public_method_defined?(prop)
       define_method(prop.to_s + "=") { |*vals| set(prop, *vals) } unless public_method_defined?(prop.to_s + "=")
     end

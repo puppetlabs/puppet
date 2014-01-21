@@ -25,7 +25,7 @@ Module from forge with module defaults
 <pre>
 $ mv modules/data modules/data.bak
 $ puppet apply --config etc/puppet.conf site.pp
-notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/ensure: defined content as '{md5}7045121976147a932a66c7671939a9ad'
+notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/making_sure: defined content as '{md5}7045121976147a932a66c7671939a9ad'
 notice: /Stage[main]/Users::Common/Notify[Adding users::common]/message: defined 'message' as 'Adding users::common'
 $ cat /tmp/ntp.conf
 server 1.pool.ntp.org

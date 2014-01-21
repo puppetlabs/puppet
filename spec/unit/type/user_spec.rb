@@ -8,7 +8,7 @@ describe Puppet::Type.type(:user) do
       mk_resource_methods
       def create; end
       def delete; end
-      def exists?; get(:ensure) != :absent; end
+      def exists?; get(:making_sure) != :absent; end
       def flush; end
       def self.instances; []; end
     end
@@ -52,7 +52,7 @@ describe Puppet::Type.type(:user) do
   end
 
   describe :managehome do
-    let (:provider) { @provider_class.new(:name => 'foo', :ensure => :absent) }
+    let (:provider) { @provider_class.new(:name => 'foo', :making_sure => :absent) }
     let (:instance) { described_class.new(:name => 'foo', :provider => provider) }
 
     it "defaults to false" do
@@ -76,16 +76,16 @@ describe Puppet::Type.type(:user) do
 
   describe "instances" do
     it "should delegate existence questions to its provider" do
-      @provider = @provider_class.new(:name => 'foo', :ensure => :absent)
+      @provider = @provider_class.new(:name => 'foo', :making_sure => :absent)
       instance = described_class.new(:name => "foo", :provider => @provider)
       instance.exists?.should == false
 
-      @provider.set(:ensure => :present)
+      @provider.set(:making_sure => :present)
       instance.exists?.should == true
     end
   end
 
-  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
+  properties = [:making_sure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
 
   properties.each do |property|
     it "should have a #{property} property" do
@@ -115,7 +115,7 @@ describe Puppet::Type.type(:user) do
 
   describe "when retrieving all current values" do
     before do
-      @provider = @provider_class.new(:name => 'foo', :ensure => :present, :uid => 15, :gid => 15)
+      @provider = @provider_class.new(:name => 'foo', :making_sure => :present, :uid => 15, :gid => 15)
       @user = described_class.new(:name => "foo", :uid => 10, :provider => @provider)
     end
 
@@ -126,7 +126,7 @@ describe Puppet::Type.type(:user) do
     end
 
     it "should set all values to :absent if the user is absent" do
-      @user.property(:ensure).expects(:retrieve).returns :absent
+      @user.property(:making_sure).expects(:retrieve).returns :absent
       @user.property(:uid).expects(:retrieve).never
       @user.retrieve[@user.property(:uid)].should == :absent
     end
@@ -136,36 +136,36 @@ describe Puppet::Type.type(:user) do
     end
   end
 
-  describe "when managing the ensure property" do
+  describe "when managing the making_sure property" do
     it "should support a :present value" do
-      expect { described_class.new(:name => 'foo', :ensure => :present) }.to_not raise_error
+      expect { described_class.new(:name => 'foo', :making_sure => :present) }.to_not raise_error
     end
 
     it "should support an :absent value" do
-      expect { described_class.new(:name => 'foo', :ensure => :absent) }.to_not raise_error
+      expect { described_class.new(:name => 'foo', :making_sure => :absent) }.to_not raise_error
     end
 
     it "should call :create on the provider when asked to sync to the :present state" do
-      @provider = @provider_class.new(:name => 'foo', :ensure => :absent)
+      @provider = @provider_class.new(:name => 'foo', :making_sure => :absent)
       @provider.expects(:create)
-      described_class.new(:name => 'foo', :ensure => :present, :provider => @provider).parameter(:ensure).sync
+      described_class.new(:name => 'foo', :making_sure => :present, :provider => @provider).parameter(:making_sure).sync
     end
 
     it "should call :delete on the provider when asked to sync to the :absent state" do
-      @provider = @provider_class.new(:name => 'foo', :ensure => :present)
+      @provider = @provider_class.new(:name => 'foo', :making_sure => :present)
       @provider.expects(:delete)
-      described_class.new(:name => 'foo', :ensure => :absent, :provider => @provider).parameter(:ensure).sync
+      described_class.new(:name => 'foo', :making_sure => :absent, :provider => @provider).parameter(:making_sure).sync
     end
 
     describe "and determining the current state" do
       it "should return :present when the provider indicates the user exists" do
-        @provider = @provider_class.new(:name => 'foo', :ensure => :present)
-        described_class.new(:name => 'foo', :ensure => :absent, :provider => @provider).parameter(:ensure).retrieve.should == :present
+        @provider = @provider_class.new(:name => 'foo', :making_sure => :present)
+        described_class.new(:name => 'foo', :making_sure => :absent, :provider => @provider).parameter(:making_sure).retrieve.should == :present
       end
 
       it "should return :absent when the provider indicates the user does not exist" do
-        @provider = @provider_class.new(:name => 'foo', :ensure => :absent)
-        described_class.new(:name => 'foo', :ensure => :present, :provider => @provider).parameter(:ensure).retrieve.should == :absent
+        @provider = @provider_class.new(:name => 'foo', :making_sure => :absent)
+        described_class.new(:name => 'foo', :making_sure => :present, :provider => @provider).parameter(:making_sure).retrieve.should == :absent
       end
     end
   end
@@ -353,8 +353,8 @@ describe Puppet::Type.type(:user) do
   end
 
   describe "when manages_solaris_rbac is enabled" do
-    it "should support a :role value for ensure" do
-      expect { described_class.new(:name => 'foo', :ensure => :role) }.to_not raise_error
+    it "should support a :role value for making_sure" do
+      expect { described_class.new(:name => 'foo', :making_sure => :role) }.to_not raise_error
     end
   end
 
@@ -382,7 +382,7 @@ describe Puppet::Type.type(:user) do
         def create; check_valid_shell;end
         def shell=(value); check_valid_shell; end
         def delete; end
-        def exists?; get(:ensure) != :absent; end
+        def exists?; get(:making_sure) != :absent; end
         def flush; end
         def self.instances; []; end
         def check_valid_shell; end
@@ -392,7 +392,7 @@ describe Puppet::Type.type(:user) do
     end
 
       it "should call :check_valid_shell on the provider when changing shell value" do
-        @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => :present)
+        @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :making_sure => :present)
         @provider.expects(:check_valid_shell)
         resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
         Puppet::Util::Storage.stubs(:load)
@@ -402,8 +402,8 @@ describe Puppet::Type.type(:user) do
         catalog.apply
       end
 
-      it "should call :check_valid_shell on the provider when changing ensure from present to absent" do
-        @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :ensure => :absent)
+      it "should call :check_valid_shell on the provider when changing making_sure from present to absent" do
+        @provider = @shell_provider_class.new(:name => 'foo', :shell => '/bin/bash', :making_sure => :absent)
         @provider.expects(:check_valid_shell)
         resource = described_class.new(:name => 'foo', :shell => '/bin/zsh', :provider => @provider)
         Puppet::Util::Storage.stubs(:load)

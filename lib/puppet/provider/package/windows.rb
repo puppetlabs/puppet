@@ -38,7 +38,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   def self.to_hash(pkg)
     {
       :name     => pkg.name,
-      :ensure   => pkg.version || :installed,
+      :making_sure   => pkg.version || :installed,
       :provider => :windows
     }
   end
@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   # reboot, or something else entirely. Reboot requests mean the package was installed
   # successfully, but we warn since we don't have a good reboot strategy.
   def check_result(hr)
-    operation = resource[:ensure] == :absent ? 'uninstall' : 'install'
+    operation = resource[:making_sure] == :absent ? 'uninstall' : 'install'
 
     case hr
     when self.class::ERROR_SUCCESS

@@ -12,7 +12,7 @@ agents.each do |host|
   on host, "getent group #{group} || groupadd #{group}"
 
   step "create user with group"
-  on(host, puppet_resource('user', user, 'ensure=present', "gid=#{group}"))
+  on(host, puppet_resource('user', user, 'making_sure=present', "gid=#{group}"))
 
   step "verify the group exists and find the gid"
   on(host, "getent group #{group}") do
@@ -26,6 +26,6 @@ agents.each do |host|
   end
 
   step "clean up after the test is done"
-  on(host, puppet_resource('user', user, 'ensure=absent'))
-  on(host, puppet_resource('group', group, 'ensure=absent'))
+  on(host, puppet_resource('user', user, 'making_sure=absent'))
+  on(host, puppet_resource('group', group, 'making_sure=absent'))
 end

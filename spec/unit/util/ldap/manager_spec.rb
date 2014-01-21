@@ -499,24 +499,24 @@ describe Puppet::Util::Ldap::Manager do
     end
 
     describe "is being updated" do
-      it "should get created if the current attribute list is empty and the desired attribute list has :ensure == :present" do
+      it "should get created if the current attribute list is empty and the desired attribute list has :making_sure == :present" do
         @manager.expects(:create)
-        @manager.update(@name, {}, {:ensure => :present})
+        @manager.update(@name, {}, {:making_sure => :present})
       end
 
-      it "should get created if the current attribute list has :ensure == :absent and the desired attribute list has :ensure == :present" do
+      it "should get created if the current attribute list has :making_sure == :absent and the desired attribute list has :making_sure == :present" do
         @manager.expects(:create)
-        @manager.update(@name, {:ensure => :absent}, {:ensure => :present})
+        @manager.update(@name, {:making_sure => :absent}, {:making_sure => :present})
       end
 
-      it "should get deleted if the current attribute list has :ensure == :present and the desired attribute list has :ensure == :absent" do
+      it "should get deleted if the current attribute list has :making_sure == :present and the desired attribute list has :making_sure == :absent" do
         @manager.expects(:delete)
-        @manager.update(@name, {:ensure => :present}, {:ensure => :absent})
+        @manager.update(@name, {:making_sure => :present}, {:making_sure => :absent})
       end
 
-      it "should get modified if both attribute lists have :ensure == :present" do
+      it "should get modified if both attribute lists have :making_sure == :present" do
         @manager.expects(:modify)
-        @manager.update(@name, {:ensure => :present, :one => :two}, {:ensure => :present, :one => :three})
+        @manager.update(@name, {:making_sure => :present, :one => :two}, {:making_sure => :present, :one => :three})
       end
     end
 
@@ -524,14 +524,14 @@ describe Puppet::Util::Ldap::Manager do
       it "should call the :delete method with its name and manager" do
         @manager.expects(:delete).with(@name)
 
-        @manager.update(@name, {}, {:ensure => :absent})
+        @manager.update(@name, {}, {:making_sure => :absent})
       end
     end
 
     describe "is being created" do
       before do
         @is = {}
-        @should = {:ensure => :present, :one => :yay, :two => :absent}
+        @should = {:making_sure => :present, :one => :yay, :two => :absent}
       end
 
       it "should call the :create method with its name" do
@@ -559,8 +559,8 @@ describe Puppet::Util::Ldap::Manager do
         @manager.update(@name, @is, @should)
       end
 
-      it "should not include :ensure in the properties sent" do
-        @manager.expects(:create).with { |*args| args[1][:ensure].nil? }
+      it "should not include :making_sure in the properties sent" do
+        @manager.expects(:create).with { |*args| args[1][:making_sure].nil? }
         @manager.update(@name, @is, @should)
       end
 

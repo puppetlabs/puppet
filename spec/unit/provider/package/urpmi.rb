@@ -26,7 +26,7 @@ describe Puppet::Type.type(:package).provider(:urpmi) do
 
     describe 'without a version' do
       it 'installs the unversioned package' do
-        resource[:ensure] = :present
+        resource[:making_sure] = :present
         Puppet::Util::Execution.expects(:execute).with(['urpmi', '--auto', 'foopkg'], anything)
         subject.install
       end
@@ -34,7 +34,7 @@ describe Puppet::Type.type(:package).provider(:urpmi) do
 
     describe 'with a version' do
       it 'installs the versioned package' do
-        resource[:ensure] = '4.5.6'
+        resource[:making_sure] = '4.5.6'
         Puppet::Util::Execution.expects(:execute).with(['urpmi', '--auto', 'foopkg-4.5.6'], anything)
         subject.install
       end
@@ -58,7 +58,7 @@ describe Puppet::Type.type(:package).provider(:urpmi) do
     end
 
     it "falls back to the current version" do
-      resource[:ensure] = '5.4.3'
+      resource[:making_sure] = '5.4.3'
       Puppet::Util::Execution.expects(:execute).with(['urpmq', '-S', 'foopkg'], anything).returns ''
       subject.latest.should == '5.4.3'
     end

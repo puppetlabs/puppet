@@ -17,10 +17,10 @@ agents.each do |agent|
   apply_manifest_on(agent,%[
     zfs { "tstpool/tstfs":
       mountpoint => "/ztstpool/mnt",
-      ensure => present,
+      making_sure => present,
     }
     file { "/ztstpool/mnt":
-      ensure => directory,
+      making_sure => directory,
       mode => 0700,
       require => Zfs["tstpool/tstfs"],
     }
@@ -32,6 +32,6 @@ agents.each do |agent|
       ip => "ip.if.1",
       require => File["/ztstpool/mnt"],
     }]) do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
 end

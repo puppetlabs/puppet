@@ -11,7 +11,7 @@ describe Puppet::Type.type(:file), " when manipulating file contexts" do
 
     @file = Puppet::Type::File.new(
       :name => make_absolute("/tmp/foo"),
-      :ensure => "file",
+      :making_sure => "file",
       :seluser => "user_u",
       :selrole => "role_r",
       :seltype => "type_t")

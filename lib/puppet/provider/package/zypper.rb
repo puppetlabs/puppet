@@ -16,7 +16,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
   # Install a package using 'zypper'.
   def install
-    should = @resource.should(:ensure)
+    should = @resource.should(:making_sure)
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
 
@@ -73,7 +73,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     else
       # zypper didn't find updates, pretend the current
       # version is the latest
-      return @property_hash[:ensure]
+      return @property_hash[:making_sure]
     end
   end
 

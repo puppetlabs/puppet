@@ -8,7 +8,7 @@ class tagdefine {
         true => "true", false => "false"
     }
 
-    file { "/tmp/taggeddefine$path": ensure => file }
+    file { "/tmp/taggeddefine$path": making_sure => file }
 }
 
 include tagdefine
@@ -29,7 +29,7 @@ $bothtrue = tagged(testing, testing) ? {
     true => "true", false => "false"
 }
 
-file { "/tmp/taggedyayness$yayness": ensure => file }
-file { "/tmp/taggedtesting$funtest": ensure => file }
-file { "/tmp/taggedboth$both": ensure => file }
-file { "/tmp/taggedbothtrue$bothtrue": ensure => file }
+file { "/tmp/taggedyayness$yayness": making_sure => file }
+file { "/tmp/taggedtesting$funtest": making_sure => file }
+file { "/tmp/taggedboth$both": making_sure => file }
+file { "/tmp/taggedbothtrue$bothtrue": making_sure => file }

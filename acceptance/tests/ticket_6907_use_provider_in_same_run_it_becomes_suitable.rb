@@ -37,7 +37,7 @@ PROVIDER
   # The name of the file is chosen to be *.exe so it works on windows and *nix
   # becasue windows inspects the PATHEXT environment variable in 1.9.3 and later.
   file { "#{dir}/must_exist.exe":
-    ensure => file,
+    making_sure => file,
     mode => 0755,
   }
 MANIFEST

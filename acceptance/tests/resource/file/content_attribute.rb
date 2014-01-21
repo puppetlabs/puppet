@@ -8,7 +8,7 @@ agents.each do |agent|
 
   step "Content Attribute: using raw content"
 
-  manifest = "file { '#{target}': content => 'This is the test file content', ensure => present }"
+  manifest = "file { '#{target}': content => 'This is the test file content', making_sure => present }"
   apply_manifest_on agent, manifest
 
   on agent, "cat #{target}" do
@@ -36,7 +36,7 @@ agents.each do |agent|
 
     file { '#{target}':
       content => '{md5}18571d3a04b2bb7ccfdbb2c44c72caa9',
-      ensure => present,
+      making_sure => present,
       backup => local,
     }
   |

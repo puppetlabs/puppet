@@ -15,8 +15,8 @@ describe Puppet::Type.type(:vlan) do
     Puppet::Type.type(:vlan).new(:name => "200").must be_appliable_to_device
   end
 
-  it "should have an ensure property" do
-    Puppet::Type.type(:vlan).attrtype(:ensure).should == :property
+  it "should have an making_sure property" do
+    Puppet::Type.type(:vlan).attrtype(:making_sure).should == :property
   end
 
   it "should have a description property" do
@@ -29,16 +29,16 @@ describe Puppet::Type.type(:vlan) do
       Puppet::Type.type(:vlan).defaultprovider.stubs(:new).returns(@provider)
     end
 
-    it "should support :present as a value to :ensure" do
-      Puppet::Type.type(:vlan).new(:name => "200", :ensure => :present)
+    it "should support :present as a value to :making_sure" do
+      Puppet::Type.type(:vlan).new(:name => "200", :making_sure => :present)
     end
 
-    it "should support :absent as a value to :ensure" do
-      Puppet::Type.type(:vlan).new(:name => "200", :ensure => :absent)
+    it "should support :absent as a value to :making_sure" do
+      Puppet::Type.type(:vlan).new(:name => "200", :making_sure => :absent)
     end
 
     it "should fail if vlan name is not a number" do
-      lambda { Puppet::Type.type(:vlan).new(:name => "notanumber", :ensure => :present) }.should raise_error
+      lambda { Puppet::Type.type(:vlan).new(:name => "notanumber", :making_sure => :present) }.should raise_error
     end
   end
 end

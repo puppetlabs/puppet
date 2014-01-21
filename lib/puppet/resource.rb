@@ -278,14 +278,14 @@ class Puppet::Resource
 
   # Convert our resource to Puppet code.
   def to_manifest
-    # Collect list of attributes to align => and move ensure first
+    # Collect list of attributes to align => and move making_sure first
     attr = parameters.keys
     attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
 
     attr.sort!
-    if attr.first != :ensure  && attr.include?(:ensure)
-      attr.delete(:ensure)
-      attr.unshift(:ensure)
+    if attr.first != :making_sure  && attr.include?(:making_sure)
+      attr.delete(:making_sure)
+      attr.unshift(:making_sure)
     end
 
     attributes = attr.collect { |k|
@@ -439,7 +439,7 @@ class Puppet::Resource
     dup.collect do |attribute, value|
       if value.to_s.empty? or Array(value).empty?
         delete(attribute)
-      elsif value.to_s == "absent" and attribute.to_s != "ensure"
+      elsif value.to_s == "absent" and attribute.to_s != "making_sure"
         delete(attribute)
       end
 

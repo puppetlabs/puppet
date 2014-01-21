@@ -19,7 +19,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
     A third, optional parameter may be given, also as a hash:
 
         $defaults = {
-          'ensure'   => present,
+          'making_sure'   => present,
           'provider' => 'ldap',
         }
 

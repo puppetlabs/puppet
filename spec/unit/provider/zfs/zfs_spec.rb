@@ -22,10 +22,10 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
 
     it "should list instances" do
       provider.class.expects(:zfs).with(:list,'-H').returns File.read(my_fixture('zfs-list.out'))
-      instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances = provider.class.instances.map { |p| {:name => p.get(:name), :making_sure => p.get(:making_sure)} }
       instances.size.should == 2
-      instances[0].should == {:name => 'rpool', :ensure => :present}
-      instances[1].should == {:name => 'rpool/ROOT', :ensure => :present}
+      instances[0].should == {:name => 'rpool', :making_sure => :present}
+      instances[1].should == {:name => 'rpool/ROOT', :making_sure => :present}
     end
   end
 
@@ -49,7 +49,7 @@ describe Puppet::Type.type(:zfs).provider(:zfs) do
     end
 
     Puppet::Type.type(:zfs).validproperties.each do |prop|
-      next if prop == :ensure
+      next if prop == :making_sure
       it "should include property #{prop}" do
         resource[prop] = prop
 

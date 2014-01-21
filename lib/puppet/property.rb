@@ -42,7 +42,7 @@ require 'puppet/parameter'
 # @api public
 #
 class Puppet::Property < Puppet::Parameter
-  require 'puppet/property/ensure'
+  require 'puppet/property/making_sure'
 
   # Returns the original wanted value(s) _(should)_ unprocessed by munging/unmunging.
   # The original values are set by {#value=} or {#should=}.
@@ -238,7 +238,7 @@ class Puppet::Property < Puppet::Parameter
   # Produces the name of the event to use to describe a change of this property's value.
   # The produced event name is either the event name configured for this property, or a generic
   # event based on the name of the property with suffix `_changed`, or if the property is
-  # `:ensure`, the name of the resource type and one of the suffixes `_created`, `_removed`, or `_changed`.
+  # `:making_sure`, the name of the resource type and one of the suffixes `_created`, `_removed`, or `_changed`.
   # @return [String] the name of the event that describes the change
   #
   def event_name
@@ -246,7 +246,7 @@ class Puppet::Property < Puppet::Parameter
 
     event_name = self.class.value_option(value, :event) and return event_name
 
-    name == :ensure or return (name.to_s + "_changed").to_sym
+    name == :making_sure or return (name.to_s + "_changed").to_sym
 
     return (resource.type.to_s + case value
     when :present; "_created"

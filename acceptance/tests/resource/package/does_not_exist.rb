@@ -2,7 +2,7 @@
 test_name "Puppet returns only resource package declaration when querying an uninstalled package" do
 
   resource_declaration_regex = %r@package \{ 'not-installed-on-this-host':
-  ensure => '(?:purged|absent)',
+  making_sure => '(?:purged|absent)',
 \}@m
 
   package_apply_regex = %r@Notice: Compiled catalog for .* in environment production in \d+\.\d{2} seconds(?:\e\[0m)?
@@ -23,7 +23,7 @@ test_name "Puppet returns only resource package declaration when querying an uni
   confine_block(:to, :platform => /debian|ubuntu/) do
     agents.each do |agent|
       step "test puppet apply" do
-        on(agent, puppet('apply', '-e', %Q|"package {'not-installed-on-this-host': ensure => purged }"|)) do
+        on(agent, puppet('apply', '-e', %Q|"package {'not-installed-on-this-host': making_sure => purged }"|)) do
           assert_match(package_apply_regex, stdout)
           assert_equal('', stderr)
         end

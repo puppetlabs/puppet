@@ -46,19 +46,19 @@ describe provider_class do
     end
 
     describe "resources that do not exist" do
-      it "should create a provider with :ensure => :absent" do
+      it "should create a provider with :making_sure => :absent" do
         provider_class.stubs(:lookup).returns(nil)
-        provider_class.expects(:new).with(:device, :ensure => :absent).returns "myprovider"
+        provider_class.expects(:new).with(:device, :making_sure => :absent).returns "myprovider"
         @resource.expects(:provider=).with("myprovider")
         provider_class.prefetch(@resources)
       end
     end
 
     describe "resources that exist" do
-      it "should create a provider with the results of the find and ensure at present" do
+      it "should create a provider with the results of the find and making_sure at present" do
         provider_class.stubs(:lookup).returns({ :name => "200", :description => "myvlan"})
 
-        provider_class.expects(:new).with(:device, :name => "200", :description => "myvlan", :ensure => :present).returns "myprovider"
+        provider_class.expects(:new).with(:device, :name => "200", :description => "myvlan", :making_sure => :present).returns "myprovider"
         @resource.expects(:provider=).with("myprovider")
 
         provider_class.prefetch(@resources)
@@ -102,18 +102,18 @@ describe provider_class do
     end
 
     it "should indicate when the instance already exists" do
-      @instance = provider_class.new(:device, :ensure => :present)
+      @instance = provider_class.new(:device, :making_sure => :present)
       @instance.exists?.should be_true
     end
 
     it "should indicate when the instance does not exist" do
-      @instance = provider_class.new(:device, :ensure => :absent)
+      @instance = provider_class.new(:device, :making_sure => :absent)
       @instance.exists?.should be_false
     end
 
     describe "is being flushed" do
       it "should flush properties" do
-        @instance = provider_class.new(:ensure => :present, :name => "200", :description => "myvlan")
+        @instance = provider_class.new(:making_sure => :present, :name => "200", :description => "myvlan")
         @instance.flush
         @instance.properties.should be_empty
       end
@@ -129,9 +129,9 @@ describe provider_class do
         @instance.stubs(:resource).returns @resource
       end
 
-      it "should set its :ensure value to :present" do
+      it "should set its :making_sure value to :present" do
         @instance.create
-        @instance.properties[:ensure].should == :present
+        @instance.properties[:making_sure].should == :present
       end
 
       it "should set all of the other attributes from the resource" do
@@ -143,9 +143,9 @@ describe provider_class do
     end
 
     describe "is being destroyed" do
-      it "should set its :ensure value to :absent" do
+      it "should set its :making_sure value to :absent" do
         @instance.destroy
-        @instance.properties[:ensure].should == :absent
+        @instance.properties[:making_sure].should == :absent
       end
     end
   end

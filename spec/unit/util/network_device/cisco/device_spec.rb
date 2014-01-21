@@ -191,19 +191,19 @@ eos
     describe "when removing a vlan" do
       it "should issue the no vlan command" do
         @transport.expects(:command).with("no vlan 200")
-        @cisco.update_vlan("200", {:ensure => :present, :name => "200"}, { :ensure=> :absent})
+        @cisco.update_vlan("200", {:making_sure => :present, :name => "200"}, { :making_sure=> :absent})
       end
     end
 
     describe "when updating a vlan" do
       it "should issue the vlan command to enter global vlan modifications" do
         @transport.expects(:command).with("vlan 200")
-        @cisco.update_vlan("200", {:ensure => :present, :name => "200"}, { :ensure=> :present, :name => "200"})
+        @cisco.update_vlan("200", {:making_sure => :present, :name => "200"}, { :making_sure=> :present, :name => "200"})
       end
 
       it "should issue the name command to modify the vlan description" do
         @transport.expects(:command).with("name myvlan")
-        @cisco.update_vlan("200", {:ensure => :present, :name => "200"}, { :ensure=> :present, :name => "200", :description => "myvlan"})
+        @cisco.update_vlan("200", {:making_sure => :present, :name => "200"}, { :making_sure=> :present, :name => "200", :description => "myvlan"})
       end
     end
   end
@@ -211,29 +211,29 @@ eos
   describe "when parsing interface" do
 
     it "should parse interface output" do
-      @cisco.expects(:parse_interface).returns({ :ensure => :present })
+      @cisco.expects(:parse_interface).returns({ :making_sure => :present })
 
-      @cisco.interface("FastEthernet0/1").should == { :ensure => :present }
+      @cisco.interface("FastEthernet0/1").should == { :making_sure => :present }
     end
 
     it "should parse trunking and merge results" do
-      @cisco.stubs(:parse_interface).returns({ :ensure => :present })
+      @cisco.stubs(:parse_interface).returns({ :making_sure => :present })
       @cisco.expects(:parse_trunking).returns({ :native_vlan => "100" })
 
-      @cisco.interface("FastEthernet0/1").should == { :ensure => :present, :native_vlan => "100" }
+      @cisco.interface("FastEthernet0/1").should == { :making_sure => :present, :native_vlan => "100" }
     end
 
     it "should return an absent interface if parse_interface returns nothing" do
       @cisco.stubs(:parse_interface).returns({})
 
-      @cisco.interface("FastEthernet0/1").should == { :ensure => :absent }
+      @cisco.interface("FastEthernet0/1").should == { :making_sure => :absent }
     end
 
     it "should parse ip address information and merge results" do
-      @cisco.stubs(:parse_interface).returns({ :ensure => :present })
+      @cisco.stubs(:parse_interface).returns({ :making_sure => :present })
       @cisco.expects(:parse_interface_config).returns({ :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] })
 
-      @cisco.interface("FastEthernet0/1").should == { :ensure => :present, :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] }
+      @cisco.interface("FastEthernet0/1").should == { :making_sure => :present, :ipaddress => [24,IPAddr.new('192.168.0.24'), nil] }
     end
 
     it "should parse the sh interface command" do
@@ -266,7 +266,7 @@ FastEthernet0/1 is down, line protocol is down
 Switch#
 eos
 
-      @cisco.parse_interface("FastEthernet0/1").should == { :ensure => :absent, :duplex => :auto, :speed => :auto }
+      @cisco.parse_interface("FastEthernet0/1").should == { :making_sure => :absent, :duplex => :auto, :speed => :auto }
     end
 
     it "should be able to parse the sh vlan brief command output" do

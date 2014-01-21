@@ -9,7 +9,7 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
 
   it { should be_versionable }
 
-  context "when retrieving ensure" do
+  context "when retrieving making_sure" do
     before(:each) do
       Puppet::Util.stubs(:which).with("rpm").returns("/bin/rpm")
       pkg.provider.stubs(:which).with("rpm").returns("/bin/rpm")
@@ -24,12 +24,12 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
 
     it "should report absent packages" do
       rpm.raises(Puppet::ExecutionFailure, "couldn't find rpm")
-      pkg.property(:ensure).retrieve.should == :absent
+      pkg.property(:making_sure).retrieve.should == :absent
     end
 
     it "should report present packages correctly" do
       rpm.returns("faff-1.2.3-1 0 1.2.3-1 5 i686\n")
-      pkg.property(:ensure).retrieve.should == "1.2.3-1-5"
+      pkg.property(:making_sure).retrieve.should == "1.2.3-1-5"
     end
   end
 

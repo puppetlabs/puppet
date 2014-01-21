@@ -8,7 +8,7 @@ on master, "if [ -f #{master['puppetpath']}/hiera.yaml ]; then cp #{master['pupp
 
 apply_manifest_on master, <<-PP
 file { '#{testdir}/hiera.yaml':
-  ensure  => present,
+  making_sure  => present,
   content => '---
     :backends:
       - "yaml"
@@ -24,7 +24,7 @@ file { '#{testdir}/hiera.yaml':
 }
 
 file { '#{testdir}/hieradata':
-  ensure  => directory,
+  making_sure  => directory,
   recurse => true,
   purge   => true,
   force   => true,
@@ -33,7 +33,7 @@ PP
 
 apply_manifest_on master, <<-PP
 file { '#{testdir}/hieradata/global.yaml':
-  ensure  => present,
+  making_sure  => present,
   content => "---
     database_user:
       name: postgres
@@ -43,7 +43,7 @@ file { '#{testdir}/hieradata/global.yaml':
 }
 
 file { '#{testdir}/hieradata/production.yaml':
-  ensure  => present,
+  making_sure  => present,
   content => "---
     database_user:
       shell: '/bin/bash'

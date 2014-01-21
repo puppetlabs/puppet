@@ -11,8 +11,8 @@ describe Puppet::Type.type(:interface) do
     Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :device_url => :device)[:device_url].should == :device
   end
 
-  it "should have an ensure property" do
-    Puppet::Type.type(:interface).attrtype(:ensure).should == :property
+  it "should have an making_sure property" do
+    Puppet::Type.type(:interface).attrtype(:making_sure).should == :property
   end
 
   it "should be applied on device" do
@@ -31,16 +31,16 @@ describe Puppet::Type.type(:interface) do
       Puppet::Type.type(:interface).defaultprovider.stubs(:new).returns(@provider)
     end
 
-    it "should support :present as a value to :ensure" do
-      Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :ensure => :present)
+    it "should support :present as a value to :making_sure" do
+      Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :making_sure => :present)
     end
 
-    it "should support :shutdown as a value to :ensure" do
-      Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :ensure => :shutdown)
+    it "should support :shutdown as a value to :making_sure" do
+      Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :making_sure => :shutdown)
     end
 
-    it "should support :no_shutdown as a value to :ensure" do
-      Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :ensure => :no_shutdown)
+    it "should support :no_shutdown as a value to :making_sure" do
+      Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1", :making_sure => :no_shutdown)
     end
 
     describe "especially speed" do

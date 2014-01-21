@@ -41,7 +41,7 @@ Puppet::Type.type(:mount).provide(
   # Every entry in fstab is :unmounted until we can prove different
   def self.prefetch_hook(target_records)
     target_records.collect do |record|
-      record[:ensure] = :unmounted if record[:record_type] == :parsed
+      record[:making_sure] = :unmounted if record[:record_type] == :parsed
       record
     end
   end
@@ -53,13 +53,13 @@ Puppet::Type.type(:mount).provide(
     # Update fstab entries that are mounted
     providers.each do |prov|
       if mounts.delete({:name => prov.get(:name), :mounted => :yes}) then
-        prov.set(:ensure => :mounted)
+        prov.set(:making_sure => :mounted)
       end
     end
 
     # Add mounts that are not in fstab but mounted
     mounts.each do |mount|
-      providers << new(:ensure => :ghost, :name => mount[:name])
+      providers << new(:making_sure => :ghost, :name => mount[:name])
     end
     providers
   end
@@ -69,17 +69,17 @@ Puppet::Type.type(:mount).provide(
     # a record in /etc/fstab.
     super
     # We need to do two things now:
-    # - Update ensure from :unmounted to :mounted if the resource is mounted
+    # - Update making_sure from :unmounted to :mounted if the resource is mounted
     # - Check for mounted devices that are not in fstab and
-    #   set ensure to :ghost (if the user wants to add an entry
+    #   set making_sure to :ghost (if the user wants to add an entry
     #   to fstab we need to know if the device was mounted before)
     mountinstances.each do |hash|
       if mount = resources[hash[:name]]
-        case mount.provider.get(:ensure)
+        case mount.provider.get(:making_sure)
         when :absent  # Mount not in fstab
-          mount.provider.set(:ensure => :ghost)
+          mount.provider.set(:making_sure => :ghost)
         when :unmounted # Mount in fstab
-          mount.provider.set(:ensure => :mounted)
+          mount.provider.set(:making_sure => :mounted)
         end
       end
     end

@@ -13,12 +13,12 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       def create; end
       def destroy; end
       def exists?
-        get(:ensure) != :absent
+        get(:making_sure) != :absent
       end
       def mount; end
       def umount; end
       def mounted?
-        [:mounted, :ghost].include?(get(:ensure))
+        [:mounted, :ghost].include?(get(:making_sure))
       end
       mk_resource_methods
     end
@@ -29,20 +29,20 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   end
 
   let :resource do
-    described_class.new(:name => "yay", :audit => :ensure, :provider => provider)
+    described_class.new(:name => "yay", :audit => :making_sure, :provider => provider)
   end
 
   let :ensureprop do
-    resource.property(:ensure)
+    resource.property(:making_sure)
   end
 
   it "should have a :refreshable feature that requires the :remount method" do
     described_class.provider_feature(:refreshable).methods.should == [:remount]
   end
 
-  it "should have no default value for :ensure" do
+  it "should have no default value for :making_sure" do
     mount = described_class.new(:name => "yay")
-    mount.should(:ensure).should be_nil
+    mount.should(:making_sure).should be_nil
   end
 
   it "should have :name as the only keyattribut" do
@@ -56,7 +56,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       end
     end
 
-    [:ensure, :device, :blockdevice, :fstype, :options, :pass, :dump, :atboot, :target].each do |param|
+    [:making_sure, :device, :blockdevice, :fstype, :options, :pass, :dump, :atboot, :target].each do |param|
       it "should have a #{param} property" do
         described_class.attrtype(param).should == :property
       end
@@ -87,58 +87,58 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       end
     end
 
-    describe "for ensure" do
-      it "should alias :present to :defined as a value to :ensure" do
-        mount = described_class.new(:name => "yay", :ensure => :present)
-        mount.should(:ensure).should == :defined
+    describe "for making_sure" do
+      it "should alias :present to :defined as a value to :making_sure" do
+        mount = described_class.new(:name => "yay", :making_sure => :present)
+        mount.should(:making_sure).should == :defined
       end
 
-      it "should support :present as a value to :ensure" do
-        expect { described_class.new(:name => "yay", :ensure => :present) }.to_not raise_error
+      it "should support :present as a value to :making_sure" do
+        expect { described_class.new(:name => "yay", :making_sure => :present) }.to_not raise_error
       end
 
-      it "should support :defined as a value to :ensure" do
-        expect { described_class.new(:name => "yay", :ensure => :defined) }.to_not raise_error
+      it "should support :defined as a value to :making_sure" do
+        expect { described_class.new(:name => "yay", :making_sure => :defined) }.to_not raise_error
       end
 
-      it "should support :unmounted as a value to :ensure" do
-        expect { described_class.new(:name => "yay", :ensure => :unmounted) }.to_not raise_error
+      it "should support :unmounted as a value to :making_sure" do
+        expect { described_class.new(:name => "yay", :making_sure => :unmounted) }.to_not raise_error
       end
 
-      it "should support :absent as a value to :ensure" do
-        expect { described_class.new(:name => "yay", :ensure => :absent) }.to_not raise_error
+      it "should support :absent as a value to :making_sure" do
+        expect { described_class.new(:name => "yay", :making_sure => :absent) }.to_not raise_error
       end
 
-      it "should support :mounted as a value to :ensure" do
-        expect { described_class.new(:name => "yay", :ensure => :mounted) }.to_not raise_error
+      it "should support :mounted as a value to :making_sure" do
+        expect { described_class.new(:name => "yay", :making_sure => :mounted) }.to_not raise_error
       end
 
-      it "should not support other values for :ensure" do
-        expect { described_class.new(:name => "yay", :ensure => :mount) }.to raise_error Puppet::Error, /Invalid value/
+      it "should not support other values for :making_sure" do
+        expect { described_class.new(:name => "yay", :making_sure => :mount) }.to raise_error Puppet::Error, /Invalid value/
       end
     end
 
     describe "for device" do
       it "should support normal /dev paths for device" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => '/dev/hda1') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => '/dev/dsk/c0d0s0') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => '/dev/hda1') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => '/dev/dsk/c0d0s0') }.to_not raise_error
       end
 
       it "should support labels for device" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'LABEL=/boot') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'LABEL=SWAP-hda6') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => 'LABEL=/boot') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => 'LABEL=SWAP-hda6') }.to_not raise_error
       end
 
       it "should support pseudo devices for device" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'ctfs') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'swap') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'sysfs') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => 'proc') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => 'ctfs') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => 'swap') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => 'sysfs') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => 'proc') }.to_not raise_error
       end
 
       it 'should not support whitespace in device' do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => '/dev/my dev/foo') }.to raise_error Puppet::Error, /device.*whitespace/
-        expect { described_class.new(:name => "/foo", :ensure => :present, :device => "/dev/my\tdev/foo") }.to raise_error Puppet::Error, /device.*whitespace/
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => '/dev/my dev/foo') }.to raise_error Puppet::Error, /device.*whitespace/
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :device => "/dev/my\tdev/foo") }.to raise_error Puppet::Error, /device.*whitespace/
       end
     end
 
@@ -150,16 +150,16 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       end
 
       it "should support normal /dev/rdsk paths for blockdevice" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => '/dev/rdsk/c0d0s0') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :blockdevice => '/dev/rdsk/c0d0s0') }.to_not raise_error
       end
 
       it "should support a dash for blockdevice" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => '-') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :blockdevice => '-') }.to_not raise_error
       end
 
       it "should not support whitespace in blockdevice" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => '/dev/my dev/foo') }.to raise_error Puppet::Error, /blockdevice.*whitespace/
-        expect { described_class.new(:name => "/foo", :ensure => :present, :blockdevice => "/dev/my\tdev/foo") }.to raise_error Puppet::Error, /blockdevice.*whitespace/
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :blockdevice => '/dev/my dev/foo') }.to raise_error Puppet::Error, /blockdevice.*whitespace/
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :blockdevice => "/dev/my\tdev/foo") }.to raise_error Puppet::Error, /blockdevice.*whitespace/
       end
 
       it "should default to /dev/rdsk/DEVICE if device is /dev/dsk/DEVICE" do
@@ -185,108 +185,108 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
     describe "for fstype" do
       it "should support valid fstypes" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'ext3') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'proc') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'sysfs') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :fstype => 'ext3') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :fstype => 'proc') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :fstype => 'sysfs') }.to_not raise_error
       end
 
       it "should support auto as a special fstype" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'auto') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :fstype => 'auto') }.to_not raise_error
       end
 
       it "should not support whitespace in fstype" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :fstype => 'ext 3') }.to raise_error Puppet::Error, /fstype.*whitespace/
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :fstype => 'ext 3') }.to raise_error Puppet::Error, /fstype.*whitespace/
       end
     end
 
     describe "for options" do
       it "should support a single option" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :options => 'ro') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :options => 'ro') }.to_not raise_error
       end
 
       it "should support muliple options as a comma separated list" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :options => 'ro,rsize=4096') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :options => 'ro,rsize=4096') }.to_not raise_error
       end
 
       it "should not support whitespace in options" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :options => ['ro','foo bar','intr']) }.to raise_error Puppet::Error, /option.*whitespace/
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :options => ['ro','foo bar','intr']) }.to raise_error Puppet::Error, /option.*whitespace/
       end
     end
 
     describe "for pass" do
       it "should support numeric values" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '0') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '1') }.to_not raise_error
-        expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '2') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :pass => '0') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :pass => '1') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :pass => '2') }.to_not raise_error
       end
 
       it "should support - on Solaris" do
         Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
         Facter.stubs(:value).with(:osfamily).returns 'Solaris'
-        expect { described_class.new(:name => "/foo", :ensure => :present, :pass => '-') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :pass => '-') }.to_not raise_error
       end
 
       it "should default to 0 on non Solaris" do
         Facter.stubs(:value).with(:osfamily).returns nil
         Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
-        described_class.new(:name => "/foo", :ensure => :present)[:pass].should == 0
+        described_class.new(:name => "/foo", :making_sure => :present)[:pass].should == 0
       end
 
       it "should default to - on Solaris" do
         Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
         Facter.stubs(:value).with(:osfamily).returns 'Solaris'
-        described_class.new(:name => "/foo", :ensure => :present)[:pass].should == '-'
+        described_class.new(:name => "/foo", :making_sure => :present)[:pass].should == '-'
       end
     end
 
     describe "for dump" do
       it "should support 0 as a value for dump" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :dump => '0') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :dump => '0') }.to_not raise_error
       end
 
       it "should support 1 as a value for dump" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :dump => '1') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :dump => '1') }.to_not raise_error
       end
 
       # Unfortunately the operatingsystem is evaluatet at load time so I am unable to stub operatingsystem
       it "should support 2 as a value for dump on FreeBSD", :if => Facter.value(:operatingsystem) == 'FreeBSD' do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :dump => '2') }.to_not raise_error
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :dump => '2') }.to_not raise_error
       end
 
       it "should not support 2 as a value for dump when not on FreeBSD", :if => Facter.value(:operatingsystem) != 'FreeBSD' do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :dump => '2') }.to raise_error Puppet::Error, /Invalid value/
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :dump => '2') }.to raise_error Puppet::Error, /Invalid value/
       end
 
       it "should default to 0" do
-        described_class.new(:name => "/foo", :ensure => :present)[:dump].should == 0
+        described_class.new(:name => "/foo", :making_sure => :present)[:dump].should == 0
       end
     end
 
     describe "for atboot" do
       it "does not allow non-boolean values" do
-        expect { described_class.new(:name => "/foo", :ensure => :present, :atboot => 'unknown') }.to raise_error Puppet::Error, /expected a boolean value/
+        expect { described_class.new(:name => "/foo", :making_sure => :present, :atboot => 'unknown') }.to raise_error Puppet::Error, /expected a boolean value/
       end
 
       it "interprets yes as yes" do
-        resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => :yes)
+        resource = described_class.new(:name => "/foo", :making_sure => :present, :atboot => :yes)
 
         expect(resource[:atboot]).to eq(:yes)
       end
 
       it "interprets true as yes" do
-        resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => :true)
+        resource = described_class.new(:name => "/foo", :making_sure => :present, :atboot => :true)
 
         expect(resource[:atboot]).to eq(:yes)
       end
 
       it "interprets no as no" do
-        resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => :no)
+        resource = described_class.new(:name => "/foo", :making_sure => :present, :atboot => :no)
 
         expect(resource[:atboot]).to eq(:no)
       end
 
       it "interprets false as no" do
-        resource = described_class.new(:name => "/foo", :ensure => :present, :atboot => false)
+        resource = described_class.new(:name => "/foo", :making_sure => :present, :atboot => false)
 
         expect(resource[:atboot]).to eq(:no)
       end
@@ -296,7 +296,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
   describe "when changing the host" do
     def test_ensure_change(options)
-      provider.set(:ensure => options[:from])
+      provider.set(:making_sure => options[:from])
       provider.expects(:create).times(options[:create] || 0)
       provider.expects(:destroy).times(options[:destroy] || 0)
       provider.expects(:mount).never
@@ -438,42 +438,42 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
   describe "when responding to refresh" do
     pending "2.6.x specifies slightly different behavior and the desired behavior needs to be clarified and revisited.  See ticket #4904" do
       it "should remount if it is supposed to be mounted" do
-        resource[:ensure] = "mounted"
+        resource[:making_sure] = "mounted"
         provider.expects(:remount)
 
         resource.refresh
       end
 
       it "should not remount if it is supposed to be present" do
-        resource[:ensure] = "present"
+        resource[:making_sure] = "present"
         provider.expects(:remount).never
 
         resource.refresh
       end
 
       it "should not remount if it is supposed to be absent" do
-        resource[:ensure] = "absent"
+        resource[:making_sure] = "absent"
         provider.expects(:remount).never
 
         resource.refresh
       end
 
       it "should not remount if it is supposed to be defined" do
-        resource[:ensure] = "defined"
+        resource[:making_sure] = "defined"
         provider.expects(:remount).never
 
         resource.refresh
       end
 
       it "should not remount if it is supposed to be unmounted" do
-        resource[:ensure] = "unmounted"
+        resource[:making_sure] = "unmounted"
         provider.expects(:remount).never
 
         resource.refresh
       end
 
       it "should not remount swap filesystems" do
-        resource[:ensure] = "mounted"
+        resource[:making_sure] = "mounted"
         resource[:fstype] = "swap"
         provider.expects(:remount).never
 
@@ -486,7 +486,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
 
     let :initial_values do
       {
-        :ensure      => :mounted,
+        :making_sure      => :mounted,
         :name        => '/mnt/foo',
         :device      => "/foo/bar",
         :blockdevice => "/other/bar",
@@ -530,7 +530,7 @@ describe Puppet::Type.type(:mount), :unless => Puppet.features.microsoft_windows
       resource.expects(:flush).in_sequence(syncorder) # Call inside syncothers
       resource.expects(:flush).in_sequence(syncorder) # I guess transaction or anything calls flush again
 
-      resource[:ensure] = :unmounted
+      resource[:making_sure] = :unmounted
       resource[:options] = 'hard'
 
       run_in_catalog(resource)

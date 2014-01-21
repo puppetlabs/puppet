@@ -7,7 +7,7 @@
 RALSH_FILE=/tmp/ralsh-running-list-$$
 SERVICE_FILE=/tmp/service-running-list-$$
 
-puppet resource service | egrep -B1 "ensure.*=>.*'running" | grep 'service {' | gawk -F"'" '{print $2}' | sort  > $RALSH_FILE
+puppet resource service | egrep -B1 "making_sure.*=>.*'running" | grep 'service {' | gawk -F"'" '{print $2}' | sort  > $RALSH_FILE
 
 if [ -e $SERVICE_FILE ]; then
   rm $SERVICE_FILE

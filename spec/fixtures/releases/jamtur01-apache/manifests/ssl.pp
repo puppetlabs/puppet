@@ -9,7 +9,7 @@ class apache::ssl {
         }
      }
      "ubuntu": {
-        a2mod { "ssl": ensure => present, }
+        a2mod { "ssl": making_sure => present, }
      }
   }
 }

@@ -342,38 +342,38 @@ describe Puppet::Type.type(:file) do
       file[:path].should == title
     end
 
-    it "should set a desired 'ensure' value if none is set and 'content' is set" do
+    it "should set a desired 'making_sure' value if none is set and 'content' is set" do
       file = described_class.new(:path => path, :content => "/foo/bar")
-      file[:ensure].should == :file
+      file[:making_sure].should == :file
     end
 
-    it "should set a desired 'ensure' value if none is set and 'target' is set", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
+    it "should set a desired 'making_sure' value if none is set and 'target' is set", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       file = described_class.new(:path => path, :target => File.expand_path(__FILE__))
-      file[:ensure].should == :link
+      file[:making_sure].should == :link
     end
   end
 
   describe "#mark_children_for_purging" do
-    it "should set each child's ensure to absent" do
+    it "should set each child's making_sure to absent" do
       paths = %w[foo bar baz]
       children = paths.inject({}) do |children,child|
-        children.merge child => described_class.new(:path => File.join(path, child), :ensure => :present)
+        children.merge child => described_class.new(:path => File.join(path, child), :making_sure => :present)
       end
 
       file.mark_children_for_purging(children)
 
       children.length.should == 3
       children.values.each do |child|
-        child[:ensure].should == :absent
+        child[:making_sure].should == :absent
       end
     end
 
     it "should skip children which have a source" do
-      child = described_class.new(:path => path, :ensure => :present, :source => File.expand_path(__FILE__))
+      child = described_class.new(:path => path, :making_sure => :present, :source => File.expand_path(__FILE__))
 
       file.mark_children_for_purging('foo' => child)
 
-      child[:ensure].should == :present
+      child[:making_sure].should == :present
     end
   end
 
@@ -386,7 +386,7 @@ describe Puppet::Type.type(:file) do
     end
 
     {
-      :ensure => :present,
+      :making_sure => :present,
       :recurse => true,
       :recurselimit => 5,
       :target => "some_target",
@@ -495,24 +495,24 @@ describe Puppet::Type.type(:file) do
       end
 
       it "should mark each file for removal" do
-        local = described_class.new(:path => path, :ensure => :present)
+        local = described_class.new(:path => path, :making_sure => :present)
         file.expects(:recurse_local).returns("local" => local)
 
         file.recurse
-        local[:ensure].should == :absent
+        local[:making_sure].should == :absent
       end
 
       it "should not remove files that exist in the remote repository" do
         file[:source] = File.expand_path(__FILE__)
         file.expects(:recurse_local).returns({})
 
-        remote = described_class.new(:path => path, :source => File.expand_path(__FILE__), :ensure => :present)
+        remote = described_class.new(:path => path, :source => File.expand_path(__FILE__), :making_sure => :present)
 
         file.expects(:recurse_remote).with { |hash| hash["remote"] = remote }
 
         file.recurse
 
-        remote[:ensure].should_not == :absent
+        remote[:making_sure].should_not == :absent
       end
     end
 
@@ -582,7 +582,7 @@ describe Puppet::Type.type(:file) do
       file[:target] = "mylinks"
       file.expects(:perform_recursion).with("mylinks").returns [@first]
       file.stubs(:newchild).never
-      file.expects(:[]=).with(:ensure, :directory)
+      file.expects(:[]=).with(:making_sure, :directory)
       file.recurse_link({})
     end
 
@@ -598,19 +598,19 @@ describe Puppet::Type.type(:file) do
       file.recurse_link("first" => @resource)
     end
 
-    it "should set the target to the full path of discovered file and set :ensure to :link if the file is not a directory", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
+    it "should set the target to the full path of discovered file and set :making_sure to :link if the file is not a directory", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
       file.stubs(:perform_recursion).returns [@first, @second]
       file.recurse_link("first" => @resource, "second" => file)
 
-      file[:ensure].should == :link
+      file[:making_sure].should == :link
       file[:target].should == "/my/second"
     end
 
-    it "should :ensure to :directory if the file is a directory" do
+    it "should :making_sure to :directory if the file is a directory" do
       file.stubs(:perform_recursion).returns [@first, @second]
       file.recurse_link("first" => file, "second" => @resource)
 
-      file[:ensure].should == :directory
+      file[:making_sure].should == :directory
     end
 
     it "should return a hash with both created and existing resources with the relative paths as the hash keys" do
@@ -967,39 +967,39 @@ describe Puppet::Type.type(:file) do
       file.must respond_to(:should_be_file?)
     end
 
-    it "should be a file if :ensure is set to :file" do
-      file[:ensure] = :file
+    it "should be a file if :making_sure is set to :file" do
+      file[:making_sure] = :file
       file.must be_should_be_file
     end
 
-    it "should be a file if :ensure is set to :present and the file exists as a normal file" do
+    it "should be a file if :making_sure is set to :present and the file exists as a normal file" do
       file.stubs(:stat).returns(mock('stat', :ftype => "file"))
-      file[:ensure] = :present
+      file[:making_sure] = :present
       file.must be_should_be_file
     end
 
-    it "should not be a file if :ensure is set to something other than :file" do
-      file[:ensure] = :directory
+    it "should not be a file if :making_sure is set to something other than :file" do
+      file[:making_sure] = :directory
       file.must_not be_should_be_file
     end
 
-    it "should not be a file if :ensure is set to :present and the file exists but is not a normal file" do
+    it "should not be a file if :making_sure is set to :present and the file exists but is not a normal file" do
       file.stubs(:stat).returns(mock('stat', :ftype => "directory"))
-      file[:ensure] = :present
+      file[:making_sure] = :present
       file.must_not be_should_be_file
     end
 
-    it "should be a file if :ensure is not set and :content is" do
+    it "should be a file if :making_sure is not set and :content is" do
       file[:content] = "foo"
       file.must be_should_be_file
     end
 
-    it "should be a file if neither :ensure nor :content is set but the file exists as a normal file" do
+    it "should be a file if neither :making_sure nor :content is set but the file exists as a normal file" do
       file.stubs(:stat).returns(mock("stat", :ftype => "file"))
       file.must be_should_be_file
     end
 
-    it "should not be a file if neither :ensure nor :content is set but the file exists but not as a normal file" do
+    it "should not be a file if neither :making_sure nor :content is set but the file exists but not as a normal file" do
       file.stubs(:stat).returns(mock("stat", :ftype => "directory"))
       file.must_not be_should_be_file
     end
@@ -1241,8 +1241,8 @@ describe Puppet::Type.type(:file) do
   describe "when autorequiring" do
     describe "target" do
       it "should require file resource when specified with the target property", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
-        file = described_class.new(:path => File.expand_path("/foo"), :ensure => :directory)
-        link = described_class.new(:path => File.expand_path("/bar"), :ensure => :link, :target => File.expand_path("/foo"))
+        file = described_class.new(:path => File.expand_path("/foo"), :making_sure => :directory)
+        link = described_class.new(:path => File.expand_path("/bar"), :making_sure => :link, :target => File.expand_path("/foo"))
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
@@ -1251,9 +1251,9 @@ describe Puppet::Type.type(:file) do
         reqs[0].target.must == link
       end
 
-      it "should require file resource when specified with the ensure property" do
-        file = described_class.new(:path => File.expand_path("/foo"), :ensure => :directory)
-        link = described_class.new(:path => File.expand_path("/bar"), :ensure => File.expand_path("/foo"))
+      it "should require file resource when specified with the making_sure property" do
+        file = described_class.new(:path => File.expand_path("/foo"), :making_sure => :directory)
+        link = described_class.new(:path => File.expand_path("/bar"), :making_sure => File.expand_path("/foo"))
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
@@ -1263,7 +1263,7 @@ describe Puppet::Type.type(:file) do
       end
 
       it "should not require target if target is not managed", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
-        link = described_class.new(:path => File.expand_path('/foo'), :ensure => :link, :target => '/bar')
+        link = described_class.new(:path => File.expand_path('/foo'), :making_sure => :link, :target => '/bar')
         catalog.add_resource link
         link.autorequire.size.should == 0
       end
@@ -1353,13 +1353,13 @@ describe Puppet::Type.type(:file) do
       @link   = File.join(path, "link")
 
       target = described_class.new(
-        :ensure => :file, :path => @target,
+        :making_sure => :file, :path => @target,
         :catalog => catalog, :content => 'yayness',
         :mode => 0644)
       catalog.add_resource target
 
       @link_resource = described_class.new(
-        :ensure => :link, :path => @link,
+        :making_sure => :link, :path => @link,
         :target => @target, :catalog => catalog,
         :mode => 0755)
       catalog.add_resource @link_resource
@@ -1459,9 +1459,9 @@ describe Puppet::Type.type(:file) do
       File.read(path).should == 'content'
     end
 
-    it "should not log errors if creating a new file with ensure present and no content" do
+    it "should not log errors if creating a new file with making_sure present and no content" do
       file[:audit]  = 'content'
-      file[:ensure] = 'present'
+      file[:making_sure] = 'present'
       catalog.add_resource(file)
 
       catalog.apply

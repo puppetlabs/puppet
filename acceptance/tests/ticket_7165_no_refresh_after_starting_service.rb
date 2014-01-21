@@ -12,7 +12,7 @@ manifest = %Q{
   }
 
   service { "service":
-    ensure     => running,
+    making_sure     => running,
     hasstatus  => true,
     hasrestart => true,
     status     => "test -e #{dir}/service",

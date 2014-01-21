@@ -71,11 +71,11 @@ describe Puppet::Provider::Ldap do
     end
 
     describe "resources that do not exist" do
-      it "should create a provider with :ensure => :absent" do
+      it "should create a provider with :making_sure => :absent" do
         result = mock 'result'
         @manager.expects(:find).with("one").returns nil
 
-        @class.expects(:new).with(:ensure => :absent).returns "myprovider"
+        @class.expects(:new).with(:making_sure => :absent).returns "myprovider"
 
         @resource.expects(:provider=).with("myprovider")
 
@@ -87,17 +87,17 @@ describe Puppet::Provider::Ldap do
       it "should create a provider with the results of the find" do
         @manager.expects(:find).with("one").returns("one" => "two")
 
-        @class.expects(:new).with("one" => "two", :ensure => :present).returns "myprovider"
+        @class.expects(:new).with("one" => "two", :making_sure => :present).returns "myprovider"
 
         @resource.expects(:provider=).with("myprovider")
 
         @class.prefetch(@resources)
       end
 
-      it "should set :ensure to :present in the returned values" do
+      it "should set :making_sure to :present in the returned values" do
         @manager.expects(:find).with("one").returns("one" => "two")
 
-        @class.expects(:new).with("one" => "two", :ensure => :present).returns "myprovider"
+        @class.expects(:new).with("one" => "two", :making_sure => :present).returns "myprovider"
 
         @resource.expects(:provider=).with("myprovider")
 
@@ -190,12 +190,12 @@ describe Puppet::Provider::Ldap do
     end
 
     it "should indicate when the ldap entry already exists" do
-      @instance = @class.new(:ensure => :present)
+      @instance = @class.new(:making_sure => :present)
       @instance.exists?.should be_true
     end
 
     it "should indicate when the ldap entry does not exist" do
-      @instance = @class.new(:ensure => :absent)
+      @instance = @class.new(:making_sure => :absent)
       @instance.exists?.should be_false
     end
 
@@ -219,9 +219,9 @@ describe Puppet::Provider::Ldap do
         @instance.stubs(:resource).returns @resource
       end
 
-      it "should set its :ensure value to :present" do
+      it "should set its :making_sure value to :present" do
         @instance.create
-        @instance.properties[:ensure].should == :present
+        @instance.properties[:making_sure].should == :present
       end
 
       it "should set all of the other attributes from the resource" do
@@ -235,9 +235,9 @@ describe Puppet::Provider::Ldap do
     end
 
     describe "is being deleted" do
-      it "should set its :ensure value to :absent" do
+      it "should set its :making_sure value to :absent" do
         @instance.delete
-        @instance.properties[:ensure].should == :absent
+        @instance.properties[:making_sure].should == :absent
       end
     end
   end

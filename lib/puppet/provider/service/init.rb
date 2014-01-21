@@ -63,7 +63,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         next
       end
 
-      check = [:ensure]
+      check = [:making_sure]
 
       check << :enable if public_method_defined? :enabled?
 

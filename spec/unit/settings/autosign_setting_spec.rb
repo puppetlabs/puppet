@@ -84,7 +84,7 @@ describe Puppet::Settings::AutosignSetting do
       resource = setting.to_resource
 
       expect(resource.title).to eq path
-      expect(resource[:ensure]).to eq :file
+      expect(resource[:making_sure]).to eq :file
       expect(resource[:mode]).to eq '664'
       expect(resource[:owner]).to eq 'puppet'
       expect(resource[:group]).to eq 'puppet'

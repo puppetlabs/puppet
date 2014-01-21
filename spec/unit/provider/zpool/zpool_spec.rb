@@ -32,10 +32,10 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
 
     it "should list instances" do
       provider.class.expects(:zpool).with(:list,'-H').returns File.read(my_fixture('zpool-list.out'))
-      instances = provider.class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances = provider.class.instances.map { |p| {:name => p.get(:name), :making_sure => p.get(:making_sure)} }
       instances.size.should == 2
-      instances[0].should == {:name => 'rpool', :ensure => :present}
-      instances[1].should == {:name => 'mypool', :ensure => :present}
+      instances[0].should == {:name => 'rpool', :making_sure => :present}
+      instances[1].should == {:name => 'mypool', :making_sure => :present}
     end
   end
 
@@ -53,8 +53,8 @@ describe Puppet::Type.type(:zpool).provider(:zpool) do
     let(:zpool_data) { ["foo", "disk"] }
 
     describe "when there is no data" do
-      it "should return a hash with ensure=>:absent" do
-        provider.process_zpool_data([])[:ensure].should == :absent
+      it "should return a hash with making_sure=>:absent" do
+        provider.process_zpool_data([])[:making_sure].should == :absent
       end
     end
 

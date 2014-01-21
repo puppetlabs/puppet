@@ -3,7 +3,7 @@
 $var = "value"
 
 file { "/tmp/snippetselectatest":
-    ensure => file,
+    making_sure => file,
     mode => $var ? {
         nottrue => 641,
         value => 755
@@ -11,7 +11,7 @@ file { "/tmp/snippetselectatest":
 }
 
 file { "/tmp/snippetselectbtest":
-    ensure => file,
+    making_sure => file,
     mode => $var ? {
         nottrue => 644,
         default => 755
@@ -21,7 +21,7 @@ file { "/tmp/snippetselectbtest":
 $othervar = "complex value"
 
 file { "/tmp/snippetselectctest":
-    ensure => file,
+    making_sure => file,
     mode => $othervar ? {
         "complex value" => 755,
         default => 644
@@ -30,7 +30,7 @@ file { "/tmp/snippetselectctest":
 $anothervar = Yayness
 
 file { "/tmp/snippetselectdtest":
-    ensure => file,
+    making_sure => file,
     mode => $anothervar ? {
         Yayness => 755,
         default => 644

@@ -186,10 +186,10 @@ class Puppet::Parser::Compiler
         # If parameters are passed, then attempt to create a duplicate resource
         # so the appropriate error is thrown.
         if class_parameters
-          resource = klass.ensure_in_catalog(scope, class_parameters[name] || {})
+          resource = klass.making_sure_in_catalog(scope, class_parameters[name] || {})
         else
           next if scope.class_scope(klass)
-          resource = klass.ensure_in_catalog(scope)
+          resource = klass.making_sure_in_catalog(scope)
         end
 
         # If they've disabled lazy evaluation (which the :include function does),
@@ -286,7 +286,7 @@ class Puppet::Parser::Compiler
 
     # Create a resource to model this node, and then add it to the list
     # of resources.
-    resource = astnode.ensure_in_catalog(topscope)
+    resource = astnode.making_sure_in_catalog(topscope)
 
     resource.evaluate
 

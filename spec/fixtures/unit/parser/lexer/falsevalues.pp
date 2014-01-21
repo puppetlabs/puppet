@@ -1,3 +1,3 @@
 $value = false
 
-file { "/tmp/falsevalues$value": ensure => file }
+file { "/tmp/falsevalues$value": making_sure => file }

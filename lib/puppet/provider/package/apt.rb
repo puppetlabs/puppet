@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # installing a specific version.
   def install
     self.run_preseed if @resource[:responsefile]
-    should = @resource[:ensure]
+    should = @resource[:making_sure]
 
     checkforcdrom
     cmd = %w{-q -y}

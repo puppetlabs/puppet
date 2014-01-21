@@ -25,7 +25,7 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
 
   reset_agent_ssl(false)
 
-  step "Step 1: ensure autosign command can approve CSRs" do
+  step "Step 1: making_sure autosign command can approve CSRs" do
     master_opts = {
       'master' => {
         'autosign' => '/bin/true',
@@ -45,7 +45,7 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
 
   reset_agent_ssl(false)
 
-  step "Step 2: ensure autosign command can reject CSRs" do
+  step "Step 2: making_sure autosign command can reject CSRs" do
     master_opts = {
       'master' => {
         'autosign' => '/bin/false',

@@ -17,17 +17,17 @@ agents.each do |agent|
   setup agent
   #-----------------------------------
   step "Zone: path - required parameter (-)"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared }') do
+  apply_manifest_on(agent, 'zone {tstzone : making_sure=>configured, iptype=>shared }') do
     assert_match( /Error: Path is required/, result.output, "err: #{agent}")
   end
 
   step "Zone: path - required parameter (+)"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt" }') do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'zone {tstzone : making_sure=>configured, iptype=>shared, path=>"/tstzones/mnt" }') do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
 
   step "Zone: path - should change the path if it is switched before install"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt2" }') do
+  apply_manifest_on(agent, 'zone {tstzone : making_sure=>configured, iptype=>shared, path=>"/tstzones/mnt2" }') do
     assert_match(/path changed '.tstzones.mnt' to '.tstzones.mnt2'/, result.stdout, "err: #{agent}")
   end
 
@@ -37,7 +37,7 @@ agents.each do |agent|
   end
 
   step "Zone: path - revert to original path"
-  apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt" }') do
+  apply_manifest_on(agent, 'zone {tstzone : making_sure=>configured, iptype=>shared, path=>"/tstzones/mnt" }') do
     assert_match(/path changed '.tstzones.mnt2' to '.tstzones.mnt'/, result.stdout, "err: #{agent}")
   end
 

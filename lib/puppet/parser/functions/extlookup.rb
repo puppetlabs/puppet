@@ -70,7 +70,7 @@ You can also specify an additional data file to search first before any others a
 time, for example:
 
     $version = extlookup(\"rsyslog_version\", \"present\", \"packages\")
-    package{\"rsyslog\": ensure => $version }
+    package{\"rsyslog\": making_sure => $version }
 
 This will look for a version configured in packages.csv and then in the rest as configured
 by $extlookup_precedence if it's not found anywhere it will default to `present`, this kind

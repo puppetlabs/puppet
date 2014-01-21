@@ -200,23 +200,23 @@ FSTAB
         # because it is used by Puppet::Type::Mount.new to populate the
         # :target property.
         described_class.stubs(:default_target).returns fstab
-        @retrieve = described_class.instances.collect { |prov| {:name => prov.get(:name), :ensure => prov.get(:ensure)}}
+        @retrieve = described_class.instances.collect { |prov| {:name => prov.get(:name), :making_sure => prov.get(:making_sure)}}
       end
 
       # Following mountpoint are present in all fstabs/mountoutputs
       it "should include unmounted resources" do
         pending("Solaris:Unable to stub Operating System Fact at runtime", :if => Facter.value(:osfamily) == 'Solaris' )
-        @retrieve.should include(:name => '/', :ensure => :mounted)
+        @retrieve.should include(:name => '/', :making_sure => :mounted)
       end
 
       it "should include mounted resources" do
         pending("Solaris:Unable to stub Operating System Fact at runtime", :if => Facter.value(:osfamily) == "Solaris")
-        @retrieve.should include(:name => '/boot', :ensure => :unmounted)
+        @retrieve.should include(:name => '/boot', :making_sure => :unmounted)
       end
 
       it "should include ghost resources" do
         pending("Solaris:Unable to stub Operating System Fact at runtime", :if => Facter.value(:osfamily) == "Solaris")
-        @retrieve.should include(:name => '/ghost', :ensure => :ghost)
+        @retrieve.should include(:name => '/ghost', :making_sure => :ghost)
       end
 
     end
@@ -256,27 +256,27 @@ FSTAB
         end
       end
 
-      it "should set :ensure to :unmounted if found in fstab but not mounted" do
+      it "should set :making_sure to :unmounted if found in fstab but not mounted" do
         pending("Solaris:Unable to stub Operating System Fact at runtime", :if => Facter.value(:osfamily) == "Solaris")
         described_class.prefetch(@resource_hash)
-        @res_unmounted.provider.get(:ensure).should == :unmounted
+        @res_unmounted.provider.get(:making_sure).should == :unmounted
       end
 
-      it "should set :ensure to :ghost if not found in fstab but mounted" do
+      it "should set :making_sure to :ghost if not found in fstab but mounted" do
         pending("Solaris:Unable to stub Operating System Fact at runtime", :if => Facter.value(:osfamily) == "Solaris")
         described_class.prefetch(@resource_hash)
-        @res_ghost.provider.get(:ensure).should == :ghost
+        @res_ghost.provider.get(:making_sure).should == :ghost
       end
 
-      it "should set :ensure to :mounted if found in fstab and mounted" do
+      it "should set :making_sure to :mounted if found in fstab and mounted" do
         pending("Solaris:Unable to stub Operating System Fact at runtime", :if => Facter.value(:osfamily) == "Solaris")
         described_class.prefetch(@resource_hash)
-        @res_mounted.provider.get(:ensure).should == :mounted
+        @res_mounted.provider.get(:making_sure).should == :mounted
       end
 
-      it "should set :ensure to :absent if not found in fstab and not mounted" do
+      it "should set :making_sure to :absent if not found in fstab and not mounted" do
         described_class.prefetch(@resource_hash)
-        @res_absent.provider.get(:ensure).should == :absent
+        @res_absent.provider.get(:making_sure).should == :absent
       end
     end
   end

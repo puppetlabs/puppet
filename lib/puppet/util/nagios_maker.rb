@@ -13,7 +13,7 @@ module Puppet::Util::NagiosMaker
 
     type = Puppet::Type.newtype(full_name) {}
 
-    type.ensurable
+    type.making_surable
 
     type.newparam(nagtype.namevar, :namevar => true) do
       desc "The name of this nagios_#{nagtype.name} resource."

@@ -10,7 +10,7 @@ agents.each do |agent|
   on(agent, "rm -rf #{parent}")
 
   step "puppet should set execute bit on readable directories"
-  on(agent, puppet_resource("file", parent, "ensure=directory", "mode=0644")) do
+  on(agent, puppet_resource("file", parent, "making_sure=directory", "mode=0644")) do
     assert_match(regexp_mode(755), stdout)
   end
 
@@ -27,13 +27,13 @@ agents.each do |agent|
 
   step "set execute git on file if explicitly specified"
   file_750 = "#{parent}/file_750.txt"
-  on(agent, puppet_resource("file", file_750, "ensure=file", "mode=0750")) do
+  on(agent, puppet_resource("file", file_750, "making_sure=file", "mode=0750")) do
     assert_match(regexp_mode(750), stdout)
   end
 
   step "don't set execute bit if directory not readable"
   dir_600 = "#{parent}/dir_600"
-  on(agent, puppet_resource("file", dir_600, "ensure=directory", "mode=0600")) do
+  on(agent, puppet_resource("file", dir_600, "making_sure=directory", "mode=0600")) do
     assert_match(regexp_mode(700), stdout) # readable by owner, but not group
   end
 

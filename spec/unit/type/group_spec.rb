@@ -17,7 +17,7 @@ describe Puppet::Type.type(:group) do
       end
     end
 
-    [:ensure, :gid].each do |param|
+    [:making_sure, :gid].each do |param|
       it "should have a #{param} property" do
         @class.attrtype(param).should == :property
       end
@@ -41,15 +41,15 @@ describe Puppet::Type.type(:group) do
   end
 
   it "should call 'create' to create the group" do
-    group = @class.new(:name => "foo", :ensure => :present)
+    group = @class.new(:name => "foo", :making_sure => :present)
     group.provider.expects(:create)
-    group.parameter(:ensure).sync
+    group.parameter(:making_sure).sync
   end
 
   it "should call 'delete' to remove the group" do
-    group = @class.new(:name => "foo", :ensure => :absent)
+    group = @class.new(:name => "foo", :making_sure => :absent)
     group.provider.expects(:delete)
-    group.parameter(:ensure).sync
+    group.parameter(:making_sure).sync
   end
 
   it "delegates the existance check to its provider" do

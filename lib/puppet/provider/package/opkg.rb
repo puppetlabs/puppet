@@ -12,7 +12,7 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     packages = []
     execpipe("#{command(:opkg)} list-installed") do |process|
       regex = %r{^(\S+) - (\S+)}
-      fields = [:name, :ensure]
+      fields = [:name, :making_sure]
       hash = {}
 
       process.each_line { |line|
@@ -61,12 +61,12 @@ Puppet::Type.type(:package).provide :opkg, :source => :opkg, :parent => Puppet::
     # list out our specific package
     output = opkg( 'list-installed', @resource[:name] )
     if output =~ /^(\S+) - (\S+)/
-      return { :ensure => $2 }
+      return { :making_sure => $2 }
     end
     nil
   rescue Puppet::ExecutionFailure
     return {
-      :ensure => :purged,
+      :making_sure => :purged,
       :status => 'missing',
       :name => @resource[:name],
       :error => 'ok',

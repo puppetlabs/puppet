@@ -75,7 +75,7 @@ describe Puppet::Application::Inspect do
       properties = events.inject({}) do |property_values, event|
         property_values.merge(event.property => event.previous_value)
       end
-      properties["ensure"].should == :file
+      properties["making_sure"].should == :file
       properties["content"].should == "{md5}#{Digest::MD5.hexdigest("file contents\n")}"
       properties.has_key?("target").should == false
     end
@@ -120,7 +120,7 @@ describe Puppet::Application::Inspect do
       properties = events.inject({}) do |property_values, event|
         property_values.merge(event.property => event.previous_value)
       end
-      properties.should == {"ensure" => :absent}
+      properties.should == {"making_sure" => :absent}
     end
 
     describe "when archiving to a bucket" do

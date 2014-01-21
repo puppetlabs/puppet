@@ -25,7 +25,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     def instances
       objects = []
       listbyname do |name|
-        objects << new(:name => name, :ensure => :present)
+        objects << new(:name => name, :making_sure => :present)
       end
 
       objects
@@ -68,7 +68,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     def resource_type=(resource_type)
       super
       @resource_type.validproperties.each do |prop|
-        next if prop == :ensure
+        next if prop == :making_sure
         define_method(prop) { get(prop) || :absent} unless public_method_defined?(prop)
         define_method(prop.to_s + "=") { |*vals| set(prop, *vals) } unless public_method_defined?(prop.to_s + "=")
       end
@@ -187,7 +187,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
   end
 
-  def ensure
+  def making_sure
     if exists?
       :present
     else

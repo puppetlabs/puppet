@@ -82,7 +82,7 @@ class Puppet::Transaction::ResourceHarness
           sync_if_needed(param, context)
         end
       else
-        resource.debug("Nothing to manage: no ensure and the resource doesn't exist")
+        resource.debug("Nothing to manage: no making_sure and the resource doesn't exist")
       end
     end
 
@@ -102,7 +102,7 @@ class Puppet::Transaction::ResourceHarness
   end
 
   def manage_via_ensure_if_possible(resource, context)
-    ensure_param = resource.parameter(:ensure)
+    ensure_param = resource.parameter(:making_sure)
     if ensure_param && ensure_param.should
       sync_if_needed(ensure_param, context)
     else
@@ -228,7 +228,7 @@ class Puppet::Transaction::ResourceHarness
     end
 
     def resource_present?
-      current_values[:ensure] != :absent
+      current_values[:making_sure] != :absent
     end
 
     def record(event)

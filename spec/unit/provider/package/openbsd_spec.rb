@@ -67,10 +67,10 @@ describe provider_class do
       fixture = File.read(my_fixture('pkginfo_flavors.list'))
       provider_class.expects(:execpipe).with(%w{/bin/pkg_info -a}).yields(fixture)
       instances = provider_class.instances.map {|p| {:name => p.get(:name),
-        :ensure => p.get(:ensure), :flavor => p.get(:flavor)}}
+        :making_sure => p.get(:making_sure), :flavor => p.get(:flavor)}}
       instances.size.should == 2
-      instances[0].should == {:name => 'bash', :ensure => '3.1.17',  :flavor => 'static'}
-      instances[1].should == {:name => 'vim',  :ensure => '7.0.42', :flavor => 'no_x11'}
+      instances[0].should == {:name => 'bash', :making_sure => '3.1.17',  :flavor => 'static'}
+      instances[1].should == {:name => 'vim',  :making_sure => '7.0.42', :flavor => 'no_x11'}
     end
   end
 
@@ -249,7 +249,7 @@ describe provider_class do
     it "should return the installed version if present" do
       fixture = File.read(my_fixture('pkginfo.detail'))
       provider.expects(:pkginfo).with('bash').returns(fixture)
-      provider.query.should == { :ensure => '3.1.17' }
+      provider.query.should == { :making_sure => '3.1.17' }
     end
 
     it "should return nothing if not present" do

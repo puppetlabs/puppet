@@ -169,19 +169,19 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       lambda { @source.copy_source_values }.should raise_error(ArgumentError)
     end
 
-    it "should set :ensure to the file type" do
+    it "should set :making_sure to the file type" do
       @metadata.stubs(:ftype).returns "file"
 
       @source.copy_source_values
-      @resource[:ensure].must == :file
+      @resource[:making_sure].must == :file
     end
 
-    it "should not set 'ensure' if it is already set to 'absent'" do
+    it "should not set 'making_sure' if it is already set to 'absent'" do
       @metadata.stubs(:ftype).returns "file"
 
-      @resource[:ensure] = :absent
+      @resource[:making_sure] = :absent
       @source.copy_source_values
-      @resource[:ensure].must == :absent
+      @resource[:making_sure].must == :absent
     end
 
     describe "and the source is a file" do

@@ -33,7 +33,7 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields bash_installed_io
 
       installed = mock 'bash'
-      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns installed
+      provider_class.expects(:new).with(:making_sure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns installed
 
       expect(provider_class.instances).to eq([installed])
     end
@@ -42,9 +42,9 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields all_installed_io
 
       bash = mock 'bash'
-      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns bash
+      provider_class.expects(:new).with(:making_sure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns bash
       vim = mock 'vim'
-      provider_class.expects(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).returns vim
+      provider_class.expects(:new).with(:making_sure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).returns vim
 
       expect(provider_class.instances).to eq([bash, vim])
     end
@@ -78,19 +78,19 @@ describe provider_class do
     it "considers the package purged if dpkg-query fails" do
       Puppet::Util::Execution.expects(:execute).with(query_args, execute_options).raises Puppet::ExecutionFailure.new("eh")
 
-      expect(provider.query[:ensure]).to eq(:purged)
+      expect(provider.query[:making_sure]).to eq(:purged)
     end
 
     it "returns a hash of the found package status for an installed package" do
       dpkg_query_execution_returns(bash_installed_output)
 
-      expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg})
+      expect(provider.query).to eq({:making_sure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg})
     end
 
     it "considers the package absent if the dpkg-query result cannot be interpreted" do
       dpkg_query_execution_returns('some-bad-data')
 
-      expect(provider.query[:ensure]).to eq(:absent)
+      expect(provider.query[:making_sure]).to eq(:absent)
     end
 
     it "fails if an error is discovered" do
@@ -104,32 +104,32 @@ describe provider_class do
       not_installed_bash.gsub!(bash_version, "")
       dpkg_query_execution_returns(not_installed_bash)
 
-      expect(provider.query[:ensure]).to eq(:purged)
+      expect(provider.query[:making_sure]).to eq(:purged)
     end
 
     it "considers the package absent if it is marked 'config-files'" do
       dpkg_query_execution_returns(bash_installed_output.gsub("installed","config-files"))
-      expect(provider.query[:ensure]).to eq(:absent)
+      expect(provider.query[:making_sure]).to eq(:absent)
     end
 
     it "considers the package absent if it is marked 'half-installed'" do
       dpkg_query_execution_returns(bash_installed_output.gsub("installed","half-installed"))
-      expect(provider.query[:ensure]).to eq(:absent)
+      expect(provider.query[:making_sure]).to eq(:absent)
     end
 
     it "considers the package absent if it is marked 'unpacked'" do
       dpkg_query_execution_returns(bash_installed_output.gsub("installed","unpacked"))
-      expect(provider.query[:ensure]).to eq(:absent)
+      expect(provider.query[:making_sure]).to eq(:absent)
     end
 
     it "considers the package absent if it is marked 'half-configured'" do
       dpkg_query_execution_returns(bash_installed_output.gsub("installed","half-configured"))
-      expect(provider.query[:ensure]).to eq(:absent)
+      expect(provider.query[:making_sure]).to eq(:absent)
     end
 
     it "considers the package held if its state is 'hold'" do
       dpkg_query_execution_returns(bash_installed_output.gsub("install","hold"))
-      expect(provider.query[:ensure]).to eq(:held)
+      expect(provider.query[:making_sure]).to eq(:held)
     end
 
     describe "parsing tests" do
@@ -140,12 +140,12 @@ describe provider_class do
           :error => 'ok',
           :status => 'status',
           :name => resource_name,
-          :ensure => 'ensure',
+          :making_sure => 'making_sure',
           :provider => :dpkg,
         }
       end
       let(:package_not_found_hash) do
-        {:ensure => :purged, :status => 'missing', :name => resource_name, :error => 'ok'}
+        {:making_sure => :purged, :status => 'missing', :name => resource_name, :error => 'ok'}
       end
 
       def parser_test(dpkg_output_string, gold_hash, number_of_debug_logs = 0)
@@ -156,13 +156,13 @@ describe provider_class do
         expect(provider.query).to eq(gold_hash)
       end
 
-      it "parses properly even if optional ensure field is missing" do
-        no_ensure = 'desired ok status name '
-        parser_test(no_ensure, package_hash.merge(:ensure => ''))
+      it "parses properly even if optional making_sure field is missing" do
+        no_making_sure = 'desired ok status name '
+        parser_test(no_making_sure, package_hash.merge(:making_sure => ''))
       end
 
       it "provides debug logging of unparsable lines" do
-        parser_test('an unexpected dpkg msg with an exit code of 0', package_not_found_hash.merge(:ensure => :absent), 1)
+        parser_test('an unexpected dpkg msg with an exit code of 0', package_not_found_hash.merge(:making_sure => :absent), 1)
       end
 
       it "does not log if execution returns with non-zero exit code" do
@@ -209,7 +209,7 @@ describe provider_class do
       provider.install
     end
 
-    it "ensures any hold is removed" do
+    it "making_sure any hold is removed" do
       provider.expects(:unhold).once
       provider.expects(:dpkg)
       provider.install

@@ -1309,9 +1309,9 @@ describe Puppet::Settings do
         lambda { @settings.to_catalog }.should_not raise_error
       end
 
-      it "should set :ensure to :present on each created user and group" do
-        @catalog.resource(:user, "suser")[:ensure].should == :present
-        @catalog.resource(:group, "sgroup")[:ensure].should == :present
+      it "should set :making_sure to :present on each created user and group" do
+        @catalog.resource(:user, "suser")[:making_sure].should == :present
+        @catalog.resource(:group, "sgroup")[:making_sure].should == :present
       end
 
       it "should set each created user's :gid to the service group" do

@@ -16,7 +16,7 @@ step 'Setup'
 stub_forge_on(master)
 
 apply_manifest_on master, <<-PP
-  file { '/tmp/modules': ensure => absent, recurse => true, force => true }
+  file { '/tmp/modules': making_sure => absent, recurse => true, force => true }
 PP
 
 step "Try to install a module to a non-existent directory"

@@ -35,8 +35,8 @@ agents.each do |agent|
     agent.group_absent(name)
   end
 
-  step "ensure the user is present with managehome"
-  on agent, puppet_resource('user', name, ["ensure=present", "managehome=true", "password=#{pw}", home_prop].compact)
+  step "making_sure the user is present with managehome"
+  on agent, puppet_resource('user', name, ["making_sure=present", "managehome=true", "password=#{pw}", home_prop].compact)
 
   step "find the current home dir"
   home_dir = get_home_dir(agent, name)
@@ -44,7 +44,7 @@ agents.each do |agent|
 
   step "modify the user"
   new_home_dir = "#{home_dir}_foo"
-  on agent, puppet_resource('user', name, ["ensure=present", "home='#{new_home_dir}'"]) do |result|
+  on agent, puppet_resource('user', name, ["making_sure=present", "home='#{new_home_dir}'"]) do |result|
     found_home_dir = result.stdout.match(/home\s*=>\s*'([^']+)'/m)[1]
     assert_equal new_home_dir, found_home_dir, "Failed to change home property of user"
   end

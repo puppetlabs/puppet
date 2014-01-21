@@ -23,7 +23,7 @@ describe host do
       end
     end
 
-    [:ip, :target, :host_aliases, :comment, :ensure].each do |property|
+    [:ip, :target, :host_aliases, :comment, :making_sure].each do |property|
       it "should have a #{property} property" do
         @class.attrtype(property).should == :property
       end
@@ -36,12 +36,12 @@ describe host do
   end
 
   describe "when validating values" do
-    it "should support present as a value for ensure" do
-      proc { @class.new(:name => "foo", :ensure => :present) }.should_not raise_error
+    it "should support present as a value for making_sure" do
+      proc { @class.new(:name => "foo", :making_sure => :present) }.should_not raise_error
     end
 
-    it "should support absent as a value for ensure" do
-      proc { @class.new(:name => "foo", :ensure => :absent) }.should_not raise_error
+    it "should support absent as a value for making_sure" do
+      proc { @class.new(:name => "foo", :making_sure => :absent) }.should_not raise_error
     end
 
     it "should accept IPv4 addresses" do

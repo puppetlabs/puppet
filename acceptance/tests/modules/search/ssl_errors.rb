@@ -20,5 +20,5 @@ end
 end
 
 ensure step 'Remove fake forge hostname'
-apply_manifest_on master, "host { 'fake.fakeforge.com': ensure => absent }"
+apply_manifest_on master, "host { 'fake.fakeforge.com': making_sure => absent }"
 end

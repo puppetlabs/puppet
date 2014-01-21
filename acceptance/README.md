@@ -100,7 +100,7 @@ This will use the existing hosts, uninstall and reinstall the puppet packages an
     include puppet/defaults.rb
     exclude *
 
-will ensure that only puppet/defaults.rb is copied.
+will making_sure that only puppet/defaults.rb is copied.
 
 NOTE: By default these tasks provision with packages.  Set TYPE=git to use source checkouts.
 

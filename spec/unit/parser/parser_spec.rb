@@ -416,7 +416,7 @@ describe Puppet::Parser do
     end
 
     it "should accept parameters with trailing comma" do
-      @parser.parse("file { '/example': ensure => file, }").should be
+      @parser.parse("file { '/example': making_sure => file, }").should be
     end
 
     it "should accept parametrized classes with trailing comma" do

@@ -25,7 +25,7 @@ apply_manifest_on master, %Q{
       '#{master['puppetpath']}/testenv',
       '#{master['puppetpath']}/testenv/modules',
     ]:
-      ensure => directory,
+      making_sure => directory,
   }
   file {
     '#{master['puppetpath']}/puppet2.conf':

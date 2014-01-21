@@ -48,7 +48,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     ).merge(
       case flags[1..1]
       when 'f'
-        {:ensure => 'held'}
+        {:making_sure => 'held'}
       when '-'
         {}
       else
@@ -93,20 +93,20 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     # NAME (PUBLISHER)            VERSION           IFO  (new:630e1ffc7a19)
     # system/core-os              0.5.11-0.169      i--
     when /^(\S+) +(\S+) +(...)$/
-      {:name => $1, :ensure => $2}.merge ifo_flag($3)
+      {:name => $1, :making_sure => $2}.merge ifo_flag($3)
 
     # x11/wm/fvwm (fvwm.org)      2.6.1-3           i--
     when /^(\S+) \((.+)\) +(\S+) +(...)$/
-      {:name => $1, :publisher => $2, :ensure => $3}.merge ifo_flag($4)
+      {:name => $1, :publisher => $2, :making_sure => $3}.merge ifo_flag($4)
 
     # NAME (PUBLISHER)                  VERSION          STATE      UFOXI (dvd:052adf36c3f4)
     # SUNWcs                            0.5.11-0.126     installed  -----
     when /^(\S+) +(\S+) +(\S+) +(.....)$/
-      {:name => $1, :ensure => $2}.merge pkg_state($3).merge(ufoxi_flag($4))
+      {:name => $1, :making_sure => $2}.merge pkg_state($3).merge(ufoxi_flag($4))
 
     # web/firefox/plugin/flash (extra)  10.0.32.18-0.111 installed  -----
     when /^(\S+) \((.+)\) +(\S+) +(\S+) +(.....)$/
-      {:name => $1, :publisher => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
+      {:name => $1, :publisher => $2, :making_sure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
 
     else
       raise ArgumentError, 'Unknown line format %s: %s' % [self.name, line]
@@ -132,23 +132,23 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     # return the first known we find. The only way that is currently available is to do a dry run of
     # pkg update and see if could get installed (`pkg update -n res`).
     known = lst.find {|p| p[:status] == 'known' }
-    return known[:ensure] if known and exec_cmd(command(:pkg), 'update', '-n', @resource[:name])[:exit].zero?
+    return known[:making_sure] if known and exec_cmd(command(:pkg), 'update', '-n', @resource[:name])[:exit].zero?
 
     # If not, then return the installed, else nil
-    (lst.find {|p| p[:status] == 'installed' } || {})[:ensure]
+    (lst.find {|p| p[:status] == 'installed' } || {})[:making_sure]
   end
 
   # install the package and accept all licenses.
   def install(nofail = false)
     name = @resource[:name]
-    should = @resource[:ensure]
+    should = @resource[:making_sure]
     # always unhold if explicitly told to install/update
     self.unhold
     unless should.is_a? Symbol
       name += "@#{should}"
       is = self.query
-      unless is[:ensure].to_sym == :absent
-        self.uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+      unless is[:making_sure].to_sym == :absent
+        self.uninstall if Puppet::Util::Package.versioncmp(should, is[:making_sure]) < 0
       end
     end
     r = exec_cmd(command(:pkg), 'install', '--accept', name)
@@ -179,7 +179,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # list a specific package
   def query
     r = exec_cmd(command(:pkg), 'list', '-H', @resource[:name])
-    return {:ensure => :absent, :name => @resource[:name]} if r[:exit] != 0
+    return {:making_sure => :absent, :name => @resource[:name]} if r[:exit] != 0
     self.class.parse_line(r[:out])
   end
 

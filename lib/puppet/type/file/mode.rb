@@ -113,10 +113,10 @@ module Puppet
       current_bits == desired_bits
     end
 
-    # Ideally, dirmask'ing could be done at munge time, but we don't know if 'ensure'
+    # Ideally, dirmask'ing could be done at munge time, but we don't know if 'making_sure'
     # will eventually be a directory or something else. And unfortunately, that logic
-    # depends on the ensure, source, and target properties. So rather than duplicate
-    # that logic, and get it wrong, we do dirmask during retrieve, after 'ensure' has
+    # depends on the making_sure, source, and target properties. So rather than duplicate
+    # that logic, and get it wrong, we do dirmask during retrieve, after 'making_sure' has
     # been synced.
     def retrieve
       if @resource.stat

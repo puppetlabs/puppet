@@ -23,7 +23,7 @@ class source_test_module {
 
   file { $target_file:
     source => 'puppet:///modules/source_test_module/source_file',
-    ensure => present
+    making_sure => present
   }
 }
 EOF
@@ -73,7 +73,7 @@ agents.each do |agent|
 
   step "Using a local file path"
 
-    apply_manifest_on agent, "file { '#{target}': source => '#{source}', ensure => present }"
+    apply_manifest_on agent, "file { '#{target}': source => '#{source}', making_sure => present }"
     on agent, "cat #{target}" do
       assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")
     end
@@ -82,7 +82,7 @@ agents.each do |agent|
   step "Using a puppet:/// URI with puppet apply"
     on agent, "rm -rf #{target}"
 
-    manifest = %{"file { '#{target}': source => 'puppet:///modules/source_mod/source', ensure => 'present' }"}
+    manifest = %{"file { '#{target}': source => 'puppet:///modules/source_mod/source', making_sure => 'present' }"}
     on agent, puppet( %{apply --modulepath=#{a_testdir} -e #{manifest}})
     on agent, "cat #{target}" do
       assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{agent}")

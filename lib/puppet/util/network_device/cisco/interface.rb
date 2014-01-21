@@ -29,7 +29,7 @@ class Puppet::Util::NetworkDevice::Cisco::Interface
         ip.ipv6? ? "ipv6 address #{ip.to_s}/#{prefix} #{option}" :
                    "ip address #{ip.to_s} #{netmask(Socket::AF_INET,prefix)}"
       end],
-      :ensure        => [10, lambda { |value| value == :present ? "no shutdown" : "shutdown" } ]
+      :making_sure        => [10, lambda { |value| value == :present ? "no shutdown" : "shutdown" } ]
   }
 
   def update(is={}, should={})

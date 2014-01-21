@@ -188,7 +188,7 @@ class Puppet::Resource::Type
   # classes and nodes.  No parameters are be supplied--if this is a
   # parameterized class, then all parameters take on their default
   # values.
-  def ensure_in_catalog(scope, parameters=nil)
+  def making_sure_in_catalog(scope, parameters=nil)
     type == :definition and raise ArgumentError, "Cannot create resources for defined resource types"
     resource_type = type == :hostclass ? :class : :node
 
@@ -212,7 +212,7 @@ class Puppet::Resource::Type
   def instantiate_resource(scope, resource)
     # Make sure our parent class has been evaluated, if we have one.
     if parent && !scope.catalog.resource(resource.type, parent)
-      parent_type(scope).ensure_in_catalog(scope)
+      parent_type(scope).making_sure_in_catalog(scope)
     end
 
     if ['Class', 'Node'].include? resource.type

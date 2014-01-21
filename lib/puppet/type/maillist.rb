@@ -3,7 +3,7 @@ module Puppet
     @doc = "Manage email lists.  This resource type can only create
       and remove lists; it cannot currently reconfigure them."
 
-    ensurable do
+    making_surable do
       defaultvalues
 
       newvalue(:purged) do
@@ -47,7 +47,7 @@ module Puppet
 
     def generate
       if provider.respond_to?(:aliases)
-        should = self.should(:ensure) || :present
+        should = self.should(:making_sure) || :present
         if should == :purged
           should = :absent
         end
@@ -55,7 +55,7 @@ module Puppet
 
         provider.aliases.
           reject  { |name,recipient| catalog.resource(:mailalias, name) }.
-          collect { |name,recipient| atype.new(:name => name, :recipient => recipient, :ensure => should) }
+          collect { |name,recipient| atype.new(:name => name, :recipient => recipient, :making_sure => should) }
       end
     end
   end

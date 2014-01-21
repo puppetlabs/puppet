@@ -5,7 +5,7 @@ describe Puppet::Provider::AixObject do
   let(:resource) do
     Puppet::Type.type(:user).new(
       :name   => 'test_aix_user',
-      :ensure => :present
+      :making_sure => :present
     )
   end
 

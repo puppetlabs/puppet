@@ -75,7 +75,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       execpipe(listcmd()) do |process|
         # pacman -Q output is 'packagename version-rel'
         regex = %r{^(\S+)\s(\S+)}
-        fields = [:name, :ensure]
+        fields = [:name, :making_sure]
         hash = {}
 
         process.each_line { |line|
@@ -136,11 +136,11 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       output = pacman("-Qi", @resource[:name])
 
       if output =~ /Version.*:\s(.+)/
-        return { :ensure => $1 }
+        return { :making_sure => $1 }
       end
     rescue Puppet::ExecutionFailure
       return {
-        :ensure => :purged,
+        :making_sure => :purged,
         :status => 'missing',
         :name => @resource[:name],
         :error => 'ok',

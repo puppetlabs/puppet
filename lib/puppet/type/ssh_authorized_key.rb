@@ -7,7 +7,7 @@ module Puppet
     SSH key should be installed, the `ssh_authorized_key` resource will autorequire
     that user."
 
-    ensurable
+    making_surable
 
     newparam(:name) do
       desc "The SSH key comment. This attribute is currently used as a

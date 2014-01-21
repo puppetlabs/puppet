@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:package).provider(:pkg) do
-  let (:resource) { Puppet::Resource.new(:package, 'dummy', :parameters => {:name => 'dummy', :ensure => :latest}) }
+  let (:resource) { Puppet::Resource.new(:package, 'dummy', :parameters => {:name => 'dummy', :making_sure => :latest}) }
   let (:provider) { described_class.new(resource) }
   before :each do
     described_class.stubs(:command).with(:pkg).returns('/bin/pkg')
@@ -54,11 +54,11 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         }.to raise_error(ArgumentError, /Unknown line format/)
       end
       {
-        'spkg       0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg},
-        'spkg (me)  0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg, :publisher => 'me'},
-        'spkg (me)  0.0.7  if-' => {:name => 'spkg', :ensure => 'held', :status => 'installed', :provider => :pkg, :publisher => 'me'},
-        'spkg       0.0.7  installed -----' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg},
-        'spkg (me)  0.0.7  installed -----' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg, :publisher => 'me'},
+        'spkg       0.0.7  i--' => {:name => 'spkg', :making_sure => '0.0.7', :status => 'installed', :provider => :pkg},
+        'spkg (me)  0.0.7  i--' => {:name => 'spkg', :making_sure => '0.0.7', :status => 'installed', :provider => :pkg, :publisher => 'me'},
+        'spkg (me)  0.0.7  if-' => {:name => 'spkg', :making_sure => 'held', :status => 'installed', :provider => :pkg, :publisher => 'me'},
+        'spkg       0.0.7  installed -----' => {:name => 'spkg', :making_sure => '0.0.7', :status => 'installed', :provider => :pkg},
+        'spkg (me)  0.0.7  installed -----' => {:name => 'spkg', :making_sure => '0.0.7', :status => 'installed', :provider => :pkg, :publisher => 'me'},
        }.each do |k, v|
         it "[#{k}] should correctly parse" do
           described_class.parse_line(k).should == v
@@ -66,22 +66,22 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       end
     end
     context ":latest" do
-      it "should work correctly for ensure latest on solaris 11 (UFOXI) when there are no further packages to install" do
+      it "should work correctly for making_sure latest on solaris 11 (UFOXI) when there are no further packages to install" do
         described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.installed'))
         provider.latest.should == "1.0.6-0.175.0.0.0.2.537"
       end
-      it "should work correctly for ensure latest on solaris 11(known UFOXI)" do
+      it "should work correctly for making_sure latest on solaris 11(known UFOXI)" do
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '-n', 'dummy'], {:failonfail => false, :combine => true}).returns ''
         $CHILD_STATUS.stubs(:exitstatus).returns 0
 
         described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.known'))
         provider.latest.should == "1.0.6-0.175.0.0.0.2.537"
       end
-      it "should work correctly for ensure latest on solaris 11 (IFO)" do
+      it "should work correctly for making_sure latest on solaris 11 (IFO)" do
         described_class.expects(:pkg).with(:list,'-Hn','dummy').returns File.read(my_fixture('dummy_solaris11.ifo.installed'))
         provider.latest.should == "1.0.6-0.175.0.0.0.2.537"
       end
-      it "should work correctly for ensure latest on solaris 11(known IFO)" do
+      it "should work correctly for making_sure latest on solaris 11(known IFO)" do
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'update', '-n', 'dummy'], {:failonfail => false, :combine => true}).returns ''
         $CHILD_STATUS.stubs(:exitstatus).returns 0
 
@@ -92,25 +92,25 @@ describe Puppet::Type.type(:package).provider(:pkg) do
     context ":instances" do
       it "should correctly parse lines with preferred publisher" do
         described_class.expects(:pkg).with(:list,'-H').returns File.read(my_fixture('simple'))
-        instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+        instances = described_class.instances.map { |p| {:name => p.get(:name), :making_sure => p.get(:making_sure)} }
         instances.size.should == 2
-        instances[0].should == {:name => 'SUNWdummy', :ensure => "2.5.5-0.111"}
-        instances[1].should == {:name => 'dummy2', :ensure =>"9.3.6.1-0.111"}
+        instances[0].should == {:name => 'SUNWdummy', :making_sure => "2.5.5-0.111"}
+        instances[1].should == {:name => 'dummy2', :making_sure =>"9.3.6.1-0.111"}
       end
       it "should correctly parse lines with non preferred publisher" do
         described_class.expects(:pkg).with(:list,'-H').returns File.read(my_fixture('publisher'))
-        instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+        instances = described_class.instances.map { |p| {:name => p.get(:name), :making_sure => p.get(:making_sure)} }
         instances.size.should == 2
-        instances[0].should == {:name => 'SUNWdummy', :ensure => "8.8-0.111"}
-        instances[1].should == {:name => 'service/network/dummy', :ensure => "0.5.11-0.151.0.1"}
+        instances[0].should == {:name => 'SUNWdummy', :making_sure => "8.8-0.111"}
+        instances[1].should == {:name => 'service/network/dummy', :making_sure => "0.5.11-0.151.0.1"}
       end
       it "should correctly parse lines on solaris 11" do
         described_class.expects(:pkg).with(:list, '-H').returns File.read(my_fixture('solaris11'))
         described_class.expects(:warning).never
-        instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure) }}
+        instances = described_class.instances.map { |p| {:name => p.get(:name), :making_sure => p.get(:making_sure) }}
         instances.size.should == 2
-        instances[0].should == {:name => 'dummy/dummy', :ensure => "3.0-0.175.0.0.0.2.537"}
-        instances[1].should == {:name => 'dummy/dummy2', :ensure => "1.8.1.2-0.175.0.0.0.2.537"}
+        instances[0].should == {:name => 'dummy/dummy', :making_sure => "3.0-0.175.0.0.0.2.537"}
+        instances[1].should == {:name => 'dummy/dummy2', :making_sure => "1.8.1.2-0.175.0.0.0.2.537"}
       end
       it "should fail on incorrect lines" do
         fake_output = File.read(my_fixture('incomplete'))
@@ -133,7 +133,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
           $CHILD_STATUS.stubs(:exitstatus).returns 0
           provider.query.should == {
             :name     => 'dummy',
-            :ensure   => "2.5.5-0.111",
+            :making_sure   => "2.5.5-0.111",
             :status   => "installed",
             :provider => :pkg,
           }
@@ -141,7 +141,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         it "should return :absent when the package is not found" do
           Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-H', 'dummy'], {:failonfail => false, :combine => true}).returns ''
           $CHILD_STATUS.stubs(:exitstatus).returns 1
-          provider.query.should == {:ensure => :absent, :name => "dummy"}
+          provider.query.should == {:making_sure => :absent, :name => "dummy"}
         end
       end
       context "on solaris 11" do
@@ -151,14 +151,14 @@ describe Puppet::Type.type(:package).provider(:pkg) do
           provider.query.should == {
             :name     => 'dummy',
             :status   => 'installed',
-            :ensure   => "1.0.6-0.175.0.0.0.2.537",
+            :making_sure   => "1.0.6-0.175.0.0.0.2.537",
             :provider => :pkg
           }
         end
         it "should return :absent when the package is not found" do
           Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-H', 'dummy'], {:failonfail => false, :combine => true}).returns ''
           $CHILD_STATUS.stubs(:exitstatus).returns 1
-          provider.query.should == {:ensure => :absent, :name => "dummy"}
+          provider.query.should == {:making_sure => :absent, :name => "dummy"}
         end
       end
       it "should return fail when the packageline cannot be parsed" do
@@ -180,7 +180,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
 
       it "should install specific version(1)" do
         # Should install also check if the version installed is the same version we are asked to install? or should we rely on puppet for that?
-        resource[:ensure] = '0.0.7'
+        resource[:making_sure] = '0.0.7'
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-H', 'dummy'], {:failonfail => false, :combine => true}).returns 'dummy       0.0.6  installed -----'
@@ -188,7 +188,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         provider.install
       end
       it "should install specific version(2)" do
-        resource[:ensure] = '0.0.8'
+        resource[:making_sure] = '0.0.8'
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'list', '-H', 'dummy'], {:failonfail => false, :combine => true}).returns 'dummy       0.0.7  installed -----'
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@0.0.8'], {:failonfail => false, :combine => true}).returns ''
@@ -196,8 +196,8 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         provider.install
       end
       it "should install specific version(3)" do
-        resource[:ensure] = '0.0.7'
-        provider.expects(:query).with().returns({:ensure => '0.0.8'})
+        resource[:making_sure] = '0.0.7'
+        provider.expects(:query).with().returns({:making_sure => '0.0.8'})
         provider.expects(:uninstall).with()
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
@@ -205,15 +205,15 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         provider.install
       end
       it "should install any if version is not specified" do
-        resource[:ensure] = :present
+        resource[:making_sure] = :present
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy'], {:failonfail => false, :combine => true}).returns ''
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.install
       end
       it "should install if no version was previously installed, and a specific version was requested" do
-        resource[:ensure] = '0.0.7'
-        provider.expects(:query).with().returns({:ensure => :absent})
+        resource[:making_sure] = '0.0.7'
+        provider.expects(:query).with().returns({:making_sure => :absent})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@0.0.7'], {:failonfail => false, :combine => true}).returns ''
         $CHILD_STATUS.stubs(:exitstatus).returns 0

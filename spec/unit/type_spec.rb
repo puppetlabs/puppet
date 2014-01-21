@@ -41,39 +41,39 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should be able to retrieve a property by name" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :making_sure => :present)
     resource.property(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
   end
 
   it "should be able to retrieve a parameter by name" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :making_sure => :present)
     resource.parameter(:name).must be_instance_of(Puppet::Type.type(:mount).attrclass(:name))
   end
 
   it "should be able to retrieve a property by name using the :parameter method" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :making_sure => :present)
     resource.parameter(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
   end
 
   it "should be able to retrieve all set properties" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :making_sure => :present)
     props = resource.properties
     props.should_not be_include(nil)
-    [:fstype, :ensure, :pass].each do |name|
+    [:fstype, :making_sure, :pass].each do |name|
       props.should be_include(resource.parameter(name))
     end
   end
 
   it "can retrieve all set parameters" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present, :tag => 'foo')
+    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :making_sure => :present, :tag => 'foo')
     params = resource.parameters_with_value
-    [:name, :provider, :ensure, :fstype, :pass, :dump, :target, :loglevel, :tag].each do |name|
+    [:name, :provider, :making_sure, :fstype, :pass, :dump, :target, :loglevel, :tag].each do |name|
       params.should be_include(resource.parameter(name))
     end
   end
 
   it "can not return any `nil` values when retrieving all set parameters" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present, :tag => 'foo')
+    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :making_sure => :present, :tag => 'foo')
     params = resource.parameters_with_value
     params.should_not be_include(nil)
   end
@@ -299,7 +299,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       }.to raise_error(Puppet::DevError, /Could not find parent provider.+parent_provider/)
     end
 
-    it "should ensure its type has a 'provider' parameter" do
+    it "should making_sure its type has a 'provider' parameter" do
       @type.provide(:test_provider)
 
       @type.parameters.should include(:provider)
@@ -614,12 +614,12 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
   describe "when retrieving current property values" do
     before do
-      @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-      @resource.property(:ensure).stubs(:retrieve).returns :absent
+      @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :making_sure => :present)
+      @resource.property(:making_sure).stubs(:retrieve).returns :absent
     end
 
     it "should fail if its provider is unsuitable" do
-      @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+      @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :making_sure => :present)
       @resource.provider.class.expects(:suitable?).returns false
       expect { @resource.retrieve_resource }.to raise_error(Puppet::Error)
     end
@@ -639,21 +639,21 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     it "should provide a value for all set properties" do
       values = @resource.retrieve_resource
-      [:ensure, :fstype, :pass].each { |property| values[property].should_not be_nil }
+      [:making_sure, :fstype, :pass].each { |property| values[property].should_not be_nil }
     end
 
-    it "should provide a value for 'ensure' even if no desired value is provided" do
+    it "should provide a value for 'making_sure' even if no desired value is provided" do
       @resource = Puppet::Type.type(:file).new(:path => make_absolute("/my/file/that/can't/exist"))
     end
 
-    it "should not call retrieve on non-ensure properties if the resource is absent and should consider the property absent" do
-      @resource.property(:ensure).expects(:retrieve).returns :absent
+    it "should not call retrieve on non-making_sure properties if the resource is absent and should consider the property absent" do
+      @resource.property(:making_sure).expects(:retrieve).returns :absent
       @resource.property(:fstype).expects(:retrieve).never
       @resource.retrieve_resource[:fstype].should == :absent
     end
 
     it "should include the result of retrieving each property's current value if the resource is present" do
-      @resource.property(:ensure).expects(:retrieve).returns :present
+      @resource.property(:making_sure).expects(:retrieve).returns :present
       @resource.property(:fstype).expects(:retrieve).returns 15
       @resource.retrieve_resource[:fstype] == 15
     end
@@ -662,7 +662,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   describe "#to_resource" do
     it "should return a Puppet::Resource that includes properties, parameters and tags" do
       type_resource = Puppet::Type.type(:mount).new(
-        :ensure   => :present,
+        :making_sure   => :present,
         :name     => "foo",
         :fstype   => "bar",
         :remounts => true
@@ -673,7 +673,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       type_resource.parameters[:remounts].should_not be_a(Puppet::Property)
       type_resource.parameters[:fstype].is_a?(Puppet::Property).should be_true
 
-      type_resource.property(:ensure).expects(:retrieve).returns :present
+      type_resource.property(:making_sure).expects(:retrieve).returns :present
       type_resource.property(:fstype).expects(:retrieve).returns 15
 
       resource = type_resource.to_resource
@@ -802,7 +802,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
             attr_accessor :names
           end
           def self.instance(name)
-            new(:name => name, :ensure => :present)
+            new(:name => name, :making_sure => :present)
           end
           def self.instances
             @instances ||= names.collect { |name| instance(name.to_s) }
@@ -837,7 +837,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
 
-  describe "::ensurable?" do
+  describe "::making_surable?" do
     before :each do
       class TestEnsurableType < Puppet::Type
         def exists?; end
@@ -847,22 +847,22 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "is true if the class has exists?, create, and destroy methods defined" do
-      TestEnsurableType.should be_ensurable
+      TestEnsurableType.should be_making_surable
     end
 
     it "is false if exists? is not defined" do
       TestEnsurableType.class_eval { remove_method(:exists?) }
-      TestEnsurableType.should_not be_ensurable
+      TestEnsurableType.should_not be_making_surable
     end
 
     it "is false if create is not defined" do
       TestEnsurableType.class_eval { remove_method(:create) }
-      TestEnsurableType.should_not be_ensurable
+      TestEnsurableType.should_not be_making_surable
     end
 
     it "is false if destroy is not defined" do
       TestEnsurableType.class_eval { remove_method(:destroy) }
-      TestEnsurableType.should_not be_ensurable
+      TestEnsurableType.should_not be_making_surable
     end
   end
 end

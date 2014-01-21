@@ -5,9 +5,9 @@ apply_manifest_on master, <<-PP
 file {
   [
     '#{master['distmoduledir']}/nginx',
-  ]: ensure => directory;
+  ]: making_sure => directory;
   '#{master['distmoduledir']}/nginx/Modulefile':
-    ensure => absent;
+    making_sure => absent;
 }
 PP
 
@@ -22,5 +22,5 @@ on master, "[ ! -d #{master['distmoduledir']}/nginx/pkg/puppetlabs-nginx-0.0.1 ]
 on master, "[ ! -f #{master['distmoduledir']}/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz ]"
 
 ensure step "Teardown"
-  apply_manifest_on master, "file { '#{master['distmoduledir']}/nginx': ensure => absent, force => true }"
+  apply_manifest_on master, "file { '#{master['distmoduledir']}/nginx': making_sure => absent, force => true }"
 end

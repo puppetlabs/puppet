@@ -732,7 +732,7 @@ class Puppet::Settings
     return @service_user_available if defined?(@service_user_available)
 
     if self[:user]
-      user = Puppet::Type.type(:user).new :name => self[:user], :audit => :ensure
+      user = Puppet::Type.type(:user).new :name => self[:user], :audit => :making_sure
 
       @service_user_available = user.exists?
     else
@@ -744,7 +744,7 @@ class Puppet::Settings
     return @service_group_available if defined?(@service_group_available)
 
     if self[:group]
-      group = Puppet::Type.type(:group).new :name => self[:group], :audit => :ensure
+      group = Puppet::Type.type(:group).new :name => self[:group], :audit => :making_sure
 
       @service_group_available = group.exists?
     else
@@ -779,7 +779,7 @@ class Puppet::Settings
   #   (and the conceptual separation) is not used very often; the main place where it will have a potential impact
   #   is when code calls Settings#use method.  See docs on that method for further details, but basically that method
   #   just attempts to do any preparation that may be necessary before code attempts to leverage the value of a particular
-  #   setting.  This has the most impact for file/directory settings, where #use will attempt to "ensure" those
+  #   setting.  This has the most impact for file/directory settings, where #use will attempt to "making_sure" those
   #   files / directories.
   # @param [Hash[Hash]] defs the settings to be defined.  This argument is a hash of hashes; each key should be a symbol,
   #   which is basically the name of the setting that you are defining.  The value should be another hash that specifies
@@ -1035,12 +1035,12 @@ Generated on #{Time.now}.
       next unless sections.nil? or sections.include?(setting.section)
 
       if user = setting.owner and user != "root" and catalog.resource(:user, user).nil?
-        resource = Puppet::Resource.new(:user, user, :parameters => {:ensure => :present})
+        resource = Puppet::Resource.new(:user, user, :parameters => {:making_sure => :present})
         resource[:gid] = self[:group] if self[:group]
         catalog.add_resource resource
       end
       if group = setting.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
-        catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:ensure => :present})
+        catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:making_sure => :present})
       end
     end
   end

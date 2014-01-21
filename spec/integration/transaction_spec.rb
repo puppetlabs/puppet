@@ -59,7 +59,7 @@ describe Puppet::Transaction do
   it "should apply exported resources" do
     catalog = Puppet::Resource::Catalog.new
     path = tmpfile("exported_files")
-    resource = Puppet::Type.type(:file).new :path => path, :backup => false, :ensure => :file
+    resource = Puppet::Type.type(:file).new :path => path, :backup => false, :making_sure => :file
     resource.exported = true
     catalog.add_resource resource
 
@@ -141,7 +141,7 @@ describe Puppet::Transaction do
   # resources in the requiring component to get refreshed.
   it "should propagate events from a contained resource through its container to its dependent container's contained resources" do
     transaction = nil
-    file = Puppet::Type.type(:file).new :path => tmpfile("event_propagation"), :ensure => :present
+    file = Puppet::Type.type(:file).new :path => tmpfile("event_propagation"), :making_sure => :present
     execfile = File.join(tmpdir("exec_event"), "exectestingness2")
     exec = Puppet::Type.type(:exec).new :command => touch(execfile), :path => ENV['PATH']
     catalog = mk_catalog(file)
@@ -170,7 +170,7 @@ describe Puppet::Transaction do
 
     file = Puppet::Type.type(:file).new(
       :path   => path,
-      :ensure => "file"
+      :making_sure => "file"
     )
 
     exec1 = Puppet::Type.type(:exec).new(
@@ -198,7 +198,7 @@ describe Puppet::Transaction do
     newfile = tmpfile("file")
       file = Puppet::Type.type(:file).new(
       :path => path,
-      :ensure => "file"
+      :making_sure => "file"
     )
 
     exec1 = Puppet::Type.type(:exec).new(
@@ -234,7 +234,7 @@ describe Puppet::Transaction do
 
     file = Puppet::Type.type(:file).new(
       :name => tmpfile("file"),
-      :ensure => "file",
+      :making_sure => "file",
       :backup => false
     )
 
@@ -289,14 +289,14 @@ describe Puppet::Transaction do
       :title => "file1",
       :path => tmpfile("file1"),
       :require => exec,
-      :ensure => :file
+      :making_sure => :file
     )
 
     file2 = Puppet::Type.type(:file).new(
       :title => "file2",
       :path => tmpfile("file2"),
       :require => file1,
-      :ensure => :file
+      :making_sure => :file
     )
 
     catalog = mk_catalog(exec, file1, file2)

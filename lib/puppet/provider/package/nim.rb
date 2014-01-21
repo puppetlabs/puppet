@@ -61,7 +61,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
     pkg = @resource[:name]
 
-    version_specified = (useversion and (! @resource.should(:ensure).is_a? Symbol))
+    version_specified = (useversion and (! @resource.should(:making_sure).is_a? Symbol))
 
     # This is unfortunate for a couple of reasons.  First, because of a subtle
     # difference in the command-line syntax for installing an RPM vs an
@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     # in Ruby... but we'd be doing an awful lot of unnecessary work.
     showres_command = "/usr/sbin/nimclient -o showres -a resource=#{source} |/usr/bin/grep -p -E "
     if (version_specified)
-      version = @resource.should(:ensure)
+      version = @resource.should(:making_sure)
       showres_command << "'#{Regexp.escape(pkg)}( |-)#{Regexp.escape(version)}'"
     else
       version = nil

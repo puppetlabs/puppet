@@ -1,9 +1,9 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/property/ensure'
+require 'puppet/property/making_sure'
 
-klass = Puppet::Property::Ensure
+klass = Puppet::Property::MakingSure
 
 describe klass do
   it "should be a subclass of Property" do

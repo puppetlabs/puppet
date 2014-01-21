@@ -7,7 +7,7 @@ describe provider_class do
   let(:resource) do
     Puppet::Type.type(:package).new(
       :name     => 'myresource',
-      :ensure   => :installed
+      :making_sure   => :installed
     )
   end
 
@@ -89,7 +89,7 @@ describe provider_class do
       # sense for '#latest', though.
       provider.class.expects(:gemlist).with({ :justme => 'myresource'}).returns({
           :name     => 'myresource',
-          :ensure   => ["3.0"],
+          :making_sure   => ["3.0"],
           :provider => :gem,
           })
       provider.latest.should == "3.0"
@@ -101,7 +101,7 @@ describe provider_class do
         with({:justme => 'myresource', :source => "http://foo.bar.baz/gems"}).
         returns({
           :name     => 'myresource',
-          :ensure   => ["3.0"],
+          :making_sure   => ["3.0"],
           :provider => :gem,
           })
       provider.latest.should == "3.0"
@@ -118,15 +118,15 @@ describe provider_class do
       provider_class.instances.should == []
     end
 
-    it "should return ensure values as an array of installed versions" do
+    it "should return making_sure values as an array of installed versions" do
       provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
         systemu (1.2.0)
         vagrant (0.8.7, 0.6.9)
       HEREDOC
 
       provider_class.instances.map {|p| p.properties}.should == [
-        {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
-        {:ensure => ["0.8.7", "0.6.9"], :provider => :gem, :name => 'vagrant'}
+        {:making_sure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
+        {:making_sure => ["0.8.7", "0.6.9"], :provider => :gem, :name => 'vagrant'}
       ]
     end
 
@@ -137,8 +137,8 @@ describe provider_class do
       HEREDOC
 
       provider_class.instances.map {|p| p.properties}.should == [
-        {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
-        {:ensure => ["1.6.1", "1.4.4.1"], :provider => :gem, :name => 'nokogiri'}
+        {:making_sure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
+        {:making_sure => ["1.6.1", "1.4.4.1"], :provider => :gem, :name => 'nokogiri'}
       ]
     end
 
@@ -147,16 +147,16 @@ describe provider_class do
         returns(File.read(my_fixture('line-with-1.8.5-warning')))
 
       provider_class.instances.map {|p| p.properties}.
-        should == [{:provider=>:gem, :ensure=>["0.3.2"], :name=>"columnize"},
-                   {:provider=>:gem, :ensure=>["1.1.3"], :name=>"diff-lcs"},
-                   {:provider=>:gem, :ensure=>["0.0.1"], :name=>"metaclass"},
-                   {:provider=>:gem, :ensure=>["0.10.5"], :name=>"mocha"},
-                   {:provider=>:gem, :ensure=>["0.8.7"], :name=>"rake"},
-                   {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-core"},
-                   {:provider=>:gem, :ensure=>["2.9.1"], :name=>"rspec-expectations"},
-                   {:provider=>:gem, :ensure=>["2.9.0"], :name=>"rspec-mocks"},
-                   {:provider=>:gem, :ensure=>["0.9.0"], :name=>"rubygems-bundler"},
-                   {:provider=>:gem, :ensure=>["1.11.3.3"], :name=>"rvm"}]
+        should == [{:provider=>:gem, :making_sure=>["0.3.2"], :name=>"columnize"},
+                   {:provider=>:gem, :making_sure=>["1.1.3"], :name=>"diff-lcs"},
+                   {:provider=>:gem, :making_sure=>["0.0.1"], :name=>"metaclass"},
+                   {:provider=>:gem, :making_sure=>["0.10.5"], :name=>"mocha"},
+                   {:provider=>:gem, :making_sure=>["0.8.7"], :name=>"rake"},
+                   {:provider=>:gem, :making_sure=>["2.9.0"], :name=>"rspec-core"},
+                   {:provider=>:gem, :making_sure=>["2.9.1"], :name=>"rspec-expectations"},
+                   {:provider=>:gem, :making_sure=>["2.9.0"], :name=>"rspec-mocks"},
+                   {:provider=>:gem, :making_sure=>["0.9.0"], :name=>"rubygems-bundler"},
+                   {:provider=>:gem, :making_sure=>["1.11.3.3"], :name=>"rvm"}]
     end
   end
 end

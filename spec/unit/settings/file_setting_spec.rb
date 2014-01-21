@@ -257,9 +257,9 @@ describe Puppet::Settings::FileSetting do
       end
     end
 
-    it "should set :ensure to the file type" do
+    it "should set :making_sure to the file type" do
       @file.expects(:type).returns :directory
-      @file.to_resource[:ensure].should == :directory
+      @file.to_resource[:making_sure].should == :directory
     end
 
     it "should set the loglevel to :debug" do

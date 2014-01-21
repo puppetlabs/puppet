@@ -30,10 +30,10 @@ class Puppet::Provider::Ldap < Puppet::Provider
   def self.prefetch(resources)
     resources.each do |name, resource|
       if result = manager.find(name)
-        result[:ensure] = :present
+        result[:making_sure] = :present
         resource.provider = new(result)
       else
-        resource.provider = new(:ensure => :absent)
+        resource.provider = new(:making_sure => :absent)
       end
     end
   end
@@ -43,7 +43,7 @@ class Puppet::Provider::Ldap < Puppet::Provider
   end
 
   def create
-    @property_hash[:ensure] = :present
+    @property_hash[:making_sure] = :present
     self.class.resource_type.validproperties.each do |property|
       if val = resource.should(property)
         if property.to_s == 'gid'
@@ -56,11 +56,11 @@ class Puppet::Provider::Ldap < Puppet::Provider
   end
 
   def delete
-    @property_hash[:ensure] = :absent
+    @property_hash[:making_sure] = :absent
   end
 
   def exists?
-    @property_hash[:ensure] != :absent
+    @property_hash[:making_sure] != :absent
   end
 
   # Apply our changes to ldap, yo.
@@ -114,8 +114,8 @@ class Puppet::Provider::Ldap < Puppet::Provider
   # Return (and look up if necessary) the desired state.
   def properties
     if @property_hash.empty?
-      @property_hash = query || {:ensure => :absent}
-      @property_hash[:ensure] = :absent if @property_hash.empty?
+      @property_hash = query || {:making_sure => :absent}
+      @property_hash[:making_sure] = :absent if @property_hash.empty?
     end
     @property_hash.dup
   end

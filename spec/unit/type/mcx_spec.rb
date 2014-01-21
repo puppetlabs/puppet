@@ -7,7 +7,7 @@ mcx_type = Puppet::Type.type(:mcx)
 
 describe mcx_type, "when validating attributes" do
 
-  properties = [:ensure, :content]
+  properties = [:making_sure, :content]
   parameters = [:name, :ds_type, :ds_name]
 
   parameters.each do |p|
@@ -64,15 +64,15 @@ describe mcx_type, "when validating properties" do
     }.should_not raise_error
   end
 
-  it "should support :present as a value to :ensure" do
+  it "should support :present as a value to :making_sure" do
     lambda {
-      mcx_type.new(:name => "/Foo/bar", :ensure => :present)
+      mcx_type.new(:name => "/Foo/bar", :making_sure => :present)
     }.should_not raise_error
   end
 
-  it "should support :absent as a value to :ensure" do
+  it "should support :absent as a value to :making_sure" do
     lambda {
-      mcx_type.new(:name => "/Foo/bar", :ensure => :absent)
+      mcx_type.new(:name => "/Foo/bar", :making_sure => :absent)
     }.should_not raise_error
   end
 

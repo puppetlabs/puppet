@@ -1,11 +1,11 @@
 # $Id$
 
 file { "/tmp/singlequote1":
-    ensure => file,
+    making_sure => file,
     content => 'a $quote'
 }
 
 file { "/tmp/singlequote2":
-    ensure => file,
+    making_sure => file,
     content => 'some "\yayness\"'
 }

@@ -42,6 +42,6 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
   end
 
   def uninstall
-    pkgdelete "#{@resource[:name]}-#{@resource.should(:ensure)}"
+    pkgdelete "#{@resource[:name]}-#{@resource.should(:making_sure)}"
   end
 end

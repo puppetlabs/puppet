@@ -8,7 +8,7 @@ agents.each do |agent|
 
   step "modify the resource"
   on(agent, puppet_resource('host', 'test', "target=#{file}",
-              'ensure=present', 'ip=127.0.0.8', 'host_aliases=banzai'))
+              'making_sure=present', 'ip=127.0.0.8', 'host_aliases=banzai'))
 
   step "verify that the content was updated"
   on(agent, "cat #{file}; rm -f #{file}") do

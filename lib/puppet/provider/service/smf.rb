@@ -39,7 +39,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
                when /maintenance/; :maintenance
                else :stopped
                end
-     new({:name => fmri, :ensure => status})
+     new({:name => fmri, :making_sure => status})
    end
   end
 

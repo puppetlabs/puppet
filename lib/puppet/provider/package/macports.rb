@@ -26,7 +26,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
 
   def self.parse_installed_query_line(line)
     regex = /(\S+)\s+@(\S+)_(\d+).*\(active\)/
-    fields = [:name, :ensure, :revision]
+    fields = [:name, :making_sure, :revision]
     hash_from_line(line, regex, fields)
   end
 
@@ -59,7 +59,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   end
 
   def install
-    should = @resource.should(:ensure)
+    should = @resource.should(:making_sure)
     if [:latest, :installed, :present].include?(should)
       output = port("-q", :install, @resource[:name])
     else
@@ -88,8 +88,8 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
       # If we're already at the latest version/revision, then just return the version
       # so the current and desired values match. Otherwise return version and revision
       # to trigger an upgrade to the latest revision.
-      if newest[:version] == current[:ensure] and newest[:revision] == current[:revision]
-        return current[:ensure]
+      if newest[:version] == current[:making_sure] and newest[:revision] == current[:revision]
+        return current[:making_sure]
       else
         return "#{newest[:version]}_#{newest[:revision]}"
       end

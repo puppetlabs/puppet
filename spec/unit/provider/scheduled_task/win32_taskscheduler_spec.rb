@@ -1278,7 +1278,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       Puppet::Type.type(:scheduled_task).new(
         :name    => 'Test Task',
         :command => 'C:\Windows\System32\notepad.exe',
-        :ensure  => @ensure
+        :making_sure  => @making_sure
       )
     end
 
@@ -1292,9 +1292,9 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       @command = 'C:\Windows\System32\notepad.exe'
     end
 
-    describe 'when :ensure is :present' do
+    describe 'when :making_sure is :present' do
       before :each do
-        @ensure = :present
+        @making_sure = :present
       end
 
       it 'should save the task' do
@@ -1306,7 +1306,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       it 'should fail if the command is not specified' do
         resource = Puppet::Type.type(:scheduled_task).new(
           :name    => 'Test Task',
-          :ensure  => @ensure
+          :making_sure  => @making_sure
         )
 
         expect { resource.provider.flush }.to raise_error(
@@ -1316,13 +1316,13 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
       end
     end
 
-    describe 'when :ensure is :absent' do
+    describe 'when :making_sure is :absent' do
       before :each do
-        @ensure = :absent
+        @making_sure = :absent
         @mock_task.stubs(:activate)
       end
 
-      it 'should not save the task if :ensure is :absent' do
+      it 'should not save the task if :making_sure is :absent' do
         @mock_task.expects(:save).never
 
         resource.provider.flush
@@ -1333,7 +1333,7 @@ describe Puppet::Type.type(:scheduled_task).provider(:win32_taskscheduler), :if 
 
         resource = Puppet::Type.type(:scheduled_task).new(
           :name    => 'Test Task',
-          :ensure  => @ensure
+          :making_sure  => @making_sure
         )
 
         resource.provider.flush

@@ -26,7 +26,7 @@ agents.each do |agent|
 
   manifest = <<-MANIFEST
     file { '#{dest}':
-      ensure => file,
+      making_sure => file,
       source => '#{symlink}',
       links  => follow,
     }

@@ -4,7 +4,7 @@
 #            entries will just be in /etc/services, but some systems (notably OS X)
 #            will have different solutions."
 #
-#        ensurable
+#        making_surable
 #
 #        newproperty(:protocols) do
 #            desc "The protocols the port uses.  Valid values are *udp* and *tcp*.

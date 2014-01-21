@@ -13,9 +13,9 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
         raise Puppet::DevError, "Could not find nagios type '#{name}'"
       end
 
-      # And add our 'ensure' settings, since they aren't a part of
+      # And add our 'making_sure' settings, since they aren't a part of
       # Naginator by default
-      @nagios_type.send(:attr_accessor, :ensure, :target, :on_disk)
+      @nagios_type.send(:attr_accessor, :making_sure, :target, :on_disk)
     end
     @nagios_type
   end

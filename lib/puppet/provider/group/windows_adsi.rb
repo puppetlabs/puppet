@@ -81,6 +81,6 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def self.instances
-    Puppet::Util::ADSI::Group.map { |g| new(:ensure => :present, :name => g.name) }
+    Puppet::Util::ADSI::Group.map { |g| new(:making_sure => :present, :name => g.name) }
   end
 end

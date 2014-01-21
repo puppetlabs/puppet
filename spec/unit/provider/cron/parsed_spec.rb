@@ -216,7 +216,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
             :monthday    => :absent,
             :special     => :absent,
             :command     => '$HOME/bin/daily.job >> $HOME/tmp/out 2>&1',
-            :ensure      => :present,
+            :making_sure      => :present,
             :environment => :absent,
             :user        => :absent,
             :target      => 'foobar'
@@ -230,7 +230,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
             :monthday    => ['1'],
             :special     => :absent,
             :command     => '$HOME/bin/monthly',
-            :ensure      => :present,
+            :making_sure      => :present,
             :environment => :absent,
             :user        => :absent,
             :target      => 'foobar'
@@ -256,7 +256,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
             :monthday    => :absent,
             :special     => :absent,
             :command     => '/bin/true',
-            :ensure      => :present,
+            :making_sure      => :present,
             :environment => :absent,
             :user        => :absent,
             :target      => 'foobar'
@@ -270,7 +270,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
             :monthday    => :absent,
             :special     => 'reboot',
             :command     => '/bin/true >> /dev/null 2>&1',
-            :ensure      => :present,
+            :making_sure      => :present,
             :environment => [
               'MAILTO=foo@example.com',
               'SHELL=/bin/sh'

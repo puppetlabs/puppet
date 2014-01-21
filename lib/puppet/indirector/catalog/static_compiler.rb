@@ -93,7 +93,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       resource[param] ||= metadata.send(param)
     end
 
-    resource[:ensure] = metadata.ftype
+    resource[:making_sure] = metadata.ftype
     if metadata.ftype == "file"
       unless resource[:content]
         resource[:content] = metadata.checksum
@@ -101,7 +101,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       end
     end
 
-    store_content(resource) if resource[:ensure] == "file"
+    store_content(resource) if resource[:making_sure] == "file"
     old_source = resource.delete(:source)
     Puppet.info "Metadata for #{resource} in catalog for '#{host}' added from '#{old_source}'"
   end
@@ -170,7 +170,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Com
       children[meta.relative_path][:source] = source + "/" + meta.relative_path
       resource.each do |param, value|
         # These should never be passed to our children.
-        unless [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].include? param
+        unless [:parent, :making_sure, :recurse, :recurselimit, :target, :alias, :source].include? param
           children[meta.relative_path][param] = value
         end
       end

@@ -46,7 +46,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should add -g when no gid is specified and group already exists" do
       Puppet::Util.stubs(:gid).returns(true)
-      resource[:ensure] = :present
+      resource[:making_sure] = :present
       provider.expects(:execute).with(includes('-g'), kind_of(Hash))
       provider.create
     end
@@ -216,7 +216,7 @@ describe Puppet::Type.type(:user).provider(:useradd) do
 
     it "should return an array with -r flag if home is managed" do
       resource[:managehome] = :true
-      resource[:ensure] = :absent
+      resource[:making_sure] = :absent
       provider.stubs(:exists?).returns(true)
       provider.expects(:execute).with(includes('-r'))
       provider.delete

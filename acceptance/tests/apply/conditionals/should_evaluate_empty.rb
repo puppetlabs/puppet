@@ -1,4 +1,4 @@
-test_name "ensure that undefined variables evaluate as false"
+test_name "making_sure that undefined variables evaluate as false"
 manifest = %q{
 if $undef_var {
 } else {

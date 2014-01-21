@@ -21,7 +21,7 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :arity => -2,
           notify { \"This configuration includes the /tmp/foo file.\":}
       }
       file { \"/tmp/foo\":
-          ensure => present,
+          making_sure => present,
       }
 
   However, this order requirement refers to parse order only, and ordering of

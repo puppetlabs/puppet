@@ -15,7 +15,7 @@ agents.each do |agent|
 
   manifest = 'notify{"My certname is $clientcert": }'
 
-  step "Run Puppet and ensure it used the conf file in the confdir"
+  step "Run Puppet and making_sure it used the conf file in the confdir"
   on agent, puppet_apply("--confdir #{conflink}"), :stdin => manifest do
     assert_match(/My certname is awesome_certname[^\w]/, stdout)
   end

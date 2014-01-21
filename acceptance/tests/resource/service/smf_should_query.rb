@@ -15,12 +15,12 @@ end
 agents.each do |agent|
   manifest, method = setup agent, :service => 'tstapp'
   step "SMF: ensre it is created with a manifest"
-  apply_manifest_on(agent, 'service {tstapp : ensure=>running, manifest=>"%s"}' % manifest) do
-    assert_match( / ensure changed 'stopped' to 'running'/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'service {tstapp : making_sure=>running, manifest=>"%s"}' % manifest) do
+    assert_match( / making_sure changed 'stopped' to 'running'/, result.stdout, "err: #{agent}")
   end
   step "SMF: query the resource"
   on agent, "puppet resource service tstapp" do
-    assert_match( /ensure => 'running'/, result.stdout, "err: #{agent}")
+    assert_match( /making_sure => 'running'/, result.stdout, "err: #{agent}")
   end
   step "SMF: query all the instances"
   on agent, "puppet resource service" do

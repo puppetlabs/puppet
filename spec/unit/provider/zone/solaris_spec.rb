@@ -59,11 +59,11 @@ describe Puppet::Type.type(:zone).provider(:solaris) do
   context "#instances" do
     it "should list the instances correctly" do
       described_class.expects(:adm).with(:list, "-cp").returns("0:dummy:running:/::native:shared")
-      instances = described_class.instances.map { |p| {:name => p.get(:name), :ensure => p.get(:ensure)} }
+      instances = described_class.instances.map { |p| {:name => p.get(:name), :making_sure => p.get(:making_sure)} }
       instances.size.should == 1
       instances[0].should == {
         :name=>"dummy",
-        :ensure=>:running,
+        :making_sure=>:running,
       }
     end
   end
@@ -154,16 +154,16 @@ net:
   end
   context "#line2hash" do
     it "should parse lines correctly" do
-      described_class.line2hash('0:dummy:running:/z::native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
+      described_class.line2hash('0:dummy:running:/z::native:shared').should == {:making_sure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
     end
     it "should parse lines correctly(2)" do
-      described_class.line2hash('0:dummy:running:/z:ipkg:native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
+      described_class.line2hash('0:dummy:running:/z:ipkg:native:shared').should == {:making_sure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy", :id=>"0"}
     end
     it "should parse lines correctly(3)" do
-      described_class.line2hash('-:dummy:running:/z:ipkg:native:shared').should == {:ensure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy"}
+      described_class.line2hash('-:dummy:running:/z:ipkg:native:shared').should == {:making_sure=>:running, :iptype=>"shared", :path=>"/z", :name=>"dummy"}
     end
     it "should parse lines correctly(3)" do
-      described_class.line2hash('-:dummy:running:/z:ipkg:native:exclusive').should == {:ensure=>:running, :iptype=>"exclusive", :path=>"/z", :name=>"dummy"}
+      described_class.line2hash('-:dummy:running:/z:ipkg:native:exclusive').should == {:making_sure=>:running, :iptype=>"exclusive", :path=>"/z", :name=>"dummy"}
     end
   end
   context "#multi_conf" do

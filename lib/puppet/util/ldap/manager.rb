@@ -212,16 +212,16 @@ class Puppet::Util::Ldap::Manager
 
   # Update the ldap entry with the desired state.
   def update(name, is, should)
-    if should[:ensure] == :absent
+    if should[:making_sure] == :absent
       Puppet.info "Removing #{dn(name)} from ldap"
       delete(name)
       return
     end
 
     # We're creating a new entry
-    if is.empty? or is[:ensure] == :absent
+    if is.empty? or is[:making_sure] == :absent
       Puppet.info "Creating #{dn(name)} in ldap"
-      # Remove any :absent params and :ensure, then convert the names to ldap names.
+      # Remove any :absent params and :making_sure, then convert the names to ldap names.
       attrs = ldap_convert(should)
       create(name, attrs)
       return
@@ -267,9 +267,9 @@ class Puppet::Util::Ldap::Manager
   private
 
   # Convert a hash of attributes to ldap-like forms.  This mostly means
-  # getting rid of :ensure and making sure everything's an array of strings.
+  # getting rid of :making_sure and making sure everything's an array of strings.
   def ldap_convert(attributes)
-    attributes.reject { |param, value| value == :absent or param == :ensure }.inject({}) do |result, ary|
+    attributes.reject { |param, value| value == :absent or param == :making_sure }.inject({}) do |result, ary|
       value = (ary[1].is_a?(Array) ? ary[1] : [ary[1]]).collect { |v| v.to_s }
       result[ldap_name(ary[0])] = value
       result

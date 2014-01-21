@@ -45,7 +45,7 @@ Puppet::Indirector::Face.define(:resource, '0.0.1') do
         my_resource = Puppet::Resource.new(
           :file,
           "/tmp/demonstration",
-          :parameters => {:ensure => :present, :content => "some\nthing\n"}
+          :parameters => {:making_sure => :present, :content => "some\nthing\n"}
         )
 
         Puppet::Face[:resource, '0.0.1'].save(my_resource)

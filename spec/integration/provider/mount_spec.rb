@@ -120,13 +120,13 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
                 fail "Unknown ensure_setting #{ensure_setting}"
             end
             expected_fstab_data = (ensure_setting != :absent)
-            describe "When setting ensure => #{ensure_setting}" do
+            describe "When setting making_sure => #{ensure_setting}" do
               ["local", "journaled"].each do |options_setting|
                 describe "When setting options => #{options_setting}" do
                   it "should leave the system in the #{expected_final_state ? 'mounted' : 'unmounted'} state, #{expected_fstab_data ? 'with' : 'without'} data in /etc/fstab" do
                     pending("Solaris: The mock :operatingsystem value does not get changed in lib/puppet/provider/mount/parsed.rb", :if => family == "Solaris")
                     @desired_options = options_setting
-                    run_in_catalog(:ensure=>ensure_setting, :options => options_setting)
+                    run_in_catalog(:making_sure=>ensure_setting, :options => options_setting)
                     @mounted.should == expected_final_state
                     if expected_fstab_data
                       check_fstab(expected_fstab_data).should == "/dev/disk1s1"
@@ -159,7 +159,7 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
       @current_device = "/dev/disk2s2"
       create_fake_fstab(true)
       @desired_options = "local"
-      run_in_catalog(:ensure=>:mounted, :options=>'local')
+      run_in_catalog(:making_sure=>:mounted, :options=>'local')
       @current_device.should=="/dev/disk1s1"
       @mounted.should==true
       @current_options.should=='local'

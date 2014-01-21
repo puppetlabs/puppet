@@ -56,15 +56,15 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
       }.should_not raise_error
     end
 
-    it "should support :present as a value to :ensure" do
+    it "should support :present as a value to :making_sure" do
       lambda {
-        macauth_type.new(:name => "foo", :ensure => :present)
+        macauth_type.new(:name => "foo", :making_sure => :present)
       }.should_not raise_error
     end
 
-    it "should support :absent as a value to :ensure" do
+    it "should support :absent as a value to :making_sure" do
       lambda {
-        macauth_type.new(:name => "foo", :ensure => :absent)
+        macauth_type.new(:name => "foo", :making_sure => :absent)
       }.should_not raise_error
     end
 

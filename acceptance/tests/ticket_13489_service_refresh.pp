@@ -4,7 +4,7 @@ confine :to, :platform => 'windows'
 
 manifest = <<MANIFEST
 service { 'BITS':
-  ensure => 'running',
+  making_sure => 'running',
 }
 
 exec { 'hello':

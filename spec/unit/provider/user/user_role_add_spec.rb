@@ -22,10 +22,10 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
       provider.stubs(:class).returns(klass)
     end
 
-    it "should use the command if not a role and ensure!=role" do
+    it "should use the command if not a role and making_sure!=role" do
       provider.stubs(:is_role?).returns(false)
       provider.stubs(:exists?).returns(false)
-      resource.stubs(:[]).with(:ensure).returns(:present)
+      resource.stubs(:[]).with(:making_sure).returns(:present)
       provider.class.stubs(:foo)
       provider.command(:foo).should == "userfoo"
     end
@@ -35,10 +35,10 @@ describe Puppet::Type.type(:user).provider(:user_role_add), :unless => Puppet.fe
       provider.command(:foo).should == "rolefoo"
     end
 
-    it "should use the role command when !exists and ensure=role" do
+    it "should use the role command when !exists and making_sure=role" do
       provider.stubs(:is_role?).returns(false)
       provider.stubs(:exists?).returns(false)
-      resource.stubs(:[]).with(:ensure).returns(:role)
+      resource.stubs(:[]).with(:making_sure).returns(:role)
       provider.command(:foo).should == "rolefoo"
     end
   end

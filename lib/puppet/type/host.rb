@@ -2,7 +2,7 @@ require 'puppet/property/ordered_list'
 
 module Puppet
   newtype(:host) do
-    ensurable
+    making_surable
 
     newproperty(:ip) do
       desc "The host's IP address, IPv4 or IPv6."

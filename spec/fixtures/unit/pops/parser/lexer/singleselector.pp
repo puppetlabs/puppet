@@ -17,6 +17,6 @@ $mode3 = $value3 ? {
     default => 755
 }
 
-file { "/tmp/singleselector1": ensure => file, mode => $mode1 }
-file { "/tmp/singleselector2": ensure => file, mode => $mode2 }
-file { "/tmp/singleselector3": ensure => file, mode => $mode3 }
+file { "/tmp/singleselector1": making_sure => file, mode => $mode1 }
+file { "/tmp/singleselector2": making_sure => file, mode => $mode2 }
+file { "/tmp/singleselector3": making_sure => file, mode => $mode3 }

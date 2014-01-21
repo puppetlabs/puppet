@@ -49,8 +49,8 @@ describe provider_class do
 
       resource = stub 'resource', :should => %w{whatever}
       resource.stubs(:should).with(:comment).returns ["Luke Kanies"]
-      resource.stubs(:should).with(:ensure).returns :present
-      instance = provider_class.new(:name => "luke", :ensure => :absent)
+      resource.stubs(:should).with(:making_sure).returns :present
+      instance = provider_class.new(:name => "luke", :making_sure => :absent)
 
       instance.stubs(:resource).returns resource
 
@@ -65,8 +65,8 @@ describe provider_class do
 
       resource = stub 'resource', :should => %w{whatever}
       resource.stubs(:should).with(:gid).returns 'bar'
-      resource.stubs(:should).with(:ensure).returns :present
-      instance = provider_class.new(:name => "luke", :ensure => :absent)
+      resource.stubs(:should).with(:making_sure).returns :present
+      instance = provider_class.new(:name => "luke", :making_sure => :absent)
       instance.stubs(:resource).returns resource
 
       @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["101"] }
@@ -85,8 +85,8 @@ describe provider_class do
 
         resource = stub 'resource', :should => %w{whatever}
         resource.stubs(:should).with(:uid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
-        instance = provider_class.new(:name => "luke", :ensure => :absent)
+        resource.stubs(:should).with(:making_sure).returns :present
+        instance = provider_class.new(:name => "luke", :making_sure => :absent)
         instance.stubs(:resource).returns resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["641"] }
@@ -102,8 +102,8 @@ describe provider_class do
 
         resource = stub 'resource', :should => %w{whatever}
         resource.stubs(:should).with(:uid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
-        instance = provider_class.new(:name => "luke", :ensure => :absent)
+        resource.stubs(:should).with(:making_sure).returns :present
+        instance = provider_class.new(:name => "luke", :making_sure => :absent)
         instance.stubs(:resource).returns resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["501"] }
@@ -204,14 +204,14 @@ describe provider_class do
       @instance.groups = "one"
     end
 
-    it "should always include :ensure => :present in the current values" do
-      @group_manager.expects(:update).with { |name, is, should| is[:ensure] == :present }
+    it "should always include :making_sure => :present in the current values" do
+      @group_manager.expects(:update).with { |name, is, should| is[:making_sure] == :present }
 
       @instance.groups = "one"
     end
 
-    it "should always include :ensure => :present in the desired values" do
-      @group_manager.expects(:update).with { |name, is, should| should[:ensure] == :present }
+    it "should always include :making_sure => :present in the desired values" do
+      @group_manager.expects(:update).with { |name, is, should| should[:making_sure] == :present }
 
       @instance.groups = "one"
     end

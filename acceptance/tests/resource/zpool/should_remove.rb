@@ -23,8 +23,8 @@ agents.each do |agent|
   end
 
   step "ZPool: remove"
-  apply_manifest_on(agent, "zpool{ tstpool: ensure=>absent }") do
-    assert_match( /ensure: removed/ , result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, "zpool{ tstpool: making_sure=>absent }") do
+    assert_match( /making_sure: removed/ , result.stdout, "err: #{agent}")
   end
   on(agent, "zpool list") do
     assert_no_match( /tstpool/ , result.stdout, "err: #{agent}")

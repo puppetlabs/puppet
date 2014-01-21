@@ -83,12 +83,12 @@ agents.each do |agent|
 
   ## Start the service
   step "Start the service on #{agent}"
-  ensure_service_on_host agent, 'sloth_daemon', 'ensure', 'running'
+  ensure_service_on_host agent, 'sloth_daemon', 'making_sure', 'running'
   assert_service_status agent, 'sloth_daemon', 'running'
 
   ## Stop the service
   step "Stop the service on #{agent}"
-  ensure_service_on_host agent, 'sloth_daemon', 'ensure', 'stopped'
+  ensure_service_on_host agent, 'sloth_daemon', 'making_sure', 'stopped'
   assert_service_status agent, 'sloth_daemon', 'stopped'
 
   ## Enable the service

@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
   # installing a specific version.
   def install
     self.run_preseed if @resource[:responsefile]
-    should = @resource.should(:ensure)
+    should = @resource.should(:making_sure)
 
     str = @resource[:name]
     case should

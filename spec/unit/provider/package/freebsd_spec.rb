@@ -13,7 +13,7 @@ describe provider_class do
 
     # But set name and source
     @resource.stubs(:[]).with(:name).returns   "mypackage"
-    @resource.stubs(:[]).with(:ensure).returns :installed
+    @resource.stubs(:[]).with(:making_sure).returns :installed
 
     @provider = provider_class.new
     @provider.resource = @resource
@@ -26,7 +26,7 @@ describe provider_class do
 
   describe "when installing" do
     before :each do
-      @resource.stubs(:should).with(:ensure).returns(:installed)
+      @resource.stubs(:should).with(:making_sure).returns(:installed)
     end
 
     it "should install a package from a path to a directory" do

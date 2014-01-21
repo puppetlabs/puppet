@@ -19,7 +19,7 @@ describe provider_class do
 
     it "should return a hash on valid input" do
       provider_class.parse("real_package==1.2.5").should == {
-        :ensure   => "1.2.5",
+        :making_sure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
       }
@@ -73,13 +73,13 @@ describe provider_class do
 
     it "should return a hash when pip and the package are present" do
       provider_class.expects(:instances).returns [provider_class.new({
-        :ensure   => "1.2.5",
+        :making_sure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
       })]
 
       @provider.query.should == {
-        :ensure   => "1.2.5",
+        :making_sure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
       }
@@ -94,13 +94,13 @@ describe provider_class do
       @resource[:name] = "Real_Package"
 
       provider_class.expects(:instances).returns [provider_class.new({
-        :ensure   => "1.2.5",
+        :making_sure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
       })]
 
       @provider.query.should == {
-        :ensure   => "1.2.5",
+        :making_sure   => "1.2.5",
         :name     => "real_package",
         :provider => :pip,
       }
@@ -136,7 +136,7 @@ describe provider_class do
     end
 
     it "should install" do
-      @resource[:ensure] = :installed
+      @resource[:making_sure] = :installed
       @resource[:source] = nil
       @provider.expects(:lazy_pip).
         with("install", '-q', "fake_package")
@@ -145,7 +145,7 @@ describe provider_class do
 
     it "omits the -e flag (GH-1256)" do
       # The -e flag makes the provider non-idempotent
-      @resource[:ensure] = :installed
+      @resource[:making_sure] = :installed
       @resource[:source] = @url
       @provider.expects(:lazy_pip).with() do |*args|
         not args.include?("-e")
@@ -154,7 +154,7 @@ describe provider_class do
     end
 
     it "should install from SCM" do
-      @resource[:ensure] = :installed
+      @resource[:making_sure] = :installed
       @resource[:source] = @url
       @provider.expects(:lazy_pip).
         with("install", '-q', "#{@url}#egg=fake_package")
@@ -162,7 +162,7 @@ describe provider_class do
     end
 
     it "should install a particular SCM revision" do
-      @resource[:ensure] = "0123456"
+      @resource[:making_sure] = "0123456"
       @resource[:source] = @url
       @provider.expects(:lazy_pip).
         with("install", "-q", "#{@url}@0123456#egg=fake_package")
@@ -170,14 +170,14 @@ describe provider_class do
     end
 
     it "should install a particular version" do
-      @resource[:ensure] = "0.0.0"
+      @resource[:making_sure] = "0.0.0"
       @resource[:source] = nil
       @provider.expects(:lazy_pip).with("install", "-q", "fake_package==0.0.0")
       @provider.install
     end
 
     it "should upgrade" do
-      @resource[:ensure] = :latest
+      @resource[:making_sure] = :latest
       @resource[:source] = nil
       @provider.expects(:lazy_pip).
         with("install", "-q", "--upgrade", "fake_package")

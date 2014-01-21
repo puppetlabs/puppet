@@ -9,7 +9,7 @@ describe zpool do
     @resource = stub 'resource', :resource => nil, :provider => @provider, :line => nil, :file => nil
   end
 
-  properties = [:ensure, :disk, :mirror, :raidz, :spare, :log]
+  properties = [:making_sure, :disk, :mirror, :raidz, :spare, :log]
 
   properties.each do |property|
     it "should have a #{property} property" do

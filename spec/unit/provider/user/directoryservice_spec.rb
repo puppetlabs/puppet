@@ -314,7 +314,7 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
   describe 'self#generate_attribute_hash' do
     let(:user_plist_resource) do
       {
-        :ensure         => :present,
+        :making_sure         => :present,
         :provider       => :directoryservice,
         :groups         => 'testgroup,third',
         :comment        => username,

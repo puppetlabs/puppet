@@ -13,7 +13,7 @@ describe provider_class do
   end
 
   describe "#install" do
-    before { resource[:ensure] = :absent }
+    before { resource[:making_sure] = :absent }
 
     it "uses pkgin install to install" do
       subject.expects(:pkgin).with("-y", :install, "vim")
@@ -22,7 +22,7 @@ describe provider_class do
   end
 
   describe "#uninstall" do
-    before { resource[:ensure] = :present }
+    before { resource[:making_sure] = :present }
 
     it "uses pkgin remove to uninstall" do
       subject.expects(:pkgin).with("-y", :remove, "vim")
@@ -50,9 +50,9 @@ describe provider_class do
     it "populates each provider with an installed package" do
       zlib_provider, zziplib_provider = provider_class.instances
       zlib_provider.get(:name).should == "zlib"
-      zlib_provider.get(:ensure).should == :present
+      zlib_provider.get(:making_sure).should == :present
       zziplib_provider.get(:name).should == "zziplib"
-      zziplib_provider.get(:ensure).should == :present
+      zziplib_provider.get(:making_sure).should == :present
     end
   end
 
@@ -68,7 +68,7 @@ describe provider_class do
 
       it "returns a hash stating the package is present" do
         result = subject.query
-        result[:ensure].should == :present
+        result[:making_sure].should == :present
         result[:name].should == "vim"
         result[:provider].should == :pkgin
       end
@@ -81,7 +81,7 @@ describe provider_class do
 
       it "returns a hash stating the package is present" do
         result = subject.query
-        result[:ensure].should == :present
+        result[:making_sure].should == :present
         result[:name].should == "vim"
         result[:provider].should == :pkgin
       end
@@ -94,7 +94,7 @@ describe provider_class do
 
       it "returns a hash stating the package is present" do
         result = subject.query
-        result[:ensure].should == :present
+        result[:making_sure].should == :present
         result[:name].should == "vim"
         result[:provider].should == :pkgin
       end
@@ -107,7 +107,7 @@ describe provider_class do
 
       it "returns a hash stating the package is present" do
         result = subject.query
-        result[:ensure].should == :absent
+        result[:making_sure].should == :absent
         result[:name].should == "vim"
         result[:provider].should == :pkgin
       end
@@ -131,7 +131,7 @@ describe provider_class do
       it "extracts the name and status" do
         hash = provider_class.parse_pkgin_line(package)
         hash[:name].should == "vim"
-        hash[:ensure].should == :present
+        hash[:making_sure].should == :present
         hash[:provider].should == :pkgin
       end
     end
@@ -142,7 +142,7 @@ describe provider_class do
       it "extracts the name and status" do
         hash = provider_class.parse_pkgin_line(package)
         hash[:name].should == "ruby18-puppet"
-        hash[:ensure].should == :present
+        hash[:making_sure].should == :present
         hash[:provider].should == :pkgin
       end
     end
@@ -153,14 +153,14 @@ describe provider_class do
       it "extracts the name and status" do
         hash = provider_class.parse_pkgin_line(package)
         hash[:name].should == "vim"
-        hash[:ensure].should == :absent
+        hash[:making_sure].should == :absent
         hash[:provider].should == :pkgin
       end
 
       it "extracts the name and an overridden status" do
         hash = provider_class.parse_pkgin_line(package, :present)
         hash[:name].should == "vim"
-        hash[:ensure].should == :present
+        hash[:making_sure].should == :present
         hash[:provider].should == :pkgin
       end
     end

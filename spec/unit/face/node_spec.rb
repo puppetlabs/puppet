@@ -193,7 +193,7 @@ describe Puppet::Face[:node, '0.0.1'] do
             @rails_node.stubs(:id).returns(1234)
 
             @type = stub_everything 'type'
-            @type.stubs(:validattr?).with(:ensure).returns(true)
+            @type.stubs(:validattr?).with(:making_sure).returns(true)
 
             @ensure_name = stub_everything 'ensure_name', :id => 23453
             Puppet::Rails::ParamName.stubs(:find_or_create_by_name).returns(@ensure_name)
@@ -212,21 +212,21 @@ describe Puppet::Face[:node, '0.0.1'] do
           describe "with an exported native type" do
             before :each do
               Puppet::Type.stubs(:type).returns(@type)
-              @type.expects(:validattr?).with(:ensure).returns(true)
+              @type.expects(:validattr?).with(:making_sure).returns(true)
             end
 
-            it "should test a native type for ensure as an attribute" do
+            it "should test a native type for making_sure as an attribute" do
               subject.clean_storeconfigs(@host, true)
             end
 
-            it "should delete the old ensure parameter" do
+            it "should delete the old making_sure parameter" do
               ensure_param = stub 'ensure_param', :id => 12345, :line => 12
               @param_values.stubs(:find).returns(ensure_param)
               Puppet::Rails::ParamValue.expects(:delete).with(12345);
               subject.clean_storeconfigs(@host, true)
             end
 
-            it "should add an ensure => absent parameter" do
+            it "should add an making_sure => absent parameter" do
               @param_values.expects(:create).with(:value => "absent",
                                                        :line => 0,
                                                        :param_name => @ensure_name)
@@ -237,7 +237,7 @@ describe Puppet::Face[:node, '0.0.1'] do
           describe "with an exported definition" do
             it "should try to lookup a definition and test it for the ensure argument" do
               Puppet::Type.stubs(:type).returns(nil)
-              definition = stub_everything 'definition', :arguments => { 'ensure' => 'present' }
+              definition = stub_everything 'definition', :arguments => { 'making_sure' => 'present' }
               Puppet::Resource::TypeCollection.any_instance.expects(:find_definition).with('', "File").returns(definition)
               subject.clean_storeconfigs(@host, true)
             end
@@ -250,15 +250,15 @@ describe Puppet::Face[:node, '0.0.1'] do
             subject.clean_storeconfigs(@host, true)
           end
 
-          it "should not unexport the resource of a not ensurable native type" do
+          it "should not unexport the resource of a not making_surable native type" do
             Puppet::Type.stubs(:type).returns(@type)
-            @type.expects(:validattr?).with(:ensure).returns(false)
+            @type.expects(:validattr?).with(:making_sure).returns(false)
             Puppet::Resource::TypeCollection.any_instance.expects(:find_definition).with('', "File").returns(nil)
             Puppet::Rails::ParamName.expects(:find_or_create_by_name).never
             subject.clean_storeconfigs(@host, true)
           end
 
-          it "should not unexport the resource of a not ensurable definition" do
+          it "should not unexport the resource of a not making_surable definition" do
             Puppet::Type.stubs(:type).returns(nil)
             definition = stub_everything 'definition', :arguments => { 'foobar' => 'someValue' }
             Puppet::Resource::TypeCollection.any_instance.expects(:find_definition).with('', "File").returns(definition)

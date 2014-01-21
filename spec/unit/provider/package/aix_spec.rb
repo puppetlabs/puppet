@@ -6,7 +6,7 @@ provider_class = Puppet::Type.type(:package).provider(:aix)
 describe provider_class do
   before(:each) do
     # Create a mock resource
-    @resource = Puppet::Type.type(:package).new(:name => 'mypackage', :ensure => :installed, :source => 'mysource', :provider => :aix)
+    @resource = Puppet::Type.type(:package).new(:name => 'mypackage', :making_sure => :installed, :source => 'mysource', :provider => :aix)
 
     @provider = @resource.provider
   end
@@ -25,19 +25,19 @@ describe provider_class do
 
   describe "when installing" do
     it "should install a package" do
-      @resource.stubs(:should).with(:ensure).returns(:installed)
+      @resource.stubs(:should).with(:making_sure).returns(:installed)
       @provider.expects(:installp).with('-acgwXY', '-d', 'mysource', 'mypackage')
       @provider.install
     end
 
     it "should install a specific package version" do
-      @resource.stubs(:should).with(:ensure).returns("1.2.3.4")
+      @resource.stubs(:should).with(:making_sure).returns("1.2.3.4")
       @provider.expects(:installp).with('-acgwXY', '-d', 'mysource', 'mypackage 1.2.3.4')
       @provider.install
     end
 
     it "should fail if the specified version is superseded" do
-      @resource[:ensure] = '1.2.3.3'
+      @resource[:making_sure] = '1.2.3.3'
       @provider.stubs(:installp).returns <<-OUTPUT
 +-----------------------------------------------------------------------------+
                     Pre-installation Verification...
@@ -90,7 +90,7 @@ mypackage                 1.2.3.3         Already superseded by 1.2.3.4
   describe "when finding the latest version" do
     it "should return the current version when no later version is present" do
       @provider.stubs(:latest_info).returns(nil)
-      @provider.stubs(:properties).returns( { :ensure => "1.2.3.4" } )
+      @provider.stubs(:properties).returns( { :making_sure => "1.2.3.4" } )
       @provider.latest.should == "1.2.3.4"
     end
 

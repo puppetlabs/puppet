@@ -16,7 +16,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
   def self.instances
     list_lists('--bare').
       split("\n").
-      collect { |line| new(:ensure => :present, :name => line.strip) }
+      collect { |line| new(:making_sure => :present, :name => line.strip) }
   end
 
   # Prefetch our list list, yo.
@@ -72,7 +72,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
 
   # Does our list exist already?
   def exists?
-    properties[:ensure] != :absent
+    properties[:making_sure] != :absent
   end
 
   # Clear out the cached values.
@@ -83,8 +83,8 @@ Puppet::Type.type(:maillist).provide(:mailman) do
   # Look up the current status.
   def properties
     if @property_hash.empty?
-      @property_hash = query || {:ensure => :absent}
-      @property_hash[:ensure] = :absent if @property_hash.empty?
+      @property_hash = query || {:making_sure => :absent}
+      @property_hash[:making_sure] = :absent if @property_hash.empty?
     end
     @property_hash.dup
   end

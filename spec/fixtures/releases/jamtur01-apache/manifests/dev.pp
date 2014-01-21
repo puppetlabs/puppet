@@ -1,5 +1,5 @@
 class apache::dev {
   include apache::params
 
-  package{$apache::params::apache_dev: ensure => installed}
+  package{$apache::params::apache_dev: making_sure => installed}
 }

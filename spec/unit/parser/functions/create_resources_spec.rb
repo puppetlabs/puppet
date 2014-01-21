@@ -39,18 +39,18 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'should be able to add' do
-      catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
-      catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
+      catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'making_sure'=>'present'}})")
+      catalog.resource(:file, "/etc/foo")['making_sure'].should == 'present'
     end
 
     it 'should be able to add virtual resources' do
-      catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
-      catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
+      catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'making_sure'=>'present'}})\nrealize(File['/etc/foo'])")
+      catalog.resource(:file, "/etc/foo")['making_sure'].should == 'present'
     end
 
     it 'should be able to add exported resources' do
-      catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
-      catalog.resource(:file, "/etc/foo")['ensure'].should == 'present'
+      catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'making_sure'=>'present'}})")
+      catalog.resource(:file, "/etc/foo")['making_sure'].should == 'present'
       catalog.resource(:file, "/etc/foo").exported.should == true
     end
 
@@ -76,7 +76,7 @@ describe 'function for dynamically creating resources' do
     end
 
     it 'should account for default values' do
-      catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}, '/etc/baz'=>{'group'=>'food'}}, {'group' => 'bar'})")
+      catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'making_sure'=>'present'}, '/etc/baz'=>{'group'=>'food'}}, {'group' => 'bar'})")
       catalog.resource(:file, "/etc/foo")['group'].should == 'bar'
       catalog.resource(:file, "/etc/baz")['group'].should == 'food'
     end

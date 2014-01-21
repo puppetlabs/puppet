@@ -147,7 +147,7 @@ describe tidy do
       end
 
       it "should configure the file for deletion" do
-        Puppet::Type.type(:file).expects(:new).with { |args| args[:ensure] == :absent }
+        Puppet::Type.type(:file).expects(:new).with { |args| args[:making_sure] == :absent }
 
         @tidy.mkfile(@basepath)
       end

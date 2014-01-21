@@ -14,18 +14,18 @@ def assert_package_version(package, expected_version)
   end
 end
 
-def get_manifest(package, ensure_value)
+def get_manifest(package, making_sure_value)
   <<MANIFEST
 package {'#{package}':
-  ensure   => '#{ensure_value}',
+  making_sure   => '#{making_sure_value}',
   source   => 'lpp_custom',
   provider => nim,
 }
 MANIFEST
 end
 
-def test_apply(package_name, ensure_value, expected_version)
-  manifest = get_manifest(package_name, ensure_value)
+def test_apply(package_name, making_sure_value, expected_version)
+  manifest = get_manifest(package_name, making_sure_value)
   on hosts, puppet_apply(["--detailed-exitcodes", "--verbose"]),
      {:stdin => manifest, :acceptable_exit_codes => [2]}
 
@@ -33,7 +33,7 @@ def test_apply(package_name, ensure_value, expected_version)
     assert_package_version package_name, expected_version
   end
 
-  step "run again to ensure idempotency" do
+  step "run again to making_sure idempotency" do
     on hosts, puppet_apply(["--detailed-exitcodes", "--verbose"]),
        {:stdin => manifest, :acceptable_exit_codes => [0]}
   end
@@ -57,31 +57,31 @@ package_types = {
 }
 
 package_types.each do |package_type, details|
-  step "install a #{package_type} package via 'ensure=>present'" do
+  step "install a #{package_type} package via 'making_sure=>present'" do
     package_name = details[:package_name]
     version = details[:new_version]
     test_apply(package_name, 'present', version)
   end
 
-  step "uninstall a #{package_type} package via 'ensure=>absent'" do
+  step "uninstall a #{package_type} package via 'making_sure=>absent'" do
     package_name = details[:package_name]
     version = ''
     test_apply(package_name, 'absent', version)
   end
 
-  step "install a #{package_type} package via 'ensure=><OLD_VERSION>'" do
+  step "install a #{package_type} package via 'making_sure=><OLD_VERSION>'" do
     package_name = details[:package_name]
     version = details[:old_version]
     test_apply(package_name, version, version)
   end
 
-  step "upgrade a #{package_type} package via 'ensure=><NEW_VERSION>'" do
+  step "upgrade a #{package_type} package via 'making_sure=><NEW_VERSION>'" do
     package_name = details[:package_name]
     version = details[:new_version]
     test_apply(package_name, version, version)
   end
 
-  step "attempt to downgrade a #{package_type} package via 'ensure=><OLD_VERSION>'" do
+  step "attempt to downgrade a #{package_type} package via 'making_sure=><OLD_VERSION>'" do
     package_name = details[:package_name]
     version = details[:old_version]
 

@@ -19,7 +19,7 @@ agents.each do |agent|
     fail_test "the list of returned hosts was wrong: #{found.join(', ')}" unless
       found == %w{test1 test2 test3 test4}
 
-    count = stdout.scan(/ensure\s+=>\s+'present'/).length
+    count = stdout.scan(/making_sure\s+=>\s+'present'/).length
     fail_test "found #{count} records, wanted 4" unless count == 4
   end
 

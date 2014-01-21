@@ -15,7 +15,7 @@ Puppet::Type.type(:package).provide :pip,
   # _package_==_version_.
   def self.parse(line)
     if line.chomp =~ /^([^=]+)==([^=]+)$/
-      {:ensure => $2, :name => $1, :provider => name}
+      {:making_sure => $2, :name => $1, :provider => name}
     else
       nil
     end
@@ -66,23 +66,23 @@ Puppet::Type.type(:package).provide :pip,
     raise Puppet::Error, "Timeout while contacting pypi.python.org: #{detail}";
   end
 
-  # Install a package.  The ensure parameter may specify installed,
+  # Install a package.  The making_sure parameter may specify installed,
   # latest, a version number, or, in conjunction with the source
   # parameter, an SCM revision.  In that case, the source parameter
   # gives the fully-qualified URL to the repository.
   def install
     args = %w{install -q}
     if @resource[:source]
-      if String === @resource[:ensure]
-        args << "#{@resource[:source]}@#{@resource[:ensure]}#egg=#{
+      if String === @resource[:making_sure]
+        args << "#{@resource[:source]}@#{@resource[:making_sure]}#egg=#{
           @resource[:name]}"
       else
         args << "#{@resource[:source]}#egg=#{@resource[:name]}"
       end
     else
-      case @resource[:ensure]
+      case @resource[:making_sure]
       when String
-        args << "#{@resource[:name]}==#{@resource[:ensure]}"
+        args << "#{@resource[:name]}==#{@resource[:making_sure]}"
       when :latest
         args << "--upgrade" << @resource[:name]
       else

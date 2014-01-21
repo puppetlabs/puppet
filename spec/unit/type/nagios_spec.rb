@@ -246,8 +246,8 @@ describe "Nagios resource types" do
         puppet_type.attrclass(nagios_type.namevar).instance_variable_get("@doc").should_not be_nil
       end
 
-      it "should have an ensure property" do
-        puppet_type.should be_validproperty(:ensure)
+      it "should have an making_sure property" do
+        puppet_type.should be_validproperty(:making_sure)
       end
 
       it "should have a target property" do

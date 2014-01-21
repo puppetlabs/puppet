@@ -2,7 +2,7 @@
 $mode = 640
 
 define thing {
-    file { "/tmp/$name": ensure => file, mode => $mode }
+    file { "/tmp/$name": making_sure => file, mode => $mode }
 }
 
 class testing {

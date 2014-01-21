@@ -7,7 +7,7 @@ agents.each do |agent|
   on(agent, "rm -rf #{target}")
 
   step "verify we can create a directory"
-  on(agent, puppet_resource("file", target, 'ensure=directory'))
+  on(agent, puppet_resource("file", target, 'making_sure=directory'))
 
   step "verify the directory was created"
   on(agent, "test -d #{target}")

@@ -69,9 +69,9 @@ describe Puppet::Property do
       property.event_name.should == :event_name
     end
 
-    describe "and the property is 'ensure'" do
+    describe "and the property is 'making_sure'" do
       before :each do
-        property.stubs(:name).returns :ensure
+        property.stubs(:name).returns :making_sure
         resource.expects(:type).returns :mytype
       end
 
@@ -96,7 +96,7 @@ describe Puppet::Property do
       end
     end
 
-    it "should use <property>_changed if the property is not 'ensure'" do
+    it "should use <property>_changed if the property is not 'making_sure'" do
       property.stubs(:name).returns :myparam
       property.expects(:should).returns :foo
       property.event_name.should == :myparam_changed

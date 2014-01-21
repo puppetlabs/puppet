@@ -22,7 +22,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     resourcefile = tmpfile('resourcefile')
     Puppet[:resourcefile] = resourcefile
 
-    res = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/sam'), :ensure => 'present')
+    res = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/sam'), :making_sure => 'present')
     res.file = 'site.pp'
     res.line = 21
 
@@ -184,7 +184,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     # This tests #931.
     it "should not lose track of resources whose names vary" do
-      changer = Puppet::Resource.new :file, @basepath+'/test/', :parameters => {:ensure => :directory}
+      changer = Puppet::Resource.new :file, @basepath+'/test/', :parameters => {:making_sure => :directory}
 
       config = Puppet::Resource::Catalog.new('test')
       config.add_resource(changer)
@@ -477,7 +477,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should provide a method to create additional resources that also registers the resource" do
-      args = {:name => "/yay", :ensure => :file}
+      args = {:name => "/yay", :making_sure => :file}
       resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
       Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
       @catalog.create_resource :file, args
@@ -741,17 +741,17 @@ describe Puppet::Resource::Catalog, "when converting a resource catalog to pson"
   end
 
   it "should validate a single resource catalog against the schema" do
-    catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'ensure'=>'present'}})")
+    catalog = compile_to_catalog("create_resources('file', {'/etc/foo'=>{'making_sure'=>'present'}})")
     expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a virtual resource catalog against the schema" do
-    catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'ensure'=>'present'}})\nrealize(File['/etc/foo'])")
+    catalog = compile_to_catalog("create_resources('@file', {'/etc/foo'=>{'making_sure'=>'present'}})\nrealize(File['/etc/foo'])")
     expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 
   it "should validate a single exported resource catalog against the schema" do
-    catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'ensure'=>'present'}})")
+    catalog = compile_to_catalog("create_resources('@@file', {'/etc/foo'=>{'making_sure'=>'present'}})")
     expect(catalog.to_pson).to validate_against('api/schemas/catalog.json')
   end
 

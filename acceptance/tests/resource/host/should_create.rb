@@ -7,7 +7,7 @@ agents.each do |agent|
   on agent, "rm -f #{target}"
 
   step "create the host record"
-  on(agent, puppet_resource("host", "test", "ensure=present",
+  on(agent, puppet_resource("host", "test", "making_sure=present",
               "ip=127.0.0.1", "target=#{target}"))
 
   step "verify that the record was created"

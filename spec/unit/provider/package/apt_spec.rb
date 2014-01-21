@@ -97,21 +97,21 @@ Version table:
     end
 
     it "should use 'apt-get install' with the package name if no version is asked for" do
-      @resource.expects(:[]).with(:ensure).returns :installed
+      @resource.expects(:[]).with(:making_sure).returns :installed
       @provider.expects(:aptget).with { |*command| command[-1] == "asdf" and command[-2] == :install }
 
       @provider.install
     end
 
     it "should specify the package version if one is asked for" do
-      @resource.expects(:[]).with(:ensure).returns "1.0"
+      @resource.expects(:[]).with(:making_sure).returns "1.0"
       @provider.expects(:aptget).with { |*command| command[-1] == "asdf=1.0" }
 
       @provider.install
     end
 
     it "should use --force-yes if a package version is specified" do
-      @resource.expects(:[]).with(:ensure).returns "1.0"
+      @resource.expects(:[]).with(:making_sure).returns "1.0"
       @provider.expects(:aptget).with { |*command| command.include?("--force-yes") }
 
       @provider.install

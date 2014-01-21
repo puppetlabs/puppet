@@ -16,13 +16,13 @@ agents.each do |agent|
   step "ZPool: setup"
   setup agent
   #-----------------------------------
-  step "ZPool: ensure create"
-  apply_manifest_on(agent, "zpool{ tstpool: ensure=>present, disk=>'/ztstpool/dsk1' }") do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  step "ZPool: making_sure create"
+  apply_manifest_on(agent, "zpool{ tstpool: making_sure=>present, disk=>'/ztstpool/dsk1' }") do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
 
   step "ZPool: idempotency - create"
-  apply_manifest_on(agent, "zpool{ tstpool: ensure=>present, disk=>'/ztstpool/dsk1' }") do
-    assert_no_match( /ensure: created/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, "zpool{ tstpool: making_sure=>present, disk=>'/ztstpool/dsk1' }") do
+    assert_no_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
 end

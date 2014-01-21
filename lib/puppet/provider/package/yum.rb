@@ -30,7 +30,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   def self.prefetch(packages)
     raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
     super
-    return unless packages.detect { |name, package| package.should(:ensure) == :latest }
+    return unless packages.detect { |name, package| package.should(:making_sure) == :latest }
 
     # collect our 'latest' info
     updates = {}
@@ -55,7 +55,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def install
-    should = @resource.should(:ensure)
+    should = @resource.should(:making_sure)
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
     operation = :install
@@ -68,8 +68,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       # Add the package version
       wanted += "-#{should}"
       is = self.query
-      if is && Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
-        self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
+      if is && Puppet::Util::Package.versioncmp(should, is[:making_sure]) < 0
+        self.debug "Downgrading package #{@resource[:name]} from version #{is[:making_sure]} to #{should}"
         operation = :downgrade
       end
     end
@@ -80,8 +80,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     raise Puppet::Error, "Could not find package #{self.name}" unless is
 
     # FIXME: Should we raise an exception even if should == :latest
-    # and yum updated us to a version other than @param_hash[:ensure] ?
-    raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead" if should && should != is[:ensure]
+    # and yum updated us to a version other than @param_hash[:making_sure] ?
+    raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:making_sure]} instead" if should && should != is[:making_sure]
   end
 
   # What's the latest package version available?
@@ -94,8 +94,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     else
       # Yum didn't find updates, pretend the current
       # version is the latest
-      raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:ensure] == :absent
-      return properties[:ensure]
+      raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:making_sure] == :absent
+      return properties[:making_sure]
     end
   end
 

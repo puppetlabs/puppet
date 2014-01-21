@@ -3,7 +3,7 @@ test_name "test that we can query and find a user that exists."
 name = "pl#{rand(999999).to_i}"
 
 agents.each do |agent|
-  step "ensure that our test user exists"
+  step "making_sure that our test user exists"
   agent.user_present(name)
 
   step "query for the resource and verify it was found"

@@ -65,7 +65,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
       pkg.expects(:match?).returns(true)
       Puppet::Provider::Package::Windows::Package.expects(:find).yields(pkg)
 
-      provider.query.should == { :name => 'pkg1', :ensure => :installed, :provider => :windows }
+      provider.query.should == { :name => 'pkg1', :making_sure => :installed, :provider => :windows }
     end
 
     it 'should include the version string when present' do
@@ -73,7 +73,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
       pkg.expects(:match?).returns(true)
       Puppet::Provider::Package::Windows::Package.expects(:find).yields(pkg)
 
-      provider.query.should == { :name => 'pkg1', :ensure => '1.0.0', :provider => :windows }
+      provider.query.should == { :name => 'pkg1', :making_sure => '1.0.0', :provider => :windows }
     end
 
     it 'should return nil if no package was found' do
@@ -140,7 +140,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
     let(:package) { mock('package', :uninstall_command => ['unblarg.exe', '/Q'] ) }
 
     before :each do
-      resource[:ensure] = :absent
+      resource[:making_sure] = :absent
       provider.package = package
     end
 

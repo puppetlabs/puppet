@@ -9,7 +9,7 @@ manifest = %Q{
     ip           => '127.0.0.2',
     target       => '#{out}',
     host_aliases => ['one', 'two', 'three'],
-    ensure       => present,
+    making_sure       => present,
   }
   Host<| host_aliases == 'two' |>
 }

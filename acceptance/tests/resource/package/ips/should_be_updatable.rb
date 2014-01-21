@@ -19,16 +19,16 @@ agents.each do |agent|
   send_pkg agent, :pkg => 'mypkg@0.0.1'
   set_publisher agent
   step "IPS: basic - it should create"
-  apply_manifest_on(agent, 'package {mypkg : ensure=>present}') do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>present}') do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
 
   step "IPS: ask to be latest"
   send_pkg agent, :pkg => 'mypkg@0.0.2'
-  apply_manifest_on(agent, 'package {mypkg : ensure=>latest}') do
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>latest}') do
     assert_match( /Finished catalog run in .*/, result.stdout, "err: #{agent}")
   end
-  step "IPS: ensure it was upgraded"
+  step "IPS: making_sure it was upgraded"
   on agent, "pkg list -v mypkg" do
     assert_match( /mypkg@0.0.2/, result.stdout, "err: #{agent}")
   end
@@ -36,7 +36,7 @@ agents.each do |agent|
   step "IPS: when there are more than one option, choose latest."
   send_pkg agent,:pkg => 'mypkg@0.0.3'
   send_pkg agent,:pkg => 'mypkg@0.0.4'
-  apply_manifest_on(agent, 'package {mypkg : ensure=>latest}') do
+  apply_manifest_on(agent, 'package {mypkg : making_sure=>latest}') do
     assert_match( /Finished catalog run in .*/, result.stdout, "err: #{agent}")
   end
   on agent, "pkg list -v mypkg" do

@@ -7,7 +7,7 @@ Puppet::Type.newtype(:scheduled_task) do
     except `name`, `command`, and `trigger` are optional; see the description
     of the `trigger` attribute for details on setting schedules."
 
-  ensurable
+  making_surable
 
   newproperty(:enabled) do
     desc "Whether the triggers for this task should be enabled. This attribute

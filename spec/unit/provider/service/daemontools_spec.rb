@@ -26,7 +26,7 @@ describe provider_class do
     # But set name, source and path (because we won't run
     # the thing that will fetch the resource path from the provider)
     @resource.stubs(:[]).with(:name).returns "myservice"
-    @resource.stubs(:[]).with(:ensure).returns :enabled
+    @resource.stubs(:[]).with(:making_sure).returns :enabled
     @resource.stubs(:[]).with(:path).returns @daemondir
     @resource.stubs(:ref).returns "Service[myservice]"
 

@@ -14,9 +14,9 @@ end
 
 agents.each do |agent|
   manifest, method = setup agent, :service => 'tstapp'
-  step "SMF: ensure it is created with a manifest"
-  apply_manifest_on(agent, 'service {tstapp : ensure=>running, manifest=>"%s"}' % manifest) do
-    assert_match( / ensure changed 'stopped' to 'running'/, result.stdout, "err: #{agent}")
+  step "SMF: making_sure it is created with a manifest"
+  apply_manifest_on(agent, 'service {tstapp : making_sure=>running, manifest=>"%s"}' % manifest) do
+    assert_match( / making_sure changed 'stopped' to 'running'/, result.stdout, "err: #{agent}")
   end
 
   step "SMF: verify with svcs that the service is online"

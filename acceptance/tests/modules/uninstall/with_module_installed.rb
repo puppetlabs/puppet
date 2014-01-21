@@ -9,7 +9,7 @@ apply_manifest_on master, <<-PP
 file {
   [
     '#{master['distmoduledir']}/crakorn',
-  ]: ensure => directory;
+  ]: making_sure => directory;
   '#{master['distmoduledir']}/crakorn/metadata.json':
     content => '{
       "name": "jimmy/crakorn",

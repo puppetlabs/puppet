@@ -8,12 +8,12 @@ module Puppet
 
           # (Useful on Solaris)
           file { \"/etc/inetd.conf\":
-            ensure => link,
+            making_sure => link,
             target => \"inet/inetd.conf\",
           }
 
       Directories of symlinks can be served recursively by instead using the
-      `source` attribute, setting `ensure` to `directory`, and setting the
+      `source` attribute, setting `making_sure` to `directory`, and setting the
       `links` attribute to `manage`."
 
     newvalue(:notlink) do
@@ -23,11 +23,11 @@ module Puppet
 
     # Anything else, basically
     newvalue(/./) do
-      @resource[:ensure] = :link if ! @resource.should(:ensure)
+      @resource[:making_sure] = :link if ! @resource.should(:making_sure)
 
-      # Only call mklink if ensure didn't call us in the first place.
-      currentensure  = @resource.property(:ensure).retrieve
-      mklink if @resource.property(:ensure).safe_insync?(currentensure)
+      # Only call mklink if making_sure didn't call us in the first place.
+      currentmaking_sure  = @resource.property(:making_sure).retrieve
+      mklink if @resource.property(:making_sure).safe_insync?(currentmaking_sure)
     end
 
     # Create our link.

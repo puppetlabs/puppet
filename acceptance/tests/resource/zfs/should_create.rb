@@ -15,9 +15,9 @@ end
 agents.each do |agent|
   step "ZFS: setup"
   setup agent
-  step "ZFS: ensure it is created"
-  apply_manifest_on(agent, 'zfs {"tstpool/tstfs": ensure=>present}') do
-    assert_match( /ensure: created/, result.stdout, "err: #{agent}")
+  step "ZFS: making_sure it is created"
+  apply_manifest_on(agent, 'zfs {"tstpool/tstfs": making_sure=>present}') do
+    assert_match( /making_sure: created/, result.stdout, "err: #{agent}")
   end
   step "verify"
   on(agent, 'zfs list') do

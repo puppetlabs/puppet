@@ -36,7 +36,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   def self.prefetch(packages)
     raise Puppet::Error, "The aix provider can only be used by root" if Process.euid != 0
 
-    return unless packages.detect { |name, package| package.should(:ensure) == :latest }
+    return unless packages.detect { |name, package| package.should(:making_sure) == :latest }
 
     sources = packages.collect { |name, package| package[:source] }.uniq
 
@@ -87,7 +87,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     pkg = @resource[:name]
 
-    pkg += " #{@resource.should(:ensure)}" if (! @resource.should(:ensure).is_a? Symbol) and useversion
+    pkg += " #{@resource.should(:making_sure)}" if (! @resource.should(:making_sure).is_a? Symbol) and useversion
 
     output = installp "-acgwXY", "-d", source, pkg
 
@@ -107,7 +107,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     begin
       list = execute(cmd).scan(/^[^#][^:]*:([^:]*):([^:]*)/).collect { |n,e|
-        { :name => n, :ensure => e, :provider => self.name }
+        { :name => n, :making_sure => e, :provider => self.name }
       }
     rescue Puppet::ExecutionFailure => detail
       if hash[:pkgname]
@@ -136,9 +136,9 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     unless upd.nil?
       return "#{upd[:version]}"
     else
-      raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:ensure] == :absent
+      raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:making_sure] == :absent
 
-      return properties[:ensure]
+      return properties[:making_sure]
     end
   end
 

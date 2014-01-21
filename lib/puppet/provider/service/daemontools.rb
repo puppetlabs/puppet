@@ -31,10 +31,10 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     * restart
     * status
 
-    If a service has `ensure => "running"`, it will link /path/to/daemon to
+    If a service has `making_sure => "running"`, it will link /path/to/daemon to
     /path/to/service, which will automatically enable the service.
 
-    If a service has `ensure => "stopped"`, it will only shut down the service, not
+    If a service has `making_sure => "stopped"`, it will only shut down the service, not
     remove the `/path/to/service` link.
 
   EOT

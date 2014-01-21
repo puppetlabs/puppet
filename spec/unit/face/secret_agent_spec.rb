@@ -14,7 +14,7 @@ describe Puppet::Face[:secret_agent, '0.0.1'] do
       Puppet[:vardir] = dirname
       Puppet[:confdir] = dirname
       @catalog = Puppet::Resource::Catalog.new
-      @file = Puppet::Resource.new(:file, File.join(dirname, "tmp_dir_resource"), :parameters => {:ensure => :present})
+      @file = Puppet::Resource.new(:file, File.join(dirname, "tmp_dir_resource"), :parameters => {:making_sure => :present})
       @catalog.add_resource(@file)
       Puppet::Resource::Catalog::Rest.any_instance.stubs(:find).returns(@catalog)
 

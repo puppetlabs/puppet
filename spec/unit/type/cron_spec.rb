@@ -36,17 +36,17 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
 
   describe "when validating values" do
 
-    describe "ensure" do
-      it "should support present as a value for ensure" do
-        expect { described_class.new(:name => 'foo', :ensure => :present) }.to_not raise_error
+    describe "making_sure" do
+      it "should support present as a value for making_sure" do
+        expect { described_class.new(:name => 'foo', :making_sure => :present) }.to_not raise_error
       end
 
-      it "should support absent as a value for ensure" do
-        expect { described_class.new(:name => 'foo', :ensure => :present) }.to_not raise_error
+      it "should support absent as a value for making_sure" do
+        expect { described_class.new(:name => 'foo', :making_sure => :present) }.to_not raise_error
       end
 
       it "should not support other values" do
-        expect { described_class.new(:name => 'foo', :ensure => :foo) }.to raise_error(Puppet::Error, /Invalid value/)
+        expect { described_class.new(:name => 'foo', :making_sure => :foo) }.to raise_error(Puppet::Error, /Invalid value/)
       end
     end
 
@@ -472,8 +472,8 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
   describe "when autorequiring resources" do
 
     before :each do
-      @user_bob = Puppet::Type.type(:user).new(:name => 'bob', :ensure => :present)
-      @user_alice = Puppet::Type.type(:user).new(:name => 'alice', :ensure => :present)
+      @user_bob = Puppet::Type.type(:user).new(:name => 'bob', :making_sure => :present)
+      @user_alice = Puppet::Type.type(:user).new(:name => 'alice', :making_sure => :present)
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource @user_bob, @user_alice
     end
@@ -489,18 +489,18 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
   end
 
   it "should require a command when adding an entry" do
-    entry = described_class.new(:name => "test_entry", :ensure => :present)
+    entry = described_class.new(:name => "test_entry", :making_sure => :present)
     expect { entry.value(:command) }.to raise_error(Puppet::Error, /No command/)
   end
 
   it "should not require a command when removing an entry" do
-    entry = described_class.new(:name => "test_entry", :ensure => :absent)
+    entry = described_class.new(:name => "test_entry", :making_sure => :absent)
     entry.value(:command).should == nil
   end
 
   it "should default to user => root if Etc.getpwuid(Process.uid) returns nil (#12357)" do
     Etc.expects(:getpwuid).returns(nil)
-    entry = described_class.new(:name => "test_entry", :ensure => :present)
+    entry = described_class.new(:name => "test_entry", :making_sure => :present)
     entry.value(:user).should eql "root"
   end
 end

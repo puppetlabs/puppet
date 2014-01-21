@@ -92,7 +92,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     backup_target(target)
 
     records = target_records(target).reject { |r|
-      r[:ensure] == :absent
+      r[:making_sure] == :absent
     }
 
     target_object(target).write(to_file(records))
@@ -272,7 +272,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     target_records.each do |r|
       r[:on_disk] = true
       r[:target] = target
-      r[:ensure] = :present
+      r[:making_sure] = :present
     end
 
     target_records = prefetch_hook(target_records) if respond_to?(:prefetch_hook)
@@ -387,12 +387,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   def destroy
     # We use the method here so it marks the target as modified.
-    self.ensure = :absent
+    self.making_sure = :absent
     (@resource.class.name.to_s + "_deleted").intern
   end
 
   def exists?
-    !(@property_hash[:ensure] == :absent or @property_hash[:ensure].nil?)
+    !(@property_hash[:making_sure] == :absent or @property_hash[:making_sure].nil?)
   end
 
   # Write our data to disk.
@@ -418,7 +418,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # The 'record' could be a resource or a record, depending on how the provider
     # is initialized.  If we got an empty property hash (probably because the resource
     # is just being initialized), then we want to set up some defaults.
-    @property_hash = self.class.record?(resource[:name]) || {:record_type => self.class.name, :ensure => :absent} if @property_hash.empty?
+    @property_hash = self.class.record?(resource[:name]) || {:record_type => self.class.name, :making_sure => :absent} if @property_hash.empty?
   end
 
   # Retrieve the current state from disk.

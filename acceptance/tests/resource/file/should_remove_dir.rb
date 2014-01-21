@@ -7,7 +7,7 @@ agents.each do |agent|
   on agent, "rm -rf #{target} ; mkdir -p #{target}"
 
   step "verify we can't remove a directory without 'force'"
-  on(agent, puppet_resource("file", target, 'ensure=absent')) do
+  on(agent, puppet_resource("file", target, 'making_sure=absent')) do
     fail_test "didn't tell us that force was required" unless
       stdout.include? "Not removing directory; use 'force' to override"
   end
@@ -16,7 +16,7 @@ agents.each do |agent|
   on agent, "test -d #{target}"
 
   step "verify we can remove a directory with 'force'"
-  on(agent, puppet_resource("file", target, 'ensure=absent', 'force=true'))
+  on(agent, puppet_resource("file", target, 'making_sure=absent', 'force=true'))
 
   step "verify that the directory is gone"
   on agent, "test -d #{target}", :acceptable_exit_codes => [1]

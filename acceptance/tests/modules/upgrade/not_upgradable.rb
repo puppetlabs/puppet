@@ -17,7 +17,7 @@ apply_manifest_on master, <<-PP
     [
       '#{master['distmoduledir']}/nginx',
       '#{master['distmoduledir']}/unicorns',
-    ]: ensure => directory;
+    ]: making_sure => directory;
     '#{master['distmoduledir']}/unicorns/metadata.json':
       content => '{
         "name": "notpmtacceptance/unicorns",

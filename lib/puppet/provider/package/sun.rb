@@ -19,7 +19,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     "PKGINST"  => :name,
     "CATEGORY" => :category,
     "ARCH"     => :platform,
-    "VERSION"  => :ensure,
+    "VERSION"  => :making_sure,
     "BASEDIR"  => :root,
     "VENDOR"   => :vendor,
     "DESC"     => :description,
@@ -74,13 +74,13 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
       # so eventhough pkginfo passed, we have to check the actual output
       raise Puppet::Error, "Unable to get information about package #{@resource[:name]} because of: #{errmsg}"
     rescue Puppet::ExecutionFailure
-      return {:ensure => :absent}
+      return {:making_sure => :absent}
     end
   end
 
   # Retrieve the version from the current package file.
   def latest
-    info2hash(@resource[:source])[:ensure]
+    info2hash(@resource[:source])[:making_sure]
   end
 
   def query
@@ -106,7 +106,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
   # Remove the old package, and install the new one.  This will probably
   # often fail.
   def update
-    self.uninstall if (@property_hash[:ensure] || info2hash[:ensure]) != :absent
+    self.uninstall if (@property_hash[:making_sure] || info2hash[:making_sure]) != :absent
     self.install
   end
 

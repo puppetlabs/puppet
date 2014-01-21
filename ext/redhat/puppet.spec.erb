@@ -280,7 +280,7 @@ getent group puppet &>/dev/null || groupadd -r puppet -g 52 &>/dev/null
 getent passwd puppet &>/dev/null || \
 useradd -r -u 52 -g puppet -d %{_localstatedir}/lib/puppet -s /sbin/nologin \
     -c "Puppet" puppet &>/dev/null
-# ensure that old setups have the right puppet home dir
+# making_sure that old setups have the right puppet home dir
 if [ $1 -gt 1 ] ; then
   usermod -d %{_localstatedir}/lib/puppet puppet &>/dev/null
 fi

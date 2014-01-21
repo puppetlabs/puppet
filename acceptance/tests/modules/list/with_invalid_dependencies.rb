@@ -18,7 +18,7 @@ file {
     '#{master['distmoduledir']}/crakorn',
     '#{master['distmoduledir']}/thelock',
     '#{master['sitemoduledir']}/crick',
-  ]: ensure => directory,
+  ]: making_sure => directory,
      recurse => true,
      purge => true,
      force => true;

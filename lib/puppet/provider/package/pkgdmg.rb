@@ -54,7 +54,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
   def self.instances
     instance_by_name.collect do |name|
-      new(:name => name, :provider => :pkgdmg, :ensure => :installed)
+      new(:name => name, :provider => :pkgdmg, :making_sure => :installed)
     end
   end
 
@@ -130,7 +130,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
   def query
     if Puppet::FileSystem.exist?("/var/db/.puppet_pkgdmg_installed_#{@resource[:name]}")
       Puppet.debug "/var/db/.puppet_pkgdmg_installed_#{@resource[:name]} found"
-      return {:name => @resource[:name], :ensure => :present}
+      return {:name => @resource[:name], :making_sure => :present}
     else
       return nil
     end

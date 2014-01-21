@@ -13,7 +13,7 @@ agents.each do |host|
   end
 
   step "apply the resource on the host using puppet resource"
-  on(host, puppet_resource("cron", "crontest", "user=tstuser", "command='   date > /dev/null    '", "ensure=present")) do
+  on(host, puppet_resource("cron", "crontest", "user=tstuser", "command='   date > /dev/null    '", "making_sure=present")) do
     assert_match(/created/, stdout, "Did not create crontab for tstuser on #{host}")
   end
 
@@ -23,12 +23,12 @@ agents.each do |host|
   end
 
   step "apply the resource with trailing whitespace and check nothing happened"
-  on(host, puppet_resource("cron", "crontest", "user=tstuser", "command='date > /dev/null    '", "ensure=present")) do
-    assert_no_match(/ensure: created/, stdout, "Rewrote the line with trailing space in crontab for tstuser on #{host}")
+  on(host, puppet_resource("cron", "crontest", "user=tstuser", "command='date > /dev/null    '", "making_sure=present")) do
+    assert_no_match(/making_sure: created/, stdout, "Rewrote the line with trailing space in crontab for tstuser on #{host}")
   end
 
   step "apply the resource with leading whitespace and check nothing happened"
-  on(host, puppet_resource("cron", "crontest", "user=tstuser", "command='     date > /dev/null'", "ensure=present")) do
-    assert_no_match(/ensure: created/, stdout, "Rewrote the line with trailing space in crontab for tstuser on #{host}")
+  on(host, puppet_resource("cron", "crontest", "user=tstuser", "command='     date > /dev/null'", "making_sure=present")) do
+    assert_no_match(/making_sure: created/, stdout, "Rewrote the line with trailing space in crontab for tstuser on #{host}")
   end
 end

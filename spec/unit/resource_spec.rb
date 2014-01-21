@@ -648,17 +648,17 @@ describe Puppet::Resource do
         :parameters => {
           :noop => true,
           :foo => %w{one two},
-          :ensure => 'present',
+          :making_sure => 'present',
         }
       )
     end
 
-    it "should align, sort and add trailing commas to attributes with ensure first" do
+    it "should align, sort and add trailing commas to attributes with making_sure first" do
       @resource.to_manifest.should == <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
         one::two { '/my/file':
-          ensure => 'present',
-          foo    => ['one', 'two'],
-          noop   => 'true',
+          making_sure => 'present',
+          foo         => ['one', 'two'],
+          noop        => 'true',
         }
       HEREDOC
     end
@@ -931,7 +931,7 @@ describe Puppet::Resource do
   describe "#prune_parameters" do
     before do
       Puppet.newtype('blond') do
-        newproperty(:ensure)
+        newproperty(:making_sure)
         newproperty(:height)
         newproperty(:weight)
         newproperty(:sign)
@@ -942,9 +942,9 @@ describe Puppet::Resource do
       end
     end
 
-    it "should strip all parameters and strip properties that are nil, empty or absent except for ensure" do
+    it "should strip all parameters and strip properties that are nil, empty or absent except for making_sure" do
       resource = Puppet::Resource.new("blond", "Bambi", :parameters => {
-        :ensure               => 'absent',
+        :making_sure               => 'absent',
         :height               => '',
         :weight               => 'absent',
         :friends              => [],
@@ -953,7 +953,7 @@ describe Puppet::Resource do
       })
 
       pruned_resource = resource.prune_parameters
-      pruned_resource.should == Puppet::Resource.new("blond", "Bambi", :parameters => {:ensure => 'absent'})
+      pruned_resource.should == Puppet::Resource.new("blond", "Bambi", :parameters => {:making_sure => 'absent'})
     end
 
     it "should leave parameters alone if in parameters_to_include" do
@@ -968,7 +968,7 @@ describe Puppet::Resource do
 
     it "should leave properties if not nil, absent or empty" do
       resource = Puppet::Resource.new("blond", "Bambi", :parameters => {
-        :ensure          => 'silly',
+        :making_sure          => 'silly',
         :height          => '7 ft 5 in',
         :friends         => ['Oprah'],
       })
@@ -976,7 +976,7 @@ describe Puppet::Resource do
       pruned_resource = resource.prune_parameters
       pruned_resource.should ==
       resource = Puppet::Resource.new("blond", "Bambi", :parameters => {
-        :ensure          => 'silly',
+        :making_sure          => 'silly',
         :height          => '7 ft 5 in',
         :friends         => ['Oprah'],
       })

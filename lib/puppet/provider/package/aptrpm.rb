@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
   # Install a package using 'apt-get'.  This function needs to support
   # installing a specific version.
   def install
-    should = @resource.should(:ensure)
+    should = @resource.should(:making_sure)
 
     str = @resource[:name]
     case should

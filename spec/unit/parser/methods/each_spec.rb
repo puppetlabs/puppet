@@ -15,63 +15,63 @@ describe 'the each method' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
         $a.each |$v| {
-          file { "/file_$v": ensure => present }
+          file { "/file_$v": making_sure => present }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_1")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_3")['making_sure'].should == 'present'
     end
     it 'each on an array selecting each value - function call style' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]
         each ($a) |$index, $v| {
-          file { "/file_$v": ensure => present }
+          file { "/file_$v": making_sure => present }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_1")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_3")['making_sure'].should == 'present'
     end
 
     it 'each on an array with index' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [present, absent, present]
         $a.each |$k,$v| {
-          file { "/file_${$k+1}": ensure => $v }
+          file { "/file_${$k+1}": making_sure => $v }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_1")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_2")['making_sure'].should == 'absent'
+      catalog.resource(:file, "/file_3")['making_sure'].should == 'present'
     end
 
     it 'each on a hash selecting entries' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>'present','b'=>'absent','c'=>'present'}
         $a.each |$e| {
-        file { "/file_${e[0]}": ensure => $e[1] }
+        file { "/file_${e[0]}": making_sure => $e[1] }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_a")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_b")['making_sure'].should == 'absent'
+      catalog.resource(:file, "/file_c")['making_sure'].should == 'present'
     end
     it 'each on a hash selecting key and value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>present,'b'=>absent,'c'=>present}
         $a.each |$k, $v| {
-          file { "/file_$k": ensure => $v }
+          file { "/file_$k": making_sure => $v }
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_a")['making_sure'].should == 'present'
+      catalog.resource(:file, "/file_b")['making_sure'].should == 'absent'
+      catalog.resource(:file, "/file_c")['making_sure'].should == 'present'
     end
   end
   context "should produce receiver" do
@@ -80,11 +80,11 @@ describe 'the each method' do
         $a = [1, 3, 2]
         $b = $a.each |$x| { "unwanted" }
         file { "/file_${b[1]}":
-          ensure => present
+          making_sure => present
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_3")['making_sure'].should == 'present'
     end
 
   end

@@ -1,9 +1,9 @@
-define filetest($mode, $ensure = file) {
+define filetest($mode, $making_sure = file) {
     file { $name:
         mode => $mode,
-        ensure => $ensure
+        making_sure => $making_sure
     }
 }
 
 filetest { "/tmp/testfiletest": mode => 644}
-filetest { "/tmp/testdirtest": mode => 755, ensure => directory}
+filetest { "/tmp/testdirtest": mode => 755, making_sure => directory}

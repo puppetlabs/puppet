@@ -99,7 +99,7 @@ module Puppet
       if resource.should_be_file?
         return false if is == :absent
       else
-        if resource[:ensure] == :present and resource[:content] and s = resource.stat
+        if resource[:making_sure] == :present and resource[:content] and s = resource.stat
           resource.warning "Ensure set to :present but file type is #{s.ftype} so no content will be synced"
         end
         return true

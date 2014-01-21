@@ -249,7 +249,7 @@ describe Puppet::Transaction::ResourceHarness do
   describe "when applying changes" do
     it "should not apply changes if allow_changes?() returns false" do
       test_file = tmpfile('foo')
-      resource = Puppet::Type.type(:file).new :path => test_file, :backup => false, :ensure => :file
+      resource = Puppet::Type.type(:file).new :path => test_file, :backup => false, :making_sure => :file
       resource.expects(:err).never # make sure no exceptions get swallowed
       @harness.expects(:allow_changes?).with(resource).returns false
       status = @harness.evaluate(resource)

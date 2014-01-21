@@ -20,7 +20,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       execpipe(listcmd) do |process|
         # our regex for matching pkg_info output
         regex = /^(.*)-(\d[^-]*)[-]?(\w*)(.*)$/
-        fields = [:name, :ensure, :flavor ]
+        fields = [:name, :making_sure, :flavor ]
         hash = {}
 
         # now turn each returned line into a package object
@@ -87,7 +87,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     if @resource[:source][-1,1] == ::File::SEPARATOR
       e_vars = { 'PKG_PATH' => @resource[:source] }
-      full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-').chomp('-')
+      full_name = [ @resource[:name], get_version || @resource[:making_sure], @resource[:flavor] ].join('-').chomp('-').chomp('-')
     else
       e_vars = {}
       full_name = @resource[:source]
@@ -108,9 +108,9 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
       process.each_line do |line|
         if match = regex.match(line.split[0])
-          # now we return the first version, unless ensure is latest
+          # now we return the first version, unless making_sure is latest
           version = match.captures[1]
-          return version unless @resource[:ensure] == "latest"
+          return version unless @resource[:making_sure] == "latest"
 
           master_version = version unless master_version > version
         end
@@ -127,7 +127,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   def query
     # Search for the version info
     if pkginfo(@resource[:name]) =~ /Information for (inst:)?#{@resource[:name]}-(\S+)/
-      return { :ensure => $2 }
+      return { :making_sure => $2 }
     else
       return nil
     end
