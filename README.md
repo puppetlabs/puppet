@@ -37,7 +37,7 @@ Documentation](https://github.com/puppetlabs/puppet/blob/master/README_DEVELOPER
 License
 -------
 
-See LICENSE file.
+See [LICENSE](LICENSE) file.
 
 Support
 -------
@@ -50,4 +50,4 @@ is an active #puppet channel on Freenode.
 
 HTTP API
 --------
-{file:api/docs/http_api_index.md HTTP API Index}
+[HTTP API Index](api/docs/http_api_index.md)
