@@ -48,6 +48,12 @@ describe "Puppet Network Format" do
         @msgpack.intern_multiple(Hash, MessagePack.pack(["foo"]))
       end.to raise_error(NoMethodError)
     end
+
+    it "should be able to serialize a catalog" do
+      cat = Puppet::Resource::Catalog.new('foo')
+      cat.add_resource(Puppet::Resource.new(:file, 'my_file'))
+      cat.to_msgpack.unpack('H*').should == ["87a47461677390a46e616d65a3666f6fa776657273696f6ec0ab656e7669726f6e6d656e74a0a97265736f75726365739184a474797065a446696c65a57469746c65a76d795f66696c65a47461677392a466696c65a76d795f66696c65a86578706f72746564c2a5656467657390a7636c617373657390"]
+    end
   end
 
   it "should include a yaml format" do
