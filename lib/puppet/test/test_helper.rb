@@ -34,6 +34,7 @@ module Puppet::Test
     # @return nil
     def self.initialize()
       initialize_settings_before_each
+      Puppet::Parser::Functions.reset
     end
 
     # Call this method once, when beginning a test run--prior to running
