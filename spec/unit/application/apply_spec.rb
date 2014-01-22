@@ -21,7 +21,7 @@ describe Puppet::Application::Apply do
     Puppet::Node.indirection.cache_class = nil
   end
 
-  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes,:catalog, :write_catalog_summary].each do |option|
+  [:debug,:loadclasses,:test,:verbose,:use_nodes,:detailed_exitcodes,:catalog, :write_catalog_summary].each do |option|
     it "should declare handle_#{option} method" do
       @apply.should respond_to("handle_#{option}".to_sym)
     end
@@ -58,8 +58,31 @@ describe Puppet::Application::Apply do
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
       Puppet::Transaction::Report.indirection.stubs(:cache_class=)
+    end
 
-      @apply.options.stubs(:[]).with(any_parameters)
+    describe "with --test" do
+      it "should call setup_test" do
+        @apply.options[:test] = true
+        @apply.expects(:setup_test)
+
+        @apply.setup
+      end
+
+      it "should set options[:verbose] to true" do
+        @apply.setup_test
+
+        @apply.options[:verbose].should == true
+      end
+      it "should set options[:show_diff] to true" do
+        Puppet[:show_diff] = false
+        @apply.setup_test
+        Puppet[:show_diff].should == true
+      end
+      it "should set options[:detailed_exitcodes] to true" do
+        @apply.setup_test
+
+        @apply.options[:detailed_exitcodes].should == true
+      end
     end
 
     it "should set console as the log destination if logdest option wasn't provided" do
@@ -75,13 +98,13 @@ describe Puppet::Application::Apply do
     end
 
     it "should set log level to debug if --debug was passed" do
-      @apply.options.stubs(:[]).with(:debug).returns(true)
+      @apply.options[:debug] = true
       @apply.setup
       Puppet::Log.level.should == :debug
     end
 
     it "should set log level to info if --verbose was passed" do
-      @apply.options.stubs(:[]).with(:verbose).returns(true)
+      @apply.options[:verbose] = true
       @apply.setup
       Puppet::Log.level.should == :info
     end
