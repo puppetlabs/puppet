@@ -112,17 +112,9 @@ module Puppet::Util::Colors
           WriteConsole.call(@handle, utf16, nChars, written, reserved)
         end
 
-        if String.method_defined?("encode")
-          def string_encode(str)
-            wstr = str.encode('UTF-16LE')
-            [wstr, wstr.length]
-          end
-        else
-          require 'iconv'
-          def string_encode(str)
-            wstr = Iconv.conv('UTF-16LE', 'UTF-8', str)
-            [wstr, wstr.length/2]
-          end
+        def string_encode(str)
+          wstr = str.encode('UTF-16LE')
+          [wstr, wstr.length]
         end
       end
 
