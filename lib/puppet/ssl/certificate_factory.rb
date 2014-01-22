@@ -37,7 +37,7 @@ module Puppet::SSL::CertificateFactory
 
   def self.add_extensions_to(cert, csr, issuer, extensions)
     ef = OpenSSL::X509::ExtensionFactory.
-      new(cert, issuer.is_a?(OpenSSL::X509::Request) ? cert : issuer)
+      new(issuer.is_a?(OpenSSL::X509::Request) ? cert : issuer, cert)
 
     # Extract the requested extensions from the CSR.
     requested_exts = csr.request_extensions.inject({}) do |hash, re|
@@ -60,7 +60,7 @@ module Puppet::SSL::CertificateFactory
     # certificate through where the CA constraint was true, though, if
     # something went wrong up there. --daniel 2011-10-11
     defaults = { "nsComment" => "Puppet Ruby/OpenSSL Internal Certificate" }
-    override = { "subjectKeyIdentifier" => "hash" }
+    override = { "subjectKeyIdentifier" => "hash", "authorityKeyIdentifier" => "keyid,issuer" }
 
     exts = [defaults, requested_exts, extensions, override].
       inject({}) {|ret, val| ret.merge(val) }
