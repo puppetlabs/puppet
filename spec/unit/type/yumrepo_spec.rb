@@ -46,13 +46,15 @@ describe Puppet::Type.type(:yumrepo) do
       lambda { Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", :http_caching => "notavalidvalue") }.should raise_error
     end
 
-    it "should fail if 'sslverify' does not have one of the following values (True|False)" do
+    it "should fail if 'sslverify' does not have one of the following values (True|False|0|1)" do
       lambda { Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", :sslverify => "notavalidvalue") }.should raise_error
     end
 
-    it "should succeed if 'sslverify' has one of the following values (True|False)" do
+    it "should succeed if 'sslverify' has one of the following values (True|False|0|1)" do
       Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", :sslverify => "True")[:sslverify].should == "True"
       Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", :sslverify => "False")[:sslverify].should == "False"
+      Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", :sslverify => "1")[:sslverify].should == "1"
+      Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", :sslverify => "0")[:sslverify].should == "0"
     end
   end
 
