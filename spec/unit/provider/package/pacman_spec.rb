@@ -12,6 +12,8 @@ describe provider do
   before do
     resolver.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
     provider.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
+    resolver.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
+    provider.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
     @resource = Puppet::Type.type(:package).new(:name => 'package')
     @provider = provider.new(@resource)
   end
@@ -24,11 +26,18 @@ describe provider do
     end
 
     it "should call pacman to install the right package quietly" do
+
+      if @provider.yaourt?
+        args = ['/usr/bin/yaourt', '--noconfirm', '-S', @resource[:name]]
+      else
+        args = ['/usr/bin/pacman', '--noconfirm', '--noprogressbar', '-Sy', @resource[:name]]
+      end
+
       executor.
         expects(:execute).
         at_least_once.
-        with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]], no_extra_options).
-        returns ""
+        with(args, no_extra_options).
+        returns ''
 
       @provider.install
     end
