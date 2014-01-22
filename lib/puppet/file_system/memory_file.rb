@@ -26,7 +26,9 @@ class Puppet::FileSystem::MemoryFile
   def initialize(path, properties)
     @path = path
     @properties = properties
-    @children = properties[:children]
+    @children = (properties[:children] || []).collect do |child|
+      child.duplicate_as(File.join(@path, child.path))
+    end
   end
 
   def directory?; @properties[:directory?]; end

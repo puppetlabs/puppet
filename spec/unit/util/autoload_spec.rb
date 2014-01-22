@@ -33,12 +33,12 @@ describe Puppet::Util::Autoload do
       Dir.expects(:entries).with(@dira).returns %w{one two}
       Dir.expects(:entries).with(@dirb).returns %w{one two}
 
-      FileTest.stubs(:directory?).returns false
-      FileTest.expects(:directory?).with(@dira).returns true
-      FileTest.expects(:directory?).with(@dirb).returns true
-      ["#{@dira}/two/lib", "#{@dirb}/two/lib"].each do |d|
-        FileTest.expects(:directory?).with(d).returns true
-      end
+      Puppet::FileSystem.expects(:directory?).with(@dira).returns true
+      Puppet::FileSystem.expects(:directory?).with(@dirb).returns true
+      Puppet::FileSystem.expects(:directory?).with(@dirc).returns false
+
+      FileTest.expects(:directory?).with(regexp_matches(%r{two/lib})).times(2).returns true
+      FileTest.expects(:directory?).with(regexp_matches(%r{one/lib})).times(2).returns false
 
       @autoload.class.module_directories.should == ["#{@dira}/two/lib", "#{@dirb}/two/lib"]
     end
@@ -52,11 +52,11 @@ describe Puppet::Util::Autoload do
       Puppet[:environment] = "foo"
       Dir.expects(:entries).with(@dira).returns %w{. ..}
 
-      FileTest.expects(:directory?).with(@dira).returns true
-      FileTest.expects(:directory?).with("#{@dira}/./lib").never
-      FileTest.expects(:directory?).with("#{@dira}/./plugins").never
-      FileTest.expects(:directory?).with("#{@dira}/../lib").never
-      FileTest.expects(:directory?).with("#{@dira}/../plugins").never
+      Puppet::FileSystem.expects(:directory?).with(@dira).returns true
+      Puppet::FileSystem.expects(:directory?).with("#{@dira}/./lib").never
+      Puppet::FileSystem.expects(:directory?).with("#{@dira}/./plugins").never
+      Puppet::FileSystem.expects(:directory?).with("#{@dira}/../lib").never
+      Puppet::FileSystem.expects(:directory?).with("#{@dira}/../plugins").never
 
       @autoload.class.module_directories
     end

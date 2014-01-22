@@ -14,11 +14,6 @@ end
 #
 # The Puppet::Node::Environment uses a number of global variables.
 #
-# ### `$environment`
-#
-# The 'environment' global variable represents the current environment that's
-# being used in the compiler.
-#
 # ### `$known_resource_types`
 #
 # The 'known_resource_types' global variable represents a singleton instance
@@ -178,7 +173,7 @@ class Puppet::Node::Environment
   # @return [Array<String>] All directories present on disk in the modulepath
   def modulepath
     @modulepath.find_all do |p|
-      FileTest.directory?(p)
+      Puppet::FileSystem.directory?(p)
     end
   end
 
@@ -437,11 +432,11 @@ class Puppet::Node::Environment
     self.to_s.to_zaml(z)
   end
 
-  private
-
   def self.split_path(path_string)
     path_string.split(File::PATH_SEPARATOR)
   end
+
+  private
 
   def self.extralibs()
     if ENV["PUPPETLIB"]

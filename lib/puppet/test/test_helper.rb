@@ -49,7 +49,7 @@ module Puppet::Test
     #  will be run.
     # @return nil
     def self.after_all_tests()
-
+      Puppet.pop_context
     end
 
     # Call this method once per test, prior to execution of each invididual test.

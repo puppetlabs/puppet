@@ -1,6 +1,6 @@
 class Puppet::FileSystem::MemoryImpl
   def initialize(*files)
-    @files = files
+    @files = files + all_children_of(files)
   end
 
   def exist?(path)
@@ -28,7 +28,7 @@ class Puppet::FileSystem::MemoryImpl
   end
 
   def basename(path)
-    path.duplicate_as(path_string(path).split(File::PATH_SEPARATOR).last)
+    path.duplicate_as(File.basename(path_string(path)))
   end
 
   def path_string(object)
@@ -36,12 +36,25 @@ class Puppet::FileSystem::MemoryImpl
   end
 
   def assert_path(path)
-    path
+    if path.is_a?(Puppet::FileSystem::MemoryFile)
+      path
+    else
+      find(path) or raise ArgumentError, "Unable to find registered object for #{path.inspect}"
+    end
   end
 
   private
 
   def find(path)
     @files.find { |file| file.path == path }
+  end
+
+  def all_children_of(files)
+    children = files.collect(&:children).flatten
+    if children.empty?
+      []
+    else
+      children + all_children_of(children)
+    end
   end
 end

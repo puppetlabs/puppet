@@ -58,13 +58,11 @@ module Puppet::Network::HTTP::Handler
     configure_profiler(request_headers, request_params)
     warn_if_near_expiration(new_request.client_cert)
 
-    Puppet.override(request_bindings()) do
-      Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
-        if route = @routes.find { |route| route.matches?(new_request) }
-          route.process(new_request, new_response)
-        else
-          raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("No route for #{new_request.method} #{new_request.path}", HANDLER_NOT_FOUND)
-        end
+    Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
+      if route = @routes.find { |route| route.matches?(new_request) }
+        route.process(new_request, new_response)
+      else
+        raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new("No route for #{new_request.method} #{new_request.path}", HANDLER_NOT_FOUND)
       end
     end
 
@@ -178,11 +176,5 @@ module Puppet::Network::HTTP::Handler
     else
       Puppet::Util::Profiler.current = Puppet::Util::Profiler::NONE
     end
-  end
-
-  def request_bindings
-    {
-      :environments => Puppet::Environments::OnlyProduction.new
-    }
   end
 end

@@ -175,7 +175,10 @@ module Puppet
   # @api private
   def self.initial_context
     {
-      :environments => Puppet::Environments::Legacy.new,
+      :environments => Puppet::Environments::Combined.new(
+        Puppet::Environments::Directories.new(Puppet[:environmentdir], Puppet::Node::Environment.split_path(Puppet[:modulepath])),
+        Puppet::Environments::Legacy.new
+      ),
       :current_environment => Puppet::Node::Environment.root,
     }
   end

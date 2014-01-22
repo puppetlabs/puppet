@@ -54,13 +54,18 @@ module Puppet::Environments
 
     def get(name)
       Puppet::Node::Environment.new(name)
+      #symbol = name.to_sym
+      #Puppet::Node::Environment.create(
+      #  symbol,
+      #  Puppet::Node::Environment.split_path(Puppet.settings.value(:modulepath, symbol)),
+      #  Puppet.settings.value(:manifest, symbol))
     end
   end
 
   class Directories
-    def initialize(environment_dir)
+    def initialize(environment_dir, global_module_path)
       @environment_dir = environment_dir
-      @environments = []
+      @global_module_path = global_module_path
     end
 
     def search_paths
@@ -68,20 +73,23 @@ module Puppet::Environments
     end
 
     def list
-      Puppet::FileSystem.children(@environment_dir).inject(Set.new) do |envs,child|
-        if Puppet::FileSystem.directory?(child) &&
-           Puppet::Node::Environment.valid_name?(Puppet::FileSystem.basename_string(child))
+      base = Puppet::FileSystem.path_string(@environment_dir)
 
-          envs << Puppet::Node::Environment.create(
-            Puppet::FileSystem.path_string(child).intern,
-            [], '')
-        end
-        envs
+      Puppet::FileSystem.children(@environment_dir).select do |child|
+        name = Puppet::FileSystem.basename_string(child)
+        Puppet::FileSystem.directory?(child) &&
+           Puppet::Node::Environment.valid_name?(name)
+      end.collect do |child|
+        name = Puppet::FileSystem.basename_string(child)
+        Puppet::Node::Environment.create(
+          name.intern,
+          [File.join(base, name, "modules")] + @global_module_path,
+          File.join(base, name, "manifests"))
       end
     end
 
     def get(name)
-      list.find { |env| env.name == name.intern } or raise NotFoundError, "Unable to find environment #{name}"
+      list.find { |env| env.name == name.intern }
     end
   end
 

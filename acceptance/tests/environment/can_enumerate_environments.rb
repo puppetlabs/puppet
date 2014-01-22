@@ -31,7 +31,7 @@ on master, "mkdir -p #{environments_dir}/env2"
 
 with_puppet_running_on(master, {
   :master => {
-    "environmentsdir" => environments_dir
+    "environmentdir" => environments_dir
   }
 }) do
   agents.each do |agent|
