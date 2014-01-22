@@ -20,7 +20,7 @@ def curl_master_from(agent, path, headers = '', &block)
   url = "https://#{master}:#{master_port(agent)}#{path}"
   cert_path = full_path(agent, setting_on(agent, "agent", "hostcert"))
   key_path = full_path(agent, setting_on(agent, "agent", "hostprivkey"))
-  curl_base = "curl -g --cert \"#{cert_path}\" --key \"#{key_path}\" -k -H '#{headers}'"
+  curl_base = "curl -sg --cert \"#{cert_path}\" --key \"#{key_path}\" -k -H '#{headers}'"
 
   on agent, "#{curl_base} '#{url}'", &block
 end
@@ -31,7 +31,7 @@ on master, "mkdir -p #{environments_dir}/env2"
 
 with_puppet_running_on(master, {
   :master => {
-    "environmentdir" => environments_dir
+    :environmentdir => environments_dir
   }
 }) do
   agents.each do |agent|

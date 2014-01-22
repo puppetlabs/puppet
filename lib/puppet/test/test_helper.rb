@@ -42,7 +42,7 @@ module Puppet::Test
     # @return nil
     def self.before_all_tests()
       # Make sure that all of the setup is also done for any before(:all) blocks
-      Puppet.push_context(Puppet.initial_context, "Initial for specs")
+      Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial for specs")
     end
 
     # Call this method once, at the end of a test run, when no more tests

@@ -150,7 +150,7 @@ module Puppet
     Puppet.settings.initialize_global_settings(args)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
-    Puppet.push_context(Puppet.initial_context, "Initial context after settings initialization")
+    Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
     Puppet::Parser::Functions.reset
   end
   private_class_method :do_initialize_settings_for_run_mode
@@ -173,10 +173,12 @@ module Puppet
 
   # The bindings used for initialization of puppet
   # @api private
-  def self.initial_context
+  def self.base_context(settings)
     {
       :environments => Puppet::Environments::Combined.new(
-        Puppet::Environments::Directories.new(Puppet[:environmentdir], Puppet::Node::Environment.split_path(Puppet[:modulepath])),
+        Puppet::Environments::Directories.new(
+          settings[:environmentdir],
+          Puppet::Node::Environment.split_path(settings[:modulepath])),
         Puppet::Environments::Legacy.new
       ),
       :current_environment => Puppet::Node::Environment.root,
@@ -184,7 +186,7 @@ module Puppet
   end
 
   # A simple set of bindings that is just enough to limp along to
-  # initialization where the {#initial_context} bindings are put in place
+  # initialization where the {#base_context} bindings are put in place
   # @api private
   def self.bootstrap_context
     { :current_environment => Puppet::Node::Environment.create(:'*bootstrap*', [], '') }
