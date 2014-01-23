@@ -9,7 +9,9 @@ end
 step "run agents again, verify they use cached catalog" do
   agents.each do |agent|
     # can't use --test, because that will set usecacheonfailure=false
-    on(agent, puppet("agent --onetime --no-daemonize --server #{master} --verbose")) do |result|
+    # We use a server that the agent can't possibly talk to in order
+    # to guarantee that no communication can take place.
+    on(agent, puppet("agent --onetime --no-daemonize --server puppet.example.com --verbose")) do |result|
       assert_match(/Using cached catalog/, result.stdout)
     end
   end
