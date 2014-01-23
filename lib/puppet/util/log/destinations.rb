@@ -18,7 +18,7 @@ Puppet::Util::Log.newdesttype :syslog do
     begin
       facility = Syslog.const_get("LOG_#{str.upcase}")
     rescue NameError
-      raise Puppet::Error, "Invalid syslog facility #{str}"
+      raise Puppet::Error, "Invalid syslog facility #{str}", $!.backtrace
     end
 
     @syslog = Syslog.open(name, options, facility)

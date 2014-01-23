@@ -204,7 +204,7 @@ module PSON
           UNPARSED
         end
       rescue => e
-        raise GeneratorError, "Caught #{e.class}: #{e}"
+        raise GeneratorError, "Caught #{e.class}: #{e}", e.backtrace
       end
 
       def parse_value

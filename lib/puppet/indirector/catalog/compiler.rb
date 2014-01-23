@@ -106,7 +106,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       rescue => detail
         message = "Failed when searching for node #{name}: #{detail}"
         Puppet.log_exception(detail, message)
-        raise Puppet::Error, message
+        raise Puppet::Error, message, detail.backtrace
       end
 
 

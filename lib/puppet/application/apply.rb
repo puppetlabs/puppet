@@ -271,7 +271,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       catalog = Puppet::Resource::Catalog.convert_from(Puppet::Resource::Catalog.default_format,text)
       catalog = Puppet::Resource::Catalog.pson_create(catalog) unless catalog.is_a?(Puppet::Resource::Catalog)
     rescue => detail
-      raise Puppet::Error, "Could not deserialize catalog from pson: #{detail}"
+      raise Puppet::Error, "Could not deserialize catalog from pson: #{detail}", detail.backtrace
     end
 
     catalog.to_ral

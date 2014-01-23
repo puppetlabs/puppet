@@ -169,7 +169,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         execute(cmd)
       end
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}"
+      raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
     end
   end
 
@@ -183,7 +183,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(self.deletecmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not delete #{@resource.class.name} #{@resource.name}: #{detail}"
+      raise Puppet::Error, "Could not delete #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
     end
   end
 
@@ -285,7 +285,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     begin
       execute(cmd)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"
+      raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
     end
   end
 end

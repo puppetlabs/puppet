@@ -64,6 +64,6 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
     end
 
   rescue => detail
-      raise Puppet::Error, "Could not load external node results for #{name}: #{detail}"
+      raise Puppet::Error, "Could not load external node results for #{name}: #{detail}", detail.backtrace
   end
 end

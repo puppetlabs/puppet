@@ -7,8 +7,8 @@ class Puppet::Util::Windows::Error < Puppet::Error
 
   attr_reader :code
 
-  def initialize(message, code = GetLastError.call)
-    super(message + ":  #{get_last_error(code)}")
+  def initialize(message, code = GetLastError.call, original = nil)
+    super(message + ":  #{get_last_error(code)}", original)
 
     @code = code
   end

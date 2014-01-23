@@ -50,7 +50,7 @@ class Puppet::FileBucket::Dipper
     rescue => detail
       message = "Could not back up #{file}: #{detail}"
       Puppet.log_exception(detail, message)
-      raise Puppet::Error, message
+      raise Puppet::Error, message, detail.backtrace
     end
   end
 

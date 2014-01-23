@@ -76,7 +76,7 @@ class AuthConfigParser
         right.info msg % val
         right.send(method, val)
       rescue Puppet::AuthStoreError => detail
-        raise Puppet::ConfigurationError, "#{detail} at line #{count} of #{@file}"
+        raise Puppet::ConfigurationError, "#{detail} at line #{count} of #{@file}", detail.backtrace
       end
     end
   end

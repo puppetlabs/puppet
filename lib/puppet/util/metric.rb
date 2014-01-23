@@ -71,7 +71,7 @@ class Puppet::Util::Metric
         RRD.create( self.path, '-s', Puppet[:rrdinterval].to_s, '-b', start.to_i.to_s, *args)
       end
     rescue => detail
-      raise "Could not create RRD file #{path}: #{detail}"
+      raise detail, "Could not create RRD file #{path}: #{detail}", detail.backtrace
     end
   end
 
@@ -185,7 +185,7 @@ class Puppet::Util::Metric
       end
       #system("rrdtool updatev #{self.path} '#{arg}'")
     rescue => detail
-      raise Puppet::Error, "Failed to update #{self.name}: #{detail}"
+      raise Puppet::Error, "Failed to update #{self.name}: #{detail}", detail.backtrace
     end
   end
 

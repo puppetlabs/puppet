@@ -151,7 +151,7 @@ module Puppet::ModuleTool::Shared
           cache_path = forge.retrieve(release[:file])
         end
       rescue OpenURI::HTTPError => e
-        raise RuntimeError, "Could not download module: #{e.message}"
+        raise RuntimeError, "Could not download module: #{e.message}", e.backtrace
       end
 
       [

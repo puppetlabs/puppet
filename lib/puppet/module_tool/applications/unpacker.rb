@@ -40,7 +40,7 @@ module Puppet::ModuleTool
           begin
             Puppet::ModuleTool::Tar.instance(@module_name).unpack(@filename.to_s, build_dir.to_s, [@module_path.stat.uid, @module_path.stat.gid].join(':'))
           rescue Puppet::ExecutionFailure => e
-            raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
+            raise RuntimeError, "Could not extract contents of module archive: #{e.message}", e.backtrace
           end
 
           # grab the first directory

@@ -33,11 +33,11 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
       Puppet.debug("connecting to #{host} as #{user}")
       @ssh = Net::SSH.start(host, user, :port => port, :password => password, :timeout => timeout)
     rescue TimeoutError
-      raise TimeoutError, "timed out while opening an ssh connection to the host"
+      raise TimeoutError, "timed out while opening an ssh connection to the host", $!.backtrace
     rescue Net::SSH::AuthenticationFailed
-      raise Puppet::Error, "SSH authentication failure connecting to #{host} as #{user}"
+      raise Puppet::Error, "SSH authentication failure connecting to #{host} as #{user}", $!.backtrace
     rescue Net::SSH::Exception
-      raise Puppet::Error, "SSH connection failure to #{host}"
+      raise Puppet::Error, "SSH connection failure to #{host}", $!.backtrace
     end
 
     @buf = ""

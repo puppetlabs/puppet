@@ -218,7 +218,7 @@ module RDoc::PuppetParserCore
             container.add_resource(RDoc::PuppetResource.new(type, title, stmt.doc, param))
           end
         rescue => detail
-          raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}"
+          raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}", detail.backtrace
         end
       end
     end
@@ -252,7 +252,7 @@ module RDoc::PuppetParserCore
 
     cls.add_comment(comment, klass.file)
   rescue => detail
-    raise Puppet::ParseError, "impossible to parse class '#{name}' in #{klass.file} at line #{klass.line}: #{detail}"
+    raise Puppet::ParseError, "impossible to parse class '#{name}' in #{klass.file} at line #{klass.line}: #{detail}", detail.backtrace
   end
 
   # create documentation for a node
@@ -277,7 +277,7 @@ module RDoc::PuppetParserCore
 
     n.add_comment(comment, node.file)
   rescue => detail
-    raise Puppet::ParseError, "impossible to parse node '#{name}' in #{node.file} at line #{node.line}: #{detail}"
+    raise Puppet::ParseError, "impossible to parse node '#{name}' in #{node.file} at line #{node.line}: #{detail}", detail.backtrace
   end
 
   # create documentation for a define
@@ -318,7 +318,7 @@ module RDoc::PuppetParserCore
     meth.document_self = true
     meth.singleton = false
   rescue => detail
-    raise Puppet::ParseError, "impossible to parse definition '#{name}' in #{define.file} at line #{define.line}: #{detail}"
+    raise Puppet::ParseError, "impossible to parse definition '#{name}' in #{define.file} at line #{define.line}: #{detail}", detail.backtrace
   end
 
   # Traverse the AST tree and produce code-objects node

@@ -40,7 +40,7 @@ Puppet::Type.type(:selboolean).provide(:getsetsebool) do
         output = out.readlines.join('').chomp!
       end
     rescue Puppet::ExecutionFailure
-      raise Puppet::ExecutionFailure, output.split("\n")[0]
+      raise Puppet::ExecutionFailure, output.split("\n")[0], $!.backtrace
     end
     output
   end

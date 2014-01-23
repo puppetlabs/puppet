@@ -47,7 +47,7 @@ class Puppet::Util::FileType
         rescue => detail
           message = "#{self.class} could not read #{@path}: #{detail}"
           Puppet.log_exception(detail, message)
-          raise Puppet::Error, message
+          raise Puppet::Error, message, detail.backtrace
         end
       end
 
@@ -63,7 +63,7 @@ class Puppet::Util::FileType
         rescue => detail
           message = "#{self.class} could not write #{@path}: #{detail}"
           Puppet.log_exception(detail, message)
-          raise Puppet::Error, message
+          raise Puppet::Error, message, detail.backtrace
         end
       end
     end

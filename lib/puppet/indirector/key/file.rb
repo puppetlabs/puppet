@@ -30,7 +30,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     begin
       Puppet::FileSystem.unlink(key_path)
     rescue => detail
-      raise Puppet::Error, "Could not remove #{request.key} public key: #{detail}"
+      raise Puppet::Error, "Could not remove #{request.key} public key: #{detail}", detail.backtrace
     end
   end
 
@@ -43,7 +43,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
         f.print request.instance.content.public_key.to_pem
       end
     rescue => detail
-      raise Puppet::Error, "Could not write #{request.key}: #{detail}"
+      raise Puppet::Error, "Could not write #{request.key}: #{detail}", detail.backtrace
     end
   end
 end

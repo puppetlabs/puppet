@@ -62,7 +62,7 @@ class Puppet::Util::Storage
         begin
           File.rename(filename, filename + ".bad")
         rescue
-          raise Puppet::Error, "Could not rename corrupt #{filename}; remove manually"
+          raise Puppet::Error, "Could not rename corrupt #{filename}; remove manually", detail.backtrace
         end
       end
     end

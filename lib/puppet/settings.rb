@@ -297,7 +297,7 @@ class Puppet::Settings
       begin
         setting.handle(self.value(setting.name))
       rescue InterpolationError => err
-        raise err unless options[:ignore_interpolation_dependency_errors]
+        raise InterpolationError, err, err.backtrace unless options[:ignore_interpolation_dependency_errors]
         #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
         #we'll get another chance after application defaults are initialized
       end
@@ -1079,9 +1079,9 @@ Generated on #{Time.now}.
     begin
       return File.read(file)
     rescue Errno::ENOENT
-      raise ArgumentError, "No such file #{file}"
+      raise ArgumentError, "No such file #{file}", $!.backtrace
     rescue Errno::EACCES
-      raise ArgumentError, "Permission denied to file #{file}"
+      raise ArgumentError, "Permission denied to file #{file}", $!.backtrace
     end
   end
 

@@ -117,7 +117,7 @@ module Puppet
             end
           end
         rescue Timeout::Error
-          self.fail "Command exceeded timeout" % value.inspect
+          self.fail Puppet::Error, "Command exceeded timeout" % value.inspect, $!.backtrace
         end
 
         if log = @resource[:logoutput]
@@ -265,7 +265,7 @@ module Puppet
         begin
           value = Float(value)
         rescue ArgumentError
-          raise ArgumentError, "The timeout must be a number."
+          raise ArgumentError, "The timeout must be a number.", $!.backtrace
         end
         [value, 0.0].max
       end

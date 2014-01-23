@@ -148,7 +148,7 @@ Puppet::Reports.register_report(:tagmail) do
         rescue => detail
           message = "Could not send report emails through smtp: #{detail}"
           Puppet.log_exception(detail, message)
-          raise Puppet::Error, message
+          raise Puppet::Error, message, detail.backtrace
         end
       elsif Puppet[:sendmail] != ""
         begin
@@ -165,7 +165,7 @@ Puppet::Reports.register_report(:tagmail) do
         rescue => detail
           message = "Could not send report emails via sendmail: #{detail}"
           Puppet.log_exception(detail, message)
-          raise Puppet::Error, message
+          raise Puppet::Error, message, detail.backtrace
         end
       else
         raise Puppet::Error, "SMTP server is unset and could not find sendmail"

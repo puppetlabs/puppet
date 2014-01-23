@@ -32,7 +32,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         map {|set| gemsplit(set) }.
         reject {|x| x.nil? }
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not list gems: #{detail}"
+      raise Puppet::Error, "Could not list gems: #{detail}", detail.backtrace
     end
 
     if options[:justme]
@@ -77,7 +77,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       begin
         uri = URI.parse(source)
       rescue => detail
-        fail "Invalid source '#{uri}': #{detail}"
+        fail detail, "Invalid source '#{uri}': #{detail}", detail.backtrace
       end
 
       case uri.scheme

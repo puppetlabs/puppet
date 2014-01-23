@@ -174,7 +174,7 @@ class Puppet::SSL::CertificateAuthority
     begin
       Puppet.settings.setting(:capass).open('w') { |f| f.print pass }
     rescue Errno::EACCES => detail
-      raise Puppet::Error, "Could not write CA password: #{detail}"
+      raise Puppet::Error, "Could not write CA password: #{detail}", detail.backtrace
     end
 
     @password = pass
@@ -408,7 +408,7 @@ class Puppet::SSL::CertificateAuthority
   private :create_x509_store
 
   # Utility method which is API for PE license checking.
-  # This is used rather than `verify` because 
+  # This is used rather than `verify` because
   #  1) We have already read the certificate from disk into memory.
   #     To read the certificate from disk again is just wasteful.
   #  2) Because we're checking a large number of certificates against

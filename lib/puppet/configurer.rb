@@ -47,7 +47,7 @@ class Puppet::Configurer
       Puppet::FileSystem.unlink(Puppet[:statefile])
       retry
     rescue => detail
-      raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}")
+      raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}", detail)
     end
   end
 

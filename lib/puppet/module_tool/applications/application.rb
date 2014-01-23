@@ -53,7 +53,7 @@ module Puppet::ModuleTool
               begin
                 @metadata.extra_metadata = PSON.load(f)
               rescue PSON::ParserError
-                raise ArgumentError, "Could not parse JSON #{extra_metadata_path}"
+                raise ArgumentError, "Could not parse JSON #{extra_metadata_path}", $!.backtrace
               end
             end
           end

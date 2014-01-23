@@ -76,7 +76,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     begin
       Puppet::FileSystem.unlink(path)
     rescue => detail
-      raise Puppet::Error, "Could not remove #{request.key}: #{detail}"
+      raise Puppet::Error, "Could not remove #{request.key}: #{detail}", detail.backtrace
     end
   end
 
@@ -166,7 +166,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
       begin
         Puppet.settings.setting(setting).open_file(path, 'w') { |f| yield f }
       rescue => detail
-        raise Puppet::Error, "Could not write #{path} to #{setting}: #{detail}"
+        raise Puppet::Error, "Could not write #{path} to #{setting}: #{detail}", detail.backtrace
       end
     else
       raise Puppet::DevError, "You must provide a setting to determine where the files are stored"

@@ -263,7 +263,7 @@ module Util
     begin
       URI::Generic.build(params)
     rescue => detail
-      raise Puppet::Error, "Failed to convert '#{path}' to URI: #{detail}"
+      raise Puppet::Error, "Failed to convert '#{path}' to URI: #{detail}", detail.backtrace
     end
   end
   module_function :path_to_uri
