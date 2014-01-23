@@ -26,8 +26,19 @@ def curl_master_from(agent, path, headers = '', &block)
 end
 
 environments_dir = master.tmpdir("environments")
-on master, "mkdir -p #{environments_dir}/env1"
-on master, "mkdir -p #{environments_dir}/env2"
+apply_manifest_on(master, <<-MANIFEST)
+File {
+  ensure => directory,
+  owner => puppet,
+  mode => 0700,
+}
+
+file {
+  "#{environments_dir}":;
+  "#{environments_dir}/env1":;
+  "#{environments_dir}/env2":;
+}
+MANIFEST
 
 with_puppet_running_on(master, {
   :master => {
