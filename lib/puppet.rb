@@ -118,7 +118,7 @@ module Puppet
   end
 
   # Parse the config file for this process.
-  # @deprecated Use {#initialize_settings}
+  # @deprecated Use {initialize_settings}
   def self.parse_config()
     Puppet.deprecation_warning("Puppet.parse_config is deprecated; please use Faces API (which will handle settings and state management for you), or (less desirable) call Puppet.initialize_settings")
     Puppet.initialize_settings
@@ -138,7 +138,7 @@ module Puppet
 
   # Initialize puppet's settings for a specified run_mode.
   #
-  # @deprecated Use {#initialize_settings}
+  # @deprecated Use {initialize_settings}
   def self.initialize_settings_for_run_mode(run_mode)
     Puppet.deprecation_warning("initialize_settings_for_run_mode may be removed in a future release, as may run_mode itself")
     do_initialize_settings_for_run_mode(run_mode, [])
@@ -186,7 +186,7 @@ module Puppet
   end
 
   # A simple set of bindings that is just enough to limp along to
-  # initialization where the {#base_context} bindings are put in place
+  # initialization where the {base_context} bindings are put in place
   # @api private
   def self.bootstrap_context
     { :current_environment => Puppet::Node::Environment.create(:'*bootstrap*', [], '') }
