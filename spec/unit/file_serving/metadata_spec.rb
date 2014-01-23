@@ -173,6 +173,46 @@ describe Puppet::FileServing::Metadata do
     end
   end
 
+  describe "WindowsStat", :if => Puppet.features.microsoft_windows? do
+    include PuppetSpec::Files
+
+    it "should return default owner, group and mode when the given path has an invalid DACL (such as a non-NTFS volume)" do
+      invalid_error = Puppet::Util::Windows::Error.new('Invalid DACL', 1336)
+      path = tmpfile('foo')
+      FileUtils.touch(path)
+
+      Puppet::Util::Windows::Security.stubs(:get_owner).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_group).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_mode).with(path).raises(invalid_error)
+
+      stat = Puppet::FileSystem.stat(path)
+
+      win_stat = Puppet::FileServing::Metadata::WindowsStat.new(stat, path)
+
+      win_stat.owner.should == 'S-1-5-32-544'
+      win_stat.group.should == 'S-1-0-0'
+      win_stat.mode.should == 0644
+    end
+
+    it "should still raise errors that are not the result of an 'Invalid DACL'" do
+      invalid_error = ArgumentError.new('bar')
+      path = tmpfile('bar')
+      FileUtils.touch(path)
+
+      Puppet::Util::Windows::Security.stubs(:get_owner).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_group).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_mode).with(path).raises(invalid_error)
+
+      stat = Puppet::FileSystem.stat(path)
+
+      win_stat = Puppet::FileServing::Metadata::WindowsStat.new(stat, path)
+
+      expect { win_stat.owner }.to raise_error(ArgumentError)
+      expect { win_stat.group }.to raise_error(ArgumentError)
+      expect { win_stat.mode }.to raise_error(ArgumentError)
+    end
+  end
+
   shared_examples_for "metadata collector symlinks" do
 
     let(:metadata) do
@@ -277,6 +317,9 @@ describe Puppet::FileServing::Metadata do
         data.collect
         data
       end
+      let (:invalid_dacl_error) do
+        Puppet::Util::Windows::Error.new('Invalid DACL', 1336)
+      end
 
       it "should default owner" do
         Puppet::Util::Windows::Security.stubs(:get_owner).returns nil
@@ -295,6 +338,28 @@ describe Puppet::FileServing::Metadata do
 
         metadata.mode.should == 0644
       end
+
+      describe "when the path raises an Invalid ACL error" do
+        # these simulate the behavior of a symlink file whose target does not support ACLs
+        it "should default owner" do
+          Puppet::Util::Windows::Security.stubs(:get_owner).raises(invalid_dacl_error)
+
+          metadata.owner.should == 'S-1-5-32-544'
+        end
+
+        it "should default group" do
+          Puppet::Util::Windows::Security.stubs(:get_group).raises(invalid_dacl_error)
+
+          metadata.group.should == 'S-1-0-0'
+        end
+
+        it "should default mode" do
+          Puppet::Util::Windows::Security.stubs(:get_mode).raises(invalid_dacl_error)
+
+          metadata.mode.should == 0644
+        end
+      end
+
     end
 
     def set_mode(mode, path)
