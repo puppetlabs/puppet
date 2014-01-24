@@ -120,8 +120,8 @@ describe Puppet::Parser::Scope do
 
   describe "when initializing" do
     it "should extend itself with its environment's Functions module as well as the default" do
-      env = Puppet::Node::Environment.new("myenv")
-      root = Puppet::Node::Environment.root
+      env = Puppet::Node::Environment.create(:myenv, [], '')
+      root = Puppet.lookup(:root_environment)
       compiler = stub 'compiler', :environment => env, :is_a? => true
 
       scope = Puppet::Parser::Scope.new(compiler)
@@ -130,7 +130,7 @@ describe Puppet::Parser::Scope do
     end
 
     it "should extend itself with the default Functions module if its environment is the default" do
-      root     = Puppet::Node::Environment.root
+      root     = Puppet.lookup(:root_environment)
       node     = Puppet::Node.new('localhost')
       compiler = Puppet::Parser::Compiler.new(node)
       scope    = Puppet::Parser::Scope.new(compiler)

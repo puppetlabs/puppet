@@ -230,7 +230,7 @@ module Puppet::Parser::Functions
     private
 
     def merged_functions(environment)
-      @functions[Environment.root].merge(@functions[environment])
+      @functions[Puppet.lookup(:root_environment)].merge(@functions[environment])
     end
 
     def get_function(name, environment)

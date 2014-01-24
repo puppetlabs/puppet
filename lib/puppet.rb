@@ -174,14 +174,18 @@ module Puppet
   # The bindings used for initialization of puppet
   # @api private
   def self.base_context(settings)
+    environments = settings[:environmentdir]
+    modulepath = Puppet::Node::Environment.split_path(settings[:modulepath])
+    manifest = settings[:manifest]
+    root_environment = Puppet::Node::Environment.create(:'*root*', modulepath, manifest)
+
     {
       :environments => Puppet::Environments::Combined.new(
-        Puppet::Environments::Directories.new(
-          settings[:environmentdir],
-          Puppet::Node::Environment.split_path(settings[:modulepath])),
+        Puppet::Environments::Directories.new(environments, modulepath),
         Puppet::Environments::Legacy.new
       ),
-      :current_environment => Puppet::Node::Environment.root,
+      :current_environment => root_environment,
+      :root_environment => root_environment,
     }
   end
 

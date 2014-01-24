@@ -36,7 +36,7 @@ end
 # In addition to normal environments that are defined by the user,there is a
 # special 'root' environment. It is defined as an instance variable on the
 # Puppet::Node::Environment metaclass. The environment name is `*root*` and can
-# be accessed by calling {Puppet::Node::Environment.root}.
+# be accessed by looking up the `:root_environment` using {Puppet.lookup}.
 #
 # The primary purpose of the root environment is to contain parser functions
 # that are not bound to a specific environment. The main case for this is for
@@ -144,16 +144,6 @@ class Puppet::Node::Environment
   # @api public
   def self.valid_name?(name)
     !!name.match(/\A\w+\Z/)
-  end
-
-  # @return [Puppet::Node::Environment] The `*root*` environment.
-  #
-  # This is only used for handling functions that are not attached to a
-  # specific environment.
-  #
-  # @api private
-  def self.root
-    @root ||= create(:'*root*', split_path(Puppet[:modulepath]), Puppet[:manifest])
   end
 
   # Clear all memoized environments and the 'current' environment
