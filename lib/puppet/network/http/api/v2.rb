@@ -3,9 +3,9 @@ module Puppet::Network::HTTP::API::V2
   require 'puppet/network/http/api/v2/authorization'
 
   def self.routes
-    [path(%r{^/v2\.0}).
+    path(%r{^/v2\.0}).
       get(Authorization.new).
-      chain(ENVIRONMENTS, NOT_FOUND)]
+      chain(ENVIRONMENTS, NOT_FOUND)
   end
 
   private
@@ -23,7 +23,7 @@ module Puppet::Network::HTTP::API::V2
   NOT_FOUND = Puppet::Network::HTTP::Route.
     path(/.*/).
     any(lambda do |req, res|
-      raise Puppet::Network::HTTP::Handler::HTTPNotFoundError.new(req.path, Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
+      raise Puppet::Network::HTTP::Error::HTTPNotFoundError.new(req.path, Puppet::Network::HTTP::Issues::HANDLER_NOT_FOUND)
     end)
 
   ENVIRONMENTS = path(%r{^/environments$}).get(provide do

@@ -28,7 +28,7 @@ class Puppet::Network::HTTP::RackREST
 
   def initialize(args={})
     super()
-    register(Puppet::Network::HTTP::API::V2.routes + Puppet::Network::HTTP::API::V1.routes)
+    register([Puppet::Network::HTTP::API::V2.routes, Puppet::Network::HTTP::API::V1.routes])
   end
 
   def set_content_type(response, format)
