@@ -36,8 +36,9 @@ module Puppet::SSL::CertificateFactory
   private
 
   def self.add_extensions_to(cert, csr, issuer, extensions)
-    ef = OpenSSL::X509::ExtensionFactory.
-      new(issuer.is_a?(OpenSSL::X509::Request) ? cert : issuer, cert)
+    ef = OpenSSL::X509::ExtensionFactory.new
+    ef.subject_certificate = cert
+    ef.issuer_certificate  = issuer.is_a?(OpenSSL::X509::Request) ? cert : issuer
 
     # Extract the requested extensions from the CSR.
     requested_exts = csr.request_extensions.inject({}) do |hash, re|
