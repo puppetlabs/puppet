@@ -84,6 +84,13 @@ describe Puppet::SSL::CertificateFactory do
           "critical" => false }
     end
 
+    it "should add an extension for the subjectKeyIdentifer" do
+      cert = subject.build(:server, csr, issuer, serial)
+      ef = OpenSSL::X509::ExtensionFactory.new(issuer, cert)
+      cert.extensions.map { |x| x.to_h }.find {|x| x["oid"] == "subjectKeyIdentifier" }.should ==
+        ef.create_extension("subjectKeyIdentifier", "hash", false).to_h
+    end
+
     # See #2848 for why we are doing this: we need to make sure that
     # subjectAltName is set if the CSR has it, but *not* if it is set when the
     # certificate is built!
