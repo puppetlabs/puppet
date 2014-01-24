@@ -147,14 +147,14 @@ describe Puppet::Node::Facts::Facter do
      :if => Puppet.features.external_facts?, :unless => Puppet.features.microsoft_windows? do
     Puppet[:pluginfactdest] = "/plugin/dest"
     @facter.find(@request)
-    Facter::Util::Config.external_facts_dirs.include?("/plugin/dest")
+    Facter.search_external_path.include?("/plugin/dest")
   end
 
   it "should include pluginfactdest when loading external facts",
     :if => Puppet.features.external_facts?, :if => Puppet.features.microsoft_windows? do
     Puppet[:pluginfactdest] = "/plugin/dest"
     @facter.find(@request)
-    Facter::Util::Config.external_facts_dirs.include?("C:/plugin/dest")
+    Facter.search_external_path.include?("C:/plugin/dest")
   end
 
   describe "when loading fact plugins from disk" do
@@ -191,7 +191,7 @@ describe Puppet::Node::Facts::Facter do
       mod = Puppet::Module.new("mymodule", "#{one}/mymodule", @request.environment)
       @request.environment.stubs(:modules).returns([mod])
       @facter.find(@request)
-      Facter::Util::Config.external_facts_dirs.include?("#{one}/mymodule/facts.d")
+      Facter.search_external_path.include?("#{one}/mymodule/facts.d")
     end
   end
 end
