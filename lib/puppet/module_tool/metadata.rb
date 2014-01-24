@@ -24,6 +24,14 @@ module Puppet::ModuleTool
 
     # Instantiate from a hash, whose keys are setters in this class.
     def initialize(settings={})
+      if settings.include?('name')
+        # Act as the reverse of to_hash method (settings typically stems from the metadata.json file)
+        if settings.include?('full_module_name') || settings.include?('username')
+          raise ArgumentError, "Parameter 'name' cannot be used in conjunction with 'full_module_name' or 'username'"
+        end
+        self.full_module_name = settings['name']
+        settings = settings.reject {|k,v| k == 'name'}
+      end
       set_options(settings)
     end
 
@@ -37,6 +45,10 @@ module Puppet::ModuleTool
     # Return an array of the module's Dependency objects.
     def dependencies
       return @dependencies ||= []
+    end
+
+    def dependencies=(dependencies)
+      return @dependencies = dependencies
     end
 
     def author
@@ -79,14 +91,6 @@ module Puppet::ModuleTool
       @description = description
     end
 
-    def extra_metadata
-      @extra_metadata || {}
-    end
-
-    def extra_metadata=(extra_metadata)
-      @extra_metadata = extra_metadata
-    end
-
     def project_page
       @project_page || 'UNKNOWN'
     end
@@ -97,13 +101,25 @@ module Puppet::ModuleTool
 
     # Return an array of the module's Puppet types, each one is a hash
     # containing :name and :doc.
+    # This is deprecated. Types are now longer stored in metadata.
     def types
       return @types ||= []
     end
 
+    # Deprecated but needed in order to read legacy metadata
+    def types=(types)
+      @types = types
+    end
+
     # Return module's file checksums.
+    # This is deprecated. Checksums are now stored in 'checksums.json'
     def checksums
       return @checksums ||= {}
+    end
+
+    # Deprecated but needed in order to read legacy metadata
+    def checksums=(checksums)
+      @checksums = checksums
     end
 
     # Return the dashed name of the module, which may either be the
@@ -130,7 +146,7 @@ module Puppet::ModuleTool
     end
 
     def to_data_hash()
-      return extra_metadata.merge({
+      return {
         'name'         => @full_module_name,
         'version'      => @version,
         'source'       => source,
@@ -139,10 +155,8 @@ module Puppet::ModuleTool
         'summary'      => summary,
         'description'  => description,
         'project_page' => project_page,
-        'dependencies' => dependencies,
-        'types'        => types,
-        'checksums'    => checksums
-      })
+        'dependencies' => dependencies
+      }
     end
 
     def to_hash()

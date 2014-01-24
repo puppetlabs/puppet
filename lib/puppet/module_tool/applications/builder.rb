@@ -11,7 +11,7 @@ module Puppet::ModuleTool
       end
 
       def run
-        load_modulefile!
+        load_metadata!
         create_directory
         copy_contents
         add_metadata
@@ -66,8 +66,15 @@ module Puppet::ModuleTool
       end
 
       def add_metadata
-        File.open(File.join(build_path, 'metadata.json'), 'w') do |f|
-          f.write(PSON.pretty_generate(metadata))
+        metadata_path = File.join(build_path, 'metadata.json')
+        unless File.file?(metadata_path)
+          # Legacy build: Metadata generated from Modulefile. Write it out
+          File.open(metadata_path, 'w') do |f|
+            f.write(PSON.pretty_generate(metadata))
+          end
+        end
+        File.open(File.join(build_path, 'checksums.json'), 'w') do |f|
+          f.write(PSON.pretty_generate(Checksums.new(@path)))
         end
       end
 

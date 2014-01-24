@@ -13,16 +13,18 @@ describe Puppet::ModuleTool::Applications::Builder do
   let(:builder)      { Puppet::ModuleTool::Applications::Builder.new(path) }
 
   before :each do
-    File.open(File.join(path, 'Modulefile'), 'w') do |f|
+    File.open(File.join(path, 'metadata.json'), 'w') do |f|
       f.write(<<EOM)
-name    '#{module_name}'
-version '#{version}'
-source 'http://github.com/testing/#{module_name}'
-author 'testing'
-license 'Apache License Version 2.0'
-summary 'Puppet testing module'
-description 'This module can be used for basic testing'
-project_page 'http://github.com/testing/#{module_name}'
+{
+  "name": "#{module_name}",
+  "version": "#{version}",
+  "source": "http://github.com/testing/#{module_name}",
+  "author": "testing",
+  "license": "Apache License Version 2.0",
+  "summary": "Puppet testing module",
+  "description": "This module can be used for basic testing",
+  "project_page": "http://github.com/testing/#{module_name}"
+}
 EOM
     end
   end

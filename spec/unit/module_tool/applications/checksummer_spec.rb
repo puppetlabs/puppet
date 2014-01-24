@@ -7,6 +7,7 @@ describe Puppet::ModuleTool::Applications::Checksummer, :unless => Puppet.featur
   }
 
   let(:module_install_path) { 'foo' }
+  let(:module_checksums_file) { 'checksums.json' }
   let(:module_metadata_file) { 'metadata.json' }
 
   let(:module_install_pathname) {
@@ -15,6 +16,12 @@ describe Puppet::ModuleTool::Applications::Checksummer, :unless => Puppet.featur
       returns(module_install_pathname)
     module_install_pathname
   }
+
+  def non_existing_path
+    mock() do
+      expects(:exist?).with().returns(false)
+    end
+  end
 
   def stub_module_file_pathname(relative_path, present)
     module_file_pathname = mock() do
@@ -26,22 +33,22 @@ describe Puppet::ModuleTool::Applications::Checksummer, :unless => Puppet.featur
 
     module_file_pathname
   end
-
-  context %q{when metadata.json doesn't exist in the specified module install path} do
+  context %q{when neither checksums.json nor metadata.json exists in the specified module install path} do
     before(:each) do
-      stub_module_file_pathname(module_metadata_file, false)
+      subject.expects(:checksums_file).with().\
+        returns(non_existing_path)
       subject.expects(:metadata_file).with().\
-        returns(module_install_pathname + module_metadata_file)
+        returns(non_existing_path)
     end
 
     it 'raises an ArgumentError exception' do
       lambda {
         subject.run
-      }.should raise_error(ArgumentError, 'No metadata.json found.')
+      }.should raise_error(ArgumentError, 'No file containing checksums found.')
     end
   end
 
-  context 'when metadata.json exists in the specified module install path' do
+  context 'when checksums.json exists in the specified module install path' do
     module_files = {
       'README'     => '1',
       'CHANGELOG'  => '2',
@@ -90,11 +97,9 @@ describe Puppet::ModuleTool::Applications::Checksummer, :unless => Puppet.featur
     end
 
     before(:each) do
-      stub_module_file_pathname(module_metadata_file, true)
-      subject.expects(:metadata_file).with().\
-        returns(module_install_pathname + module_metadata_file)
-      subject.expects(:metadata).with().\
-        returns({ 'checksums' => module_files })
+      checksum_computer
+      subject.expects(:checksums).with().\
+        returns(module_files)
     end
 
     module_files_combination.each do |removed_files|
