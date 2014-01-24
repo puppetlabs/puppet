@@ -176,16 +176,12 @@ module Puppet
   def self.base_context(settings)
     environments = settings[:environmentdir]
     modulepath = Puppet::Node::Environment.split_path(settings[:modulepath])
-    manifest = settings[:manifest]
-    root_environment = Puppet::Node::Environment.create(:'*root*', modulepath, manifest)
 
     {
       :environments => Puppet::Environments::Combined.new(
         Puppet::Environments::Directories.new(environments, modulepath),
         Puppet::Environments::Legacy.new
-      ),
-      :current_environment => root_environment,
-      :root_environment => root_environment,
+      )
     }
   end
 
@@ -193,7 +189,11 @@ module Puppet
   # initialization where the {base_context} bindings are put in place
   # @api private
   def self.bootstrap_context
-    { :current_environment => Puppet::Node::Environment.create(:'*bootstrap*', [], '') }
+    root_environment = Puppet::Node::Environment.create(:'*root*', [], '')
+    {
+      :current_environment => root_environment,
+      :root_environment => root_environment
+    }
   end
 
   # @param overrides [Hash] A hash of bindings to be merged with the parent context.
