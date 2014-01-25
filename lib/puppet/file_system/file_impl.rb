@@ -12,7 +12,8 @@ class Puppet::FileSystem::FileImpl
     # (sigh).
     #
     unless path.is_a?(String) || path.respond_to?(:to_str)
-      raise ArgumentError, "FileSystem implementation expected Pathname, got: '#{path.class}"
+      Puppet.warning(caller)
+      raise ArgumentError, "FileSystem implementation expected Pathname, got: '#{path.class}'"
     end
     # converts String and #to_str to Pathname
     Pathname.new(path)
@@ -80,7 +81,11 @@ class Puppet::FileSystem::FileImpl
   end
 
   def exist?(path)
-    File.exist?(path)
+    ::File.exist?(path)
+  end
+
+  def directory?(path)
+    ::File.directory?(path)
   end
 
   def executable?(path)
@@ -97,6 +102,10 @@ class Puppet::FileSystem::FileImpl
 
   def mkpath(path)
     path.mkpath
+  end
+
+  def children(path)
+    path.children
   end
 
   def symlink(path, dest, options = {})

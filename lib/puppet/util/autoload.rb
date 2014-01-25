@@ -137,8 +137,8 @@ class Puppet::Util::Autoload
 
         # if the app defaults have been initialized then it should be safe to access the module path setting.
         $env_module_directories[real_env] ||= real_env.modulepath.collect do |dir|
-          Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
-        end.flatten.collect { |d| File.join(d, "lib") }.find_all do |d|
+          Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
+        end.flatten.find_all do |d|
           FileTest.directory?(d)
         end
       else

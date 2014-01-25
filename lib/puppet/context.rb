@@ -11,54 +11,37 @@ class Puppet::Context
   class StackUnderflow < Puppet::Error; end
 
   # @api private
-  class Bindings
-    attr_reader :parent, :description
-
-    def initialize(parent, description, overrides = {})
-      overrides ||= {}
-      @parent = parent
-      @description = description
-      @table = parent ? parent.table.merge(overrides) : overrides
-    end
-
-    def lookup(name, default_proc)
-      if @table.include?(name)
-        @table[name]
-      elsif default_proc
-        default_proc.call
-      else
-        raise UndefinedBindingError, name
-      end
-    end
-
-    def root?
-      @parent.nil?
-    end
-
-    protected
-
-    attr_reader :table
-  end
-
-  # @api private
   def initialize(initial_bindings)
-    @bindings = Bindings.new(nil, "root", initial_bindings)
+    @stack = []
+    @table = initial_bindings
+    @description = "root"
   end
 
   # @api private
   def push(overrides, description = "")
-    @bindings = Bindings.new(@bindings, description, overrides)
+    @stack.push([@table, @description])
+    @table = @table.merge(overrides || {})
+    @description = description
   end
 
   # @api private
   def pop
-    raise(StackUnderflow, "Attempted to pop, but already at root of the context stack.") if @bindings.root?
-    @bindings = @bindings.parent
+    if @stack.empty?
+      raise(StackUnderflow, "Attempted to pop, but already at root of the context stack.")
+    else
+      (@table, @description) = @stack.pop
+    end
   end
 
   # @api private
   def lookup(name, &block)
-    @bindings.lookup(name, block)
+    if @table.include?(name)
+      @table[name]
+    elsif block
+      block.call
+    else
+      raise UndefinedBindingError, "lookup of #{name} in #{@table.inspect} at top of #{@stack.inspect}"
+    end
   end
 
   # @api private

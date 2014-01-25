@@ -14,11 +14,6 @@ end
 #
 # The Puppet::Node::Environment uses a number of global variables.
 #
-# ### `$environment`
-#
-# The 'environment' global variable represents the current environment that's
-# being used in the compiler.
-#
 # ### `$known_resource_types`
 #
 # The 'known_resource_types' global variable represents a singleton instance
@@ -41,7 +36,7 @@ end
 # In addition to normal environments that are defined by the user,there is a
 # special 'root' environment. It is defined as an instance variable on the
 # Puppet::Node::Environment metaclass. The environment name is `*root*` and can
-# be accessed by calling {Puppet::Node::Environment.root}.
+# be accessed by looking up the `:root_environment` using {Puppet.lookup}.
 #
 # The primary purpose of the root environment is to contain parser functions
 # that are not bound to a specific environment. The main case for this is for
@@ -144,27 +139,11 @@ class Puppet::Node::Environment
     @manifest = manifest
   end
 
-  # Retrieve the environment for the current process.
-  #
-  # @note This should only used when a catalog is being compiled.
-  #
-  # @api private
-  #
-  # @return [Puppet::Node::Environment] the currently set environment if one
-  #   has been explicitly set, else it will return the '*root*' environment
-  def self.current
-    Puppet.deprecation_warning("Remove me.")
-    Puppet.lookup(:current_environment)
-  end
-
-  # @return [Puppet::Node::Environment] The `*root*` environment.
-  #
-  # This is only used for handling functions that are not attached to a
-  # specific environment.
-  #
-  # @api private
-  def self.root
-    @root ||= create(:'*root*', split_path(Puppet[:modulepath]), Puppet[:manifest])
+  # @param [String] name Environment name to check for valid syntax.
+  # @return [Boolean] true if name is valid
+  # @api public
+  def self.valid_name?(name)
+    !!name.match(/\A\w+\Z/)
   end
 
   # Clear all memoized environments and the 'current' environment
@@ -172,7 +151,6 @@ class Puppet::Node::Environment
   # @api private
   def self.clear
     seen.clear
-    $environment = nil
   end
 
   # @!attribute [r] name
@@ -185,7 +163,7 @@ class Puppet::Node::Environment
   # @return [Array<String>] All directories present on disk in the modulepath
   def modulepath
     @modulepath.find_all do |p|
-      FileTest.directory?(p)
+      Puppet::FileSystem.directory?(p)
     end
   end
 
@@ -444,11 +422,11 @@ class Puppet::Node::Environment
     self.to_s.to_zaml(z)
   end
 
-  private
-
   def self.split_path(path_string)
     path_string.split(File::PATH_SEPARATOR)
   end
+
+  private
 
   def self.extralibs()
     if ENV["PUPPETLIB"]

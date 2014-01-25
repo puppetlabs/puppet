@@ -33,7 +33,11 @@ module Puppet::Test
     # that call Puppet.
     # @return nil
     def self.initialize()
-      initialize_settings_before_each
+      Puppet.push_context(Puppet.base_context({
+        :environmentdir => "/dev/null",
+        :modulepath => "",
+        :manifest => "/dev/null"
+      }), "Initial for specs")
       Puppet::Parser::Functions.reset
     end
 
@@ -42,14 +46,12 @@ module Puppet::Test
     # @return nil
     def self.before_all_tests()
       # Make sure that all of the setup is also done for any before(:all) blocks
-      Puppet.push_context(Puppet.initial_context, "Initial for specs")
     end
 
     # Call this method once, at the end of a test run, when no more tests
     #  will be run.
     # @return nil
     def self.after_all_tests()
-
     end
 
     # Call this method once per test, prior to execution of each invididual test.

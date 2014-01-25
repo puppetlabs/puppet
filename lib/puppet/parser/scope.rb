@@ -766,7 +766,8 @@ class Puppet::Parser::Scope
   private
 
   def extend_with_functions_module
-    extend Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.root)
-    extend Puppet::Parser::Functions.environment_module(environment) if environment != Puppet::Node::Environment.root
+    root = Puppet.lookup(:root_environment)
+    extend Puppet::Parser::Functions.environment_module(root)
+    extend Puppet::Parser::Functions.environment_module(environment) if environment != root
   end
 end

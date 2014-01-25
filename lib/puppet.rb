@@ -118,7 +118,7 @@ module Puppet
   end
 
   # Parse the config file for this process.
-  # @deprecated Use {#initialize_settings}
+  # @deprecated Use {initialize_settings}
   def self.parse_config()
     Puppet.deprecation_warning("Puppet.parse_config is deprecated; please use Faces API (which will handle settings and state management for you), or (less desirable) call Puppet.initialize_settings")
     Puppet.initialize_settings
@@ -138,7 +138,7 @@ module Puppet
 
   # Initialize puppet's settings for a specified run_mode.
   #
-  # @deprecated Use {#initialize_settings}
+  # @deprecated Use {initialize_settings}
   def self.initialize_settings_for_run_mode(run_mode)
     Puppet.deprecation_warning("initialize_settings_for_run_mode may be removed in a future release, as may run_mode itself")
     do_initialize_settings_for_run_mode(run_mode, [])
@@ -150,7 +150,7 @@ module Puppet
     Puppet.settings.initialize_global_settings(args)
     run_mode = Puppet::Util::RunMode[run_mode]
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
-    Puppet.push_context(Puppet.initial_context, "Initial context after settings initialization")
+    Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
     Puppet::Parser::Functions.reset
   end
   private_class_method :do_initialize_settings_for_run_mode
@@ -173,18 +173,27 @@ module Puppet
 
   # The bindings used for initialization of puppet
   # @api private
-  def self.initial_context
+  def self.base_context(settings)
+    environments = settings[:environmentdir]
+    modulepath = Puppet::Node::Environment.split_path(settings[:modulepath])
+
     {
-      :environments => Puppet::Environments::Legacy.new,
-      :current_environment => Puppet::Node::Environment.root,
+      :environments => Puppet::Environments::Combined.new(
+        Puppet::Environments::Directories.new(environments, modulepath),
+        Puppet::Environments::Legacy.new
+      )
     }
   end
 
   # A simple set of bindings that is just enough to limp along to
-  # initialization where the {#initial_context} bindings are put in place
+  # initialization where the {base_context} bindings are put in place
   # @api private
   def self.bootstrap_context
-    { :current_environment => Puppet::Node::Environment.create(:'*bootstrap*', [], '') }
+    root_environment = Puppet::Node::Environment.create(:'*root*', [], '')
+    {
+      :current_environment => root_environment,
+      :root_environment => root_environment
+    }
   end
 
   # @param overrides [Hash] A hash of bindings to be merged with the parent context.

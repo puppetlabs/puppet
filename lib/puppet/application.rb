@@ -353,15 +353,19 @@ class Application
       plugin_hook('initialize_app_defaults') { initialize_app_defaults }
     end
 
-    require 'puppet'
-    require 'puppet/util/instrumentation'
-    Puppet::Util::Instrumentation.init
+    # Setup a new context using the app's configuration
+    Puppet.override(Puppet.base_context(Puppet.settings),
+                    "Base context from application's configuration") do
+      require 'puppet'
+      require 'puppet/util/instrumentation'
+      Puppet::Util::Instrumentation.init
 
-    exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
-    exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
-    exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
-    exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
-    exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
+      exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
+      exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
+      exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
+      exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+      exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
+    end
   end
 
   def main

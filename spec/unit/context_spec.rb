@@ -21,10 +21,6 @@ describe Puppet::Context do
     it "fails if you try to pop off the top of the stack" do
       expect { context.pop }.to raise_error(Puppet::Context::StackUnderflow)
     end
-
-    it "protects the bindings table from casual access" do
-      expect { context.push({}).table }.to raise_error(NoMethodError, /protected/)
-    end
   end
 
   describe "with additional context" do
