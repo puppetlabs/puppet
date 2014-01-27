@@ -17,8 +17,8 @@ describe provider do
      @provider.stubs(:get).with(:release).returns '1'
      @provider.stubs(:get).with(:arch).returns 'i386'
   end
-  # provider should repond to the following methods
-   [:install, :latest, :update, :purge].each do |method|
+  # provider should respond to the following methods
+   [:install, :latest, :update, :purge, :hold, :unhold].each do |method|
      it "should have a(n) #{method}" do
        @provider.should respond_to(method)
     end
@@ -54,6 +54,33 @@ describe provider do
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, 'mypackage-1.0')
       @provider.stubs(:query).returns(:ensure => '1.2').then.returns(:ensure => '1.0')
       @provider.install
+    end
+
+    describe "when the provider is holdable" do
+      before do
+        provider.stubs(:declared_feature?).with(:holdable).returns true
+      end
+
+      it 'can hold packages' do
+        @resource.stubs(:should).with(:ensure).returns :held
+        @provider.expects(:yum).with('versionlock', 'mypackage')
+        @provider.hold
+      end
+
+      it "installs packages before holding them" do
+        @resource.stubs(:should).with(:ensure).returns :held
+        @provider.expects(:yum).with('versionlock', 'mypackage')
+        @provider.expects(:install)
+        @provider.hold
+      end
+
+      it "unholds packages before installing" do
+        @resource.stubs(:should).with(:ensure).returns :installed
+        @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage')
+        @provider.expects(:unhold)
+        @provider.install
+      end
+
     end
   end
 
