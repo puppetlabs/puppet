@@ -56,13 +56,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#start" do
     it "should use the supplied start command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :start => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
 
     it "should start the service with systemctl start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
   end
@@ -70,13 +70,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#stop" do
     it "should use the supplied stop command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :stop => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
 
     it "should stop the service with systemctl stop otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
   end
@@ -132,14 +132,14 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#restart" do
     it "should use the supplied restart command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => true).never
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
     end
 
     it "should restart the service with systemctl restart" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
     end
   end

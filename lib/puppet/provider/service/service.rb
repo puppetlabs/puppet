@@ -20,10 +20,9 @@ Puppet::Type.type(:service).provide :service do
   end
 
   # A simple wrapper so execution failures are a bit more informative.
-  def texecute(type, command, fof = true)
+  def texecute(type, command, fof = true, squelch = false, combine = true)
     begin
-      # #565: Services generally produce no output, so squelch them.
-      execute(command, :failonfail => fof, :override_locale => false, :squelch => true)
+      execute(command, :failonfail => fof, :override_locale => false, :squelch => squelch, :combine => combine)
     rescue Puppet::ExecutionFailure => detail
       @resource.fail "Could not #{type} #{@resource.ref}: #{detail}"
     end
