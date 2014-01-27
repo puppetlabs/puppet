@@ -192,7 +192,7 @@ module Puppet::Util::Execution
     end
 
     if options[:failonfail] and exit_status != 0
-      raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
+      raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output.strip}"
     end
 
     Puppet::Util::Execution::ProcessOutput.new(output || '', exit_status)
