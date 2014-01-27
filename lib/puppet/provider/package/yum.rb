@@ -27,6 +27,19 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
+  if command('yum')
+    Puppet.debug('Checking if yum supports versionlock.')
+    begin
+      yum('versionlock')
+      rescue Puppet::ExecutionFailure => e
+        Puppet.debug("Yum versionlock failed with: #{e.inspect}.")
+        false
+      else
+        Puppet.debug("Yum versionlock ran OK, therefore add :holdable feature.")
+        has_feature :holdable
+    end
+  end
+
   def self.prefetch(packages)
     raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
     super
@@ -74,6 +87,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
+    # Unhold before installing
+    if self.class.declared_feature?(:holdable)
+      Puppet.debug('Provider supports holdable. Unholding package before installing...')
+      self.unhold
+    end
+
     yum "-d", "0", "-e", "0", "-y", operation, wanted
 
     is = self.query
@@ -107,4 +126,27 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   def purge
     yum "-y", :erase, @resource[:name]
   end
+  
+  def hold
+    # Install before locking the version.
+    self.install
+    yum('versionlock', @resource[:name])  
+  end
+  
+  def unhold
+    Puppet.debug('Got to yum.unhold...')
+    begin
+      yum('versionlock', 'delete', "*#{@resource[:name]}*")
+    rescue Puppet::ExecutionFailure => e
+      # No versionlock present for this package
+      Puppet.debug("Yum versionlock delete failed with error: #{e.inspect}")
+      return true if e.inspect =~ /versionlock delete: no matches/
+      # If it's not a no match failure, then something else went wrong...
+      raise Puppet::Error, "Failed to unhold package #{@resource[:name]} due to: #{e.inspect}"
+      return false
+    end
+    Puppet.debug("Successfully deleted versionlock for package #{@resource[:name]}")
+    return true
+  end
+
 end
