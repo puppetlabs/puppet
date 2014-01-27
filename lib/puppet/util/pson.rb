@@ -8,6 +8,6 @@
 module Puppet::Util::Pson
   def pson_create(pson)
     raise ArgumentError, "No data provided in pson data" unless pson['data']
-    from_pson(pson['data'])
+    from_data_hash(pson['data'])
   end
 end

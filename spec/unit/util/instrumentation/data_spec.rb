@@ -41,6 +41,6 @@ describe Puppet::Util::Instrumentation::Data do
   end
 
   it "should return a hash containing data when unserializing from pson" do
-    Puppet::Util::Instrumentation::Data.from_pson({:name => "name"}).should == {:name => "name"}
+    Puppet::Util::Instrumentation::Data.from_data_hash({:name => "name"}).should == {:name => "name"}
   end
 end

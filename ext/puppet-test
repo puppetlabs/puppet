@@ -241,7 +241,7 @@ Suite.new :resource_type, "Managing resource types" do
         ARGV.each do |name|
             json = Puppet::Resource::Type.find(name).to_pson
             data = PSON.parse(json)
-            p Puppet::Resource::Type.from_pson(data)
+            p Puppet::Resource::Type.from_data_hash(data)
         end
     end
 

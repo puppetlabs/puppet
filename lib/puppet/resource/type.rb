@@ -46,7 +46,7 @@ class Puppet::Resource::Type
   extend Puppet::Indirector
   indirects :resource_type, :terminus_class => :parser
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     name = data.delete('name') or raise ArgumentError, "Resource Type names must be specified"
     kind = data.delete('kind') || "definition"
 
@@ -61,6 +61,10 @@ class Puppet::Resource::Type
     data[:arguments] = data.delete(:parameters)
 
     new(type, name, data)
+  end
+
+  def self.from_pson(data)
+    self.from_data_hash(data)
   end
 
   def to_pson(*args)

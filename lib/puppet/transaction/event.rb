@@ -19,10 +19,14 @@ class Puppet::Transaction::Event
 
   EVENT_STATUSES = %w{noop success failure audit}
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
     obj
+  end
+
+  def self.from_pson(data)
+    self.from_data_hash(data)
   end
 
   def initialize(options = {})

@@ -33,7 +33,7 @@ describe Puppet::Util::TagSet do
     array = ['a', 'b', 1, 5.4]
     set.merge(array)
 
-    tes = Puppet::Util::TagSet.from_pson(PSON.parse(set.to_pson))
+    tes = Puppet::Util::TagSet.from_data_hash(PSON.parse(set.to_pson))
     tes.should == set
   end
 

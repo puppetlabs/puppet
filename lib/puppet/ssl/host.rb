@@ -118,12 +118,16 @@ DOC
     indirection.destroy(name)
   end
 
-  def self.from_pson(pson)
-    instance = new(pson["name"])
-    if pson["desired_state"]
-      instance.desired_state = pson["desired_state"]
+  def self.from_data_hash(data)
+    instance = new(data["name"])
+    if data["desired_state"]
+      instance.desired_state = data["desired_state"]
     end
     instance
+  end
+
+  def self.from_pson(pson)
+    self.from_data_hash(pson)
   end
 
   # Puppet::SSL::Host is actually indirected now so the original implementation

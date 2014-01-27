@@ -26,8 +26,8 @@ describe Puppet::FileServing::Metadata do
     Puppet::FileServing::Metadata.new(foobar).should respond_to(:to_pson_data_hash)
   end
 
-  it "should support pson deserialization" do
-    Puppet::FileServing::Metadata.should respond_to(:from_pson)
+  it "should support deserialization" do
+    Puppet::FileServing::Metadata.should respond_to(:from_data_hash)
   end
 
   describe "when serializing" do

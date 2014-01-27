@@ -931,7 +931,7 @@ describe Puppet::SSL::Host do
           "name"  => host.name,
           "desired_state" => host.desired_state,
         }
-        generated_host = Puppet::SSL::Host.from_pson(pson_hash)
+        generated_host = Puppet::SSL::Host.from_data_hash(pson_hash)
         generated_host.desired_state.should == host.desired_state
         generated_host.name.should == host.name
       end

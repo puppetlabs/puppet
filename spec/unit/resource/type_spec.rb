@@ -39,11 +39,11 @@ describe Puppet::Resource::Type do
     end
 
     def from_json(json)
-      Puppet::Resource::Type.from_pson(json)
+      Puppet::Resource::Type.from_data_hash(json)
     end
 
     def double_convert
-      Puppet::Resource::Type.from_pson(PSON.parse(@type.to_pson))
+      Puppet::Resource::Type.from_data_hash(PSON.parse(@type.to_pson))
     end
 
     it "should include the name and type" do

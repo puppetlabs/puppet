@@ -12,8 +12,12 @@ class Puppet::Util::TagSet < Set
     @hash.keys.to_yaml
   end
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     self.new(data)
+  end
+
+  def self.from_pson(data)
+    self.from_data_hash(data)
   end
 
   def to_data_hash

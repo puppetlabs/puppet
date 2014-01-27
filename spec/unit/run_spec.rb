@@ -121,14 +121,14 @@ describe Puppet::Run do
     end
   end
 
-  describe ".from_pson" do
+  describe ".from_data_hash" do
     it "should read from a hash that represents the 'options' to initialize" do
       options = {
         "tags" => "whatever",
         "background" => true,
         "ignoreschedules" => false,
       }
-      run = Puppet::Run.from_pson(options)
+      run = Puppet::Run.from_data_hash(options)
 
       run.options.should == {
         :tags => "whatever",
@@ -145,7 +145,7 @@ describe Puppet::Run do
                 "tags" => [],
                 "ignoreschedules" => false},
               "status" => "success"}
-      run = Puppet::Run.from_pson(hash)
+      run = Puppet::Run.from_data_hash(hash)
 
       run.options.should == {
         :pluginsync => true,

@@ -24,10 +24,14 @@ module Puppet
         map(&:to_sym)
 
 
-      def self.from_pson(data)
+      def self.from_data_hash(data)
         obj = self.allocate
         obj.initialize_from_hash(data)
         obj
+      end
+
+      def self.from_pson(data)
+        self.from_data_hash(data)
       end
 
       # Provide a boolean method for each of the states.
@@ -111,7 +115,7 @@ module Puppet
         @failed = data['failed']
 
         @events = data['events'].map do |event|
-          Puppet::Transaction::Event.from_pson(event)
+          Puppet::Transaction::Event.from_data_hash(event)
         end
       end
 

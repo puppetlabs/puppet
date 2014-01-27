@@ -181,7 +181,7 @@ describe Puppet::Resource::Status do
 
     @status.containment_path.should == @containment_path
 
-    tripped = Puppet::Resource::Status.from_pson(PSON.parse(@status.to_pson))
+    tripped = Puppet::Resource::Status.from_data_hash(PSON.parse(@status.to_pson))
 
     tripped.title.should == @status.title
     tripped.containment_path.should == @status.containment_path

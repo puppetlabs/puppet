@@ -4,12 +4,12 @@ Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20
   def intern(klass, text)
     data = MessagePack.unpack(text)
     return data if data.is_a?(klass)
-    klass.from_pson(data)
+    klass.from_data_hash(data)
   end
 
   def intern_multiple(klass, text)
     MessagePack.unpack(text).collect do |data|
-      klass.from_pson(data)
+      klass.from_data_hash(data)
     end
   end
 
@@ -22,7 +22,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:msgpack, :weight => 20
   end
 
   def supported?(klass)
-    Puppet.features.msgpack? && klass.method_defined?(:to_msgpack)
+    Puppet.features.msgpack? && klass.method_defined?(:to_msgpack) && klass.method_defined?(:from_data_hash)
   end
 end
 
@@ -50,7 +50,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
       raise Puppet::Network::FormatHandler::FormatError, "Serialized YAML did not contain a valid instance of #{klass}"
     end
 
-    klass.from_pson(data)
+    klass.from_data_hash(data)
   end
 
   def render(instance)
@@ -143,7 +143,7 @@ Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weigh
   end
 end
 
-Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :required_methods => [:render_method, :intern_method]) do
+Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :required_methods => [:render_method, :intern_method], :intern_method => :from_data_hash) do
   def intern(klass, text)
     data_to_instance(klass, PSON.parse(text))
   end
@@ -168,7 +168,7 @@ Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :
       data = d
     end
     return data if data.is_a?(klass)
-    klass.from_pson(data)
+    klass.from_data_hash(data)
   end
 end
 

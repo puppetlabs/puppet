@@ -671,45 +671,45 @@ describe Puppet::Resource do
     # trap the actual data structure then.
 
     it "should set its type to the provided type" do
-      Puppet::Resource.from_pson(PSON.parse(Puppet::Resource.new("File", "/foo").to_pson)).type.should == "File"
+      Puppet::Resource.from_data_hash(PSON.parse(Puppet::Resource.new("File", "/foo").to_pson)).type.should == "File"
     end
 
     it "should set its title to the provided title" do
-      Puppet::Resource.from_pson(PSON.parse(Puppet::Resource.new("File", "/foo").to_pson)).title.should == "/foo"
+      Puppet::Resource.from_data_hash(PSON.parse(Puppet::Resource.new("File", "/foo").to_pson)).title.should == "/foo"
     end
 
     it "should include all tags from the resource" do
       resource = Puppet::Resource.new("File", "/foo")
       resource.tag("yay")
 
-      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).tags.should == resource.tags
+      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).tags.should == resource.tags
     end
 
     it "should include the file if one is set" do
       resource = Puppet::Resource.new("File", "/foo")
       resource.file = "/my/file"
 
-      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).file.should == "/my/file"
+      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).file.should == "/my/file"
     end
 
     it "should include the line if one is set" do
       resource = Puppet::Resource.new("File", "/foo")
       resource.line = 50
 
-      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).line.should == 50
+      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).line.should == 50
     end
 
     it "should include the 'exported' value if one is set" do
       resource = Puppet::Resource.new("File", "/foo")
       resource.exported = true
 
-      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).exported?.should be_true
+      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).exported?.should be_true
     end
 
     it "should set 'exported' to false if no value is set" do
       resource = Puppet::Resource.new("File", "/foo")
 
-      Puppet::Resource.from_pson(PSON.parse(resource.to_pson)).exported?.should be_false
+      Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson)).exported?.should be_false
     end
 
     it "should set all of its parameters as the 'parameters' entry" do
@@ -717,7 +717,7 @@ describe Puppet::Resource do
       resource[:foo] = %w{bar eh}
       resource[:fee] = %w{baz}
 
-      result = Puppet::Resource.from_pson(PSON.parse(resource.to_pson))
+      result = Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson))
       result["foo"].should == %w{bar eh}
       result["fee"].should == %w{baz}
     end
@@ -725,14 +725,14 @@ describe Puppet::Resource do
     it "should serialize relationships as reference strings" do
       resource = Puppet::Resource.new("File", "/foo")
       resource[:requires] = Puppet::Resource.new("File", "/bar")
-      result = Puppet::Resource.from_pson(PSON.parse(resource.to_pson))
+      result = Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson))
       result[:requires].should == "File[/bar]"
     end
 
     it "should serialize multiple relationships as arrays of reference strings" do
       resource = Puppet::Resource.new("File", "/foo")
       resource[:requires] = [Puppet::Resource.new("File", "/bar"), Puppet::Resource.new("File", "/baz")]
-      result = Puppet::Resource.from_pson(PSON.parse(resource.to_pson))
+      result = Puppet::Resource.from_data_hash(PSON.parse(resource.to_pson))
       result[:requires].should == [ "File[/bar]",  "File[/baz]" ]
     end
   end
@@ -750,59 +750,59 @@ describe Puppet::Resource do
     end
 
     it "should set its type to the provided type" do
-      Puppet::Resource.from_pson(@data).type.should == "File"
+      Puppet::Resource.from_data_hash(@data).type.should == "File"
     end
 
     it "should set its title to the provided title" do
-      Puppet::Resource.from_pson(@data).title.should == basepath+"/yay"
+      Puppet::Resource.from_data_hash(@data).title.should == basepath+"/yay"
     end
 
     it "should tag the resource with any provided tags" do
       @data['tags'] = %w{foo bar}
-      resource = Puppet::Resource.from_pson(@data)
+      resource = Puppet::Resource.from_data_hash(@data)
       resource.tags.should be_include("foo")
       resource.tags.should be_include("bar")
     end
 
     it "should set its file to the provided file" do
       @data['file'] = "/foo/bar"
-      Puppet::Resource.from_pson(@data).file.should == "/foo/bar"
+      Puppet::Resource.from_data_hash(@data).file.should == "/foo/bar"
     end
 
     it "should set its line to the provided line" do
       @data['line'] = 50
-      Puppet::Resource.from_pson(@data).line.should == 50
+      Puppet::Resource.from_data_hash(@data).line.should == 50
     end
 
     it "should 'exported' to true if set in the pson data" do
       @data['exported'] = true
-      Puppet::Resource.from_pson(@data).exported.should be_true
+      Puppet::Resource.from_data_hash(@data).exported.should be_true
     end
 
     it "should 'exported' to false if not set in the pson data" do
-      Puppet::Resource.from_pson(@data).exported.should be_false
+      Puppet::Resource.from_data_hash(@data).exported.should be_false
     end
 
     it "should fail if no title is provided" do
       @data.delete('title')
-      expect { Puppet::Resource.from_pson(@data) }.to raise_error(ArgumentError)
+      expect { Puppet::Resource.from_data_hash(@data) }.to raise_error(ArgumentError)
     end
 
     it "should fail if no type is provided" do
       @data.delete('type')
-      expect { Puppet::Resource.from_pson(@data) }.to raise_error(ArgumentError)
+      expect { Puppet::Resource.from_data_hash(@data) }.to raise_error(ArgumentError)
     end
 
     it "should set each of the provided parameters" do
       @data['parameters'] = {'foo' => %w{one two}, 'fee' => %w{three four}}
-      resource = Puppet::Resource.from_pson(@data)
+      resource = Puppet::Resource.from_data_hash(@data)
       resource['foo'].should == %w{one two}
       resource['fee'].should == %w{three four}
     end
 
     it "should convert single-value array parameters to normal values" do
       @data['parameters'] = {'foo' => %w{one}}
-      resource = Puppet::Resource.from_pson(@data)
+      resource = Puppet::Resource.from_data_hash(@data)
       resource['foo'].should == %w{one}
     end
   end

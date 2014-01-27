@@ -12,19 +12,23 @@ class Puppet::Relationship
 
   attr_reader :event
 
-  def self.from_pson(pson)
-    source = pson["source"]
-    target = pson["target"]
+  def self.from_data_hash(data)
+    source = data["source"]
+    target = data["target"]
 
     args = {}
-    if event = pson["event"]
+    if event = data["event"]
       args[:event] = event
     end
-    if callback = pson["callback"]
+    if callback = data["callback"]
       args[:callback] = callback
     end
 
     new(source, target, args)
+  end
+
+  def self.from_pson(pson)
+    self.from_data_hash(pson)
   end
 
   def event=(event)

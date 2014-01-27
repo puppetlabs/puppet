@@ -233,10 +233,14 @@ class Puppet::Util::Log
     @levels.include?(level)
   end
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     obj = allocate
     obj.initialize_from_hash(data)
     obj
+  end
+
+  def self.from_pson(data)
+    self.from_data_hash(data)
   end
 
   attr_accessor :time, :remote, :file, :line, :source

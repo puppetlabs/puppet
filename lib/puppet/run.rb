@@ -80,18 +80,22 @@ class Puppet::Run
     obj
   end
 
-  def self.from_pson(hash)
-    if hash['options']
-      return from_hash(hash)
+  def self.from_data_hash(data)
+    if data['options']
+      return from_hash(data)
     end
 
     options = { :pluginsync => Puppet[:pluginsync] }
 
-    hash.each do |key, value|
+    data.each do |key, value|
       options[key.to_sym] = value
     end
 
     new(options)
+  end
+
+  def self.from_pson(hash)
+    self.from_data_hash(hash)
   end
 
   def to_data_hash

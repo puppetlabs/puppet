@@ -18,12 +18,16 @@ class Puppet::Status
     @status.to_pson
   end
 
-  def self.from_pson(pson)
-    if pson.include?('status')
-      self.new(pson['status'])
+  def self.from_data_hash(data)
+    if data.include?('status')
+      self.new(data['status'])
     else
-      self.new(pson)
+      self.new(data)
     end
+  end
+
+  def self.from_pson(pson)
+    self.from_data_hash(pson)
   end
 
   def name

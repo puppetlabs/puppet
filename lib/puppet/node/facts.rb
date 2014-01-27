@@ -78,10 +78,14 @@ class Puppet::Node::Facts
     strip_internal == other.send(:strip_internal)
   end
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     new_facts = allocate
     new_facts.initialize_from_hash(data)
     new_facts
+  end
+
+  def self.from_pson(data)
+    self.from_data_hash(data)
   end
 
   def to_data_hash

@@ -89,7 +89,7 @@ describe Puppet::Util::Metric do
     metric.newvalue("v1", 10.1, "something")
     metric.newvalue("v2", 20, "something else")
 
-    tripped = Puppet::Util::Metric.from_pson(PSON.parse(metric.to_pson))
+    tripped = Puppet::Util::Metric.from_data_hash(PSON.parse(metric.to_pson))
 
     tripped.name.should == metric.name
     tripped.label.should == metric.label
