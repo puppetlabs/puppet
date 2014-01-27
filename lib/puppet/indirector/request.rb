@@ -78,14 +78,14 @@ class Puppet::Indirector::Request
   end
 
   def environment
-    @environment ||= Puppet::Node::Environment.new
+    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
   end
 
   def environment=(env)
     @environment = if env.is_a?(Puppet::Node::Environment)
       env
     else
-      Puppet::Node::Environment.new(env)
+      Puppet.lookup(:environments).get(env)
     end
   end
 

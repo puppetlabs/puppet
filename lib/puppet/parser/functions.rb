@@ -41,10 +41,7 @@ module Puppet::Parser::Functions
   # environment
   #
   # @api private
-  def self.environment_module(env = Puppet.lookup(:current_environment))
-    if env and ! env.is_a?(Puppet::Node::Environment)
-      env = Puppet::Node::Environment.new(env)
-    end
+  def self.environment_module(env)
     @modules[env.name] ||= Module.new
   end
 
@@ -132,10 +129,10 @@ module Puppet::Parser::Functions
     # the block must be installed as a method because it may use "return",
     # which is not allowed from procs.
     real_fname = "real_function_#{name}"
-    environment_module.send(:define_method, real_fname, &block)
+    environment_module(environment).send(:define_method, real_fname, &block)
 
     fname = "function_#{name}"
-    environment_module.send(:define_method, fname) do |*args|
+    environment_module(environment).send(:define_method, fname) do |*args|
       Puppet::Util::Profiler.profile("Called #{name}") do
         if args[0].is_a? Array
           if arity >= 0 and args[0].size != arity

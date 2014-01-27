@@ -39,15 +39,17 @@ describe "puppet module list" do
     barmod1 = PuppetSpec::Modules.create('bar', @modpath1)
     foomod2 = PuppetSpec::Modules.create('foo', @modpath2)
 
-    env = Puppet::Node::Environment.new
+    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2], '')
 
-    Puppet::Face[:module, :current].list.should == {
-      @modpath1 => [
-        Puppet::Module.new('bar', barmod1.path, env),
-        Puppet::Module.new('foo', foomod1.path, env)
-      ],
-      @modpath2 => [Puppet::Module.new('foo', foomod2.path, env)]
-    }
+    Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
+      Puppet::Face[:module, :current].list(:environment => 'useme').should == {
+        @modpath1 => [
+          Puppet::Module.new('bar', barmod1.path, usedenv),
+          Puppet::Module.new('foo', foomod1.path, usedenv)
+        ],
+        @modpath2 => [Puppet::Module.new('foo', foomod2.path, usedenv)]
+      }
+    end
   end
 
   it "should use the specified environment" do

@@ -53,7 +53,7 @@ Puppet::Face.define(:parser, '0.0.1') do
   end
 
   def validate_manifest
-    Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+    Puppet.lookup(:environments).get(Puppet[:environment]).known_resource_types.clear
   rescue => detail
     Puppet.log_exception(detail)
     exit(1)

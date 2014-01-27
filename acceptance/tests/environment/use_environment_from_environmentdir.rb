@@ -2,7 +2,7 @@ test_name "Use environments from the environmentdir"
 
 testdir = master.tmpdir('use_environmentdir')
 
-apply_manifest_on(master, <<-MANIFEST)
+apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
   owner => puppet,
@@ -10,9 +10,10 @@ File {
 }
 
 file {
+  "#{testdir}":;
   "#{testdir}/environments":;
   "#{testdir}/environments/special":;
-  "#{testdir}/environments/special/manifest":;
+  "#{testdir}/environments/special/manifests":;
   "#{testdir}/environments/special/modules":;
   "#{testdir}/environments/special/modules/amod":;
   "#{testdir}/environments/special/modules/amod/manifests":;
@@ -23,7 +24,10 @@ file {
 
   "#{testdir}/environments/special/modules/amod/manifests/init.pp":
     ensure => file,
-    content => 'class amod { notify { template: message => template("amod/our_template.erb") } file { "$agent_file_location/file": source => "puppet:///modules/amod/data" }'
+    content => 'class amod {
+      notify { template: message => template("amod/our_template.erb") }
+      file { "$agent_file_location/file": source => "puppet:///modules/amod/data" }
+    }'
   ;
   "#{testdir}/environments/special/modules/amod/lib/facter/environment_fact.rb":
     ensure => file,
@@ -53,9 +57,13 @@ master_opts = {
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
     atmp = agent.tmpdir('use_environmentdir')
-    on agent, puppet("agent", "--environment", "special", "-t", "--server", master, "--trace"), :environment => {
-      "FACTER_agent_file_location" => atmp
-    } do |result|
+    on agent, puppet("agent",
+                     "--environment", "special",
+                     "-t",
+                     "--server", master,
+                     "--trace",
+                     'ENV' => { "FACTER_agent_file_location" => atmp }),
+       :acceptable_exit_codes => [2] do |result|
       assert_match(/environment fact/, result.stdout)
     end
 

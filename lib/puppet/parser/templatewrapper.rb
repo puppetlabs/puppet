@@ -84,7 +84,7 @@ class Puppet::Parser::TemplateWrapper
 
   # @api private
   def file=(filename)
-    unless @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment.to_s)
+    unless @__file__ = Puppet::Parser::Files.find_template(filename, scope.compiler.environment)
       raise Puppet::ParseError, "Could not find template '#{filename}'"
     end
 

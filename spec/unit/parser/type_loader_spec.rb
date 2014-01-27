@@ -19,10 +19,6 @@ describe Puppet::Parser::TypeLoader do
     loader.environment.name.should == :myenv
   end
 
-  it "should include the Environment Helper" do
-    loader.class.ancestors.should be_include(Puppet::Node::Environment::Helper)
-  end
-
   it "should delegate its known resource types to its environment" do
     loader.known_resource_types.should be_instance_of(Puppet::Resource::TypeCollection)
   end

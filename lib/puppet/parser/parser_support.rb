@@ -121,8 +121,7 @@ class Puppet::Parser::Parser
   end
 
   def initialize(env)
-    # The environment is needed to know how to find the resource type collection.
-    @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
+    @environment = env
     initvars
   end
 

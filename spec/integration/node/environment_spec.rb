@@ -7,6 +7,13 @@ require 'puppet_spec/scope'
 describe Puppet::Node::Environment do
   include PuppetSpec::Files
 
+  def a_module_in(name, dir)
+    Dir.mkdir(dir)
+    moddir = File.join(dir, name)
+    Dir.mkdir(moddir)
+    moddir
+  end
+
   it "should be able to return each module from its environment with the environment, name, and path set correctly" do
     base = tmpfile("env_modules")
     Dir.mkdir(base)
@@ -16,15 +23,11 @@ describe Puppet::Node::Environment do
     %w{1 2}.each do |num|
       dir = File.join(base, "dir#{num}")
       dirs << dir
-      Dir.mkdir(dir)
-      mod = "mod#{num}"
-      moddir = File.join(dir, mod)
-      mods[mod] = moddir
-      Dir.mkdir(moddir)
+
+      mods["mod#{num}"] = a_module_in("mod#{num}", dir)
     end
 
-    environment = Puppet::Node::Environment.new("foo")
-    environment.stubs(:modulepath).returns dirs
+    environment = Puppet::Node::Environment.create(:foo, dirs, '')
 
     environment.modules.each do |mod|
       mod.environment.should == environment
@@ -37,19 +40,14 @@ describe Puppet::Node::Environment do
     Dir.mkdir(base)
 
     dirs = []
-    mods = {}
     %w{1 2}.each do |num|
       dir = File.join(base, "dir#{num}")
       dirs << dir
-      Dir.mkdir(dir)
-      mod = "mod"
-      moddir = File.join(dir, mod)
-      mods[mod] = moddir
-      Dir.mkdir(moddir)
+
+      a_module_in("mod", dir)
     end
 
-    environment = Puppet::Node::Environment.new("foo")
-    environment.stubs(:modulepath).returns dirs
+    environment = Puppet::Node::Environment.create(:foo, dirs, '')
 
     mods = environment.modules
     mods.length.should == 1

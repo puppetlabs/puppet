@@ -5,7 +5,8 @@ require 'puppet/resource'
 describe Puppet::Resource do
   include PuppetSpec::Files
 
-  let :basepath do make_absolute("/somepath") end
+  let(:basepath) { make_absolute("/somepath") }
+  let(:environment) { Puppet::Node::Environment.create(:testing, [], '') }
 
   [:catalog, :file, :line].each do |attr|
     it "should have an #{attr} attribute" do
@@ -120,10 +121,6 @@ describe Puppet::Resource do
     resource.should be_exported
   end
 
-  it "should support an environment attribute" do
-    Puppet::Resource.new("file", "/my/file", :environment => :foo).environment.name.should == :foo
-  end
-
   describe "and munging its type and title" do
     describe "when modeling a builtin resource" do
       it "should be able to find the resource type" do
@@ -139,19 +136,19 @@ describe Puppet::Resource do
       describe "that exists" do
         before do
           @type = Puppet::Resource::Type.new(:definition, "foo::bar")
-          Puppet::Node::Environment.new.known_resource_types.add @type
+          environment.known_resource_types.add @type
         end
 
         it "should set its type to the capitalized type name" do
-          Puppet::Resource.new("foo::bar", "/my/file").type.should == "Foo::Bar"
+          Puppet::Resource.new("foo::bar", "/my/file", :environment => environment).type.should == "Foo::Bar"
         end
 
         it "should be able to find the resource type" do
-          Puppet::Resource.new("foo::bar", "/my/file").resource_type.should equal(@type)
+          Puppet::Resource.new("foo::bar", "/my/file", :environment => environment).resource_type.should equal(@type)
         end
 
         it "should set its title to the provided title" do
-          Puppet::Resource.new("foo::bar", "/my/file").title.should == "/my/file"
+          Puppet::Resource.new("foo::bar", "/my/file", :environment => environment).title.should == "/my/file"
         end
       end
 
@@ -179,15 +176,15 @@ describe Puppet::Resource do
       describe "that exists" do
         before do
           @type = Puppet::Resource::Type.new(:hostclass, "foo::bar")
-          Puppet::Node::Environment.new.known_resource_types.add @type
+          environment.known_resource_types.add @type
         end
 
         it "should set its title to the capitalized, fully qualified resource type" do
-          Puppet::Resource.new("class", "foo::bar").title.should == "Foo::Bar"
+          Puppet::Resource.new("class", "foo::bar", :environment => environment).title.should == "Foo::Bar"
         end
 
         it "should be able to find the resource type" do
-          Puppet::Resource.new("class", "foo::bar").resource_type.should equal(@type)
+          Puppet::Resource.new("class", "foo::bar", :environment => environment).resource_type.should equal(@type)
         end
       end
 
@@ -207,9 +204,9 @@ describe Puppet::Resource do
         describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
           it "should set its title to :main" do
             @type = Puppet::Resource::Type.new(:hostclass, "")
-            Puppet::Node::Environment.new.known_resource_types.add @type
+            environment.known_resource_types.add @type
 
-            Puppet::Resource.new("class", "").title.should == :main
+            Puppet::Resource.new("class", "", :environment => environment).title.should == :main
           end
         end
       end
@@ -222,9 +219,9 @@ describe Puppet::Resource do
         describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
           it "should set its title to :main" do
             @type = Puppet::Resource::Type.new(:hostclass, "")
-            Puppet::Node::Environment.new.known_resource_types.add @type
+            environment.known_resource_types.add @type
 
-            Puppet::Resource.new("class", :main).title.should == :main
+            Puppet::Resource.new("class", :main, :environment => environment).title.should == :main
           end
         end
       end
@@ -237,8 +234,8 @@ describe Puppet::Resource do
 
   it "should not fail when an invalid parameter is used and strict mode is disabled" do
     type = Puppet::Resource::Type.new(:definition, "foobar")
-    Puppet::Node::Environment.new.known_resource_types.add type
-    resource = Puppet::Resource.new("foobar", "/my/file")
+    environment.known_resource_types.add type
+    resource = Puppet::Resource.new("foobar", "/my/file", :environment => environment)
     resource[:yay] = true
   end
 
@@ -267,7 +264,7 @@ describe Puppet::Resource do
   end
 
   describe "when setting default parameters" do
-    let(:foo_node) { Puppet::Node.new('foo') }
+    let(:foo_node) { Puppet::Node.new('foo', :environment => environment) }
     let(:compiler) { Puppet::Parser::Compiler.new(foo_node) }
     let(:scope)    { Puppet::Parser::Scope.new(compiler) }
 
@@ -276,15 +273,15 @@ describe Puppet::Resource do
     end
 
     it "should fail when asked to set default values and it is not a parser resource" do
-      Puppet::Node::Environment.new.known_resource_types.add(
+      environment.known_resource_types.add(
       Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("default")})
       )
-      resource = Puppet::Resource.new("default_param", "name")
+      resource = Puppet::Resource.new("default_param", "name", :environment => environment)
       lambda { resource.set_default_parameters(scope) }.should raise_error(Puppet::DevError)
     end
 
     it "should evaluate and set any default values when no value is provided" do
-      Puppet::Node::Environment.new.known_resource_types.add(
+      environment.known_resource_types.add(
         Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
@@ -293,7 +290,7 @@ describe Puppet::Resource do
     end
 
     it "should skip attributes with no default value" do
-      Puppet::Node::Environment.new.known_resource_types.add(
+      environment.known_resource_types.add(
         Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => ast_string("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => scope)
@@ -301,7 +298,7 @@ describe Puppet::Resource do
     end
 
     it "should return the list of default parameters set" do
-      Puppet::Node::Environment.new.known_resource_types.add(
+      environment.known_resource_types.add(
         Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => ast_string("a_default_value")})
       )
       resource = Puppet::Parser::Resource.new("default_param", "name", :scope => scope)
@@ -315,11 +312,10 @@ describe Puppet::Resource do
       let(:apache) { Puppet::Resource::Type.new(:hostclass, 'apache', :arguments => { 'port' => port }) }
 
       before do
-        environment = Puppet::Node::Environment.new(environment_name)
         environment.known_resource_types.add(apache)
 
         scope.stubs(:host).returns('host')
-        scope.stubs(:environment).returns(Puppet::Node::Environment.new(environment_name))
+        scope.stubs(:environment).returns(environment)
         scope.stubs(:facts).returns(Puppet::Node::Facts.new("facts", fact_values))
       end
 
@@ -398,17 +394,17 @@ describe Puppet::Resource do
 
   describe "when validating all required parameters are present" do
     it "should be able to validate that all required parameters are present" do
-      Puppet::Node::Environment.new.known_resource_types.add(
+      environment.known_resource_types.add(
         Puppet::Resource::Type.new(:definition, "required_param", :arguments => {"a" => nil})
       )
-      lambda { Puppet::Resource.new("required_param", "name").validate_complete }.should raise_error(Puppet::ParseError)
+      lambda { Puppet::Resource.new("required_param", "name", :environment => environment).validate_complete }.should raise_error(Puppet::ParseError)
     end
 
     it "should not fail when all required parameters are present" do
-      Puppet::Node::Environment.new.known_resource_types.add(
+      environment.known_resource_types.add(
         Puppet::Resource::Type.new(:definition, "no_required_param")
       )
-      resource = Puppet::Resource.new("no_required_param", "name")
+      resource = Puppet::Resource.new("no_required_param", "name", :environment => environment)
       resource["a"] = "meh"
       lambda { resource.validate_complete }.should_not raise_error
     end
@@ -455,14 +451,14 @@ describe Puppet::Resource do
 
     it "should correctly detect when provided parameters are not valid for defined resource types" do
       type = Puppet::Resource::Type.new(:definition, "foobar")
-      Puppet::Node::Environment.new.known_resource_types.add type
-      Puppet::Resource.new("foobar", "/my/file").should_not be_valid_parameter("myparam")
+      environment.known_resource_types.add type
+      Puppet::Resource.new("foobar", "/my/file", :environment => environment).should_not be_valid_parameter("myparam")
     end
 
     it "should correctly detect when provided parameters are valid for defined resource types" do
       type = Puppet::Resource::Type.new(:definition, "foobar", :arguments => {"myparam" => nil})
-      Puppet::Node::Environment.new.known_resource_types.add type
-      Puppet::Resource.new("foobar", "/my/file").should be_valid_parameter("myparam")
+      environment.known_resource_types.add type
+      Puppet::Resource.new("foobar", "/my/file", :environment => environment).should be_valid_parameter("myparam")
     end
 
     it "should allow setting and retrieving of parameters" do
@@ -603,11 +599,9 @@ describe Puppet::Resource do
   describe "when serializing a defined type" do
     before do
       type = Puppet::Resource::Type.new(:definition, "foo::bar")
-      Puppet::Node::Environment.new.known_resource_types.add type
-    end
+      environment.known_resource_types.add type
 
-    before :each do
-      @resource = Puppet::Resource.new('foo::bar', 'xyzzy')
+      @resource = Puppet::Resource.new('foo::bar', 'xyzzy', :environment => environment)
       @resource['one'] = 'test'
       @resource['two'] = 'other'
       @resource.resource_type

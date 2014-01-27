@@ -47,7 +47,7 @@ module Puppet::Util::RDoc
   def manifestdoc(files)
     Puppet[:ignoreimport] = true
     files.select { |f| FileTest.file?(f) }.each do |f|
-      parser = Puppet::Parser::Parser.new(Puppet::Node::Environment.new(Puppet[:environment]))
+      parser = Puppet::Parser::Parser.new(Puppet.lookup(:environments).get(Puppet[:environment]))
       parser.file = f
       ast = parser.parse
       output(f, ast)

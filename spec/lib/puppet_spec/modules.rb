@@ -4,7 +4,7 @@ module PuppetSpec::Modules
       module_dir = File.join(dir, name)
       FileUtils.mkdir_p(module_dir)
 
-      environment = Puppet::Node::Environment.new(options[:environment])
+      environment = options[:environment]
 
       if metadata = options[:metadata]
         metadata[:source]  ||= 'github'

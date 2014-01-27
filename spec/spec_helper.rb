@@ -164,10 +164,10 @@ RSpec.configure do |config|
         config.instance_variable_get(:@files_to_run).each { |f| logfile.puts f }
       end
     end
-    # Clean up switch of TMPDIR, don't know if needed after this, so needs to reset it
-    # to old before removing it
+
+    # return to original tmpdir
     ENV['TMPDIR'] = oldtmpdir
-    FileUtils.rm_rf(tmpdir) if Puppet::FileSystem.exist?(tmpdir) && tmpdir.to_s.start_with?(oldtmpdir)
+    FileUtils.rm_rf(tmpdir)
   end
 
   if ENV['PROFILE']

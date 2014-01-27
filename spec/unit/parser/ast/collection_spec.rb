@@ -4,7 +4,7 @@ require 'spec_helper'
 describe Puppet::Parser::AST::Collection do
   before :each do
     @mytype = Puppet::Resource::Type.new(:definition, "mytype")
-    @environment = Puppet::Node::Environment.new
+    @environment = Puppet::Node::Environment.create(:testing, [], '')
     @environment.known_resource_types.add @mytype
 
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foonode", :environment => @environment))

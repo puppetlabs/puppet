@@ -10,11 +10,10 @@ describe Puppet::Resource::TypeCollection do
 
     before do
       @dir = tmpfile("autoload_testing")
-      Puppet[:modulepath] = @dir
-
       FileUtils.mkdir_p @dir
-      @code = Puppet::Resource::TypeCollection.new("env")
-      Puppet::Node::Environment.new("env").stubs(:known_resource_types).returns @code
+
+      environment = Puppet::Node::Environment.create(:env, [@dir], '')
+      @code = environment.known_resource_types
     end
 
     # Setup a module.

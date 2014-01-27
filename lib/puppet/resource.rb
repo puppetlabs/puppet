@@ -15,9 +15,6 @@ class Puppet::Resource
 
   include Puppet::Util::Tagging
 
-  require 'puppet/resource/type_collection_helper'
-  include Puppet::Resource::TypeCollectionHelper
-
   extend Puppet::Util::Pson
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
@@ -170,23 +167,6 @@ class Puppet::Resource
     super || parameters.keys.include?( parameter_name(parameter) )
   end
 
-  # These two methods are extracted into a Helper
-  # module, but file load order prevents me
-  # from including them in the class, and I had weird
-  # behaviour (i.e., sometimes it didn't work) when
-  # I directly extended each resource with the helper.
-  def environment
-    Puppet::Node::Environment.new(@environment)
-  end
-
-  def environment=(env)
-    if env.is_a?(String) or env.is_a?(Symbol)
-      @environment = env
-    else
-      @environment = env.name
-    end
-  end
-
   %w{exported virtual strict}.each do |m|
     define_method(m+"?") do
       self.send(m)
@@ -248,11 +228,19 @@ class Puppet::Resource
 
   def resource_type
     @rstype ||= case type
-    when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
-    when "Node"; known_resource_types.node(title)
+    when "Class"; environment.known_resource_types.hostclass(title == :main ? "" : title)
+    when "Node"; environment.known_resource_types.node(title)
     else
-      Puppet::Type.type(type) || known_resource_types.definition(type)
+      Puppet::Type.type(type) || environment.known_resource_types.definition(type)
     end
+  end
+
+  def environment
+    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
+  end
+
+  def environment=(environment)
+    @environment = environment
   end
 
   # Produce a simple hash of our parameters.

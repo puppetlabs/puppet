@@ -43,7 +43,8 @@ class Puppet::Util::Autoload
       name = cleanpath(name).chomp('.rb')
       return true unless loaded.include?(name)
       file, old_mtime = loaded[name]
-      return true unless file == get_file(name)
+      environment = Puppet.lookup(:environments).get(Puppet[:environment])
+      return true unless file == get_file(name, environment)
       begin
         old_mtime.to_i != File.mtime(file).to_i
       rescue Errno::ENOENT
@@ -53,7 +54,7 @@ class Puppet::Util::Autoload
 
     # Load a single plugin by name.  We use 'load' here so we can reload a
     # given plugin.
-    def load_file(name, env=nil)
+    def load_file(name, env)
       file = get_file(name.to_s, env)
       return false unless file
       begin
@@ -73,24 +74,24 @@ class Puppet::Util::Autoload
       # Load every instance of everything we can find.
       files_to_load(path).each do |file|
         name = file.chomp(".rb")
-        load_file(name) unless loaded?(name)
+        load_file(name, nil) unless loaded?(name)
       end
     end
 
     def reload_changed
-      loaded.keys.each { |file| load_file(file) if changed?(file) }
+      loaded.keys.each { |file| load_file(file, nil) if changed?(file) }
     end
 
     # Get the correct file to load for a given path
     # returns nil if no file is found
-    def get_file(name, env=nil)
+    def get_file(name, env)
       name = name + '.rb' unless name =~ /\.rb$/
       path = search_directories(env).find { |dir| Puppet::FileSystem.exist?(File.join(dir, name)) }
       path and File.join(path, name)
     end
 
     def files_to_load(path)
-      search_directories.map {|dir| files_in_dir(dir, path) }.flatten.uniq
+      search_directories(nil).map {|dir| files_in_dir(dir, path) }.flatten.uniq
     end
 
     def files_in_dir(dir, path)
@@ -100,13 +101,7 @@ class Puppet::Util::Autoload
       end
     end
 
-    def module_directories(env=nil)
-      # We have to require this late in the process because otherwise we might
-      # have load order issues. Since require is much slower than defined?, we
-      # can skip that - and save some 2,155 invocations of require in my real
-      # world testing. --daniel 2012-07-10
-      require 'puppet/node/environment' unless defined?(Puppet::Node::Environment)
-
+    def module_directories(env)
       # We're using a per-thread cache of module directories so that we don't
       # scan the filesystem each time we try to load something. This is reset
       # at the beginning of compilation and at the end of an agent run.
@@ -133,10 +128,10 @@ class Puppet::Util::Autoload
       # "app_defaults_initialized?" method on the main puppet Settings object.
       # --cprice 2012-03-16
       if Puppet.settings.app_defaults_initialized?
-        real_env = Puppet::Node::Environment.new(env)
+        env ||= Puppet.lookup(:environments).get(Puppet[:environment])
 
         # if the app defaults have been initialized then it should be safe to access the module path setting.
-        $env_module_directories[real_env] ||= real_env.modulepath.collect do |dir|
+        $env_module_directories[env] ||= env.modulepath.collect do |dir|
           Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f, "lib") }
         end.flatten.find_all do |d|
           FileTest.directory?(d)
@@ -161,7 +156,7 @@ class Puppet::Util::Autoload
       gem_source.directories
     end
 
-    def search_directories(env=nil)
+    def search_directories(env)
       [gem_directories, module_directories(env), libdirs(), $LOAD_PATH].flatten
     end
 
@@ -196,7 +191,7 @@ class Puppet::Util::Autoload
     @wrap = true unless defined?(@wrap)
   end
 
-  def load(name, env=nil)
+  def load(name, env = nil)
     self.class.load_file(expand(name), env)
   end
 
