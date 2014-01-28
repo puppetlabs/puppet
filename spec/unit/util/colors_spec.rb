@@ -66,4 +66,18 @@ describe Puppet::Util::Colors do
       end
     end
   end
+
+  describe "on Windows", :if => Puppet.features.microsoft_windows? do
+    it "expects a trailing embedded NULL character in the wide string" do
+      message = "hello"
+
+      console = Puppet::Util::Colors::WideConsole.new
+      wstr, nchars = console.string_encode(message)
+
+      expect(nchars).to eq(message.length)
+
+      expect(wstr.length).to eq(nchars + 1)
+      expect(wstr[-1].ord).to be_zero
+    end
+  end
 end

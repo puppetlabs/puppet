@@ -84,7 +84,7 @@ module Puppet::Util::Colors
     begin
       require 'Win32API'
       require 'win32console'
-      require 'windows/wide_string'
+      require 'puppet/util/windows/string'
 
       # The win32console gem uses ANSI functions for writing to the console
       # which doesn't work for unicode strings, e.g. module tool. Ruby 1.9
@@ -112,17 +112,9 @@ module Puppet::Util::Colors
           WriteConsole.call(@handle, utf16, nChars, written, reserved)
         end
 
-        if String.method_defined?("encode")
-          def string_encode(str)
-            wstr = str.encode('UTF-16LE')
-            [wstr, wstr.length]
-          end
-        else
-          require 'iconv'
-          def string_encode(str)
-            wstr = Iconv.conv('UTF-16LE', 'UTF-8', str)
-            [wstr, wstr.length/2]
-          end
+        def string_encode(str)
+          wstr = Puppet::Util::Windows::String.wide_string(str)
+          [wstr, wstr.length - 1]
         end
       end
 
