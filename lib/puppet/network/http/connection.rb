@@ -194,14 +194,15 @@ module Puppet::Network::HTTP
       if error.message.include? "certificate verify failed"
         msg = error.message
         msg << ": [" + @verify.verify_errors.join('; ') + "]"
-        raise Puppet::Error, msg
+        raise Puppet::Error, msg, error.backtrace
       elsif error.message =~ /hostname (\w+ )?not match/
         leaf_ssl_cert = @verify.peer_certs.last
 
         valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
         msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
+        msg = "Server hostname '#{connection.address}' did not match server certificate; expected #{msg}"
 
-        raise Puppet::Error, "Server hostname '#{connection.address}' did not match server certificate; expected #{msg}"
+        raise Puppet::Error, msg, error.backtrace
       else
         raise
       end

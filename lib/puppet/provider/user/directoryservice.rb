@@ -455,14 +455,14 @@ Puppet::Type.type(:user).provide :directoryservice do
           dscl '.', '-change', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], @property_hash[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
           raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
-               "#{@resource.name} due to the following error: #{e.inspect}"
+               "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
         end
       else
         begin
           dscl '.', '-merge', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
           raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
-               "#{@resource.name} due to the following error: #{e.inspect}"
+               "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
         end
       end
     end
@@ -486,7 +486,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     begin
       dscl '.', '-merge', "/#{path}/#{username}", keyname, value
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not set the dscl #{keyname} key with value: #{value} - #{detail.inspect}"
+      raise Puppet::Error, "Could not set the dscl #{keyname} key with value: #{value} - #{detail.inspect}", detail.backtrace
     end
   end
 
@@ -643,7 +643,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     begin
       File.open(filename, 'w') { |f| f.write(value)}
     rescue Errno::EACCES => detail
-      raise Puppet::Error, "Could not write to file #{filename}: #{detail}"
+      raise Puppet::Error, "Could not write to file #{filename}: #{detail}", detail.backtrace
     end
   end
 

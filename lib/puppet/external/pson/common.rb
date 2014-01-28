@@ -319,7 +319,7 @@ module PSON
       result
     end
   rescue PSON::NestingError
-    raise ArgumentError, "exceed depth limit"
+    raise ArgumentError, "exceed depth limit", $!.backtrace
   end
 
 

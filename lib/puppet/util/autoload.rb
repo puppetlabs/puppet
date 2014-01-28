@@ -65,7 +65,7 @@ class Puppet::Util::Autoload
       rescue Exception => detail
         message = "Could not autoload #{name}: #{detail}"
         Puppet.log_exception(detail, message)
-        raise Puppet::Error, message
+        raise Puppet::Error, message, detail.backtrace
       end
     end
 

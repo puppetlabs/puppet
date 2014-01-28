@@ -148,7 +148,7 @@ class Puppet::Resource::TypeCollection
 
     @version
   rescue Puppet::ExecutionFailure => e
-    raise Puppet::ParseError, "Execution of config_version command `#{environment[:config_version]}` failed: #{e.message}"
+    raise Puppet::ParseError, "Execution of config_version command `#{environment[:config_version]}` failed: #{e.message}", e.backtrace
   end
 
   def watch_file(filename)

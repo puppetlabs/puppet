@@ -330,7 +330,7 @@ end
   def validate_ip(ip, name)
     IPAddr.new(ip) if ip
   rescue ArgumentError
-    self.fail "'#{ip}' is an invalid #{name}"
+    self.fail Puppet::Error, "'#{ip}' is an invalid #{name}", $!.backtrace
   end
 
   def validate_exclusive(interface, address, router)

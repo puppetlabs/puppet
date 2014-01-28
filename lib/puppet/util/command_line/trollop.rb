@@ -455,7 +455,7 @@ class Parser
       end
       time ? Date.new(time.year, time.month, time.day) : Date.parse(param)
     rescue ArgumentError
-      raise CommandlineError, "option '#{arg}' needs a date"
+      raise CommandlineError, "option '#{arg}' needs a date", $!.backtrace
     end
   end
 
@@ -651,7 +651,7 @@ private
       begin
         open param
       rescue SystemCallError => e
-        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}"
+        raise CommandlineError, "file or url for option '#{arg}' cannot be opened: #{e.message}", e.backtrace
       end
     end
   end

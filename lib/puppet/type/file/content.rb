@@ -126,7 +126,7 @@ module Puppet
       begin
         resource.parameter(:checksum).sum_file(resource[:path])
       rescue => detail
-        raise Puppet::Error, "Could not read #{ftype} #{@resource.title}: #{detail}"
+        raise Puppet::Error, "Could not read #{ftype} #{@resource.title}: #{detail}", detail.backtrace
       end
     end
 
@@ -233,7 +233,7 @@ module Puppet
 
       dipper.getfile(sum)
     rescue => detail
-      fail "Could not retrieve content for #{should} from filebucket: #{detail}"
+      fail detail, "Could not retrieve content for #{should} from filebucket: #{detail}", detail.backtrace
     end
   end
 end

@@ -17,7 +17,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
     # service in run levels 0, 1 and/or 6
     output = chkconfig("--level", "0123456", @resource[:name], :off)
   rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not disable #{self.name}: #{output}"
+    raise Puppet::Error, "Could not disable #{self.name}: #{output}", $!.backtrace
   end
 
   def enabled?
@@ -38,7 +38,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   def enable
       chkconfig(@resource[:name], :on)
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error, "Could not enable #{self.name}: #{detail}"
+    raise Puppet::Error, "Could not enable #{self.name}: #{detail}", detail.backtrace
   end
 
   def initscript

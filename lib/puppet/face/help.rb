@@ -88,12 +88,13 @@ Puppet::Face.define(:help, '0.0.1') do
     begin
       face = Puppet::Face[facename.to_sym, version]
     rescue Puppet::Error => detail
-      fail ArgumentError, <<-MSG
+      msg = <<-MSG
 Could not load help for the face #{facename}.
 Please check the error logs for more information.
 
 Detail: "#{detail.message}"
       MSG
+      fail ArgumentError, msg, detail.backtrace
     end
     if actionname
       action = face.get_action(actionname.to_sym)

@@ -13,7 +13,7 @@ module Puppet::Util::Windows
     def root(name)
       Win32::Registry.const_get(name)
     rescue NameError
-      raise Puppet::Error, "Invalid registry key '#{name}'"
+      raise Puppet::Error, "Invalid registry key '#{name}'", $!.backtrace
     end
 
     def open(name, path, mode = KEY_READ | KEY64, &block)
@@ -23,7 +23,7 @@ module Puppet::Util::Windows
           return yield subkey
         end
       rescue Win32::Registry::Error => error
-        raise Puppet::Util::Windows::Error.new("Failed to open registry key '#{hkey.keyname}\\#{path}'", error.code)
+        raise Puppet::Util::Windows::Error.new("Failed to open registry key '#{hkey.keyname}\\#{path}'", error.code, error)
       end
     end
 

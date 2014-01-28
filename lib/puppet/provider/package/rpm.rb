@@ -62,7 +62,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         }
       }
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error, "Failed to list packages"
+      raise Puppet::Error, "Failed to list packages", $!.backtrace
     end
 
     packages

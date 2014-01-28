@@ -12,7 +12,7 @@ module Puppet::Util::ADSI
       begin
         WIN32OLE.connect(uri)
       rescue Exception => e
-        raise Puppet::Error.new( "ADSI connection error: #{e}" )
+        raise Puppet::Error.new( "ADSI connection error: #{e}", e )
       end
     end
 
@@ -121,7 +121,7 @@ module Puppet::Util::ADSI
       begin
         native_user.SetInfo unless native_user.nil?
       rescue Exception => e
-        raise Puppet::Error.new( "User update failed: #{e}" )
+        raise Puppet::Error.new( "User update failed: #{e}", e )
       end
       self
     end
@@ -251,7 +251,7 @@ module Puppet::Util::ADSI
       begin
         native_group.SetInfo unless native_group.nil?
       rescue Exception => e
-        raise Puppet::Error.new( "Group update failed: #{e}" )
+        raise Puppet::Error.new( "Group update failed: #{e}", e )
       end
       self
     end

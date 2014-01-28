@@ -81,7 +81,7 @@ Puppet::Type.type(:file).provide :posix do
     begin
       File.send(method, should, nil, resource[:path])
     rescue => detail
-      raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}"
+      raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}", detail.backtrace
     end
   end
 
@@ -112,7 +112,7 @@ Puppet::Type.type(:file).provide :posix do
     begin
       File.send(method, nil, should, resource[:path])
     rescue => detail
-      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}"
+      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}", detail.backtrace
     end
   end
 

@@ -94,7 +94,7 @@ module Puppet::Util::Execution
     output = execute(command)
     return output
   rescue Puppet::ExecutionFailure
-    raise exception, output
+    raise exception, output, exception.backtrace
   end
 
   # Default empty options for {execute}

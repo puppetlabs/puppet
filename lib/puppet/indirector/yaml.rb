@@ -11,7 +11,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     begin
       return Puppet::Util::Yaml.load_file(file)
     rescue Puppet::Util::Yaml::YamlLoadError => detail
-      raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"
+      raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}", detail.backtrace
     end
   end
 

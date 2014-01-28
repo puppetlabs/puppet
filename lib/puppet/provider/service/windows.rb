@@ -22,21 +22,21 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_AUTO_START )
     raise Puppet::Error.new("Win32 service enable of #{@resource[:name]} failed" ) if( w32ss.nil? )
   rescue Win32::Service::Error => detail
-    raise Puppet::Error.new("Cannot enable #{@resource[:name]}, error was: #{detail}" )
+    raise Puppet::Error.new("Cannot enable #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   def disable
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_DISABLED )
     raise Puppet::Error.new("Win32 service disable of #{@resource[:name]} failed" ) if( w32ss.nil? )
   rescue Win32::Service::Error => detail
-    raise Puppet::Error.new("Cannot disable #{@resource[:name]}, error was: #{detail}" )
+    raise Puppet::Error.new("Cannot disable #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   def manual_start
     w32ss = Win32::Service.configure( 'service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_DEMAND_START )
     raise Puppet::Error.new("Win32 service manual enable of #{@resource[:name]} failed" ) if( w32ss.nil? )
   rescue Win32::Service::Error => detail
-    raise Puppet::Error.new("Cannot enable #{@resource[:name]} for manual start, error was: #{detail}" )
+    raise Puppet::Error.new("Cannot enable #{@resource[:name]} for manual start, error was: #{detail}", detail )
   end
 
   def enabled?
@@ -56,7 +56,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
         raise Puppet::Error.new("Unknown start type: #{w32ss.start_type}")
     end
   rescue Win32::Service::Error => detail
-    raise Puppet::Error.new("Cannot get start type for #{@resource[:name]}, error was: #{detail}" )
+    raise Puppet::Error.new("Cannot get start type for #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   def start
@@ -75,13 +75,13 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
 
     net(:start, @resource[:name])
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error.new("Cannot start #{@resource[:name]}, error was: #{detail}" )
+    raise Puppet::Error.new("Cannot start #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   def stop
     net(:stop, @resource[:name])
   rescue Puppet::ExecutionFailure => detail
-    raise Puppet::Error.new("Cannot stop #{@resource[:name]}, error was: #{detail}" )
+    raise Puppet::Error.new("Cannot stop #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   def status
@@ -96,7 +96,7 @@ Puppet::Type.type(:service).provide :windows, :parent => :service do
     debug("Service #{@resource[:name]} is #{w32ss.current_state}")
     return state
   rescue Win32::Service::Error => detail
-    raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}" )
+    raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
   end
 
   # returns all providers for all existing services and startup state

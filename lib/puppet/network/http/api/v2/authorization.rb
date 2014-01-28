@@ -7,7 +7,7 @@ class Puppet::Network::HTTP::API::V2::Authorization
     begin
       check_authorization(:find, request.path, request.params)
     rescue Puppet::Network::AuthorizationError => e
-      raise Puppet::Network::HTTP::Error::HTTPNotAuthorizedError, e.message
+      raise Puppet::Network::HTTP::Error::HTTPNotAuthorizedError, e.message, e.backtrace
     end
   end
 end

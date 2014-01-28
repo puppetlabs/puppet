@@ -10,7 +10,8 @@ module Puppet::ModuleTool
         begin
           @metadata = Metadata.new(:full_module_name => full_module_name)
         rescue ArgumentError
-          raise "Could not generate directory #{full_module_name.inspect}, you must specify a dash-separated username and module name."
+          msg = "Could not generate directory #{full_module_name.inspect}, you must specify a dash-separated username and module name."
+          raise $!, msg, $!.backtrace
         end
         super(options)
       end

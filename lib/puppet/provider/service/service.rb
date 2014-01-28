@@ -24,7 +24,7 @@ Puppet::Type.type(:service).provide :service do
     begin
       execute(command, :failonfail => fof, :override_locale => false, :squelch => squelch, :combine => combine)
     rescue Puppet::ExecutionFailure => detail
-      @resource.fail "Could not #{type} #{@resource.ref}: #{detail}"
+      @resource.fail Puppet::Error, "Could not #{type} #{@resource.ref}: #{detail}", detail
     end
     nil
   end

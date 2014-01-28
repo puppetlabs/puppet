@@ -274,7 +274,7 @@ class Puppet::Indirector::Request
     begin
       uri = URI.parse(URI.escape(key))
     rescue => detail
-      raise ArgumentError, "Could not understand URL #{key}: #{detail}"
+      raise ArgumentError, "Could not understand URL #{key}: #{detail}", detail.backtrace
     end
 
     # Just short-circuit these to full paths

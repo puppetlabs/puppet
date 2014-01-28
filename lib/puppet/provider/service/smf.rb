@@ -28,7 +28,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         end
       end
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new( "Cannot config #{self.name} to enable it: #{detail}" )
+      raise Puppet::Error.new( "Cannot config #{self.name} to enable it: #{detail}", detail )
   end
 
   def self.instances

@@ -39,7 +39,8 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
       end
       result
   rescue => detail
-      raise Puppet::Error, "Could not write #{request.key} to queue: #{detail}\nInstance::#{request.instance}\n client : #{client}"
+      msg = "Could not write #{request.key} to queue: #{detail}\nInstance::#{request.instance}\n client : #{client}"
+      raise Puppet::Error, msg, detail.backtrace
   end
 
   def self.queue

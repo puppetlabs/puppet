@@ -22,7 +22,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def disable
     output = systemctl(:disable, @resource[:name])
   rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not disable #{self.name}: #{output}"
+    raise Puppet::Error, "Could not disable #{self.name}: #{output}", $!.backtrace
   end
 
   def enabled?
@@ -47,7 +47,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def enable
     output = systemctl("enable", @resource[:name])
   rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not enable #{self.name}: #{output}"
+    raise Puppet::Error, "Could not enable #{self.name}: #{output}", $!.backtrace
   end
 
   def restartcmd

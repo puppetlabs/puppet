@@ -85,6 +85,12 @@ module Puppet::Util::Errors
   #   the given arguments.
   #   @param [Class] type of error
   #   @param [String] message error message(s)
+  # @overload fail(error_klass, message, ..)
+  #   Throw an exception of type error_klass with a message concatenated from
+  #   the given arguments.
+  #   @param [Class] type of error
+  #   @param [String] message error message(s)
+  #   @param [Exception] original exception, source of backtrace info
   def fail(*args)
     if args[0].is_a?(Class)
       type = args.shift
@@ -92,7 +98,8 @@ module Puppet::Util::Errors
       type = Puppet::Error
     end
 
-    error = adderrorcontext(type.new(args.join(" ")))
+    other = args.count > 1 ? args.pop : nil
+    error = adderrorcontext(type.new(args.join(" ")), other)
 
     raise error
   end

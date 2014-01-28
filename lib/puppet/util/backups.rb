@@ -46,7 +46,7 @@ module Puppet::Util::Backups
     rescue => detail
       # since they said they want a backup, let's error out
       # if we couldn't make one
-      self.fail "Could not back #{file} up: #{detail.message}"
+      self.fail Puppet::Error, "Could not back #{file} up: #{detail.message}", detail.backtrace
     end
   end
 
@@ -74,7 +74,7 @@ module Puppet::Util::Backups
     rescue => detail
       message = "Could not remove old backup: #{detail}"
       self.log_exception(detail, message)
-      self.fail message
+      self.fail Puppet::Error, message, detail.backtrace
     end
   end
 

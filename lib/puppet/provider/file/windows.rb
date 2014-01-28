@@ -44,7 +44,7 @@ Puppet::Type.type(:file).provide :windows do
     begin
       set_owner(should, resolved_path)
     rescue => detail
-      raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}"
+      raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}", detail.backtrace
     end
   end
 
@@ -57,7 +57,7 @@ Puppet::Type.type(:file).provide :windows do
     begin
       set_group(should, resolved_path)
     rescue => detail
-      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}"
+      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}", detail.backtrace
     end
   end
 

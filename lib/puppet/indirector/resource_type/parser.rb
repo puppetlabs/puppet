@@ -81,7 +81,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
     begin
       regex = Regexp.new(key)
     rescue => detail
-      raise ArgumentError, "Invalid regex '#{request.key}': #{detail}"
+      raise ArgumentError, "Invalid regex '#{request.key}': #{detail}", detail.backtrace
     end
 
     result.reject! { |t| t.name.to_s !~ regex }

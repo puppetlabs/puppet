@@ -58,7 +58,7 @@ module Puppet
         begin
           uri = URI.parse(URI.escape(source))
         rescue => detail
-          self.fail "Could not understand source #{source}: #{detail}"
+          self.fail Puppet::Error, "Could not understand source #{source}: #{detail}", detail.backtrace
         end
 
         self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
@@ -175,7 +175,7 @@ module Puppet
             break
           end
         rescue => detail
-          fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
+          fail detail, "Could not retrieve file metadata for #{source}: #{detail}", detail.backtrace
         end
       end
       fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata

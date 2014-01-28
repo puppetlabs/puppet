@@ -271,7 +271,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
         raise Puppet::ExecutionFailure, "chpasswd said #{output}"
       end
     rescue Puppet::ExecutionFailure  => detail
-      raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"
+      raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
     ensure
       tmpfile.delete()
     end
@@ -311,7 +311,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       begin
         execute(cmd)
       rescue Puppet::ExecutionFailure  => detail
-        raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"
+        raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}", detail.backtrace
       end
     end
   end

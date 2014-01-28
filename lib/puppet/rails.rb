@@ -35,7 +35,7 @@ module Puppet::Rails
     rescue => detail
       message = "Could not connect to database: #{detail}"
       Puppet.log_exception(detail, message)
-      raise Puppet::Error, message
+      raise Puppet::Error, message, detail.backtrace
     end
   end
 
@@ -107,7 +107,7 @@ module Puppet::Rails
     rescue => detail
       message = "Could not migrate database: #{detail}"
       Puppet.log_exception(detail, message)
-      raise Puppet::Error, "Could not migrate database: #{detail}"
+      raise Puppet::Error, "Could not migrate database: #{detail}", detail.backtrace
     end
   end
 
@@ -122,7 +122,7 @@ module Puppet::Rails
         ActiveRecord::Base.establish_connection(database_arguments)
       rescue => detail
         Puppet.log_exception(detail)
-        raise Puppet::Error, "Could not connect to database: #{detail}"
+        raise Puppet::Error, "Could not connect to database: #{detail}", detail.backtrace
       end
 
       ActiveRecord::Base.connection.tables.each do |t|
