@@ -27,16 +27,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
-  if command('yum')
-    Puppet.debug('Checking if yum supports versionlock.')
-    begin
-      yum('versionlock')
-      has_feature :holdable
-    rescue Puppet::ExecutionFailure
-      false
-    end
-  end
-
   def self.prefetch(packages)
     raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
     super
@@ -84,12 +74,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    # Unhold before installing
-    if self.class.declared_feature?(:holdable)
-      Puppet.debug('Provider supports holdable. Unholding package before installing...')
-      self.unhold
-    end
-
     yum "-d", "0", "-e", "0", "-y", operation, wanted
 
     is = self.query
@@ -122,23 +106,5 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   def purge
     yum "-y", :erase, @resource[:name]
-  end
-
-  def hold
-    # Install before locking the version.
-    self.install
-    yum('versionlock', @resource[:name])
-  end
-
-  def unhold
-    yum('versionlock', 'delete', "*#{@resource[:name]}*")
-  rescue Puppet::ExecutionFailure => e
-    if e.message.match /versionlock delete: no matches/
-      # No versionlock present for this package
-      return true
-    else
-      # If it's not a no match failure, then something else went wrong...
-      raise Puppet::Error, "Failed to unhold package #{@resource[:name]}: #{e.message}", e.backtrace
-    end
   end
 end
