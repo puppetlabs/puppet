@@ -144,14 +144,14 @@ describe Puppet::Node::Facts::Facter do
   end
 
   it "should include pluginfactdest when loading external facts",
-     :if => Puppet.features.external_facts?, :unless => Puppet.features.microsoft_windows? do
+     :if => (Puppet.features.external_facts? and not Puppet.features.microsoft_windows?) do
     Puppet[:pluginfactdest] = "/plugin/dest"
     @facter.find(@request)
     Facter.search_external_path.include?("/plugin/dest")
   end
 
   it "should include pluginfactdest when loading external facts",
-    :if => Puppet.features.external_facts?, :if => Puppet.features.microsoft_windows? do
+    :if => (Puppet.features.external_facts? and Puppet.features.microsoft_windows?) do
     Puppet[:pluginfactdest] = "/plugin/dest"
     @facter.find(@request)
     Facter.search_external_path.include?("C:/plugin/dest")
