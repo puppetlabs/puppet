@@ -42,7 +42,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     end
 
     # Add to facter config
-    Facter::Util::Config.external_facts_dirs += external_facts_dirs
+    Facter.search_external external_facts_dirs
 
   end
 
