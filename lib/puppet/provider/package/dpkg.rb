@@ -11,6 +11,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   commands :dpkg_deb => "/usr/bin/dpkg-deb"
   commands :dpkgquery => "/usr/bin/dpkg-query"
 
+  mk_resource_methods
+
   # Performs a dpkgquery call with a pipe so that output can be processed
   # inline in a passed block.
   # @param args [Array<String>] any command line arguments to be appended to the command
@@ -66,9 +68,12 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         hash[:ensure] = :purged
       elsif ['config-files', 'half-installed', 'unpacked', 'half-configured'].include?(hash[:status])
         hash[:ensure] = :absent
+      elsif hash[:desired] == 'hold'
+        hash[:hold] = :true
+      else
+        hash[:hold] = :false
       end
-      hash[:ensure] = :held if hash[:desired] == 'hold'
-    else 
+    else
       Puppet.debug("Failed to match dpkg-query line #{line.inspect}")
     end
 
@@ -145,20 +150,20 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     dpkg "--purge", @resource[:name]
   end
 
-  def hold
-    self.install
-    Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
-      tmpfile.write("#{@resource[:name]} hold\n")
-      tmpfile.flush
-      execute([:dpkg, "--set-selections"], :failonfail => false, :combine => false, :stdinfile => tmpfile.path.to_s)
-    end
-  end
-
-  def unhold
-    Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
-      tmpfile.write("#{@resource[:name]} install\n")
-      tmpfile.flush
-      execute([:dpkg, "--set-selections"], :failonfail => false, :combine => false, :stdinfile => tmpfile.path.to_s)
+  def hold=(hold_package)
+    case hold_package
+    when :true
+      Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
+        tmpfile.write("#{@resource[:name]} hold\n")
+        tmpfile.flush
+        execute([:dpkg, "--set-selections"], :failonfail => true, :combine => false, :stdinfile => tmpfile.path.to_s)
+      end
+    when :false
+      Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
+        tmpfile.write("#{@resource[:name]} install\n")
+        tmpfile.flush
+        execute([:dpkg, "--set-selections"], :failonfail => true, :combine => false, :stdinfile => tmpfile.path.to_s)
+      end
     end
   end
 
