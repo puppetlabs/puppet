@@ -7,15 +7,14 @@ Puppet::Type.newtype(:cron) do
     Installs and manages cron jobs.  Every cron resource requires a command
     and user attribute, as well as at least one periodic attribute (hour,
     minute, month, monthday, weekday, or special).  While the name of the cron
-    job is not part of the actual job, it is used by Puppet to store and
-    retrieve it.
+    job is not part of the actual job, the name is stored in a comment beginning with
+    `# Puppet Name: `. These comments are used to match crontab entries created by
+    Puppet with cron resources.
 
-    If you specify a cron resource that duplicates the scheduling and command
-    used by an existing crontab entry, then Puppet will take no action and
-    defers to the existing crontab entry.  If the duplicate cron resource
-    specifies `ensure => absent`, all existing duplicated crontab entries will
-    be removed.  Specifying multiple duplicate cron resources with different
-    `ensure` states will result in undefined behavior.
+    If an existing crontab entry happens to match the scheduling and command of a
+    cron resource that has never been synched, Puppet will defer to the existing
+    crontab entry and will not create a new entry tagged with the `# Puppet Name: `
+    comment.
 
     Example:
 
