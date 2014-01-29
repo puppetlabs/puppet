@@ -54,7 +54,7 @@ module Puppet::ModuleTool
           rescue => e
             raise UnknownModuleError, results.merge(:repository => @forge.uri), e.backtrace
           else
-            raise UnknownVersionError, results.merge(:repository => @forge.uri), e.backtrace if @remote.empty?
+            raise UnknownVersionError, results.merge(:repository => @forge.uri) if @remote.empty?
           end
 
           if !@options[:force] && @versions["#{@module_name}"].last[:vstring].sub(/^(?=\d)/, 'v') == (@module.version || '0.0.0').sub(/^(?=\d)/, 'v')
