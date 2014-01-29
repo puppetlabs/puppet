@@ -28,6 +28,8 @@ module Puppet::Network::HTTP
       :redirect_limit => 10
     }
 
+    @@openssl_initialized = false
+
     # Creates a new HTTP client connection to `host`:`port`.
     # @param host [String] the host to which this client will connect to
     # @param port [Fixnum] the port to which this client will connect to
@@ -177,6 +179,12 @@ module Puppet::Network::HTTP
 
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
+      # PUP-1411, make sure that openssl is initialized before we try to connect
+      if ! @@openssl_initialized
+        OpenSSL::SSL::SSLContext.new
+        @@openssl_initialized = true
+      end
+
       @verify.setup_connection(@connection)
     end
 
