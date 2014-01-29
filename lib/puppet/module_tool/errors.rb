@@ -1,3 +1,5 @@
+require 'puppet/module_tool'
+
 module Puppet::ModuleTool
   module Errors
     require 'puppet/module_tool/errors/base'

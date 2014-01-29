@@ -1,3 +1,5 @@
+require 'puppet/module_tool'
+
 module Puppet::ModuleTool
 
   # = ContentsDescription

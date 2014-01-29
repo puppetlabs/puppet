@@ -1,3 +1,8 @@
+require 'open-uri'
+
+require 'puppet/module_tool'
+require 'puppet/module_tool/errors'
+
 module Puppet::ModuleTool::Shared
 
   include Puppet::ModuleTool::Errors

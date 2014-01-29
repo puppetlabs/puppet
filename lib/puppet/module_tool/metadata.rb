@@ -1,4 +1,5 @@
 require 'puppet/util/methodhelper'
+require 'puppet/module_tool'
 
 module Puppet::ModuleTool
   # = Metadata
