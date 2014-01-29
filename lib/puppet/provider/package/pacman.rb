@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       source_uri = URI.parse source
     rescue => detail
-      fail detail, "Invalid source '#{source}': #{detail}", detail.backtrace
+      self.fail Puppet::Error, "Invalid source '#{source}': #{detail}", detail
     end
 
     source = case source_uri.scheme

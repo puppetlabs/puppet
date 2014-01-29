@@ -95,7 +95,7 @@ module Puppet
         begin
           provider.update
         rescue => detail
-          self.fail Puppet::Error, "Could not update: #{detail}", detail.backtrace
+          self.fail Puppet::Error, "Could not update: #{detail}", detail
         end
 
         if current == :absent
@@ -109,7 +109,7 @@ module Puppet
         begin
           provider.install
         rescue => detail
-          self.fail Puppet::Error, "Could not update: #{detail}", detail.backtrace
+          self.fail Puppet::Error, "Could not update: #{detail}", detail
         end
 
         if self.retrieve == :absent

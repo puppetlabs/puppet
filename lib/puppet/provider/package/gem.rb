@@ -77,7 +77,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       begin
         uri = URI.parse(source)
       rescue => detail
-        fail detail, "Invalid source '#{uri}': #{detail}", detail.backtrace
+        self.fail Puppet::Error, "Invalid source '#{uri}': #{detail}", detail
       end
 
       case uri.scheme

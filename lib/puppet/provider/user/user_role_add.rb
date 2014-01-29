@@ -203,7 +203,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
         end
       end
     rescue => detail
-      fail detail, "Could not write replace #{target_file_path}: #{detail}", detail.backtrace
+      self.fail Puppet::Error, "Could not write replace #{target_file_path}: #{detail}", detail
     end
   end
 end

@@ -117,7 +117,7 @@ module Puppet
             end
           end
         rescue Timeout::Error
-          self.fail Puppet::Error, "Command exceeded timeout" % value.inspect, $!.backtrace
+          self.fail Puppet::Error, "Command exceeded timeout", $!
         end
 
         if log = @resource[:logoutput]

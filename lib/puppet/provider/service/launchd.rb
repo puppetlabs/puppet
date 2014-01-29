@@ -222,7 +222,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       @macosx_version_major = product_version_major
       return @macosx_version_major
     rescue Puppet::ExecutionFailure => detail
-      fail(detail, "Could not determine OS X version: #{detail}", detail.backtrace)
+      self.fail Puppet::Error, "Could not determine OS X version: #{detail}", detail
     end
   end
 

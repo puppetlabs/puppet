@@ -233,7 +233,7 @@ module Puppet
 
       dipper.getfile(sum)
     rescue => detail
-      fail detail, "Could not retrieve content for #{should} from filebucket: #{detail}", detail.backtrace
+      self.fail Puppet::Error, "Could not retrieve content for #{should} from filebucket: #{detail}", detail
     end
   end
 end

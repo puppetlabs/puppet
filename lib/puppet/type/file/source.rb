@@ -58,7 +58,7 @@ module Puppet
         begin
           uri = URI.parse(URI.escape(source))
         rescue => detail
-          self.fail Puppet::Error, "Could not understand source #{source}: #{detail}", detail.backtrace
+          self.fail Puppet::Error, "Could not understand source #{source}: #{detail}", detail
         end
 
         self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
@@ -101,7 +101,7 @@ module Puppet
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
       unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment, :links => resource[:links])
-        fail "Could not find any content at %s" % metadata.source
+        self.fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
     end
@@ -175,10 +175,10 @@ module Puppet
             break
           end
         rescue => detail
-          fail detail, "Could not retrieve file metadata for #{source}: #{detail}", detail.backtrace
+          self.fail Puppet::Error, "Could not retrieve file metadata for #{source}: #{detail}", detail
         end
       end
-      fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
+      self.fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
       @metadata
     end
 

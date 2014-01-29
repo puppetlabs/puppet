@@ -253,7 +253,7 @@ class Puppet::Parser::Resource < Puppet::Resource
       validate_parameter(name)
     end
   rescue => detail
-    fail Puppet::ParseError, detail.to_s, detail.backtrace
+    self.fail Puppet::ParseError, detail.to_s, detail
   end
 
   def extract_parameters(params)
