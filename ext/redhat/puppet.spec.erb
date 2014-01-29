@@ -20,6 +20,8 @@
 %global rpmversion <%= @rpmversion %>
 
 %global confdir ext/redhat
+%global pending_upgrade_path %{_localstatedir}/lib/rpm-state/puppet
+%global pending_upgrade_file %{pending_upgrade_path}/upgrade_pending
 
 Name:           puppet
 Version:        %{rpmversion}
@@ -359,6 +361,23 @@ if [ "$1" -eq 0 ] ; then
     /bin/systemctl stop puppet.service > /dev/null 2>&1 || :
     /bin/systemctl daemon-reload >/dev/null 2>&1 || :
 fi
+
+if [ "$1" == "1" ]; then
+    /bin/systemctl is-enabled puppetagent.service > /dev/null 2>&1
+    if [ "$?" == "0" ]; then
+        /bin/systemctl --no-reload disable puppetagent.service > /dev/null 2>&1 ||:
+        /bin/systemctl stop puppetagent.service > /dev/null 2>&1 ||:
+        /bin/systemctl daemon-reload >/dev/null 2>&1 ||:
+        if [ ! -d %{pending_upgrade_path} ]; then
+            mkdir -p %{pending_upgrade_path}
+        fi
+
+        if [ ! -e %{pending_upgrade_file} ]; then
+            touch %{pending_upgrade_file}
+        fi
+    fi
+fi
+
 %else
 if [ "$1" = 0 ] ; then
     /sbin/service puppet stop > /dev/null 2>&1
@@ -384,6 +403,12 @@ fi
 %postun
 %if 0%{?_with_systemd}
 if [ $1 -ge 1 ] ; then
+    if [ -e %{pending_upgrade_file} ]; then
+        /bin/systemctl --no-reload enable puppet.service > /dev/null 2>&1 ||:
+        /bin/systemctl start puppet.service > /dev/null 2>&1 ||:
+        /bin/systemctl daemon-reload >/dev/null 2>&1 ||:
+        rm %{pending_upgrade_file}
+    fi
     # Package upgrade, not uninstall
     /bin/systemctl try-restart puppetagent.service >/dev/null 2>&1 || :
 fi
