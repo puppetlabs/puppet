@@ -1,5 +1,8 @@
 require 'puppet/indirector/data_binding/hiera'
 
+require 'tmpdir'
+require 'fileutils'
+
 module Puppet::Test
   # This class is intended to provide an API to be used by external projects
   #  when they are running tests that depend on puppet core.  This should
@@ -33,12 +36,20 @@ module Puppet::Test
     # that call Puppet.
     # @return nil
     def self.initialize()
+      owner = Process.pid
+      @environmentdir = Dir.mktmpdir('environments')
       Puppet.push_context(Puppet.base_context({
-        :environmentdir => "/dev/null",
+        :environmentdir => @environmentdir,
         :modulepath => "",
         :manifest => "/dev/null"
       }), "Initial for specs")
       Puppet::Parser::Functions.reset
+
+      ObjectSpace.define_finalizer(Puppet.lookup(:environments), proc {
+        if Process.pid == owner
+          FileUtils.rm_rf(@environmentdir)
+        end
+      })
     end
 
     # Call this method once, when beginning a test run--prior to running
@@ -192,6 +203,13 @@ module Puppet::Test
       # below 512 bits.  Sad, really, because a 0 bit key would be just fine.
       Puppet[:req_bits]  = 512
       Puppet[:keylength] = 512
+
+      # Although we setup a testing context during initialization, some tests
+      # will end up creating their own context using the real context objects
+      # and use the setting for the environments. In order to avoid those tests
+      # having to deal with a missing environmentdir we can just set it right
+      # here.
+      Puppet[:environmentdir] = @environmentdir
     end
     private_class_method :initialize_settings_before_each
   end

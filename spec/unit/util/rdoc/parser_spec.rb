@@ -68,9 +68,11 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
   end
 
   describe "when scanning top level entities" do
+    let(:environment) { Puppet::Node::Environment.create(:env, [], '') }
+
     before :each do
       @resource_type_collection = resource_type_collection = stub_everything('resource_type_collection')
-      @parser.instance_eval { @known_resource_types = resource_type_collection }
+      environment.stubs(:known_resource_types).returns(@resource_type_collection)
       @parser.stubs(:split_module).returns("module")
 
       @topcontainer = stub_everything 'topcontainer'
@@ -88,7 +90,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @module.expects(:add_comment).with("readme", "module/manifests/init.pp")
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
 
     it "should read any present README.rdoc as module documentation" do
@@ -99,7 +101,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @module.expects(:add_comment).with("readme", "module/manifests/init.pp")
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
 
     it "should prefer README.rdoc over README as module documentation" do
@@ -111,7 +113,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @module.expects(:add_comment).with("readme.rdoc", "module/manifests/init.pp")
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
 
     it "should tell the container its module name" do
@@ -119,7 +121,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @topcontainer.expects(:module_name=).with("module")
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
 
     it "should not document our toplevel if it isn't a valid module" do
@@ -128,7 +130,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
       @topcontainer.expects(:document_self=).with(false)
       @parser.expects(:parse_elements).never
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
 
     it "should set the module as global if we parse the global manifests (ie __site__ module)" do
@@ -137,7 +139,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @topcontainer.expects(:global=).with(true)
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
 
     it "should attach this module container to the toplevel container" do
@@ -145,13 +147,13 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @container.expects(:add_module).with(RDoc::PuppetModule, "module").returns(@module)
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
 
     it "should defer ast parsing to parse_elements for this module" do
-      @parser.expects(:parse_elements).with(@module)
+      @parser.expects(:parse_elements).with(@module, @resource_type_collection)
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
 
     it "should defer plugins parsing to parse_plugins for this module" do
@@ -159,29 +161,28 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @parser.expects(:parse_plugins).with(@module)
 
-      @parser.scan_top_level(@topcontainer)
+      @parser.scan_top_level(@topcontainer, environment)
     end
   end
 
   describe "when finding modules from filepath" do
-    before :each do
-      Puppet::Node::Environment.any_instance.stubs(:modulepath).returns("/path/to/modules")
-    end
+    let(:environment) {
+      Puppet::FileSystem.expects(:directory?).with("/path/to/modules").at_least_once.returns(true)
+      Puppet::Node::Environment.create(:env, ["/path/to/modules"], '')
+    }
 
     it "should return the module name for modulized puppet manifests" do
-      File.stubs(:expand_path).returns("/path/to/module/manifests/init.pp")
-      File.stubs(:identical?).with("/path/to", "/path/to/modules").returns(true)
-      @parser.split_module("/path/to/modules/mymodule/manifests/init.pp").should == "module"
+      File.stubs(:identical?).with("/path/to/modules", "/path/to/modules").returns(true)
+      @parser.split_module("/path/to/modules/mymodule/manifests/init.pp", environment).should == "mymodule"
     end
 
     it "should return <site> for manifests not under module path" do
-      File.stubs(:expand_path).returns("/path/to/manifests/init.pp")
       File.stubs(:identical?).returns(false)
-      @parser.split_module("/path/to/manifests/init.pp").should == RDoc::Parser::SITE
+      @parser.split_module("/path/to/manifests/init.pp", environment).should == RDoc::Parser::SITE
     end
 
     it "should handle windows paths with drive letters", :if => Puppet.features.microsoft_windows? && Puppet.features.rdoc1? do
-      @parser.split_module("C:/temp/init.pp").should == RDoc::Parser::SITE
+      @parser.split_module("C:/temp/init.pp", environment).should == RDoc::Parser::SITE
     end
   end
 
@@ -202,7 +203,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @parser.expects(:document_class).with("myclass", @klass, @container)
 
-      @parser.parse_elements(@container)
+      @parser.parse_elements(@container, @resource_type_collection)
     end
 
     it "should not document class parsed in an other file" do
@@ -211,7 +212,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @parser.expects(:document_class).with("myclass", @klass, @container).never
 
-      @parser.parse_elements(@container)
+      @parser.parse_elements(@container, @resource_type_collection)
     end
 
     it "should document vardefs for the main class" do
@@ -224,7 +225,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @parser.expects(:scan_for_vardef).with(@container, code)
 
-      @parser.parse_elements(@container)
+      @parser.parse_elements(@container, @resource_type_collection)
     end
 
     it "should document definitions in the parsed file" do
@@ -232,7 +233,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @parser.expects(:document_define).with("mydef", @definition, @container)
 
-      @parser.parse_elements(@container)
+      @parser.parse_elements(@container, @resource_type_collection)
     end
 
     it "should not document definitions parsed in an other file" do
@@ -241,7 +242,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @parser.expects(:document_define).with("mydef", @definition, @container).never
 
-      @parser.parse_elements(@container)
+      @parser.parse_elements(@container, @resource_type_collection)
     end
 
     it "should document nodes in the parsed file" do
@@ -249,7 +250,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @parser.expects(:document_node).with("mynode", @node, @container)
 
-      @parser.parse_elements(@container)
+      @parser.parse_elements(@container, @resource_type_collection)
     end
 
     it "should not document node parsed in an other file" do
@@ -258,7 +259,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
       @parser.expects(:document_node).with("mynode", @node, @container).never
 
-      @parser.parse_elements(@container)
+      @parser.parse_elements(@container, @resource_type_collection)
     end
   end
 

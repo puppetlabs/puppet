@@ -122,16 +122,20 @@ module Puppet::Environments
     def list
       base = Puppet::FileSystem.path_string(@environment_dir)
 
-      Puppet::FileSystem.children(@environment_dir).select do |child|
-        name = Puppet::FileSystem.basename_string(child)
-        Puppet::FileSystem.directory?(child) &&
-           Puppet::Node::Environment.valid_name?(name)
-      end.collect do |child|
-        name = Puppet::FileSystem.basename_string(child)
-        Puppet::Node::Environment.create(
-          name.intern,
-          [File.join(base, name, "modules")] + @global_module_path,
-          File.join(base, name, "manifests"))
+      if Puppet::FileSystem.directory?(@environment_dir)
+        Puppet::FileSystem.children(@environment_dir).select do |child|
+          name = Puppet::FileSystem.basename_string(child)
+          Puppet::FileSystem.directory?(child) &&
+             Puppet::Node::Environment.valid_name?(name)
+        end.collect do |child|
+          name = Puppet::FileSystem.basename_string(child)
+          Puppet::Node::Environment.create(
+            name.intern,
+            [File.join(base, name, "modules")] + @global_module_path,
+            File.join(base, name, "manifests"))
+        end
+      else
+        []
       end
     end
 

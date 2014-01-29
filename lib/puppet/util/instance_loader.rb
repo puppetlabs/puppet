@@ -65,6 +65,7 @@ module Puppet::Util::InstanceLoader
     name = name.intern
     return nil unless instances = instance_hash(type)
     unless instances.include? name
+#  require 'debugger'; debugger
       if instance_loader(type).load(name)
         unless instances.include? name
           Puppet.warning(

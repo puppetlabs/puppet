@@ -241,6 +241,6 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def environment
-    Puppet::Node::Environment.new
+    Puppet.lookup(:environments).get(Puppet[:environment])
   end
 end

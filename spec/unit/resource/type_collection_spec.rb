@@ -7,39 +7,20 @@ require 'puppet/resource/type'
 describe Puppet::Resource::TypeCollection do
   include PuppetSpec::Files
 
+  let(:environment) { Puppet::Node::Environment.create(:testing, [], '') }
+
   before do
     @instance = Puppet::Resource::Type.new(:hostclass, "foo")
-    @code = Puppet::Resource::TypeCollection.new("env")
-  end
-
-  it "should require an environment at initialization" do
-    env = Puppet::Node::Environment.new("testing")
-    Puppet::Resource::TypeCollection.new(env).environment.should equal(env)
-  end
-
-  it "should convert the environment into an environment instance if a string is provided" do
-    env = Puppet::Node::Environment.new("testing")
-    Puppet::Resource::TypeCollection.new("testing").environment.should equal(env)
-  end
-
-  it "should create a 'loader' at initialization" do
-    Puppet::Resource::TypeCollection.new("testing").loader.should be_instance_of(Puppet::Parser::TypeLoader)
-  end
-
-  it "should be able to add a resource type" do
-    Puppet::Resource::TypeCollection.new("env").should respond_to(:add)
+    @code = Puppet::Resource::TypeCollection.new(environment)
   end
 
   it "should consider '<<' to be an alias to 'add' but should return self" do
-    loader = Puppet::Resource::TypeCollection.new("env")
-    loader.expects(:add).with "foo"
-    loader.expects(:add).with "bar"
-    loader << "foo" << "bar"
+    @code.expects(:add).with "foo"
+    @code.expects(:add).with "bar"
+    @code << "foo" << "bar"
   end
 
   it "should set itself as the code collection for added resource types" do
-    loader = Puppet::Resource::TypeCollection.new("env")
-
     node = Puppet::Resource::Type.new(:node, "foo")
 
     @code.add(node)
@@ -96,7 +77,7 @@ describe Puppet::Resource::TypeCollection do
   end
 
   it "should remove all nodes, classes, and definitions when cleared" do
-    loader = Puppet::Resource::TypeCollection.new("env")
+    loader = Puppet::Resource::TypeCollection.new(environment)
     loader.add Puppet::Resource::Type.new(:hostclass, "class")
     loader.add Puppet::Resource::Type.new(:definition, "define")
     loader.add Puppet::Resource::Type.new(:node, "node")
@@ -200,14 +181,14 @@ describe Puppet::Resource::TypeCollection do
     describe "behavior of add for #{data}" do
 
       it "should return the added #{data}" do
-        loader = Puppet::Resource::TypeCollection.new("env")
+        loader = Puppet::Resource::TypeCollection.new(environment)
         instance = Puppet::Resource::Type.new(data, "foo")
 
         loader.add(instance).should equal(instance)
       end
 
       it "should retrieve #{data} insensitive to case" do
-        loader = Puppet::Resource::TypeCollection.new("env")
+        loader = Puppet::Resource::TypeCollection.new(environment)
         instance = Puppet::Resource::Type.new(data, "Bar")
 
         loader.add instance
@@ -216,75 +197,75 @@ describe Puppet::Resource::TypeCollection do
       end
 
       it "should return nil when asked for a #{data} that has not been added" do
-        Puppet::Resource::TypeCollection.new("env").send(data, "foo").should be_nil
+        Puppet::Resource::TypeCollection.new(environment).send(data, "foo").should be_nil
       end
     end
   end
 
   describe "when finding a qualified instance" do
     it "should return any found instance if the instance name is fully qualified" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
       loader.find_hostclass("namespace", "::foo::bar").should equal(instance)
     end
 
     it "should return nil if the instance name is fully qualified and no such instance exists" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       loader.find_hostclass("namespace", "::foo::bar").should be_nil
     end
 
     it "should be able to find classes in the base namespace" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo")
       loader.add instance
       loader.find_hostclass("", "foo").should equal(instance)
     end
 
     it "should return the partially qualified object if it exists in a provided namespace" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
       loader.find_hostclass("foo", "bar::baz").should equal(instance)
     end
 
     it "should be able to find partially qualified objects in any of the provided namespaces" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
       loader.find_hostclass(["nons", "foo", "otherns"], "bar::baz").should equal(instance)
     end
 
     it "should return the unqualified object if it exists in a provided namespace" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
       loader.find_hostclass("foo", "bar").should equal(instance)
     end
 
     it "should return the unqualified object if it exists in the parent namespace" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
       loader.find_hostclass("foo::bar::baz", "bar").should equal(instance)
     end
 
     it "should should return the partially qualified object if it exists in the parent namespace" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
       loader.find_hostclass("foo::bar", "bar::baz").should equal(instance)
     end
 
     it "should return the qualified object if it exists in the root namespace" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
       loader.find_hostclass("foo::bar", "foo::bar::baz").should equal(instance)
     end
 
     it "should return nil if the object cannot be found" do
-      loader = Puppet::Resource::TypeCollection.new("env")
+      loader = Puppet::Resource::TypeCollection.new(environment)
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
       loader.find_hostclass("foo::bar", "eh").should be_nil
@@ -292,7 +273,7 @@ describe Puppet::Resource::TypeCollection do
 
     describe "when topscope has a class that has the same name as a local class" do
       before do
-        @loader = Puppet::Resource::TypeCollection.new("env")
+        @loader = Puppet::Resource::TypeCollection.new(environment)
         [ "foo::bar", "bar" ].each do |name|
           @loader.add Puppet::Resource::Type.new(:hostclass, name)
         end
@@ -312,7 +293,7 @@ describe Puppet::Resource::TypeCollection do
     end
 
     it "should not look in the local scope for classes when the name is qualified" do
-        @loader = Puppet::Resource::TypeCollection.new("env")
+        @loader = Puppet::Resource::TypeCollection.new(environment)
         @loader.add Puppet::Resource::Type.new(:hostclass, "foo::bar")
 
         @loader.find_hostclass("foo", "::bar").should == nil
@@ -322,24 +303,24 @@ describe Puppet::Resource::TypeCollection do
 
   it "should be able to find nodes" do
     node = Puppet::Resource::Type.new(:node, "bar")
-    loader = Puppet::Resource::TypeCollection.new("env")
+    loader = Puppet::Resource::TypeCollection.new(environment)
     loader.add(node)
     loader.find_node(stub("ignored"), "bar").should == node
   end
 
   it "should indicate whether any nodes are defined" do
-    loader = Puppet::Resource::TypeCollection.new("env")
+    loader = Puppet::Resource::TypeCollection.new(environment)
     loader.add_node(Puppet::Resource::Type.new(:node, "foo"))
     loader.should be_nodes
   end
 
   it "should indicate whether no nodes are defined" do
-    Puppet::Resource::TypeCollection.new("env").should_not be_nodes
+    Puppet::Resource::TypeCollection.new(environment).should_not be_nodes
   end
 
   describe "when finding nodes" do
     before :each do
-      @loader = Puppet::Resource::TypeCollection.new("env")
+      @loader = Puppet::Resource::TypeCollection.new(environment)
     end
 
     it "should return any node whose name exactly matches the provided node name" do
@@ -368,7 +349,7 @@ describe Puppet::Resource::TypeCollection do
 
   describe "when managing files" do
     before do
-      @loader = Puppet::Resource::TypeCollection.new("env")
+      @loader = Puppet::Resource::TypeCollection.new(environment)
       Puppet::Util::WatchedFile.stubs(:new).returns stub("watched_file")
     end
 
@@ -409,7 +390,7 @@ describe Puppet::Resource::TypeCollection do
 
   describe "when determining the configuration version" do
     before do
-      @code = Puppet::Resource::TypeCollection.new("env")
+      @code = Puppet::Resource::TypeCollection.new(environment)
     end
 
     it "should default to the current time" do

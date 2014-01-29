@@ -24,14 +24,9 @@ describe Puppet::Util::Autoload do
     end
 
     it "should collect all of the lib directories that exist in the current environment's module path" do
-      Puppet.settings.parse_config(<<-CONF)
-      [foo]
-      modulepath = #{@dira}#{File::PATH_SEPARATOR}#{@dirb}#{File::PATH_SEPARATOR}#{@dirc}
-      CONF
-
-      Puppet[:environment] = "foo"
-      Dir.expects(:entries).with(@dira).returns %w{one two}
-      Dir.expects(:entries).with(@dirb).returns %w{one two}
+      environment = Puppet::Node::Environment.create(:foo, [@dira, @dirb, @dirc], '')
+      Dir.expects(:entries).with(@dira).returns %w{. .. one two}
+      Dir.expects(:entries).with(@dirb).returns %w{. .. one two}
 
       Puppet::FileSystem.expects(:directory?).with(@dira).returns true
       Puppet::FileSystem.expects(:directory?).with(@dirb).returns true
@@ -40,32 +35,14 @@ describe Puppet::Util::Autoload do
       FileTest.expects(:directory?).with(regexp_matches(%r{two/lib})).times(2).returns true
       FileTest.expects(:directory?).with(regexp_matches(%r{one/lib})).times(2).returns false
 
-      @autoload.class.module_directories.should == ["#{@dira}/two/lib", "#{@dirb}/two/lib"]
-    end
-
-    it "should not look for lib directories in directories starting with '.'" do
-      Puppet.settings.parse_config(<<-CONF)
-      [foo]
-      modulepath = #{@dira}
-      CONF
-
-      Puppet[:environment] = "foo"
-      Dir.expects(:entries).with(@dira).returns %w{. ..}
-
-      Puppet::FileSystem.expects(:directory?).with(@dira).returns true
-      Puppet::FileSystem.expects(:directory?).with("#{@dira}/./lib").never
-      Puppet::FileSystem.expects(:directory?).with("#{@dira}/./plugins").never
-      Puppet::FileSystem.expects(:directory?).with("#{@dira}/../lib").never
-      Puppet::FileSystem.expects(:directory?).with("#{@dira}/../plugins").never
-
-      @autoload.class.module_directories
+      @autoload.class.module_directories(environment).should == ["#{@dira}/two/lib", "#{@dirb}/two/lib"]
     end
 
     it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
       Puppet[:libdir] = %w{/libdir1 /lib/dir/two /third/lib/dir}.join(File::PATH_SEPARATOR)
       @autoload.class.expects(:gem_directories).returns %w{/one /two}
       @autoload.class.expects(:module_directories).returns %w{/three /four}
-      @autoload.class.search_directories.should == %w{/one /two /three /four} + Puppet[:libdir].split(File::PATH_SEPARATOR) + $LOAD_PATH
+      @autoload.class.search_directories(nil).should == %w{/one /two /three /four} + Puppet[:libdir].split(File::PATH_SEPARATOR) + $LOAD_PATH
     end
   end
 

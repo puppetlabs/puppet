@@ -17,7 +17,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def initialize(env)
-    @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
+    @environment = env
     @hostclasses = {}
     @definitions = {}
     @nodes = {}

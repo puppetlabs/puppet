@@ -8,7 +8,9 @@ describe Puppet::Network::HTTP::API::V2::Environments do
   include JSONMatchers
 
   it "responds with all of the available environments environments" do
-    handler = Puppet::Network::HTTP::API::V2::Environments.new(TestingEnvironmentLoader.new)
+    environment = FakeEnvironment.create(:production, [], '')
+    loader = Puppet::Environments::Static.new(environment)
+    handler = Puppet::Network::HTTP::API::V2::Environments.new(loader)
     response = Puppet::Network::HTTP::MemoryResponse.new
 
     handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
@@ -16,7 +18,7 @@ describe Puppet::Network::HTTP::API::V2::Environments do
     expect(response.code).to eq(200)
     expect(response.type).to eq("application/json")
     expect(JSON.parse(response.body)).to eq({
-      "search_path" => ["file:///fake"],
+      "search_paths" => loader.search_paths,
       "environments" => {
         "production" => {
           "modules" => {
@@ -30,22 +32,13 @@ describe Puppet::Network::HTTP::API::V2::Environments do
   end
 
   it "the response conforms to the environments schema" do
-    handler = Puppet::Network::HTTP::API::V2::Environments.new(TestingEnvironmentLoader.new)
+    environment = FakeEnvironment.create(:production, [], '')
+    handler = Puppet::Network::HTTP::API::V2::Environments.new(Puppet::Environments::Static.new(environment))
     response = Puppet::Network::HTTP::MemoryResponse.new
 
     handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
 
     expect(response.body).to validate_against('api/schemas/environments.json')
-  end
-
-  class TestingEnvironmentLoader
-    def search_paths
-      ["file:///fake"]
-    end
-
-    def list
-      [FakeEnvironment.new(:production)]
-    end
   end
 
   class FakeEnvironment < Puppet::Node::Environment

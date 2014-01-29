@@ -347,14 +347,15 @@ describe Puppet::Resource::Type do
 
   describe "when describing and managing parent classes" do
     before do
-      @krt = Puppet::Node::Environment.new.known_resource_types
+      environment = Puppet::Node::Environment.create(:testing, [], '')
+      @krt = environment.known_resource_types
       @parent = Puppet::Resource::Type.new(:hostclass, "bar")
       @krt.add @parent
 
       @child = Puppet::Resource::Type.new(:hostclass, "foo", :parent => "bar")
       @krt.add @child
 
-      @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo")))
+      @scope = Puppet::Parser::Scope.new(Puppet::Parser::Compiler.new(Puppet::Node.new("foo", :environment => environment)))
     end
 
     it "should be able to define a parent" do

@@ -97,7 +97,6 @@ describe Puppet::Module do
 
     it "should list modules that are missing" do
       metadata_file = "#{@modpath}/needy/metadata.json"
-      Puppet::FileSystem.expects(:exist?).twice.with(metadata_file).returns true
       mod = PuppetSpec::Modules.create(
         'needy',
         @modpath,
@@ -119,7 +118,6 @@ describe Puppet::Module do
 
     it "should list modules that are missing and have invalid names" do
       metadata_file = "#{@modpath}/needy/metadata.json"
-      Puppet::FileSystem.expects(:exist?).with(metadata_file).twice.returns true
       mod = PuppetSpec::Modules.create(
         'needy',
         @modpath,
@@ -140,42 +138,43 @@ describe Puppet::Module do
     end
 
     it "should list modules with unmet version requirement" do
-      ['foobar', 'foobaz'].each do |mod_name|
-        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
-        Puppet::FileSystem.stubs(:exist?).with(metadata_file).returns true
-      end
+      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+
       mod = PuppetSpec::Modules.create(
-        'foobar',
+        'test_gte_req',
         @modpath,
         :metadata => {
           :dependencies => [{
             "version_requirement" => ">= 2.2.0",
             "name" => "baz/foobar"
           }]
-        }
+        },
+        :environment => env
       )
       mod2 = PuppetSpec::Modules.create(
-        'foobaz',
+        'test_specific_req',
         @modpath,
         :metadata => {
           :dependencies => [{
             "version_requirement" => "1.0.0",
             "name" => "baz/foobar"
           }]
-        }
+        },
+        :environment => env
       )
 
       PuppetSpec::Modules.create(
         'foobar',
         @modpath,
-        :metadata => { :version => '2.0.0', :author  => 'baz' }
+        :metadata => { :version => '2.0.0', :author  => 'baz' },
+        :environment => env
       )
 
       mod.unmet_dependencies.should == [{
         :reason => :version_mismatch,
         :name   => "baz/foobar",
         :version_constraint => ">= 2.2.0",
-        :parent => { :version => "v9.9.9", :name => "puppetlabs/foobar" },
+        :parent => { :version => "v9.9.9", :name => "puppetlabs/test_gte_req" },
         :mod_details => { :installed_version => "2.0.0" }
       }]
 
@@ -183,13 +182,15 @@ describe Puppet::Module do
         :reason => :version_mismatch,
         :name   => "baz/foobar",
         :version_constraint => "v1.0.0",
-        :parent => { :version => "v9.9.9", :name => "puppetlabs/foobaz" },
+        :parent => { :version => "v9.9.9", :name => "puppetlabs/test_specific_req" },
         :mod_details => { :installed_version => "2.0.0" }
       }]
 
     end
 
     it "should consider a dependency without a version requirement to be satisfied" do
+      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+
       mod = PuppetSpec::Modules.create(
         'foobar',
         @modpath,
@@ -197,7 +198,8 @@ describe Puppet::Module do
           :dependencies => [{
             "name" => "baz/foobar"
           }]
-        }
+        },
+        :environment => env
       )
       PuppetSpec::Modules.create(
         'foobar',
@@ -205,15 +207,16 @@ describe Puppet::Module do
         :metadata => {
           :version => '2.0.0',
           :author  => 'baz'
-        }
+        },
+        :environment => env
       )
 
       mod.unmet_dependencies.should be_empty
     end
 
     it "should consider a dependency without a semantic version to be unmet" do
-      metadata_file = "#{@modpath}/foobar/metadata.json"
-      Puppet::FileSystem.expects(:exist?).with(metadata_file).times(3).returns true
+      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+
       mod = PuppetSpec::Modules.create(
         'foobar',
         @modpath,
@@ -221,7 +224,8 @@ describe Puppet::Module do
           :dependencies => [{
             "name" => "baz/foobar"
           }]
-        }
+        },
+        :environment => env
       )
       PuppetSpec::Modules.create(
         'foobar',
@@ -229,7 +233,8 @@ describe Puppet::Module do
         :metadata => {
           :version => '5.1',
           :author  => 'baz'
-        }
+        },
+        :environment => env
       )
 
       mod.unmet_dependencies.should == [{
@@ -254,10 +259,8 @@ describe Puppet::Module do
     end
 
     it "should only list unmet dependencies" do
-      [name, 'satisfied'].each do |mod_name|
-        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
-        Puppet::FileSystem.expects(:exist?).with(metadata_file).twice.returns true
-      end
+      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+
       mod = PuppetSpec::Modules.create(
         name,
         @modpath,
@@ -272,7 +275,8 @@ describe Puppet::Module do
               "name" => "baz/notsatisfied"
             }
           ]
-        }
+        },
+        :environment => env
       )
       PuppetSpec::Modules.create(
         'satisfied',
@@ -280,7 +284,8 @@ describe Puppet::Module do
         :metadata => {
           :version => '3.3.0',
           :author  => 'baz'
-        }
+        },
+        :environment => env
       )
 
       mod.unmet_dependencies.should == [{
@@ -293,6 +298,8 @@ describe Puppet::Module do
     end
 
     it "should be empty when all dependencies are met" do
+      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+
       mod = PuppetSpec::Modules.create(
         'mymod2',
         @modpath,
@@ -307,7 +314,8 @@ describe Puppet::Module do
               "name" => "baz/alsosatisfied"
             }
           ]
-        }
+        },
+        :environment => env
       )
       PuppetSpec::Modules.create(
         'satisfied',
@@ -315,7 +323,8 @@ describe Puppet::Module do
         :metadata => {
           :version => '3.3.0',
           :author  => 'baz'
-        }
+        },
+        :environment => env
       )
       PuppetSpec::Modules.create(
         'alsosatisfied',
@@ -323,7 +332,8 @@ describe Puppet::Module do
         :metadata => {
           :version => '2.1.0',
           :author  => 'baz'
-        }
+        },
+        :environment => env
       )
 
       mod.unmet_dependencies.should be_empty
@@ -652,11 +662,13 @@ describe Puppet::Module do
   end
 
   it "should know what other modules require it" do
-    Puppet.settings[:modulepath] = @modpath
+    env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+
     dependable = PuppetSpec::Modules.create(
       'dependable',
       @modpath,
-      :metadata => {:author => 'puppetlabs'}
+      :metadata => {:author => 'puppetlabs'},
+      :environment => env
     )
     PuppetSpec::Modules.create(
       'needy',
@@ -667,7 +679,8 @@ describe Puppet::Module do
             "version_requirement" => ">= 2.2.0",
             "name" => "puppetlabs/dependable"
         }]
-      }
+      },
+      :environment => env
     )
     PuppetSpec::Modules.create(
       'wantit',
@@ -678,7 +691,8 @@ describe Puppet::Module do
             "version_requirement" => "< 5.0.0",
             "name" => "puppetlabs/dependable"
         }]
-      }
+      },
+      :environment => env
     )
     dependable.required_by.should =~ [
       {

@@ -187,8 +187,8 @@ class Rights
       @methods << m
     end
 
-    def restrict_environment(env)
-      env = Puppet::Node::Environment.new(env)
+    def restrict_environment(environment)
+      env = Puppet.lookup(:environments).get(environment)
       raise ArgumentError, "'#{env}' is already in the '#{name}' ACL" if @environment.include?(env)
 
       @environment << env

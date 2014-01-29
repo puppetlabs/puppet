@@ -199,7 +199,9 @@ module Puppet
     :environmentdir => {
       :default => "$confdir/environments",
       :desc    => "A directory of environments",
-      :type    => :directory
+      :type    => :directory,
+      :owner   => "service",
+      :group   => "service",
     },
     :diff_args => {
         :default  => default_diffargs,

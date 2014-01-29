@@ -44,26 +44,6 @@ end
 # when {Puppet::Parser::Functions.reset} is called.
 class Puppet::Node::Environment
 
-  # This defines a mixin for classes that have an environment. It implements
-  # `environment` and `environment=` that respects the semantics of the
-  # Puppet::Node::Environment class
-  #
-  # @api public
-  module Helper
-
-    def environment
-      Puppet::Node::Environment.new(@environment)
-    end
-
-    def environment=(env)
-      if env.is_a?(String) or env.is_a?(Symbol)
-        @environment = env
-      else
-        @environment = env.name
-      end
-    end
-  end
-
   include Puppet::Util::Cacher
 
   # @api private

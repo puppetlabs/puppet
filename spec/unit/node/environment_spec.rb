@@ -346,28 +346,6 @@ describe Puppet::Node::Environment do
       end
     end
 
-    describe Puppet::Node::Environment::Helper do
-      before do
-        @helper = Object.new
-        @helper.extend(Puppet::Node::Environment::Helper)
-      end
-
-      it "should be able to set and retrieve the environment as a symbol" do
-        @helper.environment = :foo
-        @helper.environment.name.should == :foo
-      end
-
-      it "should accept an environment directly" do
-        @helper.environment = Puppet::Node::Environment.new(:foo)
-        @helper.environment.name.should == :foo
-      end
-
-      it "should accept an environment as a string" do
-        @helper.environment = 'foo'
-        @helper.environment.name.should == :foo
-      end
-    end
-
     describe "when performing initial import" do
       def parser_and_environment(name)
         env = Puppet::Node::Environment.new(name)

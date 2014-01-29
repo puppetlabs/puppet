@@ -35,7 +35,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
       next unless info = name2hash(name)
 
       merge_parent(info) if info[:parent]
-      info[:environment] ||= request.environment.to_s
+      info[:environment] ||= request.environment
       node = info2node(request.key, info)
       break
     end
@@ -59,7 +59,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
     return infos.collect do |info|
       merge_parent(info) if info[:parent]
-      info[:environment] ||= request.environment.to_s
+      info[:environment] ||= request.environment
       info2node(info[:name], info)
     end
   end

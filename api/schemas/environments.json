@@ -36,5 +36,5 @@
             }
         }
     },
-    "required": ["search_path", "environments"]
+    "required": ["search_paths", "environments"]
 }

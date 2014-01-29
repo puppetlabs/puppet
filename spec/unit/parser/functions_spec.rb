@@ -8,20 +8,14 @@ describe Puppet::Parser::Functions do
 
   let(:function_module) { Puppet::Parser::Functions.environment_module(Puppet.lookup(:current_environment)) }
 
+  let(:environment) { Puppet::Node::Environment.create(:myenv, [], '') }
+
   before do
     Puppet::Parser::Functions.reset
   end
 
   it "should have a method for returning an environment-specific module" do
-    Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.new("myenv")).should be_instance_of(Module)
-  end
-
-  it "should use the current default environment if no environment is provided" do
-    Puppet::Parser::Functions.environment_module.should be_instance_of(Module)
-  end
-
-  it "should be able to retrieve environment modules asked for by name rather than instance" do
-    Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.new("myenv")).should equal(Puppet::Parser::Functions.environment_module("myenv"))
+    Puppet::Parser::Functions.environment_module(environment).should be_instance_of(Module)
   end
 
   describe "when calling newfunction" do

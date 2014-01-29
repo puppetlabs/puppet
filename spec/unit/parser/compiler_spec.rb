@@ -66,13 +66,15 @@ describe Puppet::Parser::Compiler do
     now = Time.now
     Time.stubs(:now).returns(now)
 
-    @node = Puppet::Node.new("testnode", :facts => Puppet::Node::Facts.new("facts", {}))
-    @known_resource_types = Puppet::Resource::TypeCollection.new "development"
+    environment = Puppet::Node::Environment.create(:testing, [], '')
+    @node = Puppet::Node.new("testnode",
+                             :facts => Puppet::Node::Facts.new("facts", {}),
+                             :environment => environment)
+    @known_resource_types = environment.known_resource_types
     @compiler = Puppet::Parser::Compiler.new(@node)
     @scope = Puppet::Parser::Scope.new(@compiler, :source => stub('source'))
     @scope_resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope)
     @scope.resource = @scope_resource
-    @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
   end
 
   it "should have a class method that compiles, converts, and returns a catalog" do

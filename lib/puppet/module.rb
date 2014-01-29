@@ -27,7 +27,8 @@ class Puppet::Module
   # of +path+, return +nil+
   def self.find(modname, environment = nil)
     return nil unless modname
-    Puppet::Node::Environment.new(environment).module(modname)
+    env = Puppet.lookup(:environments).get(environment || Puppet[:environment])
+    env.module(modname)
   end
 
   attr_reader :name, :environment, :path
