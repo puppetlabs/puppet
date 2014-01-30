@@ -78,7 +78,7 @@ Puppet::Parser::Functions::newfunction(
     raise ArgumentError, ("reduce(): wrong number of arguments (#{args.length}; must be 2 or 3)")
   end
   unless pblock.respond_to?(:puppet_lambda)
-    raise ArgumentError, ("reduce(): wrong argument type (#{args[1].class}; must be a parameterized block.")
+    raise ArgumentError, ("reduce(): wrong argument type (#{pblock.class}; must be a parameterized block.")
   end
   receiver = args[0]
   case receiver
