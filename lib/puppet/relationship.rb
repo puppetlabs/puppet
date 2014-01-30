@@ -28,6 +28,7 @@ class Puppet::Relationship
   end
 
   def self.from_pson(pson)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
     self.from_data_hash(pson)
   end
 

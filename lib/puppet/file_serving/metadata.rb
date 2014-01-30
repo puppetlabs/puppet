@@ -192,6 +192,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   end
 
   def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
     self.from_data_hash(data)
   end
 

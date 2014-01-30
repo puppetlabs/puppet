@@ -40,6 +40,7 @@ class Puppet::Util::Instrumentation::Data
   end
 
   def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
     data
   end
 end

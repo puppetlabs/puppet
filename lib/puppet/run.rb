@@ -95,6 +95,7 @@ class Puppet::Run
   end
 
   def self.from_pson(hash)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
     self.from_data_hash(hash)
   end
 
