@@ -54,20 +54,16 @@ class WindowsDaemon < Win32::Daemon
     #   )
     # end
 
-    log_notice("Starting service with arguments: #{args}")
+    puppet = File.join(basedir, 'bin', 'puppet.bat')
+    unless File.exists?(puppet)
+      log_err("File not found: '#{puppet}'")
+      return
+    end
+    log_debug("Using '#{puppet}'")
+
+    log_notice('Service started')
 
     while running? do
-      return if state != RUNNING
-
-      log_notice('Service running')
-
-      puppet = File.join(basedir, 'bin', 'puppet.bat')
-      unless File.exists?(puppet)
-        log_err("File not found: '#{puppet}'")
-        return
-      end
-
-      log_debug("Using '#{puppet}'")
       begin
         runinterval = %x{ "#{puppet}" agent --configprint runinterval }.to_i
         if runinterval == 0
@@ -79,8 +75,13 @@ class WindowsDaemon < Win32::Daemon
         runinterval = 1800
       end
 
-      pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => Process::CREATE_NEW_CONSOLE).process_id
-      log_debug("Process created: #{pid}")
+      if state == RUNNING or state == IDLE
+        log_notice("Executing agent with arguments: #{args}")
+        pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => Process::CREATE_NEW_CONSOLE).process_id
+        log_debug("Process created: #{pid}")
+      else
+        log_debug("Service is paused.  Not invoking Puppet agent")
+      end
 
       log_debug("Service waiting for #{runinterval} seconds")
       sleep(runinterval)
