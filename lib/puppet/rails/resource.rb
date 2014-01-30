@@ -84,7 +84,11 @@ class Puppet::Rails::Resource < ActiveRecord::Base
   end
 
   def [](param)
-    super || parameter(param)
+    if param == 'id'
+      super
+    else
+      super || parameter(param)
+    end
   end
 
   # Make sure this resource is equivalent to the provided Parser resource.

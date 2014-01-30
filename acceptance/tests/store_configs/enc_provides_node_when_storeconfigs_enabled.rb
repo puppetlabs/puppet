@@ -29,9 +29,9 @@ create_remote_file master, "#{testdir}/setup.pp", <<END
 $active_record_version = $osfamily ? {
   RedHat => $lsbmajdistrelease ? {
     5       => '2.2.3',
-    default => '3.0.20',
+    default => '3.2.16',
   },
-  default => '3.0.20',
+  default => '3.2.16',
 }
 
 package {
