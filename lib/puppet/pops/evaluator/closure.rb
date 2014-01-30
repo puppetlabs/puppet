@@ -39,4 +39,10 @@ class Puppet::Pops::Evaluator::Closure
     (@model.parameters || []).size
   end
 
+  # Returns the number of optional parameters.
+  # @return [Integer] the number of optional accepted parameters
+  def optional_parameter_count
+    @model.parameters.count { |p| !p.value.nil? }
+  end
+
 end
