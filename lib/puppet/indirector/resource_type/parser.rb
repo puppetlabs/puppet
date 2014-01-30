@@ -23,10 +23,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   # @return [Puppet::Resource::Type, nil]
   # @api public
   def find(request)
-    begin
-      # This is a fix in 3.x that will be replaced with the use of a context
-      # (That is not available until 3.5).
-      $squelsh_parse_errors = true
+    Puppet.override(:squelch_parse_errors => true) do
       krt = request.environment.known_resource_types
 
       # This is a bit ugly.
@@ -39,8 +36,6 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
         end
       end
       nil
-    ensure
-      $squelsh_parse_errors = false
     end
   end
 
@@ -60,10 +55,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   #
   # @api public
   def search(request)
-    begin
-      # This is a fix in 3.x that will be replaced with the use of a context
-      # (That is not available until 3.5).
-      $squelsh_parse_errors = true
+    Puppet.override(:squelch_parse_errors => true) do
 
       krt = request.environment.known_resource_types
       # Make sure we've got all of the types loaded.
@@ -100,7 +92,5 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
       return nil if result.empty?
       result
     end
-  ensure
-    $squelsh_parse_errors = false
   end
 end

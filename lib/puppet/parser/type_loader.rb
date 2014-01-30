@@ -112,7 +112,7 @@ class Puppet::Parser::TypeLoader
       # The use case is that parsing for the purpose of searching for information
       # should not abort. There is currently one such use case in indirector/resourcetype/parser
       #
-      if $squelsh_parse_errors
+    if Puppet.lookup(:squelch_parse_errors) {|| false }
         begin
           loaded_asts << parse_file(file)
         rescue => e
