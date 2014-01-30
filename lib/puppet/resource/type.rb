@@ -68,10 +68,6 @@ class Puppet::Resource::Type
     self.from_data_hash(data)
   end
 
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
-  end
-
   def to_data_hash
     data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
       next hash unless (value = self.send(param)) and (value != "")

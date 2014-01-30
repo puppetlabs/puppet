@@ -106,8 +106,4 @@ class Puppet::Run
       :status => @status
     }
   end
-
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
-  end
 end

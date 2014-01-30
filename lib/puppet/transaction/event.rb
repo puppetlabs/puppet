@@ -64,10 +64,6 @@ class Puppet::Transaction::Event
     }
   end
 
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
-  end
-
   def property=(prop)
     @property = prop.to_s
   end

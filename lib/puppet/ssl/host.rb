@@ -312,10 +312,6 @@ ERROR_STRING
     result
   end
 
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
-  end
-
   # eventually we'll probably want to move this somewhere else or make it
   # configurable
   # --jeffweiss 29 aug 2012

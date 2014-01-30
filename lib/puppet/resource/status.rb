@@ -141,10 +141,6 @@ module Puppet
         }
       end
 
-      def to_pson(*args)
-        to_data_hash.to_pson(*args)
-      end
-
       def to_yaml_properties
         YAML_ATTRIBUTES & super
       end

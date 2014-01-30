@@ -238,10 +238,6 @@ class Puppet::Transaction::Report
     }
   end
 
-  def to_pson
-    to_data_hash.to_pson
-  end
-
   # @return [String] the host name
   # @api public
   #

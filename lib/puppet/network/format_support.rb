@@ -88,6 +88,10 @@ module Puppet::Network::FormatSupport
     to_data_hash.to_msgpack(*args)
   end
 
+  def to_pson(*args)
+    to_data_hash.to_pson(*args)
+  end
+
   def render(format = nil)
     format ||= self.class.default_format
 

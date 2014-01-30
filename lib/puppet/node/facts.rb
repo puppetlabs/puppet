@@ -114,10 +114,6 @@ class Puppet::Node::Facts
     result
   end
 
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
-  end
-
   # Add internal data to the facts for storage.
   def add_timestamp
     self.timestamp = Time.now

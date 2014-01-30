@@ -14,10 +14,6 @@ class Puppet::Status
     @status
   end
 
-  def to_pson(*args)
-    @status.to_pson
-  end
-
   def self.from_data_hash(data)
     if data.include?('status')
       self.new(data['status'])
