@@ -95,14 +95,24 @@ class Puppet::Parser::TypeLoader
     @loaded ||= {}
     loaded_asts = []
     files.reject { |file| @loaded[file] }.each do |file|
-      begin
+      # NOTE: This ugly implementation will be replaced in Puppet 3.5.
+      # The implementation now makes use of a global variable because the context support is
+      # not available until Puppet 3.5.
+      # The use case is that parsing for the purpose of searching for information
+      # should not abort. There is currently one such use case in indirector/resourcetype/parser
+      #
+      if $squelsh_parse_errors
+        begin
+          loaded_asts << parse_file(file)
+        rescue => e
+          # Resume from errors so that all parseable files would
+          # still be parsed. Mark this file as loaded so that
+          # it would not be parsed next time (handle it as if
+          # it was successfully parsed).
+          Puppet.debug("Unable to parse '#{file}': #{e.message}")
+        end
+      else
         loaded_asts << parse_file(file)
-      rescue => e
-        # Resume from errors so that all parseable files would
-        # still be parsed. Mark this file as loaded so that
-        # it would not be parsed next time (handle it as if
-        # it was successfully parsed).
-        Puppet.debug("Unable to parse '#{file}': #{e.message}")
       end
 
       @loaded[file] = true
