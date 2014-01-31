@@ -25,13 +25,24 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
   class MetaStat
     extend Forwardable
 
-    def initialize(stat)
+    def initialize(stat, source_permissions = nil)
       @stat = stat
+      @source_permissions_ignore = source_permissions == :ignore
     end
 
-    def_delegator :@stat, :uid, :owner
-    def_delegator :@stat, :gid, :group
-    def_delegators :@stat, :mode, :ftype
+    def owner
+      @source_permissions_ignore ? Process.euid : @stat.uid
+    end
+
+    def group
+      @source_permissions_ignore ? Process.egid : @stat.gid
+    end
+
+    def mode
+      @source_permissions_ignore ? 0644 : @stat.mode
+    end
+
+    def_delegators :@stat, :ftype
   end
 
   class WindowsStat < MetaStat
@@ -39,8 +50,8 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       require 'puppet/util/windows/security'
     end
 
-    def initialize(stat, path)
-      super(stat)
+    def initialize(stat, path, source_permissions = nil)
+      super(stat, source_permissions)
       @path = path
     end
 
@@ -49,6 +60,9 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       :mode => 0644
     }.each do |method, default_value|
       define_method method do
+        return default_value if @source_permissions_ignore
+
+        # this code remains for when source_permissions is not set to :ignore
         begin
           Puppet::Util::Windows::Security.send("get_#{method}", @path) || default_value
         rescue Puppet::Util::Windows::Error => detail
@@ -89,23 +103,23 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     end
   end
 
-  def collect_stat(path)
+  def collect_stat(path, source_permissions)
     stat = stat()
 
     if Puppet.features.microsoft_windows?
-      WindowsStat.new(stat, path)
+      WindowsStat.new(stat, path, source_permissions)
     else
-      MetaStat.new(stat)
+      MetaStat.new(stat, source_permissions)
     end
   end
 
   # Retrieve the attributes for this file, relative to a base directory.
   # Note that Puppet::FileSystem.stat(path) raises Errno::ENOENT
   # if the file is absent and this method does not catch that exception.
-  def collect
+  def collect(source_permissions = nil)
     real_path = full_path
 
-    stat = collect_stat(real_path)
+    stat = collect_stat(real_path, source_permissions)
     @owner = stat.owner
     @group = stat.group
     @ftype = stat.ftype

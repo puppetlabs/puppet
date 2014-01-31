@@ -169,7 +169,13 @@ module Puppet
       return nil unless value
       value.each do |source|
         begin
-          if data = Puppet::FileServing::Metadata.indirection.find(source, :environment => resource.catalog.environment, :links => resource[:links])
+          options = {
+            :environment          => resource.catalog.environment,
+            :links                => resource[:links],
+            :source_permissions   => resource[:source_permissions]
+          }
+
+          if data = Puppet::FileServing::Metadata.indirection.find(source, options)
             @metadata = data
             @metadata.source = source
             break
