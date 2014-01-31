@@ -41,6 +41,17 @@ module Puppet::Util::ADSI
       "winmgmts:{impersonationLevel=impersonate}!//#{host}/root/cimv2"
     end
 
+    def sid_uri_safe(sid)
+      return Puppet::Util::ADSI.sid_uri(sid) if sid.kind_of?(Win32::Security::SID)
+
+      begin
+        sid = Win32::Security::SID.new(Win32::Security::SID.string_to_sid(sid))
+        Puppet::Util::ADSI.sid_uri(sid)
+      rescue
+        return nil
+      end
+    end
+
     def sid_uri(sid)
       raise Puppet::Error.new( "Must use a valid SID object" ) if !sid.kind_of?(Win32::Security::SID)
       "WinNT://#{sid.to_s}"
@@ -96,6 +107,8 @@ module Puppet::Util::ADSI
     end
 
     def self.uri(name, host = '.')
+      if sid_uri = Puppet::Util::ADSI.sid_uri_safe(name) then return sid_uri end
+
       host = '.' if ['NT AUTHORITY', 'BUILTIN', Socket.gethostname].include?(host)
 
       Puppet::Util::ADSI.uri(name, 'user', host)
@@ -240,6 +253,8 @@ module Puppet::Util::ADSI
     end
 
     def self.uri(name, host = '.')
+      if sid_uri = Puppet::Util::ADSI.sid_uri_safe(name) then return sid_uri end
+
       Puppet::Util::ADSI.uri(name, 'group', host)
     end
 
