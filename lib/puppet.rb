@@ -174,14 +174,14 @@ module Puppet
   # The bindings used for initialization of puppet
   # @api private
   def self.base_context(settings)
-    environments = settings[:environmentdir]
+    environments = settings[:environmentpath]
     modulepath = Puppet::Node::Environment.split_path(settings[:modulepath])
 
+    loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
+    loaders << Puppet::Environments::Legacy.new
+
     {
-      :environments => Puppet::Environments::Combined.new(
-        Puppet::Environments::Directories.new(environments, modulepath),
-        Puppet::Environments::Legacy.new
-      )
+      :environments => Puppet::Environments::Combined.new(*loaders)
     }
   end
 
