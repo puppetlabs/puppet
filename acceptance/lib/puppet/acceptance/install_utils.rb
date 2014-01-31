@@ -94,15 +94,9 @@ module Puppet
             version = $2
             arch = $3
 
-            package_version = version == '19' ? '19-2' : "#{version}-7"
-
             rpm = fetch(
-              "http://yum.puppetlabs.com/%s/%s%s/products/i386/" % [
-                variant,
-                fedora_prefix,
-                version,
-              ],
-              "puppetlabs-release-%s.noarch.rpm" % package_version,
+              "http://yum.puppetlabs.com",
+              "puppetlabs-release-%s-%s.noarch.rpm" % [variant, version],
               platform_configs_dir
             )
 
@@ -114,13 +108,11 @@ module Puppet
               version,
               arch
             ]
-            begin
-              repo = fetch(
-                "http://builds.puppetlabs.lan/puppet/%s/repo_configs/rpm/" % sha,
-                repo_filename,
-                platform_configs_dir
-              )
-            end
+            repo = fetch(
+              "http://builds.puppetlabs.lan/puppet/%s/repo_configs/rpm/" % sha,
+              repo_filename,
+              platform_configs_dir
+            )
 
             on host, "rm -rf /root/*.repo; rm -rf /root/*.rpm"
 
