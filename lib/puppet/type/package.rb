@@ -376,5 +376,9 @@ module Puppet
     def exists?
       @provider.get(:ensure) != :absent
     end
+
+    def present?(current_values)
+      super && current_values[:ensure] != :purged
+    end
   end
 end
