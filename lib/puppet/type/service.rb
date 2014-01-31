@@ -161,7 +161,8 @@ module Puppet
         command.
 
         Defaults to the name of the service. The pattern can be a simple string
-        or any legal Ruby pattern (without slashes)."
+        or any legal Ruby pattern, including regular expressions (which should
+        be quoted without enclosing slashes)."
 
       defaultto { @resource[:binary] || @resource[:name] }
     end
