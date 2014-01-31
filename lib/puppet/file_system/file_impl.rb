@@ -12,7 +12,6 @@ class Puppet::FileSystem::FileImpl
     # (sigh).
     #
     unless path.is_a?(String) || path.respond_to?(:to_str)
-      Puppet.warning(caller)
       raise ArgumentError, "FileSystem implementation expected Pathname, got: '#{path.class}'"
     end
     # converts String and #to_str to Pathname
