@@ -23,7 +23,7 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
 
   # BF: we used to fetch the file content here, but this is counter-productive
   # for puppetmaster streaming of file content. So collect just returns itself
-  def collect
+  def collect(source_permissions = nil)
     return if stat.ftype == "directory"
     self
   end

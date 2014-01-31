@@ -136,9 +136,11 @@ describe Puppet::Resource::Catalog::StaticCompiler do
     # Stub the call to the FileServer metadata API so we don't have to have
     # a real fileserver initialized for testing.
     Puppet::FileServing::Metadata.
-      indirection.stubs(:find).
-      with() { |*args| args[0] == options[:source].sub('puppet:///','') and args[1] == {:links => :manage, :environment => nil}}.
-      returns(fake_fileserver_metadata)
+      indirection.stubs(:find).with do |uri, opts|
+        expect(uri).to eq options[:source].sub('puppet:///','')
+        expect(opts[:links]).to eq :manage
+        expect(opts[:environment]).to eq nil
+      end.returns(fake_fileserver_metadata)
 
     # I want a resource that all the file resources require and another
     # that requires them.
@@ -205,7 +207,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
 --- !ruby/object:Puppet::FileServing::Metadata
   checksum: "{md5}361fadf1c712e812d198c4cab5712a79"
   checksum_type: md5
-  destination: 
+  destination:
   expiration: #{Time.now + 1800}
   ftype: file
   group: 0

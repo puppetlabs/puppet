@@ -29,7 +29,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
     return nil unless path = mount.find(relative_path, request)
     result = model.new(path)
     result.links = request.options[:links] if request.options[:links]
-    result.collect
+    result.collect(request.options[:source_permissions])
     result
   end
 
