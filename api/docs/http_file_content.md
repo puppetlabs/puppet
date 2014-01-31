@@ -49,15 +49,19 @@ None
     GET /env/file_content/modules/example/not_found
     Accept: raw
 
-    HTTP/1.1 404 Not Found: Could not find file_content modules/example/not_found
+    HTTP/1.1 404 Not Found
     Content-Type: text/plain
+
+    Not Found: Could not find file_content modules/example/not_found
 
 #### No file name given
 
     GET /env/file_content/
 
-    HTTP/1.1 400 No request key specified in /env/file_content/
+    HTTP/1.1 400 Bad Request
     Content-Type: text/plain
+
+    No request key specified in /env/file_content/
 
 Schema
 ------
