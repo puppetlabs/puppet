@@ -197,7 +197,7 @@ module Puppet::Network::HTTP
         msg = error.message
         msg << ": [" + @verify.verify_errors.join('; ') + "]"
         raise Puppet::Error, msg, error.backtrace
-      elsif error.message =~ /hostname (\w+ )?not match/
+      elsif error.message =~ /hostname.*not match.*server certificate/
         leaf_ssl_cert = @verify.peer_certs.last
 
         valid_certnames = [leaf_ssl_cert.name, *leaf_ssl_cert.subject_alt_names].uniq
