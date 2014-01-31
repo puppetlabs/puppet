@@ -175,7 +175,7 @@ decoding of the CRL PEM file.
 
     GET /env/certificate_revocation_list
 
-    HTTP/1.1 400 No request key specified in /env/certificate_revocation_list
+    HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
     No request key specified in /env/certificate_revocation_list

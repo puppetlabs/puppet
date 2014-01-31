@@ -11,7 +11,9 @@ Puppet uses the MIME types "pson" and "text/pson" to refer to PSON.
 Differences from JSON
 ---------------------
 
-PSON does *not differ* from JSON in its representation of objects, arrays, numbers, booleans, and null values. PSON *does* serialize strings differently from JSON.
+PSON does *not differ* from JSON in its representation of objects, arrays,
+numbers, booleans, and null values. PSON *does* serialize strings differently
+from JSON.
 
 A PSON string is a sequence of 8-bit ASCII encoded data. It must start and end
 with " (ASCII 0x22) characters. Between these characters it may contain any

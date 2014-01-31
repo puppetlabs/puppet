@@ -66,7 +66,7 @@ None
 
     GET /env/resource_type/resource_type_does_not_exist
 
-    HTTP 404 Not Found: Could not find resource_type resource_type_does_not_exist
+    HTTP 404 Not Found
     Content-Type: text/plain
 
     Not Found: Could not find resource_type resource_type_does_not_exist
@@ -75,7 +75,7 @@ None
 
     GET /env/resource_type/
 
-    HTTP/1.1 400 No request key specified in /env/resource_type/
+    HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
     No request key specified in /env/resource_type/
@@ -168,7 +168,7 @@ Accept: pson, text/pson
 
     GET /env/resource_types/
 
-    HTTP/1.1 400 No request key specified in /env/resource_types/
+    HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
     No request key specified in /env/resource_types/
@@ -179,7 +179,7 @@ Searching on `[-` for instance.
 
     GET /env/resource_types/%5b-
 
-    HTTP/1.1 400 Invalid regex '[-': premature end of char-class: /[-/
+    HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
     Invalid regex '[-': premature end of char-class: /[-/

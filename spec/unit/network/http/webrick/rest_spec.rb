@@ -12,7 +12,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
   describe "when receiving a request" do
     before do
       @request     = stub('webrick http request', :query => {}, :peeraddr => %w{eh boo host ip}, :client_cert => nil)
-      @response    = stub('webrick http response', :status= => true, :body= => true)
+      @response    = mock('webrick http response')
       @model_class = stub('indirected model class')
       @webrick     = stub('webrick http server', :mount => true, :[] => {})
       Puppet::Indirector::Indirection.stubs(:model).with(:foo).returns(@model_class)
@@ -66,32 +66,21 @@ describe Puppet::Network::HTTP::WEBrickREST do
         @handler.set_response(@response, "mybody", 200)
       end
 
-      describe "when the result is a File" do
-        before(:each) do
-          stat = stub 'stat', :size => 100
-          @file = stub 'file', :stat => stat, :path => "/tmp/path"
-          @file.stubs(:is_a?).with(File).returns(true)
-        end
+      it "serves a file" do
+        stat = stub 'stat', :size => 100
+        @file = stub 'file', :stat => stat, :path => "/tmp/path"
+        @file.stubs(:is_a?).with(File).returns(true)
 
-        it "should serve it" do
-          @response.stubs(:[]=)
+        @response.expects(:[]=).with('content-length', 100)
+        @response.expects(:status=).with 200
+        @response.expects(:body=).with @file
 
-          @response.expects(:status=).with 200
-          @response.expects(:body=).with @file
-
-          @handler.set_response(@response, @file, 200)
-        end
-
-        it "should set the Content-Length header" do
-          @response.expects(:[]=).with('content-length', 100)
-
-          @handler.set_response(@response, @file, 200)
-        end
+        @handler.set_response(@response, @file, 200)
       end
 
       it "should set the status and message on the response when setting the response for a failed query" do
         @response.expects(:status=).with 400
-        @response.expects(:reason_phrase=).with "mybody"
+        @response.expects(:body=).with "mybody"
 
         @handler.set_response(@response, "mybody", 400)
       end

@@ -90,7 +90,9 @@ None
     > Accept: s
 
 
-    < HTTP/1.1 404 Not Found: Could not find file_bucket_file md5/4949e56d376cc80ce5387e8e89a75396/home/user/wrong_name
+    < HTTP/1.1 404 Not Found
+    <
+    < Not Found: Could not find file_bucket_file md5/4949e56d376cc80ce5387e8e89a75396/home/user/wrong_name
 
 Schema
 ------

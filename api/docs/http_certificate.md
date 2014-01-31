@@ -77,7 +77,7 @@ The environment field is ignored.
 
     GET /env/certificate/certificate_does_not_exist
 
-    HTTP 404 Not Found: Could not find certificate certificate_does_not_exist
+    HTTP 404 Not Found
     Content-Type: text/plain
 
     Not Found: Could not find certificate certificate_does_not_exist
@@ -86,7 +86,7 @@ The environment field is ignored.
 
     GET /env/certificate/
 
-    HTTP/1.1 400 No request key specified in /env/certificate/
+    HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
     No request key specified in /env/certificate/
@@ -95,7 +95,7 @@ The environment field is ignored.
 
     GET /env/certificate/valid_certificate
 
-    HTTP/1.1 400 this master is not a CA
+    HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
     this master is not a CA

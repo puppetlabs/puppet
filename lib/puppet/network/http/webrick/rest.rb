@@ -70,7 +70,6 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
       response.body = result
       response["content-length"] = result.stat.size if result.is_a?(File)
     end
-    response.reason_phrase = result if status < 200 or status >= 300
   end
 
   # Retrieve node/cert/ip information from the request object.
