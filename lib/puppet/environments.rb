@@ -114,7 +114,7 @@ module Puppet::Environments
     end
 
     # Generate an array of directory loaders from a path string.
-    # @param path [String] path to environment directories 
+    # @param path [String] path to environment directories
     # @param global_module_path [String] the global modulepath setting
     # @return [Array<Puppet::Environments::Directories>] An array
     #   of configured directory loaders.

@@ -30,7 +30,7 @@ def generate_module_content(module_name, options = {})
   "#{path_to_module}/#{module_name}/manifests/init.pp":
     ensure => file,
     content => 'class #{module_name} {
-      notify { template-#{module_name}: message => template("#{module_name}/our_template.erb") }
+      notify { "template-#{module_name}": message => template("#{module_name}/our_template.erb") }
       file { "$agent_file_location/file-#{module_info}": source => "puppet:///modules/#{module_name}/data" }
     }'
   ;
@@ -50,7 +50,7 @@ def generate_module_content(module_name, options = {})
 end
 
 def generate_site_manifest(path_to_manifest, *modules_to_include)
-  manifest_content = <<-EOS 
+  manifest_content = <<-EOS
   "#{path_to_manifest}/site.pp":
     ensure => file,
     content => "#{modules_to_include.map { |m| "include #{m}" }.join("\n")}"
@@ -74,21 +74,21 @@ file {
 #{generate_environment("#{testdir}/base", "onlybase")}
 #{generate_environment("#{testdir}/additional", "shadowed")}
 
-#{generate_module_content("atmp", 
-    :base_path => testdir, 
-    :env_path => 'base', 
+#{generate_module_content("atmp",
+    :base_path => testdir,
+    :env_path => 'base',
     :environment => 'shadowed')}
 #{generate_site_manifest("#{testdir}/base/shadowed/manifests", "atmp", "globalmod")}
 
 #{generate_module_content("atmp",
-    :base_path => testdir, 
-    :env_path => 'base', 
+    :base_path => testdir,
+    :env_path => 'base',
     :environment => 'onlybase')}
 #{generate_site_manifest("#{testdir}/base/onlybase/manifests", "atmp", "globalmod")}
 
 #{generate_module_content("atmp",
-    :base_path => testdir, 
-    :env_path => 'additional', 
+    :base_path => testdir,
+    :env_path => 'additional',
     :environment => 'shadowed')}
 #{generate_site_manifest("#{testdir}/additional/shadowed/manifests", "atmp", "globalmod")}
 
@@ -101,7 +101,7 @@ def run_with_environment(agent, environment, options = {})
   expected_exit_code = options[:expected_exit_code] || 2
   expected_strings = options[:expected_strings]
 
-  step "running an agent in environment '#{environment}'" 
+  step "running an agent in environment '#{environment}'"
   atmp = agent.tmpdir("use_environmentpath_#{environment}")
 
   agent_config = [
@@ -113,8 +113,8 @@ def run_with_environment(agent, environment, options = {})
     'ENV' => { "FACTER_agent_file_location" => atmp },
   }
 
-  on(agent, 
-     puppet("agent", *agent_config), 
+  on(agent,
+     puppet("agent", *agent_config),
      :acceptable_exit_codes => [expected_exit_code]) do |result|
 
     yield atmp, result
@@ -135,7 +135,7 @@ with_puppet_running_on master, master_opts, testdir do
     run_with_environment(agent, "shadowed") do |tmpdir,catalog_result|
       ["module-atmp-from-shadowed", "module-globalmod"].each do |expected|
         assert_match(/environment fact from #{expected}/, catalog_result.stdout)
-      end 
+      end
 
       ["module-atmp-from-shadowed", "module-globalmod"].each do |expected|
         on agent, "cat #{tmpdir}/file-#{expected}" do |file_result|

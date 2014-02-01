@@ -198,7 +198,7 @@ module Puppet
     },
     :environmentpath => {
       :default => "$confdir/environments",
-      :desc    => "A path of environment directoriess",
+      :desc    => "A path of environment directories",
       :type    => :path,
     },
     :diff_args => {
