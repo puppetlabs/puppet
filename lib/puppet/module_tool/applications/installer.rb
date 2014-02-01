@@ -165,9 +165,8 @@ module Puppet::ModuleTool
                 :directory         => mod.path,
                 :metadata          => metadata
             end
-
-            resolve_install_conflicts(release[:dependencies], true)
           end
+          resolve_install_conflicts(release[:dependencies], true)
         end
       end
 
