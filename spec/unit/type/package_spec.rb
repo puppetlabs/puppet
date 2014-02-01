@@ -30,6 +30,10 @@ describe Puppet::Type.type(:package) do
     Puppet::Type.type(:package).provider_feature(:package_settings).methods.should == [:package_settings_insync?, :package_settings, :package_settings=]
   end
 
+  it "should have a :hold feature that requires :hold and :hold=" do
+    Puppet::Type.type(:package).provider_feature(:holdable).methods.should == [:hold, :hold=]
+  end
+
   it "should default to being installed" do
     pkg = Puppet::Type.type(:package).new(:name => "yay", :provider => :apt)
     pkg.should(:ensure).should == :present
@@ -130,6 +134,7 @@ describe Puppet::Type.type(:package) do
         :clear           => nil,
         :satisfies?      => true,
         :name            => :mock,
+        :hold            => false,
         :validate_source => nil
       )
       Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
@@ -262,6 +267,18 @@ describe Puppet::Type.type(:package) do
         @package.property(:ensure).insync?('2.0').should be_false
         @provider.expects(:install)
         @catalog.apply
+      end
+
+      it "should place the package on hold if it is not on hold" do
+        package = Puppet::Type.type(:package).new({ :name => "yay", :ensure => '1.0'})
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource(package)
+        @provider.stubs(:properties).returns({:ensure => "1.0", :hold => :false})
+        @provider.expects(:respond_to?).with('hold=').returns(true)
+        @provider.expects(:respond_to?).with(:flush).returns(false)
+        @provider.expects(:hold).returns(:false)
+        @provider.expects(:hold=)
+        catalog.apply
       end
 
       describe "when current value is an array" do

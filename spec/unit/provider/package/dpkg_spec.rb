@@ -33,7 +33,7 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields bash_installed_io
 
       installed = mock 'bash'
-      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns installed
+      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg, :hold => :false).returns installed
 
       expect(provider_class.instances).to eq([installed])
     end
@@ -42,9 +42,9 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields all_installed_io
 
       bash = mock 'bash'
-      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns bash
+      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg, :hold => :false).returns bash
       vim = mock 'vim'
-      provider_class.expects(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).returns vim
+      provider_class.expects(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg, :hold => :false).returns vim
 
       expect(provider_class.instances).to eq([bash, vim])
     end
@@ -84,7 +84,7 @@ describe provider_class do
     it "returns a hash of the found package status for an installed package" do
       dpkg_query_execution_returns(bash_installed_output)
 
-      expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg})
+      expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg, :hold => :false})
     end
 
     it "considers the package absent if the dpkg-query result cannot be interpreted" do
@@ -129,7 +129,7 @@ describe provider_class do
 
     it "considers the package held if its state is 'hold'" do
       dpkg_query_execution_returns(bash_installed_output.gsub("install","hold"))
-      expect(provider.query[:ensure]).to eq(:held)
+      expect(provider.query[:hold]).to eq(:true)
     end
 
     describe "parsing tests" do
@@ -187,7 +187,6 @@ describe provider_class do
 
     it "uses 'dpkg -i' to install the package" do
       resource.expects(:[]).with(:source).returns "mypackagefile"
-      provider.expects(:unhold)
       provider.expects(:dpkg).with { |*command| command[-1] == "mypackagefile"  and command[-2] == "-i" }
 
       provider.install
@@ -195,7 +194,6 @@ describe provider_class do
 
     it "keeps old config files if told to do so" do
       resource.expects(:[]).with(:configfiles).returns :keep
-      provider.expects(:unhold)
       provider.expects(:dpkg).with { |*command| command[0] == "--force-confold" }
 
       provider.install
@@ -203,15 +201,8 @@ describe provider_class do
 
     it "replaces old config files if told to do so" do
       resource.expects(:[]).with(:configfiles).returns :replace
-      provider.expects(:unhold)
       provider.expects(:dpkg).with { |*command| command[0] == "--force-confnew" }
 
-      provider.install
-    end
-
-    it "ensures any hold is removed" do
-      provider.expects(:unhold).once
-      provider.expects(:dpkg)
       provider.install
     end
   end
@@ -224,22 +215,14 @@ describe provider_class do
       Tempfile.stubs(:new).returns tempfile
     end
 
-    it "installs first if holding" do
-      provider.stubs(:execute)
-      provider.expects(:install).once
-      provider.hold
-    end
-
     it "executes dpkg --set-selections when holding" do
-      provider.stubs(:install)
-      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
-      provider.hold
+      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => true, :combine => false, :stdinfile => tempfile.path}).once
+      provider.hold=:true
     end
 
     it "executes dpkg --set-selections when unholding" do
-      provider.stubs(:install)
-      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
-      provider.hold
+      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => true, :combine => false, :stdinfile => tempfile.path}).once
+      provider.hold=:false
     end
   end
 
