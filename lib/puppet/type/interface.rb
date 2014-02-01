@@ -109,4 +109,8 @@ Puppet::Type.newtype(:interface) do
         super(currentvalue, newvalue)
       end
     end
+
+  def present?(current_values)
+    super && current_values[:ensure] != :shutdown
+  end
 end
