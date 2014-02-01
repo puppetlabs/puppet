@@ -13,6 +13,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
   has_feature :versionable
   has_feature :install_options
+  has_feature :uninstall_options
 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderRpm class.
@@ -139,7 +140,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         nvr += ".#{get(:arch)}"
       end
     end
-    rpm "-e", nvr
+
+    flag = ["-e"] + uninstall_options
+    rpm flag, nvr
   end
 
   def update
@@ -148,6 +151,10 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
   def install_options
     join_options(resource[:install_options])
+  end
+
+  def uninstall_options
+    join_options(resource[:uninstall_options])
   end
 
   private
