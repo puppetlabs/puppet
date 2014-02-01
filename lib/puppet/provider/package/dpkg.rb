@@ -68,9 +68,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         hash[:ensure] = :purged
       elsif ['config-files', 'half-installed', 'unpacked', 'half-configured'].include?(hash[:status])
         hash[:ensure] = :absent
-      elsif hash[:desired] == 'hold'
+      end
+
+      if hash[:desired] == 'hold'
         hash[:hold] = :true
-      else
+      elsif ['install', 'deinstall', 'purge'].include?(hash[:desired])
         hash[:hold] = :false
       end
     else
