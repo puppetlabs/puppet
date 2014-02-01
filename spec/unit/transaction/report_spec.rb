@@ -401,6 +401,12 @@ describe Puppet::Transaction::Report do
     expect(report.render).to validate_against('api/schemas/report.json')
   end
 
+  it "generates pson for error report which validates against the report schema" do
+    Puppet[:report_serialization_format] = "pson"
+    error_report = generate_report_with_error
+    expect(error_report.render).to validate_against('api/schemas/report.json')
+  end
+
   it "can make a round trip through yaml" do
     Puppet[:report_serialization_format] = "yaml"
     report = generate_report
@@ -466,6 +472,19 @@ describe Puppet::Transaction::Report do
   def generate_report
     status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
     status.changed = true
+
+    report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
+    report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
+    report.add_times("timing", 4)
+    report.add_resource_status(status)
+    report.finalize_report
+    report
+  end
+
+  def generate_report_with_error
+    status = Puppet::Resource::Status.new(Puppet::Type.type(:notify).new(:title => "a resource"))
+    status.changed = true
+    status.failed_because("bad stuff happened")
 
     report = Puppet::Transaction::Report.new('apply', 1357986, 'test_environment', "df34516e-4050-402d-a166-05b03b940749")
     report << Puppet::Util::Log.new(:level => :warning, :message => "log message")
