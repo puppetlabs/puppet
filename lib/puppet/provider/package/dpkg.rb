@@ -91,9 +91,6 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     args = []
 
-    # We always unhold when installing to remove any prior hold.
-    self.unhold
-
     if @resource[:configfiles] == :keep
       args << '--force-confold'
     else
