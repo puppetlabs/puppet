@@ -51,7 +51,7 @@ rescue LoadError
   $haverdoc = false
 end
 
-PREREQS = %w{openssl facter cgi}
+PREREQS = %w{openssl facter cgi hiera}
 MIN_FACTER_VERSION = 1.5
 
 InstallOptions = OpenStruct.new
