@@ -385,7 +385,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           save_result = @aug.save
           unless save_result
             print_put_errors
-            fail("Save failed with return code #{save_result}, see debug")
+            fail("Saving failed, see debug")
           end
 
           saved_files = @aug.match("/augeas/events/saved")

@@ -499,7 +499,8 @@ describe provider_class do
         @augeas.expects(:close)
 
         @provider.expects(:diff).never()
-        lambda { @provider.need_to_run? }.should raise_error
+        @provider.expects(:print_put_errors)
+        lambda { @provider.need_to_run? }.should raise_error(Puppet::Error)
       end
     end
   end
@@ -676,7 +677,6 @@ describe provider_class do
       @augeas.expects(:match).returns([])
       expect { @provider.execute_changes }.to raise_error(Puppet::Error)
     end
-
   end
 
   describe "when making changes", :if => Puppet.features.augeas? do
