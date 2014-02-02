@@ -425,10 +425,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     set_augeas_save_mode(SAVE_OVERWRITE) if versioncmp(get_augeas_version, "0.3.6") >= 0
     @aug.load
     do_execute_changes
-        unless @aug.save
-          print_put_errors
-          fail("Save failed with return code #{success}, see debug")
-        end
+    unless @aug.save
+      print_put_errors
+      fail("Save failed, see debug")
+    end
 
     :executed
   ensure

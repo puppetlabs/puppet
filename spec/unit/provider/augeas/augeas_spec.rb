@@ -663,6 +663,20 @@ describe provider_class do
       @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
       expect { @provider.execute_changes }.to raise_error(RuntimeError, /command 'clearm' not supported/)
     end
+
+    it "should throw error if saving failed" do
+      @resource[:changes] = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","clearm test Jar/Jar"]
+      @resource[:context] = "/foo/"
+      @augeas.expects(:respond_to?).with("clearm").returns(true)
+      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
+      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
+      @augeas.expects(:clearm).with("/foo/test", "Jar/Jar").returns(true)
+      @augeas.expects(:save).returns(false)
+      @provider.expects(:print_put_errors)
+      @augeas.expects(:match).returns([])
+      expect { @provider.execute_changes }.to raise_error(Puppet::Error)
+    end
+
   end
 
   describe "when making changes", :if => Puppet.features.augeas? do
