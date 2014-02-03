@@ -166,41 +166,19 @@ def list_preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
   hosts
 end
 
-# Plagiarized from Beaker::Vcloud#cleanup
-def destroy_preserved_hosts(hosts = nil, secs_ago = ONE_DAY_IN_SECS)
+def release_hosts(hosts = nil, secs_ago = ONE_DAY_IN_SECS)
   secs_ago ||= ONE_DAY_IN_SECS
   hosts ||= list_preserved_hosts(secs_ago)
 
-  require 'beaker/hypervisor/vsphere_helper'
-  vsphere_credentials = VsphereHelper.load_config("#{ENV['HOME']}/.fog")
-
-  puts "Connecting to vSphere at #{vsphere_credentials[:server]}" +
-    " with credentials for #{vsphere_credentials[:user]}"
-
-  vsphere_helper = VsphereHelper.new( vsphere_credentials )
-
-  vm_names = hosts.to_a
-  pp vm_names
-  vms = vsphere_helper.find_vms vm_names
-  vm_names.each do |name|
-    unless vm = vms[name]
-      puts "Couldn't find VM #{name} in vSphere!"
-      next
-    end
-
-    if vm.runtime.powerState == 'poweredOn'
-      puts "Shutting down #{vm.name}"
-      start = Time.now
-      vm.PowerOffVM_Task.wait_for_completion
-      puts "Spent %.2f seconds halting #{vm.name}" % (Time.now - start)
-    end
-
-    start = Time.now
-    vm.Destroy_Task
-    puts "Spent %.2f seconds destroying #{vm.name}" % (Time.now - start)
-  end
-
-  vsphere_helper.close
+  require 'beaker'
+  vcloud_pooled = Beaker::VcloudPooled.new(hosts.map { |h| { 'vmhostname' => h } },
+                              :logger => Beaker::Logger.new,
+                              :dot_fog => "#{ENV['HOME']}/.fog",
+                              'pooling_api' => 'http://vcloud.delivery.puppetlabs.net' ,
+                              'datastore' => 'not-used',
+                              'resourcepool' => 'not-used',
+                              'folder' => 'not-used')
+  vcloud_pooled.cleanup
 end
 
 def print_preserved(preserved)
@@ -283,10 +261,14 @@ Shutdown and destroy any hosts that we have preserved for testing.  These should
 Specify a list of comma separated HOST_NAMES if you have a set of dynamic vcloud host names you want to purge outside of what can be grepped from the logs.
 You can go back through the last SECS_AGO logs.  Default is one day ago in secs.
   EOS
-  task :destroy_preserved_hosts do
+  task :release_hosts do
     host_names = ENV['HOST_NAMES'].split(',') if ENV['HOST_NAMES']
     secs_ago = ENV['SECS_AGO']
-    destroy_preserved_hosts(host_names, secs_ago)
+    release_hosts(host_names, secs_ago)
+  end
+
+  task :destroy_preserved_hosts => 'ci:release_hosts' do
+    puts "Note: we are now releasing hosts back to the vcloud pooling api rather than destroying them directly.  The rake task for this is ci:release_hosts"
   end
 
   desc <<-EOS
