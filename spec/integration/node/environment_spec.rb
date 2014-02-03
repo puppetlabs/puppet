@@ -56,8 +56,12 @@ describe Puppet::Node::Environment do
     mods[0].path.should == File.join(base, "dir1", "mod")
   end
 
-  shared_examples_for "the environment's initial import" do
+  shared_examples_for "the environment's initial import" do |settings|
     it "a manifest referring to a directory invokes parsing of all its files in sorted order" do
+      settings.each do |name, value|
+        Puppet[name] = value
+      end
+
       # fixture has three files 00_a.pp, 01_b.pp, and 02_c.pp. The 'b' file
       # depends on 'a' being evaluated first. The 'c' file is empty (to ensure
       # empty things do not break the directory import).
@@ -77,33 +81,29 @@ describe Puppet::Node::Environment do
   end
 
   describe 'using classic parser' do
-    before :each do
-      Puppet[:parser] = 'current'
-      # fixture uses variables that are set in a particular order (this ensures that files are parsed
-      # and combined in the right order or an error will be raised if 'b' is evaluated before 'a').
-      Puppet[:strict_variables] = true
-    end
-    it_behaves_like "the environment's initial import" do
-    end
+    it_behaves_like "the environment's initial import",
+      :parser => 'current',
+      # fixture uses variables that are set in a particular order (this ensures
+      # that files are parsed and combined in the right order or an error will
+      # be raised if 'b' is evaluated before 'a').
+      :strict_variables => true
   end
+
   describe 'using future parser' do
-    before :each do
-      Puppet[:parser] = 'future'
-      # Turned off because currently future parser turns on the binder which causes lookup of facts
-      # that are uninitialized and it will fail with errors for 'osfamily' etc.
-      # This can be turned back on when the binder is taken out of the equation.
-      # Puppet[:strict_variables] = true
-    end
-    it_behaves_like "the environment's initial import" do
-    end
+    it_behaves_like "the environment's initial import",
+      :parser    => 'future',
+      :evaluator => 'future',
+      # Turned off because currently future parser turns on the binder which
+      # causes lookup of facts that are uninitialized and it will fail with
+      # errors for 'osfamily' etc.  This can be turned back on when the binder
+      # is taken out of the equation.
+      :strict_variables => false
 
-    context 'using evaluator current' do
-      before do
-        Puppet[:evaluator] = 'current'
-      end
-
-      it_behaves_like "the environment's initial import"
+    context 'and evaluator current' do
+      it_behaves_like "the environment's initial import",
+        :parser           => 'future',
+        :evaluator        => 'current',
+        :strict_variables => false
     end
   end
-
 end
