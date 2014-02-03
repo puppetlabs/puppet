@@ -112,6 +112,11 @@ If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hos
 
 to clean them up sooner and free resources.
 
+There also may be scenarios where you want to specify the host(s) to destroy. E.g. you may want to destroy a subset of the hosts you've created. Or, if a test run terminates early, ci:destroy_preserved_hosts may not be able to derive the name of the vm to delete. In such cases you can specify host(s) to be deleted using the HOST_NAMES environment variable. E.g.
+
+    HOST_NAMES=lvwwr9tdplg351u bundle exec rake ci:destroy_preserved_hosts
+    HOST_NAMES=lvwwr9tdplg351u,ylrqjh5l6xvym4t bundle exec rake ci:destroy_preserved_hosts
+
 
 Running Tests on Vagrant Boxen
 ------------------------------
