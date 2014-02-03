@@ -96,6 +96,14 @@ describe Puppet::Node::Environment do
     end
     it_behaves_like "the environment's initial import" do
     end
+
+    context 'using evaluator current' do
+      before do
+        Puppet[:evaluator] = 'current'
+      end
+
+      it_behaves_like "the environment's initial import"
+    end
   end
 
 end

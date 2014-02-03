@@ -76,8 +76,7 @@ module Puppet::Parser
     end
 
     def self.code_merger
-      case Puppet[:parser]
-      when 'future'
+      if Puppet[:parser] == 'future' && Puppet[:evaluator] == 'future'
         Puppet::Pops::Parser::CodeMerger.new
       else
         Puppet::Parser::CodeMerger.new
