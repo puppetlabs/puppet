@@ -3,11 +3,13 @@ require 'puppet/transaction'
 require 'puppet_spec/compiler'
 require 'matchers/relationship_graph_matchers'
 require 'matchers/include_in_order'
+require 'matchers/resource'
 
 describe Puppet::Transaction::AdditionalResourceGenerator do
   include PuppetSpec::Compiler
   include PuppetSpec::Files
   include RelationshipGraphMatchers
+  include Matchers::Resource
 
   let(:prioritizer) { Puppet::Graph::SequentialPrioritizer.new }
 
@@ -405,15 +407,5 @@ describe Puppet::Transaction::AdditionalResourceGenerator do
     def failure_message_for_should
       "expected #{@expected.join(', ')} to all be contained in the same resource but the containment was #{@expected.zip(@containers).collect { |(res, container)| res + ' => ' + container }.join(', ')}"
     end
-  end
-end
-
-RSpec::Matchers.define :have_resource do |expected_resource|
-  match do |actual_catalog|
-    actual_catalog.resource(expected_resource)
-  end
-
-  def failure_message_for_should
-    "expected #{@actual.to_dot} to include #{@expected[0]}"
   end
 end
