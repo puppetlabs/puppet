@@ -159,6 +159,115 @@ describe Puppet::Transaction::ResourceHarness do
     stubProvider
   end
 
+
+  context "interaction of ensure with other properties" do
+    def an_ensurable_resource_reacting_as(behaviors)
+      stub_type = Class.new(Puppet::Type)
+      stub_type.class_eval do
+        initvars
+        ensurable do
+          def sync
+            (@resource.behaviors[:on_ensure] || proc {}).call
+          end
+
+          def insync?(value)
+            @resource.behaviors[:ensure_insync?]
+          end
+        end
+
+        newparam(:name) do
+          desc "The name var"
+          isnamevar
+        end
+
+        newproperty(:prop) do
+          newvalue("new") do
+            #noop
+          end
+
+          def retrieve
+            "old"
+          end
+        end
+
+        attr_reader :behaviors
+
+        def initialize(options)
+          @behaviors = options.delete(:behaviors)
+          super
+        end
+
+        def exists?
+          @behaviors[:present?]
+        end
+
+        def present?(resource)
+          @behaviors[:present?]
+        end
+
+        def self.name
+          "Testing"
+        end
+      end
+      stub_type.new(:behaviors => behaviors,
+                    :ensure => :present,
+                    :name => "testing",
+                    :prop => "new")
+    end
+
+    it "ensure errors means that the rest doesn't happen" do
+      resource = an_ensurable_resource_reacting_as(:ensure_insync? => false, :on_ensure => proc { raise StandardError }, :present? => true)
+
+      status = @harness.evaluate(resource)
+
+      expect(status.events.length).to eq(1)
+      expect(status.events[0].property).to eq('ensure')
+      expect(status.events[0].name.to_s).to eq('Testing_created')
+      expect(status.events[0].status).to eq('failure')
+    end
+
+    it "ensure fails completely means that the rest doesn't happen" do
+      resource = an_ensurable_resource_reacting_as(:ensure_insync? => false, :on_ensure => proc { raise Exception }, :present? => false)
+
+      expect do
+        @harness.evaluate(resource)
+      end.to raise_error(Exception)
+
+      @logs.first.message.should == "change from absent to present failed: Exception"
+      @logs.first.level.should == :err
+    end
+
+    it "ensure succeeds means that the rest doesn't happen" do
+      resource = an_ensurable_resource_reacting_as(:ensure_insync? => false, :on_ensure => proc { }, :present? => true)
+
+      status = @harness.evaluate(resource)
+
+      expect(status.events.length).to eq(1)
+      expect(status.events[0].property).to eq('ensure')
+      expect(status.events[0].name.to_s).to eq('Testing_created')
+      expect(status.events[0].status).to eq('success')
+    end
+
+    it "ensure is in sync means that the rest *does* happen" do
+      resource = an_ensurable_resource_reacting_as(:ensure_insync? => true, :present? => true)
+
+      status = @harness.evaluate(resource)
+
+      expect(status.events.length).to eq(1)
+      expect(status.events[0].property).to eq('prop')
+      expect(status.events[0].name.to_s).to eq('prop_changed')
+      expect(status.events[0].status).to eq('success')
+    end
+
+    it "ensure is in sync but resource not present, means that the rest doesn't happen" do
+      resource = an_ensurable_resource_reacting_as(:ensure_insync? => true, :present? => false)
+
+      status = @harness.evaluate(resource)
+
+      expect(status.events).to be_empty
+    end
+  end
+
   describe "when a caught error occurs" do
     before :each do
       stub_provider = make_stub_provider
@@ -227,9 +336,8 @@ describe Puppet::Transaction::ResourceHarness do
       resource = stub_provider.new :name => 'name', :audit => ['foo']
       resource.property(:foo).expects(:insync?).never
       status = @harness.evaluate(resource)
-      status.events.each do |event|
-        event.status.should != 'failure'
-      end
+
+      expect(status.events).to be_empty
     end
 
     it "should be able to audit a file's group" do # see bug #5710
