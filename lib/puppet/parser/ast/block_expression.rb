@@ -8,12 +8,7 @@ class Puppet::Parser::AST
     def evaluate(scope)
       result = nil
       @children.each do |child|
-        # Skip things that respond to :instantiate (classes, nodes,
-        # and definitions), because they have already been
-        # instantiated.
-        if !child.respond_to?(:instantiate)
-          result = child.safeevaluate(scope)
-        end
+        result = child.safeevaluate(scope)
       end
       result
     end

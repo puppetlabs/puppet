@@ -12,6 +12,6 @@ class Puppet::Pops::Parser::CodeMerger
     children = parse_results.select {|x| !x.nil? && x.code}.reduce([]) do |memo, parsed_class|
       memo << parsed_class.code
     end
-    main = Puppet::Parser::AST::BlockExpression.new(:children => children)
+    Puppet::Parser::AST::BlockExpression.new(:children => children)
   end
 end
