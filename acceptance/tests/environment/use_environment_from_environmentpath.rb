@@ -157,7 +157,7 @@ with_puppet_running_on master, master_opts, testdir do
     end
 
     run_with_environment(agent, nil, :expected_exit_code => 0) do |tmpdir, result|
-      assert_not_match(/module-atmp/, result.stdout)
+      assert_no_match(/module-atmp/, result.stdout, "module-atmp was included despite no environment being loaded")
       assert_match(/Loading facts.*globalmod/, result.stdout)
     end
   end
