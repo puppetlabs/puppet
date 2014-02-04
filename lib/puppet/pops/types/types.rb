@@ -3,7 +3,7 @@ require 'rgen/metamodel_builder'
 # The Types model is a model of Puppet Language types.
 #
 # The exact relationship between types is not visible in this model wrt. the PDataType which is an abstraction
-# of Literal, Array[Data], and Hash[Literal, Data] nested to any depth. This means it is not possible to
+# of Scalar, Array[Data], and Hash[Scalar, Data] nested to any depth. This means it is not possible to
 # infer the type by simply looking at the inheritance hierarchy. The {Puppet::Pops::Types::TypeCalculator} should
 # be used to answer questions about types. The {Puppet::Pops::Types::TypeFactory} should be used to create an instance
 # of a type whenever one is needed.
@@ -100,12 +100,12 @@ module Puppet::Pops::Types
 
   # Type that is PDataType compatible, but is not a PCollectionType.
   # @api public
-  class PLiteralType < PObjectType
+  class PScalarType < PObjectType
   end
 
   # A string type describing the set of strings having one of the given values
   #
-  class PEnumType < PLiteralType
+  class PEnumType < PScalarType
     has_many_attr 'values', String, :lowerBound => 1
 
     module ClassModule
@@ -120,7 +120,7 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PNumericType < PLiteralType
+  class PNumericType < PScalarType
   end
 
   # @api public
@@ -177,7 +177,7 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PStringType < PLiteralType
+  class PStringType < PScalarType
     has_many_attr 'values', String, :lowerBound => 0, :upperBound => -1, :unique => true
     contains_one_uni 'size_type', PIntegerType
 
@@ -194,7 +194,7 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PRegexpType < PLiteralType
+  class PRegexpType < PScalarType
     has_attr 'pattern', String, :lowerBound => 1
     has_attr 'regexp', Object, :derived => true
 
@@ -218,7 +218,7 @@ module Puppet::Pops::Types
   # If specified without a pattern it is basically the same as the String type.
   #
   # @api public
-  class PPatternType < PLiteralType
+  class PPatternType < PScalarType
     contains_many_uni 'patterns', PRegexpType
 
     module ClassModule
@@ -234,7 +234,7 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PBooleanType < PLiteralType
+  class PBooleanType < PScalarType
   end
 
   # @api public

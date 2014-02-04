@@ -149,8 +149,8 @@ module Puppet::Pops::Types::TypeFactory
   # Produces the Literal type
   # @api public
   #
-  def self.literal()
-    Types::PLiteralType.new()
+  def self.scalar()
+    Types::PScalarType.new()
   end
 
   # Produces the abstract type Collection
@@ -210,10 +210,10 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
-  # Produces a type for Hash[Literal, o] where o is either a type, or an instance for which a type is inferred.
+  # Produces a type for Hash[Scalar, o] where o is either a type, or an instance for which a type is inferred.
   # @api public
   #
-  def self.hash_of(value, key = literal())
+  def self.hash_of(value, key = scalar())
     type = Types::PHashType.new()
     type.key_type = type_of(key)
     type.element_type = type_of(value)
@@ -229,12 +229,12 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
-  # Produces a type for Hash[Literal, Data]
+  # Produces a type for Hash[Scalar, Data]
   # @api public
   #
   def self.hash_of_data()
     type = Types::PHashType.new()
-    type.key_type = literal()
+    type.key_type = scalar()
     type.element_type = data()
     type
   end
