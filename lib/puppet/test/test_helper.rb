@@ -39,7 +39,7 @@ module Puppet::Test
       owner = Process.pid
       @environmentdir = Dir.mktmpdir('environments')
       Puppet.push_context(Puppet.base_context({
-        :environmentdir => @environmentdir,
+        :environmentpath => @environmentdir,
         :modulepath => "",
         :manifest => "/dev/null"
       }), "Initial for specs")
@@ -207,9 +207,9 @@ module Puppet::Test
       # Although we setup a testing context during initialization, some tests
       # will end up creating their own context using the real context objects
       # and use the setting for the environments. In order to avoid those tests
-      # having to deal with a missing environmentdir we can just set it right
+      # having to deal with a missing environmentpath we can just set it right
       # here.
-      Puppet[:environmentdir] = @environmentdir
+      Puppet[:environmentpath] = @environmentpath
     end
     private_class_method :initialize_settings_before_each
   end

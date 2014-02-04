@@ -113,6 +113,18 @@ module Puppet::Environments
       @global_module_path = global_module_path
     end
 
+    # Generate an array of directory loaders from a path string.
+    # @param path [String] path to environment directories
+    # @param global_module_path [String] the global modulepath setting
+    # @return [Array<Puppet::Environments::Directories>] An array
+    #   of configured directory loaders.
+    def self.from_path(path, global_module_path)
+      environments = path.split(File::PATH_SEPARATOR)
+      environments.map do |dir|
+        Puppet::Environments::Directories.new(dir, global_module_path)
+      end
+    end
+
     # @!macro loader_search_paths
     def search_paths
       ["environments://directories/#{@environment_dir}"]

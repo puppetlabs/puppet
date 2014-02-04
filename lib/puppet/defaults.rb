@@ -196,12 +196,10 @@ module Puppet
           is used to find modules and much more.  For servers (i.e., `puppet master`)
           this provides the default environment for nodes we know nothing about."
     },
-    :environmentdir => {
+    :environmentpath => {
       :default => "$confdir/environments",
-      :desc    => "A directory of environments",
-      :type    => :directory,
-      :owner   => "service",
-      :group   => "service",
+      :desc    => "A path of environment directories",
+      :type    => :path,
     },
     :diff_args => {
         :default  => default_diffargs,
