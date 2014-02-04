@@ -256,7 +256,7 @@ module Puppet
       :type       => :terminus,
       :default    => nil,
       :desc       => "How to store cached nodes.
-      Valid values are (none), 'json', 'yaml' or write only yaml ('write_only_yaml').
+      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').
       The master application defaults to 'write_only_yaml', all others to none.",
     },
     :data_binding_terminus => {
@@ -292,7 +292,7 @@ module Puppet
     :catalog_cache_terminus => {
       :type       => :terminus,
       :default    => nil,
-      :desc       => "How to store cached catalogs. Valid values are 'json' and 'yaml'. The agent application defaults to 'json'."
+      :desc       => "How to store cached catalogs. Valid values are 'json', 'msgpack' and 'yaml'. The agent application defaults to 'json'."
     },
     :facts_terminus => {
       :default => 'facter',
