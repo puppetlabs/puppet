@@ -1065,6 +1065,13 @@ class Type
     resource
   end
 
+  # Given the hash of current properties, should this resource be treated as if it
+  # currently exists on the system. May need to be overridden by types that offer up
+  # more than just :absent and :present.
+  def present?(current_values)
+    current_values[:ensure] != :absent
+  end
+
   # Returns a hash of the current properties and their values.
   # If a resource is absent, its value is the symbol `:absent`
   # @return [Hash{Puppet::Property => Object}] mapping of property instance to its value

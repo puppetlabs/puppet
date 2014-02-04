@@ -369,6 +369,10 @@ Puppet::Type.newtype(:file) do
     stat ? true : false
   end
 
+  def present?(current_values)
+    super && current_values[:ensure] != :false
+  end
+
   # We have to do some extra finishing, to retrieve our bucket if
   # there is one.
   def finish
