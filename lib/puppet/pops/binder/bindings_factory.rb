@@ -262,11 +262,11 @@ module Puppet::Pops::Binder::BindingsFactory
       type(T.pattern())
     end
 
-    # Sets the type of the binding to the abstract type Literal.
-    # @return [Puppet::Pops::Types::PLiteralType] the type
+    # Sets the type of the binding to the abstract type Scalar.
+    # @return [Puppet::Pops::Types::PScalarType] the type
     # @api public
-    def literal()
-      type(T.literal())
+    def scalar()
+      type(T.scalar())
     end
 
     # Sets the type of the binding to the abstract type Data.

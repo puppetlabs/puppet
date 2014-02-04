@@ -65,7 +65,7 @@ describe 'The type calculator' do
       [ Puppet::Pops::Types::PObjectType,
         Puppet::Pops::Types::PNilType,
         Puppet::Pops::Types::PDataType,
-        Puppet::Pops::Types::PLiteralType,
+        Puppet::Pops::Types::PScalarType,
         Puppet::Pops::Types::PStringType,
         Puppet::Pops::Types::PNumericType,
         Puppet::Pops::Types::PIntegerType,
@@ -84,10 +84,10 @@ describe 'The type calculator' do
       ]
     end
 
-    def literal_types
-      # PVariantType is also literal, if its types are all Literal
+    def scalar_types
+      # PVariantType is also scalar, if its types are all Scalar
       [
-        Puppet::Pops::Types::PLiteralType,
+        Puppet::Pops::Types::PScalarType,
         Puppet::Pops::Types::PStringType,
         Puppet::Pops::Types::PNumericType,
         Puppet::Pops::Types::PIntegerType,
@@ -127,7 +127,7 @@ describe 'The type calculator' do
     end
 
     def data_compatible_types
-      result = literal_types
+      result = scalar_types
       result << Puppet::Pops::Types::PDataType
       result << array_t(types::PDataType.new)
       result << types::TypeFactory.hash_of_data
@@ -223,24 +223,24 @@ describe 'The type calculator' do
         calculator.infer([1,2.0]).element_type.class.should == Puppet::Pops::Types::PNumericType
       end
 
-      it 'with fixnum and string values translates to PArrayType[PLiteralType]' do
-        calculator.infer([1,'two']).element_type.class.should == Puppet::Pops::Types::PLiteralType
+      it 'with fixnum and string values translates to PArrayType[PScalarType]' do
+        calculator.infer([1,'two']).element_type.class.should == Puppet::Pops::Types::PScalarType
       end
 
-      it 'with float and string values translates to PArrayType[PLiteralType]' do
-        calculator.infer([1.0,'two']).element_type.class.should == Puppet::Pops::Types::PLiteralType
+      it 'with float and string values translates to PArrayType[PScalarType]' do
+        calculator.infer([1.0,'two']).element_type.class.should == Puppet::Pops::Types::PScalarType
       end
 
-      it 'with fixnum, float, and string values translates to PArrayType[PLiteralType]' do
-        calculator.infer([1, 2.0,'two']).element_type.class.should == Puppet::Pops::Types::PLiteralType
+      it 'with fixnum, float, and string values translates to PArrayType[PScalarType]' do
+        calculator.infer([1, 2.0,'two']).element_type.class.should == Puppet::Pops::Types::PScalarType
       end
 
-      it 'with fixnum and regexp values translates to PArrayType[PLiteralType]' do
-        calculator.infer([1, /two/]).element_type.class.should == Puppet::Pops::Types::PLiteralType
+      it 'with fixnum and regexp values translates to PArrayType[PScalarType]' do
+        calculator.infer([1, /two/]).element_type.class.should == Puppet::Pops::Types::PScalarType
       end
 
-      it 'with string and regexp values translates to PArrayType[PLiteralType]' do
-        calculator.infer(['one', /two/]).element_type.class.should == Puppet::Pops::Types::PLiteralType
+      it 'with string and regexp values translates to PArrayType[PScalarType]' do
+        calculator.infer(['one', /two/]).element_type.class.should == Puppet::Pops::Types::PScalarType
       end
 
       it 'with string and symbol values translates to PArrayType[PObjectType]' do
@@ -260,13 +260,13 @@ describe 'The type calculator' do
         et.class.should == Puppet::Pops::Types::PStringType
       end
 
-      it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PLiteralType]]' do
+      it 'with array of string values and array of fixnums translates to PArrayType[PArrayType[PScalarType]]' do
         et = calculator.infer([['first' 'array'], [1,2]])
         et.class.should == Puppet::Pops::Types::PArrayType
         et = et.element_type
         et.class.should == Puppet::Pops::Types::PArrayType
         et = et.element_type
-        et.class.should == Puppet::Pops::Types::PLiteralType
+        et.class.should == Puppet::Pops::Types::PScalarType
       end
 
       it 'with hashes of string values translates to PArrayType[PHashType[PStringType]]' do
@@ -278,13 +278,13 @@ describe 'The type calculator' do
         et.class.should == Puppet::Pops::Types::PStringType
       end
 
-      it 'with hash of string values and hash of fixnums translates to PArrayType[PHashType[PLiteralType]]' do
+      it 'with hash of string values and hash of fixnums translates to PArrayType[PHashType[PScalarType]]' do
         et = calculator.infer([{:first => 'first', :second => 'second' }, {:first => 1, :second => 2 }])
         et.class.should == Puppet::Pops::Types::PArrayType
         et = et.element_type
         et.class.should == Puppet::Pops::Types::PHashType
         et = et.element_type
-        et.class.should == Puppet::Pops::Types::PLiteralType
+        et.class.should == Puppet::Pops::Types::PScalarType
       end
     end
 
@@ -430,12 +430,12 @@ describe 'The type calculator' do
     end
 
     context "for Data, such that" do
-      it 'all literals + array and hash are assignable to Data' do
+      it 'all scalars + array and hash are assignable to Data' do
         t = Puppet::Pops::Types::PDataType.new()
         data_compatible_types.each { |t2| type_from_class(t2).should be_assignable_to(t) }
       end
 
-      it 'a Variant of literal, hash, or array is assignable to Data' do
+      it 'a Variant of scalar, hash, or array is assignable to Data' do
         t = Puppet::Pops::Types::PDataType.new()
         data_compatible_types.each { |t2| variant_t(type_from_class(t2)).should be_assignable_to(t) }
       end
@@ -453,27 +453,27 @@ describe 'The type calculator' do
       end
 
       it 'Data is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PObjectType, Puppet::Pops::Types::PDataType] - literal_types
+        tested_types = all_types - [Puppet::Pops::Types::PObjectType, Puppet::Pops::Types::PDataType] - scalar_types
         t = Puppet::Pops::Types::PDataType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
     end
 
-    context "for Literal, such that" do
-      it "all literals are assignable to Literal" do
-        t = Puppet::Pops::Types::PLiteralType.new()
-        literal_types.each {|t2| t2.new.should be_assignable_to(t) }
+    context "for Scalar, such that" do
+      it "all scalars are assignable to Scalar" do
+        t = Puppet::Pops::Types::PScalarType.new()
+        scalar_types.each {|t2| t2.new.should be_assignable_to(t) }
       end
 
-      it 'Literal is not assignable to any of its subtypes' do
-        t = Puppet::Pops::Types::PLiteralType.new() 
-        types_to_test = literal_types - [Puppet::Pops::Types::PLiteralType]
+      it 'Scalar is not assignable to any of its subtypes' do
+        t = Puppet::Pops::Types::PScalarType.new() 
+        types_to_test = scalar_types - [Puppet::Pops::Types::PScalarType]
         types_to_test.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
 
-      it 'Literal is not assignable to any disjunct type' do
-        tested_types = all_types - [Puppet::Pops::Types::PObjectType, Puppet::Pops::Types::PDataType] - literal_types
-        t = Puppet::Pops::Types::PLiteralType.new()
+      it 'Scalar is not assignable to any disjunct type' do
+        tested_types = all_types - [Puppet::Pops::Types::PObjectType, Puppet::Pops::Types::PDataType] - scalar_types
+        t = Puppet::Pops::Types::PScalarType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
     end
@@ -494,7 +494,7 @@ describe 'The type calculator' do
         tested_types = all_types - [
           Puppet::Pops::Types::PObjectType,
           Puppet::Pops::Types::PDataType,
-          Puppet::Pops::Types::PLiteralType,
+          Puppet::Pops::Types::PScalarType,
           ] - numeric_types
         t = Puppet::Pops::Types::PNumericType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
@@ -915,10 +915,10 @@ describe 'The type calculator' do
       t.element_type.class.should == Puppet::Pops::Types::PDataType
     end
 
-    it 'should yield \'PHashType[PLiteralType,PDataType]\' for Hash' do
+    it 'should yield \'PHashType[PScalarType,PDataType]\' for Hash' do
       t = calculator.type(Hash)
       t.class.should == Puppet::Pops::Types::PHashType
-      t.key_type.class.should == Puppet::Pops::Types::PLiteralType
+      t.key_type.class.should == Puppet::Pops::Types::PScalarType
       t.element_type.class.should == Puppet::Pops::Types::PDataType
     end
   end
@@ -932,8 +932,8 @@ describe 'The type calculator' do
       calculator.string(Puppet::Pops::Types::PObjectType.new()).should == 'Object'
     end
 
-    it 'should yield \'Literal\' for PLiteralType' do
-      calculator.string(Puppet::Pops::Types::PLiteralType.new()).should == 'Literal'
+    it 'should yield \'Scalar\' for PScalarType' do
+      calculator.string(Puppet::Pops::Types::PScalarType.new()).should == 'Scalar'
     end
 
     it 'should yield \'Boolean\' for PBooleanType' do
@@ -1096,7 +1096,7 @@ describe 'The type calculator' do
       ptype = Puppet::Pops::Types::PType
       calculator.infer(Puppet::Pops::Types::PNilType.new()       ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PDataType.new()      ).is_a?(ptype).should() == true
-      calculator.infer(Puppet::Pops::Types::PLiteralType.new()   ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PScalarType.new()   ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PStringType.new()    ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PNumericType.new()   ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PIntegerType.new()   ).is_a?(ptype).should() == true
@@ -1118,7 +1118,7 @@ describe 'The type calculator' do
       ptype = Puppet::Pops::Types::PType
       calculator.string(calculator.infer(Puppet::Pops::Types::PNilType.new()       )).should == "Type[Undef]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PDataType.new()      )).should == "Type[Data]"
-      calculator.string(calculator.infer(Puppet::Pops::Types::PLiteralType.new()   )).should == "Type[Literal]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PScalarType.new()   )).should == "Type[Scalar]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PStringType.new()    )).should == "Type[String]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PNumericType.new()   )).should == "Type[Numeric]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PIntegerType.new()   )).should == "Type[Integer]"
@@ -1140,7 +1140,7 @@ describe 'The type calculator' do
       int_t    = Puppet::Pops::Types::PIntegerType.new()
       string_t = Puppet::Pops::Types::PStringType.new()
       calculator.string(calculator.infer([int_t])).should == "Array[Type[Integer], 1, 1]"
-      calculator.string(calculator.infer([int_t, string_t])).should == "Array[Type[Literal], 2, 2]"
+      calculator.string(calculator.infer([int_t, string_t])).should == "Array[Type[Scalar], 2, 2]"
     end
 
     it 'should infer PType as the type of ruby classes' do
@@ -1235,7 +1235,7 @@ describe 'The type calculator' do
 
     it "does not reduce by combining types when using infer_set" do
       element_type = calculator.infer(['a','b',1,2]).element_type
-      element_type.class.should == Puppet::Pops::Types::PLiteralType
+      element_type.class.should == Puppet::Pops::Types::PScalarType
       element_type = calculator.infer_set(['a','b',1,2]).element_type
       element_type.class.should == Puppet::Pops::Types::PVariantType
       element_type.types[0].class.should == Puppet::Pops::Types::PStringType

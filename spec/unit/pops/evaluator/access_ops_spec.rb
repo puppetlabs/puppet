@@ -166,13 +166,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     # Hash Type
     #
-    it 'produces a Hash[Literal,String] from the expression Hash[String]' do
+    it 'produces a Hash[Scalar,String] from the expression Hash[String]' do
       expr = fqr('Hash')[fqr('String')]
-      expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.literal))
+      expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.scalar))
 
       # arguments are flattened
       expr = fqr('Hash')[[fqr('String')]]
-      expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.literal))
+      expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.scalar))
     end
 
     it 'produces a Hash[String,String] from the expression Hash[String, String]' do
@@ -180,9 +180,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.string))
     end
 
-    it 'produces a Hash[Literal,String] from the expression Hash[Integer][String]' do
+    it 'produces a Hash[Scalar,String] from the expression Hash[Integer][String]' do
       expr = fqr('Hash')[fqr('Integer')][fqr('String')]
-      expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.literal))
+      expect(evaluate(expr)).to be_the_type(types.hash_of(types.string, types.scalar))
     end
 
     it "gives an error if parameter is not a type" do

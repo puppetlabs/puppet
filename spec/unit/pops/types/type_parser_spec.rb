@@ -30,7 +30,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   [
-    'Object', 'Data', 'CatalogEntry', 'Boolean', 'Literal', 'Undef', 'Numeric',
+    'Object', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric',
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}>" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
@@ -53,11 +53,11 @@ describe Puppet::Pops::Types::TypeParser do
     expect(parser.parse("Array")).to be_the_type(types.array_of_data)
   end
 
-  it "interprets an unparameterized Hash as a Hash of Literal to Data" do
+  it "interprets an unparameterized Hash as a Hash of Scalar to Data" do
     expect(parser.parse("Hash")).to be_the_type(types.hash_of_data)
   end
 
-  it "interprets a parameterized Hash[t] as a Hash of Literal to t" do
+  it "interprets a parameterized Hash[t] as a Hash of Scalar to t" do
     expect(parser.parse("Hash[Integer]")).to be_the_type(types.hash_of(types.integer))
   end
 

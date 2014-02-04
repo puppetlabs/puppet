@@ -276,12 +276,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     {
-      'Object'  => ['Data', 'Literal', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Collection',
+      'Object'  => ['Data', 'Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Collection',
                     'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File', 'NotYetKnownResourceType'],
 
       # Note, Data > Collection is false (so not included)
-      'Data'    => ['Literal', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array', 'Hash',],
-      'Literal' => ['Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern'],
+      'Data'    => ['Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Array', 'Hash',],
+      'Scalar' => ['Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern'],
       'Numeric' => ['Integer', 'Float'],
       'CatalogEntry' => ['Class', 'Resource', 'File', 'NotYetKnownResourceType'],
       'Integer[1,10]' => ['Integer[2,3]'],

@@ -3,19 +3,19 @@
 # The Puppet type system is primarily based on sub-classing. When asking the type calculator to infer types from Ruby in general, it
 # may not provide the wanted answer; it does not for instance take module inclusions and extensions into account. In general the type
 # system should be unsurprising for anyone being exposed to the notion of type. The type `Data` may require a bit more explanation; this
-# is an abstract type that includes all literal types, as well as Array with an element type compatible with Data, and Hash with key
-# compatible with Literal and elements compatible with Data. Expressed differently; Data is what you typically express using JSON (with
-# the exception that the Puppet type system also includes Pattern (regular expression) as a literal.
+# is an abstract type that includes all scalar types, as well as Array with an element type compatible with Data, and Hash with key
+# compatible with scalar and elements compatible with Data. Expressed differently; Data is what you typically express using JSON (with
+# the exception that the Puppet type system also includes Pattern (regular expression) as a scalar.
 #
 # Inference
 # ---------
-# The `infer(o)` method infers a Puppet type for literal Ruby objects, and for Arrays and Hashes.
+# The `infer(o)` method infers a Puppet type for scalar Ruby objects, and for Arrays and Hashes.
 # The inference result is instance specific for single typed collections
 # and allows answering questions about its embedded type. It does not however preserve multiple types in
 # a collection, and can thus not answer questions like `[1,a].infer() =~ Array[Integer, String]` since the inference
-# computes the common type Literal when combining Integer and String.
+# computes the common type Scalar when combining Integer and String.
 #
-# The `infer_generic(o)` method infers a generic Puppet type for literal Ruby object, Arrays and Hashes.
+# The `infer_generic(o)` method infers a generic Puppet type for scalar Ruby object, Arrays and Hashes.
 # This inference result does not contain instance specific information; e.g. Array[Integer] where the integer
 # range is the generic default. Just `infer` it also combines types into a common type.
 #
@@ -63,7 +63,7 @@
 # In general, the type calculator should be used to answer questions if a type is a subtype of another (using {#assignable?}, or
 # {#instance?} if the question is if a given object is an instance of a given type (or is a subtype thereof).
 # Many of the types also have a Ruby subtype relationship; e.g. PHashType and PArrayType are both subtypes of PCollectionType, and
-# PIntegerType, PFloatType, PStringType,... are subtypes of PLiteralType. Even if it is possible to answer certain questions about
+# PIntegerType, PFloatType, PStringType,... are subtypes of PScalarType. Even if it is possible to answer certain questions about
 # type by looking at the Ruby class of the types this is considered an implementation detail, and such checks should in general
 # be performed by the type_calculator which implements the type system semantics.
 #
@@ -156,11 +156,11 @@ class Puppet::Pops::Types::TypeCalculator
 
     h = Types::PHashType.new()
     h.element_type = Types::PDataType.new()
-    h.key_type = Types::PLiteralType.new()
+    h.key_type = Types::PScalarType.new()
     @data_hash = h
 
     @data_t = Types::PDataType.new()
-    @literal_t = Types::PLiteralType.new()
+    @scalar_t = Types::PScalarType.new()
     @numeric_t = Types::PNumericType.new()
     @t = Types::PObjectType.new()
 
@@ -168,7 +168,7 @@ class Puppet::Pops::Types::TypeCalculator
     data_variant = Types::PVariantType.new()
     data_variant.addTypes(@data_hash.copy)
     data_variant.addTypes(@data_array.copy)
-    data_variant.addTypes(Types::PLiteralType.new)
+    data_variant.addTypes(Types::PScalarType.new)
     data_variant.addTypes(Types::PNilType.new)
     @data_variant_t = data_variant
 
@@ -273,9 +273,9 @@ class Puppet::Pops::Types::TypeCalculator
       type = Types::PArrayType.new()
       type.element_type = Types::PDataType.new()
     when c == Hash
-      # Assume hash with literal keys and data values
+      # Assume hash with scalar keys and data values
       type = Types::PHashType.new()
-      type.key_type = Types::PLiteralType.new()
+      type.key_type = Types::PScalarType.new()
       type.element_type = Types::PDataType.new()
     else
       type = Types::PRubyType.new()
@@ -521,8 +521,8 @@ class Puppet::Pops::Types::TypeCalculator
       return Types::PNumericType.new()
     end
 
-    if common_literal?(t1, t2)
-      return Types::PLiteralType.new()
+    if common_scalar?(t1, t2)
+      return Types::PScalarType.new()
     end
 
     if common_data?(t1,t2)
@@ -794,8 +794,8 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def assignable_PLiteralType(t, t2)
-    t2.is_a?(Types::PLiteralType)
+  def assignable_PScalarType(t, t2)
+    t2.is_a?(Types::PScalarType)
   end
 
   # @api private
@@ -994,7 +994,7 @@ class Puppet::Pops::Types::TypeCalculator
     return t1.title == t2.title
   end
 
-  # Data is assignable by other Data and by Array[Data] and Hash[Literal, Data]
+  # Data is assignable by other Data and by Array[Data] and Hash[Scalar, Data]
   # @api private
   def assignable_PDataType(t, t2)
     t2.is_a?(Types::PDataType) || assignable?(@data_variant_t, t2)
@@ -1042,7 +1042,7 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PBooleanType(t) ; "Boolean" ; end
 
   # @api private
-  def string_PLiteralType(t) ; "Literal" ; end
+  def string_PScalarType(t) ; "Scalar" ; end
 
   # @api private
   def string_PDataType(t)    ; "Data"    ; end
@@ -1200,8 +1200,8 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(@data_t, t1) && assignable?(@data_t, t2)
   end
 
-  def common_literal?(t1, t2)
-    assignable?(@literal_t, t1) && assignable?(@literal_t, t2)
+  def common_scalar?(t1, t2)
+    assignable?(@scalar_t, t1) && assignable?(@scalar_t, t2)
   end
 
   def common_numeric?(t1, t2)

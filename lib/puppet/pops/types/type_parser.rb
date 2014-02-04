@@ -139,8 +139,8 @@ class Puppet::Pops::Types::TypeParser
     when "collection"
       TYPES.collection()
 
-    when "literal"
-      TYPES.literal()
+    when "scalar"
+      TYPES.scalar()
 
     when "catalogentry"
       TYPES.catalog_entry()
@@ -345,7 +345,7 @@ class Puppet::Pops::Types::TypeParser
       assert_type(parameters[0])
       TYPES.optional(parameters[0])
 
-    when "object", "data", "catalogentry", "boolean", "literal", "undef", "numeric"
+    when "object", "data", "catalogentry", "boolean", "scalar", "undef", "numeric"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
 
     when "type"

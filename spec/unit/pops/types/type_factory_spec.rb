@@ -35,8 +35,8 @@ describe 'The type factory' do
       Puppet::Pops::Types::TypeFactory.variant().class().should == Puppet::Pops::Types::PVariantType
     end
 
-    it 'literal() returns PLiteralType' do
-      Puppet::Pops::Types::TypeFactory.literal().class().should == Puppet::Pops::Types::PLiteralType
+    it 'scalar() returns PScalarType' do
+      Puppet::Pops::Types::TypeFactory.scalar().class().should == Puppet::Pops::Types::PScalarType
     end
 
     it 'data() returns PDataType' do
@@ -129,10 +129,10 @@ describe 'The type factory' do
       at.element_type.class.should == Puppet::Pops::Types::PDataType
     end
 
-    it 'hash_of_data returns PHashType[PLiteralType,PDataType]' do
+    it 'hash_of_data returns PHashType[PScalarType,PDataType]' do
       ht = Puppet::Pops::Types::TypeFactory.hash_of_data
       ht.class().should == Puppet::Pops::Types::PHashType
-      ht.key_type.class.should == Puppet::Pops::Types::PLiteralType
+      ht.key_type.class.should == Puppet::Pops::Types::PScalarType
       ht.element_type.class.should == Puppet::Pops::Types::PDataType
     end
 
