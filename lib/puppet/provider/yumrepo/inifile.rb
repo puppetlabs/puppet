@@ -91,14 +91,13 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   def self.store
     inifile = self.virtual_inifile
     inifile.store
-    unless Puppet[:noop]
-      target_mode = 0644
-      inifile.each_file do |file|
-        current_mode = Puppet::FileSystem.stat(file).mode & 0777
-        unless current_mode == target_mode
-          Puppet.info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
-          ::File.chmod(target_mode, file)
-        end
+
+    target_mode = 0644
+    inifile.each_file do |file|
+      current_mode = Puppet::FileSystem.stat(file).mode & 0777
+      unless current_mode == target_mode
+        Puppet.info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
+        ::File.chmod(target_mode, file)
       end
     end
   end
