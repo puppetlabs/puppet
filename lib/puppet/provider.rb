@@ -419,7 +419,11 @@ class Puppet::Provider
       attr = attr.intern
       next if attr == :name
       define_method(attr) do
-        @property_hash[attr] || :absent
+        if @property_hash[attr].nil?
+          :absent
+        else
+          @property_hash[attr]
+        end
       end
 
       define_method(attr.to_s + "=") do |val|
