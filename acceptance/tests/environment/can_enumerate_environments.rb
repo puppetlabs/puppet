@@ -42,7 +42,7 @@ MANIFEST
 
 with_puppet_running_on(master, {
   :master => {
-    :environmentdir => environments_dir
+    :environmentpath => environments_dir
   }
 }) do
   agents.each do |agent|
