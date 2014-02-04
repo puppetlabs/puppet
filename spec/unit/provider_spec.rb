@@ -440,45 +440,43 @@ describe Puppet::Provider do
 
   context "mk_resource_methods" do
     before :each do
-      type.newproperty(:prop1)
-      type.newproperty(:prop2)
-      type.newparam(:param1)
-      type.newparam(:param2)
+      type.newproperty(:prop)
+      type.newparam(:param)
+      provider.mk_resource_methods
     end
 
-    fields = %w{prop1 prop2 param1 param2}
+    let(:instance) { provider.new(nil) }
 
-    fields.each do |name|
-      it "should add getter methods for #{name}" do
-        expect { subject.mk_resource_methods }.
-          to change { subject.method_defined?(name) }.
-          from(false).to(true)
-      end
-
-      it "should add setter methods for #{name}" do
-        method = name + '='
-        expect { subject.mk_resource_methods }.
-          to change { subject.method_defined?(name) }.
-          from(false).to(true)
-      end
+    it "defaults to :absent" do
+      expect(instance.prop).to eq(:absent)
+      expect(instance.param).to eq(:absent)
     end
 
-    context "with an instance" do
-      subject { provider.mk_resource_methods; provider.new(nil) }
+    it "should update when set" do
+      instance.prop = 'hello'
+      instance.param = 'goodbye'
 
-      fields.each do |name|
-        context name do
-          it "should default to :absent" do
-            subject.send(name).should == :absent
-          end
+      expect(instance.prop).to eq('hello')
+      expect(instance.param).to eq('goodbye')
+    end
 
-          it "should update when set" do
-            expect { subject.send(name + '=', "hello") }.
-              to change { subject.send(name) }.
-              from(:absent).to("hello")
-          end
-        end
-      end
+    it "treats nil the same as absent" do
+      instance.prop = "value"
+      instance.param = "value"
+
+      instance.prop = nil
+      instance.param = nil
+
+      expect(instance.prop).to eq(:absent)
+      expect(instance.param).to eq(:absent)
+    end
+
+    it "preserves false as false" do
+      instance.prop = false
+      instance.param = false
+
+      expect(instance.prop).to eq(false)
+      expect(instance.param).to eq(false)
     end
   end
 
