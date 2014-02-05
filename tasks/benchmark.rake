@@ -1,8 +1,5 @@
 require 'benchmark'
 require 'tmpdir'
-require 'erb'
-require 'ostruct'
-require 'open3'
 
 namespace :benchmark do
   def generate_scenario_tasks(location, name)
