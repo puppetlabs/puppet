@@ -1475,10 +1475,8 @@ EOT
 
       :call_hook => :on_initialize_and_write, # Call our hook with the default value, so we always get the value added to facter.
       :hook => proc do |value|
-        if Facter.respond_to?(:search)
-          paths = value.split(File::PATH_SEPARATOR)
-          Facter.search(*paths)
-        end
+        paths = value.split(File::PATH_SEPARATOR)
+        Facter.search(*paths)
       end
     }
   )
