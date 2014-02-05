@@ -2,7 +2,7 @@ require 'erb'
 require 'ostruct'
 require 'fileutils'
 
-class ManyModules
+class Benchmarker
   include FileUtils
 
   def initialize(target, size)
