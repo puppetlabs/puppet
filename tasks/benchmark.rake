@@ -27,8 +27,13 @@ namespace :benchmark do
 
       desc "Run the #{name} scenario."
       task :run => :generate do
+        format = if RUBY_VERSION =~ /^1\.8/
+                   Benchmark::FMTSTR
+                 else
+                   Benchmark::FORMAT
+                 end
         @benchmark.setup
-        Benchmark.benchmark(Benchmark::CAPTION, 10, Benchmark::FORMAT, "> total:", "> avg:") do |b|
+        Benchmark.benchmark(Benchmark::CAPTION, 10, format, "> total:", "> avg:") do |b|
           times = []
           ENV['ITERATIONS'].to_i.times do |i|
             times << b.report("Run #{i + 1}") do
