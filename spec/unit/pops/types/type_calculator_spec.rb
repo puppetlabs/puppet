@@ -55,6 +55,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.collection()
   end
 
+  def tuple_t(*types)
+    Puppet::Pops::Types::TypeFactory.tuple(*types)
+  end
+
   def types
     Puppet::Pops::Types
   end
@@ -81,6 +85,8 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PPatternType,
         Puppet::Pops::Types::PEnumType,
         Puppet::Pops::Types::PVariantType,
+#        Puppet::Pops::Types::PStructType,
+        Puppet::Pops::Types::PTupleType,
       ]
     end
 
@@ -123,6 +129,8 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PCollectionType,
         Puppet::Pops::Types::PHashType,
         Puppet::Pops::Types::PArrayType,
+#        Puppet::Pops::Types::PStructType,
+        Puppet::Pops::Types::PTupleType,
       ]
     end
 
@@ -521,17 +529,17 @@ describe 'The type calculator' do
     end
 
     context "for Array, such that" do
-      it "Array is not assignable to any other Collection type" do
+      it "Array is not assignable to non Array based Collection type" do
         t = Puppet::Pops::Types::PArrayType.new()
         tested_types = collection_types - [
           Puppet::Pops::Types::PCollectionType,
-          Puppet::Pops::Types::PArrayType]
+          Puppet::Pops::Types::PArrayType,
+          Puppet::Pops::Types::PTupleType]
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
 
       it 'Array is not assignable to any disjunct type' do
         tested_types = all_types - [
-          Puppet::Pops::Types::PObjectType,
           Puppet::Pops::Types::PObjectType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PArrayType.new()
@@ -551,9 +559,27 @@ describe 'The type calculator' do
       it 'Hash is not assignable to any disjunct type' do
         tested_types = all_types - [
           Puppet::Pops::Types::PObjectType,
-          Puppet::Pops::Types::PObjectType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PHashType.new()
+        tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
+      end
+    end
+
+    context "for Tuple, such that" do
+      it "Tuple is not assignable to any other non Array based Collection type" do
+        t = Puppet::Pops::Types::PTupleType.new()
+        tested_types = collection_types - [
+          Puppet::Pops::Types::PCollectionType,
+          Puppet::Pops::Types::PTupleType,
+          Puppet::Pops::Types::PArrayType]
+        tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
+      end
+
+      it 'Tuple is not assignable to any disjunct type' do
+        tested_types = all_types - [
+          Puppet::Pops::Types::PObjectType,
+          Puppet::Pops::Types::PDataType] - collection_types
+        t = Puppet::Pops::Types::PTupleType.new()
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
     end
@@ -666,9 +692,66 @@ describe 'The type calculator' do
       it 'should accept enum matching patterns as instanceof' do
         enum = enum_t('XS', 'S', 'M', 'L' 'XL', 'XXL')
         pattern = pattern_t('S', 'M', 'L')
-        calculator.assignable?(pattern, enum)  == true
+        calculator.assignable?(pattern, enum).should  == true
       end
 
+    end
+
+    context 'when dealing with tuples' do
+      it 'should accept matching tuples' do
+        tuple1 = tuple_t(1,2)
+        tuple2 = tuple_t(Integer,Integer)
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == true
+      end
+
+      it 'should accept matching tuples where one is more general than the other' do
+        tuple1 = tuple_t(1,2)
+        tuple2 = tuple_t(Numeric,Numeric)
+        calculator.assignable?(tuple1, tuple2).should == false
+        calculator.assignable?(tuple2, tuple1).should == true
+      end
+
+      it 'should accept ranged tuples' do
+        tuple1 = tuple_t(1)
+        factory.constrain_size(tuple1, 5, 5)
+        tuple2 = tuple_t(Integer,Integer, Integer, Integer, Integer)
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == true
+      end
+
+      it 'should reject ranged tuples when ranges does not match' do
+        tuple1 = tuple_t(1)
+        factory.constrain_size(tuple1, 4, 5)
+        tuple2 = tuple_t(Integer,Integer, Integer, Integer, Integer)
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == false
+      end
+
+      it 'should reject ranged tuples when ranges does not match (using infinite upper bound)' do
+        tuple1 = tuple_t(1)
+        factory.constrain_size(tuple1, 4, :default)
+        tuple2 = tuple_t(Integer,Integer, Integer, Integer, Integer)
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == false
+      end
+
+      it 'should accept matching tuples with optional entries' do
+        tuple1 = tuple_t(1,2)
+        factory.constrain_size(tuple1, 0, :default)
+        tuple2 = tuple_t(Numeric,Numeric)
+        factory.constrain_size(tuple2, 0, :default)
+        calculator.assignable?(tuple1, tuple2).should == false
+        calculator.assignable?(tuple2, tuple1).should == true
+      end
+
+      it 'should accept matching array' do
+        tuple1 = tuple_t(1,2)
+        array = array_t(Integer)
+        factory.constrain_size(array, 2, 2)
+        calculator.assignable?(tuple1, array).should == true
+        calculator.assignable?(array, tuple1).should == true
+      end
     end
 
     it 'should recognize ruby type inheritance' do

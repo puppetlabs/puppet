@@ -164,6 +164,8 @@ class Puppet::Pops::Types::TypeParser
     when "type"
       TYPES.type_type()
 
+    when "tuple"
+      TYPES.tuple()
     else
       TYPES.resource(name_ast.value)
     end
@@ -289,6 +291,30 @@ class Puppet::Pops::Types::TypeParser
       raise_invalid_parameters_error("Variant", "1 or more", parameters.size) unless parameters.size > 1
       TYPES.variant(*parameters)
 
+    when "tuple"
+      # 1..m parameters being types (last two optionally integer or literal default
+      raise_invalid_parameters_error("Tuple", "1 or more", parameters.size) unless parameters.size > 1
+      length = parameters.size
+      if is_range_parameter?(parameters[-2])
+        # min, max specification
+        min = parameters[-2]
+        min = (min == :default || min == 'default') ? 0 : min
+        assert_range_parameter(parameters[-1])
+        max = parameters[-1]
+        max = max == :default ? nil : max
+        parameters = parameters[0, length-2]
+      elsif is_range_parameter?(parameters[-1])
+        min = parameters[-1]
+        min = (min == :default || min == 'default') ? 0 : min
+        max = nil
+        parameters = parameters[0, length-1]
+      end
+      t = TYPES.tuple(*parameters)
+      if min || max
+        TYPES.constrain_size(t, min, max)
+      end
+      t
+
     when "integer"
       if parameters.size == 1
         case parameters[0]
@@ -376,8 +402,9 @@ class Puppet::Pops::Types::TypeParser
   end
 
   def assert_range_parameter(t)
-    raise_invalid_type_speification_error unless t.is_a?(Integer) || t == 'default' || t == :default
+    raise_invalid_type_speification_error unless TYPES.is_range_parameter?(t)
   end
+
 
   def raise_invalid_type_specification_error
     raise Puppet::ParseError,
