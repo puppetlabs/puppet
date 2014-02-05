@@ -73,10 +73,12 @@ describe Puppet::Util::ADSI do
     let(:domain_username) { "#{domain}\\#{username}"}
 
     it "should generate the correct URI" do
+      Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::ADSI::User.uri(username).should == "WinNT://./#{username},user"
     end
 
     it "should generate the correct URI for a user with a domain" do
+      Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::ADSI::User.uri(username, domain).should == "WinNT://#{domain}/#{username},user"
     end
 
@@ -107,13 +109,33 @@ describe Puppet::Util::ADSI do
     end
 
     it "should be able to check the existence of a user" do
+      Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::ADSI.expects(:connect).with("WinNT://./#{username},user").returns connection
       Puppet::Util::ADSI::User.exists?(username).should be_true
     end
 
     it "should be able to check the existence of a domain user" do
+      Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::ADSI.expects(:connect).with("WinNT://#{domain}/#{username},user").returns connection
       Puppet::Util::ADSI::User.exists?(domain_username).should be_true
+    end
+
+    it "should be able to confirm the existence of a user with a well-known SID",
+      :if => Puppet.features.microsoft_windows? do
+
+      system_user = Win32::Security::SID::LocalSystem
+      # ensure that the underlying OS is queried here
+      Puppet::Util::ADSI.unstub(:connect)
+      Puppet::Util::ADSI::User.exists?(system_user).should be_true
+    end
+
+    it "should return nil with an unknown SID",
+      :if => Puppet.features.microsoft_windows? do
+
+      bogus_sid = 'S-1-2-3-4'
+      # ensure that the underlying OS is queried here
+      Puppet::Util::ADSI.unstub(:connect)
+      Puppet::Util::ADSI::User.exists?(bogus_sid).should be_false
     end
 
     it "should be able to delete a user" do
@@ -123,6 +145,8 @@ describe Puppet::Util::ADSI do
     end
 
     it "should return an enumeration of IADsUser wrapped objects" do
+      Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
+
       name = 'Administrator'
       wmi_users = [stub('WMI', :name => name)]
       Puppet::Util::ADSI.expects(:execquery).with('select name from win32_useraccount where localaccount = "TRUE"').returns(wmi_users)
@@ -174,7 +198,7 @@ describe Puppet::Util::ADSI do
         user.password = 'pwd'
       end
 
-      it "should generate the correct URI",:if => Puppet.features.microsoft_windows? do
+      it "should generate the correct URI", :if => Puppet.features.microsoft_windows? do
         Puppet::Util::Windows::Security.stubs(:octet_string_to_sid_object).returns(sid)
         user.uri.should == "WinNT://testcomputername/#{username},user"
       end
@@ -321,11 +345,13 @@ describe Puppet::Util::ADSI do
       end
 
       it "should generate the correct URI" do
+        Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
         group.uri.should == "WinNT://./#{groupname},group"
       end
     end
 
     it "should generate the correct URI" do
+      Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::ADSI::Group.uri("people").should == "WinNT://./people,group"
     end
 
@@ -342,9 +368,28 @@ describe Puppet::Util::ADSI do
     end
 
     it "should be able to confirm the existence of a group" do
+      Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
       Puppet::Util::ADSI.expects(:connect).with("WinNT://./#{groupname},group").returns connection
 
       Puppet::Util::ADSI::Group.exists?(groupname).should be_true
+    end
+
+    it "should be able to confirm the existence of a group with a well-known SID",
+      :if => Puppet.features.microsoft_windows? do
+
+      service_group = Win32::Security::SID::Service
+      # ensure that the underlying OS is queried here
+      Puppet::Util::ADSI.unstub(:connect)
+      Puppet::Util::ADSI::Group.exists?(service_group).should be_true
+    end
+
+    it "should return nil with an unknown SID",
+      :if => Puppet.features.microsoft_windows? do
+
+      bogus_sid = 'S-1-2-3-4'
+      # ensure that the underlying OS is queried here
+      Puppet::Util::ADSI.unstub(:connect)
+      Puppet::Util::ADSI::Group.exists?(bogus_sid).should be_false
     end
 
     it "should be able to delete a group" do
@@ -354,6 +399,8 @@ describe Puppet::Util::ADSI do
     end
 
     it "should return an enumeration of IADsGroup wrapped objects" do
+      Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
+
       name = 'Administrators'
       wmi_groups = [stub('WMI', :name => name)]
       Puppet::Util::ADSI.expects(:execquery).with('select name from win32_group where localaccount = "TRUE"').returns(wmi_groups)
