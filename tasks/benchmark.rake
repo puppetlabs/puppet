@@ -19,53 +19,24 @@ Benchmark target: catalog compilation."
       ENV['TARGET'] = File.expand_path(ENV['TARGET'])
 
       mkdir_p(ENV['TARGET'])
+
+      require File.expand_path(File.join('benchmarks', 'many_modules', 'benchmark.rb'))
+
+      @benchmark = ManyModules.new(ENV['TARGET'], ENV['SIZE'].to_i)
     end
 
     desc "Generate the scenario"
     task :generate => :setup do
-      size = ENV['SIZE'].to_i
-      environment = File.join(ENV['TARGET'], 'environments', 'benchmarking')
-      templates = File.join('benchmarks', 'many_modules')
-
-      mkdir_p(File.join(environment, 'modules'))
-      mkdir_p(File.join(environment, 'manifests'))
-
-      render(File.join(templates, 'site.pp.erb'),
-             File.join(environment, 'manifests', 'site.pp'),
-             :size => size)
-
-      size.times do |i|
-        module_name = "module#{i}"
-        manifests = File.join(environment, 'modules', module_name, 'manifests')
-
-        mkdir_p(manifests)
-
-        render(File.join(templates, 'module', 'init.pp.erb'),
-               File.join(manifests, 'init.pp'),
-               :name => module_name)
-
-        render(File.join(templates, 'module', 'internal.pp.erb'),
-               File.join(manifests, 'internal.pp'),
-               :name => module_name)
-      end
-
-      render(File.join(templates, 'puppet.conf.erb'),
-             File.join(ENV['TARGET'], 'puppet.conf'),
-             :location => ENV['TARGET'])
+      @benchmark.generate
     end
 
     task :run => :generate do
-      require 'puppet'
-      include Benchmark
-
-      config = File.join(ENV['TARGET'], 'puppet.conf')
-      Puppet.initialize_settings(['--config', config])
-
-      Benchmark.benchmark(CAPTION, 10, FORMAT, "> total:", "> avg:") do |b|
+      @benchmark.setup
+      Benchmark.benchmark(Benchmark::CAPTION, 10, Benchmark::FORMAT, "> total:", "> avg:") do |b|
         times = []
         10.times do |i|
           times << b.report("Run #{i + 1}") do
-            run
+            @benchmark.run
           end
         end
 
@@ -76,33 +47,18 @@ Benchmark target: catalog compilation."
     end
 
     task :profile => :generate do
-      require 'puppet'
       require 'ruby-prof'
 
-      RubyProf.start
-      config = File.join(ENV['TARGET'], 'puppet.conf')
-      Puppet.initialize_settings(['--config', config])
-      run
-      result = RubyProf.stop
+      @benchmark.setup
+      result = RubyProf.profile do
+        @benchmark.run
+      end
 
       printer = RubyProf::CallTreePrinter.new(result)
       File.open(File.join("callgrind.many_modules.#{Time.now.to_i}.trace"), "w") do |f|
         printer.print(f)
       end
 
-    end
-
-    def run
-      env = Puppet.lookup(:environments).get('benchmarking')
-      node = Puppet::Node.new("testing", :environment => env)
-      Puppet::Resource::Catalog.indirection.find("testing", :use_node => node)
-    end
-  end
-
-  def render(erb_file, output_file, bindings)
-    site = ERB.new(File.read(erb_file))
-    File.open(output_file, 'w') do |fh|
-      fh.write(site.result(OpenStruct.new(bindings).instance_eval { binding }))
     end
   end
 end
