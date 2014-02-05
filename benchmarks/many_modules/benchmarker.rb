@@ -1,6 +1,7 @@
 require 'erb'
 require 'ostruct'
 require 'fileutils'
+require 'json'
 
 class Benchmarker
   include FileUtils
@@ -35,9 +36,23 @@ class Benchmarker
 
     @size.times do |i|
       module_name = "module#{i}"
-      manifests = File.join(environment, 'modules', module_name, 'manifests')
+      module_base = File.join(environment, 'modules', module_name)
+      manifests = File.join(module_base, 'manifests')
 
       mkdir_p(manifests)
+
+      File.open(File.join(module_base, 'metadata.json'), 'w') do |f|
+        JSON.dump({
+          "types" => [],
+          "source" => "",
+          "author" => "ManyModules Benchmark",
+          "license" => "Apache 2.0",
+          "version" => "1.0.0",
+          "description" => "Many Modules benchmark module #{i}",
+          "summary" => "Just this benchmark module, you know?",
+          "dependencies" => [],
+        }, f)
+      end
 
       render(File.join(templates, 'module', 'init.pp.erb'),
              File.join(manifests, 'init.pp'),
