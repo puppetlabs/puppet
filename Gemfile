@@ -45,6 +45,9 @@ group(:development, :test) do
     gem "json-schema", "2.1.1", :require => false
   end
 
+  platforms :ruby_19, :ruby_20 do
+    gem 'ruby-prof'
+  end
 end
 
 group(:extra) do

@@ -65,9 +65,7 @@ Benchmark target: catalog compilation."
         times = []
         10.times do |i|
           times << b.report("Run #{i + 1}") do
-            env = Puppet.lookup(:environments).get('benchmarking')
-            node = Puppet::Node.new("testing", :environment => env)
-            Puppet::Resource::Catalog.indirection.find("testing", :use_node => node)
+            run
           end
         end
 
@@ -75,6 +73,29 @@ Benchmark target: catalog compilation."
 
         [sum, sum / times.length]
       end
+    end
+
+    task :profile => :generate do
+      require 'puppet'
+      require 'ruby-prof'
+
+      RubyProf.start
+      config = File.join(ENV['TARGET'], 'puppet.conf')
+      Puppet.initialize_settings(['--config', config])
+      run
+      result = RubyProf.stop
+
+      printer = RubyProf::CallTreePrinter.new(result)
+      File.open(File.join("callgrind.many_modules.#{Time.now.to_i}.trace"), "w") do |f|
+        printer.print(f)
+      end
+
+    end
+
+    def run
+      env = Puppet.lookup(:environments).get('benchmarking')
+      node = Puppet::Node.new("testing", :environment => env)
+      Puppet::Resource::Catalog.indirection.find("testing", :use_node => node)
     end
   end
 
