@@ -23,6 +23,7 @@ namespace :benchmark do
       desc "Generate the #{name} scenario."
       task :generate => :setup do
         @benchmark.generate
+        @benchmark.setup
       end
 
       desc "Run the #{name} scenario."
@@ -32,7 +33,6 @@ namespace :benchmark do
                  else
                    Benchmark::FORMAT
                  end
-        @benchmark.setup
         Benchmark.benchmark(Benchmark::CAPTION, 10, format, "> total:", "> avg:") do |b|
           times = []
           ENV['ITERATIONS'].to_i.times do |i|
@@ -51,7 +51,6 @@ namespace :benchmark do
       task :profile => :generate do
         require 'ruby-prof'
 
-        @benchmark.setup
         result = RubyProf.profile do
           @benchmark.run
         end
