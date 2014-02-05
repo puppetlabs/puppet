@@ -51,7 +51,7 @@ module Plist
     # Writes the serialized object's plist to the specified filename.
     def self.save_plist(obj, filename)
       File.open(filename, 'wb') do |f|
-        f.write(obj.to_plist)
+        f.write(Plist::Emit.dump(obj))
       end
     end
 
