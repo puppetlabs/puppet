@@ -63,7 +63,7 @@ describe Puppet::Type.type(:package) do
     end
 
     after :each do
-      Puppet:git :Type.type(:package).defaultprovider = nil
+      Puppet::Type.type(:package).defaultprovider = nil
     end
 
     it "should support :present as a value to :ensure" do
