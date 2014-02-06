@@ -101,6 +101,25 @@ describe 'the map method' do
         catalog.resource(:file, "/file_0.something")['ensure'].should == 'present'
       end
     end
+
+  context 'map checks arguments and' do
+    it 'raises an error when block has more than 1 argument' do
+      expect do
+        compile_to_catalog(<<-MANIFEST)
+          [1].map |$x, $yikes|{  }
+        MANIFEST
+      end.to raise_error(Puppet::Error, /Too few arguments/)
+    end
+
+    it 'raises an error when block has fewer than 1 argument' do
+      expect do
+        compile_to_catalog(<<-MANIFEST)
+          [1].map || {  }
+        MANIFEST
+      end.to raise_error(Puppet::Error, /Too many arguments/)
+    end
+  end
+
   it_should_behave_like 'all iterative functions argument checks', 'map'
   it_should_behave_like 'all iterative functions hash handling', 'map'
   end
