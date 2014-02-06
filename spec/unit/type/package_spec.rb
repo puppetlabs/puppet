@@ -52,7 +52,7 @@ describe Puppet::Type.type(:package) do
   end
 
   describe "when validating attribute values" do
-    before do
+    before :each do
       @provider = stub(
         'provider',
         :class           => Puppet::Type.type(:package).defaultprovider,
@@ -60,6 +60,10 @@ describe Puppet::Type.type(:package) do
         :validate_source => nil
       )
       Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
+    end
+
+    after :each do
+      Puppet:git :Type.type(:package).defaultprovider = nil
     end
 
     it "should support :present as a value to :ensure" do

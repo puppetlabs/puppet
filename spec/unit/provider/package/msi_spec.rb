@@ -36,6 +36,10 @@ describe Puppet::Type.type(:package).provider(:msi) do
   end
 
   describe 'on Windows', :as_platform => :windows do
+    after :each do
+      Puppet::Type.type(:package).defaultprovider = nil
+    end
+
     it 'should not be the default provider' do
       # provider.expects(:execute).never
       Puppet::Type.type(:package).defaultprovider.should_not == subject.class
