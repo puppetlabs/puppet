@@ -21,7 +21,7 @@ module Puppet
 #      Puppet::Application::Example.new.run
 #
 #
-# class Puppet::Application::Example << Puppet::Application
+# class Puppet::Application::Example < Puppet::Application
 #
 #     def preinit
 #         # perform some pre initialization
