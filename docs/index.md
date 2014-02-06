@@ -8,6 +8,7 @@ Setting up and running tests
 
 Developer References
 
+* [Profiling and Benchmarking](profiling.md)
 * [Various Catalog Forms](catalogs.md)
 * [Windows](windows.md)
 * [Unicode and you](unicode.md)
