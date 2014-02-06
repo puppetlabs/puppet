@@ -11,10 +11,15 @@ class Puppet::Util::Metric
 
   attr_writer :basedir
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     metric = new(data['name'], data['label'])
     metric.values = data['values']
     metric
+  end
+
+  def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(data)
   end
 
   def to_data_hash

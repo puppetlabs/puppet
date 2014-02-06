@@ -78,10 +78,15 @@ class Puppet::Node::Facts
     strip_internal == other.send(:strip_internal)
   end
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     new_facts = allocate
     new_facts.initialize_from_hash(data)
     new_facts
+  end
+
+  def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(data)
   end
 
   def to_data_hash
@@ -107,10 +112,6 @@ class Puppet::Node::Facts
     end
 
     result
-  end
-
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
   end
 
   # Add internal data to the facts for storage.

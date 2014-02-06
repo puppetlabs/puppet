@@ -149,7 +149,7 @@ describe Puppet::Transaction::Event do
         :property => :mode,
         :status => 'success')
 
-      tripped = Puppet::Transaction::Event.from_pson(PSON.parse(event.to_pson))
+      tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
 
       tripped.audited.should == event.audited
       tripped.property.should == event.property
@@ -176,7 +176,7 @@ describe Puppet::Transaction::Event do
         :property => :mode,
         :status => 'success')
 
-      tripped = Puppet::Transaction::Event.from_pson(PSON.parse(event.to_pson))
+      tripped = Puppet::Transaction::Event.from_data_hash(PSON.parse(event.to_pson))
 
       tripped.desired_value.should be_nil
       tripped.historical_value.should be_nil

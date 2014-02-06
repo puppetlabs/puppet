@@ -19,10 +19,15 @@ class Puppet::Transaction::Event
 
   EVENT_STATUSES = %w{noop success failure audit}
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
     obj
+  end
+
+  def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(data)
   end
 
   def initialize(options = {})
@@ -57,10 +62,6 @@ class Puppet::Transaction::Event
       'status' => @status,
       'time' => @time.iso8601(9),
     }
-  end
-
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
   end
 
   def property=(prop)

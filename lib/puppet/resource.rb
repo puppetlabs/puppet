@@ -26,27 +26,32 @@ class Puppet::Resource
 
   ATTRIBUTES = [:file, :line, :exported]
 
-  def self.from_pson(pson)
-    raise ArgumentError, "No resource type provided in serialized data" unless type = pson['type']
-    raise ArgumentError, "No resource title provided in serialized data" unless title = pson['title']
+  def self.from_data_hash(data)
+    raise ArgumentError, "No resource type provided in serialized data" unless type = data['type']
+    raise ArgumentError, "No resource title provided in serialized data" unless title = data['title']
 
     resource = new(type, title)
 
-    if params = pson['parameters']
+    if params = data['parameters']
       params.each { |param, value| resource[param] = value }
     end
 
-    if tags = pson['tags']
+    if tags = data['tags']
       tags.each { |tag| resource.tag(tag) }
     end
 
     ATTRIBUTES.each do |a|
-      if value = pson[a.to_s]
+      if value = data[a.to_s]
         resource.send(a.to_s + "=", value)
       end
     end
 
     resource
+  end
+
+  def self.from_pson(pson)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(pson)
   end
 
   def inspect

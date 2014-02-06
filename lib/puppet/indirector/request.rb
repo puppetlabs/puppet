@@ -20,23 +20,28 @@ class Puppet::Indirector::Request
 
   ::PSON.register_document_type('IndirectorRequest',self)
 
-  def self.from_pson(json)
-    raise ArgumentError, "No indirection name provided in json data" unless indirection_name = json['type']
-    raise ArgumentError, "No method name provided in json data" unless method = json['method']
-    raise ArgumentError, "No key provided in json data" unless key = json['key']
+  def self.from_data_hash(data)
+    raise ArgumentError, "No indirection name provided in data" unless indirection_name = data['type']
+    raise ArgumentError, "No method name provided in data" unless method = data['method']
+    raise ArgumentError, "No key provided in data" unless key = data['key']
 
-    request = new(indirection_name, method, key, nil, json['attributes'])
+    request = new(indirection_name, method, key, nil, data['attributes'])
 
-    if instance = json['instance']
+    if instance = data['instance']
       klass = Puppet::Indirector::Indirection.instance(request.indirection_name).model
       if instance.is_a?(klass)
         request.instance = instance
       else
-        request.instance = klass.from_pson(instance)
+        request.instance = klass.from_data_hash(instance)
       end
     end
 
     request
+  end
+
+  def self.from_pson(json)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(json)
   end
 
   def to_data_hash

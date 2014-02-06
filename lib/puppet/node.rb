@@ -18,14 +18,19 @@ class Puppet::Node
 
   ::PSON.register_document_type('Node',self)
 
-  def self.from_pson(pson)
-    raise ArgumentError, "No name provided in serialized data" unless name = pson['name']
+  def self.from_data_hash(data)
+    raise ArgumentError, "No name provided in serialized data" unless name = data['name']
 
     node = new(name)
-    node.classes = pson['classes']
-    node.parameters = pson['parameters']
-    node.environment = pson['environment']
+    node.classes = data['classes']
+    node.parameters = data['parameters']
+    node.environment = data['environment']
     node
+  end
+
+  def self.from_pson(pson)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(pson)
   end
 
   def to_data_hash

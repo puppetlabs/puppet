@@ -14,16 +14,17 @@ class Puppet::Status
     @status
   end
 
-  def to_pson(*args)
-    @status.to_pson
+  def self.from_data_hash(data)
+    if data.include?('status')
+      self.new(data['status'])
+    else
+      self.new(data)
+    end
   end
 
   def self.from_pson(pson)
-    if pson.include?('status')
-      self.new(pson['status'])
-    else
-      self.new(pson)
-    end
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(pson)
   end
 
   def name

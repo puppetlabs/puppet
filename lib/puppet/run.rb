@@ -80,18 +80,23 @@ class Puppet::Run
     obj
   end
 
-  def self.from_pson(hash)
-    if hash['options']
-      return from_hash(hash)
+  def self.from_data_hash(data)
+    if data['options']
+      return from_hash(data)
     end
 
     options = { :pluginsync => Puppet[:pluginsync] }
 
-    hash.each do |key, value|
+    data.each do |key, value|
       options[key.to_sym] = value
     end
 
     new(options)
+  end
+
+  def self.from_pson(hash)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(hash)
   end
 
   def to_data_hash
@@ -100,9 +105,5 @@ class Puppet::Run
       :background => @background,
       :status => @status
     }
-  end
-
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
   end
 end

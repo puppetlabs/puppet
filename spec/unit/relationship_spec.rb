@@ -211,18 +211,18 @@ describe Puppet::Relationship, "when converting from pson" do
   # LAK:NOTE For all of these tests, we convert back to the edge so we can
   # trap the actual data structure then.
   it "should pass the source in as the first argument" do
-    Puppet::Relationship.from_pson("source" => "mysource", "target" => "mytarget").source.should == "mysource"
+    Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").source.should == "mysource"
   end
 
   it "should pass the target in as the second argument" do
-    Puppet::Relationship.from_pson("source" => "mysource", "target" => "mytarget").target.should == "mytarget"
+    Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget").target.should == "mytarget"
   end
 
   it "should pass the event as an argument if it's provided" do
-    Puppet::Relationship.from_pson("source" => "mysource", "target" => "mytarget", "event" => "myevent", "callback" => "eh").event.should == "myevent"
+    Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "event" => "myevent", "callback" => "eh").event.should == "myevent"
   end
 
   it "should pass the callback as an argument if it's provided" do
-    Puppet::Relationship.from_pson("source" => "mysource", "target" => "mytarget", "callback" => "mycallback").callback.should == "mycallback"
+    Puppet::Relationship.from_data_hash("source" => "mysource", "target" => "mytarget", "callback" => "mycallback").callback.should == "mycallback"
   end
 end

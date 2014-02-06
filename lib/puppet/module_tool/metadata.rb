@@ -1,5 +1,6 @@
 require 'puppet/util/methodhelper'
 require 'puppet/module_tool'
+require 'puppet/network/format_support'
 
 module Puppet::ModuleTool
   # = Metadata
@@ -9,6 +10,7 @@ module Puppet::ModuleTool
   # +annotate+ methods in other classes.
   class Metadata
     include Puppet::Util::MethodHelper
+    include Puppet::Network::FormatSupport
 
     # The full name of the module, which is a dash-separated combination of the
     # +username+ and module +name+.
@@ -148,11 +150,6 @@ module Puppet::ModuleTool
 
     def to_hash()
       to_data_hash
-    end
-
-    # Return the PSON record representing this instance.
-    def to_pson(*args)
-      return to_data_hash.to_pson(*args)
     end
   end
 end

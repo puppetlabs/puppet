@@ -24,10 +24,15 @@ module Puppet
         map(&:to_sym)
 
 
-      def self.from_pson(data)
+      def self.from_data_hash(data)
         obj = self.allocate
         obj.initialize_from_hash(data)
         obj
+      end
+
+      def self.from_pson(data)
+        Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+        self.from_data_hash(data)
       end
 
       # Provide a boolean method for each of the states.
@@ -111,7 +116,7 @@ module Puppet
         @failed = data['failed']
 
         @events = data['events'].map do |event|
-          Puppet::Transaction::Event.from_pson(event)
+          Puppet::Transaction::Event.from_data_hash(event)
         end
       end
 
@@ -134,10 +139,6 @@ module Puppet
           'out_of_sync_count' => @out_of_sync_count,
           'events' => @events,
         }
-      end
-
-      def to_pson(*args)
-        to_data_hash.to_pson(*args)
       end
 
       def to_yaml_properties

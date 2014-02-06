@@ -313,7 +313,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     end
   end
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     result = new(data['name'])
 
     if tags = data['tags']
@@ -330,14 +330,24 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     if resources = data['resources']
       result.add_resource(*resources.collect do |res|
-        Puppet::Resource.from_pson(res)
+        Puppet::Resource.from_data_hash(res)
       end)
     end
 
     if edges = data['edges']
-      edges = PSON.parse(edges) if edges.is_a?(String)
-      edges.each do |edge|
-        edge_from_pson(result, edge)
+      edges.each do |edge_hash|
+        edge = Puppet::Relationship.from_data_hash(edge_hash)
+        unless source = result.resource(edge.source)
+          raise ArgumentError, "Could not intern from data: Could not find relationship source #{edge.source.inspect}"
+        end
+        edge.source = source
+
+        unless target = result.resource(edge.target)
+          raise ArgumentError, "Could not intern from data: Could not find relationship target #{edge.target.inspect}"
+        end
+        edge.target = target
+
+        result.add_edge(edge)
       end
     end
 
@@ -348,21 +358,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     result
   end
 
-  def self.edge_from_pson(result, edge)
-    # If no type information was presented, we manually find
-    # the class.
-    edge = Puppet::Relationship.from_pson(edge) if edge.is_a?(Hash)
-    unless source = result.resource(edge.source)
-      raise ArgumentError, "Could not convert from pson: Could not find relationship source #{edge.source.inspect}"
-    end
-    edge.source = source
-
-    unless target = result.resource(edge.target)
-      raise ArgumentError, "Could not convert from pson: Could not find relationship target #{edge.target.inspect}"
-    end
-    edge.target = target
-
-    result.add_edge(edge)
+  def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(data)
   end
 
   def to_data_hash
