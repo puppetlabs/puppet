@@ -319,4 +319,84 @@ describe provider_class do
       end
     end
   end
+
+  describe 'version comparison' do
+
+    # test cases munged directly from rpm's own
+    # tests/rpmvercmp.at
+    it { provider.rpmvercmp("1.0", "1.0").should == 0 }
+    it { provider.rpmvercmp("1.0", "2.0").should == -1 }
+    it { provider.rpmvercmp("2.0", "1.0").should == 1 }
+    it { provider.rpmvercmp("2.0.1", "2.0.1").should == 0 }
+    it { provider.rpmvercmp("2.0", "2.0.1").should == -1 }
+    it { provider.rpmvercmp("2.0.1", "2.0").should == 1 }
+    it { provider.rpmvercmp("2.0.1a", "2.0.1a").should == 0 }
+    it { provider.rpmvercmp("2.0.1a", "2.0.1").should == 1 }
+    it { provider.rpmvercmp("2.0.1", "2.0.1a").should == -1 }
+    it { provider.rpmvercmp("5.5p1", "5.5p1").should == 0 }
+    it { provider.rpmvercmp("5.5p1", "5.5p2").should == -1 }
+    it { provider.rpmvercmp("5.5p2", "5.5p1").should == 1 }
+    it { provider.rpmvercmp("5.5p10", "5.5p10").should == 0 }
+    it { provider.rpmvercmp("5.5p1", "5.5p10").should == -1 }
+    it { provider.rpmvercmp("5.5p10", "5.5p1").should == 1 }
+    it { provider.rpmvercmp("10xyz", "10.1xyz").should == -1 }
+    it { provider.rpmvercmp("10.1xyz", "10xyz").should == 1 }
+    it { provider.rpmvercmp("xyz10", "xyz10").should == 0 }
+    it { provider.rpmvercmp("xyz10", "xyz10.1").should == -1 }
+    it { provider.rpmvercmp("xyz10.1", "xyz10").should == 1 }
+    it { provider.rpmvercmp("xyz.4", "xyz.4").should == 0 }
+    it { provider.rpmvercmp("xyz.4", "8").should == -1 }
+    it { provider.rpmvercmp("8", "xyz.4").should == 1 }
+    it { provider.rpmvercmp("xyz.4", "2").should == -1 }
+    it { provider.rpmvercmp("2", "xyz.4").should == 1 }
+    it { provider.rpmvercmp("5.5p2", "5.6p1").should == -1 }
+    it { provider.rpmvercmp("5.6p1", "5.5p2").should == 1 }
+    it { provider.rpmvercmp("5.6p1", "6.5p1").should == -1 }
+    it { provider.rpmvercmp("6.5p1", "5.6p1").should == 1 }
+    it { provider.rpmvercmp("6.0.rc1", "6.0").should == 1 }
+    it { provider.rpmvercmp("6.0", "6.0.rc1").should == -1 }
+    it { provider.rpmvercmp("10b2", "10a1").should == 1 }
+    it { provider.rpmvercmp("10a2", "10b2").should == -1 }
+    it { provider.rpmvercmp("1.0aa", "1.0aa").should == 0 }
+    it { provider.rpmvercmp("1.0a", "1.0aa").should == -1 }
+    it { provider.rpmvercmp("1.0aa", "1.0a").should == 1 }
+    it { provider.rpmvercmp("10.0001", "10.0001").should == 0 }
+    it { provider.rpmvercmp("10.0001", "10.1").should == 0 }
+    it { provider.rpmvercmp("10.1", "10.0001").should == 0 }
+    it { provider.rpmvercmp("10.0001", "10.0039").should == -1 }
+    it { provider.rpmvercmp("10.0039", "10.0001").should == 1 }
+    it { provider.rpmvercmp("4.999.9", "5.0").should == -1 }
+    it { provider.rpmvercmp("5.0", "4.999.9").should == 1 }
+    it { provider.rpmvercmp("20101121", "20101121").should == 0 }
+    it { provider.rpmvercmp("20101121", "20101122").should == -1 }
+    it { provider.rpmvercmp("20101122", "20101121").should == 1 }
+    it { provider.rpmvercmp("2_0", "2_0").should == 0 }
+    it { provider.rpmvercmp("2.0", "2_0").should == 0 }
+    it { provider.rpmvercmp("2_0", "2.0").should == 0 }
+    it { provider.rpmvercmp("a", "a").should == 0 }
+    it { provider.rpmvercmp("a+", "a+").should == 0 }
+    it { provider.rpmvercmp("a+", "a_").should == 0 }
+    it { provider.rpmvercmp("a_", "a+").should == 0 }
+    it { provider.rpmvercmp("+a", "+a").should == 0 }
+    it { provider.rpmvercmp("+a", "_a").should == 0 }
+    it { provider.rpmvercmp("_a", "+a").should == 0 }
+    it { provider.rpmvercmp("+_", "+_").should == 0 }
+    it { provider.rpmvercmp("_+", "+_").should == 0 }
+    it { provider.rpmvercmp("_+", "_+").should == 0 }
+    it { provider.rpmvercmp("+", "_").should == 0 }
+    it { provider.rpmvercmp("_", "+").should == 0 }
+    it { provider.rpmvercmp("1.0~rc1", "1.0~rc1").should == 0 }
+    it { provider.rpmvercmp("1.0~rc1", "1.0").should == -1 }
+    it { provider.rpmvercmp("1.0", "1.0~rc1").should == 1 }
+    it { provider.rpmvercmp("1.0~rc1", "1.0~rc2").should == -1 }
+    it { provider.rpmvercmp("1.0~rc2", "1.0~rc1").should == 1 }
+    it { provider.rpmvercmp("1.0~rc1~git123", "1.0~rc1~git123").should == 0 }
+    it { provider.rpmvercmp("1.0~rc1~git123", "1.0~rc1").should == -1 }
+    it { provider.rpmvercmp("1.0~rc1", "1.0~rc1~git123").should == 1 }
+
+    # non-upstream test cases
+    it { provider.rpmvercmp("405", "406").should == -1 }
+    it { provider.rpmvercmp("1", "0").should == 1 }
+  end
+
 end
