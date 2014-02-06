@@ -417,7 +417,7 @@ Puppet::Type.newtype(:cron) do
     [ :minute, :hour, :weekday, :monthday, :month ].each do |field|
       next unless self[field]
       next if self[field] == :absent
-      raise "forbidden mix of special and numeric schedules in #{self.ref}"
+      raise ArgumentError, "#{self.ref} cannot specify both a special schedule and a value for #{field}"
     end
   end
 
