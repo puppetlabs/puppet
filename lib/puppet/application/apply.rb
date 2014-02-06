@@ -170,7 +170,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       manifest = command_line.args.shift
       raise "Could not find file #{manifest}" unless Puppet::FileSystem.exist?(manifest)
       Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
-      Puppet[:manifest] = manifest
     end
 
     unless Puppet[:node_name_fact].empty?
@@ -183,55 +182,62 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       facts.name = Puppet[:node_name_value]
     end
 
-    # Find our Node
-    unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
-      raise "Could not find node #{Puppet[:node_name_value]}"
-    end
+    configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+    apply_environment = manifest ?
+      configured_environment.override_with(:manifest => manifest) :
+      configured_environment
 
-    # Merge in the facts.
-    node.merge(facts.values) if facts
+    Puppet.override(:environments => Puppet::Environments::Static.new(apply_environment)) do
+      # Find our Node
+      unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
+        raise "Could not find node #{Puppet[:node_name_value]}"
+      end
 
-    # Allow users to load the classes that puppet agent creates.
-    if options[:loadclasses]
-      file = Puppet[:classfile]
-      if Puppet::FileSystem.exist?(file)
-        unless FileTest.readable?(file)
-          $stderr.puts "#{file} is not readable"
-          exit(63)
+      # Merge in the facts.
+      node.merge(facts.values) if facts
+
+      # Allow users to load the classes that puppet agent creates.
+      if options[:loadclasses]
+        file = Puppet[:classfile]
+        if Puppet::FileSystem.exist?(file)
+          unless FileTest.readable?(file)
+            $stderr.puts "#{file} is not readable"
+            exit(63)
+          end
+          node.classes = ::File.read(file).split(/[\s\n]+/)
         end
-        node.classes = ::File.read(file).split(/[\s\n]+/)
-      end
-    end
-
-    begin
-      # Compile our catalog
-      starttime = Time.now
-      catalog = Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
-
-      # Translate it to a RAL catalog
-      catalog = catalog.to_ral
-
-      catalog.finalize
-
-      catalog.retrieval_duration = Time.now - starttime
-
-      if options[:write_catalog_summary]
-        catalog.write_class_file
-        catalog.write_resource_file
       end
 
-      exit_status = apply_catalog(catalog)
+      begin
+        # Compile our catalog
+        starttime = Time.now
+        catalog = Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
 
-      if not exit_status
+        # Translate it to a RAL catalog
+        catalog = catalog.to_ral
+
+        catalog.finalize
+
+        catalog.retrieval_duration = Time.now - starttime
+
+        if options[:write_catalog_summary]
+          catalog.write_class_file
+          catalog.write_resource_file
+        end
+
+        exit_status = apply_catalog(catalog)
+
+        if not exit_status
+          exit(1)
+        elsif options[:detailed_exitcodes] then
+          exit(exit_status)
+        else
+          exit(0)
+        end
+      rescue => detail
+        Puppet.log_exception(detail)
         exit(1)
-      elsif options[:detailed_exitcodes] then
-        exit(exit_status)
-      else
-        exit(0)
       end
-    rescue => detail
-      Puppet.log_exception(detail)
-      exit(1)
     end
   end
 

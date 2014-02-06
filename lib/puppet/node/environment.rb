@@ -119,6 +119,18 @@ class Puppet::Node::Environment
     @manifest = manifest
   end
 
+  # Creates a new Puppet::Node::Environment instance, overriding any of the passed
+  # parameters.
+  #
+  # @param env_params [Hash<{Symbol => String,Array<String>}>] new environment
+  #   parameters (:modulepath, :manifest)
+  # @return [Puppet::Node::Environment]
+  def override_with(env_params)
+    return self.class.create(name,
+                      env_params[:modulepath] || modulepath,
+                      env_params[:manifest] || manifest)
+  end
+
   # @param [String] name Environment name to check for valid syntax.
   # @return [Boolean] true if name is valid
   # @api public

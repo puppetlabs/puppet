@@ -43,6 +43,28 @@ describe Puppet::Node::Environment do
       Puppet::Node::Environment.new(one).should equal(one)
     end
 
+    describe "overriding an existing environment" do
+      let(:original_path) { [tmpdir('original')] }
+      let(:new_path) { [tmpdir('new')] }
+      let(:environment) { Puppet::Node::Environment.create(:overridden, original_path, 'orig.pp') }
+
+      it "overrides modulepath" do
+        overridden = environment.override_with(:modulepath => new_path)
+        expect(overridden).to_not be_equal(environment)
+        expect(overridden.name).to eq(:overridden)
+        expect(overridden.manifest).to eq('orig.pp')
+        expect(overridden.modulepath).to eq(new_path)
+      end
+
+      it "overrides manifest" do
+        overridden = environment.override_with(:manifest => 'new.pp')
+        expect(overridden).to_not be_equal(environment)
+        expect(overridden.name).to eq(:overridden)
+        expect(overridden.manifest).to eq('new.pp')
+        expect(overridden.modulepath).to eq(original_path)
+      end
+    end
+
     describe "watching a file" do
       let(:filename) { "filename" }
 
