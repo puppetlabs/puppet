@@ -44,12 +44,14 @@ group(:development, :test) do
     gem "multi_json", "1.7.7", :require => false
     gem "json-schema", "2.1.1", :require => false
   end
+end
 
+group(:development) do
   case RUBY_VERSION
   when /^1.8/
-    gem 'ruby-prof', "~> 0.13.1"
+    gem 'ruby-prof', "~> 0.13.1", :require => false
   else
-    gem 'ruby-prof'
+    gem 'ruby-prof', :require => false
   end
 end
 
