@@ -45,6 +45,12 @@ group(:development, :test) do
     gem "json-schema", "2.1.1", :require => false
   end
 
+  case RUBY_VERSION
+  when /^1.8/
+    gem 'ruby-prof', "~> 0.13.1"
+  else
+    gem 'ruby-prof'
+  end
 end
 
 group(:extra) do
