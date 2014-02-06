@@ -3,6 +3,8 @@
 This file is intended to provide a place for developers and contributors to
 document what other developers need to know about changes made to Puppet.
 
+### Dependencies
+
 # Internal Structures
 
 ## Two Types of Catalog
@@ -127,52 +129,6 @@ sure and track down the problem is to wrap the File.open method like so:
 
 The settings catalog is populated by the `Puppet::Util::Settings#to\_catalog`
 method.
-
-# Ruby Dependencies #
-
-To install the dependencies run:
-
-    $ bundle install --path .bundle/gems/
-
-Once this is done, you can interact with puppet through bundler using `bundle
-exec <command>` which will ensure that `<command>` is executed in the context
-of puppet's dependencies.
-
-For example to run the specs:
-
-    $ bundle exec rake spec
-
-To run puppet itself (for a resource lookup say):
-
-    $ bundle exec puppet resource host localhost
-
-which should return something like:
-
-    host { 'localhost':
-      ensure => 'present',
-      ip     => '127.0.0.1',
-      target => '/etc/hosts',
-    }
-
-# Running Tests #
-
-Puppet Labs projects use a common convention of using Rake to run unit tests.
-The tests can be run with the following rake task:
-
-    bundle exec rake spec
-
-This allows the Rakefile to set up the environment beforehand if needed. This
-method is how the unit tests are run in [Jenkins](https://jenkins.puppetlabs.com).
-
-Under the hood Puppet's tests use `rspec`.  To run all of them, you can directly
-use 'rspec':
-
-    bundle exec rspec
-
-To run a single file's worth of tests (much faster!), give the filename, and use
-the nested format to see the descriptions:
-
-    bundle exec rspec spec/unit/ssl/host_spec.rb --format nested
 
 ## Testing dependency version requirements
 
