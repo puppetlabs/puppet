@@ -61,6 +61,18 @@ describe 'the filter method' do
     catalog.resource(:file, "/file_blueberry")['ensure'].should == 'present'
   end
 
+  it 'can filter array using index and value' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $a = ['strawberry','blueberry','orange']
+      $b = $a.filter |$index, $x|{ $index  == 0 or $index ==2}
+      file { "/file_${b[0]}": ensure => present }
+      file { "/file_${b[1]}": ensure => present }
+    MANIFEST
+
+    catalog.resource(:file, "/file_strawberry")['ensure'].should == 'present'
+    catalog.resource(:file, "/file_orange")['ensure'].should == 'present'
+  end
+
   it 'filters on a hash (all berries) by key' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'strawberry'=>'red','blueberry'=>'blue','orange'=>'orange'}
@@ -98,6 +110,24 @@ describe 'the filter method' do
 
     catalog.resource(:file, "/file_strawb")['ensure'].should == 'present'
     catalog.resource(:file, "/file_blueb")['ensure'].should == 'present'
+  end
+
+  context 'filter checks arguments and' do
+    it 'raises an error when block has more than 2 argument' do
+      expect do
+        compile_to_catalog(<<-MANIFEST)
+          [1].filter |$indexm, $x, $yikes|{  }
+        MANIFEST
+      end.to raise_error(Puppet::Error, /block must define at most two parameters/)
+    end
+
+    it 'raises an error when block has fewer than 1 argument' do
+      expect do
+        compile_to_catalog(<<-MANIFEST)
+          [1].filter || {  }
+        MANIFEST
+      end.to raise_error(Puppet::Error, /block must define at least one parameter/)
+    end
   end
 
   it_should_behave_like 'all iterative functions argument checks', 'filter'
