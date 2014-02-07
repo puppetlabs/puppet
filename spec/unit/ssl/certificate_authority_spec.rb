@@ -960,7 +960,9 @@ describe Puppet::SSL::CertificateAuthority do
 
         it "handles very large serial numbers" do
           bighex = '0x4000000000000000000000000000000000000000'
-          @ca.crl.expects(:revoke).with { |serial, key| serial == 2**(159-1) }
+          bighex_int = 365375409332725729550921208179070754913983135744
+
+          @ca.crl.expects(:revoke).with(bighex_int, anything)
           Puppet::SSL::Certificate.indirection.expects(:find).with(bighex).returns nil
 
           @ca.revoke(bighex)

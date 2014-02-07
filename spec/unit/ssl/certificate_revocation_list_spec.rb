@@ -81,7 +81,7 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should set its issuer to the subject of the passed certificate" do
-      @crl.generate(@cert, @key).issuer.should == @cert.subject
+      @crl.generate(@cert, @key).issuer.to_s.should == @cert.subject.to_s
     end
 
     it "should set its version to 1" do
