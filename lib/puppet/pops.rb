@@ -25,6 +25,7 @@ module Puppet
       require 'puppet/pops/types/type_factory'
       require 'puppet/pops/types/type_parser'
       require 'puppet/pops/types/class_loader'
+      require 'puppet/pops/types/enumeration'
     end
 
     module Model
