@@ -34,7 +34,9 @@ acceptance tests can be destructive, so the systems being tested should be
 throwaway systems.
 
 All of the acceptance tests for Puppet are kept in the acceptance/tests/
-directory.
+directory. Running the acceptance tests is much more involved than running the
+spec tests. Information about how to run them can be found in the [acceptance
+testing documentation](acceptance_tests.md)
 
 ## Testing dependency version requirements
 
@@ -46,8 +48,8 @@ of RSpec and Mocha can be found in the project Gemfile.
 
 ## Puppet Continuous integration
 
-  * Travis-ci (unit tests only): https://travis-ci.org/puppetlabs/puppet/
-  * Jenkins (unit and acceptance tests): https://jenkins.puppetlabs.com/view/Puppet%20FOSS/
+  * Travis-ci (spec tests only): https://travis-ci.org/puppetlabs/puppet/
+  * Jenkins (spec and acceptance tests): https://jenkins.puppetlabs.com/view/Puppet%20FOSS/
 
 ## RSpec
 
