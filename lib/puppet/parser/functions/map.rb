@@ -25,8 +25,19 @@ Puppet::Parser::Functions::newfunction(
         # Turns hash into array of keys
         $a.map |$x| { $x[0] }
 
+  When using a block with 2 parameters, the element's index (starting from 0) for an array, and the key for a hash
+  is given to the block's first parameter, and the value is given to the block's second parameter.args.
+
+  *Examples*
+
+        # Turns hash into array of values
+        $a.map |$key,$val|{ $val }
+
+        # Turns hash into array of keys
+        $a.map |$key,$val|{ $key }
+
   - Since 3.4 for Array and Hash
-  - Since 3.5 for other enumerables
+  - Since 3.5 for other enumerables, and support for blocks with 2 parameters
   - requires `parser = future`
   ENDHEREDOC
 
