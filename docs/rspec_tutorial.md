@@ -138,7 +138,7 @@ describe "something that could warn" do
     $VERBOSE = nil
   end
 
-  after do
+  after :each do
     # Enable warnings afterwards
     $VERBOSE = true
   end
@@ -165,11 +165,11 @@ describe "a helper object" do
     ['foo', 'bar', 'baz']
   end
 
-  it "should be an array" do
+  it "is an array" do
     my_helper.should be_a_kind_of Array
   end
 
-  it "should have three elements" do
+  it "has three elements" do
     my_helper.should have(3).items
   end
 end
@@ -197,16 +197,16 @@ describe "stubbing a method on an object" do
     ['foo', 'bar', 'baz']
   end
 
-  it 'should have three items before being stubbed' do
+  it 'has three items before being stubbed' do
     my_helper.size.should == 3
   end
 
   describe 'when stubbing the size' do
-    before do
+    before :each do
       my_helper.stubs(:size).returns 10
     end
 
-    it 'should have the stubbed value for size' do
+    it 'has the stubbed value for size' do
       my_helper.size.should == 10
     end
   end
@@ -221,7 +221,7 @@ describe "stubbing an object" do
     stub(:not_an_array, :size => 10)
   end
 
-  it 'should have the stubbed size'
+  it 'has the stubbed size'
     my_helper.size.should == 10
   end
 end
@@ -240,7 +240,7 @@ describe "mocking a method on an object" do
   end
 
   describe "when mocking the size" do
-    before do
+    before :each do
       my_helper.expects(:size).returns 10
     end
 
@@ -259,7 +259,7 @@ describe "mocking an object" do
     mock(:not_an_array)
   end
 
-  before do
+  before :each do
     not_an_array.expects(:size).returns 10
   end
 
@@ -304,7 +304,7 @@ describe "fixture data" do
       @fixture.foo.should == :bar
     end
 
-    it "should not keep state between tests" do
+    it "does not keep state between tests" do
       # The foo stub was added in the previous test and shouldn't be present
       # in this test.
       expect { @fixture.foo }.to raise_error
@@ -322,7 +322,7 @@ describe "fixture data" do
       fixture.foo.should == :bar
     end
 
-    it "should not keep state between tests" do
+    it "does not keep state between tests" do
       # since let blocks are regenerated between tests, the foo stub added in
       # the previous test will not be present here.
       expect { fixture.foo }.to raise_error
