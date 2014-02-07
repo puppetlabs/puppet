@@ -215,16 +215,6 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
       end
 
-      it "should set the manifest if a file is passed on command line and the file exists" do
-        manifest = tmpfile('site.pp')
-        FileUtils.touch(manifest)
-        @apply.command_line.stubs(:args).returns([manifest])
-
-        Puppet.expects(:[]=).with(:manifest,manifest)
-
-        expect { @apply.main }.to exit_with 0
-      end
-
       it "should raise an error if a file is passed on command line and the file does not exist" do
         noexist = tmpfile('noexist.pp')
         @apply.command_line.stubs(:args).returns([noexist])
@@ -237,7 +227,6 @@ describe Puppet::Application::Apply do
 
         @apply.command_line.stubs(:args).returns([manifest, 'starwarsI', 'starwarsII'])
 
-        Puppet.expects(:[]=).with(:manifest,manifest)
         expect { @apply.main }.to exit_with 0
 
         msg = @logs.find {|m| m.message =~ /Only one file can be applied per run/ }
