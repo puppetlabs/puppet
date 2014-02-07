@@ -1,5 +1,6 @@
 require 'benchmark'
 require 'tmpdir'
+require 'csv'
 
 namespace :benchmark do
   def generate_scenario_tasks(location, name)
@@ -33,18 +34,26 @@ namespace :benchmark do
                  else
                    Benchmark::FORMAT
                  end
+
+        report = []
         Benchmark.benchmark(Benchmark::CAPTION, 10, format, "> total:", "> avg:") do |b|
           times = []
           ENV['ITERATIONS'].to_i.times do |i|
+            start_time = Time.now.to_i
             times << b.report("Run #{i + 1}") do
               @benchmark.run
             end
+            report << [to_millis(start_time), to_millis(times.last.real), 200, true, name]
           end
 
           sum = times.inject(Benchmark::Tms.new, &:+)
 
           [sum, sum / times.length]
         end
+
+        write_csv("#{name}.samples",
+                  %w{timestamp elapsed responsecode success name},
+                  report)
       end
 
       desc "Profile a single run of the #{name} scenario."
@@ -60,10 +69,34 @@ namespace :benchmark do
           printer.print(f)
         end
       end
+
+      def to_millis(seconds)
+        (seconds * 1000).round
+      end
+
+      def write_csv(file, header, data)
+        CSV.open(file, 'w') do |csv|
+          csv << header
+          data.each do |line|
+            csv << line
+          end
+        end
+      end
     end
   end
 
+  scenarios = []
   Dir.glob('benchmarks/*') do |location|
+    name = File.basename(location)
+    scenarios << name
     generate_scenario_tasks(location, File.basename(location))
+  end
+
+  namespace :all do
+    desc "Profile all of the scenarios. (#{scenarios.join(', ')})"
+    task :profile => scenarios.collect { |name| "#{name}:profile" }
+
+    desc "Run all of the scenarios. (#{scenarios.join(', ')})"
+    task :run => scenarios.collect { |name| "#{name}:run" }
   end
 end
