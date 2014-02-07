@@ -150,7 +150,7 @@ module Puppet::Util::ClassGen
   # @api private
   #
   def is_constant_defined?(const)
-    if ::RUBY_VERSION =~ /^1.8/
+    if ::RUBY_VERSION =~ /^1\.8/
       const_defined?(const)
     else
       const_defined?(const, false)
