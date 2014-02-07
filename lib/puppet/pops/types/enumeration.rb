@@ -9,12 +9,14 @@ class Puppet::Pops::Types::Enumeration
     @@singleton.enumerator(o)
   end
 
-  # Produces an Enumerable::Enumerator for Array, Hash, Integer, Integer Range, and String.
+  # Produces an Enumerator for Array, Hash, Integer, Integer Range, and String.
   #
   def enumerator(o)
     case o
     when String
-      o.chars
+      x = o.chars
+      # Ruby 1.8.7 returns Enumerable::Enumerator, Ruby 1.8.9 Enumerator, and 2.0.0 an Array
+      x.is_a?(Array) ? x.each : x
     when Integer
       o.times
     when Array
