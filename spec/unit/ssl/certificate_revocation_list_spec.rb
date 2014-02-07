@@ -5,13 +5,20 @@ require 'puppet/ssl/certificate_revocation_list'
 
 describe Puppet::SSL::CertificateRevocationList do
   before do
-    # let's not mock this to make sure that OpenSSL actually does the right stuff
     ca = Puppet::SSL::CertificateAuthority.new
     ca.generate_ca_certificate
-    @cert = ca.instance_variable_get(:@certificate).content
-    @key = ca.instance_variable_get(:@host).key.content
-
+    @cert = ca.host.certificate.content
+    @key = ca.host.key.content
     @class = Puppet::SSL::CertificateRevocationList
+  end
+
+  def expects_time_close_to_now(time)
+    expect(time.to_i).to be_within(5*60).of(Time.now.to_i)
+  end
+
+  def expects_time_close_to_five_years(time)
+    future = Time.now + Puppet::SSL::CertificateRevocationList::FIVE_YEARS
+    expect(time.to_i).to be_within(5*60).of(future.to_i)
   end
 
   it "should only support the text format" do
@@ -73,16 +80,22 @@ describe Puppet::SSL::CertificateRevocationList do
           "critical"  => false }
     end
 
-    it "should set the last update time" do
-      @crl.generate(@cert, @key).last_update.should_not == nil
+    it "returns the last update time in UTC" do
+      # http://tools.ietf.org/html/rfc5280#section-5.1.2.4
+      thisUpdate = @crl.generate(@cert, @key).last_update
+      thisUpdate.should be_utc
+      expects_time_close_to_now(thisUpdate)
     end
 
-    it "should set the next update time" do
-      @crl.generate(@cert, @key).next_update.should_not == nil
+    it "returns the next update time in UTC 5 years from now" do
+      # http://tools.ietf.org/html/rfc5280#section-5.1.2.5
+      nextUpdate = @crl.generate(@cert, @key).next_update
+      nextUpdate.should be_utc
+      expects_time_close_to_five_years(nextUpdate)
     end
 
     it "should verify using the CA public_key" do
-      @crl.generate(@cert, @key).verify(@key.public_key).should == true
+      @crl.generate(@cert, @key).verify(@key.public_key).should be_true
     end
 
     it "should set the content to the generated crl" do
@@ -104,7 +117,7 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should require a serial number and the CA's private key" do
-      lambda { @crl.revoke }.should raise_error(ArgumentError)
+      expect { @crl.revoke }.to raise_error(ArgumentError)
     end
 
     it "should default to OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE as the revocation reason" do
@@ -117,21 +130,15 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should mark the CRL as updated at a time that makes it valid now" do
-      time = Time.now
-      Time.stubs(:now).returns time
-
-      @crl.content.expects(:last_update=).with(time - 1)
-
       @crl.revoke(1, @key)
+
+      expects_time_close_to_now(@crl.content.last_update)
     end
 
     it "should mark the CRL valid for five years" do
-      time = Time.now
-      Time.stubs(:now).returns time
-
-      @crl.content.expects(:next_update=).with(time + (5 * 365*24*60*60))
-
       @crl.revoke(1, @key)
+
+      expects_time_close_to_five_years(@crl.content.next_update)
     end
 
     it "should sign the CRL with the CA's private key and a digest instance" do
