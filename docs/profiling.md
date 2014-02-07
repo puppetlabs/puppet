@@ -7,9 +7,17 @@ what is making it slow and fix it.
 
 There is a built-in system of profiling that can be used to identify some slow
 spots. This can only work with code that is explicitly instrumented, which, at
-the time of this writing, is only the compiler. However, to use it you only
-need to use `--profile` on the master. The timing information will be output to
-the logs and tagged with the word "PROFILE".
+the time of this writing, is primarily the compiler. To enable profiling there
+are several options:
+
+* To profile every request on the master add `--profile` to your master's
+  startup.
+* To profile a single run for an agent add `--profile` to your agent's options
+  for that run.
+* To profile a masterless run add `--profile` to your `puppet apply` options.
+
+The timing information will be output to the logs and tagged with the word
+"PROFILE".
 
 For the agent there is actually a second system: evaltrace. You can enable this
 on the agent by passing it `--evaltrace`. Timing information for each resource
