@@ -26,7 +26,7 @@ To install an open source release of Puppet,
 If you need to run Puppet from source as a tester or developer,
 [see the running from source guide on the docs site.](http://docs.puppetlabs.com/guides/from_source.html)
 
-Developing and Contributioning 
+Developing and Contributing
 ------
 
 We'd love to get contributions from you! For a quick guide to getting your
