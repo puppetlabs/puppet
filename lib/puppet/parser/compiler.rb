@@ -17,10 +17,9 @@ class Puppet::Parser::Compiler
   include Puppet::Resource::TypeCollectionHelper
 
   def self.compile(node)
-    $known_resource_types = nil
     $env_module_directories = nil
+    node.environment.check_for_reparse
 
-    # ...and we actually do the compile now we have caching ready.
     new(node).compile.to_resource
   rescue => detail
     message = "#{detail} on node #{node.name}"

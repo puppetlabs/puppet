@@ -84,7 +84,6 @@ describe Puppet::Node::Environment do
       before do
         @collection = Puppet::Resource::TypeCollection.new(env)
         env.stubs(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
-        $known_resource_types = nil
       end
 
       it "should create a resource type collection if none exists" do
@@ -108,18 +107,13 @@ describe Puppet::Node::Environment do
         env.known_resource_types.should equal(@collection)
       end
 
-      it "should return the current thread associated collection if there is one" do
-        $known_resource_types = @collection
-
-        env.known_resource_types.should equal(@collection)
-      end
-
       it "should generate a new TypeCollection if the current one requires reparsing" do
         old_type_collection = env.known_resource_types
         old_type_collection.stubs(:require_reparse?).returns true
-        $known_resource_types = nil
-        new_type_collection = env.known_resource_types
 
+        env.check_for_reparse
+
+        new_type_collection = env.known_resource_types
         new_type_collection.should be_a Puppet::Resource::TypeCollection
         new_type_collection.should_not equal(old_type_collection)
       end
@@ -412,14 +406,13 @@ describe Puppet::Node::Environment do
 
       it "should fail helpfully if there is an error importing" do
         Puppet::FileSystem.stubs(:exist?).returns true
-        env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(env)
         parser, env = parser_and_environment('testing')
 
         parser.expects(:file=).once
         parser.expects(:parse).raises ArgumentError
 
         expect do
-          env.instance_eval { perform_initial_import }
+          env.known_resource_types
         end.to raise_error(Puppet::Error)
       end
 
@@ -436,12 +429,11 @@ describe Puppet::Node::Environment do
 
       it "should mark the type collection as needing a reparse when there is an error parsing" do
         parser, env = parser_and_environment('testing')
-        env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(env)
 
         parser.expects(:parse).raises Puppet::ParseError.new("Syntax error at ...")
 
         expect do
-          env.instance_eval { perform_initial_import }
+          env.known_resource_types
         end.to raise_error(Puppet::Error, /Syntax error at .../)
         env.known_resource_types.require_reparse?.should be_true
       end
