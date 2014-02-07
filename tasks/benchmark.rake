@@ -75,7 +75,18 @@ namespace :benchmark do
     end
   end
 
+  scenarios = []
   Dir.glob('benchmarks/*') do |location|
+    name = File.basename(location)
+    scenarios << name
     generate_scenario_tasks(location, File.basename(location))
+  end
+
+  namespace :all do
+    desc "Profile all of the scenarios. (#{scenarios.join(', ')})"
+    task :profile => scenarios.collect { |name| "#{name}:profile" }
+
+    desc "Run all of the scenarios. (#{scenarios.join(', ')})"
+    task :run => scenarios.collect { |name| "#{name}:run" }
   end
 end
