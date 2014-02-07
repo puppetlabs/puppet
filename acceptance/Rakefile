@@ -274,10 +274,6 @@ You can go back through the last SECS_AGO logs.  Default is one day ago in secs.
   desc <<-EOS
 Rerun an acceptance test using the last captured preserved_config.yaml to skip provisioning.
 Or specify a CONFIG_NUMBER from `rake ci:list_preserved`.
-Uses the setup/rsync/pre-suite to rsync the local puppet source onto master and agent.
-You may specify an RSYNC_FILTER_FILE as well.
-You may skip purgeing and reinstalling puppet packages by including SKIP_PACKAGE_REINSTALL.
-You may skip rsyncing local puppet files over to the tests hosts by including SKIP_RSYNC.
 Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
   EOS
   task :test_against_preserved_hosts do
@@ -290,7 +286,7 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
       :hosts_file => "#{config_path}/preserved_config.yaml",
       :no_provision => true,
       :preserve_hosts => true,
-      :pre_suite => ['setup/rsync/pre-suite']
+      :pre_suite => ['']
     )
   end
 end
