@@ -21,6 +21,21 @@ describe Puppet::SSL::CertificateRevocationList do
     expect(time.to_i).to be_within(5*60).of(future.to_i)
   end
 
+  def expects_crlnumber_extension(crl, value)
+    crlNumber = crl.content.extensions.find { |ext| ext.oid == "crlNumber" }
+
+    expect(crlNumber.value).to eq(value.to_s)
+    expect(crlNumber).to_not be_critical
+  end
+
+  def expects_authkeyid_extension(crl, cert)
+    subjectKeyId = cert.extensions.find { |ext| ext.oid == 'subjectKeyIdentifier' }.value
+
+    authKeyId = crl.content.extensions.find { |ext| ext.oid == "authorityKeyIdentifier" }
+    expect(authKeyId.value.chomp).to eq("keyid:#{subjectKeyId}")
+    expect(authKeyId).to_not be_critical
+  end
+
   it "should only support the text format" do
     @class.supported_formats.should == [:s]
   end
@@ -72,19 +87,18 @@ describe Puppet::SSL::CertificateRevocationList do
       @crl.generate(@cert, @key).should be_an_instance_of(OpenSSL::X509::CRL)
     end
 
-    # taken from certificate_factory_spec.rb
     it "should add an extension for the CRL number" do
-      @crl.generate(@cert, @key).extensions.map { |x| x.to_h }.find { |x| x["oid"] == "crlNumber" }.should ==
-        { "oid"       => "crlNumber",
-          "value"     => "0",
-          "critical"  => false }
+      @crl.generate(@cert, @key)
+
+      expects_crlnumber_extension(@crl, 0)
     end
 
     it "should add an extension for the authority key identifier" do
-      ef = OpenSSL::X509::ExtensionFactory.new(@cert)
-      @crl.generate(@cert, @key).extensions.map { |x| x.to_h }.find { |x| x["oid"] == "authorityKeyIdentifier" }.should ==
-        ef.create_extension("authorityKeyIdentifier", "keyid:always", false).to_h
+      @crl.generate(@cert, @key)
+
+      expects_authkeyid_extension(@crl, @cert)
     end
+
     it "returns the last update time in UTC" do
       # http://tools.ietf.org/html/rfc5280#section-5.1.2.4
       thisUpdate = @crl.generate(@cert, @key).last_update
@@ -154,6 +168,19 @@ describe Puppet::SSL::CertificateRevocationList do
     it "should save the CRL" do
       Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(@crl, nil)
       @crl.revoke(1, @key)
+    end
+
+    it "adds the crlNumber extension containing the serial number" do
+      serial = 1
+      @crl.revoke(serial, @key)
+
+      expects_crlnumber_extension(@crl, serial)
+    end
+
+    it "adds the CA cert's subjectKeyId as the authorityKeyIdentifier to the CRL" do
+      @crl.revoke(1, @key)
+
+      expects_authkeyid_extension(@crl, @cert)
     end
   end
 end
