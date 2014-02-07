@@ -100,7 +100,7 @@ This will use the existing hosts.
 
 If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hosts, you may eventually generate a large number of stale vms.  They should be reaped automatically by qa infrastructure within a day or so, but you may also run:
 
-    bundle exec rake ci:destroy_preserved_hosts
+    bundle exec rake ci:release_hosts
 
 to clean them up sooner and free resources.
 

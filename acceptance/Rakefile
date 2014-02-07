@@ -22,6 +22,7 @@ module HarnessOptions
     :timesync => true,
     :repo_proxy => true,
     :add_el_extras => true,
+    :preserve_hosts => 'onfail',
   }
 
   class Aggregator
@@ -66,12 +67,18 @@ module HarnessOptions
 end
 
 def beaker_test(mode = :packages, options = {})
-  final_options = HarnessOptions.options(mode, options)
+  delete_options = options[:__delete_options__] || []
+  final_options = HarnessOptions.options(mode,
+                                         options.reject { |k,v| k == :__delete_options__ })
 
   if mode == :git
     puppet_fork = ENV['FORK'] || 'puppetlabs'
     git_server  = ENV['GIT_SERVER'] || 'github.com'
     final_options[:install] << "git://#{git_server}/#{puppet_fork}/puppet.git##{sha}"
+  end
+
+  delete_options.each do |delete_me|
+    final_options.delete(delete_me)
   end
 
   options_file = 'merged_options.rb'
@@ -83,7 +90,7 @@ EOS
     merged.puts(final_options.pretty_inspect)
   end
 
-  tests = ENV['TESTS'] || ENV['TEST'] 
+  tests = ENV['TESTS'] || ENV['TEST']
   tests_opt = "--tests=#{tests}" if tests
 
   config_opt = "--hosts=#{config}" if config
@@ -92,12 +99,18 @@ EOS
 
   args = ["--options-file", options_file, config_opt, tests_opt, overriding_options].compact
 
+  preserve_hosts = final_options[:preserve_hosts]
+  if md = /--preserve-hosts=?\s*['"]?(\w+)/.match(overriding_options)
+    preserve_hosts = md[1]
+  end
+
   begin
-    sh("beaker", *args)
+    failed = false
+    sh("beaker", *args) { |ok,res| failed = true if !ok }
   ensure
     if (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
       cp(hosts_file, "log/latest/config.yml")
-      generate_config_for_latest_hosts if final_options[:preserve_hosts] || overriding_options =~ /--preserve-hosts/
+      generate_config_for_latest_hosts if preserve_hosts = 'always' || (failed && preserve_hosts = 'onfail')
     end
     mv(options_file, "log/latest")
   end
@@ -247,7 +260,7 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
 #{USAGE}
   EOS
   task :test_and_preserve_hosts => 'ci:check_env'  do
-    beaker_test(beaker_run_type, :preserve_hosts => true)
+    beaker_test(beaker_run_type, :preserve_hosts => 'always')
   end
 
   desc "List acceptance runs from the past day which had hosts preserved."
@@ -285,8 +298,8 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
     beaker_test(beaker_run_type,
       :hosts_file => "#{config_path}/preserved_config.yaml",
       :no_provision => true,
-      :preserve_hosts => true,
-      :pre_suite => ['']
+      :preserve_hosts => 'always',
+      :__delete_options__ => [:pre_suite],
     )
   end
 end
