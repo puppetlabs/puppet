@@ -60,13 +60,15 @@ DOC
 private
 
   def create_crl_issued_by(cert)
+    ef = OpenSSL::X509::ExtensionFactory.new(cert)
     @content = wrapped_class.new
     @content.issuer = cert.subject
+    @content.add_extension(ef.create_ext("authorityKeyIdentifier", "keyid:always"))
     @content.version = 1
   end
 
   def start_at_initial_crl_number
-    @content.extensions = [crl_number_of(0)]
+    @content.add_extension(crl_number_of(0))
   end
 
   def add_certificate_revocation_for(serial, reason, time)
