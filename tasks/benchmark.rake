@@ -94,9 +94,17 @@ namespace :benchmark do
 
   namespace :all do
     desc "Profile all of the scenarios. (#{scenarios.join(', ')})"
-    task :profile => scenarios.collect { |name| "#{name}:profile" }
+    task :profile do
+      scenarios.each do |name|
+        sh "rake benchmark:#{name}:profile"
+      end
+    end
 
     desc "Run all of the scenarios. (#{scenarios.join(', ')})"
-    task :run => scenarios.collect { |name| "#{name}:run" }
+    task :run do
+      scenarios.each do |name|
+        sh "rake benchmark:#{name}:run"
+      end
+    end
   end
 end
