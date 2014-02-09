@@ -172,7 +172,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     if TYPEFACTORY.is_range_parameter?(keys[-2]) && TYPEFACTORY.is_range_parameter?(keys[-1])
       size_type = TYPEFACTORY.range(keys[-2], keys[-1])
       keys = keys[0, keys.size - 2]
-    elsif TYPEFACTORY.is_range_parameter?(keys[-2])
+    elsif TYPEFACTORY.is_range_parameter?(keys[-1])
       size_type = TYPEFACTORY.range(keys[-1], :default)
       keys = keys[0, keys.size - 1]
     end

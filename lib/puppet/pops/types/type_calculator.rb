@@ -1280,10 +1280,11 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def string_PTupleType(t)
+    range = range_array_part(t.size_type)
     return "Tuple" if t.types.empty?
     s = "Tuple[" << t.types.map {|t2| string(t2) }.join(', ')
-    if !t.types().empty? && !t.size_type.nil?
-      s << ", " << string(size_type)
+    unless range.empty?
+      s << ", " << range.join(', ')
     end
     s << "]"
     s
