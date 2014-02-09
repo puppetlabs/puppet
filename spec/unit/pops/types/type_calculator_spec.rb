@@ -1104,6 +1104,28 @@ describe 'The type calculator' do
       calculator.string(factory.constrain_size(arr.copy, 2, :default)).should == 'Array[String, 2, default]'
     end
 
+    it 'should yield \'Tuple[Integer]\' for PTupleType[PIntegerType]' do
+      t = Puppet::Pops::Types::PTupleType.new()
+      t.addTypes(Puppet::Pops::Types::PIntegerType.new())
+      calculator.string(t).should == 'Tuple[Integer]'
+    end
+
+    it 'should yield \'Tuple[T, T,..]\' for PTupleType[T, T, ...]' do
+      t = Puppet::Pops::Types::PTupleType.new()
+      t.addTypes(Puppet::Pops::Types::PIntegerType.new())
+      t.addTypes(Puppet::Pops::Types::PIntegerType.new())
+      t.addTypes(Puppet::Pops::Types::PStringType.new())
+      calculator.string(t).should == 'Tuple[Integer, Integer, String]'
+    end
+
+    it 'should yield \'Tuple\' and from/to for PTupleType' do
+      tuple_t = tuple_t(string_t)
+      calculator.string(factory.constrain_size(tuple_t.copy, 1,1)).should == 'Tuple[String, 1, 1]'
+      calculator.string(factory.constrain_size(tuple_t.copy, 1,2)).should == 'Tuple[String, 1, 2]'
+      calculator.string(factory.constrain_size(tuple_t.copy, :default, 2)).should == 'Tuple[String, default, 2]'
+      calculator.string(factory.constrain_size(tuple_t.copy, 2, :default)).should == 'Tuple[String, 2, default]'
+    end
+
     it 'should yield \'Hash[String, Integer]\' for PHashType[PStringType, PIntegerType]' do
       t = Puppet::Pops::Types::PHashType.new()
       t.key_type = Puppet::Pops::Types::PStringType.new()
@@ -1195,6 +1217,7 @@ describe 'The type calculator' do
       calculator.infer(Puppet::Pops::Types::PEnumType.new()      ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PPatternType.new()   ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PVariantType.new()   ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PTupleType.new()     ).is_a?(ptype).should() == true
     end
 
     it 'should infer PType as the type of all other types' do
@@ -1217,6 +1240,7 @@ describe 'The type calculator' do
       calculator.string(calculator.infer(Puppet::Pops::Types::PEnumType.new()      )).should == "Type[Enum]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PVariantType.new()   )).should == "Type[Variant]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PPatternType.new()   )).should == "Type[Pattern]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PTupleType.new()     )).should == "Type[Tuple]"
     end
 
     it "computes the common type of PType's type parameter" do

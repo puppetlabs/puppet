@@ -218,7 +218,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to be_the_type(expected_t)
     end
 
-    it "gives an error if parameter is not a type" do
+    it "Array parameterization gives an error if parameter is not a type" do
       expr = fqr('Array')['String']
       expect { evaluate(expr)}.to raise_error(/Array-Type\[\] arguments must be types/)
     end
@@ -232,6 +232,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       # arguments are flattened
       expr = fqr('Tuple')[[fqr('String')]]
       expect(evaluate(expr)).to be_the_type(types.tuple(String))
+    end
+
+    it "Tuple parameterization gives an error if parameter is not a type" do
+      expr = fqr('Tuple')['String']
+      expect { evaluate(expr)}.to raise_error(/Tuple-Type, Cannot use String where Abstract-Type is expected/)
     end
 
     it 'produces a varargs Tuple when the last two arguments specify size constraint' do
