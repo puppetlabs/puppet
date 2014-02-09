@@ -206,6 +206,18 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to be_the_type(types.array_of(types.string))
     end
 
+    it 'produces a size constrained Array when the last two arguments specify this' do
+      expr = fqr('Array')[fqr('String'), 1]
+      expected_t = types.array_of(String)
+      types.constrain_size(expected_t, 1, :default)
+      expect(evaluate(expr)).to be_the_type(expected_t)
+
+      expr = fqr('Array')[fqr('String'), 1, 2]
+      expected_t = types.array_of(String)
+      types.constrain_size(expected_t, 1, 2)
+      expect(evaluate(expr)).to be_the_type(expected_t)
+    end
+
     it "gives an error if parameter is not a type" do
       expr = fqr('Array')['String']
       expect { evaluate(expr)}.to raise_error(/Array-Type\[\] arguments must be types/)
