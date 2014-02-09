@@ -121,6 +121,17 @@ describe Puppet::Type.type(:cron).provider(:crontab), '(integration)', :unless =
         expect_output('crontab_user1')
       end
 
+      it "should work correctly when managing 'target' but not 'user'" do
+        resource = Puppet::Type.type(:cron).new(
+          :name    => 'My daily failure',
+          :special => 'daily',
+          :command => '/bin/false',
+          :target  => crontab_user1
+        )
+        run_in_catalog(resource)
+        expect_output('crontab_user1')
+      end
+
       it "should do nothing if a matching entry already present" do
         resource = Puppet::Type.type(:cron).new(
           :name     => 'no_such_named_resource_in_crontab',
