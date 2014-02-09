@@ -807,7 +807,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "it should implement copy_as_resource" do
+  it "implements copy_as_resource" do
     resource = Puppet::Resource.new("file", "/my/file")
     resource.copy_as_resource.should == resource
   end

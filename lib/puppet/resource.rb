@@ -401,6 +401,8 @@ class Puppet::Resource
     result.exported = self.exported
     result.virtual = self.virtual
     result.tag(*self.tags)
+    result.environment = environment
+    result.instance_variable_set(:@rstype, resource_type)
 
     result
   end
