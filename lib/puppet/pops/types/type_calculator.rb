@@ -164,12 +164,21 @@ class Puppet::Pops::Types::TypeCalculator
     @numeric_t = Types::PNumericType.new()
     @t = Types::PObjectType.new()
 
+    # Data accepts a Tuple that has 0-infinity Data compatible entries (e.g. a Tuple equivalent to Array).
+    data_tuple = Types::PTupleType.new()
+    data_tuple.addTypes(Types::PDataType.new())
+    data_tuple.size_type = Types::PIntegerType.new()
+    data_tuple.size_type.from = 0
+    data_tuple.size_type.to = nil # infinity
+    @data_tuple_t = data_tuple
+
     # Variant type compatible with Data
     data_variant = Types::PVariantType.new()
     data_variant.addTypes(@data_hash.copy)
     data_variant.addTypes(@data_array.copy)
     data_variant.addTypes(Types::PScalarType.new)
     data_variant.addTypes(Types::PNilType.new)
+    data_variant.addTypes(@data_tuple_t.copy)
     @data_variant_t = data_variant
 
     collection_default_size = Types::PIntegerType.new()
@@ -177,10 +186,6 @@ class Puppet::Pops::Types::TypeCalculator
     collection_default_size.to = nil # infinity
     @collection_default_size_t = collection_default_size
 
-#    range1 = Types::PIntegerType.new()
-#    range1.from = 1
-#    range1.to = 1
-#    @range_1 = range1
   end
 
   # Convenience method to get a data type for comparisons

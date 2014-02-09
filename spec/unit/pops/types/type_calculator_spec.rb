@@ -140,6 +140,8 @@ describe 'The type calculator' do
       result << array_t(types::PDataType.new)
       result << types::TypeFactory.hash_of_data
       result << Puppet::Pops::Types::PNilType
+      result << (tmp = tuple_t(types::PDataType.new))
+      tmp.size_type = int_range(0, nil)
       result
     end
 
@@ -929,7 +931,7 @@ describe 'The type calculator' do
         calculator.instance?(data_t, :undef).should == true
       end
 
-      it 'other symbols should not br considered instance of Data' do
+      it 'other symbols should not be considered instance of Data' do
         calculator.instance?(data_t, :love).should == false
       end
 

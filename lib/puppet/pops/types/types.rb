@@ -310,7 +310,7 @@ module Puppet::Pops::Types
 
     module ClassModule
       def hash
-        [self.class, size_type, Set.new(elements)].hash
+        [self.class, size_type, Set.new(types)].hash
       end
 
       def ==(o)
