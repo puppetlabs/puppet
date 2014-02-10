@@ -153,10 +153,10 @@ class Puppet::Pops::Types::TypeParser
       TYPES.object()
 
     when "variant"
-        TYPES.variant()
+      TYPES.variant()
 
     when "optional"
-        TYPES.optional()
+      TYPES.optional()
 
     when "ruby"
       TYPES.ruby_type()
