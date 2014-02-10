@@ -1012,7 +1012,7 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_POptionalType(t, t2)
-    return true if t2.is_a(Types::PNilType)
+    return true if t2.is_a?(Types::PNilType)
     if t2.is_a?(Types::POptionalType)
       assignable?(t.optional_type, t2.optional_type)
     else
@@ -1425,7 +1425,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def string_POptionalType(t)
-    "Optional[#{string(t.optional_type)}]"
+    if t.optional_type.nil?
+      "Optional"
+    else
+      "Optional[#{string(t.optional_type)}]"
+    end
   end
 
   # Catches all non enumerable types

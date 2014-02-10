@@ -47,6 +47,9 @@ describe Puppet::Pops::Types::TypeParser do
     expect(the_type_parsed_from(types.data)).to be_the_type(types.data)
     expect(the_type_parsed_from(types.catalog_entry)).to be_the_type(types.catalog_entry)
     expect(the_type_parsed_from(types.collection)).to be_the_type(types.collection)
+    expect(the_type_parsed_from(types.tuple)).to be_the_type(types.tuple)
+    expect(the_type_parsed_from(types.struct)).to be_the_type(types.struct)
+    expect(the_type_parsed_from(types.optional)).to be_the_type(types.optional)
   end
 
   it "interprets an unparameterized Array as an Array of Data" do
@@ -87,6 +90,27 @@ describe Puppet::Pops::Types::TypeParser do
 
     expect(the_type_parsed_from(parameterized_array)).to be_the_type(parameterized_array)
     expect(the_type_parsed_from(parameterized_hash)).to be_the_type(parameterized_hash)
+  end
+
+  it "parses optional type" do
+    opt_t = types.optional(Integer)
+    expect(the_type_parsed_from(opt_t)).to be_the_type(opt_t)
+  end
+
+  it "parses tuple type" do
+    tuple_t = types.tuple(Integer, String)
+    expect(the_type_parsed_from(tuple_t)).to be_the_type(tuple_t)
+  end
+
+  it "parses tuple type with occurence constraint" do
+    tuple_t = types.tuple(Integer, String)
+    types.constrain_size(tuple_t, 2, 5)
+    expect(the_type_parsed_from(tuple_t)).to be_the_type(tuple_t)
+  end
+
+  it "parses struct type" do
+    struct_t = types.struct({'a'=>Integer, 'b'=>String})
+    expect(the_type_parsed_from(struct_t)).to be_the_type(struct_t)
   end
 
   it "rejects an collection spec with the wrong number of parameters" do

@@ -86,12 +86,23 @@ class Puppet::Pops::Types::TypeParser
     :default
   end
 
+  # @api private
   def interpret_LiteralInteger(o)
     o.value
   end
 
+  # @api private
   def interpret_LiteralFloat(o)
     o.value
+  end
+
+  # @api private
+  def interpret_LiteralHash(o)
+    result = {}
+    o.entries.each do |entry|
+      result[@type_transformer.visit_this_0(self, entry.key)] = @type_transformer.visit_this_0(self, entry.value)
+    end
+    result
   end
 
   # @api private
@@ -298,7 +309,7 @@ class Puppet::Pops::Types::TypeParser
       # 1..m parameters being types (last two optionally integer or literal default
       raise_invalid_parameters_error("Tuple", "1 or more", parameters.size) unless parameters.size > 1
       length = parameters.size
-      if is_range_parameter?(parameters[-2])
+      if TYPES.is_range_parameter?(parameters[-2])
         # min, max specification
         min = parameters[-2]
         min = (min == :default || min == 'default') ? 0 : min
@@ -306,7 +317,7 @@ class Puppet::Pops::Types::TypeParser
         max = parameters[-1]
         max = max == :default ? nil : max
         parameters = parameters[0, length-2]
-      elsif is_range_parameter?(parameters[-1])
+      elsif TYPES.is_range_parameter?(parameters[-1])
         min = parameters[-1]
         min = (min == :default || min == 'default') ? 0 : min
         max = nil
