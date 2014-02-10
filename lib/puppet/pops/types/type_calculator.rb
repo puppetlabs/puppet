@@ -399,7 +399,7 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless o.is_a?(Hash)
     h = t.hashed_elements
     # all keys must be present and have a value (even if nil/undef)
-    return false unless o.size == h.size && h.all? { |k,v| o.has_key?(k) && instance_of(v, o[k]) }
+    (o.keys - h.keys).empty? && h.all? { |k,v| instance_of(v, o[k]) }
   end
 
   def instance_of_PHashType(t, o)
