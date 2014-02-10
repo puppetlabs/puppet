@@ -207,8 +207,8 @@ module Puppet
       desc "Whether to log command output in addition to logging the
         exit code.  Defaults to `on_failure`, which only logs the output
         when the command has an exit code that does not match any value
-        specified by the `returns` attribute.  In addition to the values
-        below, you may set this attribute to any legal log level."
+        specified by the `returns` attribute. As with any resource type,
+        the log level can be controlled with the `loglevel` metaparameter."
 
       defaultto :on_failure
 
