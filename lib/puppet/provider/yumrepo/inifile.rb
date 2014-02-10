@@ -33,13 +33,17 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     end
   end
 
-  # Search for a reposdir in the yum configuration file and append it to the
-  # list of repodirs to use.
+  # Return a list of existing directories that could contain repo files.  Fail if none found.
   def self.reposdir(conf='/etc/yum.conf', dirs=['/etc/yum.repos.d', '/etc/yum/repos.d'])
     reposdir = find_conf_value('reposdir', conf)
     dirs << reposdir if reposdir
 
-    return dirs
+    dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
+    if dirs.empty?
+      fail("No yum directories were found on the local filesystem")
+    else
+      return dirs
+    end
   end
 
   # Find configuration values in .conf files and return them
@@ -77,11 +81,9 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     # Create a new section if not found.
     unless result
       reposdir.each do |dir|
-        if File.directory?(dir)
-          path = ::File.join(dir, "#{name}.repo")
-          Puppet.info("create new repo #{name} in file #{path}")
-          result = self.virtual_inifile.add_section(name, path)
-        end
+        path = ::File.join(dir, "#{name}.repo")
+        Puppet.info("create new repo #{name} in file #{path}")
+        result = self.virtual_inifile.add_section(name, path)
       end
     end
     result

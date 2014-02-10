@@ -44,6 +44,7 @@ descr="test updates"
 
   describe 'create' do
     it 'creates a yumrepo' do
+      described_class.expects(:reposdir).returns(['/etc/yum.repos.d'])
       yumrepo_provider.section('puppetlabs-products').expects(:[]=).at_least(1)
       yumrepo_provider.create
     end
@@ -69,7 +70,8 @@ descr="test updates"
     let(:all) { ['/etc/yum.repos.d', '/etc/yum/repos.d', '/etc/yum/test'] }
 
     it 'returns defaults if no yum conf' do
-      File.expects(:exists?).with('/etc/yum.conf').returns(false)
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum.repos.d').returns(true)
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum/repos.d').returns(true)
 
       described_class.reposdir('/etc/yum.conf').should == defaults
     end
@@ -77,15 +79,30 @@ descr="test updates"
     it 'returns defaults if yumconf has no reposdir' do
       File.expects(:exists?).with('/etc/yum.conf').returns(true)
       File.expects(:read).with('/etc/yum.conf').returns("[main]\ntest = /etc/yum/test")
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum.repos.d').returns(true)
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum/repos.d').returns(true)
 
       described_class.reposdir('/etc/yum.conf').should == defaults
     end
 
-    it 'returns all directories if yum.conf contains reposdir' do
+    it 'returns all directories if yum.conf contains reposdir and directory exists' do
       File.expects(:exists?).with('/etc/yum.conf').returns(true)
       File.expects(:read).with('/etc/yum.conf').returns("[main]\nreposdir = /etc/yum/test")
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum.repos.d').returns(true)
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum/repos.d').returns(true)
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum/test').returns(true)
 
       described_class.reposdir('/etc/yum.conf').should == all
+    end
+
+    it 'returns defaults if yum.conf contains reposdir and directory doesnt exist' do
+      File.expects(:exists?).with('/etc/yum.conf').returns(true)
+      File.expects(:read).with('/etc/yum.conf').returns("[main]\nreposdir = /etc/yum/test")
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum.repos.d').returns(true)
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum/repos.d').returns(true)
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum/test').returns(false)
+
+      described_class.reposdir('/etc/yum.conf').should == defaults
     end
 
   end
