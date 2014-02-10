@@ -5,6 +5,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
 
   PROPERTIES = Puppet::Type.type(:yumrepo).validproperties
 
+  # @return [Array<Puppet::Providers>] Return all the providers built up from
+  #   discovered content on the local node.
   def self.instances
     instances = []
     # Iterate over each section of our virtual file.
@@ -24,6 +26,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   return instances
   end
 
+  # @param resources [Array<Puppet::Resource>] Resources to prefetch.
+  # @return [Array<Puppet::Resource>] Resources with providers set.
   def self.prefetch(resources)
     repos = instances
     resources.keys.each do |name|
@@ -34,20 +38,26 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   end
 
   # Return a list of existing directories that could contain repo files.  Fail if none found.
+  # @param conf [String] Configuration file to look for directories in.
+  # @param dirs [Array] Default locations for yum repos.
+  # @return [Array] Directories that were found to exist on the node.
   def self.reposdir(conf='/etc/yum.conf', dirs=['/etc/yum.repos.d', '/etc/yum/repos.d'])
     reposdir = find_conf_value('reposdir', conf)
     dirs << reposdir if reposdir
 
     dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
     if dirs.empty?
-      fail("No yum directories were found on the local filesystem")
+      fail('No yum directories were found on the local filesystem')
     else
       return dirs
     end
   end
 
-  # Find configuration values in .conf files and return them
-  # if found.
+  # Helper method to look up specific values in ini style files.
+  # @todo Migrate this into Puppet::Util::IniConfig.
+  # @param value [String] Value to look for in the configuration file.
+  # @param conf [String] Configuration file to check for value.
+  # @return [String] The value of a looked up key from the configuration file.
   def self.find_conf_value(value, conf='/etc/yum.conf')
     if File.exists?(conf)
       contents = File.read(conf)
@@ -59,6 +69,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
 
   # Build a virtual inifile by reading in numerous .repo
   # files into a single virtual file to ease manipulation.
+  # @return [Puppet::Util::IniConfig::File] The virtual inifile representing
+  #   multiple real files.
   def self.virtual_inifile
     unless @virtual
       @virtual = Puppet::Util::IniConfig::File.new
@@ -71,11 +83,19 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     return @virtual
   end
 
+  # @param key [String] The property to look up.
+  # @return [Boolean] Returns true if the property is defined in the type.
   def self.valid_property?(key)
     PROPERTIES.include?(key)
   end
 
-  # Return the named section out of the virtual_inifile.
+  # We need to return a valid section from the larger virtual inifile here,
+  # which we do by first looking it up and then creating a new section for
+  # the appropriate name if none was found.
+  # @todo Why do we create a section for every repodir found?
+  # @todo Does this mean we only return the last section made?
+  # @param name [String] Section name to lookup in the virtual inifile.
+  # @return [Puppet::Util::IniConfig] The IniConfig section
   def self.section(name)
     result = self.virtual_inifile[name]
     # Create a new section if not found.
@@ -89,7 +109,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     result
   end
 
-  # Store all modifications back to disk
+  # Here we store all modifications to disk, forcing the output file to 0644 if it differs.
+  # @return [void]
   def self.store
     inifile = self.virtual_inifile
     inifile.store
@@ -104,6 +125,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     end
   end
 
+  # @return [void]
   def create
     @property_hash[:ensure] = :present
 
@@ -120,6 +142,9 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     end
   end
 
+  # We don't actually destroy the file here, merely mark it for
+  # destruction in the section.
+  # @return [void]
   def destroy
     # Flag file for deletion on flush.
     section(@resource[:name]).destroy=(true)
@@ -127,10 +152,12 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     @property_hash.clear
   end
 
+  # @return [void]
   def flush
     self.class.store
   end
 
+  # @return [void]
   def section(name)
     self.class.section(name)
   end
@@ -147,6 +174,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     end
   end
 
+  # @return [Boolean] Returns true if ensure => present.
   def exists?
     @property_hash[:ensure] == :present
   end
