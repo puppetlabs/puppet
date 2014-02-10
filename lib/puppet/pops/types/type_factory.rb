@@ -272,13 +272,13 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
-  # Produce a type corresponding to the class of given unless given is a String, Class or a PObjectType.
+  # Produce a type corresponding to the class of given unless given is a String, Class or a PAbstractType.
   # When a String is given this is taken as a classname.
   #
   def self.type_of(o)
     if o.is_a?(Class)
       @type_calculator.type(o)
-    elsif o.is_a?(Types::PObjectType)
+    elsif o.is_a?(Types::PAbstractType)
       o
     elsif o.is_a?(String)
       type = Types::PRubyType.new()
