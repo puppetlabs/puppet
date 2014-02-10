@@ -318,6 +318,12 @@ class Puppet::Pops::Types::TypeParser
       end
       t
 
+    when "struct"
+      # 1..m parameters being types (last two optionally integer or literal default
+      raise_invalid_parameters_error("Struct", "1", parameters.size) unless parameters.size == 1
+      assert_struct_parameter(parameters[0])
+      TYPES.struct(parameters[0])
+
     when "integer"
       if parameters.size == 1
         case parameters[0]
@@ -402,12 +408,21 @@ class Puppet::Pops::Types::TypeParser
 
   def assert_type(t)
     raise_invalid_type_specification_error unless t.is_a?(Puppet::Pops::Types::PObjectType)
+    true
   end
 
   def assert_range_parameter(t)
-    raise_invalid_type_speification_error unless TYPES.is_range_parameter?(t)
+    raise_invalid_type_specification_error unless TYPES.is_range_parameter?(t)
   end
 
+  def assert_struct_parameter(h)
+    raise_invalid_type_specification_error unless h.is_a?(Hash)
+    h.each do |k,v|
+      # TODO: Should have stricter name rule
+      raise_invalid_type_specification_error unless k.is_a?(String) && !k.empty?
+      assert_type(v)
+    end
+  end
 
   def raise_invalid_type_specification_error
     raise Puppet::ParseError,
@@ -418,6 +433,7 @@ class Puppet::Pops::Types::TypeParser
     raise Puppet::ParseError,
       "Invalid number of type parameters specified: #{type} requires #{required}, #{given} provided"
   end
+
   def raise_unparameterized_type_error(ast)
     raise Puppet::ParseError, "Not a parameterized type <#{original_text_of(ast)}>"
   end
