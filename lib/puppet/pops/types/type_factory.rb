@@ -96,6 +96,9 @@ module Puppet::Pops::Types::TypeFactory
     t = Types::PStructType.new
     name_type_hash.map do |name, type|
       elem = Types::PStructElement.new
+      if name.is_a?(String) && name.empty?
+        raise ArgumentError, "An empty String can not be used where a String[1, default] is expected"
+      end
       elem.name = name
       elem.type = type_of(type)
       elem

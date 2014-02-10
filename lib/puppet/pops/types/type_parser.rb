@@ -166,6 +166,9 @@ class Puppet::Pops::Types::TypeParser
 
     when "tuple"
       TYPES.tuple()
+
+    when "struct"
+      TYPES.struct()
     else
       TYPES.resource(name_ast.value)
     end

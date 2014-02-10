@@ -4,7 +4,7 @@ require 'puppet/pops'
 describe 'The type calculator' do
   let(:calculator) {  Puppet::Pops::Types::TypeCalculator.new() }
 
-  def int_range(from, to)
+  def range_t(from, to)
    t = Puppet::Pops::Types::PIntegerType.new
    t.from = from
    t.to = to
@@ -59,6 +59,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.tuple(*types)
   end
 
+  def struct_t(type_hash)
+    Puppet::Pops::Types::TypeFactory.struct(type_hash)
+  end
+
   def types
     Puppet::Pops::Types
   end
@@ -85,7 +89,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PPatternType,
         Puppet::Pops::Types::PEnumType,
         Puppet::Pops::Types::PVariantType,
-#        Puppet::Pops::Types::PStructType,
+        Puppet::Pops::Types::PStructType,
         Puppet::Pops::Types::PTupleType,
       ]
     end
@@ -129,7 +133,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PCollectionType,
         Puppet::Pops::Types::PHashType,
         Puppet::Pops::Types::PArrayType,
-#        Puppet::Pops::Types::PStructType,
+        Puppet::Pops::Types::PStructType,
         Puppet::Pops::Types::PTupleType,
       ]
     end
@@ -141,7 +145,7 @@ describe 'The type calculator' do
       result << types::TypeFactory.hash_of_data
       result << Puppet::Pops::Types::PNilType
       result << (tmp = tuple_t(types::PDataType.new))
-      tmp.size_type = int_range(0, nil)
+      tmp.size_type = range_t(0, nil)
       result
     end
 
@@ -554,6 +558,7 @@ describe 'The type calculator' do
         t = Puppet::Pops::Types::PHashType.new()
         tested_types = collection_types - [
           Puppet::Pops::Types::PCollectionType,
+          Puppet::Pops::Types::PStructType,
           Puppet::Pops::Types::PHashType]
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
@@ -586,6 +591,24 @@ describe 'The type calculator' do
       end
     end
 
+    context "for Struct, such that" do
+      it "Struct is not assignable to any other non Hashed based Collection type" do
+        t = Puppet::Pops::Types::PStructType.new()
+        tested_types = collection_types - [
+          Puppet::Pops::Types::PCollectionType,
+          Puppet::Pops::Types::PStructType,
+          Puppet::Pops::Types::PHashType]
+        tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
+      end
+
+      it 'Struct is not assignable to any disjunct type' do
+        tested_types = all_types - [
+          Puppet::Pops::Types::PObjectType,
+          Puppet::Pops::Types::PDataType] - collection_types
+        t = Puppet::Pops::Types::PStructType.new()
+        tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
+      end
+    end
 
     it 'should recognize mapped ruby types' do
       { Integer    => Puppet::Pops::Types::PIntegerType.new,
@@ -608,37 +631,37 @@ describe 'The type calculator' do
 
     context 'when dealing with integer ranges' do
       it 'should accept an equal range' do
-        calculator.assignable?(int_range(2,5), int_range(2,5)).should == true
+        calculator.assignable?(range_t(2,5), range_t(2,5)).should == true
       end
 
       it 'should accept an equal reverse range' do
-        calculator.assignable?(int_range(2,5), int_range(5,2)).should == true
+        calculator.assignable?(range_t(2,5), range_t(5,2)).should == true
       end
 
       it 'should accept a narrower range' do
-        calculator.assignable?(int_range(2,10), int_range(3,5)).should == true
+        calculator.assignable?(range_t(2,10), range_t(3,5)).should == true
       end
 
       it 'should accept a narrower reverse range' do
-        calculator.assignable?(int_range(2,10), int_range(5,3)).should == true
+        calculator.assignable?(range_t(2,10), range_t(5,3)).should == true
       end
 
       it 'should reject a wider range' do
-        calculator.assignable?(int_range(3,5), int_range(2,10)).should == false
+        calculator.assignable?(range_t(3,5), range_t(2,10)).should == false
       end
 
       it 'should reject a wider reverse range' do
-        calculator.assignable?(int_range(3,5), int_range(10,2)).should == false
+        calculator.assignable?(range_t(3,5), range_t(10,2)).should == false
       end
 
       it 'should reject a partially overlapping range' do
-        calculator.assignable?(int_range(3,5), int_range(2,4)).should == false
-        calculator.assignable?(int_range(3,5), int_range(4,6)).should == false
+        calculator.assignable?(range_t(3,5), range_t(2,4)).should == false
+        calculator.assignable?(range_t(3,5), range_t(4,6)).should == false
       end
 
       it 'should reject a partially overlapping reverse range' do
-        calculator.assignable?(int_range(3,5), int_range(4,2)).should == false
-        calculator.assignable?(int_range(3,5), int_range(6,4)).should == false
+        calculator.assignable?(range_t(3,5), range_t(4,2)).should == false
+        calculator.assignable?(range_t(3,5), range_t(6,4)).should == false
       end
     end
 
@@ -756,6 +779,32 @@ describe 'The type calculator' do
       end
     end
 
+    context 'when dealing with structs' do
+      it 'should accept matching structs' do
+        struct1 = struct_t({'a'=>Integer, 'b'=>Integer})
+        struct2 = struct_t({'a'=>Integer, 'b'=>Integer})
+        calculator.assignable?(struct1, struct2).should == true
+        calculator.assignable?(struct2, struct1).should == true
+      end
+
+      it 'should accept matching structs where one is more general than the other' do
+        struct1 = struct_t({'a'=>Integer, 'b'=>Integer})
+        struct2 = struct_t({'a'=>Numeric, 'b'=>Numeric})
+        calculator.assignable?(struct1, struct2).should == false
+        calculator.assignable?(struct2, struct1).should == true
+      end
+
+      it 'should accept matching hash' do
+        struct1 = struct_t({'a'=>Integer, 'b'=>Integer})
+        non_empty_string = string_t()
+        non_empty_string.size_type = range_t(1, nil)
+        hsh = hash_t(non_empty_string, Integer)
+        factory.constrain_size(hsh, 2, 2)
+        calculator.assignable?(struct1, hsh).should == true
+        calculator.assignable?(hsh, struct1).should == true
+      end
+    end
+
     it 'should recognize ruby type inheritance' do
       class Foo
       end
@@ -853,7 +902,7 @@ describe 'The type calculator' do
     end
 
     it 'should consider integer in range' do
-      range = int_range(0,10)
+      range = range_t(0,10)
       calculator.instance?(range, 1).should == true
       calculator.instance?(range, 10).should == true
       calculator.instance?(range, -1).should == false
@@ -919,7 +968,7 @@ describe 'The type calculator' do
 
     it 'should consider array[mixed] as instance of Variant[mixed] when mixed types are listed in Variant' do
       enum = enum_t('XS', 'S', 'M', 'L', 'XL')
-      sizes = int_range(30, 50)
+      sizes = range_t(30, 50)
       array = array_t(variant_t(enum, sizes))
       calculator.instance?(array, ['XS', 'S', 30, 50]).should  == true
       calculator.instance?(array, ['XS', 'S', 'XXL']).should   == false
@@ -1126,6 +1175,13 @@ describe 'The type calculator' do
       calculator.string(factory.constrain_size(tuple_t.copy, 1,2)).should == 'Tuple[String, 1, 2]'
       calculator.string(factory.constrain_size(tuple_t.copy, :default, 2)).should == 'Tuple[String, default, 2]'
       calculator.string(factory.constrain_size(tuple_t.copy, 2, :default)).should == 'Tuple[String, 2, default]'
+    end
+
+    it 'should yield \'Struct\' and details for PStructType' do
+      struct_t = struct_t({'a'=>Integer, 'b'=>String})
+      calculator.string(struct_t).should == "Struct[{'a'=>Integer, 'b'=>String}]"
+      struct_t = struct_t({})
+      calculator.string(struct_t).should == "Struct"
     end
 
     it 'should yield \'Hash[String, Integer]\' for PHashType[PStringType, PIntegerType]' do

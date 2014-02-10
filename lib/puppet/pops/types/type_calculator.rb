@@ -186,6 +186,11 @@ class Puppet::Pops::Types::TypeCalculator
     collection_default_size.to = nil # infinity
     @collection_default_size_t = collection_default_size
 
+    non_empty_string = Types::PStringType.new
+    non_empty_string.size_type = Types::PIntegerType.new()
+    non_empty_string.size_type.from = 1
+    non_empty_string.size_type.to = nil # infinity
+    @non_empty_string_t = non_empty_string
   end
 
   # Convenience method to get a data type for comparisons
@@ -388,6 +393,13 @@ class Puppet::Pops::Types::TypeCalculator
     o.each_with_index do |element, index|
        return false unless instance_of(t.types[index] || t.types[-1], element)
     end
+  end
+
+  def instance_of_PStructType(t, o)
+    return false unless o.is_a?(Hash)
+    h = t.hashed_elements
+    # all keys must be present and have a value (even if nil/undef)
+    return false unless o.size == h.size && h.all? { |k,v| o.has_key?(k) && instance_of(v, o[k]) }
   end
 
   def instance_of_PHashType(t, o)
@@ -960,6 +972,8 @@ class Puppet::Pops::Types::TypeCalculator
   # Produces nil if the index is out of bounds
   # from must be less than to, and from may not be less than 0
   #
+  # @api private
+  #
   def tuple_entry_at(tuple_t, from, to, index)
     regular = (tuple_t.types.size - 1)
     if index < regular
@@ -972,9 +986,31 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # @api private
+  #
   def assignable_PStructType(t, t2)
+    return true if t == t2 || t.elements.empty? && (t2.is_a?(Types::PHashType))
+    h = t.hashed_elements
+    if t2.is_a?(Types::PStructType)
+      h2 = t2.hashed_elements
+      h.size == h2.size && h.all? {|k, v| assignable?(v, h2[k]) }
+    elsif t2.is_a?(Types::PHashType)
+      size_t2 = t2.size_type || @collection_default_size_t
+      size_t = Types::PIntegerType.new
+      size_t.from = size_t.to = h.size
+      # compatible size
+      # hash key type must be string of min 1 size
+      # hash value t must be assignable to each key
+      element_type = t2.element_type
+      assignable?(size_t, size_t2) &&
+        assignable?(@non_empty_string_t, t2.key_type) &&
+        h.all? {|k,v| assignable?(v, element_type) }
+    else
+      false
+    end
   end
 
+  # @api private
   def assignable_POptionalType(t, t2)
     return true if t2.is_a(Types::PNilType)
     if t2.is_a?(Types::POptionalType)
@@ -984,6 +1020,7 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # @api private
   def assignable_PEnumType(t, t2)
     return true if t == t2 || (t.values.empty? && (t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)))
     if t2.is_a?(Types::PStringType)
@@ -1083,6 +1120,12 @@ class Puppet::Pops::Types::TypeCalculator
       t2s.from = t2.types.size - 1 + from
       t2s.to = t2.types.size - 1 + to
       assignable?(size_t, t2s)
+    when Types::PStructType
+      from = to = t2.elements.size
+      t2s = Types::PIntegerType.new()
+      t2s.from = from
+      t2s.to = to
+      assignable?(size_t, t2s)
     else
       false
     end
@@ -1140,9 +1183,24 @@ class Puppet::Pops::Types::TypeCalculator
   # Hash is assignable if t2 is a Hash and t2's key and element types are assignable
   # @api private
   def assignable_PHashType(t, t2)
-    return false unless t2.is_a?(Types::PHashType)
-    return false unless assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
-    assignable_PCollectionType(t, t2)
+    case t2
+    when Types::PHashType
+      return false unless assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
+      assignable_PCollectionType(t, t2)
+    when Types::PStructType
+      # hash must accept String as key type
+      # hash must accept all value types
+      # hash must accept the size of the struct
+      size_t = t.size_type || @collection_default_size_t
+      sz = size_t.range
+      struct_size = t2.elements.size
+      element_type = t.element_type
+      ( struct_size >= sz.min && struct_size <= sz.max &&
+        assignable?(t.key_type, @non_emptry_string_t)  &&
+        t2.hashed_elements.all? {|k,v| assignable?(element_type, v) })
+    else
+      false
+    end
   end
 
   # @api private
@@ -1234,11 +1292,14 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # Produces a string from an Integer range type that is used inside other type strings
+  # @api private
   def range_array_part(t)
     return [] if t.nil? || (t.from.nil? && t.to.nil?)
     [t.from.nil? ? 'default' : t.from , t.to.nil? ? 'default' : t.to ]
   end
 
+  # @api private
   def string_PFloatType(t)
     range = range_array_part(t)
     unless range.empty?
@@ -1293,6 +1354,16 @@ class Puppet::Pops::Types::TypeCalculator
     end
     s << "]"
     s
+  end
+
+  # @api private
+  def string_PStructType(t)
+    return "Struct" if t.elements.empty?
+    "Struct[{" << t.elements.map {|element| string(element) }.join(', ') << "}]"
+  end
+
+  def string_PStructElement(t)
+    "'#{t.name}'=>#{string(t.type)}"
   end
 
   # @api private

@@ -283,7 +283,7 @@ module Puppet::Pops::Types
     has_attr 'hashed_elements', Object, :derived => true
 
     module ClassModule
-      def derived_hashed_elements
+      def hashed_elements_derived
         @_hashed ||= elements.reduce({}) {|memo, e| memo[e.name] = e.type; memo }
         @_hashed
       end

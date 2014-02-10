@@ -183,6 +183,11 @@ class Puppet::Pops::Evaluator::AccessOperator
     t
   end
 
+  def access_PStructType(o, scope, keys)
+    assert_keys(keys, o, 1, 1, Hash)
+    TYPEFACTORY.struct(keys[0])
+  end
+
   def access_PStringType(o, scope, keys)
     keys.flatten!
     case keys.size
