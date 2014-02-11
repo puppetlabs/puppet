@@ -169,7 +169,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     false
   end
 
-  @@name_index = 0
+  @name_index = 0
 
   # Collapse name and env records.
   def self.prefetch_hook(records)
@@ -200,7 +200,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
           name = nil
         else
           cmd_string = record[:command].gsub(/\s+/, "_")
-          index = ( @@name_index += 1 )
+          index = ( @name_index += 1 )
           record[:name] = "unmanaged:#{cmd_string}-#{ index.to_s }"
           record[:unmanaged] = true
         end
