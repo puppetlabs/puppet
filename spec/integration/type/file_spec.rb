@@ -1329,6 +1329,24 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  describe "when using validate_cmd" do
+    it "should fail the file resource if command fails" do
+      catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env false"))
+      Puppet::Util::Execution.expects(:execute).with("/usr/bin/env false", {:combine => true, :failonfail => true}).raises(Puppet::ExecutionFailure, "Failed")
+      report = catalog.apply.report
+      report.resource_statuses["File[#{path}]"].should be_failed
+      Puppet::FileSystem.exist?(path).should be_false
+    end
+
+    it "should succeed the file resource if command succeeds" do
+      catalog.add_resource(described_class.new(:path => path, :content => "foo", :validate_cmd => "/usr/bin/env true"))
+      Puppet::Util::Execution.expects(:execute).with("/usr/bin/env true", {:combine => true, :failonfail => true}).returns ''
+      report = catalog.apply.report
+      report.resource_statuses["File[#{path}]"].should_not be_failed
+      Puppet::FileSystem.exist?(path).should be_true
+    end
+  end
+
   def tmpfile_with_contents(name, contents)
     file = tmpfile(name)
     File.open(file, "w") { |f| f.write contents }
