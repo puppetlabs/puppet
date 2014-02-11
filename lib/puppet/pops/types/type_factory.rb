@@ -18,8 +18,8 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.range(from, to)
     t = Types::PIntegerType.new()
-    t.from = from unless from == :default
-    t.to = to unless to == :default
+    t.from = from unless (from == :default || from == 'default')
+    t.to = to unless (to == :default || to == 'default')
     t
   end
 
@@ -66,7 +66,7 @@ module Puppet::Pops::Types::TypeFactory
   # Produces the Optional type, i.e. a short hand for Variant[T, Undef]
   def self.optional(optional_type = nil)
     t = Types::POptionalType.new
-    t.optional_type = optional_type
+    t.optional_type = type_of(optional_type)
     t
   end
 
@@ -85,6 +85,30 @@ module Puppet::Pops::Types::TypeFactory
   def self.variant(*types)
     t = Types::PVariantType.new()
     types.each {|v| t.addTypes(type_of(v)) }
+    t
+  end
+
+  # Produces the Struct type, either a non parameterized instance representing all structs (i.e. all hashes)
+  # or a hash with a given set of keys of String type (names), bound to a value of a given type. Type may be
+  # a Ruby Class, a Puppet Type, or an instance from which the type is inferred.
+  #
+  def self.struct(name_type_hash = {})
+    t = Types::PStructType.new
+    name_type_hash.map do |name, type|
+      elem = Types::PStructElement.new
+      if name.is_a?(String) && name.empty?
+        raise ArgumentError, "An empty String can not be used where a String[1, default] is expected"
+      end
+      elem.name = name
+      elem.type = type_of(type)
+      elem
+    end.each {|elem| t.addElements(elem) }
+    t
+  end
+
+  def self.tuple(*types)
+    t = Types::PTupleType.new
+    types.each {|elem| t.addTypes(type_of(elem)) }
     t
   end
 
@@ -248,13 +272,13 @@ module Puppet::Pops::Types::TypeFactory
     type
   end
 
-  # Produce a type corresponding to the class of given unless given is a String, Class or a PObjectType.
+  # Produce a type corresponding to the class of given unless given is a String, Class or a PAbstractType.
   # When a String is given this is taken as a classname.
   #
   def self.type_of(o)
     if o.is_a?(Class)
       @type_calculator.type(o)
-    elsif o.is_a?(Types::PObjectType)
+    elsif o.is_a?(Types::PAbstractType)
       o
     elsif o.is_a?(String)
       type = Types::PRubyType.new()
@@ -302,4 +326,10 @@ module Puppet::Pops::Types::TypeFactory
     collection_t.size_type = range(from, to)
     collection_t
   end
+
+  # Returns true if the given type t is of valid range parameter type (integer or literal default).
+  def self.is_range_parameter?(t)
+    t.is_a?(Integer) || t == 'default' || t == :default
+  end
+
 end

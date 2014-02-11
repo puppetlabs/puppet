@@ -55,6 +55,14 @@ describe 'The type factory' do
       Puppet::Pops::Types::TypeFactory.catalog_entry().class().should == Puppet::Pops::Types::PCatalogEntryType
     end
 
+    it 'struct() returns PStructType' do
+      Puppet::Pops::Types::TypeFactory.struct().class().should == Puppet::Pops::Types::PStructType
+    end
+
+    it 'tuple() returns PTupleType' do
+      Puppet::Pops::Types::TypeFactory.tuple().class().should == Puppet::Pops::Types::PTupleType
+    end
+
     it 'undef() returns PNilType' do
       Puppet::Pops::Types::TypeFactory.undef().class().should == Puppet::Pops::Types::PNilType
     end

@@ -86,12 +86,23 @@ class Puppet::Pops::Types::TypeParser
     :default
   end
 
+  # @api private
   def interpret_LiteralInteger(o)
     o.value
   end
 
+  # @api private
   def interpret_LiteralFloat(o)
     o.value
+  end
+
+  # @api private
+  def interpret_LiteralHash(o)
+    result = {}
+    o.entries.each do |entry|
+      result[@type_transformer.visit_this_0(self, entry.key)] = @type_transformer.visit_this_0(self, entry.value)
+    end
+    result
   end
 
   # @api private
@@ -153,10 +164,10 @@ class Puppet::Pops::Types::TypeParser
       TYPES.object()
 
     when "variant"
-        TYPES.variant()
+      TYPES.variant()
 
     when "optional"
-        TYPES.optional()
+      TYPES.optional()
 
     when "ruby"
       TYPES.ruby_type()
@@ -164,6 +175,11 @@ class Puppet::Pops::Types::TypeParser
     when "type"
       TYPES.type_type()
 
+    when "tuple"
+      TYPES.tuple()
+
+    when "struct"
+      TYPES.struct()
     else
       TYPES.resource(name_ast.value)
     end
@@ -289,6 +305,36 @@ class Puppet::Pops::Types::TypeParser
       raise_invalid_parameters_error("Variant", "1 or more", parameters.size) unless parameters.size > 1
       TYPES.variant(*parameters)
 
+    when "tuple"
+      # 1..m parameters being types (last two optionally integer or literal default
+      raise_invalid_parameters_error("Tuple", "1 or more", parameters.size) unless parameters.size > 1
+      length = parameters.size
+      if TYPES.is_range_parameter?(parameters[-2])
+        # min, max specification
+        min = parameters[-2]
+        min = (min == :default || min == 'default') ? 0 : min
+        assert_range_parameter(parameters[-1])
+        max = parameters[-1]
+        max = max == :default ? nil : max
+        parameters = parameters[0, length-2]
+      elsif TYPES.is_range_parameter?(parameters[-1])
+        min = parameters[-1]
+        min = (min == :default || min == 'default') ? 0 : min
+        max = nil
+        parameters = parameters[0, length-1]
+      end
+      t = TYPES.tuple(*parameters)
+      if min || max
+        TYPES.constrain_size(t, min, max)
+      end
+      t
+
+    when "struct"
+      # 1..m parameters being types (last two optionally integer or literal default
+      raise_invalid_parameters_error("Struct", "1", parameters.size) unless parameters.size == 1
+      assert_struct_parameter(parameters[0])
+      TYPES.struct(parameters[0])
+
     when "integer"
       if parameters.size == 1
         case parameters[0]
@@ -373,10 +419,20 @@ class Puppet::Pops::Types::TypeParser
 
   def assert_type(t)
     raise_invalid_type_specification_error unless t.is_a?(Puppet::Pops::Types::PObjectType)
+    true
   end
 
   def assert_range_parameter(t)
-    raise_invalid_type_speification_error unless t.is_a?(Integer) || t == 'default' || t == :default
+    raise_invalid_type_specification_error unless TYPES.is_range_parameter?(t)
+  end
+
+  def assert_struct_parameter(h)
+    raise_invalid_type_specification_error unless h.is_a?(Hash)
+    h.each do |k,v|
+      # TODO: Should have stricter name rule
+      raise_invalid_type_specification_error unless k.is_a?(String) && !k.empty?
+      assert_type(v)
+    end
   end
 
   def raise_invalid_type_specification_error
@@ -388,6 +444,7 @@ class Puppet::Pops::Types::TypeParser
     raise Puppet::ParseError,
       "Invalid number of type parameters specified: #{type} requires #{required}, #{given} provided"
   end
+
   def raise_unparameterized_type_error(ast)
     raise Puppet::ParseError, "Not a parameterized type <#{original_text_of(ast)}>"
   end

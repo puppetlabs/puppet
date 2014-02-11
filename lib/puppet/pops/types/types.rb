@@ -138,6 +138,18 @@ module Puppet::Pops::Types
         1+(to-from).abs
       end
 
+      # Returns the range as an array ordered so the smaller number is always first.
+      # The number may be Infinity or -Infinity.
+      def range
+        f = from || -(1.0 / 0.0)
+        t = to || (1.0 / 0.0)
+        if f < t
+          [f, t]
+        else
+          [t,f]
+        end
+      end
+
       # Returns Enumerator if no block is given
       # Returns self if size is infinity (does not yield)
       def each
@@ -248,6 +260,63 @@ module Puppet::Pops::Types
 
       def ==(o)
         self.class == o.class && element_type == o.element_type && size_type == o.size_type
+      end
+    end
+  end
+
+  class PStructElement < Puppet::Pops::Model::PopsObject
+    has_attr 'name', String, :lowerBound => 1
+    contains_one_uni 'type', PAbstractType
+
+    module ClassModule
+      def hash
+        [self.class, type, name].hash
+      end
+
+      def ==(o)
+        self.class == o.class && type == o.type && name == o.name
+      end
+    end
+  end
+
+  # @api public
+  class PStructType < PObjectType
+    contains_many_uni 'elements', PStructElement, :lowerBound => 1
+    has_attr 'hashed_elements', Object, :derived => true
+
+    module ClassModule
+      def hashed_elements_derived
+        @_hashed ||= elements.reduce({}) {|memo, e| memo[e.name] = e.type; memo }
+        @_hashed
+      end
+
+      def clear_hashed_elements
+        @_hashed = nil
+      end
+
+      def hash
+        [self.class, Set.new(elements)].hash
+      end
+
+      def ==(o)
+        self.class == o.class && hashed_elements == o.hashed_elements
+      end
+    end
+  end
+
+  # @api public
+  class PTupleType < PObjectType
+    contains_many_uni 'types', PAbstractType, :lowerBound => 1
+    # If set, describes repetition of the last type in types
+    contains_one_uni 'size_type', PIntegerType, :lowerBound => 0
+
+    module ClassModule
+      def hash
+        [self.class, size_type, Set.new(types)].hash
+      end
+
+      def ==(o)
+        self.class == o.class && types == o.types && size_type == o.size_type
       end
     end
   end

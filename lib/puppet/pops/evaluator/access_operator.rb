@@ -8,6 +8,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   include Puppet::Pops::Evaluator::Runtime3Support
 
   Issues = Puppet::Pops::Issues
+  TYPEFACTORY = Puppet::Pops::Types::TypeFactory
 
   attr_reader :semantic
 
@@ -164,6 +165,27 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.flatten!
     assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAbstractType)
     Puppet::Pops::Types::TypeFactory.variant(*keys)
+  end
+
+  def access_PTupleType(o, scope, keys)
+    keys.flatten!
+    if TYPEFACTORY.is_range_parameter?(keys[-2]) && TYPEFACTORY.is_range_parameter?(keys[-1])
+      size_type = TYPEFACTORY.range(keys[-2], keys[-1])
+      keys = keys[0, keys.size - 2]
+    elsif TYPEFACTORY.is_range_parameter?(keys[-1])
+      size_type = TYPEFACTORY.range(keys[-1], :default)
+      keys = keys[0, keys.size - 1]
+    end
+    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAbstractType)
+    t = Puppet::Pops::Types::TypeFactory.tuple(*keys)
+    # set size type, or nil for default (exactly 1)
+    t.size_type = size_type
+    t
+  end
+
+  def access_PStructType(o, scope, keys)
+    assert_keys(keys, o, 1, 1, Hash)
+    TYPEFACTORY.struct(keys[0])
   end
 
   def access_PStringType(o, scope, keys)

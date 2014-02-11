@@ -164,12 +164,21 @@ class Puppet::Pops::Types::TypeCalculator
     @numeric_t = Types::PNumericType.new()
     @t = Types::PObjectType.new()
 
+    # Data accepts a Tuple that has 0-infinity Data compatible entries (e.g. a Tuple equivalent to Array).
+    data_tuple = Types::PTupleType.new()
+    data_tuple.addTypes(Types::PDataType.new())
+    data_tuple.size_type = Types::PIntegerType.new()
+    data_tuple.size_type.from = 0
+    data_tuple.size_type.to = nil # infinity
+    @data_tuple_t = data_tuple
+
     # Variant type compatible with Data
     data_variant = Types::PVariantType.new()
     data_variant.addTypes(@data_hash.copy)
     data_variant.addTypes(@data_array.copy)
     data_variant.addTypes(Types::PScalarType.new)
     data_variant.addTypes(Types::PNilType.new)
+    data_variant.addTypes(@data_tuple_t.copy)
     @data_variant_t = data_variant
 
     collection_default_size = Types::PIntegerType.new()
@@ -177,6 +186,11 @@ class Puppet::Pops::Types::TypeCalculator
     collection_default_size.to = nil # infinity
     @collection_default_size_t = collection_default_size
 
+    non_empty_string = Types::PStringType.new
+    non_empty_string.size_type = Types::PIntegerType.new()
+    non_empty_string.size_type.from = 1
+    non_empty_string.size_type.to = nil # infinity
+    @non_empty_string_t = non_empty_string
   end
 
   # Convenience method to get a data type for comparisons
@@ -241,6 +255,15 @@ class Puppet::Pops::Types::TypeCalculator
   # Returns an enumerable if the t represents something that can be iterated
   def enumerable(t)
     @@enumerable_visitor.visit_this_0(self, t)
+  end
+
+  # Answers if the two given types describe the same type
+  def equals(left, right)
+    return false unless left.is_a?(Types::PAbstractType) && right.is_a?(Types::PAbstractType)
+    # Types compare per class only - an extra test must be made if the are mutually assignable
+    # to find all types that represent the same type of instance
+    #
+    left  == right || (assignable?(right, left) && assignable?(left, right))
   end
 
   # Answers 'what is the Puppet Type corresponding to the given Ruby class'
@@ -357,6 +380,28 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(size_t, size_t2)
   end
 
+  def instance_of_PTupleType(t, o)
+    return false unless o.is_a?(Array)
+    # compute the tuple's min/max size, and check if that size matches
+    from, to = size_range(t.size_type)
+    size_t = Types::PIntegerType.new()
+    size_t.from = t2.types.size - 1 + from
+    size_t.to = t2.types.size - 1 + to
+    # compute the array's size as type
+    size_t2 = size_as_type(o)
+    return false unless assignable?(size_t, size_t2)
+    o.each_with_index do |element, index|
+       return false unless instance_of(t.types[index] || t.types[-1], element)
+    end
+  end
+
+  def instance_of_PStructType(t, o)
+    return false unless o.is_a?(Hash)
+    h = t.hashed_elements
+    # all keys must be present and have a value (even if nil/undef)
+    (o.keys - h.keys).empty? && h.all? { |k,v| instance_of(v, o[k]) }
+  end
+
   def instance_of_PHashType(t, o)
     return false unless o.is_a?(Hash)
     key_t = t.key_type
@@ -368,7 +413,6 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of_PDataType(t, o)
-    #require 'debugger'; debugger
     instance_of(@data_variant_t, o)
   end
 
@@ -812,6 +856,24 @@ class Puppet::Pops::Types::TypeCalculator
     trange[0] <= t2range[0] && trange[1] >= t2range[1]
   end
 
+  # Transform int range to a size constraint
+  # if range == nil the constraint is 1,1
+  # if range.from == nil min size = 1
+  # if range.to == nil max size == Infinity
+  #
+  def size_range(range)
+    return [1,1] if range.nil?
+    from = range.from
+    to = range.to
+    x = from.nil? ? 1 : from
+    y = to.nil? ? TheInfinity : to
+    if x < y
+      [x, y]
+    else
+      [y, x]
+    end
+  end
+
   # @api private
   def from_to_ordered(from, to)
     x = (from.nil? || from == :default) ? -TheInfinity : from
@@ -845,8 +907,111 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  def assignable_PTupleType(t, t2)
+    return true if t == t2 || t.types.empty? && (t2.is_a?(Types::PArrayType))
+    t_regular = t.types[0..-2]
+    t_ranged = t.types[-1]
+    t_from, t_to = size_range(t.size_type)
+    t_required = t_regular.size + t_from
+
+    if t2.is_a?(Types::PTupleType)
+      t2_regular = t2.types[0..-2]
+      t2_ranged = t2.types[-1]
+      t2_from, t2_to = size_range(t2.size_type)
+      t2_required = t2_regular.size + t2_from
+
+      # tuples with fewer required entries can not be assigned
+      return false if t_required > t2_required
+      # tuples with more optionally available entries can not be assigned
+      return false if t_regular.size + t_to < t2_regular.size + t2_to
+
+      t_required.times do |index|
+        t_entry = tuple_entry_at(t, t_from, t_to, index)
+        t2_entry = tuple_entry_at(t2, t2_from, t2_to, index)
+        return false if t2_entry.nil? || !assignable?(t_entry, t2_entry)
+      end
+      # Handle remainder in t2's required
+      (t2_required - t_required).times do |index|
+        t_entry = tuple_entry_at(t, t_from, t_to, t_required + index)
+        t2_entry = tuple_entry_at(t2, t2_from, t2_to, t_required + index)
+        return false if t2_entry.nil? || !assignable?(t_entry, t2_entry)
+      end
+      # Now only a trailing optional type remains - the last type must always be compatible
+      # irrespective of optionality and count
+      #
+      return assignable?(t_ranged, t2_ranged)
+
+    elsif t2.is_a?(Types::PArrayType)
+      t2_entry = t2.element_type
+
+      # Array of anything can not be assigned (unless tuple is tuple of anything) - this case
+      # was handled at the top of this method.
+      #
+      return false if t2_entry.nil?
+
+      # array type may be size constrained
+      size_t = t2.size_type || @collection_default_size_t
+      min, max = size_t.range
+      # Array with fewer min entries can not be assigned
+      return false if t_required > min
+      # Array with more optionally available entries can not be assigned
+      return false if t_regular.size + t_to < max
+      # each tuple type must be assignable to the element type
+      t_required.times do |index|
+        t_entry = tuple_entry_at(t, t_from, t_to, index)
+        return false unless assignable?(t_entry, t2_entry)
+      end
+      # ... and so must the last, possibly optional (ranged) type
+      return assignable?(t_ranged, t2_entry)
+    end
+  end
+
+  # Produces the tuple entry at the given index given a tuple type, its from/to constraints on the last
+  # type, and an index.
+  # Produces nil if the index is out of bounds
+  # from must be less than to, and from may not be less than 0
+  #
+  # @api private
+  #
+  def tuple_entry_at(tuple_t, from, to, index)
+    regular = (tuple_t.types.size - 1)
+    if index < regular
+      tuple_t.types[index]
+    elsif index < regular + to
+      # in the varargs part
+      tuple_t.types[-1]
+    else
+      nil
+    end
+  end
+
+  # @api private
+  #
+  def assignable_PStructType(t, t2)
+    return true if t == t2 || t.elements.empty? && (t2.is_a?(Types::PHashType))
+    h = t.hashed_elements
+    if t2.is_a?(Types::PStructType)
+      h2 = t2.hashed_elements
+      h.size == h2.size && h.all? {|k, v| assignable?(v, h2[k]) }
+    elsif t2.is_a?(Types::PHashType)
+      size_t2 = t2.size_type || @collection_default_size_t
+      size_t = Types::PIntegerType.new
+      size_t.from = size_t.to = h.size
+      # compatible size
+      # hash key type must be string of min 1 size
+      # hash value t must be assignable to each key
+      element_type = t2.element_type
+      assignable?(size_t, size_t2) &&
+        assignable?(@non_empty_string_t, t2.key_type) &&
+        h.all? {|k,v| assignable?(v, element_type) }
+    else
+      false
+    end
+  end
+
+  # @api private
   def assignable_POptionalType(t, t2)
-    return true if t2.is_a(Types::PNilType)
+    return true if t2.is_a?(Types::PNilType)
     if t2.is_a?(Types::POptionalType)
       assignable?(t.optional_type, t2.optional_type)
     else
@@ -854,6 +1019,7 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # @api private
   def assignable_PEnumType(t, t2)
     return true if t == t2 || (t.values.empty? && (t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)))
     if t2.is_a?(Types::PStringType)
@@ -941,10 +1107,27 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def assignable_PCollectionType(t, t2)
-    return false unless t2.is_a?(Types::PCollectionType)
     size_t = t.size_type || @collection_default_size_t
-    size_t2 = t2.size_type || @collection_default_size_t
-    assignable?(size_t, size_t2)
+    case t2
+    when Types::PCollectionType
+      size_t2 = t2.size_type || @collection_default_size_t
+      assignable?(size_t, size_t2)
+    when Types::PTupleType
+      # compute the tuple's min/max size, and check if that size matches
+      from, to = size_range(t2.size_type)
+      t2s = Types::PIntegerType.new()
+      t2s.from = t2.types.size - 1 + from
+      t2s.to = t2.types.size - 1 + to
+      assignable?(size_t, t2s)
+    when Types::PStructType
+      from = to = t2.elements.size
+      t2s = Types::PIntegerType.new()
+      t2s.from = from
+      t2s.to = to
+      assignable?(size_t, t2s)
+    else
+      false
+    end
   end
 
   # @api private
@@ -955,20 +1138,68 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(t.type, t2.type)
   end
 
-  # Array is assignable if t2 is an Array and t2's element type is assignable
+  # Array is assignable if t2 is an Array and t2's element type is assignable, or if t2 is a Tuple
+  # where 
   # @api private
   def assignable_PArrayType(t, t2)
-    return false unless t2.is_a?(Types::PArrayType)
-    return false unless assignable?(t.element_type, t2.element_type)
-    assignable_PCollectionType(t, t2)
+    if t2.is_a?(Types::PArrayType)
+      return false unless assignable?(t.element_type, t2.element_type)
+      assignable_PCollectionType(t, t2)
+
+    elsif t2.is_a?(Types::PTupleType)
+      return false unless t2.types.all? {|t2_element| assignable?(t.element_type, t2_element) }
+      t2_regular = t2.types[0..-2]
+      t2_ranged = t2.types[-1]
+      t2_from, t2_to = size_range(t2.size_type)
+      t2_required = t2_regular.size + t2_from
+
+      t_entry = t.element_type
+
+      # Tuple of anything can not be assigned (unless array is tuple of anything) - this case
+      # was handled at the top of this method.
+      #
+      return false if t_entry.nil?
+
+      # array type may be size constrained
+      size_t = t.size_type || @collection_default_size_t
+      min, max = size_t.range
+      # Tuple with fewer min entries can not be assigned
+      return false if t2_required < min
+      # Tuple with more optionally available entries can not be assigned
+      return false if t2_regular.size + t2_to > max
+      # each tuple type must be assignable to the element type
+      t2_required.times do |index|
+        t2_entry = tuple_entry_at(t2, t2_from, t2_to, index)
+        return false unless assignable?(t_entry, t2_entry)
+      end
+      # ... and so must the last, possibly optional (ranged) type
+      return assignable?(t_entry, t2_ranged)
+    else
+      false
+    end
   end
 
   # Hash is assignable if t2 is a Hash and t2's key and element types are assignable
   # @api private
   def assignable_PHashType(t, t2)
-    return false unless t2.is_a?(Types::PHashType)
-    return false unless assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
-    assignable_PCollectionType(t, t2)
+    case t2
+    when Types::PHashType
+      return false unless assignable?(t.key_type, t2.key_type) && assignable?(t.element_type, t2.element_type)
+      assignable_PCollectionType(t, t2)
+    when Types::PStructType
+      # hash must accept String as key type
+      # hash must accept all value types
+      # hash must accept the size of the struct
+      size_t = t.size_type || @collection_default_size_t
+      min, max = size_t.range
+      struct_size = t2.elements.size
+      element_type = t.element_type
+      ( struct_size >= min && struct_size <= max &&
+        assignable?(t.key_type, @non_emptry_string_t)  &&
+        t2.hashed_elements.all? {|k,v| assignable?(element_type, v) })
+    else
+      false
+    end
   end
 
   # @api private
@@ -1060,11 +1291,14 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # Produces a string from an Integer range type that is used inside other type strings
+  # @api private
   def range_array_part(t)
     return [] if t.nil? || (t.from.nil? && t.to.nil?)
     [t.from.nil? ? 'default' : t.from , t.to.nil? ? 'default' : t.to ]
   end
 
+  # @api private
   def string_PFloatType(t)
     range = range_array_part(t)
     unless range.empty?
@@ -1107,6 +1341,28 @@ class Puppet::Pops::Types::TypeCalculator
   def string_PVariantType(t)
     return "Variant" if t.types.empty?
     "Variant[" << t.types.map {|t2| string(t2) }.join(', ') << ']'
+  end
+
+  # @api private
+  def string_PTupleType(t)
+    range = range_array_part(t.size_type)
+    return "Tuple" if t.types.empty?
+    s = "Tuple[" << t.types.map {|t2| string(t2) }.join(', ')
+    unless range.empty?
+      s << ", " << range.join(', ')
+    end
+    s << "]"
+    s
+  end
+
+  # @api private
+  def string_PStructType(t)
+    return "Struct" if t.elements.empty?
+    "Struct[{" << t.elements.map {|element| string(element) }.join(', ') << "}]"
+  end
+
+  def string_PStructElement(t)
+    "'#{t.name}'=>#{string(t.type)}"
   end
 
   # @api private
@@ -1168,7 +1424,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def string_POptionalType(t)
-    "Optional[#{string(t.optional_type)}]"
+    if t.optional_type.nil?
+      "Optional"
+    else
+      "Optional[#{string(t.optional_type)}]"
+    end
   end
 
   # Catches all non enumerable types

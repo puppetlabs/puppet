@@ -206,9 +206,49 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to be_the_type(types.array_of(types.string))
     end
 
-    it "gives an error if parameter is not a type" do
+    it 'produces a size constrained Array when the last two arguments specify this' do
+      expr = fqr('Array')[fqr('String'), 1]
+      expected_t = types.array_of(String)
+      types.constrain_size(expected_t, 1, :default)
+      expect(evaluate(expr)).to be_the_type(expected_t)
+
+      expr = fqr('Array')[fqr('String'), 1, 2]
+      expected_t = types.array_of(String)
+      types.constrain_size(expected_t, 1, 2)
+      expect(evaluate(expr)).to be_the_type(expected_t)
+    end
+
+    it "Array parameterization gives an error if parameter is not a type" do
       expr = fqr('Array')['String']
       expect { evaluate(expr)}.to raise_error(/Array-Type\[\] arguments must be types/)
+    end
+
+    # Tuple Type
+    #
+    it 'produces a Tuple[String] from the expression Tuple[String]' do
+      expr = fqr('Tuple')[fqr('String')]
+      expect(evaluate(expr)).to be_the_type(types.tuple(String))
+
+      # arguments are flattened
+      expr = fqr('Tuple')[[fqr('String')]]
+      expect(evaluate(expr)).to be_the_type(types.tuple(String))
+    end
+
+    it "Tuple parameterization gives an error if parameter is not a type" do
+      expr = fqr('Tuple')['String']
+      expect { evaluate(expr)}.to raise_error(/Tuple-Type, Cannot use String where Abstract-Type is expected/)
+    end
+
+    it 'produces a varargs Tuple when the last two arguments specify size constraint' do
+      expr = fqr('Tuple')[fqr('String'), 1]
+      expected_t = types.tuple(String)
+      types.constrain_size(expected_t, 1, :default)
+      expect(evaluate(expr)).to be_the_type(expected_t)
+
+      expr = fqr('Tuple')[fqr('String'), 1, 2]
+      expected_t = types.tuple(String)
+      types.constrain_size(expected_t, 1, 2)
+      expect(evaluate(expr)).to be_the_type(expected_t)
     end
 
     # Pattern Type

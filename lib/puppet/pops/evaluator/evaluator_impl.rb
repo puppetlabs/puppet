@@ -420,18 +420,20 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     if left.is_a?(Puppet::Pops::Types::PAbstractType)
       case o.operator
       when :'=='
-        @@compare_operator.equals(left,right)
+        @@type_calculator.equals(left,right)
+
       when :'!='
-        ! @@compare_operator.equals(left,right)
+        !@@type_calculator.equals(left,right)
+
       when :'<'
         # left can be assigned to right, but they are not equal
-        @@type_calculator.assignable?(right, left) && ! @@compare_operator.equals(left,right)
+        @@type_calculator.assignable?(right, left) && ! @@type_calculator.equals(left,right)
       when :'<='
         # left can be assigned to right
         @@type_calculator.assignable?(right, left)
       when :'>'
         # right can be assigned to left, but they are not equal
-        @@type_calculator.assignable?(left,right) && ! @@compare_operator.equals(left,right)
+        @@type_calculator.assignable?(left,right) && ! @@type_calculator.equals(left,right)
       when :'>='
         # right can be assigned to left
         @@type_calculator.assignable?(left, right)
