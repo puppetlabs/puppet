@@ -8,6 +8,7 @@ module Puppet::ModuleTool
     require 'puppet/module_tool/applications/generator'
     require 'puppet/module_tool/applications/installer'
     require 'puppet/module_tool/applications/searcher'
+    require 'puppet/module_tool/applications/skeleton_wrangler'
     require 'puppet/module_tool/applications/unpacker'
     require 'puppet/module_tool/applications/uninstaller'
     require 'puppet/module_tool/applications/upgrader'
