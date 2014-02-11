@@ -413,7 +413,6 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of_PDataType(t, o)
-    #require 'debugger'; debugger
     instance_of(@data_variant_t, o)
   end
 
@@ -952,11 +951,11 @@ class Puppet::Pops::Types::TypeCalculator
 
       # array type may be size constrained
       size_t = t2.size_type || @collection_default_size_t
-      sz = size_t.range
+      min, max = size_t.range
       # Array with fewer min entries can not be assigned
-      return false if t_required > sz.min
+      return false if t_required > min
       # Array with more optionally available entries can not be assigned
-      return false if t_regular.size + t_to < sz.max
+      return false if t_regular.size + t_to < max
       # each tuple type must be assignable to the element type
       t_required.times do |index|
         t_entry = tuple_entry_at(t, t_from, t_to, index)
@@ -1156,18 +1155,18 @@ class Puppet::Pops::Types::TypeCalculator
 
       t_entry = t.element_type
 
-      # Array of anything can not be assigned (unless tuple is tuple of anything) - this case
+      # Tuple of anything can not be assigned (unless array is tuple of anything) - this case
       # was handled at the top of this method.
       #
       return false if t_entry.nil?
 
       # array type may be size constrained
       size_t = t.size_type || @collection_default_size_t
-      sz = size_t.range
+      min, max = size_t.range
       # Tuple with fewer min entries can not be assigned
-      return false if t2_required < sz.min
+      return false if t2_required < min
       # Tuple with more optionally available entries can not be assigned
-      return false if t2_regular.size + t2_to > sz.max
+      return false if t2_regular.size + t2_to > max
       # each tuple type must be assignable to the element type
       t2_required.times do |index|
         t2_entry = tuple_entry_at(t2, t2_from, t2_to, index)
@@ -1192,10 +1191,10 @@ class Puppet::Pops::Types::TypeCalculator
       # hash must accept all value types
       # hash must accept the size of the struct
       size_t = t.size_type || @collection_default_size_t
-      sz = size_t.range
+      min, max = size_t.range
       struct_size = t2.elements.size
       element_type = t.element_type
-      ( struct_size >= sz.min && struct_size <= sz.max &&
+      ( struct_size >= min && struct_size <= max &&
         assignable?(t.key_type, @non_emptry_string_t)  &&
         t2.hashed_elements.all? {|k,v| assignable?(element_type, v) })
     else

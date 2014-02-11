@@ -144,7 +144,8 @@ describe 'The type calculator' do
       result << array_t(types::PDataType.new)
       result << types::TypeFactory.hash_of_data
       result << Puppet::Pops::Types::PNilType
-      result << (tmp = tuple_t(types::PDataType.new))
+      tmp = tuple_t(types::PDataType.new)
+      result << (tmp)
       tmp.size_type = range_t(0, nil)
       result
     end
@@ -446,7 +447,9 @@ describe 'The type calculator' do
     context "for Data, such that" do
       it 'all scalars + array and hash are assignable to Data' do
         t = Puppet::Pops::Types::PDataType.new()
-        data_compatible_types.each { |t2| type_from_class(t2).should be_assignable_to(t) }
+        data_compatible_types.each { |t2|
+          type_from_class(t2).should be_assignable_to(t)
+        }
       end
 
       it 'a Variant of scalar, hash, or array is assignable to Data' do
@@ -1179,7 +1182,9 @@ describe 'The type calculator' do
 
     it 'should yield \'Struct\' and details for PStructType' do
       struct_t = struct_t({'a'=>Integer, 'b'=>String})
-      calculator.string(struct_t).should == "Struct[{'a'=>Integer, 'b'=>String}]"
+      s = calculator.string(struct_t)
+      # Ruby 1.8.7 - noone likes you...
+      (s == "Struct[{'a'=>Integer, 'b'=>String}]" || s == "Struct[{'b'=>String, 'a'=>Integer}]").should == true
       struct_t = struct_t({})
       calculator.string(struct_t).should == "Struct"
     end

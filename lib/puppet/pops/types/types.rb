@@ -138,13 +138,15 @@ module Puppet::Pops::Types
         1+(to-from).abs
       end
 
+      # Returns the range as an array ordered so the smaller number is always first.
+      # The number may be Infinity or -Infinity.
       def range
         f = from || -(1.0 / 0.0)
         t = to || (1.0 / 0.0)
         if f < t
-          (f..t)
+          [f, t]
         else
-          (t..f)
+          [t,f]
         end
       end
 
