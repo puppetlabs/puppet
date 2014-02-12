@@ -26,13 +26,17 @@ To install an open source release of Puppet,
 If you need to run Puppet from source as a tester or developer,
 [see the running from source guide on the docs site.](http://docs.puppetlabs.com/guides/from_source.html)
 
-Contributions
+Developing and Contributing
 ------
 
-Please see our [Contribution
-Documents](https://github.com/puppetlabs/puppet/blob/master/CONTRIBUTING.md)
-and our [Developer
-Documentation](https://github.com/puppetlabs/puppet/blob/master/README_DEVELOPER.md).
+We'd love to get contributions from you! For a quick guide to getting your
+system setup for developing take a look at our [Quickstart
+Guide](docs/quickstart.md). Once you are up and running, take a look at the
+[Contribution Documents](CONTRIBUTING.md) to see how to get your changes merged
+in.
+
+For more complete docs on developing with puppet you can take a look at the
+rest of the [developer documents](docs/index.md).
 
 License
 -------

@@ -11,7 +11,7 @@ Table of Contents
 General Notes
 -------------
 
-The rake tasks for running the tests are defined by the Rakefile in the same directory as this file.
+The rake tasks for running the tests are defined by the Rakefile in the acceptance test directory.
 These tasks come with some documentation: `rake -T` will give short descriptions, and a `rake -D` will give full descriptions with information on ENV options required and optional for the various tasks.
 
 If you are setting up a new repository for acceptance, you will need to bundle install first.  This step assumes you have ruby and the bundler gem installed.
