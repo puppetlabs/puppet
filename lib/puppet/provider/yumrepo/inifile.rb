@@ -94,19 +94,20 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # We need to return a valid section from the larger virtual inifile here,
   # which we do by first looking it up and then creating a new section for
   # the appropriate name if none was found.
-  # @todo Why do we create a section for every repodir found?
-  # @todo Does this mean we only return the last section made?
   # @param name [String] Section name to lookup in the virtual inifile.
   # @return [Puppet::Util::IniConfig] The IniConfig section
   def self.section(name)
     result = self.virtual_inifile[name]
     # Create a new section if not found.
     unless result
-      reposdir.each do |dir|
-        path = ::File.join(dir, "#{name}.repo")
-        Puppet.info("create new repo #{name} in file #{path}")
-        result = self.virtual_inifile.add_section(name, path)
-      end
+      # Previously we did an .each on reposdir with the effect that we
+      # constantly created and overwrote result until the last entry of
+      # the array.  This was done because the ordering is
+      # [defaults, custom] for reposdir and we want to use the custom if
+      # we have it and the defaults if not.
+      path = ::File.join(reposdir.last, "#{name}.repo")
+      Puppet.info("create new repo #{name} in file #{path}")
+      result = self.virtual_inifile.add_section(name, path)
     end
     result
   end
