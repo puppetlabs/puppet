@@ -385,8 +385,8 @@ class Puppet::Pops::Types::TypeCalculator
     # compute the tuple's min/max size, and check if that size matches
     from, to = size_range(t.size_type)
     size_t = Types::PIntegerType.new()
-    size_t.from = t2.types.size - 1 + from
-    size_t.to = t2.types.size - 1 + to
+    size_t.from = t.types.size - 1 + from
+    size_t.to = t.types.size - 1 + to
     # compute the array's size as type
     size_t2 = size_as_type(o)
     return false unless assignable?(size_t, size_t2)
