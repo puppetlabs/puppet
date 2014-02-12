@@ -145,7 +145,7 @@ describe "something that could warn" do
 
   it "doesn't generate a warning" do
     MY_CONSTANT = 1
-    # reassigning a normally prints out 'warning: already initialized constant FOO'
+    # reassigning a constant normally prints out 'warning: already initialized constant FOO'
     MY_CONSTANT = 2
   end
 end
