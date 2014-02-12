@@ -184,9 +184,11 @@ class Puppet::SSL::CertificateAuthority
 
   # Lists the names of all signed certificates.
   #
+  # @param name [Array<string>] filter to cerificate names
+  #
   # @return [Array<String>]
-  def list
-    list_certificates.collect { |c| c.name }
+  def list(name='*')
+    list_certificates(name).collect { |c| c.name }
   end
 
   # Return all the certificate objects as found by the indirector
@@ -195,13 +197,16 @@ class Puppet::SSL::CertificateAuthority
   # Created to prevent the case of reading all certs from disk, getting
   # just their names and verifying the cert for each name, which then
   # causes the cert to again be read from disk.
+  # @param name [Array<string>] filter to cerificate names
   #
   # @author Jeff Weiss <jeff.weiss@puppetlabs.com>
   # @api Puppet Enterprise Licensing
   #
+  # @param name [Array<string>] filter to cerificate names
+  #
   # @return [Array<Puppet::SSL::Certificate>]
-  def list_certificates
-    Puppet::SSL::Certificate.indirection.search("*")
+  def list_certificates(name='*')
+    Puppet::SSL::Certificate.indirection.search(name)
   end
 
   # Read the next serial from the serial file, and increment the
