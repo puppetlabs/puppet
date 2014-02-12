@@ -256,6 +256,30 @@ Puppet::Type.newtype(:file) do
     defaultto :true
   end
 
+  newparam(:validate_cmd) do
+    desc "If this parameter is set, then this file will only be written if
+        the command returns 0.  For example:
+
+        file { '/etc/apache2/apache2.conf':
+          content => 'example'
+          validate_cmd => '/usr/sbin/apache2 -t -f %'
+        }
+
+        This would replace apache2.conf only if that test returned true.
+
+        The percent sign (%) will be replaced with the path of the temporary
+        file for this resource.
+
+        Note that the command must be fully qualified."
+  end
+
+  newparam(:validate_replacement) do
+    desc "The replacement string that `validate_cmd` uses to replace
+        with the file name. Defaults to: `%`"
+
+    defaultto '%'
+  end
+
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
     req = []
@@ -726,6 +750,12 @@ Puppet::Type.newtype(:file) do
         content_checksum = write_content(file)
         file.flush
         fail_if_checksum_is_wrong(file.path, content_checksum) if validate_checksum?
+        if self[:validate_cmd]
+          output = Puppet::Util::Execution.execute(self[:validate_cmd].gsub(self[:validate_replacement], file.path), :failonfail => true, :combine => true)
+          output.split(/\n/).each { |line|
+            self.debug(line)
+          }
+        end
       end
     else
       umask = mode ? 000 : 022
