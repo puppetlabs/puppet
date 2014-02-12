@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/transaction/report'
 require 'puppet/indirector/report/msgpack'
 
-describe Puppet::Transaction::Report::Msgpack do
+describe Puppet::Transaction::Report::Msgpack, :if => Puppet.features.msgpack? do
   it "should be a subclass of the Msgpack terminus" do
     Puppet::Transaction::Report::Msgpack.superclass.should equal(Puppet::Indirector::Msgpack)
   end
