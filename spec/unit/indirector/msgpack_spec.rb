@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet/indirector/indirector_testing/msgpack'
 
-describe Puppet::Indirector::Msgpack do
+describe Puppet::Indirector::Msgpack, :if => Puppet.features.msgpack? do
   include PuppetSpec::Files
 
   subject { Puppet::IndirectorTesting::Msgpack.new }

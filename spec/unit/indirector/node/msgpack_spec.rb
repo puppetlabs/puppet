@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/node'
 require 'puppet/indirector/node/msgpack'
 
-describe Puppet::Node::Msgpack do
+describe Puppet::Node::Msgpack, :if => Puppet.features.msgpack? do
   it "should be a subclass of the Msgpack terminus" do
     Puppet::Node::Msgpack.superclass.should equal(Puppet::Indirector::Msgpack)
   end
