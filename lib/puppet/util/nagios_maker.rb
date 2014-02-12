@@ -11,12 +11,37 @@ module Puppet::Util::NagiosMaker
 
     raise(Puppet::DevError, "No nagios type for #{name}") unless nagtype = Nagios::Base.type(name)
 
-    type = Puppet::Type.newtype(full_name) {}
+    type = Puppet::Type.newtype(full_name) do
+
+      # Generate a file resource if necessary.
+      #
+      # @see Puppet::Type::File and its properties owner, group and mode.
+      def generate
+        return nil unless self[:owner] or self[:group] or self[:mode]
+        props = { :name => self[:target] }
+        [ :owner, :group, :mode ].each do |prop|
+          props[prop] = self[prop] if self[prop]
+        end
+        Puppet::Type.type(:file).new(props)
+      end
+
+    end
 
     type.ensurable
 
     type.newparam(nagtype.namevar, :namevar => true) do
       desc "The name of this nagios_#{nagtype.name} resource."
+    end
+
+    [ :owner, :group, :mode].each do |fileprop|
+      type.newparam(fileprop) do
+        desc "The desired #{fileprop} of the config file for this nagios_#{nagtype.name} resource.
+ 
+          NOTE: If the target file is explicitly managed by a file resource in your manifest,
+          this parameter has no effect. If a parent directory of the target is managed by
+          a recursive file resource, this limitation does not apply (i.e., this parameter
+          takes precedence, and if purge is used, the target file is exempt)."
+      end
     end
 
     # We deduplicate the parameters because it makes sense to allow Naginator to have dupes.

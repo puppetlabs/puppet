@@ -258,6 +258,12 @@ describe "Nagios resource types" do
         puppet_type.attrclass(:target).instance_variable_get("@doc").should_not be_nil
       end
 
+      [ :owner, :group, :mode ].each do |fileprop|
+        it "should have a #{fileprop} parameter" do
+          puppet_type.parameters.should be_include(fileprop)
+        end
+      end
+
       nagios_type.parameters.reject { |param| param == nagios_type.namevar or param.to_s =~ /^[0-9]/ }.each do |param|
         it "should have a #{param} property" do
           puppet_type.should be_validproperty(param)
