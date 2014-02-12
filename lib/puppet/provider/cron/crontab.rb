@@ -68,6 +68,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
 
     def to_line(record)
       str = ""
+      record[:name] = nil if record[:unmanaged]
       str = "# Puppet Name: #{record[:name]}\n" if record[:name]
       if record[:environment] and record[:environment] != :absent
         str += record[:environment].map {|line| "#{line}\n"}.join('')
@@ -132,7 +133,8 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
   # See if we can match the record against an existing cron job.
   def self.match(record, resources)
     # if the record is named, do not even bother (#19876)
-    return false if record[:name]
+    # except the resource name was implicitly generated (#3220)
+    return false if record[:name] and !record[:unmanaged]
     resources.each do |name, resource|
       # Match the command first, since it's the most important one.
       next unless record[:target] == resource[:target]
@@ -167,6 +169,8 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     false
   end
 
+  @name_index = 0
+
   # Collapse name and env records.
   def self.prefetch_hook(records)
     name = nil
@@ -194,6 +198,11 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
         if name
           record[:name] = name
           name = nil
+        else
+          cmd_string = record[:command].gsub(/\s+/, "_")
+          index = ( @name_index += 1 )
+          record[:name] = "unmanaged:#{cmd_string}-#{ index.to_s }"
+          record[:unmanaged] = true
         end
         if envs.nil? or envs.empty?
           record[:environment] = :absent

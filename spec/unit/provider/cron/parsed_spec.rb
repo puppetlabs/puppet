@@ -200,42 +200,38 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
 
       it "should be able to create records from not-managed records" do
         described_class.expects(:target_object).returns File.new(my_fixture('simple'))
-        described_class.instances.map do |p|
+        parameters = described_class.instances.map do |p|
           h = {:name => p.get(:name)}
           Puppet::Type.type(:cron).validproperties.each do |property|
             h[property] = p.get(property)
           end
           h
-        end.should == [
-          {
-            :name        => :absent,
-            :minute      => ['5'],
-            :hour        => ['0'],
-            :weekday     => :absent,
-            :month       => :absent,
-            :monthday    => :absent,
-            :special     => :absent,
-            :command     => '$HOME/bin/daily.job >> $HOME/tmp/out 2>&1',
-            :ensure      => :present,
-            :environment => :absent,
-            :user        => :absent,
-            :target      => 'foobar'
-          },
-          {
-            :name        => :absent,
-            :minute      => ['15'],
-            :hour        => ['14'],
-            :weekday     => :absent,
-            :month       => :absent,
-            :monthday    => ['1'],
-            :special     => :absent,
-            :command     => '$HOME/bin/monthly',
-            :ensure      => :present,
-            :environment => :absent,
-            :user        => :absent,
-            :target      => 'foobar'
-          }
-        ]
+        end
+
+        expect(parameters[0][:name]).to match(%r{unmanaged:\$HOME/bin/daily.job_>>_\$HOME/tmp/out_2>&1-\d+})
+        expect(parameters[0][:minute]).to eq(['5'])
+        expect(parameters[0][:hour]).to eq(['0'])
+        expect(parameters[0][:weekday]).to eq(:absent)
+        expect(parameters[0][:month]).to eq(:absent)
+        expect(parameters[0][:monthday]).to eq(:absent)
+        expect(parameters[0][:special]).to eq(:absent)
+        expect(parameters[0][:command]).to match(%r{\$HOME/bin/daily.job >> \$HOME/tmp/out 2>&1})
+        expect(parameters[0][:ensure]).to eq(:present)
+        expect(parameters[0][:environment]).to eq(:absent)
+        expect(parameters[0][:user]).to eq(:absent)
+
+        expect(parameters[1][:name]).to match(%r{unmanaged:\$HOME/bin/monthly-\d+})
+        expect(parameters[1][:minute]).to eq(['15'])
+        expect(parameters[1][:hour]).to eq(['14'])
+        expect(parameters[1][:weekday]).to eq(:absent)
+        expect(parameters[1][:month]).to eq(:absent)
+        expect(parameters[1][:monthday]).to eq(['1'])
+        expect(parameters[1][:special]).to eq(:absent)
+        expect(parameters[1][:command]).to match(%r{\$HOME/bin/monthly})
+        expect(parameters[1][:ensure]).to eq(:present)
+        expect(parameters[1][:environment]).to eq(:absent)
+        expect(parameters[1][:user]).to eq(:absent)
+        expect(parameters[1][:target]).to eq('foobar')
       end
 
       it "should be able to parse puppet manged cronjobs" do

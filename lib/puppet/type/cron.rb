@@ -411,6 +411,27 @@ Puppet::Type.newtype(:cron) do
 
   attr_accessor :uid
 
+  # Marks the resource as "being purged".
+  #
+  # @api public
+  #
+  # @note This overrides the Puppet::Type method in order to handle
+  #   an edge case that has so far been observed during testig only.
+  #   Without forcing the should-value for the user property to be
+  #   identical to the original cron file, purging from a fixture
+  #   will not work, because the user property defaults to the user
+  #   running the test. It is not clear whether this scenario can apply
+  #   during normal operation.
+  #
+  # @note Also, when not forcing the should-value for the target
+  #   property, unpurged file content (such as comments) can end up
+  #   being written to the default target (i.e. the current login name).
+  def purging
+    self[:target] = provider.property_hash[:target]
+    self[:user] = provider.property_hash[:target]
+    super
+  end
+
   def value(name)
     name = name.intern
     ret = nil
