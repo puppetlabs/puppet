@@ -154,7 +154,6 @@ module Manager
       name = name.downcase.intern
       return @types[name] if @types[name]
     end
-
     # Try loading the type.
     if typeloader.load(name, Puppet::Node::Environment.current)
       Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
