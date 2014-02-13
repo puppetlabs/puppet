@@ -434,6 +434,13 @@ class Puppet::Pops::Types::TypeCalculator
   # Answers 'is o an instance of type t'
   # @api public
   #
+  def self.instance?(t, o)
+    singleton.instance_of(t,o)
+  end
+
+  # Answers 'is o an instance of type t'
+  # @api public
+  #
   def instance?(t, o)
     instance_of(t,o)
   end
