@@ -3,8 +3,8 @@ require "spec_helper"
 provider_class = Puppet::Type.type(:package).provider(:pkgin)
 
 describe provider_class do
-  let(:resource) { Puppet::Type.type(:package).new(:name => "vim", :ensure => "7.2.446") }
-  subject        { provider_class.new(resource) }
+  let(:resource) { Puppet::Type.type(:package).new(:name => "vim", :provider => :pkgin) }
+  subject        { resource.provider }
 
   describe "Puppet provider interface" do
     it "can return the list of all packages" do
@@ -23,6 +23,7 @@ describe provider_class do
    end
 
    describe "a package with a fixed version" do
+    before { resource[:ensure] = '7.2.446' }
     it "uses pkgin install to install a fixed version" do
       subject.expects(:pkgin).with("-y", :install, "vim-7.2.446").once()
       subject.install
