@@ -505,7 +505,8 @@ class Puppet::Parser::Scope
   #
   # @see to_hash_legacy
   def to_hash(recursive = true)
-    if Puppet['parser'] == 'future'
+    @parser ||= Puppet[:parser]
+    if @parser == 'future'
       to_hash_future(recursive)
     else
       to_hash_legacy(recursive)
@@ -518,7 +519,7 @@ class Puppet::Parser::Scope
   # @see to_hash
   def to_hash_future(recursive)
     if recursive and has_enclosing_scope?
-      target = enclosing_scope.to_hash(recursive)
+      target = enclosing_scope.to_hash_future(recursive)
     else
       target = Hash.new
     end
@@ -534,7 +535,7 @@ class Puppet::Parser::Scope
   # @see to_hash
   def to_hash_legacy(recursive = true)
     if recursive and parent
-      target = parent.to_hash(recursive)
+      target = parent.to_hash_legacy(recursive)
     else
       target = Hash.new
     end
