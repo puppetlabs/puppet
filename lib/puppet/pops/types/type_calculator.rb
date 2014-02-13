@@ -393,6 +393,7 @@ class Puppet::Pops::Types::TypeCalculator
     o.each_with_index do |element, index|
        return false unless instance_of(t.types[index] || t.types[-1], element)
     end
+    true
   end
 
   def instance_of_PStructType(t, o)

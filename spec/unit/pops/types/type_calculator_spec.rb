@@ -978,6 +978,22 @@ describe 'The type calculator' do
       calculator.instance?(array, ['XS', 'S', 29]).should      == false
     end
 
+    it 'should consider array[seq] as instance of Tuple[seq] when elements of seq are instance of' do
+      tuple = tuple_t(Integer, String, Float)
+      calculator.instance?(tuple, [1, 'a', 3.14]).should       == true
+      calculator.instance?(tuple, [1.2, 'a', 3.14]).should     == false
+      calculator.instance?(tuple, [1, 1, 3.14]).should         == false
+      calculator.instance?(tuple, [1, 'a', 1]).should          == false
+    end
+
+    it 'should consider hash[cont] as instance of Struct[cont-t]' do
+      struct = struct_t({'a'=>Integer, 'b'=>String, 'c'=>Float})
+      calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>3.14}).should       == true
+      calculator.instance?(struct, {'a'=>1.2, 'b'=>'a', 'c'=>3.14}).should     == false
+      calculator.instance?(struct, {'a'=>1, 'b'=>1, 'c'=>3.14}).should         == false
+      calculator.instance?(struct, {'a'=>1, 'b'=>'a', 'c'=>1}).should          == false
+    end
+
     context 'and t is Data' do
       it 'undef should be considered instance of Data' do
         calculator.instance?(data_t, :undef).should == true
