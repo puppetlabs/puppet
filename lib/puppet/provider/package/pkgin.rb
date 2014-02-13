@@ -5,58 +5,83 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   commands :pkgin => "pkgin"
 
-  defaultfor :operatingsystem => :dragonfly
+  defaultfor :operatingsystem => [ :dragonfly , :smartos ]
 
-  has_feature :installable, :uninstallable
+  has_feature :installable, :uninstallable, :upgradeable, :versionable
 
-  def self.parse_pkgin_line(package, force_status=nil)
+  def self.parse_pkgin_line(package)
 
     # e.g.
     #   vim-7.2.446 =        Vim editor (vi clone) without GUI
     match, name, version, status = *package.match(/(\S+)-(\S+)(?: (=|>|<))?\s+.+$/)
     if match
-      ensure_status = if force_status
-        force_status
-      elsif status
-        :present
-      else
-        :absent
-      end
-
       {
         :name     => name,
-        :ensure   => ensure_status,
-        :provider => :pkgin
+        :status   => status,
+        :ensure   => version
       }
     end
   end
 
+  def self.prefetch(packages)
+    super
+    # Withouth -f, no fresh pkg_summary files are downloaded
+    pkgin("-yf", :update)
+  end
+
   def self.instances
     pkgin(:list).split("\n").map do |package|
-      new(parse_pkgin_line(package, :present))
+      new(parse_pkgin_line(package))
     end
   end
 
   def query
-    packages = pkgin(:search, resource[:name]).split("\n")
+    packages = parse_pkgsearch_line
 
-    # Remove the last three lines of help text.
-    packages.slice!(-3, 3)
-
-    matching_package = nil
-    packages.detect do |package|
-      properties = self.class.parse_pkgin_line(package)
-      matching_package = properties if properties && resource[:name] == properties[:name]
+    if packages.empty?
+      if @resource[:ensure] == :absent
+        notice "declared as absent but unavailable #{@resource.file}:#{resource.line}"
+        return false
+      else
+        @resource.fail "No candidate to be installed"
+      end
     end
 
-    matching_package
+    packages.first.update( :ensure => :absent )
+  end
+
+  def parse_pkgsearch_line
+    packages = pkgin(:search, resource[:name]).split("\n")
+
+    return [] if packages.length == 1
+
+    # Remove the last three lines of help text.
+    packages.slice!(-4, 4)
+
+    pkglist = packages.map{ |line| self.class.parse_pkgin_line(line) }
+    pkglist.select{ |package| resource[:name] == package[:name] }
   end
 
   def install
-    pkgin("-y", :install, resource[:name])
+    if String === @resource[:ensure]
+      pkgin("-y", :install, "#{resource[:name]}-#{resource[:ensure]}")
+    else
+      pkgin("-y", :install, resource[:name])
+    end
   end
 
   def uninstall
     pkgin("-y", :remove, resource[:name])
   end
+
+  def latest
+    package = parse_pkgsearch_line.detect{ |package| package[:status] == '<' }
+    return properties[:ensure] if not package
+    return package[:ensure]
+  end
+
+  def update
+    pkgin("-y", :install, resource[:name])
+  end
+
 end
