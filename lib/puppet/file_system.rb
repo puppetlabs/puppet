@@ -232,7 +232,7 @@ module Puppet::FileSystem
   end
 
   # @return [Boolean] true if the file is a symbolic link.
-  # 
+  #
   # @api public
   #
   def self.symlink?(path)
@@ -339,5 +339,19 @@ module Puppet::FileSystem
   #
   def self.exclusive_create(path, mode, &block)
     @impl.exclusive_create(assert_path(path), mode, &block)
+  end
+
+  # Changes permission bits on the named path to the bit pattern represented
+  # by mode.
+  #
+  # @param mode [Integer] The mode to apply to the file if it is created
+  # @param path [String] The path to the file, can also accept [PathName]
+  #
+  # @raise [Errno::ENOENT]: path doesn't exist
+  #
+  # @api public
+  #
+  def self.chmod(mode, path)
+    @impl.chmod(mode, path)
   end
 end

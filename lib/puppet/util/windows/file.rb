@@ -219,14 +219,23 @@ module Puppet::Util::Windows::File
   def stat(file_name)
     file_name = file_name.to_s # accomodate PathName or String
     stat = File.stat(file_name)
+    singleton_class = class << stat; self; end
+    target_path = file_name
+
     if symlink?(file_name)
-      link_ftype = File.stat(readlink(file_name)).ftype
+      target_path = readlink(file_name)
+      link_ftype = File.stat(target_path).ftype
+
       # sigh, monkey patch instance method for instance, and close over link_ftype
-      singleton_class = class << stat; self; end
       singleton_class.send(:define_method, :ftype) do
         link_ftype
       end
     end
+
+    singleton_class.send(:define_method, :mode) do
+      Puppet::Util::Windows::Security.get_mode(target_path)
+    end
+
     stat
   end
   module_function :stat
@@ -235,6 +244,12 @@ module Puppet::Util::Windows::File
     file_name = file_name.to_s # accomodate PathName or String
     # monkey'ing around!
     stat = File.lstat(file_name)
+
+    singleton_class = class << stat; self; end
+    singleton_class.send(:define_method, :mode) do
+      Puppet::Util::Windows::Security.get_mode(file_name)
+    end
+
     if symlink?(file_name)
       def stat.ftype
         "link"

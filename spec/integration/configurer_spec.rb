@@ -60,7 +60,8 @@ describe Puppet::Configurer do
       @configurer.run :catalog => @catalog, :report => report
       t2 = Time.now.tv_sec
 
-      file_mode = Puppet.features.microsoft_windows? ? '100644' : '100666'
+      # sticky bit only applies to directories in windows
+      file_mode = Puppet.features.microsoft_windows? ? '666' : '100666'
 
       Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode.to_s(8).should == file_mode
 

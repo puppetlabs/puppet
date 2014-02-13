@@ -185,7 +185,8 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
 
     it "changes only the requested bits" do
       # lower nibble must be set to 4 for the sake of passing on Windows
-      FileUtils.chmod 0464, path
+      Puppet::FileSystem.chmod(0464, path)
+
       mode_sym.sync
       stat = Puppet::FileSystem.stat(path)
       (stat.mode & 0777).to_s(8).should == "644"
