@@ -322,7 +322,7 @@ class Puppet::Resource::Type
 
     arguments.each do |arg, default|
       arg = arg.to_s
-      warn_if_metaparam(arg, default)
+      debug_if_metaparam(arg, default)
       @arguments[arg] = default
     end
   end
@@ -374,11 +374,11 @@ class Puppet::Resource::Type
     end
   end
 
-  def warn_if_metaparam(param, default)
+  def debug_if_metaparam(param, default)
     return unless Puppet::Type.metaparamclass(param)
 
     if default
-      warnonce "#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition"
+      debug_once "#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition"
     else
       raise Puppet::ParseError, "#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition"
     end
