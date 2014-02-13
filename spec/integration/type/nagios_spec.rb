@@ -51,7 +51,9 @@ describe "Nagios file creation" do
           :mode   => '0640'
         )
         run_in_catalog(resource)
-        ( "%o" % get_mode(target_file) ).should == "100640"
+        # sticky bit only applies to directories in Windows
+        mode = Puppet.features.microsoft_windows? ? "640" : "100640"
+        ( "%o" % get_mode(target_file) ).should == mode
       end
     end
 

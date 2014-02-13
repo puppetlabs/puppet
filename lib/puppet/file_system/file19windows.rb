@@ -78,9 +78,6 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
   end
 
   def stat(path)
-    if ! Puppet.features.manages_symlinks?
-      return super
-    end
     Puppet::Util::Windows::File.stat(path)
   end
 
@@ -89,6 +86,10 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
       return Puppet::Util::Windows::File.stat(path)
     end
     Puppet::Util::Windows::File.lstat(path)
+  end
+
+  def chmod(mode, path)
+    Puppet::Util::Windows::Security.set_mode(mode, path.to_s)
   end
 
   private
