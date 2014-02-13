@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'puppet/module_tool/applications'
 
-describe Puppet::ModuleTool::Applications::Checksummer, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::ModuleTool::Applications::Checksummer do
   subject {
     Puppet::ModuleTool::Applications::Checksummer.new(module_install_path)
   }

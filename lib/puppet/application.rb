@@ -353,9 +353,11 @@ class Application
       plugin_hook('initialize_app_defaults') { initialize_app_defaults }
     end
 
+    new_context = Puppet.base_context(Puppet.settings)
+    new_context[:current_environment] = new_context[:environments].get(Puppet[:environment])
     # Setup a new context using the app's configuration
-    Puppet.override(Puppet.base_context(Puppet.settings),
-                    "Base context from application's configuration") do
+    Puppet.override(new_context,
+                    "New base context and current environment from application's configuration") do
       require 'puppet'
       require 'puppet/util/instrumentation'
       Puppet::Util::Instrumentation.init

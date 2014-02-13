@@ -24,14 +24,8 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
     let(:modpath1) { create_temp_dir("modpath1") }
     let(:modpath2) { create_temp_dir("modpath2") }
     let(:env) { Puppet::Node::Environment.create(:env, [modpath1, modpath2], '') }
-    let(:options)  { {:environment => "env"} }
+    let(:options)  { { :environment_instance => env } }
     let(:uninstaller) { Puppet::ModuleTool::Applications::Uninstaller.new("puppetlabs-foo", options) }
-
-    around :each do |example|
-      Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
-        example.run
-      end
-    end
 
     def create_temp_dir(name)
       path = File.join(working_dir, name)

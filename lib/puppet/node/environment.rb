@@ -372,6 +372,17 @@ class Puppet::Node::Environment
     path_string.split(File::PATH_SEPARATOR)
   end
 
+  def ==(other)
+    return true if other.kind_of?(Puppet::Node::Environment) &&
+      self.name == other.name &&
+      self.full_modulepath == other.full_modulepath &&
+      self.manifest == other.manifest
+  end
+
+  def hash
+    [self.class, name, full_modulepath, manifest].hash
+  end
+
   private
 
   def self.extralibs()

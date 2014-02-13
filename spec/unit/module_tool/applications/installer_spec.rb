@@ -3,7 +3,7 @@ require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 require 'semver'
 
-describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::ModuleTool::Applications::Installer do
   include PuppetSpec::Files
 
   let(:unpacker)        { stub(:run) }
@@ -19,16 +19,11 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
     mod
   end
   let(:env)             { Puppet::Node::Environment.create(:env, [modpath1], '') }
-  let(:options)         { { :target_dir => modpath1 } }
-
-  before do
-    Puppet[:environment] = :env
-  end
-
-  around :each do |example|
-    Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
-      example.run
-    end
+  let(:options)         do
+    {
+      :target_dir => modpath1,
+      :environment_instance => env,
+    }
   end
 
   let(:forge) do
@@ -228,7 +223,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       end
 
       it "should install requested module if the '--force' flag is used" do
-        options = { :force => true, :target_dir => modpath1 }
+        options.merge!(:force => true)
         Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
           returns(unpacker)
@@ -237,7 +232,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       end
 
       it "should not install dependencies if the '--force' flag is used" do
-        options = { :force => true, :target_dir => modpath1 }
+        options.merge!(:force => true)
         Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
           returns(unpacker)
@@ -247,7 +242,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       end
 
       it "should not install dependencies if the '--ignore-dependencies' flag is used" do
-        options = { :ignore_dependencies => true, :target_dir => modpath1 }
+        options.merge!(:ignore_dependencies => true)
         Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
           returns(unpacker)
@@ -257,7 +252,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       end
 
       it "should set an error if dependencies can't be resolved" do
-        options = { :version => '0.0.1', :target_dir => modpath1 }
+        options.merge!(:version => '0.0.1')
         oneline = "'pmtacceptance-apollo' (v0.0.1) requested; Invalid dependency cycle"
         multiline = <<-MSG.strip
 Could not install module 'pmtacceptance-apollo' (v0.0.1)
