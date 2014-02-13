@@ -886,13 +886,14 @@ describe Puppet::Type.type(:file) do
     it "should be able to copy files with spaces in their names" do
       dest = tmpfile("destwith spaces")
       source = tmpfile_with_contents("filewith spaces", "foo")
-      File.chmod(0755, source)
+
+      expected_mode = 0755
+      Puppet::FileSystem.chmod(expected_mode, source)
 
       catalog.add_resource described_class.new(:path => dest, :source => source)
 
       catalog.apply
 
-      expected_mode = Puppet.features.microsoft_windows? ? 0644 : 0755
       File.read(dest).should == "foo"
       (Puppet::FileSystem.stat(dest).mode & 007777).should == expected_mode
     end
@@ -1021,6 +1022,7 @@ describe Puppet::Type.type(:file) do
       end
 
       it "should provide valid default values when ACLs are not supported" do
+        Puppet::Util::Windows::Security.stubs(:supports_acl?).returns(false)
         Puppet::Util::Windows::Security.stubs(:supports_acl?).with(source).returns false
 
         file = described_class.new(

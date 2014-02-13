@@ -135,4 +135,7 @@ class Puppet::FileSystem::FileImpl
     open(path, 0, 'rb') { |this| FileUtils.compare_stream(this, stream) }
   end
 
+  def chmod(mode, path)
+    FileUtils.chmod(mode, path)
+  end
 end

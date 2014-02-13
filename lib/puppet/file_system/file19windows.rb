@@ -91,6 +91,10 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
     Puppet::Util::Windows::File.lstat(path)
   end
 
+  def chmod(mode, path)
+    Puppet::Util::Windows::Security.set_mode(mode, path.to_s)
+  end
+
   private
 
   def raise_if_symlinks_unsupported
