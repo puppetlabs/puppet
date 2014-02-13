@@ -78,9 +78,6 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
   end
 
   def stat(path)
-    if ! Puppet.features.manages_symlinks?
-      return super
-    end
     Puppet::Util::Windows::File.stat(path)
   end
 
