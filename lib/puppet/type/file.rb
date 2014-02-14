@@ -135,7 +135,7 @@ Puppet::Type.newtype(:file) do
         but not the local (destination) directory. Allows copying of
         a few files into a directory containing many
         unmanaged files without scanning all the local files.
-        This can only be used when a source parameter is specified. 
+        This can only be used when a source parameter is specified.
       * `false` --- Default of no recursion.
     "
 
@@ -257,25 +257,33 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:validate_cmd) do
-    desc "If this parameter is set, then this file will only be written if
-        the command returns 0.  For example:
+    desc "A command for validating the file's syntax before replacing it. If
+      Puppet would need to rewrite a file due to new `source` or `content`, it
+      will check the new content's validity first. If validation fails, the file
+      resource will fail.
 
-        file { '/etc/apache2/apache2.conf':
-          content => 'example'
-          validate_cmd => '/usr/sbin/apache2 -t -f %'
-        }
+      This command must have a fully qualified path, and should contain a
+      percent (`%`) token where it would expect an input file. It must exit `0`
+      if the syntax is correct, and non-zero otherwise. The command will be
+      run on the target system while applying the catalog, not on the puppet master.
 
-        This would replace apache2.conf only if that test returned true.
+      Example:
 
-        The percent sign (%) will be replaced with the path of the temporary
-        file for this resource.
+          file { '/etc/apache2/apache2.conf':
+            content      => 'example',
+            validate_cmd => '/usr/sbin/apache2 -t -f %',
+          }
 
-        Note that the command must be fully qualified."
+      This would replace apache2.conf only if the test returned true.
+
+      Note that if a validation command requires a `%` as part of its text,
+      you can specify a different placeholder token with the
+      `validate_replacement` attribute."
   end
 
   newparam(:validate_replacement) do
-    desc "The replacement string that `validate_cmd` uses to replace
-        with the file name. Defaults to: `%`"
+    desc "The replacement string in a `validate_cmd` that will be replaced
+      with an input file name. Defaults to: `%`"
 
     defaultto '%'
   end
