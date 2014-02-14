@@ -231,6 +231,9 @@ class Puppet::Resource
     catalog ? catalog.resource(to_s) : nil
   end
 
+  # The resource's type implementation
+  # @return [Puppet::Type, Puppet::Resource::Type]
+  # @api private
   def resource_type
     @rstype ||= case type
     when "Class"; environment.known_resource_types.hostclass(title == :main ? "" : title)
@@ -238,6 +241,13 @@ class Puppet::Resource
     else
       Puppet::Type.type(type) || environment.known_resource_types.definition(type)
     end
+  end
+
+  # Set the resource's type implementation
+  # @param type [Puppet::Type, Puppet::Resource::Type]
+  # @api private
+  def resource_type=(type)
+    @rstype = type
   end
 
   def environment
@@ -401,6 +411,8 @@ class Puppet::Resource
     result.exported = self.exported
     result.virtual = self.virtual
     result.tag(*self.tags)
+    result.environment = environment
+    result.instance_variable_set(:@rstype, resource_type)
 
     result
   end

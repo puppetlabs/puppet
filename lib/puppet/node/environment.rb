@@ -10,27 +10,6 @@ end
 # Puppet::Node::Environment acts as a container for all configuration
 # that is expected to vary between environments.
 #
-# ## Global variables
-#
-# The Puppet::Node::Environment uses a number of global variables.
-#
-# ### `$known_resource_types`
-#
-# The 'known_resource_types' global variable represents a singleton instance
-# of the Puppet::Resource::TypeCollection class. The variable is discarded
-# and regenerated if it is accessed by an environment that doesn't match the
-# environment of the 'known_resource_types'
-#
-# This behavior of discarding the known_resource_types every time the
-# environment changes is not ideal. In the best case this can cause valid data
-# to be discarded and reloaded. If Puppet is being used with numerous
-# environments then this penalty will be repeatedly incurred.
-#
-# In the worst case (#15106) demonstrates that if a different environment is
-# accessed during catalog compilation, for whatever reason, the
-# known_resource_types can be discarded which loses information that cannot
-# be recovered and can cause a catalog compilation to completely fail.
-#
 # ## The root environment
 #
 # In addition to normal environments that are defined by the user,there is a
@@ -180,45 +159,14 @@ class Puppet::Node::Environment
     Puppet.settings.value(param, self.name)
   end
 
-  # The current global TypeCollection
-  #
-  # @note The environment is loosely coupled with the {Puppet::Resource::TypeCollection}
-  #   class. While there is a 1:1 relationship between an environment and a
-  #   TypeCollection instance, there is only one TypeCollection instance
-  #   available at any given time. It is stored in `$known_resource_types`.
-  #   `$known_resource_types` is accessed as an instance method, but is global
-  #   to all environment variables.
-  #
   # @api public
   # @return [Puppet::Resource::TypeCollection] The current global TypeCollection
   def known_resource_types
-    # This makes use of short circuit evaluation to get the right thread-safe
-    # per environment semantics with an efficient most common cases; we almost
-    # always just return our thread's known-resource types.  Only at the start
-    # of a compilation (after our thread var has been set to nil) or when the
-    # environment has changed or when the known resource types have become stale
-    # do we delve deeper.
-    $known_resource_types = nil if $known_resource_types &&
-      ($known_resource_types.environment != self || !@known_resource_types_being_imported && $known_resource_types.stale?)
-    $known_resource_types ||=
-      if @known_resource_types.nil? or @known_resource_types.require_reparse?
-        #set the global variable $known_resource_types immediately as it will be queried
-        #resursively from the parser which would set it anyway, just executing more code in vain
-        @known_resource_types = $known_resource_types = Puppet::Resource::TypeCollection.new(self)
-
-        #avoid an infinite recursion (called from the parser) if Puppet[:filetimeout] is set to -1 and
-        #$known_resource_types.stale? returns always true; let's set a flag that we're importing
-        #so if this method is called recursively we'll skip testing the stale status
-        begin
-          @known_resource_types_being_imported = true
-          @known_resource_types.import_ast(perform_initial_import, '')
-        ensure
-          @known_resource_types_being_imported = false
-        end
-        @known_resource_types
-      else
-        @known_resource_types
-      end
+    if @known_resource_types.nil?
+      @known_resource_types = Puppet::Resource::TypeCollection.new(self)
+      @known_resource_types.import_ast(perform_initial_import(), '')
+    end
+    @known_resource_types
   end
 
   # Yields each modules' plugin directory if the plugin directory (modulename/lib)
@@ -386,6 +334,12 @@ class Puppet::Node::Environment
     known_resource_types.watch_file(file.to_s)
   end
 
+  def check_for_reparse
+    if @known_resource_types && @known_resource_types.require_reparse?
+      @known_resource_types = nil
+    end
+  end
+
   # @return [String] The stringified value of the `name` instance variable
   # @api public
   def to_s
@@ -473,7 +427,7 @@ class Puppet::Node::Environment
       end
     end
   rescue => detail
-    known_resource_types.parse_failed = true
+    @known_resource_types.parse_failed = true
 
     msg = "Could not parse for environment #{self}: #{detail}"
     error = Puppet::Error.new(msg)

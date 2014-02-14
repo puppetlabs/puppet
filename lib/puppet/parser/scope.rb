@@ -277,6 +277,8 @@ class Puppet::Parser::Scope
     # The table for storing class singletons.  This will only actually
     # be used by top scopes and node scopes.
     @class_scopes = {}
+
+    @enable_trusted_data = Puppet[:trusted_node_data]
   end
 
   # Store the fact that we've evaluated a class, and store a reference to
@@ -559,7 +561,7 @@ class Puppet::Parser::Scope
     end
 
     # Check for reserved variable names
-    if Puppet[:trusted_node_data] && !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
+    if @enable_trusted_data && !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
