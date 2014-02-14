@@ -61,8 +61,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @param conf [String] Configuration file to check for value.
   # @return [String] The value of a looked up key from the configuration file.
   def self.find_conf_value(value, conf='/etc/yum.conf')
-    if File.exists?(conf)
-      contents = File.read(conf)
+    if Puppet::FileSystem.exist?(conf)
+      contents = Puppet::FileSystem.read(conf)
       match = /^#{value}\s*=\s*(.*)/.match(contents)
     end
 
@@ -78,7 +78,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
       @virtual = Puppet::Util::IniConfig::File.new
       reposdir.each do |dir|
         Dir.glob("#{dir}/*.repo").each do |file|
-          @virtual.read(file) if ::File.file?(file)
+          @virtual.read(file) if Puppet::FileSystem.file?(file)
         end
       end
     end
@@ -123,7 +123,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
       current_mode = Puppet::FileSystem.stat(file).mode & 0777
       unless current_mode == target_mode
         Puppet.info "changing mode of #{file} from %03o to %03o" % [current_mode, target_mode]
-        ::File.chmod(target_mode, file)
+        Puppet::FileSystem.chmod(target_mode, file)
       end
     end
   end
@@ -132,6 +132,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   def create
     @property_hash[:ensure] = :present
 
+    new_section = section(@resource[:name])
+
     # We fetch a list of properties from the type, then iterate
     # over them, avoiding ensure.  We're relying on .should to
     # check if the property has been set and should be modified,
@@ -139,7 +141,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     PROPERTIES.each do |property|
       next if property == :ensure
       if value = @resource.should(property)
-        section(@resource[:name])[property.to_s] = value
+        new_section[property.to_s] = value
         @property_hash[property] = value
       end
     end
