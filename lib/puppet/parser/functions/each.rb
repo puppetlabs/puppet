@@ -76,25 +76,27 @@ Puppet::Parser::Functions::newfunction(
     end
   end
 
-  raise ArgumentError, ("each(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
+  raise ArgumentError, ("each(): wrong number of arguments (#{args.length}; expected 2, got #{args.length})") if args.length != 2
   receiver = args[0]
   pblock = args[1]
   raise ArgumentError, ("each(): wrong argument type (#{args[1].class}; must be a parameterized block.") unless pblock.respond_to?(:puppet_lambda)
 
   serving_size = pblock.parameter_count
   if serving_size == 0
-    raise ArgumentError, "each(): block must define at least one parameter; value."
+    raise ArgumentError, "each(): block must define at least one parameter; value. Block has 0."
   end
 
   case receiver
   when Hash
     if serving_size > 2
-      raise ArgumentError, "each(): block must define at most two parameters; key, value"
+      raise ArgumentError, "each(): block must define at most two parameters; key, value. Block has #{serving_size}; "+
+      pblock.parameter_names.join(', ')
     end
     foreach_Hash(receiver, self, pblock, serving_size)
   else
     if serving_size > 2
-      raise ArgumentError, "each(): block must define at most two parameters; index, value"
+      raise ArgumentError, "each(): block must define at most two parameters; index, value. Block has #{serving_size}; "+
+        pblock.parameter_names.join(', ')
     end
     enum = Puppet::Pops::Types::Enumeration.enumerator(receiver)
     unless enum

@@ -127,5 +127,9 @@ class Puppet::Parser::AST
     def puppet_lambda()
       true
     end
+
+    def parameter_names
+      @parameters.collect {|p| p[0] }
+    end
   end
 end

@@ -45,4 +45,8 @@ class Puppet::Pops::Evaluator::Closure
     @model.parameters.count { |p| !p.value.nil? }
   end
 
+  def parameter_names
+    @model.parameters.collect {|p| p.name }
+  end
+
 end

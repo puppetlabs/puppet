@@ -75,7 +75,7 @@ Puppet::Parser::Functions::newfunction(
   when 3
     pblock = args[2]
   else
-    raise ArgumentError, ("reduce(): wrong number of arguments (#{args.length}; must be 2 or 3)")
+    raise ArgumentError, ("reduce(): wrong number of arguments (#{args.length}; expected 2 or 3, got #{args.length})")
   end
   unless pblock.respond_to?(:puppet_lambda)
     raise ArgumentError, ("reduce(): wrong argument type (#{pblock.class}; must be a parameterized block.")
@@ -84,6 +84,12 @@ Puppet::Parser::Functions::newfunction(
   enum = Puppet::Pops::Types::Enumeration.enumerator(receiver)
   unless enum
     raise ArgumentError, ("reduce(): wrong argument type (#{receiver.class}; must be something enumerable.")
+  end
+
+  serving_size = pblock.parameter_count
+  if serving_size != 2
+    raise ArgumentError, "reduce(): block must define 2 parameters; memo, value. Block has #{serving_size}; "+
+    pblock.parameter_names.join(', ')
   end
 
   if args.length == 3
