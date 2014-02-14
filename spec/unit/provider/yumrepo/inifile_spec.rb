@@ -30,7 +30,7 @@ descr="test updates"
     before :each do
       described_class.stubs(:reposdir).returns(['/etc/yum.repos.d'])
       File.expects(:file?).with('/etc/yum.repos.d/test.repo').returns(true)
-      File.expects(:exist?).with(Pathname.new('/etc/yum.repos.d/test.repo')).returns(true)
+      Puppet::FileSystem.expects(:exist?).with('/etc/yum.repos.d/test.repo').returns(true)
       File.expects(:read).with('/etc/yum.repos.d/test.repo').returns(repo_file)
     end
 
