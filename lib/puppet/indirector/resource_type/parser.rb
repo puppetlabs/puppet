@@ -24,7 +24,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   # @api public
   def find(request)
     Puppet.override(:squelch_parse_errors => true) do
-      krt = request.environment.known_resource_types
+      krt = resource_types_in(request.environment)
 
       # This is a bit ugly.
       [:hostclass, :definition, :node].each do |type|
@@ -57,7 +57,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   def search(request)
     Puppet.override(:squelch_parse_errors => true) do
 
-      krt = request.environment.known_resource_types
+      krt = resource_types_in(request.environment)
       # Make sure we've got all of the types loaded.
       krt.loader.import_all
 
@@ -92,5 +92,10 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
       return nil if result.empty?
       result
     end
+  end
+
+  def resource_types_in(environment)
+    environment.check_for_reparse
+    environment.known_resource_types
   end
 end
