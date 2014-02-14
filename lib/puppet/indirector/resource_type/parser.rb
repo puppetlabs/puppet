@@ -27,7 +27,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
       # This is a fix in 3.x that will be replaced with the use of a context
       # (That is not available until 3.5).
       $squelsh_parse_errors = true
-      krt = request.environment.known_resource_types
+      krt = resource_types_in(request.environment)
 
       # This is a bit ugly.
       [:hostclass, :definition, :node].each do |type|
@@ -65,7 +65,7 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
       # (That is not available until 3.5).
       $squelsh_parse_errors = true
 
-      krt = request.environment.known_resource_types
+      krt = resource_types_in(request.environment)
       # Make sure we've got all of the types loaded.
       krt.loader.import_all
 
@@ -102,5 +102,10 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
     end
   ensure
     $squelsh_parse_errors = false
+  end
+
+  def resource_types_in(environment)
+    environment.check_for_reparse
+    environment.known_resource_types
   end
 end
