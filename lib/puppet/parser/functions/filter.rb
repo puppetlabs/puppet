@@ -69,13 +69,14 @@ Puppet::Parser::Functions::newfunction(
   raise ArgumentError, ("filter(): wrong argument type (#{pblock.class}; must be a parameterized block.") unless pblock.respond_to?(:puppet_lambda)
   serving_size = pblock.parameter_count
   if serving_size == 0
-    raise ArgumentError, "filter(): block must define at least one parameter; value."
+    raise ArgumentError, "filter(): block must define at least one parameter; value. Block has 0."
   end
 
   case receiver
   when Hash
     if serving_size > 2
-      raise ArgumentError, "filter(): block must define at most two parameters; key, value"
+      raise ArgumentError, "filter(): block must define at most two parameters; key, value. Block has #{serving_size}; "+
+      pblock.parameter_names.join(', ')
     end
     if serving_size == 1
       result = receiver.select {|x, y| pblock.call(self, [x, y]) }
@@ -87,7 +88,8 @@ Puppet::Parser::Functions::newfunction(
     result
   else
     if serving_size > 2
-      raise ArgumentError, "filter(): block must define at most two parameters; index, value"
+      raise ArgumentError, "filter(): block must define at most two parameters; index, value. Block has #{serving_size}; "+
+      pblock.parameter_names.join(', ')
     end
     enum = Puppet::Pops::Types::Enumeration.enumerator(receiver)
     unless enum
