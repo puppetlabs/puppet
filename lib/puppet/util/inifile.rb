@@ -13,13 +13,15 @@ require 'puppet/util/filetype'
 module Puppet::Util::IniConfig
   # A section in a .ini file
   class Section
-    attr_reader :name, :file
+    attr_reader :name, :file, :entries
+    attr_writer :destroy
 
     def initialize(name, file)
       @name = name
       @file = file
       @dirty = false
       @entries = []
+      @destroy = false
     end
 
     # Has this section been modified since it's been read in
@@ -31,6 +33,11 @@ module Puppet::Util::IniConfig
     # Should only be used internally
     def mark_clean
       @dirty = false
+    end
+
+    # Should the file be destroyed?
+    def destroy?
+      @destroy
     end
 
     # Add a line of text (e.g., a comment) Such lines
@@ -142,8 +149,10 @@ module Puppet::Util::IniConfig
       @files.each do |file, lines|
         text = ""
         dirty = false
+        destroy = false
         lines.each do |l|
           if l.is_a?(Section)
+            destroy ||= l.destroy?
             dirty ||= l.dirty?
             text << l.format
             l.mark_clean
@@ -151,9 +160,15 @@ module Puppet::Util::IniConfig
             text << l
           end
         end
-        if dirty
-          Puppet::Util::FileType.filetype(:flat).new(file).write(text)
-          return file
+        # We delete the file and then remove it from the list of files.
+        if destroy
+          ::File.unlink(file)
+          @files.delete(file)
+        else
+          if dirty
+            Puppet::Util::FileType.filetype(:flat).new(file).write(text)
+            return file
+          end
         end
       end
     end
