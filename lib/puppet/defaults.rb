@@ -1780,7 +1780,7 @@ EOT
       :default => "current",
       :desc => <<-'EOT'
         Selects the parser to use for parsing puppet manifests (in puppet DSL
-        language/'.pp' files). Available choices are `current` (the default),
+        language/'.pp' files). Available choices are `current` (the default)
         and `future`.
 
         The `curent` parser means that the released version of the parser should
@@ -1801,26 +1801,21 @@ EOT
         end
       end,
       :desc => <<-'EOT'
-        Selects the evaluator to use for evaluation of puppet manifests parsed
-        with the option "parser = future". Available choices are `current`,
-        and `future` (the default).
+        Which evaluator to use when compiling Puppet manifests. Valid values
+        are `current` and `future` (the default).
 
-        The `future` evaluator means that the new evaluator (experimental) will
-        be used, whereas 'current' means that the "parser future" option will
-        transform the parsed result to Puppet 3x and use the regular
-        evaluator.
+        **Note:** This setting is only used when `parser = future`. It allows
+        testers to turn off the `future` evaluator when doing detailed tests and
+        comparisons of the new compilation system.
 
-        The `future` evaluator is a "time travel to the future" allowing early
-        exposure to new language features. What these features are will vary from
-        release to release and they may be invididually configurable.
+        Evaluation is the second stage of catalog compilation. After the parser
+        converts a manifest to a model of expressions, the evaluator processes
+        each expression. (For example, a resource declaration signals the
+        evaluator to add a resource to the catalog).
 
-        The default for this parameter is 'future', which means that the flag is
-        there to turn off the future evaluator for A / B testing.
-
-        The experimental features "parser future, evaluator future" are expected
-        to become what is released as the standard / current in Puppet 4.x.
-
-        The evaluator option has no effect unless parser is set to 'future'.
+        The `future` parser and evaluator are slated to become default in Puppet
+        4. Their purpose is to add new features and improve consistency
+        and reliability.
 
         Available Since Puppet 3.5.
       EOT
