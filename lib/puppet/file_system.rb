@@ -157,6 +157,15 @@ module Puppet::FileSystem
     @impl.directory?(assert_path(path))
   end
 
+  # Determines if a file is a file.
+  #
+  # @return [Boolean] true if the given file is a file.
+  #
+  # @api public
+  def self.file?(path)
+    @impl.file?(assert_path(path))
+  end
+
   # Determines if a file is executable.
   #
   # @todo Should this take into account extensions on the windows platform?

@@ -149,6 +149,10 @@ describe "Puppet::FileSystem" do
       Puppet::FileSystem.exist?(file).should be_true
     end
 
+    it "should return true for file? on a present file" do
+      Puppet::FileSystem.file?(file).should be_true
+    end
+
     it "should return false for exist? on a non-existant file" do
       Puppet::FileSystem.exist?(missing_file).should be_false
     end

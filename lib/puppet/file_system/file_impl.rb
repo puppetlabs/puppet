@@ -87,6 +87,10 @@ class Puppet::FileSystem::FileImpl
     ::File.directory?(path)
   end
 
+  def file?(path)
+    ::File.file?(path)
+  end
+
   def executable?(path)
     ::File.executable?(path)
   end
