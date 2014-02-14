@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     This provider supports either MSI or self-extracting executable installers.
 
     This provider requires a `source` attribute when installing the package.
-    It accepts paths paths to local files, mapped drives, or UNC paths.
+    It accepts paths to local files, mapped drives, or UNC paths.
 
     If the executable requires special arguments to perform a silent install or
     uninstall, then the appropriate arguments should be specified using the

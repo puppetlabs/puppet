@@ -25,7 +25,7 @@ Puppet::Parser::Functions::newfunction(
         $a = ["raspberry", "blueberry", "orange"]
         $a.filter |$x| { $x =~ /berry$/ }          # rasberry, blueberry
 
-  If the the block defines two parameters, they will be set to `index, value` (with index starting at 0) for all
+  If the block defines two parameters, they will be set to `index, value` (with index starting at 0) for all
   enumerables except Hash, and to `key, value` for a Hash.
 
   *Examples*

@@ -9,7 +9,7 @@ module Puppet
     end
 
     newproperty(:value) do
-      desc "Whether the the SELinux boolean should be enabled or disabled."
+      desc "Whether the SELinux boolean should be enabled or disabled."
       newvalue(:on)
       newvalue(:off)
     end

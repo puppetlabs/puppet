@@ -4,7 +4,7 @@
 # It is required that custom producers inherit from this producer (directly or indirectly).
 #
 # The selection of a Producer is typically performed by the Innjector when it configures itself
-# from a Bindings model where a {Puppet::Pops::Binder::Bindings::ProducerDescriptor} describes 
+# from a Bindings model where a {Puppet::Pops::Binder::Bindings::ProducerDescriptor} describes
 # which producer to use. The configuration uses this to create the concrete producer.
 # It is possible to describe that a particular producer class is to be used, and also to describe that
 # a custom producer (derived from Producer) should be used. This is available for both regular
@@ -462,12 +462,12 @@ module Puppet::Pops::Binder::Producers
   end
 
   # This type of producer should only be created by the Injector.
-  # 
+  #
   # @api private
   #
   class AssistedInjectProducer < Producer
     # An Assisted Inject Producer is created when a lookup is made of a type that is
-    # not bound. It does not support a transformer lambda. 
+    # not bound. It does not support a transformer lambda.
     # @note This initializer has a different signature than all others. Do not use in regular logic.
     # @api private
     #
@@ -557,7 +557,7 @@ module Puppet::Pops::Binder::Producers
   #   Collection accepts elements that comply with the array's element type, or the entire type (i.e. Array[element_type]).
   #   If the type is restrictive - e.g. Array[String] and an Array[String] is contributed, the result will not be type
   #   compliant without also using the `:flatten` option, and a type error will be raised. For an array with relaxed typing
-  #   i.e. Array[Data], it it valid to produce a result such as `['a', ['b', 'c'], 'd']` and no flattening is required
+  #   i.e. Array[Data], it is valid to produce a result such as `['a', ['b', 'c'], 'd']` and no flattening is required
   #   and no error is raised (but using the array needs to be aware of potential array, non-array entries.
   #   The use of the option `:flatten` controls how the result is flattened.
   #

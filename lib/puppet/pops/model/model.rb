@@ -157,7 +157,7 @@ module Puppet::Pops::Model
     contains_many_uni 'values', Expression
   end
 
-  # A Keyed entry has a key and a value expression. It it typically used as an entry in a Hash.
+  # A Keyed entry has a key and a value expression. It is typically used as an entry in a Hash.
   #
   class KeyedEntry < Positioned
     contains_one_uni 'key', Expression, :lowerBound => 1
@@ -391,7 +391,7 @@ module Puppet::Pops::Model
   end
 
   # A text expression is an interpolation of an expression. If the embedded expression is
-  # a QualifiedName, it it taken as a variable name and resolved. All other expressions are evaluated.
+  # a QualifiedName, it is taken as a variable name and resolved. All other expressions are evaluated.
   # The result is transformed to a string.
   #
   class TextExpression < UnaryExpression; end

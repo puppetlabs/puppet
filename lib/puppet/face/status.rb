@@ -27,7 +27,7 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
 
     Over REST, this action will query the configured puppet master by default.
     To query other servers, including puppet agent nodes started with the
-    <--listen> option, you can set set the global <--server> and <--masterport>
+    <--listen> option, you can set the global <--server> and <--masterport>
     options on the command line; note that agent nodes listen on port 8139.
   EOT
   find.short_description <<-EOT

@@ -1,7 +1,7 @@
 
 # A Closure represents logic bound to a particular scope.
 # As long as the runtime (basically the scope implementation) has the behaviour of Puppet 3x it is not
-# safe to use this closure when the the scope given to it when initialized goes "out of scope".
+# safe to use this closure when the scope given to it when initialized goes "out of scope".
 # 
 # Note that the implementation is backwards compatible in that the call method accepts a scope, but this
 # scope is not used.

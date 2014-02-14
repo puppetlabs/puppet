@@ -30,7 +30,7 @@ class Puppet::Pops::Types::TypeParser
   #
   def parse(string)
     # TODO: This state (@string) can be removed since the parse result of newer future parser
-    # contains a Locator in its SourcePosAdapter and the Locator keeps the the string.
+    # contains a Locator in its SourcePosAdapter and the Locator keeps the string.
     # This way, there is no difference between a parsed "string" and something that has been parsed
     # earlier and fed to 'interpret'
     #
