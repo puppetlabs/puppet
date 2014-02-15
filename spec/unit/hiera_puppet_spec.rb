@@ -46,7 +46,7 @@ describe 'HieraPuppet' do
       begin
         Puppet.settings[:hiera_config] = nil
       rescue ArgumentError => detail
-        raise unless detail.message =~ /unknown configuration parameter/
+        raise unless detail.message =~ /unknown setting/
       end
       HieraPuppet.send(:hiera_config_file).should be_nil
     end
@@ -55,7 +55,7 @@ describe 'HieraPuppet' do
       begin
         Puppet.settings[:hiera_config] = "/dev/null/my_hiera.yaml"
       rescue ArgumentError => detail
-        raise unless detail.message =~ /unknown configuration parameter/
+        raise unless detail.message =~ /unknown setting/
         pending("This example does not apply to Puppet #{Puppet.version} because it does not have this setting")
       end
 
@@ -67,7 +67,7 @@ describe 'HieraPuppet' do
       begin
         Puppet.settings[:hiera_config] = nil
       rescue ArgumentError => detail
-        raise unless detail.message =~ /unknown configuration parameter/
+        raise unless detail.message =~ /unknown setting/
       end
       Puppet.settings[:confdir] = "/dev/null/puppet"
       hiera_config = File.join(Puppet[:confdir], 'hiera.yaml')

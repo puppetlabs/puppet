@@ -64,9 +64,9 @@ manifests.
 
 OPTIONS
 -------
-Note that any configuration parameter that's valid in the configuration
+Note that any setting that's valid in the configuration
 file is also a valid long argument. For example, 'tags' is a
-valid configuration parameter, so you can specify '--tags <class>,<tag>'
+valid setting, so you can specify '--tags <class>,<tag>'
 as an argument.
 
 See the configuration file documentation at

@@ -471,7 +471,7 @@ describe Puppet::Settings do
     it "should raise an error if we try to set a setting that hasn't been defined'" do
       lambda{
         @settings[:why_so_serious] = "foo"
-      }.should raise_error(ArgumentError, /unknown configuration parameter/)
+      }.should raise_error(ArgumentError, /unknown setting/)
     end
   end
 
