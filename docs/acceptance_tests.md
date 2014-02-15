@@ -73,7 +73,7 @@ Alternatively you may provision via git clone by calling the ci:test:git task.  
 If you have a branch pushed to your fork which you wish to test prior to merging into puppetlabs/puppet, you can do so be setting the FORK environment variable.  So, if I have a branch 'issue/master/wonder-if-this-explodes' pushed to my jpartlow puppet fork that I want to test on Windows, I could invoke the following:
 
 ```sh
-bundle exec ci:test:git CONFIG=config/nodes/win2008r2.yaml SHA=issue/master/wonder-if-this-explodes FORK=jpartlow
+bundle exec rake ci:test:git CONFIG=config/nodes/win2008r2.yaml SHA=issue/master/wonder-if-this-explodes FORK=jpartlow
 ```
 
 #### Source Checkout for Local Branch
@@ -108,7 +108,7 @@ NOTE: By default these tasks provision with packages.  Set TYPE=git to use sourc
 
 If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hosts, you may eventually generate a large number of stale vms.  They should be reaped automatically by qa infrastructure within a day or so, but you may also run:
 
-    bundle exec ci:destroy_preserved_hosts
+    bundle exec rake ci:destroy_preserved_hosts
 
 to clean them up sooner and free resources.
 
