@@ -61,5 +61,18 @@ describe Puppet::Type.type(:yumrepo) do
       Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", :sslverify => "True")[:sslverify].should == "True"
       Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", :sslverify => "False")[:sslverify].should == "False"
     end
+
+    [:mirrorlist, :baseurl, :gpgkey, :include, :proxy, :metalink].each do |param|
+      it "should succeed if '#{param}' uses one of the following protocols (file|http|https|ftp)" do
+        Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "file:///srv/example/")[param].should =~ %r{\Afile://}
+        Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "http://example.com/")[param].should =~ %r{\Ahttp://}
+        Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "https://example.com/")[param].should =~ %r{\Ahttps://}
+        Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "ftp://example.com/")[param].should =~ %r{\Aftp://}
+      end
+
+      it "should fail if '#{param}' does not use one of the following protocols (file|http|https|ftp)" do
+        expect { Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "gopher://example.com/") }.to raise_error
+      end
+    end
   end
 end
