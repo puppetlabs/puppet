@@ -22,8 +22,15 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
              "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n")
     end
 
+    def rpm_whatprovides
+      pkg.provider.expects(:rpm).
+        with('-q', 'faff', '--nosignature', '--whatprovides', '--nodigest', '--qf',
+             "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n")
+    end
+
     it "should report absent packages" do
       rpm.raises(Puppet::ExecutionFailure, "couldn't find rpm")
+      rpm_whatprovides.raises(Puppet::ExecutionFailure, "couldn't find rpm")
       pkg.property(:ensure).retrieve.should == :absent
     end
 
