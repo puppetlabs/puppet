@@ -75,13 +75,21 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     #NOTE: Prior to a fix for issue 1243, this method potentially returned a cached value
     #IF YOU CALL THIS METHOD, IT WILL CALL RPM
     #Use get(:property) to check if cached values are available
-    cmd = ["-q", @resource[:name], "#{self.class.nosignature}", "#{self.class.nodigest}", "--qf", self.class::NEVRA_FORMAT]
-
     begin
-      output = rpm(*cmd)
+      output = query_by_name(@resource[:name])
     rescue Puppet::ExecutionFailure
-      # rpm -q exits 1 if package not found
-      return nil
+      # If @resource[:name] is a provides on a base package, we should query
+      # for the package name that contains the provides. query_by_name()'s
+      # second parameter is whether to run --whatprovides on the resource name.
+      # When that returns a package name we run it back through query_by_name()
+      # and if the package which contains the provide is installed then
+      # return success.
+      begin
+        pkg = query_by_name(@resource[:name], true).split(' ')[0]
+        output = query_by_name(pkg)
+      rescue Puppet::ExecutionFailure
+        return nil
+      end
     end
     # FIXME: We could actually be getting back multiple packages
     # for multilib and this will only return the first such package
@@ -151,6 +159,16 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   end
 
   private
+
+  def query_by_name(name, provides=false)
+    query = ["-q", name, "#{self.class.nosignature}"]
+    query << "--whatprovides" if provides
+    ["#{self.class.nodigest}", "--qf", self.class::NEVRA_FORMAT].each do |option|
+      query << option
+    end
+
+    rpm(*query)
+  end
 
   # Turns a array of options into flags to be passed to rpm install(8) and
   # The options can be passed as a string or hash. Note that passing a hash

@@ -258,6 +258,8 @@ describe provider_class do
       Puppet.expects(:debug).never
       Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format], execute_options).raises Puppet::ExecutionFailure.new('package not found')
 
+      # query() in the RPM provider will check for a provides before returning nil
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", resource_name, "--nosignature", "--whatprovides", "--nodigest", "--qf", nevra_format], execute_options).raises Puppet::ExecutionFailure.new('package not found')
       expect(provider.query).to be_nil
     end
   end
