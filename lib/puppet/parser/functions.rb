@@ -22,7 +22,9 @@ module Puppet::Parser::Functions
 
     # Runs a newfunction to create a function for each of the log levels
     Puppet::Util::Log.levels.each do |level|
-      newfunction(level, :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
+      newfunction(level,
+                  :environment => Puppet.lookup(:root_environment),
+                  :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
         send(level, vals.join(" "))
       end
     end
@@ -110,12 +112,16 @@ module Puppet::Parser::Functions
   #   zero or more arguments.  A function with an arity of 2 must be provided
   #   with exactly two arguments, no more and no less.  Added in Puppet 3.1.0.
   #
+  # @option options [Puppet::Node::Environment] :environment (nil) can
+  #   explicitly pass the environment we wanted the function added to.  Only used
+  #   to set logging functions in root environment
+  #
   # @return [Hash] describing the function.
   #
   # @api public
   def self.newfunction(name, options = {}, &block)
     name = name.intern
-    environment = Puppet.lookup(:current_environment)
+    environment = options[:environment] || Puppet.lookup(:current_environment)
 
     Puppet.warning "Overwriting previous definition for function #{name}" if get_function(name, environment)
 
