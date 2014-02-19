@@ -171,7 +171,7 @@ module Puppet::Pops::Parser::HeredocSupport
 
     # Given offset is offset in the subspace
     def offset_on_line(offset)
-      @locator.offset_on_line + @leading_line_offset
+      @locator.offset_on_line(offset) + @leading_line_offset
     end
 
     # Given offset is offset in the subspace

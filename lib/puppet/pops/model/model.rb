@@ -261,6 +261,15 @@ module Puppet::Pops::Model
     contains_one_uni 'body', Expression
   end
 
+  # A heredoc is a wrapper around a LiteralString or a ConcatenatedStringExpression with a specification
+  # of syntax. The expectation is that "syntax" has meaning to a validator. A syntax of nil or '' means
+  # "unspecified syntax".
+  #
+  class HeredocExpression < Expression
+    has_attr 'syntax', String
+    contains_one_uni 'text_expr', Expression, :lowerBound => 1
+  end
+
   # A class definition
   #
   class HostClassDefinition < NamedDefinition
@@ -421,6 +430,18 @@ module Puppet::Pops::Model
   # The expression is typically a QualifiedName, or QualifiedReference.
   #
   class VariableExpression < UnaryExpression; end
+
+  # Epp start
+  class EppExpression < Definition
+  end
+
+  # A string to render
+  class RenderStringExpression < LiteralString
+  end
+
+  # An expression to evluate and render
+  class RenderExpression < UnaryExpression
+  end
 
   # A resource body describes one resource instance
   #

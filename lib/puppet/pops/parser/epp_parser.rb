@@ -23,8 +23,6 @@ class Puppet::Pops::Parser::EppParser < Puppet::Pops::Parser::Parser
   # Performs the parsing and returns the resulting model.
   # The lexer holds state, and this is setup with {#parse_string}, or {#parse_file}.
   #
-  # TODO: Drop support for parsing a ruby file this way (should be done where it is decided
-  #   which file to load/run (i.e. loaders), and initial file to run
   # TODO: deal with options containing origin (i.e. parsing a string from externally known location).
   # TODO: should return the model, not a Hostclass
   #
@@ -47,5 +45,7 @@ class Puppet::Pops::Parser::EppParser < Puppet::Pops::Parser::Parser
     return main
   ensure
     @lexer.clear
+    @namestack = []
+    @definitions = []
   end
 end

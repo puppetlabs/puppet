@@ -122,6 +122,12 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  def build_HeredocExpression(o, name, expr)
+    o.syntax = name
+    o.text_expr = build(expr)
+    o
+  end
+
   # @param name [String] a valid classname
   # @param parameters [Array<Model::Parameter>] may be empty
   # @param parent_class_name [String, nil] a valid classname referencing a parent class, optional.
@@ -245,6 +251,11 @@ class Puppet::Pops::Model::Factory
   def build_ResourceExpression(o, type_name, bodies)
     o.type_name = build(type_name)
     bodies.each {|b| o.addBodies(build(b)) }
+    o
+  end
+
+  def build_RenderStringExpression(o, string)
+    o.value = string;
     o
   end
 
@@ -506,6 +517,9 @@ class Puppet::Pops::Model::Factory
 
   def self.HASH(entries);                new(Model::LiteralHash, *entries);                      end
 
+  # TODO_HEREDOC
+  def self.HEREDOC(name, expr);          new(Model::HeredocExpression, name, expr);              end
+
   def self.LIST(entries);                new(Model::LiteralList, *entries);                      end
 
   def self.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
@@ -532,6 +546,19 @@ class Puppet::Pops::Model::Factory
 
   def self.TEXT(expr)
     new(Model::TextExpression, new(expr).interpolate)
+  end
+
+  # TODO_EPP
+  def self.RENDER_STRING(o)
+    new(Model::RenderStringExpression, o)
+  end
+
+  def self.RENDER_EXPR(expr)
+    new(Model::RenderExpression, expr)
+  end
+
+  def self.EPP(parameters, body)
+    new(Model::EppExpression, parameters, body)
   end
 
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the

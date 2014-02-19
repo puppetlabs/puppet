@@ -3,6 +3,7 @@ require 'puppet/pops/evaluator/compare_operator'
 require 'puppet/pops/evaluator/relationship_operator'
 require 'puppet/pops/evaluator/access_operator'
 require 'puppet/pops/evaluator/closure'
+require 'puppet/pops/evaluator/external_syntax_support'
 
 # This implementation of {Puppet::Pops::Evaluator} performs evaluation using the puppet 3.x runtime system
 # in a manner largely compatible with Puppet 3.x, but adds new features and introduces constraints.
@@ -27,6 +28,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
   #
   include Puppet::Pops::Evaluator::Runtime3Support
+  include Puppet::Pops::Evaluator::ExternalSyntaxSupport
 
   # This constant is not defined as Float::INFINITY in Ruby 1.8.7 (but is available in later version
   # Refactor when support is dropped for Ruby 1.8.7.
@@ -726,6 +728,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         nil
       end
     end
+  end
+
+  # Evaluates Puppet DSL Heredoc
+  def eval_HeredocExpression o, scope
+    result = evaluate(o.text_expr, scope)
+    assert_external_syntax(scope, result, o.syntax, o.text_expr)
+    result
   end
 
   # Evaluates Puppet DSL `if`
