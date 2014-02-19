@@ -303,7 +303,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         @target = path
         return self.parse(text)
       rescue Puppet::Error => detail
-        detail.file = @target
+        detail.file = @target if detail.respond_to?(:file=)
         raise detail
       ensure
         @target = old
