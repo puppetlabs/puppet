@@ -188,7 +188,7 @@ describe provider_class do
 
     describe "on a modern RPM" do
       before(:each) do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '--nosignature', '--nodigest', "--qf", nevra_format], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "--whatprovides", "myresource", '--nosignature', '--nodigest', "--qf", nevra_format], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
       end
 
       let(:rpm_version) { "RPM version 4.10.0\n" }
@@ -201,7 +201,7 @@ describe provider_class do
 
     describe "on an ancient RPM" do
       before(:each) do
-        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q",  "myresource", '', '', '--qf', nevra_format], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
+        Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "--whatprovides", "myresource", '', '', '--qf', nevra_format], execute_options).returns("myresource 0 1.2.3.4 5.el4 noarch\n")
       end
 
       let(:rpm_version) { "RPM version 3.0.6\n" }
@@ -217,7 +217,7 @@ describe provider_class do
   describe "parsing" do
     def parser_test(rpm_output_string, gold_hash, number_of_debug_logs = 0)
       Puppet.expects(:debug).times(number_of_debug_logs)
-      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format], execute_options).returns(rpm_output_string)
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "--whatprovides", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format], execute_options).returns(rpm_output_string)
       expect(provider.query).to eq(gold_hash)
     end
 
@@ -256,7 +256,7 @@ describe provider_class do
 
     it "does not log or fail if rpm returns package not found" do
       Puppet.expects(:debug).never
-      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format], execute_options).raises Puppet::ExecutionFailure.new('package not found')
+      Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "-q", "--whatprovides", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format], execute_options).raises Puppet::ExecutionFailure.new('package not found')
 
       expect(provider.query).to be_nil
     end

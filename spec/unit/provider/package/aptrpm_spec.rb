@@ -18,7 +18,7 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
 
     def rpm
       pkg.provider.expects(:rpm).
-        with('-q', 'faff', '--nosignature', '--nodigest', '--qf',
+        with('-q', '--whatprovides', 'faff', '--nosignature', '--nodigest', '--qf',
              "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n")
     end
 
