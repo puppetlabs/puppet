@@ -1,6 +1,6 @@
 {
   :install => [
-    'git://github.com/puppetlabs/facter.git#stable',
+    'git://github.com/puppetlabs/facter.git#master',
     'git://github.com/puppetlabs/hiera.git#stable',
   ],
   :pre_suite => [
