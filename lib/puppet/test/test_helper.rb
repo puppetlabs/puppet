@@ -40,7 +40,7 @@ module Puppet::Test
       @environmentdir = Dir.mktmpdir('environments')
       Puppet.push_context(Puppet.base_context({
         :environmentpath => @environmentdir,
-        :modulepath => "",
+        :basemodulepath => "",
         :manifest => "/dev/null"
       }), "Initial for specs")
       Puppet::Parser::Functions.reset

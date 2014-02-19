@@ -175,7 +175,7 @@ module Puppet
   # @api private
   def self.base_context(settings)
     environments = settings[:environmentpath]
-    modulepath = Puppet::Node::Environment.split_path(settings[:modulepath])
+    modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
     loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
     loaders << Puppet::Environments::Legacy.new
