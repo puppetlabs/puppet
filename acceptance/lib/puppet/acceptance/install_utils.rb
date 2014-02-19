@@ -72,7 +72,7 @@ module Puppet
         case host['platform']
         when /debian/
           on host, 'iptables -F'
-        when /fedora/
+        when /fedora|el-7/
           on host, puppet('resource', 'service', 'firewalld', 'ensure=stopped')
         when /el|centos/
           on host, puppet('resource', 'service', 'iptables', 'ensure=stopped')
