@@ -44,7 +44,7 @@ class Puppet::Forge
 
     # Return the base Pathname for all the caches.
     def self.base_path
-      Pathname(Puppet.settings[:module_working_dir]) + 'cache'
+      Pathname(Puppet.settings[:module_working_dir]) + "cache-#{Process.pid}"
     end
 
     # Clean out all the caches.
