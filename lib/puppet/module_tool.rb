@@ -103,34 +103,30 @@ module Puppet
       end
     end
 
+    # @param options [Hash<Symbol,String>] This hash will contain any
+    #   command-line arguments that are not Settings, as those will have already
+    #   been extracted by the underlying application code.
+    #
+    # @note Unfortunately the whole point of this method is the side effect of
+    # modifying the options parameter.  This same hash is referenced both
+    # when_invoked and when_rendering.  For this reason, we are not returning
+    # a duplicate.
+    #
+    # An :environment_instance and a :target_dir are added/updated in the
+    # options parameter.
+    #
+    # @api private
     def self.set_option_defaults(options)
-      sep = File::PATH_SEPARATOR
+      current_environment = Puppet.lookup(:current_environment)
+      modulepath =  [options[:target_dir]] + current_environment.full_modulepath
 
-      if options[:environment]
-        Puppet.settings[:environment] = options[:environment]
-      else
-        options[:environment] = Puppet.settings[:environment]
-      end
+      face_environment = current_environment.override_with(
+        :modulepath => modulepath.compact
+      )
 
-      if options[:modulepath]
-        Puppet.settings[:modulepath] = options[:modulepath]
-      else
-        # (#14872) make sure the module path of the desired environment is used
-        # when determining the default value of the --target-dir option
-        Puppet.settings[:modulepath] = options[:modulepath] =
-          Puppet.settings.value(:modulepath, options[:environment])
-      end
-
-      if options[:target_dir]
-        options[:target_dir] = File.expand_path(options[:target_dir])
-        # prepend the target dir to the module path
-        Puppet.settings[:modulepath] = options[:modulepath] =
-          options[:target_dir] + sep + options[:modulepath]
-      else
-        # default to the first component of the module path
-        options[:target_dir] =
-          File.expand_path(options[:modulepath].split(sep).first)
-      end
+      options[:environment_instance] = face_environment
+      # Note: environment will have expanded the path
+      options[:target_dir] = face_environment.full_modulepath.first
     end
   end
 end

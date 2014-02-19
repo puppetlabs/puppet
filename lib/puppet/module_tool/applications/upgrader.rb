@@ -6,7 +6,7 @@ module Puppet::ModuleTool
 
       def initialize(name, forge, options)
         @action              = :upgrade
-        @environment         = Puppet.lookup(:environments).get(Puppet[:environment])
+        @environment         = options[:environment_instance]
         @module_name         = name
         @options             = options
         @force               = options[:force]
