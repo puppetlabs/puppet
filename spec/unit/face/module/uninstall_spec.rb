@@ -8,7 +8,7 @@ describe "puppet module uninstall" do
   let(:options) do
     {}
   end
-  let(:modulepath) { '/module/path' }
+  let(:modulepath) { File.expand_path('/module/path') }
   let(:environment) do
     Puppet::Node::Environment.create(:env, [modulepath], '')
   end
