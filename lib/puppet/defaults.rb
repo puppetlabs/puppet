@@ -928,8 +928,14 @@ EOT
       :type       => :boolean,
       :desc       => "Whether the master should function as a certificate authority.",
     },
-    :modulepath => {
+    :basemodulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
+      :type => :path,
+      :desc => "The base non-environment specific search path for modules, included
+      also in all directory environment and default legacy environment modulepaths.",
+    },
+    :modulepath => {
+      :default => "$basemodulepath",
       :type => :path,
       :desc => "The search path for modules, as a list of directories separated by the system
         path separator character. (The POSIX path separator is ':', and the

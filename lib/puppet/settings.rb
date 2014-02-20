@@ -1059,12 +1059,16 @@ Generated on #{Time.now}.
           end
         end
       else
+        values_from_section = nil
         if @configuration_file
-          section = @configuration_file.sections[name]
-          if section
-            ValuesFromSection.new(name, section)
+          if section = @configuration_file.sections[name]
+            values_from_section = ValuesFromSection.new(name, section)
           end
         end
+        if values_from_section.nil? && name != :main && @global_defaults_initialized
+          values_from_section = ValuesFromCurrentEnvironment.new(name)
+        end
+        values_from_section
       end
     end.compact
   end
@@ -1248,6 +1252,42 @@ Generated on #{Time.now}.
       if setting
         setting.value
       end
+    end
+  end
+
+  # @api private
+  class ValuesFromCurrentEnvironment
+    def initialize(desired_environment)
+      @desired_environment = desired_environment
+    end
+
+    def include?(name)
+      return false unless name == :modulepath || name == :manifest
+      if i = instance
+        i.include?(name)
+      end
+    end
+
+    def lookup(name)
+      return nil unless name == :modulepath || name == :manifest
+      if i = instance
+        i[name]
+      end
+    end
+
+    private
+
+    def instance
+      unless @instance
+        env = Puppet.lookup(:current_environment)
+        if env.name == @desired_environment
+          @instance = {
+            :modulepath => env.full_modulepath.join(File::PATH_SEPARATOR),
+            :manifest => env.manifest,
+          }
+        end
+      end
+      return @instance
     end
   end
 end
