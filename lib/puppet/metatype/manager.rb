@@ -142,6 +142,11 @@ module Manager
   # @return [Puppet::Type, nil] the type or nil if the type was not defined and could not be loaded
   #
   def type(name)
+    # Avoid loading if name obviously is not a type name
+    if name.to_s.include?(':')
+      return nil
+    end
+
     @types ||= {}
 
     # We are overwhelmingly symbols here, which usually match, so it is worth
