@@ -4,6 +4,7 @@ confine :except, :platform => 'solaris'
 confine :except, :platform => 'windows'
 confine :except, :platform => 'el-6'
 confine :except, :platform => 'lucid'
+confine :except, :platform => 'sles-11'
 
 testdir = master.tmpdir('use_enc')
 
