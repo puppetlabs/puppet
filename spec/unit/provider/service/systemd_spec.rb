@@ -9,12 +9,12 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     described_class.stubs(:which).with('systemctl').returns '/bin/systemctl'
   end
-  
+
 
   let :provider do
     described_class.new(:name => 'sshd.service')
   end
-  
+
   osfamily = [ 'archlinux' ]
 
   osfamily.each do |osfamily|
@@ -22,7 +22,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
       described_class.default?.should be_true
     end
-  end  
+  end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
@@ -37,7 +37,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
 
     it "should get a list of services from systemctl list-units" do
       pending('A service that has been killed (ACTIVE=failed) is not recognized')
-      described_class.expects(:systemctl).with('list-units', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units'))
+      described_class.expects(:systemctl).with('list-units', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units'))
       described_class.instances.map(&:name).should =~ %w{
         auditd.service
         crond.service
@@ -49,6 +49,24 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         ip6tables.service
         puppet.service
         sshd.service
+      }
+    end
+
+    it "should return only services" do
+      # what we should not do if we want only services
+      described_class.stubs(:systemctl).with('list-units', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units_all'))
+      # what we should do if we want only services
+      described_class.stubs(:systemctl).with('list-units', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units_services'))
+      described_class.instances.map(&:name).should =~ %w{
+        auditd.service
+        crond.service
+        dbus.service
+        display-manager.service
+        ebtables.service
+        fedora-readonly.service
+        initrd-switch-root.service
+        ip6tables.service
+        puppet.service
       }
     end
   end
