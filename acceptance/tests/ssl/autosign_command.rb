@@ -36,7 +36,7 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
       agents.each do |agent|
         next if agent == master
 
-        on(agent, puppet("agent --test --server #{master} --waitforcert 0"))
+        on(agent, puppet("agent --test --server #{master} --waitforcert 0 --certname #{agent}-autosign"))
         assert_key_generated(agent)
         assert_match(/Caching certificate for #{agent}/, stdout, "Expected certificate to be autosigned")
       end
@@ -56,7 +56,7 @@ test_name "autosign command and csr attributes behavior (#7243,#7244)" do
       agents.each do |agent|
         next if agent == master
 
-        on(agent, puppet("agent --test --server #{master} --waitforcert 0"), :acceptable_exit_codes => [1])
+        on(agent, puppet("agent --test --server #{master} --waitforcert 0 --certname #{agent}-reject"), :acceptable_exit_codes => [1])
         assert_key_generated(agent)
         assert_match(/no certificate found/, stdout, "Expected certificate to not be autosigned")
       end
@@ -123,7 +123,7 @@ custom_attributes:
         next if agent == master
 
         step "attempting to obtain cert for #{agent}"
-        on(agent, puppet("agent --test --server #{master} --waitforcert 0 --csr_attributes '#{agent_csr_attributes[agent]}'"), :acceptable_exit_codes => [0])
+        on(agent, puppet("agent --test --server #{master} --waitforcert 0 --csr_attributes '#{agent_csr_attributes[agent]}' --certname #{agent}-attrs"), :acceptable_exit_codes => [0])
         assert_key_generated(agent)
       end
     end
