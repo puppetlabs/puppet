@@ -730,6 +730,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     end
   end
 
+  # SubLocatable is simply an expression that holds location information
+  def eval_SubLocatableExpression o, scope
+    evaluate(o.expr, scope)
+  end
+
   # Evaluates Puppet DSL Heredoc
   def eval_HeredocExpression o, scope
     result = evaluate(o.text_expr, scope)
