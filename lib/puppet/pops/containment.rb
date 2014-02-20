@@ -10,6 +10,35 @@ module Puppet::Pops::Containment
     EAllContentsEnumerator.new(self)
   end
 
+  def eAllContainers
+    EAllContainersEnumerator.new(self)
+  end
+
+  class EAllContainersEnumerator
+    include Enumerable
+
+    def initialize o
+      @element = o
+    end
+
+    def each &block
+      if block_given?
+        eAllContainers(@element, &block)
+      else
+        self
+      end
+    end
+
+    def eAllContainers(element, &block)
+      x = element.eContainer
+      while !x.nil? do
+        yield x
+        x = x.eContainer
+      end
+    end
+
+  end
+
   class EAllContentsEnumerator
     include Enumerable
     def initialize o
