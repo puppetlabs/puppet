@@ -4,10 +4,12 @@ class Puppet::ModuleTool::Tar::Gnu
   end
 
   def unpack(sourcefile, destdir, owner)
-    Puppet::Util::Execution.execute("#{@command} xzf #{sourcefile} --no-same-owner -C #{destdir}")
-    Puppet::Util::Execution.execute("find #{destdir} -type d -exec chmod 755 {} +")
-    Puppet::Util::Execution.execute("find #{destdir} -type f -exec chmod a-wst {} +")
-    Puppet::Util::Execution.execute("chown -R #{owner} #{destdir}")
+    Dir.chdir(destdir) do
+      Puppet::Util::Execution.execute("gzip -dc #{sourcefile} | #{@command} xof -")
+      Puppet::Util::Execution.execute("find #{destdir} -type d -exec chmod 755 {} +")
+      Puppet::Util::Execution.execute("find #{destdir} -type f -exec chmod a-wst {} +")
+      Puppet::Util::Execution.execute("chown -R #{owner} #{destdir}")
+    end
   end
 
   def pack(sourcedir, destfile)
