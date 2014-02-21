@@ -110,6 +110,19 @@ class Puppet::Node::Environment
                       env_params[:manifest] || manifest)
   end
 
+  # Retrieve the environment for the current process.
+  #
+  # @note This should only used when a catalog is being compiled.
+  #
+  # @api private
+  #
+  # @return [Puppet::Node::Environment] the currently set environment if one
+  #   has been explicitly set, else it will return the '*root*' environment
+  def self.current
+    Puppet.deprecation_warning("Puppet::Node::Environment.current has been replaced by Puppet.lookup(:current_environment), see http://links.puppetlabs.com/current-env-deprecation")
+    Puppet.lookup(:current_environment)
+  end
+
   # @param [String] name Environment name to check for valid syntax.
   # @return [Boolean] true if name is valid
   # @api public

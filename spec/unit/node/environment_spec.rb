@@ -454,4 +454,13 @@ describe Puppet::Node::Environment do
     it_behaves_like 'the environment'
   end
 
+  describe '#current' do
+    it 'should return the current context' do
+      env = Puppet::Node::Environment.new(:test)
+      Puppet::Context.any_instance.expects(:lookup).with(:current_environment).returns(env)
+      Puppet.expects(:deprecation_warning).once
+      Puppet::Node::Environment.current.should equal(env)
+    end
+  end
+
 end
