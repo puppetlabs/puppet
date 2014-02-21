@@ -44,7 +44,7 @@ module Puppet::Environments
 
     # @!macro loader_search_paths
     def search_paths
-      ["environments://static/memory"]
+      ["data:text/plain,internal"]
     end
 
     # @!macro loader_list
@@ -78,7 +78,7 @@ module Puppet::Environments
 
     # @!macro loader_search_paths
     def search_paths
-      ["environments://legacy"]
+      ["file://#{Puppet[:config]}"]
     end
 
     # @note The list of environments for the Legacy environments is always
@@ -127,7 +127,7 @@ module Puppet::Environments
 
     # @!macro loader_search_paths
     def search_paths
-      ["environments://directories/#{@environment_dir}"]
+      ["file://#{@environment_dir}"]
     end
 
     # @!macro loader_list
