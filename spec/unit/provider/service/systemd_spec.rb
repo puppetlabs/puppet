@@ -35,23 +35,6 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       described_class.should respond_to :instances
     end
 
-    it "should get a list of services from systemctl list-units" do
-      pending('A service that has been killed (ACTIVE=failed) is not recognized')
-      described_class.expects(:systemctl).with('list-units', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units'))
-      described_class.instances.map(&:name).should =~ %w{
-        auditd.service
-        crond.service
-        dbus.service
-        display-manager.service
-        ebtables.service
-        fedora-readonly.service
-        initrd-switch-root.service
-        ip6tables.service
-        puppet.service
-        sshd.service
-      }
-    end
-
     it "should return only services" do
       described_class.expects(:systemctl).with('list-units', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units_services'))
       described_class.instances.map(&:name).should =~ %w{
