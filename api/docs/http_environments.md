@@ -9,7 +9,7 @@ Get
 
 Get the list of known environments.
 
-    GET /v2/environments
+    GET /v2.0/environments
 
 ### Parameters
 
@@ -19,7 +19,7 @@ None
 
 Note: module lists shortened for readability.
 
-    GET /v2/environments
+    GET /v2.0/environments
 
     HTTP 200 OK
     Content-Type: application/json
