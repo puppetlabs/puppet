@@ -1065,7 +1065,7 @@ Generated on #{Time.now}.
             values_from_section = ValuesFromSection.new(name, section)
           end
         end
-        if values_from_section.nil? && name != :main && @global_defaults_initialized
+        if values_from_section.nil? && @global_defaults_initialized
           values_from_section = ValuesFromCurrentEnvironment.new(name)
         end
         values_from_section
