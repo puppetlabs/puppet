@@ -10,11 +10,10 @@ class Puppet::Network::HTTP::API::V2::Environments
       "search_paths" => @env_loader.search_paths,
       "environments" => Hash[@env_loader.list.collect do |env|
         [env.name, {
-          "modules" => Hash[env.modules.collect do |mod|
-            [mod.name, {
-              "version" => mod.version
-            }]
-          end]
+          "settings" => {
+            "modulepath" => env.full_modulepath,
+            "manifest" => env.manifest
+          }
         }]
       end]
     }))

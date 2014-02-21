@@ -9,7 +9,7 @@ Get
 
 Get the list of known environments.
 
-    GET /v2/environments
+    GET /v2.0/environments
 
 ### Parameters
 
@@ -19,7 +19,7 @@ None
 
 Note: module lists shortened for readability.
 
-    GET /v2/environments
+    GET /v2.0/environments
 
     HTTP 200 OK
     Content-Type: application/json
@@ -28,10 +28,16 @@ Note: module lists shortened for readability.
       "search_paths": ["/etc/puppet/environments"]
       "environments": {
         "production": {
-          "modules": {
-            "a-module": { "version": "1.3.5" }
-            "a-different-module": { "version": "2.4.6" }
+          "settings": {
+            "modulepath": ["/first/module/directory", "/second/module/directory"],
+            "manifest": ["/location/of/manifests"]
           }
         }
       }
     }
+
+Schema
+------
+
+A environments response body adheres to the {file:api/schemas/environments.json
+api/schemas/environments.json} schema.
