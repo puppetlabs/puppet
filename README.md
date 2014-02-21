@@ -61,13 +61,11 @@ they become available.
 
 Bugfixes and ongoing development will occur in minor releases for the current
 major version. Security fixes will be backported to a previous major version on
-a best-effort basis, until the previous major version is end of lifed. (End of
-life usually happens at "N-2" major versions back, where "N" is the current
-series.)
+a best-effort basis, until the previous major version is no longer maintained.
 
 
 For example: If a security vulnerability is discovered in Puppet 4.1.1, we
-would fix it in the 4 series, most likely as 4.1.2. Puppet Labs will then make
+would fix it in the 4 series, most likely as 4.1.2. Maintainers would then make
 a best effort to backport that fix onto the latest Puppet 3 release.
 
 Long-term support, including security patches and bug fixes, is available for
