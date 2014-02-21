@@ -55,19 +55,22 @@ list](https://groups.google.com/forum/?fromgroups#!forum/puppet-users) is
 available for asking questions and getting help from others. In addition there
 is an active #puppet channel on Freenode.
 
-We use semantic version numbers for our releases, and recommend that users stay 
-as up-to-date as possible by upgrading to patch releases and minor releases as 
+We use semantic version numbers for our releases, and recommend that users stay
+as up-to-date as possible by upgrading to patch releases and minor releases as
 they become available.
 
-Bugfixes and ongoing development will occur in minor releases for the current 
-major version. Security fixes will be backported to a previous major version on 
-a best-effort basis, until the previous major version is end of lifed. 
+Bugfixes and ongoing development will occur in minor releases for the current
+major version. Security fixes will be backported to a previous major version on
+a best-effort basis, until the previous major version is end of lifed. (End of
+life usually happens at "N-2" major versions back, where "N" is the current
+series.)
 
-For example: If a security vulnerability is discovered in Puppet 4.1.1, we 
-would fix it in the 4 series, most likely as 4.1.2. Puppet Labs will then make 
-a best effort to backport that fix onto the latest Puppet 3 release. 
 
-Long-term support, including security patches and bug fixes, is available for 
+For example: If a security vulnerability is discovered in Puppet 4.1.1, we
+would fix it in the 4 series, most likely as 4.1.2. Puppet Labs will then make
+a best effort to backport that fix onto the latest Puppet 3 release.
+
+Long-term support, including security patches and bug fixes, is available for
 commercial customers. Please see the following page for more details:
 
 [Puppet Enterprise Support Lifecycle](http://puppetlabs.com/misc/puppet-enterprise-lifecycle)
