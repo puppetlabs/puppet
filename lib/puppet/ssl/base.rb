@@ -90,6 +90,10 @@ class Puppet::SSL::Base
     content.to_pem
   end
 
+  def to_data_hash
+    to_s
+  end
+
   # Provide the full text of the thing we're dealing with.
   def to_text
     return "" unless content
