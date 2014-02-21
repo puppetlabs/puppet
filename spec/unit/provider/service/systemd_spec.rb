@@ -53,10 +53,7 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
 
     it "should return only services" do
-      # what we should not do if we want only services
-      described_class.stubs(:systemctl).with('list-units', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units_all'))
-      # what we should do if we want only services
-      described_class.stubs(:systemctl).with('list-units', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units_services'))
+      described_class.expects(:systemctl).with('list-units', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units_services'))
       described_class.instances.map(&:name).should =~ %w{
         auditd.service
         crond.service
