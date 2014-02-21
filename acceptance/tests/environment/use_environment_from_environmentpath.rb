@@ -126,7 +126,7 @@ end
 master_opts = {
   'master' => {
     'environmentpath' => "#{testdir}/additional:#{testdir}/base",
-    'modulepath' => "#{testdir}/modules",
+    'basemodulepath' => "#{testdir}/modules",
   }
 }
 
