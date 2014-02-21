@@ -87,6 +87,10 @@ class HavePrintedMatcher
     end
   end
 
+  def failure_message_for_should_not
+    "expected #{@expected.inspect} to not be printed; got:\n#{@actual}"
+  end
+
   def description
     "expect #{@expected.inspect} to be printed"
   end
