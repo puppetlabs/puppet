@@ -90,6 +90,10 @@ module Puppet::Pops::Parser::HeredocSupport
         # Record position where next heredoc (from same line as current @()) should start scanning for content
         ctx[:newline_jump] = scn.pos
 
+        # Emit a token that provides the grammar with location information about the lines on which the heredoc
+        # content is based
+        enqueue_completed([:SUBLOCATE, lines, lines.size], heredoc_offset)
+
         # Process captured lines - remove leading, and trailing newline
         str = heredoc_text(lines, leading, has_margin, remove_break)
 

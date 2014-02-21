@@ -16,7 +16,7 @@ token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
 token IN UNLESS PIPE
 token LAMBDA SELBRACE
 token NUMBER
-token HEREDOC
+token HEREDOC SUBLOCATE
 token RENDER_STRING RENDER_EXPR EPP_START
 token LOW
 
@@ -661,8 +661,8 @@ dqtail
 
 # TODO_HEREDOC
 heredoc
-  : HEREDOC string    { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0], val[1] }
-  | HEREDOC dq_string { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0], val[1] }
+  : HEREDOC SUBLOCATE string    { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0], val[1] }
+  | HEREDOC SUBLOCATE dq_string { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0], val[1] }
 
 # TODO_EPP
 epp_expression
