@@ -731,7 +731,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   # SubLocatable is simply an expression that holds location information
-  def eval_SubLocatableExpression o, scope
+  def eval_SubLocatedExpression o, scope
     evaluate(o.expr, scope)
   end
 

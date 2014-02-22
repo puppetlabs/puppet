@@ -277,6 +277,24 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  # Builds a SubLocatedExpression - this wraps the expression in a sublocation configured
+  # from the given token
+  # A SubLocated holds its own locator that is used for subexpressions holding positions relative
+  # to what it describes.
+  #
+  def build_SubLocatedExpression(o, token, expression)
+    o.expr = build(expression)
+    o.offset = token.offset
+    o.length =  token.length
+    locator = token.locator
+    o.locator = locator
+    o.leading_line_count = locator.leading_line_count
+    o.leading_line_offset = locator.leading_line_offset
+    # Index is held in sublocator's parent locator - needed to be able to reconstruct
+    o.line_offsets = locator.locator.line_index
+    o
+  end
+
   def build_SelectorEntry(o, matching, value)
     o.matching_expr = build(matching)
     o.value_expr = build(value)
@@ -519,6 +537,8 @@ class Puppet::Pops::Model::Factory
 
   # TODO_HEREDOC
   def self.HEREDOC(name, expr);          new(Model::HeredocExpression, name, expr);              end
+
+  def self.SUBLOCATE(token, expr)        new(Model::SubLocatedExpression, token, expr);          end
 
   def self.LIST(entries);                new(Model::LiteralList, *entries);                      end
 

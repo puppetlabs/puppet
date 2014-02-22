@@ -282,23 +282,23 @@ module Puppet::Pops::Model
   end
 
   # Contains one expression which has offsets reported virtually (offset against the Program's
-  # overall locator.
+  # overall locator).
   #
-  class SubLocatableExpression < Expression
+  class SubLocatedExpression < Expression
     contains_one_uni 'expr', Expression, :lowerBound => 1
 
-    # How much each line start is offset (i.e. "margin")
+    # line offset index for contained expressions
     has_many_attr 'line_offsets', Integer
-    # Number of preceding lines
-    has_attr 'leading_line_count', Integer
-    # This expression's offset is the same as the sublocators leading offset
-    # has_attr 'leading_offset', Integer
 
-    # 
+    # Number of preceding lines (before the line_offsets)
+    has_attr 'leading_line_count', Integer
+
+    # The offset of the leading source line (i.e. size of "left margin").
     has_attr 'leading_line_offset', Integer
 
     # The locator for the sub-locatable's children (not for the sublocator itself)
-    # The locator is not serialized
+    # The locator is not serialized and is recreated on demand from the indexing information
+    # in self.
     #
     has_attr 'locator', Object, :lowerBound => 1, :transient => true
 
@@ -316,8 +316,8 @@ module Puppet::Pops::Model
           outer_locator = Puppet::Pops::Parser::Locator.locator(adpater.extract_text, source_ref, line_offsets)
 
           # Create a sublocator that describes an offset from the outer
-          # TODO_HEREDOC: Sublocator should move out from HeredocSupport
-          result = Puppet::Pops::Parser::HeredocSupport::SubLocator.new(outer_locator,
+          # NOTE: the offset of self is the same as the sublocator's leading_offset
+          result = Puppet::Pops::Parser::Locator::SubLocator.new(outer_locator,
             leading_line_count, offset, leading_line_offset)
           setLocator(result)
         end

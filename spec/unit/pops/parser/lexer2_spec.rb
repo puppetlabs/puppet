@@ -296,7 +296,7 @@ describe 'Lexer2' do
       Tex\\tt\\n
       |- END
       CODE
-      tokens_scanned_from(code).should match_tokens2([:HEREDOC, 'syntax'], [:STRING, "Tex\tt\\n"])
+      tokens_scanned_from(code).should match_tokens2([:HEREDOC, 'syntax'], :SUBLOCATE, [:STRING, "Tex\tt\\n"])
     end
 
     it 'lexes "tag", syntax and escapes, margin, right trim and interpolation' do
@@ -307,6 +307,7 @@ describe 'Lexer2' do
       CODE
       tokens_scanned_from(code).should match_tokens2(
         [:HEREDOC, 'syntax'],
+        :SUBLOCATE,
         [:DQPRE, "Tex\tt\\n"],
         [:VARIABLE, "var"],
         [:DQPOST, " After"]

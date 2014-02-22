@@ -47,7 +47,7 @@ module Puppet::Pops::Adapters
       when o.is_a?(Puppet::Pops::Model::Program)
         return o.locator
       # TODO_HEREDOC use case of SubLocator instead
-      when o.respond_to?(:locator) && !(found_locator = o.locator).nil?
+      when o.is_a?(Puppet::Pops::Model::SubLocatedExpression) && !(found_locator = o.locator).nil?
         return found_locator
       when adapter = self.class.get(o)
         return adapter.locator
