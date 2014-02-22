@@ -70,7 +70,6 @@ class Puppet::Pops::IssueReporter
       exception.file = errors[0].file
       raise exception
     end
-    parse_result
   end
 
   def self.format_with_prefix(prefix, message)
