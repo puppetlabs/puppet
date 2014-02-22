@@ -52,7 +52,7 @@ describe Puppet::Node::Environment do
         overridden = environment.override_with(:modulepath => new_path)
         expect(overridden).to_not be_equal(environment)
         expect(overridden.name).to eq(:overridden)
-        expect(overridden.manifest).to eq('orig.pp')
+        expect(overridden.manifest).to eq(File.expand_path('orig.pp'))
         expect(overridden.modulepath).to eq(new_path)
       end
 
@@ -60,7 +60,7 @@ describe Puppet::Node::Environment do
         overridden = environment.override_with(:manifest => 'new.pp')
         expect(overridden).to_not be_equal(environment)
         expect(overridden.name).to eq(:overridden)
-        expect(overridden.manifest).to eq('new.pp')
+        expect(overridden.manifest).to eq(File.expand_path('new.pp'))
         expect(overridden.modulepath).to eq(original_path)
       end
     end
