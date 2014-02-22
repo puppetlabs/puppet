@@ -81,7 +81,7 @@ class Puppet::Node::Environment
     obj.send(:initialize,
              name,
              expand_dirs(extralibs() + modulepath),
-             manifest)
+             File.expand_path(manifest))
     obj
   end
 

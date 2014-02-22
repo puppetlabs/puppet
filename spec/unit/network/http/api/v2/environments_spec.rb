@@ -22,8 +22,8 @@ describe Puppet::Network::HTTP::API::V2::Environments do
       "environments" => {
         "production" => {
           "settings" => {
-            "modulepath" => ["/first", "/second"],
-            "manifest" => "/manifests"
+            "modulepath" => [File.expand_path("/first"), File.expand_path("/second")],
+            "manifest" => File.expand_path("/manifests")
           }
         }
       }
