@@ -363,6 +363,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     [do_dump(o.matching_expr), "=>", do_dump(o.value_expr)]
   end
 
+  def dump_SubLocatedExpression o
+    ["sublocated", do_dump(o.expr)]
+  end
+
   def dump_Object o
     [o.class.to_s, o.to_s]
   end

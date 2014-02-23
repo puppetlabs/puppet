@@ -7,12 +7,12 @@ class Puppetx::Puppetlabs::SyntaxCheckers::Json < Puppetx::Puppet::SyntaxChecker
   # This implementation is abstract, it raises {NotImplementedError} since a subclass should have implemented the
   # method.
   #
+  # Error messages from the checker are capped at 100 chars from the source text.
+  #
   # @param text [String] The text to check
   # @param syntax [String] The syntax identifier in mime style (e.g. 'json', 'json-patch+json', 'xml', 'myapp+xml'
-  # @option location_info [String] :file The filename where the string originates
-  # @option location_info [Integer] :line The line number identifying the location where the string is being used/checked
-  # @option location_info [Integer] :position The position on the line identifying the location where the string is being used/checked
-  # @return [Boolean] Whether the checked string had issues (warnings and/or errors) or not.
+  # @param acceptor [#accept] A Diagnostic acceptor
+  # @param source_pos [Puppet::Pops::Adapters::SourcePosAdapter] A source pos adapter with location information
   # @api public
   #
   def check(text, syntax, acceptor, source_pos)
@@ -31,9 +31,6 @@ class Puppetx::Puppetlabs::SyntaxCheckers::Json < Puppetx::Puppet::SyntaxChecker
       # and the issue code. (In this case especially, where there is only a single error message being issued).
       #
       issue = Puppet::Pops::Issues::issue(:ILLEGAL_JSON) { msg }
-#      source_pos = Puppet::Pops::Adapters::SourcePosAdapter.new()
-#      source_pos.line = location_info[:line]
-#      source_pos.pos = location_info[:pos]
       acceptor.accept(Puppet::Pops::Validation::Diagnostic.new(:error, issue, source_pos.locator.file, source_pos, {}))
     end
   end

@@ -36,7 +36,7 @@ class Puppet::Pops::Model::Factory
     begin
       @@build_visitor.visit_this(self, o, *args)
     rescue =>e
-      # require 'debugger'; debugger # enable this when in trouble...
+      # debug here when in trouble...
       raise e
     end
   end
@@ -46,7 +46,7 @@ class Puppet::Pops::Model::Factory
     begin
       @@interpolation_visitor.visit_this_0(self, current)
     rescue =>e
-      # require 'debugger'; debugger # enable this when in trouble...
+      # debug here when in trouble...
       raise e
     end
   end

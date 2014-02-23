@@ -1,4 +1,3 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
 
 require 'puppet/pops'
@@ -22,9 +21,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     #
     Puppet[:parser] = 'future'
     Puppet[:evaluator] = 'future'
+    # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
+    require 'puppetx'
   end
 
-  let(:parser) { Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
+  let(:parser) {  Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
   let(:node) { 'node.example.com' }
   let(:scope) { s = create_test_scope_for_node(node); s }
   types = Puppet::Pops::Types::TypeFactory
@@ -892,6 +893,73 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       parser.evaluate_string(scope, source, __FILE__)
       scope.compiler.should have_relationship(['File', 'b', '~>', 'File', 'a'])
     end
+  end
+
+  context "When evaluating heredoc" do
+    it "evaluates plain heredoc" do
+      src = "@(END)\nThis is\nheredoc text\nEND\n"
+      parser.evaluate_string(scope, src).should == "This is\nheredoc text\n"
+    end
+
+    it "parses heredoc with margin" do
+      src = [
+      "@(END)",
+      "   This is",
+      "   heredoc text",
+      "   | END",
+      ""
+      ].join("\n")
+      parser.evaluate_string(scope, src).should == "This is\nheredoc text\n"
+    end
+
+    it "parses heredoc with margin and right newline trim" do
+      src = [
+      "@(END)",
+      "   This is",
+      "   heredoc text",
+      "   |- END",
+      ""
+      ].join("\n")
+      parser.evaluate_string(scope, src).should == "This is\nheredoc text"
+    end
+
+    it "parses escape specification" do
+      src = <<-CODE
+      @(END/t)
+      Tex\\tt\\n
+      |- END
+      CODE
+      parser.evaluate_string(scope, src).should == "Tex\tt\\n"
+    end
+
+    it "parses syntax checked specification" do
+      src = <<-CODE
+      @(END:json)
+      ["foo", "bar"]
+      |- END
+      CODE
+      parser.evaluate_string(scope, src).should == '["foo", "bar"]'
+    end
+
+    it "parses syntax checked specification with error and reports it" do
+      src = <<-CODE
+      @(END:json)
+      ['foo', "bar"]
+      |- END
+      CODE
+      expect { parser.evaluate_string(scope, src)}.to raise_error(/Cannot parse invalid JSON string/)
+    end
+
+    it "parses interpolated heredoc epression" do
+      src = <<-CODE
+      $name = 'Fjodor'
+      @("END")
+      Hello $name
+      |- END
+      CODE
+      parser.evaluate_string(scope, src).should == "Hello Fjodor"
+    end
+
   end
 
   context "Detailed Error messages are reported" do
