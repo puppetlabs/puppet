@@ -18,10 +18,10 @@ module Puppet::Pops::Parser::EppSupport
 
   # A block must be passed to scan. It will be called with two arguments, a symbol for the token,
   # and an instance of LexerSupport::TokenValue
-  # PERFORMANCE NOTE: The TokenValue is designed to reduce the amount of garbage / termporary data
-  # and to only convert the lexer's internal tokens on demand. It is slightly mroe costly to create an
+  # PERFORMANCE NOTE: The TokenValue is designed to reduce the amount of garbage / temporary data
+  # and to only convert the lexer's internal tokens on demand. It is slightly more costly to create an
   # instance of a class defined in Ruby than an Array or Hash, but the gain is much bigger since transformation
-  # logic is avoided for many of its memebers (most are never used (e.g. line/pos information which is only of
+  # logic is avoided for many of its members (most are never used (e.g. line/pos information which is only of
   # value in general for error messages, and for some expressions (which the lexer does not know about).
   #
   def scan_epp
