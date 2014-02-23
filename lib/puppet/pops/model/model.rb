@@ -498,6 +498,8 @@ module Puppet::Pops::Model
 
   # Epp start
   class EppExpression < Definition
+    contains_many_uni 'parameters', Parameter
+    contains_one_uni 'body', Expression
   end
 
   # A string to render

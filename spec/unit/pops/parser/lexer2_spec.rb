@@ -333,7 +333,7 @@ describe 'Lexer2' do
       code = <<-CODE
       This is just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2([:RENDER_STRING, "      This is just text\n"])
+      epp_tokens_scanned_from(code).should match_tokens2(:EPP_START, [:RENDER_STRING, "      This is just text\n"])
     end
 
     it 'epp can contain text with interpolated rendered expressions' do
@@ -341,6 +341,7 @@ describe 'Lexer2' do
       This is <%= $x %> just text
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:RENDER_EXPR, nil],
       [:VARIABLE, "x"],
@@ -353,6 +354,7 @@ describe 'Lexer2' do
       This is <% $x=10 %> just text
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
       :EQUALS,
@@ -367,6 +369,7 @@ describe 'Lexer2' do
       just text
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
       :EQUALS,
@@ -382,6 +385,7 @@ describe 'Lexer2' do
       just text
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
       :EQUALS,
@@ -396,6 +400,7 @@ describe 'Lexer2' do
       <%% this is escaped epp %%>
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
       :EQUALS,

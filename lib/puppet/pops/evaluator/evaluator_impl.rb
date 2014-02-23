@@ -394,6 +394,16 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     end
   end
 
+  def eval_RenderStringExpression(o, scope)
+    scope["@epp"] << o.value.dup
+    nil
+  end
+
+  def eval_RenderExpression(o, scope)
+    scope["@epp"] << string(evaluate(o.expr, scope), scope)
+    nil
+  end
+
   # Evaluates Puppet DSL ->, ~>, <-, and <~
   def eval_RelationshipExpression(o, scope)
     # First level evaluation, reduction to basic data types or puppet types, the relationship operator then translates this

@@ -770,6 +770,13 @@ class Puppet::Pops::Model::Factory
     x
   end
 
+  def build_EppExpression(o, parameters, body)
+    parameters.each {|p| o.addParameters(build(p)) }
+    b = f_build_body(body)
+    o.body = b.current if b
+    o
+  end
+
   # If building a factory, simply unwrap the model oject contained in the factory.
   def build_Factory(o)
     o.current

@@ -1157,7 +1157,7 @@ module_eval(<<'.,.,', 'egrammar.ra', 64)
 
 module_eval(<<'.,.,', 'egrammar.ra', 65)
   def _reduce_2(val, _values, result)
-     result = Factory.block_or_expression(*val[0]) 
+     result = create_program(Factory.block_or_expression(*val[0])) 
     result
   end
 .,.,

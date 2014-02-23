@@ -63,7 +63,7 @@ rule
 # Produces [Model::BlockExpression, Model::Expression, nil] depending on multiple statements, single statement or empty
 program
   : statements { result = create_program(Factory.block_or_expression(*val[0])) }
-  | epp_expression { result = Factory.block_or_expression(*val[0]) }
+  | epp_expression { result = create_program(Factory.block_or_expression(*val[0])) }
   | nil
 
 # Produces a semantic model (non validated, but semantically adjusted).

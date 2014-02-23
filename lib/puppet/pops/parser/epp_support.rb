@@ -36,6 +36,8 @@ module Puppet::Pops::Parser::EppSupport
     lex_error "Internal Error: No string or file given to lexer to process." unless scn
 
     ctx[:epp_mode] = :text
+    enqueue_completed([:EPP_START, nil, 0], 0)
+
     interpolate_epp
 
     # This is the lexer's main loop
@@ -57,6 +59,7 @@ module Puppet::Pops::Parser::EppSupport
     ctx = @lexing_context
     eppscanner = EppScanner.new(scn)
     before = scn.pos
+
     s = eppscanner.scan(skip_leading)
 
     case eppscanner.mode

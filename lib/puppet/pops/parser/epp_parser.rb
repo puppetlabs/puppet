@@ -6,7 +6,7 @@ class Puppet::Pops::Parser::EppParser < Puppet::Pops::Parser::Parser
   # @return [void]
   #
   def initvars
-    self.lexer = Puppet::Pops::Parser::Lexer.new({:mode => :epp})
+    self.lexer = Puppet::Pops::Parser::Lexer2.new()# {:mode => :epp})
   end
 
   # Parses a file expected to contain epp text/DSL logic.
