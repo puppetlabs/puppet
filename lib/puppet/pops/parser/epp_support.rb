@@ -46,7 +46,7 @@ module Puppet::Pops::Parser::EppSupport
         yield [ ctx[:after] = token[0], token[1] ]
       end
     end
-    if ctx[:epp_position]
+    if ctx[:epp_open_position]
       lex_error("Unbalanced epp tag, reached <eof> without closing tag.", ctx[:epp_position])
     end
 
