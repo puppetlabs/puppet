@@ -63,3 +63,17 @@ describe Nagios::Base do
     obj.host_name.should == "my_hostname"
   end
 end
+
+describe Nagios::Parser do
+  include PuppetSpec::Files
+
+  subject do
+    described_class.new
+  end
+
+  let(:config) { File.new( my_fixture('define_empty_param') ).read }
+
+  it "should handle empty parameter values" do
+    expect { subject.parse(config) }.to_not raise_error
+  end
+end

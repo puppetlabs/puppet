@@ -8,7 +8,7 @@ require 'racc/parser.rb'
 module Nagios
   class Parser < Racc::Parser
 
-module_eval(<<'...end grammar.ry/module_eval...', 'grammar.ry', 49)
+module_eval(<<'...end grammar.ry/module_eval...', 'grammar.ry', 50)
 require 'strscan'
 
 class ::Nagios::Parser::SyntaxError < RuntimeError; end
@@ -107,6 +107,7 @@ def tokenize_parameter_value
     ;
 
   when (text = @ss.scan(/\n/))                  # newline
+    @in_parameter_value = false
     [:RETURN, text]
 
   when (text = @ss.scan(/.+$/))                 # Value of parameter
@@ -211,33 +212,33 @@ end
 ##### State transition tables begin ###
 
 racc_action_table = [
-     8,     3,     3,    14,    12,    18,    10,     4,     4,     9,
-    14,    12,     6,    19,    12 ]
+     8,     3,     3,    14,    12,    18,    10,     4,     4,    20,
+    12,    14,    12,     9,     6,    12 ]
 
 racc_action_check = [
-     5,     0,     5,    13,     9,    13,     8,     0,     5,     6,
-    11,    12,     3,    14,    19 ]
+     5,     0,     5,    13,     9,    13,     8,     0,     5,    14,
+    14,    11,    12,     6,     3,    20 ]
 
 racc_action_pointer = [
-    -1,   nil,   nil,     9,   nil,     0,     4,   nil,     6,    -4,
-   nil,     6,     3,    -1,     6,   nil,   nil,   nil,   nil,     6,
-   nil ]
+    -1,   nil,   nil,    11,   nil,     0,     8,   nil,     6,    -4,
+   nil,     7,     4,    -1,     2,   nil,   nil,   nil,   nil,   nil,
+     7,   nil ]
 
 racc_action_default = [
-   -11,    -1,    -3,   -11,    -4,   -11,   -11,    -2,   -11,   -11,
-    21,   -11,    -9,   -11,   -11,    -6,   -10,    -7,    -5,   -11,
-    -8 ]
+   -12,    -1,    -3,   -12,    -4,   -12,   -12,    -2,   -12,   -12,
+    22,   -12,   -10,   -12,   -12,    -6,   -11,    -7,    -5,    -9,
+   -12,    -8 ]
 
 racc_goto_table = [
-    11,     1,    15,    16,    17,    13,     7,     5,   nil,   nil,
-    20 ]
+    11,     1,    15,    16,    17,    19,     7,    13,     5,   nil,
+   nil,    21 ]
 
 racc_goto_check = [
-     4,     2,     6,     4,     6,     5,     2,     1,   nil,   nil,
-     4 ]
+     4,     2,     6,     4,     6,     4,     2,     5,     1,   nil,
+   nil,     4 ]
 
 racc_goto_pointer = [
-   nil,     7,     1,   nil,    -9,    -6,    -9 ]
+   nil,     8,     1,   nil,    -9,    -4,    -9 ]
 
 racc_goto_default = [
    nil,   nil,   nil,     2,   nil,   nil,   nil ]
@@ -252,12 +253,13 @@ racc_reduce_table = [
   1, 14, :_reduce_none,
   2, 14, :_reduce_7,
   3, 15, :_reduce_8,
+  2, 15, :_reduce_9,
   1, 13, :_reduce_none,
   2, 13, :_reduce_none ]
 
-racc_reduce_n = 11
+racc_reduce_n = 12
 
-racc_shift_n = 21
+racc_shift_n = 22
 
 racc_token_table = {
   false => 0,
@@ -379,9 +381,16 @@ module_eval(<<'.,.,', 'grammar.ry', 38)
   end
 .,.,
 
-# reduce 9 omitted
+module_eval(<<'.,.,', 'grammar.ry', 39)
+  def _reduce_9(val, _values, result)
+     result = {val[0] => "" } 
+    result
+  end
+.,.,
 
 # reduce 10 omitted
+
+# reduce 11 omitted
 
 def _reduce_none(val, _values, result)
   val[0]
