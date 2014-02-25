@@ -107,7 +107,7 @@ Supported url must conforms to:
 
 OPTIONS
 -------
-Note that any configuration parameter that's valid in the configuration file
+Note that any setting that's valid in the configuration file
 is also a valid long argument.  For example, 'server' is a valid configuration
 parameter, so you can specify '--server <servername>' as an argument.
 

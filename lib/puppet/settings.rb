@@ -114,7 +114,7 @@ class Puppet::Settings
   # Generate the list of valid arguments, in a format that GetoptLong can
   # understand, and add them to the passed option list.
   def addargs(options)
-    # Add all of the config parameters as valid options.
+    # Add all of the settings as valid options.
     self.each { |name, setting|
       setting.getopt_args.each { |args| options << args }
     }
@@ -125,7 +125,7 @@ class Puppet::Settings
   # Generate the list of valid arguments, in a format that OptionParser can
   # understand, and add them to the passed option list.
   def optparse_addargs(options)
-    # Add all of the config parameters as valid options.
+    # Add all of the settings as valid options.
     self.each { |name, setting|
       options << setting.optparse_args
     }
@@ -133,7 +133,7 @@ class Puppet::Settings
     options
   end
 
-  # Is our parameter a boolean parameter?
+  # Is our setting a boolean setting?
   def boolean?(param)
     param = param.to_sym
     @config.include?(param) and @config[param].kind_of?(BooleanSetting)
@@ -405,7 +405,7 @@ class Puppet::Settings
           end
           puts "#{v} = #{value(v,env)}"
         else
-          puts "invalid parameter: #{v}"
+          puts "invalid setting: #{v}"
           return false
         end
       end
@@ -477,7 +477,7 @@ class Puppet::Settings
     mode
   end
 
-  # Return all of the parameters associated with a given section.
+  # Return all of the settings associated with a given section.
   def params(section = nil)
     if section
       section = section.intern if section.is_a? String
@@ -811,11 +811,11 @@ class Puppet::Settings
       name = name.to_sym
       hash[:name] = name
       hash[:section] = section
-      raise ArgumentError, "Parameter #{name} is already defined" if @config.include?(name)
+      raise ArgumentError, "Setting #{name} is already defined" if @config.include?(name)
       tryconfig = newsetting(hash)
       if short = tryconfig.short
         if other = @shortnames[short]
-          raise ArgumentError, "Parameter #{other.name} is already using short name '#{short}'"
+          raise ArgumentError, "Setting #{other.name} is already using short name '#{short}'"
         end
         @shortnames[short] = tryconfig
       end
@@ -863,7 +863,7 @@ class Puppet::Settings
   # Convert our list of config settings into a configuration file.
   def to_config
     str = %{The configuration file for #{Puppet.run_mode.name}.  Note that this file
-is likely to have unused configuration parameters in it; any parameter that's
+is likely to have unused settings in it; any setting that's
 valid anywhere in Puppet can be in any config file, even if it's not used.
 
 Every section can specify three special parameters: owner, group, and mode.
@@ -972,7 +972,7 @@ Generated on #{Time.now}.
 
     setting = @config[param]
 
-    # Short circuit to nil for undefined parameters.
+    # Short circuit to nil for undefined settings.
     return nil if setting.nil?
 
     # Check the cache first.  It needs to be a per-environment
@@ -1222,7 +1222,7 @@ Generated on #{Time.now}.
     def set(name, value)
       if !@defaults[name]
         raise ArgumentError,
-          "Attempt to assign a value to unknown configuration parameter #{name.inspect}"
+          "Attempt to assign a value to unknown setting #{name.inspect}"
       end
 
       if @defaults[name].has_hook?

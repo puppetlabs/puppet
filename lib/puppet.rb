@@ -71,7 +71,7 @@ module Puppet
     end
   end
 
-  # configuration parameter access and stuff
+  # setting access and stuff
   def self.[]=(param,value)
     @@settings[param] = value
   end
@@ -107,7 +107,7 @@ module Puppet
     Puppet::Util::RunMode[@@settings.preferred_run_mode]
   end
 
-  # Load all of the configuration parameters.
+  # Load all of the settings.
   require 'puppet/defaults'
 
   def self.genmanifest
