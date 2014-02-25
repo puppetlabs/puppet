@@ -119,6 +119,62 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     @@string_visitor.visit_this_1(self, o, scope)
   end
 
+  # Call a closure matching arguments by name - Can only be called with a Closure (for now), may be refactored later
+  # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
+  # could create similar objects to Closure, wait until other types of defines are instantiated - they may behave
+  # as special cases of calls - i.e. 'new').
+  #
+  # Call by name supports a "spill_over" mode where extra arguments in the given args_hash are introduced
+  # as variables in the resulting scope.
+  #
+  # @raise ArgumentError, if there are to many or too few arguments
+  # @raise ArgumentError, if given closure is not a Puppet::Pops::Evaluator::Closure
+  #
+  def call_by_name(closure, args_hash, scope, spill_over = false)
+    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Closure)
+    pblock = closure.model
+    parameters = pblock.parameters || []
+
+    if !spill_over && args.size > parameters.size
+      raise ArgumentError, "Too many arguments: #{args.size} for #{parameters.size}" 
+    end
+
+    # associate values with parameters
+    scope_hash = {}
+    parameters.each do |p|
+      scope_hash[p.name] = args_hash[p.name] || evaluate(p.value, scope)
+    end
+    missing = scope_hash.reduce([]) {|memo, entry| memo << entry[0] if entry[1].nil?; memo }
+    unless missing.empty?
+      optional = parameters.count { |p| !p.value.nil? }
+      raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.join(" ,")}"
+    end
+
+    if spill_over
+      # all args from given hash should be used, nil entries replaced by default values should win
+      scope_hash = args_hash.merge(scope_hash)
+    end
+
+    # Store the evaluated name => value associations in a new inner/local/ephemeral scope
+    # (This is made complicated due to the fact that the implementation of scope is overloaded with
+    # functionality and an inner ephemeral scope must be used (as opposed to just pushing a local scope
+    # on a scope "stack").
+
+    # Ensure variable exists with nil value if error occurs.
+    # Some ruby implementations does not like creating variable on return
+    result = nil
+    begin
+      scope_memo = get_scope_nesting_level(scope)
+      # change to create local scope_from - cannot give it file and line - that is the place of the call, not
+      # "here"
+      create_local_scope_from(scope_hash, scope)
+      result = evaluate(pblock.body, scope)
+    ensure
+      set_scope_nesting_level(scope, scope_memo)
+    end
+    result
+  end
+
   # Call a closure - Can only be called with a Closure (for now), may be refactored later
   # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
   # could create similar objects to Closure, wait until other types of defines are instantiated - they may behave
