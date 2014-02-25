@@ -155,19 +155,6 @@ describe Puppet::Provider do
     Puppet::Provider.should respond_to(:specificity)
   end
 
-  it "should consider two defaults to be higher specificity than one default" do
-    one = provider_of do
-      defaultfor :osfamily => "solaris"
-    end
-
-    two = provider_of do
-      defaultfor :osfamily => "solaris", :operatingsystemrelease => "5.10"
-    end
-
-    two.specificity.should > one.specificity
-  end
-
-
   it "should be Comparable" do
     res = Puppet::Type.type(:notify).new(:name => "res")
 
