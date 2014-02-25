@@ -288,6 +288,53 @@ describe Puppet::Provider do
       subject.name.should == type.defaultprovider.name
     end
 
+    describe "when there are multiple defaultfor's of equal specificity" do
+      before :each do
+        subject.defaultfor :operatingsystem => :os1
+        subject.defaultfor :operatingsystem => :os2
+      end
+
+      let(:alternate) { type.provide(:alternate) {} }
+
+      it "should be default for the first defaultfor" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os1
+
+        provider.should be_default
+        alternate.should_not be_default
+      end
+
+      it "should be default for the last defaultfor" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
+
+        provider.should be_default
+        alternate.should_not be_default
+      end
+    end
+
+    describe "when there are multiple defaultfor's with different specificity" do
+      before :each do
+        subject.defaultfor :operatingsystem => :os1
+        subject.defaultfor :operatingsystem => :os2, :operatingsystemmajrelease => "42"
+      end
+
+      let(:alternate) { type.provide(:alternate) {} }
+
+      it "should be default for a more specific, but matching, defaultfor" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
+        Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "42"
+
+        provider.should be_default
+        alternate.should_not be_default
+      end
+
+      it "should be default for a less specific, but matching, defaultfor" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os1
+
+        provider.should be_default
+        alternate.should_not be_default
+      end
+    end
+
     it "should consider any true value enough to be default" do
       alternate = type.provide(:alternate) {}
 
@@ -298,13 +345,16 @@ describe Puppet::Provider do
       alternate.should_not be_default
     end
 
-    it "should not be default if the confine doesn't match" do
+    it "should not be default if the defaultfor doesn't match" do
       subject.should_not be_default
       subject.defaultfor :operatingsystem => :one
       subject.should_not be_default
     end
 
     it "should consider two defaults to be higher specificity than one default" do
+      Facter.expects(:value).with(:osfamily).at_least_once.returns "solaris"
+      Facter.expects(:value).with(:operatingsystemrelease).at_least_once.returns "5.10"
+
       one = type.provide(:one) do
         defaultfor :osfamily => "solaris"
       end

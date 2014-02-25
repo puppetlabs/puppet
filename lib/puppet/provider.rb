@@ -280,30 +280,35 @@ class Puppet::Provider
   end
 
   # @return [Boolean] Returns whether this implementation satisfies all of the default requirements or not.
-  #   Returns false If defaults are empty.
+  #   Returns false if there is no matching defaultfor
   # @see Provider.defaultfor
   #
   def self.default?
-    return false if @defaults.empty?
-    if @defaults.find do |fact, values|
+    default_match ? true : false
+  end
+
+  # Look through the array of defaultfor hashes and return the first match.
+  # @return [Hash<{String => Object}>] the matching hash specified by a defaultfor
+  # @see Provider.defaultfor
+  # @api private
+  def self.default_match
+    return nil if @defaults.empty?
+    @defaults.each do |default|
+      found = default.inject(true) do |result, (fact, values)|
         values = [values] unless values.is_a? Array
+        values.map! { |v| v.to_s.downcase.intern }
+
         if fval = Facter.value(fact).to_s and fval != ""
           fval = fval.to_s.downcase.intern
-        else
-          return false
-        end
 
-        # If any of the values match, we're a default.
-        if values.find do |value| fval == value.to_s.downcase.intern end
-          false
+          result &= values.include?(fval)
         else
-          true
+          result = false
         end
       end
-      return false
-    else
-      return true
+      return default if found
     end
+    return nil
   end
 
   # Sets a facts filter that determine which of several suitable providers should be picked by default.
@@ -315,14 +320,12 @@ class Puppet::Provider
   # @return [void]
   #
   def self.defaultfor(hash)
-    hash.each do |d,v|
-      @defaults[d] = v
-    end
+    @defaults << hash
   end
 
   # @return [Integer] Returns a numeric specificity for this provider based on how many requirements it has
   #  and number of _ancestors_. The higher the number the more specific the provider.
-  # The number of requirements is based on the number of defaults set up with {Provider.defaultfor}.
+  # The number of requirements is based on the hash size of the matching {Provider.defaultfor}.
   #
   # The _ancestors_ is the Ruby Module::ancestors method and the number of classes returned is used
   # to boost the score. The intent is that if two providers are equal, but one is more "derived" than the other
@@ -335,13 +338,15 @@ class Puppet::Provider
     # are to increase the score. What is will actually do is count all classes that Ruby Module::ancestors
     # returns (which can be other classes than those the parent chain) - in a way, an odd measure of the
     # complexity of a provider).
-    (@defaults.length * 100) + ancestors.select { |a| a.is_a? Class }.length
+    match = default_match
+    length = match ? match.length : 0
+    (length * 100) + ancestors.select { |a| a.is_a? Class }.length
   end
 
   # Initializes defaults and commands (i.e. clears them).
   # @return [void]
   def self.initvars
-    @defaults = {}
+    @defaults = []
     @commands = {}
   end
 
@@ -491,9 +496,11 @@ class Puppet::Provider
 
   dochook(:defaults) do
     if @defaults.length > 0
-      return "Default for " + @defaults.collect do |f, v|
-        "`#{f}` == `#{[v].flatten.join(', ')}`"
-      end.sort.join(" and ") + "."
+      return @defaults.collect do |d|
+        "Default for " + d.collect do |f, v|
+          "`#{f}` == `#{[v].flatten.join(', ')}`"
+        end.sort.join(" and ") + "."
+      end.join(" ")
     end
   end
 
