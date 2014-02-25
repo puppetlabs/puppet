@@ -5,8 +5,8 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   commands :systemctl => "systemctl"
 
-  #defaultfor :osfamily => [:redhat, :suse]
   defaultfor :osfamily => [:archlinux]
+  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
 
   def self.instances
     i = []
