@@ -59,6 +59,7 @@ class HavePrintedMatcher
   def matches?(block)
     begin
       $stderr = $stdout = StringIO.new
+      $stdout.set_encoding('UTF-8')
       block.call
       $stdout.rewind
       @actual = $stdout.read
