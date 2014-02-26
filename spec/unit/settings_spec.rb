@@ -569,6 +569,13 @@ describe Puppet::Settings do
       @settings.preferred_run_mode.should == :user
     end
 
+    it "interpolates a boolean false without raising an error" do
+      @settings.define_settings(:section,
+          :trip_wire => { :type => :boolean, :default => false, :desc => "a trip wire" },
+          :tripping => { :default => '$trip_wire', :desc => "once tripped if interpolated was false" })
+      @settings[:tripping].should == "false"
+    end
+
     describe "setbycli" do
       it "should generate a deprecation warning" do
         @settings.handlearg("--one", "blah")
