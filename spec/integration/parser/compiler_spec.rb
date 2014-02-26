@@ -361,7 +361,7 @@ describe "Puppet::Parser::Compiler" do
               $facts[the_earth] = is_flat
               notify { 'test': message => $facts[the_earth] }
             MANIFEST
-          }.to raise_error(/frozen Hash/)
+          }.to raise_error(/frozen [hH]ash/)
         end
 
         it 'should make $facts available even if there are no facts' do
