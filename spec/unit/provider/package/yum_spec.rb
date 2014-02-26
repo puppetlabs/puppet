@@ -16,6 +16,7 @@ describe provider do
      @provider.stubs(:get).with(:version).returns '1'
      @provider.stubs(:get).with(:release).returns '1'
      @provider.stubs(:get).with(:arch).returns 'i386'
+     @provider.stubs(:get).with(:install_options).returns '-x expackage'
   end
   # provider should repond to the following methods
    [:install, :latest, :update, :purge].each do |method|
@@ -33,7 +34,7 @@ describe provider do
 
     it 'should call yum install for :installed' do
       @resource.stubs(:should).with(:ensure).returns :installed
-      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage')
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '-x expackage', :install, 'mypackage')
       @provider.install
     end
 
@@ -44,7 +45,7 @@ describe provider do
 
     it 'should be able to set version' do
       @resource.stubs(:should).with(:ensure).returns '1.2'
-      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage-1.2')
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '-x expackage', :install, 'mypackage-1.2')
       @provider.stubs(:query).returns :ensure => '1.2'
       @provider.install
     end
