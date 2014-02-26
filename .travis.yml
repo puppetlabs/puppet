@@ -4,6 +4,7 @@ script: "bundle exec rake spec"
 notifications:
   email: false
 rvm:
+  - 2.1.0
   - 2.0.0
   - 1.9.3
   - 1.8.7
