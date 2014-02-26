@@ -85,6 +85,15 @@ EOT
       expect(Puppet::Util::Docs.scrub(my_cleaned_output)).to eq my_cleaned_output
     end
 
+    it "trims leading space from one-liners (even when they're buffered with extra newlines)" do
+      input = "
+        Updates values in the `puppet.conf` configuration file.
+      "
+      expected_output = "Updates values in the `puppet.conf` configuration file."
+      output = Puppet::Util::Docs.scrub(input)
+      expect(output).to eq expected_output
+    end
+
 
   end
 end
