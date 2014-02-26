@@ -427,6 +427,11 @@ module Puppet
       :type    => :boolean,
       :desc    => "Stores trusted node data in a hash called $trusted.
         When true also prevents $trusted from being overridden in any scope.",
+    },
+    :immutable_node_data => {
+      :default => '$trusted_node_data',
+      :type    => :boolean,
+      :desc    => "When true, also prevents $trusted and $facts from being overridden in any scope",
     }
   )
   Puppet.define_settings(:module_tool,
