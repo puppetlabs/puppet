@@ -7,11 +7,14 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   desc "Ubuntu service management with `upstart`.
 
-  This provider manages `upstart` jobs, which have replaced `initd` services
-  on Ubuntu. For `upstart` documentation, see <http://upstart.ubuntu.com/>.
+  This provider manages `upstart` jobs on Ubuntu. For `upstart` documentation,
+  see <http://upstart.ubuntu.com/>.
   "
-  # confine to :ubuntu for now because I haven't tested on other platforms
-  confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]
+
+  confine :any => [
+    Facter.value(:operatingsystem) == 'Ubuntu',
+    (Facter.value(:osfamily) == 'RedHat' and Facter.value(:operatingsystemrelease) =~ /^6\./),
+  ]
 
   defaultfor :operatingsystem => :ubuntu
 
@@ -28,6 +31,18 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def self.instances
     self.get_services(self.excludes) # Take exclude list from init provider
   end
+
+  def self.excludes
+    excludes = super
+    if Facter.value(:osfamily) == 'RedHat'
+      # Puppet cannot deal with services that have instances, so we have to
+      # ignore these services using instances on redhat based systems.
+      excludes += %w[serial tty]
+    end
+
+    excludes
+  end
+
 
   def self.get_services(exclude=[])
     instances = []
