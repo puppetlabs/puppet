@@ -186,11 +186,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def deletecmd
-    if @resource.forcelocal?
-       cmd = [command(:localdelete)]
-    else
-       cmd = [command(:delete)]
-    end
+    cmd = [command(:delete)]
     cmd += @resource.managehome? ? ['-r'] : []
     cmd << @resource[:name]
   end

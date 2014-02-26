@@ -125,6 +125,13 @@ describe Puppet::Type.type(:user).provider(:useradd) do
         provider.expects(:execute).with(all_of(includes('/usr/sbin/usermod'), includes('-e')))
         provider.create
       end
+
+      it "should use userdel to delete users" do
+        resource[:ensure] = :absent
+        provider.stubs(:exists?).returns(true)
+        provider.expects(:execute).with(includes('/usr/sbin/userdel'))
+        provider.delete
+      end
     end
 
     describe "on systems that allow to set shell" do
