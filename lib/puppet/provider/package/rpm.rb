@@ -5,11 +5,12 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   desc "RPM packaging support; should work anywhere with a working `rpm`
     binary.
 
-    This provider supports the `install_options` attribute, which allows
-    command-line flags to be passed to the RPM binary. Install options should be
-    specified as an array, where each element is either a string or a
-    `{'--flag' => 'value'}` hash. (That hash example would be equivalent to a
-    `'--flag=value'` string; the hash syntax is available as a convenience.)"
+    This provider supports the `install_options` and `uninstall_options`
+    attributes, which allow command-line flags to be passed to the RPM binary.
+    These options should be specified as an array, where each element is either
+    a string or a `{'--flag' => 'value'}` hash. (That hash example would be
+    equivalent to a `'--flag=value'` string; the hash syntax is available as a
+    convenience.)"
 
   has_feature :versionable
   has_feature :install_options
