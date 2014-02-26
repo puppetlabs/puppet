@@ -503,6 +503,10 @@ class Puppet::Parser::Compiler
     if Puppet[:trusted_node_data]
       @topscope.set_trusted(node.trusted_data)
     end
+    if(Puppet[:immutable_node_data])
+      facts_hash = node.facts.nil? ? {} : node.facts.values
+      @topscope.set_facts(facts_hash)
+    end
   end
 
   def create_settings_scope
