@@ -372,6 +372,29 @@ describe Puppet::Provider do
 
       child.specificity.should > parent.specificity
     end
+
+    describe "using a :feature key" do
+      before :each do
+        Puppet.features.add(:yay) do true end
+        Puppet.features.add(:boo) do false end
+      end
+
+      it "is default for an available feature" do
+        one = type.provide(:one) do
+          defaultfor :feature => :yay
+        end
+
+        one.should be_default
+      end
+
+      it "is not default for a missing feature" do
+        two = type.provide(:two) do
+          defaultfor :feature => :boo
+        end
+
+        two.should_not be_default
+      end
+    end
   end
 
   context "provider commands" do

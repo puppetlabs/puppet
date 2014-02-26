@@ -294,21 +294,34 @@ class Puppet::Provider
   def self.default_match
     return nil if @defaults.empty?
     @defaults.each do |default|
-      found = default.inject(true) do |result, (fact, values)|
-        values = [values] unless values.is_a? Array
-        values.map! { |v| v.to_s.downcase.intern }
-
-        if fval = Facter.value(fact).to_s and fval != ""
-          fval = fval.to_s.downcase.intern
-
-          result &= values.include?(fval)
-        else
-          result = false
+      found = default.inject(true) do |result, (key, values)|
+        case key
+          when :feature
+            result &= feature_match(values)
+          else
+            result &= fact_match(key, values)
         end
       end
       return default if found
     end
     return nil
+  end
+
+  def self.fact_match(fact, values)
+    values = [values] unless values.is_a? Array
+    values.map! { |v| v.to_s.downcase.intern }
+
+    if fval = Facter.value(fact).to_s and fval != ""
+      fval = fval.to_s.downcase.intern
+
+      values.include?(fval)
+    else
+      false
+    end
+  end
+
+  def self.feature_match(value)
+    Puppet.features.send(value.to_s + "?")
   end
 
   # Sets a facts filter that determine which of several suitable providers should be picked by default.
