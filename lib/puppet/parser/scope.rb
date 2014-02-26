@@ -278,7 +278,7 @@ class Puppet::Parser::Scope
     # be used by top scopes and node scopes.
     @class_scopes = {}
 
-    @enable_trusted_data = Puppet[:trusted_node_data]
+    @enable_immutable_data = Puppet[:immutable_node_data]
   end
 
   # Store the fact that we've evaluated a class, and store a reference to
@@ -545,7 +545,7 @@ class Puppet::Parser::Scope
     }
   end
 
-  RESERVED_VARIABLE_NAMES = ['trusted'].freeze
+  RESERVED_VARIABLE_NAMES = ['trusted', 'facts'].freeze
 
   # Set a variable in the current scope.  This will override settings
   # in scopes above, but will not allow variables in the current scope
@@ -561,7 +561,7 @@ class Puppet::Parser::Scope
     end
 
     # Check for reserved variable names
-    if @enable_trusted_data && !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
+    if @enable_immutable_data && !options[:privileged] && RESERVED_VARIABLE_NAMES.include?(name)
       raise Puppet::ParseError, "Attempt to assign to a reserved variable name: '#{name}'"
     end
 
@@ -589,6 +589,10 @@ class Puppet::Parser::Scope
     setvar('trusted', deep_freeze(hash), :privileged => true)
   end
 
+  def set_facts(hash)
+    setvar('facts', deep_freeze(hash), :privileged => true)
+  end
+
   # Deeply freezes the given object. The object and its content must be of the types:
   # Array, Hash, Numeric, Boolean, Symbol, Regexp, NilClass, or String. All other types raises an Error.
   # (i.e. if they are assignable to Puppet::Pops::Types::Data type).
@@ -597,6 +601,7 @@ class Puppet::Parser::Scope
     case object
     when Hash
       object.each {|k, v| deep_freeze(k); deep_freeze(v) }
+      object.freeze
     when NilClass
       # do nothing
     when String

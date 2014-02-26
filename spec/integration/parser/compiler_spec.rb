@@ -314,6 +314,90 @@ describe "Puppet::Parser::Compiler" do
       end
     end
 
+    context 'when working with immutable node data' do
+      context 'and have opted in to immutable_node_data' do
+        before :each do
+          Puppet[:immutable_node_data] = true
+        end
+
+        it 'should make $facts available' do
+          Puppet[:facts_terminus] = :memory
+          facts = Puppet::Node::Facts.new("testing", 'the_facts' => 'straight')
+          Puppet::Node::Facts.indirection.save(facts)
+          node = Puppet::Node.new("testing")
+          node.fact_merge
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+           notify { 'test': message => $facts[the_facts] }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == "straight"
+        end
+
+        it 'should make $facts reserved' do
+          Puppet[:facts_terminus] = :memory
+          facts = Puppet::Node::Facts.new("testing", 'the_facts' => 'straight')
+          Puppet::Node::Facts.indirection.save(facts)
+          node = Puppet::Node.new("testing")
+          node.fact_merge
+
+          expect { 
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+            $facts = {}
+            notify { 'test': message => $facts[the_facts] }
+          MANIFEST
+          }.to raise_error(/assign to a reserved variable name: 'facts'/)
+        end
+
+        it 'should make $facts immutable' do
+          Puppet[:facts_terminus] = :memory
+          facts = Puppet::Node::Facts.new("testing", 'the_facts' => 'straight')
+          Puppet::Node::Facts.indirection.save(facts)
+          node = Puppet::Node.new("testing")
+          node.fact_merge
+
+          expect {
+            catalog = compile_to_catalog(<<-MANIFEST, node)
+              $facts[the_earth] = is_flat
+              notify { 'test': message => $facts[the_earth] }
+            MANIFEST
+          }.to raise_error(/frozen [hH]ash/)
+        end
+
+        it 'should make $facts available even if there are no facts' do
+         Puppet[:facts_terminus] = :memory
+         node = Puppet::Node.new("testing2")
+         node.fact_merge
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            notify { 'test': message => $facts }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == {}
+        end
+      end
+
+      context 'and have not opted in to immutable_node_data' do
+        before :each do
+          Puppet[:immutable_node_data] = false
+        end
+
+        it 'should not make $facts available' do
+         Puppet[:facts_terminus] = :memory
+         facts = Puppet::Node::Facts.new("testing", 'the_facts' => 'straight')
+         Puppet::Node::Facts.indirection.save(facts)
+         node = Puppet::Node.new("testing")
+         node.fact_merge
+
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+            notify { 'test': message => "An $facts space" }
+          MANIFEST
+
+          catalog.resource("Notify[test]")[:message].should == "An  space"
+        end
+      end
+    end
+
     context 'when working with the trusted data hash' do
       context 'and have opted in to trusted_node_data' do
         before :each do

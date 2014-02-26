@@ -1199,7 +1199,7 @@ Generated on #{Time.now}.
           @environment
         elsif varname == "run_mode"
           @mode
-        elsif pval = interpolate(varname.to_sym)
+        elsif !(pval = interpolate(varname.to_sym)).nil?
           pval
         else
           raise InterpolationError, "Could not find value for #{value}"
