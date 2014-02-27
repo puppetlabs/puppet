@@ -65,7 +65,7 @@ module Puppet::Pops::Parser::SlurpSupport
     # Process unicode escapes first as they require getting 4 hex digits
     # If later a \u is found it is warned not to be a unicode escape
     if escapes.include?('u')
-      str.gsub!(/\\u([\da-fAF]{4})/m) {
+      str.gsub!(/\\u([\da-fA-F]{4})/m) {
         [$1.hex].pack("U")
       }
     end
