@@ -107,6 +107,24 @@ describe 'Lexer2' do
     end
   end
 
+  [ 'a-b', 'a--b', 'a-b-c'].each do |string|
+    it "should lex a BARE WORD STRING on the form '#{string}'" do
+      tokens_scanned_from(string).should match_tokens2([:STRING, string])
+    end
+  end
+
+  { '-a'   =>      [:MINUS, :NAME],
+    '--a'  =>      [:MINUS, :MINUS, :NAME],
+    'a-'   =>      [:NAME, :MINUS],
+    'a- b'   =>    [:NAME, :MINUS, :NAME],
+    'a--'  =>      [:NAME, :MINUS, :MINUS],
+    'a-$3' =>      [:NAME, :MINUS, :VARIABLE],
+  }.each do |source, expected|
+    it "should lex leading and trailing hyphens from #{source}" do
+      tokens_scanned_from(source).should match_tokens2(*expected)
+    end
+  end
+
   { 'false'=>false, 'true'=>true}.each do |string, value|
     it "should lex a BOOLEAN on the form '#{string}'" do
       tokens_scanned_from(string).should match_tokens2([:BOOLEAN, value])
