@@ -45,7 +45,7 @@ module Puppet
 
         # List the hosts.
         def list(ca)
-          signed = ca.list
+          signed = ca.list if [:signed, :all].include?(subjects)
           requests = ca.waiting?
 
           case subjects
@@ -57,6 +57,7 @@ module Puppet
             hosts = requests
           else
             hosts = subjects
+            signed = ca.list(hosts)
           end
 
           certs = {:signed => {}, :invalid => {}, :request => {}}
@@ -72,7 +73,7 @@ module Puppet
 
             if verify_error
               certs[:invalid][host] = [ Puppet::SSL::Certificate.indirection.find(host), verify_error ]
-            elsif signed.include?(host)
+            elsif (signed and signed.include?(host))
               certs[:signed][host]  = Puppet::SSL::Certificate.indirection.find(host)
             else
               certs[:request][host] = Puppet::SSL::CertificateRequest.indirection.find(host)
