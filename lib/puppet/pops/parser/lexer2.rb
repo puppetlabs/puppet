@@ -154,6 +154,7 @@ class Puppet::Pops::Parser::Lexer2
   #
   PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][\w]*)+}
   PATTERN_NAME           = %r{((::)?[a-z][\w]*)(::[a-z][\w]*)*}
+  PATTERN_BARE_WORD      = %r{[a-z_](?:[\w-]*[\w])?}
 
   PATTERN_DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
   PATTERN_NUMBER         = %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b}
@@ -565,12 +566,20 @@ class Puppet::Pops::Parser::Lexer2
     when 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
     'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
       value = scn.scan(PATTERN_NAME)
-      if value
+      # NAME or false start because followed by hyphen(s) and word
+      if value && !scn.match?(/-+\w/)
         emit_completed(KEYWORDS[value] || [:NAME, value, scn.pos - before], before)
       else
-        # move to faulty position ([a-z] was ok)
-        scn.pos = scn.pos + 1
-        lex_error("Illegal name")
+        # Restart and check entire pattern (for ease of detecting non allowed trailing hyphen)
+        scn.pos = before
+        value = scn.scan(PATTERN_BARE_WORD)
+        if value
+          emit_completed([:STRING, value, scn.pos - before], before)
+        else
+          # move to faulty position ([a-z] was ok)
+          scn.pos = scn.pos + 1
+          lex_error("Illegal name")
+        end
       end
 
     when 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
