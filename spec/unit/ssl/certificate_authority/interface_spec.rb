@@ -185,7 +185,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         @digest = mock("digest")
         @digest.stubs(:to_s).returns("(fingerprint)")
         @ca.expects(:waiting?).returns %w{host1 host2 host3}
-        @ca.expects(:list).returns %w{host4 host5 host6}
+        @ca.expects(:list).returns(%w{host4 host5 host6}).at_most(1)
         @csr.stubs(:digest).returns @digest
         @cert.stubs(:digest).returns @digest
         @ca.stubs(:verify)
@@ -207,6 +207,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
       describe "and :all was provided" do
         it "should print a string containing all certificate requests and certificates" do
+          @ca.expects(:list).returns %w{host4 host5 host6}
           @ca.stubs(:verify).with("host4").raises(Puppet::SSL::CertificateAuthority::CertificateVerificationError.new(23), "certificate revoked")
 
           applier = @class.new(:list, :to => :all)
@@ -226,6 +227,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
       describe "and :signed was provided" do
         it "should print a string containing all signed certificate requests and certificates" do
+          @ca.expects(:list).returns %w{host4 host5 host6}
           applier = @class.new(:list, :to => :signed)
 
           applier.expects(:puts).with(<<-OUTPUT.chomp)
