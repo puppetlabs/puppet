@@ -328,6 +328,30 @@ describe "Puppet::Parser::Compiler" do
       end
     end
 
+    context "when dealing with variable references" do
+      it 'an initial underscore in a variable name is ok' do
+        node = Puppet::Node.new("testing_x")
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          class a { $_a = 10}
+          include a
+          notify { 'test': message => $a::_a }
+        MANIFEST
+
+        catalog.resource("Notify[test]")[:message].should == 10
+      end
+
+      it 'an initial underscore in not ok if elsewhere than last segment' do
+        node = Puppet::Node.new("testing_x")
+        expect { 
+          catalog = compile_to_catalog(<<-MANIFEST, node)
+          class a { $_a = 10}
+          include a
+          notify { 'test': message => $_a::_a }
+        MANIFEST
+          }.to raise_error(/Illegal variable name/)
+      end
+    end
+
     context 'when working with the trusted data hash' do
       context 'and have opted in to hashed_node_data' do
         before :each do
