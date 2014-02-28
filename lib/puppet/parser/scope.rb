@@ -599,15 +599,18 @@ class Puppet::Parser::Scope
   #
   def deep_freeze(object)
     case object
+    when Array
+      object.each {|v| deep_freeze(v) }
+      object.freeze
     when Hash
       object.each {|k, v| deep_freeze(k); deep_freeze(v) }
       object.freeze
-    when NilClass
+    when NilClass, Numeric, TrueClass, FalseClass
       # do nothing
     when String
       object.freeze
     else
-      raise Puppet::Error, "Unsupported data type: '#{object.class}"
+      raise Puppet::Error, "Unsupported data type: '#{object.class}'"
     end
     object
   end
