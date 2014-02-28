@@ -348,7 +348,8 @@ class Puppet::Node::Environment
   end
 
   def check_for_reparse
-    if @known_resource_types && @known_resource_types.require_reparse?
+    if (Puppet[:code] != @parsed_code) || (@known_resource_types && @known_resource_types.require_reparse?)
+      @parsed_code = nil
       @known_resource_types = nil
     end
   end
@@ -431,8 +432,9 @@ class Puppet::Node::Environment
   def perform_initial_import
     return empty_parse_result if Puppet[:ignoreimport]
     parser = Puppet::Parser::ParserFactory.parser(self)
-    if code = Puppet[:code] and code != ""
-      parser.string = code
+    @parsed_code = Puppet[:code]
+    if @parsed_code != ""
+      parser.string = @parsed_code
       parser.parse
     else
       file = self.manifest
