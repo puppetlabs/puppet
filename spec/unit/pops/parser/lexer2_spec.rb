@@ -164,7 +164,14 @@ describe 'Lexer2' do
   { "''"      => '',
     "'a'"     => 'a',
     "'a\\'b'" =>"a'b",
-    "'a\\r\\n\\t\\s\\$\\\"\\\\b'" => "a\\r\\n\\t\\s\\$\\\"\\\\b"
+    "'a\\rb'" =>"a\\rb",
+    "'a\\nb'" =>"a\\nb",
+    "'a\\tb'" =>"a\\tb",
+    "'a\\sb'" =>"a\\sb",
+    "'a\\$b'" =>"a\\$b",
+    "'a\\\"b'" =>"a\\\"b",
+    "'a\\\\b'" =>"a\\b",
+    "'a\\\\'" =>"a\\",
   }.each do |source, expected|
     it "should lex a single quoted STRING on the form #{source}" do
       tokens_scanned_from(source).should match_tokens2([:STRING, expected])
