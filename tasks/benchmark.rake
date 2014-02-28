@@ -21,7 +21,6 @@ namespace :benchmark do
         @benchmark = Benchmarker.new(ENV['TARGET'], ENV['SIZE'].to_i)
       end
 
-      desc "Generate the #{name} scenario."
       task :generate => :setup do
         @benchmark.generate
         @benchmark.setup
