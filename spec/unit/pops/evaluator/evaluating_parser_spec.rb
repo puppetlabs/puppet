@@ -840,6 +840,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(error_pattern)
       end
     end
+
+    context "an initial underscore in the last segment of a var name is allowed" do
+      { '$_a  = 1'   => 1,
+        '$__a = 1'   => 1,
+      }.each do |source, value|
+        it "as in this example '#{source}'" do
+          parser.evaluate_string(scope, source, __FILE__).should == value
+        end
+      end
+    end
   end
 
   context "When evaluating relationships" do
