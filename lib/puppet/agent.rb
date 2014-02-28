@@ -15,8 +15,12 @@ class Puppet::Agent
   def initialize(client_class, should_fork=true)
     @splayed = false
 
-    @should_fork = should_fork
+    @should_fork = can_fork? && should_fork
     @client_class = client_class
+  end
+
+  def can_fork?
+    Puppet.features.posix?
   end
 
   def needing_restart?
