@@ -292,19 +292,16 @@ class Puppet::Provider
   # @see Provider.defaultfor
   # @api private
   def self.default_match
-    return nil if @defaults.empty?
-    @defaults.each do |default|
-      found = default.inject(true) do |result, (key, values)|
+    @defaults.find do |default|
+      default.all? do |key, values|
         case key
           when :feature
-            result &= feature_match(values)
+            feature_match(values)
           else
-            result &= fact_match(key, values)
+            fact_match(key, values)
         end
       end
-      return default if found
     end
-    return nil
   end
 
   def self.fact_match(fact, values)
