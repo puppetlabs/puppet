@@ -139,8 +139,16 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # Fetch the list of packages currently installed on the system.
   def self.instances
     packages = self.installedpkgs
-    packages.concat(self.installedgroups)
-    packages
+    groups   = self.installedgroups
+    result   = nil
+
+    if (!packages && !groups)
+      nil
+    elsif (packages && groups)
+      packages.concat(groups)
+    else
+      packages
+    end
   end
 
 
