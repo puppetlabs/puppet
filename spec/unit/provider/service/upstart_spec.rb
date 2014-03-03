@@ -22,6 +22,14 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     provider_class.stubs(:which).with("/sbin/initctl").returns("/sbin/initctl")
   end
 
+  describe "excluding services" do
+    it "ignores tty and serial on Redhat systems" do
+      Facter.stubs(:value).with(:osfamily).returns('RedHat')
+      expect(described_class.excludes).to include 'serial'
+      expect(described_class.excludes).to include 'tty'
+    end
+  end
+
   describe "#instances" do
     it "should be able to find all instances" do
       lists_processes_as("rc stop/waiting\nssh start/running, process 712")
