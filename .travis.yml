@@ -12,3 +12,5 @@ rvm:
 matrix:
   allow_failures:
     - rvm: ruby-head
+env:
+  - SPEC_OPTS="--format documentation"
