@@ -473,6 +473,12 @@ describe Puppet::Settings do
         @settings[:why_so_serious] = "foo"
       }.should raise_error(ArgumentError, /unknown setting/)
     end
+
+    it "allows overriding cli args based on the cli-set value" do
+      @settings.handlearg("--myval", "cliarg")
+      @settings.set_value(:myval, "modified #{@settings[:myval]}", :cli)
+      expect(@settings[:myval]).to eq("modified cliarg")
+    end
   end
 
   describe "when returning values" do
