@@ -79,6 +79,7 @@ class Puppet::Settings
       :cli => Values.new(:cli, @config),
       :memory => Values.new(:memory, @config),
       :application_defaults => Values.new(:application_defaults, @config),
+      :overridden_defaults => Values.new(:overridden_defaults, @config),
     }
     @configuration_file = nil
 
@@ -108,6 +109,11 @@ class Puppet::Settings
   # Set a config value.  This doesn't set the defaults, it sets the value itself.
   def []=(param, value)
     @value_sets[:memory].set(param, value)
+    unsafe_flush_cache
+  end
+
+  def override_default(param, value)
+    @value_sets[:overridden_defaults].set(param, value)
     unsafe_flush_cache
   end
 
@@ -161,6 +167,7 @@ class Puppet::Settings
     end
 
     @value_sets[:memory] = Values.new(:memory, @config)
+    @value_sets[:overridden_defaults] = Values.new(:overridden_defaults, @config)
 
     @cache.clear
   end
@@ -708,11 +715,7 @@ class Puppet::Settings
 
   # The order in which to search for values.
   def searchpath(environment = nil)
-    if environment
-      [:cli, :memory, environment, :run_mode, :main, :application_defaults]
-    else
-      [:cli, :memory, :run_mode, :main, :application_defaults]
-    end
+    [:memory, :cli, environment, :run_mode, :main, :application_defaults, :overridden_defaults].compact
   end
 
   # Get a list of objects per section
@@ -1050,7 +1053,7 @@ Generated on #{Time.now}.
   def value_sets_for(environment, mode)
     searchpath(environment).collect do |name|
       case name
-      when :cli, :memory, :application_defaults
+      when :cli, :memory, :application_defaults, :overridden_defaults
         @value_sets[name]
       when :run_mode
         if @configuration_file
