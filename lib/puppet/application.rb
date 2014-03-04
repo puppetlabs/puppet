@@ -400,8 +400,6 @@ class Application
       Puppet::Util::Log.level = :debug
     elsif options[:verbose]
       Puppet::Util::Log.level = :info
-    elsif Puppet[:log_level]
-      Puppet::Util::Log.level = Puppet[:log_level]
     end
   end
 
