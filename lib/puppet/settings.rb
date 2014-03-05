@@ -102,16 +102,31 @@ class Puppet::Settings
   end
 
   # Retrieve a config value
+  # @param param [Symbol] the name of the setting
+  # @return [Object] the value of the setting
+  # @api private
   def [](param)
     value(param)
   end
 
   # Set a config value.  This doesn't set the defaults, it sets the value itself.
+  # @param param [Symbol] the name of the setting
+  # @param value [Object] the new value of the setting
+  # @api private
   def []=(param, value)
     @value_sets[:memory].set(param, value)
     unsafe_flush_cache
   end
 
+  # Create a new default value for the given setting. The default overrides are
+  # higher precedence than the defaults given in defaults.rb, but lower
+  # precedence than any other values for the setting. This allows one setting
+  # `a` to change the default of setting `b`, but still allow a user to provide
+  # a value for setting `b`.
+  #
+  # @param param [Symbol] the name of the setting
+  # @param value [Object] the new default value for the setting
+  # @api private
   def override_default(param, value)
     @value_sets[:overridden_defaults].set(param, value)
     unsafe_flush_cache
