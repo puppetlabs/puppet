@@ -14,7 +14,7 @@ Source0: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
 
 PreReq: %{insserv_prereq} %{fillup_prereq}
 Requires: ruby >= 1.8.7
-Requires: facter >= 1.6.11
+Requires: facter >= 1:1.7.0
 Requires: cron
 Requires: logrotate
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)

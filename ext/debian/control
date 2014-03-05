@@ -3,7 +3,7 @@ Section: admin
 Priority: optional
 Maintainer: Puppet Labs <info@puppetlabs.com>
 Uploaders: Micah Anderson <micah@debian.org>, Andrew Pollock <apollock@debian.org>, Nigel Kersten <nigel@explanatorygap.net>, Stig Sandbeck Mathisen <ssm@debian.org>
-Build-Depends-Indep: ruby | ruby-interpreter, libopenssl-ruby, facter (>= 1.6.12)
+Build-Depends-Indep: ruby | ruby-interpreter, libopenssl-ruby, facter (>= 1.7.0)
 Build-Depends: debhelper (>= 7.0.0), openssl
 Standards-Version: 3.9.1
 Vcs-Git: git://github.com/puppetlabs/puppet
@@ -11,7 +11,7 @@ Homepage: http://projects.puppetlabs.com/projects/puppet
 
 Package: puppet-common
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, libxmlrpc-ruby, libopenssl-ruby, ruby-shadow | libshadow-ruby1.8, libaugeas-ruby | libaugeas-ruby1.9.1 | libaugeas-ruby1.8, adduser, lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 1.0.0), facter (>= 1.6.12), ruby-rgen (>= 0.6.5), libjson-ruby | ruby-json
+Depends: ${misc:Depends}, ruby | ruby-interpreter, libxmlrpc-ruby, libopenssl-ruby, ruby-shadow | libshadow-ruby1.8, libaugeas-ruby | libaugeas-ruby1.9.1 | libaugeas-ruby1.8, adduser, lsb-base, sysv-rc (>= 2.86) | file-rc, hiera (>= 1.0.0), facter (>= 1.7.0), ruby-rgen (>= 0.6.5), libjson-ruby | ruby-json
 Recommends: lsb-release, debconf-utils
 Suggests: ruby-selinux | libselinux-ruby1.8, librrd-ruby1.9.1 | librrd-ruby1.8
 Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
@@ -56,7 +56,7 @@ Description: Centralized configuration management - agent startup and compatibil
 
 Package: puppetmaster-common
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, puppet-common (= ${binary:Version}), facter (>= 1.6.12), lsb-base
+Depends: ${misc:Depends}, ruby | ruby-interpreter, puppet-common (= ${binary:Version}), facter (>= 1.7.0), lsb-base
 Breaks: puppet (<< 0.24.7-1), puppetmaster (<< 2.6.1~rc2-1)
 Replaces: puppetmaster (<< 2.6.1~rc2-1)
 Suggests: apache2 | nginx, puppet-el, vim-puppet, stompserver, ruby-stomp | libstomp-ruby1.8,
@@ -78,7 +78,7 @@ Description: Puppet master common scripts
 
 Package: puppetmaster
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, puppetmaster-common (= ${source:Version}), facter (>= 1.6.12), lsb-base
+Depends: ${misc:Depends}, ruby | ruby-interpreter, puppetmaster-common (= ${source:Version}), facter (>= 1.7.0), lsb-base
 Breaks: puppet (<< 0.24.7-1)
 Suggests: apache2 | nginx, puppet-el, vim-puppet, stompserver, ruby-stomp | libstomp-ruby1.8,
  rdoc, ruby-ldap | libldap-ruby1.8, puppetdb-terminus
@@ -99,7 +99,7 @@ Description: Centralized configuration management - master startup and compatibi
 
 Package: puppetmaster-passenger
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, puppetmaster-common (= ${source:Version}), facter (>= 1.6.12), lsb-base, libapache2-mod-passenger
+Depends: ${misc:Depends}, ruby | ruby-interpreter, puppetmaster-common (= ${source:Version}), facter (>= 1.7.0), lsb-base, libapache2-mod-passenger
 Conflicts: puppetmaster (<< 2.6.1~rc2-1)
 Replaces: puppetmaster (<< 2.6.1~rc2-1)
 Description: Centralised configuration management - master setup to run under mod passenger
@@ -136,7 +136,7 @@ Description: syntax highlighting for puppet manifests in emacs
 
 Package: puppet-testsuite
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, puppet-common (= ${source:Version}), facter (>= 1.6.12), lsb-base, rails (>= 1.2.3-2), rdoc, ruby-ldap | libldap-ruby1.8, ruby-rspec | librspec-ruby, git-core, ruby-mocha | libmocha-ruby1.8
+Depends: ${misc:Depends}, ruby | ruby-interpreter, puppet-common (= ${source:Version}), facter (>= 1.7.0), lsb-base, rails (>= 1.2.3-2), rdoc, ruby-ldap | libldap-ruby1.8, ruby-rspec | librspec-ruby, git-core, ruby-mocha | libmocha-ruby1.8
 Recommends: cron
 Description: Centralized configuration management - test suite
  This package provides all the tests from the upstream puppet source code.
