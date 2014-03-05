@@ -177,8 +177,9 @@ step "puppet master with manifest and modulepath set in puppet.conf is overriden
 end
 
 step "puppet master with default manifest, modulepath, environment, environmentpath and an existing default production directory environment directory" do
+  ssldir = on(master, puppet("master --configprint ssldir")).stdout.chomp
   master_opts = {
-    :__commandline_args__ => "--confdir=#{testdir} --ssldir=#{master[:puppetpath]}/ssl"
+    :__commandline_args__ => "--confdir=#{testdir} --ssldir=#{ssldir}"
   }
   with_puppet_running_on master, master_opts, testdir do
     agents.each do |agent|
