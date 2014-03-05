@@ -19,7 +19,7 @@ require 'date'
 Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   desc "User management for AIX."
 
-  # This will the the default provider for this platform
+  # This will the default provider for this platform
   defaultfor :operatingsystem => :aix
   confine :operatingsystem => :aix
 

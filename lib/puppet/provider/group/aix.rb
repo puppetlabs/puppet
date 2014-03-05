@@ -9,7 +9,7 @@ require 'puppet/provider/aixobject'
 Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject do
   desc "Group management for AIX."
 
-  # This will the the default provider for this platform
+  # This will the default provider for this platform
   defaultfor :operatingsystem => :aix
   confine :operatingsystem => :aix
 
