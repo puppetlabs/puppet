@@ -119,14 +119,14 @@ step "puppet master with --manifest and --modulepath overrides existing default 
       on(agent, puppet("agent -t --server #{master}"), :acceptable_exit_codes => [2] ) do
         assert_match(/in cmdline\.pp/, stdout)
         assert_match(/amod from commandline modulepath/, stdout)
-        assert_not_match(/production/, stdout)
+        assert_no_match(/production/, stdout)
       end
 
       step "even if environment is specified"
       on(agent, puppet("agent -t --server #{master} --environment production"), :acceptable_exit_codes => [2]) do
         assert_match(/in cmdline\.pp/, stdout)
         assert_match(/amod from commandline modulepath/, stdout)
-        assert_not_match(/production/, stdout)
+        assert_no_match(/production/, stdout)
       end
     end
   end
@@ -151,7 +151,7 @@ step "puppet master with --manifest and --modulepath overrides existing default 
         on(agent, puppet("agent -t --server #{master}"), :acceptable_exit_codes => [2]) do
           assert_match(/in other manifestdir site\.pp/, stdout)
           assert_match(/amod from commandline modulepath/, stdout)
-          assert_not_match(/production/, stdout)
+          assert_no_match(/production/, stdout)
         end
       end
     end
