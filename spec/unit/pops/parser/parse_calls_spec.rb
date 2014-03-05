@@ -14,8 +14,12 @@ describe "egrammar parsing function calls" do
         dump(parse("foo()")).should == "(invoke foo)"
       end
 
-      it "foo bar" do
-        dump(parse("foo bar")).should == "(invoke foo bar)"
+      it "notice bar" do
+        dump(parse("notice bar")).should == "(invoke notice bar)"
+      end
+
+      it "notice(bar)" do
+        dump(parse("notice bar")).should == "(invoke notice bar)"
       end
 
       it "foo(bar)" do
@@ -30,8 +34,8 @@ describe "egrammar parsing function calls" do
         dump(parse("foo(bar,fum,)")).should == "(invoke foo bar fum)"
       end
 
-      it "foo fqdn_rand(30)" do
-        dump(parse("foo fqdn_rand(30)")).should == '(invoke foo (call fqdn_rand 30))'
+      it "notice fqdn_rand(30)" do
+        dump(parse("notice fqdn_rand(30)")).should == '(invoke notice (call fqdn_rand 30))'
       end
     end
 
@@ -40,8 +44,8 @@ describe "egrammar parsing function calls" do
         dump(parse("if true {foo()}")).should == "(if true\n  (then (invoke foo)))"
       end
 
-      it "if true { foo bar}" do
-        dump(parse("if true {foo bar}")).should == "(if true\n  (then (invoke foo bar)))"
+      it "if true { notice bar}" do
+        dump(parse("if true {notice bar}")).should == "(if true\n  (then (invoke notice bar)))"
       end
     end
   end

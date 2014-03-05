@@ -147,8 +147,8 @@ class Puppet::Pops::Model::Factory
   end
 
   def build_KeyedEntry(o, k, v)
-    o.key = build(k)
-    o.value = build(v)
+    o.key = to_ops(k)
+    o.value = to_ops(v)
     o
   end
 
@@ -703,6 +703,27 @@ class Puppet::Pops::Model::Factory
     o.nil? || o.is_a?(Puppet::Pops::Model::Nop)
   end
 
+  STATEMENT_CALLS = { 
+    'require' => true, 
+    'realize' => true, 
+    'include' => true,
+    'contain' => true,
+
+    'debug'   => true,
+    'info'    => true,
+    'notice'  => true,
+    'warning' => true,
+    'error'   => true,
+
+    'fail'    => true,
+  }
+  # Returns true if the given name is a "statement keyword" (require, include, contain,
+  # error, notice, info, debug
+  #
+  def name_is_statement(name)
+    STATEMENT_CALLS[name]
+  end
+
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
   # expression, or expression list.
   #
@@ -710,7 +731,7 @@ class Puppet::Pops::Model::Factory
     expressions.reduce([]) do |memo, expr|
       expr = expr.current if expr.is_a?(Puppet::Pops::Model::Factory)
       name = memo[-1]
-      if name.is_a? Model::QualifiedName
+      if name.is_a?(Model::QualifiedName) && STATEMENT_CALLS[name.value]
         memo[-1] = Puppet::Pops::Model::Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
         if expr.is_a?(Model::CallNamedFunctionExpression)
           # Patch statement function call to expression style
@@ -730,6 +751,20 @@ class Puppet::Pops::Model::Factory
     end
 
   end
+
+  # Transforms a left expression followed by an untitled resource (in the form of attribute_operations)
+  # @param left [Factory, Expression] the lhs followed what may be a hash
+  def self.transform_resource_wo_title(left, attribute_ops)
+    return nil unless attribute_ops.is_a? Array
+#    return nil if attribute_ops.find { |ao| ao.operator == :'+>' }
+    keyed_entries = attribute_ops.map do |ao|
+      return nil if ao.operator == :'+>'
+      KEY_ENTRY(ao.attribute_name, ao.value_expr)
+    end
+    result = block_or_expression(*transform_calls([left, HASH(keyed_entries)]))
+    result
+  end
+
 
   # Building model equivalences of Ruby objects
   # Allows passing regular ruby objects to the factory to produce instructions

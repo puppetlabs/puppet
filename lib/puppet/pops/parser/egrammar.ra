@@ -397,7 +397,13 @@ resource_expression
       result = case Factory.resource_shape(val[0])
       when :resource, :class
         # This catches deprecated syntax.
-        error val[1], "All resource specifications require names"
+        # If the attribute operations does not include +>, then the found expression
+        # is actually a LEFT followed by LITERAL_HASH
+        #
+        unless tmp = transform_resource_wo_title(val[0], val[2])
+          error val[1], "Syntax error resource body without title or hash with +>"
+        end
+        tmp
       when :defaults
         Factory.RESOURCE_DEFAULTS(val[0], val[2])
       when :override
