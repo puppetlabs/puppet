@@ -501,9 +501,43 @@ class Puppet::Parser::Scope
   # by default) including the values defined in parent. Local values
   # shadow parent values. Ephemeral scopes for match results ($0 - $n) are not included.
   #
+  # This is currently a wrapper for to_hash_legacy or to_hash_future.
+  #
+  # @see to_hash_future
+  #
+  # @see to_hash_legacy
   def to_hash(recursive = true)
+    @parser ||= Puppet[:parser]
+    if @parser == 'future'
+      to_hash_future(recursive)
+    else
+      to_hash_legacy(recursive)
+    end
+  end
+
+  # Fixed version of to_hash that implements scoping correctly (i.e., with
+  # dynamic scoping disabled #28200 / PUP-1220
+  #
+  # @see to_hash
+  def to_hash_future(recursive)
+    if recursive and has_enclosing_scope?
+      target = enclosing_scope.to_hash_future(recursive)
+    else
+      target = Hash.new
+    end
+
+    # add all local scopes
+    @ephemeral.last.add_entries_to(target)
+    target
+  end
+
+  # The old broken implementation of to_hash that retains the dynamic scoping
+  # semantics
+  #
+  # @see to_hash
+  def to_hash_legacy(recursive = true)
     if recursive and parent
-      target = parent.to_hash(recursive)
+      target = parent.to_hash_legacy(recursive)
     else
       target = Hash.new
     end
