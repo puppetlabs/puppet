@@ -63,7 +63,9 @@ class Puppet::Network::HTTP::API::V1
 
     method = indirection_method(http_method, indirection)
 
-    params[:environment] = Puppet.lookup(:environments).get(environment)
+    configured_environment = Puppet.lookup(:environments).get(environment)
+    configured_environment = configured_environment.override_from_commandline(Puppet.settings)
+    params[:environment] = configured_environment
 
     params.delete(:bucket_path)
 

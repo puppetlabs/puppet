@@ -110,6 +110,25 @@ class Puppet::Node::Environment
                       env_params[:manifest] || manifest)
   end
 
+  # Creates a new Puppet::Node::Environment instance, overriding manfiest
+  # and modulepath from the passed settings if they were originally set from
+  # the commandline, or returns self if there is nothing to override.
+  #
+  # @param settings [Puppet::Settings] an initialized puppet settings instance
+  # @return [Puppet::Node::Environment] new overridden environment or self if
+  #   there are no commandline changes from settings.
+  def override_from_commandline(settings)
+    overrides = {}
+    overrides[:modulepath] = [settings[:modulepath]] if settings.set_by_cli?(:modulepath)
+    if settings.set_by_cli?(:manifest) ||
+      (settings.set_by_cli?(:manifestdir) && settings[:manifest].start_with?(settings[:manifestdir]))
+      overrides[:manifest] = settings[:manifest]
+    end
+    overrides.empty? ?
+      self :
+      self.override_with(overrides)
+  end
+
   # Retrieve the environment for the current process.
   #
   # @note This should only used when a catalog is being compiled.

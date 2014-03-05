@@ -195,8 +195,16 @@ class Puppet::Util::Autoload
     self.class.load_file(expand(name), env)
   end
 
-  # Load all instances that we can.  This uses require, rather than load,
-  # so that already-loaded files don't get reloaded unnecessarily.
+  # Load all instances from a path of Autoload.search_directories matching the
+  # relative path this Autoloader was initialized with.  For example, if we
+  # have created a Puppet::Util::Autoload for Puppet::Type::User with a path of
+  # 'puppet/provider/user', the search_directories path will be searched for
+  # all ruby files matching puppet/provider/user/*.rb and they will then be
+  # loaded from the first directory in the search path providing them.  So
+  # earlier entries in the search path may shadow later entries.
+  #
+  # This uses require, rather than load, so that already-loaded files don't get
+  # reloaded unnecessarily.
   def loadall
     self.class.loadall(@path)
   end

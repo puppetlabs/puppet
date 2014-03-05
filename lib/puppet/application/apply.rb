@@ -182,7 +182,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       facts.name = Puppet[:node_name_value]
     end
 
-    configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+    configured_environment = Puppet.lookup(:current_environment)
     apply_environment = manifest ?
       configured_environment.override_with(:manifest => manifest) :
       configured_environment

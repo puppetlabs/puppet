@@ -354,7 +354,10 @@ class Application
     end
 
     new_context = Puppet.base_context(Puppet.settings)
-    new_context[:current_environment] = new_context[:environments].get(Puppet[:environment])
+    configured_environment = new_context[:environments].get(Puppet[:environment])
+    configured_environment = configured_environment.override_from_commandline(Puppet.settings)
+    new_context[:current_environment] = configured_environment
+
     # Setup a new context using the app's configuration
     Puppet.override(new_context,
                     "New base context and current environment from application's configuration") do

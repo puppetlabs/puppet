@@ -199,6 +199,13 @@ describe Puppet::Application::Apply do
         Puppet::Node::Facts.indirection.cache_class = nil
       end
 
+      around :each do |example|
+        Puppet.override(:current_environment =>
+                        Puppet::Node::Environment.create(:production, [], '')) do
+          example.run
+        end
+      end
+
       it "should set the code to run from --code" do
         @apply.options[:code] = "code to run"
         Puppet.expects(:[]=).with(:code,"code to run")
