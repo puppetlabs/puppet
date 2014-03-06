@@ -1,0 +1,117 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'rspec'
+
+# Disable ruby verbosity
+# We need control over output so that the parallel task can parse it correctly
+$VERBOSE = nil
+
+# Monkey patch Proc.source_location for 1.8.7
+unless Proc.method_defined? :source_location
+  class Proc
+    def source_location
+      match = to_s.match(/^#<Proc.*@(.*):([0-9]+)>$/)
+      return unless match
+      [match[1], match[2]]
+    end
+  end
+end
+
+module Parallel
+  module RSpec
+    #
+    # Responsible for grouping rspec examples into groups of a given size.
+    #
+    class Grouper
+      attr_reader :groups
+      attr_reader :files
+      attr_reader :total_examples
+
+      def initialize(group_size)
+        config = ::RSpec::Core::Configuration.new
+        options = ::RSpec::Core::ConfigurationOptions.new((ENV['TEST'] || ENV['TESTS'] || 'spec').split(';'))
+        options.parse_options
+        options.configure config
+
+        # This will scan and load all spec examples
+        config.load_spec_files
+
+        @total_examples = 0
+
+        # Populate a map of spec file => example count, sorted ascending by count
+        # NOTE: this uses a private API of RSpec and is may break if the gem is updated
+        @files = ::RSpec::Core::ExampleGroup.children.inject({}) do |files, group|
+          file = group.metadata[:example_group_block].source_location[0]
+          count = count_examples(group)
+          files[file] = (files[file] || 0) + count
+          @total_examples += count
+          files
+        end.sort_by { |_, v| v}
+
+        # Group the spec files
+        @groups = []
+        group = nil
+        example_count = 0
+        @files.each do |file, count|
+          group = [] unless group
+          group << file
+          if (example_count += count) > group_size
+            example_count = 0
+            @groups << group
+            group = nil
+          end
+        end
+        @groups << group if group
+      end
+
+      private
+      def count_examples(group)
+        return 0 unless group
+        # Each group can have examples as well as child groups, so recursively traverse
+        group.children.inject(group.examples.count) { |count, g| count + count_examples(g) }
+      end
+    end
+  end
+end
+
+def print_usage
+  puts 'usage: rspec_grouper <group_size>'
+end
+
+if __FILE__ == $0
+  if ARGV.length != 1
+    print_usage
+  else
+    group_size = ARGV[0].to_i
+    abort 'error: group count must be greater than zero.' if group_size < 1
+    grouper = Parallel::RSpec::Grouper.new(group_size)
+    abort 'error: no rspec examples were found.' if grouper.total_examples == 0
+    groups = grouper.groups
+    puts "Grouped #{grouper.total_examples} rspec example(s) into #{groups.length} group(s) from #{grouper.files.count} file(s)."
+    puts
+
+    paths = []
+
+    begin
+      # Create a temp directory and write out group files
+      tmpdir = Dir.mktmpdir
+      groups.each_with_index do |group, index|
+        path = File.join(tmpdir, "group#{index+1}")
+        file = File.new(path, 'w')
+        paths << path
+        file.puts group
+        file.close
+        puts path
+      end
+    rescue Exception
+      # Delete all files on an exception
+      paths.each do |path|
+        begin
+          File.delete path
+        rescue Exception
+        end
+      end
+      raise
+    end
+  end
+end

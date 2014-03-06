@@ -1,6 +1,6 @@
 language: ruby
 bundler_args: --without development
-script: "bundle exec rake spec"
+script: "bundle exec rake \"parallel:spec[1]\""
 notifications:
   email: false
 rvm:
@@ -12,5 +12,3 @@ rvm:
 matrix:
   allow_failures:
     - rvm: ruby-head
-env:
-  - SPEC_OPTS="--format documentation"
