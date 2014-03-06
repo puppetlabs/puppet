@@ -22,7 +22,7 @@ module HarnessOptions
     :timesync => true,
     :repo_proxy => true,
     :add_el_extras => true,
-    :preserve_hosts => 'onfail',
+    :preserve_hosts => 'onfail'
   }
 
   class Aggregator
@@ -299,7 +299,7 @@ Defaults to a packages run, but you can set it to 'git' with TYPE='git'.
       :hosts_file => "#{config_path}/preserved_config.yaml",
       :no_provision => true,
       :preserve_hosts => 'always',
-      :__delete_options__ => [:pre_suite],
+      :__delete_options__ => [:pre_suite]
     )
   end
 end
