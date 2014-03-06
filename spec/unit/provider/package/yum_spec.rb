@@ -16,10 +16,11 @@ describe provider do
      @provider.stubs(:get).with(:version).returns '1'
      @provider.stubs(:get).with(:release).returns '1'
      @provider.stubs(:get).with(:arch).returns 'i386'
-     @provider.stubs(:get).with(:install_options).returns '-x expackage'
+     @resource.stubs(:[]).with(:install_options).returns nil
   end
+
   # provider should repond to the following methods
-   [:install, :latest, :update, :purge].each do |method|
+   [:install, :latest, :update, :purge, :install_options].each do |method|
      it "should have a(n) #{method}" do
        @provider.should respond_to(method)
     end
@@ -34,7 +35,7 @@ describe provider do
 
     it 'should call yum install for :installed' do
       @resource.stubs(:should).with(:ensure).returns :installed
-      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '-x expackage', :install, 'mypackage')
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', nil, :install, 'mypackage')
       @provider.install
     end
 
@@ -45,15 +46,22 @@ describe provider do
 
     it 'should be able to set version' do
       @resource.stubs(:should).with(:ensure).returns '1.2'
-      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', '-x expackage', :install, 'mypackage-1.2')
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', nil, :install, 'mypackage-1.2')
       @provider.stubs(:query).returns :ensure => '1.2'
       @provider.install
     end
 
     it 'should be able to downgrade' do
       @resource.stubs(:should).with(:ensure).returns '1.0'
-      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, 'mypackage-1.0')
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', nil, :downgrade, 'mypackage-1.0')
       @provider.stubs(:query).returns(:ensure => '1.2').then.returns(:ensure => '1.0')
+      @provider.install
+    end
+
+    it 'should accept install options' do
+      @resource.stubs(:[]).with(:install_options).returns ['-t', {'-x' => 'expackage'}]
+      @resource.stubs(:should).with(:ensure).returns :installed
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', ["-t", "-x 'expackage'"], :install, 'mypackage')
       @provider.install
     end
   end
