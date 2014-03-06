@@ -84,7 +84,7 @@ TODO Fix up the Rakefile's handling of git urls so that there is a simple way to
 
 ### Preserving Hosts
 
-If you have local changes to puppet code (outside of acceptance/) that you don't want to repackage for time reasons, or you just want to ssh into the hosts after a test run, you can use the following sequence:
+If you need to ssh into the hosts after a test run, you can use the following sequence:
 
     bundle exec rake ci:test_and_preserve_hosts CONFIG=some/config.yaml SHA=12345 TEST=a/foo_test.rb
 
@@ -94,21 +94,13 @@ Then you can log into the hosts, or rerun tests against them by:
 
     bundle exec rake ci:test_against_preserved_hosts TEST=a/foo_test.rb
 
-This will use the existing hosts, uninstall and reinstall the puppet packages and rsync in any changes from your local source lib dir.  To skip reinstalling the packages set SKIP_PACKAGE_REINSTALL=1.  To skip rsyncing, set SKIP_RSYNC=1.  To use rsync filters, create a file with your rsync filter settings and set RSYNC_FILTER_FILE to the name of that file.  For example:
-
-    include puppet
-    include puppet/defaults.rb
-    exclude *
-
-will ensure that only puppet/defaults.rb is copied.
-
-NOTE: By default these tasks provision with packages.  Set TYPE=git to use source checkouts.
+This will use the existing hosts.
 
 ### Cleaning Up Preserved Hosts
 
 If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hosts, you may eventually generate a large number of stale vms.  They should be reaped automatically by qa infrastructure within a day or so, but you may also run:
 
-    bundle exec rake ci:destroy_preserved_hosts
+    bundle exec rake ci:release_hosts
 
 to clean them up sooner and free resources.
 
