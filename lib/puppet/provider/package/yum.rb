@@ -59,7 +59,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
     operation = :install
-    install_options = @resource[:install_options].flatten.compact.join(' ')
 
     case should
     when true, false, Symbol
@@ -107,5 +106,24 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   def purge
     yum "-y", :erase, @resource[:name]
+  end
+
+  def install_options
+    join_options(resource[:install_options])
+  end
+
+  def join_options(options)
+    return unless options
+
+    options.collect do |val|
+      case val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k} '#{val[k]}'"
+        end.join(' ')
+      else
+        val
+      end
+    end
   end
 end
