@@ -170,7 +170,7 @@ def list_preserved_hosts(secs_ago = ONE_DAY_IN_SECS)
     File.open(log, 'r') do |file|
       if file.ctime > yesterday
         file.each_line do |line|
-          matchdata = /^(\w+) \(.*?\) \$/.match(line.encode!('UTF-8', 'UTF-8', :invalid => :replace))
+          matchdata = /^(\w+) \(.*?\) \d\d:\d\d:\d\d\$/.match(line.encode!('UTF-8', 'UTF-8', :invalid => :replace))
           hosts.add(matchdata[1]) if matchdata
         end
       end
