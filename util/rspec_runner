@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+require 'rspec'
+require 'rspec/core/formatters/progress_formatter'
+require 'rspec/core/command_line'
+
+# Disable ruby verbosity
+# We need control over output so that the parallel task can parse it correctly
+$VERBOSE = nil
+
+module Parallel
+  module RSpec
+    #
+    # Responsible for formatting output.
+    # This differs from the built-in progress formatter by not appending an index to failures.
+    #
+    class Formatter < ::RSpec::Core::Formatters::ProgressFormatter
+      def dump_failure(example, _)
+        # Unlike the super class implementation, do not print the failure number
+        output.puts "#{short_padding}#{example.full_description}"
+        dump_failure_info(example)
+      end
+    end
+    #
+    # Responsible for running spec files given a spec file.
+    # We do it this way so that we can run very long spec file lists on Windows, since
+    # Windows has a limited argument length depending on method of invocation.
+    #
+    class Runner
+      def initialize(specs_file)
+        abort "error: spec list file '#{specs_file}' does not exist." unless File.exists? specs_file
+        @options = ['-fParallel::RSpec::Formatter']
+        File.readlines(specs_file).each { |line| @options << line.chomp }
+      end
+
+      def run
+        ::RSpec::Core::CommandLine.new(@options).run($stderr, $stdout)
+      end
+    end
+  end
+end
+
+def print_usage
+  puts 'usage: rspec_runner <spec_list_file>'
+end
+
+if __FILE__ == $0
+  if ARGV.length != 1
+    print_usage
+  else
+    exit Parallel::RSpec::Runner.new(ARGV[0]).run
+  end
+end

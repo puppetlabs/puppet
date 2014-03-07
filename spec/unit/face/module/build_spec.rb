@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/face'
+require 'puppet/module_tool'
 
 describe "puppet module build" do
   subject { Puppet::Face[:module, :current] }
