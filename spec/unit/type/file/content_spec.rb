@@ -196,12 +196,13 @@ describe content do
           before do
             Puppet[:show_diff] = cfg
             @resource.stubs(:show_diff?).returns param
+            @resource[:loglevel] = "debug"
           end
 
           if cfg and param
             it "should display a diff" do
               @content.expects(:diff).returns("my diff").once
-              @content.expects(:notice).with("\nmy diff").once
+              @content.expects(:debug).with("\nmy diff").once
               @content.should_not be_safe_insync("other content")
             end
           else
