@@ -296,7 +296,7 @@ describe 'Lexer2' do
       Tex\\tt\\n
       |- END
       CODE
-      tokens_scanned_from(code).should match_tokens2([:HEREDOC, 'syntax'], [:STRING, "Tex\tt\\n"])
+      tokens_scanned_from(code).should match_tokens2([:HEREDOC, 'syntax'], :SUBLOCATE, [:STRING, "Tex\tt\\n"])
     end
 
     it 'lexes "tag", syntax and escapes, margin, right trim and interpolation' do
@@ -307,6 +307,7 @@ describe 'Lexer2' do
       CODE
       tokens_scanned_from(code).should match_tokens2(
         [:HEREDOC, 'syntax'],
+        :SUBLOCATE,
         [:DQPRE, "Tex\tt\\n"],
         [:VARIABLE, "var"],
         [:DQPOST, " After"]
@@ -332,7 +333,7 @@ describe 'Lexer2' do
       code = <<-CODE
       This is just text
       CODE
-      epp_tokens_scanned_from(code).should match_tokens2([:RENDER_STRING, "      This is just text\n"])
+      epp_tokens_scanned_from(code).should match_tokens2(:EPP_START, [:RENDER_STRING, "      This is just text\n"])
     end
 
     it 'epp can contain text with interpolated rendered expressions' do
@@ -340,6 +341,7 @@ describe 'Lexer2' do
       This is <%= $x %> just text
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:RENDER_EXPR, nil],
       [:VARIABLE, "x"],
@@ -352,6 +354,7 @@ describe 'Lexer2' do
       This is <% $x=10 %> just text
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
       :EQUALS,
@@ -366,6 +369,7 @@ describe 'Lexer2' do
       just text
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
       :EQUALS,
@@ -381,6 +385,7 @@ describe 'Lexer2' do
       just text
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
       :EQUALS,
@@ -395,6 +400,7 @@ describe 'Lexer2' do
       <%% this is escaped epp %%>
       CODE
       epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
       [:RENDER_STRING, "      This is "],
       [:VARIABLE, "x"],
       :EQUALS,

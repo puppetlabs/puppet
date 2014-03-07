@@ -239,6 +239,22 @@ class Puppet::Parser::Scope
     known_resource_types.find_definition(namespaces, name)
   end
 
+  def find_global_scope()
+    # walk upwards until first found node_scope or top_scope
+    if is_nodescope? || is_topscope?
+      self
+    else
+      next_scope = inherited_scope || enclosing_scope
+      if next_scope.nil?
+        # this happens when testing, and there is only a single test scope and no link to any
+        # other scopes
+        self
+      else
+        next_scope.find_global_scope()
+      end
+    end
+  end
+
   # This just delegates directly.
   def_delegator :compiler, :findresource
 

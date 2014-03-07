@@ -27,6 +27,11 @@ class Puppet::Pops::Evaluator::Closure
     @evaluator.call(self, args, @enclosing_scope)
   end
 
+  # Call closure with argument assignment by name
+  def call_by_name(scope, args_hash, spill_over = false)
+    @evaluator.call_by_name(self, args_hash, @enclosing_scope, spill_over)
+  end
+
   # incompatible with 3x except that it is an array of the same size
   def parameters()
     @model.parameters || []

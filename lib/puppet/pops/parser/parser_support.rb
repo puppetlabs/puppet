@@ -146,6 +146,10 @@ class Puppet::Pops::Parser::Parser
     factory.record_position(start_locateable, end_locateable)
   end
 
+  def heredoc_loc(factory, start_locateabke, end_locateable = nil)
+    factory.record_heredoc_position(start_locatable, end_locatable)
+  end
+
   # Associate documentation with the factory wrapped model object.
   # @return [Puppet::Pops::Model::Factory] the given factory
   # @api private

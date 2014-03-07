@@ -261,6 +261,80 @@ module Puppet::Pops::Model
     contains_one_uni 'body', Expression
   end
 
+  class LocatableExpression < Expression
+    has_many_attr 'line_offsets', Integer
+    has_attr 'locator', Object, :lowerBound => 1, :transient => true
+
+    module ClassModule
+      # Go through the gymnastics of making either value or pattern settable
+      # with synchronization to the other form. A derived value cannot be serialized
+      # and we want to serialize the pattern. When recreating the object we need to
+      # recreate it from the pattern string.
+      # The below sets both values if one is changed.
+      #
+      def locator
+        unless result = getLocator
+          setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets))
+        end
+        result
+      end
+    end
+  end
+
+  # Contains one expression which has offsets reported virtually (offset against the Program's
+  # overall locator).
+  #
+  class SubLocatedExpression < Expression
+    contains_one_uni 'expr', Expression, :lowerBound => 1
+
+    # line offset index for contained expressions
+    has_many_attr 'line_offsets', Integer
+
+    # Number of preceding lines (before the line_offsets)
+    has_attr 'leading_line_count', Integer
+
+    # The offset of the leading source line (i.e. size of "left margin").
+    has_attr 'leading_line_offset', Integer
+
+    # The locator for the sub-locatable's children (not for the sublocator itself)
+    # The locator is not serialized and is recreated on demand from the indexing information
+    # in self.
+    #
+    has_attr 'locator', Object, :lowerBound => 1, :transient => true
+
+    module ClassModule
+      def locator
+        unless result = getLocator
+          # Adapt myself to get the Locator for me
+          adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(self)
+          # Get the program (root), and deal with case when not contained in a program
+          program = eAllContainers.find {|c| c.is_a?(Program) }
+          source_ref = program.nil? ? '' : program.source_ref
+
+          # An outer locator is needed since SubLocator only deals with offsets. This outer locator
+          # has 0,0 as origin.
+          outer_locator = Puppet::Pops::Parser::Locator.locator(adpater.extract_text, source_ref, line_offsets)
+
+          # Create a sublocator that describes an offset from the outer
+          # NOTE: the offset of self is the same as the sublocator's leading_offset
+          result = Puppet::Pops::Parser::Locator::SubLocator.new(outer_locator,
+            leading_line_count, offset, leading_line_offset)
+          setLocator(result)
+        end
+        result
+      end
+    end
+  end
+
+  # A heredoc is a wrapper around a LiteralString or a ConcatenatedStringExpression with a specification
+  # of syntax. The expectation is that "syntax" has meaning to a validator. A syntax of nil or '' means
+  # "unspecified syntax".
+  #
+  class HeredocExpression < Expression
+    has_attr 'syntax', String
+    contains_one_uni 'text_expr', Expression, :lowerBound => 1
+  end
+
   # A class definition
   #
   class HostClassDefinition < NamedDefinition
@@ -422,6 +496,20 @@ module Puppet::Pops::Model
   #
   class VariableExpression < UnaryExpression; end
 
+  # Epp start
+  class EppExpression < Expression
+    has_attr 'see_scope', Boolean
+    contains_one_uni 'body', Expression
+  end
+
+  # A string to render
+  class RenderStringExpression < LiteralString
+  end
+
+  # An expression to evluate and render
+  class RenderExpression < UnaryExpression
+  end
+
   # A resource body describes one resource instance
   #
   class ResourceBody < Positioned
@@ -506,12 +594,6 @@ module Puppet::Pops::Model
     has_attr 'locator', Object, :lowerBound => 1, :transient => true
 
     module ClassModule
-      # Go through the gymnastics of making either value or pattern settable
-      # with synchronization to the other form. A derived value cannot be serialized
-      # and we want to serialize the pattern. When recreating the object we need to
-      # recreate it from the pattern string.
-      # The below sets both values if one is changed.
-      #
       def locator
         unless result = getLocator
           setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets))

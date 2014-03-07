@@ -36,7 +36,7 @@ class Puppet::Pops::Model::Factory
     begin
       @@build_visitor.visit_this(self, o, *args)
     rescue =>e
-      # require 'debugger'; debugger # enable this when in trouble...
+      # debug here when in trouble...
       raise e
     end
   end
@@ -46,7 +46,7 @@ class Puppet::Pops::Model::Factory
     begin
       @@interpolation_visitor.visit_this_0(self, current)
     rescue =>e
-      # require 'debugger'; debugger # enable this when in trouble...
+      # debug here when in trouble...
       raise e
     end
   end
@@ -119,6 +119,12 @@ class Puppet::Pops::Model::Factory
   def build_CreateAttributeExpression(o, name, datatype_expr)
     o.name = name
     o.type = to_ops(datatype_expr)
+    o
+  end
+
+  def build_HeredocExpression(o, name, expr)
+    o.syntax = name
+    o.text_expr = build(expr)
     o
   end
 
@@ -202,7 +208,7 @@ class Puppet::Pops::Model::Factory
   def build_LambdaExpression(o, parameters, body)
     parameters.each {|p| o.addParameters(build(p)) }
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = to_ops(b) if b
     o
   end
 
@@ -248,6 +254,11 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  def build_RenderStringExpression(o, string)
+    o.value = string;
+    o
+  end
+
   def build_ResourceBody(o, title_expression, attribute_operations)
     o.title = build(title_expression)
     attribute_operations.each {|ao| o.addOperations(build(ao)) }
@@ -263,6 +274,24 @@ class Puppet::Pops::Model::Factory
   def build_SelectorExpression(o, left, *selectors)
     o.left_expr = to_ops(left)
     selectors.each {|s| o.addSelectors(build(s)) }
+    o
+  end
+
+  # Builds a SubLocatedExpression - this wraps the expression in a sublocation configured
+  # from the given token
+  # A SubLocated holds its own locator that is used for subexpressions holding positions relative
+  # to what it describes.
+  #
+  def build_SubLocatedExpression(o, token, expression)
+    o.expr = build(expression)
+    o.offset = token.offset
+    o.length =  token.length
+    locator = token.locator
+    o.locator = locator
+    o.leading_line_count = locator.leading_line_count
+    o.leading_line_offset = locator.leading_line_offset
+    # Index is held in sublocator's parent locator - needed to be able to reconstruct
+    o.line_offsets = locator.locator.line_index
     o
   end
 
@@ -506,6 +535,11 @@ class Puppet::Pops::Model::Factory
 
   def self.HASH(entries);                new(Model::LiteralHash, *entries);                      end
 
+  # TODO_HEREDOC
+  def self.HEREDOC(name, expr);          new(Model::HeredocExpression, name, expr);              end
+
+  def self.SUBLOCATE(token, expr)        new(Model::SubLocatedExpression, token, expr);          end
+
   def self.LIST(entries);                new(Model::LiteralList, *entries);                      end
 
   def self.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
@@ -532,6 +566,25 @@ class Puppet::Pops::Model::Factory
 
   def self.TEXT(expr)
     new(Model::TextExpression, new(expr).interpolate)
+  end
+
+  # TODO_EPP
+  def self.RENDER_STRING(o)
+    new(Model::RenderStringExpression, o)
+  end
+
+  def self.RENDER_EXPR(expr)
+    new(Model::RenderExpression, expr)
+  end
+
+  def self.EPP(parameters, body)
+    see_scope = false
+    params = parameters
+    if parameters.nil?
+      params = []
+      see_scope = true
+    end
+    LAMBDA(params, new(Model::EppExpression, see_scope, body))
   end
 
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the
@@ -721,6 +774,13 @@ class Puppet::Pops::Model::Factory
     x = Model::LiteralRegularExpression.new
     x.value = o;
     x
+  end
+
+  def build_EppExpression(o, see_scope, body)
+    o.see_scope = see_scope
+    b = f_build_body(body)
+    o.body = b.current if b
+    o
   end
 
   # If building a factory, simply unwrap the model oject contained in the factory.

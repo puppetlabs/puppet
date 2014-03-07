@@ -58,6 +58,17 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
+  def dump_EppExpression o
+    result = ["epp"]
+#    result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
+    if o.body
+      result << do_dump(o.body)
+    else
+      result << []
+    end
+    result
+  end
+
   def dump_ExportedQuery o
     result = ["<<| |>>"]
     result += dump_QueryExpression(o) unless is_nop?(o.expr)
@@ -178,6 +189,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
   # Interpolated strings are shown as (cat seg0 seg1 ... segN)
   def dump_ConcatenatedString o
     ["cat"] + o.segments.collect {|x| do_dump(x)}
+  end
+
+  def dump_HeredocExpression(o)
+    result = ["@(#{o.syntax})", :indent, :break, do_dump(o.text_expr), :dedent, :break]
   end
 
   def dump_HostClassDefinition o
@@ -304,6 +319,14 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     [o.operator.to_s, do_dump(o.left_expr), do_dump(o.right_expr)]
   end
 
+  def dump_RenderStringExpression o
+    ["render-s", " '#{o.value}'"]
+  end
+
+  def dump_RenderExpression o
+    ["render", do_dump(o.expr)]
+  end
+
   def dump_ResourceBody o
     result = [do_dump(o.title), :indent]
     o.operations.each do |p|
@@ -338,6 +361,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   def dump_SelectorEntry o
     [do_dump(o.matching_expr), "=>", do_dump(o.value_expr)]
+  end
+
+  def dump_SubLocatedExpression o
+    ["sublocated", do_dump(o.expr)]
   end
 
   def dump_Object o

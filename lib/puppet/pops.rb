@@ -77,6 +77,7 @@ module Puppet
       require 'puppet/pops/parser/lexer'
       require 'puppet/pops/parser/lexer2'
       require 'puppet/pops/parser/evaluating_parser'
+      require 'puppet/pops/parser/epp_parser'
     end
 
     module Validation
@@ -89,6 +90,7 @@ module Puppet
     module Evaluator
       require 'puppet/pops/evaluator/runtime3_support'
       require 'puppet/pops/evaluator/evaluator_impl'
+      require 'puppet/pops/evaluator/epp_evaluator'
     end
   end
 

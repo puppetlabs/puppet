@@ -93,7 +93,7 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     result << expression_dumper.dump(o.expression)
   end
 
-  def dump_InstanceProducerDescriptor
+  def dump_InstanceProducerDescriptor o
     # TODO: o.arguments, o. transformer
     ['instance', o.class_name]
   end

@@ -33,6 +33,9 @@ module Puppet::Pops::Adapters
     end
 
     def locator
+      # The locator is always the parent locator, all positioned objects are positioned within their
+      # parent. If a positioned object also has a locator that locator is for its children!
+      #
       @locator ||= find_locator(@adapted.eContainer)
     end
 
@@ -40,8 +43,13 @@ module Puppet::Pops::Adapters
       if o.nil?
         raise ArgumentError, "InternalError: SourcePosAdapter for something that has no locator among parents"
       end
-      return o.locator if o.is_a?(Puppet::Pops::Model::Program)
-      if adapter = self.class.get(o)
+      case
+      when o.is_a?(Puppet::Pops::Model::Program)
+        return o.locator
+      # TODO_HEREDOC use case of SubLocator instead
+      when o.is_a?(Puppet::Pops::Model::SubLocatedExpression) && !(found_locator = o.locator).nil?
+        return found_locator
+      when adapter = self.class.get(o)
         return adapter.locator
       else
         find_locator(o.eContainer)

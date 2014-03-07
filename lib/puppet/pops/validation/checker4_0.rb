@@ -160,8 +160,15 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_CallNamedFunctionExpression(o)
-    unless o.functor_expr.is_a? Model::QualifiedName
-      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature => 'function name', :container => o)
+    case o.functor_expr
+    when Puppet::Pops::Model::QualifiedName
+      # ok
+      nil
+    when Puppet::Pops::Model::RenderStringExpression
+      # helpful to point out this easy to make Epp error
+      acceptor.accept(Issues::ILLEGAL_EPP_PARAMETERS, o)
+    else
+      acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
   end
 

@@ -16,6 +16,8 @@ token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
 token IN UNLESS PIPE
 token LAMBDA SELBRACE
 token NUMBER
+token HEREDOC SUBLOCATE
+token RENDER_STRING RENDER_EXPR EPP_START
 token LOW
 
 prechigh
@@ -27,6 +29,7 @@ prechigh
   left  AT ATAT
   left  DOT
   left  CALL
+  nonassoc EPP_START
   left  LBRACK LISTSTART
   left  RBRACK
   left  QMARK
@@ -51,6 +54,8 @@ prechigh
   left  CASE_COLON
   left  FARROW
   left  COMMA
+  nonassoc RENDER_EXPR
+  nonassoc RENDER_STRING
   left  LOW
 preclow
 
@@ -58,6 +63,7 @@ rule
 # Produces [Model::BlockExpression, Model::Expression, nil] depending on multiple statements, single statement or empty
 program
   : statements { result = create_program(Factory.block_or_expression(*val[0])) }
+  | epp_expression { result = create_program(Factory.block_or_expression(*val[0])) }
   | nil
 
 # Produces a semantic model (non validated, but semantically adjusted).
@@ -143,6 +149,7 @@ primary_expression
   | definition_expression
   | hostclass_expression
   | node_definition_expression
+  | epp_render_expression
 
 # Aleways have the same value
 literal_expression
@@ -638,6 +645,7 @@ hash
 quotedtext
   : string
   | dq_string
+  | heredoc
 
 string          : STRING                 { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
 dq_string       : dqpre dqrval           { result = Factory.string(val[0], *val[1]) ; loc result, val[0], val[1][-1] }
@@ -650,6 +658,25 @@ text_expression : expression             { result = Factory.TEXT(val[0]) }
 dqtail
   : dqpost        { result = [val[0]] }
   | dqmid dqrval  { result = [val[0]] + val[1] }
+
+heredoc
+  : HEREDOC sublocated_text  { result = Factory.HEREDOC(val[0][:value], val[1]); loc result, val[0] }
+
+sublocated_text
+  : SUBLOCATE string    { result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] }
+  | SUBLOCATE dq_string { result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] }
+
+epp_expression
+  : EPP_START epp_parameters_list statements { result = Factory.EPP(val[1], val[2]); loc result, val[0] }
+
+epp_parameters_list
+  :                                  =LOW{ result = nil }
+  | LPAREN RPAREN                        { result = [] }
+  | LPAREN parameters endcomma RPAREN    { result = val[1] }
+
+epp_render_expression
+  : RENDER_STRING          { result = Factory.RENDER_STRING(val[0][:value]); loc result, val[0] }
+  | RENDER_EXPR expression { result = Factory.RENDER_EXPR(val[1]); loc result, val[0], val[1] }
 
 number   : NUMBER   { result = Factory.NUMBER(val[0][:value]) ; loc result, val[0] }
 name     : NAME     { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }

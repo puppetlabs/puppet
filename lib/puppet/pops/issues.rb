@@ -449,4 +449,13 @@ module Puppet::Pops::Issues
   RESULT_IS_INFINITY = hard_issue :RESULT_IS_INFINITY, :operator do
     "The result of the #{operator} expression is Infinity"
   end
+
+  # TODO_HEREDOC
+  EMPTY_HEREDOC_SYNTAX_SEGMENT = issue :EMPTY_HEREDOC_SYNTAX_SEGMENT, :syntax do
+    "Heredoc syntax specification has empty segment between '+' : '#{syntax}'"
+  end
+
+  ILLEGAL_EPP_PARAMETERS = issue :ILLEGAL_EPP_PARAMETERS do
+    "Ambiguous EPP parameter expression. Probably missing '<%-' before parameters to remove leading whitespace"
+  end
 end

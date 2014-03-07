@@ -3,6 +3,7 @@ require 'puppet/pops/evaluator/compare_operator'
 require 'puppet/pops/evaluator/relationship_operator'
 require 'puppet/pops/evaluator/access_operator'
 require 'puppet/pops/evaluator/closure'
+require 'puppet/pops/evaluator/external_syntax_support'
 
 # This implementation of {Puppet::Pops::Evaluator} performs evaluation using the puppet 3.x runtime system
 # in a manner largely compatible with Puppet 3.x, but adds new features and introduces constraints.
@@ -27,6 +28,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
   #
   include Puppet::Pops::Evaluator::Runtime3Support
+  include Puppet::Pops::Evaluator::ExternalSyntaxSupport
 
   # This constant is not defined as Float::INFINITY in Ruby 1.8.7 (but is available in later version
   # Refactor when support is dropped for Ruby 1.8.7.
@@ -115,6 +117,61 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
   def string(o, scope)
     @@string_visitor.visit_this_1(self, o, scope)
+  end
+
+  # Call a closure matching arguments by name - Can only be called with a Closure (for now), may be refactored later
+  # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
+  # could create similar objects to Closure, wait until other types of defines are instantiated - they may behave
+  # as special cases of calls - i.e. 'new').
+  #
+  # Call by name supports a "spill_over" mode where extra arguments in the given args_hash are introduced
+  # as variables in the resulting scope.
+  #
+  # @raise ArgumentError, if there are to many or too few arguments
+  # @raise ArgumentError, if given closure is not a Puppet::Pops::Evaluator::Closure
+  #
+  def call_by_name(closure, args_hash, scope, spill_over = false)
+    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Closure)
+    pblock = closure.model
+    parameters = pblock.parameters || []
+
+    if !spill_over && args_hash.size > parameters.size
+      raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}" 
+    end
+
+    # associate values with parameters
+    scope_hash = {}
+    parameters.each do |p|
+      scope_hash[p.name] = args_hash[p.name] || evaluate(p.value, scope)
+    end
+    missing = scope_hash.reduce([]) {|memo, entry| memo << entry[0] if entry[1].nil?; memo }
+    unless missing.empty?
+      optional = parameters.count { |p| !p.value.nil? }
+      raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.join(" ,")}"
+    end
+    if spill_over
+      # all args from given hash should be used, nil entries replaced by default values should win
+      scope_hash = args_hash.merge(scope_hash)
+    end
+
+    # Store the evaluated name => value associations in a new inner/local/ephemeral scope
+    # (This is made complicated due to the fact that the implementation of scope is overloaded with
+    # functionality and an inner ephemeral scope must be used (as opposed to just pushing a local scope
+    # on a scope "stack").
+
+    # Ensure variable exists with nil value if error occurs.
+    # Some ruby implementations does not like creating variable on return
+    result = nil
+    begin
+      scope_memo = get_scope_nesting_level(scope)
+      # change to create local scope_from - cannot give it file and line - that is the place of the call, not
+      # "here"
+      create_local_scope_from(scope_hash, scope)
+      result = evaluate(pblock.body, scope)
+    ensure
+      set_scope_nesting_level(scope, scope_memo)
+    end
+    result
   end
 
   # Call a closure - Can only be called with a Closure (for now), may be refactored later
@@ -390,6 +447,23 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       end
       result
     end
+  end
+
+  def eval_EppExpression(o, scope)
+    scope["@epp"] = []
+    evaluate(o.body, scope)
+    result = scope["@epp"].join('')
+    result
+  end
+
+  def eval_RenderStringExpression(o, scope)
+    scope["@epp"] << o.value.dup
+    nil
+  end
+
+  def eval_RenderExpression(o, scope)
+    scope["@epp"] << string(evaluate(o.expr, scope), scope)
+    nil
   end
 
   # Evaluates Puppet DSL ->, ~>, <-, and <~
@@ -672,7 +746,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_CallNamedFunctionExpression(o, scope)
     # The functor expression is not evaluated, it is not possible to select the function to call
     # via an expression like $a()
-    unless o.functor_expr.is_a? Puppet::Pops::Model::QualifiedName
+    case o.functor_expr
+    when Puppet::Pops::Model::QualifiedName
+      # ok
+    when Puppet::Pops::Model::RenderStringExpression
+      # helpful to point out this easy to make Epp error
+      fail(Issues::ILLEGAL_EPP_PARAMETERS, o)
+    else
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = o.functor_expr.value
@@ -726,6 +806,18 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         nil
       end
     end
+  end
+
+  # SubLocatable is simply an expression that holds location information
+  def eval_SubLocatedExpression o, scope
+    evaluate(o.expr, scope)
+  end
+
+  # Evaluates Puppet DSL Heredoc
+  def eval_HeredocExpression o, scope
+    result = evaluate(o.text_expr, scope)
+    assert_external_syntax(scope, result, o.syntax, o.text_expr)
+    result
   end
 
   # Evaluates Puppet DSL `if`
