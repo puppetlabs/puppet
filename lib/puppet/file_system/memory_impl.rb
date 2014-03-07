@@ -28,7 +28,7 @@ class Puppet::FileSystem::MemoryImpl
   end
 
   def pathname(path)
-    find(path)
+    find(path) || Puppet::FileSystem::MemoryFile.a_missing_file(path)
   end
 
   def basename(path)
@@ -37,6 +37,20 @@ class Puppet::FileSystem::MemoryImpl
 
   def path_string(object)
     object.path
+  end
+
+  def read(path)
+    handle = assert_path(path).handle
+    handle.read
+  end
+
+  def open(path, *args, &block)
+    handle = assert_path(path).handle
+    if block_given?
+      yield handle
+    else
+      return handle
+    end
   end
 
   def assert_path(path)

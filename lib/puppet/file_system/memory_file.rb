@@ -36,10 +36,31 @@ class Puppet::FileSystem::MemoryFile
   def executable?; @properties[:executable?]; end
 
   def each_line(&block)
-    StringIO.new(@properties[:content]).each_line(&block)
+    handle.each_line(&block)
+  end
+
+  def handle
+    raise Errno::ENOENT unless exist?
+    StringIO.new(@properties[:content] || '')
   end
 
   def duplicate_as(other_path)
     self.class.new(other_path, @properties)
+  end
+
+  def absolute?
+    Pathname.new(path).absolute?
+  end
+
+  def to_path
+    path
+  end
+
+  def to_s
+    to_path
+  end
+
+  def inspect
+    "<Puppet::FileSystem::MemoryFile:#{to_s}>"
   end
 end
