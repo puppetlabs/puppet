@@ -208,7 +208,7 @@ class Puppet::Pops::Model::Factory
   def build_LambdaExpression(o, parameters, body)
     parameters.each {|p| o.addParameters(build(p)) }
     b = f_build_body(body)
-    o.body = b.current if b
+    o.body = to_ops(b) if b
     o
   end
 
@@ -578,7 +578,13 @@ class Puppet::Pops::Model::Factory
   end
 
   def self.EPP(parameters, body)
-    new(Model::EppExpression, parameters, body)
+    see_scope = false
+    params = parameters
+    if parameters.nil?
+      params = []
+      see_scope = true
+    end
+    LAMBDA(params, new(Model::EppExpression, see_scope, body))
   end
 
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the
@@ -770,8 +776,8 @@ class Puppet::Pops::Model::Factory
     x
   end
 
-  def build_EppExpression(o, parameters, body)
-    parameters.each {|p| o.addParameters(build(p)) }
+  def build_EppExpression(o, see_scope, body)
+    o.see_scope = see_scope
     b = f_build_body(body)
     o.body = b.current if b
     o

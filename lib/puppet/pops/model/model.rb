@@ -497,8 +497,8 @@ module Puppet::Pops::Model
   class VariableExpression < UnaryExpression; end
 
   # Epp start
-  class EppExpression < Definition
-    contains_many_uni 'parameters', Parameter
+  class EppExpression < Expression
+    has_attr 'see_scope', Boolean
     contains_one_uni 'body', Expression
   end
 

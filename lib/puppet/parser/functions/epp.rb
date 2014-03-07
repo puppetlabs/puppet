@@ -1,53 +1,41 @@
-Puppet::Parser::Functions::newfunction(:epptemplate, :type => :rvalue, :arity => -2, :doc =>
-"Evaluates one or more Embedded Puppet Template (EPP) files and returns their concatenated result.
+Puppet::Parser::Functions::newfunction(:epp, :type => :rvalue, :arity => -2, :doc =>
+"Evaluates an Embedded Puppet Template (EPP) file and returns the rendered text result as a String.
 
 EPP support the following tags:
+
 * `<%= puppet expression %>` - This tag renders the value of the expression it contains.
 * `<% puppet expression(s) %>` - This tag will execute the expression(s) it contains, but renders nothing.
 * `<%# comment %>` - The tag and its content renders nothing.
 * `<%%` or `%%>` - Renders a literal `<%` or `%>` respectively.
 * `<%-` - Same as `<%` but suppresses any leading whitespace.
 * `-%>` - Same as `%>` but suppresses any trailing whitespace on the same line (including line break).
+* `<%-( parameters )-%>` - When placed as the first tag declares the template's parameters.
 
-EPP supports parameters by placing an optional parameter list as the very first element in the Epp. As an example,
+File based EPP supports the following visibilities of variables in scope:
+
+* Global scope (i.e. top + node scopes) - global scope is always visible
+* Global + all given arguments - if the EPP template does not declare parameters, and arguments are given
+* Global + declared parameters - if the EPP declares parameters, given argument names must match
+
+EPP supports parameters by placing an optional parameter list as the very first element in the EPP. As an example,
 `<%- ($x, $y, $z='unicorn') -%>` when placed first in the EPP text declares that the parameters `x` and `y` must be
-given as template arguments when calling `epptemplate`, and that `z` if not given as a template argument
+given as template arguments when calling `inline_epp`, and that `z` if not given as a template argument
 defaults to `'unicorn'`. Template parameters are available as variables, e.g.arguments `$x`, `$y` and `$z` in the example.
+Note that `<%-` must be used or any leading whitespace will be interpreted as text
 
-Arguments are passed to the template by calling `epptemplate` with a Hash as the last argument, where parameters
-are bound to values, e.g. `epptemplate('templatefile.epp', {'x'=>10, 'y'=>20})`. Excess arguments may be given
-(i.e. undeclared parameters). Template parameters shadow variables in outer scopes. Template arguments may be
-passed to any template; the template text does not have to have a declaration of parameters.
+Arguments are passed to the template by calling `epp` with a Hash as the last argument, where parameters
+are bound to values, e.g. `epp('...', {'x'=>10, 'y'=>20})`. Excess arguments may be given
+(i.e. undeclared parameters) only if the EPP templates does not declare any parameters at all.
+Template parameters shadow variables in outer scopes. File based epp does never have access to variables in the
+scope where the `epp` function is called from.
 
-Several files may be given as arguments to `epptemplate`, the result is the concatenation of each produced result.
-If template arguments are given, they are used for each given file.
-") do |arguments|
-  # accepts one or more arguments (each being a file), except an optional last argument being a hash
-  # of parameters to pass to each evaluation.
-
-  if(arguments[-1].is_a? Hash)
-    template_args = arguments[-1]
-    arguments = arguments[0..-2]
-  else
-    template_args = {}
+- See function inline_epp for examples of EPP
+- Since 3.5
+- Requires Future Parser") do |arguments|
+  # Requires future parser
+  unless Puppet[:parser] == "future"
+    raise ArgumentError, "epp(): function is only available when --parser future is in effect"
   end
-  require 'puppet/parser/parser_factory'
-  require 'puppet/parser/ast'
+  Puppet::Pops::Evaluator::EppEvaluator.epp(self, arguments[0], self.compiler.environment.to_s, arguments[1])
 
-  arguments.collect do |file|
-    if file.is_a?(Hash)
-      raise IllegalArgumentException, "A Hash may be given as the last argument only"
-    end
-    debug "Retrieving epp template #{file}"
-    template_file = Puppet::Parser::Files.find_template(file, self.compiler.environment.to_s)
-    unless template_file
-      raise Puppet::ParseError, "Could not find template '#{filename}'"
-    end
-
-    parser = Puppet::Parser::ParserFactory.epp_parser(self.compiler.environment)
-    parser.file = template_file
-    result = parser.parse()
-    raise Puppet::ParseError, "Parsing #{template_file} did not produce an instance of Epp. Got: #{result.class}" unless result.is_a?(Puppet::Parser::AST::Epp)
-    result.call(self, template_args)
-  end.join("")
 end

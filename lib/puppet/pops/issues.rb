@@ -454,4 +454,8 @@ module Puppet::Pops::Issues
   EMPTY_HEREDOC_SYNTAX_SEGMENT = issue :EMPTY_HEREDOC_SYNTAX_SEGMENT, :syntax do
     "Heredoc syntax specification has empty segment between '+' : '#{syntax}'"
   end
+
+  ILLEGAL_EPP_PARAMETERS = issue :ILLEGAL_EPP_PARAMETERS do
+    "Ambiguous EPP parameter expression. Probably missing '<%-' before parameters to remove leading whitespace"
+  end
 end

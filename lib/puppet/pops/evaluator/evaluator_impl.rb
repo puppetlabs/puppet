@@ -135,8 +135,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     pblock = closure.model
     parameters = pblock.parameters || []
 
-    if !spill_over && args.size > parameters.size
-      raise ArgumentError, "Too many arguments: #{args.size} for #{parameters.size}" 
+    if !spill_over && args_hash.size > parameters.size
+      raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}" 
     end
 
     # associate values with parameters
@@ -149,7 +149,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       optional = parameters.count { |p| !p.value.nil? }
       raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.join(" ,")}"
     end
-
     if spill_over
       # all args from given hash should be used, nil entries replaced by default values should win
       scope_hash = args_hash.merge(scope_hash)
@@ -450,6 +449,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     end
   end
 
+  def eval_EppExpression(o, scope)
+    scope["@epp"] = []
+    evaluate(o.body, scope)
+    result = scope["@epp"].join('')
+    result
+  end
+
   def eval_RenderStringExpression(o, scope)
     scope["@epp"] << o.value.dup
     nil
@@ -740,7 +746,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_CallNamedFunctionExpression(o, scope)
     # The functor expression is not evaluated, it is not possible to select the function to call
     # via an expression like $a()
-    unless o.functor_expr.is_a? Puppet::Pops::Model::QualifiedName
+    case o.functor_expr
+    when Puppet::Pops::Model::QualifiedName
+      # ok
+    when Puppet::Pops::Model::RenderStringExpression
+      # helpful to point out this easy to make Epp error
+      fail(Issues::ILLEGAL_EPP_PARAMETERS, o)
+    else
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = o.functor_expr.value

@@ -90,6 +90,7 @@ module Puppet
     module Evaluator
       require 'puppet/pops/evaluator/runtime3_support'
       require 'puppet/pops/evaluator/evaluator_impl'
+      require 'puppet/pops/evaluator/epp_evaluator'
     end
   end
 

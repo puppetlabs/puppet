@@ -3,6 +3,8 @@
 #
 class Puppet::Pops::Parser::EvaluatingParser
 
+  attr_reader :parser
+
   def initialize()
     @parser = Puppet::Pops::Parser::Parser.new()
   end
@@ -17,7 +19,7 @@ class Puppet::Pops::Parser::EvaluatingParser
     # Also a possible improvement (if the YAML parser returns positions) is to provide correct output of position.
     #
     begin
-      assert_and_report(@parser.parse_string(s))
+      assert_and_report(parser.parse_string(s))
     rescue Puppet::ParseError => e
       # TODO: This is not quite right, why does not the exception have the correct file?
       e.file = @file_source unless e.file.is_a?(String) && !e.file.empty?
@@ -28,7 +30,7 @@ class Puppet::Pops::Parser::EvaluatingParser
   def parse_file(file)
     @file_source = file
     clear()
-    assert_and_report(@parser.parse_file(file))
+    assert_and_report(parser.parse_file(file))
   end
 
   def evaluate_string(scope, s, file_source='unknown')
@@ -180,5 +182,15 @@ class Puppet::Pops::Parser::EvaluatingParser
       Puppet::Pops::Validation::ValidatorFactory_4_0.new().validator(acceptor)
     end
 
+    # Create a closure that can be called in the given scope
+    def closure(model, scope)
+      Puppet::Pops::Evaluator::Closure.new(@@evaluator, model, scope)
+    end
+  end
+
+  class EvaluatingEppParser < Transitional
+    def initialize()
+      @parser = Puppet::Pops::Parser::EppParser.new()
+    end
   end
 end
