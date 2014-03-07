@@ -140,18 +140,21 @@ describe Puppet::FileServing::Fileset do
     end
 
     def mock_dir_structure(path, stat_method = :lstat)
-      Puppet::FileSystem.stubs(stat_method).with(@path).returns @dirstat
-      Dir.stubs(:entries).with(path).returns(%w{one two .svn CVS})
+      Puppet::FileSystem.stubs(stat_method).with(path).returns @dirstat
 
       # Keep track of the files we're stubbing.
       @files = %w{.}
 
-      %w{one two .svn CVS}.each do |subdir|
+      top_names = %w{one two .svn CVS}
+      sub_names = %w{file1 file2 .svn CVS 0 false}
+
+      Dir.stubs(:entries).with(path).returns(top_names)
+      top_names.each do |subdir|
         @files << subdir # relative path
         subpath = File.join(path, subdir)
         Puppet::FileSystem.stubs(stat_method).with(subpath).returns @dirstat
-        Dir.stubs(:entries).with(subpath).returns(%w{.svn CVS file1 file2 0 false})
-        %w{file1 file2 .svn CVS 0 false}.each do |file|
+        Dir.stubs(:entries).with(subpath).returns(sub_names)
+        sub_names.each do |file|
           @files << File.join(subdir, file) # relative path
           subfile_path = File.join(subpath, file)
           Puppet::FileSystem.stubs(stat_method).with(subfile_path).returns(@filestat)
