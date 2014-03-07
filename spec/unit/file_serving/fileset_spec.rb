@@ -150,8 +150,8 @@ describe Puppet::FileServing::Fileset do
         @files << subdir # relative path
         subpath = File.join(path, subdir)
         Puppet::FileSystem.stubs(stat_method).with(subpath).returns @dirstat
-        Dir.stubs(:entries).with(subpath).returns(%w{.svn CVS file1 file2})
-        %w{file1 file2 .svn CVS}.each do |file|
+        Dir.stubs(:entries).with(subpath).returns(%w{.svn CVS file1 file2 0 false})
+        %w{file1 file2 .svn CVS 0 false}.each do |file|
           @files << File.join(subdir, file) # relative path
           subfile_path = File.join(subpath, file)
           Puppet::FileSystem.stubs(stat_method).with(subfile_path).returns(@filestat)
@@ -242,6 +242,20 @@ describe Puppet::FileServing::Fileset do
       @fileset.recurse = true
       @fileset.ignore = %w{.svn CVS}
       @fileset.files.find { |file| file.include?(".svn") or file.include?("CVS") }.should be_nil
+    end
+
+    it "ignores files that match a pattern given as a number" do
+      mock_dir_structure(@path)
+      @fileset.recurse = true
+      @fileset.ignore = [0]
+      @fileset.files.find { |file| file.include?("0") }.should be_nil
+    end
+
+    it "ignores files that match a pattern given as a boolean" do
+      mock_dir_structure(@path)
+      @fileset.recurse = true
+      @fileset.ignore = [false]
+      @fileset.files.find { |file| file.include?("false") }.should be_nil
     end
 
     it "uses Puppet::FileSystem#stat if :links is set to :follow" do

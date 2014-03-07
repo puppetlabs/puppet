@@ -70,7 +70,7 @@ class Puppet::FileServing::Fileset
 
   def ignore=(values)
     values = [values] unless values.is_a?(Array)
-    @ignore = values
+    @ignore = values.collect(&:to_s)
   end
 
   def links=(links)
