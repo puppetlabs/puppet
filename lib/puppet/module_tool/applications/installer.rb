@@ -135,6 +135,8 @@ module Puppet::ModuleTool
       # install into the same directory 'foo'.
       #
       def resolve_install_conflicts(graph, is_dependency = false)
+        Puppet.debug("Resolving conflicts for #{graph.map {|n| n[:module]}.join(',')}")
+
         graph.each do |release|
           @environment.modules_by_path[options[:target_dir]].each do |mod|
             if mod.has_metadata?
@@ -165,8 +167,11 @@ module Puppet::ModuleTool
                 :directory         => mod.path,
                 :metadata          => metadata
             end
+          end
 
-            resolve_install_conflicts(release[:dependencies], true)
+          deps = release[:dependencies]
+          if deps && !deps.empty?
+            resolve_install_conflicts(deps, true)
           end
         end
       end

@@ -268,6 +268,37 @@ MSG
         results[:error][:oneline].should == oneline
         results[:error][:multiline].should == multiline
       end
+
+      it "resolves conflicts for each dependency only once" do
+        Puppet::Log.level = :debug
+
+        installed_modules = [
+          Puppet::Module.new('ntp', File.join(modpath1, 'ntp'), env.name),
+          Puppet::Module.new('mysql', File.join(modpath1, 'mysql'), env.name),
+          Puppet::Module.new('apache', File.join(modpath1, 'apache'), env.name)
+        ]
+
+        env.stubs(:modules_by_path).returns({modpath1 => installed_modules})
+
+        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+          with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
+          returns(unpacker)
+        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+          with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options).
+          returns(unpacker)
+        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+          with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
+          returns(unpacker)
+
+        installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
+
+        modules = @logs.map do |log|
+          data = log.message.match(/Resolving conflicts for (.*)/)
+          data ? data[1] : nil
+        end.compact
+
+        expect(modules).to eq(["pmtacceptance-apollo", "pmtacceptance-java,pmtacceptance-stdlib"])
+      end
     end
 
     context "when there are modules installed" do
