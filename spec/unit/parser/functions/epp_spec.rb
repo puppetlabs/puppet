@@ -1,7 +1,7 @@
 
 require 'spec_helper'
 
-describe "the template function" do
+describe "the epp function" do
   include PuppetSpec::Files
 
   before :all do
