@@ -21,6 +21,7 @@ class Puppet::Settings
   require 'puppet/settings/autosign_setting'
   require 'puppet/settings/config_file'
   require 'puppet/settings/value_translator'
+  require 'puppet/settings/environment_conf'
 
   # local reference for convenience
   PuppetOptionParser = Puppet::Util::CommandLine::PuppetOptionParser
@@ -1030,6 +1031,13 @@ Generated on #{Time.now}.
     end
   end
 
+  # This method just turns a file into a new ConfigFile::Conf instance
+  # @param file [String] absolute path to the configuration file
+  # @return [Puppet::Settings::ConfigFile::Conf]
+  # @api private
+  def parse_file(file)
+    @config_file_parser.parse_file(file, read_file(file))
+  end
 
   private
 
@@ -1092,20 +1100,10 @@ Generated on #{Time.now}.
     end.compact
   end
 
-  # This method just turns a file in to a hash of hashes.
-  def parse_file(file)
-    @config_file_parser.parse_file(file, read_file(file))
-  end
-
   # Read the file in.
+  # @api private
   def read_file(file)
-    begin
-      return File.read(file)
-    rescue Errno::ENOENT
-      raise ArgumentError, "No such file #{file}", $!.backtrace
-    rescue Errno::EACCES
-      raise ArgumentError, "Permission denied to file #{file}", $!.backtrace
-    end
+    return Puppet::FileSystem.read(file)
   end
 
   # Private method for internal test use only; allows to do a comprehensive clear of all settings between tests.
@@ -1276,21 +1274,20 @@ Generated on #{Time.now}.
 
   # @api private
   class ValuesFromCurrentEnvironment
-    ENVIRONMENT_SETTINGS = [:modulepath, :manifest, :config_version].freeze
 
     def initialize(desired_environment)
       @desired_environment = desired_environment
     end
 
     def include?(name)
-      return false unless ENVIRONMENT_SETTINGS.include?(name) 
+      return false unless Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name) 
       if i = instance
         i.include?(name)
       end
     end
 
     def lookup(name)
-      return nil unless ENVIRONMENT_SETTINGS.include?(name)
+      return nil unless Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name)
       if i = instance
         i[name]
       end

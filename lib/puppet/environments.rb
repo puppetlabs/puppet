@@ -115,7 +115,7 @@ module Puppet::Environments
 
     # Generate an array of directory loaders from a path string.
     # @param path [String] path to environment directories
-    # @param global_module_path [String] the global modulepath setting
+    # @param global_module_path [Array<String>] the global modulepath setting
     # @return [Array<Puppet::Environments::Directories>] An array
     #   of configured directory loaders.
     def self.from_path(path, global_module_path)
@@ -141,11 +141,16 @@ module Puppet::Environments
              Puppet::Node::Environment.valid_name?(name)
         end.collect do |child|
           name = Puppet::FileSystem.basename_string(child)
-          Puppet::Node::Environment.create(
-            name.intern,
-            [File.join(base, name, "modules")] + @global_module_path,
-            File.join(base, name, "manifests"))
-        end
+
+          if config = Puppet::Settings::EnvironmentConf.load_from(child, @global_module_path)
+            env = Puppet::Node::Environment.create(
+              name.intern,
+              config.modulepath,
+              config.manifest,
+              config.config_version)
+          end
+          env
+        end.compact
       else
         []
       end
