@@ -11,7 +11,7 @@ module Puppet::Pops::Parser::SlurpSupport
   SLURP_SQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*[']/
   SLURP_DQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*(["]|[$]\{?)/
   SLURP_UQ_PATTERN  = /(?:[^\\]|^|[^\\])(?:[\\]{2})*([$]\{?|\z)/
-  SLURP_ALL_PATTERN = /.*(\z)/
+  SLURP_ALL_PATTERN = /.*(\z)/m
   SQ_ESCAPES = %w{ \\ ' }
   DQ_ESCAPES = %w{ \\  $ ' " r n t s u}+["\r\n", "\n"]
   UQ_ESCAPES = %w{ \\  $ r n t s u}+["\r\n", "\n"]
