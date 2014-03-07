@@ -51,15 +51,15 @@ describe "epp parser" do
     end
 
     it "template parameters" do
-      dump(parse("<%($x)%>Hello World")).should == "(lambda (parameters x) (epp (block (render-s 'Hello World'))))"
+      dump(parse("<%|$x|%>Hello World")).should == "(lambda (parameters x) (epp (block (render-s 'Hello World'))))"
     end
 
     it "template parameters with default" do
-      dump(parse("<%($x='cigar')%>Hello World")).should == "(lambda (parameters (= x 'cigar')) (epp (block (render-s 'Hello World'))))"
+      dump(parse("<%|$x='cigar'|%>Hello World")).should == "(lambda (parameters (= x 'cigar')) (epp (block (render-s 'Hello World'))))"
     end
 
     it "template parameters with and without default" do
-      dump(parse("<%($x='cigar', $y)%>Hello World")).should == "(lambda (parameters (= x 'cigar') y) (epp (block (render-s 'Hello World'))))"
+      dump(parse("<%|$x='cigar', $y|%>Hello World")).should == "(lambda (parameters (= x 'cigar') y) (epp (block (render-s 'Hello World'))))"
     end
 
     it "comments" do

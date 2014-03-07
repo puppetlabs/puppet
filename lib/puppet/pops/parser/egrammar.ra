@@ -671,8 +671,8 @@ epp_expression
 
 epp_parameters_list
   :                                  =LOW{ result = nil }
-  | LPAREN RPAREN                        { result = [] }
-  | LPAREN parameters endcomma RPAREN    { result = val[1] }
+  | PIPE PIPE                        { result = [] }
+  | PIPE parameters endcomma PIPE    { result = val[1] }
 
 epp_render_expression
   : RENDER_STRING          { result = Factory.RENDER_STRING(val[0][:value]); loc result, val[0] }
