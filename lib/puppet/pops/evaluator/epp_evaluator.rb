@@ -26,7 +26,6 @@ class Puppet::Pops::Evaluator::EppEvaluator
 
     file = file + ".epp" unless file =~ /\.epp$/
     scope.debug "Retrieving epp template #{file}"
-    require 'debugger'; debugger
     template_file = Puppet::Parser::Files.find_template(file, env_name)
     unless template_file
       raise Puppet::ParseError, "Could not find template '#{file}'"

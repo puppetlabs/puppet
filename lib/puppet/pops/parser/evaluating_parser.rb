@@ -172,10 +172,14 @@ class Puppet::Pops::Parser::EvaluatingParser
   # will eventually have this behavior instead of using transformation to Puppet 3.x AST
   class Transitional < Puppet::Pops::Parser::EvaluatingParser
 
+    def evaluator
+      @@evaluator ||= Puppet::Pops::Evaluator::EvaluatorImpl.new()
+      @@evaluator
+    end
+
     def evaluate(scope, model)
       return nil unless model
-      @@evaluator ||= Puppet::Pops::Evaluator::EvaluatorImpl.new()
-      @@evaluator.evaluate(model, scope)
+      evaluator.evaluate(model, scope)
     end
 
     def validator(acceptor)
@@ -184,7 +188,7 @@ class Puppet::Pops::Parser::EvaluatingParser
 
     # Create a closure that can be called in the given scope
     def closure(model, scope)
-      Puppet::Pops::Evaluator::Closure.new(@@evaluator, model, scope)
+      Puppet::Pops::Evaluator::Closure.new(evaluator, model, scope)
     end
   end
 
