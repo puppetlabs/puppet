@@ -1276,19 +1276,21 @@ Generated on #{Time.now}.
 
   # @api private
   class ValuesFromCurrentEnvironment
+    ENVIRONMENT_SETTINGS = [:modulepath, :manifest, :config_version].freeze
+
     def initialize(desired_environment)
       @desired_environment = desired_environment
     end
 
     def include?(name)
-      return false unless name == :modulepath || name == :manifest
+      return false unless ENVIRONMENT_SETTINGS.include?(name) 
       if i = instance
         i.include?(name)
       end
     end
 
     def lookup(name)
-      return nil unless name == :modulepath || name == :manifest
+      return nil unless ENVIRONMENT_SETTINGS.include?(name)
       if i = instance
         i[name]
       end
@@ -1303,6 +1305,7 @@ Generated on #{Time.now}.
           @instance = {
             :modulepath => env.full_modulepath.join(File::PATH_SEPARATOR),
             :manifest => env.manifest,
+            :config_version => env.config_version,
           }
         end
       end
