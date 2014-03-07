@@ -30,6 +30,30 @@ describe "the template function" do
       scope['undef_var'] = :undef
       eval_template("<%= $undef_var == undef %>").should == "true"
     end
+
+    it "gets shadowed variable if args are given" do
+      scope['phantom'] = 'of the opera'
+      eval_template_with_args("<%= $phantom == dragos %>", 'phantom' => 'dragos').should == "true"
+    end
+
+    it "gets shadowed variable if args are given and parameters are specified" do
+      scope['x'] = 'wrong one'
+      eval_template_with_args("<%-( $x )-%><%= $x == correct %>", 'x' => 'correct').should == "true"
+    end
+
+    it "raises an error if required variable is not given" do
+      scope['x'] = 'wrong one'
+      expect {
+        eval_template_with_args("<%-( $x )-%><%= $x == correct %>", 'y' => 'correct')
+      }.to raise_error(/no value given for required parameters x/)
+    end
+
+    it "raises an error if too many arguments are given" do
+      scope['x'] = 'wrong one'
+      expect {
+        eval_template_with_args("<%-( $x )-%><%= $x == correct %>", 'x' => 'correct', 'y' => 'surplus')
+      }.to raise_error(/Too many arguments: 2 for 1/)
+    end
   end
 
   # although never a problem with epp
@@ -45,9 +69,11 @@ describe "the template function" do
 
 
   def eval_template_with_args(content, args_hash)
-    File.stubs(:read).with("template.epp").returns(content)
-    FileTest.stubs(:exist?).with("template.epp").returns(true)
-    Puppet::Parser::Files.stubs(:find_template).returns("template.epp")
+    file_path = tmpdir('epp_spec_content')
+    filename = File.join(file_path, "template.epp")
+    File.open(filename, "w+") { |f| f.write(content) }
+
+    Puppet::Parser::Files.stubs(:find_template).returns(filename)
     scope.function_epp(['template', args_hash])
   end
 
