@@ -205,48 +205,40 @@ describe Puppet::Settings do
     end
 
     it "should support a getopt-specific mechanism for turning booleans off" do
-      @settings[:bool] = true
+      @settings.override_default(:bool, true)
       @settings.handlearg("--no-bool", "")
       @settings[:bool].should == false
     end
 
     it "should support a getopt-specific mechanism for turning booleans on" do
       # Turn it off first
-      @settings[:bool] = false
+      @settings.override_default(:bool, false)
       @settings.handlearg("--bool", "")
       @settings[:bool].should == true
     end
 
     it "should consider a cli setting with no argument to be a boolean" do
       # Turn it off first
-      @settings[:bool] = false
+      @settings.override_default(:bool, false)
       @settings.handlearg("--bool")
       @settings[:bool].should == true
     end
 
-    it "should consider a cli setting with an empty string as an argument to be a boolean, if the setting itself is a boolean" do
-      # Turn it off first
-      @settings[:bool] = false
-      @settings.handlearg("--bool", "")
-      @settings[:bool].should == true
-    end
-
     it "should consider a cli setting with an empty string as an argument to be an empty argument, if the setting itself is not a boolean" do
-      @settings[:myval] = "bob"
+      @settings.override_default(:myval, "bob")
       @settings.handlearg("--myval", "")
       @settings[:myval].should == ""
     end
 
     it "should consider a cli setting with a boolean as an argument to be a boolean" do
       # Turn it off first
-      @settings[:bool] = false
+      @settings.override_default(:bool, false)
       @settings.handlearg("--bool", "true")
       @settings[:bool].should == true
     end
 
     it "should not consider a cli setting of a non boolean with a boolean as an argument to be a boolean" do
-      # Turn it off first
-      @settings[:myval] = "bob"
+      @settings.override_default(:myval, "bob")
       @settings.handlearg("--no-myval", "")
       @settings[:myval].should == ""
     end
@@ -257,7 +249,6 @@ describe Puppet::Settings do
     end
 
     it "should flag bool settings from the CLI" do
-      @settings[:bool] = false
       @settings.handlearg("--bool")
       @settings.set_by_cli?(:bool).should be_true
     end
@@ -457,10 +448,11 @@ describe Puppet::Settings do
       @settings[:bool].should == false
     end
 
-    it "should prefer cli values to values set in Ruby code" do
-      @settings.handlearg("--myval", "cliarg")
+    it "should prefer values set in ruby to values set on the cli" do
       @settings[:myval] = "memarg"
-      @settings[:myval].should == "cliarg"
+      @settings.handlearg("--myval", "cliarg")
+
+      @settings[:myval].should == "memarg"
     end
 
     it "should clear the list of environments" do
@@ -616,12 +608,6 @@ describe Puppet::Settings do
       @settings.handlearg("--one", "clival")
       @settings.send(:parse_config_files)
 
-      @settings[:one].should == "clival"
-    end
-
-    it "should return values set on the cli before values set in Ruby" do
-      @settings[:one] = "rubyval"
-      @settings.handlearg("--one", "clival")
       @settings[:one].should == "clival"
     end
 

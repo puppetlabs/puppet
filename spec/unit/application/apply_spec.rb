@@ -74,7 +74,7 @@ describe Puppet::Application::Apply do
         @apply.options[:verbose].should == true
       end
       it "should set options[:show_diff] to true" do
-        Puppet[:show_diff] = false
+        Puppet.settings.override_default(:show_diff, false)
         @apply.setup_test
         Puppet[:show_diff].should == true
       end

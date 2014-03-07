@@ -364,11 +364,11 @@ module Puppet
         :hook     => proc do |value|
           if value
             # This reconfigures the termini for Node, Facts, and Catalog
-            Puppet.settings[:storeconfigs] = true
+            Puppet.settings.override_default(:storeconfigs, true)
 
             # But then we modify the configuration
             Puppet::Resource::Catalog.indirection.cache_class = :queue
-            Puppet.settings[:catalog_cache_terminus] = :queue
+            Puppet.settings.override_default(:catalog_cache_terminus, :queue)
           else
             raise "Cannot disable asynchronous storeconfigs in a running process"
           end
@@ -383,7 +383,7 @@ module Puppet
     `active_record` backend, but will disable external tools that search the storeconfigs database.
     Thinning catalogs is generally unnecessary when using PuppetDB to store catalogs.",
       :hook     => proc do |value|
-        Puppet.settings[:storeconfigs] = true if value
+        Puppet.settings.override_default(:storeconfigs, true) if value
         end
       },
     :config_version => {
@@ -1226,7 +1226,7 @@ EOT
       :hook => proc { |value|
         if value
           Puppet.deprecation_warning "Setting 'catalog_format' is deprecated; use 'preferred_serialization_format' instead."
-          Puppet.settings[:preferred_serialization_format] = value
+          Puppet.settings.override_default(:preferred_serialization_format, value)
         end
       }
     },
@@ -1748,7 +1748,7 @@ EOT
         if value
           if not Puppet.settings[:async_storeconfigs]
             Puppet::Resource::Catalog.indirection.cache_class = :store_configs
-            Puppet.settings[:catalog_cache_terminus] = :store_configs
+            Puppet.settings.override_default(:catalog_cache_terminus, :store_configs)
           end
           Puppet::Node::Facts.indirection.cache_class = :store_configs
 
