@@ -245,7 +245,13 @@ class Puppet::Parser::Scope
       self
     else
       next_scope = inherited_scope || enclosing_scope
-      next_scope.find_global_scope()
+      if next_scope.nil?
+        # this happens when testing, and there is only a single test scope and no link to any
+        # other scopes
+        self
+      else
+        next_scope.find_global_scope()
+      end
     end
   end
 
