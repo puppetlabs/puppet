@@ -56,6 +56,10 @@ describe "the inline_epp function" do
     end
   end
 
+  it "renders a block expression" do
+    eval_template_with_args("<%= {($x) $x + 1} %>", 'x' => 2).should == "3"
+  end
+
   # although never a problem with epp
   it "is not interfered with by having a variable named 'string' (#14093)" do
     scope['string'] = "this output should not be seen"
