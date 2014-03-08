@@ -241,8 +241,7 @@ EOF
     end
 
     it "should return nil on error" do
-      provider.expects(:execpipe).raises(Puppet::ExecutionFailure.new("ERROR!"))
-      provider.expects(:execpipe).raises(Puppet::ExecutionFailure.new("ERROR!"))
+      provider.expects(:execpipe).twice.raises(Puppet::ExecutionFailure.new("ERROR!"))
       provider.instances.should be_nil
     end
 
