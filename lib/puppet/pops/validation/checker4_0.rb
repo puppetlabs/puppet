@@ -452,8 +452,6 @@ class Puppet::Pops::Validation::Checker4_0
   #
   def rvalue_Expression(o); end
 
-  def rvalue_BlockExpression(o)           ; acceptor.accept(Issues::NOT_RVALUE, o) ; end
-
   def rvalue_ResourceDefaultsExpression(o); acceptor.accept(Issues::NOT_RVALUE, o) ; end
 
   def rvalue_ResourceOverrideExpression(o); acceptor.accept(Issues::NOT_RVALUE, o) ; end

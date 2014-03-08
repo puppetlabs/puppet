@@ -677,6 +677,7 @@ epp_parameters_list
 epp_render_expression
   : RENDER_STRING          { result = Factory.RENDER_STRING(val[0][:value]); loc result, val[0] }
   | RENDER_EXPR expression { result = Factory.RENDER_EXPR(val[1]); loc result, val[0], val[1] }
+  | RENDER_EXPR LBRACE statements RBRACE { result = Factory.RENDER_EXPR(Factory.block_or_expression(*val[2])); loc result, val[0], val[3] }
 
 number   : NUMBER   { result = Factory.NUMBER(val[0][:value]) ; loc result, val[0] }
 name     : NAME     { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }
