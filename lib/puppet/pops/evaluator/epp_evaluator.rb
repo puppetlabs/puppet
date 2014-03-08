@@ -79,7 +79,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
       [{}, false]
     else
       unless template_args.is_a?(Hash)
-        raise ArgumentException, "#{func_name}(): the template_args must be a Hash, got a {template_args.class}"
+        raise ArgumentError, "#{func_name}(): the template_args must be a Hash, got a #{template_args.class}"
       end
       [template_args, true]
     end
