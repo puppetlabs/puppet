@@ -186,6 +186,11 @@ class Puppet::Pops::Parser::Parser
     Factory.transform_calls(expressions)
   end
 
+  # Transforms a LEFT followed by the result of attribute_operations, this may be a call or an invalid sequence
+  def transform_resource_wo_title(left, resource)
+    Factory.transform_resource_wo_title(left, resource)
+  end
+
   # If there are definitions that require initialization a Program is produced, else the body
   def create_program(body)
     locator = @lexer.locator
