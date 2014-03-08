@@ -4,7 +4,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
 
   def self.inline_epp(scope, epp_source, template_args = nil)
     unless epp_source.is_a? String
-      raise ArgumentError, "inline_epp(): the first argument must be a String with the epp source text, got a #{file.class}"
+      raise ArgumentError, "inline_epp(): the first argument must be a String with the epp source text, got a #{epp_source.class}"
     end
 
     # Parse and validate the source
