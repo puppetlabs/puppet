@@ -38,20 +38,20 @@ describe "the inline_epp function" do
 
     it "gets shadowed variable if args are given and parameters are specified" do
       scope['x'] = 'wrong one'
-      eval_template_with_args("<%-( $x )-%><%= $x == correct %>", 'x' => 'correct').should == "true"
+      eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'x' => 'correct').should == "true"
     end
 
     it "raises an error if required variable is not given" do
       scope['x'] = 'wrong one'
       expect {
-        eval_template_with_args("<%-( $x )-%><%= $x == correct %>", 'y' => 'correct')
+        eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'y' => 'correct')
       }.to raise_error(/no value given for required parameters x/)
     end
 
     it "raises an error if too many arguments are given" do
       scope['x'] = 'wrong one'
       expect {
-        eval_template_with_args("<%-( $x )-%><%= $x == correct %>", 'x' => 'correct', 'y' => 'surplus')
+        eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'x' => 'correct', 'y' => 'surplus')
       }.to raise_error(/Too many arguments: 2 for 1/)
     end
   end
