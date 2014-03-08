@@ -5,32 +5,25 @@ require 'tmpdir'
 require 'puppet/interface'
 
 describe Puppet::Interface::FaceCollection do
-  # To avoid cross-pollution we have to save and restore both the hash
-  # containing all the interface data, and the array used by require.  Restoring
-  # both means that we don't leak side-effects across the code. --daniel 2011-04-06
-  #
-  # Worse luck, we *also* need to flush $" of anything defining a face,
-  # because otherwise we can cross-pollute from other test files and end up
-  # with no faces loaded, but the require value set true. --daniel 2011-04-10
+
+  # Before and after each spec, restore the global state stored in FaceCollection
+  # This is done to prevent interference with other specs that use faces
   before :each do
-    @original_faces    = subject.instance_variable_get("@faces").dup
-    @original_required = $".dup
-    $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
+    # Clear the existing faces and treat as unloaded
     subject.instance_variable_get(:@faces).clear
     subject.instance_variable_set(:@loaded, false)
-    @autoload_loaded = {}
-    Puppet::Util::Autoload.stubs(:loaded).returns(@autoload_loaded)
+    # Remove all previously required faces
+    $".delete_if { |path| path =~ /face\/.*\.rb$/ }
+    Puppet::Util::Autoload.stubs(:loaded).returns({})
   end
 
   after :each do
-    # Just pushing the duplicate back into place doesn't work as reliably as
-    # this method to restore the state.  Honestly, I need to make this horror
-    # go away entirely. --daniel 2012-04-28
-    faces = subject.instance_variable_get("@faces")
-    faces.clear
-    @original_faces.each {|k,v| faces[k] = v }
-
-    @original_required.each {|f| $".push f unless $".include? f }
+    # Clear the existing faces and treat as unloaded
+    subject.instance_variable_get(:@faces).clear
+    subject.instance_variable_set(:@loaded, false)
+    # Remove all previously required faces
+    # This ensures we can correctly autoload a face again from other specs
+    $".delete_if { |path| path =~ /face\/.*\.rb$/ }
   end
 
   describe "::[]" do
