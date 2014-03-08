@@ -222,14 +222,6 @@ class Puppet::Pops::Validation::Checker4_0
     rvalue(o.test)
   end
 
-  def check_ImportExpression(o)
-    o.files.each do |f|
-      unless f.is_a? Model::LiteralString
-        acceptor.accept(Issues::ILLEGAL_EXPRESSION, f, :feature => 'file name', :container => o)
-      end
-    end
-  end
-
   def check_KeyedEntry(o)
     rvalue(o.key)
     rvalue(o.value)
