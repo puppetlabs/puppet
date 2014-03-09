@@ -345,7 +345,22 @@ describe 'Lexer2' do
       [:RENDER_STRING, "      This is "],
       [:RENDER_EXPR, nil],
       [:VARIABLE, "x"],
+      [:EPP_END, "%>"],
       [:RENDER_STRING, " just text\n"]
+      )
+    end
+
+    it 'epp can contain text with trimmed interpolated rendered expressions' do
+      code = <<-CODE
+      This is <%= $x -%> just text
+      CODE
+      epp_tokens_scanned_from(code).should match_tokens2(
+      :EPP_START,
+      [:RENDER_STRING, "      This is "],
+      [:RENDER_EXPR, nil],
+      [:VARIABLE, "x"],
+      [:EPP_END_TRIM, "-%>"],
+      [:RENDER_STRING, "just text\n"]
       )
     end
 
