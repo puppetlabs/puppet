@@ -438,8 +438,8 @@ Puppet::Type.newtype(:cron) do
   #   property, unpurged file content (such as comments) can end up
   #   being written to the default target (i.e. the current login name).
   def purging
-    self[:target] = provider.property_hash[:target]
-    self[:user] = provider.property_hash[:target]
+    self[:target] = provider.target
+    self[:user] = provider.target
     super
   end
 
