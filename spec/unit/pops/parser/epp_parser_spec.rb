@@ -43,6 +43,10 @@ describe "epp parser" do
     it "nested epp expression tags" do
       expect { dump(parse("<%= 1+1 <%= 2+2 %>%>")) }.to raise_error(/Syntax error/)
     end
+
+    it "rendering sequence of expressions" do
+      expect { dump(parse("<%= 1 2 3 %>")) }.to raise_error(/Syntax error/)
+    end
   end
 
   context "handles parsing of" do
@@ -60,6 +64,10 @@ describe "epp parser" do
 
     it "template parameters with and without default" do
       dump(parse("<%|$x='cigar', $y|%>Hello World")).should == "(lambda (parameters (= x 'cigar') y) (epp (block (render-s 'Hello World'))))"
+    end
+
+    it "template parameters + additional setup" do
+      dump(parse("<%|$x| $y = 10 %>Hello World")).should == "(lambda (parameters x) (epp (block (= $y 10) (render-s 'Hello World'))))"
     end
 
     it "comments" do
