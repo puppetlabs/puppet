@@ -99,6 +99,8 @@ class Puppet::Pops::Parser::Lexer2
 
   # EPP_START is currently a marker token, may later get syntax
   TOKEN_EPPSTART       =  [:EPP_START, nil, 0].freeze
+  TOKEN_EPPEND         =  [:EPP_END, '%>', 2].freeze
+  TOKEN_EPPEND_TRIM    =  [:EPP_END_TRIM, '-%>', 3].freeze
 
   # This is used for unrecognized tokens, will always be a single character. This particular instance
   # is not used, but is kept here for documentation purposes.
@@ -347,6 +349,9 @@ class Puppet::Pops::Parser::Lexer2
     when '%'
       if la1 == '>' && ctx[:epp_mode]
         scn.pos += 2
+        if ctx[:epp_mode] == :expr
+          enqueue_completed(TOKEN_EPPEND, before)
+        end
         ctx[:epp_mode] = :text
         interpolate_epp
       else
@@ -417,6 +422,9 @@ class Puppet::Pops::Parser::Lexer2
     when '-'
       if ctx[:epp_mode] && la1 == '%' && la2 == '>'
         scn.pos += 3
+        if ctx[:epp_mode] == :expr
+          enqueue_completed(TOKEN_EPPEND_TRIM, before)
+        end
         interpolate_epp(:with_trim)
       else
         emit(case la1

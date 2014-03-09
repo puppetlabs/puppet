@@ -17,7 +17,7 @@ token IN UNLESS PIPE
 token LAMBDA SELBRACE
 token NUMBER
 token HEREDOC SUBLOCATE
-token RENDER_STRING RENDER_EXPR EPP_START
+token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
 token LOW
 
 prechigh
@@ -681,9 +681,13 @@ epp_parameters_list
   | PIPE parameters endcomma PIPE    { result = val[1] }
 
 epp_render_expression
-  : RENDER_STRING          { result = Factory.RENDER_STRING(val[0][:value]); loc result, val[0] }
-  | RENDER_EXPR expression { result = Factory.RENDER_EXPR(val[1]); loc result, val[0], val[1] }
-  | RENDER_EXPR LBRACE statements RBRACE { result = Factory.RENDER_EXPR(Factory.block_or_expression(*val[2])); loc result, val[0], val[3] }
+  : RENDER_STRING                  { result = Factory.RENDER_STRING(val[0][:value]); loc result, val[0] }
+  | RENDER_EXPR expression epp_end { result = Factory.RENDER_EXPR(val[1]); loc result, val[0], val[2] }
+  | RENDER_EXPR LBRACE statements RBRACE epp_end { result = Factory.RENDER_EXPR(Factory.block_or_expression(*val[2])); loc result, val[0], val[4] }
+
+epp_end
+  : EPP_END
+  | EPP_END_TRIM
 
 number   : NUMBER   { result = Factory.NUMBER(val[0][:value]) ; loc result, val[0] }
 name     : NAME     { result = Factory.QNAME_OR_NUMBER(val[0][:value]) ; loc result, val[0] }
