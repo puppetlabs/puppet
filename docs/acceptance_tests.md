@@ -21,6 +21,32 @@ cd /path/to/repo/acceptance
 bundle install --path=.bundle/gems
 ```
 
+### Using Git Mirrors
+
+By default if you are installing from source, packages will be installed from Github, from their puppetlabs forks.  This can be selectively overridden for all installed projects, or per project, by setting environment variables.
+
+GIT_SERVER => this will be the address the git server used for all installed projects.  Defaults to 'github.com'.
+FORK => this will be the fork of the project for all installed projects.  Defaults to 'puppetlabs'.
+
+To customize the server or fork for a specific project use PROJECT_NAME_GIT_SERVER and PROJECT_NAME_FORK.
+
+For example, run with these options:
+
+```sh
+bundle exec rake ci:test:git CONFIG=config/nodes/win2008r2.yaml SHA=abcd PUPPET_GIT_SERVER=percival.corp.puppetlabs.net GIT_SERVER=github.delivery.puppetlabs.net
+```
+
+Beaker will install the following:
+
+```
+:install=>
+  ["git://github.delivery.puppetlabs.net/puppetlabs-facter.git#stable",
+   "git://github.delivery.puppetlabs.net/puppetlabs-hiera.git#stable",
+   "git://percival.corp.puppetlabs.net/puppetlabs-puppet.git#abcd"],
+```
+
+This corresponds to installing facter and hiera stable from our internal mirror, while installing puppet SHA abcd from a git daemon on my local machine percival.  See below for details on setting up a local git daemon.
+
 Running Tests on the vcloud
 ---------------------------
 
@@ -80,7 +106,7 @@ bundle exec rake ci:test:git CONFIG=config/nodes/win2008r2.yaml SHA=issue/master
 
 See notes on running acceptance with Vagrant for more details on using a local git daemon.
 
-TODO Fix up the Rakefile's handling of git urls so that there is a simple way to specify both a branch on a github fork, and a branch on some other git server daemon, so that you have fewer steps when serving from a local git daemon. 
+TODO Fix up the Rakefile's handling of git urls so that there is a simple way to specify both a branch on a github fork, and a branch on some other git server daemon, so that you have fewer steps when serving from a local git daemon.
 
 ### Preserving Hosts
 
@@ -104,10 +130,10 @@ If you run a number of jobs with --preserve_hosts or vi ci:test_and_preserve_hos
 
 to clean them up sooner and free resources.
 
-There also may be scenarios where you want to specify the host(s) to destroy. E.g. you may want to destroy a subset of the hosts you've created. Or, if a test run terminates early, ci:destroy_preserved_hosts may not be able to derive the name of the vm to delete. In such cases you can specify host(s) to be deleted using the HOST_NAMES environment variable. E.g.
+There also may be scenarios where you want to specify the host(s) to relase. E.g. you may want to relase a subset of the hosts you've created. Or, if a test run terminates early, ci:release_hosts may not be able to derive the name of the vm to delete. In such cases you can specify host(s) to be deleted using the HOST_NAMES environment variable. E.g.
 
-    HOST_NAMES=lvwwr9tdplg351u bundle exec rake ci:destroy_preserved_hosts
-    HOST_NAMES=lvwwr9tdplg351u,ylrqjh5l6xvym4t bundle exec rake ci:destroy_preserved_hosts
+    HOST_NAMES=lvwwr9tdplg351u bundle exec rake ci:release_hosts
+    HOST_NAMES=lvwwr9tdplg351u,ylrqjh5l6xvym4t bundle exec rake ci:release_hosts
 
 
 Running Tests on Vagrant Boxen
@@ -169,7 +195,7 @@ The last thing that needs to be done before we can run the tests is to set up a 
 We'll do this by starting a git daemon on our host.
 In another session, navigate to the folder that contains your checkout of the puppet repo, and then create the following symlink:
 ```sh
-ln -s . puppet.git
+ln -s . puppetlabs-puppet.git
 ```
 This works around the inflexible checkout path used by the test prep code.
 
@@ -192,7 +218,7 @@ From the description, we can see that we'll need to set a few environment variab
   + GIT_SERVER should be the IP address of the host (i.e. your machine) in the vagrant private network created for the test box.
     This is derived from the test box's ip by replacing the last octet with 1.
     For our example above, the host IP is 192.168.80.1
-  + FORK should be the path to a 'puppet.git' directory that points to the repo.
+  + FORK should be the path to a 'puppetlabs-puppet.git' directory that points to the repo.
     In our case, this is the path to the symlink we created before, which is inside your puppet repo checkout, so FORK should just be the name of your checkout.
     We'll assume that the name is `puppet`.
 
