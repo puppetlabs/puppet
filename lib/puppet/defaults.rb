@@ -196,6 +196,11 @@ module Puppet
           is used to find modules and much more.  For servers (i.e., `puppet master`)
           this provides the default environment for nodes we know nothing about."
     },
+    :environmentpath => {
+      :default => "$confdir/environments",
+      :desc    => "A path of environment directories",
+      :type    => :path,
+    },
     :diff_args => {
         :default  => default_diffargs,
         :desc     => "Which arguments to pass to the diff command when printing differences between
@@ -251,7 +256,7 @@ module Puppet
       :type       => :terminus,
       :default    => nil,
       :desc       => "How to store cached nodes.
-      Valid values are (none), 'json', 'yaml' or write only yaml ('write_only_yaml').
+      Valid values are (none), 'json', 'msgpack', 'yaml' or write only yaml ('write_only_yaml').
       The master application defaults to 'write_only_yaml', all others to none.",
     },
     :data_binding_terminus => {
@@ -266,8 +271,9 @@ module Puppet
     },
     :binder => {
       :default => false,
-      :desc    => "Turns the binding system on or off. This includes hiera-2 and data in modules.  The binding system aggregates data from
-      modules and other locations and makes them available for lookup.  The binding system is experimental and any or all of it may change.",
+      :desc    => "Turns the binding system on or off. This includes bindings in modules.
+        The binding system aggregates data from modules and other locations and makes them available for lookup.
+        The binding system is experimental and any or all of it may change.",
       :type    => :boolean,
     },
     :binder_config => {
@@ -286,7 +292,7 @@ module Puppet
     :catalog_cache_terminus => {
       :type       => :terminus,
       :default    => nil,
-      :desc       => "How to store cached catalogs. Valid values are 'json' and 'yaml'. The agent application defaults to 'json'."
+      :desc       => "How to store cached catalogs. Valid values are 'json', 'msgpack' and 'yaml'. The agent application defaults to 'json'."
     },
     :facts_terminus => {
       :default => 'facter',
@@ -358,11 +364,11 @@ module Puppet
         :hook     => proc do |value|
           if value
             # This reconfigures the termini for Node, Facts, and Catalog
-            Puppet.settings[:storeconfigs] = true
+            Puppet.settings.override_default(:storeconfigs, true)
 
             # But then we modify the configuration
             Puppet::Resource::Catalog.indirection.cache_class = :queue
-            Puppet.settings[:catalog_cache_terminus] = :queue
+            Puppet.settings.override_default(:catalog_cache_terminus, :queue)
           else
             raise "Cannot disable asynchronous storeconfigs in a running process"
           end
@@ -377,7 +383,7 @@ module Puppet
     `active_record` backend, but will disable external tools that search the storeconfigs database.
     Thinning catalogs is generally unnecessary when using PuppetDB to store catalogs.",
       :hook     => proc do |value|
-        Puppet.settings[:storeconfigs] = true if value
+        Puppet.settings.override_default(:storeconfigs, true) if value
         end
       },
     :config_version => {
@@ -421,6 +427,11 @@ module Puppet
       :type    => :boolean,
       :desc    => "Stores trusted node data in a hash called $trusted.
         When true also prevents $trusted from being overridden in any scope.",
+    },
+    :immutable_node_data => {
+      :default => '$trusted_node_data',
+      :type    => :boolean,
+      :desc    => "When true, also prevents $trusted and $facts from being overridden in any scope",
     }
   )
   Puppet.define_settings(:module_tool,
@@ -533,7 +544,9 @@ EOT
     :certdir => {
       :default => "$ssldir/certs",
       :type   => :directory,
+      :mode => 0755,
       :owner => "service",
+      :group => "service",
       :desc => "The certificate directory."
     },
     :ssldir => {
@@ -541,18 +554,23 @@ EOT
       :type   => :directory,
       :mode => 0771,
       :owner => "service",
+      :group => "service",
       :desc => "Where SSL certificates are kept."
     },
     :publickeydir => {
       :default => "$ssldir/public_keys",
       :type   => :directory,
+      :mode => 0755,
       :owner => "service",
+      :group => "service",
       :desc => "The public key directory."
     },
     :requestdir => {
       :default => "$ssldir/certificate_requests",
       :type => :directory,
+      :mode => 0755,
       :owner => "service",
+      :group => "service",
       :desc => "Where host certificate requests are stored."
     },
     :privatekeydir => {
@@ -560,6 +578,7 @@ EOT
       :type   => :directory,
       :mode => 0750,
       :owner => "service",
+      :group => "service",
       :desc => "The private key directory."
     },
     :privatedir => {
@@ -567,6 +586,7 @@ EOT
       :type   => :directory,
       :mode => 0750,
       :owner => "service",
+      :group => "service",
       :desc => "Where the client stores private certificate information."
     },
     :passfile => {
@@ -574,6 +594,7 @@ EOT
       :type   => :file,
       :mode => 0640,
       :owner => "service",
+      :group => "service",
       :desc => "Where puppet agent stores the password for its private key.
         Generally unused."
     },
@@ -582,6 +603,7 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where individual hosts store and look for their certificate requests."
     },
     :hostcert => {
@@ -589,13 +611,15 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where individual hosts store and look for their certificates."
     },
     :hostprivkey => {
       :default => "$privatekeydir/$certname.pem",
       :type   => :file,
-      :mode => 0600,
+      :mode => 0640,
       :owner => "service",
+      :group => "service",
       :desc => "Where individual hosts store and look for their private key."
     },
     :hostpubkey => {
@@ -603,6 +627,7 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where individual hosts store and look for their public key."
     },
     :localcacert => {
@@ -610,14 +635,16 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where each client stores the CA certificate."
     },
     :ssl_client_ca_auth => {
       :type  => :file,
       :mode  => 0644,
       :owner => "service",
+      :group => "service",
       :desc  => "Certificate authorities who issue server certificates.  SSL servers will not be
-        considered authentic unless they posses a certificate issued by an authority
+        considered authentic unless they possess a certificate issued by an authority
         listed in this file.  If this setting has no value then the Puppet master's CA
         certificate (localcacert) will be used."
     },
@@ -625,8 +652,9 @@ EOT
       :type  => :file,
       :mode  => 0644,
       :owner => "service",
+      :group => "service",
       :desc  => "Certificate authorities who issue client certificates.  SSL clients will not be
-        considered authentic unless they posses a certificate issued by an authority
+        considered authentic unless they possess a certificate issued by an authority
         listed in this file.  If this setting has no value then the Puppet master's CA
         certificate (localcacert) will be used."
     },
@@ -635,6 +663,7 @@ EOT
       :type   => :file,
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where the host's certificate revocation list can be found.
         This is distinct from the certificate authority's CRL."
     },
@@ -664,7 +693,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0755,
       :desc => "The root directory for the certificate authority."
     },
     :cacert => {
@@ -672,7 +701,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0644,
       :desc => "The CA certificate."
     },
     :cakey => {
@@ -680,7 +709,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "The CA private key."
     },
     :capub => {
@@ -688,6 +717,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
+      :mode => 0644,
       :desc => "The CA public key."
     },
     :cacrl => {
@@ -695,8 +725,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0664,
-
+      :mode => 0644,
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
     },
     :caprivatedir => {
@@ -704,7 +733,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0750,
       :desc => "Where the CA stores private certificate information."
     },
     :csrdir => {
@@ -712,6 +741,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
+      :mode  => 0755,
       :desc => "Where the CA stores certificate requests"
     },
     :signeddir => {
@@ -719,7 +749,7 @@ EOT
       :type => :directory,
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => 0755,
       :desc => "Where the CA stores signed certificates."
     },
     :capass => {
@@ -727,7 +757,7 @@ EOT
       :type => :file,
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => 0640,
       :desc => "Where the CA stores the password for the private key."
     },
     :serial => {
@@ -775,7 +805,7 @@ EOT
     :ca_ttl => {
       :default    => "5y",
       :type       => :duration,
-      :desc       => "The default TTL for new certificates. If this setting is set, ca_days is ignored.
+      :desc       => "The default TTL for new certificates.
       #{AS_DURATION}"
     },
     :req_bits => {
@@ -841,7 +871,8 @@ EOT
     :manifest => {
       :default    => "$manifestdir/site.pp",
       :type       => :file,
-      :desc       => "The entry-point manifest for puppet master.",
+      :desc       => "The entry-point manifest file for puppet master or a directory of manifests
+        to be evaluated in alphabetical order.",
     },
     :code => {
       :default    => "",
@@ -902,8 +933,14 @@ EOT
       :type       => :boolean,
       :desc       => "Whether the master should function as a certificate authority.",
     },
-    :modulepath => {
+    :basemodulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
+      :type => :path,
+      :desc => "The base non-environment specific search path for modules, included
+      also in all directory environment and default legacy environment modulepaths.",
+    },
+    :modulepath => {
+      :default => "$basemodulepath",
       :type => :path,
       :desc => "The search path for modules, as a list of directories separated by the system
         path separator character. (The POSIX path separator is ':', and the
@@ -1189,7 +1226,7 @@ EOT
       :hook => proc { |value|
         if value
           Puppet.deprecation_warning "Setting 'catalog_format' is deprecated; use 'preferred_serialization_format' instead."
-          Puppet.settings[:preferred_serialization_format] = value
+          Puppet.settings.override_default(:preferred_serialization_format, value)
         end
       }
     },
@@ -1711,7 +1748,7 @@ EOT
         if value
           if not Puppet.settings[:async_storeconfigs]
             Puppet::Resource::Catalog.indirection.cache_class = :store_configs
-            Puppet.settings[:catalog_cache_terminus] = :store_configs
+            Puppet.settings.override_default(:catalog_cache_terminus, :store_configs)
           end
           Puppet::Node::Facts.indirection.cache_class = :store_configs
 
@@ -1754,17 +1791,44 @@ EOT
       :default => "current",
       :desc => <<-'EOT'
         Selects the parser to use for parsing puppet manifests (in puppet DSL
-        language/'.pp' files). Available choices are `current` (the default),
+        language/'.pp' files). Available choices are `current` (the default)
         and `future`.
 
         The `curent` parser means that the released version of the parser should
         be used.
 
         The `future` parser is a "time travel to the future" allowing early
-        exposure to new language features. What these fatures are will vary from
+        exposure to new language features. What these features are will vary from
         release to release and they may be invididually configurable.
 
         Available Since Puppet 3.2.
+      EOT
+    },
+    :evaluator => {
+      :default => "future",
+      :hook => proc do |value|
+        if !['future', 'current'].include?(value)
+          raise "evaluator can only be set to 'future' or 'current', got '#{value}'"
+        end
+      end,
+      :desc => <<-'EOT'
+        Which evaluator to use when compiling Puppet manifests. Valid values
+        are `current` and `future` (the default).
+
+        **Note:** This setting is only used when `parser = future`. It allows
+        testers to turn off the `future` evaluator when doing detailed tests and
+        comparisons of the new compilation system.
+
+        Evaluation is the second stage of catalog compilation. After the parser
+        converts a manifest to a model of expressions, the evaluator processes
+        each expression. (For example, a resource declaration signals the
+        evaluator to add a resource to the catalog).
+
+        The `future` parser and evaluator are slated to become default in Puppet
+        4. Their purpose is to add new features and improve consistency
+        and reliability.
+
+        Available Since Puppet 3.5.
       EOT
     },
    :max_errors => {
@@ -1790,8 +1854,15 @@ EOT
       warnings in case multiple errors have been detected. A value of 0 is the
       same as value 1. The count is per manifest.
     EOT
+    },
+  :strict_variables => {
+    :default => false,
+    :type => :boolean,
+    :desc => <<-'EOT'
+      Makes the parser raise errors when referencing unknown variables. (This does not affect
+      referencing variables that are explicitly set to undef).
+    EOT
     }
-
   )
   define_settings(:puppetdoc,
     :document_all => {

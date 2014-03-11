@@ -59,7 +59,7 @@ class Puppet::Property::Ensure < Puppet::Property
     rescue Puppet::Error, Puppet::DevError
       raise
     rescue => detail
-      raise Puppet::DevError, "Could not convert change #{self.name} to string: #{detail}"
+      raise Puppet::DevError, "Could not convert change #{self.name} to string: #{detail}", detail.backtrace
     end
   end
 

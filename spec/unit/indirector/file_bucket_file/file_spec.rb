@@ -68,10 +68,10 @@ describe Puppet::FileBucketFile::File do
           checksum = save_bucket_file("stuff\r\n", "/foo/bar")
 
           dir_path = "#{Puppet[:bucketdir]}/f/c/7/7/7/c/0/b/fc777c0bc467e1ab98b4c6915af802ec"
-          contents_file = Puppet::FileSystem::File.new("#{dir_path}/contents")
-          paths_file = Puppet::FileSystem::File.new("#{dir_path}/paths")
-          contents_file.binread.should == "stuff\r\n"
-          paths_file.read.should == "foo/bar\n"
+          contents_file = "#{dir_path}/contents"
+          paths_file = "#{dir_path}/paths"
+          Puppet::FileSystem.binread(contents_file).should == "stuff\r\n"
+          Puppet::FileSystem.read(paths_file).should == "foo/bar\n"
         end
 
         it "should leave the paths file alone if the path is already stored" do

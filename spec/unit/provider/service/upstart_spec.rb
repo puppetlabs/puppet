@@ -22,6 +22,14 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     provider_class.stubs(:which).with("/sbin/initctl").returns("/sbin/initctl")
   end
 
+  describe "excluding services" do
+    it "ignores tty and serial on Redhat systems" do
+      Facter.stubs(:value).with(:osfamily).returns('RedHat')
+      expect(described_class.excludes).to include 'serial'
+      expect(described_class.excludes).to include 'tty'
+    end
+  end
+
   describe "#instances" do
     it "should be able to find all instances" do
       lists_processes_as("rc stop/waiting\nssh start/running, process 712")
@@ -51,8 +59,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
   describe "#search" do
     it "searches through paths to find a matching conf file" do
       File.stubs(:directory?).returns(true)
-      Puppet::FileSystem::File.stubs(:exist?).returns(false)
-      Puppet::FileSystem::File.expects(:exist?).with("/etc/init/foo-bar.conf").returns(true)
+      Puppet::FileSystem.stubs(:exist?).returns(false)
+      Puppet::FileSystem.expects(:exist?).with("/etc/init/foo-bar.conf").returns(true)
       resource = Puppet::Type.type(:service).new(:name => "foo-bar", :provider => :upstart)
       provider = provider_class.new(resource)
 
@@ -61,8 +69,8 @@ describe Puppet::Type.type(:service).provider(:upstart) do
 
     it "searches for just the name of a compound named service" do
       File.stubs(:directory?).returns(true)
-      Puppet::FileSystem::File.stubs(:exist?).returns(false)
-      Puppet::FileSystem::File.expects(:exist?).with("/etc/init/network-interface.conf").returns(true)
+      Puppet::FileSystem.stubs(:exist?).returns(false)
+      Puppet::FileSystem.expects(:exist?).with("/etc/init/network-interface.conf").returns(true)
       resource = Puppet::Type.type(:service).new(:name => "network-interface INTERFACE=lo", :provider => :upstart)
       provider = provider_class.new(resource)
 

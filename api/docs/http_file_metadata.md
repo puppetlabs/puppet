@@ -130,7 +130,9 @@ None
 
     GET /env/file_metadata/modules/example/does_not_exist
 
-    HTTP/1.1 404 Not Found: Could not find file_metadata modules/example/does_not_exist
+    HTTP/1.1 404 Not Found
+
+    Not Found: Could not find file_metadata modules/example/does_not_exist
 
 Search
 ------

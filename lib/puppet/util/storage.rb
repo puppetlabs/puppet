@@ -45,7 +45,7 @@ class Puppet::Util::Storage
     Puppet.settings.use(:main) unless FileTest.directory?(Puppet[:statedir])
     filename = Puppet[:statefile]
 
-    unless Puppet::FileSystem::File.exist?(filename)
+    unless Puppet::FileSystem.exist?(filename)
       self.init if @@state.nil?
       return
     end
@@ -62,7 +62,7 @@ class Puppet::Util::Storage
         begin
           File.rename(filename, filename + ".bad")
         rescue
-          raise Puppet::Error, "Could not rename corrupt #{filename}; remove manually"
+          raise Puppet::Error, "Could not rename corrupt #{filename}; remove manually", detail.backtrace
         end
       end
     end
@@ -80,7 +80,7 @@ class Puppet::Util::Storage
   def self.store
     Puppet.debug "Storing state"
 
-    Puppet.info "Creating state file #{Puppet[:statefile]}" unless Puppet::FileSystem::File.exist?(Puppet[:statefile])
+    Puppet.info "Creating state file #{Puppet[:statefile]}" unless Puppet::FileSystem.exist?(Puppet[:statefile])
 
     Puppet::Util.benchmark(:debug, "Stored state") do
       Puppet::Util::Yaml.dump(@@state, Puppet[:statefile])

@@ -82,7 +82,7 @@ module Puppet
       #
       # @return [void]
       def execute
-        Puppet::Util.exit_on_fail("intialize global default settings") do
+        Puppet::Util.exit_on_fail("initialize global default settings") do
           Puppet.initialize_settings(args)
         end
 
@@ -126,7 +126,7 @@ module Puppet
           # we try to restrict to only code that can be autoloaded from the node's
           # environment.
           if @subcommand_name != 'master' and @subcommand_name != 'agent'
-            Puppet::Node::Environment.new.each_plugin_directory do |dir|
+            Puppet.lookup(:environments).get(Puppet[:environment]).each_plugin_directory do |dir|
               $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
             end
           end

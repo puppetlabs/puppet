@@ -15,9 +15,6 @@ class Puppet::Resource
 
   include Puppet::Util::Tagging
 
-  require 'puppet/resource/type_collection_helper'
-  include Puppet::Resource::TypeCollectionHelper
-
   extend Puppet::Util::Pson
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
@@ -29,27 +26,32 @@ class Puppet::Resource
 
   ATTRIBUTES = [:file, :line, :exported]
 
-  def self.from_pson(pson)
-    raise ArgumentError, "No resource type provided in serialized data" unless type = pson['type']
-    raise ArgumentError, "No resource title provided in serialized data" unless title = pson['title']
+  def self.from_data_hash(data)
+    raise ArgumentError, "No resource type provided in serialized data" unless type = data['type']
+    raise ArgumentError, "No resource title provided in serialized data" unless title = data['title']
 
     resource = new(type, title)
 
-    if params = pson['parameters']
+    if params = data['parameters']
       params.each { |param, value| resource[param] = value }
     end
 
-    if tags = pson['tags']
+    if tags = data['tags']
       tags.each { |tag| resource.tag(tag) }
     end
 
     ATTRIBUTES.each do |a|
-      if value = pson[a.to_s]
+      if value = data[a.to_s]
         resource.send(a.to_s + "=", value)
       end
     end
 
     resource
+  end
+
+  def self.from_pson(pson)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(pson)
   end
 
   def inspect
@@ -170,23 +172,6 @@ class Puppet::Resource
     super || parameters.keys.include?( parameter_name(parameter) )
   end
 
-  # These two methods are extracted into a Helper
-  # module, but file load order prevents me
-  # from including them in the class, and I had weird
-  # behaviour (i.e., sometimes it didn't work) when
-  # I directly extended each resource with the helper.
-  def environment
-    Puppet::Node::Environment.new(@environment)
-  end
-
-  def environment=(env)
-    if env.is_a?(String) or env.is_a?(Symbol)
-      @environment = env
-    else
-      @environment = env.name
-    end
-  end
-
   %w{exported virtual strict}.each do |m|
     define_method(m+"?") do
       self.send(m)
@@ -246,13 +231,31 @@ class Puppet::Resource
     catalog ? catalog.resource(to_s) : nil
   end
 
+  # The resource's type implementation
+  # @return [Puppet::Type, Puppet::Resource::Type]
+  # @api private
   def resource_type
     @rstype ||= case type
-    when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
-    when "Node"; known_resource_types.node(title)
+    when "Class"; environment.known_resource_types.hostclass(title == :main ? "" : title)
+    when "Node"; environment.known_resource_types.node(title)
     else
-      Puppet::Type.type(type) || known_resource_types.definition(type)
+      Puppet::Type.type(type) || environment.known_resource_types.definition(type)
     end
+  end
+
+  # Set the resource's type implementation
+  # @param type [Puppet::Type, Puppet::Resource::Type]
+  # @api private
+  def resource_type=(type)
+    @rstype = type
+  end
+
+  def environment
+    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
+  end
+
+  def environment=(environment)
+    @environment = environment
   end
 
   # Produce a simple hash of our parameters.
@@ -303,11 +306,8 @@ class Puppet::Resource
   # Convert our resource to a RAL resource instance.  Creates component
   # instances for resource types that don't exist.
   def to_ral
-    if typeklass = Puppet::Type.type(self.type)
-      return typeklass.new(self)
-    else
-      return Puppet::Type::Component.new(self)
-    end
+    typeklass = Puppet::Type.type(self.type) || Puppet::Type.type(:component)
+    typeklass.new(self)
   end
 
   def name
@@ -339,16 +339,7 @@ class Puppet::Resource
     return nil unless resource_type.type == :hostclass
 
     name = "#{resource_type.name}::#{param}"
-    # Lookup with injector (optionally), and if no value bound, lookup with "classic hiera"
-    result = nil
-    if scope.compiler.is_binder_active?
-      result = scope.compiler.injector.lookup(scope, name)
-    end
-    if result.nil?
-      lookup_with_databinding(name, scope)
-    else
-      result
-    end
+    lookup_with_databinding(name, scope)
   end
 
   private :lookup_external_default_for
@@ -420,6 +411,8 @@ class Puppet::Resource
     result.exported = self.exported
     result.virtual = self.virtual
     result.tag(*self.tags)
+    result.environment = environment
+    result.instance_variable_set(:@rstype, resource_type)
 
     result
   end

@@ -21,10 +21,10 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
   end
 
   def destroy(request)
-    Puppet::FileSystem::File.unlink(path(request.key))
+    Puppet::FileSystem.unlink(path(request.key))
   rescue => detail
     unless detail.is_a? Errno::ENOENT
-      raise Puppet::Error, "Could not destroy #{self.name} #{request.key}: #{detail}"
+      raise Puppet::Error, "Could not destroy #{self.name} #{request.key}: #{detail}", detail.backtrace
     end
     1                           # emulate success...
   end
@@ -56,13 +56,13 @@ class Puppet::Indirector::JSON < Puppet::Indirector::Terminus
     rescue Errno::ENOENT
       return nil
     rescue => detail
-      raise Puppet::Error, "Could not read JSON data for #{indirection.name} #{key}: #{detail}"
+      raise Puppet::Error, "Could not read JSON data for #{indirection.name} #{key}: #{detail}", detail.backtrace
     end
 
     begin
       return from_json(json)
     rescue => detail
-      raise Puppet::Error, "Could not parse JSON data for #{indirection.name} #{key}: #{detail}"
+      raise Puppet::Error, "Could not parse JSON data for #{indirection.name} #{key}: #{detail}", detail.backtrace
     end
   end
 

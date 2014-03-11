@@ -1,4 +1,5 @@
 require 'puppet/provider/package'
+require 'set'
 require 'uri'
 
 Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Package do
@@ -6,7 +7,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   commands :pacman => "/usr/bin/pacman"
   # Yaourt is a common AUR helper which, if installed, we can use to query the AUR
-  commands :yaourt => "/usr/bin/yaourt" if Puppet::FileSystem::File.exist? '/usr/bin/yaourt'
+  commands :yaourt => "/usr/bin/yaourt" if Puppet::FileSystem.exist? '/usr/bin/yaourt'
 
   confine     :operatingsystem => :archlinux
   defaultfor  :operatingsystem => :archlinux
@@ -14,7 +15,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # If yaourt is installed, we can make use of it
   def yaourt?
-    return Puppet::FileSystem::File.exist? '/usr/bin/yaourt'
+    return Puppet::FileSystem.exist?('/usr/bin/yaourt')
   end
 
   # Install a package using 'pacman', or 'yaourt' if available.
@@ -46,7 +47,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       source_uri = URI.parse source
     rescue => detail
-      fail "Invalid source '#{source}': #{detail}"
+      self.fail Puppet::Error, "Invalid source '#{source}': #{detail}", detail
     end
 
     source = case source_uri.scheme
@@ -68,8 +69,14 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     [command(:pacman), "-Q"]
   end
 
-  # Fetch the list of packages currently installed on the system.
-  def self.instances
+  # Pacman has a concept of package groups as well.
+  # Package groups have no versions.
+  def self.listgroupcmd
+    [command(:pacman), "-Qg"]
+  end
+
+  # Get installed packages (pacman -Q)
+  def self.installedpkgs
     packages = []
     begin
       execpipe(listcmd()) do |process|
@@ -87,6 +94,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
             hash[:provider] = self.name
 
             packages << new(hash)
+
             hash = {}
           else
             warning("Failed to match line %s" % line)
@@ -98,6 +106,51 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     end
     packages
   end
+
+  # Get installed groups (pacman -Qg)
+  def self.installedgroups
+    packages = []
+    begin
+      execpipe(listgroupcmd()) do |process|
+        # pacman -Qg output is 'groupname packagename'
+        # Groups need to be deduplicated
+        groups = Set[]
+
+        process.each_line { |line|
+          groups.add(line.split[0])
+        }
+
+        groups.each { |line|
+          hash = {
+            :name   => line,
+            :ensure => "1", # Groups don't have versions, so ensure => latest
+                            # will still cause a reinstall.
+            :provider => self.name
+          }
+          packages << new(hash)
+        }
+      end
+    rescue Puppet::ExecutionFailure
+      return nil
+    end
+    packages
+  end
+
+  # Fetch the list of packages currently installed on the system.
+  def self.instances
+    packages = self.installedpkgs
+    groups   = self.installedgroups
+    result   = nil
+
+    if (!packages && !groups)
+      nil
+    elsif (packages && groups)
+      packages.concat(groups)
+    else
+      packages
+    end
+  end
+
 
   # Because Archlinux is a rolling release based distro, installing a package
   # should always result in the newest release.

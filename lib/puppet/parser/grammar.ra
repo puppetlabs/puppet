@@ -738,6 +738,7 @@ regex:        REGEX {
 }
 
 hash:        LBRACE hashpairs RBRACE {
+  @lexer.commentpop
   if val[1].instance_of?(AST::ASTHash)
     result = val[1]
   else
@@ -745,12 +746,14 @@ hash:        LBRACE hashpairs RBRACE {
   end
 }
   | LBRACE hashpairs COMMA RBRACE {
+    @lexer.commentpop
     if val[1].instance_of?(AST::ASTHash)
     result = val[1]
   else
     result = ast AST::ASTHash, { :value => val[1] }
   end
 }           | LBRACE RBRACE {
+  @lexer.commentpop
   result = ast AST::ASTHash
 }
 

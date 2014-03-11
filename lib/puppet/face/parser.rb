@@ -43,17 +43,23 @@ Puppet::Face.define(:parser, '0.0.1') do
       end
       missing_files = []
       files.each do |file|
-        missing_files << file if ! Puppet::FileSystem::File.exist?(file)
-        Puppet[:manifest] = file
-        validate_manifest
+        missing_files << file if ! Puppet::FileSystem.exist?(file)
+        validate_manifest(file)
       end
       raise Puppet::Error, "One or more file(s) specified did not exist:\n#{missing_files.collect {|f| " " * 3 + f + "\n"}}" if ! missing_files.empty?
       nil
     end
   end
 
-  def validate_manifest
-    Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+  # @api private
+  def validate_manifest(manifest = nil)
+    configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+    validation_environment = manifest ?
+      configured_environment.override_with(:manifest => manifest) :
+      configured_environment
+
+    validation_environment.known_resource_types.clear
+
   rescue => detail
     Puppet.log_exception(detail)
     exit(1)

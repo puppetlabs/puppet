@@ -1,7 +1,6 @@
 require 'puppet/application'
 require 'puppet/util/network_device'
 
-
 class Puppet::Application::Device < Puppet::Application
 
   run_mode :agent
@@ -107,7 +106,7 @@ Supported url must conforms to:
 
 OPTIONS
 -------
-Note that any configuration parameter that's valid in the configuration file
+Note that any setting that's valid in the configuration file
 is also a valid long argument.  For example, 'server' is a valid configuration
 parameter, so you can specify '--server <servername>' as an argument.
 
@@ -173,9 +172,9 @@ Licensed under the Apache 2.0 License
         Puppet.info "starting applying configuration to #{device.name} at #{device.url}"
 
         # override local $vardir and $certname
-        Puppet.settings.set_value(:confdir, ::File.join(Puppet[:devicedir], device.name), :cli)
-        Puppet.settings.set_value(:vardir, ::File.join(Puppet[:devicedir], device.name), :cli)
-        Puppet.settings.set_value(:certname, device.name, :cli)
+        Puppet[:confdir] = ::File.join(Puppet[:devicedir], device.name)
+        Puppet[:vardir] = ::File.join(Puppet[:devicedir], device.name)
+        Puppet[:certname] = device.name
 
         # this will reload and recompute default settings and create the devices sub vardir, or we hope so :-)
         Puppet.settings.use :main, :agent, :ssl
@@ -194,9 +193,9 @@ Licensed under the Apache 2.0 License
       rescue => detail
         Puppet.log_exception(detail)
       ensure
-        Puppet.settings.set_value(:vardir, vardir, :cli)
-        Puppet.settings.set_value(:confdir, confdir, :cli)
-        Puppet.settings.set_value(:certname, certname, :cli)
+        Puppet[:vardir] = vardir
+        Puppet[:confdir] = confdir
+        Puppet[:certname] = certname
         Puppet::SSL::Host.reset
       end
     end

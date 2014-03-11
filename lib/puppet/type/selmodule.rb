@@ -42,7 +42,7 @@ Puppet::Type.newtype(:selmodule) do
 
     desc "If set to `true`, the policy will be reloaded if the
     version found in the on-disk file differs from the loaded
-    version.  If set to `false` (the default) the the only check
+    version.  If set to `false` (the default) the only check
     that will be made is if the policy is loaded at all or not."
 
     newvalue(:true)

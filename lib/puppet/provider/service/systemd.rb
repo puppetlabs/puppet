@@ -5,12 +5,12 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   commands :systemctl => "systemctl"
 
-  #defaultfor :osfamily => [:redhat, :suse]
   defaultfor :osfamily => [:archlinux]
+  defaultfor :osfamily => :redhat, :operatingsystemmajrelease => "7"
 
   def self.instances
     i = []
-    output = systemctl('list-units', '--full', '--all',  '--no-pager')
+    output = systemctl('list-units', '--type', 'service', '--full', '--all',  '--no-pager')
     output.scan(/^(\S+)\s+(loaded|error)\s+(active|inactive)\s+(active|waiting|running|plugged|mounted|dead|exited|listening|elapsed)\s*?(\S.*?)?$/i).each do |m|
       i << new(:name => m[0])
     end
@@ -22,7 +22,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def disable
     output = systemctl(:disable, @resource[:name])
   rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not disable #{self.name}: #{output}"
+    raise Puppet::Error, "Could not disable #{self.name}: #{output}", $!.backtrace
   end
 
   def enabled?
@@ -47,7 +47,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def enable
     output = systemctl("enable", @resource[:name])
   rescue Puppet::ExecutionFailure
-    raise Puppet::Error, "Could not enable #{self.name}: #{output}"
+    raise Puppet::Error, "Could not enable #{self.name}: #{output}", $!.backtrace
   end
 
   def restartcmd

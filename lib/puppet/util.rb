@@ -263,7 +263,7 @@ module Util
     begin
       URI::Generic.build(params)
     rescue => detail
-      raise Puppet::Error, "Failed to convert '#{path}' to URI: #{detail}"
+      raise Puppet::Error, "Failed to convert '#{path}' to URI: #{detail}", detail.backtrace
     end
   end
   module_function :path_to_uri
@@ -396,8 +396,8 @@ module Util
       end
     end
 
-    file     = Puppet::FileSystem::File.new(file)
-    tempfile = Tempfile.new(file.basename, file.dir.to_s)
+    file     = Puppet::FileSystem.pathname(file)
+    tempfile = Tempfile.new(Puppet::FileSystem.basename_string(file), Puppet::FileSystem.dir_string(file))
 
     # Set properties of the temporary file before we write the content, because
     # Tempfile doesn't promise to be safe from reading by other people, just
@@ -409,12 +409,13 @@ module Util
     # secure" tempfile permissions instead.  Magic happens later.
     if !Puppet.features.microsoft_windows?
       # Grab the current file mode, and fall back to the defaults.
-      if file.exist?
-        stat = file.path.lstat
+      effective_mode =
+      if Puppet::FileSystem.exist?(file)
+        stat = Puppet::FileSystem.lstat(file)
         tempfile.chown(stat.uid, stat.gid)
-        effective_mode = stat.mode
+        stat.mode
       else
-        effective_mode = mode
+        mode
       end
 
       if effective_mode
@@ -445,25 +446,25 @@ module Util
 
     if Puppet.features.microsoft_windows?
       # Windows ReplaceFile needs a file to exist, so touch handles this
-      if !file.exist?
-        file.touch
+      if !Puppet::FileSystem.exist?(file)
+        Puppet::FileSystem.touch(file)
         if mode
-          Puppet::Util::Windows::Security.set_mode(mode, file.path.to_s)
+          Puppet::Util::Windows::Security.set_mode(mode, Puppet::FileSystem.path_string(file))
         end
       end
       # Yes, the arguments are reversed compared to the rename in the rest
       # of the world.
-      Puppet::Util::Windows::File.replace_file(file.path, tempfile.path)
+      Puppet::Util::Windows::File.replace_file(FileSystem.path_string(file), tempfile.path)
 
     else
-      File.rename(tempfile.path, file.path.to_s)
+      File.rename(tempfile.path, Puppet::FileSystem.path_string(file))
     end
 
     # Ideally, we would now fsync the directory as well, but Ruby doesn't
     # have support for that, and it doesn't matter /that/ much...
 
     # Return something true, and possibly useful.
-    file.path
+    file
   end
   module_function :replace_file
 

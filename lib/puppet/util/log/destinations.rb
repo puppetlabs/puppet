@@ -18,7 +18,7 @@ Puppet::Util::Log.newdesttype :syslog do
     begin
       facility = Syslog.const_get("LOG_#{str.upcase}")
     rescue NameError
-      raise Puppet::Error, "Invalid syslog facility #{str}"
+      raise Puppet::Error, "Invalid syslog facility #{str}", $!.backtrace
     end
 
     @syslog = Syslog.open(name, options, facility)
@@ -68,7 +68,7 @@ Puppet::Util::Log.newdesttype :file do
     # first make sure the directory exists
     # We can't just use 'Config.use' here, because they've
     # specified a "special" destination.
-    unless Puppet::FileSystem::File.exist?(File.dirname(path))
+    unless Puppet::FileSystem.exist?(Puppet::FileSystem.dir(path))
       FileUtils.mkdir_p(File.dirname(path), :mode => 0755)
       Puppet.info "Creating log directory #{File.dirname(path)}"
     end

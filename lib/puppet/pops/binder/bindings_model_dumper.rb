@@ -93,7 +93,7 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     result << expression_dumper.dump(o.expression)
   end
 
-  def dump_InstanceProducerDescriptor
+  def dump_InstanceProducerDescriptor o
     # TODO: o.arguments, o. transformer
     ['instance', o.class_name]
   end
@@ -171,20 +171,6 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     result
   end
 
-  def dump_Category o
-    ['category', o.categorization, do_dump(o.value)]
-  end
-
-  def dump_CategorizedBindings o
-    result = ['when', do_dump(o.predicates), :indent]
-    o.bindings.each do |b|
-      result << :break
-      result << do_dump(b)
-    end
-    result << :dedent
-    result
-  end
-
   def dump_LayeredBindings o
     result = ['layers', :indent]
       o.layers.each do |layer|
@@ -195,11 +181,7 @@ class Puppet::Pops::Binder::BindingsModelDumper < Puppet::Pops::Model::TreeDumpe
     result
   end
 
-  def dump_EffectiveCategories o
-    ['categories', do_dump(o.categories)]
-  end
-
   def dump_ContributedBindings o
-    ['contributed', o.name, do_dump(o.effective_categories), do_dump(o.bindings)]
+    ['contributed', o.name, do_dump(o.bindings)]
   end
 end

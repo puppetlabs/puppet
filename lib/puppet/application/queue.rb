@@ -42,13 +42,13 @@ class Puppet::Application::Queue < Puppet::Application
   def help
     <<-HELP
 
-puppet-queue(8) -- Queuing daemon for asynchronous storeconfigs
+puppet-queue(8) -- Deprecated queuing daemon for asynchronous storeconfigs
 ========
 
 SYNOPSIS
 --------
 Retrieves serialized storeconfigs records from a queue and processes
-them in order.
+them in order. THIS FEATURE IS DEPRECATED; use PuppetDB instead.
 
 
 USAGE
@@ -60,19 +60,19 @@ DESCRIPTION
 -----------
 This application runs as a daemon and processes storeconfigs data,
 retrieving the data from a stomp server message queue and writing it to
-a database.
+a database. It was once necessary as a workaround for the poor performance
+of ActiveRecord-based storeconfigs, but has been supplanted by the PuppetDB
+service, which gives better performance with less complexity.
 
-For more information, including instructions for properly setting up
-your puppet master and message queue, see the documentation on setting
-up asynchronous storeconfigs at:
-http://projects.puppetlabs.com/projects/1/wiki/Using_Stored_Configuration
+For more information, see the PuppetDB documentation at
+http://docs.puppetlabs.com/puppetdb/latest
 
 
 OPTIONS
 -------
-Note that any configuration parameter that's valid in the configuration
+Note that any setting that's valid in the configuration
 file is also a valid long argument. For example, 'server' is a valid
-configuration parameter, so you can specify '--server <servername>' as
+setting, so you can specify '--server <servername>' as
 an argument.
 
 See the configuration file documentation at

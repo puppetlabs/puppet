@@ -36,6 +36,12 @@ class Puppet::Pops::Binder::KeyFactory
   end
 
   # @api public
+  def multibind_contribution_key_to_id(contributions_key)
+    # removes the leading "mc_" from the key to get the multibind_id
+    contributions_key[3..-1]
+  end
+
+  # @api public
   def is_named?(key)
     key.is_a?(Array) && key[1] && !key[1].empty?
   end

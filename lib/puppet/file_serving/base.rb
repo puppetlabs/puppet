@@ -68,7 +68,7 @@ class Puppet::FileServing::Base
   # Stat our file, using the appropriate link-sensitive method.
   def stat
     @stat_method ||= self.links == :manage ? :lstat : :stat
-    Puppet::FileSystem::File.new(full_path).send(@stat_method)
+    Puppet::FileSystem.send(@stat_method, full_path)
   end
 
   def to_data_hash

@@ -464,7 +464,7 @@ class Puppet::Parameter
     begin
       unsafe_validate(value)
     rescue ArgumentError => detail
-      fail detail.to_s
+      self.fail Puppet::Error, detail.to_s, detail
     rescue Puppet::Error, TypeError
       raise
     rescue => detail

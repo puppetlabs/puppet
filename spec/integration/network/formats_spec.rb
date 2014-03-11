@@ -9,7 +9,7 @@ class PsonIntTest
     other.class == self.class and string == other.string
   end
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     new(data[0])
   end
 

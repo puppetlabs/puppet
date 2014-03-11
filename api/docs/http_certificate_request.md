@@ -89,7 +89,7 @@ None
 
     GET /env/certificate_request/does_not_exist
 
-    HTTP/1.1 404 Not Found: Could not find certificate_request does_not_exist
+    HTTP/1.1 404 Not Found
     Content-Type: text/plain
 
     Not Found: Could not find certificate_request does_not_exist
@@ -98,7 +98,7 @@ None
 
     GET /env/certificate_request/
 
-    HTTP/1.1 400 No request key specified in /env/certificate_request/
+    HTTP/1.1 400 Bad Request
     Content-Type: text/plain
 
     No request key specified in /env/certificate_request/

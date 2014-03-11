@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'puppet/ssl/host'
+require 'matchers/json'
 
 def base_pson_comparison(result, pson_hash)
   result["fingerprint"].should == pson_hash["fingerprint"]
@@ -9,23 +10,9 @@ def base_pson_comparison(result, pson_hash)
   result["state"].should       == pson_hash["desired_state"]
 end
 
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  HOST_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/host.json')))
-
-  describe "host schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, HOST_SCHEMA)
-    end
-  end
-end
-
 describe Puppet::SSL::Host do
+  include JSONMatchers
   include PuppetSpec::Files
-
-  def validate_json_for_host(host)
-    JSON::Validator.validate!(HOST_SCHEMA, host.to_pson)
-  end
 
   before do
     Puppet::SSL::Host.indirection.terminus_class = :file
@@ -855,9 +842,10 @@ describe Puppet::SSL::Host do
         base_pson_comparison result, pson_hash
       end
 
-      it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+      it "should validate against the schema" do
         host.generate_certificate_request
-        validate_json_for_host(host)
+
+        expect(host.to_pson).to validate_against('api/schemas/host.json')
       end
 
       describe "explicit fingerprints" do
@@ -903,8 +891,8 @@ describe Puppet::SSL::Host do
               result["dns_alt_names"].should == pson_hash["desired_alt_names"]
             end
 
-            it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-              validate_json_for_host(host)
+            it "should validate against the schema" do
+              expect(host.to_pson).to validate_against('api/schemas/host.json')
             end
           end
         end
@@ -943,7 +931,7 @@ describe Puppet::SSL::Host do
           "name"  => host.name,
           "desired_state" => host.desired_state,
         }
-        generated_host = Puppet::SSL::Host.from_pson(pson_hash)
+        generated_host = Puppet::SSL::Host.from_data_hash(pson_hash)
         generated_host.desired_state.should == host.desired_state
         generated_host.name.should == host.name
       end

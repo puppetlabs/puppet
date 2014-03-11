@@ -180,22 +180,22 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
   end
 
   # Impose our container information on another graph by using it
-  # to replace any container vertices X with a pair of verticies
-  # { admissible_X and completed_X } such that that
+  # to replace any container vertices X with a pair of vertices
+  # { admissible_X and completed_X } such that
   #
   #    0) completed_X depends on admissible_X
   #    1) contents of X each depend on admissible_X
   #    2) completed_X depends on each on the contents of X
-  #    3) everything which depended on X depens on completed_X
+  #    3) everything which depended on X depends on completed_X
   #    4) admissible_X depends on everything X depended on
   #    5) the containers and their edges must be removed
   #
   # Note that this requires attention to the possible case of containers
   # which contain or depend on other containers, but has the advantage
   # that the number of new edges created scales linearly with the number
-  # of contained verticies regardless of how containers are related;
+  # of contained vertices regardless of how containers are related;
   # alternatives such as replacing container-edges with content-edges
-  # scale as the product of the number of external dependences, which is
+  # scale as the product of the number of external dependencies, which is
   # to say geometrically in the case of nested / chained containers.
   #
   Default_label = { :callback => :refresh, :event => :ALL_EVENTS }
@@ -207,8 +207,8 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     #
     # These two hashes comprise the aforementioned attention to the possible
     #   case of containers that contain / depend on other containers; they map
-    #   containers to their sentinels but pass other verticies through.  Thus we
-    #   can "do the right thing" for references to other verticies that may or
+    #   containers to their sentinels but pass other vertices through.  Thus we
+    #   can "do the right thing" for references to other vertices that may or
     #   may not be containers.
     #
     admissible = Hash.new { |h,k| k }

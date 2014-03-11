@@ -122,5 +122,14 @@ class Puppet::Parser::AST
       result << "| ... }"
       result.join('')
     end
+
+    # marker method checked with respond_to :puppet_lambda
+    def puppet_lambda()
+      true
+    end
+
+    def parameter_names
+      @parameters.collect {|p| p[0] }
+    end
   end
 end

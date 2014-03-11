@@ -57,8 +57,7 @@ class Puppet::Transaction::Report
   attr_accessor :environment
 
   # A hash with a map from resource to status
-  # @return [Hash<{String => String}>] Resource name to status string.
-  # @todo Uncertain if the types in the hash are correct...
+  # @return [Hash{String => Puppet::Resource::Status}] Resource name to status.
   attr_reader :resource_statuses
 
   # A list of log messages.
@@ -98,10 +97,15 @@ class Puppet::Transaction::Report
   #
   attr_reader :report_format
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     obj = self.allocate
     obj.initialize_from_hash(data)
     obj
+  end
+
+  def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(data)
   end
 
   def as_logging_destination(&block)
@@ -198,11 +202,11 @@ class Puppet::Transaction::Report
 
     @metrics = {}
     data['metrics'].each do |name, hash|
-      @metrics[name] = Puppet::Util::Metric.from_pson(hash)
+      @metrics[name] = Puppet::Util::Metric.from_data_hash(hash)
     end
 
     @logs = data['logs'].map do |record|
-      Puppet::Util::Log.from_pson(record)
+      Puppet::Util::Log.from_data_hash(record)
     end
 
     @resource_statuses = {}
@@ -210,7 +214,7 @@ class Puppet::Transaction::Report
       if record[1] == {}
         status = nil
       else
-        status = Puppet::Resource::Status.from_pson(record[1])
+        status = Puppet::Resource::Status.from_data_hash(record[1])
       end
       @resource_statuses[record[0]] = status
     end
@@ -232,10 +236,6 @@ class Puppet::Transaction::Report
       'metrics' => @metrics,
       'resource_statuses' => @resource_statuses,
     }
-  end
-
-  def to_pson
-    to_data_hash.to_pson
   end
 
   # @return [String] the host name

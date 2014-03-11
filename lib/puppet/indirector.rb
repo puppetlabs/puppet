@@ -9,6 +9,7 @@ module Puppet::Indirector
 
   require 'puppet/indirector/indirection'
   require 'puppet/indirector/terminus'
+  require 'puppet/indirector/code'
   require 'puppet/indirector/envelope'
   require 'puppet/network/format_support'
 

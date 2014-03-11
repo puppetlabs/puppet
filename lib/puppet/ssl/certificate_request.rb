@@ -205,7 +205,7 @@ DOC
         csr.add_attribute(OpenSSL::X509::Attribute.new(oid, attr_set))
         Puppet.debug("Added csr attribute: #{oid} => #{attr_set.inspect}")
       rescue OpenSSL::X509::AttributeError => e
-        raise Puppet::Error, "Cannot create CSR with attribute #{oid}: #{e.message}"
+        raise Puppet::Error, "Cannot create CSR with attribute #{oid}: #{e.message}", e.backtrace
       end
     end
   end
@@ -230,7 +230,7 @@ DOC
           ext = OpenSSL::X509::Extension.new(oid, value.to_s, false)
           extensions << ext
         rescue OpenSSL::X509::ExtensionError => e
-          raise Puppet::Error, "Cannot create CSR with extension request #{oid}: #{e.message}"
+          raise Puppet::Error, "Cannot create CSR with extension request #{oid}: #{e.message}", e.backtrace
         end
       end
     end

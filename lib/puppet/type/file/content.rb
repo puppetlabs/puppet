@@ -3,14 +3,13 @@ require 'uri'
 require 'tempfile'
 
 require 'puppet/util/checksums'
-require 'puppet/network/http/api/v1'
+require 'puppet/network/http'
 require 'puppet/network/http/compression'
 
 module Puppet
   Puppet::Type.type(:file).newproperty(:content) do
     include Puppet::Util::Diff
     include Puppet::Util::Checksums
-    include Puppet::Network::HTTP::API::V1
     include Puppet::Network::HTTP::Compression.module
 
     attr_reader :actual_content
@@ -112,7 +111,7 @@ module Puppet
 
       if ! result and Puppet[:show_diff] and resource.show_diff?
         write_temporarily do |path|
-          notice "\n" + diff(@resource[:path], path)
+          send @resource[:loglevel], "\n" + diff(@resource[:path], path)
         end
       end
       result
@@ -127,7 +126,7 @@ module Puppet
       begin
         resource.parameter(:checksum).sum_file(resource[:path])
       rescue => detail
-        raise Puppet::Error, "Could not read #{ftype} #{@resource.title}: #{detail}"
+        raise Puppet::Error, "Could not read #{ftype} #{@resource.title}: #{detail}", detail.backtrace
       end
     end
 
@@ -211,7 +210,7 @@ module Puppet
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
-        connection.request_get(indirection2uri(req), add_accept_encoding({"Accept" => "raw"}), &block)
+        connection.request_get(Puppet::Network::HTTP::API::V1.indirection2uri(req), add_accept_encoding({"Accept" => "raw"}), &block)
       end
     end
 
@@ -234,7 +233,7 @@ module Puppet
 
       dipper.getfile(sum)
     rescue => detail
-      fail "Could not retrieve content for #{should} from filebucket: #{detail}"
+      self.fail Puppet::Error, "Could not retrieve content for #{should} from filebucket: #{detail}", detail
     end
   end
 end

@@ -39,7 +39,8 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
       end
       result
   rescue => detail
-      raise Puppet::Error, "Could not write #{request.key} to queue: #{detail}\nInstance::#{request.instance}\n client : #{client}"
+      msg = "Could not write #{request.key} to queue: #{detail}\nInstance::#{request.instance}\n client : #{client}"
+      raise Puppet::Error, msg, detail.backtrace
   end
 
   def self.queue
@@ -72,7 +73,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
       begin
         yield(self.intern(msg))
       rescue => detail
-        Puppet.log_exception(detail, "Error occured with subscription to queue #{queue} for indirection #{indirection_name}: #{detail}")
+        Puppet.log_exception(detail, "Error occurred with subscription to queue #{queue} for indirection #{indirection_name}: #{detail}")
       end
     end
   end

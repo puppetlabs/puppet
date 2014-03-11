@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'puppet/module_tool/tar'
+require 'puppet/module_tool'
 
 describe Puppet::ModuleTool::Tar do
 

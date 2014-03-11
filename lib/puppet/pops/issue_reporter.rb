@@ -13,7 +13,7 @@ class Puppet::Pops::IssueReporter
     max_warnings = Puppet[:max_warnings] + 1
     max_deprecations = Puppet[:max_deprecations] + 1
     emit_warnings = options[:emit_warnings] || false
-    emit_errors = options[:emit_errors] || true
+    emit_errors = options[:emit_errors].nil? ? true : !!options[:emit_errors]
     emit_message = options[:message]
     emit_exception = options[:exception_class] || Puppet::ParseError
 
@@ -48,7 +48,12 @@ class Puppet::Pops::IssueReporter
       formatter = Puppet::Pops::Validation::DiagnosticFormatterPuppetStyle.new
       if errors.size == 1 || max_errors <= 1
         # raise immediately
-        raise emit_exception.new(format_with_prefix(emit_message, formatter.format(errors[0])))
+        exception = emit_exception.new(format_with_prefix(emit_message, formatter.format(errors[0])))
+        # if an exception was given as cause, use it's backtrace instead of the one indicating "here"
+        if errors[0].exception
+          exception.set_backtrace(errors[0].exception.backtrace)
+        end
+        raise exception
       end
       emitted = 0
       if emit_message
@@ -65,7 +70,6 @@ class Puppet::Pops::IssueReporter
       exception.file = errors[0].file
       raise exception
     end
-    parse_result
   end
 
   def self.format_with_prefix(prefix, message)

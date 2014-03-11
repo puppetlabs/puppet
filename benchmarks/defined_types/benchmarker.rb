@@ -18,8 +18,7 @@ class Benchmarker
   end
 
   def run
-    env = Puppet::Node::Environment.new(:benchmarking)
-#    env = Puppet.lookup(:environments).get('benchmarking')
+    env = Puppet.lookup(:environments).get('benchmarking')
     node = Puppet::Node.new("testing", :environment => env)
     Puppet::Resource::Catalog.indirection.find("testing", :use_node => node)
   end

@@ -1,8 +1,8 @@
 ---
 version: 1
 layers:
-  - {name: site, include: 'confdir-hiera:/'}
-  - {name: modules, include: 'module-hiera:/*/', exclude: 'module-hiera:/bad/' }
+  - {name: site, include: 'confdir:/'}
+  - {name: modules, include: 'module:/*::test/', exclude: 'module:/bad::test/' }
 categories:
   - ['node', '$fqn']
   - ['environment', '$environment']

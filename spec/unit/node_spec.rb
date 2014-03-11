@@ -2,41 +2,39 @@
 require 'spec_helper'
 require 'matchers/json'
 
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  NODE_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../api/schemas/node.json')))
-
-  describe "node schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, NODE_SCHEMA)
-    end
-  end
-end
-
 describe Puppet::Node do
+  include JSONMatchers
+
+  let(:environment) { Puppet::Node::Environment.create(:bar, [], '') }
+  let(:env_loader) { Puppet::Environments::Static.new(environment) }
+
   it "should register its document type as Node" do
     PSON.registered_document_types["Node"].should equal(Puppet::Node)
   end
 
   describe "when managing its environment" do
     it "should use any set environment" do
-      Puppet::Node.new("foo", :environment => "bar").environment.name.should == :bar
+      Puppet.override(:environments => env_loader) do
+        Puppet::Node.new("foo", :environment => "bar").environment.should == environment
+      end
     end
 
     it "should support providing an actual environment instance" do
-      Puppet::Node.new("foo", :environment => Puppet::Node::Environment.new(:bar)).environment.name.should == :bar
+      Puppet::Node.new("foo", :environment => environment).environment.name.should == :bar
     end
 
     it "should determine its environment from its parameters if no environment is set" do
-      Puppet::Node.new("foo", :parameters => {"environment" => :bar}).environment.name.should == :bar
+      Puppet.override(:environments => env_loader) do
+        Puppet::Node.new("foo", :parameters => {"environment" => :bar}).environment.should == environment
+      end
     end
 
-    it "should use the default environment if no environment is provided" do
-      Puppet::Node.new("foo").environment.name.should == Puppet::Node::Environment.new.name
-    end
+    it "should use the configured environment if no environment is provided" do
+      Puppet[:environment] = environment.name.to_s
 
-    it "should always return an environment instance rather than a string" do
-      Puppet::Node.new("foo").environment.should be_instance_of(Puppet::Node::Environment)
+      Puppet.override(:environments => env_loader) do
+        Puppet::Node.new("foo").environment.should == environment
+      end
     end
 
     it "should allow the environment to be set after initialization" do
@@ -87,7 +85,7 @@ describe Puppet::Node do
                             :classes => ['erth', 'aiu'],
                             :parameters => {"hostname"=>"food"}
                            )
-    JSON::Validator.validate!(NODE_SCHEMA, node.to_pson)
+    expect(node.to_pson).to validate_against('api/schemas/node.json')
   end
 
   it "when missing optional parameters validates against the node json schema", :unless => Puppet.features.microsoft_windows? do
@@ -95,7 +93,7 @@ describe Puppet::Node do
     node = Puppet::Node.new("hello",
                             :environment => 'kjhgrg'
                            )
-    JSON::Validator.validate!(NODE_SCHEMA, node.to_pson)
+    expect(node.to_pson).to validate_against('api/schemas/node.json')
   end
 
   describe "when converting to json" do
@@ -160,8 +158,10 @@ describe Puppet::Node do
     end
 
     it "should include the environment" do
-      @node.environment = "production"
-      Puppet::Node.should read_json_attribute('environment').from(@node.to_pson).as(Puppet::Node::Environment.new(:production))
+      Puppet.override(:environments => env_loader) do
+        @node.environment = environment
+        Puppet::Node.should read_json_attribute('environment').from(@node.to_pson).as(environment)
+      end
     end
   end
 end

@@ -7,15 +7,14 @@ Puppet::Type.newtype(:cron) do
     Installs and manages cron jobs.  Every cron resource requires a command
     and user attribute, as well as at least one periodic attribute (hour,
     minute, month, monthday, weekday, or special).  While the name of the cron
-    job is not part of the actual job, it is used by Puppet to store and
-    retrieve it.
+    job is not part of the actual job, the name is stored in a comment beginning with
+    `# Puppet Name: `. These comments are used to match crontab entries created by
+    Puppet with cron resources.
 
-    If you specify a cron resource that duplicates the scheduling and command
-    used by an existing crontab entry, then Puppet will take no action and
-    defers to the existing crontab entry.  If the duplicate cron resource
-    specifies `ensure => absent`, all existing duplicated crontab entries will
-    be removed.  Specifying multiple duplicate cron resources with different
-    `ensure` states will result in undefined behavior.
+    If an existing crontab entry happens to match the scheduling and command of a
+    cron resource that has never been synched, Puppet will defer to the existing
+    crontab entry and will not create a new entry tagged with the `# Puppet Name: `
+    comment.
 
     Example:
 
@@ -234,9 +233,7 @@ Puppet::Type.newtype(:cron) do
     end
 
     def munge(value)
-      value.sub!(/^\s+/, '')
-      value.sub!(/\s+$/, '')
-      value
+      value.strip
     end
   end
 
@@ -409,9 +406,42 @@ Puppet::Type.newtype(:cron) do
     }
   end
 
+  validate do
+    return true unless self[:special]
+    return true if self[:special] == :absent
+    # there is a special schedule in @should, so we don't want to see
+    # any numeric should values
+    [ :minute, :hour, :weekday, :monthday, :month ].each do |field|
+      next unless self[field]
+      next if self[field] == :absent
+      raise ArgumentError, "#{self.ref} cannot specify both a special schedule and a value for #{field}"
+    end
+  end
+
   # We have to reorder things so that :provide is before :target
 
   attr_accessor :uid
+
+  # Marks the resource as "being purged".
+  #
+  # @api public
+  #
+  # @note This overrides the Puppet::Type method in order to handle
+  #   an edge case that has so far been observed during testig only.
+  #   Without forcing the should-value for the user property to be
+  #   identical to the original cron file, purging from a fixture
+  #   will not work, because the user property defaults to the user
+  #   running the test. It is not clear whether this scenario can apply
+  #   during normal operation.
+  #
+  # @note Also, when not forcing the should-value for the target
+  #   property, unpurged file content (such as comments) can end up
+  #   being written to the default target (i.e. the current login name).
+  def purging
+    self[:target] = provider.property_hash[:target]
+    self[:user] = provider.property_hash[:target]
+    super
+  end
 
   def value(name)
     name = name.intern

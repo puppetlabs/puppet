@@ -7,10 +7,10 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   include Puppet::Network::HTTP::Handler
 
-  def initialize(server, handler)
+  def initialize(server)
     raise ArgumentError, "server is required" unless server
+    register([Puppet::Network::HTTP::API::V2.routes, Puppet::Network::HTTP::API::V1.routes])
     super(server)
-    initialize_for_puppet(:server => server, :handler => handler)
   end
 
   # Retrieve the request parameters, including authentication information.
@@ -39,14 +39,6 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     result
   end
 
-  def accept_header(request)
-    request["accept"]
-  end
-
-  def content_type_header(request)
-    request["content-type"]
-  end
-
   def http_method(request)
     request.request_method
   end
@@ -60,7 +52,11 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
   end
 
   def client_cert(request)
-    request.client_cert
+    if cert = request.client_cert
+      Puppet::SSL::Certificate.from_instance(cert)
+    else
+      nil
+    end
   end
 
   # Set the specified format as the content type of the response.
@@ -74,7 +70,6 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
       response.body = result
       response["content-length"] = result.stat.size if result.is_a?(File)
     end
-    response.reason_phrase = result if status < 200 or status >= 300
   end
 
   # Retrieve node/cert/ip information from the request object.

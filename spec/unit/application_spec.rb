@@ -604,7 +604,7 @@ describe Puppet::Application do
           @app.parse_options
         end
 
-        it "should give to OptionParser a block that adds the the value to the options array" do
+        it "should give to OptionParser a block that adds the value to the options array" do
           OptionParser.any_instance.stubs(:on)
           OptionParser.any_instance.stubs(:on).with("--test4","-t").yields(nil)
 

@@ -90,6 +90,7 @@ module Puppet::Pops::Validation
   # @api public
   #
   class SeverityProducer
+    @@severity_hash = {:ignore => true, :warning => true, :error => true, :deprecation => true }
 
     # Creates a new instance where all issues are diagnosed as :error unless overridden.
     # @api public
@@ -122,8 +123,8 @@ module Puppet::Pops::Validation
     # @api public
     #
     def []=(issue, level)
-      assert_issue(issue)
-      assert_severity(level)
+      raise Puppet::DevError.new("Attempt to set validation severity for something that is not an Issue. (Got #{issue.class})") unless issue.is_a? Puppet::Pops::Issues::Issue
+      raise Puppet::DevError.new("Illegal severity level: #{option}") unless @@severity_hash[level]
       raise Puppet::DevError.new("Attempt to demote the hard issue '#{issue.issue_code}' to #{level}") unless issue.demotable? || level == :error
       @severities[issue] = level
     end
@@ -134,7 +135,7 @@ module Puppet::Pops::Validation
     # @api public
     #
     def should_report? issue
-      diagnose = self[issue]
+      diagnose = @severities[issue]
       diagnose == :error || diagnose == :warning || diagnose == :deprecation
     end
 
@@ -149,7 +150,7 @@ module Puppet::Pops::Validation
     # @api private
     #
     def assert_severity level
-      raise Puppet::DevError.new("Illegal severity level: #{option}") unless [:ignore, :warning, :error, :deprecation].include? level
+      raise Puppet::DevError.new("Illegal severity level: #{option}") unless @@severity_hash[level]
     end
   end
 
@@ -194,13 +195,14 @@ module Puppet::Pops::Validation
       arguments[:semantic] ||= semantic
 
       # A detail message is always provided, but is blank by default.
+      # TODO: this support is questionable, it requires knowledge that :detail is special
       arguments[:detail] ||= ''
 
-      origin_adapter = Puppet::Pops::Utils.find_adapter(semantic, Puppet::Pops::Adapters::OriginAdapter)
-      file = origin_adapter ? origin_adapter.origin : nil
-      source_pos = Puppet::Pops::Utils.find_adapter(semantic, Puppet::Pops::Adapters::SourcePosAdapter)
+      source_pos = Puppet::Pops::Utils.find_closest_positioned(semantic)
+      file = source_pos ? source_pos.locator.file : nil
+
       severity = @severity_producer.severity(issue)
-      @acceptor.accept(Diagnostic.new(severity, issue, file, source_pos, arguments))
+      @acceptor.accept(Diagnostic.new(severity, issue, file, source_pos, arguments, except))
     end
 
     def will_accept? issue
@@ -221,6 +223,8 @@ module Puppet::Pops::Validation
       @file = file
       @source_pos = source_pos
       @arguments = arguments
+      # TODO: Currently unused, the intention is to provide more information (stack backtrace, etc.) when
+      # debugging or similar - this to catch internal problems reported as higher level issues.
       @exception = exception
     end
   end
@@ -250,6 +254,7 @@ module Puppet::Pops::Validation
 
     def format_location diagnostic
       file = diagnostic.file
+      file = (file.is_a?(String) && file.empty?) ? nil : file
       line = pos = nil
       if diagnostic.source_pos
         line = diagnostic.source_pos.line
@@ -283,6 +288,7 @@ module Puppet::Pops::Validation
     # have to be used here for backwards compatibility.
     def format_location diagnostic
       file = diagnostic.file
+      file = (file.is_a?(String) && file.empty?) ? nil : file
       line = pos = nil
       if diagnostic.source_pos
         line = diagnostic.source_pos.line

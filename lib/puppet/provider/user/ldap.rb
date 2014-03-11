@@ -14,7 +14,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
 
   confine :feature => :ldap, :false => (Puppet[:ldapuser] == "")
 
-  has_feature :manages_passwords
+  has_feature :manages_passwords, :manages_shell
 
   manages(:posixAccount, :person).at("ou=People").named_by(:uid).and.maps :name => :uid,
     :password => :userPassword,

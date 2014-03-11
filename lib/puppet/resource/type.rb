@@ -46,7 +46,7 @@ class Puppet::Resource::Type
   extend Puppet::Indirector
   indirects :resource_type, :terminus_class => :parser
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     name = data.delete('name') or raise ArgumentError, "Resource Type names must be specified"
     kind = data.delete('kind') || "definition"
 
@@ -63,8 +63,9 @@ class Puppet::Resource::Type
     new(type, name, data)
   end
 
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
+  def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(data)
   end
 
   def to_data_hash
@@ -179,7 +180,8 @@ class Puppet::Resource::Type
       return
     end
 
-    self.code = self.code.sequence_with(other.code)
+    self.code = Puppet::Parser::ParserFactory.code_merger.concatenate([self, other])
+#    self.code = self.code.sequence_with(other.code)
   end
 
   # Make an instance of the resource type, and place it in the catalog
@@ -382,4 +384,3 @@ class Puppet::Resource::Type
     end
   end
 end
-

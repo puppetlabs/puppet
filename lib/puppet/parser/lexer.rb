@@ -347,7 +347,7 @@ class Puppet::Parser::Lexer
   def file=(file)
     @file = file
     @line = 1
-    contents = Puppet::FileSystem::File.exist?(file) ? File.read(file) : ""
+    contents = Puppet::FileSystem.exist?(file) ? Puppet::FileSystem.read(file) : ""
     @scanner = StringScanner.new(contents)
   end
 
@@ -478,26 +478,27 @@ class Puppet::Parser::Lexer
         next
       end
 
-      lexing_context[:after]         = final_token.name unless newline
-      lexing_context[:string_interpolation_depth] += 1 if final_token.name == :DQPRE
-      lexing_context[:string_interpolation_depth] -= 1 if final_token.name == :DQPOST
+      final_token_name = final_token.name
+      lexing_context[:after]         = final_token_name unless newline
+      lexing_context[:string_interpolation_depth] += 1 if final_token_name == :DQPRE
+      lexing_context[:string_interpolation_depth] -= 1 if final_token_name == :DQPOST
 
       value = token_value[:value]
 
-      if match = @@pairs[value] and final_token.name != :DQUOTE and final_token.name != :SQUOTE
+      if match = @@pairs[value] and final_token_name != :DQUOTE and final_token_name != :SQUOTE
         @expected << match
-      elsif exp = @expected[-1] and exp == value and final_token.name != :DQUOTE and final_token.name != :SQUOTE
+      elsif exp = @expected[-1] and exp == value and final_token_name != :DQUOTE and final_token_name != :SQUOTE
         @expected.pop
       end
 
-      if final_token.name == :LBRACE or final_token.name == :LPAREN
+      if final_token_name == :LBRACE or final_token_name == :LPAREN
         commentpush
       end
-      if final_token.name == :RPAREN
+      if final_token_name == :RPAREN
         commentpop
       end
 
-      yield [final_token.name, token_value]
+      yield [final_token_name, token_value]
 
       if @previous_token
         namestack(value) if @previous_token.name == :CLASS and value != '{'

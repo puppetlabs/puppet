@@ -15,7 +15,7 @@ module Puppet; module Parser; module Files
   def find_manifests_in_modules(pattern, environment)
     module_name, file_pattern = split_file_path(pattern)
     begin
-      if mod = Puppet::Module.find(module_name, environment)
+      if mod = environment.module(module_name)
         return [mod.name, mod.match_manifests(file_pattern)]
       end
     rescue Puppet::Module::InvalidName
@@ -31,7 +31,9 @@ module Puppet; module Parser; module Files
   # module.
   # In all cases, an absolute path is returned, which does not
   # necessarily refer to an existing file
-  def find_template(template, environment = nil)
+  #
+  # @api private
+  def find_template(template, environment)
     if template == File.expand_path(template)
       return template
     end
@@ -41,7 +43,7 @@ module Puppet; module Parser; module Files
       template_paths.collect { |path|
         File::join(path, template)
       }.each do |f|
-        return f if Puppet::FileSystem::File.exist?(f)
+        return f if Puppet::FileSystem.exist?(f)
       end
     end
 
@@ -53,7 +55,8 @@ module Puppet; module Parser; module Files
     nil
   end
 
-  def find_template_in_module(template, environment = nil)
+  # @api private
+  def find_template_in_module(template, environment)
     path, file = split_file_path(template)
 
     # Because templates don't have an assumed template name, like manifests do,
@@ -61,7 +64,7 @@ module Puppet; module Parser; module Files
     # directory.
     return nil unless file
 
-    if mod = Puppet::Module.find(path, environment) and t = mod.template(file)
+    if mod = environment.module(path) and t = mod.template(file)
       return t
     end
     nil
@@ -69,8 +72,9 @@ module Puppet; module Parser; module Files
 
   # Return an array of paths by splitting the +templatedir+ config
   # parameter.
-  def templatepath(environment = nil)
-    dirs = Puppet.settings.value(:templatedir, environment).split(File::PATH_SEPARATOR)
+  # @api private
+  def templatepath(environment)
+    dirs = Puppet.settings.value(:templatedir, environment.to_s).split(File::PATH_SEPARATOR)
     dirs.select do |p|
       File::directory?(p)
     end
@@ -78,6 +82,7 @@ module Puppet; module Parser; module Files
 
   # Split the path into the module and the rest of the path, or return
   # nil if the path is empty or absolute (starts with a /).
+  # @api private
   def split_file_path(path)
     if path == "" or Puppet::Util.absolute_path?(path)
       nil

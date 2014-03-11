@@ -1,5 +1,0 @@
-a_number: 42
-a_string: forty two
-an_eval: "the answer from \"yaml\" is ${a}."
-an_eval2: "the answer\nfrom \\\"yaml\\\" is $a and \\$a"
-

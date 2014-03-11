@@ -1,9 +1,0 @@
----
-version: 2
-
-hierarchy:
-  - ['node', '${node}', '${node}' ]
-
-backends:
-  - yaml
-  - json

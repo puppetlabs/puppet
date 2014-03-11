@@ -1,8 +1,29 @@
 require 'puppet/ssl'
 
-# The tedious class that does all the manipulations to the
-# certificate to correctly sign it.  Yay.
+# This class encapsulates the logic of creating and adding extensions to X509
+# certificates.
+#
+# @api private
 module Puppet::SSL::CertificateFactory
+
+  # Create, add extensions to, and sign a new X509 certificate.
+  #
+  # @param cert_type [Symbol] The certificate type to create, which specifies
+  #   what extensions are added to the certificate.
+  #   One of (:ca, :terminalsubca, :server, :ocsp, :client)
+  # @param csr [OpenSSL::X509::Request] The signing request associated with
+  #   the certificate being created.
+  # @param issuer [OpenSSL::X509::Certificate, OpenSSL::X509::Request] An X509 CSR
+  #   if this is a self signed certificate, or the X509 certificate of the CA if
+  #   this is a CA signed certificate.
+  # @param serial [Integer] The serial number for the given certificate, which
+  #   MUST be unique for the given CA.
+  # @param ttl [String] The duration of the validity for the given certificate.
+  #   defaults to Puppet[:ca_ttl]
+  #
+  # @api public
+  #
+  # @return [OpenSSL::X509::Certificate]
   def self.build(cert_type, csr, issuer, serial, ttl = nil)
     # Work out if we can even build the requested type of certificate.
     build_extensions = "build_#{cert_type.to_s}_extensions"
@@ -35,9 +56,27 @@ module Puppet::SSL::CertificateFactory
 
   private
 
+  # Add X509v3 extensions to the given certificate.
+  #
+  # @param cert [OpenSSL::X509::Certificate] The certificate to add the
+  #   extensions to.
+  # @param csr [OpenSSL::X509::Request] The CSR associated with the given
+  #   certificate, which may specify requested extensions for the given cert.
+  #   See http://tools.ietf.org/html/rfc2985 Section 5.4.2 Extension request
+  # @param issuer [OpenSSL::X509::Certificate, OpenSSL::X509::Request] An X509 CSR
+  #   if this is a self signed certificate, or the X509 certificate of the CA if
+  #   this is a CA signed certificate.
+  # @param extensions [Hash<String, Array<String> | String>] The extensions to
+  #   add to the certificate, based on the certificate type being created (CA,
+  #   server, client, etc)
+  #
+  # @api private
+  #
+  # @return [void]
   def self.add_extensions_to(cert, csr, issuer, extensions)
-    ef = OpenSSL::X509::ExtensionFactory.
-      new(cert, issuer.is_a?(OpenSSL::X509::Request) ? cert : issuer)
+    ef = OpenSSL::X509::ExtensionFactory.new
+    ef.subject_certificate = cert
+    ef.issuer_certificate  = issuer.is_a?(OpenSSL::X509::Request) ? cert : issuer
 
     # Extract the requested extensions from the CSR.
     requested_exts = csr.request_extensions.inject({}) do |hash, re|
@@ -60,7 +99,13 @@ module Puppet::SSL::CertificateFactory
     # certificate through where the CA constraint was true, though, if
     # something went wrong up there. --daniel 2011-10-11
     defaults = { "nsComment" => "Puppet Ruby/OpenSSL Internal Certificate" }
-    override = { "subjectKeyIdentifier" => "hash" }
+
+    # See http://www.openssl.org/docs/apps/x509v3_config.html
+    # for information about the special meanings of 'hash', 'keyid', 'issuer'
+    override = {
+      "subjectKeyIdentifier"   => "hash",
+      "authorityKeyIdentifier" => "keyid,issuer"
+    }
 
     exts = [defaults, requested_exts, extensions, override].
       inject({}) {|ret, val| ret.merge(val) }

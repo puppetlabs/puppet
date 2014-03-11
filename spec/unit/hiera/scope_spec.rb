@@ -1,8 +1,12 @@
 require 'spec_helper'
 require 'hiera/scope'
 
+require 'puppet_spec/scope'
+
 describe Hiera::Scope do
-  let(:real) { Puppet::Parser::Scope.new_for_test_harness("test_node") }
+  include PuppetSpec::Scope
+
+  let(:real) { create_test_scope_for_node("test_node") }
   let(:scope) { Hiera::Scope.new(real) }
 
   describe "#initialize" do
@@ -57,7 +61,7 @@ describe Hiera::Scope do
     end
 
     it "looks for the class which includes the defined type as the calling_class" do
-      parent = Puppet::Parser::Scope.new_for_test_harness("parent")
+      parent = create_test_scope_for_node("parent")
       real.parent = parent
       parent.source = Puppet::Resource::Type.new(:hostclass,
                                                  "name_of_the_class_including_the_definition",

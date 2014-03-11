@@ -30,6 +30,9 @@ Puppet::Type.type(:user).provide :directoryservice do
   # 10.8 Passwords use a PBKDF2 salt value
   has_features :manages_password_salt
 
+  #provider can set the user's shell
+  has_feature :manages_shell
+
 ##               ##
 ## Class Methods ##
 ##               ##
@@ -238,7 +241,7 @@ Puppet::Type.type(:user).provide :directoryservice do
   def self.get_sha1(guid)
     password_hash = nil
     password_hash_file = "#{password_hash_dir}/#{guid}"
-    if Puppet::FileSystem::File.exist?(password_hash_file) and File.file?(password_hash_file)
+    if Puppet::FileSystem.exist?(password_hash_file) and File.file?(password_hash_file)
       raise Puppet::Error, "Could not read password hash file at #{password_hash_file}" if not File.readable?(password_hash_file)
       f = File.new(password_hash_file)
       password_hash = f.read
@@ -452,14 +455,14 @@ Puppet::Type.type(:user).provide :directoryservice do
           dscl '.', '-change', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], @property_hash[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
           raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
-               "#{@resource.name} due to the following error: #{e.inspect}"
+               "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
         end
       else
         begin
           dscl '.', '-merge', "/Users/#{resource.name}", self.class.ns_to_ds_attribute_map[setter_method.intern], value
         rescue Puppet::ExecutionFailure => e
           raise Puppet::Error, "Cannot set the #{setter_method} value of '#{value}' for user " +
-               "#{@resource.name} due to the following error: #{e.inspect}"
+               "#{@resource.name} due to the following error: #{e.inspect}", e.backtrace
         end
       end
     end
@@ -483,7 +486,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     begin
       dscl '.', '-merge', "/#{path}/#{username}", keyname, value
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not set the dscl #{keyname} key with value: #{value} - #{detail.inspect}"
+      raise Puppet::Error, "Could not set the dscl #{keyname} key with value: #{value} - #{detail.inspect}", detail.backtrace
     end
   end
 
@@ -640,7 +643,7 @@ Puppet::Type.type(:user).provide :directoryservice do
     begin
       File.open(filename, 'w') { |f| f.write(value)}
     rescue Errno::EACCES => detail
-      raise Puppet::Error, "Could not write to file #{filename}: #{detail}"
+      raise Puppet::Error, "Could not write to file #{filename}: #{detail}", detail.backtrace
     end
   end
 

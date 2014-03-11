@@ -52,7 +52,7 @@ class Puppet::Pops::Types::ClassLoader
     #
     when Puppet::Pops::Types::PArrayType   ; Array
     when Puppet::Pops::Types::PHashType    ; Hash
-    when Puppet::Pops::Types::PPatternType ; Regexp
+    when Puppet::Pops::Types::PRegexpType ; Regexp
     when Puppet::Pops::Types::PIntegerType ; Integer
     when Puppet::Pops::Types::PStringType  ; String
     when Puppet::Pops::Types::PFloatType   ; Float

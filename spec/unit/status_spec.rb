@@ -1,7 +1,11 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+require 'matchers/json'
+
 describe Puppet::Status do
+  include JSONMatchers
+
   it "should implement find" do
     Puppet::Status.indirection.find( :default ).should be_is_a(Puppet::Status)
     Puppet::Status.indirection.find( :default ).status["is_alive"].should == true
@@ -38,12 +42,10 @@ describe Puppet::Status do
     new_status.should equal_attributes_of(status)
   end
 
-  it "serializes to PSON that conforms to the status schema", :unless => Puppet.features.microsoft_windows? do
-    schema = JSON.parse(File.read('api/schemas/status.json'))
+  it "serializes to PSON that conforms to the status schema" do
     status = Puppet::Status.new
     status.version = Puppet.version
 
-    JSON::Validator.validate!(JSON_META_SCHEMA, schema)
-    JSON::Validator.validate!(schema, status.render('pson'))
+    expect(status.render('pson')).to validate_against('api/schemas/status.json')
   end
 end

@@ -43,18 +43,6 @@ Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))
 end
 
-# various spec tests now use json schema validation
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  require 'json'
-  require 'json-schema'
-
-  JSON_META_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../api/schemas/json-meta-schema.json')))
-
-  # FACTS_SCHEMA is shared across two spec files so promote constant to here
-  FACTS_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../api/schemas/facts.json')))
-end
-
 RSpec.configure do |config|
   include PuppetSpec::Fixtures
 
@@ -67,7 +55,9 @@ RSpec.configure do |config|
   #    IPAddr.new("::2:3:4:5:6:7:8")
   #  end
   # end
-  config.filter_run_excluding :broken => true
+  exclude_filters = {:broken => true}
+  exclude_filters[:benchmark] = true unless ENV['BENCHMARK']
+  config.filter_run_excluding exclude_filters
 
   config.mock_with :mocha
 
@@ -90,9 +80,22 @@ RSpec.configure do |config|
 
   config.before :all do
     Puppet::Test::TestHelper.before_all_tests()
+    if ENV['PROFILE'] == 'all'
+      require 'ruby-prof'
+      RubyProf.start
+    end
   end
 
   config.after :all do
+    if ENV['PROFILE'] == 'all'
+      require 'ruby-prof'
+      result = RubyProf.stop
+      printer = RubyProf::CallTreePrinter.new(result)
+      open(File.join(ENV['PROFILEOUT'],"callgrind.all.#{Time.now.to_i}.trace"), "w") do |f|
+        printer.print(f)
+      end
+    end
+
     Puppet::Test::TestHelper.after_all_tests()
   end
 
@@ -122,8 +125,14 @@ RSpec.configure do |config|
 
     @log_level = Puppet::Util::Log.level
 
-    Puppet::Test::TestHelper.before_each_test()
+    base = PuppetSpec::Files.tmpdir('tmp_settings')
+    Puppet[:vardir] = File.join(base, 'var')
+    Puppet[:confdir] = File.join(base, 'etc')
+    Puppet[:logdir] = "$vardir/log"
+    Puppet[:rundir] = "$vardir/run"
+    Puppet[:hiera_config] = File.join(base, 'hiera')
 
+    Puppet::Test::TestHelper.before_each_test()
   end
 
   config.after :each do
@@ -155,9 +164,30 @@ RSpec.configure do |config|
         config.instance_variable_get(:@files_to_run).each { |f| logfile.puts f }
       end
     end
-    # Clean up switch of TMPDIR, don't know if needed after this, so needs to reset it
-    # to old before removing it
+
+    # return to original tmpdir
     ENV['TMPDIR'] = oldtmpdir
-    FileUtils.rm_rf(tmpdir) if Puppet::FileSystem::File.exist?(tmpdir) && tmpdir.to_s.start_with?(oldtmpdir)
+    FileUtils.rm_rf(tmpdir)
+  end
+
+  if ENV['PROFILE']
+    require 'ruby-prof'
+
+    def profile
+      result = RubyProf.profile { yield }
+      name = example.metadata[:full_description].downcase.gsub(/[^a-z0-9_-]/, "-").gsub(/-+/, "-")
+      printer = RubyProf::CallTreePrinter.new(result)
+      open(File.join(ENV['PROFILEOUT'],"callgrind.#{name}.#{Time.now.to_i}.trace"), "w") do |f|
+        printer.print(f)
+      end
+    end
+
+    config.around(:each) do |example|
+      if ENV['PROFILE'] == 'each' or (example.metadata[:profile] and ENV['PROFILE'])
+        profile { example.run }
+      else
+        example.run
+      end
+    end
   end
 end

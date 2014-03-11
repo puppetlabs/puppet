@@ -7,7 +7,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     begin
       execoutput("#{command(:semodule)} --install #{selmod_name_to_filename}")
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not load policy module: #{detail}";
+      raise Puppet::Error, "Could not load policy module: #{detail}", detail.backtrace
     end
     :true
   end
@@ -15,7 +15,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
   def destroy
       execoutput("#{command(:semodule)} --remove #{@resource[:name]}")
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not remove policy module: #{detail}";
+      raise Puppet::Error, "Could not remove policy module: #{detail}", detail.backtrace
   end
 
   def exists?
@@ -47,7 +47,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
   def syncversion= (dosync)
       execoutput("#{command(:semodule)} --upgrade #{selmod_name_to_filename}")
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not upgrade policy module: #{detail}";
+      raise Puppet::Error, "Could not upgrade policy module: #{detail}", detail.backtrace
   end
 
   # Helper functions
@@ -59,7 +59,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         output = out.readlines.join('').chomp!
       end
     rescue Puppet::ExecutionFailure
-      raise Puppet::ExecutionFailure, output.split("\n")[0]
+      raise Puppet::ExecutionFailure, output.split("\n")[0], $!.backtrace
     end
     output
   end
@@ -127,7 +127,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         end
       end
     rescue Puppet::ExecutionFailure
-      raise Puppet::ExecutionFailure, "Could not list policy modules: #{lines.join(' ').chomp!}"
+      raise Puppet::ExecutionFailure, "Could not list policy modules: #{lines.join(' ').chomp!}", $!.backtrace
     end
     nil
   end

@@ -1,5 +1,5 @@
-class Puppet::FileSystem::File19 < Puppet::FileSystem::File
-  def binread
-    @path.binread
+class Puppet::FileSystem::File19 < Puppet::FileSystem::FileImpl
+  def binread(path)
+    path.binread
   end
 end

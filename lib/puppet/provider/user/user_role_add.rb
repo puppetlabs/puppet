@@ -68,7 +68,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   def run(cmd, msg)
       execute(cmd)
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Could not #{msg} #{@resource.class.name} #{@resource.name}: #{detail}"
+      raise Puppet::Error, "Could not #{msg} #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
   end
 
   def transition(type)
@@ -203,7 +203,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
         end
       end
     rescue => detail
-      fail "Could not write replace #{target_file_path}: #{detail}"
+      self.fail Puppet::Error, "Could not write replace #{target_file_path}: #{detail}", detail
     end
   end
 end

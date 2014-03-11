@@ -18,7 +18,7 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
     begin
       output = execute(external_command, :failonfail => true, :combine => false)
     rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error, "Failed to find #{name} via exec: #{detail}"
+      raise Puppet::Error, "Failed to find #{name} via exec: #{detail}", detail.backtrace
     end
 
     if output =~ /\A\s*\Z/ # all whitespace

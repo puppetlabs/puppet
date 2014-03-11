@@ -19,18 +19,14 @@ describe Puppet::Parser do
   end
 
   it "should set the environment" do
-    env = Puppet::Node::Environment.new
+    env = Puppet::Node::Environment.create(:testing, [], '')
     Puppet::Parser::Parser.new(env).environment.should == env
   end
 
-  it "should convert the environment into an environment instance if a string is provided" do
-    env = Puppet::Node::Environment.new("testing")
-    Puppet::Parser::Parser.new("testing").environment.should == env
-  end
-
   it "should be able to look up the environment-specific resource type collection" do
-    rtc = Puppet::Node::Environment.new("development").known_resource_types
-    parser = Puppet::Parser::Parser.new "development"
+    env = Puppet::Node::Environment.create(:development, [], '')
+    rtc = env.known_resource_types
+    parser = Puppet::Parser::Parser.new env
     parser.known_resource_types.should equal(rtc)
   end
 
@@ -53,8 +49,8 @@ describe Puppet::Parser do
 
   describe "when parsing files" do
     before do
-      Puppet::FileSystem::File.stubs(:exist?).returns true
-      File.stubs(:read).returns ""
+      Puppet::FileSystem.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:read).returns ""
       @parser.stubs(:watch_file)
     end
 
@@ -527,5 +523,13 @@ describe Puppet::Parser do
     @parser.known_resource_types.import_ast(@parser.parse("define funtest {}"), '')
     @parser.known_resource_types.hostclass('funtest').
       should == @parser.find_hostclass("", "fUntEst")
+  end
+
+  context "deprecations" do
+    it "should flag use of import as deprecated" do
+      Puppet.expects(:deprecation_warning).once
+      @parser.known_resource_types.loader.expects(:import).with('foo', Dir.pwd)
+      @parser.parse("import 'foo'")
+    end
   end
 end

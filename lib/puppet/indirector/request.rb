@@ -14,27 +14,34 @@ class Puppet::Indirector::Request
 
   attr_reader :indirection_name
 
+  # trusted_information is specifically left out because we can't serialize it
+  # and keep it "trusted"
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
 
   ::PSON.register_document_type('IndirectorRequest',self)
 
-  def self.from_pson(json)
-    raise ArgumentError, "No indirection name provided in json data" unless indirection_name = json['type']
-    raise ArgumentError, "No method name provided in json data" unless method = json['method']
-    raise ArgumentError, "No key provided in json data" unless key = json['key']
+  def self.from_data_hash(data)
+    raise ArgumentError, "No indirection name provided in data" unless indirection_name = data['type']
+    raise ArgumentError, "No method name provided in data" unless method = data['method']
+    raise ArgumentError, "No key provided in data" unless key = data['key']
 
-    request = new(indirection_name, method, key, nil, json['attributes'])
+    request = new(indirection_name, method, key, nil, data['attributes'])
 
-    if instance = json['instance']
+    if instance = data['instance']
       klass = Puppet::Indirector::Indirection.instance(request.indirection_name).model
       if instance.is_a?(klass)
         request.instance = instance
       else
-        request.instance = klass.from_pson(instance)
+        request.instance = klass.from_data_hash(instance)
       end
     end
 
     request
+  end
+
+  def self.from_pson(json)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(json)
   end
 
   def to_data_hash
@@ -76,14 +83,14 @@ class Puppet::Indirector::Request
   end
 
   def environment
-    @environment ||= Puppet::Node::Environment.new
+    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
   end
 
   def environment=(env)
     @environment = if env.is_a?(Puppet::Node::Environment)
       env
     else
-      Puppet::Node::Environment.new(env)
+      Puppet.lookup(:environments).get(env)
     end
   end
 
@@ -142,19 +149,9 @@ class Puppet::Indirector::Request
     @indirection_name = name.to_sym
   end
 
-
   def model
     raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless i = indirection
     i.model
-  end
-
-  # Should we allow use of the cached object?
-  def use_cache?
-    if defined?(@use_cache)
-      ! ! use_cache
-    else
-      true
-    end
   end
 
   # Are we trying to interact with multiple resources, or just one?
@@ -282,7 +279,7 @@ class Puppet::Indirector::Request
     begin
       uri = URI.parse(URI.escape(key))
     rescue => detail
-      raise ArgumentError, "Could not understand URL #{key}: #{detail}"
+      raise ArgumentError, "Could not understand URL #{key}: #{detail}", detail.backtrace
     end
 
     # Just short-circuit these to full paths

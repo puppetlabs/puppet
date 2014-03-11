@@ -98,42 +98,40 @@ class Puppet::Parser::Compiler
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile
-    # Set the client's parameters into the top scope.
-    Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
+    Puppet.override({ :current_environment => environment }, "For compiling #{node.name}") do
+      # Set the client's parameters into the top scope.
+      Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
 
-    Puppet::Util::Profiler.profile("Compile: Created settings scope") { create_settings_scope }
+      Puppet::Util::Profiler.profile("Compile: Created settings scope") { create_settings_scope }
 
-    if is_binder_active?
-      Puppet::Util::Profiler.profile("Compile: Created injector") { create_injector }
+      if is_binder_active?
+        Puppet::Util::Profiler.profile("Compile: Created injector") { create_injector }
+      end
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
+
+      Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
+
+      Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
+
+      fail_on_unevaluated
+
+      @catalog
     end
-
-    Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
-
-    Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
-
-    Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
-
-    Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
-
-    Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
-
-    fail_on_unevaluated
-
-    @catalog
   end
 
   def_delegator :@collections, :delete, :delete_collection
 
   # Return the node's environment.
   def environment
-    unless defined?(@environment)
-      unless node.environment.is_a? Puppet::Node::Environment
-        raise Puppet::DevError, "node #{node} has an invalid environment!"
-      end
-      @environment = node.environment
+    unless node.environment.is_a? Puppet::Node::Environment
+      raise Puppet::DevError, "node #{node} has an invalid environment!"
     end
-    Puppet::Node::Environment.current = @environment
-    @environment
+    node.environment
   end
 
   # Evaluate all of the classes specified by the node.
@@ -245,12 +243,11 @@ class Puppet::Parser::Compiler
   #
   def create_boot_injector(env_boot_bindings)
     assert_binder_active()
-    boot_contribution = Puppet::Pops::Binder::SystemBindings.injector_boot_contribution(env_boot_bindings)
-    final_contribution = Puppet::Pops::Binder::SystemBindings.final_contribution
-    binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_categories(boot_contribution.effective_categories)
-    binder.define_layers(Puppet::Pops::Binder::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
-    @boot_injector = Puppet::Pops::Binder::Injector.new(binder)
+    pb = Puppet::Pops::Binder
+    boot_contribution = pb::SystemBindings.injector_boot_contribution(env_boot_bindings)
+    final_contribution = pb::SystemBindings.final_contribution
+    binder = pb::Binder.new(pb::BindingsFactory.layered_bindings(final_contribution, boot_contribution))
+    @boot_injector = pb::Injector.new(binder)
   end
 
   # Answers if Puppet Binder should be active or not, and if it should and is not active, then it is activated.
@@ -506,6 +503,10 @@ class Puppet::Parser::Compiler
     if Puppet[:trusted_node_data]
       @topscope.set_trusted(node.trusted_data)
     end
+    if(Puppet[:immutable_node_data])
+      facts_hash = node.facts.nil? ? {} : node.facts.values
+      @topscope.set_facts(facts_hash)
+    end
   end
 
   def create_settings_scope
@@ -543,10 +544,7 @@ class Puppet::Parser::Compiler
     assert_binder_active()
     composer = Puppet::Pops::Binder::BindingsComposer.new()
     layered_bindings = composer.compose(topscope)
-    binder = Puppet::Pops::Binder::Binder.new()
-    binder.define_categories(composer.effective_categories(topscope))
-    binder.define_layers(layered_bindings)
-    @injector = Puppet::Pops::Binder::Injector.new(binder)
+    @injector = Puppet::Pops::Binder::Injector.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
   end
 
   def assert_binder_active

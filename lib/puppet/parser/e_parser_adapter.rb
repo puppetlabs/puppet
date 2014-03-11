@@ -36,7 +36,6 @@ class Puppet::Parser::EParserAdapter
 
       # Validate
       validate(parse_result)
-
       # Transform the result, but only if not nil
       parse_result = Puppet::Pops::Model::AstTransformer.new(source_file, @classic_parser).transform(parse_result) if parse_result
       if parse_result && !parse_result.is_a?(Puppet::Parser::AST::BlockExpression)

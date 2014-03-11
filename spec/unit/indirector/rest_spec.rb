@@ -164,10 +164,6 @@ describe Puppet::Indirector::REST do
     Puppet::Indirector::Request.new(:test_model, :save, key, instance, options)
   end
 
-  it "should include the v1 REST API module" do
-    Puppet::Indirector::REST.ancestors.should be_include(Puppet::Network::HTTP::API::V1)
-  end
-
   it "should have a method for specifying what setting a subclass should use to retrieve its server" do
     terminus_class.should respond_to(:use_server_setting)
   end

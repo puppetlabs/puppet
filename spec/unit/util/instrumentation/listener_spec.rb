@@ -7,6 +7,7 @@ require 'puppet/util/instrumentation'
 require 'puppet/util/instrumentation/listener'
 
 describe Puppet::Util::Instrumentation::Listener do
+  include JSONMatchers
 
   Listener = Puppet::Util::Instrumentation::Listener
 
@@ -87,14 +88,14 @@ describe Puppet::Util::Instrumentation::Listener do
   describe "when deserializing from pson" do
     it "should lookup the archetype listener from the instrumentation layer" do
       Puppet::Util::Instrumentation.expects(:[]).with("listener").returns(@listener)
-      Puppet::Util::Instrumentation::Listener.from_pson({"name" => "listener"})
+      Puppet::Util::Instrumentation::Listener.from_data_hash({"name" => "listener"})
     end
 
     it "should create a new listener shell instance delegating to the archetypal listener" do
       Puppet::Util::Instrumentation.expects(:[]).with("listener").returns(@listener)
       @listener.stubs(:listener).returns(@delegate)
       Puppet::Util::Instrumentation::Listener.expects(:new).with(@delegate, nil, true)
-      Puppet::Util::Instrumentation::Listener.from_pson({"name" => "listener", "enabled" => true})
+      Puppet::Util::Instrumentation::Listener.from_data_hash({"name" => "listener", "enabled" => true})
     end
   end
 end

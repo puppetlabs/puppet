@@ -6,7 +6,7 @@ module Puppet::ModuleTool
 
       def initialize(name, forge, options)
         @action              = :upgrade
-        @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
+        @environment         = options[:environment_instance]
         @module_name         = name
         @options             = options
         @force               = options[:force]
@@ -38,18 +38,21 @@ module Puppet::ModuleTool
           dir = @module.modulepath
 
           Puppet.notice "Found '#{@module_name}' (#{colorize(:cyan, results[:installed_version] || '???')}) in #{dir} ..."
-          if !@options[:force] && @module.has_metadata? && @module.has_local_changes?
-            raise LocalChangesError,
-              :action            => :upgrade,
-              :module_name       => @module_name,
-              :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-              :installed_version => @module.version
+          if !@options[:force] && @module.has_metadata?
+            changes = Puppet::ModuleTool::Applications::Checksummer.run(@module.path)
+            if !changes.empty?
+              raise LocalChangesError,
+                :action            => :upgrade,
+                :module_name       => @module_name,
+                :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
+                :installed_version => @module.version
+            end
           end
 
           begin
             get_remote_constraints(@forge)
           rescue => e
-            raise UnknownModuleError, results.merge(:repository => @forge.uri)
+            raise UnknownModuleError, results.merge(:repository => @forge.uri), e.backtrace
           else
             raise UnknownVersionError, results.merge(:repository => @forge.uri) if @remote.empty?
           end

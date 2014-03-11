@@ -35,9 +35,22 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
         else
           command.length.should == 4
           command[1].should == '-o'
+
+          # update is a special option, used on bsd's
+          # strip it out and track as a local bool here
+          update = false
+          tmp_options = command[2].split(",")
+
+          if tmp_options.include?("update")
+            update = true
+            tmp_options.delete("update")
+          end
+          @current_options = tmp_options.join(",")
+
+          if !update
+            @mounted.should == false # verify that we don't try to call "mount" redundantly
+          end
           command[3].should == '/Volumes/foo_disk'
-          @mounted.should == false # verify that we don't try to call "mount" redundantly
-          @current_options = command[2]
           @current_device = check_fstab(true)
           @mounted = true
           ''

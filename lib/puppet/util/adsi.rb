@@ -12,7 +12,7 @@ module Puppet::Util::ADSI
       begin
         WIN32OLE.connect(uri)
       rescue Exception => e
-        raise Puppet::Error.new( "ADSI connection error: #{e}" )
+        raise Puppet::Error.new( "ADSI connection error: #{e}", e )
       end
     end
 
@@ -39,6 +39,18 @@ module Puppet::Util::ADSI
 
     def wmi_resource_uri( host = '.' )
       "winmgmts:{impersonationLevel=impersonate}!//#{host}/root/cimv2"
+    end
+
+    # @api private
+    def sid_uri_safe(sid)
+      return sid_uri(sid) if sid.kind_of?(Win32::Security::SID)
+
+      begin
+        sid = Win32::Security::SID.new(Win32::Security::SID.string_to_sid(sid))
+        sid_uri(sid)
+      rescue Win32::Security::SID::Error
+        return nil
+      end
     end
 
     def sid_uri(sid)
@@ -96,6 +108,8 @@ module Puppet::Util::ADSI
     end
 
     def self.uri(name, host = '.')
+      if sid_uri = Puppet::Util::ADSI.sid_uri_safe(name) then return sid_uri end
+
       host = '.' if ['NT AUTHORITY', 'BUILTIN', Socket.gethostname].include?(host)
 
       Puppet::Util::ADSI.uri(name, 'user', host)
@@ -121,7 +135,7 @@ module Puppet::Util::ADSI
       begin
         native_user.SetInfo unless native_user.nil?
       rescue Exception => e
-        raise Puppet::Error.new( "User update failed: #{e}" )
+        raise Puppet::Error.new( "User update failed: #{e}", e )
       end
       self
     end
@@ -240,6 +254,8 @@ module Puppet::Util::ADSI
     end
 
     def self.uri(name, host = '.')
+      if sid_uri = Puppet::Util::ADSI.sid_uri_safe(name) then return sid_uri end
+
       Puppet::Util::ADSI.uri(name, 'group', host)
     end
 
@@ -251,7 +267,7 @@ module Puppet::Util::ADSI
       begin
         native_group.SetInfo unless native_group.nil?
       rescue Exception => e
-        raise Puppet::Error.new( "Group update failed: #{e}" )
+        raise Puppet::Error.new( "Group update failed: #{e}", e )
       end
       self
     end

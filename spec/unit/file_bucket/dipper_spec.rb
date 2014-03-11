@@ -45,7 +45,7 @@ describe Puppet::FileBucket::Dipper do
     Digest::MD5.hexdigest("my\r\ncontents").should == checksum
 
     @dipper.backup(file).should == checksum
-    Puppet::FileSystem::File.exist?("#{file_bucket}/f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea/contents").should == true
+    Puppet::FileSystem.exist?("#{file_bucket}/f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea/contents").should == true
   end
 
   it "should not backup a file that is already in the bucket" do
@@ -123,7 +123,7 @@ describe Puppet::FileBucket::Dipper do
         klass.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(contents))
 
         dipper.restore(dest, md5).should == md5
-        Digest::MD5.hexdigest(Puppet::FileSystem::File.new(dest).binread).should == md5
+        Digest::MD5.hexdigest(Puppet::FileSystem.binread(dest)).should == md5
 
         request.key.should == "md5/#{md5}"
         request.server.should == server

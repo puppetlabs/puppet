@@ -15,7 +15,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
     :fields   => %w{options type key name},
     :optional => %w{options},
     :rts => /^\s+/,
-    :match    => /^(?:(.+) )?(ssh-dss|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ([^ ]+) ?(.*)$/,
+    :match    => /^(?:(.+) )?(ssh-dss|ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ([^ ]+) ?(.*)$/,
     :post_parse => proc { |h|
       h[:name] = "" if h[:name] == :absent
       h[:options] ||= [:absent]
@@ -41,7 +41,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
   end
 
   def user
-    uid = Puppet::FileSystem::File.new(target).stat.uid
+    uid = Puppet::FileSystem.stat(target).uid
     Etc.getpwuid(uid).name
   end
 
@@ -55,7 +55,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
     self.class.backup_target(target)
 
     Puppet::Util::SUIDManager.asuser(@resource.should(:user)) do
-        unless Puppet::FileSystem::File.exist?(dir = File.dirname(target))
+        unless Puppet::FileSystem.exist?(dir = File.dirname(target))
           Puppet.debug "Creating #{dir}"
           Dir.mkdir(dir, dir_perm)
         end

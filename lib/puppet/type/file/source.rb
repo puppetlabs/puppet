@@ -58,7 +58,7 @@ module Puppet
         begin
           uri = URI.parse(URI.escape(source))
         rescue => detail
-          self.fail "Could not understand source #{source}: #{detail}"
+          self.fail Puppet::Error, "Could not understand source #{source}: #{detail}", detail
         end
 
         self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
@@ -101,7 +101,7 @@ module Puppet
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
       unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment, :links => resource[:links])
-        fail "Could not find any content at %s" % metadata.source
+        self.fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
     end
@@ -141,7 +141,7 @@ module Puppet
         when :ignore
           next
         when :use_when_creating
-          next if Puppet::FileSystem::File.exist?(resource[:path])
+          next if Puppet::FileSystem.exist?(resource[:path])
         end
 
         copy_source_value(metadata_method)
@@ -169,16 +169,22 @@ module Puppet
       return nil unless value
       value.each do |source|
         begin
-          if data = Puppet::FileServing::Metadata.indirection.find(source, :environment => resource.catalog.environment, :links => resource[:links])
+          options = {
+            :environment          => resource.catalog.environment,
+            :links                => resource[:links],
+            :source_permissions   => resource[:source_permissions]
+          }
+
+          if data = Puppet::FileServing::Metadata.indirection.find(source, options)
             @metadata = data
             @metadata.source = source
             break
           end
         rescue => detail
-          fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
+          self.fail Puppet::Error, "Could not retrieve file metadata for #{source}: #{detail}", detail
         end
       end
-      fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
+      self.fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
       @metadata
     end
 

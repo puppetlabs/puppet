@@ -21,7 +21,7 @@ module Puppet
 #      Puppet::Application::Example.new.run
 #
 #
-# class Puppet::Application::Example << Puppet::Application
+# class Puppet::Application::Example < Puppet::Application
 #
 #     def preinit
 #         # perform some pre initialization
@@ -353,15 +353,24 @@ class Application
       plugin_hook('initialize_app_defaults') { initialize_app_defaults }
     end
 
-    require 'puppet'
-    require 'puppet/util/instrumentation'
-    Puppet::Util::Instrumentation.init
+    new_context = Puppet.base_context(Puppet.settings)
+    configured_environment = new_context[:environments].get(Puppet[:environment])
+    configured_environment = configured_environment.override_from_commandline(Puppet.settings)
+    new_context[:current_environment] = configured_environment
 
-    exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
-    exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
-    exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
-    exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
-    exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
+    # Setup a new context using the app's configuration
+    Puppet.override(new_context,
+                    "New base context and current environment from application's configuration") do
+      require 'puppet'
+      require 'puppet/util/instrumentation'
+      Puppet::Util::Instrumentation.init
+
+      exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
+      exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
+      exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
+      exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+      exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
+    end
   end
 
   def main
@@ -405,7 +414,7 @@ class Application
 
   def configure_indirector_routes
     route_file = Puppet[:route_file]
-    if Puppet::FileSystem::File.exist?(route_file)
+    if Puppet::FileSystem.exist?(route_file)
       routes = YAML.load_file(route_file)
       application_routes = routes[name.to_s]
       Puppet::Indirector.configure_routes(application_routes) if application_routes

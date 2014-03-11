@@ -24,28 +24,8 @@ module Puppet::Pops::Binder::Config::Issues
     "The configuration file '#{semantic}' has no 'version' entry in the top level hash"
   end
 
-  CONFIG_CATEGORIES_MISSING = issue :CONFIG_CATEGORIES_MISSING do
-    "The configuration file '#{semantic}' has no 'categories' entry in the top level hash"
-  end
-
   LAYERS_IS_NOT_ARRAY = issue :LAYERS_IS_NOT_ARRAY, :klass do
     "The configuration file '#{semantic}' should contain a 'layers' key with an Array value, got: #{klass.name}"
-  end
-
-  CATEGORIES_IS_NOT_ARRAY = issue :CATEGORIES_IS_NOT_ARRAY, :klass do
-    "The configuration file '#{semantic}' should contain a 'categories' key with an Array value, got: #{klass.name}"
-  end
-
-  CATEGORY_IS_NOT_ARRAY = issue :CATEGORY_IS_NOT_ARRAY, :klass do
-    "The configuration file '#{semantic}' each entry in  'categories' should be an Array(String, String), got: #{klass.name}"
-  end
-
-  CATEGORY_NOT_TWO_STRINGS = issue :CATEGORY_NOT_TWO_STRINGS, :count do
-    "The configuration file '#{semantic}' each entry in  'categories' should be an array with 2 strings, got: #{count}"
-  end
-
-  INVALID_CATEGORY_NAME = issue :INVALID_CATEGORY_NAME, :name do
-    "The configuration file '#{semantic}' contains the invalid category: '#{name}', must match /[a-z][a-zA-Z0-9_]*/"
   end
 
   LAYER_IS_NOT_HASH = issue :LAYER_IS_NOT_HASH, :klass do
@@ -100,7 +80,7 @@ module Puppet::Pops::Binder::Config::Issues
     "The configuration file '#{semantic}' contains '#{extension}', expected: Hash, but got: #{actual}."
   end
 
-  UNKNOWN_EXTENSION = issue :UNKNOWN_EXTENSION, :actual do
+  UNKNOWN_EXTENSION = issue :UNKNOWN_EXTENSION, :extension do
     "The configuration file '#{semantic}' contains the unknown extension: #{extension}."
   end
 end

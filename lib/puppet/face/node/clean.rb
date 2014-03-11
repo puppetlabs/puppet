@@ -37,7 +37,7 @@ Puppet::Face.define(:node, '0.0.1') do
       # This seems really bad; run_mode should be set as part of a class
       # definition, and should not be modifiable beyond that.  This is one of
       # the only places left in the code that tries to manipulate it. Other
-      # parts of code that handle certificates behave differently if the the
+      # parts of code that handle certificates behave differently if the
       # run_mode is master. Those other behaviors are needed for cleaning the
       # certificates correctly.
       Puppet.settings.preferred_run_mode = "master"
@@ -144,7 +144,7 @@ Puppet::Face.define(:node, '0.0.1') do
   end
 
   def environment
-    @environment ||= Puppet::Node::Environment.new
+    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
   end
 
   def type_is_ensurable(resource)

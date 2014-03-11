@@ -11,10 +11,15 @@ class Puppet::Util::Metric
 
   attr_writer :basedir
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     metric = new(data['name'], data['label'])
     metric.values = data['values']
     metric
+  end
+
+  def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(data)
   end
 
   def to_data_hash
@@ -71,7 +76,7 @@ class Puppet::Util::Metric
         RRD.create( self.path, '-s', Puppet[:rrdinterval].to_s, '-b', start.to_i.to_s, *args)
       end
     rescue => detail
-      raise "Could not create RRD file #{path}: #{detail}"
+      raise detail, "Could not create RRD file #{path}: #{detail}", detail.backtrace
     end
   end
 
@@ -161,7 +166,7 @@ class Puppet::Util::Metric
       Puppet.warning "RRD library is missing; cannot store metrics"
       return
     end
-    self.create(time - 5) unless Puppet::FileSystem::File.exist?(self.path)
+    self.create(time - 5) unless Puppet::FileSystem.exist?(self.path)
 
     if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
       @rrd ||= RRDtool.new(self.path)
@@ -185,7 +190,7 @@ class Puppet::Util::Metric
       end
       #system("rrdtool updatev #{self.path} '#{arg}'")
     rescue => detail
-      raise Puppet::Error, "Failed to update #{self.name}: #{detail}"
+      raise Puppet::Error, "Failed to update #{self.name}: #{detail}", detail.backtrace
     end
   end
 

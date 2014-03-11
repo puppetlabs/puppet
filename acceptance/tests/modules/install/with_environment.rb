@@ -4,40 +4,60 @@ extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
 module_name   = "nginx"
-module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do
   rm_installed_modules_from_hosts orig_installed_modules, (get_installed_modules_for_hosts hosts)
-  # TODO make helper take environments into account
-  on master, "rm -rf #{master['puppetpath']}/testenv #{master['puppetpath']}/puppet2.conf"
 end
 
 step 'Setup'
 
 stub_forge_on(master)
 
-# Configure a non-default environment
-on master, "rm -rf #{master['puppetpath']}/testenv"
-apply_manifest_on master, %Q{
+puppet_conf = generate_base_legacy_and_directory_environments(master['puppetpath'])
+
+check_module_install_in = lambda do |environment_path, module_install_args|
+  on master, "puppet module install #{module_author}-#{module_name} --config=#{puppet_conf} #{module_install_args}" do
+    assert_module_installed_ui(stdout, module_author, module_name)
+    assert_match(/#{environment_path}/, stdout,
+          "Notice of non default install path was not displayed")
+  end
+  assert_module_installed_on_disk(master, "#{environment_path}", module_name)
+end
+
+step 'Install a module into a non default legacy environment' do
+  check_module_install_in.call("#{master['puppetpath']}/legacyenv/modules",
+                               "--environment=legacyenv")
+end
+
+step 'Install a module into a non default directory environment' do
+  check_module_install_in.call("#{master['puppetpath']}/environments/direnv/modules",
+                              "--environment=direnv")
+end
+
+step 'Prepare a separate modulepath'
+modulepath_dir = master.tmpdir("modulepath")
+apply_manifest_on(master, <<-MANIFEST , :catch_failures => true)
   file {
     [
-      '#{master['puppetpath']}/testenv',
-      '#{master['puppetpath']}/testenv/modules',
+      '#{master['puppetpath']}/environments/production',
+      '#{modulepath_dir}',
     ]:
-      ensure => directory,
-  }
-  file {
-    '#{master['puppetpath']}/puppet2.conf':
-      source => $settings::config,
-  }
-}
-on master, "{ echo '[testenv]'; echo 'modulepath=#{master['puppetpath']}/testenv/modules'; } >> #{master['puppetpath']}/puppet2.conf"
 
-step 'Install a module into a non default environment'
-on master, "puppet module install #{module_author}-#{module_name} --config=#{master['puppetpath']}/puppet2.conf --environment=testenv" do
-  assert_module_installed_ui(stdout, module_author, module_name)
-  assert_match(/#{master['puppetpath']}\/testenv\/modules/, stdout,
-        "Notice of non default install path was not displayed")
+    ensure => directory,
+    owner => puppet,
+  }
+MANIFEST
+
+step "Install a module into --modulepath #{modulepath_dir} despite the implicit production directory env existing" do
+  check_module_install_in.call(modulepath_dir, "--modulepath=#{modulepath_dir}")
 end
-assert_module_installed_on_disk(master, "#{master['puppetpath']}/testenv/modules", module_name)
+
+step "Uninstall so we can try a different scenario" do
+  on master, "puppet module uninstall #{module_author}-#{module_name} --config=#{puppet_conf} --modulepath=#{modulepath_dir}"
+end
+
+step "Install a module into --modulepath #{modulepath_dir} with a directory env specified" do
+  check_module_install_in.call(modulepath_dir,
+                               "--modulepath=#{modulepath_dir} --environment=direnv")
+end

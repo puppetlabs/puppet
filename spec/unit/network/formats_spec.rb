@@ -9,7 +9,7 @@ class PsonTest
     string == other.string
   end
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     new(data)
   end
 
@@ -43,10 +43,33 @@ describe "Puppet Network Format" do
       @msgpack.weight.should == 20
     end
 
-    it "should fail when one element does not have a from_pson" do
+    it "should fail when one element does not have a from_data_hash" do
       expect do
         @msgpack.intern_multiple(Hash, MessagePack.pack(["foo"]))
       end.to raise_error(NoMethodError)
+    end
+
+    it "should be able to serialize a catalog" do
+      cat = Puppet::Resource::Catalog.new('foo')
+      cat.add_resource(Puppet::Resource.new(:file, 'my_file'))
+      catunpack = MessagePack.unpack(cat.to_msgpack)
+      catunpack.should include(
+        "tags"=>[],
+        "name"=>"foo",
+        "version"=>nil,
+        "environment"=>"",
+        "edges"=>[],
+        "classes"=>[]
+      )
+      catunpack["resources"][0].should include(
+        "type"=>"File",
+        "title"=>"my_file",
+        "exported"=>false
+      )
+      catunpack["resources"][0]["tags"].should include(
+        "file",
+        "my_file"
+      )
     end
   end
 
@@ -293,10 +316,10 @@ describe "Puppet Network Format" do
         @pson.render_multiple(instances).should == "foo"
       end
 
-      it "should intern by calling 'PSON.parse' on the text and then using from_pson to convert the data into an instance" do
+      it "should intern by calling 'PSON.parse' on the text and then using from_data_hash to convert the data into an instance" do
         text = "foo"
         PSON.expects(:parse).with("foo").returns("type" => "PsonTest", "data" => "foo")
-        PsonTest.expects(:from_pson).with("foo").returns "parsed_pson"
+        PsonTest.expects(:from_data_hash).with("foo").returns "parsed_pson"
         @pson.intern(PsonTest, text).should == "parsed_pson"
       end
 
@@ -304,22 +327,22 @@ describe "Puppet Network Format" do
         text = "foo"
         instance = PsonTest.new("foo")
         PSON.expects(:parse).with("foo").returns(instance)
-        PsonTest.expects(:from_pson).never
+        PsonTest.expects(:from_data_hash).never
         @pson.intern(PsonTest, text).should equal(instance)
       end
 
-      it "should intern by calling 'PSON.parse' on the text and then using from_pson to convert the actual into an instance if the pson has no class/data separation" do
+      it "should intern by calling 'PSON.parse' on the text and then using from_data_hash to convert the actual into an instance if the pson has no class/data separation" do
         text = "foo"
         PSON.expects(:parse).with("foo").returns("foo")
-        PsonTest.expects(:from_pson).with("foo").returns "parsed_pson"
+        PsonTest.expects(:from_data_hash).with("foo").returns "parsed_pson"
         @pson.intern(PsonTest, text).should == "parsed_pson"
       end
 
       it "should intern multiples by parsing the text and using 'class.intern' on each resulting data structure" do
         text = "foo"
         PSON.expects(:parse).with("foo").returns ["bar", "baz"]
-        PsonTest.expects(:from_pson).with("bar").returns "BAR"
-        PsonTest.expects(:from_pson).with("baz").returns "BAZ"
+        PsonTest.expects(:from_data_hash).with("bar").returns "BAR"
+        PsonTest.expects(:from_data_hash).with("baz").returns "BAZ"
         @pson.intern_multiple(PsonTest, text).should == %w{BAR BAZ}
       end
 

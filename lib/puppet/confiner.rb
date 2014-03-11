@@ -13,6 +13,7 @@ module Puppet::Confiner
   # * `:true` => a predicate code block returning true
   # * `:false` => a predicate code block returning false
   # * `:feature` => name of system feature that must be present
+  # * `:any` => an array of expressions that will be ORed together
   #
   # @example
   #   confine :operatingsystem => [:redhat, :fedora]

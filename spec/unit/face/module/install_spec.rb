@@ -7,43 +7,43 @@ describe "puppet module install" do
 
   subject { Puppet::Face[:module, :current] }
 
-  let(:options) do
-    {}
-  end
-
   describe "option validation" do
-    before do
-      Puppet.settings[:modulepath] = fakemodpath
-    end
-
-    let(:expected_options) do
-      {
-        :target_dir  => fakefirstpath,
-        :modulepath  => fakemodpath,
-        :environment => 'production'
-      }
-    end
-
     let(:sep) { File::PATH_SEPARATOR }
     let(:fakefirstpath)  { make_absolute("/my/fake/modpath") }
     let(:fakesecondpath) { make_absolute("/other/fake/path") }
     let(:fakemodpath)    { "#{fakefirstpath}#{sep}#{fakesecondpath}" }
     let(:fakedirpath)    { make_absolute("/my/fake/path") }
+    let(:options) { {} }
+    let(:environment) do
+      Puppet::Node::Environment.create(:env, [fakefirstpath, fakesecondpath], '')
+    end
+    let(:expected_options) do
+      {
+        :target_dir  => fakefirstpath,
+        :environment_instance => environment,
+      }
+    end
+
+    around(:each) do |example|
+      Puppet.override(:current_environment => environment) do
+        example.run
+      end
+    end
 
     context "without any options" do
-      it "should require a name" do
+      it "requires a name" do
         pattern = /wrong number of arguments/
         expect { subject.install }.to raise_error ArgumentError, pattern
       end
 
-      it "should not require any options" do
+      it "does not require any options" do
         expects_installer_run_with("puppetlabs-apache", expected_options)
 
         subject.install("puppetlabs-apache")
       end
     end
 
-    it "should accept the --force option" do
+    it "accepts the --force option" do
       options[:force] = true
       expected_options.merge!(options)
 
@@ -52,17 +52,17 @@ describe "puppet module install" do
       subject.install("puppetlabs-apache", options)
     end
 
-    it "should accept the --target-dir option" do
+    it "accepts the --target-dir option" do
       options[:target_dir] = make_absolute("/foo/puppet/modules")
       expected_options.merge!(options)
-      expected_options[:modulepath] = "#{options[:target_dir]}#{sep}#{fakemodpath}"
+      expected_options[:environment_instance] = environment.override_with(:modulepath => [options[:target_dir], fakefirstpath, fakesecondpath])
 
       expects_installer_run_with("puppetlabs-apache", expected_options)
 
       subject.install("puppetlabs-apache", options)
     end
 
-    it "should accept the --version option" do
+    it "accepts the --version option" do
       options[:version] = "0.0.1"
       expected_options.merge!(options)
 
@@ -71,96 +71,13 @@ describe "puppet module install" do
       subject.install("puppetlabs-apache", options)
     end
 
-    it "should accept the --ignore-dependencies option" do
+    it "accepts the --ignore-dependencies option" do
       options[:ignore_dependencies] = true
       expected_options.merge!(options)
 
       expects_installer_run_with("puppetlabs-apache", expected_options)
 
       subject.install("puppetlabs-apache", options)
-    end
-
-    describe "when modulepath option is passed" do
-      let(:expected_options) { { :modulepath => fakemodpath, :environment => Puppet[:environment] } }
-      let(:options)          { { :modulepath => fakemodpath } }
-
-      describe "when target-dir option is not passed" do
-        it "should set target-dir to be first path from modulepath" do
-          expected_options[:target_dir] = fakefirstpath
-
-          expects_installer_run_with("puppetlabs-apache", expected_options)
-
-          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
-
-          Puppet.settings[:modulepath].should == fakemodpath
-        end
-
-        it "should expand the target directory derived from the modulepath" do
-          options[:modulepath] = "modules"
-          expanded_path = File.expand_path("modules")
-          expected_options.merge!(options)
-          expected_options[:target_dir] = expanded_path
-          expected_options[:modulepath] = "modules"
-
-          expects_installer_run_with("puppetlabs-apache", expected_options)
-          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
-        end
-      end
-
-      describe "when target-dir option is passed" do
-        it "should set target-dir to be first path of modulepath" do
-          options[:target_dir] = fakedirpath
-          expected_options[:target_dir] = fakedirpath
-          expected_options[:modulepath] = "#{fakedirpath}#{sep}#{fakemodpath}"
-
-          expects_installer_run_with("puppetlabs-apache", expected_options)
-
-          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
-
-          Puppet.settings[:modulepath].should == "#{fakedirpath}#{sep}#{fakemodpath}"
-        end
-      end
-    end
-
-    describe "when modulepath option is not passed" do
-      before do
-        Puppet.settings[:modulepath] = fakemodpath
-      end
-
-      describe "when target-dir option is not passed" do
-        it "should set target-dir to be first path of default mod path" do
-          expected_options[:target_dir] = fakefirstpath
-          expected_options[:modulepath] = fakemodpath
-
-          expects_installer_run_with("puppetlabs-apache", expected_options)
-
-          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
-        end
-      end
-
-      describe "when target-dir option is passed" do
-        it "should prepend target-dir to modulepath" do
-          options[:target_dir] = fakedirpath
-          expected_options[:target_dir] = fakedirpath
-          expected_options[:modulepath] = "#{options[:target_dir]}#{sep}#{fakemodpath}"
-
-          expects_installer_run_with("puppetlabs-apache", expected_options)
-
-          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
-          Puppet.settings[:modulepath].should == expected_options[:modulepath]
-        end
-
-        it "should expand the target directory when target_dir is set" do
-          options[:target_dir] = "modules"
-          expanded_path = File.expand_path("modules")
-          expected_options.merge!(options)
-          expected_options[:target_dir] = expanded_path
-          expected_options[:modulepath] = "#{expanded_path}#{sep}#{fakemodpath}"
-
-          expects_installer_run_with("puppetlabs-apache", expected_options)
-          Puppet::Face[:module, :current].install("puppetlabs-apache", options)
-        end
-      end
     end
   end
 

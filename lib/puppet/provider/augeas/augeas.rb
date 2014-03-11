@@ -169,7 +169,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
         aug.set("/augeas/load/Xfm/incl", resource[:incl])
-        restricted = true
+        restricted_metadata = "/augeas//error"
       elsif glob_avail and opt_ctx
         # Optimize loading if the context is given, requires the glob function
         # from Augeas 0.8.2 or up
@@ -178,14 +178,14 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
         if aug.match(load_path).size < aug.match("/augeas/load/*").size
           aug.rm(load_path)
-          restricted = true
+          restricted_metadata = "/augeas/files#{ctx_path}/error"
         else
           # This will occur if the context is less specific than any glob
           debug("Unable to optimize files loaded by context path, no glob matches")
         end
       end
       aug.load
-      print_load_errors(:warning => restricted)
+      print_load_errors(restricted_metadata)
     end
     @aug
   end
@@ -308,7 +308,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       load_path.flatten!
     end
 
-    if Puppet::FileSystem::File.exist?("#{Puppet[:libdir]}/augeas/lenses")
+    if Puppet::FileSystem.exist?("#{Puppet[:libdir]}/augeas/lenses")
       load_path << "#{Puppet[:libdir]}/augeas/lenses"
     end
 
@@ -323,10 +323,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     @aug.set("/augeas/save", mode)
   end
 
-  def print_load_errors(args={})
+  def print_load_errors(path)
     errors = @aug.match("/augeas//error")
     unless errors.empty?
-      if args[:warning]
+      if path && !@aug.match(path).empty?
         warning("Loading failed for one or more files, see debug for /augeas//error output")
       else
         debug("Loading failed for one or more files, output from /augeas//error:")
@@ -385,7 +385,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           save_result = @aug.save
           unless save_result
             print_put_errors
-            fail("Save failed with return code #{save_result}, see debug")
+            fail("Saving failed, see debug")
           end
 
           saved_files = @aug.match("/augeas/events/saved")
@@ -425,10 +425,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     set_augeas_save_mode(SAVE_OVERWRITE) if versioncmp(get_augeas_version, "0.3.6") >= 0
     @aug.load
     do_execute_changes
-        unless @aug.save
-          print_put_errors
-          fail("Save failed with return code #{success}, see debug")
-        end
+    unless @aug.save
+      print_put_errors
+      fail("Save failed, see debug")
+    end
 
     :executed
   ensure

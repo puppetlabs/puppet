@@ -5,7 +5,8 @@ require 'rgen/metamodel_builder'
 # This means it can load a class from a gem, or from puppet modules.
 #
 class Puppet::Pops::Binder::BindingsLoader
-  @autoloader = Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings", :wrap => false)
+  @confdir = Puppet.settings[:confdir]
+#  @autoloader = Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings", :wrap => false)
 
   # Returns a XXXXX given a fully qualified class name.
   # Lookup of class is never relative to the calling namespace.
@@ -35,10 +36,18 @@ class Puppet::Pops::Binder::BindingsLoader
   def self.loadable?(basedir, name)
     # note, "lib" is added by the autoloader
     #
-    paths_for_name(name).find {|p| Puppet::FileSystem::File.exist?(File.join(basedir, "lib/puppet/bindings", p)+'.rb') }
+    paths_for_name(name).find {|p| Puppet::FileSystem.exist?(File.join(basedir, "lib/puppet/bindings", p)+'.rb') }
   end
 
   private
+
+  def self.loader()
+    unless Puppet.settings[:confdir] == @confdir
+      @confdir = Puppet.settings[:confdir] == @confdir
+      @autoloader = Puppet::Util::Autoload.new("BindingsLoader", "puppet/bindings", :wrap => false)
+    end
+    @autoloader
+  end
 
   def self.provide_from_string(scope, name)
     name_path = name.split('::')
@@ -55,7 +64,7 @@ class Puppet::Pops::Binder::BindingsLoader
 
     unless result
       # Attempt to load it using the auto loader
-      paths_for_name(name).find {|path| @autoloader.load(path) }
+      paths_for_name(name).find {|path| loader.load(path) }
       result = Puppet::Bindings.resolve(scope, name)
     end
     result

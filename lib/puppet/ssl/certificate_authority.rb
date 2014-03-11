@@ -85,10 +85,10 @@ class Puppet::SSL::CertificateAuthority
       when 'true', true
         AutosignAlways.new
       else
-        file = Puppet::FileSystem::File.new(auto)
-        if file.executable?
+        file = Puppet::FileSystem.pathname(auto)
+        if Puppet::FileSystem.executable?(file)
           Puppet::SSL::CertificateAuthority::AutosignCommand.new(auto)
-        elsif file.exist?
+        elsif Puppet::FileSystem.exist?(file)
           AutosignConfig.new(file)
         else
           AutosignNever.new
@@ -174,7 +174,7 @@ class Puppet::SSL::CertificateAuthority
     begin
       Puppet.settings.setting(:capass).open('w') { |f| f.print pass }
     rescue Errno::EACCES => detail
-      raise Puppet::Error, "Could not write CA password: #{detail}"
+      raise Puppet::Error, "Could not write CA password: #{detail}", detail.backtrace
     end
 
     @password = pass
@@ -184,9 +184,11 @@ class Puppet::SSL::CertificateAuthority
 
   # Lists the names of all signed certificates.
   #
+  # @param name [Array<string>] filter to cerificate names
+  #
   # @return [Array<String>]
-  def list
-    list_certificates.collect { |c| c.name }
+  def list(name='*')
+    list_certificates(name).collect { |c| c.name }
   end
 
   # Return all the certificate objects as found by the indirector
@@ -195,13 +197,16 @@ class Puppet::SSL::CertificateAuthority
   # Created to prevent the case of reading all certs from disk, getting
   # just their names and verifying the cert for each name, which then
   # causes the cert to again be read from disk.
+  # @param name [Array<string>] filter to cerificate names
   #
   # @author Jeff Weiss <jeff.weiss@puppetlabs.com>
   # @api Puppet Enterprise Licensing
   #
+  # @param name [Array<string>] filter to cerificate names
+  #
   # @return [Array<Puppet::SSL::Certificate>]
-  def list_certificates
-    Puppet::SSL::Certificate.indirection.search("*")
+  def list_certificates(name='*')
+    Puppet::SSL::Certificate.indirection.search(name)
   end
 
   # Read the next serial from the serial file, and increment the
@@ -227,7 +232,7 @@ class Puppet::SSL::CertificateAuthority
 
   # Does the password file exist?
   def password?
-    Puppet::FileSystem::File.exist? Puppet[:capass]
+    Puppet::FileSystem.exist?(Puppet[:capass])
   end
 
   # Print a given host's certificate as text.
@@ -408,7 +413,7 @@ class Puppet::SSL::CertificateAuthority
   private :create_x509_store
 
   # Utility method which is API for PE license checking.
-  # This is used rather than `verify` because 
+  # This is used rather than `verify` because
   #  1) We have already read the certificate from disk into memory.
   #     To read the certificate from disk again is just wasteful.
   #  2) Because we're checking a large number of certificates against
@@ -492,7 +497,7 @@ class Puppet::SSL::CertificateAuthority
 
     def autosign_store
       auth = Puppet::Network::AuthStore.new
-      @config.each_line do |line|
+      Puppet::FileSystem.each_line(@config) do |line|
         next if line =~ /^\s*#/
         next if line =~ /^\s*$/
         auth.allow(line.chomp)

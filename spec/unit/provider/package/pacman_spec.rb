@@ -12,6 +12,8 @@ describe provider do
   before do
     resolver.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
     provider.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
+    resolver.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
+    provider.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
     @resource = Puppet::Type.type(:package).new(:name => 'package')
     @provider = provider.new(@resource)
   end
@@ -24,11 +26,18 @@ describe provider do
     end
 
     it "should call pacman to install the right package quietly" do
+
+      if @provider.yaourt?
+        args = ['/usr/bin/yaourt', '--noconfirm', '-S', @resource[:name]]
+      else
+        args = ['/usr/bin/pacman', '--noconfirm', '--noprogressbar', '-Sy', @resource[:name]]
+      end
+
       executor.
         expects(:execute).
         at_least_once.
-        with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]], no_extra_options).
-        returns ""
+        with(args, no_extra_options).
+        returns ''
 
       @provider.install
     end
@@ -186,15 +195,22 @@ EOF
     end
   end
 
+
+
   describe "when fetching a package list" do
-    it "should query pacman" do
+    it "should retrieve installed packages" do
       provider.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
-      provider.instances
+      provider.installedpkgs
+    end
+
+    it "should retrieve installed package groups" do
+      provider.expects(:execpipe).with(["/usr/bin/pacman", '-Qg'])
+      provider.installedgroups
     end
 
     it "should return installed packages with their versions" do
       provider.expects(:execpipe).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
-      packages = provider.instances
+      packages = provider.installedpkgs
 
       packages.length.should == 2
 
@@ -211,15 +227,28 @@ EOF
       }
     end
 
+    it "should return installed groups with a dummy version" do
+      provider.expects(:execpipe).yields(StringIO.new("group1 pkg1\ngroup1 pkg2"))
+      groups = provider.installedgroups
+
+      groups.length.should == 1
+
+      groups[0].properties.should == {
+        :provider => :pacman,
+        :ensure   => '1',
+        :name     => 'group1'
+      }
+    end
+
     it "should return nil on error" do
-      provider.expects(:execpipe).raises(Puppet::ExecutionFailure.new("ERROR!"))
+      provider.expects(:execpipe).twice.raises(Puppet::ExecutionFailure.new("ERROR!"))
       provider.instances.should be_nil
     end
 
     it "should warn on invalid input" do
       provider.expects(:execpipe).yields(StringIO.new("blah"))
       provider.expects(:warning).with("Failed to match line blah")
-      provider.instances.should == []
+      provider.installedpkgs == []
     end
   end
 

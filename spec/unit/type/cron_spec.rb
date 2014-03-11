@@ -3,10 +3,14 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do
-  before do
+  before :all do
     @provider_class = described_class.provide(:simple) { mk_resource_methods }
     @provider_class.stubs(:suitable?).returns true
     described_class.stubs(:defaultprovider).returns @provider_class
+  end
+
+  after :all do
+    described_class.unprovide(:simple)
   end
 
   it "should have :name be its namevar" do
@@ -438,6 +442,40 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         expect { described_class.new(:name => 'foo', :monthday => '*/2A' ) }.to raise_error(Puppet::Error, /\*\/2A is not a valid monthday/)
         # As it turns out cron does not complaining about steps that exceed the valid range
         # expect { described_class.new(:name => 'foo', :monthday => '*/32' ) }.to raise_error(Puppet::Error, /is not a valid monthday/)
+      end
+    end
+
+    describe "special" do
+      %w(reboot yearly annually monthly weekly daily midnight hourly).each do |value|
+        it "should support the value '#{value}'" do
+          expect { described_class.new(:name => 'foo', :special => value ) }.to_not raise_error(Puppet::Error, /cannot specify both a special schedule and a value/)
+        end
+      end
+
+      context "when combined with numeric schedule fields" do
+        context "which are 'absent'" do
+          [ %w(reboot yearly annually monthly weekly daily midnight hourly), :absent ].flatten.each { |value|
+            it "should accept the value '#{value}' for special" do
+              expect {
+                described_class.new(:name => 'foo', :minute => :absent, :special => value )
+              }.to_not raise_error(Puppet::Error, /cannot specify both a special schedule and a value/)
+            end
+          }
+        end
+        context "which are not absent" do
+          %w(reboot yearly annually monthly weekly daily midnight hourly).each { |value|
+            it "should not accept the value '#{value}' for special" do
+              expect {
+                described_class.new(:name => 'foo', :minute => "1", :special => value )
+              }.to raise_error(Puppet::Error, /cannot specify both a special schedule and a value/)
+            end
+          }
+          it "should accept the 'absent' value for special" do
+            expect {
+              described_class.new(:name => 'foo', :minute => "1", :special => :absent )
+            }.to_not raise_error(Puppet::Error, /cannot specify both a special schedule and a value/)
+          end
+        end
       end
     end
 

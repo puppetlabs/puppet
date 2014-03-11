@@ -1,8 +1,8 @@
 require 'puppet/node'
 require 'puppet/resource/catalog'
-require 'puppet/indirector/code'
+require 'puppet/indirector/catalog/compiler'
 
-class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
+class Puppet::Resource::Catalog::StaticCompiler < Puppet::Resource::Catalog::Compiler
 
   desc %q{Compiles catalogs on demand using the optional static compiler. This
     functions similarly to the normal compiler, but it replaces puppet:/// file
@@ -35,12 +35,8 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
       that compiled a given catalog may not have stored the required file contents
       in their filebuckets.}
 
-  def compiler
-    @compiler ||= indirection.terminus(:compiler)
-  end
-
   def find(request)
-    return nil unless catalog = compiler.find(request)
+    return nil unless catalog = super
 
     raise "Did not get catalog back" unless catalog.is_a?(model)
 

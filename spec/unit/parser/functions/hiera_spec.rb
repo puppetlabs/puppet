@@ -1,7 +1,10 @@
 require 'spec_helper'
+require 'puppet_spec/scope'
 
 describe 'Puppet::Parser::Functions#hiera' do
-  let :scope do Puppet::Parser::Scope.new_for_test_harness('foo') end
+  include PuppetSpec::Scope
+
+  let :scope do create_test_scope_for_node('foo') end
 
   it 'should require a key argument' do
     expect { scope.function_hiera([]) }.to raise_error(ArgumentError)
@@ -13,7 +16,7 @@ describe 'Puppet::Parser::Functions#hiera' do
   end
 
   it 'should use the priority resolution_type' do
-    Hiera.any_instance.expects(:lookup).with() { |*args| args[4].should be :priority }.returns('foo_result')
+    Hiera.any_instance.expects(:lookup).with() { |*args| args[4].should be(:priority) }.returns('foo_result')
     scope.function_hiera(['key']).should == 'foo_result'
   end
 end

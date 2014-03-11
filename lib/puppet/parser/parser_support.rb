@@ -82,12 +82,12 @@ class Puppet::Parser::Parser
   def_delegators :@lexer, :file, :string=
 
   def file=(file)
-    unless Puppet::FileSystem::File.exist?(file)
+    unless Puppet::FileSystem.exist?(file)
       unless file =~ /\.pp$/
         file = file + ".pp"
       end
     end
-    raise Puppet::AlreadyImportedError, "Import loop detected" if known_resource_types.watching_file?(file)
+    raise Puppet::AlreadyImportedError, "Import loop detected for #{file}" if known_resource_types.watching_file?(file)
 
     watch_file(file)
     @lexer.file = file
@@ -98,6 +98,16 @@ class Puppet::Parser::Parser
   def_delegators :known_resource_types, :watch_file, :version
 
   def import(file)
+    deprecation_location_text =
+    if @lexer.file && @lexer.line
+      " at #{@lexer.file}:#{@lexer.line}"
+    elsif @lexer.file
+      " in file #{@lexer.file}"
+    elsif @lexer.line
+      " at #{@lexer.line}"
+    end
+
+    Puppet.deprecation_warning("The use of 'import' is deprecated#{deprecation_location_text}. See http://links.puppetlabs.com/puppet-import-deprecation")
     if @lexer.file
       # use a path relative to the file doing the importing
       dir = File.dirname(@lexer.file)
@@ -111,8 +121,7 @@ class Puppet::Parser::Parser
   end
 
   def initialize(env)
-    # The environment is needed to know how to find the resource type collection.
-    @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
+    @environment = env
     initvars
   end
 

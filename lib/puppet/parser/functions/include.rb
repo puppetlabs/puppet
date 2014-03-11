@@ -1,5 +1,6 @@
 # Include the specified classes
-Puppet::Parser::Functions::newfunction(:include, :arity => -2, :doc => "Declares one or more classes, causing the resources in them to be
+Puppet::Parser::Functions::newfunction(:include, :arity => -2, :doc =>
+"Declares one or more classes, causing the resources in them to be
 evaluated and added to the catalog. Accepts a class name, an array of class
 names, or a comma-separated list of class names.
 
@@ -15,7 +16,7 @@ and resource-like declarations with the same class.
 
 The `include` function does not cause classes to be contained in the class
 where they are declared. For that, see the `contain` function. It also
-does not create a dependency relationship between the declared class and th
+does not create a dependency relationship between the declared class and the
 surrounding class; for that, see the `require` function.") do |vals|
     if vals.is_a?(Array)
       # Protect against array inside array

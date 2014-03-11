@@ -23,15 +23,19 @@ class Puppet::Util::Lockfile
 
   # @return [boolean] true if lock is successfully acquired, false otherwise.
   def lock(lock_data = nil)
-    return false if locked?
-
-    File.open(@file_path, 'w') { |fd| fd.print(lock_data) }
-    true
+    begin
+      Puppet::FileSystem.exclusive_create(@file_path, nil) do |fd|
+        fd.print(lock_data)
+      end
+      true
+    rescue Errno::EEXIST
+      false
+    end
   end
 
   def unlock
     if locked?
-      Puppet::FileSystem::File.unlink(@file_path)
+      Puppet::FileSystem.unlink(@file_path)
       true
     else
       false
@@ -56,7 +60,7 @@ class Puppet::Util::Lockfile
   #  being overridden by child classes.
   # @return [boolean] true if the file is locked, false if it is not.
   def file_locked?()
-    Puppet::FileSystem::File.exist? @file_path
+    Puppet::FileSystem.exist? @file_path
   end
   private :file_locked?
 end

@@ -23,7 +23,7 @@ module Puppet::Configurer::FactHandler
     rescue Exception => detail
       message = "Could not retrieve local facts: #{detail}"
       Puppet.log_exception(detail, message)
-      raise Puppet::Error, message
+      raise Puppet::Error, message, detail.backtrace
     end
   end
 

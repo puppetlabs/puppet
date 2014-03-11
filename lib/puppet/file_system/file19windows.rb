@@ -3,7 +3,7 @@ require 'puppet/util/windows'
 
 class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
 
-  def self.exist?(path)
+  def exist?(path)
     if ! Puppet.features.manages_symlinks?
       return ::File.exist?(path)
     end
@@ -21,14 +21,10 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
     end
   end
 
-  def exist?
-    self.class.exist?(@path)
-  end
-
-  def symlink(dest, options = {})
+  def symlink(path, dest, options = {})
     raise_if_symlinks_unsupported
 
-    dest_exists = self.class.exist?(dest) # returns false on dangling symlink
+    dest_exists = exist?(dest) # returns false on dangling symlink
     dest_stat = Puppet::Util::Windows::File.stat(dest) if dest_exists
     dest_symlink = Puppet::Util::Windows::File.symlink?(dest)
 
@@ -41,23 +37,23 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
 
     if options[:noop] != true
       ::File.delete(dest) if dest_exists # can only be file
-      Puppet::Util::Windows::File.symlink(@path, dest)
+      Puppet::Util::Windows::File.symlink(path, dest)
     end
 
     0
   end
 
-  def symlink?
+  def symlink?(path)
     return false if ! Puppet.features.manages_symlinks?
-    Puppet::Util::Windows::File.symlink?(@path)
+    Puppet::Util::Windows::File.symlink?(path)
   end
 
-  def readlink
+  def readlink(path)
     raise_if_symlinks_unsupported
-    Puppet::Util::Windows::File.readlink(@path)
+    Puppet::Util::Windows::File.readlink(path)
   end
 
-  def self.unlink(*file_names)
+  def unlink(*file_names)
     if ! Puppet.features.manages_symlinks?
       return ::File.unlink(*file_names)
     end
@@ -81,25 +77,23 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
     file_names.length
   end
 
-  def unlink
-    self.class.unlink(@path)
+  def stat(path)
+    Puppet::Util::Windows::File.stat(path)
   end
 
-  def stat
+  def lstat(path)
     if ! Puppet.features.manages_symlinks?
-      return super
+      return Puppet::Util::Windows::File.stat(path)
     end
-    Puppet::Util::Windows::File.stat(@path)
+    Puppet::Util::Windows::File.lstat(path)
   end
 
-  def lstat
-    if ! Puppet.features.manages_symlinks?
-      return Puppet::Util::Windows::File.stat(@path)
-    end
-    Puppet::Util::Windows::File.lstat(@path)
+  def chmod(mode, path)
+    Puppet::Util::Windows::Security.set_mode(mode, path.to_s)
   end
 
   private
+
   def raise_if_symlinks_unsupported
     if ! Puppet.features.manages_symlinks?
       msg = "This version of Windows does not support symlinks.  Windows Vista / 2008 or higher is required."
@@ -110,4 +104,5 @@ class Puppet::FileSystem::File19Windows < Puppet::FileSystem::File19
       Puppet.warning "The current user does not have the necessary permission to manage symlinks."
     end
   end
+
 end

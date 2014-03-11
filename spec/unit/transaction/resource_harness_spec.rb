@@ -361,7 +361,7 @@ describe Puppet::Transaction::ResourceHarness do
       resource.expects(:err).never # make sure no exceptions get swallowed
       @harness.expects(:allow_changes?).with(resource).returns false
       status = @harness.evaluate(resource)
-      Puppet::FileSystem::File.exist?(test_file).should == false
+      Puppet::FileSystem.exist?(test_file).should == false
     end
   end
 

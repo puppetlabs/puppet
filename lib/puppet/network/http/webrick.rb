@@ -22,7 +22,7 @@ class Puppet::Network::HTTP::WEBrick
     @server = WEBrick::HTTPServer.new(arguments)
     @server.listeners.each { |l| l.start_immediately = false }
 
-    @server.mount('/', Puppet::Network::HTTP::WEBrickREST, :this_value_is_apparently_necessary_but_unused)
+    @server.mount('/', Puppet::Network::HTTP::WEBrickREST)
 
     raise "WEBrick server is already listening" if @listening
     @listening = true

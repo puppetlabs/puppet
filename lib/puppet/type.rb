@@ -1182,6 +1182,7 @@ class Type
     # Now create our resource.
     resource = Puppet::Resource.new(self.name, title)
     resource.catalog = hash.delete(:catalog)
+    resource.resource_type = self
 
     hash.each do |param, value|
       resource[param] = value
@@ -2427,6 +2428,3 @@ end
 end
 
 require 'puppet/provider'
-
-# Always load these types.
-Puppet::Type.type(:component)

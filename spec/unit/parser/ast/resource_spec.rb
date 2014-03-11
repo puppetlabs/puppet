@@ -97,7 +97,7 @@ describe Puppet::Parser::AST::Resource do
     describe "when generating qualified resources" do
       before do
         @scope = Puppet::Parser::Scope.new Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
-        @parser = Puppet::Parser::Parser.new(Puppet::Node::Environment.new)
+        @parser = Puppet::Parser::Parser.new(@scope.environment)
         ["one", "one::two", "three"].each do |name|
           @parser.environment.known_resource_types.add(Puppet::Resource::Type.new(:definition, name, {}))
         end

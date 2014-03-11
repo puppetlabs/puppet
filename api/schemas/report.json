@@ -266,7 +266,7 @@
                                     "changed",
                                     "total",
                                     "skipped",
-                                    "failed_to_restart", 
+                                    "failed_to_restart",
                                     "restarted",
                                     "scheduled"
                                 ]
@@ -279,7 +279,7 @@
                                     "Changed",
                                     "Total",
                                     "Skipped",
-                                    "Failed to restart", 
+                                    "Failed to restart",
                                     "Restarted",
                                     "Scheduled"
                                 ]
@@ -496,7 +496,7 @@
             "required": [
                 "resource_type",
                 "title",
-                "change_count", 
+                "change_count",
                 "out_of_sync_count",
                 "tags",
                 "events",
@@ -517,7 +517,10 @@
 
                 "property": {
                     "description": "The property for which the event occurred.",
-                    "type":        "string"
+                    "oneOf": [
+                        { "type": "string" },
+                        { "type": "null" }
+                    ]
                 },
 
                 "previous_value": {
@@ -525,7 +528,8 @@
                     "oneOf": [
                         { "type": "string" },
                         { "type": "array" },
-                        { "type": "object" }
+                        { "type": "object" },
+                        { "type": "null" }
                     ]
                 },
 
@@ -534,7 +538,8 @@
                     "oneOf": [
                         { "type": "string" },
                         { "type": "array" },
-                        { "type": "object" }
+                        { "type": "object" },
+                        { "type": "null" }
                     ]
                 },
 
@@ -543,7 +548,8 @@
                     "oneOf": [
                         { "type": "string" },
                         { "type": "array" },
-                        { "type": "object" }
+                        { "type": "object" },
+                        { "type": "null" }
                     ]
                 },
 

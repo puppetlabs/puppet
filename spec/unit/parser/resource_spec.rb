@@ -1,15 +1,11 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
-
-# LAK: FIXME This is just new tests for resources; I have
-# not moved all tests over yet.
 
 describe Puppet::Parser::Resource do
   before do
-    @node = Puppet::Node.new("yaynode")
-    @known_resource_types = Puppet::Resource::TypeCollection.new("env")
+    environment = Puppet::Node::Environment.create(:testing, [], '')
+    @node = Puppet::Node.new("yaynode", :environment => environment)
+    @known_resource_types = environment.known_resource_types
     @compiler = Puppet::Parser::Compiler.new(@node)
-    @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
     @source = newclass ""
     @scope = @compiler.topscope
   end
@@ -131,8 +127,6 @@ describe Puppet::Parser::Resource do
 
   describe "when evaluating" do
     before do
-      @node = Puppet::Node.new "test-node"
-      @compiler = Puppet::Parser::Compiler.new @node
       @catalog = Puppet::Resource::Catalog.new
       source = stub('source')
       source.stubs(:module_name)

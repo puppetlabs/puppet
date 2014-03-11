@@ -30,11 +30,10 @@ module InjectorSpecModule
     Puppet::Pops::Types::TypeFactory
   end
 
-  # Returns a binder with the effective categories highest/test, node/kermit, environment/dev (and implicit 'common')
+  # Returns a binder
   #
-  def binder_with_categories
+  def configured_binder
     b = Puppet::Pops::Binder::Binder.new()
-    b.define_categories(factory.categories(['highest', 'test', 'node', 'kermit', 'environment','dev']))
     b
   end
 
@@ -104,38 +103,22 @@ describe 'Injector' do
   let(:scope)     { null_scope()}
   let(:duck_type) { type_factory.ruby(InjectorSpecModule::TestDuck) }
 
-  let(:binder)    { Puppet::Pops::Binder::Binder.new()}
-
-  let(:cbinder)   do
-    b = Puppet::Pops::Binder::Binder.new()
-    b.define_categories(factory.categories([]))
-    b
-  end
+  let(:binder)    { Puppet::Pops::Binder::Binder }
 
   let(:lbinder)   do
-    cbinder.define_layers(layered_bindings)
+    binder.new(layered_bindings)
   end
 
 
   let(:layered_bindings) { factory.layered_bindings(test_layer_with_bindings(bindings.model)) }
-  #let(:xinjector)  { Puppet::Pops::Binder::Injector.new(lbinder) }
 
   context 'When created' do
-    it 'should raise an error when given binder is not configured at all' do
-      expect { Puppet::Pops::Binder::Injector.new(binder()) }.to raise_error(/Given Binder is not configured/)
-    end
-
-    it 'should raise an error if binder has categories, but is not completely configured' do
-      expect { Puppet::Pops::Binder::Injector.new(cbinder) }.to raise_error(/Given Binder is not configured/)
-    end
-
     it 'should not raise an error if binder is configured' do
-      lbinder.configured?().should == true # of something is very wrong
       expect { injector(lbinder) }.to_not raise_error
     end
 
     it 'should create an empty injector given an empty binder' do
-      expect { cbinder.define_layers(layered_bindings) }.to_not raise_exception
+      expect { binder.new(layered_bindings) }.to_not raise_exception
     end
 
     it "should be possible to reference the TypeCalculator" do
@@ -144,6 +127,50 @@ describe 'Injector' do
 
     it "should be possible to reference the KeyFactory" do
       injector(lbinder).key_factory.is_a?(Puppet::Pops::Binder::KeyFactory).should == true
+    end
+
+    it "can be created using a model" do
+      bindings.bind.name('a_string').to('42')
+      injector = Puppet::Pops::Binder::Injector.create_from_model(layered_bindings)
+      injector.lookup(scope, 'a_string').should == '42'
+    end
+
+    it 'can be created using a block' do
+      injector = Puppet::Pops::Binder::Injector.create('test') do
+        bind.name('a_string').to('42')
+      end
+      injector.lookup(scope, 'a_string').should == '42'
+    end
+
+    it 'can be created using a hash' do
+      injector = Puppet::Pops::Binder::Injector.create_from_hash('test', 'a_string' => '42')
+      injector.lookup(scope, 'a_string').should == '42'
+    end
+
+    it 'can be created using an overriding injector with block' do
+      injector = Puppet::Pops::Binder::Injector.create('test') do
+        bind.name('a_string').to('42')
+      end
+      injector2 = injector.override('override') do
+        bind.name('a_string').to('43')
+      end
+      injector.lookup(scope, 'a_string').should == '42'
+      injector2.lookup(scope, 'a_string').should == '43'
+    end
+
+    it 'can be created using an overriding injector with hash' do
+      injector = Puppet::Pops::Binder::Injector.create_from_hash('test', 'a_string' => '42')
+      injector2 = injector.override_with_hash('override', 'a_string' => '43')
+      injector.lookup(scope, 'a_string').should == '42'
+      injector2.lookup(scope, 'a_string').should == '43'
+    end
+
+    it "can be created using an overriding injector with a model" do
+      injector = Puppet::Pops::Binder::Injector.create_from_hash('test', 'a_string' => '42')
+      bindings.bind.name('a_string').to('43')
+      injector2 = injector.override_with_model(layered_bindings)
+      injector.lookup(scope, 'a_string').should == '42'
+      injector2.lookup(scope, 'a_string').should == '43'
     end
   end
 
@@ -214,63 +241,36 @@ describe 'Injector' do
       end
     end
 
-    context 'and conditionals are in use' do
-      let(:binder) { binder_with_categories()}
-      let(:lbinder) { binder.define_layers(layered_bindings) }
-
-      it "should be possible to shadow a bound value in a higher precedented category" do
-        bindings.bind().name('a_string').to('42')
-        bindings.when_in_category('environment', 'dev').bind().name('a_string').to('43')
-        bindings.when_in_category('node', 'kermit').bind().name('a_string').to('being green')
-        injector(lbinder).lookup(scope,'a_string').should == 'being green'
-      end
-
-      it "shadowing should not happen when not in a category" do
-        bindings.bind().name('a_string').to('42')
-        bindings.when_in_category('environment', 'dev').bind().name('a_string').to('43')
-        bindings.when_in_category('node', 'piggy').bind().name('a_string').to('being green')
-        injector(lbinder).lookup(scope,'a_string').should == '43'
-      end
-
-      it "multiple predicates makes binding more specific" do
-        bindings.bind().name('a_string').to('42')
-        bindings.when_in_category('environment', 'dev').bind().name('a_string').to('43')
-        bindings.when_in_category('node', 'kermit').bind().name('a_string').to('being green')
-        bindings.when_in_categories({'node'=>'kermit', 'environment'=>'dev'}).bind().name('a_string').to('being dev green')
-        injector(lbinder).lookup(scope,'a_string').should == 'being dev green'
-      end
-
-      it "multiple predicates makes binding more specific, but not more specific than higher precedence" do
-        bindings.bind().name('a_string').to('42')
-        bindings.when_in_category('environment', 'dev').bind().name('a_string').to('43')
-        bindings.when_in_category('node', 'kermit').bind().name('a_string').to('being green')
-        bindings.when_in_categories({'node'=>'kermit', 'environment'=>'dev'}).bind().name('a_string').to('being dev green')
-        bindings.when_in_category('highest', 'test').bind().name('a_string').to('bazinga')
-        injector(lbinder).lookup(scope,'a_string').should == 'bazinga'
-      end
-    end
-
     context "and multiple layers are in use" do
-      let(:binder) { binder_with_categories()}
-
       it "a higher layer shadows anything in a lower layer" do
         bindings1 = factory.named_bindings('test1')
-        bindings1.when_in_category("highest", "test").bind().name('a_string').to('bad stuff')
+        bindings1.bind().name('a_string').to('bad stuff')
         lower_layer =  factory.named_layer('lower-layer', bindings1.model)
 
         bindings2 = factory.named_bindings('test2')
         bindings2.bind().name('a_string').to('good stuff')
         higher_layer =  factory.named_layer('higher-layer', bindings2.model)
 
-        binder.define_layers(factory.layered_bindings(higher_layer, lower_layer))
-        injector = injector(binder)
+        injector = injector(binder.new(factory.layered_bindings(higher_layer, lower_layer)))
         injector.lookup(scope,'a_string').should == 'good stuff'
+      end
+
+      it "a higher layer may not shadow a lower layer binding that is final" do
+        bindings1 = factory.named_bindings('test1')
+        bindings1.bind().final.name('a_string').to('required stuff')
+        lower_layer =  factory.named_layer('lower-layer', bindings1.model)
+
+        bindings2 = factory.named_bindings('test2')
+        bindings2.bind().name('a_string').to('contraband')
+        higher_layer =  factory.named_layer('higher-layer', bindings2.model)
+        expect {
+         injector = injector(binder.new(factory.layered_bindings(higher_layer, lower_layer)))
+        }.to raise_error(/Override of final binding not allowed/)
       end
     end
 
     context "and dealing with Data types" do
-      let(:binder)  { binder_with_categories()}
-      let(:lbinder) { binder.define_layers(layered_bindings) }
+      let(:lbinder) { binder.new(layered_bindings) }
 
       it "should treat all data as same type w.r.t. key" do
         bindings.bind().name('a_string').to('42')
@@ -599,10 +599,7 @@ describe 'Injector' do
         mb = bindings.multibind(ids[2]).type(hash_of_integer).name('broken_family2')
         mb.producer_options(:uniq => :true)
 
-
-        binder.define_categories(factory.categories([]))
-        binder.define_layers(factory.layered_bindings(test_layer_with_bindings(bindings.model)))
-        injector = injector(binder)
+        injector = injector(binder.new(factory.layered_bindings(test_layer_with_bindings(bindings.model))))
         expect { injector.lookup(scope, 'broken_family0')}.to raise_error(/:conflict_resolution => :append/)
         expect { injector.lookup(scope, 'broken_family1')}.to raise_error(/:flatten/)
         expect { injector.lookup(scope, 'broken_family2')}.to raise_error(/:uniq/)
@@ -614,34 +611,32 @@ describe 'Injector' do
 
         bindings.multibind(multibind_id).type(hash_of_duck).name('donalds_nephews')
 
-        mb1 = bindings.when_in_category("highest", "test").bind.in_multibind(multibind_id)
+        mb1 = bindings.bind.in_multibind(multibind_id)
+        pending 'priority based on layers not added, and priority on category removed'
         mb1.type(duck_type).name('nephew').to(InjectorSpecModule::NamedDuck, 'Huey')
 
         mb2 = bindings.bind.in_multibind(multibind_id)
         mb2.type(duck_type).name('nephew').to(InjectorSpecModule::NamedDuck, 'Dewey')
 
-        binder.define_categories(factory.categories(['highest', 'test']))
         binder.define_layers(layered_bindings)
 
         injector(binder).lookup(scope, hash_of_duck, "donalds_nephews")['nephew'].name.should == 'Huey'
       end
 
       it "a higher priority contribution wins when resolution is :merge" do
+        # THIS TEST MAY DEPEND ON HASH ORDER SINCE PRIORITY BASED ON CATEGORY IS REMOVED
         hash_of_data = type_factory.hash_of_data()
         multibind_id = "hashed_ducks"
 
         bindings.multibind(multibind_id).type(hash_of_data).name('donalds_nephews').producer_options(:conflict_resolution => :merge)
 
-        mb1 = bindings.when_in_category("highest", "test").bind.in_multibind(multibind_id)
+        mb1 = bindings.bind.in_multibind(multibind_id)
         mb1.name('nephew').to({'name' => 'Huey', 'is' => 'winner'})
 
         mb2 = bindings.bind.in_multibind(multibind_id)
         mb2.name('nephew').to({'name' => 'Dewey', 'is' => 'looser', 'has' => 'cap'})
 
-        binder.define_categories(factory.categories(['highest', 'test']))
-        binder.define_layers(layered_bindings)
-
-        the_ducks = injector(binder).lookup(scope, "donalds_nephews");
+        the_ducks = injector(binder.new(layered_bindings)).lookup(scope, "donalds_nephews");
         the_ducks['nephew']['name'].should == 'Huey'
         the_ducks['nephew']['is'].should == 'winner'
         the_ducks['nephew']['has'].should == 'cap'
@@ -750,7 +745,7 @@ describe 'Injector' do
 
       it "should be possible to post process lookup with a puppet lambda" do
         model = parser.parse_string('fake() |$value| {$value + 1 }').current
-        bindings.bind.name('an_int').to(42).producer_options( :transformer => model.lambda)
+        bindings.bind.name('an_int').to(42).producer_options( :transformer => model.body.lambda)
         injector(lbinder).lookup(scope, 'an_int').should == 43
       end
 
@@ -761,9 +756,9 @@ describe 'Injector' do
       end
     end
   end
+
   context "When there are problems with configuration" do
-    let(:binder) { binder_with_categories()}
-    let(:lbinder) { binder.define_layers(layered_bindings) }
+    let(:lbinder) { binder.new(layered_bindings) }
 
     it "reports error for surfacing abstract bindings" do
       bindings.bind.abstract.name('an_int')
@@ -772,8 +767,8 @@ describe 'Injector' do
 
     it "does not report error for abstract binding that is ovrridden" do
       bindings.bind.abstract.name('an_int')
-      bindings.when_in_category('highest', 'test').bind.override.name('an_int').to(142)
-      expect{injector(lbinder).lookup(scope, 'an_int') }.to_not raise_error
+      bindings.bind.override.name('an_int').to(142)
+      expect{ injector(lbinder).lookup(scope, 'an_int') }.to_not raise_error
     end
 
     it "reports error for overriding binding that does not override" do

@@ -7,7 +7,7 @@ class Puppet::Indirector::FileMetadata::File < Puppet::Indirector::DirectFileSer
 
   def find(request)
     return unless data = super
-    data.collect
+    data.collect(request.options[:source_permissions])
 
     data
   end

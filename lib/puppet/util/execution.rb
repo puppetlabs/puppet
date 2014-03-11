@@ -66,8 +66,15 @@ module Puppet::Util::Execution
       Puppet.debug "Executing '#{command_str}'"
     end
 
-    output = open("| #{command_str} 2>&1") do |pipe|
-      yield pipe
+    # force the run of the command with
+    # the user/system locale to "C" (via environment variables LANG and LC_*)
+    # it enables to have non localized output for some commands and therefore
+    # a predictable output
+    english_env = ENV.to_hash.merge( {'LANG' => 'C', 'LC_ALL' => 'C'} )
+    output = Puppet::Util.withenv(english_env) do
+      open("| #{command_str} 2>&1") do |pipe|
+        yield pipe
+      end
     end
 
     if failonfail
@@ -87,7 +94,7 @@ module Puppet::Util::Execution
     output = execute(command)
     return output
   rescue Puppet::ExecutionFailure
-    raise exception, output
+    raise exception, output, exception.backtrace
   end
 
   # Default empty options for {execute}
@@ -185,7 +192,7 @@ module Puppet::Util::Execution
     end
 
     if options[:failonfail] and exit_status != 0
-      raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output}"
+      raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output.strip}"
     end
 
     Puppet::Util::Execution::ProcessOutput.new(output || '', exit_status)
@@ -286,7 +293,7 @@ module Puppet::Util::Execution
     #  about a race condition because all of the places that we call this from are preceded by a call to "waitpid2",
     #  meaning that the processes responsible for writing the file have completed before we get here.)
     2.times do |try|
-      if Puppet::FileSystem::File.exist?(stdout.path)
+      if Puppet::FileSystem.exist?(stdout.path)
         stdout.open
         begin
           return stdout.read

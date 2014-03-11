@@ -16,13 +16,13 @@ describe Puppet::Network::Rights do
         right.allow("*")
         right.restrict_method(allowed_method)
         right.restrict_authenticated(:any)
-        rights.is_request_forbidden_and_why?(:indirection_name, :head, "key", {}).should == nil
+        rights.is_request_forbidden_and_why?(:head, "/indirection_name/key", {}).should == nil
       end
     end
 
     it "should disallow the request if neither :find nor :save is allowed" do
       rights = Puppet::Network::Rights.new
-      why_forbidden = rights.is_request_forbidden_and_why?(:indirection_name, :head, "key", {})
+      why_forbidden = rights.is_request_forbidden_and_why?(:head, "/indirection_name/key", {})
       why_forbidden.should be_instance_of(Puppet::Network::AuthorizationError)
       why_forbidden.to_s.should == "Forbidden request:  access to /indirection_name/key [find]"
     end

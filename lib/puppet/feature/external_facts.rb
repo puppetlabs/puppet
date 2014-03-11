@@ -1,5 +1,5 @@
-require 'facter/util/config'
+require 'facter'
 
 Puppet.features.add(:external_facts) {
-   Facter::Util::Config.respond_to?(:external_facts_dirs=)
+  Facter.respond_to?(:search_external)
 }

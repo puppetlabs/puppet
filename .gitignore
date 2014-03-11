@@ -20,3 +20,5 @@ Gemfile.local
 puppet-acceptance/
 /.project
 .idea/
+.ruby-version
+.ruby-gemset

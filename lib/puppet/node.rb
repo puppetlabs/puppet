@@ -9,9 +9,6 @@ class Puppet::Node
   # the node sources.
   extend Puppet::Indirector
 
-  # Adds the environment getter and setter, with some instance/string conversion
-  include Puppet::Node::Environment::Helper
-
   # Use the node source as the indirection terminus.
   indirects :node, :terminus_setting => :node_terminus, :doc => "Where to find node information.
     A node is composed of its name, its facts, and its environment."
@@ -21,14 +18,19 @@ class Puppet::Node
 
   ::PSON.register_document_type('Node',self)
 
-  def self.from_pson(pson)
-    raise ArgumentError, "No name provided in serialized data" unless name = pson['name']
+  def self.from_data_hash(data)
+    raise ArgumentError, "No name provided in serialized data" unless name = data['name']
 
     node = new(name)
-    node.classes = pson['classes']
-    node.parameters = pson['parameters']
-    node.environment = pson['environment']
+    node.classes = data['classes']
+    node.parameters = data['parameters']
+    node.environment = data['environment']
     node
+  end
+
+  def self.from_pson(pson)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(pson)
   end
 
   def to_data_hash
@@ -53,15 +55,22 @@ class Puppet::Node
   end
 
   def environment
-    return super if @environment
-
-    if env = parameters["environment"]
+    if @environment
+      @environment
+    elsif env = parameters["environment"]
       self.environment = env
-      return super
+      @environment
+    else
+      Puppet.lookup(:environments).get(Puppet[:environment])
     end
+  end
 
-    # Else, return the default
-    Puppet::Node::Environment.new
+  def environment=(env)
+    if env.is_a?(String) or env.is_a?(Symbol)
+      @environment = Puppet.lookup(:environments).get(env)
+    else
+      @environment = env
+    end
   end
 
   def initialize(name, options = {})

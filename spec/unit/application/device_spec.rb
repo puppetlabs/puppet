@@ -127,7 +127,6 @@ describe Puppet::Application::Device do
     before :each do
       @device.options.stubs(:[])
       Puppet.stubs(:info)
-      Puppet::FileSystem::File.stubs(:exist?).returns(true)
       Puppet[:libdir] = "/dev/null/lib"
       Puppet::SSL::Host.stubs(:ca_location=)
       Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
@@ -301,7 +300,7 @@ describe Puppet::Application::Device do
           "device2" => OpenStruct.new(:name => "device2", :url => "url", :provider => "cisco"),
         }
         Puppet::Util::NetworkDevice::Config.stubs(:devices).returns(@device_hash)
-        Puppet.settings.stubs(:set_value)
+        Puppet.stubs(:[]=)
         Puppet.settings.stubs(:use)
         @device.stubs(:setup_host)
         Puppet::Util::NetworkDevice.stubs(:init)
@@ -310,18 +309,18 @@ describe Puppet::Application::Device do
       end
 
       it "should set vardir to the device vardir" do
-        Puppet.settings.expects(:set_value).with(:vardir, make_absolute("/dummy/devices/device1"), :cli)
+        Puppet.expects(:[]=).with(:vardir, make_absolute("/dummy/devices/device1"))
         @device.main
       end
 
       it "should set confdir to the device confdir" do
-        Puppet.settings.expects(:set_value).with(:confdir, make_absolute("/dummy/devices/device1"), :cli)
+        Puppet.expects(:[]=).with(:confdir, make_absolute("/dummy/devices/device1"))
         @device.main
       end
 
       it "should set certname to the device certname" do
-        Puppet.settings.expects(:set_value).with(:certname, "device1", :cli)
-        Puppet.settings.expects(:set_value).with(:certname, "device2", :cli)
+        Puppet.expects(:[]=).with(:certname, "device1")
+        Puppet.expects(:[]=).with(:certname, "device2")
         @device.main
       end
 
@@ -350,31 +349,29 @@ describe Puppet::Application::Device do
           all_devices = Set.new(@device_hash.keys.map do |device_name| make_absolute("/dummy/devices/#{device_name}") end)
           found_devices = Set.new()
 
-          # a block to use in a few places later to validate the arguments passed to "set_value"
-          p = Proc.new do |my_setting, my_value, my_type|
-            success =
-                  (my_setting == setting) &&
-                    (my_type == :cli) &&
-                    (all_devices.include?(my_value))
-                found_devices.add(my_value) if success
-                success
+          # a block to use in a few places later to validate the updated settings
+          p = Proc.new do |my_setting, my_value|
+            if my_setting == setting && all_devices.include?(my_value)
+              found_devices.add(my_value)
+              true
+            else
+              false
+            end
           end
 
           seq = sequence("clean up dirs")
 
           all_devices.size.times do
             ## one occurrence of set / run / set("/dummy") for each device
-            Puppet.settings.expects(:set_value).with(&p).in_sequence(seq)
+            Puppet.expects(:[]=).with(&p).in_sequence(seq)
             @configurer.expects(:run).in_sequence(seq)
-            Puppet.settings.expects(:set_value).with(setting, make_absolute("/dummy"), :cli).in_sequence(seq)
+            Puppet.expects(:[]=).with(setting, make_absolute("/dummy")).in_sequence(seq)
           end
 
 
           @device.main
 
-          # make sure that we were called with each of the defined devices
-          all_devices.should == found_devices
-
+          expect(found_devices).to eq(all_devices)
         end
       end
 
@@ -382,32 +379,30 @@ describe Puppet::Application::Device do
         all_devices = Set.new(@device_hash.keys)
         found_devices = Set.new()
 
-        # a block to use in a few places later to validate the arguments passed to "set_value"
-        p = Proc.new do |my_setting, my_value, my_type|
-          success =
-              (my_setting == :certname) &&
-                  (my_type == :cli) &&
-                  (all_devices.include?(my_value))
-          found_devices.add(my_value) if success
-          success
-          #true
+        # a block to use in a few places later to validate the updated settings
+        p = Proc.new do |my_setting, my_value|
+          if my_setting == :certname && all_devices.include?(my_value)
+            found_devices.add(my_value)
+            true
+          else
+            false
+          end
         end
 
         seq = sequence("clean up certname")
 
         all_devices.size.times do
           ## one occurrence of set / run / set("certname") for each device
-          Puppet.settings.expects(:set_value).with(&p).in_sequence(seq)
+          Puppet.expects(:[]=).with(&p).in_sequence(seq)
           @configurer.expects(:run).in_sequence(seq)
-          Puppet.settings.expects(:set_value).with(:certname, "certname", :cli).in_sequence(seq)
+          Puppet.expects(:[]=).with(:certname, "certname").in_sequence(seq)
         end
 
 
         @device.main
 
         # make sure that we were called with each of the defined devices
-        all_devices.should == found_devices
-
+        expect(found_devices).to eq(all_devices)
       end
 
       it "should expire all cached attributes" do

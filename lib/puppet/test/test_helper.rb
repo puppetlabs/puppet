@@ -1,5 +1,8 @@
 require 'puppet/indirector/data_binding/hiera'
 
+require 'tmpdir'
+require 'fileutils'
+
 module Puppet::Test
   # This class is intended to provide an API to be used by external projects
   #  when they are running tests that depend on puppet core.  This should
@@ -33,26 +36,39 @@ module Puppet::Test
     # that call Puppet.
     # @return nil
     def self.initialize()
-      initialize_settings_before_each
+      owner = Process.pid
+      @environmentdir = Dir.mktmpdir('environments')
+      Puppet.push_context(Puppet.base_context({
+        :environmentpath => @environmentdir,
+        :basemodulepath => "",
+        :manifest => "/dev/null"
+      }), "Initial for specs")
+      Puppet::Parser::Functions.reset
+
+      ObjectSpace.define_finalizer(Puppet.lookup(:environments), proc {
+        if Process.pid == owner
+          FileUtils.rm_rf(@environmentdir)
+        end
+      })
     end
 
     # Call this method once, when beginning a test run--prior to running
     #  any individual tests.
     # @return nil
     def self.before_all_tests()
-
+      # Make sure that all of the setup is also done for any before(:all) blocks
     end
 
     # Call this method once, at the end of a test run, when no more tests
     #  will be run.
     # @return nil
     def self.after_all_tests()
-
     end
 
     # Call this method once per test, prior to execution of each invididual test.
     # @return nil
     def self.before_each_test()
+
       # We need to preserve the current state of all our indirection cache and
       # terminus classes.  This is pretty important, because changes to these
       # are global and lead to order dependencies in our testing.
@@ -83,8 +99,15 @@ module Puppet::Test
 
       initialize_settings_before_each()
 
-      Puppet::Node::Environment.clear
+      Puppet.push_context(
+        {
+          :trusted_information =>
+            Puppet::Context::TrustedInformation.new('local', 'testing', {}),
+        },
+        "Context for specs")
+
       Puppet::Parser::Functions.reset
+      Puppet::Node::Environment.clear
       Puppet::Application.clear!
       Puppet::Util::Profiler.clear
 
@@ -137,6 +160,7 @@ module Puppet::Test
       $LOAD_PATH.clear
       $old_load_path.each {|x| $LOAD_PATH << x }
 
+      Puppet.pop_context
     end
 
 
@@ -179,6 +203,13 @@ module Puppet::Test
       # below 512 bits.  Sad, really, because a 0 bit key would be just fine.
       Puppet[:req_bits]  = 512
       Puppet[:keylength] = 512
+
+      # Although we setup a testing context during initialization, some tests
+      # will end up creating their own context using the real context objects
+      # and use the setting for the environments. In order to avoid those tests
+      # having to deal with a missing environmentpath we can just set it right
+      # here.
+      Puppet[:environmentpath] = @environmentpath
     end
     private_class_method :initialize_settings_before_each
   end

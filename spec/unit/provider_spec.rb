@@ -155,19 +155,6 @@ describe Puppet::Provider do
     Puppet::Provider.should respond_to(:specificity)
   end
 
-  it "should consider two defaults to be higher specificity than one default" do
-    one = provider_of do
-      defaultfor :osfamily => "solaris"
-    end
-
-    two = provider_of do
-      defaultfor :osfamily => "solaris", :operatingsystemrelease => "5.10"
-    end
-
-    two.specificity.should > one.specificity
-  end
-
-
   it "should be Comparable" do
     res = Puppet::Type.type(:notify).new(:name => "res")
 
@@ -301,6 +288,53 @@ describe Puppet::Provider do
       subject.name.should == type.defaultprovider.name
     end
 
+    describe "when there are multiple defaultfor's of equal specificity" do
+      before :each do
+        subject.defaultfor :operatingsystem => :os1
+        subject.defaultfor :operatingsystem => :os2
+      end
+
+      let(:alternate) { type.provide(:alternate) {} }
+
+      it "should be default for the first defaultfor" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os1
+
+        provider.should be_default
+        alternate.should_not be_default
+      end
+
+      it "should be default for the last defaultfor" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
+
+        provider.should be_default
+        alternate.should_not be_default
+      end
+    end
+
+    describe "when there are multiple defaultfor's with different specificity" do
+      before :each do
+        subject.defaultfor :operatingsystem => :os1
+        subject.defaultfor :operatingsystem => :os2, :operatingsystemmajrelease => "42"
+      end
+
+      let(:alternate) { type.provide(:alternate) {} }
+
+      it "should be default for a more specific, but matching, defaultfor" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os2
+        Facter.expects(:value).with(:operatingsystemmajrelease).at_least_once.returns "42"
+
+        provider.should be_default
+        alternate.should_not be_default
+      end
+
+      it "should be default for a less specific, but matching, defaultfor" do
+        Facter.expects(:value).with(:operatingsystem).at_least_once.returns :os1
+
+        provider.should be_default
+        alternate.should_not be_default
+      end
+    end
+
     it "should consider any true value enough to be default" do
       alternate = type.provide(:alternate) {}
 
@@ -311,13 +345,16 @@ describe Puppet::Provider do
       alternate.should_not be_default
     end
 
-    it "should not be default if the confine doesn't match" do
+    it "should not be default if the defaultfor doesn't match" do
       subject.should_not be_default
       subject.defaultfor :operatingsystem => :one
       subject.should_not be_default
     end
 
     it "should consider two defaults to be higher specificity than one default" do
+      Facter.expects(:value).with(:osfamily).at_least_once.returns "solaris"
+      Facter.expects(:value).with(:operatingsystemrelease).at_least_once.returns "5.10"
+
       one = type.provide(:one) do
         defaultfor :osfamily => "solaris"
       end
@@ -335,11 +372,34 @@ describe Puppet::Provider do
 
       child.specificity.should > parent.specificity
     end
+
+    describe "using a :feature key" do
+      before :each do
+        Puppet.features.add(:yay) do true end
+        Puppet.features.add(:boo) do false end
+      end
+
+      it "is default for an available feature" do
+        one = type.provide(:one) do
+          defaultfor :feature => :yay
+        end
+
+        one.should be_default
+      end
+
+      it "is not default for a missing feature" do
+        two = type.provide(:two) do
+          defaultfor :feature => :boo
+        end
+
+        two.should_not be_default
+      end
+    end
   end
 
   context "provider commands" do
     it "should raise for unknown commands" do
-      expect { subject.command(:something) }.to raise_error Puppet::DevError
+      expect { subject.command(:something) }.to raise_error(Puppet::DevError)
     end
 
     it "should handle command inheritance" do
@@ -349,10 +409,10 @@ describe Puppet::Provider do
       command = Puppet::Util.which('sh') || Puppet::Util.which('cmd.exe')
       parent.commands :sh => command
 
-      Puppet::FileSystem::File.exist?(parent.command(:sh)).should be_true
+      Puppet::FileSystem.exist?(parent.command(:sh)).should be_true
       parent.command(:sh).should =~ /#{Regexp.escape(command)}$/
 
-      Puppet::FileSystem::File.exist?(child.command(:sh)).should be_true
+      Puppet::FileSystem.exist?(child.command(:sh)).should be_true
       child.command(:sh).should =~ /#{Regexp.escape(command)}$/
     end
 
@@ -381,7 +441,7 @@ describe Puppet::Provider do
       end
 
       it "should define a wrapper for the command" do
-        subject.should respond_to :cmd
+        subject.should respond_to(:cmd)
       end
 
       it "should return nil if the command is requested" do
@@ -389,7 +449,7 @@ describe Puppet::Provider do
       end
 
       it "should raise if the command is invoked" do
-        expect { subject.cmd }.to raise_error Puppet::Error, /Command cmd is missing/
+        expect { subject.cmd }.to raise_error(Puppet::Error, /Command cmd is missing/)
       end
     end
   end
@@ -440,45 +500,43 @@ describe Puppet::Provider do
 
   context "mk_resource_methods" do
     before :each do
-      type.newproperty(:prop1)
-      type.newproperty(:prop2)
-      type.newparam(:param1)
-      type.newparam(:param2)
+      type.newproperty(:prop)
+      type.newparam(:param)
+      provider.mk_resource_methods
     end
 
-    fields = %w{prop1 prop2 param1 param2}
+    let(:instance) { provider.new(nil) }
 
-    fields.each do |name|
-      it "should add getter methods for #{name}" do
-        expect { subject.mk_resource_methods }.
-          to change { subject.method_defined?(name) }.
-          from(false).to(true)
-      end
-
-      it "should add setter methods for #{name}" do
-        method = name + '='
-        expect { subject.mk_resource_methods }.
-          to change { subject.method_defined?(name) }.
-          from(false).to(true)
-      end
+    it "defaults to :absent" do
+      expect(instance.prop).to eq(:absent)
+      expect(instance.param).to eq(:absent)
     end
 
-    context "with an instance" do
-      subject { provider.mk_resource_methods; provider.new(nil) }
+    it "should update when set" do
+      instance.prop = 'hello'
+      instance.param = 'goodbye'
 
-      fields.each do |name|
-        context name do
-          it "should default to :absent" do
-            subject.send(name).should == :absent
-          end
+      expect(instance.prop).to eq('hello')
+      expect(instance.param).to eq('goodbye')
+    end
 
-          it "should update when set" do
-            expect { subject.send(name + '=', "hello") }.
-              to change { subject.send(name) }.
-              from(:absent).to("hello")
-          end
-        end
-      end
+    it "treats nil the same as absent" do
+      instance.prop = "value"
+      instance.param = "value"
+
+      instance.prop = nil
+      instance.param = nil
+
+      expect(instance.prop).to eq(:absent)
+      expect(instance.param).to eq(:absent)
+    end
+
+    it "preserves false as false" do
+      instance.prop = false
+      instance.param = false
+
+      expect(instance.prop).to eq(false)
+      expect(instance.param).to eq(false)
     end
   end
 
@@ -545,18 +603,18 @@ describe Puppet::Provider do
 
         subject { provider }
 
-        it { should respond_to :has_features }
-        it { should respond_to :has_feature }
+        it { should respond_to(:has_features) }
+        it { should respond_to(:has_feature) }
 
         context "provider class" do
-          it { should respond_to :nomethods? }
+          it { should respond_to(:nomethods?) }
           it { should_not be_nomethods }
 
-          it { should respond_to :numeric? }
+          it { should respond_to(:numeric?) }
           it { subject.send(numeric?, be_numeric) }
           it { subject.send(numeric?, be_satisfies(:numeric)) }
 
-          it { should respond_to :alpha? }
+          it { should respond_to(:alpha?) }
           it { subject.send(alpha?, be_alpha) }
           it { subject.send(alpha?, be_satisfies(:alpha)) }
         end
@@ -564,11 +622,11 @@ describe Puppet::Provider do
         context "provider instance" do
           subject { provider.new }
 
-          it { should respond_to :numeric? }
+          it { should respond_to(:numeric?) }
           it { subject.send(numeric?, be_numeric) }
           it { subject.send(numeric?, be_satisfies(:numeric)) }
 
-          it { should respond_to :alpha? }
+          it { should respond_to(:alpha?) }
           it { subject.send(alpha?, be_alpha) }
           it { subject.send(alpha?, be_satisfies(:alpha)) }
         end
@@ -580,11 +638,11 @@ describe Puppet::Provider do
         type.feature :undemanding, ''
       end
 
-      it { should respond_to :undemanding? }
+      it { should respond_to(:undemanding?) }
 
       context "when the feature is not declared" do
         it { should_not be_undemanding }
-        it { should_not be_satisfies :undemanding }
+        it { should_not be_satisfies(:undemanding) }
       end
 
       context "when the feature is declared" do
@@ -593,7 +651,7 @@ describe Puppet::Provider do
         end
 
         it { should be_undemanding }
-        it { should be_satisfies :undemanding }
+        it { should be_satisfies(:undemanding) }
       end
     end
 
@@ -618,13 +676,13 @@ describe Puppet::Provider do
       }.each do |name, data|
         data[:yes].each do |param|
           it "should support #{param} with provider #{name}" do
-            providers[name].should be_supports_parameter param
+            providers[name].should be_supports_parameter(param)
           end
         end
 
         data[:no].each do |param|
           it "should not support #{param} with provider #{name}" do
-            providers[name].should_not be_supports_parameter param
+            providers[name].should_not be_supports_parameter(param)
           end
         end
       end

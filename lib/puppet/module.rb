@@ -1,6 +1,6 @@
 require 'puppet/util/logging'
 require 'semver'
-require 'puppet/module_tool/applications'
+require 'json'
 
 # Support for modules
 class Puppet::Module
@@ -28,7 +28,8 @@ class Puppet::Module
   # of +path+, return +nil+
   def self.find(modname, environment = nil)
     return nil unless modname
-    Puppet::Node::Environment.new(environment).module(modname)
+    env = Puppet.lookup(:environments).get(environment || Puppet[:environment])
+    env.module(modname)
   end
 
   attr_reader :name, :environment, :path
@@ -54,11 +55,11 @@ class Puppet::Module
   def has_metadata?
     return false unless metadata_file
 
-    return false unless Puppet::FileSystem::File.exist?(metadata_file)
+    return false unless Puppet::FileSystem.exist?(metadata_file)
 
     begin
-      metadata =  PSON.parse(File.read(metadata_file))
-    rescue PSON::PSONError => e
+      metadata =  JSON.parse(File.read(metadata_file))
+    rescue JSON::JSONError => e
       Puppet.debug("#{name} has an invalid and unparsable metadata.json file.  The parse error: #{e.message}")
       return false
     end
@@ -71,7 +72,7 @@ class Puppet::Module
     # we have files of a given type.
     define_method(type +'?') do
       type_subpath = subpath(location)
-      unless Puppet::FileSystem::File.exist?(type_subpath)
+      unless Puppet::FileSystem.exist?(type_subpath)
         Puppet.debug("No #{type} found in subpath '#{type_subpath}' " +
                          "(file / directory does not exist)")
         return false
@@ -94,7 +95,7 @@ class Puppet::Module
         full_path = subpath(location)
       end
 
-      return nil unless Puppet::FileSystem::File.exist?(full_path)
+      return nil unless Puppet::FileSystem.exist?(full_path)
       return full_path
     end
 
@@ -112,7 +113,7 @@ class Puppet::Module
   end
 
   def load_metadata
-    data = PSON.parse File.read(metadata_file)
+    data = JSON.parse File.read(metadata_file)
     @forge_name = data['name'].gsub('-', '/') if data['name']
 
     [:source, :author, :version, :license, :puppetversion, :dependencies].each do |attr|
@@ -153,7 +154,7 @@ class Puppet::Module
   end
 
   def all_manifests
-    return [] unless Puppet::FileSystem::File.exist?(manifests)
+    return [] unless Puppet::FileSystem.exist?(manifests)
 
     Dir.glob(File.join(manifests, '**', '*.{rb,pp}'))
   end
@@ -209,11 +210,15 @@ class Puppet::Module
   end
 
   def has_local_changes?
+    Puppet.deprecation_warning("This method is being removed.")
+    require 'puppet/module_tool/applications'
     changes = Puppet::ModuleTool::Applications::Checksummer.run(path)
     !changes.empty?
   end
 
   def local_changes
+    Puppet.deprecation_warning("This method is being removed.")
+    require 'puppet/module_tool/applications'
     Puppet::ModuleTool::Applications::Checksummer.run(path)
   end
 

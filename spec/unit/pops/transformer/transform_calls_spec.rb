@@ -14,8 +14,8 @@ describe "transformation to Puppet AST for function calls" do
         astdump(parse("foo()")).should == "(invoke foo)"
       end
 
-      it "foo bar" do
-        astdump(parse("foo bar")).should == "(invoke foo bar)"
+      it "notice bar" do
+        astdump(parse("notice bar")).should == "(invoke notice bar)"
       end
     end
 
@@ -24,9 +24,44 @@ describe "transformation to Puppet AST for function calls" do
         astdump(parse("if true {foo()}")).should == "(if true\n  (then (invoke foo)))"
       end
 
-      it "if true { foo bar}" do
-        astdump(parse("if true {foo bar}")).should == "(if true\n  (then (invoke foo bar)))"
+      it "if true { notice bar}" do
+        astdump(parse("if true {notice bar}")).should == "(if true\n  (then (invoke notice bar)))"
       end
+    end
+    context "in general" do
+      {
+        "require bar"      => '(invoke require bar)',
+        "realize bar"      => '(invoke realize bar)',
+        "contain bar"      => '(invoke contain bar)',
+        "include bar"      => '(invoke include bar)',
+
+        "info bar"         => '(invoke info bar)',
+        "notice bar"       => '(invoke notice bar)',
+        "error bar"        => '(invoke error bar)',
+        "warning bar"      => '(invoke warning bar)',
+        "debug bar"        => '(invoke debug bar)',
+
+        "fail bar"         => '(invoke fail bar)',
+
+        "notice {a => 1}"  => "(invoke notice ({} ('a' 1)))",
+        "notice 1,2,3"     => "(invoke notice 1 2 3)",
+        "notice(1,2,3)"    => "(invoke notice 1 2 3)",
+      }.each do |source, result|
+        it "should transform #{source} to #{result}" do
+          astdump(parse(source)).should == result
+        end
+      end
+
+      {
+        "foo bar"      => '(block foo bar)',
+        "tag bar"      => '(block tag bar)',
+        "tag"          => 'tag',
+      }.each do |source, result|
+        it "should not transform #{source}, and instead produce #{result}" do
+          astdump(parse(source)).should == result
+        end
+      end
+
     end
   end
 
@@ -60,7 +95,7 @@ describe "transformation to Puppet AST for function calls" do
       astdump(parse("$a.foo")).should == "(call-method (. $a foo))"
     end
 
-    it "$a.foo ||{ }" do
+    it "$a.foo || { }" do
       astdump(parse("$a.foo || { }")).should == "(call-method (. $a foo) (lambda ()))"
     end
 
@@ -68,7 +103,7 @@ describe "transformation to Puppet AST for function calls" do
       astdump(parse("$a.foo || {[]}")).should == "(call-method (. $a foo) (lambda (block ([]))))"
     end
 
-    it "$a.foo {|$x| }" do
+    it "$a.foo |$x| { }" do
       astdump(parse("$a.foo |$x| { }")).should == "(call-method (. $a foo) (lambda (parameters x) ()))"
     end
 

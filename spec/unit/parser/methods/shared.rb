@@ -11,28 +11,12 @@ end
 
 shared_examples_for 'all iterative functions argument checks' do |func|
 
-  it 'raises an error when defined with more than 1 argument' do
-    expect do
-      compile_to_catalog(<<-MANIFEST)
-        [1].#{func} |$x, $yikes|{  }
-      MANIFEST
-    end.to raise_error(Puppet::Error, /Too few arguments/)
-  end
-
-  it 'raises an error when defined with fewer than 1 argument' do
-    expect do
-      compile_to_catalog(<<-MANIFEST)
-        [1].#{func} || {  }
-      MANIFEST
-    end.to raise_error(Puppet::Error, /Too many arguments/)
-  end
-
   it 'raises an error when used against an unsupported type' do
     expect do
       compile_to_catalog(<<-MANIFEST)
-        "not correct".#{func} |$v| {  }
+        3.14.#{func} |$v| {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /must be an Array or a Hash/)
+    end.to raise_error(Puppet::Error, /must be something enumerable/)
   end
 
   it 'raises an error when called with any parameters besides a block' do

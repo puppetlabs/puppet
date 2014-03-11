@@ -126,6 +126,20 @@ describe "egrammar parsing resource declarations" do
       ].join("\n")
     end
 
+    it "@class { 'cname': }" do
+      dump(parse("@class { 'cname': }")).should == [
+        "(virtual-resource class",
+        "  ('cname'))"
+      ].join("\n")
+    end
+
+    it "@@class { 'cname': }" do
+      dump(parse("@@class { 'cname': }")).should == [
+        "(exported-resource class",
+        "  ('cname'))"
+      ].join("\n")
+    end
+
     it "class { 'cname': x => 1, y => 2}" do
       dump(parse("class { 'cname': x => 1, y => 2}")).should == [
         "(resource class",

@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'puppet/forge/errors'
+require 'puppet/forge'
 
 describe Puppet::Forge::Errors do
   describe 'SSLVerifyError' do

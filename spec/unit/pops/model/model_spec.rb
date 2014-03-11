@@ -19,8 +19,8 @@ describe Puppet::Pops::Model::Factory do
     current = x.current
     current.is_a?(Model::ArithmeticExpression).should == true
     current.operator.should == :'+'
-    current.left_expr.class.should == Model::LiteralNumber
-    current.right_expr.class.should == Model::LiteralNumber
+    current.left_expr.class.should == Model::LiteralInteger
+    current.right_expr.class.should == Model::LiteralInteger
     current.left_expr.value.should == 10
     current.right_expr.value.should == 20
   end

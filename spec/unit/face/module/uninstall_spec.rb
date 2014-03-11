@@ -8,8 +8,24 @@ describe "puppet module uninstall" do
   let(:options) do
     {}
   end
+  let(:modulepath) { File.expand_path('/module/path') }
+  let(:environment) do
+    Puppet::Node::Environment.create(:env, [modulepath], '')
+  end
+  let(:expected_options) do
+    {
+      :target_dir  => modulepath,
+      :environment_instance => environment,
+    }
+  end
 
   describe "option validation" do
+    around(:each) do |example|
+      Puppet.override(:current_environment => environment) do
+        example.run
+      end
+    end
+
     context "without any options" do
       it "should require a name" do
         pattern = /wrong number of arguments/
@@ -22,39 +38,16 @@ describe "puppet module uninstall" do
       end
     end
 
-    it "should accept the --environment option" do
-      options[:environment] = "development"
-      expected_options = { :environment => 'development' }
-      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
-      subject.uninstall("puppetlabs-apache", options)
-    end
-
-    it "should accept the --modulepath option" do
-      options[:modulepath] = "/foo/puppet/modules"
-      expected_options = {
-        :modulepath => '/foo/puppet/modules',
-        :environment => 'production',
-      }
-      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
-      subject.uninstall("puppetlabs-apache", options)
-    end
-
     it "should accept the --version option" do
       options[:version] = "1.0.0"
-      expected_options = {
-        :version => '1.0.0',
-        :environment => 'production',
-      }
+      expected_options.merge!(:version => '1.0.0')
       Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
       subject.uninstall("puppetlabs-apache", options)
     end
 
     it "should accept the --force flag" do
       options[:force] = true
-      expected_options = {
-        :environment => 'production',
-        :force => true,
-      }
+      expected_options.merge!(:force => true)
       Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
       subject.uninstall("puppetlabs-apache", options)
     end

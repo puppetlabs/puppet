@@ -13,8 +13,13 @@ module Puppet::Network::Authentication
     # Check CA cert if we're functioning as a CA
     certs << Puppet::SSL::CertificateAuthority.instance.host.certificate if Puppet::SSL::CertificateAuthority.ca?
 
-    # Always check the host cert if we have one, this will be the agent or master cert depending on the run mode
-    certs << Puppet::SSL::Host.localhost.certificate if Puppet::FileSystem::File.exist?(Puppet[:hostcert])
+    # Depending on the run mode, the localhost certificate will be for the
+    # master or the agent. Don't load the certificate if the CA cert is not
+    # present: infinite recursion will occur as another authenticated request
+    # will be spawned to download the CA cert.
+    if [Puppet[:hostcert], Puppet[:localcacert]].all? {|path| Puppet::FileSystem.exist?(path) }
+      certs << Puppet::SSL::Host.localhost.certificate
+    end
 
     # Remove nil values for caller convenience
     certs.compact.each do |cert|

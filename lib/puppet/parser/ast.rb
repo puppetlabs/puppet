@@ -36,7 +36,6 @@ class Puppet::Parser::AST
   # Evaluate the current object.  Just a stub method, since the subclass
   # should override this method.
   def evaluate(*options)
-    raise Puppet::DevError, "Did not override #evaluate in #{self.class}"
   end
 
   # Throw a parse error.
@@ -128,3 +127,4 @@ require 'puppet/parser/ast/resourceparam'
 require 'puppet/parser/ast/selector'
 require 'puppet/parser/ast/tag'
 require 'puppet/parser/ast/vardef'
+require 'puppet/parser/code_merger'

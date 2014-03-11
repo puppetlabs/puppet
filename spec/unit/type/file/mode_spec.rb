@@ -81,7 +81,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     end
 
     it "should return true if the file is a link and we are managing links", :if => Puppet.features.manages_symlinks? do
-      Puppet::FileSystem::File.new('anything').symlink(path)
+      Puppet::FileSystem.symlink('anything', path)
 
       mode.must be_insync('644')
     end
@@ -185,10 +185,11 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
 
     it "changes only the requested bits" do
       # lower nibble must be set to 4 for the sake of passing on Windows
-      FileUtils.chmod 0464, path
+      Puppet::FileSystem.chmod(0464, path)
+
       mode_sym.sync
-      file = Puppet::FileSystem::File.new(path)
-      (file.stat.mode & 0777).to_s(8).should == "644"
+      stat = Puppet::FileSystem.stat(path)
+      (stat.mode & 0777).to_s(8).should == "644"
     end
   end
 end

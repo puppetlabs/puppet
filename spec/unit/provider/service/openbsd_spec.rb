@@ -46,13 +46,13 @@ describe provider_class do
   describe "#start" do
     it "should use the supplied start command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :start => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
 
     it "should start the service otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :start], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :start], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
       provider.start
     end
@@ -61,13 +61,13 @@ describe provider_class do
   describe "#stop" do
     it "should use the supplied stop command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :stop => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
 
     it "should stop the service otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :stop], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/etc/rc.d/sshd', :stop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
       provider.stop
     end
@@ -76,23 +76,23 @@ describe provider_class do
   describe "#status" do
     it "should use the status command from the resource" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => true).never
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
       provider.status
     end
 
       it "should return :stopped when status command returns with a non-zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-        provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => true).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => true)
+        provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
+        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 3
         provider.status.should == :stopped
       end
 
       it "should return :running when status command returns with a zero exitcode" do
         provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :status => '/bin/foo'))
-        provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => true).never
-        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => true)
+        provider.expects(:execute).with(['/etc/rc.d/sshd', :status], :failonfail => false, :override_locale => false, :squelch => false, :combine => true).never
+        provider.expects(:execute).with(['/bin/foo'], :failonfail => false, :override_locale => false, :squelch => false, :combine => true)
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         provider.status.should == :running
       end
@@ -101,23 +101,23 @@ describe provider_class do
   describe "#restart" do
     it "should use the supplied restart command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => true).never
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
     end
 
     it "should restart the service with rc-service restart if hasrestart is true" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => true))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
       provider.restart
     end
 
     it "should restart the service with rc-service stop/start if hasrestart is false" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :hasrestart => false))
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => true).never
-      provider.expects(:execute).with(['/etc/rc.d/sshd', :stop], :failonfail => true, :override_locale => false, :squelch => true)
-      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :start], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :restart], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/etc/rc.d/sshd', :stop], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
+      provider.expects(:execute).with(['/etc/rc.d/sshd', '-f', :start], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.expects(:search).with('sshd').returns('/etc/rc.d/sshd')
       provider.restart
     end

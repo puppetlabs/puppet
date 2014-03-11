@@ -170,7 +170,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
       puts PSON::pretty_generate(catalog.to_resource, :allow_nan => true, :max_nesting => false)
     rescue => detail
-      $stderr.puts detail
+      Puppet.log_exception(detail, "Failed to compile catalog for node #{options[:node]}: #{detail}")
       exit(30)
     end
     exit(0)

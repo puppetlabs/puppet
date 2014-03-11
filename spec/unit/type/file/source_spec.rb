@@ -94,6 +94,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     before do
       @metadata = stub 'metadata', :source= => nil
       @resource.stubs(:[]).with(:links).returns :manage
+      @resource.stubs(:[]).with(:source_permissions)
     end
 
     it "should return already-available metadata" do
@@ -109,22 +110,36 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should collect its metadata using the Metadata class if it is not already set" do
       @source = source.new(:resource => @resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment, :links => :manage).returns @metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with do |uri, options|
+        expect(uri).to eq @foobar_uri
+        expect(options[:environment]).to eq @environment
+        expect(options[:links]).to eq :manage
+      end.returns @metadata
+
       @source.metadata
     end
 
     it "should use the metadata from the first found source" do
       metadata = stub 'metadata', :source= => nil
       @source = source.new(:resource => @resource, :value => [@foobar, @feebooz])
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment, :links => :manage).returns nil
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri, :environment => @environment, :links => :manage).returns metadata
+      options = {
+        :environment => @environment,
+        :links => :manage,
+        :source_permissions => nil
+      }
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, options).returns nil
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz_uri, options).returns metadata
       @source.metadata.should equal(metadata)
     end
 
     it "should store the found source as the metadata's source" do
       metadata = mock 'metadata'
       @source = source.new(:resource => @resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment, :links => :manage).returns metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with do |uri, options|
+        expect(uri).to eq @foobar_uri
+        expect(options[:environment]).to eq @environment
+        expect(options[:links]).to eq :manage
+      end.returns metadata
 
       metadata.expects(:source=).with(@foobar_uri)
       @source.metadata
@@ -132,7 +147,11 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should fail intelligently if an exception is encountered while querying for metadata" do
       @source = source.new(:resource => @resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment, :links => :manage).raises RuntimeError
+      Puppet::FileServing::Metadata.indirection.expects(:find).with do |uri, options|
+        expect(uri).to eq @foobar_uri
+        expect(options[:environment]).to eq @environment
+        expect(options[:links]).to eq :manage
+      end.raises RuntimeError
 
       @source.expects(:fail).raises ArgumentError
       lambda { @source.metadata }.should raise_error(ArgumentError)
@@ -140,7 +159,11 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should fail if no specified sources can be found" do
       @source = source.new(:resource => @resource, :value => @foobar)
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar_uri, :environment => @environment, :links => :manage).returns nil
+      Puppet::FileServing::Metadata.indirection.expects(:find).with  do |uri, options|
+        expect(uri).to eq @foobar_uri
+        expect(options[:environment]).to eq @environment
+        expect(options[:links]).to eq :manage
+      end.returns nil
 
       @source.expects(:fail).raises RuntimeError
 
@@ -270,7 +293,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
         context "when managing an existing file" do
           before :each do
-            Puppet::FileSystem::File.stubs(:exist?).with(@resource[:path]).returns(true)
+            Puppet::FileSystem.stubs(:exist?).with(@resource[:path]).returns(true)
           end
 
           it "should not copy owner, group or mode from local sources" do

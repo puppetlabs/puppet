@@ -46,7 +46,7 @@ module PSON
       string.gsub!(/["\\\x0-\x1f]/) { MAP[$MATCH] }
       string
     rescue => e
-      raise GeneratorError, "Caught #{e.class}: #{e}"
+      raise GeneratorError, "Caught #{e.class}: #{e}", e.backtrace
     end
   else
     def utf8_to_pson(string) # :nodoc:

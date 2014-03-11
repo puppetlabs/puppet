@@ -54,6 +54,9 @@ module Puppet
       "Allows local users to be managed on systems that also use some other
        remote NSS method of managing accounts."
 
+    feature :manages_shell,
+      "The provider allows for setting shell and validates if possible"
+
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
         provider.create
@@ -169,7 +172,7 @@ module Puppet
       end
     end
 
-    newproperty(:shell) do
+    newproperty(:shell, :required_features => :manages_shell) do
       desc "The user's login shell.  The shell must exist and be
         executable.
 

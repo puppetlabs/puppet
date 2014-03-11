@@ -6,6 +6,7 @@ Puppet::Type.newtype(:zone) do
 the zone's filesystem (with the `path` attribute), the zone resource will
 autorequire that directory."
 
+module Puppet::Zone
   class StateMachine
     # A silly little state machine.
     def initialize
@@ -47,6 +48,7 @@ autorequire that directory."
       index(a) < index(b)
     end
   end
+end
 
   ensurable do
     desc "The running state of the zone.  The valid states directly reflect
@@ -57,7 +59,7 @@ autorequire that directory."
 
     def self.fsm
       return @fsm if @fsm
-      @fsm = StateMachine.new
+      @fsm = Puppet::Zone::StateMachine.new
     end
 
     def self.alias_state(values)
@@ -148,9 +150,17 @@ autorequire that directory."
   newproperty(:ip, :parent => Puppet::Property::List) do
     require 'ipaddr'
 
-    desc "The IP address of the zone.  IP addresses must be specified
-      with the interface, separated by a colon, e.g.: bge0:192.168.0.1.
-      For multiple interfaces, specify them in an array."
+    desc "The IP address of the zone.  IP addresses **must** be specified
+      with an interface, and may optionally be specified with a default router
+      (sometimes called a defrouter). The interface, IP address, and default
+      router should be separated by colons to form a complete IP address string.
+      For example: `bge0:192.168.178.200` would be a valid IP address string
+      without a default router, and `bge0:192.168.178.200:192.168.178.1` adds a
+      default router to it.
+
+      For zones with multiple interfaces, the value of this attribute should be
+      an array of IP address strings (each of which must include an interface
+      and may include a default router)."
 
     # The default action of list should is to lst.join(' '). By specifying
     # @should, we ensure the should remains an array. If we override should, we
@@ -320,7 +330,7 @@ autorequire that directory."
   def validate_ip(ip, name)
     IPAddr.new(ip) if ip
   rescue ArgumentError
-    self.fail "'#{ip}' is an invalid #{name}"
+    self.fail Puppet::Error, "'#{ip}' is an invalid #{name}", $!
   end
 
   def validate_exclusive(interface, address, router)

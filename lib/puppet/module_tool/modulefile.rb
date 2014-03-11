@@ -1,3 +1,6 @@
+require 'puppet/module_tool'
+require 'puppet/module_tool/dependency'
+
 module Puppet::ModuleTool
 
   # = Modulefile

@@ -45,7 +45,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     begin
       output = portinfo(*cmdline)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output)
+      raise Puppet::Error.new(output, $!)
       return nil
     end
 
@@ -87,7 +87,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     begin
       output = portinstall(*cmdline)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output)
+      raise Puppet::Error.new(output, $!)
     end
 
     if output =~ /\*\* No such /
@@ -110,7 +110,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     begin
       output = portversion(*cmdline)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output)
+      raise Puppet::Error.new(output, $!)
     end
 
     # Check: output format.
@@ -175,7 +175,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     begin
       output = portinfo(*cmdline)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output)
+      raise Puppet::Error.new(output, $!)
     end
 
     # Check: if output isn't in the right format, return nil
@@ -205,7 +205,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     begin
       output = portinfo(*cmdline)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output)
+      raise Puppet::Error.new(output, $!)
     end
 
     if output =~ /^(\S+)/
@@ -223,7 +223,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     begin
       output = portinfo(*cmdline)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output)
+      raise Puppet::Error.new(output, $!)
     end
 
     if output =~ /^(\S+)/
@@ -232,7 +232,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
       begin
         output = portupgrade(*cmdline)
       rescue Puppet::ExecutionFailure
-        raise Puppet::Error.new(output)
+        raise Puppet::Error.new(output, $!)
       end
     end
   end

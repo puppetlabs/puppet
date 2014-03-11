@@ -25,6 +25,13 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       :none => Win32::Security::SID::Nobody,
       :everyone => Win32::Security::SID::Everyone
     }
+    # The TCP/IP NetBIOS Helper service (aka 'lmhosts') has ended up
+    # disabled on some VMs for reasons we couldn't track down. This
+    # condition causes tests which rely on resolving UNC style paths
+    # (like \\localhost) to fail with unhelpful error messages.
+    # Put a check for this upfront to aid debug should this strike again.
+    service = Puppet::Type.type(:service).new(:name => 'lmhosts')
+    service.provider.status.should == :running
   end
 
   let (:sids) { @sids }
@@ -41,6 +48,14 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     else
       winsec.set_group(sids[:guest], path)
     end
+  end
+
+  def grant_everyone_full_access(path)
+    sd = winsec.get_security_descriptor(path)
+    everyone = 'S-1-1-0'
+    inherit = WindowsSecurityTester::OBJECT_INHERIT_ACE | WindowsSecurityTester::CONTAINER_INHERIT_ACE
+    sd.dacl.allow(everyone, Windows::File::FILE_ALL_ACCESS, inherit)
+    winsec.set_security_descriptor(path, sd)
   end
 
   shared_examples_for "only child owner" do
@@ -96,7 +111,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
         after :each do
           winsec.set_mode(WindowsSecurityTester::S_IRWXU, parent)
-          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) if Puppet::FileSystem::File.exist?(path)
+          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) if Puppet::FileSystem.exist?(path)
         end
 
         describe "#supports_acl?" do
@@ -363,7 +378,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         after :each do
-          if Puppet::FileSystem::File.exist?(path)
+          if Puppet::FileSystem.exist?(path)
             winsec.set_owner(sids[:current_user], path)
             winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
           end
@@ -616,6 +631,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       path
     end
 
+    after :each do
+      # allow temp files to be cleaned up
+      grant_everyone_full_access(parent)
+    end
+
     it_behaves_like "a securable object" do
       def check_access(mode, path)
         if (mode & WindowsSecurityTester::S_IRUSR).nonzero?
@@ -680,6 +700,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       path = File.join(parent, 'childdir')
       Dir.mkdir(path)
       path
+    end
+
+    after :each do
+      # allow temp files to be cleaned up
+      grant_everyone_full_access(parent)
     end
 
     it_behaves_like "a securable object" do

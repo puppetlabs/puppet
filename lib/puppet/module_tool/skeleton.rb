@@ -1,3 +1,6 @@
+require 'pathname'
+require 'puppet/module_tool'
+
 module Puppet::ModuleTool
 
   # = Skeleton

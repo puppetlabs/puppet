@@ -72,12 +72,13 @@ class Puppet::Settings::BaseSetting
     end
   end
 
-  def has_hook?
-    respond_to? :handle
+  def hook=(block)
+    @has_hook = true
+    meta_def :handle, &block
   end
 
-  def hook=(block)
-    meta_def :handle, &block
+  def has_hook?
+    @has_hook
   end
 
   # Create the new element.  Pretty much just sets the name.
@@ -92,6 +93,7 @@ class Puppet::Settings::BaseSetting
 
     #set the default value for call_hook
     @call_hook = :on_write_only if args[:hook] and not args[:call_hook]
+    @has_hook = false
 
     raise ArgumentError, "Cannot reference :call_hook for :#{@name} if no :hook is defined" if args[:call_hook] and not args[:hook]
 
@@ -158,5 +160,9 @@ class Puppet::Settings::BaseSetting
   # Modify the value when it is first evaluated
   def munge(value)
     value
+  end
+
+  def set_meta(meta)
+    Puppet.notice("#{name} does not support meta data. Ignoring.")
   end
 end

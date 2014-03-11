@@ -27,7 +27,7 @@
 <transform file path=var/svc/manifest/.*\.xml -> add restart_fmri svc:/system/manifest-import:default>
 
 # we depend on facter
-<transform pkg -> emit depend type=require fmri=application/facter@1.6.12>
+<transform pkg -> emit depend type=require fmri=application/facter@1.7.0>
 
 # preserve the old conf file on upgrade.
 <transform file path=etc/puppet/(puppet|auth).conf -> add overlay true>

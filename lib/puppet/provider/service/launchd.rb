@@ -171,7 +171,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         @job_list[line.split(/\s/).last] = :running
       end
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
+      raise Puppet::Error.new("Unable to determine status of #{resource[:name]}", $!)
     end
     @job_list
   end
@@ -222,7 +222,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       @macosx_version_major = product_version_major
       return @macosx_version_major
     rescue Puppet::ExecutionFailure => detail
-      fail("Could not determine OS X version: #{detail}")
+      self.fail Puppet::Error, "Could not determine OS X version: #{detail}", detail
     end
   end
 
@@ -257,7 +257,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     begin
       execute(cmds)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}")
+      raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}", $!)
     end
     # As load -w clears the Disabled flag, we need to add it in after
     self.disable if did_enable_job and resource[:enable] == :false
@@ -278,7 +278,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     begin
       execute(cmds)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}")
+      raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}", $!)
     end
     # As unload -w sets the Disabled flag, we need to add it in after
     self.enable if did_disable_job and resource[:enable] == :true

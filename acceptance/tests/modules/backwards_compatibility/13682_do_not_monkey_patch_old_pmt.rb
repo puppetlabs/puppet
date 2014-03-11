@@ -10,6 +10,7 @@ module Puppet
     end
   end
 end
+require "rubygems"
 require "puppet"
 puts Puppet.version
 '

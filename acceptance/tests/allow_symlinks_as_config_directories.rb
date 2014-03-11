@@ -11,16 +11,13 @@ agents.each do |agent|
   on agent, "mkdir #{confdir}"
   on agent, "ln -s #{confdir} #{conflink}"
 
-  create_remote_file agent, "#{confdir}/puppet.conf", <<CONFFILE
-[main]
-certname = "awesome_certname"
-CONFFILE
+  on(agent, puppet('config', 'set', 'certname', 'awesome_certname', '--confdir', confdir))
 
-manifest = 'notify{"My certname is $clientcert": }'
+  manifest = 'notify{"My certname is $clientcert": }'
 
   step "Run Puppet and ensure it used the conf file in the confdir"
   on agent, puppet_apply("--confdir #{conflink}"), :stdin => manifest do
-    assert_match("My certname is awesome_certname", stdout)
+    assert_match(/My certname is awesome_certname[^\w]/, stdout)
   end
 
   step "Check that the symlink and confdir are unchanged"

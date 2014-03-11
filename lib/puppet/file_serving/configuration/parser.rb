@@ -7,7 +7,7 @@ class Puppet::FileServing::Configuration::Parser
 
   # Parse our configuration file.
   def parse
-    raise("File server configuration #{@file} does not exist") unless Puppet::FileSystem::File.exist?(@file)
+    raise("File server configuration #{@file} does not exist") unless Puppet::FileSystem.exist?(@file)
     raise("Cannot read file server configuration #{@file}") unless FileTest.readable?(@file)
 
     @mounts = {}
@@ -37,10 +37,10 @@ class Puppet::FileServing::Configuration::Parser
           when "deny"
             deny(mount, value)
           else
-            raise ArgumentError.new("Invalid argument '#{var}'", @count, @file)
+            raise ArgumentError.new("Invalid argument '#{var}' in #{@file.filename}, line #{@count}")
           end
         else
-          raise ArgumentError.new("Invalid line '#{line.chomp}'", @count, @file)
+          raise ArgumentError.new("Invalid line '#{line.chomp}' at #{@file.filename}, line #{@count}")
         end
       }
     }

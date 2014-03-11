@@ -10,7 +10,7 @@ module Puppet::Util::Backups
 
     # let the path be specified
     file ||= self[:path]
-    return true unless Puppet::FileSystem::File.exist?(file)
+    return true unless Puppet::FileSystem.exist?(file)
 
     return(self.bucket ? perform_backup_with_bucket(file) : perform_backup_with_backuplocal(file, self[:backup]))
   end
@@ -19,7 +19,7 @@ module Puppet::Util::Backups
 
   def perform_backup_with_bucket(fileobj)
     file = (fileobj.class == String) ? fileobj : fileobj.name
-    case Puppet::FileSystem::File.new(file).lstat.ftype
+    case Puppet::FileSystem.lstat(file).ftype
     when "directory"
       # we don't need to backup directories when recurse is on
       return true if self[:recurse]
@@ -46,7 +46,7 @@ module Puppet::Util::Backups
     rescue => detail
       # since they said they want a backup, let's error out
       # if we couldn't make one
-      self.fail "Could not back #{file} up: #{detail.message}"
+      self.fail Puppet::Error, "Could not back #{file} up: #{detail.message}", detail
     end
   end
 
@@ -58,7 +58,7 @@ module Puppet::Util::Backups
     end
 
     begin
-      stat = Puppet::FileSystem::File.new(newfile).send(method)
+      stat = Puppet::FileSystem.send(method, newfile)
     rescue Errno::ENOENT
       return
     end
@@ -70,11 +70,11 @@ module Puppet::Util::Backups
     info "Removing old backup of type #{stat.ftype}"
 
     begin
-      Puppet::FileSystem::File.unlink(newfile)
+      Puppet::FileSystem.unlink(newfile)
     rescue => detail
       message = "Could not remove old backup: #{detail}"
       self.log_exception(detail, message)
-      self.fail message
+      self.fail Puppet::Error, message, detail
     end
   end
 

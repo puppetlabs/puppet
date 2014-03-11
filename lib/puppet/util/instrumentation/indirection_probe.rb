@@ -30,7 +30,12 @@ class Puppet::Util::Instrumentation::IndirectionProbe
     to_pson_data_hash.to_pson(*args)
   end
 
-  def self.from_pson(data)
+  def self.from_data_hash(data)
     self.new(data["name"])
+  end
+
+  def self.from_pson(data)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(data)
   end
 end

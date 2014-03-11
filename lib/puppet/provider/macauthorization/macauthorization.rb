@@ -17,7 +17,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
   # This should be confined based on macosx_productversion
   # but puppet resource doesn't make the facts available and
   # that interface is heavily used with this provider.
-  if Puppet::FileSystem::File.exist?("/usr/bin/sw_vers")
+  if Puppet::FileSystem.exist?("/usr/bin/sw_vers")
     product_version = sw_vers "-productVersion"
 
     confine :true => unless /^10\.[0-4]/.match(product_version)
@@ -143,7 +143,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         authdb["rules"].delete(resource[:name])
         Plist::Emit.save_plist(authdb, AuthDB)
       rescue Errno::EACCES => e
-        raise Puppet::Error.new("Error saving #{AuthDB}: #{e}")
+        raise Puppet::Error.new("Error saving #{AuthDB}: #{e}", e)
       end
     end
   end
@@ -188,7 +188,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
       cmds << :security << "authorizationdb" << "write" << name
       execute(cmds, :failonfail => false, :combine => false, :stdinfile => tmp.path.to_s)
     rescue Errno::EACCES => e
-      raise Puppet::Error.new("Cannot save right to #{tmp.path}: #{e}")
+      raise Puppet::Error.new("Cannot save right to #{tmp.path}: #{e}", e)
     ensure
       tmp.close
       tmp.unlink

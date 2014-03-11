@@ -1,22 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/file_serving/metadata'
-
-# the json-schema gem doesn't support windows
-if not Puppet.features.microsoft_windows?
-  FILE_METADATA_SCHEMA = JSON.parse(File.read(File.join(File.dirname(__FILE__), '../../../api/schemas/file_metadata.json')))
-
-  describe "catalog schema" do
-    it "should validate against the json meta-schema" do
-      JSON::Validator.validate!(JSON_META_SCHEMA, FILE_METADATA_SCHEMA)
-    end
-  end
-
-  def validate_json_for_file_metadata(file_metadata)
-    JSON::Validator.validate!(FILE_METADATA_SCHEMA, file_metadata.to_pson)
-  end
-end
+require 'matchers/json'
 
 describe Puppet::FileServing::Metadata do
   let(:foobar) { File.expand_path('/foo/bar') }
@@ -41,8 +26,8 @@ describe Puppet::FileServing::Metadata do
     Puppet::FileServing::Metadata.new(foobar).should respond_to(:to_pson_data_hash)
   end
 
-  it "should support pson deserialization" do
-    Puppet::FileServing::Metadata.should respond_to(:from_pson)
+  it "should support deserialization" do
+    Puppet::FileServing::Metadata.should respond_to(:from_data_hash)
   end
 
   describe "when serializing" do
@@ -103,6 +88,7 @@ describe Puppet::FileServing::Metadata do
 end
 
 describe Puppet::FileServing::Metadata do
+  include JSONMatchers
   include PuppetSpec::Files
 
   shared_examples_for "metadata collector" do
@@ -154,8 +140,8 @@ describe Puppet::FileServing::Metadata do
           end
         end
 
-        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-          validate_json_for_file_metadata(metadata)
+        it "should validate against the schema" do
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
       end
 
@@ -179,11 +165,51 @@ describe Puppet::FileServing::Metadata do
           metadata.checksum.should == "{ctime}#{time}"
         end
 
-        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
+        it "should validate against the schema" do
           metadata.collect
-          validate_json_for_file_metadata(metadata)
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
       end
+    end
+  end
+
+  describe "WindowsStat", :if => Puppet.features.microsoft_windows? do
+    include PuppetSpec::Files
+
+    it "should return default owner, group and mode when the given path has an invalid DACL (such as a non-NTFS volume)" do
+      invalid_error = Puppet::Util::Windows::Error.new('Invalid DACL', 1336)
+      path = tmpfile('foo')
+      FileUtils.touch(path)
+
+      Puppet::Util::Windows::Security.stubs(:get_owner).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_group).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_mode).with(path).raises(invalid_error)
+
+      stat = Puppet::FileSystem.stat(path)
+
+      win_stat = Puppet::FileServing::Metadata::WindowsStat.new(stat, path)
+
+      win_stat.owner.should == 'S-1-5-32-544'
+      win_stat.group.should == 'S-1-0-0'
+      win_stat.mode.should == 0644
+    end
+
+    it "should still raise errors that are not the result of an 'Invalid DACL'" do
+      invalid_error = ArgumentError.new('bar')
+      path = tmpfile('bar')
+      FileUtils.touch(path)
+
+      Puppet::Util::Windows::Security.stubs(:get_owner).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_group).with(path).raises(invalid_error)
+      Puppet::Util::Windows::Security.stubs(:get_mode).with(path).raises(invalid_error)
+
+      stat = Puppet::FileSystem.stat(path)
+
+      win_stat = Puppet::FileServing::Metadata::WindowsStat.new(stat, path)
+
+      expect { win_stat.owner }.to raise_error(ArgumentError)
+      expect { win_stat.group }.to raise_error(ArgumentError)
+      expect { win_stat.mode }.to raise_error(ArgumentError)
     end
   end
 
@@ -201,21 +227,21 @@ describe Puppet::FileServing::Metadata do
         let(:path) { tmpfile('file_serving_metadata_link') }
         let(:target) { tmpfile('file_serving_metadata_target') }
         let(:checksum) { Digest::MD5.hexdigest("some content\n") }
-        let(:fmode) { Puppet::FileSystem::File.new(path).lstat.mode & 0777 }
+        let(:fmode) { Puppet::FileSystem.lstat(path).mode & 0777 }
 
         before :each do
           File.open(target, "wb") {|f| f.print("some content\n")}
           set_mode(0644, target)
 
-          Puppet::FileSystem::File.new(target).symlink(path)
+          Puppet::FileSystem.symlink(target, path)
         end
 
         it "should read links instead of returning their checksums" do
           metadata.destination.should == target
         end
 
-        it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-          validate_json_for_file_metadata(metadata)
+        it "should validate against the schema" do
+          expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
         end
       end
     end
@@ -248,8 +274,8 @@ describe Puppet::FileServing::Metadata do
         proc { metadata.collect}.should raise_error(Errno::ENOENT)
       end
 
-      it "should validate against the schema", :unless => Puppet.features.microsoft_windows? do
-        validate_json_for_file_metadata(metadata)
+      it "should validate against the schema" do
+        expect(metadata.to_pson).to validate_against('api/schemas/file_metadata.json')
       end
     end
   end
@@ -291,6 +317,9 @@ describe Puppet::FileServing::Metadata do
         data.collect
         data
       end
+      let (:invalid_dacl_error) do
+        Puppet::Util::Windows::Error.new('Invalid DACL', 1336)
+      end
 
       it "should default owner" do
         Puppet::Util::Windows::Security.stubs(:get_owner).returns nil
@@ -309,6 +338,28 @@ describe Puppet::FileServing::Metadata do
 
         metadata.mode.should == 0644
       end
+
+      describe "when the path raises an Invalid ACL error" do
+        # these simulate the behavior of a symlink file whose target does not support ACLs
+        it "should default owner" do
+          Puppet::Util::Windows::Security.stubs(:get_owner).raises(invalid_dacl_error)
+
+          metadata.owner.should == 'S-1-5-32-544'
+        end
+
+        it "should default group" do
+          Puppet::Util::Windows::Security.stubs(:get_group).raises(invalid_dacl_error)
+
+          metadata.group.should == 'S-1-0-0'
+        end
+
+        it "should default mode" do
+          Puppet::Util::Windows::Security.stubs(:get_mode).raises(invalid_dacl_error)
+
+          metadata.mode.should == 0644
+        end
+      end
+
     end
 
     def set_mode(mode, path)
@@ -325,7 +376,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
       @file = Puppet::FileServing::Metadata.new(path, :links => :manage)
       stat = stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
       stub_file = stub(:readlink => "/some/other/path", :lstat => stat)
-      Puppet::FileSystem::File.expects(:new).with(path).at_least_once.returns stub_file
+      Puppet::FileSystem.expects(:lstat).with(path).at_least_once.returns stat
+      Puppet::FileSystem.expects(:readlink).with(path).at_least_once.returns "/some/other/path"
       @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
       @file.stubs(:md5_file).returns(@checksum)           #
 
@@ -356,9 +408,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
       path = "/base/path/my/file"
       @file = Puppet::FileServing::Metadata.new(path, :links => :follow)
       stat = stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
-      mocked_file = mock(path, :stat => stat)
-      Puppet::FileSystem::File.expects(:new).with(path).at_least_once.returns mocked_file
-      mocked_file.expects(:readlink).never
+      Puppet::FileSystem.expects(:stat).with(path).at_least_once.returns stat
+      Puppet::FileSystem.expects(:readlink).never
 
       if Puppet.features.microsoft_windows?
         win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',

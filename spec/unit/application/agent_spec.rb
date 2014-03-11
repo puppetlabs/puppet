@@ -33,6 +33,8 @@ describe Puppet::Application::Agent do
     Puppet::Node::Facts.indirection.stubs(:terminus_class=)
 
     $stderr.expects(:puts).never
+
+    Puppet.settings.stubs(:use)
   end
 
   it "should operate in agent run_mode" do
@@ -198,7 +200,6 @@ describe Puppet::Application::Agent do
   describe "during setup" do
     before :each do
       Puppet.stubs(:info)
-      Puppet::FileSystem::File.stubs(:exist?).returns(true)
       Puppet[:libdir] = "/dev/null/lib"
       Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
       Puppet::Transaction::Report.indirection.stubs(:cache_class=)
@@ -291,6 +292,7 @@ describe Puppet::Application::Agent do
     end
 
     it "should use :main, :puppetd, and :ssl" do
+      Puppet.settings.unstub(:use)
       Puppet.settings.expects(:use).with(:main, :agent, :ssl)
 
       @puppetd.setup
@@ -449,8 +451,7 @@ describe Puppet::Application::Agent do
 
     describe "when setting up listen" do
       before :each do
-        Puppet::FileSystem::File.stubs(:exist?).with('auth').returns(true)
-        Puppet::FileSystem::File.stubs(:exist?).returns(true)
+        Puppet::FileSystem.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(true)
         @puppetd.options[:serve] = []
         @server = stub_everything 'server'
         Puppet::Network::Server.stubs(:new).returns(@server)
@@ -460,7 +461,7 @@ describe Puppet::Application::Agent do
       it "should exit if no authorization file" do
         Puppet[:listen] = true
         Puppet.stubs(:err)
-        Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(false)
+        Puppet::FileSystem.stubs(:exist?).with(Puppet[:rest_authconfig]).returns(false)
 
         expect do
           execute_agent

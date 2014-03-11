@@ -74,8 +74,8 @@ describe Puppet::Type.type(:zone) do
     relationship_graph.populate_from(catalog)
     relationship_graph.dependencies(zone).should == [zfs]
   end
-  describe StateMachine do
-    let (:sm) { StateMachine.new }
+  describe Puppet::Zone::StateMachine do
+    let (:sm) { Puppet::Zone::StateMachine.new }
     before :each do
       sm.insert_state :absent, :down => :destroy
       sm.insert_state :configured, :up => :configure, :down => :uninstall

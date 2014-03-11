@@ -6,12 +6,12 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
   # Read a given name's file in and convert it from YAML.
   def find(request)
     file = path(request.key)
-    return nil unless Puppet::FileSystem::File.exist?(file)
+    return nil unless Puppet::FileSystem.exist?(file)
 
     begin
-      return Puppet::Util::Yaml.load_file(file)
+      return fix(Puppet::Util::Yaml.load_file(file))
     rescue Puppet::Util::Yaml::YamlLoadError => detail
-      raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"
+      raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}", detail.backtrace
     end
   end
 
@@ -24,7 +24,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     basedir = File.dirname(file)
 
     # This is quite likely a bad idea, since we're not managing ownership or modes.
-    Dir.mkdir(basedir) unless Puppet::FileSystem::File.exist?(basedir)
+    Dir.mkdir(basedir) unless Puppet::FileSystem.exist?(basedir)
 
     begin
       Puppet::Util::Yaml.dump(request.instance, file)
@@ -46,22 +46,18 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
   def destroy(request)
     file_path = path(request.key)
-    Puppet::FileSystem::File.unlink(file_path) if Puppet::FileSystem::File.exist?(file_path)
+    Puppet::FileSystem.unlink(file_path) if Puppet::FileSystem.exist?(file_path)
   end
 
   def search(request)
     Dir.glob(path(request.key,'')).collect do |file|
-      YAML.load_file(file)
+      fix(Puppet::Util::Yaml.load_file(file))
     end
   end
 
-  private
+  protected
 
-  def from_yaml(text)
-    YAML.load(text)
-  end
-
-  def to_yaml(object)
-    YAML.dump(object)
+  def fix(object)
+    object
   end
 end

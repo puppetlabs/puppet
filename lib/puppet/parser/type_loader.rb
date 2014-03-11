@@ -5,7 +5,6 @@ require 'puppet/parser/parser_factory'
 
 class Puppet::Parser::TypeLoader
   extend  Forwardable
-  include Puppet::Node::Environment::Helper
 
   # Import manifest files that match a given file glob pattern.
   #
@@ -48,6 +47,18 @@ class Puppet::Parser::TypeLoader
 
   def initialize(env)
     self.environment = env
+  end
+
+  def environment
+    @environment
+  end
+
+  def environment=(env)
+    if env.is_a?(String) or env.is_a?(Symbol)
+      @environment = Puppet.lookup(:environments).get(env)
+    else
+      @environment = env
+    end
   end
 
   # Try to load the object with the given fully qualified name.
@@ -101,7 +112,7 @@ class Puppet::Parser::TypeLoader
       # The use case is that parsing for the purpose of searching for information
       # should not abort. There is currently one such use case in indirector/resourcetype/parser
       #
-      if $squelsh_parse_errors
+    if Puppet.lookup(:squelch_parse_errors) {|| false }
         begin
           loaded_asts << parse_file(file)
         rescue => e

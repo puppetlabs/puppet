@@ -128,7 +128,7 @@ module SymbolicFileMode
           rest = ''
         end
 
-        raise Puppet::Error, "#{e}#{rest} in symbolic mode #{modification.inspect}"
+        raise Puppet::Error, "#{e}#{rest} in symbolic mode #{modification.inspect}", e.backtrace
       end
     end
 

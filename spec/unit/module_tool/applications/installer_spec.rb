@@ -3,22 +3,28 @@ require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 require 'semver'
 
-describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features.microsoft_windows? do
+describe Puppet::ModuleTool::Applications::Installer do
   include PuppetSpec::Files
-
-  before do
-    FileUtils.mkdir_p(modpath1)
-    fake_env.modulepath = [modpath1]
-    FileUtils.touch(stdlib_pkg)
-    Puppet.settings[:modulepath] = modpath1
-  end
 
   let(:unpacker)        { stub(:run) }
   let(:installer_class) { Puppet::ModuleTool::Applications::Installer }
-  let(:modpath1)        { File.join(tmpdir("installer"), "modpath1") }
-  let(:stdlib_pkg)      { File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz") }
-  let(:fake_env)        { Puppet::Node::Environment.new('fake_env') }
-  let(:options)         { { :target_dir => modpath1 } }
+  let(:modpath1) do
+    path = File.join(tmpdir("installer"), "modpath1")
+    FileUtils.mkdir_p(path)
+    path
+  end
+  let(:stdlib_pkg) do
+    mod = File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz")
+    FileUtils.touch(mod)
+    mod
+  end
+  let(:env)             { Puppet::Node::Environment.create(:env, [modpath1], '') }
+  let(:options)         do
+    {
+      :target_dir => modpath1,
+      :environment_instance => env,
+    }
+  end
 
   let(:forge) do
     forge = mock("Puppet::Forge")
@@ -217,7 +223,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       end
 
       it "should install requested module if the '--force' flag is used" do
-        options = { :force => true, :target_dir => modpath1 }
+        options.merge!(:force => true)
         Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
           returns(unpacker)
@@ -226,7 +232,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       end
 
       it "should not install dependencies if the '--force' flag is used" do
-        options = { :force => true, :target_dir => modpath1 }
+        options.merge!(:force => true)
         Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
           returns(unpacker)
@@ -236,7 +242,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       end
 
       it "should not install dependencies if the '--ignore-dependencies' flag is used" do
-        options = { :ignore_dependencies => true, :target_dir => modpath1 }
+        options.merge!(:ignore_dependencies => true)
         Puppet::ModuleTool::Applications::Unpacker.expects(:new).
           with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
           returns(unpacker)
@@ -246,7 +252,7 @@ describe Puppet::ModuleTool::Applications::Installer, :unless => Puppet.features
       end
 
       it "should set an error if dependencies can't be resolved" do
-        options = { :version => '0.0.1', :target_dir => modpath1 }
+        options.merge!(:version => '0.0.1')
         oneline = "'pmtacceptance-apollo' (v0.0.1) requested; Invalid dependency cycle"
         multiline = <<-MSG.strip
 Could not install module 'pmtacceptance-apollo' (v0.0.1)
@@ -261,6 +267,37 @@ MSG
         results[:result].should == :failure
         results[:error][:oneline].should == oneline
         results[:error][:multiline].should == multiline
+      end
+
+      it "resolves conflicts for each dependency only once" do
+        Puppet::Log.level = :debug
+
+        installed_modules = [
+          Puppet::Module.new('ntp', File.join(modpath1, 'ntp'), env.name),
+          Puppet::Module.new('mysql', File.join(modpath1, 'mysql'), env.name),
+          Puppet::Module.new('apache', File.join(modpath1, 'apache'), env.name)
+        ]
+
+        env.stubs(:modules_by_path).returns({modpath1 => installed_modules})
+
+        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+          with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
+          returns(unpacker)
+        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+          with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options).
+          returns(unpacker)
+        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
+          with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
+          returns(unpacker)
+
+        installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
+
+        modules = @logs.map do |log|
+          data = log.message.match(/Resolving conflicts for (.*)/)
+          data ? data[1] : nil
+        end.compact
+
+        expect(modules).to eq(["pmtacceptance-apollo", "pmtacceptance-java,pmtacceptance-stdlib"])
       end
     end
 

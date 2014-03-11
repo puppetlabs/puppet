@@ -14,9 +14,9 @@ describe Puppet::SSL::CertificateFactory do
     csr
   end
   let :issuer do
-    cert = OpenSSL::X509::Certificate.new
-    cert.subject = OpenSSL::X509::Name.new([["CN", 'issuer.local']])
-    cert
+    cert = Puppet::SSL::CertificateAuthority.new
+    cert.generate_ca_certificate
+    cert.host.certificate.content
   end
 
   describe "when generating the certificate" do
@@ -76,12 +76,27 @@ describe Puppet::SSL::CertificateFactory do
       cert.not_after.to_i.should == now.to_i + 12
     end
 
-    it "should build extensions for the certificate" do
+    it "should adds an extension for the nsComment" do
       cert = subject.build(:server, csr, issuer, serial)
       cert.extensions.map {|x| x.to_h }.find {|x| x["oid"] == "nsComment" }.should ==
         { "oid"      => "nsComment",
           "value"    => "Puppet Ruby/OpenSSL Internal Certificate",
           "critical" => false }
+    end
+
+    it "should add an extension for the subjectKeyIdentifer" do
+      cert = subject.build(:server, csr, issuer, serial)
+      ef = OpenSSL::X509::ExtensionFactory.new(issuer, cert)
+      cert.extensions.map { |x| x.to_h }.find {|x| x["oid"] == "subjectKeyIdentifier" }.should ==
+        ef.create_extension("subjectKeyIdentifier", "hash", false).to_h
+    end
+
+
+    it "should add an extension for the authorityKeyIdentifer" do
+      cert = subject.build(:server, csr, issuer, serial)
+      ef = OpenSSL::X509::ExtensionFactory.new(issuer, cert)
+      cert.extensions.map { |x| x.to_h }.find {|x| x["oid"] == "authorityKeyIdentifier" }.should ==
+        ef.create_extension("authorityKeyIdentifier", "keyid:always", false).to_h
     end
 
     # See #2848 for why we are doing this: we need to make sure that

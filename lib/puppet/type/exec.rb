@@ -117,7 +117,7 @@ module Puppet
             end
           end
         rescue Timeout::Error
-          self.fail "Command exceeded timeout" % value.inspect
+          self.fail Puppet::Error, "Command exceeded timeout", $!
         end
 
         if log = @resource[:logoutput]
@@ -207,8 +207,8 @@ module Puppet
       desc "Whether to log command output in addition to logging the
         exit code.  Defaults to `on_failure`, which only logs the output
         when the command has an exit code that does not match any value
-        specified by the `returns` attribute.  In addition to the values
-        below, you may set this attribute to any legal log level."
+        specified by the `returns` attribute. As with any resource type,
+        the log level can be controlled with the `loglevel` metaparameter."
 
       defaultto :on_failure
 
@@ -265,7 +265,7 @@ module Puppet
         begin
           value = Float(value)
         rescue ArgumentError
-          raise ArgumentError, "The timeout must be a number."
+          raise ArgumentError, "The timeout must be a number.", $!.backtrace
         end
         [value, 0.0].max
       end
@@ -375,7 +375,7 @@ module Puppet
       # If the file exists, return false (i.e., don't run the command),
       # else return true
       def check(value)
-        ! Puppet::FileSystem::File.exist?(value)
+        ! Puppet::FileSystem.exist?(value)
       end
     end
 

@@ -4,22 +4,27 @@ Puppet::Parser::Functions::newfunction(
 :arity => -2,
 :doc => <<-'ENDHEREDOC') do |args|
   Applies a parameterized block to each element in a sequence of entries from the first
-  argument (_the collection_) and returns the last result of the invocation of the parameterized block.
+  argument (_the enumerable_) and returns the last result of the invocation of the parameterized block.
 
-  This function takes two mandatory arguments: the first should be an Array or a Hash, and the last
-  a parameterized block as produced by the puppet syntax:
+  This function takes two mandatory arguments: the first should be an Array, Hash, or something of
+  enumerable type, and the last a parameterized block as produced by the puppet syntax:
 
         $a.reduce |$memo, $x| { ... }
+        reduce($a) |$memo, $x| { ... }
 
-  When the first argument is an Array, the block is called with each entry in turn. When the first argument
-  is a hash each entry is converted to an array with `[key, value]` before being fed to the block. An optional
-  'start memo' value may be supplied as an argument between the array/hash and mandatory block.
+  When the first argument is an Array or someting of an enumerable type, the block is called with each entry in turn.
+  When the first argument is a hash each entry is converted to an array with `[key, value]` before being
+  fed to the block. An optional 'start memo' value may be supplied as an argument between the array/hash
+  and mandatory block.
+
+        $a.reduce(start) |$memo, $x| { ... }
+        reduce($a, start) |$memo, $x| { ... }
 
   If no 'start memo' is given, the first invocation of the parameterized block will be given the first and second
-  elements of the collection, and if the collection has fewer than 2 elements, the first
+  elements of the enumeration, and if the enumerable has fewer than 2 elements, the first
   element is produced as the result of the reduction without invocation of the block.
 
-  On each subsequent invocations, the produced value of the invoked parameterized block is given as the memo in the
+  On each subsequent invocation, the produced value of the invoked parameterized block is given as the memo in the
   next invocation.
 
   *Examples*
@@ -33,6 +38,10 @@ Puppet::Parser::Functions::newfunction(
         $a = {a => 1, b => 2, c => 3}
         $a.reduce |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
         #=> [sum, 6]
+
+        # reverse a string
+        "abc".reduce |$memo, $char| { "$char$memo" }
+        #=>"cbe"
 
   It is possible to provide a starting 'memo' as an argument.
 
@@ -48,29 +57,44 @@ Puppet::Parser::Functions::newfunction(
         $a.reduce([na, 4]) |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
         #=> [sum, 10]
 
-  - Since 3.2
+  *Examples*
+
+        Integer[1,4].reduce |$memo, $x| { $memo + $x }
+        #=> 10
+
+  - Since 3.2 for Array and Hash
+  - Since 3.5 for additional enumerable types
   - requires `parser = future`.
   ENDHEREDOC
 
   require 'puppet/parser/ast/lambda'
+
   case args.length
   when 2
     pblock = args[1]
   when 3
     pblock = args[2]
   else
-    raise ArgumentError, ("reduce(): wrong number of arguments (#{args.length}; must be 2 or 3)")
+    raise ArgumentError, ("reduce(): wrong number of arguments (#{args.length}; expected 2 or 3, got #{args.length})")
   end
-  unless pblock.is_a? Puppet::Parser::AST::Lambda
-    raise ArgumentError, ("reduce(): wrong argument type (#{args[1].class}; must be a parameterized block.")
+  unless pblock.respond_to?(:puppet_lambda)
+    raise ArgumentError, ("reduce(): wrong argument type (#{pblock.class}; must be a parameterized block.")
   end
   receiver = args[0]
-  unless [Array, Hash].include?(receiver.class)
-    raise ArgumentError, ("collect(): wrong argument type (#{args[0].class}; must be an Array or a Hash.")
+  enum = Puppet::Pops::Types::Enumeration.enumerator(receiver)
+  unless enum
+    raise ArgumentError, ("reduce(): wrong argument type (#{receiver.class}; must be something enumerable.")
   end
+
+  serving_size = pblock.parameter_count
+  if serving_size != 2
+    raise ArgumentError, "reduce(): block must define 2 parameters; memo, value. Block has #{serving_size}; "+
+    pblock.parameter_names.join(', ')
+  end
+
   if args.length == 3
-    receiver.reduce(args[1]) {|memo, x| pblock.call(self, memo, x) }
+    enum.reduce(args[1]) {|memo, x| pblock.call(self, memo, x) }
   else
-    receiver.reduce {|memo, x| pblock.call(self, memo, x) }
+    enum.reduce {|memo, x| pblock.call(self, memo, x) }
   end
 end

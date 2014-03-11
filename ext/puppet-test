@@ -18,7 +18,7 @@
 #
 # = Options
 #
-# Note that any configuration parameter that's valid in the configuration file
+# Note that any setting that's valid in the configuration file
 # is also a valid long argument.  For example, 'server' is a valid configuration
 # parameter, so you can specify '--server <servername>' as an argument.
 #
@@ -241,7 +241,7 @@ Suite.new :resource_type, "Managing resource types" do
         ARGV.each do |name|
             json = Puppet::Resource::Type.find(name).to_pson
             data = PSON.parse(json)
-            p Puppet::Resource::Type.from_pson(data)
+            p Puppet::Resource::Type.from_data_hash(data)
         end
     end
 
@@ -474,7 +474,7 @@ begin
     explicit_waitforcert = false
     result.each { |opt,arg|
         case opt
-            # First check to see if the argument is a valid configuration parameter;
+            # First check to see if the argument is a valid setting;
             # if so, set it.
             when "--compile"
                 $options[:suite] = :configuration

@@ -17,7 +17,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def initialize(env)
-    @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
+    @environment = env
     @hostclasses = {}
     @definitions = {}
     @nodes = {}
@@ -148,7 +148,7 @@ class Puppet::Resource::TypeCollection
 
     @version
   rescue Puppet::ExecutionFailure => e
-    raise Puppet::ParseError, "Execution of config_version command `#{environment[:config_version]}` failed: #{e.message}"
+    raise Puppet::ParseError, "Execution of config_version command `#{environment[:config_version]}` failed: #{e.message}", e.backtrace
   end
 
   def watch_file(filename)

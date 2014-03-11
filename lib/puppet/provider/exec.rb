@@ -63,7 +63,7 @@ class Puppet::Provider::Exec < Puppet::Provider
 
       end
     rescue Errno::ENOENT => detail
-      self.fail detail.to_s
+      self.fail Puppet::Error, detail.to_s, detail
     end
 
     # Return output twice as processstatus was returned before, but only exitstatus was ever called.

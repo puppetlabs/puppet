@@ -24,6 +24,7 @@ class Puppet::Pops::Parser::Parser
   include Puppet::Resource::TypeCollectionHelper
 
   attr_accessor :lexer
+  attr_reader :definitions
 
   # Returns the token text of the given lexer token, or nil, if token is nil
   def token_text t
@@ -42,28 +43,28 @@ class Puppet::Pops::Parser::Parser
   # before evaluation-time.
   #
   def classname(name)
-    [@lexer.namespace, name].join("::").sub(/^::/, '')
+    [namespace, name].join("::").sub(/^::/, '')
   end
 
-  # Reinitializes variables (i.e. creates a new lexer instance
-  #
-  def clear
-    initvars
-  end
+#  # Reinitializes variables (i.e. creates a new lexer instance
+#  #
+#  def clear
+#    initvars
+#  end
 
   # Raises a Parse error.
-  def error(message, options = {})
+  def error(value, message, options = {})
     except = Puppet::ParseError.new(message)
-    except.line = options[:line] || @lexer.line
-    except.file = options[:file] || @lexer.file
-    except.pos = options[:pos]   || @lexer.pos
+    except.line = options[:line] || value[:line]
+    except.file = options[:file] || value[:file] # @lexer.file
+    except.pos = options[:pos]   || value[:pos] # @lexer.pos
 
     raise except
   end
 
   # Parses a file expected to contain pp DSL logic.
   def parse_file(file)
-    unless Puppet::FileSystem::File.exist?(file)
+    unless Puppet::FileSystem.exist?(file)
       unless file =~ /\.pp$/
         file = file + ".pp"
       end
@@ -77,15 +78,16 @@ class Puppet::Pops::Parser::Parser
     # and there is no syntax that requires knowing if something referenced exists, it is safe
     # to assume that no environment is needed when parsing. (All that comes later).
     #
-    initvars
+    @lexer = Puppet::Pops::Parser::Lexer2.new
+    @namestack = []
+    @definitions = []
   end
 
-  # Initializes the parser support by creating a new instance of {Puppet::Pops::Parser::Lexer}
-  # @return [void]
-  #
-  def initvars
-    @lexer = Puppet::Pops::Parser::Lexer.new
-  end
+#  # Initializes the parser support by creating a new instance of {Puppet::Pops::Parser::Lexer}
+#  # @return [void]
+#  #
+#  def initvars
+#  end
 
   # This is a callback from the generated grammar (when an error occurs while parsing)
   # TODO Picks up origin information from the lexer, probably needs this from the caller instead
@@ -93,26 +95,36 @@ class Puppet::Pops::Parser::Parser
   #
   def on_error(token,value,stack)
     if token == 0 # denotes end of file
-      value = 'end of file'
+      value_at = 'end of file'
     else
-      value = "'#{value[:value]}'"
+      value_at = "'#{value[:value]}'"
     end
-    error = "Syntax error at #{value}"
+    error = "Syntax error at #{value_at}"
 
     # The 'expected' is only of value at end of input, otherwise any parse error involving a
-    # start of a pair will be reported as expecting the close of the pair - e.g. "$x.each |$x {", would
+    # start of a pair will be reported as expecting the close of the pair - e.g. "$x.each |$x {|", would
     # report that "seeing the '{', the '}' is expected. That would be wrong.
     # Real "expected" tokens are very difficult to compute (would require parsing of racc output data). Output of the stack
     # could help, but can require extensive backtracking and produce many options.
     #
-    if token == 0 && brace = @lexer.expected
-      error += "; expected '#{brace}'"
-    end
+    # The lexer should handle the "expected instead of end of file for strings, and interpolation", other expectancies
+    # must be handled by the grammar. The lexer may have enqueued tokens far ahead - the lexer's opinion about this
+    # is not trustworthy.
+    #
+#    if token == 0 && brace = @lexer.expected
+#      error += "; expected '#{brace}'"
+#    end
 
     except = Puppet::ParseError.new(error)
-    except.line = @lexer.line
-    except.file = @lexer.file if @lexer.file
-    except.pos  = @lexer.pos
+    if token != 0
+      path        = value[:file]
+      except.line = value[:line]
+      except.pos  = value[:pos]
+    else
+      # At end of input, use what the lexer thinks is the source file
+      path        = lexer.file
+    end
+    except.file = path if path.is_a?(String) && !path.empty?
 
     raise except
   end
@@ -130,8 +142,12 @@ class Puppet::Pops::Parser::Parser
   # @return [Puppet::Pops::Model::Factory] the given factory
   # @api private
   #
-  def loc(factory, start_token, end_token = nil)
-    factory.record_position(sourcepos(start_token), sourcepos(end_token))
+  def loc(factory, start_locateable, end_locateable = nil)
+    factory.record_position(start_locateable, end_locateable)
+  end
+
+  def heredoc_loc(factory, start_locateabke, end_locateable = nil)
+    factory.record_heredoc_position(start_locatable, end_locatable)
   end
 
   # Associate documentation with the factory wrapped model object.
@@ -141,26 +157,26 @@ class Puppet::Pops::Parser::Parser
     factory.doc = doc_string
   end
 
-  def sourcepos(o)
-    if !o
-      Puppet::Pops::Adapters::SourcePosAdapter.new
-    elsif o.is_a? Puppet::Pops::Model::Factory
-      # It is a built model element with loc set returns start at pos 0
-      o.loc
-    else
-      loc = Puppet::Pops::Adapters::SourcePosAdapter.new
-      # It must be a token
-      loc.line = o[:line]
-      loc.pos = o[:pos]
-      loc.offset = o[:offset]
-      loc.length = o[:length]
-      loc
-    end
-  end
-
   def aryfy(o)
     o = [o] unless o.is_a?(Array)
     o
+  end
+
+  def namespace
+    @namestack.join('::')
+  end
+
+  def namestack(name)
+    @namestack << name
+  end
+
+  def namepop()
+    @namestack.pop
+  end
+
+  def add_definition(definition)
+    @definitions << definition.current
+    definition
   end
 
   # Transforms an array of expressions containing literal name expressions to calls if followed by an
@@ -168,6 +184,17 @@ class Puppet::Pops::Parser::Parser
   #
   def transform_calls(expressions)
     Factory.transform_calls(expressions)
+  end
+
+  # Transforms a LEFT followed by the result of attribute_operations, this may be a call or an invalid sequence
+  def transform_resource_wo_title(left, resource)
+    Factory.transform_resource_wo_title(left, resource)
+  end
+
+  # If there are definitions that require initialization a Program is produced, else the body
+  def create_program(body)
+    locator = @lexer.locator
+    Factory.PROGRAM(body, definitions, locator)
   end
 
   # Performs the parsing and returns the resulting model.
@@ -194,10 +221,11 @@ class Puppet::Pops::Parser::Parser
       #      rescue => except
       #        raise Puppet::ParseError.new(except.message, @lexer.file, @lexer.line, @lexer.pos, except)
     end
-    main.record_origin(@lexer.file) if main
     return main
   ensure
     @lexer.clear
+    @namestack = []
+    @definitions = []
   end
 
 end

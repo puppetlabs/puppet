@@ -1,3 +1,8 @@
+require 'open-uri'
+
+require 'puppet/module_tool'
+require 'puppet/module_tool/errors'
+
 module Puppet::ModuleTool::Shared
 
   include Puppet::ModuleTool::Errors
@@ -151,7 +156,7 @@ module Puppet::ModuleTool::Shared
           cache_path = forge.retrieve(release[:file])
         end
       rescue OpenURI::HTTPError => e
-        raise RuntimeError, "Could not download module: #{e.message}"
+        raise RuntimeError, "Could not download module: #{e.message}", e.backtrace
       end
 
       [

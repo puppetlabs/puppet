@@ -5,7 +5,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   desc "User management via `pw` on FreeBSD and DragonFly BSD."
 
   commands :pw => "pw"
-  has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry
+  has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry, :manages_shell
 
   defaultfor :operatingsystem => [:freebsd, :dragonfly]
 

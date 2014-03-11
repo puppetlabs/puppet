@@ -28,10 +28,9 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     Puppet.settings[:modulepath] = "/no/such/file"
 
-    env = Puppet::Node::Environment.new("foo")
-    env.stubs(:modulepath).returns [path]
+    env = Puppet::Node::Environment.create(:foo, [path], '')
 
-    result = Puppet::FileServing::Content.indirection.search("plugins", :environment => "foo", :recurse => true)
+    result = Puppet::FileServing::Content.indirection.search("plugins", :environment => env, :recurse => true)
 
     result.should_not be_nil
     result.length.should == 2
@@ -59,8 +58,8 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
   end
 
   it "should find file content in files when node name expansions are used" do
-    Puppet::FileSystem::File.stubs(:exist?).returns true
-    Puppet::FileSystem::File.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
+    Puppet::FileSystem.stubs(:exist?).returns true
+    Puppet::FileSystem.stubs(:exist?).with(Puppet[:fileserverconfig]).returns(true)
 
     @path = tmpfile("file_server_testing")
 

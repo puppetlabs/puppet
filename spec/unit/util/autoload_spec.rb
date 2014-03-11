@@ -24,40 +24,25 @@ describe Puppet::Util::Autoload do
     end
 
     it "should collect all of the lib directories that exist in the current environment's module path" do
-      Puppet[:environment] = "foo"
-      Puppet.settings.set_value(:modulepath, "#{@dira}#{File::PATH_SEPARATOR}#{@dirb}#{File::PATH_SEPARATOR}#{@dirc}", :foo)
-      Dir.expects(:entries).with(@dira).returns %w{one two}
-      Dir.expects(:entries).with(@dirb).returns %w{one two}
+      environment = Puppet::Node::Environment.create(:foo, [@dira, @dirb, @dirc], '')
+      Dir.expects(:entries).with(@dira).returns %w{. .. one two}
+      Dir.expects(:entries).with(@dirb).returns %w{. .. one two}
 
-      FileTest.stubs(:directory?).returns false
-      FileTest.expects(:directory?).with(@dira).returns true
-      FileTest.expects(:directory?).with(@dirb).returns true
-      ["#{@dira}/two/lib", "#{@dirb}/two/lib"].each do |d|
-        FileTest.expects(:directory?).with(d).returns true
-      end
+      Puppet::FileSystem.expects(:directory?).with(@dira).returns true
+      Puppet::FileSystem.expects(:directory?).with(@dirb).returns true
+      Puppet::FileSystem.expects(:directory?).with(@dirc).returns false
 
-      @autoload.class.module_directories.should == ["#{@dira}/two/lib", "#{@dirb}/two/lib"]
-    end
+      FileTest.expects(:directory?).with(regexp_matches(%r{two/lib})).times(2).returns true
+      FileTest.expects(:directory?).with(regexp_matches(%r{one/lib})).times(2).returns false
 
-    it "should not look for lib directories in directories starting with '.'" do
-      Puppet[:environment] = "foo"
-      Puppet.settings.set_value(:modulepath, @dira, :foo)
-      Dir.expects(:entries).with(@dira).returns %w{. ..}
-
-      FileTest.expects(:directory?).with(@dira).returns true
-      FileTest.expects(:directory?).with("#{@dira}/./lib").never
-      FileTest.expects(:directory?).with("#{@dira}/./plugins").never
-      FileTest.expects(:directory?).with("#{@dira}/../lib").never
-      FileTest.expects(:directory?).with("#{@dira}/../plugins").never
-
-      @autoload.class.module_directories
+      @autoload.class.module_directories(environment).should == ["#{@dira}/two/lib", "#{@dirb}/two/lib"]
     end
 
     it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
       Puppet[:libdir] = %w{/libdir1 /lib/dir/two /third/lib/dir}.join(File::PATH_SEPARATOR)
       @autoload.class.expects(:gem_directories).returns %w{/one /two}
       @autoload.class.expects(:module_directories).returns %w{/three /four}
-      @autoload.class.search_directories.should == %w{/one /two /three /four} + Puppet[:libdir].split(File::PATH_SEPARATOR) + $LOAD_PATH
+      @autoload.class.search_directories(nil).should == %w{/one /two /three /four} + Puppet[:libdir].split(File::PATH_SEPARATOR) + $LOAD_PATH
     end
   end
 
@@ -71,7 +56,7 @@ describe Puppet::Util::Autoload do
 
     [RuntimeError, LoadError, SyntaxError].each do |error|
       it "should die with Puppet::Error if a #{error.to_s} exception is thrown" do
-        Puppet::FileSystem::File.stubs(:exist?).returns true
+        Puppet::FileSystem.stubs(:exist?).returns true
 
         Kernel.expects(:load).raises error
 
@@ -84,7 +69,7 @@ describe Puppet::Util::Autoload do
     end
 
     it "should register loaded files with the autoloader" do
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
       @autoload.load("myfile")
 
@@ -94,7 +79,7 @@ describe Puppet::Util::Autoload do
     end
 
     it "should be seen by loaded? on the instance using the short name" do
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
       @autoload.load("myfile")
 
@@ -104,7 +89,7 @@ describe Puppet::Util::Autoload do
     end
 
     it "should register loaded files with the main loaded file list so they are not reloaded by ruby" do
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
 
       @autoload.load("myfile")
@@ -117,7 +102,7 @@ describe Puppet::Util::Autoload do
     it "should load the first file in the searchpath" do
       @autoload.stubs(:search_directories).returns [make_absolute("/a"), make_absolute("/b")]
       FileTest.stubs(:directory?).returns true
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.expects(:load).with(make_absolute("/a/tmp/myfile.rb"), optionally(anything))
 
       @autoload.load("myfile")
@@ -126,7 +111,7 @@ describe Puppet::Util::Autoload do
     end
 
     it "should treat equivalent paths to a loaded file as loaded" do
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
       @autoload.load("myfile")
 
@@ -144,7 +129,7 @@ describe Puppet::Util::Autoload do
       @autoload.class.stubs(:search_directories).returns [make_absolute("/a")]
       FileTest.stubs(:directory?).returns true
       Dir.stubs(:glob).returns [make_absolute("/a/foo/file.rb")]
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
       @time_a = Time.utc(2010, 'jan', 1, 6, 30)
       File.stubs(:mtime).returns @time_a
 
@@ -185,7 +170,7 @@ describe Puppet::Util::Autoload do
 
     it "changes should be seen by changed? on the instance using the short name" do
       File.stubs(:mtime).returns(@first_time)
-      Puppet::FileSystem::File.stubs(:exist?).returns true
+      Puppet::FileSystem.stubs(:exist?).returns true
       Kernel.stubs(:load)
       @autoload.load("myfile")
       @autoload.loaded?("myfile").should be
@@ -206,14 +191,14 @@ describe Puppet::Util::Autoload do
 
       it "should reload if mtime changes" do
         File.stubs(:mtime).with(@file_a).returns(@first_time + 60)
-        Puppet::FileSystem::File.stubs(:exist?).with(@file_a).returns true
+        Puppet::FileSystem.stubs(:exist?).with(@file_a).returns true
         Kernel.expects(:load).with(@file_a, optionally(anything))
         @autoload.class.reload_changed
       end
 
       it "should do nothing if the file is deleted" do
         File.stubs(:mtime).with(@file_a).raises(Errno::ENOENT)
-        Puppet::FileSystem::File.stubs(:exist?).with(@file_a).returns false
+        Puppet::FileSystem.stubs(:exist?).with(@file_a).returns false
         Kernel.expects(:load).never
         @autoload.class.reload_changed
       end
@@ -228,8 +213,8 @@ describe Puppet::Util::Autoload do
         File.expects(:mtime).with(@file_a).returns(@first_time)
         @autoload.class.mark_loaded("file", @file_a)
         File.stubs(:mtime).with(@file_a).raises(Errno::ENOENT)
-        Puppet::FileSystem::File.stubs(:exist?).with(@file_a).returns false
-        Puppet::FileSystem::File.stubs(:exist?).with(@file_b).returns true
+        Puppet::FileSystem.stubs(:exist?).with(@file_a).returns false
+        Puppet::FileSystem.stubs(:exist?).with(@file_b).returns true
         File.stubs(:mtime).with(@file_b).returns @first_time
         Kernel.expects(:load).with(@file_b, optionally(anything))
         @autoload.class.reload_changed
@@ -238,11 +223,11 @@ describe Puppet::Util::Autoload do
 
       it "should load a/file when b/file is loaded and a/file is created" do
         File.stubs(:mtime).with(@file_b).returns @first_time
-        Puppet::FileSystem::File.stubs(:exist?).with(@file_b).returns true
+        Puppet::FileSystem.stubs(:exist?).with(@file_b).returns true
         @autoload.class.mark_loaded("file", @file_b)
 
         File.stubs(:mtime).with(@file_a).returns @first_time
-        Puppet::FileSystem::File.stubs(:exist?).with(@file_a).returns true
+        Puppet::FileSystem.stubs(:exist?).with(@file_a).returns true
         Kernel.expects(:load).with(@file_a, optionally(anything))
         @autoload.class.reload_changed
         @autoload.class.send(:loaded)["file"].should == [@file_a, @first_time]

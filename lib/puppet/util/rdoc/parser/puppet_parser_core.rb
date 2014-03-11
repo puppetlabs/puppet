@@ -24,20 +24,20 @@ module RDoc::PuppetParserCore
 
   # main entry point
   def scan
-    environment = Puppet::Node::Environment.new
-    @known_resource_types = environment.known_resource_types
-    unless environment.known_resource_types.watching_file?(@input_file_name)
+    environment = Puppet.lookup(:environments).get(Puppet[:environment])
+    known_resource_types = environment.known_resource_types
+    unless known_resource_types.watching_file?(@input_file_name)
       Puppet.info "rdoc: scanning #{@input_file_name}"
       if @input_file_name =~ /\.pp$/
         @parser = Puppet::Parser::Parser.new(environment)
         @parser.file = @input_file_name
         @parser.parse.instantiate('').each do |type|
-          @known_resource_types.add type
+          known_resource_types.add type
         end
       end
     end
 
-    scan_top_level(@top_level)
+    scan_top_level(@top_level, environment)
     @top_level
   end
 
@@ -76,7 +76,7 @@ module RDoc::PuppetParserCore
   # if it does, it returns the module name, otherwise if we are sure
   # it is part of the global manifest path, "__site__" is returned.
   # And finally if this path couldn't be mapped anywhere, nil is returned.
-  def split_module(path)
+  def split_module(path, environment)
     # find a module
     fullpath = File.expand_path(path)
     Puppet.debug "rdoc: testing #{fullpath}"
@@ -84,7 +84,7 @@ module RDoc::PuppetParserCore
       modpath = $1
       name = $2
       Puppet.debug "rdoc: module #{name} into #{modpath} ?"
-      Puppet::Node::Environment.new.modulepath.each do |mp|
+      environment.modulepath.each do |mp|
         if File.identical?(modpath,mp)
           Puppet.debug "rdoc: found module #{name}"
           return name
@@ -95,7 +95,7 @@ module RDoc::PuppetParserCore
       # there can be paths we don't want to scan under modules
       # imagine a ruby or manifest that would be distributed as part as a module
       # but we don't want those to be hosted under <site>
-      Puppet::Node::Environment.new.modulepath.each do |mp|
+      environment.modulepath.each do |mp|
         # check that fullpath is a descendant of mp
         dirname = fullpath
         previous = dirname
@@ -111,7 +111,7 @@ module RDoc::PuppetParserCore
   end
 
   # create documentation for the top level +container+
-  def scan_top_level(container)
+  def scan_top_level(container, environment)
     # use the module README as documentation for the module
     comment = ""
     %w{README README.rdoc}.each do |rfile|
@@ -121,7 +121,7 @@ module RDoc::PuppetParserCore
     look_for_directives_in(container, comment) unless comment.empty?
 
     # infer module name from directory
-    name = split_module(@input_file_name)
+    name = split_module(@input_file_name, environment)
     if name.nil?
       # skip .pp files that are not in manifests directories as we can't guarantee they're part
       # of a module or the global configuration.
@@ -140,7 +140,7 @@ module RDoc::PuppetParserCore
     mod.add_comment(comment, @input_file_name)
 
     if @input_file_name =~ /\.pp$/
-      parse_elements(mod)
+      parse_elements(mod, environment.known_resource_types)
     elsif @input_file_name =~ /\.rb$/
       parse_plugins(mod)
     end
@@ -218,7 +218,7 @@ module RDoc::PuppetParserCore
             container.add_resource(RDoc::PuppetResource.new(type, title, stmt.doc, param))
           end
         rescue => detail
-          raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}"
+          raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}", detail.backtrace
         end
       end
     end
@@ -252,7 +252,7 @@ module RDoc::PuppetParserCore
 
     cls.add_comment(comment, klass.file)
   rescue => detail
-    raise Puppet::ParseError, "impossible to parse class '#{name}' in #{klass.file} at line #{klass.line}: #{detail}"
+    raise Puppet::ParseError, "impossible to parse class '#{name}' in #{klass.file} at line #{klass.line}: #{detail}", detail.backtrace
   end
 
   # create documentation for a node
@@ -277,7 +277,7 @@ module RDoc::PuppetParserCore
 
     n.add_comment(comment, node.file)
   rescue => detail
-    raise Puppet::ParseError, "impossible to parse node '#{name}' in #{node.file} at line #{node.line}: #{detail}"
+    raise Puppet::ParseError, "impossible to parse node '#{name}' in #{node.file} at line #{node.line}: #{detail}", detail.backtrace
   end
 
   # create documentation for a define
@@ -318,15 +318,15 @@ module RDoc::PuppetParserCore
     meth.document_self = true
     meth.singleton = false
   rescue => detail
-    raise Puppet::ParseError, "impossible to parse definition '#{name}' in #{define.file} at line #{define.line}: #{detail}"
+    raise Puppet::ParseError, "impossible to parse definition '#{name}' in #{define.file} at line #{define.line}: #{detail}", detail.backtrace
   end
 
   # Traverse the AST tree and produce code-objects node
   # that contains the documentation
-  def parse_elements(container)
+  def parse_elements(container, known_resource_types)
     Puppet.debug "rdoc: scanning manifest"
 
-    @known_resource_types.hostclasses.values.sort { |a,b| a.name <=> b.name }.each do |klass|
+    known_resource_types.hostclasses.values.sort { |a,b| a.name <=> b.name }.each do |klass|
       name = klass.name
       if klass.file == @input_file_name
         unless name.empty?
@@ -339,13 +339,13 @@ module RDoc::PuppetParserCore
       end
     end
 
-    @known_resource_types.definitions.each do |name, define|
+    known_resource_types.definitions.each do |name, define|
       if define.file == @input_file_name
         document_define(name,define,container)
       end
     end
 
-    @known_resource_types.nodes.each do |name, node|
+    known_resource_types.nodes.each do |name, node|
       if node.file == @input_file_name
         document_node(name.to_s,node,container)
       end

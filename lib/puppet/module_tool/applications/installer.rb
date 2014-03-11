@@ -18,7 +18,7 @@ module Puppet::ModuleTool
       def initialize(name, forge, install_dir, options = {})
         super(options)
         @action              = :install
-        @environment         = Puppet::Node::Environment.new(Puppet.settings[:environment])
+        @environment         = options[:environment_instance]
         @force               = options[:force]
         @ignore_dependencies = options[:force] || options[:ignore_dependencies]
         @name                = name
@@ -32,7 +32,7 @@ module Puppet::ModuleTool
           if is_module_package?(@name)
             @source = :filesystem
             @filename = File.expand_path(@name)
-            raise MissingPackageError, :requested_package => @filename unless Puppet::FileSystem::File.exist?(@filename)
+            raise MissingPackageError, :requested_package => @filename unless Puppet::FileSystem.exist?(@filename)
 
             parsed = parse_filename(@filename)
             @module_name = parsed[:module_name]
@@ -91,7 +91,7 @@ module Puppet::ModuleTool
             :module_name       => @module_name,
             :installed_version => @installed[@module_name].first.version,
             :requested_version => @version || (@conditions[@module_name].empty? ? :latest : :best),
-            :local_changes     => @installed[@module_name].first.local_changes
+            :local_changes     => Puppet::ModuleTool::Applications::Checksummer.run(@installed[@module_name].first.path)
         end
 
         if @ignore_dependencies && @source == :filesystem
@@ -135,6 +135,8 @@ module Puppet::ModuleTool
       # install into the same directory 'foo'.
       #
       def resolve_install_conflicts(graph, is_dependency = false)
+        Puppet.debug("Resolving conflicts for #{graph.map {|n| n[:module]}.join(',')}")
+
         graph.each do |release|
           @environment.modules_by_path[options[:target_dir]].each do |mod|
             if mod.has_metadata?
@@ -165,8 +167,11 @@ module Puppet::ModuleTool
                 :directory         => mod.path,
                 :metadata          => metadata
             end
+          end
 
-            resolve_install_conflicts(release[:dependencies], true)
+          deps = release[:dependencies]
+          if deps && !deps.empty?
+            resolve_install_conflicts(deps, true)
           end
         end
       end

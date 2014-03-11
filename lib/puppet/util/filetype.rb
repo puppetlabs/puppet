@@ -47,7 +47,7 @@ class Puppet::Util::FileType
         rescue => detail
           message = "#{self.class} could not read #{@path}: #{detail}"
           Puppet.log_exception(detail, message)
-          raise Puppet::Error, message
+          raise Puppet::Error, message, detail.backtrace
         end
       end
 
@@ -63,7 +63,7 @@ class Puppet::Util::FileType
         rescue => detail
           message = "#{self.class} could not write #{@path}: #{detail}"
           Puppet.log_exception(detail, message)
-          raise Puppet::Error, message
+          raise Puppet::Error, message, detail.backtrace
         end
       end
     end
@@ -98,12 +98,12 @@ class Puppet::Util::FileType
   newfiletype(:flat) do
     # Back the file up before replacing it.
     def backup
-      bucket.backup(@path) if Puppet::FileSystem::File.exist?(@path)
+      bucket.backup(@path) if Puppet::FileSystem.exist?(@path)
     end
 
     # Read the file.
     def read
-      if Puppet::FileSystem::File.exist?(@path)
+      if Puppet::FileSystem.exist?(@path)
         File.read(@path)
       else
         return nil
@@ -112,7 +112,7 @@ class Puppet::Util::FileType
 
     # Remove the file.
     def remove
-      Puppet::FileSystem::File.unlink(@path) if Puppet::FileSystem::File.exist?(@path)
+      Puppet::FileSystem.unlink(@path) if Puppet::FileSystem.exist?(@path)
     end
 
     # Overwrite the file.

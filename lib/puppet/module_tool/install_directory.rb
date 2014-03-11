@@ -1,3 +1,6 @@
+require 'puppet/module_tool'
+require 'puppet/module_tool/errors'
+
 module Puppet
   module ModuleTool
     # Control the install location for modules.

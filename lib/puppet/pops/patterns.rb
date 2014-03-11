@@ -17,19 +17,28 @@ module Puppet::Pops::Patterns
   ILLEGAL_HOSTNAME_CHARS = %r{[^-\w.]}
 
   # NAME matches a name the same way as the lexer.
-  # This name includes hyphen, which may be illegal in variables, and names in general.
-  NAME = %r{\A((::)?[a-z0-9]\w*)(::[a-z0-9]\w*)*\z}
+  NAME = %r{\A((::)?[a-z]\w*)(::[a-z]\w*)*\z}
 
   # CLASSREF_EXT matches a class reference the same way as the lexer - i.e. the external source form
   # where each part must start with a capital letter A-Z.
   # This name includes hyphen, which may be illegal in some cases.
   #
-  CLASSREF_EXT = %r{\A((::){0,1}[A-Z][-\w]*)+\z}
+  CLASSREF_EXT = %r{\A((::){0,1}[A-Z][\w]*)+\z}
 
   # CLASSREF matches a class reference the way it is represented internally in the
   # model (i.e. in lower case).
   # This name includes hyphen, which may be illegal in some cases.
   #
-  CLASSREF = %r{\A((::){0,1}[a-z][-\w]*)+\z}
+  CLASSREF = %r{\A((::){0,1}[a-z][\w]*)+\z}
+
+  # DOLLAR_VAR matches a variable name including the initial $ character
+  DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
+
+  # VAR_NAME matches the name part of a variable (The $ character is not included)
+  # Note, that only the final segment may start with an underscore.
+  VAR_NAME = %r{\A(:?(::)?[a-z]\w*)*(:?(::)?[a-z_]\w*)\z}
+
+  # A Numeric var name must be the decimal number 0, or a decimal number not starting with 0
+  NUMERIC_VAR_NAME = %r{\A(?:0|(?:[1-9][0-9]*))\z}
 
 end

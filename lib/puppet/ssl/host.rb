@@ -118,12 +118,17 @@ DOC
     indirection.destroy(name)
   end
 
-  def self.from_pson(pson)
-    instance = new(pson["name"])
-    if pson["desired_state"]
-      instance.desired_state = pson["desired_state"]
+  def self.from_data_hash(data)
+    instance = new(data["name"])
+    if data["desired_state"]
+      instance.desired_state = data["desired_state"]
     end
     instance
+  end
+
+  def self.from_pson(pson)
+    Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
+    self.from_data_hash(pson)
   end
 
   # Puppet::SSL::Host is actually indirected now so the original implementation
@@ -305,10 +310,6 @@ ERROR_STRING
     result[:dns_alt_names] = thing_to_use.subject_alt_names
 
     result
-  end
-
-  def to_pson(*args)
-    to_data_hash.to_pson(*args)
   end
 
   # eventually we'll probably want to move this somewhere else or make it

@@ -147,13 +147,4 @@ describe "egrammar parsing conditionals" do
     end
   end
 
-  context "When parsing imports" do
-    it "import 'foo'" do
-      dump(parse("import 'foo'")).should == "(import 'foo')"
-    end
-
-    it "import 'foo', 'bar'" do
-      dump(parse("import 'foo', 'bar'")).should == "(import 'foo' 'bar')"
-    end
-  end
 end

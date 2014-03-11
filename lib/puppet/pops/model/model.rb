@@ -18,14 +18,13 @@
 #
 # This metamodel is expressed using RGen.
 #
-# TODO: Anonymous Enums - probably ok, but they can be named (don't know if that is meaningsful)
 
 require 'rgen/metamodel_builder'
 
 module Puppet::Pops::Model
+  extend RGen::MetamodelBuilder::ModuleExtension
+
   # A base class for modeled objects that makes them Visitable, and Adaptable.
-  # @todo currently  includes Containment which will not be needed when the corresponding methods
-  #   are added to RGen (in some version after 0.6.2).
   #
   class PopsObject < RGen::MetamodelBuilder::MMBase
     include Puppet::Pops::Visitable
@@ -34,8 +33,22 @@ module Puppet::Pops::Model
     abstract
   end
 
+  # A Positioned object has an offset measured in an opaque unit (representing characters) from the start
+  # of a source text (starting
+  # from 0), and a length measured in the same opaque unit. The resolution of the opaque unit requires the
+  # aid of a Locator instance that knows about the measure. This information is stored in the model's
+  # root node - a Program.
+  #
+  # The offset and length are optional if the source of the model is not from parsed text.
+  #
+  class Positioned < PopsObject
+    abstract
+    has_attr 'offset', Integer
+    has_attr 'length', Integer
+  end
+
   # @abstract base class for expressions
-  class Expression < PopsObject
+  class Expression < Positioned
     abstract
   end
 
@@ -72,12 +85,6 @@ module Puppet::Pops::Model
   #
   class ParenthesizedExpression < UnaryExpression; end
 
-  # An import of one or several files.
-  #
-  class ImportExpression < Expression
-    contains_many_uni 'files', Expression, :lowerBound => 1
-  end
-
   # A boolean not expression, reversing the truth of the unary expr.
   #
   class NotExpression < UnaryExpression; end
@@ -89,7 +96,7 @@ module Puppet::Pops::Model
   # An assignment expression assigns a value to the lval() of the left_expr.
   #
   class AssignmentExpression < BinaryExpression
-    has_attr 'operator', RGen::MetamodelBuilder::DataTypes::Enum.new([:'=', :'+=']), :lowerBound => 1
+    has_attr 'operator', RGen::MetamodelBuilder::DataTypes::Enum.new([:'=', :'+=', :'-=']), :lowerBound => 1
   end
 
   # An arithmetic expression applies an arithmetic operator on left and right expressions.
@@ -150,9 +157,9 @@ module Puppet::Pops::Model
     contains_many_uni 'values', Expression
   end
 
-  # A Keyed entry has a key and a value expression. It it typically used as an entry in a Hash.
+  # A Keyed entry has a key and a value expression. It is typically used as an entry in a Hash.
   #
-  class KeyedEntry < PopsObject
+  class KeyedEntry < Positioned
     contains_one_uni 'key', Expression, :lowerBound => 1
     contains_one_uni 'value', Expression, :lowerBound => 1
   end
@@ -206,19 +213,10 @@ module Puppet::Pops::Model
 
   # An attribute operation sets or appends a value to a named attribute.
   #
-  class AttributeOperation < PopsObject
+  class AttributeOperation < Positioned
     has_attr 'attribute_name', String, :lowerBound => 1
     has_attr 'operator', RGen::MetamodelBuilder::DataTypes::Enum.new([:'=>', :'+>', ]), :lowerBound => 1
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
-  end
-
-  # An optional attribute operation sets or appends a value to a named attribute unless
-  # the value is undef/nil in which case the opereration is a Nop.
-  #
-  # This is a new feature proposed to solve the undef as antimatter problem
-  # @note Currently Unused
-  #
-  class OptionalAttributeOperation < AttributeOperation
   end
 
   # An object that collects stored objects from the central cache and returns
@@ -230,7 +228,7 @@ module Puppet::Pops::Model
     contains_many_uni 'operations', AttributeOperation
   end
 
-  class Parameter < PopsObject
+  class Parameter < Positioned
     has_attr 'name', String, :lowerBound => 1
     contains_one_uni 'value', Expression
   end
@@ -239,30 +237,102 @@ module Puppet::Pops::Model
   #
   class Definition < Expression
     abstract
-    contains_many_uni 'parameters', Parameter
-    contains_one_uni 'body', Expression
   end
 
-  # Abstract base class for named definitions.
+  # Abstract base class for named and parameterized definitions.
   class NamedDefinition < Definition
     abstract
     has_attr 'name', String, :lowerBound => 1
+    contains_many_uni 'parameters', Parameter
+    contains_one_uni 'body', Expression
   end
 
   # A resource type definition (a 'define' in the DSL).
   #
   class ResourceTypeDefinition < NamedDefinition
-    # FUTURE
-    # contains_one_uni 'producer', Producer
   end
 
   # A node definition matches hosts using Strings, or Regular expressions. It may inherit from
   # a parent node (also using a String or Regular expression).
   #
-  class NodeDefinition < Expression
+  class NodeDefinition < Definition
     contains_one_uni 'parent', Expression
     contains_many_uni 'host_matches', Expression, :lowerBound => 1
     contains_one_uni 'body', Expression
+  end
+
+  class LocatableExpression < Expression
+    has_many_attr 'line_offsets', Integer
+    has_attr 'locator', Object, :lowerBound => 1, :transient => true
+
+    module ClassModule
+      # Go through the gymnastics of making either value or pattern settable
+      # with synchronization to the other form. A derived value cannot be serialized
+      # and we want to serialize the pattern. When recreating the object we need to
+      # recreate it from the pattern string.
+      # The below sets both values if one is changed.
+      #
+      def locator
+        unless result = getLocator
+          setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets))
+        end
+        result
+      end
+    end
+  end
+
+  # Contains one expression which has offsets reported virtually (offset against the Program's
+  # overall locator).
+  #
+  class SubLocatedExpression < Expression
+    contains_one_uni 'expr', Expression, :lowerBound => 1
+
+    # line offset index for contained expressions
+    has_many_attr 'line_offsets', Integer
+
+    # Number of preceding lines (before the line_offsets)
+    has_attr 'leading_line_count', Integer
+
+    # The offset of the leading source line (i.e. size of "left margin").
+    has_attr 'leading_line_offset', Integer
+
+    # The locator for the sub-locatable's children (not for the sublocator itself)
+    # The locator is not serialized and is recreated on demand from the indexing information
+    # in self.
+    #
+    has_attr 'locator', Object, :lowerBound => 1, :transient => true
+
+    module ClassModule
+      def locator
+        unless result = getLocator
+          # Adapt myself to get the Locator for me
+          adapter = Puppet::Pops::Adapters::SourcePosAdapter.adapt(self)
+          # Get the program (root), and deal with case when not contained in a program
+          program = eAllContainers.find {|c| c.is_a?(Program) }
+          source_ref = program.nil? ? '' : program.source_ref
+
+          # An outer locator is needed since SubLocator only deals with offsets. This outer locator
+          # has 0,0 as origin.
+          outer_locator = Puppet::Pops::Parser::Locator.locator(adpater.extract_text, source_ref, line_offsets)
+
+          # Create a sublocator that describes an offset from the outer
+          # NOTE: the offset of self is the same as the sublocator's leading_offset
+          result = Puppet::Pops::Parser::Locator::SubLocator.new(outer_locator,
+            leading_line_count, offset, leading_line_offset)
+          setLocator(result)
+        end
+        result
+      end
+    end
+  end
+
+  # A heredoc is a wrapper around a LiteralString or a ConcatenatedStringExpression with a specification
+  # of syntax. The expectation is that "syntax" has meaning to a validator. A syntax of nil or '' means
+  # "unspecified syntax".
+  #
+  class HeredocExpression < Expression
+    has_attr 'syntax', String
+    contains_one_uni 'text_expr', Expression, :lowerBound => 1
   end
 
   # A class definition
@@ -272,7 +342,10 @@ module Puppet::Pops::Model
   end
 
   # i.e {|parameters| body }
-  class LambdaExpression < Definition; end
+  class LambdaExpression < Expression
+    contains_many_uni 'parameters', Parameter
+    contains_one_uni 'body', Expression
+  end
 
   # If expression. If test is true, the then_expr part should be evaluated, else the (optional)
   # else_expr. An 'elsif' is simply an else_expr = IfExpression, and 'else' is simply else == Block.
@@ -329,27 +402,54 @@ module Puppet::Pops::Model
   #
   class LiteralValue < Literal
     abstract
-    has_attr 'value', Object, :lowerBound => 1
   end
 
   # A Regular Expression Literal.
   #
-  class LiteralRegularExpression < LiteralValue; end
+  class LiteralRegularExpression < LiteralValue
+    has_attr 'value', Object, :lowerBound => 1, :transient => true
+    has_attr 'pattern', String, :lowerBound => 1
+
+    module ClassModule
+      # Go through the gymnastics of making either value or pattern settable
+      # with synchronization to the other form. A derived value cannot be serialized
+      # and we want to serialize the pattern. When recreating the object we need to
+      # recreate it from the pattern string.
+      # The below sets both values if one is changed.
+      #
+      def value= regexp
+        setValue regexp
+        setPattern regexp.to_s
+      end
+
+      def pattern= regexp_string
+        setPattern regexp_string
+        setValue Regexp.new(regexp_string)
+      end
+    end
+
+  end
 
   # A Literal String
   #
-  class LiteralString < LiteralValue; end
+  class LiteralString < LiteralValue
+    has_attr 'value', String, :lowerBound => 1
+  end
 
-  # A literal text is like a literal string, but has other rules for escaped characters. It
-  # is used as part of a ConcatenatedString
-  #
-  class LiteralText < LiteralValue; end
+  class LiteralNumber < LiteralValue
+    abstract
+  end
 
   # A literal number has a radix of decimal (10), octal (8), or hex (16) to enable string conversion with the input radix.
   # By default, a radix of 10 is used.
   #
-  class LiteralNumber < LiteralValue
+  class LiteralInteger < LiteralNumber
     has_attr 'radix', Integer, :lowerBound => 1, :defaultValueLiteral => "10"
+    has_attr 'value', Integer, :lowerBound => 1
+  end
+
+  class LiteralFloat < LiteralNumber
+    has_attr 'value', Float, :lowerBound => 1
   end
 
   # The DSL `undef`.
@@ -360,10 +460,12 @@ module Puppet::Pops::Model
   class LiteralDefault < Literal; end
 
   # DSL `true` or `false`
-  class LiteralBoolean < LiteralValue; end
+  class LiteralBoolean < LiteralValue
+    has_attr 'value', Boolean, :lowerBound => 1
+  end
 
   # A text expression is an interpolation of an expression. If the embedded expression is
-  # a QualifiedName, it it taken as a variable name and resolved. All other expressions are evaluated.
+  # a QualifiedName, it is taken as a variable name and resolved. All other expressions are evaluated.
   # The result is transformed to a string.
   #
   class TextExpression < UnaryExpression; end
@@ -379,32 +481,38 @@ module Puppet::Pops::Model
 
   # A DSL NAME (one or multiple parts separated by '::').
   #
-  class QualifiedName < LiteralValue; end
+  class QualifiedName < LiteralValue
+    has_attr 'value', String, :lowerBound => 1
+  end
 
   # A DSL CLASSREF (one or multiple parts separated by '::' where (at least) the first part starts with an upper case letter).
   #
-  class QualifiedReference < LiteralValue; end
+  class QualifiedReference < LiteralValue
+    has_attr 'value', String, :lowerBound => 1
+  end
 
   # A Variable expression looks up value of expr (some kind of name) in scope.
   # The expression is typically a QualifiedName, or QualifiedReference.
   #
   class VariableExpression < UnaryExpression; end
 
-  # A type reference is a reference to a type.
-  #
-  class TypeReference < Expression
-    contains_one_uni 'type_name', QualifiedReference, :lowerBound => 1
+  # Epp start
+  class EppExpression < Expression
+    has_attr 'see_scope', Boolean
+    contains_one_uni 'body', Expression
   end
 
-  # An instance reference is a reference to one or many named instances of a particular type
-  #
-  class InstanceReferences < TypeReference
-    contains_many_uni 'names', Expression, :lowerBound => 1
+  # A string to render
+  class RenderStringExpression < LiteralString
+  end
+
+  # An expression to evluate and render
+  class RenderExpression < UnaryExpression
   end
 
   # A resource body describes one resource instance
   #
-  class ResourceBody < PopsObject
+  class ResourceBody < Positioned
     contains_one_uni 'title', Expression
     contains_many_uni 'operations', AttributeOperation
   end
@@ -414,6 +522,7 @@ module Puppet::Pops::Model
   # All derived classes may not support all forms, and these needs to be validated
   #
   class AbstractResource < Expression
+    abstract
     has_attr 'form', RGen::MetamodelBuilder::DataTypes::Enum.new([:regular, :virtual, :exported ]), :lowerBound => 1, :defaultValueLiteral => "regular"
     has_attr 'virtual', Boolean, :derived => true
     has_attr 'exported', Boolean, :derived => true
@@ -456,7 +565,7 @@ module Puppet::Pops::Model
 
   # A selector entry describes a map from matching_expr to value_expr.
   #
-  class SelectorEntry < PopsObject
+  class SelectorEntry < Positioned
     contains_one_uni 'matching_expr', Expression, :lowerBound => 1
     contains_one_uni 'value_expr', Expression, :lowerBound => 1
   end
@@ -468,100 +577,30 @@ module Puppet::Pops::Model
     contains_many_uni 'selectors', SelectorEntry
   end
 
-  # Create Invariant. Future suggested enhancement Puppet Types.
-  #
-  class CreateInvariantExpression < Expression
-    has_attr 'name', String
-    contains_one_uni 'message_expr', Expression, :lowerBound => 1
-    contains_one_uni 'constraint_expr', Expression, :lowerBound => 1
-  end
-
-  # Create Attribute. Future suggested enhancement Puppet Types.
-  #
-  class CreateAttributeExpression < Expression
-    has_attr 'name', String, :lowerBound => 1
-
-    # Should evaluate to name of datatype (String, Integer, Float, Boolean) or an EEnum metadata
-    # (created by CreateEnumExpression). If omitted, the type is a String.
-    #
-    contains_one_uni 'type', Expression
-    contains_one_uni 'min_expr', Expression
-    contains_one_uni 'max_expr', Expression
-    contains_one_uni 'default_value', Expression
-    contains_one_uni 'input_transformer', Expression
-    contains_one_uni 'derived_expr', Expression
-  end
-
-  # Create Attribute. Future suggested enhancement Puppet Types.
-  #
-  class CreateEnumExpression < Expression
-    has_attr 'name', String
-    contains_one_uni 'values', Expression
-  end
-
-  # Create Type. Future suggested enhancement Puppet Types.
-  #
-  class CreateTypeExpression < Expression
-    has_attr 'name', String, :lowerBound => 1
-    has_attr 'super_name', String
-    contains_many_uni 'attributes', CreateAttributeExpression
-    contains_many_uni 'invariants', CreateInvariantExpression
-  end
-
-  # Create ResourceType. Future suggested enhancement Puppet Types.
-  # @todo UNFINISHED
-  #
-  class CreateResourceType < CreateTypeExpression
-    # TODO CreateResourceType
-    # - has features required by the provider - provider invariant?
-    # - super type must be a ResourceType
-  end
-
   # A named access expression looks up a named part. (e.g. $a.b)
   #
   class NamedAccessExpression < BinaryExpression; end
 
-  # A named function definition declares and defines a new function
-  # Future enhancement.
+  # A Program is the top level construct returned by the parser
+  # it contains the parsed result in the body, and has a reference to the full source text,
+  # and its origin. The line_offset's is an array with the start offset of each line.
   #
-  class NamedFunctionDefinition < NamedDefinition; end
+  class Program < PopsObject
+    contains_one_uni 'body', Expression
+    has_many 'definitions', Definition
+    has_attr 'source_text', String
+    has_attr 'source_ref', String
+    has_many_attr 'line_offsets', Integer
+    has_attr 'locator', Object, :lowerBound => 1, :transient => true
 
-  # Future enhancements - Injection - Unfinished
-  #
-  module Injection
-    # A producer expression produces an instance of a type. The instance is initialized
-    # from an expression (or from the current scope if this expression is missing).
-    #--
-    # new. to handle production of injections
-    #
-    class Producer < Expression
-      contains_one_uni 'type_name', TypeReference, :lowerBound => 1
-      contains_one_uni 'instantiation_expr', Expression
+    module ClassModule
+      def locator
+        unless result = getLocator
+          setLocator(result = Puppet::Pops::Parser::Locator.locator(source_text, source_ref(), line_offsets))
+        end
+        result
+      end
     end
 
-    # A binding entry binds one capability generically or named, specifies default bindings or
-    # composition of other bindings.
-    #
-    class BindingEntry < PopsObject
-      contains_one_uni 'key', Expression
-      contains_one_uni 'value', Expression
-    end
-
-    # Defines an optionally named binding.
-    #
-    class Binding < Expression
-      contains_one_uni 'title_expr', Expression
-      contains_many_uni 'bindings', BindingEntry
-    end
-
-    # An injection provides a value bound in the effective binding scope. The injection
-    # is based on a type (a capability) and an optional list of instance names (i.e. an InstanceReference).
-    # Invariants: optional and instantiation are mutually exclusive
-    #
-    class InjectExpression < Expression
-      has_attr 'optional', Boolean
-      contains_one_uni 'binding', Expression, :lowerBound => 1
-      contains_one_uni 'instantiation', Expression
-    end
   end
 end

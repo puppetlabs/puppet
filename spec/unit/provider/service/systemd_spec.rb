@@ -9,12 +9,12 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     Puppet::Type.type(:service).stubs(:defaultprovider).returns described_class
     described_class.stubs(:which).with('systemctl').returns '/bin/systemctl'
   end
-  
+
 
   let :provider do
     described_class.new(:name => 'sshd.service')
   end
-  
+
   osfamily = [ 'archlinux' ]
 
   osfamily.each do |osfamily|
@@ -22,7 +22,19 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       Facter.expects(:value).with(:osfamily).returns(osfamily)
       described_class.default?.should be_true
     end
-  end  
+  end
+
+  it "should be the default provider on rhel7" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
+    Facter.expects(:value).with(:operatingsystemmajrelease).returns("7")
+    described_class.default?.should be_true
+  end
+
+  it "should not be the default provider on rhel6" do
+    Facter.expects(:value).with(:osfamily).at_least_once.returns(:redhat)
+    Facter.expects(:value).with(:operatingsystemmajrelease).returns("6")
+    described_class.default?.should_not be_true
+  end
 
   [:enabled?, :enable, :disable, :start, :stop, :status, :restart].each do |method|
     it "should have a #{method} method" do
@@ -35,9 +47,8 @@ describe Puppet::Type.type(:service).provider(:systemd) do
       described_class.should respond_to :instances
     end
 
-    it "should get a list of services from systemctl list-units" do
-      pending('A service that has been killed (ACTIVE=failed) is not recognized')
-      described_class.expects(:systemctl).with('list-units', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units'))
+    it "should return only services" do
+      described_class.expects(:systemctl).with('list-units', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units_services'))
       described_class.instances.map(&:name).should =~ %w{
         auditd.service
         crond.service
@@ -48,7 +59,6 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         initrd-switch-root.service
         ip6tables.service
         puppet.service
-        sshd.service
       }
     end
   end
@@ -56,13 +66,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#start" do
     it "should use the supplied start command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :start => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
 
     it "should start the service with systemctl start otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/systemctl','start','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.start
     end
   end
@@ -70,13 +80,13 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#stop" do
     it "should use the supplied stop command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service', :stop => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
 
     it "should stop the service with systemctl stop otherwise" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/systemctl','stop','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.stop
     end
   end
@@ -132,14 +142,14 @@ describe Puppet::Type.type(:service).provider(:systemd) do
   describe "#restart" do
     it "should use the supplied restart command if specified" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd', :restart => '/bin/foo'))
-      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => true).never
-      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true).never
+      provider.expects(:execute).with(['/bin/foo'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
     end
 
     it "should restart the service with systemctl restart" do
       provider = described_class.new(Puppet::Type.type(:service).new(:name => 'sshd.service'))
-      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => true)
+      provider.expects(:execute).with(['/bin/systemctl','restart','sshd.service'], :failonfail => true, :override_locale => false, :squelch => false, :combine => true)
       provider.restart
     end
   end

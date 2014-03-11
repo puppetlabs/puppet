@@ -2,11 +2,12 @@ require 'net/http'
 require 'open-uri'
 require 'pathname'
 require 'uri'
-require 'puppet/forge/cache'
-require 'puppet/forge/repository'
-require 'puppet/forge/errors'
 
 class Puppet::Forge
+  require 'puppet/forge/errors'
+  require 'puppet/forge/cache'
+  require 'puppet/forge/repository'
+
   include Puppet::Forge::Errors
 
   # +consumer_name+ is a name to be used for identifying the consumer of the

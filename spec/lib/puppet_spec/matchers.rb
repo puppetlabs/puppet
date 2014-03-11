@@ -59,6 +59,7 @@ class HavePrintedMatcher
   def matches?(block)
     begin
       $stderr = $stdout = StringIO.new
+      $stdout.set_encoding('UTF-8') if $stdout.respond_to?(:set_encoding)
       block.call
       $stdout.rewind
       @actual = $stdout.read
@@ -85,6 +86,10 @@ class HavePrintedMatcher
     else
       "expected #{@expected.inspect} to be printed; got:\n#{@actual}"
     end
+  end
+
+  def failure_message_for_should_not
+    "expected #{@expected.inspect} to not be printed; got:\n#{@actual}"
   end
 
   def description

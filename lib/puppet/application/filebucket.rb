@@ -57,9 +57,9 @@ use your local file bucket by specifying '--local'.
 
 OPTIONS
 -------
-Note that any configuration parameter that's valid in the configuration
+Note that any setting that's valid in the configuration
 file is also a valid long argument. For example, 'ssldir' is a valid
-configuration parameter, so you can specify '--ssldir <directory>' as an
+setting, so you can specify '--ssldir <directory>' as an
 argument.
 
 See the configuration file documentation at
@@ -129,7 +129,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     raise "You must specify a file to back up" unless args.length > 0
 
     args.each do |file|
-      unless Puppet::FileSystem::File.exist?(file)
+      unless Puppet::FileSystem.exist?(file)
         $stderr.puts "#{file}: no such file"
         next
       end

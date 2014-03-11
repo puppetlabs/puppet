@@ -11,7 +11,11 @@ module Puppet::Parser
     def self.parser(environment)
       case Puppet[:parser]
       when 'future'
-        eparser(environment)
+        if Puppet[:evaluator] == 'future'
+          evaluating_parser(environment)
+        else
+          eparser(environment)
+        end
       else
         classic_parser(environment)
       end
@@ -21,7 +25,19 @@ module Puppet::Parser
     #
     def self.classic_parser(environment)
       require 'puppet/parser'
+
       Puppet::Parser::Parser.new(environment)
+    end
+
+    # Returns an instance of an EvaluatingParser
+    def self.evaluating_parser(file_watcher)
+      # Since RGen is optional, test that it is installed
+      @@asserted ||= false
+      assert_rgen_installed() unless @@asserted
+      @@asserted = true
+      require 'puppet/parser/e4_parser_adapter'
+      require 'puppet/pops/parser/code_merger'
+      E4ParserAdapter.new(file_watcher)
     end
 
     # Creates an instance of the expression based parser 'eparser'
@@ -58,6 +74,15 @@ module Puppet::Parser
         raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.1 is required when using '--parser future'. An older version is installed, please update.")
       end
     end
+
+    def self.code_merger
+      if Puppet[:parser] == 'future' && Puppet[:evaluator] == 'future'
+        Puppet::Pops::Parser::CodeMerger.new
+      else
+        Puppet::Parser::CodeMerger.new
+      end
+    end
+
   end
 
 end

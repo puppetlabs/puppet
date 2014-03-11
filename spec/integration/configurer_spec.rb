@@ -8,6 +8,7 @@ describe Puppet::Configurer do
 
   describe "when downloading plugins" do
     it "should use the :pluginsignore setting, split on whitespace, for ignoring remote files" do
+      Puppet.settings.stubs(:use)
       resource = Puppet::Type.type(:notify).new :name => "yay"
       Puppet::Type.type(:file).expects(:new).at_most(2).with do |args|
         args[:ignore] == Puppet[:pluginsignore].split(/\s+/)
@@ -24,7 +25,7 @@ describe Puppet::Configurer do
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource(Puppet::Type.type(:notify).new(:title => "testing"))
 
-      # Make sure we don't try to persist the local state after the transaction ran, 
+      # Make sure we don't try to persist the local state after the transaction ran,
       # because it will fail during test (the state file is in a not-existing directory)
       # and we need the transaction to be successful to be able to produce a summary report
       @catalog.host_config = false
@@ -59,9 +60,10 @@ describe Puppet::Configurer do
       @configurer.run :catalog => @catalog, :report => report
       t2 = Time.now.tv_sec
 
-      file_mode = Puppet.features.microsoft_windows? ? '100644' : '100666'
+      # sticky bit only applies to directories in windows
+      file_mode = Puppet.features.microsoft_windows? ? '666' : '100666'
 
-      Puppet::FileSystem::File.new(Puppet[:lastrunfile]).stat.mode.to_s(8).should == file_mode
+      Puppet::FileSystem.stat(Puppet[:lastrunfile]).mode.to_s(8).should == file_mode
 
       summary = nil
       File.open(Puppet[:lastrunfile], "r") do |fd|

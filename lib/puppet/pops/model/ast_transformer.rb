@@ -33,10 +33,16 @@ class Puppet::Pops::Model::AstTransformer
     klass.new(merge_location(hash, o))
   end
 
+  # THIS IS AN EXPENSIVE OPERATION
+  # The 3x AST requires line, pos etc. to be recorded directly in the AST nodes and this information
+  # must be computed.
+  # (Newer implementation only computes the information that is actually needed; typically when raising an
+  # exception).
+  #
   def merge_location(hash, o)
     if o
       pos = {}
-      source_pos = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::SourcePosAdapter)
+      source_pos = Puppet::Pops::Utils.find_closest_positioned(o)
       if source_pos
         pos[:line] = source_pos.line
         pos[:pos]  = source_pos.pos
@@ -49,7 +55,14 @@ class Puppet::Pops::Model::AstTransformer
 
   # Transforms pops expressions into AST 3.1 statements/expressions
   def transform(o)
+    begin
     @@transform_visitor.visit_this(self,o)
+    rescue StandardError => e
+      loc_data = {}
+      merge_location(loc_data, o)
+      raise Puppet::ParseError.new("Error while transforming to Puppet 3 AST: #{e.message}", 
+        loc_data[:file], loc_data[:line], loc_data[:pos], e)
+    end
   end
 
   # Transforms pops expressions into AST 3.1 query expressions
@@ -62,7 +75,12 @@ class Puppet::Pops::Model::AstTransformer
     @@hostname_transform_visitor.visit_this(self, o)
   end
 
-  def transform_LiteralNumber(o)
+  def transform_LiteralFloat(o)
+    # Numbers are Names in the AST !! (Name a.k.a BareWord)
+    ast o, AST::Name, :value => o.value.to_s
+  end
+
+  def transform_LiteralInteger(o)
     s = case o.radix
     when 10
       o.value.to_s
@@ -155,6 +173,14 @@ class Puppet::Pops::Model::AstTransformer
       args[:override] = transform(o.operations)
     end
     ast o, AST::Collection, args
+  end
+
+  def transform_EppExpression(o)
+    # TODO: Not supported in 3x TODO_EPP
+    parameters = o.parameters.collect {|p| transform(p) }
+    args = { :parameters => parameters }
+    args[:children] = transform(o.body) unless is_nop?(o.body)
+    Puppet::Parser::AST::Epp.new(merge_location(args, o))
   end
 
   def transform_ExportedQuery(o)
@@ -251,33 +277,16 @@ class Puppet::Pops::Model::AstTransformer
     ast o, AST::InOperator, :lval => transform(o.left_expr), :rval => transform(o.right_expr)
   end
 
-  # This is a complex transformation from a modeled import to a Nop result (where the import took place),
-  # and calls to perform import/parsing etc. during the transformation.
-  # When testing syntax, the @importer does not have to be set, but it is not possible to check
-  # the actual import without inventing a new AST::ImportExpression with nop effect when evaluating.
-  def transform_ImportExpression(o)
-    if importer
-      o.files.each {|f|
-        unless f.is_a? Model::LiteralString
-          raise "Illegal import file expression. Must be a single quoted string"
-        end
-        importer.import(f.value)
-      }
-    end
-    # Crazy stuff
-    # Transformation of "import" needs to parse the other files at the time of transformation.
-    # Then produce a :nop, since nothing should be evaluated.
-    ast o, AST::Nop, {}
-  end
-
-  def transform_InstanceReferences(o)
-    ast o, AST::ResourceReference, :type => o.type_name.value, :title => transform(o.names)
-  end
-
   # Assignment in AST 3.1 is to variable or hasharray accesses !!! See Bug #16116
   def transform_AssignmentExpression(o)
     args = {:value => transform(o.right_expr) }
-    args[:append] = true if o.operator == :'+='
+    case o.operator
+    when :'+='
+      args[:append] = true
+    when :'='
+    else
+      raise "The operator #{o.operator} is not supported by Puppet 3."
+    end
 
     args[:name] = case o.left_expr
     when Model::VariableExpression
@@ -343,11 +352,6 @@ class Puppet::Pops::Model::AstTransformer
   end
 
   def transform_LiteralString(o)
-    ast o, AST::String, :value => o.value
-  end
-
-  # Literal text in a concatenated string
-  def transform_LiteralText(o)
     ast o, AST::String, :value => o.value
   end
 
@@ -432,6 +436,12 @@ class Puppet::Pops::Model::AstTransformer
     Puppet::Parser::AST::Hostclass.new(o.name, merge_location(args, o))
   end
 
+  def transform_HeredocExpression(o)
+    # TODO_HEREDOC Not supported in 3x
+    args = {:syntax=> o.syntax(), :expr => transform(o.text_expr()) }
+    Puppet::Parser::AST::Heredoc.new(merge_location(args, o))
+  end
+
   def transform_NodeDefinition(o)
     # o.host_matches are expressions, and 3.1 AST requires special object AST::HostName
     # where a HostName is one of NAME, STRING, DEFAULT or Regexp - all of these are strings except regexp
@@ -477,6 +487,16 @@ class Puppet::Pops::Model::AstTransformer
 
   def transform_RelationshipExpression(o)
     Puppet::Parser::AST::Relationship.new(transform(o.left_expr), transform(o.right_expr), o.operator.to_s, merge_location({}, o))
+  end
+
+  def transform_RenderStringExpression(o)
+    # TODO_EPP Not supported in 3x
+    ast o, AST::RenderString, :value => o.value
+  end
+
+  def transform_RenderExpression(o)
+    # TODO_EPP Not supported in 3x
+    ast o, AST::RenderExpression, :value => transform(o.expr)
   end
 
   def transform_ResourceTypeDefinition(o)
@@ -531,6 +551,10 @@ class Puppet::Pops::Model::AstTransformer
   # For non query expressions, parentheses can be dropped in the resulting AST.
   def transform_ParenthesizedExpression(o)
     transform(o.expr)
+  end
+
+  def transform_Program(o)
+    transform(o.body)
   end
 
   def transform_IfExpression(o)

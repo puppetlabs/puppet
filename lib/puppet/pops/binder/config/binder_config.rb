@@ -6,49 +6,31 @@ module Puppet::Pops::Binder::Config
   #
   class BinderConfig
 
-    # The bindings hierarchy is an array of categorizations where the
-    # array for each category has exactly three elements - the categorization name,
-    # category value, and the path that is later used by the backend to read
-    # the bindings for that category
+    # The layering configuration is an array of layers from most to least significant.
+    # Each layer is represented by a Hash containing :name and :include and optionally :exclude
     #
     # @return [Array<Hash<String, String>, Hash<String, Array<String>>]
     # @api public
     #
     attr_reader :layering_config
 
-    # @return [Array<Array(String, String)>] Array of Category tuples where Strings are not evaluated.
-    # @api public
-    #
-    attr_reader :categorization
-
     # @return <Hash<String, String>] ({}) optional mapping of bindings-scheme to handler class name
     attr_reader :scheme_extensions
 
-    # @return <Hash<String, String>] ({}) optional mapping of hiera backend name to backend class name
-    attr_reader :hiera_backends
 
     # @return [String] the loaded config file
     attr_accessor :config_file
 
     DEFAULT_LAYERS = [
-      { 'name' => 'site',    'include' => ['confdir-hiera:/', 'confdir:/default?optional']  },
-      { 'name' => 'modules', 'include' => ['module-hiera:/*/', 'module:/*::default'] },
-    ]
-
-    DEFAULT_CATEGORIES = [
-      ['node',        "${fqdn}"],
-      ['osfamily',    "${osfamily}"],
-      ['environment', "${environment}"],
-      ['common',      "true"]
+      { 'name' => 'site',    'include' => [ 'confdir:/default?optional'] },
+      { 'name' => 'modules', 'include' => [ 'module:/*::default'] },
     ]
 
     DEFAULT_SCHEME_EXTENSIONS = {}
 
-    DEFAULT_HIERA_BACKENDS_EXTENSIONS = {}
-
     def default_config()
       # This is hardcoded now, but may be a user supplied default configuration later
-      {'version' => 1, 'layers' => default_layers, 'categories' => default_categories}
+      {'version' => 1, 'layers' => default_layers }
     end
 
     def confdir()
@@ -72,20 +54,20 @@ module Puppet::Pops::Binder::Config
         rootdir = confdir
         if rootdir.is_a?(String)
           expanded_config_file = File.expand_path(File.join(rootdir, '/binder_config.yaml'))
-          if Puppet::FileSystem::File.exist?(expanded_config_file)
+          if Puppet::FileSystem.exist?(expanded_config_file)
             @config_file = expanded_config_file
           end
         else
           raise ArgumentError, "No Puppet settings 'confdir', or it is not a String"
         end
       when String
-        unless Puppet::FileSystem::File.exist?(@config_file)
+        unless Puppet::FileSystem.exist?(@config_file)
           raise ArgumentError, "Cannot find the given binder configuration file '#{@config_file}'"
         end
       else
         raise ArgumentError, "The setting binder_config is expected to be a String, got: #{@config_file.class.name}."
       end
-      unless @config_file.is_a?(String) && Puppet::FileSystem::File.exist?(@config_file)
+      unless @config_file.is_a?(String) && Puppet::FileSystem.exist?(@config_file)
         @config_file = nil # use defaults
       end
 
@@ -103,14 +85,10 @@ module Puppet::Pops::Binder::Config
 
       unless diagnostics.errors?
         @layering_config   = data['layers'] or default_layers
-        @categorization    = data['categories'] or default_categories
         @scheme_extensions = (data['extensions'] and data['extensions']['scheme_handlers'] or default_scheme_extensions)
-        @hiera_backends    = (data['extensions'] and data['extensions']['hiera_backends'] or default_hiera_backends_extensions)
       else
         @layering_config = []
-        @categorization = {}
         @scheme_extensions = {}
-        @hiera_backends = {}
       end
     end
 
@@ -122,18 +100,8 @@ module Puppet::Pops::Binder::Config
     end
 
     # @api private
-    def default_categories
-      DEFAULT_CATEGORIES
-    end
-
-    # @api private
     def default_scheme_extensions
       DEFAULT_SCHEME_EXTENSIONS
-    end
-
-    # @api private
-    def default_hiera_backends_extensions
-      DEFAULT_HIERA_BACKENDS_EXTENSIONS
     end
   end
 end

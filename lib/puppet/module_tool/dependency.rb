@@ -1,6 +1,10 @@
+require 'puppet/module_tool'
+require 'puppet/network/format_support'
+
 module Puppet::ModuleTool
 
   class Dependency
+    include Puppet::Network::FormatSupport
 
     attr_reader :full_module_name, :username, :name, :version_requirement, :repository
 
@@ -20,11 +24,6 @@ module Puppet::ModuleTool
       result[:version_requirement] = @version_requirement if @version_requirement && ! @version_requirement.nil?
       result[:repository] = @repository.to_s if @repository && ! @repository.nil?
       result
-    end
-
-    # Return PSON representation of this data.
-    def to_pson(*args)
-      to_data_hash.to_pson(*args)
     end
   end
 end

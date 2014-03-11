@@ -22,7 +22,9 @@ module Puppet::Parser::Functions
 
     # Runs a newfunction to create a function for each of the log levels
     Puppet::Util::Log.levels.each do |level|
-      newfunction(level, :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
+      newfunction(level,
+                  :environment => Puppet.lookup(:root_environment),
+                  :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
         send(level, vals.join(" "))
       end
     end
@@ -41,11 +43,8 @@ module Puppet::Parser::Functions
   # environment
   #
   # @api private
-  def self.environment_module(env = nil)
-    if env and ! env.is_a?(Puppet::Node::Environment)
-      env = Puppet::Node::Environment.new(env)
-    end
-    @modules[ (env || Environment.current || Environment.root).name ] ||= Module.new
+  def self.environment_module(env)
+    @modules[env.name] ||= Module.new
   end
 
   # Create a new Puppet DSL function.
@@ -71,7 +70,8 @@ module Puppet::Parser::Functions
   #         :doc=>"Doubles an object, typically a number or string."}
   #
   # @example Invoke the double function from irb as is done in RSpec examples:
-  #     >> scope = Puppet::Parser::Scope.new_for_test_harness('example')
+  #     >> require 'puppet_spec/scope'
+  #     >> scope = PuppetSpec::Scope.create_test_scope_for_node('example')
   #     => Scope()
   #     >> scope.function_double([2])
   #     => 4
@@ -112,13 +112,18 @@ module Puppet::Parser::Functions
   #   zero or more arguments.  A function with an arity of 2 must be provided
   #   with exactly two arguments, no more and no less.  Added in Puppet 3.1.0.
   #
+  # @option options [Puppet::Node::Environment] :environment (nil) can
+  #   explicitly pass the environment we wanted the function added to.  Only used
+  #   to set logging functions in root environment
+  #
   # @return [Hash] describing the function.
   #
   # @api public
   def self.newfunction(name, options = {}, &block)
     name = name.intern
+    environment = options[:environment] || Puppet.lookup(:current_environment)
 
-    Puppet.warning "Overwriting previous definition for function #{name}" if get_function(name)
+    Puppet.warning "Overwriting previous definition for function #{name}" if get_function(name, environment)
 
     arity = options[:arity] || -1
     ftype = options[:type] || :statement
@@ -130,10 +135,10 @@ module Puppet::Parser::Functions
     # the block must be installed as a method because it may use "return",
     # which is not allowed from procs.
     real_fname = "real_function_#{name}"
-    environment_module.send(:define_method, real_fname, &block)
+    environment_module(environment).send(:define_method, real_fname, &block)
 
     fname = "function_#{name}"
-    environment_module.send(:define_method, fname) do |*args|
+    environment_module(environment).send(:define_method, fname) do |*args|
       Puppet::Util::Profiler.profile("Called #{name}") do
         if args[0].is_a? Array
           if arity >= 0 and args[0].size != arity
@@ -151,25 +156,26 @@ module Puppet::Parser::Functions
     func = {:arity => arity, :type => ftype, :name => fname}
     func[:doc] = options[:doc] if options[:doc]
 
-    add_function(name, func)
+    add_function(name, func, environment)
     func
   end
 
   # Determine if a function is defined
   #
   # @param [Symbol] name the function
+  # @param [Puppet::Node::Environment] environment the environment to find the function in
   #
   # @return [Symbol, false] The name of the function if it's defined,
   #   otherwise false.
   #
   # @api public
-  def self.function(name)
+  def self.function(name, environment = Puppet.lookup(:current_environment))
     name = name.intern
 
     func = nil
-    unless func = get_function(name)
-      autoloader.load(name, Environment.current)
-      func = get_function(name)
+    unless func = get_function(name, environment)
+      autoloader.load(name, environment)
+      func = get_function(name, environment)
     end
 
     if func
@@ -179,12 +185,12 @@ module Puppet::Parser::Functions
     end
   end
 
-  def self.functiondocs
+  def self.functiondocs(environment = Puppet.lookup(:current_environment))
     autoloader.loadall
 
     ret = ""
 
-    merged_functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
+    merged_functions(environment).sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
       ret << "#{name}\n#{"-" * name.to_s.length}\n"
       if hash[:doc]
         ret << Puppet::Util::Docs.scrub(hash[:doc])
@@ -201,42 +207,43 @@ module Puppet::Parser::Functions
   # Determine whether a given function returns a value.
   #
   # @param [Symbol] name the function
+  # @param [Puppet::Node::Environment] environment The environment to find the function in
+  # @return [Boolean] whether it is an rvalue function
   #
   # @api public
-  def self.rvalue?(name)
-    func = get_function(name)
+  def self.rvalue?(name, environment = Puppet.lookup(:current_environment))
+    func = get_function(name, environment)
     func ? func[:type] == :rvalue : false
   end
 
   # Return the number of arguments a function expects.
   #
   # @param [Symbol] name the function
+  # @param [Puppet::Node::Environment] environment The environment to find the function in
   # @return [Integer] The arity of the function. See {newfunction} for
   #   the meaning of negative values.
   #
   # @api public
-  def self.arity(name)
-    func = get_function(name)
+  def self.arity(name, environment = Puppet.lookup(:current_environment))
+    func = get_function(name, environment)
     func ? func[:arity] : -1
   end
 
   class << self
     private
 
-    def merged_functions
-      @functions[Environment.root].merge(@functions[Environment.current])
+    def merged_functions(environment)
+      @functions[Puppet.lookup(:root_environment)].merge(@functions[environment])
     end
 
-    def get_function(name)
+    def get_function(name, environment)
       name = name.intern
-      merged_functions[name]
+      merged_functions(environment)[name]
     end
 
-    def add_function(name, func)
+    def add_function(name, func, environment)
       name = name.intern
-      @functions[Environment.current][name] = func
+      @functions[environment][name] = func
     end
   end
-
-  reset  # initialize the class instance variables
 end

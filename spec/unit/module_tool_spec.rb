@@ -154,87 +154,20 @@ TREE
   end
 
   describe '.set_option_defaults' do
-    describe 'option :environment' do
-      context 'passed:' do
-        let (:environment) { "ahgkduerh" }
-        let (:options) { {:environment => environment} }
-
-        it 'Puppet[:environment] should be set to the value of the option' do
-          subject.set_option_defaults options
-
-          Puppet[:environment].should == environment
-        end
-
-        it 'the option value should not be overridden' do
-          Puppet[:environment] = :foo
-          subject.set_option_defaults options
-
-          options[:environment].should == environment
-        end
-      end
-
-      context 'NOT passed:' do
-        it 'Puppet[:environment] should NOT be overridden' do
-          Puppet[:environment] = :foo
-
-          subject.set_option_defaults({})
-          Puppet[:environment].should == :foo
-        end
-
-        it 'the option should be set to the value of Puppet[:environment]' do
-          options_to_modify = Hash.new
-          Puppet[:environment] = :abcdefg
-
-          subject.set_option_defaults options_to_modify
-
-          options_to_modify[:environment].should == :abcdefg
-        end
+    let(:options) { {} }
+    let(:modulepath) { [File.expand_path('/env/module/path'), File.expand_path('/global/module/path')] }
+    let(:environment) { Puppet::Node::Environment.create('current', modulepath, '') }
+    around(:each) do |example|
+      Puppet.override(:current_environment => environment) do
+        example.run
       end
     end
 
-    describe 'option :modulepath' do
-      context 'passed:' do
-        let (:modulepath) { PuppetSpec::Files.make_absolute('/bar') }
-        let (:options) { {:modulepath => modulepath} }
-
-        it 'Puppet[:modulepath] should be set to the value of the option' do
-
-          subject.set_option_defaults options
-
-          Puppet[:modulepath].should == modulepath
-        end
-
-        it 'the option value should not be overridden' do
-          Puppet[:modulepath] = "/foo"
-
-          subject.set_option_defaults options
-
-          options[:modulepath].should == modulepath
-        end
-      end
-
-      context 'NOT passed:' do
-        let (:options) { {:environment => :pmttestenv} }
-
-        before(:each) do
-          Puppet[:modulepath] = "/no"
-          Puppet[:environment] = :pmttestenv
-          Puppet.settings.set_value(:modulepath,
-                                    ["/foo", "/bar", "/no"].join(File::PATH_SEPARATOR),
-                                    :pmttestenv)
-        end
-
-        it 'Puppet[:modulepath] should be reset to the module path of the current environment' do
-          subject.set_option_defaults options
-
-          Puppet[:modulepath].should == Puppet.settings.value(:modulepath, :pmttestenv)
-        end
-
-        it 'the option should be set to the module path of the current environment' do
-          subject.set_option_defaults options
-
-          options[:modulepath].should == Puppet.settings.value(:modulepath, :pmttestenv)
-        end
+    describe 'option :environment_instance' do
+      it 'adds an environment_instance to the options hash' do
+        subject.set_option_defaults(options)
+        expect(options[:environment_instance].name).to eq(environment.name)
+        expect(options[:environment_instance].modulepath).to eq(environment.modulepath)
       end
     end
 
@@ -244,32 +177,26 @@ TREE
       context 'passed:' do
         let (:options) { {:target_dir => target_dir} }
 
-        it 'the option value should be prepended to the Puppet[:modulepath]' do
-          Puppet[:modulepath] = "/fuz"
-          original_modulepath = Puppet[:modulepath]
-
+        it 'prepends the target_dir into the environment_instance modulepath' do
           subject.set_option_defaults options
 
-          Puppet[:modulepath].should == options[:target_dir] + File::PATH_SEPARATOR + original_modulepath
+          expect(options[:environment_instance].full_modulepath).
+            to eq([File.expand_path(target_dir)] + modulepath)
         end
 
-        it 'the option value should be turned into an absolute path' do
+        it 'expands the target dir' do
           subject.set_option_defaults options
 
           options[:target_dir].should == File.expand_path(target_dir)
         end
       end
 
-      describe 'NOT passed:' do
-        before :each do
-          Puppet[:modulepath] = 'foo' + File::PATH_SEPARATOR + 'bar'
-        end
-
+      context 'NOT passed:' do
         it 'the option should be set to the first component of Puppet[:modulepath]' do
           options = Hash.new
           subject.set_option_defaults options
 
-          options[:target_dir].should == Puppet[:modulepath].split(File::PATH_SEPARATOR)[0]
+          expect(options[:target_dir]).to eq(environment.full_modulepath.first)
         end
       end
     end

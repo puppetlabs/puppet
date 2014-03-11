@@ -63,7 +63,7 @@ Puppet::Type.type(:package).provide :pip,
     result = client.call("package_releases", @resource[:name])
     result.first
   rescue Timeout::Error => detail
-    raise Puppet::Error, "Timeout while contacting pypi.python.org: #{detail}";
+    raise Puppet::Error, "Timeout while contacting pypi.python.org: #{detail}", detail.backtrace
   end
 
   # Install a package.  The ensure parameter may specify installed,
@@ -113,7 +113,7 @@ Puppet::Type.type(:package).provide :pip,
       self.class.commands :pip => pathname
       pip *args
     else
-      raise e, 'Could not locate the pip command.'
+      raise e, 'Could not locate the pip command.', e.backtrace
     end
   end
 end

@@ -23,7 +23,7 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
 
   # BF: we used to fetch the file content here, but this is counter-productive
   # for puppetmaster streaming of file content. So collect just returns itself
-  def collect
+  def collect(source_permissions = nil)
     return if stat.ftype == "directory"
     self
   end
@@ -34,7 +34,7 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
       # This stat can raise an exception, too.
       raise(ArgumentError, "Cannot read the contents of links unless following links") if stat.ftype == "symlink"
 
-      @content = Puppet::FileSystem::File.new(full_path).binread
+      @content = Puppet::FileSystem.binread(full_path)
     end
     @content
   end

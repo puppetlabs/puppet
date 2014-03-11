@@ -5,10 +5,46 @@ require 'puppet/ssl/certificate_revocation_list'
 
 describe Puppet::SSL::CertificateRevocationList do
   before do
-    @cert = stub 'cert', :subject => "mysubject"
-    @key = stub 'key', :private? => true
-
+    ca = Puppet::SSL::CertificateAuthority.new
+    ca.generate_ca_certificate
+    @cert = ca.host.certificate.content
+    @key = ca.host.key.content
     @class = Puppet::SSL::CertificateRevocationList
+  end
+
+  def expects_time_close_to_now(time)
+    expect(time.to_i).to be_within(5*60).of(Time.now.to_i)
+  end
+
+  def expects_time_close_to_five_years(time)
+    future = Time.now + Puppet::SSL::CertificateRevocationList::FIVE_YEARS
+    expect(time.to_i).to be_within(5*60).of(future.to_i)
+  end
+
+  def expects_crlnumber_extension(crl, value)
+    crlNumber = crl.content.extensions.find { |ext| ext.oid == "crlNumber" }
+
+    expect(crlNumber.value).to eq(value.to_s)
+    expect(crlNumber).to_not be_critical
+  end
+
+  def expects_authkeyid_extension(crl, cert)
+    subjectKeyId = cert.extensions.find { |ext| ext.oid == 'subjectKeyIdentifier' }.value
+
+    authKeyId = crl.content.extensions.find { |ext| ext.oid == "authorityKeyIdentifier" }
+    expect(authKeyId.value.chomp).to eq("keyid:#{subjectKeyId}")
+    expect(authKeyId).to_not be_critical
+  end
+
+  def expects_crlreason_extension(crl, reason)
+    revoke = crl.content.revoked.first
+
+    crlNumber = crl.content.extensions.find { |ext| ext.oid == "crlNumber" }
+    expect(revoke.serial.to_s).to eq(crlNumber.value)
+
+    crlReason = revoke.extensions.find { |ext| ext.oid = 'CRLReason' }
+    expect(crlReason.value).to eq(reason)
+    expect(crlReason).to_not be_critical
   end
 
   it "should only support the text format" do
@@ -16,23 +52,17 @@ describe Puppet::SSL::CertificateRevocationList do
   end
 
   describe "when converting from a string" do
-    it "should create a CRL instance with its name set to 'foo' and its content set to the extracted CRL" do
-      crl = stub 'crl', :is_a? => true
-      OpenSSL::X509::CRL.expects(:new).returns(crl)
+    it "deserializes a CRL" do
+      crl = @class.new('foo')
+      crl.generate(@cert, @key)
 
-      mycrl = stub 'sslcrl'
-      mycrl.expects(:content=).with(crl)
-
-      @class.expects(:new).with("foo").returns mycrl
-
-      @class.from_s("my crl").should == mycrl
+      new_crl = @class.from_s(crl.to_s)
+      expect(new_crl.content.to_text).to eq(crl.content.to_text)
     end
   end
 
   describe "when an instance" do
     before do
-      @class.any_instance.stubs(:read_or_generate)
-
       @crl = @class.new("whatever")
     end
 
@@ -47,63 +77,55 @@ describe Puppet::SSL::CertificateRevocationList do
 
   describe "when generating the crl" do
     before do
-      @real_crl = mock 'crl'
-      @real_crl.stub_everything
-
-      OpenSSL::X509::CRL.stubs(:new).returns(@real_crl)
-
-      @class.any_instance.stubs(:read_or_generate)
-
       @crl = @class.new("crl")
     end
 
     it "should set its issuer to the subject of the passed certificate" do
-      @real_crl.expects(:issuer=).with(@cert.subject)
-
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).issuer.to_s.should == @cert.subject.to_s
     end
 
     it "should set its version to 1" do
-      @real_crl.expects(:version=).with(1)
-
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).version.should == 1
     end
 
     it "should create an instance of OpenSSL::X509::CRL" do
-      OpenSSL::X509::CRL.expects(:new).returns(@real_crl)
-
-      @crl.generate(@cert, @key)
+      @crl.generate(@cert, @key).should be_an_instance_of(OpenSSL::X509::CRL)
     end
 
-    # The next three tests aren't good, but at least they
-    # specify the behaviour.
     it "should add an extension for the CRL number" do
-      @real_crl.expects(:extensions=)
       @crl.generate(@cert, @key)
+
+      expects_crlnumber_extension(@crl, 0)
     end
 
-    it "should set the last update time" do
-      @real_crl.expects(:last_update=)
+    it "should add an extension for the authority key identifier" do
       @crl.generate(@cert, @key)
+
+      expects_authkeyid_extension(@crl, @cert)
     end
 
-    it "should set the next update time" do
-      @real_crl.expects(:next_update=)
-      @crl.generate(@cert, @key)
+    it "returns the last update time in UTC" do
+      # http://tools.ietf.org/html/rfc5280#section-5.1.2.4
+      thisUpdate = @crl.generate(@cert, @key).last_update
+      thisUpdate.should be_utc
+      expects_time_close_to_now(thisUpdate)
     end
 
-    it "should sign the CRL" do
-      @real_crl.expects(:sign).with { |key, digest| key == @key }
-      @crl.generate(@cert, @key)
+    it "returns the next update time in UTC 5 years from now" do
+      # http://tools.ietf.org/html/rfc5280#section-5.1.2.5
+      nextUpdate = @crl.generate(@cert, @key).next_update
+      nextUpdate.should be_utc
+      expects_time_close_to_five_years(nextUpdate)
+    end
+
+    it "should verify using the CA public_key" do
+      @crl.generate(@cert, @key).verify(@key.public_key).should be_true
     end
 
     it "should set the content to the generated crl" do
+      # this test shouldn't be needed since we test the return of generate() which should be the content field
       @crl.generate(@cert, @key)
-      @crl.content.should equal(@real_crl)
-    end
-
-    it "should return the generated crl" do
-      @crl.generate(@cert, @key).should equal(@real_crl)
+      @crl.content.should be_an_instance_of(OpenSSL::X509::CRL)
     end
   end
 
@@ -111,47 +133,26 @@ describe Puppet::SSL::CertificateRevocationList do
   # SSL stuff is very complicated.  It just hits the high points.
   describe "when revoking a certificate" do
     before do
-      @class.wrapped_class.any_instance.stubs(:issuer=)
-      @class.wrapped_class.any_instance.stubs(:sign)
-
       @crl = @class.new("crl")
       @crl.generate(@cert, @key)
-      @crl.content.stubs(:sign)
 
       Puppet::SSL::CertificateRevocationList.indirection.stubs :save
-
-      @key = mock 'key'
     end
 
     it "should require a serial number and the CA's private key" do
-      lambda { @crl.revoke }.should raise_error(ArgumentError)
-    end
-
-    it "should default to OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE as the revocation reason" do
-      # This makes it a bit more of an integration test than we'd normally like, but that's life
-      # with openssl.
-      reason = OpenSSL::ASN1::Enumerated(OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE)
-      OpenSSL::ASN1.expects(:Enumerated).with(OpenSSL::OCSP::REVOKED_STATUS_KEYCOMPROMISE).returns reason
-
-      @crl.revoke(1, @key)
+      expect { @crl.revoke }.to raise_error(ArgumentError)
     end
 
     it "should mark the CRL as updated at a time that makes it valid now" do
-      time = Time.now
-      Time.stubs(:now).returns time
-
-      @crl.content.expects(:last_update=).with(time - 1)
-
       @crl.revoke(1, @key)
+
+      expects_time_close_to_now(@crl.content.last_update)
     end
 
     it "should mark the CRL valid for five years" do
-      time = Time.now
-      Time.stubs(:now).returns time
-
-      @crl.content.expects(:next_update=).with(time + (5 * 365*24*60*60))
-
       @crl.revoke(1, @key)
+
+      expects_time_close_to_five_years(@crl.content.next_update)
     end
 
     it "should sign the CRL with the CA's private key and a digest instance" do
@@ -162,6 +163,34 @@ describe Puppet::SSL::CertificateRevocationList do
     it "should save the CRL" do
       Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(@crl, nil)
       @crl.revoke(1, @key)
+    end
+
+    it "adds the crlNumber extension containing the serial number" do
+      serial = 1
+      @crl.revoke(serial, @key)
+
+      expects_crlnumber_extension(@crl, serial)
+    end
+
+    it "adds the CA cert's subjectKeyId as the authorityKeyIdentifier to the CRL" do
+      @crl.revoke(1, @key)
+
+      expects_authkeyid_extension(@crl, @cert)
+    end
+
+    it "adds a non-critical CRL reason specifying key compromise by default" do
+      # http://tools.ietf.org/html/rfc5280#section-5.3.1
+      serial = 1
+      @crl.revoke(serial, @key)
+
+      expects_crlreason_extension(@crl, 'Key Compromise')
+    end
+
+    it "allows alternate reasons to be specified" do
+      serial = 1
+      @crl.revoke(serial, @key, OpenSSL::OCSP::REVOKED_STATUS_CACOMPROMISE)
+
+      expects_crlreason_extension(@crl, 'CA Compromise')
     end
   end
 end

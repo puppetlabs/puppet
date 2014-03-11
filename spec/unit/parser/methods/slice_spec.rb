@@ -40,6 +40,7 @@ describe 'methods' do
       catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
+
     it 'slice with one parameter' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, present, 2, absent, 3, present]
@@ -52,6 +53,7 @@ describe 'methods' do
       catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
+
     it 'slice with shorter last slice' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, present, 2, present, 3, absent]
@@ -64,8 +66,8 @@ describe 'methods' do
       catalog.resource(:file, "/file_3.")['ensure'].should == 'absent'
     end
   end
-  context "should be callable on hash as" do
 
+  context "should be callable on hash as" do
     it 'slice with explicit parameters, missing are empty' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {1=>present, 2=>present, 3=>absent}
@@ -77,8 +79,44 @@ describe 'methods' do
       catalog.resource(:file, "/file_1.2")['ensure'].should == 'present'
       catalog.resource(:file, "/file_3.")['ensure'].should == 'absent'
     end
-
   end
+
+  context "should be callable on enumerable types as" do
+    it 'slice with integer range' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = Integer[1,4]
+        $a.slice(2) |$a,$b| {
+          file { "/file_${a}.${b}": ensure => present }
+        }
+      MANIFEST
+
+      catalog.resource(:file, "/file_1.2")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_3.4")['ensure'].should == 'present'
+    end
+
+    it 'slice with integer' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        4.slice(2) |$a,$b| {
+          file { "/file_${a}.${b}": ensure => present }
+        }
+      MANIFEST
+
+      catalog.resource(:file, "/file_0.1")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_2.3")['ensure'].should == 'present'
+    end
+
+    it 'slice with string' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        'abcd'.slice(2) |$a,$b| {
+          file { "/file_${a}.${b}": ensure => present }
+        }
+      MANIFEST
+
+      catalog.resource(:file, "/file_a.b")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_c.d")['ensure'].should == 'present'
+    end
+  end
+
   context "when called without a block" do
     it "should produce an array with the result" do
       catalog = compile_to_catalog(<<-MANIFEST)

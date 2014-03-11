@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
     begin
       output = portversion(*cmd)
     rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new(output)
+      raise Puppet::Error.new(output, $!)
     end
     line = output.split("\n").pop
 

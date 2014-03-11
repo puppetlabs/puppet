@@ -1,47 +1,58 @@
 test_name 'puppet module uninstall (with environment)'
-
-teardown do
-on master, "rm -rf #{master['puppetpath']}/testenv #{master['puppetpath']}/puppet2.conf"
-end
+require 'puppet/acceptance/module_utils'
+extend Puppet::Acceptance::ModuleUtils
 
 step 'Setup'
 
 stub_forge_on(master)
 
+puppet_conf = generate_base_legacy_and_directory_environments(master['puppetpath'])
+
+crakorn_metadata = <<-EOS
+{
+ "name": "jimmy/crakorn",
+ "version": "0.4.0",
+ "source": "",
+ "author": "jimmy",
+ "license": "MIT",
+ "dependencies": []
+}
+EOS
+
 # Configure a non-default environment
-on master, "rm -rf #{master['puppetpath']}/testenv"
 apply_manifest_on master, %Q{
   file {
     [
-      '#{master['puppetpath']}/testenv',
-      '#{master['puppetpath']}/testenv/modules',
-      '#{master['puppetpath']}/testenv/modules/crakorn',
+      '#{master['puppetpath']}/legacyenv/modules/crakorn',
+      '#{master['puppetpath']}/environments/direnv/modules',
+      '#{master['puppetpath']}/environments/direnv/modules/crakorn',
     ]:
       ensure => directory,
   }
   file {
-    '#{master['puppetpath']}/testenv/modules/crakorn/metadata.json':
-      content => '{
-        "name": "jimmy/crakorn",
-        "version": "0.4.0",
-        "source": "",
-        "author": "jimmy",
-        "license": "MIT",
-        "dependencies": []
-      }',
+    '#{master['puppetpath']}/legacyenv/modules/crakorn/metadata.json':
+      content => '#{crakorn_metadata}',
   }
   file {
-    '#{master['puppetpath']}/puppet2.conf':
-      source => $settings::config,
+    '#{master['puppetpath']}/environments/direnv/modules/crakorn/metadata.json':
+      content => '#{crakorn_metadata}',
   }
 }
-on master, %Q{{ echo "[testenv]"; echo "modulepath=#{master['puppetpath']}/testenv/modules"; } >> #{master['puppetpath']}/puppet2.conf}
 
-step 'Uninstall a module from a non default environment'
-on master, "puppet module uninstall jimmy-crakorn --config=#{master['puppetpath']}/puppet2.conf --environment=testenv" do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
-    Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{master['puppetpath']}/testenv/modules
-  OUTPUT
+check_module_uninstall_in = lambda do |environment, environment_path|
+  on master, "puppet module uninstall jimmy-crakorn --config=#{puppet_conf} --environment=#{environment}" do
+    assert_output <<-OUTPUT
+      \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
+      Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{environment_path}
+    OUTPUT
+  end
+  on master, "[ ! -d #{environment_path}/crakorn ]"
 end
-on master, "[ ! -d #{master['puppetpath']}/testenv/modules/crakorn ]"
+
+step 'Uninstall a module from a non default legacy environment' do
+  check_module_uninstall_in.call('legacyenv', "#{master['puppetpath']}/legacyenv/modules")
+end
+
+step 'Uninstall a module from a non default directory environment' do
+  check_module_uninstall_in.call('direnv', "#{master['puppetpath']}/environments/direnv/modules")
+end

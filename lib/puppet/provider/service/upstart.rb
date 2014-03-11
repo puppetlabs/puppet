@@ -7,11 +7,14 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   desc "Ubuntu service management with `upstart`.
 
-  This provider manages `upstart` jobs, which have replaced `initd` services
-  on Ubuntu. For `upstart` documentation, see <http://upstart.ubuntu.com/>.
+  This provider manages `upstart` jobs on Ubuntu. For `upstart` documentation,
+  see <http://upstart.ubuntu.com/>.
   "
-  # confine to :ubuntu for now because I haven't tested on other platforms
-  confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]
+
+  confine :any => [
+    Facter.value(:operatingsystem) == 'Ubuntu',
+    (Facter.value(:osfamily) == 'RedHat' and Facter.value(:operatingsystemrelease) =~ /^6\./),
+  ]
 
   defaultfor :operatingsystem => :ubuntu
 
@@ -28,6 +31,18 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   def self.instances
     self.get_services(self.excludes) # Take exclude list from init provider
   end
+
+  def self.excludes
+    excludes = super
+    if Facter.value(:osfamily) == 'RedHat'
+      # Puppet cannot deal with services that have instances, so we have to
+      # ignore these services using instances on redhat based systems.
+      excludes += %w[serial tty]
+    end
+
+    excludes
+  end
+
 
   def self.get_services(exclude=[])
     instances = []
@@ -71,7 +86,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
       paths.each do |path|
         service_name = name.match(/^(\S+)/)[1]
         fqname = File.join(path, service_name + suffix)
-        if Puppet::FileSystem::File.exist?(fqname)
+        if Puppet::FileSystem.exist?(fqname)
           return fqname
         end
 
@@ -148,7 +163,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
 private
   def is_upstart?(script = initscript)
-    Puppet::FileSystem::File.exist?(script) && script.match(/\/etc\/init\/\S+\.conf/)
+    Puppet::FileSystem.exist?(script) && script.match(/\/etc\/init\/\S+\.conf/)
   end
 
   def version_is_pre_0_6_7
@@ -256,7 +271,7 @@ private
   end
 
   def read_override_file
-    if Puppet::FileSystem::File.exist?(overscript)
+    if Puppet::FileSystem.exist?(overscript)
       read_script_from(overscript)
     else
       ""

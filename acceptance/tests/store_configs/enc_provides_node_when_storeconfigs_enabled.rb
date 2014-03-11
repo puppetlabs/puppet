@@ -3,6 +3,7 @@ test_name "ENC node information is used when store configs enabled (#16698)"
 confine :except, :platform => 'solaris'
 confine :except, :platform => 'windows'
 confine :except, :platform => 'el-6'
+confine :except, :platform => 'el-7'
 confine :except, :platform => 'lucid'
 confine :except, :platform => 'sles-11'
 
@@ -30,9 +31,9 @@ create_remote_file master, "#{testdir}/setup.pp", <<END
 $active_record_version = $osfamily ? {
   RedHat => $lsbmajdistrelease ? {
     5       => '2.2.3',
-    default => '3.0.20',
+    default => '3.2.16',
   },
-  default => '3.0.20',
+  default => '3.2.16',
 }
 
 package {
@@ -42,21 +43,23 @@ package {
   activerecord:
     ensure => $active_record_version,
     provider => 'gem',
-    require => Package[rubygems]
+    require => Package[rubygems];
 }
 
 if $osfamily == "Debian" {
   package {
+    # This is the deb sqlite3 package
     sqlite3:
       ensure => present;
 
-    libsqlite3-ruby:
+    libsqlite3-dev:
       ensure => present,
-      require => Package[sqlite3]
+      require => Package[sqlite3];
+
   }
 } elsif $osfamily == "RedHat" {
   $sqlite_gem_pkg_name = $operatingsystem ? {
-    Fedora => "rubygem-sqlite3",
+    "Fedora" => "rubygem-sqlite3",
     default => "rubygem-sqlite3-ruby"
   }
 
@@ -73,7 +76,23 @@ if $osfamily == "Debian" {
 }
 END
 
+# This is a brute force hack around PUP-1073 because the deb for the core
+# sqlite3 package and the rubygem for the sqlite3 driver are both named
+# 'sqlite3'.  So we just run a second puppet apply.
+create_remote_file master, "#{testdir}/setup_sqlite_gem.pp", <<END
+if $osfamily == "Debian" {
+  package {
+    # This is the rubygem sqlite3 driver
+    sqlite3-gem:
+      name => 'sqlite3',
+      ensure => present,
+      provider => 'gem',
+  }
+}
+END
+
 on master, puppet_apply("#{testdir}/setup.pp")
+on master, puppet_apply("#{testdir}/setup_sqlite_gem.pp")
 
 master_opts = {
   'master' => {

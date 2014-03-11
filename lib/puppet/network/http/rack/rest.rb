@@ -1,14 +1,11 @@
 require 'openssl'
 require 'cgi'
 require 'puppet/network/http/handler'
-require 'puppet/network/http/rack/httphandler'
 require 'puppet/util/ssl'
 
-class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
-
+class Puppet::Network::HTTP::RackREST
   include Puppet::Network::HTTP::Handler
 
-  HEADER_ACCEPT = 'HTTP_ACCEPT'.freeze
   ContentType = 'Content-Type'.freeze
 
   CHUNK_SIZE = 8192
@@ -31,7 +28,7 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   def initialize(args={})
     super()
-    initialize_for_puppet(args)
+    register([Puppet::Network::HTTP::API::V2.routes, Puppet::Network::HTTP::API::V1.routes])
   end
 
   def set_content_type(response, format)
@@ -51,20 +48,12 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
 
   # Retrieve all headers from the http request, as a map.
   def headers(request)
-    request.env.select {|k,v| k.start_with? 'HTTP_'}.inject({}) do |m, (k,v)|
+    headers = request.env.select {|k,v| k.start_with? 'HTTP_'}.inject({}) do |m, (k,v)|
       m[k.sub(/^HTTP_/, '').gsub('_','-').downcase] = v
       m
     end
-  end
-
-  # Retrieve the accept header from the http request.
-  def accept_header(request)
-    request.env[HEADER_ACCEPT]
-  end
-
-  # Retrieve the accept header from the http request.
-  def content_type_header(request)
-    request.content_type
+    headers['content-type'] = request.content_type
+    headers
   end
 
   # Return which HTTP verb was used in this request.
@@ -102,8 +91,11 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     cert = request.env['SSL_CLIENT_CERT']
     # NOTE: The SSL_CLIENT_CERT environment variable will be the empty string
     # when Puppet agent nodes have not yet obtained a signed certificate.
-    return nil if cert.nil? or cert.empty?
-    OpenSSL::X509::Certificate.new(cert)
+    if cert.nil? || cert.empty?
+      nil
+    else
+      Puppet::SSL::Certificate.from_instance(OpenSSL::X509::Certificate.new(cert))
+    end
   end
 
   # Passenger freaks out if we finish handling the request without reading any
