@@ -1,4 +1,5 @@
 # Returns the contents of a file
+require 'puppet/file_system'
 
 Puppet::Parser::Functions::newfunction(
   :file, :arity => -2, :type => :rvalue,
@@ -11,7 +12,7 @@ Puppet::Parser::Functions::newfunction(
         raise Puppet::ParseError, "Files must be fully qualified"
       end
       if Puppet::FileSystem.exist?(file)
-        ret = File.read(file)
+        ret = Puppet::FileSystem.binread(file)
         break
       end
     end

@@ -19,15 +19,15 @@ describe "the 'file' function" do
 
   def with_file_content(content)
     path = tmpfile('file-function')
-    file = File.new(path, 'w')
+    file = File.new(path, 'wb')
     file.sync = true
     file.print content
     yield path
   end
 
-  it "should read a file" do
-    with_file_content('file content') do |name|
-      scope.function_file([name]).should == "file content"
+  it "should read a file in binary mode" do
+    with_file_content("file content\r\n") do |name|
+      scope.function_file([name]).should == "file content\r\n"
     end
   end
 
