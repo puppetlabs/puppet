@@ -418,36 +418,52 @@ describe Puppet::Type.type(:user) do
 
   describe "when purging ssh keys" do
     it "should not accept a keyfile with a relative path" do
-      expect { described_class.new(:name => "a", :purge_ssh_keys => "keys") }.to raise_error
+      expect {
+        described_class.new(:name => "a", :purge_ssh_keys => "keys")
+      }.to raise_error(Puppet::Error, /Paths to keyfiles must be absolute, not keys/)
     end
 
     context "with a home directory specified" do
       it "should accept true" do
-        expect { described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => true) }.to_not raise_error
+        described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => true)
       end
       it "should accept the ~ wildcard" do
-        expect { described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "~/keys") }.to_not raise_error
+        described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "~/keys")
       end
       it "should accept the %h wildcard" do
-        expect { described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "%h/keys") }.to_not raise_error
+        described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "%h/keys")
+      end
+      it "raises when given a relative path" do
+        expect {
+          described_class.new(:name => "a", :home => "/tmp", :purge_ssh_keys => "keys")
+        }.to raise_error(Puppet::Error, /Paths to keyfiles must be absolute/)
       end
     end
 
     context "with no home directory specified" do
       it "should not accept true" do
-        expect { described_class.new(:name => "a", :purge_ssh_keys => true) }.to raise_error
+        expect {
+          described_class.new(:name => "a", :purge_ssh_keys => true)
+        }.to raise_error(Puppet::Error, /purge_ssh_keys can only be true for users with a defined home directory/)
       end
       it "should not accept the ~ wildcard" do
-        expect { described_class.new(:name => "a", :purge_ssh_keys => "~/keys") }.to raise_error
+        expect {
+          described_class.new(:name => "a", :purge_ssh_keys => "~/keys")
+        }.to raise_error(Puppet::Error, /meta character ~ or %h only allowed for users with a defined home directory/)
       end
       it "should not accept the %h wildcard" do
-        expect { described_class.new(:name => "a", :purge_ssh_keys => "%h/keys") }.to raise_error
+        expect {
+          described_class.new(:name => "a", :purge_ssh_keys => "%h/keys")
+        }.to raise_error(Puppet::Error, /meta character ~ or %h only allowed for users with a defined home directory/)
       end
     end
 
     context "with a valid parameter" do
+      let(:paths) do
+        [ "/dev/null", "/tmp/keyfile" ].map { |path| File.expand_path(path) }
+      end
       subject do
-        res = described_class.new(:name => "test", :purge_ssh_keys => [ "/dev/null", "/tmp/keyfile" ])
+        res = described_class.new(:name => "test", :purge_ssh_keys => paths)
         res.catalog = Puppet::Resource::Catalog.new
         res
       end
@@ -456,8 +472,9 @@ describe Puppet::Type.type(:user) do
         subject.eval_generate
       end
       it "should check each keyfile for readability" do
-        File.expects(:readable?).with("/dev/null")
-        File.expects(:readable?).with("/tmp/keyfile")
+        paths.each do |path|
+          File.expects(:readable?).with(path)
+        end
         subject.eval_generate
       end
     end

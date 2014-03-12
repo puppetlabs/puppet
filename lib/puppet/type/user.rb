@@ -593,8 +593,11 @@ module Puppet
         value = [ value ] if value.is_a?(String)
         if value.is_a?(Array)
           value.each do |entry|
+
             raise ArgumentError, "Each entry for purge_ssh_keys must be a string, not a #{entry.class}" unless entry.is_a?(String)
-            raise ArgumentError, "Paths to keyfiles must be absolute, not #{entry}" unless entry =~ %r{^/|^~/|^%h/}
+
+            valid_home = Puppet::Util.absolute_path?(entry) || entry =~ %r{^~/|^%h/}
+            raise ArgumentError, "Paths to keyfiles must be absolute, not #{entry}" unless valid_home
           end
           return
         end
