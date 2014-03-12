@@ -1,13 +1,24 @@
-#!/bin/bash
+#! /bin/sh
 #
-# Restart puppet on network changes to pickup changes to /etc/resolv.conf
+# Reload puppet on network changes to pick up changes to /etc/resolv.conf,
+# facter facts, et. al.
+#
+# As of 2013-11-26, NetworkManager has a hard-coded 3-second timeout for
+# dispatcher scripts.  For that reason, we specifically prefer to reload puppet
+# instead of restarting it, because on a slow system a restart might actually
+# take longer than 3 seconds, which will result in NetworkManager killing the
+# dispatcher script.
 #
 # https://projects.puppetlabs.com/issues/2776
-# https://bugzilla.redhat.com/532085
+# https://bugzilla.redhat.com/show_bug.cgi?id=532085
+#
 
-
-if [ -f "/bin/systemctl" ]  ; then
-  [[ $2 =~ ^(up|down)$ ]] && /bin/systemctl try-restart puppet.service || :
-else
-  [[ $2 =~ ^(up|down)$ ]] && /sbin/service puppet condrestart || :
-fi
+case "x${2}" in
+xup|xdown)
+  if type systemctl &>/dev/null; then
+    systemctl --quiet is-active puppet.service && systemctl reload puppet.service &>/dev/null || :
+  else
+    /sbin/service puppet status &>/dev/null && /sbin/service puppet reload &>/dev/null || :
+  fi
+  ;;
+esac
