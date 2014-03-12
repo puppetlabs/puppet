@@ -98,9 +98,8 @@ Puppet::Type.newtype(:scheduled_task) do
             first become active. Several time formats will work, but we
             suggest 24-hour time formatted as HH:MM.
           * `start_date` ---  The date when the trigger should first become active.
-            Defaults to "today." Several date formats will work, including
-            special dates like "today," but we suggest formatting dates as
-            YYYY-MM-DD.
+            Defaults to the current date. You should format dates as YYYY-MM-DD,
+            although other date formats may work. (Under the hood, this uses `Date.parse`.)
       * For daily triggers:
           * `every` --- How often the task should run, as a number of days. Defaults
             to 1. ("2" means every other day, "3" means every three days, etc.)
@@ -132,7 +131,7 @@ Puppet::Type.newtype(:scheduled_task) do
           # May, July, September, and November, starting after August 31st, 2011.
           trigger => {
             schedule   => monthly,
-            start_date => '2011-08-31',   # Defaults to 'today'
+            start_date => '2011-08-31',   # Defaults to current date
             start_time => '08:00',        # Must be specified
             months     => [1,3,5,7,9,11], # Defaults to all
             on         => [1, 15, last],  # Must be specified
@@ -142,7 +141,7 @@ Puppet::Type.newtype(:scheduled_task) do
           # starting after August 31st, 2011.
           trigger => {
             schedule         => monthly,
-            start_date       => '2011-08-31', # Defaults to 'today'
+            start_date       => '2011-08-31', # Defaults to current date
             start_time       => '08:00',      # Must be specified
             months           => [1,3,5],      # Defaults to all
             which_occurrence => first,        # Must be specified
