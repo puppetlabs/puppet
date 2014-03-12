@@ -37,6 +37,7 @@ vars: var
     ;
 
 var: PARAM VALUE returns { result = {val[0] => val[1]} }
+    | PARAM returns { result = {val[0] => "" } }
     ;
 
 returns: RETURN
@@ -144,6 +145,7 @@ def tokenize_parameter_value
     ;
 
   when (text = @ss.scan(/\n/))                  # newline
+    @in_parameter_value = false
     [:RETURN, text]
 
   when (text = @ss.scan(/.+$/))                 # Value of parameter
