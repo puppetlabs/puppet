@@ -3,20 +3,6 @@ require 'puppet/module_tool'
 
 describe Puppet::ModuleTool::Tar do
 
-  it "uses gtar when present on Solaris" do
-    Facter.stubs(:value).with('osfamily').returns 'Solaris'
-    Puppet::Util.stubs(:which).with('gtar').returns '/usr/bin/gtar'
-
-    described_class.instance(nil).should be_a_kind_of Puppet::ModuleTool::Tar::Solaris
-  end
-
-  it "uses gtar when present on OpenBSD" do
-    Facter.stubs(:value).with('osfamily').returns 'OpenBSD'
-    Puppet::Util.stubs(:which).with('gtar').returns '/usr/bin/gtar'
-
-    described_class.instance(nil).should be_a_kind_of Puppet::ModuleTool::Tar::Solaris
-  end
-
   it "uses tar when present and not on Windows" do
     Facter.stubs(:value).with('osfamily').returns 'ObscureLinuxDistro'
     Puppet::Util.stubs(:which).with('tar').returns '/usr/bin/tar'
