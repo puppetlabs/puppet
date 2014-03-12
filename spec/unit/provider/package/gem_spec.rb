@@ -44,6 +44,11 @@ describe provider_class do
       provider.install
     end
 
+    it "should return install_options as nil by default" do
+      provider.expects(:execute).with { |args| expect(args[5]).to be_nil }.returns ""
+      provider.install
+    end
+
     describe "when a source is specified" do
       describe "as a normal file" do
         it "should use the file name instead of the gem name" do
