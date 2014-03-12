@@ -8,8 +8,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     interpreted as the path to a local gem file.  If source is not present at all,
     the gem will be installed from the default gem repositories."
 
-  has_feature :versionable
-  has_feature :install_options
+  has_feature :versionable, :install_options
 
   commands :gemcmd => "gem"
 
@@ -26,9 +25,6 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
     if name = options[:justme]
       gem_list_command << name + "$"
-    end
-    if options[:install_options]
-      gem_list_command << options[:install_options]
     end
 
     begin
@@ -101,7 +97,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       command << "--no-rdoc" << "--no-ri" << resource[:name]
     end
 
-    command << resource[:install_options]
+    command << install_options
 
     output = execute(command)
     # Apparently some stupid gem versions don't exit non-0 on failure
@@ -112,7 +108,6 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     # This always gets the latest version available.
     gemlist_options = {:justme => resource[:name]}
     gemlist_options.merge!({:source => resource[:source]}) unless resource[:source].nil?
-    gemlist_options.merge!({:install_options => resource[:install_options]}) unless resource[:install_options].nil?
     hash = self.class.gemlist(gemlist_options)
 
     hash[:ensure][0]
@@ -128,5 +123,24 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def update
     self.install(false)
+  end
+
+  def install_options
+    join_options(resource[:install_options])
+  end
+
+  def join_options(options)
+    return unless options
+
+    options.collect do |val|
+      case val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k}=#{val[k]}"
+        end.join(' ')
+      else
+        val
+      end
+    end
   end
 end
