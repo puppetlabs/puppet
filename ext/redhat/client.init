@@ -10,6 +10,9 @@
 # processname: puppet
 # config: /etc/sysconfig/puppet
 
+# Source function library.
+. /etc/rc.d/init.d/functions
+
 PATH=/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
 
@@ -18,9 +21,6 @@ lockfile=${LOCKFILE-/var/lock/subsys/puppet}
 pidfile=${PIDFILE-/var/run/puppet/agent.pid}
 puppetd=${PUPPETD-/usr/bin/puppet}
 RETVAL=0
-
-# Source function library.
-. /etc/rc.d/init.d/functions
 
 PUPPET_OPTS="agent "
 [ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="${PUPPET_OPTS} --server=${PUPPET_SERVER}"
