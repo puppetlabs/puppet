@@ -17,7 +17,10 @@ module Puppet
       Puppet 2.7 and newer expect init scripts to have a working status command.
       If this isn't the case for any of your services' init scripts, you will
       need to set `hasstatus` to false and possibly specify a custom status
-      command in the `status` attribute.
+      command in the `status` attribute. As a last resort, Puppet will attempt to
+      search the process table by calling whatever command is listed in the `ps`
+      fact. The default search pattern is the name of the service, but you can
+      specify it with the `pattern` attribute.
 
       **Refresh:** `service` resources can respond to refresh events (via
       `notify`, `subscribe`, or the `~>` arrow). If a `service` receives an
@@ -158,7 +161,8 @@ module Puppet
         command.
 
         Defaults to the name of the service. The pattern can be a simple string
-        or any legal Ruby pattern."
+        or any legal Ruby pattern, including regular expressions (which should
+        be quoted without enclosing slashes)."
 
       defaultto { @resource[:binary] || @resource[:name] }
     end
