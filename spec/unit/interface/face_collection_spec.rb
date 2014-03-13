@@ -6,30 +6,43 @@ require 'puppet/interface'
 
 describe Puppet::Interface::FaceCollection do
 
-  # Used to clear faces state before and after tests
-  # This is done to prevent this spec from interfering with other specs that use faces
-  def clear_faces
-    # Reset FaceCollection state
-    subject.instance_variable_get(:@faces).clear
-    subject.instance_variable_set :@loaded, false
-
-    # Remove any face files from the list of required files
-    $".delete_if { |path| path =~ /face\/.*\.rb$/ }
-
-    # Remove all faces from the autoloader
-    loaded = Puppet::Util::Autoload.instance_variable_get(:@loaded)
-    loaded.keys.dup.each do |k|
-      next unless k.start_with? 'puppet/face'
-      loaded.delete k
+  # To prevent conflicts with other specs that use faces, we must save and restore global state.
+  # Because there are specs that do 'describe Puppet::Face[...]', we must restore the same objects otherwise
+  # the 'subject' of the specs will differ.
+  before :all do
+    # Save FaceCollection's global state
+    faces = subject.instance_variable_get(:@faces)
+    @faces = faces.dup
+    faces.each do |k, v|
+      @faces[k] = v.dup
     end
+    @faces_loaded = subject.instance_variable_get(:@loaded)
+
+    # Save the already required face files
+    @required = []
+    $".each do |path|
+      @required << path if path =~ /face\/.*\.rb$/
+    end
+
+    # Save Autoload's global state
+    @loaded = Puppet::Util::Autoload.instance_variable_get(:@loaded).dup
+  end
+
+  after :all do
+    # Restore global state
+    subject.instance_variable_set :@faces, @faces
+    subject.instance_variable_set :@loaded, @faces_loaded
+    $".delete_if { |path| path =~ /face\/.*\.rb$/ }
+    @required.each { |path| $".push path unless $".include? path }
+    Puppet::Util::Autoload.instance_variable_set(:@loaded, @loaded)
   end
 
   before :each do
-    clear_faces
-  end
-
-  after :each do
-    clear_faces
+    # Before each test, clear the faces
+    subject.instance_variable_get(:@faces).clear
+    subject.instance_variable_set(:@loaded, false)
+    Puppet::Util::Autoload.instance_variable_get(:@loaded).clear
+    $".delete_if { |path| path =~ /face\/.*\.rb$/ }
   end
 
   describe "::[]" do
