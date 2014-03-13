@@ -11,10 +11,10 @@ module Puppet::ModuleTool
       end
 
       def run
-        load_modulefile!
+        load_metadata!
         create_directory
         copy_contents
-        add_metadata
+        write_json
         Puppet.notice "Building #{@path} for release"
         pack
         relative = Pathname.new(archive_file).relative_path_from(Pathname.new(File.expand_path(Dir.pwd)))
@@ -40,7 +40,7 @@ module Puppet::ModuleTool
       def pack
         FileUtils.rm archive_file rescue nil
 
-        tar = Puppet::ModuleTool::Tar.instance(metadata.full_module_name)
+        tar = Puppet::ModuleTool::Tar.instance(metadata.to_hash['name'])
         Dir.chdir(@pkg_path) do
           tar.pack(metadata.release_name, archive_file)
         end
@@ -65,9 +65,18 @@ module Puppet::ModuleTool
         end
       end
 
-      def add_metadata
-        File.open(File.join(build_path, 'metadata.json'), 'w') do |f|
-          f.write(PSON.pretty_generate(metadata))
+      def write_json
+        metadata_path = File.join(build_path, 'metadata.json')
+
+        unless File.exist?(metadata_path)
+          # Legacy build: Metadata was parsed from Modulefile; write it out
+          File.open(metadata_path, 'w') do |f|
+            f.write(PSON.pretty_generate(metadata))
+          end
+        end
+
+        File.open(File.join(build_path, 'checksums.json'), 'w') do |f|
+          f.write(PSON.pretty_generate(Checksums.new(@path)))
         end
       end
 

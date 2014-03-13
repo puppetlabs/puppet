@@ -8,7 +8,7 @@ module Puppet::ModuleTool
 
       def initialize(full_module_name, options = {})
         begin
-          @metadata = Metadata.new(:full_module_name => full_module_name)
+          @metadata = Metadata.new.update('name' => full_module_name, 'version' => '0.0.1')
         rescue ArgumentError
           msg = "Could not generate directory #{full_module_name.inspect}, you must specify a dash-separated username and module name."
           raise $!, msg, $!.backtrace
@@ -94,7 +94,7 @@ module Puppet::ModuleTool
         def target
           target = @generator.destination + @source.relative_path_from(@generator.skeleton.path)
           components = target.to_s.split(File::SEPARATOR).map do |part|
-            part == 'NAME' ? @generator.metadata.name : part
+            part == 'NAME' ? @generator.metadata.module_name : part
           end
           Pathname.new(components.join(File::SEPARATOR))
         end

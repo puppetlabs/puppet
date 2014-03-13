@@ -10,7 +10,7 @@ module Puppet
     extend Puppet::Util::Colors
 
     # Directory and names that should not be checksummed.
-    ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage', 'metadata.json', 'REVISION']
+    ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage', 'checksums.json', 'REVISION']
     FULL_MODULE_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
     REPOSITORY_URL = Puppet.settings[:module_repository]
 
@@ -56,14 +56,14 @@ module Puppet
     end
 
     # Analyse path to see if it is a module root directory by detecting a
-    # file named 'Modulefile' in the directory.
+    # file named 'metadata.json' or 'Modulefile' in the directory.
     #
     # @param path [Pathname, String] path to analyse
     # @return [Boolean] true if the path is a module root, false otherwise
     def self.is_module_root?(path)
       path = Pathname.new(path) if path.class == String
 
-      FileTest.file?(path + 'Modulefile')
+      FileTest.file?(path + 'metadata.json') || FileTest.file?(path + 'Modulefile')
     end
 
     # Builds a formatted tree from a list of node hashes containing +:text+

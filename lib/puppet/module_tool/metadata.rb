@@ -3,153 +3,93 @@ require 'puppet/module_tool'
 require 'puppet/network/format_support'
 
 module Puppet::ModuleTool
-  # = Metadata
-  #
+
   # This class provides a data structure representing a module's metadata.
-  # It provides some basic parsing, but other data is injected into it using
-  # +annotate+ methods in other classes.
+  # @api private
   class Metadata
-    include Puppet::Util::MethodHelper
     include Puppet::Network::FormatSupport
 
-    # The full name of the module, which is a dash-separated combination of the
-    # +username+ and module +name+.
-    attr_reader :full_module_name
+    attr_reader :module_name
 
-    # The name of the user that owns this module.
-    attr_reader :username
-
-    # The name of this module. See also +full_module_name+.
-    attr_reader :name
-
-    # The version of this module.
-    attr_reader :version
-
-    # Instantiate from a hash, whose keys are setters in this class.
-    def initialize(settings={})
-      set_options(settings)
+    def initialize
+      @data = {
+        'name'         => nil,
+        'version'      => nil,
+        'author'       => 'UNKNOWN',
+        'summary'      => 'UNKNOWN',
+        'license'      => 'Apache License, Version 2.0',
+        'source'       => 'UNKNOWN',
+        'dependencies' => []
+      }
     end
 
-    # Set the full name of this module, and from it, the +username+ and
-    # module +name+.
-    def full_module_name=(full_module_name)
-      @full_module_name = full_module_name
-      @username, @name = Puppet::ModuleTool::username_and_modname_from(full_module_name)
-    end
-
-    # Return an array of the module's Dependency objects.
-    def dependencies
-      return @dependencies ||= []
-    end
-
-    def author
-      @author || @username
-    end
-
-    def author=(author)
-      @author = author
-    end
-
-    def source
-      @source || 'UNKNOWN'
-    end
-
-    def source=(source)
-      @source = source
-    end
-
-    def license
-      @license || 'Apache License, Version 2.0'
-    end
-
-    def license=(license)
-      @license = license
-    end
-
-    def summary
-      @summary || 'UNKNOWN'
-    end
-
-    def summary=(summary)
-      @summary = summary
-    end
-
-    def description
-      @description || 'UNKNOWN'
-    end
-
-    def description=(description)
-      @description = description
-    end
-
-    def extra_metadata
-      @extra_metadata || {}
-    end
-
-    def extra_metadata=(extra_metadata)
-      @extra_metadata = extra_metadata
-    end
-
-    def project_page
-      @project_page || 'UNKNOWN'
-    end
-
-    def project_page=(project_page)
-      @project_page = project_page
-    end
-
-    # Return an array of the module's Puppet types, each one is a hash
-    # containing :name and :doc.
-    def types
-      return @types ||= []
-    end
-
-    # Return module's file checksums.
-    def checksums
-      return @checksums ||= {}
-    end
-
-    # Return the dashed name of the module, which may either be the
-    # dash-separated combination of the +username+ and module +name+, or just
-    # the module +name+.
+    # Returns a filesystem-friendly version of this module name.
     def dashed_name
-      return [@username, @name].compact.join('-')
+      @data['name'].tr('/', '-') if @data['name']
     end
 
-    # Return the release name, which is the combination of the +dashed_name+
-    # of the module and its +version+ number.
+    # Returns a string that uniquely represents this version of this module.
     def release_name
-      return [dashed_name, @version].join('-')
+      return nil unless @data['name'] && @data['version']
+      [ dashed_name, @data['version'] ].join('-')
     end
 
-    # Set the version of this module, ensure a string like '0.1.0' see the
-    # Semantic Versions here: http://semver.org
-    def version=(version)
-      if SemVer.valid?(version)
-        @version = version
-      else
-        raise ArgumentError, "Invalid version format: #{@version} (Semantic Versions are acceptable: http://semver.org)"
+    # Merges the current set of metadata with another metadata hash.  This
+    # method also handles the validation of module names and versions, in an
+    # effort to be proactive about module publishing constraints.
+    def update(data)
+      data['author'] ||= @data['author'] unless @data['author'] == 'UNKNOWN'
+
+      if data['name']
+        validate_name(data['name'])
+        author, name = data['name'].split(/[-\/]/, 2)
+        @module_name = name
+        data['author'] ||= author
       end
+
+      data['version'] && validate_version(data['version'])
+      @data.merge!(data)
+
+      return self
     end
 
-    def to_data_hash()
-      return extra_metadata.merge({
-        'name'         => @full_module_name,
-        'version'      => @version,
-        'source'       => source,
-        'author'       => author,
-        'license'      => license,
-        'summary'      => summary,
-        'description'  => description,
-        'project_page' => project_page,
-        'dependencies' => dependencies,
-        'types'        => types,
-        'checksums'    => checksums
-      })
+    # Returns a hash of the module's metadata.  Used by Puppet's automated
+    # serialization routines.
+    #
+    # @see Puppet::Network::FormatSupport#to_data_hash
+    def to_hash
+      @data
+    end
+    alias :to_data_hash :to_hash
+
+    private
+
+    # Validates that the given module name is both namespaced and well-formed.
+    def validate_name(name)
+      return if name =~ /\A[a-z0-9]+[-\/][a-z][a-z0-9_]*\Z/i
+
+      err = if name =~ /[-\/]/
+        namespace, modname = name.split(/[-\/]/, 2)
+        if modname =~ /^[a-z][a-z0-9_]*$/i
+          "the namespace contains non-alphanumeric characters"
+        elsif modname =~ /^[a-z]/i
+          "the module name contains non-alphanumeric (or underscore) characters"
+        else
+          "the module name must begin with a letter"
+        end
+      else
+        "the field must be a namespaced module name"
+      end
+
+      raise ArgumentError, "Invalid 'name' field in metadata.json: #{err}"
     end
 
-    def to_hash()
-      to_data_hash
+    # Validates that the version string can be parsed as per SemVer.
+    def validate_version(version)
+      return if SemVer.valid?(version)
+
+      err = "version string cannot be parsed as a valid Semantic Version"
+      raise ArgumentError, "Invalid 'version' field in metadata.json: #{err}"
     end
   end
 end
