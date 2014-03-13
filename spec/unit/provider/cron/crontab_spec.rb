@@ -153,6 +153,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     let(:resource) do
      s = stub(:resource)
      s.stubs(:[]).with(:user).returns 'root'
+     s.stubs(:[]).with(:target).returns 'root'
      s
     end
 

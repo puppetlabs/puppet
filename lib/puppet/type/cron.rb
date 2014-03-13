@@ -375,8 +375,10 @@ Puppet::Type.newtype(:cron) do
       The user defaults to whomever Puppet is running as."
 
     defaultto {
-      struct = Etc.getpwuid(Process.uid)
-      struct.respond_to?(:name) && struct.name or 'root'
+      if not provider.is_a?(@resource.class.provider(:crontab))
+        struct = Etc.getpwuid(Process.uid)
+        struct.respond_to?(:name) && struct.name or 'root'
+      end
     }
   end
 
@@ -395,8 +397,8 @@ Puppet::Type.newtype(:cron) do
         if val = @resource.should(:user)
           val
         else
-          raise ArgumentError,
-            "You must provide a username with crontab entries"
+          struct = Etc.getpwuid(Process.uid)
+          struct.respond_to?(:name) && struct.name or 'root'
         end
       elsif provider.class.ancestors.include?(Puppet::Provider::ParsedFile)
         provider.class.default_target

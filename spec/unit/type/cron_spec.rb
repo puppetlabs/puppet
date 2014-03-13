@@ -3,13 +3,17 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do
-  before :all do
+  let(:simple_provider) do
     @provider_class = described_class.provide(:simple) { mk_resource_methods }
     @provider_class.stubs(:suitable?).returns true
+    @provider_class
+  end
+
+  before :each do
     described_class.stubs(:defaultprovider).returns @provider_class
   end
 
-  after :all do
+  after :each do
     described_class.unprovide(:simple)
   end
 
