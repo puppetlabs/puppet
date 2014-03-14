@@ -4,7 +4,7 @@ class Puppet::Status
   extend Puppet::Indirector
   indirects :status, :terminus_class => :local
 
-  attr :status, true
+  attr_accessor :status
 
   def initialize( status = nil )
     @status = status || {"is_alive" => true}
