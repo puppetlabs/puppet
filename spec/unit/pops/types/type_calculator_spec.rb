@@ -1431,21 +1431,23 @@ describe 'The type calculator' do
     it "does not reduce by combining types when using infer_set" do
       element_type = calculator.infer(['a','b',1,2]).element_type
       element_type.class.should == Puppet::Pops::Types::PScalarType
-      element_type = calculator.infer_set(['a','b',1,2]).element_type
-      element_type.class.should == Puppet::Pops::Types::PVariantType
-      element_type.types[0].class.should == Puppet::Pops::Types::PStringType
-      element_type.types[1].class.should == Puppet::Pops::Types::PStringType
-      element_type.types[2].class.should == Puppet::Pops::Types::PIntegerType
-      element_type.types[3].class.should == Puppet::Pops::Types::PIntegerType
+      inferred_type = calculator.infer_set(['a','b',1,2])
+      inferred_type.class.should == Puppet::Pops::Types::PTupleType
+      element_types = inferred_type.types
+      element_types[0].class.should == Puppet::Pops::Types::PStringType
+      element_types[1].class.should == Puppet::Pops::Types::PStringType
+      element_types[2].class.should == Puppet::Pops::Types::PIntegerType
+      element_types[3].class.should == Puppet::Pops::Types::PIntegerType
     end
 
     it "does not reduce by combining types when using infer_set and values are undef" do
       element_type = calculator.infer(['a',nil]).element_type
       element_type.class.should == Puppet::Pops::Types::PStringType
-      element_type = calculator.infer_set(['a',nil]).element_type
-      element_type.class.should == Puppet::Pops::Types::PVariantType
-      element_type.types[0].class.should == Puppet::Pops::Types::PStringType
-      element_type.types[1].class.should == Puppet::Pops::Types::PNilType
+      inferred_type = calculator.infer_set(['a',nil])
+      inferred_type.class.should == Puppet::Pops::Types::PTupleType
+      element_types = inferred_type.types
+      element_types[0].class.should == Puppet::Pops::Types::PStringType
+      element_types[1].class.should == Puppet::Pops::Types::PNilType
     end
   end
 

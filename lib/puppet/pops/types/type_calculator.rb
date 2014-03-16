@@ -790,16 +790,25 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def infer_set_Array(o)
-    type = Types::PArrayType.new()
-    type.element_type = if o.empty?
-      Types::PNilType.new()
+    if o.empty?
+      type = Types::PArrayType.new()
+      type.element_type = Types::PNilType.new()
     else
-      t = Types::PVariantType.new()
-      t.types = o.map() {|x| infer_set(x) }
-      t.types.size == 1 ? t.types[0] : t
+      type = Types::PTupleType.new()
+      type.types = o.map() {|x| infer_set(x) }
     end
-    type.size_type = size_as_type(o)
     type
+
+#    type = Types::PArrayType.new()
+#    type.element_type = if o.empty?
+#      Types::PNilType.new()
+#    else
+#      t = Types::PVariantType.new()
+#      t.types = o.map() {|x| infer_set(x) }
+#      t.types.size == 1 ? t.types[0] : t
+#    end
+#    type.size_type = size_as_type(o)
+#    type
   end
 
   def infer_set_Hash(o)
