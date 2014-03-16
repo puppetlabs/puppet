@@ -14,3 +14,5 @@ matrix:
   allow_failures:
     - rvm: ruby-head
     - rvm: jruby-19mode
+env:
+  - JRUBY_OPTS="-J-Xmx1024m"
