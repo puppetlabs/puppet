@@ -228,8 +228,8 @@ lambda_rest
 
 # Produces Array<Model::Parameter>
 lambda_parameter_list
-: PIPE PIPE                     { result = [] }
-| PIPE parameters endcomma PIPE { result = val[1] }
+  : PIPE PIPE                     { result = [] }
+  | PIPE parameters endcomma PIPE { result = val[1] }
 
 #---CONDITIONALS
 #
@@ -714,20 +714,20 @@ endsemi
   | SEMIC
 
 keyword
- : AND
- | CASE
- | CLASS
- | DEFAULT
- | DEFINE
- | ELSE
- | ELSIF
- | IF
- | IN
- | INHERITS
- | NODE
- | OR
- | UNDEF
- | UNLESS
+  : AND
+  | CASE
+  | CLASS
+  | DEFAULT
+  | DEFINE
+  | ELSE
+  | ELSIF
+  | IF
+  | IN
+  | INHERITS
+  | NODE
+  | OR
+  | UNDEF
+  | UNLESS
 
 nil
   : { result = nil}
