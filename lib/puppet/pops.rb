@@ -92,6 +92,9 @@ module Puppet
       require 'puppet/pops/evaluator/evaluator_impl'
       require 'puppet/pops/evaluator/epp_evaluator'
     end
+    module Functions
+      require 'puppet/functions'
+    end
   end
 
   require 'puppet/parser/ast/pops_bridge'

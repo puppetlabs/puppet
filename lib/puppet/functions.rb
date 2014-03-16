@@ -109,18 +109,17 @@ module Puppet::Functions
 
   # Creates a default dispatcher configured from a method with the same name as the function
   def self.default_dispatcher(the_class, func_name)
-    m = the_class.instance_method(func_name)
-    unless m
-      raise ArgumentError, "Cannot create a default dispatcher for function #{func_name}, no method with the same name found"
+    unless the_class.method_defined?(func_name)
+      raise ArgumentError, "Function Creation Error, cannot create a default dispatcher for function '#{func_name}', no method with this name found"
     end
-    object_signature(*min_max_param(m))
+    object_signature(*min_max_param(the_class.instance_method(func_name)))
   end
 
   def self.min_max_param(method)
     # Ruby 1.8.7 does not have support for details about parameters
-    if m.respond_to?(:parameters)
+    if method.respond_to?(:parameters)
       result = {:req => 0, :opt => 0, :rest => 0 }
-      m.parameters.each { |p| result[p[0]] += 1 }
+      method.parameters.each { |p| result[p[0]] += 1 }
       min = result[:req]
       max = result[:rest] > 0 ? :default : min + result[:opt]
     else
@@ -140,7 +139,7 @@ module Puppet::Functions
     # Array[Optional[Object], Integer[min, max]]
     factory = Puppet::Pops::Types::TypeFactory
     optional_object = factory.optional(factory.object)
-    constrain_size(factory.array_of(optional_object), min, max)
+    factory.constrain_size(factory.array_of(optional_object), min, max)
   end
 
   class Function
@@ -161,7 +160,7 @@ module Puppet::Functions
 
     def call(scope, *args)
       @call_scope = scope
-      @dispatcher.dispatch(self, args)
+      self.class.dispatcher.dispatch(self, args)
     end
 
     def self.define_dispatch(&block)
@@ -212,12 +211,12 @@ module Puppet::Functions
       # An upper 'unbound' is created if only min occurs is specified.
       # If neither min nor max occurs is given, the tuple is fixed at the given types.
       #
-      if tuple_args_array[-1].is_a?(Integer)
-        if tuple_args_array[-2].is_a?(Integer)
-          types = tuple_args_array.slice[0..-2]
+      if tuple_args_array[ -1 ].is_a?(Integer)
+        if tuple_args_array[ -2 ].is_a?(Integer)
+          types = tuple_args_array[ 0..-2 ]
           size_constraint = tuple_args_array.slice(-2,2)
         else
-          types = tuple_args_array.slice[0..-2]
+          types = tuple_args_array.slice(0..-2)
           size_constraint = tuple_args_array.slice(-2,2)
         end
       end
@@ -242,14 +241,16 @@ module Puppet::Functions
         tuple_t
       end
     end
+  end
 
   # This is a smart dispatcher
   # For backwards compatible (untyped) API, the dispatcher only enforces simple count, and can be simpler internally
   #
   class Dispatcher
+    attr_reader :dispatchers
 
     def initialize()
-      @dispatchers = []
+      @dispatchers = [ ]
     end
 
     def empty?
@@ -259,16 +260,93 @@ module Puppet::Functions
     def dispatch(instance, args)
       tc = Puppet::Pops::Types::TypeCalculator
       actual = tc.infer_set(args)
-      found = @dispatchers.find { |d| tc.assignable?(d[0], actual) }
+      found = @dispatchers.find { |d| tc.assignable?(d[ 0 ], actual) }
       if found
-        found[1].visit_this(instance, *args)
+        found[ 1 ].visit_this(instance, *args)
       else
-        raise ArgumentError, "no method with matching signature found"  # TODO: TO BE IMPROVED
+        raise ArgumentError, "function '#{instance.class.name}' called with mis-matched arguments\n#{diff_string(instance.class.name, actual)}"  # TODO: TO BE IMPROVED
+      end
+    end
+
+    def diff_string(name, args_type)
+      result = []
+      if @dispatchers.size < 2
+        params_type = @dispatchers[0][0]
+        result << "expected:\n  #{name}(#{signature_string(params_type)}) - #{arg_count_string(params_type)}"
+      else
+        result << "expected one of:\n"
+        result += @dispatchers.map { |d| "#{name}(#{signature_string(d[0])}) - #{arg_count_string(d[0])}" }.join('\n  ')
+      end
+      result << "\nactual:\n  #{name}(#{arg_types_string(args_type)}) - #{arg_count_string(args_type)}"
+      result.join('')
+    end
+
+    # TODO: CHANGE to print func(arg, arg, arg {repeat}) - total arg count 2 - 3
+    #
+    def signature_string(args_type)
+      size_type = args_type.size_type
+      types =
+      case args_type
+      when Puppet::Pops::Types::PTupleType
+        last_range = args_type.repeat_last_range
+        args_type.types
+      when Puppet::Pops::Types::PArrayType
+        last_range = args_type.size_range
+        [ args_type.element_type ]
+      end
+      tc = Puppet::Pops::Types::TypeCalculator
+      result = types.map { |t| tc.string(t) }.join(', ')
+      # Add {from, to} for the last type
+      # This works for both Array and Tuple since it describes the allowed count of the "last" type element
+      # for both. It does not show anything when the range is {1,1}.
+      #
+      result += range_string(last_range)
+      result
+    end
+
+    def arg_count_string(args_type)
+      "arg count #{range_string(args_type.size_range, false)}"
+    end
+
+    # TODO: CHANGE to print func(arg, arg, arg) - arg count n
+    # Count is always the from size of the type since it is an actual count
+    #
+    def arg_types_string(args_type)
+      types =
+      case args_type
+      when Puppet::Pops::Types::PTupleType
+        last_range = args_type.repeat_last_range
+        args_type.types
+      when Puppet::Pops::Types::PArrayType
+        last_range = args_type.size_range
+        [ args_type.element_type ]
+      end
+      # stringify generalized versions or it will display Integer[10,10] for "10", String['the content'] etc.
+      # note that type must be copied since generalize is a mutating operation
+      tc = Puppet::Pops::Types::TypeCalculator
+      result = types.map { |t| tc.string(tc.generalize!(t.copy)) }.join(', ')
+      # Add {from, to} for the last type
+      # This works for both Array and Tuple since it describes the allowed count of the "last" type element
+      # for both. It does not show anything when the range is {1,1}.
+      #
+      result += range_string(last_range)
+      result
+    end
+
+    def range_string(size_range, squelch_one = true)
+      from = size_range[0]
+      to = size_range[1]
+      if from == to
+        (squelch_one && from == 1) ? '' : "{#{from}}"
+      elsif to == Puppet::Pops::Types::INFINITY
+        "{#{from},}"
+      else
+        "{#{from},#{to}}"
       end
     end
 
     def add_dispatch(type, func_name)
-      @dispatchers << [type, NonPolymorphicVisitor.new(func_name)]
+      @dispatchers << [ type, NonPolymorphicVisitor.new(func_name) ]
     end
 
     def add_polymorph_dispatch(type, method_name)
@@ -282,13 +360,13 @@ module Puppet::Functions
       raise ArgumentError, "polymorph dispatch on signature without object" if range.from.nil? || range.from < 1
       min = range.from - 1
       max = range.to.nil? ? -1 : (range.to - 1)
-      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, min, max)]
+      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, min, max) ]
     end
-
   end
 
   # Simple non Polymorphic Visitor
   class NonPolymorphicVisitor
+    attr_reader :name
     def initialize(name)
       @name = name
     end
