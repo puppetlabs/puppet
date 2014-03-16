@@ -137,6 +137,7 @@ expressions
 # These go through a chain of left recursion, ending with primary_expression
 higher_precedence
   : call_function_expression
+  | primary_expression = LOW { result = val[0] }
 
 primary_expression
   : literal_expression
@@ -190,7 +191,6 @@ call_function_expression
       loc result, val[0], val[2]
       result.lambda = val[3]
     }
-  | primary_expression = LOW { result = val[0] }
 
 #---CALL METHOD
 #
