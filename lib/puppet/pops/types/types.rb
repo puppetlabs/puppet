@@ -379,7 +379,7 @@ module Puppet::Pops::Types
     # contains_one_uni 'super_type', PHostClassType
     module ClassModule
       def hash
-        [self.class, host_class].hash
+        [self.class, class_name].hash
       end
       def ==(o)
         self.class == o.class && class_name == o.class_name
