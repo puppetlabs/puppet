@@ -168,6 +168,20 @@ module Puppet::Functions
       builder.instance_eval &block
     end
 
+    def self.dispatch(meth_name, &block)
+      builder = DispatcherBuilder.new(dispatcher)
+      builder.instance_eval do
+        dispatch(meth_name, &block)
+      end
+    end
+
+    def self.dispatch_polymorph(meth_name, &block)
+      builder = DispatcherBuilder.new(dispatcher)
+      builder.instance_eval do
+        dispatch_polymorph(meth_name, &block)
+      end
+    end
+
     def self.dispatcher
       @dispatcher ||= Dispatcher.new
     end
@@ -193,12 +207,72 @@ module Puppet::Functions
       @dispatcher = dispatcher
     end
 
-    def dispatch(meth_name, *tuple_signature)
-      @dispatcher.add_dispatch(meth_name, create_tuple(tuple_signature))
+    # Delegates method calls not supported by Function.class to the TypeFactory
+    #
+    def method_missing(meth, *args, &block)
+      if Puppet::Pops::Types::TypeFactory.respond_to?(meth)
+        Puppet::Pops::Types::TypeFactory.send(meth, *args, &block)
+      else
+        super
+      end
     end
 
-    def dispatch_polymorph(meth_name, *tuple_signature)
-      @dispatcher.add_polymorph_dispatch(meth_name, @signature)
+    def respond_to?(meth, include_all=false)
+      Puppet::Pops::Types::TypeFactory.respond_to?(meth, include_all) || super
+    end
+
+    def dispatch(meth_name, &block)
+      @types = []
+      @names = []
+      @min = nil
+      @max = nil
+      self.instance_eval &block
+
+      # fixup what param method recorded to make it compatible with dispatch_on_type
+      # (i.e. the last two parameters may be integers, and define min (and optionally) max occurrence of last type).
+      #
+      @types << @min unless @min.nil?
+      @types << @max unless @max.nil?
+      @dispatcher.add_dispatch(self.class.create_tuple(@types), meth_name, @names)
+    end
+
+    def dispatch_polymorph(meth_name, &block)
+      @types = []
+      @names = []
+      @min = nil
+      @max = nil
+      self.instance_eval &block
+      # fixup what param method recorded to make it compatible with dispatch_on_type
+      # (i.e. the last two parameters may be integers, and define min (and optionally) max occurrence of last type).
+      #
+      @types << @min unless @min.nil?
+      @types << @max unless @max.nil?
+      @dispatcher.add_polymorph_dispatch(self.class.create_tuple(@types), meth_name, @names)
+    end
+
+    def param(type, name, min_occurs = nil, max_occurs = nil)
+      @types << type
+      @names << name
+      # only the last parameter may have min, max occurrence set - this test ensures this
+      if !@min.nil?
+        raise ArgumentError, "attempt to define parameter '#{name}'  after variable occurences set for previous param"
+      end
+      @min = min_occurs
+      @max = max_occurs
+      unless min_occurs.nil? || min_occurs.is_a?(Integer)
+        raise ArgumentError, "min occurrence of function parameter must be an Integer, got #{min_occurs.class}"
+      end
+      unless max_occurs.nil? || max_occurs.is_a?(Integer)
+        raise ArgumentError, "max occurrence of function parameter must be an Integer, got #{max_occurs.class}"
+      end
+    end
+
+    def dispatch_on_type(meth_name, *tuple_signature)
+      @dispatcher.add_dispatch(meth_name, self.class.create_tuple(tuple_signature),[])
+    end
+
+    def dispatch_polymorph_on_type(meth_name, *tuple_signature)
+      @dispatcher.add_polymorph_dispatch(meth_name, self.class.create_tuple(tuple_signature), [])
     end
 
     # Handles creation of a tuple type from strings, puppet types, or ruby types and allows
@@ -219,6 +293,8 @@ module Puppet::Functions
           types = tuple_args_array.slice(0..-2)
           size_constraint = tuple_args_array.slice(-2,2)
         end
+      else
+        types = tuple_args_array
       end
 
       mapped_types = types.map do |t|
@@ -234,7 +310,7 @@ module Puppet::Functions
           raise ArgumentError, "Type signature argument must be a Puppet Type, or a String reference to a type. Got #{t.class}"
         end
       end
-      tuple_t = Puppet::Pops::Types::TypeFactory.tuple(mapped_types)
+      tuple_t = Puppet::Pops::Types::TypeFactory.tuple(*mapped_types)
       if size_constraint
         Puppet::Pops::Types::TypeFactory.constrain_size(tuple_t, size_constraint)
       else
@@ -269,9 +345,9 @@ module Puppet::Functions
     end
 
     def diff_string(name, args_type)
-      result = []
+      result = [ ]
       if @dispatchers.size < 2
-        params_type = @dispatchers[0][0]
+        params_type = @dispatchers[ 0 ][ 0 ]
         result << "expected:\n  #{name}(#{signature_string(params_type)}) - #{arg_count_string(params_type)}"
       else
         result << "expected one of:\n"
@@ -334,8 +410,8 @@ module Puppet::Functions
     end
 
     def range_string(size_range, squelch_one = true)
-      from = size_range[0]
-      to = size_range[1]
+      from = size_range[ 0 ]
+      to = size_range[ 1 ]
       if from == to
         (squelch_one && from == 1) ? '' : "{#{from}}"
       elsif to == Puppet::Pops::Types::INFINITY
@@ -345,11 +421,11 @@ module Puppet::Functions
       end
     end
 
-    def add_dispatch(type, func_name)
-      @dispatchers << [ type, NonPolymorphicVisitor.new(func_name) ]
+    def add_dispatch(type, func_name, param_names=[])
+      @dispatchers << [ type, NonPolymorphicVisitor.new(func_name), param_names ]
     end
 
-    def add_polymorph_dispatch(type, method_name)
+    def add_polymorph_dispatch(type, method_name, param_names=[])
       # Type is a CollectionType, its size-type indicates min/max args
       # This includes the polymorph object which needs to be deducted from the
       # number of additional args
@@ -360,7 +436,7 @@ module Puppet::Functions
       raise ArgumentError, "polymorph dispatch on signature without object" if range.from.nil? || range.from < 1
       min = range.from - 1
       max = range.to.nil? ? -1 : (range.to - 1)
-      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, min, max) ]
+      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, min, max), param_names ]
     end
   end
 

@@ -70,6 +70,14 @@ actual:
     expect(d1.dispatchers[0][1]).to_not eql(d2.dispatchers[0][1].name)
   end
 
+  context 'when using dispatch' do
+    it 'a function can be created using dispatch and called' do
+      f = create_min_function_class_using_dispatch()
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({}, 3,4)).to eql(3)
+    end
+  end
+
   def create_min_function_class
     f = Puppet::Functions.create_function('min') do
       def min(x,y)
@@ -93,15 +101,13 @@ actual:
       end
     end
   end
-  def alternative
+
+  def create_min_function_class_using_dispatch
     f = Puppet::Functions.create_function('min') do
-      dispatch :min do
-        param Numeric, 'a'
-        param Numeric, 'b'
-      end
-      dispatch 'min', integer, integer do
-        names 'a', 'b'
-      end
+        dispatch :min do
+          param Numeric, 'a'
+          param Numeric, 'b'
+        end
       def min(x,y)
         x <= y ? x : y
       end
