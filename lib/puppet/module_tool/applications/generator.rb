@@ -8,7 +8,21 @@ module Puppet::ModuleTool
 
       def initialize(full_module_name, options = {})
         begin
-          @metadata = Metadata.new.update('name' => full_module_name, 'version' => '0.0.1')
+          @metadata = Metadata.new.update(
+            'name' => full_module_name,
+            'version' => '0.0.1',
+            'dependencies' => [
+              { :name => 'puppetlabs-stdlib', :version_range => '>= 1.0.0' }
+            ]
+          )
+
+          # These are used in the generation of the metadata.json file t
+          # simulate an ordered hash.  In particular, the keys listed below are
+          # promoted to the top of the serialized hash for human-friendliness.
+          #
+          # This particularly works around the lack of ordered hashes in 1.8.7.
+          @hash = @metadata.to_hash
+          @remaining_keys = @hash.keys - %w[ name version author summary license source ]
         rescue ArgumentError
           msg = "Could not generate directory #{full_module_name.inspect}, you must specify a dash-separated username and module name."
           raise $!, msg, $!.backtrace
