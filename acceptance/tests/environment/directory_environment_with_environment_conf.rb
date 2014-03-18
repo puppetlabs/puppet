@@ -21,7 +21,7 @@ file {
     ensure => file,
     content => '
       manifest=#{absolute_manifestdir}
-      modulepath=relative-modules:#{absolute_modulesdir}
+      modulepath=relative-modules:#{absolute_modulesdir}:$basemodulepath
       config_version=version_script.sh
     '
   ;

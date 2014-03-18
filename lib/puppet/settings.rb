@@ -1093,7 +1093,7 @@ Generated on #{Time.now}.
           end
         end
         if values_from_section.nil? && @global_defaults_initialized
-          values_from_section = ValuesFromCurrentEnvironment.new(name)
+          values_from_section = ValuesFromEnvironmentConf.new(name)
         end
         values_from_section
       end
@@ -1273,40 +1273,30 @@ Generated on #{Time.now}.
   end
 
   # @api private
-  class ValuesFromCurrentEnvironment
-
-    def initialize(desired_environment)
-      @desired_environment = desired_environment
+  class ValuesFromEnvironmentConf
+    def initialize(environment_name)
+      @environment_name = environment_name
     end
 
     def include?(name)
-      return false unless Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name) 
-      if i = instance
-        i.include?(name)
+      if Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name) && conf
+        return true
       end
+      false
     end
 
     def lookup(name)
       return nil unless Puppet::Settings::EnvironmentConf::VALID_SETTINGS.include?(name)
-      if i = instance
-        i[name]
-      end
+      conf.send(name) if conf
     end
 
-    private
-
-    def instance
-      unless @instance
-        env = Puppet.lookup(:current_environment)
-        if env.name == @desired_environment
-          @instance = {
-            :modulepath => env.full_modulepath.join(File::PATH_SEPARATOR),
-            :manifest => env.manifest,
-            :config_version => env.config_version,
-          }
+    def conf
+      unless @conf
+        if environments = Puppet.lookup(:environments)
+          @conf = environments.get_conf(@environment_name)
         end
       end
-      return @instance
+      return @conf
     end
   end
 end

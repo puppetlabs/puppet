@@ -33,10 +33,12 @@ class Puppet::Settings::EnvironmentConf
     new(path_to_env, section, global_module_path)
   end
 
+  attr_reader :section
+
   # Create through EnvironmentConf.load_from()
-  def initialize(path_to_env, config, global_module_path)
+  def initialize(path_to_env, section, global_module_path)
     @path_to_env = path_to_env
-    @config = config
+    @section = section
     @global_module_path = global_module_path
   end
 
@@ -52,7 +54,7 @@ class Puppet::Settings::EnvironmentConf
       path = modulepath.kind_of?(String) ?
         modulepath.split(File::PATH_SEPARATOR) :
         modulepath
-      path.map { |p| absolute(p) }
+      path.map { |p| absolute(p) }.join(File::PATH_SEPARATOR)
     end
   end
 
@@ -83,7 +85,7 @@ class Puppet::Settings::EnvironmentConf
   end
 
   def get_setting(setting_name, default = nil)
-    setting = @config.setting(setting_name) if @config
+    setting = section.setting(setting_name) if section
     value = setting.value if setting
     value ||= default
     yield value
@@ -91,8 +93,11 @@ class Puppet::Settings::EnvironmentConf
 
   def absolute(path)
     return nil if path.nil?
-    Puppet::FileSystem.pathname(path).absolute? ?
-      path :
+    if path =~ /^\$/ || Puppet::FileSystem.pathname(path).absolute?
+      # Path begins with $something interpolatable, or is already absolute
+      path
+    else
       File.join(@path_to_env, path)
+    end
   end
 end

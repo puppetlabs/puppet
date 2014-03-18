@@ -11,7 +11,7 @@ describe Puppet::Settings::EnvironmentConf do
       config.expects(:setting).with(:modulepath).returns(
         mock('setting', :value => '/some/modulepath')
       )
-      expect(envconf.modulepath).to eq(['/some/modulepath'])
+      expect(envconf.modulepath).to eq('/some/modulepath')
     end
 
     it "reads a manifest from config" do
@@ -34,7 +34,7 @@ describe Puppet::Settings::EnvironmentConf do
     let(:envconf) { Puppet::Settings::EnvironmentConf.new("/some/direnv", nil, ["/global/modulepath"]) }
 
     it "returns a default modulepath when config has none, with global_module_path" do
-      expect(envconf.modulepath).to eq(['/some/direnv/modules', '/global/modulepath'])
+      expect(envconf.modulepath).to eq('/some/direnv/modules:/global/modulepath')
     end
 
     it "returns a default manifest when config has none" do

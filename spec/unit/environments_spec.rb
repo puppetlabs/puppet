@@ -45,11 +45,18 @@ describe Puppet::Environments do
 
     def loader_from(options, &block)
       FS.overlay(*options[:filesystem]) do
-        yield Puppet::Environments::Directories.new(
+        environments = Puppet::Environments::Directories.new(
           options[:directory],
           options[:modulepath] || []
         )
+        Puppet.override(:environments => environments) do
+          yield environments
+        end
       end
+    end
+
+    before(:each) do
+      Puppet.settings.initialize_global_settings
     end
 
     it "lists environments" do
@@ -196,7 +203,7 @@ config_version=/some/script
           expect(loader.get("env1")).to environment(:env1).
             with_manifest(manifestdir.path).
             with_modulepath(modulepath.map(&:path)).
-            with_config_version('/some/script')
+            with_config_version(File.expand_path('/some/script'))
         end
       end
 
@@ -226,7 +233,7 @@ config_version=/some/script
           expect(loader.get("env1")).to environment(:env1).
             with_manifest(manifestdir.path).
             with_modulepath(modulepath.map(&:path)).
-            with_config_version('/some/script')
+            with_config_version(File.expand_path('/some/script'))
         end
 
         expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*#{envdir}\/env1.*may not have sections.*ignored: 'foo'/)
@@ -242,7 +249,7 @@ config_version=/some/script
           expect(loader.get("env1")).to environment(:env1).
             with_manifest(manifestdir.path).
             with_modulepath(modulepath.map(&:path)).
-            with_config_version('/some/script')
+            with_config_version(File.expand_path('/some/script'))
         end
 
         expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*#{envdir}\/env1.*unknown setting.*dog, cat/)
@@ -265,12 +272,42 @@ config_version=relative/script
           ]),
         ])
 
-        loader_from(:filesystem => [envdir].flatten,
+        loader_from(:filesystem => [envdir],
                     :directory => envdir) do |loader|
           expect(loader.get("env1")).to environment(:env1).
             with_manifest(File.join(envdir, 'env1', 'relative', 'manifest')).
             with_modulepath([File.join(envdir, 'env1', 'relative', 'modules')]).
             with_config_version(File.join(envdir, 'env1', 'relative', 'script'))
+        end
+      end
+
+      it "interpolates other setting values correctly" do
+        content.clear
+        content << <<-EOF
+manifest=$confdir/whackymanifests
+modulepath=/some/absolute:$basemodulepath:modules
+config_version=$vardir/random/scripts
+        EOF
+
+        some_absolute_dir = FS::MemoryFile.a_directory('/some/absolute')
+        base_module_dirs = Puppet[:basemodulepath].split(File::PATH_SEPARATOR).map do |path|
+          FS::MemoryFile.a_directory(path)
+        end
+        envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+          FS::MemoryFile.a_directory("env1", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", content),
+            FS::MemoryFile.a_directory("modules"),
+          ]),
+        ])
+
+        loader_from(:filesystem => [envdir, some_absolute_dir, base_module_dirs].flatten,
+                    :directory => envdir) do |loader|
+          expect(loader.get("env1")).to environment(:env1).
+            with_manifest(File.join(Puppet[:confdir], 'whackymanifests')).
+            with_modulepath([some_absolute_dir.path,
+                            base_module_dirs.map { |d| d.path },
+                            File.join(envdir, 'env1', 'modules')].flatten).
+            with_config_version(File.join(Puppet[:vardir], 'random', 'scripts'))
         end
       end
 
@@ -288,7 +325,7 @@ config_version=relative/script
           expect(loader.get("env1")).to environment(:env1).
             with_manifest(manifestdir.path).
             with_modulepath(modulepath.map(&:path)).
-            with_config_version('/some/script')
+            with_config_version(File.expand_path('/some/script'))
         end
       end
     end
