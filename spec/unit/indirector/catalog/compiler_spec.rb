@@ -168,7 +168,10 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should convert the facts into a fact instance and save it" do
       request = a_request_that_contains(@facts)
 
-      options = {:environment => request.environment}
+      options = {
+        :environment => request.environment,
+        :transaction_uuid => request.options[:transaction_uuid],
+      }
 
       Puppet::Node::Facts.indirection.expects(:save).with(equals(@facts), nil, options)
 
