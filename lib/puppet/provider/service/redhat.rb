@@ -21,13 +21,25 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   end
 
   def enabled?
+    osfamily = Facter.value(:osfamily)
+
     # Checkconfig always returns 0 on SuSE unless the --check flag is used.
-    args = (Facter.value(:osfamily) == 'Suse' ? ['--check'] : [])
+    # However, that is true only for non boot services, which always return 1 if
+    # --check is used.
+    args = (osfamily == 'Suse' and @resource[:name] !~ /^boot\./ ? ['--check'] : [])
 
     begin
-      chkconfig(@resource[:name], *args)
+      output = chkconfig(@resource[:name], *args)
     rescue Puppet::ExecutionFailure
       return :false
+    end
+
+    # If a boot service is disabled on SuSE, then it will print output showing "off"
+    # at the end
+    if osfamily == 'Suse' and @resource[:name] =~ /^boot\./
+      if output =~ /.* off$/
+        return :false
+      end
     end
 
     :true
