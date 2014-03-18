@@ -10,7 +10,7 @@ if Puppet.features.microsoft_windows?
   end
 end
 
-describe Puppet::Type.type(:file) do
+describe Puppet::Type.type(:file), :uses_checksums => true do
   include PuppetSpec::Files
 
   let(:catalog) { Puppet::Resource::Catalog.new }
@@ -401,7 +401,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "when writing files" do
+  using_checksums_describe "when writing files" do
     it "should backup files to a filebucket when one is configured" do
       filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = described_class.new :path => path, :backup => "mybucket", :content => "foo"
@@ -410,11 +410,11 @@ describe Puppet::Type.type(:file) do
 
       File.open(file[:path], "w") { |f| f.write("bar") }
 
-      md5 = Digest::MD5.hexdigest("bar")
+      d = digest(IO.binread(file[:path]))
 
       catalog.apply
 
-      filebucket.bucket.getfile(md5).should == "bar"
+      filebucket.bucket.getfile(d).should == "bar"
     end
 
     it "should backup files in the local directory when a backup string is provided" do
@@ -460,7 +460,7 @@ describe Puppet::Type.type(:file) do
       File.open(dest1, "w") { |f| f.puts "whatever" }
       Puppet::FileSystem.symlink(dest1, link)
 
-      md5 = Digest::MD5.hexdigest(File.read(file[:path]))
+      d = digest(File.read(file[:path]))
 
       catalog.apply
 
@@ -498,13 +498,13 @@ describe Puppet::Type.type(:file) do
       File.open(barfile, "w") { |f| f.print "baryay" }
 
 
-      foomd5 = Digest::MD5.hexdigest(File.read(foofile))
-      barmd5 = Digest::MD5.hexdigest(File.read(barfile))
+      food = digest(File.read(foofile))
+      bard = digest(File.read(barfile))
 
       catalog.apply
 
-      bucket.bucket.getfile(foomd5).should == "fooyay"
-      bucket.bucket.getfile(barmd5).should == "baryay"
+      bucket.bucket.getfile(food).should == "fooyay"
+      bucket.bucket.getfile(bard).should == "baryay"
     end
   end
 
