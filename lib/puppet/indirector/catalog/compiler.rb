@@ -32,7 +32,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       end
 
       facts.add_timestamp
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.indirection.save(facts, nil, :environment => request.environment)
     end
   end
 
