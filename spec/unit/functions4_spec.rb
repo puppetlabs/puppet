@@ -70,12 +70,28 @@ actual:
     expect(d1.dispatchers[0][1]).to_not eql(d2.dispatchers[0][1].name)
   end
 
-  context 'when using dispatch' do
+  context 'when using regular dispatch' do
     it 'a function can be created using dispatch and called' do
       f = create_min_function_class_using_dispatch()
       func = f.new(:closure_scope, :loader)
       expect(func.call({}, 3,4)).to eql(3)
     end
+
+    it 'an error is raised with reference to given parameter names when called with mis-matched arguments' do
+      f = create_min_function_class_using_dispatch()
+      # TODO: Bogus parameters, not yet used
+      func = f.new(:closure_scope, :loader)
+      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect do
+        func.call({}, 10, 10, 10)
+      end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
+"function 'min' called with mis-matched arguments
+expected:
+  min(Numeric a, Numeric b) - arg count {2}
+actual:
+  min(Integer, Integer, Integer) - arg count {3}")))
+    end
+
   end
 
   def create_min_function_class

@@ -329,10 +329,19 @@ module Puppet::Functions
       @dispatchers = [ ]
     end
 
+    # Answers if dispatching has been defined
+    # @return [Boolean] true if dispatching has been defined
+    #
     def empty?
       @dispatchers.empty?
     end
 
+    # Dispatches the call to the first found signature (entry with matching type).
+    #
+    # @param instance [Puppet::Functions::Function] - the function to call
+    # @param args [Array<Object>] - the given arguments in the form of an Array
+    # @return [Object] - what the called function produced
+    #
     def dispatch(instance, args)
       tc = Puppet::Pops::Types::TypeCalculator
       actual = tc.infer_set(args)
@@ -340,26 +349,61 @@ module Puppet::Functions
       if found
         found[ 1 ].visit_this(instance, *args)
       else
-        raise ArgumentError, "function '#{instance.class.name}' called with mis-matched arguments\n#{diff_string(instance.class.name, actual)}"  # TODO: TO BE IMPROVED
+        raise ArgumentError, "function '#{instance.class.name}' called with mis-matched arguments\n#{diff_string(instance.class.name, actual)}"
       end
     end
 
+    # Adds a regular dispatch for one method name
+    #
+    # @param type [Puppet::Pops::Types::PArrayType, Puppet::Pops::Types::PTupleType] - type describing signature
+    # @param method_name [String] - the name of the method that will be called when type matches given arguments
+    # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
+    #
+    def add_dispatch(type, method_name, param_names=[])
+      @dispatchers << [ type, NonPolymorphicVisitor.new(method_name), param_names ]
+    end
+
+    # Adds a polymorph dispatch for one method name
+    #
+    # @param type [Puppet::Pops::Types::PArrayType, Puppet::Pops::Types::PTupleType] - type describing signature
+    # @param method_name [String] - the name of the (polymorph) method that will be called when type matches given arguments
+    # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
+    #
+    def add_polymorph_dispatch(type, method_name, param_names=[])
+      # Type is a CollectionType, its size-type indicates min/max args
+      # This includes the polymorph object which needs to be deducted from the
+      # number of additional args
+      # NOTE: the type is valuable if there are type constraints also on the first arg
+      # (better error message)
+      range = type.size_type # get .from, .to, unbound if nil (from must be bound, to can be nil)
+      raise ArgumentError, "polymorph dispath on collection type without range" unless range
+      raise ArgumentError, "polymorph dispatch on signature without object" if range.from.nil? || range.from < 1
+      min = range.from - 1
+      max = range.to.nil? ? -1 : (range.to - 1)
+      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, min, max), param_names ]
+    end
+
+    private
+
+    # Produces a string with the difference between the given arguments and support signature(s).
+    #
     def diff_string(name, args_type)
       result = [ ]
       if @dispatchers.size < 2
-        params_type = @dispatchers[ 0 ][ 0 ]
-        result << "expected:\n  #{name}(#{signature_string(params_type)}) - #{arg_count_string(params_type)}"
+        params_type  = @dispatchers[ 0 ][ 0 ]
+        params_names = @dispatchers[ 0 ][ 2 ]
+        result << "expected:\n  #{name}(#{signature_string(params_type, params_names)}) - #{arg_count_string(params_type)}"
       else
         result << "expected one of:\n"
-        result += @dispatchers.map { |d| "#{name}(#{signature_string(d[0])}) - #{arg_count_string(d[0])}" }.join('\n  ')
+        result += @dispatchers.map { |d| "#{name}(#{signature_string(d[0], d[2])}) - #{arg_count_string(d[0])}" }.join('\n  ')
       end
       result << "\nactual:\n  #{name}(#{arg_types_string(args_type)}) - #{arg_count_string(args_type)}"
       result.join('')
     end
 
-    # TODO: CHANGE to print func(arg, arg, arg {repeat}) - total arg count 2 - 3
+    # Produces a string for the signature(s)
     #
-    def signature_string(args_type)
+    def signature_string(args_type, param_names)
       size_type = args_type.size_type
       types =
       case args_type
@@ -371,7 +415,12 @@ module Puppet::Functions
         [ args_type.element_type ]
       end
       tc = Puppet::Pops::Types::TypeCalculator
-      result = types.map { |t| tc.string(t) }.join(', ')
+
+      # join type with names (types are always present, names are optional)
+      # separate entries with comma
+      #
+      result = types.zip(param_names).map { |t| [tc.string(t[0]), t[1]].compact.join(' ') }.join(', ')
+
       # Add {from, to} for the last type
       # This works for both Array and Tuple since it describes the allowed count of the "last" type element
       # for both. It does not show anything when the range is {1,1}.
@@ -421,23 +470,6 @@ module Puppet::Functions
       end
     end
 
-    def add_dispatch(type, func_name, param_names=[])
-      @dispatchers << [ type, NonPolymorphicVisitor.new(func_name), param_names ]
-    end
-
-    def add_polymorph_dispatch(type, method_name, param_names=[])
-      # Type is a CollectionType, its size-type indicates min/max args
-      # This includes the polymorph object which needs to be deducted from the
-      # number of additional args
-      # NOTE: the type is valuable if there are type constraints also on the first arg
-      # (better error message)
-      range = type.size_type # get .from, .to, unbound if nil (from must be bound, to can be nil)
-      raise ArgumentError, "polymorph dispath on collection type without range" unless range
-      raise ArgumentError, "polymorph dispatch on signature without object" if range.from.nil? || range.from < 1
-      min = range.from - 1
-      max = range.to.nil? ? -1 : (range.to - 1)
-      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, min, max), param_names ]
-    end
   end
 
   # Simple non Polymorphic Visitor
