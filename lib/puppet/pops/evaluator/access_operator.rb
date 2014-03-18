@@ -531,7 +531,8 @@ class Puppet::Pops::Evaluator::AccessOperator
     result = keys.each_with_index.map do |c, i|
       ctype = Puppet::Pops::Types::PHostClassType.new()
       if c.is_a?(Puppet::Pops::Types::PResourceType) && !c.type_name.nil? && c.title.nil?
-        c = c.type_name.downcase
+        # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
+        c = c.type_name.downcase.sub(/^::/, '')
       end
       unless c.is_a?(String)
         fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
@@ -539,7 +540,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       if c !~ Puppet::Pops::Patterns::NAME
         fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
       end
-      ctype.class_name = c
+      ctype.class_name = c.downcase.sub(/^::/,'')
       ctype
     end
     # returns single type as type, else an array of types

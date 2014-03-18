@@ -280,7 +280,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       # arguments are flattened
       expr = fqr('Class')[[fqn('apache')]]
       expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
-      end
+    end
 
     it 'produces same class if no class name is given' do
       expr = fqr('Class')[fqn('apache')][]
@@ -292,6 +292,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       result = evaluate(expr)
       expect(result[0]).to be_the_type(types.host_class('apache'))
       expect(result[1]).to be_the_type(types.host_class('nginx'))
+    end
+
+    it 'removes leading :: in class name' do
+      expr = fqr('Class')['::evoe']
+      expect(evaluate(expr)).to be_the_type(types.host_class('evoe'))
     end
 
     it 'raises error if the name is not a valid name' do

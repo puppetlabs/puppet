@@ -221,7 +221,9 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.host_class(class_name = nil)
     type = Types::PHostClassType.new()
-    type.class_name = class_name
+    unless class_name.nil?
+      type.class_name = class_name.sub(/^::/, '')
+    end
     type
   end
 
