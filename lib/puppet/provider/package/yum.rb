@@ -32,23 +32,65 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     super
     return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
-    # collect our 'latest' info
+    # repo_permutations is list of all permutations of enabled and disabled repositories
+    repo_permutations = [ { "enablerepo" => [], "disablerepo" => [] } ]
+    packages.each_value do |package|
+      if package[:enablerepo].is_a? Array
+        enablerepo = package[:enablerepo]
+      else
+        enablerepo = [package[:enablerepo]]
+      end
+      if package[:disablerepo].is_a? Array
+        disablerepo = package[:disablerepo]
+      else
+        disablerepo = [package[:disablerepo]]
+      end
+      repos = { "enablerepo" => enablerepo.sort, "disablerepo" =>  disablerepo.sort}
+      unless repo_permutations.include?(repos)
+        repo_permutations << repos
+      end
+    end
+
     updates = {}
-    python(self::YUMHELPER).each_line do |l|
-      l.chomp!
-      next if l.empty?
-      if l[0,4] == "_pkg"
-        hash = nevra_to_hash(l[5..-1])
-        [hash[:name], "#{hash[:name]}.#{hash[:arch]}"].each  do |n|
-          updates[n] ||= []
-          updates[n] << hash
+
+    # run yumhelper for each combination of repositories
+    repo_permutations.each do |repos|
+      arguments = []
+      unless repos["enablerepo"].empty?
+        arguments += ["-e", repos["enablerepo"].join(",")]
+      end
+      unless repos["disablerepo"].empty?
+        arguments += ["-d", repos["disablerepo"].join(",")]
+      end
+      # collect our 'latest' info
+      python(self::YUMHELPER, *arguments).each_line do |l|
+        l.chomp!
+        next if l.empty?
+        if l[0,4] == "_pkg"
+          hash = nevra_to_hash(l[5..-1])
+          # include info on which set of repos this update is from
+          ["#{hash[:name]}.#{repos}", "#{hash[:name]}.#{hash[:arch]}.#{repos}"].each  do |n|
+            updates[n] ||= []
+            updates[n] << hash
+          end
         end
       end
     end
 
     # Add our 'latest' info to the providers.
     packages.each do |name, package|
-      if info = updates[package[:name]]
+      if package[:enablerepo].is_a? Array
+        enablerepo = package[:enablerepo]
+      else
+        enablerepo = [package[:enablerepo]]
+      end
+      if package[:disablerepo].is_a? Array
+        disablerepo = package[:disablerepo]
+      else
+        disablerepo = [package[:disablerepo]]
+      end
+      repos = { "enablerepo" => enablerepo.sort, "disablerepo" =>  disablerepo.sort}
+      if info = updates["#{package[:name]}.#{repos}"]
         package.provider.latest_info = info[0]
       end
     end
@@ -59,6 +101,17 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
     operation = :install
+
+    if @resource[:enablerepo].is_a? Array
+      enablerepo = @resource[:enablerepo]
+    else
+      enablerepo = [@resource[:enablerepo]]
+    end
+    if @resource[:disablerepo].is_a? Array
+      disablerepo = @resource[:disablerepo]
+    else
+      disablerepo = [@resource[:disablerepo]]
+    end
 
     case should
     when true, false, Symbol
@@ -74,7 +127,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    yum "-d", "0", "-e", "0", "-y", operation, wanted
+    arguments = [ "-d", "0", "-e", "0", "-y" ]
+    unless @resource[:disablerepo].empty?
+      arguments <<  "--disablerepo=#{disablerepo.join(',')}"
+    end
+    unless @resource[:enablerepo].empty?
+      arguments <<  "--enablerepo=#{enablerepo.join(',')}"
+    end
+    arguments += [ operation , wanted ]
+    yum *arguments
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is
