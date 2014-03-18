@@ -4,7 +4,8 @@ require 'puppet/network/http_pool'
 
 require 'puppet/network/resolver'
 
-describe Puppet::Type.type(:file).attrclass(:content) do
+describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true do
+using_checksums_describe "" do
   include PuppetSpec::Files
 
   let(:filename) { tmpfile('testfile') }
@@ -32,6 +33,10 @@ describe Puppet::Type.type(:file).attrclass(:content) do
       resource[:checksum] = :md5lite
 
       content.checksum_type.should == :md5lite
+    end
+
+    it "should use the type specified by digest_algorithm by default" do
+      content.checksum_type.should == digest_algorithm.intern
     end
   end
 
@@ -63,12 +68,12 @@ describe Puppet::Type.type(:file).attrclass(:content) do
     end
 
     it "should store the checksum as the desired content" do
-      digest = Digest::MD5.hexdigest("this is some content")
+      d = digest("this is some content")
 
-      content.stubs(:checksum_type).returns "md5"
+      content.stubs(:checksum_type).returns digest_algorithm
       content.should = "this is some content"
 
-      content.should.must == "{md5}#{digest}"
+      content.should.must == "{#{digest_algorithm}}#{d}"
     end
 
     it "should not checksum 'absent'" do
@@ -78,9 +83,9 @@ describe Puppet::Type.type(:file).attrclass(:content) do
     end
 
     it "should accept a checksum as the desired content" do
-      digest = Digest::MD5.hexdigest("this is some content")
+      d = digest("this is some content")
 
-      string = "{md5}#{digest}"
+      string = "{#{digest_algorithm}}#{d}"
       content.should = string
 
       content.should.must == string
@@ -131,9 +136,9 @@ describe Puppet::Type.type(:file).attrclass(:content) do
     it "should return the checksum of the file if it exists and is a normal file" do
       stat = mock 'stat', :ftype => "file"
       resource.expects(:stat).returns stat
-      resource.parameter(:checksum).expects(:md5_file).with(resource[:path]).returns "mysum"
+      resource.parameter(:checksum).expects("#{digest_algorithm}_file".intern).with(resource[:path]).returns "mysum"
 
-      content.retrieve.should == "{md5}mysum"
+      content.retrieve.should == "{#{digest_algorithm}}mysum"
     end
   end
 
@@ -184,9 +189,8 @@ describe Puppet::Type.type(:file).attrclass(:content) do
       end
 
       it "should return true if the sum for the current contents is the same as the sum for the desired content" do
-        content.must be_safe_insync("{md5}" + Digest::MD5.hexdigest("some content"))
+        content.must be_safe_insync("{#{digest_algorithm}}" + digest("some content"))
       end
-
       [true, false].product([true, false]).each do |cfg, param|
         describe "and Puppet[:show_diff] is #{cfg} and show_diff => #{param}" do
           before do
@@ -341,7 +345,7 @@ describe Puppet::Type.type(:file).attrclass(:content) do
 
       it "should return the checksum computed" do
         File.open(filename, 'wb') do |file|
-          content.write(file).should == "{md5}#{Digest::MD5.hexdigest(source_content)}"
+          content.write(file).should == "{#{digest_algorithm}}#{digest(source_content)}"
         end
       end
     end
@@ -377,7 +381,7 @@ describe Puppet::Type.type(:file).attrclass(:content) do
 
         it "should return the checksum computed" do
           File.open(filename, 'w') do |file|
-            content.write(file).should == "{md5}#{Digest::MD5.hexdigest(source_content)}"
+            content.write(file).should == "{#{digest_algorithm}}#{digest(source_content)}"
           end
         end
       end
@@ -424,7 +428,7 @@ describe Puppet::Type.type(:file).attrclass(:content) do
 
         it "should return the checksum computed" do
           File.open(filename, 'w') do |file|
-            content.write(file).should == "{md5}#{Digest::MD5.hexdigest(source_content)}"
+            content.write(file).should == "{#{digest_algorithm}}#{digest(source_content)}"
           end
         end
       end
@@ -508,4 +512,5 @@ describe Puppet::Type.type(:file).attrclass(:content) do
       end
     end
   end
+end
 end

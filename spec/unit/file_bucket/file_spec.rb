@@ -70,6 +70,7 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
         # `using_checksums_describe` will reset the digest digest_algorithm at the
         # end of the example group, so we're not permanently changing global
         # state with this.
+        Puppet.settings.stubs(:use)
         Puppet[:digest_algorithm] = 'wefoijwefoij23f02j'
         Puppet::FileBucket::File.new(plaintext)
       }.to raise_error(ArgumentError, /invalid checksum type wefoijwefoij23f02j/)
