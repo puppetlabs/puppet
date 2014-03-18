@@ -191,3 +191,92 @@ RSpec.configure do |config|
     end
   end
 end
+
+DIGEST_ALGORITHMS_TO_TRY = [nil, 'md5', 'sha256']
+# see lib/puppet/defaults.rb
+DEFAULT_DIGEST_ALGORITHM = 'md5'
+
+shared_context('with various digest_algorithm settings',
+               :uses_checksums => true) do
+  # Drop-in replacement for the it class method, which makes an
+  # example group containing one example for each value of the
+  # :digest_algorithm Puppet setting given in
+  # DIGEST_ALGORITHMS_TO_TRY.
+  def self.using_checksums_it desc=nil, *args, &block
+    # refer to rspec/core/example_group.rb
+    group = describe("when digest_algorithm is") do
+      DIGEST_ALGORITHMS_TO_TRY.each do |the_algo|
+        
+        describe(the_algo ? "set to #{the_algo}" : "unset",
+                 :digest_algorithm => the_algo) do
+          it(desc, *args, &block)
+        end
+      end
+    end
+    group.metadata[:shared_group_name] = desc
+    group
+  end
+
+  # Drop-in replacement for the describe class method, which makes an
+  # example group containing one copy of the given group for each
+  # value of the :digest_algorithm Puppet setting given in
+  # DIGEST_ALGORITHMS_TO_TRY.
+  def self.using_checksums_describe *args, &example_group_block
+    group = describe("") do
+      DIGEST_ALGORITHMS_TO_TRY.each do |the_algo|
+        describe("when digest_algorithm is " +
+                 (the_algo ? "set to #{the_algo}" : "unset"),
+                 :digest_algorithm => the_algo) do
+          class << self
+            alias_method :using_checksums_it, :it
+          end
+          describe *args, &example_group_block
+        end
+      end
+    end
+  end
+end
+    
+DIGEST_ALGORITHMS_TO_TRY.each do |the_algo|
+  shared_context("when digest_algorithm is set to #{the_algo || 'nil'}",
+                 :digest_algorithm => the_algo) do
+    before do
+      Puppet[:digest_algorithm] = the_algo
+    end
+    after do
+      Puppet[:digest_algorithm] = nil
+    end
+    let(:algo) { the_algo || DEFAULT_DIGEST_ALGORITHM }
+    let(:checksums) { {
+      "my\r\ncontents" => {
+        'md5'    => 'f0d7d4e480ad698ed56aeec8b6bd6dea',
+        'sha256' => '409a11465ed0938227128b1756c677a8480a8b84814f1963853775e15a74d4b4',
+      },
+      "other stuff" => {
+        'md5'    => 'c0133c37ea4b55af2ade92e1f1337568',
+        'sha256' => '71e19d6834b179eff0012516fa1397c392d5644a3438644e3f23634095a84974',
+      },
+      } }
+    let(:bucket_dirs) { {
+      "my\r\ncontents" => {
+        'md5'    => 'f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea',
+        'sha256' => '4/0/9/a/1/1/4/6/409a11465ed0938227128b1756c677a8480a8b84814f1963853775e15a74d4b4',
+      },
+      "other stuff" => {
+        'md5'    => 'c/0/1/3/3/c/3/7/c0133c37ea4b55af2ade92e1f1337568',
+        'sha256' => '7/1/e/1/9/d/6/8/71e19d6834b179eff0012516fa1397c392d5644a3438644e3f23634095a84974',
+      }
+      } }
+    let(:plaintext) { "my\r\ncontents" }
+    let(:checksum) { checksums[plaintext][algo] }
+    let(:bucket_dir) { bucket_dirs[plaintext][algo] }
+    let(:not_bucketed_plaintext) { "other stuff" }
+    let(:not_bucketed_checksum) { checksums[not_bucketed_plaintext][algo] }
+    let(:not_bucketed_bucket_dir) { checksums[not_bucketed_plaintext][algo] }
+    let(:checksums_class) { Class.new { include Puppet::Util::Checksums } }
+    let(:checksums_instance) { checksums_class.new }
+    def digest *args
+      checksums_instance.method(algo).call *args
+    end
+  end
+end
