@@ -21,14 +21,17 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   end
 
   def enabled?
-    # Checkconfig always returns 0 on SuSE unless the --check flag is used.
-    args = (Facter.value(:osfamily) == 'Suse' ? ['--check'] : [])
+    name = @resource[:name]
 
     begin
-      chkconfig(@resource[:name], *args)
+      output = chkconfig name
     rescue Puppet::ExecutionFailure
       return :false
     end
+
+    # For Suse OS family, chkconfig returns 0 even if the service is disabled or non-existent
+    # Therefore, check the output for '<name>  on' to see if it is enabled
+    return :false unless Facter.value(:osfamily) != 'Suse' || output =~ /^#{name}\s+on$/
 
     :true
   end
