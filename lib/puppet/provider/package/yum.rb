@@ -74,8 +74,8 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    args = ["-d", "0", "-e", "0", "-y", install_options].compact
-    yum *args, operation, wanted
+    args = ["-d", "0", "-e", "0", "-y", install_options, operation, wanted].compact
+    yum *args
 
 
     is = self.query
