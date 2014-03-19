@@ -46,7 +46,7 @@ describe Puppet::Node::Environment do
     describe "overriding an existing environment" do
       let(:original_path) { [tmpdir('original')] }
       let(:new_path) { [tmpdir('new')] }
-      let(:environment) { Puppet::Node::Environment.create(:overridden, original_path, 'orig.pp') }
+      let(:environment) { Puppet::Node::Environment.create(:overridden, original_path, 'orig.pp', '/config/script') }
 
       it "overrides modulepath" do
         overridden = environment.override_with(:modulepath => new_path)
@@ -54,6 +54,7 @@ describe Puppet::Node::Environment do
         expect(overridden.name).to eq(:overridden)
         expect(overridden.manifest).to eq(File.expand_path('orig.pp'))
         expect(overridden.modulepath).to eq(new_path)
+        expect(overridden.config_version).to eq('/config/script')
       end
 
       it "overrides manifest" do
@@ -62,6 +63,16 @@ describe Puppet::Node::Environment do
         expect(overridden.name).to eq(:overridden)
         expect(overridden.manifest).to eq(File.expand_path('new.pp'))
         expect(overridden.modulepath).to eq(original_path)
+        expect(overridden.config_version).to eq('/config/script')
+      end
+
+      it "overrides config_version" do
+        overridden = environment.override_with(:config_version => '/new/script')
+        expect(overridden).to_not be_equal(environment)
+        expect(overridden.name).to eq(:overridden)
+        expect(overridden.manifest).to eq(File.expand_path('orig.pp'))
+        expect(overridden.modulepath).to eq(original_path)
+        expect(overridden.config_version).to eq('/new/script')
       end
     end
 
@@ -147,6 +158,20 @@ describe Puppet::Node::Environment do
 
       it "should provide an array-like accessor method for returning any environment-specific setting" do
         env.should respond_to(:[])
+      end
+
+      it "obtains its core values from the puppet settings instance as a legacy env" do
+        Puppet.settings.parse_config(<<-CONF)
+        [testing]
+        manifest = /some/manifest
+        modulepath = /some/modulepath
+        config_version = /some/script
+        CONF
+
+        env = Puppet::Node::Environment.new("testing")
+        expect(env.full_modulepath).to eq(['/some/modulepath'])
+        expect(env.manifest).to eq('/some/manifest')
+        expect(env.config_version).to eq('/some/script')
       end
 
       it "should ask the Puppet settings instance for the setting qualified with the environment name" do

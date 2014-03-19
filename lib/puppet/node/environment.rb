@@ -64,7 +64,8 @@ class Puppet::Node::Environment
 
     obj = self.create(symbol,
              split_path(Puppet.settings.value(:modulepath, symbol)),
-             Puppet.settings.value(:manifest, symbol))
+             Puppet.settings.value(:manifest, symbol),
+             Puppet.settings.value(:config_version, symbol))
     seen[symbol] = obj
   end
 
@@ -73,15 +74,18 @@ class Puppet::Node::Environment
   # @param name [Symbol] the name of the
   # @param modulepath [Array<String>] the list of paths from which to load modules
   # @param manifest [String] the path to the manifest for the environment
+  # @param config_version [String] path to a script whose output will be added
+  #   to report logs (optional)
   # @return [Puppet::Node::Environment]
   #
   # @api public
-  def self.create(name, modulepath, manifest)
+  def self.create(name, modulepath, manifest, config_version = nil)
     obj = self.allocate
     obj.send(:initialize,
              name,
              expand_dirs(extralibs() + modulepath),
-             File.expand_path(manifest))
+             File.expand_path(manifest),
+             config_version)
     obj
   end
 
@@ -92,27 +96,30 @@ class Puppet::Node::Environment
   #   semantics.
   #
   # @param name [Symbol] The environment name
-  def initialize(name, modulepath, manifest)
+  def initialize(name, modulepath, manifest, config_version)
     @name = name
     @modulepath = modulepath
     @manifest = manifest
+    @config_version = config_version
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding any of the passed
   # parameters.
   #
   # @param env_params [Hash<{Symbol => String,Array<String>}>] new environment
-  #   parameters (:modulepath, :manifest)
+  #   parameters (:modulepath, :manifest, :config_version)
   # @return [Puppet::Node::Environment]
   def override_with(env_params)
     return self.class.create(name,
                       env_params[:modulepath] || modulepath,
-                      env_params[:manifest] || manifest)
+                      env_params[:manifest] || manifest,
+                      env_params[:config_version] || config_version)
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding manfiest
-  # and modulepath from the passed settings if they were originally set from
-  # the commandline, or returns self if there is nothing to override.
+  # modulepath, or :config_version from the passed settings if they were
+  # originally set from the commandline, or returns self if there is nothing to
+  # override.
   #
   # @param settings [Puppet::Settings] an initialized puppet settings instance
   # @return [Puppet::Node::Environment] new overridden environment or self if
@@ -120,6 +127,7 @@ class Puppet::Node::Environment
   def override_from_commandline(settings)
     overrides = {}
     overrides[:modulepath] = self.class.split_path(settings[:modulepath]) if settings.set_by_cli?(:modulepath)
+    overrides[:config_version] = settings[:config_version] if settings.set_by_cli?(:config_version)
     if settings.set_by_cli?(:manifest) ||
       (settings.set_by_cli?(:manifestdir) && settings[:manifest].start_with?(settings[:manifestdir]))
       overrides[:manifest] = settings[:manifest]
@@ -180,6 +188,12 @@ class Puppet::Node::Environment
   #   @api public
   #   @return [String] path to the manifest file or directory.
   attr_reader :manifest
+
+  # @!attribute [r] config_version
+  #   @api public
+  #   @return [String] path to a script whose output will be added to report logs
+  #     (optional)
+  attr_reader :config_version
 
   # Return an environment-specific Puppet setting.
   #

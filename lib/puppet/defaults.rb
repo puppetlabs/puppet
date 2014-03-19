@@ -936,8 +936,11 @@ EOT
     :basemodulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
       :type => :path,
-      :desc => "The base non-environment specific search path for modules, included
-      also in all directory environment and default legacy environment modulepaths.",
+      :desc => "A search path for modules, as a list of directories
+        separated by the system path separator character. This set of
+        paths is used as the default for legacy environments and is
+        combined with a directory environments 'modules' directory
+        for a directory environment's default.",
     },
     :modulepath => {
       :default => "$basemodulepath",

@@ -400,18 +400,19 @@ describe Puppet::Resource::TypeCollection do
       @code.version.should == time.to_i
     end
 
-    it "should use the output of the environment's config_version setting if one is provided" do
-      @code.environment.stubs(:[]).with(:config_version).returns("/my/foo")
+    context "when config_version script is specified" do
+      let(:environment) { Puppet::Node::Environment.create(:testing, [], '', '/my/foo') }
 
-      Puppet::Util::Execution.expects(:execute).with(["/my/foo"]).returns "output\n"
-      @code.version.should == "output"
-    end
+      it "should use the output of the environment's config_version setting if one is provided" do
+        Puppet::Util::Execution.expects(:execute).with(["/my/foo"]).returns "output\n"
+        @code.version.should == "output"
+      end
 
-    it "should raise a puppet parser error if executing config_version fails" do
-      @code.environment.stubs(:[]).with(:config_version).returns("test")
-      Puppet::Util::Execution.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
+      it "should raise a puppet parser error if executing config_version fails" do
+        Puppet::Util::Execution.expects(:execute).raises(Puppet::ExecutionFailure.new("msg"))
 
-      lambda { @code.version }.should raise_error(Puppet::ParseError)
+        lambda { @code.version }.should raise_error(Puppet::ParseError)
+      end
     end
   end
 end
