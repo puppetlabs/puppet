@@ -570,7 +570,7 @@ module Puppet
     end
 
     def eval_generate
-      return if self[:purge_ssh_keys].empty?
+      return [] if self[:purge_ssh_keys].empty?
       find_unmanaged_keys
     end
 
