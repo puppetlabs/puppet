@@ -282,9 +282,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
     end
 
-    it 'produces same class if no class name is given' do
+    it 'raises error if access is to no keys' do
       expr = fqr('Class')[fqn('apache')][]
-      expect { evaluate(expr) }.to raise_error(/Evaluation Error: Class\[apache\]\[\] accepts 1 argument\. Got 0/)
+      expect { evaluate(expr) }.to raise_error(/Evaluation Error: Class\[apache\]\[\] accepts 1 or more arguments\. Got 0/)
     end
 
     it 'produces a collection of classes when multiple class names are given' do
@@ -302,6 +302,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     it 'raises error if the name is not a valid name' do
       expr = fqr('Class')['fail-whale']
       expect { evaluate(expr) }.to raise_error(/Illegal name/)
+    end
+
+    it 'gives an error if an empty array is given as argument' do
+      expr = fqr('Class')[literal([])]
+      expect {evaluate(expr)}.to raise_error(/Evaluation Error: Class\[\] accepts 1 or more arguments. Got 0/)
     end
 
     # Resource
@@ -333,6 +338,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       result = evaluate(expr)
       expect(result[0]).to be_the_type(types.resource('File', 'x'))
       expect(result[1]).to be_the_type(types.resource('File', 'y'))
+    end
+
+    it 'gives an error if an empty array is given as argument' do
+      expr = fqr('Resource')[literal([])]
+      expect {evaluate(expr)}.to raise_error(/Evaluation Error: Resource\[\] accepts 1 to 2 arguments. Got 0/)
+    end
+
+    it 'gives an error if an empty array is given as argument' do
+      expr = fqr('File')[literal([])]
+      expect {evaluate(expr)}.to raise_error(/Evaluation Error: File\[\] accepts 1 argument. Got 0/)
     end
 
     it 'gives an error if resource is not found' do
