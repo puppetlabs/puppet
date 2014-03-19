@@ -208,7 +208,14 @@ config_version=/some/script
       end
 
       it "accepts an empty environment.conf without warning" do
-        content.clear
+        content = nil
+
+        envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+          FS::MemoryFile.a_directory("env1", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", content),
+          ]),
+        ])
+
         manifestdir = FS::MemoryFile.a_directory(File.join(envdir, "env1", "manifests"))
         modulesdir = FS::MemoryFile.a_directory(File.join(envdir, "env1", "modules"))
         global_path_location = File.expand_path("global_path")
@@ -282,8 +289,7 @@ config_version=relative/script
       end
 
       it "interpolates other setting values correctly" do
-        content.clear
-        content << <<-EOF
+        content = <<-EOF
 manifest=$confdir/whackymanifests
 modulepath=/some/absolute:$basemodulepath:modules
 config_version=$vardir/random/scripts
