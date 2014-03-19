@@ -74,7 +74,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    yum "-d", "0", "-e", "0", "-y", install_options, operation, wanted
+    args = ["-d", "0", "-e", "0", "-y", install_options].compact
+    yum *args, operation, wanted
+
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is

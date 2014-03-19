@@ -43,7 +43,7 @@ describe provider_class do
 
     it 'should call yum install for :installed' do
       resource.stubs(:should).with(:ensure).returns :installed
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', nil, :install, 'mypackage')
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage')
       provider.install
     end
 
@@ -55,7 +55,7 @@ describe provider_class do
     it 'should be able to set version' do
       resource[:ensure] = '1.2'
 
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', nil, :install, 'mypackage-1.2')
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage-1.2')
       provider.stubs(:query).returns :ensure => '1.2'
       provider.install
     end
@@ -63,7 +63,7 @@ describe provider_class do
     it 'should be able to downgrade' do
       resource[:ensure] = '1.0'
 
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', nil, :downgrade, 'mypackage-1.0')
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, 'mypackage-1.0')
       provider.stubs(:query).returns(:ensure => '1.2').then.returns(:ensure => '1.0')
       provider.install
     end
