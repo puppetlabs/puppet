@@ -38,12 +38,10 @@ group(:development, :test) do
 
   gem "yarjuf", "~> 1.0"
 
-  # json-schema does not support windows, so use the 'ruby' platform to exclude it on windows
-  platforms :ruby do
-    # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
-    gem "multi_json", "1.7.7", :require => false
-    gem "json-schema", "2.1.1", :require => false
-  end
+  # json-schema does not support windows, so omit it from the platforms list
+  # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
+  gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
+  gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
 end
 
 group(:development) do
@@ -61,10 +59,16 @@ group(:extra) do
   gem "couchrest", '~> 1.0', :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
-  gem "sqlite3", :require => false
   gem "stomp", :require => false
   gem "tzinfo", :require => false
-  gem "msgpack", :require => false
+  case RUBY_PLATFORM
+  when 'java'
+    gem "jdbc-sqlite3", :require => false
+    gem "msgpack-jruby", :require => false
+  else
+    gem "sqlite3", :require => false
+    gem "msgpack", :require => false
+  end
 end
 
 require 'yaml'
