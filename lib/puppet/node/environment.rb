@@ -95,9 +95,9 @@ class Puppet::Node::Environment
   #   objects, so this will not be invoked with the normal Ruby initialization
   #   semantics.
   #
-  # @param name [Symbol] The environment name
+  # @param name [#to_sym] The environment name
   def initialize(name, modulepath, manifest, config_version)
-    @name = name
+    @name = name.to_sym
     @modulepath = modulepath
     @manifest = manifest
     @config_version = config_version
@@ -366,7 +366,7 @@ class Puppet::Node::Environment
       next unless mod.forge_name
       deps[mod.forge_name] ||= []
       mod.dependencies and mod.dependencies.each do |mod_dep|
-        deps[mod_dep['name']] ||= []
+        deps[mod_dep['name'].tr('-', '/')] ||= []
         dep_details = {
           'name'                => mod.forge_name,
           'version'             => mod.version,

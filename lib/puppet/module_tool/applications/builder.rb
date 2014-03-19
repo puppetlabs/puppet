@@ -40,7 +40,7 @@ module Puppet::ModuleTool
       def pack
         FileUtils.rm archive_file rescue nil
 
-        tar = Puppet::ModuleTool::Tar.instance(metadata.full_module_name)
+        tar = Puppet::ModuleTool::Tar.instance
         Dir.chdir(@pkg_path) do
           tar.pack(metadata.release_name, archive_file)
         end
