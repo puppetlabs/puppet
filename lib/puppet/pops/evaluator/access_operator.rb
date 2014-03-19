@@ -73,7 +73,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PRegexpType(o, scope, keys)
     keys.flatten!
     unless keys.size == 1
-      blamed = keys.size == 0 ? @semantic : @semantic.keys[2]
+      blamed = keys.size == 0 ? @semantic : @semantic.keys[1]
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :actual => keys.size)
     end
     assert_keys(keys, o, 1, 1, String, Regexp)
@@ -214,7 +214,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def assert_keys(keys, o, min, max, *allowed_classes)
     size = keys.size
     unless size.between?(min, max || INFINITY)
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :max => max, :actual => keys.size)
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>1, :max => max, :actual => keys.size)
     end
     keys.each_with_index do |k, i|
       unless allowed_classes.any? {|clazz| k.is_a?(clazz) }
@@ -438,10 +438,12 @@ class Puppet::Pops::Evaluator::AccessOperator
   #   Resource[File, 'foo']['bar'] # => Value of the 'bar' parameter in the File['foo'] resource
   #
   def access_PResourceType(o, scope, keys)
+    blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
     keys.flatten!
     if keys.size == 0
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
-        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)
+      max = o.type_name.nil? ? 2 : 1
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
+        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => max, :actual => 0)
     end
     if !o.title.nil?
       # lookup resource and return one or more parameter values
@@ -500,10 +502,12 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def access_PHostClassType(o, scope, keys)
+    blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
+
     keys.flatten!
     if keys.size == 0
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
-        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
+        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
     end
     if ! o.class_name.nil?
       # lookup class resource and return one or more parameter values

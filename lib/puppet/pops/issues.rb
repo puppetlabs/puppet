@@ -384,7 +384,7 @@ module Puppet::Pops::Issues
     base_type_label = base_type.is_a?(String) ? base_type : label.a_an_uc(base_type)
     if max == -1 || max == 1.0 / 0.0 # Infinity
       "#{base_type_label}[] accepts #{min} or more arguments. Got #{actual}"
-    elsif max
+    elsif max && max != min
       "#{base_type_label}[] accepts #{min} to #{max} arguments. Got #{actual}"
     else
       "#{base_type_label}[] accepts #{min} #{label.plural_s(min, 'argument')}. Got #{actual}"
