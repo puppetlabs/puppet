@@ -570,11 +570,11 @@ module Puppet
     end
 
     def eval_generate
-      return if self[:purge_ssh_keys].empty?
+      return [] if self[:purge_ssh_keys].empty?
       find_unmanaged_keys
     end
 
-    newparam(:purge_ssh_keys, :boolean => false) do
+    newparam(:purge_ssh_keys) do
       desc "Purge ssh keys authorized for the user
             if they are not managed via ssh_authorized_keys. When true,
             looks for keys in .ssh/authorized_keys in the user's home
@@ -582,12 +582,13 @@ module Puppet
             paths to file to search for authorized keys. If a path starts
             with ~ or %h, this token is replaced with the user's home directory."
 
-      defaultto false
+      defaultto :false
 
-      newvalues(true, false)
+      # Use Symbols instead of booleans until PUP-1967 is resolved.
+      newvalues(:true, :false)
 
       validate do |value|
-        if [ true, false ].include? value
+        if [ :true, :false ].include? value.to_s.intern
           return
         end
         value = [ value ] if value.is_a?(String)
@@ -605,13 +606,18 @@ module Puppet
       end
 
       munge do |value|
-        return [] if value == false
+        # Resolve string, boolean and symbol forms of true and false to a
+        # single representation.
+        test_sym = value.to_s.intern
+        value = test_sym if [:true, :false].include? test_sym
+
+        return [] if value == :false
         home = resource[:home]
-        if value == true and not home
+        if value == :true and not home
           raise ArgumentError, "purge_ssh_keys can only be true for users with a defined home directory"
         end
 
-        return [ "#{home}/.ssh/authorized_keys" ] if value == true
+        return [ "#{home}/.ssh/authorized_keys" ] if value == :true
         # value is an array - munge each value
         [ value ].flatten.map do |entry|
           if entry =~ /^~|^%h/ and not home
