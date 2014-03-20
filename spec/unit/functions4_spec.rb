@@ -2,7 +2,7 @@ require 'spec_helper'
 require 'puppet/pops'
 
 describe 'the 4x function api' do
-  it 'a simple function can be created without dispatch declaration' do
+  it 'allows a simple function to be created without dispatch declaration' do
     f = Puppet::Functions.create_function('min') do
       def min(x,y)
         x <= y ? x : y
@@ -33,7 +33,7 @@ describe 'the 4x function api' do
       func.call({}, 10)
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape("function 'min' called with mis-matched arguments
 expected:
-  min(Optional[Object]{2}) - arg count {2}
+  min(Optional[Object] x, Optional[Object] y) - arg count {2}
 actual:
   min(Integer) - arg count {1}")))
   end
@@ -48,7 +48,7 @@ actual:
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
 "function 'min' called with mis-matched arguments
 expected:
-  min(Optional[Object]{2}) - arg count {2}
+  min(Optional[Object] x, Optional[Object] y) - arg count {2}
 actual:
   min(Integer, Integer, Integer) - arg count {3}")))
   end

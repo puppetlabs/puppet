@@ -99,7 +99,8 @@ module Puppet::Functions
     # define any dispatchers. Fail if function name does not match a given method name in user code.
     #
     if the_class.dispatcher.empty?
-      the_class.dispatcher.add_dispatch(default_dispatcher(the_class, func_name), func_name)
+      type, names = default_dispatcher(the_class, func_name)
+      the_class.dispatcher.add_dispatch(type, func_name, names)
     end
 
     # The function class is returned as the result of the create function method
@@ -119,9 +120,11 @@ module Puppet::Functions
     # Ruby 1.8.7 does not have support for details about parameters
     if method.respond_to?(:parameters)
       result = {:req => 0, :opt => 0, :rest => 0 }
+      # TODO: Optimize into one map iteration that produces names map, and sets count as side effect
       method.parameters.each { |p| result[p[0]] += 1 }
       min = result[:req]
       max = result[:rest] > 0 ? :default : min + result[:opt]
+      names = method.parameters.map {|p| p[1] }
     else
       # Cannot correctly compute the signature in Ruby 1.8.7 because arity for optional values is
       # screwed up (there is no way to get the upper limit), an optional looks the same as a varargs
@@ -130,16 +133,17 @@ module Puppet::Functions
       arity = m.arity
       min = arity >= 0 ? arity : -arity -1
       max = arity >= 0 ? arity : :default  # i.e. infinite (which is wrong when there are optional - flaw in 1.8.7)
+      names = [] # no names available
     end
-    [min, max]
+    [min, max, names]
   end
 
-  def self.object_signature(min, max)
+  def self.object_signature(min, max, names)
     # Construct the type for the signature
     # Array[Optional[Object], Integer[min, max]]
     factory = Puppet::Pops::Types::TypeFactory
     optional_object = factory.optional(factory.object)
-    factory.constrain_size(factory.array_of(optional_object), min, max)
+    [factory.constrain_size(factory.array_of(optional_object), min, max), names]
   end
 
   class Function
@@ -411,7 +415,9 @@ module Puppet::Functions
         last_range = args_type.repeat_last_range
         args_type.types
       when Puppet::Pops::Types::PArrayType
-        last_range = args_type.size_range
+        from, to = args_type.size_range
+        adjust = param_names.size() -1
+        last_range = [(from - adjust), (to - adjust)]
         [ args_type.element_type ]
       end
       tc = Puppet::Pops::Types::TypeCalculator
@@ -419,7 +425,15 @@ module Puppet::Functions
       # join type with names (types are always present, names are optional)
       # separate entries with comma
       #
-      result = types.zip(param_names).map { |t| [tc.string(t[0]), t[1]].compact.join(' ') }.join(', ')
+      if param_names.empty?
+        result = types.map { |t| tc.string(t) }.join(', ')
+      else
+        result = param_names.each_with_index.map {|name, index| [tc.string(types[index] || types[-1]), name].join(' ') }.join(', ')
+      end
+#      # join type with names (types are always present, names are optional)
+#      # separate entries with comma
+#      #
+#      result = types.zip(param_names).map { |t| [tc.string(t[0]), t[1]].compact.join(' ') }.join(', ')
 
       # Add {from, to} for the last type
       # This works for both Array and Tuple since it describes the allowed count of the "last" type element
