@@ -606,6 +606,11 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
         }]
     end
 
+    before :each do
+      # Ensure we don't have a value cached from another spec
+      provider.class.remove_instance_variable :@groups if provider.class.instance_variable_defined? :@groups
+    end
+
     it 'should return an array of hashes containing group data' do
       provider.class.expects(:dscl).with('-plist', '.', 'readall', '/Groups').returns(groups_xml)
       provider.class.get_list_of_groups.should == groups_hash
@@ -952,6 +957,11 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
   end
 
   describe 'self#get_os_version' do
+    before :each do
+      # Ensure we don't have a value cached from another spec
+      provider.class.remove_instance_variable :@os_version if provider.class.instance_variable_defined? :@os_version
+    end
+
     it 'should call Facter.value(:macosx_productversion_major) ONLY ONCE no matter how ' +
        'many times get_os_version() is called' do
       Facter.expects(:value).with(:macosx_productversion_major).once.returns('10.8')
