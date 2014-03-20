@@ -481,19 +481,26 @@ describe Puppet::Type.type(:user) do
 
     describe "generated keys" do
       subject do
-        res = described_class.new(:name => "test", :purge_ssh_keys => my_fixture('authorized_keys'))
+        res = described_class.new(:name => "test", :purge_ssh_keys => purge_param)
         res.catalog = Puppet::Resource::Catalog.new
         res
       end
-      let(:resources) { subject.eval_generate }
-      it "should contain a resource for each key" do
-        names = resources.collect { |res| res.name }
-        names.should include("keyname1")
-        names.should include("keyname2")
+      context "when purging is disabled" do
+        let(:purge_param) { false }
+        its(:eval_generate) { should be_empty }
       end
-      it "should not include keys in comment lines" do
-        names = resources.collect { |res| res.name }
-        names.should_not include("keyname3")
+      context "when purging is enabled" do
+        let(:purge_param) { my_fixture('authorized_keys') }
+        let(:resources) { subject.eval_generate }
+        it "should contain a resource for each key" do
+          names = resources.collect { |res| res.name }
+          names.should include("keyname1")
+          names.should include("keyname2")
+        end
+        it "should not include keys in comment lines" do
+          names = resources.collect { |res| res.name }
+          names.should_not include("keyname3")
+        end
       end
     end
   end
