@@ -169,8 +169,8 @@ describe Puppet::Node::Environment do
         CONF
 
         env = Puppet::Node::Environment.new("testing")
-        expect(env.full_modulepath).to eq(['/some/modulepath'])
-        expect(env.manifest).to eq('/some/manifest')
+        expect(env.full_modulepath).to eq([File.expand_path('/some/modulepath')])
+        expect(env.manifest).to eq(File.expand_path('/some/manifest'))
         expect(env.config_version).to eq('/some/script')
       end
 
