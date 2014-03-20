@@ -52,6 +52,12 @@ module Puppet
         :owner    => "service",
         :group    => "service",
         :desc     => "The directory in which to store log files",
+    },
+    :log_level => {
+      :default    => 'notice',
+      :type       => :enum,
+      :values     => ["debug","info","notice","warning","err","alert","emerg","crit"],
+      :desc       => "Default logging level",
     }
   )
 

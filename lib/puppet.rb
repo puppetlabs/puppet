@@ -152,6 +152,7 @@ module Puppet
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
     Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
     Puppet::Parser::Functions.reset
+    Puppet::Util::Log.level = Puppet[:log_level]
   end
   private_class_method :do_initialize_settings_for_run_mode
 
