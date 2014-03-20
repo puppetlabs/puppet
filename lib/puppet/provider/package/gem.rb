@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     interpreted as the path to a local gem file.  If source is not present at all,
     the gem will be installed from the default gem repositories."
 
-  has_feature :versionable
+  has_feature :versionable, :install_options
 
   commands :gemcmd => "gem"
 
@@ -97,6 +97,8 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       command << "--no-rdoc" << "--no-ri" << resource[:name]
     end
 
+    command << install_options
+
     output = execute(command)
     # Apparently some stupid gem versions don't exit non-0 on failure
     self.fail "Could not install: #{output.chomp}" if output.include?("ERROR")
@@ -121,5 +123,24 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def update
     self.install(false)
+  end
+
+  def install_options
+    join_options(resource[:install_options])
+  end
+
+  def join_options(options)
+    return unless options
+
+    options.collect do |val|
+      case val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k}=#{val[k]}"
+        end.join(' ')
+      else
+        val
+      end
+    end
   end
 end

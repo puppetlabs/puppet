@@ -17,6 +17,10 @@ describe provider_class do
     provider
   end
 
+  before :each do
+    resource.provider = provider
+  end
+
   describe "when installing" do
     it "should use the path to the gem" do
       provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
@@ -41,6 +45,17 @@ describe provider_class do
 
     it "should specify the package name" do
       provider.expects(:execute).with { |args| args[4] == "myresource" }.returns ""
+      provider.install
+    end
+
+    it "should return install_options as nil by default" do
+      provider.expects(:execute).with { |args| expect(args[5]).to be_nil }.returns ""
+      provider.install
+    end
+
+    it "should allow setting an install_options parameter" do
+      resource[:install_options] = [ '--force', {'--bindir' => '/usr/bin' } ]
+      provider.expects(:execute).with { |args| args[5] == ["--force", "--bindir=/usr/bin"] }.returns ""
       provider.install
     end
 
