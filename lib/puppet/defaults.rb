@@ -876,9 +876,10 @@ EOT
     },
     :manifest => {
       :default    => "$manifestdir/site.pp",
-      :type       => :file,
+      :type       => :file_or_directory,
       :desc       => "The entry-point manifest file for puppet master or a directory of manifests
-        to be evaluated in alphabetical order.",
+        to be evaluated in alphabetical order. Puppet manages this path as a directory
+        if it exists or if the path ends with a / or \\.",
     },
     :code => {
       :default    => "",
