@@ -307,10 +307,33 @@ module Puppet::Pops::Types
   # @api public
   class PTupleType < PObjectType
     contains_many_uni 'types', PAbstractType, :lowerBound => 1
-    # If set, describes repetition of the last type in types
+    # If set, describes min and max required of the given types - if max > size of
+    # types, the last type entry repeats
+    #
     contains_one_uni 'size_type', PIntegerType, :lowerBound => 0
 
     module ClassModule
+      # Returns the number of elements accepted [min, max] in the tuple
+      def size_range
+        types_size = types.size
+        size_type.nil? ? [types_size, types_size] : size_type.range
+      end
+
+      # Returns the number of accepted occurrences [min, max] of the last type in the tuple
+      # The defaults is [1,1]
+      #
+      def repeat_last_range
+        types_size = types.size
+        if size_type.nil?
+          return [1, 1]
+        end
+        from, to = size_type.range()
+        min = from - (types_size-1)
+        min = min <= 0 ? 0 : min
+        max = to - (types_size-1)
+        [min, max]
+      end
+
       def hash
         [self.class, size_type, Set.new(types)].hash
       end
