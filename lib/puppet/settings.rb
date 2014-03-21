@@ -1216,7 +1216,7 @@ Generated on #{Time.now}.
       return value unless value.is_a? String
       value.gsub(/\$(\w+)|\$\{(\w+)\}/) do |value|
         varname = $2 || $1
-        if varname == "environment"
+        if varname == "environment" && @environment
           @environment
         elsif varname == "run_mode"
           @mode
