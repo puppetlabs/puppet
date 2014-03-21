@@ -189,6 +189,9 @@ module Puppet
         * Mac OS X 10.7 (Lion) uses salted SHA512 hashes. The Puppet Labs [stdlib][]
           module contains a `str2saltedsha512` function which can generate password
           hashes for Lion.
+        * Mac OS X 10.8 and higher use salted SHA512 PBKDF2 hashes. When
+          managing passwords on these systems the salt and iterations properties
+          need to be specified as well as the password.
         * Windows passwords can only be managed in cleartext, as there is no Windows API
           for setting the password hash.
 
@@ -544,13 +547,13 @@ module Puppet
 
     newproperty(:salt, :required_features => :manages_password_salt) do
       desc "This is the 32 byte salt used to generate the PBKDF2 password used in
-            OS X"
+            OS X. This field is required for managing passwords on OS X >= 10.8."
     end
 
     newproperty(:iterations, :required_features => :manages_password_salt) do
       desc "This is the number of iterations of a chained computation of the
             password hash (http://en.wikipedia.org/wiki/PBKDF2).  This parameter
-            is used in OS X"
+            is used in OS X. This field is required for managing passwords on OS X >= 10.8."
 
       munge do |value|
         if value.is_a?(String) and value =~/^[-0-9]+$/
