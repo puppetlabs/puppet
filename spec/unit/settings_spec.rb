@@ -654,6 +654,38 @@ describe Puppet::Settings do
       @settings.send(:parse_config_files)
       @settings.value(:one, "env").should == "envval"
     end
+
+    context "when interpolating a dynamic environments setting" do
+      let(:dynamic_manifestdir) { "manifestdir=/somewhere/$environment/manifests" }
+      let(:environment) { "environment=anenv" }
+
+      before(:each) do
+        @settings.define_settings :main,
+          :manifestdir => { :default => "/manifests", :desc => "manifestdir setting" },
+          :environment => { :default => "production", :desc => "environment setting" }
+      end
+
+      it "interpolates default environment when no environment specified" do
+        text = <<-EOF
+[main]
+#{dynamic_manifestdir}
+        EOF
+        @settings.stubs(:read_file).returns(text)
+        @settings.send(:parse_config_files)
+        expect(@settings.value(:manifestdir)).to eq("/somewhere/production/manifests")
+      end
+ 
+      it "interpolates the set environment when no environment specified" do
+        text = <<-EOF
+[main]
+#{dynamic_manifestdir}
+#{environment}
+        EOF
+        @settings.stubs(:read_file).returns(text)
+        @settings.send(:parse_config_files)
+        expect(@settings.value(:manifestdir)).to eq("/somewhere/anenv/manifests")
+      end
+    end
   end
 
 
