@@ -370,6 +370,8 @@ Puppet::Type.type(:user).provide :directoryservice do
         if value.length != 256
            raise Puppet::Error, "OS X versions > 10.7 require a Salted SHA512 PBKDF2 password hash of 256 characters. Please check your password and try again."
         end
+
+        assert_full_pbkdf2_password
       end
 
       # Methods around setting the password on OS X are the ONLY methods that
@@ -405,6 +407,8 @@ Puppet::Type.type(:user).provide :directoryservice do
   # method.
   def iterations=(value)
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
+      assert_full_pbkdf2_password
+
       sleep 2
       flush_dscl_cache
       users_plist = get_users_plist(@resource.name)
@@ -420,6 +424,8 @@ Puppet::Type.type(:user).provide :directoryservice do
   # method.
   def salt=(value)
     if (Puppet::Util::Package.versioncmp(self.class.get_os_version, '10.7') > 0)
+      assert_full_pbkdf2_password
+
       sleep 2
       flush_dscl_cache
       users_plist = get_users_plist(@resource.name)
@@ -472,6 +478,14 @@ Puppet::Type.type(:user).provide :directoryservice do
   ##                ##
   ## Helper Methods ##
   ##                ##
+
+  def assert_full_pbkdf2_password
+    missing = [:password, :salt, :iterations].select { |parameter| @resource[parameter].nil? }
+
+    if !missing.empty?
+       raise Puppet::Error, "OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash. This resource is missing: #{missing.join(', ')}."
+    end
+  end
 
   def users_plist_dir
     '/var/db/dslocal/nodes/Default/users'

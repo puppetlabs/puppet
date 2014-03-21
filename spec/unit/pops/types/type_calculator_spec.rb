@@ -764,13 +764,22 @@ describe 'The type calculator' do
         calculator.assignable?(tuple2, tuple1).should == false
       end
 
-      it 'should accept matching tuples with optional entries' do
+      it 'should accept matching tuples with optional entries by repeating last' do
         tuple1 = tuple_t(1,2)
         factory.constrain_size(tuple1, 0, :default)
         tuple2 = tuple_t(Numeric,Numeric)
         factory.constrain_size(tuple2, 0, :default)
         calculator.assignable?(tuple1, tuple2).should == false
         calculator.assignable?(tuple2, tuple1).should == true
+      end
+
+      it 'should accept matching tuples with optional entries' do
+        tuple1 = tuple_t(Integer, Integer, String)
+        factory.constrain_size(tuple1, 1, 3)
+        array2 = factory.constrain_size(array_t(Integer),2,2)
+        calculator.assignable?(tuple1, array2).should == true
+        factory.constrain_size(tuple1, 3, 3)
+        calculator.assignable?(tuple1, array2).should == false
       end
 
       it 'should accept matching array' do

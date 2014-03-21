@@ -383,10 +383,8 @@ class Puppet::Pops::Types::TypeCalculator
   def instance_of_PTupleType(t, o)
     return false unless o.is_a?(Array)
     # compute the tuple's min/max size, and check if that size matches
-    from, to = size_range(t.size_type)
-    size_t = Types::PIntegerType.new()
-    size_t.from = t.types.size - 1 + from
-    size_t.to = t.types.size - 1 + to
+    size_t = t.size_type || Puppet::Pops::Types::TypeFactory.range(*t.size_range)
+
     # compute the array's size as type
     size_t2 = size_as_type(o)
     return false unless assignable?(size_t, size_t2)
@@ -915,39 +913,27 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  def max(a,b)
+    a >=b ? a : b
+  end
+
+  def min(a,b)
+    a <= b ? a : b
+  end
+
   def assignable_PTupleType(t, t2)
     return true if t == t2 || t.types.empty? && (t2.is_a?(Types::PArrayType))
-    t_regular = t.types[0..-2]
-    t_ranged = t.types[-1]
-    t_from, t_to = size_range(t.size_type)
-    t_required = t_regular.size + t_from
+    size_t = t.size_type || Puppet::Pops::Types::TypeFactory.range(*t.size_range)
 
     if t2.is_a?(Types::PTupleType)
-      t2_regular = t2.types[0..-2]
-      t2_ranged = t2.types[-1]
-      t2_from, t2_to = size_range(t2.size_type)
-      t2_required = t2_regular.size + t2_from
+      size_t2 = t2.size_type || Puppet::Pops::Types::TypeFactory.range(*t2.size_range)
 
-      # tuples with fewer required entries can not be assigned
-      return false if t_required > t2_required
-      # tuples with more optionally available entries can not be assigned
-      return false if t_regular.size + t_to < t2_regular.size + t2_to
-
-      t_required.times do |index|
-        t_entry = tuple_entry_at(t, t_from, t_to, index)
-        t2_entry = tuple_entry_at(t2, t2_from, t2_to, index)
-        return false if t2_entry.nil? || !assignable?(t_entry, t2_entry)
+      # not assignable if the number of types in t2 is outside number of types in t1
+      return false unless assignable?(size_t, size_t2)
+      max(t.types.size, t2.types.size).times do |index|
+        return false unless assignable?((t.types[index] || t.types[-1]), (t2.types[index] || t2.types[-1]))
       end
-      # Handle remainder in t2's required
-      (t2_required - t_required).times do |index|
-        t_entry = tuple_entry_at(t, t_from, t_to, t_required + index)
-        t2_entry = tuple_entry_at(t2, t2_from, t2_to, t_required + index)
-        return false if t2_entry.nil? || !assignable?(t_entry, t2_entry)
-      end
-      # Now only a trailing optional type remains - the last type must always be compatible
-      # irrespective of optionality and count
-      #
-      return assignable?(t_ranged, t2_ranged)
+      true
 
     elsif t2.is_a?(Types::PArrayType)
       t2_entry = t2.element_type
@@ -956,21 +942,15 @@ class Puppet::Pops::Types::TypeCalculator
       # was handled at the top of this method.
       #
       return false if t2_entry.nil?
-
-      # array type may be size constrained
-      size_t = t2.size_type || @collection_default_size_t
-      min, max = size_t.range
-      # Array with fewer min entries can not be assigned
-      return false if t_required > min
-      # Array with more optionally available entries can not be assigned
-      return false if t_regular.size + t_to < max
-      # each tuple type must be assignable to the element type
-      t_required.times do |index|
-        t_entry = tuple_entry_at(t, t_from, t_to, index)
-        return false unless assignable?(t_entry, t2_entry)
+      size_t = t.size_type || Puppet::Pops::Types::TypeFactory.range(*t.size_range)
+      size_t2 = t2.size_type || @collection_default_size_t
+      return false unless assignable?(size_t, size_t2)
+      min(t.types.size, size_t2.range()[1]).times do |index|
+        return false unless assignable?((t.types[index] || t.types[-1]), t2_entry)
       end
-      # ... and so must the last, possibly optional (ranged) type
-      return assignable?(t_ranged, t2_entry)
+      true
+    else
+      false
     end
   end
 
