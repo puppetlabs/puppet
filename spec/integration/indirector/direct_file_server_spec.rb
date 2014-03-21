@@ -1,5 +1,5 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
+require 'matchers/include'
 
 require 'puppet/indirector/file_content/file'
 
@@ -34,34 +34,31 @@ end
 
 describe Puppet::Indirector::DirectFileServer, " when interacting with FileServing::Fileset and the model" do
   include PuppetSpec::Files
+  include Matchers::Include
 
-  let(:path) { tmpdir('direct_file_server_testing') }
+  matcher :file_with_content do |name, content|
+    match do |actual|
+      actual.full_path == name && actual.content == content
+    end
+  end
 
-  before do
-    @terminus = Puppet::Indirector::FileContent::File.new
-
-    File.open(File.join(path, "one"), "w") { |f| f.print "one content" }
-    File.open(File.join(path, "two"), "w") { |f| f.print "two content" }
-
-    @request = @terminus.indirection.request(:search, "file:///#{path}", nil, :recurse => true)
+  matcher :directory_named do |name|
+    match do |actual|
+      actual.full_path == name
+    end
   end
 
   it "should return an instance for every file in the fileset" do
-    result = @terminus.search(@request)
-    result.should be_instance_of(Array)
-    result.length.should == 3
-    result.each { |r| r.should be_instance_of(Puppet::FileServing::Content) }
-  end
+    path = tmpdir('direct_file_server_testing')
+    File.open(File.join(path, "one"), "w") { |f| f.print "one content" }
+    File.open(File.join(path, "two"), "w") { |f| f.print "two content" }
 
-  it "should return instances capable of returning their content" do
-    @terminus.search(@request).each do |instance|
-      case instance.full_path
-      when /one/; instance.content.should == "one content"
-      when /two/; instance.content.should == "two content"
-      when path
-      else
-        raise "No valid key for #{instance.path.inspect}"
-      end
-    end
+    terminus = Puppet::Indirector::FileContent::File.new
+    request = terminus.indirection.request(:search, "file:///#{path}", nil, :recurse => true)
+
+    expect(terminus.search(request)).to include_in_any_order(
+      file_with_content(File.join(path, "one"), "one content"),
+      file_with_content(File.join(path, "two"), "two content"),
+      directory_named(path))
   end
 end
