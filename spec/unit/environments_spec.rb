@@ -159,11 +159,11 @@ describe Puppet::Environments do
           ]),
         ])
       end
-      let(:manifestdir) { FS::MemoryFile.a_directory("/some/manifest/path") }
+      let(:manifestdir) { FS::MemoryFile.a_directory(File.expand_path("/some/manifest/path")) }
       let(:modulepath) do
         [
-          FS::MemoryFile.a_directory("/some/module/path"),
-          FS::MemoryFile.a_directory("/some/other/path"),
+          FS::MemoryFile.a_directory(File.expand_path("/some/module/path")),
+          FS::MemoryFile.a_directory(File.expand_path("/some/other/path")),
         ]
       end
 
@@ -289,13 +289,19 @@ config_version=relative/script
       end
 
       it "interpolates other setting values correctly" do
+        modulepath = [
+          File.expand_path('/some/absolute'),
+          '$basemodulepath',
+          'modules'
+        ].join(File::PATH_SEPARATOR)
+
         content = <<-EOF
 manifest=$confdir/whackymanifests
-modulepath=/some/absolute:$basemodulepath:modules
+modulepath=#{modulepath}
 config_version=$vardir/random/scripts
         EOF
 
-        some_absolute_dir = FS::MemoryFile.a_directory('/some/absolute')
+        some_absolute_dir = FS::MemoryFile.a_directory(File.expand_path('/some/absolute'))
         base_module_dirs = Puppet[:basemodulepath].split(File::PATH_SEPARATOR).map do |path|
           FS::MemoryFile.a_directory(path)
         end

@@ -93,11 +93,11 @@ class Puppet::Settings::EnvironmentConf
 
   def absolute(path)
     return nil if path.nil?
-    if path =~ /^\$/ || Puppet::FileSystem.pathname(path).absolute?
-      # Path begins with $something interpolatable, or is already absolute
+    if path =~ /^\$/
+      # Path begins with $something interpolatable
       path
     else
-      File.join(@path_to_env, path)
+      File.expand_path(path, @path_to_env)
     end
   end
 end
