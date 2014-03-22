@@ -399,7 +399,7 @@ module Puppet::Functions
         result << "expected:\n  #{name}(#{signature_string(params_type, params_names)}) - #{arg_count_string(params_type)}"
       else
         result << "expected one of:\n"
-        result += @dispatchers.map { |d| "#{name}(#{signature_string(d[0], d[2])}) - #{arg_count_string(d[0])}" }.join('\n  ')
+        result << (@dispatchers.map {|d| "  #{name}(#{signature_string(d[0], d[2])}) - #{arg_count_string(d[0])}"}.join("\n"))
       end
       result << "\nactual:\n  #{name}(#{arg_types_string(args_type)}) - #{arg_count_string(args_type)}"
       result.join('')
@@ -430,10 +430,6 @@ module Puppet::Functions
       else
         result = param_names.each_with_index.map {|name, index| [tc.string(types[index] || types[-1]), name].join(' ') }.join(', ')
       end
-#      # join type with names (types are always present, names are optional)
-#      # separate entries with comma
-#      #
-#      result = types.zip(param_names).map { |t| [tc.string(t[0]), t[1]].compact.join(' ') }.join(', ')
 
       # Add {from, to} for the last type
       # This works for both Array and Tuple since it describes the allowed count of the "last" type element
@@ -447,9 +443,6 @@ module Puppet::Functions
       "arg count #{range_string(args_type.size_range, false)}"
     end
 
-    # TODO: CHANGE to print func(arg, arg, arg) - arg count n
-    # Count is always the from size of the type since it is an actual count
-    #
     def arg_types_string(args_type)
       types =
       case args_type
@@ -464,6 +457,7 @@ module Puppet::Functions
       # note that type must be copied since generalize is a mutating operation
       tc = Puppet::Pops::Types::TypeCalculator
       result = types.map { |t| tc.string(tc.generalize!(t.copy)) }.join(', ')
+
       # Add {from, to} for the last type
       # This works for both Array and Tuple since it describes the allowed count of the "last" type element
       # for both. It does not show anything when the range is {1,1}.

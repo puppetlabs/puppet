@@ -92,6 +92,28 @@ actual:
   min(Integer, Integer, Integer) - arg count {3}")))
     end
 
+    it 'a function can be created using dispatch and called' do
+      f = create_min_function_class_disptaching_to_two_methods()
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({}, 3,4)).to eql(3)
+      expect(func.call({}, 'Apple', 'Banana')).to eql('Apple')
+    end
+
+    it 'an error is raised with reference to multiple methods when called with mis-matched arguments' do
+      f = create_min_function_class_disptaching_to_two_methods()
+      # TODO: Bogus parameters, not yet used
+      func = f.new(:closure_scope, :loader)
+      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect do
+        func.call({}, 10, 10, 10)
+      end.to raise_error(ArgumentError,
+"function 'min' called with mis-matched arguments
+expected one of:
+  min(Numeric a, Numeric b) - arg count {2}
+  min(String s1, String s2) - arg count {2}
+actual:
+  min(Integer, Integer, Integer) - arg count {3}")
+    end
   end
 
   def create_min_function_class
@@ -126,6 +148,29 @@ actual:
         end
       def min(x,y)
         x <= y ? x : y
+      end
+    end
+  end
+
+  def create_min_function_class_disptaching_to_two_methods
+    f = Puppet::Functions.create_function('min') do
+      dispatch :min do
+        param Numeric, 'a'
+        param Numeric, 'b'
+      end
+
+      dispatch :min_s do
+        param String, 's1'
+        param String, 's2'
+      end
+
+      def min(x,y)
+        x <= y ? x : y
+      end
+
+      def min_s(x,y)
+        cmp = (x.downcase <=> y.downcase)
+        cmp <= 0 ? x : y
       end
     end
   end
