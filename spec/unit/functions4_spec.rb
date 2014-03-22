@@ -92,6 +92,21 @@ actual:
   min(Integer, Integer, Integer) - arg count {3}")))
     end
 
+    it 'an error includes optional indicators and count for last element' do
+      f = create_function_with_optionals_and_varargs()
+      # TODO: Bogus parameters, not yet used
+      func = f.new(:closure_scope, :loader)
+      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect do
+        func.call({}, 10)
+      end.to raise_error(ArgumentError,
+"function 'min' called with mis-matched arguments
+expected:
+  min(Optional[Object] x, Optional[Object] y, Optional[Object] a?, Optional[Object] b?, Optional[Object] c{0,}) - arg count {2,}
+actual:
+  min(Integer) - arg count {1}")
+    end
+
     it 'a function can be created using dispatch and called' do
       f = create_min_function_class_disptaching_to_two_methods()
       func = f.new(:closure_scope, :loader)
@@ -171,6 +186,14 @@ actual:
       def min_s(x,y)
         cmp = (x.downcase <=> y.downcase)
         cmp <= 0 ? x : y
+      end
+    end
+  end
+
+  def create_function_with_optionals_and_varargs
+    f = Puppet::Functions.create_function('min') do
+      def min(x,y,a=1, b=1, *c)
+        x <= y ? x : y
       end
     end
   end

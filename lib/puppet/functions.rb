@@ -122,8 +122,8 @@ module Puppet::Functions
       result = {:req => 0, :opt => 0, :rest => 0 }
       # TODO: Optimize into one map iteration that produces names map, and sets count as side effect
       method.parameters.each { |p| result[p[0]] += 1 }
-      min = result[:req]
-      max = result[:rest] > 0 ? :default : min + result[:opt]
+      from = result[:req]
+      to = result[:rest] > 0 ? :default : from + result[:opt]
       names = method.parameters.map {|p| p[1] }
     else
       # Cannot correctly compute the signature in Ruby 1.8.7 because arity for optional values is
@@ -131,19 +131,19 @@ module Puppet::Functions
       # In this case - the failure will simply come later when the call fails
       #
       arity = m.arity
-      min = arity >= 0 ? arity : -arity -1
-      max = arity >= 0 ? arity : :default  # i.e. infinite (which is wrong when there are optional - flaw in 1.8.7)
+      from = arity >= 0 ? arity : -arity -1
+      to = arity >= 0 ? arity : :default  # i.e. infinite (which is wrong when there are optional - flaw in 1.8.7)
       names = [] # no names available
     end
-    [min, max, names]
+    [from, to, names]
   end
 
-  def self.object_signature(min, max, names)
+  def self.object_signature(from, to, names)
     # Construct the type for the signature
-    # Array[Optional[Object], Integer[min, max]]
+    # Array[Optional[Object], Integer[from, to]]
     factory = Puppet::Pops::Types::TypeFactory
     optional_object = factory.optional(factory.object)
-    [factory.constrain_size(factory.array_of(optional_object), min, max), names]
+    [factory.constrain_size(factory.array_of(optional_object), from, to), names]
   end
 
   class Function
@@ -382,9 +382,9 @@ module Puppet::Functions
       range = type.size_type # get .from, .to, unbound if nil (from must be bound, to can be nil)
       raise ArgumentError, "polymorph dispath on collection type without range" unless range
       raise ArgumentError, "polymorph dispatch on signature without object" if range.from.nil? || range.from < 1
-      min = range.from - 1
-      max = range.to.nil? ? -1 : (range.to - 1)
-      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, min, max), param_names ]
+      from = range.from - 1
+      to = range.to.nil? ? -1 : (range.to - 1)
+      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names ]
     end
 
     private
@@ -413,11 +413,15 @@ module Puppet::Functions
       case args_type
       when Puppet::Pops::Types::PTupleType
         last_range = args_type.repeat_last_range
+        required_count, _ = args_type.size_range
         args_type.types
       when Puppet::Pops::Types::PArrayType
         from, to = args_type.size_range
+        required_count = from
+        # array has just one element, but there may be multiple names that needs to be subtracted from the count
+        # to make it correct for the last named element
         adjust = param_names.size() -1
-        last_range = [(from - adjust), (to - adjust)]
+        last_range = [max(0, (from - adjust)), (to - adjust)]
         [ args_type.element_type ]
       end
       tc = Puppet::Pops::Types::TypeCalculator
@@ -426,9 +430,12 @@ module Puppet::Functions
       # separate entries with comma
       #
       if param_names.empty?
-        result = types.map { |t| tc.string(t) }.join(', ')
+        result = types.each_with_index.map {|t, index| tc.string(t) + opt_value_indicator(index, required_count, 0) }.join(', ')
       else
-        result = param_names.each_with_index.map {|name, index| [tc.string(types[index] || types[-1]), name].join(' ') }.join(', ')
+        limit = param_names.size
+        result = param_names.each_with_index.map do |name, index|
+          [tc.string(types[index] || types[-1]), name].join(' ') + opt_value_indicator(index, required_count, limit)
+        end.join(', ')
       end
 
       # Add {from, to} for the last type
@@ -437,6 +444,16 @@ module Puppet::Functions
       #
       result += range_string(last_range)
       result
+    end
+
+    # Why oh why Ruby do you not have a standard Math.max ?
+    def max(a, b)
+      a >= b ? a : b
+    end
+
+    def opt_value_indicator(index, required_count, limit)
+      count = index + 1
+      (count > required_count && count < limit) ? '?' : ''
     end
 
     def arg_count_string(args_type)
@@ -466,6 +483,12 @@ module Puppet::Functions
       result
     end
 
+    # Formats a range into a string {from, to} with optimizations when:
+    # * from and to are equal => {from}
+    # * from and to are both and 1 and squelch_one == true => ''
+    # * from is 0 and to is 1 => '?'
+    # * to is INFINITY => {from, }
+    #
     def range_string(size_range, squelch_one = true)
       from = size_range[ 0 ]
       to = size_range[ 1 ]
@@ -473,6 +496,8 @@ module Puppet::Functions
         (squelch_one && from == 1) ? '' : "{#{from}}"
       elsif to == Puppet::Pops::Types::INFINITY
         "{#{from},}"
+      elsif from == 0 && to == 1
+        '?'
       else
         "{#{from},#{to}}"
       end
