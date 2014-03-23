@@ -231,13 +231,7 @@ module Puppet::Functions
       @min = nil
       @max = nil
       self.instance_eval &block
-
-      # fixup what param method recorded to make it compatible with dispatch_on_type
-      # (i.e. the last two parameters may be integers, and define min (and optionally) max occurrence of last type).
-      #
-      @types << @min unless @min.nil?
-      @types << @max unless @max.nil?
-      @dispatcher.add_dispatch(self.class.create_tuple(@types), meth_name, @names)
+      @dispatcher.add_dispatch(self.class.create_tuple(@types, @min, @max), meth_name, @names)
     end
 
     def dispatch_polymorph(meth_name, &block)
@@ -246,61 +240,37 @@ module Puppet::Functions
       @min = nil
       @max = nil
       self.instance_eval &block
-      # fixup what param method recorded to make it compatible with dispatch_on_type
-      # (i.e. the last two parameters may be integers, and define min (and optionally) max occurrence of last type).
-      #
-      @types << @min unless @min.nil?
-      @types << @max unless @max.nil?
-      @dispatcher.add_polymorph_dispatch(self.class.create_tuple(@types), meth_name, @names)
+      @dispatcher.add_polymorph_dispatch(self.class.create_tuple(@types, @min, @max), meth_name, @names)
     end
 
-    def param(type, name, min_occurs = nil, max_occurs = nil)
+    def param(type, name)
       @types << type
       @names << name
-      # only the last parameter may have min, max occurrence set - this test ensures this
-      if !@min.nil?
-        raise ArgumentError, "attempt to define parameter '#{name}'  after variable occurences set for previous param"
-      end
+    end
+
+    # Specifies the min and max occurance of arguments (of the specified types) if something other than
+    # the exact count from the number of specified types). The max value may be specified as -1 if an infinite
+    # number of arguments are supported. When max is > than the number of specified types, the last specified type
+    # repeats.
+    #
+    def arg_count(min_occurs, max_occurs)
       @min = min_occurs
       @max = max_occurs
-      unless min_occurs.nil? || min_occurs.is_a?(Integer)
-        raise ArgumentError, "min occurrence of function parameter must be an Integer, got #{min_occurs.class}"
+      unless min_occurs.is_a?(Integer) && min_occurs >= 0
+        raise ArgumentError, "min arg_count of function parameter must be an Integer >=0, got #{min_occurs.class} '#{min_occurs}'"
       end
-      unless max_occurs.nil? || max_occurs.is_a?(Integer)
-        raise ArgumentError, "max occurrence of function parameter must be an Integer, got #{max_occurs.class}"
+      unless max_occurs == :default || (max_occurs.is_a?(Integer) && max_occurs >= 0)
+        raise ArgumentError, "max arg_count of function parameter must be an Integer >= 0, or :default, got #{max_occurs.class} '#{max_occurs}'"
       end
-    end
-
-    def dispatch_on_type(meth_name, *tuple_signature)
-      @dispatcher.add_dispatch(meth_name, self.class.create_tuple(tuple_signature),[])
-    end
-
-    def dispatch_polymorph_on_type(meth_name, *tuple_signature)
-      @dispatcher.add_polymorph_dispatch(meth_name, self.class.create_tuple(tuple_signature), [])
+      unless max_occurs == :default || (max_occurs.is_a?(integer) && max_occurs >= min_occurs)
+        raise ArgumentError, "max arg_count must be :default (infinite) or >= min arg_count, got min: '#{min_occurs}, max: '#{max_occurs}'"
+      end
     end
 
     # Handles creation of a tuple type from strings, puppet types, or ruby types and allows
     # the min/max occurs of the given types to be given as one or two integer values at the end.
-    def self.create_tuple(tuple_args_array)
-      size_constraint = nil
-
-      # Check if size multiplicity of last type was specified and adjust
-      # arguments. Multiplicity may be a single (min occurs), or two (min, max occurs) Integer values.
-      # An upper 'unbound' is created if only min occurs is specified.
-      # If neither min nor max occurs is given, the tuple is fixed at the given types.
-      #
-      if tuple_args_array[ -1 ].is_a?(Integer)
-        if tuple_args_array[ -2 ].is_a?(Integer)
-          types = tuple_args_array[ 0..-2 ]
-          size_constraint = tuple_args_array.slice(-2,2)
-        else
-          types = tuple_args_array.slice(0..-2)
-          size_constraint = tuple_args_array.slice(-2,2)
-        end
-      else
-        types = tuple_args_array
-      end
-
+    #
+    def self.create_tuple(types, from, to)
       mapped_types = types.map do |t|
         case t
         when String
@@ -315,8 +285,8 @@ module Puppet::Functions
         end
       end
       tuple_t = Puppet::Pops::Types::TypeFactory.tuple(*mapped_types)
-      if size_constraint
-        Puppet::Pops::Types::TypeFactory.constrain_size(tuple_t, size_constraint)
+      if !(from.nil? && to.nil?)
+        Puppet::Pops::Types::TypeFactory.constrain_size(tuple_t, from,to)
       else
         tuple_t
       end
