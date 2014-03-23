@@ -147,8 +147,6 @@ module Puppet::Functions
   end
 
   class Function
-    attr_reader :call_scope
-
     # The scope where the function is defined
     attr_reader :closure_scope
 
@@ -163,8 +161,7 @@ module Puppet::Functions
     end
 
     def call(scope, *args)
-      @call_scope = scope
-      self.class.dispatcher.dispatch(self, args)
+      self.class.dispatcher.dispatch(self, scope, args)
     end
 
     def self.define_dispatch(&block)
@@ -183,6 +180,44 @@ module Puppet::Functions
       builder = DispatcherBuilder.new(dispatcher)
       builder.instance_eval do
         dispatch_polymorph(meth_name, &block)
+      end
+    end
+
+    # Defines class level injected attribute with reader method
+    #
+    def self.attr_injected(type, attribute_name, injection_name = nil)
+      define_method(attribute_name) do
+        ivar = :"@#{attribute_name.to_s}"
+        unless instance_variable_defined?(ivar)
+          injector = Puppet.lookup(:injector)
+          value =
+          if injection_name.nil?
+            injector.lookup(closure_scope, type)
+          else
+            injector.lookup(closure_scope, type, injection_name)
+          end
+          instance_variable_set(ivar, value)
+        end
+        instance_variable_get(ivar)
+      end
+    end
+
+    # Defines class level injected producer attribute with reader method
+    #
+    def self.attr_injected_producer(type, attribute_name, injection_name = nil)
+      define_method(attribute_name) do
+        ivar = :"@#{attribute_name.to_s}"
+        unless instance_variable_defined?(ivar)
+          injector = Puppet.lookup(:injector)
+          value =
+          if injection_name.nil?
+            injector.lookup_producer(closure_scope, type)
+          else
+            injector.lookup_producer(closure_scope, type, injection_name)
+          end
+          instance_variable_set(ivar, value)
+        end
+        instance_variable_get(ivar)
       end
     end
 
@@ -281,7 +316,7 @@ module Puppet::Functions
         when Class
           Puppet::Pops::Types::TypeFactory.type_of(t)
         else
-          raise ArgumentError, "Type signature argument must be a Puppet Type, or a String reference to a type. Got #{t.class}"
+          raise ArgumentError, "Type signature argument must be a Puppet Type, Class, or a String reference to a type. Got #{t.class}"
         end
       end
       tuple_t = Puppet::Pops::Types::TypeFactory.tuple(*mapped_types)
@@ -313,10 +348,11 @@ module Puppet::Functions
     # Dispatches the call to the first found signature (entry with matching type).
     #
     # @param instance [Puppet::Functions::Function] - the function to call
+    # @param calling_scope [T.B.D::Scope] - the scope of the caller
     # @param args [Array<Object>] - the given arguments in the form of an Array
     # @return [Object] - what the called function produced
     #
-    def dispatch(instance, args)
+    def dispatch(instance, calling_scope, args)
       tc = Puppet::Pops::Types::TypeCalculator
       actual = tc.infer_set(args)
       found = @dispatchers.find { |d| tc.assignable?(d[ 0 ], actual) }
@@ -349,11 +385,12 @@ module Puppet::Functions
       # number of additional args
       # NOTE: the type is valuable if there are type constraints also on the first arg
       # (better error message)
-      range = type.size_type # get .from, .to, unbound if nil (from must be bound, to can be nil)
+      range = type.size_range # get .from, .to, unbound if nil (from must be bound, to can be nil)
       raise ArgumentError, "polymorph dispath on collection type without range" unless range
-      raise ArgumentError, "polymorph dispatch on signature without object" if range.from.nil? || range.from < 1
-      from = range.from - 1
-      to = range.to.nil? ? -1 : (range.to - 1)
+      raise ArgumentError, "polymorph dispatch on signature without object" if range[0] < 1
+      from = range[0] - 1 # The object itself is not included
+      to = range[1]
+      to = to == Puppet::Pops::Types::INFINITY ? -1 : (to -1)
       @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names ]
     end
 

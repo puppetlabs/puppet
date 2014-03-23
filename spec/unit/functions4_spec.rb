@@ -1,7 +1,14 @@
 require 'spec_helper'
 require 'puppet/pops'
 
+module FunctionAPISpecModule
+  class TestDuck
+  end
+end
+
 describe 'the 4x function api' do
+  include FunctionAPISpecModule
+
   it 'allows a simple function to be created without dispatch declaration' do
     f = Puppet::Functions.create_function('min') do
       def min(x,y)
@@ -145,6 +152,50 @@ actual:
   min(Integer, Integer, Integer) - arg count {3}")
     end
 
+    it 'a function can be created using polymorph dispatch and called' do
+      f = create_function_with_polymorph_dispatch()
+      func = f.new(:closure_scope, :loader)
+      expect(func.call({}, 3,4)).to eql(3)
+      expect(func.call({}, 'Apple', 'Banana')).to eql('Apple')
+    end
+
+    it 'an error is raised with reference to polymorph method when called with mis-matched arguments' do
+      f = create_function_with_polymorph_dispatch()
+      # TODO: Bogus parameters, not yet used
+      func = f.new(:closure_scope, :loader)
+      expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      expect do
+        func.call({}, 10, 10, 10)
+      end.to raise_error(ArgumentError,
+"function 'min' called with mis-matched arguments
+expected:
+  min(Scalar a, Scalar b) - arg count {2}
+actual:
+  min(Integer, Integer, Integer) - arg count {3}")
+    end
+
+    context 'can use injection' do
+      before :all do
+        injector = Puppet::Pops::Binder::Injector.create('test') do
+          bind.name('a_string').to('evoe')
+          bind.name('an_int').to(42)
+        end
+        Puppet.push_context({:injector => injector}, "injector for testing function API")
+      end
+
+      after :all do
+        Puppet.pop_context()
+      end
+
+      it 'attributes can be injected' do
+        # this tests that meta programming / construction puts injected class attributes in the correct place
+        f1 = create_function_with_class_injection()
+        f = f1.new(:closure_scope, :loader)
+        expect(f.test_attr2()).to eql("evoe")
+        expect(f.serial().produce(nil)).to eql(42)
+        expect(f.test_attr().class.name).to eql("FunctionAPISpecModule::TestDuck")
+      end
+    end
   end
 
   def create_min_function_class
@@ -228,6 +279,40 @@ actual:
         x <= y ? x : y
       end
     end
-end
+  end
+
+  def create_function_with_polymorph_dispatch
+    f = Puppet::Functions.create_function('min') do
+      dispatch_polymorph :min do
+        param scalar, 'a'
+        param scalar, 'b'
+      end
+
+      def min_Numeric(x,y)
+        x <= y ? x : y
+      end
+
+      def min_String(x,y)
+        cmp = (x.downcase <=> y.downcase)
+        cmp <= 0 ? x : y
+      end
+
+      def min_Object(x,y)
+        raise ArgumentError, "min(): Only Numeric and String arguments are supported"
+      end
+    end
+  end
+
+  def create_function_with_class_injection
+    f = Puppet::Functions.create_function('test') do
+      attr_injected type_of(FunctionAPISpecModule::TestDuck), :test_attr
+      attr_injected string(), :test_attr2, "a_string"
+      attr_injected_producer integer(), :serial, "an_int"
+
+      def test(x,y,a=1, b=1, *c)
+        x <= y ? x : y
+      end
+    end
+  end
 
 end
