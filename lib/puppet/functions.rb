@@ -140,9 +140,9 @@ module Puppet::Functions
 
   def self.object_signature(from, to, names)
     # Construct the type for the signature
-    # Array[Optional[Object], Integer[from, to]]
+    # Array[Object], Integer[from, to]]
     factory = Puppet::Pops::Types::TypeFactory
-    optional_object = factory.optional(factory.object)
+    optional_object = factory.object
     [factory.constrain_size(factory.array_of(optional_object), from, to), names]
   end
 
@@ -280,7 +280,7 @@ module Puppet::Functions
     end
 
     # Handles creation of a tuple type from strings, puppet types, or ruby types and allows
-    # the min/max occurs of the last given type to be given as one or two integer values at the end.
+    # the min/max occurs of the given types to be given as one or two integer values at the end.
     def self.create_tuple(tuple_args_array)
       size_constraint = nil
 

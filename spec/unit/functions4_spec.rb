@@ -33,7 +33,7 @@ describe 'the 4x function api' do
       func.call({}, 10)
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape("function 'min' called with mis-matched arguments
 expected:
-  min(Optional[Object] x, Optional[Object] y) - arg count {2}
+  min(Object x, Object y) - arg count {2}
 actual:
   min(Integer) - arg count {1}")))
   end
@@ -48,7 +48,7 @@ actual:
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
 "function 'min' called with mis-matched arguments
 expected:
-  min(Optional[Object] x, Optional[Object] y) - arg count {2}
+  min(Object x, Object y) - arg count {2}
 actual:
   min(Integer, Integer, Integer) - arg count {3}")))
   end
@@ -102,7 +102,7 @@ actual:
       end.to raise_error(ArgumentError,
 "function 'min' called with mis-matched arguments
 expected:
-  min(Optional[Object] x, Optional[Object] y, Optional[Object] a?, Optional[Object] b?, Optional[Object] c{0,}) - arg count {2,}
+  min(Object x, Object y, Object a?, Object b?, Object c{0,}) - arg count {2,}
 actual:
   min(Integer) - arg count {1}")
     end
@@ -129,6 +129,7 @@ expected one of:
 actual:
   min(Integer, Integer, Integer) - arg count {3}")
     end
+
   end
 
   def create_min_function_class
