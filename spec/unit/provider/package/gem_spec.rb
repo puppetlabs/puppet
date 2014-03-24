@@ -48,8 +48,8 @@ describe provider_class do
       provider.install
     end
 
-    it "should return install_options as nil by default" do
-      provider.expects(:execute).with { |args| expect(args[5]).to be_nil }.returns ""
+    it "should not append install_options by default" do
+      provider.expects(:execute).with { |args| args.length == 5 }.returns ""
       provider.install
     end
 
