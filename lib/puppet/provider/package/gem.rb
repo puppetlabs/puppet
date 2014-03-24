@@ -97,7 +97,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       command << "--no-rdoc" << "--no-ri" << resource[:name]
     end
 
-    command << install_options
+    command << install_options if resource[:install_options]
 
     output = execute(command)
     # Apparently some stupid gem versions don't exit non-0 on failure
