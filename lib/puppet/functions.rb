@@ -12,35 +12,43 @@ module Puppet::Functions
   #   end
   #
   # Documentation for the function should be placed as comments to the method(s) that define the functionality
-  # The simplest form of defining a function introspects the method signature (in the example `min(a,b)` and
+  # The simplest form of defining a function introspects the method signature (in the example `min(a,b)`) and
   # infers that this means that there are 2 required arguments of Object type. If something else is wanted
-  # the method define_dispatch should be called in the block defining the function.
+  # the method `dispatch` should be called in the block defining the function to define the details of dispatching
+  # a call of the function.
+  #
   # In the next example, the function is enhanced to check that arguments are of numeric type.
   #
   # @example dispatch and type checking
   #   Puppet::Functions.create_function('min') do
-  #     define_dispatch do
-  #       dispatch('min', Numeric, Numeric)
+  #     dispatch :min do
+  #       param Numeric, 'a'
+  #       param Numeric, 'b'
   #     end
+  #
   #     def min(a, b)
   #       a <= b ? a : b
   #     end
   #   end
   #
-  # It is possible to specify multiple type signatures, and dispatch to the same, or alternative methods.
+  # It is possible to specify multiple type signatures as defined by the param specification in the dispatch method, and
+  # dispatch to the same, or alternative methods.
   # When a call is processed the given type signatures are tested in the order they were defined - the first signature
   # with matching type wins.
   #
+  # Polymorphic Dispatch
+  # ---
   # The dispatcher also supports polymorphic dispatch where the method to call is selected based on the type of the
-  # first argument. It is possible to mix non/polymorphic dispatching, the first with a matching signature wins
+  # first argument. It is possible to mix regular and polymorphic dispatching, the first with a matching signature wins
   # in all cases. (Typically one or the other dispatch type is selected for a given function).
-  # Polymorphic dispatch are based on a method prefix, followed by "_ClassName" where "ClassName" is the simple name
+  #
+  # Polymorphic dispatch is based on a method prefix, followed by "_ClassName" where "ClassName" is the simple name
   # of the class of the first argument.
   #
   # @example using polymorphic dispatch
   #   Puppet::Functions.create_function('label') do
-  #     define_dispatch do
-  #       dispatch_polymorph('label', Object)
+  #     dispatch_polymorph do
+  #       param Object, 'label'
   #     end
   #
   #     def label_Object(o)
@@ -55,15 +63,56 @@ module Puppet::Functions
   # In this example, if the argument is a String, a special label is produced and for all others a generic label is
   # produced. It is now easy to add `label_` methods for other classes as needed without changing the dispatch.
   #
-  # The type specification of the signature that follows the name of the method are given to the Puppet::Pops::Types::TypeFactory
-  # to create a PTupleType.
+  # The type specification of the signature that follows the name of the method are given to the
+  # `Puppet::Pops::Types::TypeFactory` to create a PTupleType.
+  #
   # Arguments may be Puppet Type References in String form, Ruby classes (for basic types), or Puppet Type instances
   # as created by the Puppet::Pops::Types::TypeFactory. To make type creation convenient, the logic that builds a dispatcher
   # redirects any calls to the type factory.
-  # 
+  #
+  # Injection Support
+  # ===
+  # The Function API supports injection of data and services. It is possible to make injection that takes effect
+  # when the function is loaded (for services and runtime configuration that does not change depending on how/from where
+  # in what context the function is called. It is also possible to inject and weave argument values into a call.
+  #
+  # Injection of attributes
+  # ---
+  # Injection of attributes is performed by one of the methods `attr_injected`, and `attr_injected_producer`.
+  #
+  # @example using injected attributes
+  #   Puppet::Functions.create_function('test') do
+  #     attr_injected String, :larger, 'message_larger'
+  #     attr_injected String, :smaller, 'message_smaller'
+  #     def test(a, b)
+  #       a > b ? larger() : smaller()
+  #     end
+  #   end
+  #
+  # Injection and Weaving of parameters
+  # ---
+  # It is possible to inject and weave parameters into a call. These extra parameters are not passed from the
+  # Puppet logic.
+  #
+  # @example using injected parameters
+  #   Puppet::Functions.create_function('test') do
+  #     dispatch :test do
+  #       param Scalar, 'a'
+  #       param Scalar, 'b'
+  #       injected_param String, 'larger', 'message_larger'
+  #       injected_param String, 'smaller', 'message_smaller'
+  #     end
+  #     def test(a, b, larger, smaller)
+  #       a > b ? larger : smaller
+  #     end
+  #   end
+  # The function in the example above is called like this:
+  #
+  #     test(10, 20)
+  #
   def self.create_function(func_name, &block)
 
-    # Create an anonymous class to represent the function
+    # Creates an anonymous class to represent the function
     # The idea being that it is garbage collected when there are no more
     # references to it.
     #
@@ -369,10 +418,8 @@ module Puppet::Functions
       tc = Puppet::Pops::Types::TypeCalculator
       actual = tc.infer_set(args)
       found = @dispatchers.find { |d| tc.assignable?(d.type, actual) }
-#      found = @dispatchers.find { |d| tc.assignable?(d[ 0 ], actual) }
       if found
         found.invoke(instance, calling_scope, args)
-#        found[ 1 ].visit_this(instance, *args)
       else
         raise ArgumentError, "function '#{instance.class.name}' called with mis-matched arguments\n#{diff_string(instance.class.name, actual)}"
       end
@@ -386,7 +433,6 @@ module Puppet::Functions
     #
     def add_dispatch(type, method_name, param_names, injections, weaving)
       @dispatchers << Dispatch.new(type, NonPolymorphicVisitor.new(method_name), param_names, injections, weaving)
-#      @dispatchers << [ type, NonPolymorphicVisitor.new(method_name), param_names, injections, weaving ]
     end
 
     # Adds a polymorph dispatch for one method name
