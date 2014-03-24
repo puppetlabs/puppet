@@ -74,7 +74,7 @@ actual:
     d2 = f2.dispatcher
     expect(d1).to_not eql(d2)
     expect(d1.dispatchers[0]).to_not eql(d2.dispatchers[0])
-    expect(d1.dispatchers[0][1]).to_not eql(d2.dispatchers[0][1].name)
+    expect(d1.dispatchers[0].visitor).to_not eql(d2.dispatchers[0].visitor.name)
   end
 
   context 'when using regular dispatch' do
@@ -188,12 +188,25 @@ actual:
       end
 
       it 'attributes can be injected' do
-        # this tests that meta programming / construction puts injected class attributes in the correct place
         f1 = create_function_with_class_injection()
         f = f1.new(:closure_scope, :loader)
         expect(f.test_attr2()).to eql("evoe")
         expect(f.serial().produce(nil)).to eql(42)
         expect(f.test_attr().class.name).to eql("FunctionAPISpecModule::TestDuck")
+      end
+
+      it 'parameters can be injected and woven with regular dispatch' do
+        f1 = create_function_with_param_injection_regular()
+        f = f1.new(:closure_scope, :loader)
+        expect(f.call(nil, 10, 20)).to eql("evoe! 10, and 20 < 42 = true")
+        expect(f.call(nil, 50, 20)).to eql("evoe! 50, and 20 < 42 = false")
+      end
+
+      it 'parameters can be injected and woven with polymorph dispatch' do
+        f1 = create_function_with_param_injection_poly()
+        f = f1.new(:closure_scope, :loader)
+        expect(f.call(nil, 10, 20)).to eql("evoe! 10, and 20 < 42 = true")
+        expect(f.call(nil, 50, 20)).to eql("evoe! 50, and 20 < 42 = false")
       end
     end
   end
@@ -311,6 +324,46 @@ actual:
 
       def test(x,y,a=1, b=1, *c)
         x <= y ? x : y
+      end
+    end
+  end
+
+  def create_function_with_param_injection_poly
+    f = Puppet::Functions.create_function('test') do
+      attr_injected type_of(FunctionAPISpecModule::TestDuck), :test_attr
+      attr_injected string(), :test_attr2, "a_string"
+      attr_injected_producer integer(), :serial, "an_int"
+
+      dispatch_polymorph :test do
+        injected_param string, 'x', 'a_string'
+        injected_producer_param integer, 'y', 'an_int'
+        param scalar, 'a'
+        param scalar, 'b'
+      end
+
+      def test_String(x,y,a,b)
+        y_produced = y.produce(nil)
+        "#{x}! #{a}, and #{b} < #{y_produced} = #{ !!(a < y_produced && b < y_produced)}"
+      end
+    end
+  end
+
+  def create_function_with_param_injection_regular
+    f = Puppet::Functions.create_function('test') do
+      attr_injected type_of(FunctionAPISpecModule::TestDuck), :test_attr
+      attr_injected string(), :test_attr2, "a_string"
+      attr_injected_producer integer(), :serial, "an_int"
+
+      dispatch :test do
+        injected_param string, 'x', 'a_string'
+        injected_producer_param integer, 'y', 'an_int'
+        param scalar, 'a'
+        param scalar, 'b'
+      end
+
+      def test(x,y,a,b)
+        y_produced = y.produce(nil)
+        "#{x}! #{a}, and #{b} < #{y_produced} = #{ !!(a < y_produced && b < y_produced)}"
       end
     end
   end

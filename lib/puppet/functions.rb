@@ -100,7 +100,7 @@ module Puppet::Functions
     #
     if the_class.dispatcher.empty?
       type, names = default_dispatcher(the_class, func_name)
-      the_class.dispatcher.add_dispatch(type, func_name, names)
+      the_class.dispatcher.add_dispatch(type, func_name, names, nil, nil)
     end
 
     # The function class is returned as the result of the create function method
@@ -190,13 +190,7 @@ module Puppet::Functions
         ivar = :"@#{attribute_name.to_s}"
         unless instance_variable_defined?(ivar)
           injector = Puppet.lookup(:injector)
-          value =
-          if injection_name.nil?
-            injector.lookup(closure_scope, type)
-          else
-            injector.lookup(closure_scope, type, injection_name)
-          end
-          instance_variable_set(ivar, value)
+          instance_variable_set(ivar, injector.lookup(closure_scope, type, injection_name))
         end
         instance_variable_get(ivar)
       end
@@ -209,13 +203,7 @@ module Puppet::Functions
         ivar = :"@#{attribute_name.to_s}"
         unless instance_variable_defined?(ivar)
           injector = Puppet.lookup(:injector)
-          value =
-          if injection_name.nil?
-            injector.lookup_producer(closure_scope, type)
-          else
-            injector.lookup_producer(closure_scope, type, injection_name)
-          end
-          instance_variable_set(ivar, value)
+          instance_variable_set(ivar, injector.lookup_producer(closure_scope, type, injection_name))
         end
         instance_variable_get(ivar)
       end
@@ -261,26 +249,51 @@ module Puppet::Functions
     end
 
     def dispatch(meth_name, &block)
+      # an array of either an index into names/types, or an array with injection information [type, name, injection_name]
+      # used when the call is being made to weave injections into the given arguments.
+      #
       @types = []
       @names = []
+      @weaving = []
+      @injections = []
       @min = nil
       @max = nil
       self.instance_eval &block
-      @dispatcher.add_dispatch(self.class.create_tuple(@types, @min, @max), meth_name, @names)
+      @dispatcher.add_dispatch(self.class.create_tuple(@types, @min, @max), meth_name, @names, @injections, @weaving)
     end
 
     def dispatch_polymorph(meth_name, &block)
       @types = []
       @names = []
+      @weaving = []
+      @injections = []
       @min = nil
       @max = nil
       self.instance_eval &block
-      @dispatcher.add_polymorph_dispatch(self.class.create_tuple(@types, @min, @max), meth_name, @names)
+      @dispatcher.add_polymorph_dispatch(self.class.create_tuple(@types, @min, @max), meth_name, @names, @injections, @weaving)
     end
 
     def param(type, name)
       @types << type
       @names << name
+      # mark what should be picked for this position when dispatching
+      @weaving << @names.size()-1
+    end
+
+    # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
+    #
+    def injected_param(type, name, injection_name = '')
+      @injections << [type, name, injection_name]
+      # mark what should be picked for this position when dispatching
+      @weaving << [@injections.size() -1]
+    end
+
+    # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
+    #
+    def injected_producer_param(type, name, injection_name = '')
+      @injections << [type, name, injection_name, :producer]
+      # mark what should be picked for this position when dispatching
+      @weaving << [@injections.size()-1]
     end
 
     # Specifies the min and max occurance of arguments (of the specified types) if something other than
@@ -355,9 +368,11 @@ module Puppet::Functions
     def dispatch(instance, calling_scope, args)
       tc = Puppet::Pops::Types::TypeCalculator
       actual = tc.infer_set(args)
-      found = @dispatchers.find { |d| tc.assignable?(d[ 0 ], actual) }
+      found = @dispatchers.find { |d| tc.assignable?(d.type, actual) }
+#      found = @dispatchers.find { |d| tc.assignable?(d[ 0 ], actual) }
       if found
-        found[ 1 ].visit_this(instance, *args)
+        found.invoke(instance, calling_scope, args)
+#        found[ 1 ].visit_this(instance, *args)
       else
         raise ArgumentError, "function '#{instance.class.name}' called with mis-matched arguments\n#{diff_string(instance.class.name, actual)}"
       end
@@ -369,8 +384,9 @@ module Puppet::Functions
     # @param method_name [String] - the name of the method that will be called when type matches given arguments
     # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
     #
-    def add_dispatch(type, method_name, param_names=[])
-      @dispatchers << [ type, NonPolymorphicVisitor.new(method_name), param_names ]
+    def add_dispatch(type, method_name, param_names, injections, weaving)
+      @dispatchers << Dispatch.new(type, NonPolymorphicVisitor.new(method_name), param_names, injections, weaving)
+#      @dispatchers << [ type, NonPolymorphicVisitor.new(method_name), param_names, injections, weaving ]
     end
 
     # Adds a polymorph dispatch for one method name
@@ -379,7 +395,7 @@ module Puppet::Functions
     # @param method_name [String] - the name of the (polymorph) method that will be called when type matches given arguments
     # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
     #
-    def add_polymorph_dispatch(type, method_name, param_names=[])
+    def add_polymorph_dispatch(type, method_name, param_names, injections, weaving)
       # Type is a CollectionType, its size-type indicates min/max args
       # This includes the polymorph object which needs to be deducted from the
       # number of additional args
@@ -389,24 +405,72 @@ module Puppet::Functions
       raise ArgumentError, "polymorph dispath on collection type without range" unless range
       raise ArgumentError, "polymorph dispatch on signature without object" if range[0] < 1
       from = range[0] - 1 # The object itself is not included
-      to = range[1]
-      to = to == Puppet::Pops::Types::INFINITY ? -1 : (to -1)
-      @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names ]
+      to = range[1] -1 # object not included here either (it may be infinity, but does not matter)
+      if !injections.empty?
+        from += injections.size
+        to += injections.size
+      end
+      to = (to == Puppet::Pops::Types::INFINITY) ? -1 : to
+      @dispatchers << Dispatch.new(type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names, injections, weaving)
+      # @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names, injections, weaving ]
     end
 
     private
+
+    class Dispatch
+      attr_reader :type
+      attr_reader :visitor
+      attr_reader :param_names
+      attr_reader :injections
+      attr_reader :weaving
+
+      def initialize(type, visitor, param_names, injections, weaving)
+        @type = type
+        @visitor = visitor
+        @param_names = param_names || []
+        @injections = injections || []
+        @weaving = weaving
+      end
+
+      def invoke(instance, calling_scope, args)
+        @visitor.visit_this(instance, *weave(calling_scope, args))
+      end
+
+      def weave(scope, args)
+        # no nead to weave if there are no injections
+        if injections.empty?
+          args
+        else
+          injector = Puppet.lookup(:injector)
+          weaving.map do |knit|
+            if knit.is_a?(Array)
+              injection_data = @injections[knit[0]]
+              # inject
+              if injection_data[3] == :producer
+                injector.lookup_producer(scope, injection_data[0], injection_data[2])
+              else
+                injector.lookup(scope, injection_data[0], injection_data[2])
+              end
+            else
+              # pick that argument
+              args[knit]
+            end
+          end
+        end
+      end
+    end
 
     # Produces a string with the difference between the given arguments and support signature(s).
     #
     def diff_string(name, args_type)
       result = [ ]
       if @dispatchers.size < 2
-        params_type  = @dispatchers[ 0 ][ 0 ]
-        params_names = @dispatchers[ 0 ][ 2 ]
+        params_type  = @dispatchers[ 0 ].type
+        params_names = @dispatchers[ 0 ].param_names
         result << "expected:\n  #{name}(#{signature_string(params_type, params_names)}) - #{arg_count_string(params_type)}"
       else
         result << "expected one of:\n"
-        result << (@dispatchers.map {|d| "  #{name}(#{signature_string(d[0], d[2])}) - #{arg_count_string(d[0])}"}.join("\n"))
+        result << (@dispatchers.map {|d| "  #{name}(#{signature_string(d.type, d.param_names)}) - #{arg_count_string(d.type)}"}.join("\n"))
       end
       result << "\nactual:\n  #{name}(#{arg_types_string(args_type)}) - #{arg_count_string(args_type)}"
       result.join('')
