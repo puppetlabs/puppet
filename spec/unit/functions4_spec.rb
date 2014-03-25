@@ -36,11 +36,16 @@ describe 'the 4x function api' do
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_true
+    signature = if RUBY_VERSION =~ /^1\.8/
+      'Object{2}'
+    else
+      'Object x, Object y'
+    end
     expect do
       func.call({}, 10)
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape("function 'min' called with mis-matched arguments
 expected:
-  min(Object x, Object y) - arg count {2}
+  min(#{signature}) - arg count {2}
 actual:
   min(Integer) - arg count {1}")))
   end
@@ -50,12 +55,17 @@ actual:
     # TODO: Bogus parameters, not yet used
     func = f.new(:closure_scope, :loader)
     expect(func.is_a?(Puppet::Functions::Function)).to be_true
+    signature = if RUBY_VERSION =~ /^1\.8/
+      'Object{2}'
+    else
+      'Object x, Object y'
+    end
     expect do
       func.call({}, 10, 10, 10)
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
 "function 'min' called with mis-matched arguments
 expected:
-  min(Object x, Object y) - arg count {2}
+  min(#{signature}) - arg count {2}
 actual:
   min(Integer, Integer, Integer) - arg count {3}")))
   end
@@ -104,12 +114,17 @@ actual:
       # TODO: Bogus parameters, not yet used
       func = f.new(:closure_scope, :loader)
       expect(func.is_a?(Puppet::Functions::Function)).to be_true
+      signature = if RUBY_VERSION =~ /^1\.8/
+        'Object{2,}'
+      else
+        'Object x, Object y, Object a?, Object b?, Object c{0,}'
+      end
       expect do
         func.call({}, 10)
       end.to raise_error(ArgumentError,
 "function 'min' called with mis-matched arguments
 expected:
-  min(Object x, Object y, Object a?, Object b?, Object c{0,}) - arg count {2,}
+  min(#{signature}) - arg count {2,}
 actual:
   min(Integer) - arg count {1}")
     end
