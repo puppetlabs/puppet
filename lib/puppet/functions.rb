@@ -537,7 +537,7 @@ module Puppet::Functions
         required_count = from
         # array has just one element, but there may be multiple names that needs to be subtracted from the count
         # to make it correct for the last named element
-        adjust = param_names.size() -1
+        adjust = max(0, param_names.size() -1)
         last_range = [max(0, (from - adjust)), (to - adjust)]
         [ args_type.element_type ]
       end
