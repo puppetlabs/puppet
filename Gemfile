@@ -21,7 +21,7 @@ end
 gem "puppet", :path => File.dirname(__FILE__), :require => false
 gem "facter", *location_for(ENV['FACTER_LOCATION'] || ['> 1.6', '< 3'])
 gem "hiera", *location_for(ENV['HIERA_LOCATION'] || '~> 1.0')
-gem "rake", :require => false
+gem "rake", "10.1.1", :require => false
 gem "rgen", "0.6.5", :require => false
 
 
