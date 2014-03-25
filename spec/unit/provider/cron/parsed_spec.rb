@@ -31,6 +31,14 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
     )
   end
 
+  let :resource_sparse do
+    Puppet::Type.type(:cron).new(
+      :minute => %w{42},
+      :target => 'root',
+      :name   => 'sparse'
+    )
+  end
+
   let :record_special do
     {
       :record_type => :crontab,
@@ -317,5 +325,12 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
         end
       end
     end
+
+    describe "with a resource without a command" do
+      it "should not raise an error" do
+        expect { described_class.match(record,{resource_sparse[:name] => resource_sparse}) }.to_not raise_error
+      end
+    end
+
   end
 end
