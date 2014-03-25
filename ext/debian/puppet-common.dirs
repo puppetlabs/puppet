@@ -1,4 +1,7 @@
 etc/puppet
+etc/puppet/environments/example_env
+etc/puppet/environments/example_env/modules
+etc/puppet/environments/example_env/manifests
 etc/puppet/manifests
 etc/puppet/templates
 etc/puppet/modules
