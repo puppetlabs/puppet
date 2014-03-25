@@ -15,6 +15,9 @@ require 'rgen/metamodel_builder'
 # @api public
 #
 module Puppet::Pops::Types
+  # Used as end in a range
+  INFINITY = 1.0 / 0.0
+  NEGATIVE_INFINITY = -INFINITY
 
   class PAbstractType < Puppet::Pops::Model::PopsObject
     abstract
@@ -134,15 +137,15 @@ module Puppet::Pops::Types
 
       # Returns Float.Infinity if one end of the range is unbound
       def size
-        return 1.0 / 0.0 if from.nil? || to.nil?
+        return INFINITY if from.nil? || to.nil?
         1+(to-from).abs
       end
 
       # Returns the range as an array ordered so the smaller number is always first.
       # The number may be Infinity or -Infinity.
       def range
-        f = from || -(1.0 / 0.0)
-        t = to || (1.0 / 0.0)
+        f = from || NEGATIVE_INFINITY
+        t = to || INFINITY
         if f < t
           [f, t]
         else
@@ -254,8 +257,21 @@ module Puppet::Pops::Types
     contains_one_uni 'element_type', PAbstractType
     contains_one_uni 'size_type', PIntegerType
     module ClassModule
+      # Returns an array with from (min) size to (max) size
+      # A negative range value in from is 
+      def size_range
+        return [0, INFINITY] if size_type.nil?
+        f = size_type.from || 0
+        t = size_type.to || INFINITY
+        if f < t
+          [f, t]
+        else
+          [t,f]
+        end
+      end
+
       def hash
-        [self.class, element_type, size].hash
+        [self.class, element_type, size_type].hash
       end
 
       def ==(o)
