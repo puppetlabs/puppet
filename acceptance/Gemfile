@@ -1,7 +1,7 @@
 source ENV['GEM_SOURCE'] || "https://rubygems.org"
 
 gem "beaker", "~> 1.7.0"
-gem "rake"
+gem 'rake', "~> 10.1.0"
 
 group(:test) do
   gem "rspec", "~> 2.11.0", :require => false
