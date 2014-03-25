@@ -47,7 +47,9 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     validate do |value|
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      if value != :absent and not ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+        fail("Must be a valid URL")
+      end
     end
   end
 
@@ -57,7 +59,9 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     validate do |value|
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      if value != :absent and not ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+        fail("Must be a valid URL not #{value}")
+      end
     end
   end
 
@@ -92,7 +96,9 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     validate do |value|
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      if value != :absent and not ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+        fail("Must be a valid URL")
+      end
 
     end
   end
@@ -110,7 +116,9 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     validate do |value|
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      if value != :absent and not ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+        fail("Must be a valid URL")
+      end
     end
   end
 
@@ -122,7 +130,9 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     validate do |value|
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      if value != :absent and not ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+        fail("Must be a valid URL")
+      end
     end
   end
 
@@ -140,7 +150,9 @@ Puppet::Type.newtype(:yumrepo) do
 
     validate do |value|
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      if value != :absent and not ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+        fail("Must be a valid URL")
+      end
     end
   end
 
@@ -240,7 +252,12 @@ Puppet::Type.newtype(:yumrepo) do
       percentage `60%`. An SI prefix (k, M or G) may be appended
       to the data rate values.\n#{ABSENT_DOC}"
 
-    newvalues(/[.0-9]+[kMG%]?/, :absent)
+    newvalues(/.*/, :absent)
+    validate do |value|
+      unless value =~ /^[0-9]+(\.[0-9]+)?[kMG%]?$/ or value == :absent
+        fail('Wrong format') 
+      end
+    end
   end
 
   newproperty(:bandwidth) do
@@ -250,7 +267,12 @@ Puppet::Type.newtype(:yumrepo) do
       will be disabled. If `throttle` is expressed as a data rate then
       this option is ignored.\n#{ABSENT_DOC}"
 
-    newvalues(/[.0-9]+[kMG]?/, :absent)
+    newvalues(/.*/, :absent)
+    validate do |value|
+      unless value =~ /^[0-9]+(\.[0-9]+)?[kMG]?$/ or value == :absent
+        fail('Wrong format')
+      end
+    end
   end
 
   newproperty(:cost) do
@@ -265,7 +287,9 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     validate do |value|
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      if value != :absent and not ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+        fail("Must be a valid URL not #{value}")
+      end
     end
   end
 
