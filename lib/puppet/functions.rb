@@ -179,7 +179,7 @@ module Puppet::Functions
       # screwed up (there is no way to get the upper limit), an optional looks the same as a varargs
       # In this case - the failure will simply come later when the call fails
       #
-      arity = m.arity
+      arity = method.arity
       from = arity >= 0 ? arity : -arity -1
       to = arity >= 0 ? arity : :default  # i.e. infinite (which is wrong when there are optional - flaw in 1.8.7)
       names = [] # no names available
