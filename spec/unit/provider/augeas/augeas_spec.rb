@@ -386,6 +386,7 @@ describe provider_class do
         file = "/etc/hosts"
         File.stubs(:delete)
 
+        @resource[:loglevel] = "crit"
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
@@ -397,7 +398,7 @@ describe provider_class do
         @provider.should be_need_to_run
 
         expect(@logs[0].message).to eq("\ndiff")
-        expect(@logs[0].level).to eq(:notice)
+        expect(@logs[0].level).to eq(:crit)
       end
 
       it "should display a diff for each file that is changed when changing many files" do
