@@ -530,11 +530,6 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
     end
   end
 
-  it "should require a command when adding an entry" do
-    entry = described_class.new(:name => "test_entry", :ensure => :present)
-    expect { entry.value(:command) }.to raise_error(Puppet::Error, /No command/)
-  end
-
   it "should not require a command when removing an entry" do
     entry = described_class.new(:name => "test_entry", :ensure => :absent)
     entry.value(:command).should == nil

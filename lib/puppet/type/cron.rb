@@ -461,7 +461,6 @@ Puppet::Type.newtype(:cron) do
     unless ret
       case name
       when :command
-        devfail "No command, somehow" unless @parameters[:ensure].value == :absent
       when :special
         # nothing
       else
