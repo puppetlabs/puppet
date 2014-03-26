@@ -108,6 +108,7 @@ class Puppet::Settings
   # @return [Object] the value of the setting
   # @api private
   def [](param)
+    Puppet.deprecation_warning("Accessing '#{param}' as a setting is deprecated.") if DEPRECATED_SETTINGS.include?(param)
     value(param)
   end
 
@@ -116,6 +117,7 @@ class Puppet::Settings
   # @param value [Object] the new value of the setting
   # @api private
   def []=(param, value)
+    Puppet.deprecation_warning("Modifying '#{param}' as a setting is deprecated.") if DEPRECATED_SETTINGS.include?(param)
     @value_sets[:memory].set(param, value)
     unsafe_flush_cache
   end
@@ -525,6 +527,8 @@ class Puppet::Settings
 
     # If we get here and don't have any data, we just return and don't muck with the current state of the world.
     return if data.nil?
+
+    issue_deprecations(data)
 
     # If we get here then we have some data, so we need to clear out any previous settings that may have come from
     #  config files.
@@ -1042,6 +1046,21 @@ Generated on #{Time.now}.
   end
 
   private
+
+  DEPRECATED_ENVIRONMENT_SETTINGS = [:manifest, :modulepath, :config_version].freeze
+  DEPRECATED_SETTINGS = (DEPRECATED_ENVIRONMENT_SETTINGS + [:templatedir, :manifestdir]).freeze
+
+  def issue_deprecations(data)
+    sections = data.sections.select do |k,v|
+      [:main, :master, :agent, :user].include?(k)
+    end
+
+    sections.values.each do |section|
+      DEPRECATED_ENVIRONMENT_SETTINGS.each do |s|
+        Puppet.deprecation_warning("Setting #{s} is deprecated in puppet.conf.") if !section.setting(s).nil?
+      end
+    end
+  end
 
   def get_config_file_default(default)
     obj = nil

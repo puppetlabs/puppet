@@ -873,6 +873,11 @@ EOT
       :default    => "$confdir/manifests",
       :type       => :directory,
       :desc       => "Where puppet master looks for its manifests.",
+      :hook => proc do |value|
+        if value
+          Puppet.deprecation_warning "Setting 'manifestdir' is deprecated; please use the new directory environments."
+        end
+      end
     },
     :manifest => {
       :default    => "$manifestdir/site.pp",
@@ -1781,6 +1786,11 @@ EOT
         :type     => :directory,
         :desc     => "Where Puppet looks for template files.  Can be a list of colon-separated
           directories.",
+        :hook => proc do |value|
+          if value
+            Puppet.deprecation_warning "Setting 'templatedir' is deprecated; please use templates in modules."
+          end
+        end
     },
 
     :allow_variables_with_dashes => {
