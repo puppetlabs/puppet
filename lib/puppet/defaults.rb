@@ -1850,6 +1850,23 @@ EOT
         Available Since Puppet 3.5.
       EOT
     },
+   :biff => {
+     :default => false,
+     :type => :boolean,
+     :hook => proc do |value|
+       if Puppet.settings[:parser] != 'future'
+         Puppet.settings.override_default(:parser, 'future')
+       end
+       if Puppet.settings[:evaluator] != 'future'
+         Puppet.settings.override_default(:evaluator, 'future')
+       end
+     end,
+     :desc => <<-EOT
+       Turns on Biff the catalog builder, future parser, and future evaluator.
+       This is an experimental feature - and this setting may go away before
+       release of Pupet 3.6.
+     EOT
+   },
    :max_errors => {
      :default => 10,
      :desc => <<-'EOT'
