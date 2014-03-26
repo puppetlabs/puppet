@@ -110,8 +110,14 @@ def shell_out():
 
 if useyumlib:
     try:
+        my = yum.YumBase()
         try:
-            my = yum.YumBase()
+            my.doLock()
+        except yum.Errors.LockError:
+            # Let's fall back to yum itself which has logic to wait
+            rc = shell_out()
+            sys.exit(rc)
+        try:
             ypl = pkg_lists(my)
             for pkg in ypl.updates:
                 print "_pkg %s %s %s %s %s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)
