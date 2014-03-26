@@ -7,6 +7,7 @@
 import sys
 import string
 import re
+import time
 
 # this maintains compatibility with really old platforms with python 1.x
 from os import popen, WEXITSTATUS
@@ -110,13 +111,34 @@ def shell_out():
 
 if useyumlib:
     try:
+        my = yum.YumBase()
+
         try:
-            my = yum.YumBase()
+            # Acquire yum lock to prevent simultaneous DB access
+            lock_count = 300  # 10 mins
+            while True:
+                if lock_count == 0:
+                    print "_err timed out acquiring lock"
+                    sys.exit(1)
+
+                try:
+                    my.doLock()
+                except yum.Errors.LockError, e:
+                    if e.errno:
+                        print "_err LockError %d %s" % (e.errno, e)
+                        sys.exit(1)
+                    else:
+                        time.sleep(2)
+                        lock_count = lock_count - 1
+                else:
+                    break
+
             ypl = pkg_lists(my)
             for pkg in ypl.updates:
                 print "_pkg %s %s %s %s %s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)
         finally:
             my.closeRpmDB()
+            my.doUnlock()
     except IOError, e:
         print "_err IOError %d %s" % (e.errno, e)
         sys.exit(1)
@@ -127,3 +149,5 @@ if useyumlib:
 else:
     rc = shell_out()
     sys.exit(rc)
+
+# vim: tabstop=4:softtabstop=4:shiftwidth=4:expandtab
