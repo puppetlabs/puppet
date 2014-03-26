@@ -382,23 +382,26 @@ describe provider_class do
         @augeas.stubs(:save).returns(true)
       end
 
-      it "should call diff when a file is shown to have been changed" do
+      it "should display a diff when a single file is shown to have been changed" do
         file = "/etc/hosts"
         File.stubs(:delete)
 
+        @resource[:loglevel] = "crit"
         @resource[:context] = "/files"
         @resource[:changes] = ["set #{file}/foo bar"]
 
         @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
         @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
         @augeas.expects(:set).with("/augeas/save", "newfile")
-        @augeas.expects(:close).never()
+        @provider.expects("diff").with("#{file}", "#{file}.augnew").returns("diff")
 
-        @provider.expects("diff").with("#{file}", "#{file}.augnew").returns("")
         @provider.should be_need_to_run
+
+        expect(@logs[0].message).to eq("\ndiff")
+        expect(@logs[0].level).to eq(:crit)
       end
 
-      it "should call diff for each file thats changed" do
+      it "should display a diff for each file that is changed when changing many files" do
         file1 = "/etc/hosts"
         file2 = "/etc/resolv.conf"
         File.stubs(:delete)
@@ -410,11 +413,13 @@ describe provider_class do
         @augeas.stubs(:get).with("/augeas/events/saved[1]").returns("/files#{file1}")
         @augeas.stubs(:get).with("/augeas/events/saved[2]").returns("/files#{file2}")
         @augeas.expects(:set).with("/augeas/save", "newfile")
-        @augeas.expects(:close).never()
+        @provider.expects(:diff).with("#{file1}", "#{file1}.augnew").returns("diff #{file1}")
+        @provider.expects(:diff).with("#{file2}", "#{file2}.augnew").returns("diff #{file2}")
 
-        @provider.expects(:diff).with("#{file1}", "#{file1}.augnew").returns("")
-        @provider.expects(:diff).with("#{file2}", "#{file2}.augnew").returns("")
         @provider.should be_need_to_run
+
+        expect(@logs.collect(&:message)).to include("\ndiff #{file1}", "\ndiff #{file2}")
+        expect(@logs.collect(&:level)).to eq([:notice, :notice])
       end
 
       describe "and resource[:root] is set" do
@@ -430,10 +435,12 @@ describe provider_class do
           @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
           @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
           @augeas.expects(:set).with("/augeas/save", "newfile")
-          @augeas.expects(:close).never()
+          @provider.expects(:diff).with("#{root}#{file}", "#{root}#{file}.augnew").returns("diff")
 
-          @provider.expects(:diff).with("#{root}#{file}", "#{root}#{file}.augnew").returns("")
           @provider.should be_need_to_run
+
+          expect(@logs[0].message).to eq("\ndiff")
+          expect(@logs[0].level).to eq(:notice)
         end
       end
 
