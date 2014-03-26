@@ -115,6 +115,8 @@ find examples/ -type f | xargs --no-run-if-empty chmod a-x
 rm -rf %{buildroot}
 ruby install.rb --destdir=%{buildroot} --quick --no-rdoc --sitelibdir=%{puppet_libdir}
 
+install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/environments/example_env/manifests
+install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/environments/example_env/modules
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
@@ -141,6 +143,7 @@ install -Dp -m0755 %{confdir}/queue.init %{buildroot}%{_initrddir}/puppetqueue
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
+install -Dp -m0644 ext/README.environment %{buildroot}%{_sysconfdir}/puppet/environments/example_env/README.environment
 
 # Install the ext/ directory to %%{_datadir}/%%{name}
 install -d %{buildroot}%{_datadir}/%{name}
@@ -273,6 +276,11 @@ cp -pr ext/puppet-nm-dispatcher \
 %endif
 %config(noreplace) %{_sysconfdir}/puppet/fileserver.conf
 %dir %{_sysconfdir}/puppet/manifests
+%dir %{_sysconfdir}/puppet/environments
+%dir %{_sysconfdir}/puppet/environments/example_env
+%dir %{_sysconfdir}/puppet/environments/example_env/manifests
+%dir %{_sysconfdir}/puppet/environments/example_env/modules
+%{_sysconfdir}/puppet/environments/example_env/README.environment
 %{_mandir}/man8/puppet-ca.8.gz
 %{_mandir}/man8/puppet-master.8.gz
 
