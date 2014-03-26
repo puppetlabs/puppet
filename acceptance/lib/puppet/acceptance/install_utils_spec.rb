@@ -93,29 +93,28 @@ describe 'InstallUtils' do
     it "fetches and installs repo configurations for #{platform}" do
       host.config['platform'] = platform
       platform_configs_dir = "repo-configs/#{platform}"
-  
-      rpm_url  = files[:rpm][0]
-      rpm_file = files[:rpm][1]
+
+      rpm_file = files[:rpm]
       testcase.expects(:fetch).with(
-        rpm_url,
+        "http://yum.puppetlabs.com",
         rpm_file,
         platform_configs_dir
       ).returns("#{platform_configs_dir}/#{rpm_file}")
-  
+
       repo_url  = files[:repo][0]
-      repo_file = files[:repo][1] 
+      repo_file = files[:repo][1]
       testcase.expects(:fetch).with(
         repo_url,
         repo_file,
         platform_configs_dir
       ).returns("#{platform_configs_dir}/#{repo_file}")
-  
+
       testcase.expects(:on).with(host, regexp_matches(/rm.*repo; rm.*rpm/))
       testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{rpm_file}", '/root')
       testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{repo_file}", '/root')
       testcase.expects(:on).with(host, regexp_matches(%r{mv.*repo /etc/yum.repos.d}))
       testcase.expects(:on).with(host, regexp_matches(%r{rpm.*/root/.*rpm}))
-  
+
       testcase.install_repos_on(host, sha, 'repo-configs')
     end
   end
@@ -127,10 +126,7 @@ describe 'InstallUtils' do
       'el-6-i386',
       'abcdef10',
       {
-        :rpm => [
-          "http://yum.puppetlabs.com/el/6/products/i386/",
-          "puppetlabs-release-6-7.noarch.rpm",
-        ],
+        :rpm => "puppetlabs-release-el-6.noarch.rpm",
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
           "pl-puppet-abcdef10-el-6-i386.repo",
@@ -142,10 +138,7 @@ describe 'InstallUtils' do
       'fedora-18-x86_64',
       'abcdef10',
       {
-        :rpm => [
-          "http://yum.puppetlabs.com/fedora/f18/products/i386/",
-          "puppetlabs-release-18-7.noarch.rpm",
-        ],
+        :rpm => "puppetlabs-release-fedora-18.noarch.rpm",
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
           "pl-puppet-abcdef10-fedora-f18-x86_64.repo",
@@ -157,10 +150,7 @@ describe 'InstallUtils' do
       'centos-5-x86_64',
       'abcdef10',
       {
-        :rpm => [
-          "http://yum.puppetlabs.com/el/5/products/i386/",
-          "puppetlabs-release-5-7.noarch.rpm",
-        ],
+        :rpm => "puppetlabs-release-el-5.noarch.rpm",
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
           "pl-puppet-abcdef10-el-5-x86_64.repo",
