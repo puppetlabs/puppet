@@ -55,8 +55,8 @@ describe provider_class, :as_platform => :posix do
     end
   end
 
-  it "(#15797) should use 'on' when calling enable" do
-    provider_class.expects(:chkconfig).with(@resource[:name], :on)
+  it "(#15797) should use 'resetpriorities' when calling enable" do
+    provider_class.expects(:chkconfig).with(@resource[:name], :resetpriorities)
     @provider.enable
   end
 
@@ -75,7 +75,7 @@ describe provider_class, :as_platform => :posix do
     end
 
     it "should check for on" do
-      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  on"
+      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  resetpriorities"
       @provider.enabled?.should == :true
     end
 
