@@ -74,8 +74,8 @@ describe provider_class, :as_platform => :posix do
       Facter.expects(:value).with(:osfamily).returns 'Suse'
     end
 
-    it "should check for resetpriorities" do
-      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  resetpriorities"
+    it "should check for on" do
+      provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  on"
       @provider.enabled?.should == :true
     end
 
