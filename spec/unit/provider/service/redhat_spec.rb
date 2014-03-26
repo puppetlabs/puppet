@@ -69,12 +69,12 @@ describe provider_class, :as_platform => :posix do
     @provider.should respond_to(:enabled?)
   end
 
-  describe "when checking enabled? on Suse" do
+  describe "when checking enabled? resetpriorities Suse" do
     before :each do
       Facter.expects(:value).with(:osfamily).returns 'Suse'
     end
 
-    it "should check for on" do
+    it "should check for resetpriorities" do
       provider_class.stubs(:chkconfig).with(@resource[:name]).returns "#{@resource[:name]}  resetpriorities"
       @provider.enabled?.should == :true
     end
