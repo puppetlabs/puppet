@@ -32,6 +32,17 @@ Puppet::Face.define(:module, '1.0.0') do
 
     arguments "[<path>]"
 
+    option "--exclude PATTERN1,PATTERN2,..." do
+      summary "Exclude files or dirs from package."
+
+      description <<-TEXT
+        Exclude files or directories whose path matches the PATTERNs passed.
+
+        PATTERN is interpreted as a regular expression, allowing complex
+        filtering of the content.
+      TEXT
+    end
+
     when_invoked do |*args|
       options = args.pop
       if options.nil? or args.length > 1 then

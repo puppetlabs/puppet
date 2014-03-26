@@ -5,8 +5,10 @@ module Puppet::ModuleTool
     class Builder < Application
 
       def initialize(path, options = {})
-        @path = File.expand_path(path)
+        @path = Pathname.new(File.expand_path(path))
         @pkg_path = File.join(@path, 'pkg')
+        @exclude = options[:exclude]
+        @exclude = Regexp.new(@exclude.split(',').join("|")) unless @exclude.nil?
         super(options)
       end
 
@@ -55,12 +57,14 @@ module Puppet::ModuleTool
       end
 
       def copy_contents
-        Dir[File.join(@path, '*')].each do |path|
-          case File.basename(path)
-          when *Puppet::ModuleTool::ARTIFACTS
-            next
+        @path.find do |descendant|
+          next if @path == descendant
+          relative_path = descendant.relative_path_from(@path)
+          if Puppet::ModuleTool.artifact?(descendant) or (@exclude and @exclude.match(relative_path.to_s))
+            Find.prune
           else
-            FileUtils.cp_r path, build_path, :preserve => true
+            path = File.join(build_path, relative_path)
+            File.file?(descendant) ? FileUtils.copy(descendant, path, :preserve => true) : FileUtils.mkdir(path)
           end
         end
       end

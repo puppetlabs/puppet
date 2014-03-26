@@ -10,7 +10,8 @@ describe Puppet::ModuleTool::Applications::Builder do
   let(:version)      { '0.0.1' }
   let(:release_name) { "#{module_name}-#{version}" }
   let(:tarball)      { File.join(path, 'pkg', release_name) + ".tar.gz" }
-  let(:builder)      { Puppet::ModuleTool::Applications::Builder.new(path) }
+  let(:options)      { {} }
+  let(:builder)      { Puppet::ModuleTool::Applications::Builder.new(path, options) }
 
   before :each do
     File.open(File.join(path, 'Modulefile'), 'w') do |f|
@@ -25,14 +26,52 @@ description 'This module can be used for basic testing'
 project_page 'http://github.com/testing/#{module_name}'
 EOM
     end
+    ['coverage','pkg',['spec','fixtures','manifests'],['spec','fixtures','modules']].each do |f|
+      FileUtils.mkdir_p(File.join(path, *f))
+    end
   end
 
-  it "should attempt to create a module relative to the pkg directory" do
+  before do
     tarrer = mock('tarrer')
     Puppet::ModuleTool::Tar.expects(:instance).with(module_name).returns(tarrer)
     Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
     tarrer.expects(:pack).with(release_name, tarball)
-
     builder.run
   end
+
+  def target_exists?(*file)
+    File.exist?(File.join(path, "pkg", "#{module_name}-#{version}", file))
+  end
+
+  shared_examples :build do
+    it "should create metadata.json" do
+      target_exists?("metadata.json").should be_true
+    end
+    it "should not create default excluded files" do
+      target_exists?("coverage").should be_false
+      target_exists?("pkg").should be_false
+    end
+  end
+
+  context "when using default parameters" do
+    it_behaves_like :build
+    it "should include fixtures/manifests dir" do
+      target_exists?("spec", "fixtures", "manifests").should be_true
+    end
+    it "should include fixtures/modules dir" do
+      target_exists?("spec", "fixtures", "modules").should be_true
+    end
+  end
+
+  context "when using exclusions" do
+    let(:options) { { :exclude => "spec/fixtures/manifests,modul.*" }}
+    it_behaves_like :build
+    it "should not include fixtures/manifests dir" do
+      target_exists?("spec", "fixtures", "manifests").should be_false
+    end
+    it "should not include fixtures/modules dir" do
+      target_exists?("spec", "fixtures", "modules").should be_false
+    end
+  end
+
 end
