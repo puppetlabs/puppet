@@ -1,6 +1,9 @@
 require 'rake/clean'
 require 'pp'
 require 'yaml'
+$LOAD_PATH << File.expand_path(File.join(File.dirname(__FILE__), 'lib'))
+require 'puppet/acceptance/git_utils'
+extend Puppet::Acceptance::GitUtils
 
 ONE_DAY_IN_SECS = 24 * 60 * 60
 REPO_CONFIGS_DIR = "repo-configs"
@@ -72,9 +75,16 @@ def beaker_test(mode = :packages, options = {})
                                          options.reject { |k,v| k == :__delete_options__ })
 
   if mode == :git
-    puppet_fork = ENV['FORK'] || 'puppetlabs'
-    git_server  = ENV['GIT_SERVER'] || 'github.com'
-    final_options[:install] << "git://#{git_server}/#{puppet_fork}/puppet.git##{sha}"
+    # Build up project git urls based on git server and fork env variables or defaults
+    final_options[:install].map! do |install|
+      if md = /^(\w+)#(\w+)$/.match(install)
+        project, project_sha = md.captures
+        "#{build_giturl(project)}##{project_sha}"
+      elsif md = /^(\w+)$/.match(install)
+        project = md[1]
+        "#{build_giturl(project)}##{sha}"
+      end
+    end
   end
 
   delete_options.each do |delete_me|
@@ -227,8 +237,9 @@ Requires commit SHA to be put under test as environment variable: SHA='<sha>'.
 Also must set CONFIG=config/nodes/foo.yaml or include it in an options.rb for Beaker.
 You may set TESTS=path/to/test,and/more/tests.
 You may set additional Beaker OPTIONS='--more --options'
-If testing from git checkouts, you may optionally set the github fork to checkout from using FORK='other-puppet-fork'.
-You may also optionally set the git server to checkout from using GIT_SERVER='my.host.with.git.daemon', if you have set up a `git daemon` to pull local commits from.  (In this case, the FORK should be set to the path to the repository, and you will need to allow the git daemon to serve the repo (see `git help daemon`)).
+If testing from git checkouts, you may optionally set the github fork to checkout from using PUPPET_FORK='some-other-puppet-fork' (you may change the HIERA_FORK and FACTER_FORK as well if you wish).
+You may also optionally set the git server to checkout repos from using GIT_SERVER='some.git.mirror'.
+Or you may set PUPPET_GIT_SERVER='my.host.with.git.daemon', specifically, if you have set up a `git daemon` to pull local commits from.  (You will need to allow the git daemon to serve the repo (see `git help daemon` and the docs/acceptance_tests.md for more details)).
 If there is a Beaker options hash in a ./local_options.rb, it will be included.  Commandline options set through the above environment variables will override settings in this file.
 EOS
 
@@ -306,4 +317,8 @@ end
 
 task :default do
   sh('rake -T')
+end
+
+task :spec do
+  sh('rspec lib')
 end
