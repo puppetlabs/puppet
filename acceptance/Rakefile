@@ -109,21 +109,19 @@ EOS
 
   args = ["--options-file", options_file, config_opt, tests_opt, overriding_options].compact
 
-  preserve_hosts = final_options[:preserve_hosts]
-  if md = /--preserve-hosts=?\s*['"]?(\w+)/.match(overriding_options)
-    preserve_hosts = md[1]
-  end
-
   begin
-    failed = false
-    sh("beaker", *args) { |ok,res| failed = true if !ok }
+    sh("beaker", *args)
   ensure
-    if (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
-      cp(hosts_file, "log/latest/config.yml")
-      generate_config_for_latest_hosts if preserve_hosts = 'always' || (failed && preserve_hosts = 'onfail')
-    end
-    mv(options_file, "log/latest")
+    preserve_configuration(final_options, options_file)
   end
+end
+
+def preserve_configuration(final_options, options_file)
+  if (hosts_file = config || final_options[:hosts_file]) && hosts_file !~ /preserved_config/
+    cp(hosts_file, "log/latest/config.yml")
+    generate_config_for_latest_hosts
+  end
+  mv(options_file, "log/latest")
 end
 
 def generate_config_for_latest_hosts
