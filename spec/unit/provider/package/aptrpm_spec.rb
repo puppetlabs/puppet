@@ -16,14 +16,17 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
       Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], {:combine => true, :custom_environment => {}, :failonfail => true}).returns("4.10.1\n").at_most_once
     end
 
-    def rpm
-      pkg.provider.expects(:rpm).
-        with('-q', '--whatprovides', 'faff', '--nosignature', '--nodigest', '--qf',
-             "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n")
+    def rpm_args
+      ['-q', 'faff', '--nosignature', '--nodigest', '--qf', "%{NAME} %|EPOCH?{%{EPOCH}}:{0}| %{VERSION} %{RELEASE} %{ARCH}\\n"]
+    end
+
+    def rpm(args = rpm_args)
+      pkg.provider.expects(:rpm).with(*args)
     end
 
     it "should report absent packages" do
       rpm.raises(Puppet::ExecutionFailure, "couldn't find rpm")
+      rpm(rpm_args + ['--whatprovides']).raises(Puppet::ExecutionFailure, 'no package provides faff')
       pkg.property(:ensure).retrieve.should == :absent
     end
 
