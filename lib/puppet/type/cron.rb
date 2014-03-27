@@ -368,11 +368,14 @@ Puppet::Type.newtype(:cron) do
   end
 
   newproperty(:user) do
-    desc "The user to run the command as.  This user must
+    desc "The user who owns the cron job.  This user must
       be allowed to run cron jobs, which is not currently checked by
       Puppet.
 
-      The user defaults to whomever Puppet is running as."
+      This property defaults to the user running Puppet or `root`.
+
+      The default crontab provider executes the system `crontab` using
+      the user account specified by this property."
 
     defaultto {
       if not provider.is_a?(@resource.class.provider(:crontab))
@@ -388,9 +391,15 @@ Puppet::Type.newtype(:cron) do
   end
 
   newproperty(:target) do
-    desc "The username that will own the cron entry. Defaults to
-    the value of $USER for the shell that invoked Puppet, or root if $USER
-    is empty."
+    desc "The name of the crontab file in which the cron job should be stored.
+
+      This property defaults to the value of the `user` property if set, the
+      user running Puppet or `root`.
+
+      For the default crontab provider, this property is functionally
+      equivalent to the `user` property and should be avoided. In particular,
+      setting both `user` and `target` to different values will result in
+      undefined behavior."
 
     defaultto {
       if provider.is_a?(@resource.class.provider(:crontab))
