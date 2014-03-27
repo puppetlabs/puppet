@@ -49,6 +49,10 @@ Puppet::Type.newtype(:cron) do
     These changes must be expressed by setting the parameter to
     `minute => absent` because Puppet only manages parameters that are out of
     sync with manifest entries.
+
+    **Autorequires:** If Puppet is managing the user account specified by the
+    `user` property of a cron resource, then the cron resource will autorequire
+    that user.
   EOT
   ensurable
 
