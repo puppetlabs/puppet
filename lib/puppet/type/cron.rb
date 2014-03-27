@@ -4,12 +4,12 @@ require 'puppet/util/filetype'
 
 Puppet::Type.newtype(:cron) do
   @doc = <<-'EOT'
-    Installs and manages cron jobs.  Every cron resource requires a command
-    and user attribute, as well as at least one periodic attribute (hour,
-    minute, month, monthday, weekday, or special).  While the name of the cron
-    job is not part of the actual job, the name is stored in a comment beginning with
-    `# Puppet Name: `. These comments are used to match crontab entries created by
-    Puppet with cron resources.
+    Installs and manages cron jobs.  Every cron resource created by Puppet
+    requires a command and at least one periodic attribute (hour, minute,
+    month, monthday, weekday, or special).  While the name of the cron job is
+    not part of the actual job, the name is stored in a comment beginning with
+    `# Puppet Name: `. These comments are used to match crontab entries created
+    by Puppet with cron resources.
 
     If an existing crontab entry happens to match the scheduling and command of a
     cron resource that has never been synched, Puppet will defer to the existing
