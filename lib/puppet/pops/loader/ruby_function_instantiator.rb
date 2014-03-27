@@ -5,7 +5,7 @@ class Puppet::Pops::Loader::RubyFunctionInstantiator
   # Produces an instance of the Function class with the given typed_name, or fails with an error if the
   # given ruby source does not produce this instance when evaluated.
   #
-  # @param loader [T.B.D] The loader the function is associated with
+  # @param loader [Puppet::Pops::Loader::Loader] The loader the function is associated with
   # @param typed_name [Puppet::Pops::Loader::TypedName] the type / name of the function to load
   # @param source_ref [URI, String] a reference to the source / origin of the ruby code to evaluate
   # @param ruby_code_string [String] ruby code in a string

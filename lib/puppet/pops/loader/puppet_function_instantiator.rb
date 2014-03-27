@@ -5,7 +5,7 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
   # Produces an instance of the Function class with the given typed_name, or fails with an error if the
   # given puppet source does not produce this instance when evaluated.
   #
-  # @param loader [T.B.D] The loader the function is associated with
+  # @param loader [Puppet::Pops::Loader::Loader] The loader the function is associated with
   # @param typed_name [Puppet::Pops::Loader::TypedName] the type / name of the function to load
   # @param source_ref [URI, String] a reference to the source / origin of the puppet code to evaluate
   # @param pp_code_string [String] puppet code in a string
@@ -27,7 +27,7 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
       raise ArgumentError, "The code loaded from #{source_ref} must contain only the function #{typed_name.name} - it has additional definitions."
     end
     the_function_definition = result.model.definitions[0]
-    # TODO: There is no FunctionExpression yet
+
     unless the_function_definition.is_a?(Puppet::Pops::Model::FunctionDefinition)
       raise ArgumentError, "The code loaded from #{source_ref} does not define the function #{typed_name.name} - no function found."
     end
