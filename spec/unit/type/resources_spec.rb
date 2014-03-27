@@ -89,52 +89,9 @@ describe resources do
     end
 
     describe "with unless_uid" do
-      describe "with a uid range" do
-        before do
-          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => 10_000..20_000
-          @res.catalog = Puppet::Resource::Catalog.new
-        end
-
-        it "should purge uids that are not in a specified range" do
-          user_hash = {:name => 'special_user', :uid => 25_000}
-          user = Puppet::Type.type(:user).new(user_hash)
-          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
-          @res.user_check(user).should be_true
-        end
-
-        it "should not purge uids that are in a specified range" do
-          user_hash = {:name => 'special_user', :uid => 15_000}
-          user = Puppet::Type.type(:user).new(user_hash)
-          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
-          @res.user_check(user).should be_false
-        end
-      end
-
-      describe "with a uid range array" do
-        before do
-          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => [10_000..15_000, 15_000..20_000]
-          @res.catalog = Puppet::Resource::Catalog.new
-        end
-
-        it "should purge uids that are not in a specified range array" do
-          user_hash = {:name => 'special_user', :uid => 25_000}
-          user = Puppet::Type.type(:user).new(user_hash)
-          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
-          @res.user_check(user).should be_true
-        end
-
-        it "should not purge uids that are in a specified range array" do
-          user_hash = {:name => 'special_user', :uid => 15_000}
-          user = Puppet::Type.type(:user).new(user_hash)
-          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
-          @res.user_check(user).should be_false
-        end
-
-      end
-
       describe "with a uid array" do
         before do
-          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => [15_000, 15_001, 15_002]
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => [15_000, '15001', 15_002]
           @res.catalog = Puppet::Resource::Catalog.new
         end
 
@@ -151,10 +108,9 @@ describe resources do
           user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
           @res.user_check(user).should be_false
         end
-
       end
 
-      describe "with a single uid" do
+      describe "with a single uid integer" do
         before do
           @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => 15_000
           @res.catalog = Puppet::Resource::Catalog.new
@@ -175,34 +131,26 @@ describe resources do
         end
       end
 
-      describe "with a mixed uid array" do
+      describe "with a single uid string" do
         before do
-          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => [10_000..15_000, 16_666]
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => '15000'
           @res.catalog = Puppet::Resource::Catalog.new
         end
 
-        it "should not purge ids in the range" do
+        it "should purge uids that are not specified" do
+          user_hash = {:name => 'special_user', :uid => 25_000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_true
+        end
+
+        it "should not purge uids that are specified" do
           user_hash = {:name => 'special_user', :uid => 15_000}
           user = Puppet::Type.type(:user).new(user_hash)
           user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
           @res.user_check(user).should be_false
         end
-
-        it "should not purge specified ids" do
-          user_hash = {:name => 'special_user', :uid => 16_666}
-          user = Puppet::Type.type(:user).new(user_hash)
-          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
-          @res.user_check(user).should be_false
-        end
-
-        it "should purge unspecified ids" do
-          user_hash = {:name => 'special_user', :uid => 17_000}
-          user = Puppet::Type.type(:user).new(user_hash)
-          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
-          @res.user_check(user).should be_true
-        end
       end
-      
     end
   end
 
