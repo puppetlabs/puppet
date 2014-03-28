@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'puppet/indirector/facts/facter'
 
 describe Puppet::Node::Facts::Facter do
+  FS = Puppet::FileSystem
+
   it "should be a subclass of the Code terminus" do
     Puppet::Node::Facts::Facter.superclass.should equal(Puppet::Indirector::Code)
   end
@@ -173,8 +175,6 @@ describe Puppet::Node::Facts::Facter do
     it "should load all facts from the modules" do
       Puppet::Node::Facts::Facter.stubs(:load_facts_in_dir)
 
-      Puppet[:modulepath] = [one, two].join(File::PATH_SEPARATOR)
-
       Dir.stubs(:glob).returns []
       Dir.expects(:glob).with("#{one}/*/lib/facter").returns %w{oneA oneB}
       Dir.expects(:glob).with("#{two}/*/lib/facter").returns %w{twoA twoB}
@@ -184,7 +184,11 @@ describe Puppet::Node::Facts::Facter do
       Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("twoA")
       Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("twoB")
 
-      Puppet::Node::Facts::Facter.load_fact_plugins
+      FS.overlay(FS::MemoryFile.a_directory(one), FS::MemoryFile.a_directory(two)) do
+        Puppet.override(:current_environment => Puppet::Node::Environment.create(:testing, [one, two], "")) do
+          Puppet::Node::Facts::Facter.load_fact_plugins
+        end
+      end
     end
 
     it "should include module plugin facts when present", :if => Puppet.features.external_facts? do
