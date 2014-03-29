@@ -1028,11 +1028,11 @@ describe Puppet::Settings do
         end
 
         it "warns when manifestdir is set" do
-          assert_puppet_conf_deprecation('manifestdir', /Setting 'manifestdir'.*is.*deprecated/)
+          assert_puppet_conf_deprecation('manifestdir', /Setting manifestdir.*is.*deprecated/)
         end
 
         it "warns when templatedir is set" do
-          assert_puppet_conf_deprecation('templatedir', /Setting 'templatedir'.*is.*deprecated/)
+          assert_puppet_conf_deprecation('templatedir', /Setting templatedir.*is.*deprecated/)
         end
       end
 
@@ -1064,11 +1064,11 @@ describe Puppet::Settings do
         end
 
         it "warns when manifestdir is set on command line" do
-          assert_command_line_deprecation('manifestdir', "Setting 'manifestdir' is deprecated; please use the new directory environments.")
+          assert_command_line_deprecation('manifestdir', "Setting manifestdir is deprecated.")
         end
 
         it "warns when templatedir is set on command line" do
-          assert_command_line_deprecation('templatedir', "Setting 'templatedir' is deprecated; please use templates in modules.")
+          assert_command_line_deprecation('templatedir', "Setting templatedir is deprecated.")
         end
       end
 
@@ -1092,12 +1092,10 @@ describe Puppet::Settings do
         end
 
         it "warns when attempt to access a 'manifestdir' setting" do
-          Puppet.expects(:deprecation_warning).with(regexp_matches(/Setting 'manifestdir' is deprecated/))
           assert_accessing_setting_is_deprecated('manifestdir')
         end
 
         it "warns when attempt to access a 'templatedir' setting" do
-          Puppet.expects(:deprecation_warning).with(regexp_matches(/Setting 'templatedir' is deprecated/))
           assert_accessing_setting_is_deprecated('templatedir')
         end
 

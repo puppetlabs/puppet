@@ -391,6 +391,10 @@ class Puppet::Settings
       end
     end
 
+    if FULLY_DEPRECATED_SETTINGS.include?(str)
+      Puppet.deprecation_warning("Setting #{str} is deprecated.")
+    end
+
     @value_sets[:cli].set(str, value)
     unsafe_flush_cache
   end
@@ -1048,7 +1052,8 @@ Generated on #{Time.now}.
   private
 
   DEPRECATED_ENVIRONMENT_SETTINGS = [:manifest, :modulepath, :config_version].freeze
-  DEPRECATED_SETTINGS = (DEPRECATED_ENVIRONMENT_SETTINGS + [:templatedir, :manifestdir]).freeze
+  FULLY_DEPRECATED_SETTINGS = [:templatedir, :manifestdir].freeze
+  DEPRECATED_SETTINGS = (DEPRECATED_ENVIRONMENT_SETTINGS + FULLY_DEPRECATED_SETTINGS).freeze
 
   def issue_deprecations(data)
     sections = data.sections.select do |k,v|
@@ -1058,6 +1063,10 @@ Generated on #{Time.now}.
     sections.values.each do |section|
       DEPRECATED_ENVIRONMENT_SETTINGS.each do |s|
         Puppet.deprecation_warning("Setting #{s} is deprecated in puppet.conf.") if !section.setting(s).nil?
+      end
+
+      FULLY_DEPRECATED_SETTINGS.each do |s|
+        Puppet.deprecation_warning("Setting #{s} is deprecated.") if !section.setting(s).nil?
       end
     end
   end
