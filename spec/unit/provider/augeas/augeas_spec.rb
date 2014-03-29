@@ -365,7 +365,7 @@ describe provider_class do
     end
 
     #Ticket 5211 testing
-    it "should return false when a size doeas equal the provided value" do
+    it "should return false when a size does equal the provided value" do
       @resource[:onlyif] = "match path size != 3"
       @augeas.stubs("match").returns(["set", "of", "values"])
       @provider.need_to_run?.should == false
