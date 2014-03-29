@@ -264,7 +264,7 @@ describe Puppet::Application::Doc do
         Puppet[:trace] = false
         @env = stub 'env'
         @env.stubs(:modulepath).returns([modules])
-        @env.stubs(:[]).with(:manifest).returns('manifests/site.pp')
+        @env.stubs(:manifest).returns('manifests/site.pp')
         Puppet::Node::Environment.stubs(:new).returns(@env)
         Puppet[:modulepath] = modules
         Puppet[:manifestdir] = manifests
@@ -308,7 +308,7 @@ describe Puppet::Application::Doc do
 
       it "should get modulepath and manifestdir values from the environment" do
         @env.expects(:modulepath).returns(['envmodules1','envmodules2'])
-        @env.expects(:[]).with(:manifest).returns('envmanifests/site.pp')
+        @env.expects(:manifest).returns('envmanifests/site.pp')
 
         Puppet::Util::RDoc.expects(:rdoc).with('doc', ['envmodules1','envmodules2','envmanifests'], nil)
 

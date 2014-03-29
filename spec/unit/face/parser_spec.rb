@@ -14,9 +14,12 @@ describe Puppet::Face[:parser, :current] do
     end
 
     it "validates the configured site manifest when no files are given" do
-      Puppet[:manifest] = file_containing('site.pp', "{ invalid =>")
+      manifest = file_containing('site.pp', "{ invalid =>")
 
-      expect { parser.validate() }.to exit_with(1)
+      configured_environment = Puppet::Node::Environment.create(:default, [], manifest)
+      Puppet.override(:current_environment => configured_environment) do
+        expect { parser.validate() }.to exit_with(1)
+      end
     end
 
     it "validates the given file" do
