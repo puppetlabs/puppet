@@ -1056,11 +1056,12 @@ Generated on #{Time.now}.
   DEPRECATED_SETTINGS = (DEPRECATED_ENVIRONMENT_SETTINGS + FULLY_DEPRECATED_SETTINGS).freeze
 
   def issue_deprecations(data)
-    sections = data.sections.select do |k,v|
-      [:main, :master, :agent, :user].include?(k)
+    sections = data.sections.inject([]) do |accum,entry|
+      accum << entry[1] if [:main, :master, :agent, :user].include?(entry[0])
+      accum
     end
 
-    sections.values.each do |section|
+    sections.each do |section|
       DEPRECATED_ENVIRONMENT_SETTINGS.each do |s|
         Puppet.deprecation_warning("Setting #{s} is deprecated in puppet.conf.") if !section.setting(s).nil?
       end
