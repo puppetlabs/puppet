@@ -1064,18 +1064,18 @@ describe Puppet::Settings do
         end
 
         it "warns when manifestdir is set on command line" do
-          assert_command_line_deprecation('manifestdir', "Setting manifestdir is deprecated.")
+          assert_command_line_deprecation('manifestdir', "Setting manifestdir is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
         end
 
         it "warns when templatedir is set on command line" do
-          assert_command_line_deprecation('templatedir', "Setting templatedir is deprecated.")
+          assert_command_line_deprecation('templatedir', "Setting templatedir is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
         end
       end
 
       context "as settings in the code base" do
         def assert_accessing_setting_is_deprecated(setting)
-          Puppet.expects(:deprecation_warning).with("Accessing '#{setting}' as a setting is deprecated.")
-          Puppet.expects(:deprecation_warning).with("Modifying '#{setting}' as a setting is deprecated.")
+          Puppet.expects(:deprecation_warning).with("Accessing '#{setting}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
+          Puppet.expects(:deprecation_warning).with("Modifying '#{setting}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
           Puppet[setting.intern] = apath = File.expand_path('foo')
           expect(Puppet[setting.intern]).to eq(apath)
         end
