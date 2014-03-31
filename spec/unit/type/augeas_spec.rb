@@ -34,7 +34,7 @@ describe augeas do
     end
 
     properties = [:returns]
-    params = [:name, :context, :onlyif, :changes, :root, :load_path, :type_check]
+    params = [:name, :context, :onlyif, :changes, :root, :load_path, :type_check, :show_diff]
 
     properties.each do |property|
       it "should have a #{property} property" do

@@ -365,16 +365,56 @@ describe provider_class do
     end
 
     #Ticket 5211 testing
-    it "should return false when a size doeas equal the provided value" do
+    it "should return false when a size does equal the provided value" do
       @resource[:onlyif] = "match path size != 3"
       @augeas.stubs("match").returns(["set", "of", "values"])
       @provider.need_to_run?.should == false
     end
 
+    [true, false].product([true, false]) do |cfg, param|
+      describe "and Puppet[:show_diff] is #{cfg} and show_diff => #{param}" do
+        let(:file) { "/some/random/file" }
+
+        before(:each) do
+          Puppet[:show_diff] = cfg
+          @resource[:show_diff] = param
+
+          @resource[:root] = ""
+          @resource[:context] = "/files"
+          @resource[:changes] = ["set #{file}/foo bar"]
+
+          File.stubs(:delete)
+          @provider.stubs(:get_augeas_version).returns("0.10.0")
+          @provider.stubs("diff").with("#{file}", "#{file}.augnew").returns("diff")
+
+          @augeas.stubs(:set).returns(true)
+          @augeas.stubs(:save).returns(true)
+          @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
+          @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
+          @augeas.stubs(:set).with("/augeas/save", "newfile")
+        end
+
+        if cfg && param
+          it "should display a diff" do
+            @provider.should be_need_to_run
+
+            expect(@logs[0].message).to eq("\ndiff")
+          end
+        else
+          it "should not display a diff" do
+            @provider.should be_need_to_run
+
+            @logs.should be_empty
+          end
+        end
+      end
+    end
+
     # Ticket 2728 (diff files)
-    describe "and Puppet[:show_diff] is set" do
+    describe "and configured to show diffs" do
       before(:each) do
         Puppet[:show_diff] = true
+        @resource[:show_diff] = true
 
         @resource[:root] = ""
         @provider.stubs(:get_augeas_version).returns("0.10.0")
