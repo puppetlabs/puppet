@@ -67,7 +67,7 @@ module Puppet::Util::Logging
       offender = get_deprecation_offender()
       if (! $deprecation_warnings.has_key?(offender)) then
         $deprecation_warnings[offender] = message
-        warning("#{message}\n   (at #{offender})")
+        warning("#{message}\n   (at #{offender.join('; ')})")
       end
     end
   end
@@ -78,7 +78,11 @@ module Puppet::Util::Logging
     #
     # let's find the offending line;  we need to jump back up the stack a few steps to find the method that called
     #  the deprecated method
-    caller()[2]
+    if Puppet[:trace]
+      caller()[2..-1]
+    else
+      [caller()[2]]
+    end
   end
 
   def clear_deprecation_warnings

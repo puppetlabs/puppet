@@ -115,7 +115,7 @@ describe Puppet::Util::Logging do
         # since the deprecation warning will only log each offending line once, we have to do some tomfoolery
         # here in order to make it think each of these calls is coming from a unique call stack; we're basically
         # mocking the method that it would normally use to find the call stack.
-        @logger.expects(:get_deprecation_offender).returns("deprecation log count test ##{i}")
+        @logger.expects(:get_deprecation_offender).returns(["deprecation log count test ##{i}"])
         @logger.deprecation_warning i
       }
       @logger.expects(:warning).with(101).never

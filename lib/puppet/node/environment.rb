@@ -126,12 +126,20 @@ class Puppet::Node::Environment
   #   there are no commandline changes from settings.
   def override_from_commandline(settings)
     overrides = {}
-    overrides[:modulepath] = self.class.split_path(settings[:modulepath]) if settings.set_by_cli?(:modulepath)
-    overrides[:config_version] = settings[:config_version] if settings.set_by_cli?(:config_version)
-    if settings.set_by_cli?(:manifest) ||
-      (settings.set_by_cli?(:manifestdir) && settings[:manifest].start_with?(settings[:manifestdir]))
-      overrides[:manifest] = settings[:manifest]
+
+    if settings.set_by_cli?(:modulepath)
+      overrides[:modulepath] = self.class.split_path(settings.value(:modulepath))
     end
+
+    if settings.set_by_cli?(:config_version)
+      overrides[:config_version] = settings.value(:config_version)
+    end
+
+    if settings.set_by_cli?(:manifest) ||
+      (settings.set_by_cli?(:manifestdir) && settings.value(:manifest).start_with?(settings.value(:manifestdir)))
+      overrides[:manifest] = settings.value(:manifest)
+    end
+
     overrides.empty? ?
       self :
       self.override_with(overrides)

@@ -37,8 +37,9 @@ Puppet::Face.define(:parser, '0.0.1') do
           Puppet[:code] = STDIN.read
           validate_manifest
         else
-           files << Puppet[:manifest]
-           Puppet.notice "No manifest specified. Validating the default manifest #{Puppet[:manifest]}"
+          manifest = Puppet.lookup(:current_environment).manifest
+          files << manifest
+          Puppet.notice "No manifest specified. Validating the default manifest #{manifest}"
         end
       end
       missing_files = []

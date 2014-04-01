@@ -397,7 +397,9 @@ module Puppet
       :desc       => "How to determine the configuration version.  By default, it will be the
       time that the configuration is parsed, but you can provide a shell script to override how the
       version is determined.  The output of this script will be added to every log message in the
-      reports, allowing you to correlate changes on your hosts to the source version on the server.",
+      reports, allowing you to correlate changes on your hosts to the source version on the server.
+      This setting is deprecated. Please use an explicit directory environment instead.
+      See http://links.puppetlabs.com/directory-environments",
     },
     :zlib => {
         :default  => true,
@@ -872,14 +874,18 @@ EOT
     :manifestdir => {
       :default    => "$confdir/manifests",
       :type       => :directory,
-      :desc       => "Where puppet master looks for its manifests.",
+      :desc       => "Where puppet master looks for its manifests.
+        This setting is deprecated. Please use an explicit directory environment instead.
+        See http://links.puppetlabs.com/directory-environments"
     },
     :manifest => {
       :default    => "$manifestdir/site.pp",
       :type       => :file_or_directory,
       :desc       => "The entry-point manifest file for puppet master or a directory of manifests
         to be evaluated in alphabetical order. Puppet manages this path as a directory
-        if it exists or if the path ends with a / or \\.",
+        if it exists or if the path ends with a / or \\.
+        This setting is deprecated. Please use an explicit directory environment instead.
+        See http://links.puppetlabs.com/directory-environments",
     },
     :code => {
       :default    => "",
@@ -954,7 +960,9 @@ EOT
       :type => :path,
       :desc => "The search path for modules, as a list of directories separated by the system
         path separator character. (The POSIX path separator is ':', and the
-        Windows path separator is ';'.)",
+        Windows path separator is ';'.) This setting is deprecated. Please use an
+        explicit directory environment instead. See
+        http://links.puppetlabs.com/directory-environments",
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
@@ -1780,7 +1788,8 @@ EOT
         :default  => "$vardir/templates",
         :type     => :directory,
         :desc     => "Where Puppet looks for template files.  Can be a list of colon-separated
-          directories.",
+          directories. This setting is deprecated. Please use an explicit directory environment
+          instead. See http://links.puppetlabs.com/directory-environments"
     },
 
     :allow_variables_with_dashes => {

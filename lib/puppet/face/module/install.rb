@@ -11,7 +11,7 @@ Puppet::Face.define(:module, '1.0.0') do
 
       The specified module will be installed into the directory
       specified with the `--target-dir` option, which defaults to
-      #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first}.
+      #{Puppet.lookup(:current_environment).full_modulepath.first}.
     EOT
 
     returns "Pathname object representing the path to the installed module."

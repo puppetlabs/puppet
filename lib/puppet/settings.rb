@@ -108,6 +108,7 @@ class Puppet::Settings
   # @return [Object] the value of the setting
   # @api private
   def [](param)
+    Puppet.deprecation_warning("Accessing '#{param}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations") if DEPRECATED_SETTINGS.include?(param)
     value(param)
   end
 
@@ -116,6 +117,7 @@ class Puppet::Settings
   # @param value [Object] the new value of the setting
   # @api private
   def []=(param, value)
+    Puppet.deprecation_warning("Modifying '#{param}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations") if DEPRECATED_SETTINGS.include?(param)
     @value_sets[:memory].set(param, value)
     unsafe_flush_cache
   end
@@ -389,6 +391,10 @@ class Puppet::Settings
       end
     end
 
+    if FULLY_DEPRECATED_SETTINGS.include?(str)
+      Puppet.deprecation_warning("Setting #{str} is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
+    end
+
     @value_sets[:cli].set(str, value)
     unsafe_flush_cache
   end
@@ -525,6 +531,8 @@ class Puppet::Settings
 
     # If we get here and don't have any data, we just return and don't muck with the current state of the world.
     return if data.nil?
+
+    issue_deprecations(data)
 
     # If we get here then we have some data, so we need to clear out any previous settings that may have come from
     #  config files.
@@ -1042,6 +1050,27 @@ Generated on #{Time.now}.
   end
 
   private
+
+  DEPRECATED_ENVIRONMENT_SETTINGS = [:manifest, :modulepath, :config_version].freeze
+  FULLY_DEPRECATED_SETTINGS = [:templatedir, :manifestdir].freeze
+  DEPRECATED_SETTINGS = (DEPRECATED_ENVIRONMENT_SETTINGS + FULLY_DEPRECATED_SETTINGS).freeze
+
+  def issue_deprecations(data)
+    sections = data.sections.inject([]) do |accum,entry|
+      accum << entry[1] if [:main, :master, :agent, :user].include?(entry[0])
+      accum
+    end
+
+    sections.each do |section|
+      DEPRECATED_ENVIRONMENT_SETTINGS.each do |s|
+        Puppet.deprecation_warning("Setting #{s} is deprecated in puppet.conf. See http://links.puppetlabs.com/env-settings-deprecations") if !section.setting(s).nil?
+      end
+
+      FULLY_DEPRECATED_SETTINGS.each do |s|
+        Puppet.deprecation_warning("Setting #{s} is deprecated. See http://links.puppetlabs.com/env-settings-deprecations") if !section.setting(s).nil?
+      end
+    end
+  end
 
   def get_config_file_default(default)
     obj = nil
