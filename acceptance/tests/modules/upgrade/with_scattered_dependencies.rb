@@ -31,18 +31,17 @@ with_puppet_running_on master, master_opts, testdir do
 
   step "Upgrade a module that has a more recent version published"
   on master, puppet("module upgrade pmtacceptance-postgresql --version 0.0.2") do
-    assert_output <<-OUTPUT
-      STDERR> \e[1;31mWarning: Setting modulepath is deprecated in puppet.conf. See http://links.puppetlabs.com/env-settings-deprecations
-      STDERR>    (at /usr/lib/ruby/site_ruby/1.8/puppet/settings.rb:1065:in `each')\e[0m
-      STDOUT> \e[mNotice: Preparing to upgrade 'pmtacceptance-postgresql' ...\e[0m
-      STDOUT> \e[mNotice: Found 'pmtacceptance-postgresql' (\e[0;36mv0.0.1\e[m) in #{master['distmoduledir']} ...\e[0m
-      STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-      STDOUT> \e[mNotice: Upgrading -- do not interrupt ...\e[0m
-      STDOUT> #{master['distmoduledir']}
-      STDOUT> └─┬ pmtacceptance-postgresql (\e[0;36mv0.0.1 -> v0.0.2\e[0m)
-      STDOUT>   ├─┬ pmtacceptance-java (\e[0;36mv1.6.0 -> v1.7.0\e[0m)
-      STDOUT>   │ └── pmtacceptance-stdlib (\e[0;36mv0.0.2 -> v1.0.0\e[0m) [#{testdir}/modules]
-      STDOUT>   └── pmtacceptance-stdlib (\e[0;36mv0.0.2 -> v1.0.0\e[0m) [#{testdir}/modules]
-    OUTPUT
+    pattern = Regexp.new([
+      ".*Notice: Preparing to upgrade 'pmtacceptance-postgresql' .*",
+      ".*Notice: Found 'pmtacceptance-postgresql' \\(.*v0.0.1.*\\) in #{master['distmoduledir']} .*",
+      ".*Notice: Downloading from https://forge.puppetlabs.com .*",
+      ".*Notice: Upgrading -- do not interrupt .*",
+      "#{master['distmoduledir']}",
+      "└─┬ pmtacceptance-postgresql \\(.*v0.0.1 -> v0.0.2.*\\)",
+      "  ├─┬ pmtacceptance-java \\(.*v1.6.0 -> v1.7.0.*\\)",
+      "  │ └── pmtacceptance-stdlib \\(.*v0.0.2 -> v1.0.0.*\\) \\[#{testdir}/modules\\]",
+      "  └── pmtacceptance-stdlib \\(.*v0.0.2 -> v1.0.0.*\\) \\[#{testdir}/modules\\]",
+    ].join("\n"))
+    assert_match(pattern, result.output)
   end
 end

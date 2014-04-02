@@ -22,43 +22,40 @@ with_puppet_running_on master, master_opts, testdir do
   on master, puppet("module install pmtacceptance-java --version 1.6.0 --modulepath #{master['distmoduledir']}")
   on master, puppet("module install pmtacceptance-java --version 1.7.0 --modulepath #{testdir}/modules")
   on master, puppet("module list") do
-    assert_output <<-OUTPUT
-      STDERR> \e[1;31mWarning: Setting modulepath is deprecated in puppet.conf. See http://links.puppetlabs.com/env-settings-deprecations
-      STDERR>    (at /usr/lib/ruby/site_ruby/1.8/puppet/settings.rb:1065:in `each')\e[0m
-      STDOUT> #{master['distmoduledir']}
-      STDOUT> ├── pmtacceptance-java (\e[0;36mv1.6.0\e[0m)
-      STDOUT> └── pmtacceptance-stdlib (\e[0;36mv1.0.0\e[0m)
-      STDOUT> #{testdir}/modules
-      STDOUT> ├── pmtacceptance-java (\e[0;36mv1.7.0\e[0m)
-      STDOUT> └── pmtacceptance-stdlib (\e[0;36mv1.0.0\e[0m)
-    OUTPUT
+    pattern = Regexp.new([
+      "#{master['distmoduledir']}",
+      "├── pmtacceptance-java \\(.*v1.6.0\e.*\\)",
+      "└── pmtacceptance-stdlib \\(.*v1.0.0.*\\)",
+      "#{testdir}/modules",
+      "├── pmtacceptance-java \\(.*v1.7.0.*\\)",
+      "└── pmtacceptance-stdlib \\(.*v1.0.0.*\\)",
+    ].join("\n"))
+    assert_match(pattern, result.output)
   end
 
   step "Try to upgrade a module that exists multiple locations in the module path"
   on master, puppet("module upgrade pmtacceptance-java"), :acceptable_exit_codes => [1] do
-    assert_output <<-OUTPUT
-      STDERR> \e[1;31mWarning: Setting modulepath is deprecated in puppet.conf. See http://links.puppetlabs.com/env-settings-deprecations
-      STDERR>    (at /usr/lib/ruby/site_ruby/1.8/puppet/settings.rb:1065:in `each')\e[0m
-      STDOUT> \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
-      STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java'
-      STDERR>   Module 'pmtacceptance-java' appears multiple places in the module path
-      STDERR>     'pmtacceptance-java' (v1.6.0) was found in #{master['distmoduledir']}
-      STDERR>     'pmtacceptance-java' (v1.7.0) was found in #{testdir}/modules
-      STDERR>     Use the `--modulepath` option to limit the search to specific directories\e[0m
-    OUTPUT
+    pattern = Regexp.new([
+      ".*Notice: Preparing to upgrade 'pmtacceptance-java' .*",
+      ".*Error: Could not upgrade module 'pmtacceptance-java'",
+      "  Module 'pmtacceptance-java' appears multiple places in the module path",
+      "    'pmtacceptance-java' \\(v1.6.0\\) was found in #{master['distmoduledir']}",
+      "    'pmtacceptance-java' \\(v1.7.0\\) was found in #{testdir}/modules",
+      "    Use the `--modulepath` option to limit the search to specific directories",
+    ].join("\n"))
+    assert_match(pattern, result.output)
   end
 
   step "Upgrade a module that exists multiple locations by restricting the --modulepath"
   on master, puppet("module upgrade pmtacceptance-java --modulepath #{master['distmoduledir']}") do
-    assert_output <<-OUTPUT
-      STDERR> \e[1;31mWarning: Setting modulepath is deprecated in puppet.conf. See http://links.puppetlabs.com/env-settings-deprecations
-      STDERR>    (at /usr/lib/ruby/site_ruby/1.8/puppet/settings.rb:1065:in `each')\e[0m
-      STDOUT> \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
-      STDOUT> \e[mNotice: Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[m) in #{master['distmoduledir']} ...\e[0m
-      STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-      STDOUT> \e[mNotice: Upgrading -- do not interrupt ...\e[0m
-      STDOUT> #{master['distmoduledir']}
-      STDOUT> └── pmtacceptance-java (\e[0;36mv1.6.0 -> v1.7.1\e[0m)
-    OUTPUT
+    pattern = Regexp.new([
+      ".*Notice: Preparing to upgrade 'pmtacceptance-java' .*",
+      ".*Notice: Found 'pmtacceptance-java' \\(.*v1.6.0.*\\) in #{master['distmoduledir']} .*",
+      ".*Notice: Downloading from https://forge.puppetlabs.com .*",
+      ".*Notice: Upgrading -- do not interrupt .*",
+      "#{master['distmoduledir']}",
+      "└── pmtacceptance-java \\(.*v1.6.0 -> v1.7.1.*\\)",
+    ].join("\n"))
+    assert_match(pattern, result.output)
   end
 end
