@@ -18,7 +18,11 @@ Puppet::Functions.create_function(:assert_type) do
   def assert_type(type, value)
     unless Puppet::Pops::Types::TypeCalculator.instance?(type,value)
       inferred_type = Puppet::Pops::Types::TypeCalculator.infer(value)
-      raise ArgumentError, "assert_type(): Expected type #{type} does not match actual: #{inferred_type}"
+      # Do not give all the details - i.e. format as Integer, instead of Integer[n, n] for exact value, which
+      # is just confusing. (OTOH: may need to revisit, or provide a better "type diff" output.
+      #
+      actual = Puppet::Pops::Types::TypeCalculator.generalize!(inferred_type)
+      raise Puppet::ParseError, "assert_type(): Expected type #{type} does not match actual: #{actual}"
     end
     value
   end
