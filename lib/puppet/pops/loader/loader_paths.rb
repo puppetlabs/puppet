@@ -15,7 +15,11 @@ module Puppet::Pops::Loader::LoaderPaths
     result =
     case type # typed_name.type
     when :function
-      [FunctionPath4x.new(loader), FunctionPath3x.new(loader), FunctionPathPP.new(loader)]
+      if Puppet[:biff] == true
+        [FunctionPath4x.new(loader), FunctionPath3x.new(loader), FunctionPathPP.new(loader)]
+      else
+        [FunctionPath4x.new(loader), FunctionPathPP.new(loader)]
+      end
 
     # when :xxx # TODO: Add all other types
 

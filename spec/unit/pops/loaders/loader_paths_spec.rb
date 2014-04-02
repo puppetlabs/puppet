@@ -5,6 +5,7 @@ require 'puppet/loaders'
 
 describe 'loader paths' do
   include PuppetSpec::Files
+  before(:each) { Puppet[:biff] = true }
 
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
 
