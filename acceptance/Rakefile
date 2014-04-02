@@ -24,7 +24,7 @@ module HarnessOptions
     :xml => true,
     :timesync => true,
     :repo_proxy => true,
-    :add_el_extras => true,
+    :add_el_extras => false,
     :preserve_hosts => 'onfail'
   }
 
