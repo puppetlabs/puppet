@@ -1,3 +1,5 @@
+require 'puppet/provider/package'
+
 Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality
   include Puppet::Util::Package
