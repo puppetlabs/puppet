@@ -105,7 +105,7 @@ describe 'module loaders' do
                   'foo3x.rb' => <<-CODE
                     Puppet::Parser::Functions::newfunction(
                       :foo3x, :type => :rvalue,
-                      :arity => 1,
+                      :arity => 1
                     ) do |args|
                       args[0]
                     end
