@@ -107,15 +107,24 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
           }.compact
           begin
             mounts.each do |mountpoint|
-              Dir.entries(mountpoint).select { |f|
-                f =~ /\.m{0,1}pkg$/i
-              }.each do |pkg|
-                installpkg("#{mountpoint}/#{pkg}", name, source)
+              temporary_directory = Dir.mktmpdir(name)
+              begin
+                FileUtils.cp_r Dir[File.join(mountpoint, '*')], temporary_directory
+
+                packages = Dir.entries(temporary_directory).select { |f|
+                  f =~ /\.m{0,1}pkg$/i
+                }.map { |f|
+                  File.join(temporary_directory, f)
+                }.each { |pkg|
+                  installpkg(pkg, name, source)
+                }
+              ensure
+                FileUtils.remove_entry(temporary_directory)
               end
             end
           ensure
             mounts.each do |mountpoint|
-              hdiutil "eject", mountpoint
+              hdiutil "eject", "-force", mountpoint
             end
           end
         end
