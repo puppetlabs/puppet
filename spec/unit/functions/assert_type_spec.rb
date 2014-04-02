@@ -18,7 +18,7 @@ describe 'the assert_type function' do
   it 'asserts non compliant type by raising an error' do
     expect do
       func.call({}, type(Integer), 'hello world')
-    end.to raise_error(ArgumentError, /does not match actual/)
+    end.to raise_error(Puppet::ParseError, /does not match actual/)
   end
 
   it 'checks that first argument is a type' do
