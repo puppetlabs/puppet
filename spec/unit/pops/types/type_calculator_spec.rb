@@ -1306,6 +1306,7 @@ describe 'The type calculator' do
       calculator.infer(Puppet::Pops::Types::PPatternType.new()   ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PVariantType.new()   ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PTupleType.new()     ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::POptionalType.new()  ).is_a?(ptype).should() == true
     end
 
     it 'should infer PType as the type of all other types' do
@@ -1329,6 +1330,7 @@ describe 'The type calculator' do
       calculator.string(calculator.infer(Puppet::Pops::Types::PVariantType.new()   )).should == "Type[Variant]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PPatternType.new()   )).should == "Type[Pattern]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PTupleType.new()     )).should == "Type[Tuple]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::POptionalType.new()  )).should == "Type[Optional]"
     end
 
     it "computes the common type of PType's type parameter" do

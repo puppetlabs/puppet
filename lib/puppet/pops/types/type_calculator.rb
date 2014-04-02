@@ -669,7 +669,7 @@ class Puppet::Pops::Types::TypeCalculator
   # The type of all types is PType
   # @api private
   #
-  def infer_PObjectType(o)
+  def infer_PAbstractType(o)
     type = Types::PType.new()
     type.type = o.copy
     type
