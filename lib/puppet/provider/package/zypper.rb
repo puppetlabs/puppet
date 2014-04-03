@@ -82,23 +82,4 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     # zypper install can be used for update, too
     self.install
   end
-
-  def install_options
-    join_options(resource[:install_options])
-  end
-
-  def join_options(options)
-    return unless options
-
-    options.collect do |val|
-      case val
-      when Hash
-        val.keys.sort.collect do |k|
-          "#{k}=#{val[k]}"
-        end
-      else
-        val
-      end
-    end.flatten
-  end
 end

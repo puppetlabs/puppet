@@ -72,7 +72,7 @@ describe provider_class do
       resource[:ensure] = :installed
       resource[:install_options] = ['-t', {'-x' => 'expackage'}]
 
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', ["-t", "-x 'expackage'"], :install, 'mypackage')
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', ['-t', '-x=expackage'], :install, 'mypackage')
       provider.install
     end
   end

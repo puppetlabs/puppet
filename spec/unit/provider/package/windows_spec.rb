@@ -241,7 +241,7 @@ describe Puppet::Type.type(:package).provider(:windows) do
     end
 
     it 'should sort hash keys' do
-      provider.join_options([{'b' => '2', 'a' => '1', 'c' => '3'}]).should == ['a=1 b=2 c=3']
+      provider.join_options([{'b' => '2', 'a' => '1', 'c' => '3'}]).should == ['a=1', 'b=2', 'c=3']
     end
 
     it 'should return strings and hashes' do

@@ -122,19 +122,4 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
   def shell_quote(value)
     value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
   end
-
-  def join_options(options)
-    return unless options
-
-    options.collect do |val|
-      case val
-      when Hash
-        val.keys.sort.collect do |k|
-          "#{k}=#{val[k]}"
-        end.join(' ')
-      else
-        val
-      end
-    end
-  end
 end
