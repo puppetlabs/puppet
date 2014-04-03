@@ -17,7 +17,7 @@ module Puppet::Pops::Evaluator::ExternalSyntaxSupport
     # Call checker and give it the location information from the expression
     # (as opposed to where the heredoc tag is (somewhere on the line above)).
     acceptor = Puppet::Pops::Validation::Acceptor.new()
-    source_pos = find_closest_positioned(reference_expr)
+    source_pos = @runtime.find_closest_positioned(reference_expr)
     checker.check(result, syntax, acceptor, source_pos)
 
     if acceptor.error_count > 0

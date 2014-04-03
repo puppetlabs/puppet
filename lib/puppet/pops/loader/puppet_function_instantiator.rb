@@ -53,8 +53,9 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
 
   def self.create_function_class(function_definition, closure_scope)
     method_name = :"#{function_definition.name.split(/::/).slice(-1)}"
+    runtime = Puppet::Pops::Evaluator::Runtime3Support.new
     closure = Puppet::Pops::Evaluator::Closure.new(
-      Puppet::Pops::Evaluator::EvaluatorImpl.new(),
+      Puppet::Pops::Evaluator::EvaluatorImpl.new(runtime),
         function_definition,
         closure_scope)
      required_optional = function_definition.parameters.reduce([0, 0]) do |memo, p|

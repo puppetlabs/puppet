@@ -18,14 +18,11 @@ module EvaluatorRspecHelper
     node = Puppet::Node.new('localhost')
     compiler = Puppet::Parser::Compiler.new(node)
 
-    # Compiler must create the top scope
-#    compiler.send(:evaluate_main)
-
     # compiler creates the top scope if one is not present
     top_scope = compiler.topscope()
-    # top_scope = Puppet::Parser::Scope.new(compiler)
+    runtime = Puppet::Pops::Evaluator::Runtime3Support.new
 
-    evaluator = Puppet::Pops::Evaluator::EvaluatorImpl.new
+    evaluator = Puppet::Pops::Evaluator::EvaluatorImpl.new(runtime)
     result = evaluator.evaluate(in_top_scope.current, top_scope)
     if in_named_scope
       other_scope = Puppet::Parser::Scope.new(compiler)
@@ -54,8 +51,9 @@ module EvaluatorRspecHelper
 
     # compiler creates the top scope if one is not present
     top_scope = compiler.topscope()
+    runtime = Puppet::Pops::Evaluator::Runtime3Support.new
 
-    evaluator = Puppet::Pops::Evaluator::EvaluatorImpl.new
+    evaluator = Puppet::Pops::Evaluator::EvaluatorImpl.new(runtime)
     result = evaluator.evaluate(in_top_scope.current, top_scope)
     if in_local_scope
       # This is really bad in 3.x scope

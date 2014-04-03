@@ -3,8 +3,7 @@
 # to make it easier to later refactor the evaluator for better implementations of the 3x classes.
 #
 # @api private
-module Puppet::Pops::Evaluator::Runtime3Support
-
+class Puppet::Pops::Evaluator::Runtime3Support
   # Fails the evaluation of _semantic_ with a given issue.
   #
   # @param issue [Puppet::Pops::Issue] the issue to report
@@ -262,7 +261,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     )
   end
 
-  def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
+  def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters, type_calculator)
 
     # TODO: Unknown resource causes creation of Resource to fail with ArgumentError, should give
     # a proper Issue. Now the result is "Error while evaluating a Resource Statement" with the message
@@ -298,9 +297,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
         end
         scope.compiler.add_resource(scope, resource)
         scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == 'class'
+
         # Turn the resource into a PType (a reference to a resource type)
         # weed out nil's
-        resource_to_ptype(resource)
+        if resource.nil?
+          nil
+        else
+          type_calculator.infer(resource)
+        end
     end
   end
 
@@ -462,6 +466,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
     Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
   end
 
+  def find_closest_positioned(o)
+    return nil if o.nil? || o.is_a?(Puppet::Pops::Model::Program)
+    o.offset.nil? ? find_closest_positioned(o.eContainer) : Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
+  end
+
   private
 
   # Produces an array with [type, title] from a PCatalogEntryType
@@ -482,11 +491,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     source_pos = Puppet::Pops::Utils.find_closest_positioned(o)
     return [nil, -1] unless source_pos
     [source_pos.locator.file, source_pos.line]
-  end
-
-  def find_closest_positioned(o)
-    return nil if o.nil? || o.is_a?(Puppet::Pops::Model::Program)
-    o.offset.nil? ? find_closest_positioned(o.eContainer) : Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
   end
 
   # Creates a diagnostic producer

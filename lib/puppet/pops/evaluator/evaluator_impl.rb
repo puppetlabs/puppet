@@ -24,10 +24,6 @@ require 'puppet/pops/evaluator/external_syntax_support'
 class Puppet::Pops::Evaluator::EvaluatorImpl
   include Puppet::Pops::Utils
 
-  # Provides access to the Puppet 3.x runtime (scope, etc.)
-  # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
-  #
-  include Puppet::Pops::Evaluator::Runtime3Support
   include Puppet::Pops::Evaluator::ExternalSyntaxSupport
 
   # This constant is not defined as Float::INFINITY in Ruby 1.8.7 (but is available in later version
@@ -40,7 +36,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   Issues = Puppet::Pops::Issues
 
-  def initialize
+  def initialize(runtime)
+    @runtime = runtime
+
     @@eval_visitor   ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
     @@lvalue_visitor   ||= Puppet::Pops::Visitor.new(self, "lvalue", 1, 1)
     @@assign_visitor   ||= Puppet::Pops::Visitor.new(self, "assign", 3, 3)
@@ -50,15 +48,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     @@type_parser      ||= Puppet::Pops::Types::TypeParser.new()
 
     @@compare_operator     ||= Puppet::Pops::Evaluator::CompareOperator.new()
-    @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new()
-
-    # Initialize the runtime module
-    Puppet::Pops::Evaluator::Runtime3Support.instance_method(:initialize).bind(self).call()
-  end
-
-  # @api private
-  def type_calculator
-    @@type_calculator
+    @@relationship_operator ||= Puppet::Pops::Evaluator::RelationshipOperator.new(@runtime)
   end
 
   # Polymorphic evaluate - calls eval_TYPE
@@ -86,7 +76,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       if e.is_a? Puppet::ParseError
         raise e
       end
-      fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
+      @runtime.fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)
     end
   end
 
@@ -136,7 +126,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     parameters = pblock.parameters || []
 
     if !spill_over && args_hash.size > parameters.size
-      raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}" 
+      raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}"
     end
 
     # associate values with parameters
@@ -163,13 +153,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     # Some ruby implementations does not like creating variable on return
     result = nil
     begin
-      scope_memo = get_scope_nesting_level(scope)
+      scope_memo = @runtime.get_scope_nesting_level(scope)
       # change to create local scope_from - cannot give it file and line - that is the place of the call, not
       # "here"
-      create_local_scope_from(scope_hash, scope)
+      @runtime.create_local_scope_from(scope_hash, scope)
       result = evaluate(pblock.body, scope)
     ensure
-      set_scope_nesting_level(scope, scope_memo)
+      @runtime.set_scope_nesting_level(scope, scope_memo)
     end
     result
   end
@@ -227,13 +217,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     # Some ruby implementations does not like creating variable on return
     result = nil
     begin
-      scope_memo = get_scope_nesting_level(scope)
+      scope_memo = @runtime.get_scope_nesting_level(scope)
       # change to create local scope_from - cannot give it file and line - that is the place of the call, not
       # "here"
-      create_local_scope_from(Hash[evaluated], scope)
+      @runtime.create_local_scope_from(Hash[evaluated], scope)
       result = evaluate(pblock.body, scope)
     ensure
-      set_scope_nesting_level(scope, scope_memo)
+      @runtime.set_scope_nesting_level(scope, scope_memo)
     end
     result
   end
@@ -248,7 +238,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Catches all illegal lvalues
   #
   def lvalue_Object(o, scope)
-    fail(Issues::ILLEGAL_ASSIGNMENT, o)
+    @runtime.fail(Issues::ILLEGAL_ASSIGNMENT, o)
   end
 
   # Assign value to named variable.
@@ -263,20 +253,20 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   def assign_String(name, value, o, scope)
     if name =~ /::/
-      fail(Issues::CROSS_SCOPE_ASSIGNMENT, o.left_expr, {:name => name})
+      @runtime.fail(Issues::CROSS_SCOPE_ASSIGNMENT, o.left_expr, {:name => name})
     end
-    set_variable(name, value, o, scope)
+    @runtime.set_variable(name, value, o, scope)
     value
   end
 
   def assign_Numeric(n, value, o, scope)
-    fail(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o.left_expr, {:varname => n.to_s})
+    @runtime.fail(Issues::ILLEGAL_NUMERIC_ASSIGNMENT, o.left_expr, {:varname => n.to_s})
   end
 
   # Catches all illegal assignment (e.g. 1 = 2, {'a'=>1} = 2, etc)
   #
   def assign_Object(name, value, o, scope)
-    fail(Issues::ILLEGAL_ASSIGNMENT, o)
+    @runtime.fail(Issues::ILLEGAL_ASSIGNMENT, o)
   end
 
   def eval_Factory(o, scope)
@@ -324,11 +314,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   def eval_NotExpression(o, scope)
-    ! is_true?(evaluate(o.expr, scope))
+    ! @runtime.is_true?(evaluate(o.expr, scope))
   end
 
   def eval_UnaryMinusExpression(o, scope)
-    - coerce_numeric(evaluate(o.expr, scope), o, scope)
+    - @runtime.coerce_numeric(evaluate(o.expr, scope), o, scope)
   end
 
   # Abstract evaluation, returns array [left, right] with the evaluated result of left_expr and
@@ -356,7 +346,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
     when :'+='
       # if value does not exist and strict is on, looking it up fails, else it is nil or :undef
-      existing_value = get_variable_value(name, o, scope)
+      existing_value = @runtime.get_variable_value(name, o, scope)
       begin
         if existing_value.nil? || existing_value == :undef
           assign(name, value, o, scope)
@@ -366,7 +356,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
           assign(name, calculate(existing_value, value, :'+', o.left_expr, o.right_expr, scope), o, scope)
         end
       rescue ArgumentError => e
-        fail(Issues::APPEND_FAILED, o, {:message => e.message})
+        @runtime.fail(Issues::APPEND_FAILED, o, {:message => e.message})
       end
 
     when :'-='
@@ -374,19 +364,19 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       # include any values the user wants deleted anyway :-)
       #
       # if value does not exist and strict is on, looking it up fails, else it is nil or :undef
-      existing_value = get_variable_value(name, o, scope)
+      existing_value = @runtime.get_variable_value(name, o, scope)
       begin
       if existing_value.nil? || existing_value == :undef
         assign(name, :undef, o, scope)
       else
         # Delegate to delete function to deal with check of LHS, and perform deletion
-        assign(name, delete(get_variable_value(name, o, scope), value), o, scope)
+        assign(name, delete(@runtime.get_variable_value(name, o, scope), value), o, scope)
       end
       rescue ArgumentError => e
-        fail(Issues::APPEND_FAILED, o, {:message => e.message}, e)
+        @runtime.fail(Issues::APPEND_FAILED, o, {:message => e.message}, e)
       end
     else
-      fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+      @runtime.fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
     end
     value
   end
@@ -401,7 +391,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     begin
       result = calculate(left, right, o.operator, o.left_expr, o.right_expr, scope)
     rescue ArgumentError => e
-      fail(Issues::RUNTIME_ERROR, o, {:detail => e.message}, e)
+      @runtime.fail(Issues::RUNTIME_ERROR, o, {:detail => e.message}, e)
     end
     result
   end
@@ -411,7 +401,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   def calculate(left, right, operator, left_o, right_o, scope)
     unless ARITHMETIC_OPERATORS.include?(operator)
-      fail(Issues::UNSUPPORTED_OPERATOR, left_o.eContainer, {:operator => o.operator})
+      @runtime.fail(Issues::UNSUPPORTED_OPERATOR, left_o.eContainer, {:operator => o.operator})
     end
 
     if (left.is_a?(Array) || left.is_a?(Hash)) && COLLECTION_OPERATORS.include?(operator)
@@ -423,27 +413,27 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         delete(left, right)
       when :'<<'
         unless left.is_a?(Array)
-          fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
+          @runtime.fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
         end
         left + [right]
       end
     else
       # Handle operation on numeric
-      left = coerce_numeric(left, left_o, scope)
-      right = coerce_numeric(right, right_o, scope)
+      left = @runtime.coerce_numeric(left, left_o, scope)
+      right = @runtime.coerce_numeric(right, right_o, scope)
       begin
         if operator == :'%' && (left.is_a?(Float) || right.is_a?(Float))
           # Deny users the fun of seeing severe rounding errors and confusing results
-          fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
+          @runtime.fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
         end
         result = left.send(operator, right)
       rescue NoMethodError => e
-        fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
+        @runtime.fail(Issues::OPERATOR_NOT_APPLICABLE, left_o, {:operator => operator, :left_value => left})
       rescue ZeroDivisionError => e
-        fail(Issues::DIV_BY_ZERO, right_o)
+        @runtime.fail(Issues::DIV_BY_ZERO, right_o)
       end
       if result == INFINITY || result == -INFINITY
-        fail(Issues::RESULT_IS_INFINITY, left_o, {:operator => operator})
+        @runtime.fail(Issues::RESULT_IS_INFINITY, left_o, {:operator => operator})
       end
       result
     end
@@ -481,7 +471,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_AccessExpression(o, scope)
     left = evaluate(o.left_expr, scope)
     keys = o.keys.nil? ? [] : o.keys.collect {|key| evaluate(key, scope) }
-    Puppet::Pops::Evaluator::AccessOperator.new(o).access(left, scope, *keys)
+    Puppet::Pops::Evaluator::AccessOperator.new(o, @runtime).access(left, scope, *keys)
   end
 
   # Evaluates <, <=, >, >=, and ==
@@ -512,7 +502,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         # right can be assigned to left
         @@type_calculator.assignable?(left, right)
       else
-        fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+        @runtime.fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
       end
     else
       case o.operator
@@ -529,11 +519,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       when :'>='
         @@compare_operator.compare(left,right) >= 0
       else
-        fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
+        @runtime.fail(Issues::UNSUPPORTED_OPERATOR, o, {:operator => o.operator})
       end
     end
     rescue ArgumentError => e
-      fail(Issues::COMPARISON_NOT_POSSIBLE, o, {
+      @runtime.fail(Issues::COMPARISON_NOT_POSSIBLE, o, {
         :operator => o.operator,
         :left_value => left,
         :right_value => right,
@@ -573,14 +563,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     begin
       pattern = Regexp.new(pattern) unless pattern.is_a?(Regexp)
     rescue StandardError => e
-      fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message}, e)
+      @runtime.fail(Issues::MATCH_NOT_REGEXP, o.right_expr, {:detail => e.message}, e)
     end
     unless left.is_a?(String)
-      fail(Issues::MATCH_NOT_STRING, o.left_expr, {:left_value => left})
+      @runtime.fail(Issues::MATCH_NOT_STRING, o.left_expr, {:left_value => left})
     end
 
     matched = pattern.match(left) # nil, or MatchData
-    set_match_data(matched, o, scope) # creates ephemeral
+    @runtime.set_match_data(matched, o, scope) # creates ephemeral
 
     # convert match result to Boolean true, or false
     o.operator == :'=~' ? !!matched : !matched
@@ -598,7 +588,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # b is only evaluated if a is true
   #
   def eval_AndExpression o, scope
-    is_true?(evaluate(o.left_expr, scope)) ? is_true?(evaluate(o.right_expr, scope)) : false
+    @runtime.is_true?(evaluate(o.left_expr, scope)) ? @runtime.is_true?(evaluate(o.right_expr, scope)) : false
   end
 
   # @example
@@ -606,7 +596,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # b is only evaluated if a is false
   #
   def eval_OrExpression o, scope
-    is_true?(evaluate(o.left_expr, scope)) ? true : is_true?(evaluate(o.right_expr, scope))
+    @runtime.is_true?(evaluate(o.left_expr, scope)) ? true : @runtime.is_true?(evaluate(o.right_expr, scope))
   end
 
   # Evaluates each entry of the literal list and creates a new Array
@@ -715,20 +705,20 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     o.bodies.map do |body|
       titles = [evaluate(body.title, scope)].flatten
       evaluated_parameters = body.operations.map {|op| evaluate(op, scope) }
-      create_resources(o, scope, virtual, exported, type_name, titles, evaluated_parameters)
+      @runtime.create_resources(o, scope, virtual, exported, type_name, titles, evaluated_parameters, @@type_calculator)
     end.flatten.compact
   end
 
   def eval_ResourceOverrideExpression(o, scope)
     evaluated_resources = evaluate(o.resources, scope)
     evaluated_parameters = o.operations.map { |op| evaluate(op, scope) }
-    create_resource_overrides(o, scope, [evaluated_resources].flatten, evaluated_parameters)
+    @runtime.create_resource_overrides(o, scope, [evaluated_resources].flatten, evaluated_parameters)
     evaluated_resources
   end
 
   # Produces 3x array of parameters
   def eval_AttributeOperation(o, scope)
-    create_resource_parameter(o, scope, o.attribute_name, evaluate(o.value_expr, scope), o.operator)
+    @runtime.create_resource_parameter(o, scope, o.attribute_name, evaluate(o.value_expr, scope), o.operator)
   end
 
   # Sets default parameter values for a type, produces the type
@@ -736,7 +726,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_ResourceDefaultsExpression(o, scope)
     type_name = o.type_ref.value # a QualifiedName's string value
     evaluated_parameters = o.operations.map {|op| evaluate(op, scope) }
-    create_resource_defaults(o, scope, type_name, evaluated_parameters)
+    @runtime.create_resource_defaults(o, scope, type_name, evaluated_parameters)
     # Produce the type
     evaluate(o.type_ref, scope)
   end
@@ -751,32 +741,32 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       # ok
     when Puppet::Pops::Model::RenderStringExpression
       # helpful to point out this easy to make Epp error
-      fail(Issues::ILLEGAL_EPP_PARAMETERS, o)
+      @runtime.fail(Issues::ILLEGAL_EPP_PARAMETERS, o)
     else
-      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
+      @runtime.fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = o.functor_expr.value
     evaluated_arguments = o.arguments.collect {|arg| evaluate(arg, scope) }
     # wrap lambda in a callable block if it is present
     evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
-    call_function(name, evaluated_arguments, o, scope)
+    @runtime.call_function(name, evaluated_arguments, o, scope)
   end
 
   # Evaluation of CallMethodExpression handles a NamedAccessExpression functor (receiver.function_name)
   #
   def eval_CallMethodExpression(o, scope)
     unless o.functor_expr.is_a? Puppet::Pops::Model::NamedAccessExpression
-      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function accessor', :container => o})
+      @runtime.fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function accessor', :container => o})
     end
     receiver = evaluate(o.functor_expr.left_expr, scope)
     name = o.functor_expr.right_expr
     unless name.is_a? Puppet::Pops::Model::QualifiedName
-      fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
-    end 
+      @runtime.fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
+    end
     name = name.value # the string function name
     evaluated_arguments = [receiver] + (o.arguments || []).collect {|arg| evaluate(arg, scope) }
     evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
-    call_function(name, evaluated_arguments, o, scope)
+    @runtime.call_function(name, evaluated_arguments, o, scope)
   end
 
   # @example
@@ -815,7 +805,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Evaluates Puppet DSL `if`
   def eval_IfExpression o, scope
     with_guarded_scope(scope) do
-      if is_true?(evaluate(o.test, scope))
+      if @runtime.is_true?(evaluate(o.test, scope))
         evaluate(o.then_expr, scope)
       else
         evaluate(o.else_expr, scope)
@@ -826,7 +816,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Evaluates Puppet DSL `unless`
   def eval_UnlessExpression o, scope
     with_guarded_scope(scope) do
-      unless is_true?(evaluate(o.test, scope))
+      unless @runtime.is_true?(evaluate(o.test, scope))
         evaluate(o.then_expr, scope)
       else
         evaluate(o.else_expr, scope)
@@ -850,11 +840,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     when String
     when Numeric
     else
-      fail(Issues::ILLEGAL_VARIABLE_EXPRESSION, o.expr)
+      @runtime.fail(Issues::ILLEGAL_VARIABLE_EXPRESSION, o.expr)
     end
     # TODO: Check for valid variable name (Task for validator)
     # TODO: semantics of undefined variable in scope, this just returns what scope does == value or nil
-    get_variable_value(name, o, scope)
+    @runtime.get_variable_value(name, o, scope)
   end
 
   # Evaluates double quoted strings that may contain interpolation
@@ -877,7 +867,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_TextExpression o, scope
     if o.expr.is_a?(Puppet::Pops::Model::QualifiedName)
       # TODO: formalize, when scope returns nil, vs error
-      string(get_variable_value(o.expr.value, o, scope), scope)
+      string(@runtime.get_variable_value(o.expr.value, o, scope), scope)
     else
       string(evaluate(o.expr, scope), scope)
     end
@@ -1035,7 +1025,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     if right.is_a?(Regexp)
       return false unless left.is_a? String
       matched = right.match(left)
-      set_match_data(matched, o, scope) # creates or clears ephemeral
+      @runtime.set_match_data(matched, o, scope) # creates or clears ephemeral
       !!matched # convert to boolean
     elsif right.is_a?(Puppet::Pops::Types::PAbstractType)
       # right is a type and left is not - check if left is an instance of the given type
@@ -1050,11 +1040,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   def with_guarded_scope(scope)
-    scope_memo = get_scope_nesting_level(scope)
+    scope_memo = @runtime.get_scope_nesting_level(scope)
     begin
       yield
     ensure
-      set_scope_nesting_level(scope, scope_memo)
+      @runtime.set_scope_nesting_level(scope, scope_memo)
     end
   end
 

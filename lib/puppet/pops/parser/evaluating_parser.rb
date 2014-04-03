@@ -5,8 +5,9 @@ class Puppet::Pops::Parser::EvaluatingParser
 
   attr_reader :parser
 
-  def initialize()
+  def initialize(runtime = Puppet::Pops::Evaluator::Runtime3Support.new)
     @parser = Puppet::Pops::Parser::Parser.new()
+    @runtime = runtime
   end
 
   def parse_string(s, file_source = 'unknown')
@@ -171,9 +172,8 @@ class Puppet::Pops::Parser::EvaluatingParser
   # This is a temporary solution to making it possible to use the new evaluator. The main class
   # will eventually have this behavior instead of using transformation to Puppet 3.x AST
   class Transitional < Puppet::Pops::Parser::EvaluatingParser
-
     def evaluator
-      @@evaluator ||= Puppet::Pops::Evaluator::EvaluatorImpl.new()
+      @@evaluator ||= Puppet::Pops::Evaluator::EvaluatorImpl.new(@runtime)
       @@evaluator
     end
 
@@ -193,8 +193,9 @@ class Puppet::Pops::Parser::EvaluatingParser
   end
 
   class EvaluatingEppParser < Transitional
-    def initialize()
+    def initialize(runtime = Puppet::Pops::Evaluator::Runtime3Support.new)
       @parser = Puppet::Pops::Parser::EppParser.new()
+      @runtime = runtime
     end
   end
 end
