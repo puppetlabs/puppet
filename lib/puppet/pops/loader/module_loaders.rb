@@ -155,16 +155,17 @@ module Puppet::Pops::Loader::ModuleLoaders
     attr_reader :smart_paths
     attr_reader :path_index
 
-    # Create a kind of ModuleLoader for one module
-    # The parameters are:
-    # * parent_loader - typically the loader for the root
-    # * module_name - the name of the module (non qualified name)
-    # * path - the path to the root of the module (semantics defined by subclass)
+    # Create a kind of ModuleLoader for one module (Puppet Module, or module like)
+    #
+    # @param parent_loader [Puppet::Pops::Loader::Loader] typically the loader for the environment or root
+    # @param module_name [String] the name of the module (non qualified name), may be nil for "modules" only containing globals
+    # @param path [String] the path to the root of the module (semantics defined by subclass)
+    # @param loader_name [String] a name that identifies the loader
     #
     def initialize(parent_loader, module_name, path, loader_name)
       super
       unless Puppet::FileSystem.directory?(path)
-        raise ArgumentError, "The given module root path '#{path}' is not a directory (required for filesystem based module path entry)"
+        raise ArgumentError, "The given module root path '#{path}' is not a directory (required for file system based module path entry)"
       end
       @path_index = Set.new()
     end
@@ -224,5 +225,4 @@ module Puppet::Pops::Loader::ModuleLoaders
       "(ModuleLoader::GemBased '#{loader_name()}' '#{@gem_ref}' [#{module_name()}])"
     end
   end
-
 end

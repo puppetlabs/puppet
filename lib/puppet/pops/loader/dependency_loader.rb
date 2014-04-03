@@ -14,9 +14,9 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
 
   # Creates a DependencyLoader for one parent loader
   #
-  # @param parent_loader [Puppet::Pops::Loader] - typically a module loader for the root
-  # @param name [String] - the name of the dependency-loader (used for debugging and tracing only)
-  # @param depedency_loaders [Array<Puppet::Pops::Loader>] - array of loaders for modules this module depends on
+  # @param parent_loader [Puppet::Pops::Loader] typically a module loader for the root
+  # @param name [String] the name of the dependency-loader (used for debugging and tracing only)
+  # @param depedency_loaders [Array<Puppet::Pops::Loader>] array of loaders for modules this module depends on
   #
   def initialize(parent_loader, name, dependency_loaders)
     super parent_loader, name
