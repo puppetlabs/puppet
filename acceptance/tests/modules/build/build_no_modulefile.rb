@@ -13,10 +13,11 @@ PP
 
 step "Try to build a module with no modulefile"
 on master, puppet("module build #{master['distmoduledir']}/nginx"), :acceptable_exit_codes => [1] do
-  assert_equal <<-OUTPUT, stderr
-\e[1;31mError: Unable to find module root at #{master['distmoduledir']}/nginx\e[0m
-\e[1;31mError: Try 'puppet help module build' for usage\e[0m
-  OUTPUT
+  pattern = Regexp.new([
+    ".*Error: Unable to find module root at #{master['distmoduledir']}/nginx.*",
+    ".*Error: Try 'puppet help module build' for usage.*",
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.stderr)
 end
 on master, "[ ! -d #{master['distmoduledir']}/nginx/pkg/puppetlabs-nginx-0.0.1 ]"
 on master, "[ ! -f #{master['distmoduledir']}/nginx/pkg/puppetlabs-nginx-0.0.1.tar.gz ]"

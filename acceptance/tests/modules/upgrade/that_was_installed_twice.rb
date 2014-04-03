@@ -42,7 +42,7 @@ with_puppet_running_on master, master_opts, testdir do
       "    'pmtacceptance-java' \\(v1.6.0\\) was found in #{master['distmoduledir']}",
       "    'pmtacceptance-java' \\(v1.7.0\\) was found in #{testdir}/modules",
       "    Use the `--modulepath` option to limit the search to specific directories",
-    ].join("\n"))
+    ].join("\n"), Regexp::MULTILINE)
     assert_match(pattern, result.output)
   end
 
@@ -55,7 +55,7 @@ with_puppet_running_on master, master_opts, testdir do
       ".*Notice: Upgrading -- do not interrupt .*",
       "#{master['distmoduledir']}",
       "└── pmtacceptance-java \\(.*v1.6.0 -> v1.7.1.*\\)",
-    ].join("\n"))
+    ].join("\n"), Regexp::MULTILINE)
     assert_match(pattern, result.output)
   end
 end

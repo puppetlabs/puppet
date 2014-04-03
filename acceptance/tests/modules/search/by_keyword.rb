@@ -6,7 +6,6 @@ stub_forge_on(master)
 step 'Search for a module by exact keyword'
 
 on master, puppet("module search github") do
-  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 \e[mNotice: Searching https://forge.puppetlabs.com ...\e[0m
 NAME               DESCRIPTION                    AUTHOR          KEYWORDS      

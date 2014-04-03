@@ -41,9 +41,9 @@ apply_manifest_on master, %Q{
 
 check_module_uninstall_in = lambda do |environment, environment_path|
   on master, "puppet module uninstall jimmy-crakorn --config=#{puppet_conf} --environment=#{environment}" do
-    assert_output <<-OUTPUT
-      \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
-      Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{environment_path}
+    assert_equal <<-OUTPUT, stdout
+\e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
+Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{environment_path}
     OUTPUT
   end
   on master, "[ ! -d #{environment_path}/crakorn ]"

@@ -48,14 +48,12 @@ on master, "[ -d #{master['sitemoduledir']}/crakorn ]"
 
 step "List the installed modules"
 on master, puppet("module list") do
-  assert_equal '', stderr
   assert_match /jimmy-crakorn/, stdout, 'Could not find jimmy crakorn'
   assert_match /jimmy-appleseed/, stdout, 'Could not find jimmy appleseed, but then again... wasnt it johnny appleseed?'
 end
 
 step "List the installed modules as a dependency tree"
 on master, puppet("module list --tree") do
-  assert_equal '', stderr
   assert_match /jimmy-crakorn.*\[#{master['sitemoduledir']}\]/, stdout, 'Could not find jimmy crakorn'
   assert_match /jimmy-appleseed.*\[#{master['distmoduledir']}\]/, stdout, 'Could not find jimmy appleseed, but then again... wasnt it johnny appleseed?'
 end

@@ -32,54 +32,58 @@ PP
 
 on master, puppet("module install pmtacceptance-java --version 1.6.0")
 on master, puppet("module list --modulepath #{master['distmoduledir']}") do
-  assert_output <<-OUTPUT
-    #{master['distmoduledir']}
-    ├── nginx (\e[0;36m???\e[0m)
-    ├── notpmtacceptance-unicorns (\e[0;36mv0.0.3\e[0m)
-    ├── pmtacceptance-java (\e[0;36mv1.6.0\e[0m)
-    └── pmtacceptance-stdlib (\e[0;36mv1.0.0\e[0m)
+  assert_equal <<-OUTPUT, stdout
+#{master['distmoduledir']}
+├── nginx (\e[0;36m???\e[0m)
+├── notpmtacceptance-unicorns (\e[0;36mv0.0.3\e[0m)
+├── pmtacceptance-java (\e[0;36mv1.6.0\e[0m)
+└── pmtacceptance-stdlib (\e[0;36mv1.0.0\e[0m)
   OUTPUT
 end
 
 step "Try to upgrade a module that is not installed"
 on master, puppet("module upgrade pmtacceptance-nginx"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to upgrade 'pmtacceptance-nginx' ...\e[0m
-    STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-nginx'
-    STDERR>   Module 'pmtacceptance-nginx' is not installed
-    STDERR>     Use `puppet module install` to install this module\e[0m
-  OUTPUT
+  pattern = Regexp.new([
+    %Q{.*Notice: Preparing to upgrade 'pmtacceptance-nginx' .*},
+    %Q{.*Error: Could not upgrade module 'pmtacceptance-nginx'},
+    %Q{  Module 'pmtacceptance-nginx' is not installed},
+    %Q{    Use `puppet module install` to install this module.*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.output)
 end
 
 step "Try to upgrade a local module"
 on master, puppet("module upgrade nginx"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to upgrade 'nginx' ...\e[0m
-    STDOUT> \e[mNotice: Found 'nginx' (\e[0;36m???\e[m) in #{master['distmoduledir']} ...\e[0m
-    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    STDERR> \e[1;31mError: Could not upgrade module 'nginx' (??? -> latest)
-    STDERR>   Module 'nginx' does not exist on https://forge.puppetlabs.com\e[0m
-  OUTPUT
+  pattern = Regexp.new([
+    %Q{.*Notice: Preparing to upgrade 'nginx' .*},
+    %Q{.*Notice: Found 'nginx' \\(.*\\?\\?\\?.*\\) in #{master['distmoduledir']} .*},
+    %Q{.*Notice: Downloading from https://forge.puppetlabs.com .*},
+    %Q{.*Error: Could not upgrade module 'nginx' \\(\\?\\?\\? -> latest\\)},
+    %Q{  Module 'nginx' does not exist on https://forge.puppetlabs.com.*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.output)
 end
 
 step "Try to upgrade a module that doesn't exist"
 on master, puppet("module upgrade notpmtacceptance-unicorns"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to upgrade 'notpmtacceptance-unicorns' ...\e[0m
-    STDOUT> \e[mNotice: Found 'notpmtacceptance-unicorns' (\e[0;36mv0.0.3\e[m) in #{master['distmoduledir']} ...\e[0m
-    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    STDERR> \e[1;31mError: Could not upgrade module 'notpmtacceptance-unicorns' (v0.0.3 -> latest)
-    STDERR>   Module 'notpmtacceptance-unicorns' does not exist on https://forge.puppetlabs.com\e[0m
-  OUTPUT
+  pattern = Regexp.new([
+    %Q{.*Notice: Preparing to upgrade 'notpmtacceptance-unicorns' .*},
+    %Q{.*Notice: Found 'notpmtacceptance-unicorns' \\(.*v0.0.3.*\\) in #{master['distmoduledir']} .*},
+    %Q{.*Notice: Downloading from https://forge.puppetlabs.com .*},
+    %Q{.*Error: Could not upgrade module 'notpmtacceptance-unicorns' \\(v0.0.3 -> latest\\)},
+    %Q{  Module 'notpmtacceptance-unicorns' does not exist on https://forge.puppetlabs.com.*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.output)
 end
 
 step "Try to upgrade an installed module to a version that doesn't exist"
 on master, puppet("module upgrade pmtacceptance-java --version 2.0.0"), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to upgrade 'pmtacceptance-java' ...\e[0m
-    STDOUT> \e[mNotice: Found 'pmtacceptance-java' (\e[0;36mv1.6.0\e[m) in #{master['distmoduledir']} ...\e[0m
-    STDOUT> \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    STDERR> \e[1;31mError: Could not upgrade module 'pmtacceptance-java' (v1.6.0 -> v2.0.0)
-    STDERR>   No version matching '2.0.0' exists on https://forge.puppetlabs.com\e[0m
-  OUTPUT
+  pattern = Regexp.new([
+    %Q{.*Notice: Preparing to upgrade 'pmtacceptance-java' .*},
+    %Q{.*Notice: Found 'pmtacceptance-java' \\(.*v1.6.0.*\\) in #{master['distmoduledir']} .*},
+    %Q{.*Notice: Downloading from https://forge.puppetlabs.com .*},
+    %Q{.*Error: Could not upgrade module 'pmtacceptance-java' \\(v1.6.0 -> v2.0.0\\)},
+    %Q{  No version matching '2.0.0' exists on https://forge.puppetlabs.com.*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.output)
 end

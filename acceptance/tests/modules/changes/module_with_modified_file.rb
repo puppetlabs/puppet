@@ -12,9 +12,10 @@ step 'Run module changes to check a module with a modified file'
 on( master, puppet("module changes #{testdir}/nginx"),
     :acceptable_exit_codes => [0] ) do
 
-  assert_equal <<-STDERR, stderr
-\e[1;31mWarning: 1 files modified\e[0m
-  STDERR
+  pattern = Regexp.new([
+%Q{.*Warning: 1 files modified.*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.stderr)
 
   assert_equal <<-OUTPUT, stdout
 README

@@ -41,7 +41,7 @@ with_puppet_running_on master, master_opts, testdir do
       "  ├─┬ pmtacceptance-java \\(.*v1.6.0 -> v1.7.0.*\\)",
       "  │ └── pmtacceptance-stdlib \\(.*v0.0.2 -> v1.0.0.*\\) \\[#{testdir}/modules\\]",
       "  └── pmtacceptance-stdlib \\(.*v0.0.2 -> v1.0.0.*\\) \\[#{testdir}/modules\\]",
-    ].join("\n"))
+    ].join("\n"), Regexp::MULTILINE)
     assert_match(pattern, result.output)
   end
 end

@@ -56,7 +56,6 @@ on master, "[ -d #{master['puppetpath']}/modules2/thelock ]"
 
 step "List the installed modules with relative modulepath"
 on master, "cd #{master['puppetpath']}/modules2 && puppet module list --modulepath=." do
-  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 #{master['puppetpath']}/modules2
 ├── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
@@ -67,7 +66,6 @@ end
 
 step "List the installed modules with absolute modulepath"
 on master, puppet("module list --modulepath=#{master['puppetpath']}/modules2") do
-  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 #{master['puppetpath']}/modules2
 ├── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
