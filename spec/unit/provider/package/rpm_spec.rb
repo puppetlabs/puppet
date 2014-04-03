@@ -299,8 +299,8 @@ describe provider_class do
   end
 
   describe "#install_options" do
-    it "returns empty array by default" do
-      expect(provider.install_options).to eq([])
+    it "returns nil by default" do
+      expect(provider.install_options).to eq(nil)
     end
 
     it "returns install_options when set" do
@@ -314,7 +314,7 @@ describe provider_class do
     end
 
     it 'returns install_options when set as hash' do
-      provider.resource[:install_options] = { '-Darch' => 'vax' }
+      provider.resource[:install_options] = [{ '-Darch' => 'vax' }]
       expect(provider.install_options).to eq(['-Darch=vax'])
     end
 
@@ -325,8 +325,8 @@ describe provider_class do
   end
 
   describe "#uninstall_options" do
-    it "returns empty array by default" do
-      expect(provider.uninstall_options).to eq([])
+    it "returns nil by default" do
+      expect(provider.uninstall_options).to eq(nil)
     end
 
     it "returns uninstall_options when set" do
@@ -340,7 +340,7 @@ describe provider_class do
     end
 
     it 'returns uninstall_options when set as hash' do
-      provider.resource[:uninstall_options] = { '-Darch' => 'vax' }
+      provider.resource[:uninstall_options] = [{ '-Darch' => 'vax' }]
       expect(provider.uninstall_options).to eq(['-Darch=vax'])
     end
     it 'returns uninstall_options when an array with hashes' do

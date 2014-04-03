@@ -25,4 +25,28 @@ class Puppet::Provider::Package < Puppet::Provider
   def validate_source(value)
     true
   end
+
+  # Turns a array of options into flags to be passed to a command.
+  # The options can be passed as a string or hash. Note that passing a hash
+  # should only be used in case --foo=bar must be passed,
+  # which can be accomplished with:
+  #     install_options => [ { '--foo' => 'bar' } ]
+  # Regular flags like '--foo' must be passed as a string.
+  # @param options [Array]
+  # @return Concatenated list of options
+  # @api private
+  def join_options(options)
+    return unless options
+
+    options.collect do |val|
+      case val
+        when Hash
+          val.keys.sort.collect do |k|
+            "#{k}=#{val[k]}"
+          end
+        else
+          val
+      end
+    end.flatten
+  end
 end
