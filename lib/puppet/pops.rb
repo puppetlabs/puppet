@@ -92,7 +92,10 @@ module Puppet
       require 'puppet/pops/evaluator/runtime3_support'
       require 'puppet/pops/evaluator/evaluator_impl'
       require 'puppet/pops/evaluator/epp_evaluator'
+
+      require 'puppet/pops/evaluator/scopes'
     end
+
     module Functions
       require 'puppet/functions'
     end
