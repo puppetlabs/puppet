@@ -36,7 +36,7 @@ Puppet::Functions.create_function(:assert_type) do
   # @param value [Optional[Object]] the value to assert
   #
   def assert_type_s(type_string, value)
-    t = Puppet::Pops::Types::TypeParser.new.parse(type_string)      
+    t = Puppet::Pops::Types::TypeParser.new.parse(type_string)
     assert_type(t, value)
   end
 end
