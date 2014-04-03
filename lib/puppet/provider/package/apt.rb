@@ -1,10 +1,12 @@
+require 'puppet/provider/package'
+
 Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality
   include Puppet::Util::Package
 
   desc "Package management via `apt-get`."
 
-  has_feature :versionable
+  has_feature :versionable, :install_options
 
   commands :aptget => "/usr/bin/apt-get"
   commands :aptcache => "/usr/bin/apt-cache"
@@ -63,6 +65,8 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
       cmd << "--force-yes"
     end
 
+    cmd << install_options if @resource[:install_options]
+
     cmd << :install << str
 
     aptget(*cmd)
@@ -103,5 +107,25 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     aptget '-y', '-q', :remove, '--purge', @resource[:name]
     # workaround a "bug" in apt, that already removed packages are not purged
     super
+  end
+
+  # Code to support a hash in :install_options
+  def install_options
+    join_options(@resource[:install_options])
+  end
+
+  def join_options(options)
+    return unless options
+
+    options.collect do |val|
+      case val
+      when Hash
+        val.keys.sort.collect do |k|
+          "#{k}=#{val[k]}"
+        end.join(' ')
+      else
+        val
+      end
+    end
   end
 end
