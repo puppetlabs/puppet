@@ -9,10 +9,13 @@ describe 'the assert_type function' do
     loaders = Puppet::Pops::Loaders.new()
     loaders.puppet_system_loader.load(:function, 'assert_type')
   end
+
   it 'asserts compliant type by returning the value' do
-#    loaders = Puppet::Pops::Loaders.new()
-#    func = loaders.puppet_system_loader.load(:function, 'assert_type')
     expect(func.call({}, type(String), 'hello world')).to eql('hello world')
+  end
+
+  it 'accepts type given as a String' do
+    expect(func.call({}, 'String', 'hello world')).to eql('hello world')
   end
 
   it 'asserts non compliant type by raising an error' do
@@ -26,8 +29,9 @@ describe 'the assert_type function' do
       func.call({}, 10, 10)
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
 "function 'assert_type' called with mis-matched arguments
-expected:
+expected one of:
   assert_type(Type type, Optional[Object] value) - arg count {2}
+  assert_type(String type_string, Optional[Object] value) - arg count {2}
 actual:
   assert_type(Integer, Integer) - arg count {2}")))
   end

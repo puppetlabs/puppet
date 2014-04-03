@@ -12,6 +12,11 @@ Puppet::Functions.create_function(:assert_type) do
     param optional(object()), 'value'
   end
 
+  dispatch :assert_type_s do
+    param String, 'type_string'
+    param optional(object()), 'value'
+  end
+
   # @param type [Type] the type the value must be an instance of
   # @param value [Optional[Object]] the value to assert
   #
@@ -25,5 +30,13 @@ Puppet::Functions.create_function(:assert_type) do
       raise Puppet::ParseError, "assert_type(): Expected type #{type} does not match actual: #{actual}"
     end
     value
+  end
+
+  # @param type_string [String] the type the value must be an instance of given in String form
+  # @param value [Optional[Object]] the value to assert
+  #
+  def assert_type_s(type_string, value)
+    t = Puppet::Pops::Types::TypeParser.new.parse(type_string)      
+    assert_type(t, value)
   end
 end
