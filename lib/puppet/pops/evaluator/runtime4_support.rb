@@ -1,7 +1,7 @@
-# A module with bindings between the new evaluator and the 4x runtime.
+# A class with bindings between the new evaluator and the 4x runtime.
 #
 # @api private
-module Puppet::Pops::Evaluator::Runtime4Support
+class Puppet::Pops::Evaluator::Runtime4Support
   # Fails the evaluation of _semantic_ with a given issue.
   #
   # @param issue [Puppet::Pops::Issue] the issue to report
@@ -33,6 +33,7 @@ module Puppet::Pops::Evaluator::Runtime4Support
   # @todo Change from ParseError to EvaluationError
   #
   def set_variable(name, value, o, scope)
+    scope.bind(name, value)
   end
 
   # Returns the value of the variable (nil is returned if variable has no value, or if variable does not exist)
@@ -45,18 +46,7 @@ module Puppet::Pops::Evaluator::Runtime4Support
   # @todo Change from ParseError to EvaluationError
   #
   def get_variable_value(name, o, scope)
-    # Puppet 3x stores all variables as strings (then converts them back to numeric with a regexp... to see if it is a match variable)
-    # Not ideal, scope should support numeric lookup directly instead.
-    # TODO: consider fixing scope
-    catch(:undefined_variable) {
-      return scope.lookupvar(name.to_s)
-    }
-    # It is always ok to reference numeric variables even if they are not assigned. They are always undef
-    # if not set by a match expression.
-    #
-    unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
-      fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, {:name => name})
-    end
+    scope.lookup(name)
   end
 
   # Returns true if the variable of the given name is set in the given most nested scope. True is returned even if
@@ -198,14 +188,16 @@ module Puppet::Pops::Evaluator::Runtime4Support
   # as a side effect. Fails if the function does not exist.
   #
   def assert_function_available(name, o, scope)
-    fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
+    #fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
   end
 
   def call_function(name, args, o, scope)
-    # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-    # NOTE: Passing an empty string last converts :undef to empty string
+    # This is all temporary until we can get real function calls implemented
     mapped_args = args.map {|a| convert(a, scope, '') }
-    scope.send("function_#{name}", mapped_args)
+    function_obj = Object.new
+    function_obj.send(:extend, Puppet::Util::Logging)
+    function_obj.send(:extend, Puppet::Parser::Functions.environment_module(Puppet.lookup(:root_environment)))
+    function_obj.send("function_#{name}", mapped_args)
   end
 
   # Returns true if the function produces a value

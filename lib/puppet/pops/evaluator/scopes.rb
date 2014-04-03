@@ -18,6 +18,10 @@ class Puppet::Pops::Evaluator::Scopes
       @bindings[name] = value
     end
 
+    def bound?(name)
+      @bindings.include?(name)
+    end
+
     def lookup(name)
       @bindings[name]
     end
