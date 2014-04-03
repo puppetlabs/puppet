@@ -28,13 +28,13 @@ describe Puppet::Network::HttpPool do
         end
 
         orig_class = Puppet::Network::HttpPool.http_client_class
-        Puppet::Network::HttpPool.set_http_client_class(FooClient)
+        Puppet::Network::HttpPool.http_client_class = FooClient
         http = Puppet::Network::HttpPool.http_instance("me", 54321)
         http.should be_an_instance_of FooClient
         http.host.should == 'me'
         http.port.should == 54321
       ensure
-        Puppet::Network::HttpPool.set_http_client_class(orig_class)
+        Puppet::Network::HttpPool.http_client_class = orig_class
       end
     end
 

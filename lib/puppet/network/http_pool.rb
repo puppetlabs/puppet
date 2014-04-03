@@ -17,8 +17,8 @@ module Puppet::Network::HttpPool
   def self.http_client_class
     @http_client_class
   end
-  def self.set_http_client_class(clazz)
-    @http_client_class = clazz
+  def self.http_client_class=(klass)
+    @http_client_class = klass
   end
 
   # Retrieve a connection for the given host and port.
