@@ -15,7 +15,7 @@ class Puppet::Pops::Loader::NullLoader < Puppet::Pops::Loader::Loader
     @parent
   end
 
-  def load_typed(type, name)
+  def load_typed(typed_name)
     if @parent.nil?
       nil
     else

@@ -58,7 +58,8 @@ module Puppet::Pops::Loader::LoaderPaths
     # Effective path is the generic path + the name part(s) + extension.
     #
     def effective_path(typed_name, start_index_in_name)
-      "#{File.join(generic_path, typed_name.name_parts[ start_index_in_name..-1 ])}#{extension}"
+#      "#{File.join(generic_path, typed_name.name_parts[ start_index_in_name..-1 ])}#{extension}"
+      "#{File.join(generic_path, typed_name.name_parts)}#{extension}"
     end
 
     def relative_path()
@@ -77,7 +78,8 @@ module Puppet::Pops::Loader::LoaderPaths
 
     # Duplication of extension information, but avoids one call
     def effective_path(typed_name, start_index_in_name)
-      "#{File.join(generic_path, typed_name.name_parts[ start_index_in_name..-1 ])}.rb"
+#      "#{File.join(generic_path, typed_name.name_parts[ start_index_in_name..-1 ])}.rb"
+      "#{File.join(generic_path, typed_name.name_parts)}.rb"
     end
   end
 
@@ -88,7 +90,8 @@ module Puppet::Pops::Loader::LoaderPaths
 
     # Duplication of extension information, but avoids one call
     def effective_path(typed_name, start_index_in_name)
-      "#{File.join(generic_path, typed_name.name_parts[ start_index_in_name..-1 ])}.pp"
+#      "#{File.join(generic_path, typed_name.name_parts[ start_index_in_name..-1 ])}.pp"
+      "#{File.join(generic_path, typed_name.name_parts)}.pp"
     end
   end
 

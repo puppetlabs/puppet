@@ -44,6 +44,20 @@ class Puppet::Pops::Loaders
     self.new()
   end
 
+  def public_loader_for_module(module_name)
+    md = @module_resolver[module_name] || (return nil)
+    # Note, this loader is not resolved until it is asked to load something it may contain
+    md.public_loader
+  end
+
+  def private_loader_for_module(module_name)
+    md = @module_resolver[module_name] || (return nil)
+    unless md.resolved?
+      @module_resolver.resolve(md)
+    end
+    md.private_loader
+  end
+
   private
 
   def create_puppet_system_loader()
@@ -95,29 +109,14 @@ class Puppet::Pops::Loaders
     loader
   end
 
-  def configure_loaders_for_modules(loader, current_environment)
+  def configure_loaders_for_modules(parent_loader, current_environment)
     @module_resolver = mr = ModuleResolver.new()
-
     current_environment.modules.each do |puppet_module|
       # Create data about this module
-      md = new LoaderModuleData(puppet_module)
+      md = LoaderModuleData.new(puppet_module)
       mr[puppet_module.name] = md
-      md.loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader, md_name, md.path, md.name)
+      md.public_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader, md.name, md.path, md.name)
     end
-  end
-
-  def public_loader_for_module(module_name)
-    md = @module_resolver[module_name] || (return nil)
-    # Note, this loader is not resolved until it is asked to load something it may contain
-    md.public_loader
-  end
-
-  def private_loader_for_module(module_name)
-    md = @module_resolver[module_name] || (return nil)
-    unless md.resolved?
-      @module_resolver.resolve(md)
-    end
-    md.private_loader
   end
 
   # =LoaderModuleData

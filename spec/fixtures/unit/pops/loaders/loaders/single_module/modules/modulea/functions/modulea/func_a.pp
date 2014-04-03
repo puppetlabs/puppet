@@ -1,0 +1,1 @@
+function modulea::func_a() { "I am modulea::func_a()" }

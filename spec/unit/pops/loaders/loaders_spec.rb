@@ -1,8 +1,16 @@
 require 'spec_helper'
+require 'puppet_spec/files'
+
 require 'puppet/pops'
 require 'puppet/loaders'
 
 describe 'loaders' do
+  include PuppetSpec::Files
+
+  def config_dir(config_name)
+    my_fixture(config_name)
+  end
+
   # Loaders caches the puppet_system_loader, must reset between tests
   #
   before(:each) { Puppet::Pops::Loaders.clear() }
@@ -33,6 +41,41 @@ describe 'loaders' do
   end
 
   # TODO: LOADING OF MODULES ON MODULEPATH
+  context 'loading from path with single module' do
+    before do
+      env = Puppet::Node::Environment.create(:'*test*', [File.join(config_dir('single_module'), 'modules')], '')
+      overrides = {
+        :current_environment => env
+      }
+      Puppet.push_context(overrides, "single-module-test-loaders")
+    end
+
+    after do
+      Puppet.pop_context()
+    end
+
+    it 'can load from a module path' do
+      loaders = Puppet::Pops::Loaders.new()
+      modulea_loader = loaders.public_loader_for_module('modulea')
+      expect(modulea_loader.class).to eql(Puppet::Pops::Loader::ModuleLoaders::FileBased)
+
+      function = modulea_loader.load_typed(typed_name(:function, 'func_a')).value
+      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
+      expect(function.class.name).to eq('func_a')
+
+      function = modulea_loader.load_typed(typed_name(:function, 'modulea::func_a')).value
+      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
+      expect(function.class.name).to eq('modulea::func_a')
+
+      function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
+      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
+      expect(function.class.name).to eq('rb_func_a')
+
+      function = modulea_loader.load_typed(typed_name(:function, 'modulea::rb_func_a')).value
+      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
+      expect(function.class.name).to eq('modulea::rb_func_a')
+    end
+  end
 
   def typed_name(type, name)
     Puppet::Pops::Loader::Loader::TypedName.new(type, name)

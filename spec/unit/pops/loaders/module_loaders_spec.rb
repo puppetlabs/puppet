@@ -23,7 +23,8 @@ describe 'module loaders' do
     it 'can load a .pp function in a qualified name space' do
       module_dir = dir_containing('testmodule', {
       'functions' => {
-        'foo.pp' => 'function testmodule::foo() { yay }'}})
+        'testmodule' => {
+          'foo.pp' => 'function testmodule::foo() { yay }'}}})
 
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
       function = module_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
@@ -59,17 +60,18 @@ describe 'module loaders' do
         'lib' => {
           'puppet' => {
             'functions' => {
-              'foo4x.rb' => <<-CODE
-                 Puppet::Functions.create_function('testmodule::foo4x') do
-                   def foo4x()
-                     'yay'
+              'testmodule' => {
+                'foo4x.rb' => <<-CODE
+                   Puppet::Functions.create_function('testmodule::foo4x') do
+                     def foo4x()
+                       'yay'
+                     end
                    end
-                 end
-              CODE
-            }
+                CODE
+                }
               }
             }
-          })
+        }})
 
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
       function = module_loader.load_typed(typed_name(:function, 'testmodule::foo4x')).value

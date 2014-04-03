@@ -24,7 +24,8 @@ describe 'dependency loader' do
     it 'can load something in a qualified name space' do
       module_dir = dir_containing('testmodule', {
       'functions' => {
-        'foo.pp' => 'function testmodule::foo() { yay }'}})
+        'testmodule' => {
+          'foo.pp' => 'function testmodule::foo() { yay }'}}})
 
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
       dep_loader = Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
