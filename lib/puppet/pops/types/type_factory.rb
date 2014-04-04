@@ -135,6 +135,7 @@ module Puppet::Pops::Types::TypeFactory
     if pattern
       t.pattern = pattern.is_a?(Regexp) ? pattern.inspect[1..-2] : pattern
     end
+    t.regexp() unless pattern.nil? # compile pattern to catch errors
     t
   end
 
@@ -145,6 +146,7 @@ module Puppet::Pops::Types::TypeFactory
       when String
         re_T = Types::PRegexpType.new()
         re_T.pattern = re
+        re_T.regexp()  # compile it to catch errors
         t.addPatterns(re_T)
 
       when Regexp

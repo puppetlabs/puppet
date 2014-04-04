@@ -1,0 +1,1 @@
+function func_a() { "I am func_a()" }

@@ -18,6 +18,7 @@ token LAMBDA SELBRACE
 token NUMBER
 token HEREDOC SUBLOCATE
 token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
+token FUNCTION
 token LOW
 
 prechigh
@@ -150,8 +151,9 @@ primary_expression
   | hostclass_expression
   | node_definition_expression
   | epp_render_expression
+  | function_definition
 
-# Aleways have the same value
+# Allways have the same value
 literal_expression
   : array
   | boolean
@@ -589,9 +591,17 @@ node_definition_expression
     : nil
     | INHERITS hostname { result = val[1] }
 
+#---FUNCTION DEFINITION
+#
+function_definition
+  : FUNCTION classname parameter_list LBRACE opt_statements RBRACE {
+      result = add_definition(Factory.FUNCTION(val[1][:value], val[2], val[4]))
+      loc result, val[0], val[5]
+    }
+
 #---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
 #   Produces String
-#
+#   TODO: The error that "class" is not a valid classname is bad - classname rule is also used for other things
 classname
   : NAME  { result = val[0] }
   | CLASS { error val[0], "'class' is not a valid classname" }

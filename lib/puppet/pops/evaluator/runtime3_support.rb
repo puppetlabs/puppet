@@ -216,10 +216,24 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # as a side effect. Fails if the function does not exist.
   #
   def assert_function_available(name, o, scope)
+    # Check first via 4x API (if it is available), and the function exists
+    if loaders = Puppet.lookup(:loaders) {nil}
+      if loaders && func = loaders.puppet_system_loader.load(:function, name)
+        return
+      end
+    end
+
     fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
   end
 
   def call_function(name, args, o, scope)
+    # Call via 4x API if it is available, and the function exists
+    if loaders = Puppet.lookup(:loaders) {nil}
+      if loaders && func = loaders.puppet_system_loader.load(:function, name)
+        return func.call(scope, *args)
+      end
+    end
+    # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts :undef to empty string
     mapped_args = args.map {|a| convert(a, scope, '') }

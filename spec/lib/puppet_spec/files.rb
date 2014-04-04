@@ -52,6 +52,24 @@ module PuppetSpec::Files
     dir
   end
 
+  def dir_containing(name, contents_hash) PuppetSpec::Files.dir_containing(name, contents_hash) end
+  def self.dir_containing(name, contents_hash)
+    dir_contained_in(tmpdir(name), contents_hash)
+  end
+
+  def self.dir_contained_in(dir, contents_hash)
+    contents_hash.each do |k,v|
+      if v.is_a?(Hash)
+        Dir.mkdir(tmp = File.join(dir,k))
+        dir_contained_in(tmp, v)
+      else
+        file = File.join(dir, k)
+        File.open(file, 'wb') {|f| f.write(v) }
+      end
+    end
+    dir
+  end
+
   def self.record_tmp(tmp)
     # ...record it for cleanup,
     $global_tempfiles ||= []

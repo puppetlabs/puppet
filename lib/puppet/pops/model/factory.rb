@@ -695,6 +695,10 @@ class Puppet::Pops::Model::Factory
     new(Model::ResourceTypeDefinition, name, parameters, body)
   end
 
+  def self.FUNCTION(name, parameters, body)
+    new(Model::FunctionDefinition, name, parameters, body)
+  end
+
   def self.LAMBDA(parameters, body)
     new(Model::LambdaExpression, parameters, body)
   end
