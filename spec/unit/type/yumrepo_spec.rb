@@ -74,5 +74,14 @@ describe Puppet::Type.type(:yumrepo) do
         expect { Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "gopher://example.com/") }.to raise_error
       end
     end
+
+    [:baseurl, :gpgkey].each do |param|
+      it 'should accept multiple urls' do
+        Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "http://localhost/1 http://localhost/2")
+      end
+      it 'should fail if one element is wrong' do
+        expect { Puppet::Type.type(:yumrepo).new(:name => "puppetlabs", param => "http://localhost/1 localhost/2") }.to raise_error
+      end
+    end
   end
 end
