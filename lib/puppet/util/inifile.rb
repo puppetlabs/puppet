@@ -47,6 +47,16 @@ module Puppet::Util::IniConfig
       @entries << line
     end
 
+    # Allow us to remove entire entries if required.
+    def remove_line(entry)
+      @entries.each do |e|
+        if e.include?(entry)
+          @entries.delete(e)
+          @dirty = true
+        end
+      end
+    end
+
     # Set the entry 'key=value'. If no entry with the
     # given key exists, one is appended to teh end of the section
     def []=(key, value)
@@ -148,7 +158,11 @@ module Puppet::Util::IniConfig
     def store
       @files.each do |file, lines|
         text = ""
-        dirty = false
+        unless Puppet::FileSystem.exist?(file)
+          dirty = true
+        else
+          dirty = false
+        end
         destroy = false
         lines.each do |l|
           if l.is_a?(Section)

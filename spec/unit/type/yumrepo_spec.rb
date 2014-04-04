@@ -13,11 +13,12 @@ describe Puppet::Type.type(:yumrepo) do
       yumrepo[:name].should == "puppetlabs"
     end
 
-    [:baseurl, :cost, :descr, :enabled, :enablegroups, :exclude, :failovermethod,
-     :gpgcheck, :repo_gpgcheck, :gpgkey, :http_caching, :include, :includepkgs, :keepalive,
-     :metadata_expire, :mirrorlist, :priority, :protect, :proxy, :proxy_username,
-     :proxy_password, :timeout, :sslcacert, :sslverify, :sslclientcert,
-     :sslclientkey, :s3_enabled, :metalink].each do |param|
+    [:baseurl, :cost, :descr, :enabled, :enablegroups, :exclude,
+     :failovermethod, :gpgcheck, :repo_gpgcheck, :gpgkey, :http_caching,
+     :include, :includepkgs, :keepalive, :metadata_expire, :mirrorlist,
+     :priority, :protect, :proxy, :proxy_username, :proxy_password, :timeout,
+     :sslcacert, :sslverify, :sslclientcert, :sslclientkey, :s3_enabled,
+     :metalink].each do |param|
       it "should have a '#{param}' parameter" do
         Puppet::Type.type(:yumrepo).attrtype(param).should == :property
       end
@@ -25,8 +26,10 @@ describe Puppet::Type.type(:yumrepo) do
   end
 
   describe "When validating attribute values" do
-    [:cost, :enabled, :enablegroups, :failovermethod, :gpgcheck, :repo_gpgcheck, :http_caching,
-     :keepalive, :metadata_expire, :priority, :protect, :timeout].each do |param|
+    [:baseurl, :cost, :enabled, :enablegroups, :failovermethod, :gpgcheck,
+     :gpgkey, :include, :repo_gpgcheck, :http_caching, :keepalive,
+     :metadata_expire, :metalink, :mirrorlist, :priority, :protect, :proxy,
+     :timeout].each do |param|
       it "should support :absent as a value to '#{param}' parameter" do
         Puppet::Type.type(:yumrepo).new(:name => 'puppetlabs', param => :absent)
       end
