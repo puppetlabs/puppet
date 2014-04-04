@@ -50,12 +50,8 @@ class Puppet::Resource::Catalog::Biff < Puppet::Indirector::Code
     node = node_from_request(request)
     node.trusted_data = Puppet.lookup(:trusted_information) { Puppet::Context::TrustedInformation.local(node) }.to_h
 
-    if catalog = compile(node)
-      return catalog
-    else
-      # This shouldn't actually happen; we should either return
-      # a config or raise an exception.
-      return nil
+    Puppet::Util::Profiler.profile("Compiled catalog for #{node.name} in environment #{node.environment}") do
+      compile(node.environment)
     end
   end
 
@@ -71,11 +67,6 @@ class Puppet::Resource::Catalog::Biff < Puppet::Indirector::Code
     end
   end
 
-  # Is our compiler part of a network, or are we just local?
-  def networked?
-    Puppet.run_mode.master?
-  end
-
   private
 
   # Add any extra data necessary to the node.
@@ -84,28 +75,15 @@ class Puppet::Resource::Catalog::Biff < Puppet::Indirector::Code
     node.merge(@server_facts)
   end
 
-  # Compile the actual catalog.
-  def compile(node)
-    str = "Compiled catalog for #{node.name}"
-    str += " in environment #{node.environment}" if node.environment
-    config = nil
+  def compile(environment)
+    runtime = Puppet::Pops::Evaluator::Runtime4Support.new
+    scopes = Puppet::Pops::Evaluator::Scopes.new
+    evaluator = Puppet::Pops::Parser::EvaluatingParser::Transitional.new(runtime)
 
-    benchmark(:notice, str) do
-      Puppet::Util::Profiler.profile(str) do
-        begin
-          runtime = Puppet::Pops::Evaluator::Runtime4Support.new
-          evaluator = Puppet::Pops::Parser::EvaluatingParser::Transitional.new(runtime)
-          model = evaluator.parse_file(node.environment.manifest)
-          scopes = Puppet::Pops::Evaluator::Scopes.new
+    model = evaluator.parse_file(environment.manifest)
+    evaluator.evaluate(scopes.global, model)
 
-          evaluator.evaluate(scopes.global, model)
-        rescue Puppet::Error => detail
-          Puppet.err(detail.to_s) if networked?
-          raise
-        end
-      end
-    end
-
+    # don't have a catalog actually built yet
     Puppet::Resource::Catalog.new
   end
 
