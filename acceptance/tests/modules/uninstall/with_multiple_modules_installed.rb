@@ -49,7 +49,7 @@ with_puppet_running_on master, master_opts, testdir do
       "    'pmtacceptance-java' \\(v1.7.0\\) was found in #{testdir}/modules",
       "    'pmtacceptance-java' \\(v1.6.0\\) was found in #{master['distmoduledir']}",
       "    Use the `--modulepath` option to limit the search to specific directories.*"
-    ].join("\n"))
+    ].join("\n"), Regexp::MULTILINE)
     assert_match(pattern, result.output)
   end
 
@@ -58,7 +58,7 @@ with_puppet_running_on master, master_opts, testdir do
     pattern = Regexp.new([
       ".*Notice: Preparing to uninstall 'pmtacceptance-java' .*",
       "Removed 'pmtacceptance-java' \\(.*v1.6.0.*\\) from #{master['distmoduledir']}"
-    ].join("\n"))
+    ].join("\n"), Regexp::MULTILINE)
     assert_match(pattern, result.output)
   end
 end

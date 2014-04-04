@@ -64,24 +64,26 @@ on master, "[ -d #{master['sitemoduledir']}/crick ]"
 
 step "List the installed modules"
 on master, puppet('module list') do
-  assert_equal <<-STDERR, stderr
-\e[1;31mWarning: Missing dependency 'jimmy-crakorn':
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
-\e[1;31mWarning: Missing dependency 'jimmy-sprinkles':
-  'jimmy-thelock' (v1.0.0) requires 'jimmy-sprinkles' (v2.x)\e[0m
-STDERR
+  pattern = Regexp.new([
+    %Q{.*Warning: Missing dependency 'jimmy-crakorn':},
+    %Q{  'jimmy-appleseed' \\(v1.1.0\\) requires 'jimmy-crakorn' \\(v0.4.0\\)},
+    %Q{  'jimmy-crick' \\(v1.0.1\\) requires 'jimmy-crakorn' \\(v0.4.x\\).*},
+    %Q{.*Warning: Missing dependency 'jimmy-sprinkles':},
+    %Q{  'jimmy-thelock' \\(v1.0.0\\) requires 'jimmy-sprinkles' \\(v2.x\\).*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.stderr)
 end
 
 step "List the installed modules as a dependency tree"
 on master, puppet('module list --tree') do
-  assert_equal <<-STDERR, stderr
-\e[1;31mWarning: Missing dependency 'jimmy-crakorn':
-  'jimmy-appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
-\e[1;31mWarning: Missing dependency 'jimmy-sprinkles':
-  'jimmy-thelock' (v1.0.0) requires 'jimmy-sprinkles' (v2.x)\e[0m
-STDERR
+  pattern = Regexp.new([
+    %Q{.*Warning: Missing dependency 'jimmy-crakorn':},
+    %Q{  'jimmy-appleseed' \\(v1.1.0\\) requires 'jimmy-crakorn' \\(v0.4.0\\)},
+    %Q{  'jimmy-crick' \\(v1.0.1\\) requires 'jimmy-crakorn' \\(v0.4.x\\).*},
+    %Q{.*Warning: Missing dependency 'jimmy-sprinkles':},
+    %Q{  'jimmy-thelock' \\(v1.0.0\\) requires 'jimmy-sprinkles' \\(v2.x\\).*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.stderr)
 
   assert_match /UNMET DEPENDENCY.*jimmy-sprinkles/, stdout, 'Did not find unmeet dependency for jimmy-sprinkles warning'
 

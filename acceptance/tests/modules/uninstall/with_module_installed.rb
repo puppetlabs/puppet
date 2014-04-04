@@ -26,9 +26,9 @@ on master, "[ -d #{master['distmoduledir']}/crakorn ]"
 
 step "Uninstall the module jimmy-crakorn"
 on master, puppet('module uninstall jimmy-crakorn') do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
-    Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{master['distmoduledir']}
+  assert_equal <<-OUTPUT, stdout
+\e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
+Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{master['distmoduledir']}
   OUTPUT
 end
 on master, "[ ! -d #{master['distmoduledir']}/crakorn ]"

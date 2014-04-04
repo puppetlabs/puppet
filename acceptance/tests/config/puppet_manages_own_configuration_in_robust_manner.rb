@@ -22,8 +22,8 @@ step "Record original state of system users" do
     original_state[host] = {}
     original_state[host][:user] = user = host.execute('puppet config print user')
     original_state[host][:group] = group = host.execute('puppet config print group')
-    original_state[host][:ug_resources] = on(host, puppet('resource', 'user', user)).output
-    original_state[host][:ug_resources] += on(host, puppet('resource', 'group', group)).output
+    original_state[host][:ug_resources] = on(host, puppet('resource', 'user', user)).stdout
+    original_state[host][:ug_resources] += on(host, puppet('resource', 'group', group)).stdout
     original_state[host][:ug_resources] += "Group['#{group}'] -> User['#{user}']\n"
   end
 end

@@ -21,7 +21,6 @@ search_types.each do |type, search_string|
   on master, puppet("module search #{search_string}") do
     search_string = search_string.gsub(/\//, "-")
     em_module_name = module_name.gsub(/#{search_string}/, "\e[0;32m#{search_string}\e[0m")
-    assert_equal '', stderr
     assert_equal expected_output % [em_module_name], stdout
   end
 end

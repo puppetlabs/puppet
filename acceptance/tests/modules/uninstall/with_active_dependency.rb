@@ -40,35 +40,37 @@ on master, "[ -d #{master['distmoduledir']}/appleseed ]"
 
 step "Try to uninstall the module jimmy-crakorn"
 on master, puppet('module uninstall jimmy-crakorn'), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
-    STDERR> \e[1;31mError: Could not uninstall module 'jimmy-crakorn'
-    STDERR>   Other installed modules have dependencies on 'jimmy-crakorn' (v0.4.0)
-    STDERR>     'jimmy/appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
-    STDERR>     Use `puppet module uninstall --force` to uninstall this module anyway\e[0m
-  OUTPUT
+  pattern = Regexp.new([
+    %Q{.*Notice: Preparing to uninstall 'jimmy-crakorn' .*},
+    %Q{.*Error: Could not uninstall module 'jimmy-crakorn'},
+    %Q{  Other installed modules have dependencies on 'jimmy-crakorn' \\(v0.4.0\\)},
+    %Q{    'jimmy/appleseed' \\(v1.1.0\\) requires 'jimmy-crakorn' \\(v0.4.0\\)},
+    %Q{    Use `puppet module uninstall --force` to uninstall this module anyway.*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.output)
 end
 on master, "[ -d #{master['distmoduledir']}/crakorn ]"
 on master, "[ -d #{master['distmoduledir']}/appleseed ]"
 
 step "Try to uninstall the module jimmy-crakorn with a version range"
 on master, puppet('module uninstall jimmy-crakorn --version 0.x'), :acceptable_exit_codes => [1] do
-  assert_output <<-OUTPUT
-    STDOUT> \e[mNotice: Preparing to uninstall 'jimmy-crakorn' (\e[0;36mv0.x\e[m) ...\e[0m
-    STDERR> \e[1;31mError: Could not uninstall module 'jimmy-crakorn' (v0.x)
-    STDERR>   Other installed modules have dependencies on 'jimmy-crakorn' (v0.4.0)
-    STDERR>     'jimmy/appleseed' (v1.1.0) requires 'jimmy-crakorn' (v0.4.0)
-    STDERR>     Use `puppet module uninstall --force` to uninstall this module anyway\e[0m
-  OUTPUT
+  pattern = Regexp.new([
+    %Q{.*Notice: Preparing to uninstall 'jimmy-crakorn' \\(.*v0.x.*\\) .*},
+    %Q{.*Error: Could not uninstall module 'jimmy-crakorn' \\(v0.x\\)},
+    %Q{  Other installed modules have dependencies on 'jimmy-crakorn' \\(v0.4.0\\)},
+    %Q{    'jimmy/appleseed' \\(v1.1.0\\) requires 'jimmy-crakorn' \\(v0.4.0\\)},
+    %Q{    Use `puppet module uninstall --force` to uninstall this module anyway.*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.output)
 end
 on master, "[ -d #{master['distmoduledir']}/crakorn ]"
 on master, "[ -d #{master['distmoduledir']}/appleseed ]"
 
 step "Uninstall the module jimmy-crakorn forcefully"
 on master, puppet('module uninstall jimmy-crakorn --force') do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
-    Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{master['distmoduledir']}
+  assert_equal <<-OUTPUT, stdout
+\e[mNotice: Preparing to uninstall 'jimmy-crakorn' ...\e[0m
+Removed 'jimmy-crakorn' (\e[0;36mv0.4.0\e[0m) from #{master['distmoduledir']}
   OUTPUT
 end
 on master, "[ ! -d #{master['distmoduledir']}/crakorn ]"

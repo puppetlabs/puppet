@@ -18,21 +18,21 @@ stub_forge_on(master)
 # How does this test differ from a with_version test???
 step "Install a module with cycles"
 on master, puppet("module install #{module_author}-#{module_name} --version 0.0.1") do
-  assert_output <<-OUTPUT
-    \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-    \e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
-    \e[mNotice: Installing -- do not interrupt ...\e[0m
-    #{master['distmoduledir']}
-    └─┬ #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
-      └── #{module_author}-apache (\e[0;36mv0.0.1\e[0m)
+  assert_equal <<-OUTPUT, stdout
+\e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
+\e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+\e[mNotice: Installing -- do not interrupt ...\e[0m
+#{master['distmoduledir']}
+└─┬ #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
+  └── #{module_author}-apache (\e[0;36mv0.0.1\e[0m)
   OUTPUT
 end
 
 # This isn't going to work
 on master, puppet("module list --modulepath #{master['distmoduledir']}") do |res|
-  assert_output <<-OUTPUT
-    #{master['distmoduledir']}
-    ├── #{module_author}-apache (\e[0;36mv0.0.1\e[0m)
-    └── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
+  assert_equal <<-OUTPUT, stdout
+#{master['distmoduledir']}
+├── #{module_author}-apache (\e[0;36mv0.0.1\e[0m)
+└── #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)
   OUTPUT
 end
