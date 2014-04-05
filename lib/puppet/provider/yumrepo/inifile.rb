@@ -18,7 +18,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
         if valid_property?(key)
           # We strip the values here to handle cases where distros set values
           # like enabled = 1 with spaces.
-          attributes_hash[key] = value.strip
+          attributes_hash[key] = value
         end
       end
       instances << new(attributes_hash)
