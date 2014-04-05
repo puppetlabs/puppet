@@ -441,8 +441,8 @@ class Puppet::Pops::Evaluator::AccessOperator
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
     keys_orig_size = keys.size
 
-    keys.compact!
     keys.flatten!
+    keys.compact!
     if keys_orig_size == 0
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
         :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
@@ -516,8 +516,8 @@ class Puppet::Pops::Evaluator::AccessOperator
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
     keys_orig_size = keys.size
 
-    keys.compact!
     keys.flatten!
+    keys.compact!
 
     if keys_orig_size == 0
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
