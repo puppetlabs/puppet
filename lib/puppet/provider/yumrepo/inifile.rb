@@ -132,7 +132,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   def create
     @property_hash[:ensure] = :present
 
-    new_section = section(@resource[:name])
+    new_section = current_section
 
     # We fetch a list of properties from the type, then iterate
     # over them, avoiding ensure.  We're relying on .should to
@@ -140,11 +140,17 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     # and if so we set it in the virtual inifile.
     PROPERTIES.each do |property|
       next if property == :ensure
+
+
       if value = @resource.should(property)
-        new_section[property.to_s] = value
-        @property_hash[property] = value
+        self.send("#{property}=", value)
       end
     end
+  end
+
+  # @return [Boolean] Returns true if ensure => present.
+  def exists?
+    @property_hash[:ensure] == :present
   end
 
   # We don't actually destroy the file here, merely mark it for
@@ -152,7 +158,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @return [void]
   def destroy
     # Flag file for deletion on flush.
-    section(@resource[:name]).destroy=(true)
+    current_section.destroy=(true)
 
     @property_hash.clear
   end
@@ -162,26 +168,43 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     self.class.store
   end
 
+  # Generate setters and getters for our INI properties.
+  PROPERTIES.each do |property|
+    # The ensure property uses #create, #exists, and #destroy we can't generate
+    # meaningful setters and getters for this
+    next if property == :ensure
+
+    define_method(property) do
+      get_property(property)
+    end
+
+    define_method("#{property}=") do |value|
+      set_property(property, value)
+    end
+  end
+
+  private
+
+  def get_property(property)
+    if ! @property_hash.has_key?(property)
+      @property_hash[property] = current_section[property.to_s]
+    end
+    value = @property_hash[property]
+    value.nil? ? :absent : value
+  end
+
+  def set_property(property, value)
+    value = (value == :absent ? nil : value)
+    current_section[property.to_s] = value
+    @property_hash[property] = value
+  end
+
   # @return [void]
   def section(name)
     self.class.section(name)
   end
 
-  # Create all of our setters.
-  mk_resource_methods
-  PROPERTIES.each do |property|
-    # Exclude ensure, as we don't need to create an ensure=
-    next if property == :ensure
-    # Builds the property= method.
-    define_method("#{property.to_s}=") do |value|
-      section(@property_hash[:name])[property.to_s] = value
-      @property_hash[property] = value
-    end
+  def current_section
+    self.class.section(self.name)
   end
-
-  # @return [Boolean] Returns true if ensure => present.
-  def exists?
-    @property_hash[:ensure] == :present
-  end
-
 end
