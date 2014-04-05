@@ -63,10 +63,14 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     validate do |value|
       next if value.to_s == 'absent'
-      parsed = URI.parse(value)
 
-      unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
+      value.split(/\s+/).each do |uri|
+
+        parsed = URI.parse(uri)
+
+        unless VALID_SCHEMES.include?(parsed.scheme)
+          raise "Must be a valid URL"
+        end
       end
     end
   end
@@ -103,10 +107,14 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
     validate do |value|
       next if value.to_s == 'absent'
-      parsed = URI.parse(value)
 
-      unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
+      value.split(/\s+/).each do |uri|
+
+        parsed = URI.parse(uri)
+
+        unless VALID_SCHEMES.include?(parsed.scheme)
+          raise "Must be a valid URL"
+        end
       end
     end
   end
