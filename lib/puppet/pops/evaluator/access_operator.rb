@@ -439,12 +439,24 @@ class Puppet::Pops::Evaluator::AccessOperator
   #
   def access_PResourceType(o, scope, keys)
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
+    keys_orig_size = keys.size
+
     keys.flatten!
-    if keys.size == 0
-      max = o.type_name.nil? ? 2 : 1
+    keys.compact!
+    if keys_orig_size == 0
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
-        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => max, :actual => 0)
+        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
     end
+
+    # If given keys  that were just a mix of empty/nil with empty array as a result.
+    # As opposed to calling the function the wrong way (without any arguments), (configurable issue),
+    # Return an empty array
+    #
+    if keys.empty? && keys_orig_size > 0
+      optionally_fail(Puppet::Pops::Issues::EMPTY_RESOURCE_SPECIALIZATION, blamed)
+      return []
+    end
+
     if !o.title.nil?
       # lookup resource and return one or more parameter values
       resource = find_resource(scope, o.type_name, o.title)
@@ -462,7 +474,6 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
 
     # type_name is LHS type_name if set, else the first given arg
-    keys_orig_size = keys.size
     type_name = o.type_name || keys.shift
     type_name = case type_name
     when Puppet::Pops::Types::PResourceType
@@ -503,12 +514,25 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def access_PHostClassType(o, scope, keys)
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
+    keys_orig_size = keys.size
 
     keys.flatten!
-    if keys.size == 0
+    keys.compact!
+
+    if keys_orig_size == 0
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
         :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
     end
+
+    # If given keys  that were just a mix of empty/nil with empty array as a result.
+    # As opposed to calling the function the wrong way (without any arguments), (configurable issue),
+    # Return an empty array
+    #
+    if keys.empty? && keys_orig_size > 0
+      optionally_fail(Puppet::Pops::Issues::EMPTY_RESOURCE_SPECIALIZATION, blamed)
+      return []
+    end
+
     if ! o.class_name.nil?
       # lookup class resource and return one or more parameter values
       resource = find_resource(scope, 'class', o.class_name)

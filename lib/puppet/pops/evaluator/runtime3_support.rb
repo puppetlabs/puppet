@@ -4,6 +4,7 @@
 #
 # @api private
 module Puppet::Pops::Evaluator::Runtime3Support
+
   # Fails the evaluation of _semantic_ with a given issue.
   #
   # @param issue [Puppet::Pops::Issue] the issue to report
@@ -13,6 +14,21 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
   def fail(issue, semantic, options={}, except=nil)
+    optionally_fail(issue, semantic, options, except)
+    # an error should have been raised since fail always fails
+    raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+  end
+
+  # Optionally (based on severity) Fails the evaluation of _semantic_ with a given issue
+  # If the given issue is configured to be of severity < :error it is only reported, and the function returns.
+  #
+  # @param issue [Puppet::Pops::Issue] the issue to report
+  # @param semantic [Puppet::Pops::ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
+  # @param options [Hash] hash of optional named data elements for the given issue
+  # @return [!] this method does not return
+  # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
+  #
+  def optionally_fail(issue, semantic, options={}, except=nil)
     if except.nil?
       # Want a stacktrace, and it must be passed as an exception
       begin
@@ -444,14 +460,16 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Needs conversion by calling scope to resolve the name and possibly return a different name
     # Resolution can only be called with an array, and returns an array. Here there is only one name
     type, titles = scope.resolve_type_and_titles(o.type_name, [o.title])
-    Puppet::Resource.new(type, titles[0])
+    # Note: a title of nil makes Resource class throw error with information that is wrong
+    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
   end
 
   def convert_PHostClassType(o, scope, undef_value)
     # Needs conversion by calling scope to resolve the name and possibly return a different name
     # Resolution can only be called with an array, and returns an array. Here there is only one name
     type, titles = scope.resolve_type_and_titles('class', [o.class_name])
-    Puppet::Resource.new(type, titles[0])
+    # Note: a title of nil makes Resource class throw error with information that is wrong
+    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
   end
 
   private
@@ -485,16 +503,30 @@ module Puppet::Pops::Evaluator::Runtime3Support
   def diagnostic_producer
     Puppet::Pops::Validation::DiagnosticProducer.new(
       ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
-      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
+      SeverityProducer.new(), # All issues are errors
+#      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
       Puppet::Pops::Model::ModelLabelProvider.new())
+  end
+
+  # Configure the severity of failures
+  class SeverityProducer < Puppet::Pops::Validation::SeverityProducer
+    Issues = Puppet::Pops::Issues
+
+    def initialize
+      super
+      p = self
+      p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :warning
+    end
   end
 
   # An acceptor of diagnostics that immediately raises an exception.
   class ExceptionRaisingAcceptor < Puppet::Pops::Validation::Acceptor
     def accept(diagnostic)
       super
-      Puppet::Pops::IssueReporter.assert_and_report(self, {:message => "Evaluation Error:" })
-      raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+      Puppet::Pops::IssueReporter.assert_and_report(self, {:message => "Evaluation Error:", :emit_warnings => true })
+      if errors?
+        raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+      end
     end
   end
 

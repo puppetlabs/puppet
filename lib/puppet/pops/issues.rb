@@ -403,6 +403,10 @@ module Puppet::Pops::Issues
     "First argument to Resource[] must be a resource type or a String. Got #{actual}."
   end
 
+  EMPTY_RESOURCE_SPECIALIZATION = issue :EMPTY_RESOURCE_SPECIALIZATION do
+    "Arguments to Resource[] are all empty/undefined"
+  end
+
   ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
     "Illegal Class name in class reference. #{label.a_an_uc(name)} cannot be used where a String is expected"
   end
