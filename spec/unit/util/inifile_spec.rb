@@ -20,6 +20,11 @@ describe Puppet::Util::IniConfig::Section do
       expect(subject).to be_dirty
     end
 
+    it "is dirty if the section is marked for deletion" do
+      subject.destroy = true
+      expect(subject).to be_dirty
+    end
+
     it "is clean if the section has been explicitly marked as clean" do
       subject['hello'] = 'world'
       subject.mark_clean
@@ -80,11 +85,29 @@ describe Puppet::Util::IniConfig::Section do
         "secondkey=secondval\n"
       )
     end
+
+    it "is empty if the section is marked for deletion" do
+      subject.entries << ['firstkey', 'firstval']
+      subject.destroy = true
+      expect(subject.format).to eq('')
+    end
   end
 end
 
 describe Puppet::Util::IniConfig::PhysicalFile do
   subject { described_class.new('/some/nonexistent/file') }
+
+  let(:first_sect) do
+    sect = Puppet::Util::IniConfig::Section.new('firstsection', '/some/imaginary/file')
+    sect.entries << "# comment\n" << ['onefish', 'redfish'] << "\n"
+    sect
+  end
+
+  let(:second_sect) do
+    sect = Puppet::Util::IniConfig::Section.new('secondsection', '/some/imaginary/file')
+    sect.entries << ['twofish', 'bluefish']
+    sect
+  end
 
   describe "when reading a file" do
     it "raises an error if the file does not exist" do
@@ -220,17 +243,6 @@ describe Puppet::Util::IniConfig::PhysicalFile do
   end
 
   describe "formatting" do
-    let(:first_sect) do
-      sect = Puppet::Util::IniConfig::Section.new('firstsection', '/some/imaginary/file')
-      sect.entries << "# comment\n" << ['onefish', 'redfish'] << "\n"
-      sect
-    end
-
-    let(:second_sect) do
-      sect = Puppet::Util::IniConfig::Section.new('secondsection', '/some/imaginary/file')
-      sect.entries << ['twofish', 'bluefish']
-      sect
-    end
 
     it "concatenates each formatted section in order" do
       subject.contents << first_sect << second_sect
@@ -266,6 +278,68 @@ describe Puppet::Util::IniConfig::PhysicalFile do
       expected = "[secondsection]\n" + "twofish=bluefish\n"
 
       expect(subject.format).to eq expected
+    end
+  end
+
+  describe "storing the file" do
+    describe "with empty contents" do
+      describe "and destroy_empty is true" do
+        before { subject.destroy_empty = true }
+        it "removes the file if there are no sections" do
+          File.expects(:unlink)
+          subject.store
+        end
+
+        it "removes the file if all sections are marked to be destroyed" do
+          subject.contents << first_sect << second_sect
+          first_sect.destroy = true
+          second_sect.destroy = true
+
+          File.expects(:unlink)
+          subject.store
+        end
+
+        it "doesn't remove the file if not all sections are marked to be destroyed" do
+          subject.contents << first_sect << second_sect
+          first_sect.destroy = true
+          second_sect.destroy = false
+
+          File.expects(:unlink).never
+          subject.filetype.stubs(:write)
+          subject.store
+        end
+      end
+
+      it "rewrites the file if destroy_empty is false" do
+        subject.contents << first_sect << second_sect
+        first_sect.destroy = true
+        second_sect.destroy = true
+
+        File.expects(:unlink).never
+        subject.stubs(:format).returns "formatted"
+        subject.filetype.expects(:write).with("formatted")
+        subject.store
+      end
+    end
+
+    it "rewrites the file if any section is dirty" do
+      subject.contents << first_sect << second_sect
+      first_sect.mark_dirty
+      second_sect.mark_clean
+
+      subject.stubs(:format).returns "formatted"
+      subject.filetype.expects(:write).with("formatted")
+      subject.store
+    end
+
+    it "doesn't modify the file if all sections are clean" do
+      subject.contents << first_sect << second_sect
+      first_sect.mark_clean
+      second_sect.mark_clean
+
+      subject.stubs(:format).returns "formatted"
+      subject.filetype.expects(:write).never
+      subject.store
     end
   end
 end

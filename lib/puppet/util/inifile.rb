@@ -25,10 +25,13 @@ module Puppet::Util::IniConfig
       @destroy = false
     end
 
-    # Has this section been modified since it's been read in
-    # or written back to disk
+    # Does this section need to be updated in/removed from the associated file?
+    #
+    # @note This section is dirty if a key has been modified _or_ if the
+    #   section has been modified so the associated file can be rewritten
+    #   without this section.
     def dirty?
-      @dirty
+      @dirty or @destroy
     end
 
     def mark_dirty
@@ -74,13 +77,17 @@ module Puppet::Util::IniConfig
     # Format the section as text in the way it should be
     # written to file
     def format
-      text = "[#{name}]\n"
-      @entries.each do |entry|
-        if entry.is_a?(Array)
-          key, value = entry
-          text << "#{key}=#{value}\n" unless value.nil?
-        else
-          text << entry
+      if @destroy
+        text = ""
+      else
+        text = "[#{name}]\n"
+        @entries.each do |entry|
+          if entry.is_a?(Array)
+            key, value = entry
+            text << "#{key}=#{value}\n" unless value.nil?
+          else
+            text << entry
+          end
         end
       end
       text
@@ -232,10 +239,17 @@ module Puppet::Util::IniConfig
     #   @return [Array<String, Puppet::Util::IniConfig::Section>]
     attr_reader :contents
 
-    def initialize(file)
+    # @!attribute [rw] destroy_empty
+    #   Whether empty files should be removed if no sections are defined.
+    #   Defaults to false
+    attr_accessor :destroy_empty
+
+    def initialize(file, options = {})
       @file = file
       @contents = []
       @filetype = Puppet::Util::FileType.filetype(:flat).new(file)
+
+      @destroy_empty = options.fetch(:destroy_empty, false)
     end
 
     # Read and parse the on-disk file associated with this object
@@ -324,13 +338,23 @@ module Puppet::Util::IniConfig
 
       @contents.each do |content|
         if content.is_a? Section
-          text << content.format unless content.destroy?
+          text << content.format
         else
           text << content
         end
       end
 
       text
+    end
+
+    def store
+      if @destroy_empty and (sections.empty? or sections.all?(&:destroy?))
+        ::File.unlink(@file)
+      elsif sections.any?(&:dirty?)
+        text = self.format
+        @filetype.write(text)
+      end
+      sections.each(&:mark_clean)
     end
 
     private
