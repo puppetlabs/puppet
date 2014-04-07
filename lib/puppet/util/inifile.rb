@@ -319,6 +319,20 @@ module Puppet::Util::IniConfig
       @contents.find { |entry| entry.is_a? Section and entry.name == name }
     end
 
+    def format
+      text = ""
+
+      @contents.each do |content|
+        if content.is_a? Section
+          text << content.format unless content.destroy?
+        else
+          text << content
+        end
+      end
+
+      text
+    end
+
     private
 
     # Create a new section and store it in the file contents

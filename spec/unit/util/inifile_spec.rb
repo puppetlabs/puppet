@@ -218,4 +218,54 @@ describe Puppet::Util::IniConfig::PhysicalFile do
     expect(section.name).to eq "second"
     expect(section["key"]).to eq "value"
   end
+
+  describe "formatting" do
+    let(:first_sect) do
+      sect = Puppet::Util::IniConfig::Section.new('firstsection', '/some/imaginary/file')
+      sect.entries << "# comment\n" << ['onefish', 'redfish'] << "\n"
+      sect
+    end
+
+    let(:second_sect) do
+      sect = Puppet::Util::IniConfig::Section.new('secondsection', '/some/imaginary/file')
+      sect.entries << ['twofish', 'bluefish']
+      sect
+    end
+
+    it "concatenates each formatted section in order" do
+      subject.contents << first_sect << second_sect
+
+      expected = "[firstsection]\n" +
+        "# comment\n" +
+        "onefish=redfish\n" +
+        "\n" +
+        "[secondsection]\n" +
+        "twofish=bluefish\n"
+
+      expect(subject.format).to eq expected
+    end
+
+    it "includes comments that are not within a section" do
+      subject.contents << "# This comment is not in a section\n" << first_sect << second_sect
+
+      expected = "# This comment is not in a section\n" +
+        "[firstsection]\n" +
+        "# comment\n" +
+        "onefish=redfish\n" +
+        "\n" +
+        "[secondsection]\n" +
+        "twofish=bluefish\n"
+
+      expect(subject.format).to eq expected
+    end
+
+    it "excludes sections that are marked to be destroyed" do
+      subject.contents << first_sect << second_sect
+      first_sect.destroy = true
+
+      expected = "[secondsection]\n" + "twofish=bluefish\n"
+
+      expect(subject.format).to eq expected
+    end
+  end
 end
