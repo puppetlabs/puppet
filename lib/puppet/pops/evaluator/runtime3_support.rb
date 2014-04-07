@@ -515,7 +515,12 @@ module Puppet::Pops::Evaluator::Runtime3Support
     def initialize
       super
       p = self
-      p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :warning
+      # Issues triggering warning only if --debug is on
+      if Puppet[:debug]
+        p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :warning
+      else
+        p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
+      end
     end
   end
 
