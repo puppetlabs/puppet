@@ -24,7 +24,7 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def evaluate(scope)
-      result = @@evaluator.evaluate(scope, @value)
+      @@evaluator.evaluate(scope, @value)
     end
 
     # Adapts to 3x where top level constructs needs to have each to iterate over children. Short circuit this
