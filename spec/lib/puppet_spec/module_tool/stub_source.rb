@@ -124,6 +124,13 @@ module PuppetSpec
                 )
                 Hash[metadata.map { |k,v| [ k.to_s, v ] }]
               end
+
+              data = {
+                'name'     => release.name,
+                'version'  => release.version,
+                'metadata' => release.metadata,
+              }
+              release.meta_def(:forge_data) { |key| data[key] }
             end
           end
         end

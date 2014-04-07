@@ -225,6 +225,7 @@ module Puppet::ModuleTool
         return {
           :release          => release,
           :name             => release.name,
+          :supported        => release.forge_data('supported'),
           :path             => release.install_dir.to_s,
           :dependencies     => dependencies.compact,
           :version          => release.version,
