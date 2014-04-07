@@ -19,12 +19,12 @@ describe Puppet::Parser do
   end
 
   it "should set the environment" do
-    env = Puppet::Node::Environment.create(:testing, [], '')
+    env = Puppet::Node::Environment.create(:testing, [])
     Puppet::Parser::Parser.new(env).environment.should == env
   end
 
   it "should be able to look up the environment-specific resource type collection" do
-    env = Puppet::Node::Environment.create(:development, [], '')
+    env = Puppet::Node::Environment.create(:development, [])
     rtc = env.known_resource_types
     parser = Puppet::Parser::Parser.new env
     parser.known_resource_types.should equal(rtc)

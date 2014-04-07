@@ -78,7 +78,7 @@ class Puppet::Node::Environment
   # @return [Puppet::Node::Environment]
   #
   # @api public
-  def self.create(name, modulepath, manifest)
+  def self.create(name, modulepath, manifest = NO_MANIFEST)
     obj = self.allocate
     obj.send(:initialize,
              name,
@@ -462,7 +462,7 @@ class Puppet::Node::Environment
       # if the manifest file is a reference to a directory, parse and combine all .pp files in that
       # directory
       if file == NO_MANIFEST
-        nil
+        Puppet::Parser::AST::Hostclass.new('')
       elsif File.directory?(file)
         parse_results = Dir.entries(file).find_all { |f| f =~ /\.pp$/ }.sort.map do |pp_file|
           parser.file = File.join(file, pp_file)

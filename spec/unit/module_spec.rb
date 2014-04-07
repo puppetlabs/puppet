@@ -138,7 +138,7 @@ describe Puppet::Module do
     end
 
     it "should list modules with unmet version requirement" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       mod = PuppetSpec::Modules.create(
         'test_gte_req',
@@ -189,7 +189,7 @@ describe Puppet::Module do
     end
 
     it "should consider a dependency without a version requirement to be satisfied" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       mod = PuppetSpec::Modules.create(
         'foobar',
@@ -215,7 +215,7 @@ describe Puppet::Module do
     end
 
     it "should consider a dependency without a semantic version to be unmet" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       mod = PuppetSpec::Modules.create(
         'foobar',
@@ -259,7 +259,7 @@ describe Puppet::Module do
     end
 
     it "should only list unmet dependencies" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       mod = PuppetSpec::Modules.create(
         name,
@@ -298,7 +298,7 @@ describe Puppet::Module do
     end
 
     it "should be empty when all dependencies are met" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       mod = PuppetSpec::Modules.create(
         'mymod2',
@@ -662,7 +662,7 @@ describe Puppet::Module do
   end
 
   it "should know what other modules require it" do
-    env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+    env = Puppet::Node::Environment.create(:testing, [@modpath])
 
     dependable = PuppetSpec::Modules.create(
       'dependable',

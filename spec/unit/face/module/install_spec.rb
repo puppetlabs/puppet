@@ -15,7 +15,7 @@ describe "puppet module install" do
     let(:fakedirpath)    { make_absolute("/my/fake/path") }
     let(:options) { {} }
     let(:environment) do
-      Puppet::Node::Environment.create(:env, [fakefirstpath, fakesecondpath], '')
+      Puppet::Node::Environment.create(:env, [fakefirstpath, fakesecondpath])
     end
     let(:expected_options) do
       {

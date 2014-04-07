@@ -7,7 +7,7 @@ require 'puppet/resource/type'
 describe Puppet::Resource::TypeCollection do
   include PuppetSpec::Files
 
-  let(:environment) { Puppet::Node::Environment.create(:testing, [], '') }
+  let(:environment) { Puppet::Node::Environment.create(:testing, []) }
 
   before do
     @instance = Puppet::Resource::Type.new(:hostclass, "foo")
