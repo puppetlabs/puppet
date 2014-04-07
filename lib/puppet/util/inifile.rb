@@ -300,7 +300,7 @@ module Puppet::Util::IniConfig
             )
           end
 
-          section = create_section(section_name)
+          section = add_section(section_name)
           optname = nil
         elsif (match = l.match(INI_PROPERTY))
           # We allow space around the keys, but not the values
@@ -357,18 +357,71 @@ module Puppet::Util::IniConfig
       sections.each(&:mark_clean)
     end
 
-    private
-
     # Create a new section and store it in the file contents
     #
     # @api private
     # @param name [String] The name of the section to create
     # @return [Puppet::Util::IniConfig::Section]
-    def create_section(name)
+    def add_section(name)
       section = Section.new(name, @file)
       @contents << section
 
       section
+    end
+  end
+
+  class FileCollection
+
+    attr_reader :files
+
+    def initialize
+      @files = {}
+    end
+
+    def read(file)
+      physical_file = PhysicalFile.new(file)
+      physical_file.read
+      @files[file] = physical_file
+    end
+
+    def store
+      @files.values.each do |file|
+        file.store
+      end
+    end
+
+    def each_section(&block)
+      @files.values.each do |file|
+        file.sections.each do |section|
+          yield section
+        end
+      end
+    end
+
+    def each_file(&block)
+      @files.keys.each do |path|
+        yield path
+      end
+    end
+
+    def get_section(name)
+      sect = nil
+      @files.values.each do |file|
+        if (current = file.get_section(name))
+          sect = current
+        end
+      end
+      sect
+    end
+    alias [] get_section
+
+    def include?(name)
+      !! get_section(name)
+    end
+
+    def add_section(name, file)
+      @files[file] ||= PhysicalFile.new(file)
+      @files[file].add_section(name)
     end
   end
 

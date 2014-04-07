@@ -343,3 +343,139 @@ describe Puppet::Util::IniConfig::PhysicalFile do
     end
   end
 end
+
+describe Puppet::Util::IniConfig::FileCollection do
+
+  let(:path_a) { '/some/nonexistent/file/a' }
+  let(:path_b) { '/some/nonexistent/file/b' }
+
+  let(:file_a) { Puppet::Util::IniConfig::PhysicalFile.new(path_a) }
+  let(:file_b) { Puppet::Util::IniConfig::PhysicalFile.new(path_b) }
+
+  let(:sect_a1) { Puppet::Util::IniConfig::Section.new('sect_a1', path_a) }
+  let(:sect_a2) { Puppet::Util::IniConfig::Section.new('sect_a2', path_a) }
+
+  let(:sect_b1) { Puppet::Util::IniConfig::Section.new('sect_b1', path_b) }
+  let(:sect_b2) { Puppet::Util::IniConfig::Section.new('sect_b2', path_b) }
+
+  before do
+    file_a.contents << sect_a1 << sect_a2
+    file_b.contents << sect_b1 << sect_b2
+  end
+
+  describe "reading a file" do
+    let(:stub_file) { stub('Physical file') }
+
+    it "creates a new PhysicalFile and uses that to read the file" do
+      stub_file.expects(:read)
+      Puppet::Util::IniConfig::PhysicalFile.expects(:new).with(path_a).returns stub_file
+
+      subject.read(path_a)
+    end
+
+    it "stores the PhysicalFile and the path to the file" do
+      stub_file.stubs(:read)
+      Puppet::Util::IniConfig::PhysicalFile.stubs(:new).with(path_a).returns stub_file
+      subject.read(path_a)
+
+      path, physical_file = subject.files.first
+
+      expect(path).to eq(path_a)
+      expect(physical_file).to eq stub_file
+    end
+  end
+
+  describe "storing all files" do
+    before do
+      subject.files[path_a] = file_a
+      subject.files[path_b] = file_b
+    end
+
+    it "stores all files in the collection" do
+      file_a.expects(:store).once
+      file_b.expects(:store).once
+
+      subject.store
+    end
+  end
+
+  describe "iterating over sections" do
+    before do
+      subject.files[path_a] = file_a
+      subject.files[path_b] = file_b
+    end
+
+    it "yields every section from every file" do
+      [sect_a1, sect_a2, sect_b1, sect_b2].each do |sect|
+        sect.expects(:touch).once
+      end
+
+      subject.each_section do |sect|
+        sect.touch
+      end
+    end
+  end
+
+  describe "iterating over files" do
+    before do
+      subject.files[path_a] = file_a
+      subject.files[path_b] = file_b
+    end
+
+    it "yields the path to every file in the collection" do
+      seen = []
+      subject.each_file do |file|
+        seen << file
+      end
+
+      expect(seen).to include(path_a)
+      expect(seen).to include(path_b)
+    end
+  end
+
+  describe "retrieving a specific section" do
+    before do
+      subject.files[path_a] = file_a
+      subject.files[path_b] = file_b
+    end
+
+    it "retrieves the first section defined" do
+      expect(subject.get_section('sect_b1')).to eq sect_b1
+    end
+
+    it "returns nil if there was no section with the given name" do
+      expect(subject.get_section('nope')).to be_nil
+    end
+
+    it "allows #[] to be used as an alias to #get_section" do
+      expect(subject['b2']).to eq subject.get_section('b2')
+    end
+  end
+
+  describe "checking if a section has been defined" do
+    before do
+      subject.files[path_a] = file_a
+      subject.files[path_b] = file_b
+    end
+
+    it "is true if a section with the given name is defined" do
+      expect(subject.include?('sect_a1')).to be_true
+    end
+
+    it "is false if a section with the given name can't be found" do
+      expect(subject.include?('nonexistent')).to be_false
+    end
+  end
+
+  describe "adding a new section" do
+    before do
+      subject.files[path_a] = file_a
+      subject.files[path_b] = file_b
+    end
+
+    it "adds the section to the appropriate file" do
+      file_a.expects(:add_section).with('newsect')
+      subject.add_section('newsect', path_a)
+    end
+  end
+end
