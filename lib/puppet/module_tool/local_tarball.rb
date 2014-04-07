@@ -61,6 +61,10 @@ module Puppet::ModuleTool
         super(source, name, version, dependencies || {})
       end
 
+      def forge_data(key)
+        nil
+      end
+
       def install(dir)
         @source.install(self, dir)
         @install_dir = dir

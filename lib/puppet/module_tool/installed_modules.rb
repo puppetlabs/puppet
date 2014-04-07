@@ -70,6 +70,10 @@ module Puppet::ModuleTool
         end
       end
 
+      def forge_data(key)
+        nil
+      end
+
       def install_dir
         Pathname.new(@mod.path).dirname
       end

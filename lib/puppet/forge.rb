@@ -123,6 +123,10 @@ class Puppet::Forge < Semantic::Dependency::Source
       super(source, name, version, Hash[dependencies])
     end
 
+    def forge_data(key)
+      @data[key]
+    end
+
     def install(dir)
       staging_dir = self.prepare
 
