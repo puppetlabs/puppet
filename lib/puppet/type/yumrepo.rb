@@ -301,4 +301,11 @@ Puppet::Type.newtype(:yumrepo) do
     end
   end
 
+  newproperty(:skip_if_unavailable) do
+    desc "Should yum skip this repository if unable to reach it.
+      #{YUM_BOOLEAN_DOC}
+      #{ABSENT_DOC}"
+
+    newvalues(YUM_BOOLEAN, :absent)
+  end
 end
