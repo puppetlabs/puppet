@@ -10,42 +10,6 @@ describe Puppet::Environments do
   FS = Puppet::FileSystem
 
   describe "directories loader" do
-
-    RSpec::Matchers.define :environment do |name|
-      match do |env|
-        env.name == name &&
-          (!@manifest || @manifest == env.manifest) &&
-          (!@modulepath || @modulepath == env.modulepath)
-      end
-
-      chain :with_manifest do |manifest|
-        @manifest = manifest
-      end
-
-      chain :with_modulepath do |modulepath|
-        @modulepath = modulepath
-      end
-
-      description do
-        "environment #{expected}" +
-          (@manifest ? " with manifest #{@manifest}" : "") +
-          (@modulepath ? " with modulepath [#{@modulepath.join(', ')}]" : "")
-      end
-
-      failure_message_for_should do |env|
-        "expected <#{env.name}: modulepath = [#{env.modulepath.join(', ')}], manifest = #{env.manifest}> to be #{description}"
-      end
-    end
-
-    def loader_from(options, &block)
-      FS.overlay(*options[:filesystem]) do
-        yield Puppet::Environments::Directories.new(
-          options[:directory],
-          options[:modulepath] || []
-        )
-      end
-    end
-
     it "lists environments" do
       global_path_1_location = File.expand_path("global_path_1")
       global_path_2_location = File.expand_path("global_path_2")
@@ -121,6 +85,41 @@ describe Puppet::Environments do
                   :directory => directory_tree) do |loader|
         expect(loader.get("env_not_in_this_list")).to be_nil
       end
+    end
+  end
+
+  RSpec::Matchers.define :environment do |name|
+    match do |env|
+      env.name == name &&
+        (!@manifest || @manifest == env.manifest) &&
+        (!@modulepath || @modulepath == env.modulepath)
+    end
+
+    chain :with_manifest do |manifest|
+      @manifest = manifest
+    end
+
+    chain :with_modulepath do |modulepath|
+      @modulepath = modulepath
+    end
+
+    description do
+      "environment #{expected}" +
+        (@manifest ? " with manifest #{@manifest}" : "") +
+        (@modulepath ? " with modulepath [#{@modulepath.join(', ')}]" : "")
+    end
+
+    failure_message_for_should do |env|
+      "expected <#{env.name}: modulepath = [#{env.modulepath.join(', ')}], manifest = #{env.manifest}> to be #{description}"
+    end
+  end
+
+  def loader_from(options, &block)
+    FS.overlay(*options[:filesystem]) do
+      yield Puppet::Environments::Directories.new(
+        options[:directory],
+        options[:modulepath] || []
+      )
     end
   end
 end
