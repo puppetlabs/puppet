@@ -9,6 +9,7 @@
 # The parsing tries to stay close to python's ConfigParser
 
 require 'puppet/util/filetype'
+require 'puppet/error'
 
 module Puppet::Util::IniConfig
   # A section in a .ini file
@@ -218,5 +219,122 @@ module Puppet::Util::IniConfig
       result
     end
   end
-end
 
+  class PhysicalFile
+
+    # @!attribute [r] filetype
+    #   @api private
+    #   @return [Puppet::Util::FileType::FileTypeFlat]
+    attr_reader :filetype
+
+    # @!attribute [r] contents
+    #   @api private
+    #   @return [Array<String, Puppet::Util::IniConfig::Section>]
+    attr_reader :contents
+
+    def initialize(file)
+      @file = file
+      @contents = []
+      @filetype = Puppet::Util::FileType.filetype(:flat).new(file)
+    end
+
+    # Read and parse the on-disk file associated with this object
+    def read
+      text = @filetype.read
+      if text.nil?
+        raise IniParseError, "Cannot read nonexistent file #{@file.inspect}"
+      end
+      parse(text)
+    end
+
+    INI_COMMENT = Regexp.union(
+      /^\s*$/,
+      /^[#;]/,
+      /^\s*rem\s/i
+    )
+    INI_CONTINUATION = /^[ \t\r\n\f]/
+    INI_SECTION_NAME = /^\[([^\]]+)\]/
+    INI_PROPERTY     = /^\s*([^\s=]+)\s*\=(.*)$/
+
+    # @api private
+    def parse(text)
+      section = nil   # The name of the current section
+      optname = nil   # The name of the last option in section
+      line_num = 0
+
+      text.each_line do |l|
+        line_num += 1
+        if l.match(INI_COMMENT)
+          # Whitespace or comment
+          if section.nil?
+            @contents << l
+          else
+            section.add_line(l)
+          end
+        elsif l.match(INI_CONTINUATION) && section && optname
+          # continuation line
+          section[optname] += "\n#{l.chomp}"
+        elsif (match = l.match(INI_SECTION_NAME))
+          # section heading
+          section.mark_clean if section
+
+          section_name = match[1]
+
+          if get_section(section_name)
+            raise IniParseError.new(
+              "Section #{section_name.inspect} is already defined, cannot redefine", @file, line_num
+            )
+          end
+
+          section = create_section(section_name)
+          optname = nil
+        elsif (match = l.match(INI_PROPERTY))
+          # We allow space around the keys, but not the values
+          # For the values, we don't know if space is significant
+          key = match[1]
+          val = match[2]
+
+          if section.nil?
+            raise IniParseError.new("Property with key #{key.inspect} outside of a section")
+          end
+
+          section[key] = val
+          optname = key
+        else
+          raise IniParseError.new("Can't parse line '#{l.chomp}'", @file, line_num)
+        end
+      end
+      section.mark_clean unless section.nil?
+    end
+
+    # @return [Array<Puppet::Util::IniConfig::Section>] All sections defined in
+    #   this file.
+    def sections
+      @contents.select { |entry| entry.is_a? Section }
+    end
+
+    # @return [Puppet::Util::IniConfig::Section, nil] The section with the
+    #   given name if it exists, else nil.
+    def get_section(name)
+      @contents.find { |entry| entry.is_a? Section and entry.name == name }
+    end
+
+    private
+
+    # Create a new section and store it in the file contents
+    #
+    # @api private
+    # @param name [String] The name of the section to create
+    # @return [Puppet::Util::IniConfig::Section]
+    def create_section(name)
+      section = Section.new(name, @file)
+      @contents << section
+
+      section
+    end
+  end
+
+  class IniParseError < Puppet::Error
+    include Puppet::ExternalFileError
+  end
+end
