@@ -30,6 +30,10 @@ module Puppet::Util::IniConfig
       @dirty
     end
 
+    def mark_dirty
+      @dirty = true
+    end
+
     # Should only be used internally
     def mark_clean
       @dirty = false
