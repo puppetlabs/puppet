@@ -24,7 +24,7 @@ class Puppet::Parser::AST::PopsBridge
     end
 
     def evaluate(scope)
-      @@evaluator.evaluate(scope, @value)
+      result = @@evaluator.evaluate(scope, @value)
     end
 
     # Adapts to 3x where top level constructs needs to have each to iterate over children. Short circuit this
@@ -52,6 +52,13 @@ class Puppet::Parser::AST::PopsBridge
     #
     def children
       []
+    end
+  end
+
+  class NilAsUndefExpression < Expression
+    def evaluate(scope)
+      result = super
+      result.nil? ? :undef : result
     end
   end
 
@@ -109,7 +116,7 @@ class Puppet::Parser::AST::PopsBridge
       # can thus reference all sorts of information. Here the value expression is wrapped in an AST Bridge to a Pops
       # expression since the Pops side can not control the evaluation
       if o.value
-        [ o.name, Expression.new(:value => o.value) ]
+        [ o.name, NilAsUndefExpression.new(:value => o.value) ]
       else
         [ o.name ]
       end

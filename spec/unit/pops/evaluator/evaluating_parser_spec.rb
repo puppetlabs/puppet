@@ -760,6 +760,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(Puppet::ParseError)
         end
       end
+
+    it "provides location information on error in unparenthesized call logic" do
+    expect{parser.evaluate_string(scope, "include non_existing_class", __FILE__)}.to raise_error(Puppet::ParseError, /line 1\:1/)
+    end
   end
 
   context "When evaluator performs string interpolation" do

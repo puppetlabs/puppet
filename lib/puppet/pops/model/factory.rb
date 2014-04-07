@@ -461,12 +461,16 @@ class Puppet::Pops::Model::Factory
     current.respond_to?(meth, include_all) || super
   end
 
+  def self.record_position(o, start_locatable, end_locateable)
+    new(o).record_position(start_locatable, end_locateable)
+  end
+
   # Records the position (start -> end) and computes the resulting length.
   #
   def record_position(start_locatable, end_locatable)
     from = start_locatable.is_a?(Puppet::Pops::Model::Factory) ? start_locatable.current : start_locatable
     to   = end_locatable.is_a?(Puppet::Pops::Model::Factory) ? end_locatable.current  : end_locatable
-    to = from if to.nil?
+    to = from if to.nil? || to.offset.nil?
     o = current
     # record information directly in the Model::Positioned object
     o.offset = from.offset
@@ -736,7 +740,10 @@ class Puppet::Pops::Model::Factory
       expr = expr.current if expr.is_a?(Puppet::Pops::Model::Factory)
       name = memo[-1]
       if name.is_a?(Model::QualifiedName) && STATEMENT_CALLS[name.value]
-        memo[-1] = Puppet::Pops::Model::Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
+        the_call = Puppet::Pops::Model::Factory.CALL_NAMED(name, false, expr.is_a?(Array) ? expr : [expr])
+        # last positioned is last arg if there are several
+        record_position(the_call, name, expr.is_a?(Array) ? expr[-1]  : expr)
+        memo[-1] = the_call
         if expr.is_a?(Model::CallNamedFunctionExpression)
           # Patch statement function call to expression style
           # This is needed because it is first parsed as a "statement" and the requirement changes as it becomes
