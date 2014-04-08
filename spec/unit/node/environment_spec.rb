@@ -276,7 +276,7 @@ describe Puppet::Node::Environment do
               @first,
               :metadata => {
                 :author       => 'puppetlabs',
-                :dependencies => [{ 'name' => 'puppetlabs/bar', "version_requirement" => "3.0.0" }]
+                :dependencies => [{ 'name' => 'puppetlabs-bar', "version_requirement" => "3.0.0" }]
               }
             )
             PuppetSpec::Modules.create(

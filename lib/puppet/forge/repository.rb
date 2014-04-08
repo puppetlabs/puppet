@@ -2,6 +2,8 @@ require 'net/https'
 require 'digest/sha1'
 require 'uri'
 require 'puppet/util/http_proxy'
+require 'puppet/forge'
+require 'puppet/forge/errors'
 
 if Puppet.features.zlib? && Puppet[:zlib]
   require 'zlib'
@@ -35,21 +37,39 @@ class Puppet::Forge
     end
 
     # Instantiate a new repository instance rooted at the +url+.
-    # The agent will report +consumer_version+ in the User-Agent to
-    # the repository.
-    def initialize(url, consumer_version)
-      @uri = url.is_a?(::URI) ? url : ::URI.parse(url)
+    # The library will report +for_agent+ in the User-Agent to the repository.
+    def initialize(host, for_agent)
+      @host  = host
+      @agent = for_agent
       @cache = Cache.new(self)
-      @consumer_version = consumer_version
+      @uri   = URI.parse(host)
     end
 
-    # Return a Net::HTTPResponse read for this +request_path+.
-    def make_http_request(request_path)
-      request = Net::HTTP::Get.new(URI.escape(@uri.path + request_path), { "User-Agent" => user_agent })
-      if ! @uri.user.nil? && ! @uri.password.nil?
+    # Return a Net::HTTPResponse read for this +path+.
+    def make_http_request(path, io = nil)
+      Puppet.debug "HTTP GET #{@host}#{path}"
+      request = get_request_object(path)
+      return read_response(request, io)
+    end
+
+    def get_request_object(path)
+      headers = {
+        "User-Agent" => user_agent,
+      }
+
+      if Puppet.features.zlib? && Puppet[:zlib] && RUBY_VERSION >= "1.9"
+        headers = headers.merge({
+          "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
+        })
+      end
+
+      request = Net::HTTP::Get.new(URI.escape(path), headers)
+
+      unless @uri.user.nil? || @uri.password.nil?
         request.basic_auth(@uri.user, @uri.password)
       end
-      return read_response(request)
+
+      return request
     end
 
     # Return a Net::HTTPResponse read from this HTTPRequest +request+.
@@ -60,11 +80,27 @@ class Puppet::Forge
     #   related error
     # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
     #  verifying the remote SSL certificate
-    def read_response(request)
+    def read_response(request, io = nil)
       http_object = get_http_object
 
       http_object.start do |http|
-        http.request(request)
+        response = http.request(request)
+
+        if Puppet.features.zlib? && Puppet[:zlib]
+          if response && response.key?("content-encoding")
+            case response["content-encoding"]
+            when "gzip"
+              response.body = Zlib::GzipReader.new(StringIO.new(response.read_body), :encoding => "ASCII-8BIT").read
+              response.delete("content-encoding")
+            when "deflate"
+              response.body = Zlib::Inflate.inflate(response.read_body)
+              response.delete("content-encoding")
+            end
+          end
+        end
+
+        io.write(response.body) if io.respond_to? :write
+        response
       end
     rescue *NET_HTTP_EXCEPTIONS => e
       raise CommunicationError.new(:uri => @uri.to_s, :original => e)
@@ -103,33 +139,32 @@ class Puppet::Forge
     # Return the local file name containing the data downloaded from the
     # repository at +release+ (e.g. "myuser-mymodule").
     def retrieve(release)
-      uri = @uri.dup
-      uri.path = uri.path.chomp('/') + release
-      return cache.retrieve(uri)
+      path = @host.chomp('/') + release
+      return cache.retrieve(path)
     end
 
     # Return the URI string for this repository.
     def to_s
-      return @uri.to_s
+      "#<#{self.class} #{@host}>"
     end
 
     # Return the cache key for this repository, this a hashed string based on
     # the URI.
     def cache_key
       return @cache_key ||= [
-        @uri.to_s.gsub(/[^[:alnum:]]+/, '_').sub(/_$/, ''),
-        Digest::SHA1.hexdigest(@uri.to_s)
-      ].join('-')
+        @host.to_s.gsub(/[^[:alnum:]]+/, '_').sub(/_$/, ''),
+        Digest::SHA1.hexdigest(@host.to_s)
+      ].join('-').freeze
     end
+
+    private
 
     def user_agent
-      "#{@consumer_version} Puppet/#{Puppet.version} (#{Facter.value(:operatingsystem)} #{Facter.value(:operatingsystemrelease)}) #{ruby_version}"
+      @user_agent ||= [
+        @agent,
+        "Puppet/#{Puppet.version}",
+        "Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_PLATFORM})",
+      ].join(' ').freeze
     end
-    private :user_agent
-
-    def ruby_version
-      "Ruby/#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL} (#{RUBY_RELEASE_DATE}; #{RUBY_PLATFORM})"
-    end
-    private :ruby_version
   end
 end

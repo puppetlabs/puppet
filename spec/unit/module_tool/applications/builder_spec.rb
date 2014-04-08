@@ -29,7 +29,7 @@ EOM
 
   it "should attempt to create a module relative to the pkg directory" do
     tarrer = mock('tarrer')
-    Puppet::ModuleTool::Tar.expects(:instance).with(module_name).returns(tarrer)
+    Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
     Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
     tarrer.expects(:pack).with(release_name, tarball)
 
