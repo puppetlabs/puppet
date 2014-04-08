@@ -360,12 +360,7 @@ module Puppet::Pops::Types
     end
   end
 
-  class PCallSignatureType < PAbstractType
-    # TODO: Produced type - tricky since it really needs to be able to refer to the types, and type params
-    #       given in types to be useful; i.e. func(T) => T, func(T1, T2) => [T1]. This requires introduction
-    #       of type functions common(T1, T2)=>T, param(T, n) => Tn, number_generality(T, T) etc.
-    #       This is still difficult; as an exercise try typing the lambda given to the map function
-
+  class PCallableType < PAbstractType
     # Types of parameters and required/optional count
     contains_one_uni 'param_types', PTupleType, :lowerBound => 1
 
@@ -379,27 +374,13 @@ module Puppet::Pops::Types
 
     module ClassModule
       def hash
+        # note: names are ignored in hash
         [self.class, Set.new(param_types), block_type].hash
       end
 
       def ==(o)
+        # note: names are ignored in comparison
         self.class == o.class && args_type == o.args_type && block_type == o.block_type
-      end
-    end
-  end
-
-  # @api public
-  class PCallableType < PObjectType
-    # if not set/empty means 'any callable'
-    contains_many_uni 'signatures', PCallSignatureType, :lowerBound => 0
-
-    module ClassModule
-      def hash
-        [self.class, Set.new(signatures)].hash
-      end
-
-      def ==(o)
-        self.class == o.class && signatures == o.signatures
       end
     end
   end
