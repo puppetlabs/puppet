@@ -64,6 +64,8 @@ describe "apply" do
         }
         EOF
       end
+      environmentdir = Dir.mktmpdir('environments')
+      Puppet[:environmentpath] = environmentdir
       create_default_directory_environment
     end
 
