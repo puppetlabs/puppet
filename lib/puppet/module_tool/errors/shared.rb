@@ -5,25 +5,81 @@ module Puppet::ModuleTool::Errors
       @requested_name    = options[:requested_name]
       @requested_version = options[:requested_version]
       @installed_version = options[:installed_version]
-      @dependency_name   = options[:dependency_name]
       @conditions        = options[:conditions]
       @action            = options[:action]
 
-      super "Could not #{@action} '#{@requested_name}' (#{vstring}); module '#{@dependency_name}' cannot satisfy dependencies"
+      super "Could not #{@action} '#{@requested_name}' (#{vstring}); no version satisfies all dependencies"
     end
 
     def multiline
-      same_mod = @requested_name == @dependency_name
-
       message = []
       message << "Could not #{@action} module '#{@requested_name}' (#{vstring})"
-      message << "  No version of '#{@dependency_name}' will satisfy dependencies"
-      message << "    You specified '#{@requested_name}' (#{v(@requested_version)})" if same_mod
-      message += @conditions.select { |c| c[:module] != :you }.sort_by { |c| c[:module] }.map do |c|
-        "    '#{c[:module]}' (#{v(c[:version])}) requires '#{@dependency_name}' (#{v(c[:dependency])})"
+      message << "  No version of '#{@requested_name}' can satisfy all dependencies"
+      message << "    Use `puppet module #{@action} --ignore-dependencies` to #{@action} only this module"
+
+      message.join("\n")
+    end
+  end
+
+  class NoCandidateReleasesError < ModuleToolError
+    def initialize(options)
+      @module_name       = options[:module_name]
+      @requested_version = options[:requested_version]
+      @installed_version = options[:installed_version]
+      @source            = options[:source]
+      @action            = options[:action]
+
+      if @requested_version == :latest
+        super "Could not #{@action} '#{@module_name}'; no releases are available from #{@source}"
+      else
+        super "Could not #{@action} '#{@module_name}'; no releases matching '#{@requested_version}' are available from #{@source}"
       end
-      message << "    Use `puppet module #{@action} --force` to #{@action} this module anyway" if same_mod
-      message << "    Use `puppet module #{@action} --ignore-dependencies` to #{@action} only this module" unless same_mod
+    end
+
+    def multiline
+      message = []
+      message << "Could not #{@action} '#{@module_name}' (#{vstring})"
+
+      if @requested_version == :latest
+        message << "  No releases are available from #{@source}"
+        message << "    Does '#{@module_name}' have at least one published release?"
+      else
+        message << "  No releases matching '#{@requested_version}' are available from #{@source}"
+      end
+
+      message.join("\n")
+    end
+  end
+
+  class InstallConflictError < ModuleToolError
+    def initialize(options)
+      @requested_module  = options[:requested_module]
+      @requested_version = v(options[:requested_version])
+      @dependency        = options[:dependency]
+      @directory         = options[:directory]
+      @metadata          = options[:metadata]
+      super "'#{@requested_module}' (#{@requested_version}) requested; installation conflict"
+    end
+
+    def multiline
+      message = []
+      message << "Could not install module '#{@requested_module}' (#{@requested_version})"
+
+      if @dependency
+        message << "  Dependency '#{@dependency[:name]}' (#{v(@dependency[:version])}) would overwrite #{@directory}"
+      else
+        message << "  Installation would overwrite #{@directory}"
+      end
+
+      if @metadata
+        message << "    Currently, '#{@metadata["name"]}' (#{v(@metadata["version"])}) is installed to that directory"
+      end
+
+      if @dependency
+        message << "    Use `puppet module install --ignore-dependencies` to install only this module"
+      else
+        message << "    Use `puppet module install --force` to install this module anyway"
+      end
 
       message.join("\n")
     end
@@ -101,7 +157,7 @@ module Puppet::ModuleTool::Errors
       @requested_version = options[:requested_version]
       @installed_version = options[:installed_version]
       @action            = options[:action]
-      super "Could not #{@action} '#{@module_name}'; module is not installed"
+      super "Could not #{@action} '#{@module_name}'; module has had changes made locally"
     end
 
     def multiline
@@ -109,6 +165,23 @@ module Puppet::ModuleTool::Errors
       message << "Could not #{@action} module '#{@module_name}' (#{vstring})"
       message << "  Installed module has had changes made locally"
       message << "    Use `puppet module #{@action} --force` to #{@action} this module anyway"
+      message.join("\n")
+    end
+  end
+
+  class InvalidModuleError < ModuleToolError
+    def initialize(name, options)
+      @name   = name
+      @action = options[:action]
+      @error  = options[:error]
+      super "Could not #{@action} '#{@name}'; #{@error.message}"
+    end
+
+    def multiline
+      message = []
+      message << "Could not #{@action} module '#{@name}'"
+      message << "  Failure trying to parse metadata"
+      message << "    Original message was: #{@error.message}"
       message.join("\n")
     end
   end

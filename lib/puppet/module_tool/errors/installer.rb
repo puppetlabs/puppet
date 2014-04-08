@@ -22,53 +22,22 @@ module Puppet::ModuleTool::Errors
     end
   end
 
-  class InstallConflictError < InstallError
+  class MissingPackageError < InstallError
     def initialize(options)
-      @requested_module  = options[:requested_module]
-      @requested_version = v(options[:requested_version])
-      @dependency        = options[:dependency]
-      @directory         = options[:directory]
-      @metadata          = options[:metadata]
-      super "'#{@requested_module}' (#{@requested_version}) requested; Installation conflict"
+      @requested_package = options[:requested_package]
+      @source = options[:source]
+
+      super "Could not install '#{@requested_package}'; no releases are available from #{@source}"
     end
 
     def multiline
       message = []
-      message << "Could not install module '#{@requested_module}' (#{@requested_version})"
+      message << "Could not install '#{@requested_package}'"
 
-      if @dependency
-        message << "  Dependency '#{@dependency[:name]}' (#{v(@dependency[:version])}) would overwrite #{@directory}"
-      else
-        message << "  Installation would overwrite #{@directory}"
-      end
-
-      if @metadata
-        message << "    Currently, '#{@metadata[:name]}' (#{v(@metadata[:version])}) is installed to that directory"
-      end
-
-      message << "    Use `puppet module install --target-dir <DIR>` to install modules elsewhere"
-
-      if @dependency
-        message << "    Use `puppet module install --ignore-dependencies` to install only this module"
-      else
-        message << "    Use `puppet module install --force` to install this module anyway"
-      end
+      message << "  No releases are available from #{@source}"
+      message << "    Does '#{@requested_package}' have at least one published release?"
 
       message.join("\n")
-    end
-  end
-
-  class MissingPackageError < InstallError
-    def initialize(options)
-      @requested_package = options[:requested_package]
-      super "#{@requested_package} requested; Package #{@requested_package} does not exist"
-    end
-
-    def multiline
-      <<-MSG.strip
-Could not install package #{@requested_package}
-  Package #{@requested_package} does not exist
-      MSG
     end
   end
 
@@ -110,16 +79,15 @@ Could not install module '#{@requested_module}' (#{@requested_version})
 
   class InvalidPathInPackageError < InstallError
     def initialize(options)
-      @requested_package = options[:requested_package]
-      @entry_path        = options[:entry_path]
-      @directory         = options[:directory]
+      @entry_path = options[:entry_path]
+      @directory  = options[:directory]
       super "Attempt to install file into #{@entry_path.inspect} under #{@directory.inspect}"
     end
 
     def multiline
       <<-MSG.strip
-Could not install package #{@requested_package}
-  Package #{@requested_package} attempted to install file into
+Could not install package
+  Package attempted to install file into
   #{@entry_path.inspect} under #{@directory.inspect}.
       MSG
     end

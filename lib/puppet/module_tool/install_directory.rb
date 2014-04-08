@@ -7,18 +7,19 @@ module Puppet
     class InstallDirectory
       include Puppet::ModuleTool::Errors
 
-      def initialize(target_directory)
-        @target_directory = target_directory
+      attr_reader :target
+      def initialize(target)
+        @target = target
       end
 
       # prepare the module install location. This will create the location if
       # needed.
       def prepare(module_name, version)
-        return if @target_directory.directory?
+        return if @target.directory?
 
         begin
-          @target_directory.mkpath
-          Puppet.notice "Created target directory #{@target_directory}"
+          @target.mkpath
+          Puppet.notice "Created target directory #{@target}"
         rescue SystemCallError => orig_error
           raise converted_to_friendly_error(module_name, version, orig_error)
         end
@@ -37,7 +38,7 @@ module Puppet
         ERROR_MAPPINGS[orig_error.class].new(orig_error,
           :requested_module  => module_name,
           :requested_version => version,
-          :directory         => @target_directory.to_s)
+          :directory         => @target.to_s)
       end
     end
   end
