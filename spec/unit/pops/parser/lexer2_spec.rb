@@ -208,6 +208,17 @@ describe 'Lexer2' do
     end
   end
 
+  { '"$"'      => '$',
+    '"a$"'     => 'a$',
+    '"a$%b"'  => "a$%b",
+    '"a$$"'  => "a$$",
+    '"a$$%"'  => "a$$%",
+  }.each do |source, expected|
+    it "should lex interpolation including false starts #{source}" do
+      tokens_scanned_from(source).should match_tokens2([:STRING, expected])
+    end
+  end
+
   it "differentiates between foo[x] and foo [x] (whitespace)" do
     tokens_scanned_from("$a[1]").should match_tokens2(:VARIABLE, :LBRACK, :NUMBER, :RBRACK)
     tokens_scanned_from("$a [1]").should match_tokens2(:VARIABLE, :LBRACK, :NUMBER, :RBRACK)

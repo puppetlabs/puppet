@@ -58,7 +58,7 @@ describe "egrammar parsing heredoc" do
     ].join("\n")
   end
 
-  it "parses interpolated heredoc epression" do
+  it "parses interpolated heredoc expression" do
     src = <<-CODE
     @("END")
     Hello $name
@@ -70,4 +70,18 @@ describe "egrammar parsing heredoc" do
       ")"
     ].join("\n")
   end
+
+  it "parses interpolated heredoc expression with false start on $" do
+    src = <<-CODE
+    @("END")
+    Hello $name$%a
+    |- END
+    CODE
+    dump(parse(src)).should == [
+      "(@()",
+      "  (sublocated (cat 'Hello ' (str $name) '$%a'))",
+      ")"
+    ].join("\n")
+  end
+
 end
