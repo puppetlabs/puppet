@@ -39,7 +39,7 @@ describe "apply" do
       EOF
     end
 
-    special = Puppet::Node::Environment.create(:special, [], '')
+    special = Puppet::Node::Environment.create(:special, [])
     Puppet.override(:current_environment => special) do
       Puppet[:environment] = 'special'
       puppet = Puppet::Application[:apply]

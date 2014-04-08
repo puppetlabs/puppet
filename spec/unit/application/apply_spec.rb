@@ -201,7 +201,7 @@ describe Puppet::Application::Apply do
 
       around :each do |example|
         Puppet.override(:current_environment =>
-                        Puppet::Node::Environment.create(:production, [], '')) do
+                        Puppet::Node::Environment.create(:production, [])) do
           example.run
         end
       end

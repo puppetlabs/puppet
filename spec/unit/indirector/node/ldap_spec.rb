@@ -6,7 +6,7 @@ require 'puppet/indirector/node/ldap'
 describe Puppet::Node::Ldap do
   let(:nodename) { "mynode.domain.com" }
   let(:node_indirection) { Puppet::Node::Ldap.new }
-  let(:environment) { Puppet::Node::Environment.create(:myenv, [], '') }
+  let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
   let(:fact_values) { {:afact => "a value", "one" => "boo"} }
   let(:facts) { Puppet::Node::Facts.new(nodename, fact_values) }
 
@@ -176,7 +176,7 @@ describe Puppet::Node::Ldap do
       end
 
       it "should set the node's environment to the environment of the results" do
-        result_env = Puppet::Node::Environment.create(:local_test, [], '')
+        result_env = Puppet::Node::Environment.create(:local_test, [])
         Puppet::Node::Facts.indirection.stubs(:find).with(nodename, :environment => result_env).returns(facts)
         @result[:environment] = "local_test"
 
@@ -259,7 +259,7 @@ describe Puppet::Node::Ldap do
         end
 
         it "should use the parent's environment if the node has none" do
-          env = Puppet::Node::Environment.create(:parent, [], '')
+          env = Puppet::Node::Environment.create(:parent, [])
           @entry[:parent] = "parent"
 
           @parent[:environment] = "parent"
@@ -272,7 +272,7 @@ describe Puppet::Node::Ldap do
         end
 
         it "should prefer the node's environment to the parent's" do
-          child_env = Puppet::Node::Environment.create(:child, [], '')
+          child_env = Puppet::Node::Environment.create(:child, [])
           @entry[:parent] = "parent"
           @entry[:environment] = "child"
 

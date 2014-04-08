@@ -347,7 +347,7 @@ describe Puppet::Resource::Type do
 
   describe "when describing and managing parent classes" do
     before do
-      environment = Puppet::Node::Environment.create(:testing, [], '')
+      environment = Puppet::Node::Environment.create(:testing, [])
       @krt = environment.known_resource_types
       @parent = Puppet::Resource::Type.new(:hostclass, "bar")
       @krt.add @parent

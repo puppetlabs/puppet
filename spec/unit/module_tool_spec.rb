@@ -156,7 +156,7 @@ TREE
   describe '.set_option_defaults' do
     let(:options) { {} }
     let(:modulepath) { [File.expand_path('/env/module/path'), File.expand_path('/global/module/path')] }
-    let(:environment) { Puppet::Node::Environment.create('current', modulepath, '') }
+    let(:environment) { Puppet::Node::Environment.create('current', modulepath) }
     around(:each) do |example|
       Puppet.override(:current_environment => environment) do
         example.run

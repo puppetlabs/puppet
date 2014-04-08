@@ -40,7 +40,7 @@ describe "Puppet::Rails::Host", :if => can_use_scratch_database? do
 
     it "should stringify the environment" do
       host = Puppet::Rails::Host.new
-      host.environment = Puppet::Node::Environment.create(:production, [], '')
+      host.environment = Puppet::Node::Environment.create(:production, [])
       host.environment.class.should == String
     end
 
