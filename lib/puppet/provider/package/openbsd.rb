@@ -12,6 +12,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   has_feature :versionable
   has_feature :install_options
   has_feature :uninstall_options
+  has_feature :upgradeable
 
   def self.instances
     packages = []
@@ -54,6 +55,46 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     [command(:pkginfo), "-a"]
   end
 
+  def latest
+    parse_pkgconf
+
+    if @resource[:source][-1,1] == ::File::SEPARATOR
+      e_vars = { 'PKG_PATH' => @resource[:source] }
+    else
+      e_vars = {}
+    end
+
+    output = Puppet::Util.withenv(e_vars) {pkginfo "-Q", resource[:name]}
+
+    if output.nil? or output.size == 0 or output =~ /Error from /
+      Puppet.debug("Failed to query for #{resource[:name]}")
+      return properties[:ensure]
+    else
+      output.chomp!
+      Puppet.debug("pkg_info -Q for #{resource[:name]}: #{output}")
+    end
+
+    if output =~ /^#{resource[:name]}-(\d[^-]*)[-]?(\w*) \(installed\)$/
+      Puppet.debug("Package is already the latest available")
+      return properties[:ensure]
+    else
+      match = /^(.*)-(\d[^-]*)[-]?(\w*)$/.match(output)
+      Puppet.debug("Latest available for #{resource[:name]}: #{match[2]}")
+      if properties[:ensure] > match[2]
+        # The locally installed package may actually be newer than what a mirror
+        # has. Log it at debug, but ignore it otherwise.
+        Puppet.debug("Package #{resource[:name]} #{properties[:ensure]} newer then available #{match[2]}")
+        return properties[:ensure]
+      else
+        return match[2]
+      end
+    end
+  end
+
+  def update
+    self.install(true)
+  end
+
   def parse_pkgconf
     unless @resource[:source]
       if Puppet::FileSystem.exist?("/etc/pkg.conf")
@@ -80,7 +121,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     end
   end
 
-  def install
+  def install(latest = false)
     cmd = []
 
     parse_pkgconf
@@ -94,6 +135,15 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     end
 
     cmd << install_options
+
+    # In case of a real update (i.e., the package already exists) then
+    # pkg_add(8) can handle the flavors. However, if we're actually
+    # installing with 'latest', we do need to handle the flavors.
+    # So we always need to handle flavors ourselves as to not break installs.
+    if latest and resource[:flavor]
+      full_name = "#{resource[:name]}--#{resource[:flavor]}"
+    end
+
     cmd << full_name
 
     Puppet::Util.withenv(e_vars) { pkgadd cmd.flatten.compact.join(' ') }
@@ -102,14 +152,21 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   def get_version
     execpipe([command(:pkginfo), "-I", @resource[:name]]) do |process|
       # our regex for matching pkg_info output
-      regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
+      regex = /^(.*)-(\d[^-]*)[-]?(\w*)(.*)$/
       master_version = 0
       version = -1
 
       process.each_line do |line|
         if match = regex.match(line.split[0])
           # now we return the first version, unless ensure is latest
+          # also a flavor  needs to be taken into account as there
+          # may be a single package, which happens to be flavored.
           version = match.captures[1]
+          flavor = match.captures[2]
+          if !flavor.empty?
+            version = "#{version}-#{flavor}"
+          end
+
           return version unless @resource[:ensure] == "latest"
 
           master_version = version unless master_version > version
