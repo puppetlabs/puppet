@@ -19,7 +19,7 @@ File {
 }
 
 ##############################################
-# The default production directory environment
+# A production directory environment
 file {
   "#{testdir}":;
   "#{environmentpath}":;
@@ -112,7 +112,7 @@ master_opts = {
 
 # Note: this is the semantics seen with legacy environments if commandline
 # manifest/modulepath are set.
-step "puppet master with --manifest and --modulepath overrides existing default production directory environment" do
+step "puppet master with --manifest and --modulepath overrides set production directory environment" do
   master_opts = master_opts.merge(:__commandline_args__ => "--manifest=#{cmdline_manifest} --modulepath=#{other_modulepath}")
   with_puppet_running_on master, master_opts, testdir do
     agents.each do |agent|
@@ -158,7 +158,7 @@ step "puppet master with --manifest and --modulepath overrides existing default 
   end
 end
 
-step "puppet master with manifest and modulepath set in puppet.conf is overriden by an existing default production directory" do
+step "puppet master with manifest and modulepath set in puppet.conf is overriden by an existing and set production directory environment" do
   with_puppet_running_on master, master_opts, testdir do
     agents.each do |agent|
       step "this case is unfortunate, but will be irrelevant when we remove legacyenv in 4.0"
@@ -176,21 +176,82 @@ step "puppet master with manifest and modulepath set in puppet.conf is overriden
   end
 end
 
-step "puppet master with default manifest, modulepath, environment, environmentpath and an existing default production directory environment directory" do
+step "puppet master with default manifest, modulepath, environment, environmentpath and an existing '#{environmentpath}/production' directory environment that has not been set" do
   ssldir = on(master, puppet("master --configprint ssldir")).stdout.chomp
   master_opts = {
     :__commandline_args__ => "--confdir=#{testdir} --ssldir=#{ssldir}"
   }
   with_puppet_running_on master, master_opts, testdir do
     agents.each do |agent|
-      step "default production directory environment takes precedence"
+      step "#{environmentpath}/production directory environment does not take precedence because default environmentpath is ''"
+      on(agent, puppet("agent -t --server #{master}"), :acceptable_exit_codes => [2] ) do
+        assert_match(/in site\.pp/, stdout)
+        assert_match(/amod from modulepath/, stdout)
+      end
+      on(agent, puppet("agent -t --server #{master} --environment production"), :acceptable_exit_codes => [2]) do
+        assert_match(/in site\.pp/, stdout)
+        assert_match(/amod from modulepath/, stdout)
+      end
+    end
+  end
+end
+
+step "puppet master with explicit dynamic environment settings and empty environmentpath" do
+  step "Prepare an additional modulepath module"
+  apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
+  File {
+    ensure => directory,
+    owner => puppet,
+    mode => 0700,
+  }
+  
+  # A second module in another modules dir
+  file {
+    "#{other_modulepath}":;
+    "#{other_modulepath}/bmod/":;
+    "#{other_modulepath}/bmod/manifests":;
+  }
+
+  file { "#{other_modulepath}/bmod/manifests/init.pp":
+    ensure => file,
+    content => 'class bmod {
+      notify { "bmod from other modulepath": }
+    }'
+  }
+  
+  file { "#{environmentpath}/production/manifests/production.pp":
+    ensure => file,
+    content => '
+      notify { "in production.pp": }
+      include amod
+      include bmod
+    '
+  }
+  MANIFEST
+
+  master_opts = {
+      'master' => {
+        'manifest' => "#{environmentpath}/$environment/manifests",
+        'modulepath' => "#{environmentpath}/$environment/modules:#{other_modulepath}",
+      }
+    }
+  
+  with_puppet_running_on master, master_opts, testdir do
+    agents.each do |agent|
+      step "pulls in the production environment based on $environment default"
       on(agent, puppet("agent -t --server #{master}"), :acceptable_exit_codes => [2] ) do
         assert_match(/in production\.pp/, stdout)
         assert_match(/amod from production environment/, stdout)
+        step "and sees modules located in later elements of the modulepath (which would not be seen by a directory env (PUP-2158)"
+        assert_match(/bmod from other modulepath/, stdout)
       end
-      on(agent, puppet("agent -t --server #{master} --environment production"), :acceptable_exit_codes => [2]) do
+
+      step "pulls in the production environment when explicitly set"
+      on(agent, puppet("agent -t --server #{master} --environment production"), :acceptable_exit_codes => [2] ) do
         assert_match(/in production\.pp/, stdout)
         assert_match(/amod from production environment/, stdout)
+        step "and sees modules located in later elements of the modulepath (which would not be seen by a directory env (PUP-2158)"
+        assert_match(/bmod from other modulepath/, stdout)
       end
     end
   end

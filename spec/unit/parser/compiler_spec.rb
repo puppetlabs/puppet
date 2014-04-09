@@ -66,7 +66,7 @@ describe Puppet::Parser::Compiler do
     now = Time.now
     Time.stubs(:now).returns(now)
 
-    environment = Puppet::Node::Environment.create(:testing, [], '')
+    environment = Puppet::Node::Environment.create(:testing, [])
     @node = Puppet::Node.new("testnode",
                              :facts => Puppet::Node::Facts.new("facts", {}),
                              :environment => environment)

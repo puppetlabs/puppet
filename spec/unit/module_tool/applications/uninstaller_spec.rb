@@ -23,7 +23,7 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
     let(:working_dir) { tmpdir("uninstaller") }
     let(:modpath1) { create_temp_dir("modpath1") }
     let(:modpath2) { create_temp_dir("modpath2") }
-    let(:env) { Puppet::Node::Environment.create(:env, [modpath1, modpath2], '') }
+    let(:env) { Puppet::Node::Environment.create(:env, [modpath1, modpath2]) }
     let(:options)  { { :environment_instance => env } }
     let(:uninstaller) { Puppet::ModuleTool::Applications::Uninstaller.new("puppetlabs-foo", options) }
 

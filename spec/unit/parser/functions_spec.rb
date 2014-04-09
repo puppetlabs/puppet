@@ -8,7 +8,7 @@ describe Puppet::Parser::Functions do
 
   let(:function_module) { Puppet::Parser::Functions.environment_module(Puppet.lookup(:current_environment)) }
 
-  let(:environment) { Puppet::Node::Environment.create(:myenv, [], '') }
+  let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
 
   before do
     Puppet::Parser::Functions.reset
@@ -72,7 +72,7 @@ describe Puppet::Parser::Functions do
         end
       end
 
-      Puppet.override(:current_environment => Puppet::Node::Environment.create(:other, [], '')) do
+      Puppet.override(:current_environment => Puppet::Node::Environment.create(:other, [])) do
         Puppet::Parser::Functions.newfunction("other_env", :type => :rvalue) do |args|
         end
 

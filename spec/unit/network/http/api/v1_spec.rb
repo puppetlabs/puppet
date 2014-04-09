@@ -282,7 +282,7 @@ describe Puppet::Network::HTTP::API::V1 do
       expect(response.code).to eq(not_authorized_code)
     end
 
-    it "should return an error code if the indirection does not support remote requests" do
+    it "should return 'not found' if the indirection does not support remote requests" do
       request = a_request_that_heads(Puppet::IndirectorTesting.new("my data"))
 
       indirection.expects(:allow_remote_requests?).returns(false)
@@ -290,6 +290,16 @@ describe Puppet::Network::HTTP::API::V1 do
       handler.call(request, response)
 
       expect(response.code).to eq(not_found_code)
+    end
+
+    it "should return 'not found' if the environment does not exist" do
+      Puppet.override(:environments => Puppet::Environments::Static.new()) do
+        request = a_request_that_heads(Puppet::IndirectorTesting.new("my data"))
+
+        handler.call(request, response)
+
+        expect(response.code).to eq(not_found_code)
+      end
     end
 
     it "should serialize a controller exception when an exception is thrown while finding the model instance" do

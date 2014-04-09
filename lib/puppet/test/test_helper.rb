@@ -37,19 +37,12 @@ module Puppet::Test
     # @return nil
     def self.initialize()
       owner = Process.pid
-      @environmentdir = Dir.mktmpdir('environments')
       Puppet.push_context(Puppet.base_context({
-        :environmentpath => @environmentdir,
+        :environmentpath => "",
         :basemodulepath => "",
         :manifest => "/dev/null"
       }), "Initial for specs")
       Puppet::Parser::Functions.reset
-
-      ObjectSpace.define_finalizer(Puppet.lookup(:environments), proc {
-        if Process.pid == owner
-          FileUtils.rm_rf(@environmentdir)
-        end
-      })
     end
 
     # Call this method once, when beginning a test run--prior to running
