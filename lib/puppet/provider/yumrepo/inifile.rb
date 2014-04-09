@@ -141,6 +141,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     PROPERTIES.each do |property|
       next if property == :ensure
       if value = @resource.should(property)
+        next if value == :absent
         new_section[property.to_s] = value
         @property_hash[property] = value
       end
@@ -174,7 +175,12 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     next if property == :ensure
     # Builds the property= method.
     define_method("#{property.to_s}=") do |value|
-      section(@property_hash[:name])[property.to_s] = value
+      newvalue = @resource.should(property)
+      if newvalue == :absent
+        section(@property_hash[:name]).remove_line(property.to_s)
+      else
+        section(@property_hash[:name])[property.to_s] = value
+      end
       @property_hash[property] = value
     end
   end
