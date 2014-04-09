@@ -24,7 +24,7 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
       providers = described_class.instances
       providers.should have(1).items
       providers[0].name.should == 'updates'
-      #providers[0].descr.should == 'Some long description of the repo'
+      providers[0].descr.should == 'Some long description of the repo'
       providers[0].enabled.should == '1'
     end
   end
@@ -59,8 +59,7 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
     describe "methods used by ensurable" do
       it "#create sets the yumrepo properties on the according section" do
         section.expects(:[]=).with('baseurl', 'http://yum.puppetlabs.com/el/6/products/$basearch')
-        #section.expects(:[]=).with('name', 'Puppet Labs Products El 6 - $basearch')
-        section.stubs(:[]=).with('descr', 'Puppet Labs Products El 6 - $basearch')
+        section.expects(:[]=).with('name', 'Puppet Labs Products El 6 - $basearch')
         section.expects(:[]=).with('enabled', '1')
         section.expects(:[]=).with('gpgcheck', '1')
         section.expects(:[]=).with('gpgkey', 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-puppetlabs')
@@ -82,7 +81,7 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
     end
 
     describe "getting properties" do
-      it "maps the 'descr' property to the 'name' INI property", :pending => "proper mapping of descr to name" do
+      it "maps the 'descr' property to the 'name' INI property" do
         section.expects(:[]).with('name').returns 'Some rather long description of the repository'
         expect(provider.descr).to eq 'Some rather long description of the repository'
       end
@@ -99,7 +98,7 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
     end
 
     describe "setting properties" do
-      it "maps the 'descr' property to the 'name' INI property", :pending => "proper mapping of descr to name" do
+      it "maps the 'descr' property to the 'name' INI property" do
         section.expects(:[]=).with('name', 'Some rather long description of the repository')
         provider.descr = 'Some rather long description of the repository'
       end

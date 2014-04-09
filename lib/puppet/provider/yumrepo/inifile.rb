@@ -19,6 +19,8 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
           # We strip the values here to handle cases where distros set values
           # like enabled = 1 with spaces.
           attributes_hash[key] = value
+        elsif key == :name
+          attributes_hash[:descr] = value
         end
       end
       instances << new(attributes_hash)
@@ -181,6 +183,21 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     define_method("#{property}=") do |value|
       set_property(property, value)
     end
+  end
+
+  # Map the yumrepo 'descr' type property to the 'name' INI property.
+  def descr
+    if ! @property_hash.has_key?(:descr)
+      @property_hash[:descr] = current_section['name']
+    end
+    value = @property_hash[:descr]
+    value.nil? ? :absent : value
+  end
+
+  def descr=(value)
+    value = (value == :absent ? nil : value)
+    current_section['name'] = value
+    @property_hash[:descr] = value
   end
 
   private
