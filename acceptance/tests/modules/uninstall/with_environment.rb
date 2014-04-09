@@ -53,6 +53,13 @@ step 'Uninstall a module from a non default legacy environment' do
   check_module_uninstall_in.call('legacyenv', "#{master['puppetpath']}/legacyenv/modules")
 end
 
+step 'Enable directory environments' do
+  on master, puppet("config", "set",
+                    "environmentpath", "#{master['puppetpath']}/environments",
+                    "--section", "main",
+                    "--config", puppet_conf)
+end
+
 step 'Uninstall a module from a non default directory environment' do
   check_module_uninstall_in.call('direnv', "#{master['puppetpath']}/environments/direnv/modules")
 end
