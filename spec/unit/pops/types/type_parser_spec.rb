@@ -162,6 +162,28 @@ describe Puppet::Pops::Types::TypeParser do
     expect(parser.parse("Ruby['Integer']")).to be_the_type(types.ruby_type('Integer'))
   end
 
+  it 'parses a callable type' do
+    expect(parser.parse("Callable")).to be_the_type(types.all_callables())
+  end
+
+  it 'parses a parameterized callable type' do
+    expect(parser.parse("Callable[String, Integer]")).to be_the_type(types.callable(String, Integer))
+  end
+
+  it 'parses a parameterized callable type with min/max' do
+    expect(parser.parse("Callable[String, Integer, 1, default]")).to be_the_type(types.callable(String, Integer, 1, :default))
+  end
+
+  it 'parses a parameterized callable type with block' do
+    expect(parser.parse("Callable[String, Callable[Boolean]]")).to be_the_type(types.callable(String, types.callable(true)))
+  end
+
+  it 'parses a parameterized callable type with only min/max' do
+    t = parser.parse("Callable[0,0]")
+    expect(t).to be_the_type(types.callable())
+    expect(t.param_types.types).to be_empty
+  end
+
   matcher :be_the_type do |type|
     calc = Puppet::Pops::Types::TypeCalculator.new
 
