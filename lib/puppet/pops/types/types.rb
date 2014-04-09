@@ -360,12 +360,9 @@ module Puppet::Pops::Types
     end
   end
 
-  class PCallableType < PAbstractType
+  class PCallableType < PObjectType
     # Types of parameters and required/optional count
     contains_one_uni 'param_types', PTupleType, :lowerBound => 1
-
-    # Names of parameters, must be the same number of names as number of param types, or empty if not available
-    has_many_attr 'param_names', String, :lowerBound => 1
 
     # Although being an abstract type reference, only PAbstractCallable, and Optional[Callable] are supported
     # If not set, the meaning is that block is not supported.
@@ -374,12 +371,10 @@ module Puppet::Pops::Types
 
     module ClassModule
       def hash
-        # note: names are ignored in hash
         [self.class, Set.new(param_types), block_type].hash
       end
 
       def ==(o)
-        # note: names are ignored in comparison
         self.class == o.class && args_type == o.args_type && block_type == o.block_type
       end
     end

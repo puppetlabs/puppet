@@ -472,11 +472,7 @@ module Puppet::Functions
           t = Puppet::Pops::Types::PCallableType.new()
           # TODO: handle that dispatch.type may be an ArrayType instead of a TupleType
           t2 = dispatch.type
-          t.param_types = t2.copy
-          if t2.size_type
-            t.param_types.size_type = t2.size_type.copy
-          end
-          t.param_names = dispatch.param_names
+          t.param_types = Puppet::Pops::Types::TypeCalculator.copy_as_tuple(t2)
           # TODO: Function does not have a block type yet
           t
         end

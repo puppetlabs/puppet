@@ -178,7 +178,6 @@ describe 'The type factory' do
         expect(t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(t.param_types.types).to be_empty
-        expect(t.param_names).to be_empty
         expect(t.block_type).to be_nil
       end
 
@@ -188,33 +187,12 @@ describe 'The type factory' do
         expect(t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(t.param_types.types).to eql([tf.integer, tf.string])
-        expect(t.param_names).to eql(['arg0', 'arg1'])
-        expect(t.block_type).to be_nil
-      end
-
-      it 'callable method with types produces the corresponding Tuple for parameters with given names' do
-        tf = Puppet::Pops::Types::TypeFactory
-        t = tf.callable([tf.integer, 'a'], [tf.string, 'b'])
-        expect(t.class).to be(Puppet::Pops::Types::PCallableType)
-        expect(t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
-        expect(t.param_types.types).to eql([tf.integer, tf.string])
-        expect(t.param_names).to eql(['a', 'b'])
-        expect(t.block_type).to be_nil
-      end
-
-      it 'callable assigns names for params without name' do
-        tf = Puppet::Pops::Types::TypeFactory
-        t = tf.callable([tf.integer, 'a'], tf.string)
-        expect(t.class).to be(Puppet::Pops::Types::PCallableType)
-        expect(t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
-        expect(t.param_types.types).to eql([tf.integer, tf.string])
-        expect(t.param_names).to eql(['a', 'arg1'])
         expect(t.block_type).to be_nil
       end
 
       it 'callable accepts min range to be given' do
         tf = Puppet::Pops::Types::TypeFactory
-        t = tf.callable([tf.integer, 'a'], tf.string, 1)
+        t = tf.callable(tf.integer, tf.string, 1)
         expect(t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(t.param_types.size_type.from).to eql(1)
@@ -223,7 +201,7 @@ describe 'The type factory' do
 
       it 'callable accepts max range to be given' do
         tf = Puppet::Pops::Types::TypeFactory
-        t = tf.callable([tf.integer, 'a'], tf.string, 1, 3)
+        t = tf.callable(tf.integer, tf.string, 1, 3)
         expect(t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(t.param_types.size_type.from).to eql(1)
@@ -232,7 +210,7 @@ describe 'The type factory' do
 
       it 'callable accepts max range to be given as :default' do
         tf = Puppet::Pops::Types::TypeFactory
-        t = tf.callable([tf.integer, 'a'], tf.string, 1, :default)
+        t = tf.callable(tf.integer, tf.string, 1, :default)
         expect(t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(t.param_types.size_type.from).to eql(1)
@@ -243,7 +221,6 @@ describe 'The type factory' do
         t = Puppet::Pops::Types::TypeFactory.all_callables()
         expect(t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(t.param_types).to be_nil
-        expect(t.param_names).to be_empty
         expect(t.block_type).to be_nil
       end
 
@@ -256,7 +233,6 @@ describe 'The type factory' do
         expect(block_t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(block_t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(block_t.param_types.types).to be_empty
-        expect(block_t.param_names).to be_empty
         expect(block_t.block_type).to be_nil
       end
 
@@ -271,7 +247,6 @@ describe 'The type factory' do
         expect(block_t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(block_t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(block_t.param_types.types).to be_empty
-        expect(block_t.param_names).to be_empty
         expect(block_t.block_type).to be_nil
       end
     end

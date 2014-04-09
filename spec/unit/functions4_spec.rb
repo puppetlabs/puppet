@@ -233,7 +233,6 @@ actual:
         expect(t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(t.param_types.types).to eql([tf.numeric(), tf.numeric()])
-        expect(t.param_names).to eql(['a','b'])
         expect(t.block_type).to be_nil
       end
 
@@ -246,12 +245,10 @@ actual:
         t1 = t.types[0]
         expect(t1.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(t1.param_types.types).to eql([tf.numeric(), tf.numeric()])
-        expect(t1.param_names).to eql(['a','b'])
         expect(t1.block_type).to be_nil
         t2 = t.types[1]
         expect(t2.param_types.class).to be(Puppet::Pops::Types::PTupleType)
         expect(t2.param_types.types).to eql([tf.string(), tf.string()])
-        expect(t2.param_names).to eql(['s1','s2'])
         expect(t2.block_type).to be_nil
       end
     end

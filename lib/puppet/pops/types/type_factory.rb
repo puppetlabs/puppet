@@ -203,11 +203,7 @@ module Puppet::Pops::Types::TypeFactory
   # If max > params.size means that the last type repeats.
   # if max is :default, the max value is unbound (infinity).
   # 
-  # Params are either given as a sequence of arguments to {#type_of}.
-  # Or as a sequence of arrays where each array is [type, name] which also names the parameters.
-  # If parameter names are not given, they are automatically generated as arg0 - argn.
-  # A mix of [type, name], and type is allowed, automatic naming then applies to
-  # unnamed entries.
+  # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
     callable = Types::PCallableType.new()
@@ -220,29 +216,13 @@ module Puppet::Pops::Types::TypeFactory
       params = params[0, params.size - 1]
     end
 
-    types = [ ]
-    names = [ ]
-    params.each_with_index do |p, index|
-      if p.is_a?(Array)
-        # type, name pair
-        t, n = p
-        unless (t && n) && n.is_a?(String)
-          raise ArgumentError, "Callable Type Expected [Type, String] entry, got '[#{t.class}, #{n.class}]'"
-        end
-        types << type_of(t)
-        names << n
-      else
-        types << type_of(p)
-        names << "arg#{index}"
-      end
-    end
+    types = params.map {|p| type_of(p) }
 
     # create a signature
     callable_t = Types::PCallableType.new()
     tuple_t = tuple(*types)
     tuple_t.size_type = size_type unless size_type.nil?
     callable_t.param_types = tuple_t
-    callable_t.param_names = names unless names.empty?
     callable_t
   end
 
