@@ -197,7 +197,8 @@ module Puppet::Pops::Types::TypeFactory
   # that does not accept parameters. To create a Callable that matches all callables
   # use {#all_callables}.
   #
-  # The params is a list of types, where the two last types may be a min, max count.
+  # The params is a list of types, where the three last entries may be
+  # optionally followed by min, max count, and a Callable which is taken as the block_type.
   # If neither min or max are specified the parameters must match exactly.
   # A min < params.size means that the difference are optional.
   # If max > params.size means that the last type repeats.
@@ -207,6 +208,7 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.callable(*params)
     callable = Types::PCallableType.new()
+    block_t = params[-1].is_a?(Types::PCallableType) ? params.pop : nil
     # compute a size_type for the signature based on the two last parameters
     if is_range_parameter?(params[-2]) && is_range_parameter?(params[-1])
       size_type = range(params[-2], params[-1])
@@ -223,6 +225,8 @@ module Puppet::Pops::Types::TypeFactory
     tuple_t = tuple(*types)
     tuple_t.size_type = size_type unless size_type.nil?
     callable_t.param_types = tuple_t
+
+    callable_t.block_type = block_t
     callable_t
   end
 

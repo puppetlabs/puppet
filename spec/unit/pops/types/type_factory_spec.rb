@@ -224,6 +224,28 @@ describe 'The type factory' do
         expect(t.block_type).to be_nil
       end
 
+      it 'with block are created by placing a Callable last' do
+        block_t = Puppet::Pops::Types::TypeFactory.callable(String)
+        t = Puppet::Pops::Types::TypeFactory.callable(String, block_t)
+        expect(t.block_type).to be(block_t)
+      end
+
+      it 'min size constraint can be used with a block last' do
+        block_t = Puppet::Pops::Types::TypeFactory.callable(String)
+        t = Puppet::Pops::Types::TypeFactory.callable(String, 1, block_t)
+        expect(t.block_type).to be(block_t)
+        expect(t.param_types.size_type.from).to eql(1)
+        expect(t.param_types.size_type.to).to be_nil
+      end
+
+      it 'min, max size constraint can be used with a block last' do
+        block_t = Puppet::Pops::Types::TypeFactory.callable(String)
+        t = Puppet::Pops::Types::TypeFactory.callable(String, 1, 3, block_t)
+        expect(t.block_type).to be(block_t)
+        expect(t.param_types.size_type.from).to eql(1)
+        expect(t.param_types.size_type.to).to eql(3)
+      end
+
       it 'the with_block methods decorates a Callable with a block_type' do
         t = Puppet::Pops::Types::TypeFactory.callable()
         t2 = Puppet::Pops::Types::TypeFactory.with_block(t)
