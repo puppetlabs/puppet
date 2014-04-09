@@ -23,6 +23,21 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.string(*strings)
   end
 
+  def callable_t(*params)
+    Puppet::Pops::Types::TypeFactory.callable(*params)
+  end
+  def all_callables_t(*params)
+    Puppet::Pops::Types::TypeFactory.all_callables()
+  end
+
+  def with_block_t(callable_t, *params)
+    Puppet::Pops::Types::TypeFactory.with_block(callable_t, *params)
+  end
+
+  def with_optional_block_t(callable_t, *params)
+    Puppet::Pops::Types::TypeFactory.with_optional_block(callable_t, *params)
+  end
+
   def enum_t(*strings)
     Puppet::Pops::Types::TypeFactory.enum(*strings)
   end
@@ -63,6 +78,10 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.struct(type_hash)
   end
 
+  def optional_object_t
+    Puppet::Pops::Types::TypeFactory.optional_object()
+  end
+
   def types
     Puppet::Pops::Types
   end
@@ -91,6 +110,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PVariantType,
         Puppet::Pops::Types::PStructType,
         Puppet::Pops::Types::PTupleType,
+        Puppet::Pops::Types::PCallableType,
       ]
     end
 
@@ -426,6 +446,46 @@ describe 'The type calculator' do
       common_t.class.should == Puppet::Pops::Types::PVariantType
       Set.new(common_t.types).should  == Set.new([a_t1, a_t2])
     end
+
+    context "of callables" do
+      it 'incompatible instances => generic callable' do
+        t1 = callable_t(String)
+        t2 = callable_t(Integer)
+        common_t = calculator.common_type(t1, t2)
+        expect(common_t.class).to be(Puppet::Pops::Types::PCallableType)
+        expect(common_t.param_types).to be_nil
+        expect(common_t.block_type).to be_nil
+      end
+
+      it 'compatible instances => the least specific' do
+        t1 = callable_t(String)
+        scalar_t = Puppet::Pops::Types::PScalarType.new
+        t2 = callable_t(scalar_t)
+        common_t = calculator.common_type(t1, t2)
+        expect(common_t.class).to be(Puppet::Pops::Types::PCallableType)
+        expect(common_t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
+        expect(common_t.param_types.types).to eql([scalar_t])
+        expect(common_t.block_type).to be_nil
+      end
+
+      it 'block_type is included in the check (incompatible block)' do
+        t1 = with_block_t(callable_t(String), String)
+        t2 = with_block_t(callable_t(String), Integer)
+        common_t = calculator.common_type(t1, t2)
+        expect(common_t.class).to be(Puppet::Pops::Types::PCallableType)
+        expect(common_t.param_types).to be_nil
+        expect(common_t.block_type).to be_nil
+      end
+
+      it 'block_type is included in the check (compatible block)' do
+        t1 = with_block_t(callable_t(String), String)
+        scalar_t = Puppet::Pops::Types::PScalarType.new
+        t2 = with_block_t(callable_t(String), scalar_t)
+        common_t = calculator.common_type(t1, t2)
+        expect(common_t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
+        expect(common_t.block_type).to eql(callable_t(scalar_t))
+      end
+    end
   end
 
   context 'computes assignability' do
@@ -609,6 +669,16 @@ describe 'The type calculator' do
           Puppet::Pops::Types::PObjectType,
           Puppet::Pops::Types::PDataType] - collection_types
         t = Puppet::Pops::Types::PStructType.new()
+        tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
+      end
+    end
+
+    context "for Callable, such that" do
+      it "Callable is not assignable to any disjunct type" do
+        t = Puppet::Pops::Types::PCallableType.new()
+        tested_types = all_types - [
+          Puppet::Pops::Types::PCallableType,
+          Puppet::Pops::Types::PObjectType]
         tested_types.each {|t2| t.should_not be_assignable_to(t2.new) }
       end
     end
@@ -1040,6 +1110,38 @@ describe 'The type calculator' do
         calculator.instance?(data_t, [1, nil, 'a']).should == true
       end
     end
+
+    context "and t is something Callable" do
+
+      it 'a Closure should be considered a Callable' do
+        factory = Puppet::Pops::Model::Factory
+        params = [factory.PARAM('a')]
+        the_block = factory.LAMBDA(params,factory.literal(42))
+        the_closure = Puppet::Pops::Evaluator::Closure.new(:fake_evaluator, the_block, :fake_scope)
+        expect(calculator.instance?(all_callables_t, the_closure)).to be_true
+        # TODO: lambdas are currently unttypes, anything can be given if arg count is correct
+        expect(calculator.instance?(callable_t(optional_object_t), the_closure)).to be_true
+        # Arg count is wrong
+        expect(calculator.instance?(callable_t(optional_object_t, optional_object_t), the_closure)).to be_false
+      end
+
+      it 'a Function instance should be considered a Callable' do
+        fc = Puppet::Functions.create_function(:foo) do
+          dispatch :foo do
+            param String, 'a'
+          end
+
+          def foo(a)
+            a
+          end
+        end
+        f = fc.new(:closure_scope, :loader)
+        # Any callable
+        expect(calculator.instance?(all_callables_t, f)).to be_true
+        # Callable[String]
+        expect(calculator.instance?(callable_t(String), f)).to be_true
+      end
+    end
   end
 
   context 'when converting a ruby class' do
@@ -1282,6 +1384,33 @@ describe 'The type calculator' do
       t = variant_t(t1, t2, t3)
       calculator.string(t).should == "Variant[String, Integer, Pattern[/a/]]"
     end
+
+    it "should yield 'Callable' for generic callable" do
+      expect(calculator.string(all_callables_t)).to eql("Callable")
+    end
+
+    it "should yield 'Callable[0,0]' for callable without params" do
+      expect(calculator.string(callable_t)).to eql("Callable[0, 0]")
+    end
+
+    it "should yield 'Callable[t,t]' for callable with typed parameters" do
+      expect(calculator.string(callable_t(String, Integer))).to eql("Callable[String, Integer]")
+    end
+
+    it "should yield 'Callable[t,min.max]' for callable with size constraint (infinite max)" do
+      expect(calculator.string(callable_t(String, 0))).to eql("Callable[String, 0, default]")
+    end
+
+    it "should yield 'Callable[t,min.max]' for callable with size constraint (capped max)" do
+      expect(calculator.string(callable_t(String, 0, 3))).to eql("Callable[String, 0, 3]")
+    end
+
+    it "should yield 'Callable[Callable]' for callable with block" do
+      expect(calculator.string(callable_t(all_callables_t))).to eql("Callable[0, 0, Callable]")
+      expect(calculator.string(callable_t(string_t, all_callables_t))).to eql("Callable[String, Callable]")
+      expect(calculator.string(callable_t(string_t, 1,1, all_callables_t))).to eql("Callable[String, 1, 1, Callable]")
+    end
+
   end
 
   context 'when processing meta type' do
@@ -1307,6 +1436,7 @@ describe 'The type calculator' do
       calculator.infer(Puppet::Pops::Types::PVariantType.new()   ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PTupleType.new()     ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::POptionalType.new()  ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PCallableType.new()  ).is_a?(ptype).should() == true
     end
 
     it 'should infer PType as the type of all other types' do
@@ -1331,6 +1461,7 @@ describe 'The type calculator' do
       calculator.string(calculator.infer(Puppet::Pops::Types::PPatternType.new()   )).should == "Type[Pattern]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PTupleType.new()     )).should == "Type[Tuple]"
       calculator.string(calculator.infer(Puppet::Pops::Types::POptionalType.new()  )).should == "Type[Optional]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PCallableType.new()  )).should == "Type[Callable]"
     end
 
     it "computes the common type of PType's type parameter" do

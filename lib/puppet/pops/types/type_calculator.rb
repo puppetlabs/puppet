@@ -191,6 +191,8 @@ class Puppet::Pops::Types::TypeCalculator
     non_empty_string.size_type.from = 1
     non_empty_string.size_type.to = nil # infinity
     @non_empty_string_t = non_empty_string
+
+    @nil_t = Types::PNilType.new
   end
 
   # Convenience method to get a data type for comparisons
@@ -362,7 +364,6 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of(t, o)
-#    return true if o.nil? && !t.is_a?(Types::PRequiredType)
     @@instance_of_visitor.visit_this_1(self, t, o)
   end
 
@@ -566,6 +567,12 @@ class Puppet::Pops::Types::TypeCalculator
       return Types::PPatternType.new()
     end
 
+    if t1.is_a?(Types::PCallableType) && t2.is_a?(Types::PCallableType)
+      # They do not have the same signature, and one is not assignable to the other,
+      # what remains is the most general form of Callable
+      return Types::PCallableType.new()
+    end
+
     # Common abstract types, from most specific to most general
     if common_numeric?(t1, t2)
       return Types::PNumericType.new()
@@ -657,6 +664,34 @@ class Puppet::Pops::Types::TypeCalculator
   #
   def infer_Class(o)
     Types::PType.new()
+  end
+
+  def infer_Closure(o)
+    t = Types::PCallableType.new()
+    tuple_t = Types::PTupleType.new()
+    # since closure lambdas are currently untyped, each parameter becomes Optional[Object]
+    o.parameter_names.each do |name|
+      # TODO: Change when Closure supports typed parameters
+      tuple_t.addTypes(Puppet::Pops::Types::TypeFactory.optional_object())
+    end
+
+    to = o.parameter_count
+    from = to - o.optional_parameter_count
+    if from != to
+      size_t = Types::PIntegerType.new()
+      size_t.from = size
+      size_t.to = size
+      tuple_t.size_type = size_t
+    end
+    t.param_types = tuple_t
+    # TODO: A Lambda can not currently declare that it accepts a lambda, except as an explicit parameter
+    # being a Callable
+    t
+  end
+
+  # @api private
+  def infer_Function(o)
+    o.class.dispatcher.to_type
   end
 
   # @api private
@@ -1095,6 +1130,19 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def assignable_PCallableType(t, t2)
+    return false unless t2.is_a?(Types::PCallableType)
+    # nil param_types means, any other Callable is assignable
+    return true if t.param_types.nil?
+    return false unless assignable?(t.param_types, t2.param_types)
+    # names are ignored, they are just information
+    # Blocks must be compatible
+    this_block_t = t.block_type || @nil_t
+    that_block_t = t2.block_type || @nil_t
+    assignable?(this_block_t, that_block_t)
+  end
+
+  # @api private
   def assignable_PCollectionType(t, t2)
     size_t = t.size_type || @collection_default_size_t
     case t2
@@ -1345,6 +1393,35 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def string_PCallableType(t)
+    # generic
+    return "Callable" if t.param_types.nil?
+
+    if t.param_types.types.empty?
+      range = [0, 0]
+    else
+      range = range_array_part(t.param_types.size_type)
+    end
+    types = t.param_types.types.map {|t2| string(t2) }
+
+    params_part= types.join(', ')
+
+    s = "Callable[" << types.join(', ')
+    unless range.empty?
+      (s << ', ') unless types.empty?
+      s << range.join(', ')
+    end
+    # Add block T last (after min, max) if present)
+    #
+    unless t.block_type.nil?
+      (s << ', ') unless types.empty? && range.empty?
+      s << string(t.block_type)
+    end
+    s << "]"
+    s
+  end
+
+  # @api private
   def string_PStructType(t)
     return "Struct" if t.elements.empty?
     "Struct[{" << t.elements.map {|element| string(element) }.join(', ') << "}]"
@@ -1431,6 +1508,21 @@ class Puppet::Pops::Types::TypeCalculator
     # Not enumerable if representing an infinite range
     return nil if t.size == TheInfinity
     t
+  end
+
+  def self.copy_as_tuple(t)
+    case t
+    when Types::PTupleType
+      t.copy
+    when Types::PArrayType
+      # transform array to tuple
+      result = Types::PTupleType.new
+      result.addTypes(t.element_type.copy)
+      result.size_type = t.size_type.nil? ? nil : t.size_type.copy
+      result
+    else
+      raise ArgumentError, "Internal Error: Only Array and Tuple can be given to copy_as_tuple"
+    end
   end
 
   private

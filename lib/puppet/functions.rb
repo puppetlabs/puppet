@@ -465,8 +465,30 @@ module Puppet::Functions
       # @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names, injections, weaving ]
     end
 
-    private
+    # Produces a CallableType for a single signature, and a Variant[<callables>] otherwise
+    #
+    def to_type()
+        callables = dispatchers.map do | dispatch |
+          t = Puppet::Pops::Types::PCallableType.new()
+          # TODO: handle that dispatch.type may be an ArrayType instead of a TupleType
+          t2 = dispatch.type
+          t.param_types = Puppet::Pops::Types::TypeCalculator.copy_as_tuple(t2)
+          # TODO: Function does not have a block type yet
+          t
+        end
+      if callables.size > 1
+        # multiple signatures, produce a Variant type of Callable1-n
+        t = Puppet::Pops::Types::PVariantType.new()
+        t.types = callables
+        t
+      else
+        # single signature, produce single Callable
+        callables.pop
+      end
+    end
 
+    # @api private
+    #
     class Dispatch
       attr_reader :type
       attr_reader :visitor
@@ -487,7 +509,7 @@ module Puppet::Functions
       end
 
       def weave(scope, args)
-        # no nead to weave if there are no injections
+        # no need to weave if there are no injections
         if injections.empty?
           args
         else
@@ -509,6 +531,8 @@ module Puppet::Functions
         end
       end
     end
+
+    private
 
     # Produces a string with the difference between the given arguments and support signature(s).
     #

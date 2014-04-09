@@ -180,6 +180,11 @@ class Puppet::Pops::Types::TypeParser
 
     when "struct"
       TYPES.struct()
+
+    when "callable"
+      # A generic callable as opposed to one that does not accept arguments
+      TYPES.all_callables()
+
     else
       TYPES.resource(name_ast.value)
     end
@@ -328,6 +333,10 @@ class Puppet::Pops::Types::TypeParser
         TYPES.constrain_size(t, min, max)
       end
       t
+
+    when "callable"
+      # 1..m parameters being types (last three optionally integer or literal default, and a callable)
+      TYPES.callable(*parameters)
 
     when "struct"
       # 1..m parameters being types (last two optionally integer or literal default
