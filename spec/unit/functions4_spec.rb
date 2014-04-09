@@ -43,11 +43,11 @@ describe 'the 4x function api' do
     end
     expect do
       func.call({}, 10)
-    end.to raise_error(ArgumentError, Regexp.new(Regexp.escape("function 'min' called with mis-matched arguments
+    end.to raise_error(ArgumentError, "function 'min' called with mis-matched arguments
 expected:
   min(#{signature}) - arg count {2}
 actual:
-  min(Integer) - arg count {1}")))
+  min(Integer) - arg count {1}")
   end
 
   it 'an error is raised if called with too many arguments' do
