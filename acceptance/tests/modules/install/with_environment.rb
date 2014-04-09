@@ -30,6 +30,13 @@ step 'Install a module into a non default legacy environment' do
                                "--environment=legacyenv")
 end
 
+step 'Enable directory environments' do
+  on master, puppet("config", "set",
+                    "environmentpath", "#{master['puppetpath']}/environments",
+                    "--section", "main",
+                    "--config", puppet_conf)
+end
+
 step 'Install a module into a non default directory environment' do
   check_module_install_in.call("#{master['puppetpath']}/environments/direnv/modules",
                               "--environment=direnv")
