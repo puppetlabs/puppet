@@ -42,6 +42,7 @@ describe Puppet::Util::Autoload do
       Puppet[:libdir] = %w{/libdir1 /lib/dir/two /third/lib/dir}.join(File::PATH_SEPARATOR)
       @autoload.class.expects(:gem_directories).returns %w{/one /two}
       @autoload.class.expects(:module_directories).returns %w{/three /four}
+      Puppet::Util::Autoload.reset_search_directories_cache!
       @autoload.class.search_directories(nil).should == %w{/one /two /three /four} + Puppet[:libdir].split(File::PATH_SEPARATOR) + $LOAD_PATH
     end
   end

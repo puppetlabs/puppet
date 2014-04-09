@@ -12,6 +12,7 @@ describe Puppet::Util::Feature do
     Dir.mkdir(libdir)
 
     $LOAD_PATH << libdir
+    Puppet::Util::Autoload.reset_search_directories_cache!
 
     $features = Puppet::Util::Feature.new("feature_lib")
 

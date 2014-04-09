@@ -79,6 +79,7 @@ class Puppet::Util::Autoload
     end
 
     def reload_changed
+      reset_search_directories_cache!
       loaded.keys.each { |file| load_file(file, nil) if changed?(file) }
     end
 
@@ -156,7 +157,21 @@ class Puppet::Util::Autoload
       gem_source.directories
     end
 
+    def reset_search_directories_cache!
+      @search_directories = {}
+    end
+
     def search_directories(env)
+      if Puppet.settings.app_defaults_initialized?
+        env ||= Puppet.lookup(:environments).get(Puppet[:environment])
+        @search_directories ||= {}
+        @search_directories[env.name] ||= search_directories_uncached(env)
+      else
+        search_directories_uncached(env)
+      end
+    end
+
+    def search_directories_uncached(env)
       [gem_directories, module_directories(env), libdirs(), $LOAD_PATH].flatten
     end
 

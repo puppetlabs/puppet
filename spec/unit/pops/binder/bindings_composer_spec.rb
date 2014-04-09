@@ -35,6 +35,7 @@ describe 'BinderComposer' do
       Puppet.settings[:confdir] = config_directory
       Puppet.settings[:libdir] = File.join(config_directory, 'lib')
       Puppet.settings[:modulepath] = File.join(config_directory, 'modules')
+      Puppet::Util::Autoload.reset_search_directories_cache!
       # this ensure the binder is active at the right time
       # (issues with getting a /dev/null path for "confdir" / "libdir")
       raise "Binder not active" unless scope.compiler.is_binder_active?
