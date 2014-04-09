@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Puppet::Parser::Resource do
   before do
-    environment = Puppet::Node::Environment.create(:testing, [], '')
+    environment = Puppet::Node::Environment.create(:testing, [])
     @node = Puppet::Node.new("yaynode", :environment => environment)
     @known_resource_types = environment.known_resource_types
     @compiler = Puppet::Parser::Compiler.new(@node)

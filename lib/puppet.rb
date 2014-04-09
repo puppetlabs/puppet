@@ -178,8 +178,17 @@ module Puppet
     environments = settings[:environmentpath]
     modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
-    loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
-    loaders << Puppet::Environments::Legacy.new
+    if environments.empty?
+      loaders = [Puppet::Environments::Legacy.new]
+    else
+      loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
+      # in case the configured environment (used for the default sometimes)
+      # doesn't exist
+      loaders << Puppet::Environments::StaticPrivate.new(
+        Puppet::Node::Environment.create(Puppet[:environment].to_sym,
+                                         [],
+                                         Puppet::Node::Environment::NO_MANIFEST))
+    end
 
     {
       :environments => Puppet::Environments::Combined.new(*loaders)

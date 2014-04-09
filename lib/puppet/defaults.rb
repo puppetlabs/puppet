@@ -203,8 +203,9 @@ module Puppet
           this provides the default environment for nodes we know nothing about."
     },
     :environmentpath => {
-      :default => "$confdir/environments",
-      :desc    => "A path of environment directories",
+      :default => "",
+      :desc    => "A search path for environment directories, as a list of directories separated by the system
+        path separator character.",
       :type    => :path,
     },
     :diff_args => {

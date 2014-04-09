@@ -74,6 +74,22 @@ module Puppet::Environments
     end
   end
 
+  # A source of unlisted pre-defined environments.
+  #
+  # Used only for internal bootstrapping environments which are not relevant
+  # to an end user (such as the fall back 'configured' environment).
+  #
+  # @api private
+  class StaticPrivate < Static
+
+    # Unlisted
+    #
+    # @!macro loader_list
+    def list
+      []
+    end
+  end
+
   # Old-style environments that come either from explicit stanzas in
   # puppet.conf or from dynamic environments created from use of `$environment`
   # in puppet.conf.

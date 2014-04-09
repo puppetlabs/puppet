@@ -64,7 +64,7 @@ describe Puppet::Parser::Scope do
   end
 
   it "should get its environment from its compiler" do
-    env = Puppet::Node::Environment.create(:testing, [], '')
+    env = Puppet::Node::Environment.create(:testing, [])
     compiler = stub 'compiler', :environment => env, :is_a? => true
     scope = Puppet::Parser::Scope.new(compiler)
     scope.environment.should equal(env)
@@ -87,7 +87,7 @@ describe Puppet::Parser::Scope do
   end
 
   describe "when custom functions are called" do
-    let(:env) { Puppet::Node::Environment.create(:testing, [], '') }
+    let(:env) { Puppet::Node::Environment.create(:testing, []) }
     let(:compiler) { Puppet::Parser::Compiler.new(Puppet::Node.new('foo', :environment => env)) }
     let(:scope) { Puppet::Parser::Scope.new(compiler) }
 
@@ -120,7 +120,7 @@ describe Puppet::Parser::Scope do
 
   describe "when initializing" do
     it "should extend itself with its environment's Functions module as well as the default" do
-      env = Puppet::Node::Environment.create(:myenv, [], '')
+      env = Puppet::Node::Environment.create(:myenv, [])
       root = Puppet.lookup(:root_environment)
       compiler = stub 'compiler', :environment => env, :is_a? => true
 

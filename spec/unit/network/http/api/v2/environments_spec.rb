@@ -31,7 +31,7 @@ describe Puppet::Network::HTTP::API::V2::Environments do
   end
 
   it "the response conforms to the environments schema" do
-    environment = Puppet::Node::Environment.create(:production, [], '')
+    environment = Puppet::Node::Environment.create(:production, [])
     handler = Puppet::Network::HTTP::API::V2::Environments.new(Puppet::Environments::Static.new(environment))
     response = Puppet::Network::HTTP::MemoryResponse.new
 

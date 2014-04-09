@@ -22,8 +22,9 @@ end
 # logging functions. Logging functions are attached to the 'root' environment
 # when {Puppet::Parser::Functions.reset} is called.
 class Puppet::Node::Environment
-
   include Puppet::Util::Cacher
+
+  NO_MANIFEST = :no_manifest
 
   # @api private
   def self.seen
@@ -73,18 +74,19 @@ class Puppet::Node::Environment
   #
   # @param name [Symbol] the name of the
   # @param modulepath [Array<String>] the list of paths from which to load modules
-  # @param manifest [String] the path to the manifest for the environment
+  # @param manifest [String] the path to the manifest for the environment or
+  # the constant Puppet::Node::Environment::NO_MANIFEST if there is none.
   # @param config_version [String] path to a script whose output will be added
   #   to report logs (optional)
   # @return [Puppet::Node::Environment]
   #
   # @api public
-  def self.create(name, modulepath, manifest, config_version = nil)
+  def self.create(name, modulepath, manifest = NO_MANIFEST, config_version = nil)
     obj = self.allocate
     obj.send(:initialize,
              name,
              expand_dirs(extralibs() + modulepath),
-             File.expand_path(manifest),
+             manifest == NO_MANIFEST ? manifest : File.expand_path(manifest),
              config_version)
     obj
   end
@@ -481,7 +483,9 @@ class Puppet::Node::Environment
       file = self.manifest
       # if the manifest file is a reference to a directory, parse and combine all .pp files in that
       # directory
-      if File.directory?(file)
+      if file == NO_MANIFEST
+        Puppet::Parser::AST::Hostclass.new('')
+      elsif File.directory?(file)
         parse_results = Dir.entries(file).find_all { |f| f =~ /\.pp$/ }.sort.map do |pp_file|
           parser.file = File.join(file, pp_file)
           parser.parse

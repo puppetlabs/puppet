@@ -68,7 +68,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
   end
 
   describe "when scanning top level entities" do
-    let(:environment) { Puppet::Node::Environment.create(:env, [], '') }
+    let(:environment) { Puppet::Node::Environment.create(:env, []) }
 
     before :each do
       @resource_type_collection = resource_type_collection = stub_everything('resource_type_collection')
@@ -168,7 +168,7 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
   describe "when finding modules from filepath" do
     let(:environment) {
       Puppet::FileSystem.expects(:directory?).with("/path/to/modules").at_least_once.returns(true)
-      Puppet::Node::Environment.create(:env, ["/path/to/modules"], '')
+      Puppet::Node::Environment.create(:env, ["/path/to/modules"])
     }
 
     it "should return the module name for modulized puppet manifests" do

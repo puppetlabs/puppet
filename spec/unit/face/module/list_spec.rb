@@ -39,7 +39,7 @@ describe "puppet module list" do
     barmod1 = PuppetSpec::Modules.create('bar', @modpath1)
     foomod2 = PuppetSpec::Modules.create('foo', @modpath2)
 
-    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2], '')
+    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
       Puppet::Face[:module, :current].list(:environment => 'useme').should == {
@@ -56,7 +56,7 @@ describe "puppet module list" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath1)
 
-    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2], '')
+    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
       Puppet::Face[:module, :current].list(:environment => 'useme').should == {
@@ -87,7 +87,7 @@ describe "puppet module list" do
   it "prefers a given modulepath over the modulepath from the given environment" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath2)
-    env = Puppet::Node::Environment.create(:myenv, ['/tmp/notused'], '')
+    env = Puppet::Node::Environment.create(:myenv, ['/tmp/notused'])
     Puppet[:modulepath] = ""
 
     modules = Puppet::Face[:module, :current].list(:environment => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")

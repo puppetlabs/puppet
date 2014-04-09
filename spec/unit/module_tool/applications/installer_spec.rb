@@ -18,7 +18,7 @@ describe Puppet::ModuleTool::Applications::Installer do
     FileUtils.touch(mod)
     mod
   end
-  let(:env)             { Puppet::Node::Environment.create(:env, [modpath1], '') }
+  let(:env)             { Puppet::Node::Environment.create(:env, [modpath1]) }
   let(:options)         do
     {
       :target_dir => modpath1,

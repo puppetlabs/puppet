@@ -29,7 +29,7 @@ describe Puppet::Node::Environment do
       mods["mod#{num}"] = a_module_in("mod#{num}", dir)
     end
 
-    environment = Puppet::Node::Environment.create(:foo, dirs, '')
+    environment = Puppet::Node::Environment.create(:foo, dirs)
 
     environment.modules.each do |mod|
       mod.environment.should == environment
@@ -49,7 +49,7 @@ describe Puppet::Node::Environment do
       a_module_in("mod", dir)
     end
 
-    environment = Puppet::Node::Environment.create(:foo, dirs, '')
+    environment = Puppet::Node::Environment.create(:foo, dirs)
 
     mods = environment.modules
     mods.length.should == 1

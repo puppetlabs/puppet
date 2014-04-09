@@ -44,8 +44,9 @@ module Puppet::Pops::Parser::InterpolationSupport
           break
         else
           # false $ variable start
-          text += value
+          text += terminator
           value,terminator = slurp_dqstring()
+          text += value
           after = scn.pos
         end
       end
@@ -84,8 +85,9 @@ module Puppet::Pops::Parser::InterpolationSupport
           break
         else
           # false $ variable start
+          text += terminator
+          value,terminator = slurp_dqstring
           text += value
-          value,terminator = self.send(slurpfunc)
           after = scn.pos
         end
       end
@@ -127,8 +129,9 @@ module Puppet::Pops::Parser::InterpolationSupport
           break
         else
           # false $ variable start
-          text += value
+          text += terminator
           value,terminator = slurp_uqstring()
+          text += value
           after = scn.pos
         end
       end
@@ -166,8 +169,9 @@ module Puppet::Pops::Parser::InterpolationSupport
           break
         else
           # false $ variable start
-          text += value
+          text += terminator
           value,terminator = slurp_uqstring
+          text += value
           after = scn.pos
         end
       end

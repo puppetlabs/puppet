@@ -199,7 +199,7 @@ describe Puppet::Node::Environment do
 
       it "should return nil if asked for a module that does not exist in its path" do
         modpath = tmpdir('modpath')
-        env = Puppet::Node::Environment.create(:testing, [modpath], '')
+        env = Puppet::Node::Environment.create(:testing, [modpath])
 
         env.module("one").should be_nil
       end
