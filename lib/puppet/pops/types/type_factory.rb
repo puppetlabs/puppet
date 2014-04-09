@@ -70,6 +70,11 @@ module Puppet::Pops::Types::TypeFactory
     t
   end
 
+  # Convenience method to produce an Optional[Object] type
+  def self.optional_object()
+    optional(object())
+  end
+
   # Produces the Enum type, optionally with specific string values
   # @api public
   #
@@ -177,6 +182,78 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.scalar()
     Types::PScalarType.new()
+  end
+
+  # Produces a CallableType matching all callables
+  # @api public
+  #
+  def self.all_callables()
+    return Puppet::Pops::Types::PCallableType.new
+  end
+
+  # Produces a Callable type with one signature without support for a block
+  # Use #with_block, or #with_optional_block to add a block to the callable
+  # If no parameters are given, the Callable will describe a signature
+  # that does not accept parameters. To create a Callable that matches all callables
+  # use {#all_callables}.
+  #
+  # The params is a list of types, where the two last types may be a min, max count.
+  # If neither min or max are specified the parameters must match exactly.
+  # A min < params.size means that the difference are optional.
+  # If max > params.size means that the last type repeats.
+  # if max is :default, the max value is unbound (infinity).
+  # 
+  # Params are either given as a sequence of arguments to {#type_of}.
+  # Or as a sequence of arrays where each array is [type, name] which also names the parameters.
+  # If parameter names are not given, they are automatically generated as arg0 - argn.
+  # A mix of [type, name], and type is allowed, automatic naming then applies to
+  # unnamed entries.
+  #
+  def self.callable(*params)
+    callable = Types::PCallableType.new()
+    # compute a size_type for the signature based on the two last parameters
+    if is_range_parameter?(params[-2]) && is_range_parameter?(params[-1])
+      size_type = range(params[-2], params[-1])
+      params = params[0, params.size - 2]
+    elsif is_range_parameter?(params[-1])
+      size_type = range(params[-1], :default)
+      params = params[0, params.size - 1]
+    end
+
+    types = [ ]
+    names = [ ]
+    params.each_with_index do |p, index|
+      if p.is_a?(Array)
+        # type, name pair
+        t, n = p
+        unless (t && n) && n.is_a?(String)
+          raise ArgumentError, "Callable Type Expected [Type, String] entry, got '[#{t.class}, #{n.class}]'"
+        end
+        types << type_of(t)
+        names << n
+      else
+        types << type_of(p)
+        names << "arg#{index}"
+      end
+    end
+
+    # create a signature
+    callable_t = Types::PCallableType.new()
+    tuple_t = tuple(*types)
+    tuple_t.size_type = size_type unless size_type.nil?
+    callable_t.param_types = tuple_t
+    callable_t.param_names = names unless names.empty?
+    callable_t
+  end
+
+  def self.with_block(callable, *block_params)
+    callable.block_type = callable(*block_params)
+    callable
+  end
+
+  def self.with_optional_block(callable, *block_params)
+    callable.block_type = optional(callable(*block_params))
+    callable
   end
 
   # Produces the abstract type Collection
