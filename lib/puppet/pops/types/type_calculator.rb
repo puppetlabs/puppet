@@ -1411,6 +1411,7 @@ class Puppet::Pops::Types::TypeCalculator
     # Add block T last (after min, max) if present)
     #
     unless t.block_type.nil?
+      (s << ', ') unless types.empty? && range.empty?
       s << string(t.block_type)
     end
     s << "]"

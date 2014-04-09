@@ -1405,6 +1405,12 @@ describe 'The type calculator' do
       expect(calculator.string(callable_t(String, 0, 3))).to eql("Callable[String, 0, 3]")
     end
 
+    it "should yield 'Callable[Callable]' for callable with block" do
+      expect(calculator.string(callable_t(all_callables_t))).to eql("Callable[0, 0, Callable]")
+      expect(calculator.string(callable_t(string_t, all_callables_t))).to eql("Callable[String, Callable]")
+      expect(calculator.string(callable_t(string_t, 1,1, all_callables_t))).to eql("Callable[String, 1, 1, Callable]")
+    end
+
   end
 
   context 'when processing meta type' do
