@@ -12,7 +12,12 @@ shared_examples_for "a yumrepo parameter that expects a boolean parameter" do |p
 
   valid_values.each do |value|
     it "accepts a valid value of #{value}" do
-      described_class.new(:name => 'puppetlabs', param => value)
+      instance = described_class.new(:name => 'puppetlabs', param => value)
+      expect(instance[param]).to eq value
+    end
+    it "accepts #{value} downcased to #{value.downcase}" do
+      instance = described_class.new(:name => 'puppetlabs', param => value.downcase)
+      expect(instance[param]).to eq value.downcase
     end
   end
 
