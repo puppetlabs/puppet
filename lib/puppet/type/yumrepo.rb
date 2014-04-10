@@ -18,8 +18,10 @@ Puppet::Type.newtype(:yumrepo) do
   # Doc string for properties that can be made 'absent'
   ABSENT_DOC="Set this to `absent` to remove it from the file completely."
   # False can be false/0/no and True can be true/1/yes in yum.
-  YUM_BOOLEAN=/(True|False|0|1|No|Yes)/
+  YUM_BOOLEAN=/(True|False|0|1|No|Yes)/i
   YUM_BOOLEAN_DOC="Valid values are: False/0/No or True/1/Yes."
+
+  VALID_SCHEMES = %w[file http https ftp]
 
   newparam(:name, :namevar => true) do
     desc "The name of the repository.  This corresponds to the
@@ -46,8 +48,12 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/.*/, :absent)
     validate do |value|
+      next if value.to_s == 'absent'
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+
+      unless VALID_SCHEMES.include?(parsed.scheme)
+        raise "Must be a valid URL"
+      end
     end
   end
 
@@ -56,8 +62,16 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/.*/, :absent)
     validate do |value|
-      parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      next if value.to_s == 'absent'
+
+      value.split(/\s+/).each do |uri|
+
+        parsed = URI.parse(uri)
+
+        unless VALID_SCHEMES.include?(parsed.scheme)
+          raise "Must be a valid URL"
+        end
+      end
     end
   end
 
@@ -92,8 +106,16 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/.*/, :absent)
     validate do |value|
-      parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+      next if value.to_s == 'absent'
+
+      value.split(/\s+/).each do |uri|
+
+        parsed = URI.parse(uri)
+
+        unless VALID_SCHEMES.include?(parsed.scheme)
+          raise "Must be a valid URL"
+        end
+      end
     end
   end
 
@@ -104,8 +126,12 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/.*/, :absent)
     validate do |value|
+      next if value.to_s == 'absent'
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+
+      unless VALID_SCHEMES.include?(parsed.scheme)
+        raise "Must be a valid URL"
+      end
     end
   end
 
@@ -202,8 +228,12 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/.*/, :absent)
     validate do |value|
+      next if value.to_s == 'absent'
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+
+      unless VALID_SCHEMES.include?(parsed.scheme)
+        raise "Must be a valid URL"
+      end
     end
   end
 
@@ -262,8 +292,12 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/.*/, :absent)
     validate do |value|
+      next if value.to_s == 'absent'
       parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+
+      unless VALID_SCHEMES.include?(parsed.scheme)
+        raise "Must be a valid URL"
+      end
     end
   end
 

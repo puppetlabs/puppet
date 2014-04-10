@@ -10,24 +10,28 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
 
   describe 'self.instances' do
     let(:updates_section) do
-      stub('inifile updates section',
-           :name => 'updates',
-           :entries => {'name' => 'updates', 'enabled' => '1', 'descr' => 'test updates'})
+      sect = Puppet::Util::IniConfig::Section.new('updates', '/some/imaginary/file')
+      sect.entries << ['name', 'Some long description of the repo']
+      sect.entries << ['enabled', '1']
+
+      sect
     end
 
     it 'finds any existing sections' do
       virtual_inifile.expects(:each_section).yields(updates_section)
+      virtual_inifile.stubs(:[]).with('updates').returns(updates_section)
 
       providers = described_class.instances
       providers.should have(1).items
       providers[0].name.should == 'updates'
+      providers[0].descr.should == 'Some long description of the repo'
       providers[0].enabled.should == '1'
     end
   end
 
-  describe "methods used by ensurable" do
+  describe "setting and getting properties" do
 
-    let(:type) do
+    let(:type_instance) do
       Puppet::Type.type(:yumrepo).new(
         :name     => 'puppetlabs-products',
         :ensure   => :present,
@@ -39,31 +43,75 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
       )
     end
 
-    let(:provider) { type.provider }
-
-    let(:puppetlabs_section) { stub('inifile puppetlabs section', :name => 'puppetlabs-products') }
-
-    it "#create sets the yumrepo properties on the according section" do
-      described_class.expects(:section).returns(puppetlabs_section)
-      puppetlabs_section.expects(:[]=).with('baseurl', 'http://yum.puppetlabs.com/el/6/products/$basearch')
-      puppetlabs_section.expects(:[]=).with('descr', 'Puppet Labs Products El 6 - $basearch')
-      puppetlabs_section.expects(:[]=).with('enabled', '1')
-      puppetlabs_section.expects(:[]=).with('gpgcheck', '1')
-      puppetlabs_section.expects(:[]=).with('gpgkey', 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-puppetlabs')
-
-      provider.create
+    let(:provider) do
+      described_class.new(type_instance)
     end
 
-    it "#exists? checks if the repo has been marked as present" do
-      described_class.stubs(:section).returns(stub(:[]= => nil))
-      provider.create
-      expect(provider).to be_exist
+    let(:section) do
+      stub('inifile puppetlabs section', :name => 'puppetlabs-products')
     end
 
-    it "#destroy deletes the associated ini file section" do
-      described_class.expects(:section).returns(puppetlabs_section)
-      puppetlabs_section.expects(:destroy=).with(true)
-      provider.destroy
+    before do
+      type_instance.provider = provider
+      described_class.stubs(:section).with('puppetlabs-products').returns(section)
+    end
+
+    describe "methods used by ensurable" do
+      it "#create sets the yumrepo properties on the according section" do
+        section.expects(:[]=).with('baseurl', 'http://yum.puppetlabs.com/el/6/products/$basearch')
+        section.expects(:[]=).with('name', 'Puppet Labs Products El 6 - $basearch')
+        section.expects(:[]=).with('enabled', '1')
+        section.expects(:[]=).with('gpgcheck', '1')
+        section.expects(:[]=).with('gpgkey', 'file:///etc/pki/rpm-gpg/RPM-GPG-KEY-puppetlabs')
+
+        provider.create
+      end
+
+      it "#exists? checks if the repo has been marked as present" do
+        described_class.stubs(:section).returns(stub(:[]= => nil))
+        provider.create
+        expect(provider).to be_exist
+      end
+
+      it "#destroy deletes the associated ini file section" do
+        described_class.expects(:section).returns(section)
+        section.expects(:destroy=).with(true)
+        provider.destroy
+      end
+    end
+
+    describe "getting properties" do
+      it "maps the 'descr' property to the 'name' INI property" do
+        section.expects(:[]).with('name').returns 'Some rather long description of the repository'
+        expect(provider.descr).to eq 'Some rather long description of the repository'
+      end
+
+      it "gets the property from the INI section" do
+        section.expects(:[]).with('enabled').returns '1'
+        expect(provider.enabled).to eq '1'
+      end
+
+      it "sets the property as :absent if the INI property is nil" do
+        section.expects(:[]).with('exclude').returns nil
+        expect(provider.exclude).to eq :absent
+      end
+    end
+
+    describe "setting properties" do
+      it "maps the 'descr' property to the 'name' INI property" do
+        section.expects(:[]=).with('name', 'Some rather long description of the repository')
+        provider.descr = 'Some rather long description of the repository'
+      end
+
+      it "sets the property on the INI section" do
+        section.expects(:[]=).with('enabled', '0')
+        provider.enabled = '0'
+      end
+
+      it "sets the section field to nil when the specified value is absent" do
+        section.expects(:[]=).with('exclude', nil)
+        provider.exclude = :absent
+      end
     end
   end
 
