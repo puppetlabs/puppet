@@ -265,4 +265,45 @@ describe Puppet::Type.type(:yumrepo).provider(:inifile) do
       expect(described_class.reposdir('/etc/yum.conf')).to be_empty
     end
   end
+
+  describe "looking up a conf value" do
+    describe "and the file doesn't exist" do
+      it "returns nil" do
+        Puppet::FileSystem.stubs(:exist?).returns false
+        expect(described_class.find_conf_value('reposdir')).to be_nil
+      end
+    end
+
+    describe "and the file exists" do
+      let(:pfile) { stub('yum.conf physical file') }
+      let(:sect) { stub('ini section') }
+
+      before do
+        Puppet::FileSystem.stubs(:exist?).with('/etc/yum.conf').returns true
+        Puppet::Util::IniConfig::PhysicalFile.stubs(:new).with('/etc/yum.conf').returns pfile
+      end
+
+      it "creates a PhysicalFile to parse the given file" do
+        pfile.expects(:get_section)
+        described_class.find_conf_value('reposdir')
+      end
+
+      it "returns nil if the file exists but the 'main' section doesn't exist" do
+        pfile.expects(:get_section).with('main')
+        expect(described_class.find_conf_value('reposdir')).to be_nil
+      end
+
+      it "returns nil if the file exists but the INI property doesn't exist" do
+        pfile.expects(:get_section).with('main').returns sect
+        sect.expects(:[]).with('reposdir')
+        expect(described_class.find_conf_value('reposdir')).to be_nil
+      end
+
+      it "returns the value if the value is defined in the PhysicalFile" do
+        pfile.expects(:get_section).with('main').returns sect
+        sect.expects(:[]).with('reposdir').returns '/etc/alternate.repos.d'
+        expect(described_class.find_conf_value('reposdir')).to eq '/etc/alternate.repos.d'
+      end
+    end
+  end
 end

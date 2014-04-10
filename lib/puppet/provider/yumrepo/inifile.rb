@@ -67,17 +67,16 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   end
 
   # Helper method to look up specific values in ini style files.
-  # @todo Migrate this into Puppet::Util::IniConfig.
   # @param value [String] Value to look for in the configuration file.
   # @param conf [String] Configuration file to check for value.
   # @return [String] The value of a looked up key from the configuration file.
   def self.find_conf_value(value, conf='/etc/yum.conf')
     if Puppet::FileSystem.exist?(conf)
-      contents = Puppet::FileSystem.read(conf)
-      match = /^#{value}\s*=\s*(.*)/.match(contents)
+      file = Puppet::Util::IniConfig::PhysicalFile.new(conf)
+      if (main = file.get_section('main'))
+        main[value]
+      end
     end
-
-    return match.captures[0] if match
   end
 
   def self.repofiles
