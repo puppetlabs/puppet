@@ -147,7 +147,16 @@ describe Puppet::Util::IniConfig::PhysicalFile do
                          /Section "mysect" is already defined, cannot redefine/)
       end
 
-      it "raises an error if a section is redefined in the file collection"
+      it "raises an error if a section is redefined in the file collection" do
+        subject.file_collection = stub('file collection', :get_section => true)
+        text = "[mysect]\n[mysect]\n"
+
+        expect {
+          subject.parse(text)
+        }.to raise_error(Puppet::Util::IniConfig::IniParseError,
+                         /Section "mysect" is already defined, cannot redefine/)
+      end
+
     end
 
     describe "parsing properties" do
@@ -368,6 +377,7 @@ describe Puppet::Util::IniConfig::FileCollection do
 
     it "creates a new PhysicalFile and uses that to read the file" do
       stub_file.expects(:read)
+      stub_file.expects(:file_collection=)
       Puppet::Util::IniConfig::PhysicalFile.expects(:new).with(path_a).returns stub_file
 
       subject.read(path_a)
@@ -375,6 +385,7 @@ describe Puppet::Util::IniConfig::FileCollection do
 
     it "stores the PhysicalFile and the path to the file" do
       stub_file.stubs(:read)
+      stub_file.stubs(:file_collection=)
       Puppet::Util::IniConfig::PhysicalFile.stubs(:new).with(path_a).returns stub_file
       subject.read(path_a)
 

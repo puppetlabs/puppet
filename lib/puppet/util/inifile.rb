@@ -120,6 +120,10 @@ module Puppet::Util::IniConfig
     #   Defaults to false
     attr_accessor :destroy_empty
 
+    # @!attribute [rw] file_collection
+    #   @return [Puppet::Util::IniConfig::FileCollection]
+    attr_accessor :file_collection
+
     def initialize(file, options = {})
       @file = file
       @contents = []
@@ -169,12 +173,6 @@ module Puppet::Util::IniConfig
           section.mark_clean if section
 
           section_name = match[1]
-
-          if get_section(section_name)
-            raise IniParseError.new(
-              "Section #{section_name.inspect} is already defined, cannot redefine", @file, line_num
-            )
-          end
 
           section = add_section(section_name)
           optname = nil
@@ -239,10 +237,26 @@ module Puppet::Util::IniConfig
     # @param name [String] The name of the section to create
     # @return [Puppet::Util::IniConfig::Section]
     def add_section(name)
+      if section_exists?(name)
+        raise IniParseError.new("Section #{name.inspect} is already defined, cannot redefine", @file)
+      end
+
       section = Section.new(name, @file)
       @contents << section
 
       section
+    end
+
+    private
+
+    def section_exists?(name)
+      if self.get_section(name)
+        true
+      elsif @file_collection and @file_collection.get_section(name)
+        true
+      else
+        false
+      end
     end
   end
 
@@ -254,10 +268,10 @@ module Puppet::Util::IniConfig
       @files = {}
     end
 
+    # Read and parse a file and store it in the collection. If the file has
+    # already been read it will be destroyed and re-read.
     def read(file)
-      physical_file = PhysicalFile.new(file)
-      physical_file.read
-      @files[file] = physical_file
+      new_physical_file(file).read
     end
 
     def store
@@ -296,8 +310,26 @@ module Puppet::Util::IniConfig
     end
 
     def add_section(name, file)
-      @files[file] ||= PhysicalFile.new(file)
-      @files[file].add_section(name)
+      get_physical_file(file).add_section(name)
+    end
+
+    private
+
+    # Return a file if it's already been defined, create a new file if it hasn't
+    # been defined.
+    def get_physical_file(file)
+      if @files[file]
+        @files[file]
+      else
+        new_physical_file(file)
+      end
+    end
+
+    # Create a new physical file and set required attributes on that file.
+    def new_physical_file(file)
+      @files[file] = PhysicalFile.new(file)
+      @files[file].file_collection = self
+      @files[file]
     end
   end
 
