@@ -1,7 +1,25 @@
 require 'puppet/util/inifile'
 
 Puppet::Type.type(:yumrepo).provide(:inifile) do
-  desc 'Manage yum repos'
+  desc <<-EOD
+    Manage yum repo configurations by parsing yum INI configuration files.
+
+    ## Fetching instances
+
+    When fetching repo instances, directory entries in '/etc/yum/repos.d',
+    '/etc/yum.repos.d', and the directory optionally specified by the reposdir
+    key in '/etc/yum.conf' will be checked. If a given directory does not exist it
+    will be ignored. In addition, all sections in '/etc/yum.conf' aside from
+    'main' will be created as sections.
+
+    ## Storing instances
+
+    When creating a new repository, a new section will be added in the first
+    yum repo directory that exists. The custom directory specified by the
+    '/etc/yum.conf' reposdir property is checked first, followed by
+    '/etc/yum/repos.d', and then '/etc/yum.repos.d'. If none of these exist, the
+    section will be created in '/etc/yum.conf'.
+  EOD
 
   PROPERTIES = Puppet::Type.type(:yumrepo).validproperties
 
