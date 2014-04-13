@@ -228,37 +228,27 @@ module Puppet::Pops::Evaluator::Runtime3Support
     n
   end
 
-  # Asserts that the given function name resolves to an available function. The function is loaded
-  # as a side effect. Fails if the function does not exist.
-  #
-  def assert_function_available(name, o, scope)
-    # Check first via 4x API (if it is available), and the function exists
+  def call_function(name, args, o, scope)
+    # Call via 4x API if it is available, and the function exists
+    #
     if loaders = Puppet.lookup(:loaders) {nil}
-      if loaders && func = loaders.puppet_system_loader.load(:function, name)
-        return
+      # find the loader that loaded the code, or use the system loader
+      adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
+      loader = adapter.nil? ? loaders.puppet_system_loader : adapter.loader
+      if loader && func = loader.load(:function, name)
+        return func.call(scope, *args)
       end
     end
 
     fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
-  end
 
-  def call_function(name, args, o, scope)
-    # Call via 4x API if it is available, and the function exists
-    if loaders = Puppet.lookup(:loaders) {nil}
-      if loaders && func = loaders.puppet_system_loader.load(:function, name)
-        return func.call(scope, *args)
-      end
-    end
     # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts :undef to empty string
     mapped_args = args.map {|a| convert(a, scope, '') }
-    scope.send("function_#{name}", mapped_args)
-  end
-
-  # Returns true if the function produces a value
-  def rvalue_function?(name, o, scope)
-    Puppet::Parser::Functions.rvalue?(name)
+    result = scope.send("function_#{name}", mapped_args)
+    # Prevent non r-value functions from leaking their result (they are not written to care about this)
+    Puppet::Parser::Functions.rvalue?(name) ? result : nil
   end
 
   # The o is used for source reference

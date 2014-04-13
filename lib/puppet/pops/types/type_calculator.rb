@@ -252,13 +252,12 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
-  # Answers 'can an instance of type t2 be assigned to a variable of type t'
+  # Answers 'can an instance of type t2 be assigned to a variable of type t'.
+  # Does not accept nil/undef unless the type accepts it.
+  #
   # @api public
   #
   def assignable?(t, t2)
-    # nil is assignable to anything except to required types
-    return true if is_pnil?(t2)
-
     if t.is_a?(Class)
       t = type(t)
     end
@@ -690,27 +689,9 @@ class Puppet::Pops::Types::TypeCalculator
     Types::PType.new()
   end
 
+  # @api private
   def infer_Closure(o)
-    t = Types::PCallableType.new()
-    tuple_t = Types::PTupleType.new()
-    # since closure lambdas are currently untyped, each parameter becomes Optional[Object]
-    o.parameter_names.each do |name|
-      # TODO: Change when Closure supports typed parameters
-      tuple_t.addTypes(Puppet::Pops::Types::TypeFactory.optional_object())
-    end
-
-    to = o.parameter_count
-    from = to - o.optional_parameter_count
-    if from != to
-      size_t = Types::PIntegerType.new()
-      size_t.from = size
-      size_t.to = size
-      tuple_t.size_type = size_t
-    end
-    t.param_types = tuple_t
-    # TODO: A Lambda can not currently declare that it accepts a lambda, except as an explicit parameter
-    # being a Callable
-    t
+    o.type()
   end
 
   # @api private
@@ -855,6 +836,7 @@ class Puppet::Pops::Types::TypeCalculator
     if o.empty?
       type = Types::PArrayType.new()
       type.element_type = Types::PNilType.new()
+      type.size_type = size_as_type(o)
     else
       type = Types::PTupleType.new()
       type.types = o.map() {|x| infer_set(x) }
@@ -989,7 +971,10 @@ class Puppet::Pops::Types::TypeCalculator
       # of the tuple type.
       #
       args_tuple = args_tuple.copy
-      block_t = args_tuple.types.pop()
+      # to drop the callable, it must be removed explicitly since this is an rgen array
+      args_tuple.removeTypes(block_t = args_tuple.types.last())
+    else
+      # no block was given, if it is required, the below will fail
     end
     # unless argument types match parameter types
     return false unless assignable?(callable_t.param_types, args_tuple)
@@ -1138,6 +1123,9 @@ class Puppet::Pops::Types::TypeCalculator
           # no string can match this enum anyway since it does not accept anything
           false
         end
+      else
+        # no other type matches string
+        false
       end
     elsif t2.is_a?(Types::PStringType)
       # A specific string acts as a set of strings - must have exactly the same strings
@@ -1286,7 +1274,7 @@ class Puppet::Pops::Types::TypeCalculator
       struct_size = t2.elements.size
       element_type = t.element_type
       ( struct_size >= min && struct_size <= max &&
-        assignable?(t.key_type, @non_emptry_string_t)  &&
+        assignable?(t.key_type, @non_empty_string_t)  &&
         t2.hashed_elements.all? {|k,v| assignable?(element_type, v) })
     else
       false

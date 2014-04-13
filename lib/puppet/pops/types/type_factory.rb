@@ -207,8 +207,14 @@ module Puppet::Pops::Types::TypeFactory
   # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
-    callable = Types::PCallableType.new()
-    block_t = params[-1].is_a?(Types::PCallableType) ? params.pop : nil
+    case params.last
+    when Types::PCallableType
+      last_callable = true
+    when Types::POptionalType
+      last_callable = true if params.last.optional_type.is_a?(Types::PCallableType)
+    end
+    block_t = last_callable ? params.pop : nil
+
     # compute a size_type for the signature based on the two last parameters
     if is_range_parameter?(params[-2]) && is_range_parameter?(params[-1])
       size_type = range(params[-2], params[-1])
