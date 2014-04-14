@@ -331,6 +331,19 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     - coerce_numeric(evaluate(o.expr, scope), o, scope)
   end
 
+  def eval_UnfoldExpression(o, scope)
+    candidate = evaluate(o.expr, scope)
+    case candidate
+    when Array
+      candidate
+    when Hash
+      candidate.to_a
+    else
+      # turns anything else into an array (so result can be unfolded)
+      [candidate]
+    end
+  end
+
   # Abstract evaluation, returns array [left, right] with the evaluated result of left_expr and
   # right_expr
   # @return <Array<Object, Object>> array with result of evaluating left and right expressions
@@ -610,10 +623,19 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   # Evaluates each entry of the literal list and creates a new Array
+  # Supports unfolding of entries
   # @return [Array] with the evaluated content
   #
   def eval_LiteralList o, scope
-    o.values.collect {|expr| evaluate(expr, scope)}
+    values = []
+    o.values.each do |v|
+      if v.is_a?(Puppet::Pops::Model::UnfoldExpression)
+        values.concat(evaluate(v, scope))
+      else
+        values << evaluate(v, scope)
+      end
+    end
+    values
   end
 
   # Evaluates each entry of the literal hash and creates a new Hash.
@@ -756,7 +778,16 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = o.functor_expr.value
-    evaluated_arguments = o.arguments.collect {|arg| evaluate(arg, scope) }
+    assert_function_available(name, o, scope)
+    evaluated_arguments = []
+    o.arguments.each do |arg|
+      if arg.is_a?(Puppet::Pops::Model::UnfoldExpression)
+        evaluated_arguments.concat(evaluate(arg, scope))
+      else
+        evaluated_arguments << evaluate(arg, scope)
+      end
+    end
+
     # wrap lambda in a callable block if it is present
     evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
     call_function(name, evaluated_arguments, o, scope)
@@ -774,7 +805,17 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end 
     name = name.value # the string function name
-    evaluated_arguments = [receiver] + (o.arguments || []).collect {|arg| evaluate(arg, scope) }
+    assert_function_available(name, o, scope)
+    evaluated_arguments = [receiver]
+    (o.arguments || []).each do |arg|
+      if arg.is_a?(Puppet::Pops::Model::UnfoldExpression)
+        evaluated_arguments.concat(evaluate(arg, scope))
+      else
+        evaluated_arguments << evaluate(arg, scope)
+      end
+    end
+
+    # wrap lambda in a callable block if it is present
     evaluated_arguments << Puppet::Pops::Evaluator::Closure.new(self, o.lambda, scope) if o.lambda
     call_function(name, evaluated_arguments, o, scope)
   end

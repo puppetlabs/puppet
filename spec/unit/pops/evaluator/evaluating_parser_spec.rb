@@ -478,6 +478,18 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         end
       end
   end
+  context "When evaluator evaluated unfold" do
+    {
+      "*[1,2,3]"             => [1,2,3],
+      "*{a=>10, b=>20}"      => [['a',10],['b',20]],
+      "*1"                   => [1],
+      "*'a'"                 => ['a']
+    }.each do |source, result|
+      it "should parse and evaluate the expression '#{source}' to #{result}" do
+        parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+  end
 
   context "When evaluator performs [] operations" do
     {
@@ -501,6 +513,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "[1,2,3,4][-5,-3]" => [1,2],
       "[1,2,3,4][-6,-3]" => [1,2],
       "[1,2,3,4][2,-3]"  => [],
+      "[1,*[2,3],4]"     => [1,2,3,4],
+      "[1,*[2,3],4][1]"  => 2,
     }.each do |source, result|
       it "should parse and evaluate the expression '#{source}' to #{result}" do
         parser.evaluate_string(scope, source, __FILE__).should == result
@@ -750,6 +764,8 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     {
       'sprintf( "x%iy", $a )'                 => "x10y",
+      # unfolds
+      'sprintf( *["x%iy", $a] )'              => "x10y",
       '"x%iy".sprintf( $a )'                  => "x10y",
       '$b.reduce |$memo,$x| { $memo + $x }'   => 6,
       'reduce($b) |$memo,$x| { $memo + $x }'  => 6,
@@ -961,7 +977,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       expect { parser.evaluate_string(scope, src)}.to raise_error(/Cannot parse invalid JSON string/)
     end
 
-    it "parses interpolated heredoc epression" do
+    it "parses interpolated heredoc expression" do
       src = <<-CODE
       $name = 'Fjodor'
       @("END")

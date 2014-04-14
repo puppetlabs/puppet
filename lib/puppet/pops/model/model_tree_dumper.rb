@@ -182,6 +182,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     ['-', do_dump(o.expr)]
   end
 
+  def dump_UnfoldExpression o
+    ['unfold', do_dump(o.expr)]
+  end
+
   def dump_BlockExpression o
     ["block"] + o.statements.collect {|x| do_dump(x) }
   end

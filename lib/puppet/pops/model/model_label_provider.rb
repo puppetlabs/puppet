@@ -50,6 +50,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_VariableExpression o          ; "Variable"                          end
   def label_TextExpression o              ; "Expression in Interpolated String" end
   def label_UnaryMinusExpression o        ; "Unary Minus"                       end
+  def label_UnfoldExpression o            ; "Unfold"                            end
   def label_BlockExpression o             ; "Block Expression"                  end
   def label_ConcatenatedString o          ; "Double Quoted String"              end
   def label_HeredocExpression o           ; "'@(#{o.syntax})' expression"       end
