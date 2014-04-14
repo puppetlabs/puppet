@@ -95,7 +95,7 @@ module Puppet::Pops::Adapters
   # @see Puppet::Pops::Utils#find_adapter
   #
   class LoaderAdapter < Puppet::Pops::Adaptable::Adapter
-    # @return [Puppet::Pops::Loader] the loader
+    # @return [Puppet::Pops::Loader::Loader] the loader
     attr_accessor :loader
   end
 end

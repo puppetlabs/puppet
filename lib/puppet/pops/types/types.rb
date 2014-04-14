@@ -256,6 +256,7 @@ module Puppet::Pops::Types
   class PCollectionType < PObjectType
     contains_one_uni 'element_type', PAbstractType
     contains_one_uni 'size_type', PIntegerType
+
     module ClassModule
       # Returns an array with from (min) size to (max) size
       # A negative range value in from is 
@@ -370,6 +371,30 @@ module Puppet::Pops::Types
     contains_one_uni 'block_type', PAbstractType, :lowerBound => 0
 
     module ClassModule
+      # Returns the number of accepted arguments [min, max]
+      def size_range
+        param_types.size_range
+      end
+
+      # Returns the number of accepted arguments for the last parameter type [min, max]
+      #
+      def last_range
+        param_types.repeat_last_range
+      end
+
+      # Range [0,0], [0,1], or [1,1] for the block
+      #
+      def block_range
+        case block_type
+        when Puppet::Pops::Types::POptionalType
+          [0,1]
+        when Puppet::Pops::Types::PVariantType, Puppet::Pops::Types::PCallableType
+          [1,1]
+        else
+          [0,0]
+        end
+      end
+
       def hash
         [self.class, Set.new(param_types), block_type].hash
       end
