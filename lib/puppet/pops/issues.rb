@@ -418,6 +418,10 @@ module Puppet::Pops::Issues
     "Unacceptable name. The name '#{name}' is unacceptable as the name of #{label.a_an(semantic)}"
   end
 
+  NON_NAMESPACED_FUNCTION = hard_issue :NON_NAMESPACED_FUNCTION, :name do
+    "A Puppet Function must be defined within a module name-space. The name '#{name}' is unacceptable."
+  end
+
   NOT_NUMERIC = issue :NOT_NUMERIC, :value do
     "The value '#{value}' cannot be converted to Numeric."
   end

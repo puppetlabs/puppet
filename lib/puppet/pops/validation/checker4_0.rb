@@ -210,11 +210,19 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
-  # for 'class' and 'define'
+  # for 'class', 'define', and function
   def check_NamedDefinition(o)
     top(o.eContainer, o)
     if o.name !~ Puppet::Pops::Patterns::CLASSREF
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
+    end
+  end
+
+  def check_FunctionDefinition(o)
+    # super class check
+    check_NamedDefinition(o)
+    if o.name !~ /.+::/
+      acceptor.accept(Issues::NON_NAMESPACED_FUNCTION, o, {:name=>o.name})
     end
   end
 
