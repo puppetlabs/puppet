@@ -13,7 +13,7 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
   # @return [Puppet::Pops::Functions.Function] - an instantiated function with global scope closure associated with the given loader
   #
   def self.create(loader, typed_name, source_ref, pp_code_string)
-    parser = Puppet::Pops::Parser::EvaluatingParser.new()
+    parser = Puppet::Pops::Parser::EvaluatingParser::Transitional.new()
 
     # parse and validate
     result = parser.parse_string(pp_code_string, source_ref)
