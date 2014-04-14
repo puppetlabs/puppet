@@ -481,7 +481,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   context "When evaluator evaluated unfold" do
     {
       "*[1,2,3]"             => [1,2,3],
-      "*{a=>10, b=>20}"      => [['a',10],['b',20]],
       "*1"                   => [1],
       "*'a'"                 => ['a']
     }.each do |source, result|
@@ -489,6 +488,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         parser.evaluate_string(scope, source, __FILE__).should == result
       end
     end
+
+    it "should parse and evaluate the expression '*{a=>10, b=>20} to [['a',10],['b',20]]" do
+      result = parser.evaluate_string(scope, '*{a=>10, b=>20}', __FILE__)
+      expect(result).to include(['a', 10])
+      expect(result).to include(['b', 20])
+    end
+
   end
 
   context "When evaluator performs [] operations" do
