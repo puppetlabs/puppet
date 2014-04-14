@@ -48,17 +48,14 @@ describe Puppet::Type.type(:service).provider(:systemd) do
     end
 
     it "should return only services" do
-      described_class.expects(:systemctl).with('list-units', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_units_services'))
+      described_class.expects(:systemctl).with('list-unit-files', '--type', 'service', '--full', '--all', '--no-pager').returns File.read(my_fixture('list_unit_files_services'))
       described_class.instances.map(&:name).should =~ %w{
+        arp-ethers.service
         auditd.service
-        crond.service
-        dbus.service
-        display-manager.service
-        ebtables.service
-        fedora-readonly.service
-        initrd-switch-root.service
-        ip6tables.service
-        puppet.service
+        autovt@.service
+        avahi-daemon.service
+        blk-availability.service
+        brandbot.service
       }
     end
   end

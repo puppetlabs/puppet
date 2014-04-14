@@ -1,0 +1,7 @@
+UNIT FILE                                   STATE
+arp-ethers.service                          disabled
+auditd.service                              enabled
+autovt@.service                             disabled
+avahi-daemon.service                        enabled
+blk-availability.service                    disabled
+brandbot.service                            static
