@@ -35,7 +35,7 @@ class Puppet::FileBucket::File
 
     @bucket_path = options.delete(:bucket_path)
     Puppet.settings.use('main')
-    @checksum_type = Puppet[:digest_algorithm] || 'md5'
+    @checksum_type = Puppet[:digest_algorithm] || Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
     @checksum_type = @checksum_type.intern unless @checksum_type.is_a? Symbol
     raise ArgumentError.new("invalid checksum type #{@checksum_type}") unless known_checksum_types.include? @checksum_type
     raise ArgumentError.new("Unknown option(s): #{options.keys.join(', ')}") unless options.empty?

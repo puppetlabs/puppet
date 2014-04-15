@@ -12,26 +12,34 @@ Puppet::Type.type(:file).newparam(:checksum) do
   newvalues "md5", "md5lite", "sha256", "sha256lite", "mtime", "ctime", "none"
 
   defaultto do
-    algo = Puppet[:digest_algorithm] || 'md5'
+    algo = Puppet[:digest_algorithm] || Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
     algo = algo.intern unless algo.is_a? Symbol
     algo
   end
 
   def sum(content)
-    type = value || Puppet[:digest_algorithm] || :md5 # because this might be called before defaults are set
+    type = digest_algorithm()
     "{#{type}}" + send(type, content)
   end
 
   def sum_file(path)
-    type = value || Puppet[:digest_algorithm] || :md5 # because this might be called before defaults are set
+    type = digest_algorithm()
     method = type.to_s + "_file"
     "{#{type}}" + send(method, path).to_s
   end
 
   def sum_stream(&block)
-    type = value || Puppet[:digest_algorithm] || :md5 # same comment as above
+    type = digest_algorithm()
     method = type.to_s + "_stream"
     checksum = send(method, &block)
     "{#{type}}#{checksum}"
+  end
+
+  private
+
+  # Return the appropriate digest algorithm with fallbacks in case puppet defaults have not
+  # been initialized.
+  def digest_algorithm
+    value || Puppet[:digest_algorithm] || Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
   end
 end

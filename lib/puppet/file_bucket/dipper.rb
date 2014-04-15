@@ -25,7 +25,7 @@ class Puppet::FileBucket::Dipper
       @local_path = nil
       @rest_path = "https://#{server}:#{port}/#{environment}/file_bucket_file/"
     end
-    @checksum_type = Puppet[:digest_algorithm] || 'md5'
+    @checksum_type = Puppet[:digest_algorithm] || Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
     @checksum_type = @checksum_type.intern unless @checksum_type.is_a? Symbol
     @digest = method(@checksum_type)
   end
