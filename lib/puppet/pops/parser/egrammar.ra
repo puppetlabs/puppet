@@ -629,8 +629,26 @@ parameters
 
 # Produces Model::Parameter
 parameter
+  : untyped_parameter
+  | typed_parameter
+
+untyped_parameter
+  : regular_parameter
+  | splat_parameter
+
+regular_parameter
   : VARIABLE EQUALS expression { result = Factory.PARAM(val[0][:value], val[2]) ; loc result, val[0] }
   | VARIABLE                   { result = Factory.PARAM(val[0][:value]); loc result, val[0] }
+
+splat_parameter
+  : TIMES regular_parameter { result = val[1]; val[1].captures_rest() }
+
+typed_parameter
+  : parameter_type untyped_parameter { val[1].type_expr(val[0]) ; result = val[1] }
+
+parameter_type
+  : type { result = val[0] }
+  | type LBRACK expressions RBRACK { result = val[0][*val[2]] ; loc result, val[0], val[3] }
 
 #--RESTRICTED EXPRESSIONS
 #  i.e. where one could have expected an expression, but the set is limited
