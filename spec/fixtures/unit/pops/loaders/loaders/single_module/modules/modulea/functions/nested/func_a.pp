@@ -1,0 +1,1 @@
+function modulea::nested::func_a() { "I am modulea::nested::func_a()" }

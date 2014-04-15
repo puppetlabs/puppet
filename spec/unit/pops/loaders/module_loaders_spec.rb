@@ -9,22 +9,22 @@ describe 'module loaders' do
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
 
   describe 'FileBased module loader' do
-    it 'can load a .pp function in global name space' do
+    it 'loading a .pp function in global name space raises an error' do
       module_dir = dir_containing('testmodule', {
       'functions' => {
         'foo.pp' => 'function foo() { yay }'}})
 
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
-      function = module_loader.load_typed(typed_name(:function, 'foo')).value
-      expect(function.class.name).to eq('foo')
-      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
+      expect do
+        module_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
+      end.to raise_error(Puppet::ParseError, /A Puppet Function must be defined within a module name-space. The name 'foo' is unacceptable/)
+
     end
 
     it 'can load a .pp function in a qualified name space' do
       module_dir = dir_containing('testmodule', {
       'functions' => {
-        'testmodule' => {
-          'foo.pp' => 'function testmodule::foo() { yay }'}}})
+          'foo.pp' => 'function testmodule::foo() { yay }'}})
 
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
       function = module_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
@@ -82,7 +82,7 @@ describe 'module loaders' do
     it 'makes parent loader win over entries in child' do
       module_dir = dir_containing('testmodule', {
       'functions' => {
-        'foo.pp' => 'function foo() { yay }'}})
+        'foo.pp' => 'function testmodule::foo() { yay }'}})
 
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
       module_dir2 = dir_containing('testmodule2', {
@@ -90,8 +90,8 @@ describe 'module loaders' do
         'foo.pp' => 'fail(should not happen)'}})
 
       module_loader2 = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(module_loader, 'testmodule2', module_dir2, 'test2')
-      function = module_loader2.load_typed(typed_name(:function, 'foo')).value
-      expect(function.class.name).to eq('foo')
+      function = module_loader2.load_typed(typed_name(:function, 'testmodule::foo')).value
+      expect(function.class.name).to eq('testmodule::foo')
       expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
     end
 

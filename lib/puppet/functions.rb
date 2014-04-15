@@ -36,6 +36,29 @@ module Puppet::Functions
   # When a call is processed the given type signatures are tested in the order they were defined - the first signature
   # with matching type wins.
   #
+  # Argument Count and Capture Rest
+  # ---
+  # If nothing is specified, the number of arguments given to the function must be the same as the number of parameters
+  # (parameters that perform injection not included). If something else is wanted, the method `arg_count` specifies
+  # the minimum and maximum number of given arguments. Thus, to indicate that parameters are optional, set min to
+  # a value lower than the number of specified parameters, and max to the number of specified parameters.
+  #
+  # To express that the last parameter captures the rest, the method `last_captures_rest` can be called. This is
+  # an indicator to those that obtain information about the function (for the purpose of displaying error messages etc.)
+  # For a Function, there the call is processed the same way irrespective how the `last_captures_rest`, and it is up
+  # to the implementor of the target method to decide who the specified min/max number of arguments are laid out.
+  # This is shown in the following example:
+  #
+  # @example variable number of args to
+  #   dispatch :foo do
+  #     param Numeric, 'up_to_five_numbers'
+  #     arg_count 1, 5
+  #   end
+  #
+  #   def foo(a, b=0, c=0, *d)
+  #     ...
+  #   end
+  #
   # Polymorphic Dispatch
   # ---
   # The dispatcher also supports polymorphic dispatch where the method to call is selected based on the type of the
@@ -79,6 +102,7 @@ module Puppet::Functions
   # Injection of attributes
   # ---
   # Injection of attributes is performed by one of the methods `attr_injected`, and `attr_injected_producer`.
+  # The injected attributes are available via accessor method calls.
   #
   # @example using injected attributes
   #   Puppet::Functions.create_function('test') do
@@ -91,8 +115,9 @@ module Puppet::Functions
   #
   # Injection and Weaving of parameters
   # ---
-  # It is possible to inject and weave parameters into a call. These extra parameters are not passed from the
-  # Puppet logic.
+  # It is possible to inject and weave parameters into a call. These extra parameters are not part of
+  # the parameters passed from the Puppet logic, and they can not be overridden by parameters given as arguments
+  # in the call. They are invisible to the Puppet Language.
   #
   # @example using injected parameters
   #   Puppet::Functions.create_function('test') do
@@ -106,9 +131,53 @@ module Puppet::Functions
   #       a > b ? larger : smaller
   #     end
   #   end
+  #
   # The function in the example above is called like this:
   #
   #     test(10, 20)
+  #
+  # Using injected value as default
+  # ---
+  # Default value assignment is handled by using the regular Ruby mechanism (a value is assigned to the variable).
+  # The dispatch simply indicates that the value is optional. If the default value should be injected, it can be
+  # handled different ways depending on what is desired:
+  #
+  # * by calling the accessor method for an injected Function class attribute. This is suitable if the
+  #   value is constant across all instantiations of the function, and across all calls.
+  # * by injecting a parameter into the call to the left of the parameter, and then assigning that as the default value.
+  # * One of the above forms, but using an injected producer instead of a directly injected value.
+  #
+  # @example method with injected default values
+  #   Puppet::Functions.create_function('test') do
+  #     dispatch :test do
+  #       injected_param String, 'b_default', 'b_default_value_key'
+  #       param Scalar, 'a'
+  #       param Scalar, 'b'
+  #     end
+  #     def test(b_default, a, b = b_default)
+  #       # ...
+  #     end
+  #   end
+  #
+  # Access to Scope
+  # ---
+  # In general, functions should not need access to scope; they should be written to act on their given input
+  # only. If they absolutely must look up variable values, they should do so via the closure scope (the scope where they
+  # are defined) - this is done by calling `closure_scope()`. 
+  #
+  # For Puppet System Functions where access to the calling scope may be essential the implementor of the function may
+  # override the `Function.call` method to pass the scope on to the method(s) implementing the body of the function.
+  #
+  # Calling other Functions
+  # ---
+  # Calling other functions by name is directly supported via `call_funcion(name, *args)`. This allows a function
+  # to call other functions visible from its loader.
+  #
+  # @todo Optimizations
+  #
+  #   Unoptimized implementation. The delegation chain is longer than required, and arguments are passed with splat.
+  #   The chain Function -> class -> Dispatcher -> Dispatch -> Visitor can be shortened for non polymorph dispatching.
+  #   Also, when there is only one signature (single Dispatch), a different Dispatcher could short circuit the search.
   #
   # @param func_name [String, Symbol] a simple or qualified function name
   # @param &block [Proc] the block that defines the methods and dispatch of the Function to create
@@ -121,16 +190,6 @@ module Puppet::Functions
     # references to it.
     #
     the_class = Class.new(Function, &block)
-
-    # TODO: The func_name should be a symbol - else error
-    # Why symbol? They are sticky in memory and the qualified name used in PP is a Fully qualified string
-    # It should probably be either a QualifiedName (counting on it to already be validated? or check again? or
-    # a string
-    # Assume String for now, and that names are properly formed...
-    # Later, must handle name spacing of function, and only use last part as the actual name - better with two
-    # parameters, namespace, and func_name perhaps - or maybe namespace is derived from where it is found, which is
-    # even better
-    #
 
     # Make the anonymous class appear to have the class-name <func_name>
     # Even if this class is not bound to such a symbol in a global ruby scope and
@@ -153,7 +212,8 @@ module Puppet::Functions
     if the_class.dispatcher.empty?
       simple_name = func_name.split(/::/)[-1]
       type, names = default_dispatcher(the_class, simple_name)
-      the_class.dispatcher.add_dispatch(type, simple_name, names, nil, nil)
+      last_captures_rest = (type.size_range[1] == Puppet::Pops::Types::INFINITY)
+      the_class.dispatcher.add_dispatch(type, simple_name, names, nil, nil, nil, last_captures_rest)
     end
 
     # The function class is returned as the result of the create function method
@@ -177,7 +237,7 @@ module Puppet::Functions
       method.parameters.each { |p| result[p[0]] += 1 }
       from = result[:req]
       to = result[:rest] > 0 ? :default : from + result[:opt]
-      names = method.parameters.map {|p| p[1] }
+      names = method.parameters.map {|p| p[1].to_s }
     else
       # Cannot correctly compute the signature in Ruby 1.8.7 because arity for optional values is
       # screwed up (there is no way to get the upper limit), an optional looks the same as a varargs
@@ -191,19 +251,28 @@ module Puppet::Functions
     [from, to, names]
   end
 
+  # Construct a signature consisting of Object type, with min, and max, and given names.
+  # (there is only one type entry). Note that this signature is Object, not Optional[Object].
+  #
   def self.object_signature(from, to, names)
     # Construct the type for the signature
-    # Array[Object], Integer[from, to]]
+    # Tuple[Object, from, to]
     factory = Puppet::Pops::Types::TypeFactory
-    optional_object = factory.object
-    [factory.constrain_size(factory.array_of(optional_object), from, to), names]
+    [factory.callable(factory.object, from, to), names]
   end
 
+  # Function
+  # ===
+  # This class is the base class for all Puppet 4x Function API functions. A specialized class is
+  # created for each puppet function.
+  # Most methods act on the class, except `call`, `closure_scope`, and `loader` which are bound to a
+  # particular instance of the function (it is aware of its runtime context).
+  #
   class Function
-    # The scope where the function is defined
+    # The scope where the function was defined
     attr_reader :closure_scope
 
-    # The loader that loaded this function
+    # The loader that loaded this function.
     # Should be used if function wants to load other things.
     #
     attr_reader :loader
@@ -213,8 +282,39 @@ module Puppet::Functions
       @loader = loader
     end
 
+    # Invokes the function via the dispatching logic that performs type check and weaving.
+    # A specialized function may override this method to do its own dispatching and checking of
+    # the raw arguments. A specialized implementation can rearrange arguments, add or remove
+    # arguments and then delegate to the dispatching logic by calling:
+    #
+    # @example Delegating to the dispatcher
+    #     def call(scope, *args)
+    #       manipulated_args = args + ['easter_egg']
+    #       self.class.dispatcher.dispatch(self, scope, manipulated_args)
+    #     end
+    #
+    # System functions that must have access to the calling scope can use this technique. Functions
+    # in general should not need the calling scope. (The closure scope; what is visible where the function
+    # is defined) is available via the method `closure_scope`).
+    #
     def call(scope, *args)
       self.class.dispatcher.dispatch(self, scope, args)
+    end
+
+    # Allows the implementation of a function to call other functions by name. The callable functions
+    # are those visible to the same loader that loaded this function (the calling function).
+    # 
+    def call_function(function_name, *args)
+      if the_loader = loader
+        func = the_loader.load(:function, function_name)
+        if func
+          return func.call(closure_scope, *args)
+        end
+      end
+      # Raise a generic error to allow upper layers to fill in the details about where in a puppet manifest this
+      # error originates. (Such information is not available here).
+      #
+      raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found"
     end
 
     def self.define_dispatch(&block)
@@ -280,6 +380,11 @@ module Puppet::Functions
       Puppet::Pops::Types::TypeFactory.respond_to?(meth, include_all) || super
     end
 
+    # Produces information about parameters in a way that is compatible with Closure
+    #
+    def self.signatures
+      @dispatcher.signatures
+    end
   end
 
   class DispatcherBuilder
@@ -311,8 +416,12 @@ module Puppet::Functions
       @injections = []
       @min = nil
       @max = nil
+      @last_captures = false
+      @block_type = nil
+      @block_name = nil
       self.instance_eval &block
-      @dispatcher.add_dispatch(self.class.create_tuple(@types, @min, @max), meth_name, @names, @injections, @weaving)
+      callable_t = self.class.create_callable(@types, @block_type, @min, @max)
+      @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @last_captures)
     end
 
     def dispatch_polymorph(meth_name, &block)
@@ -322,15 +431,71 @@ module Puppet::Functions
       @injections = []
       @min = nil
       @max = nil
+      @last_captures = false
+      @block_type = nil
+      @block_name = nil
       self.instance_eval &block
-      @dispatcher.add_polymorph_dispatch(self.class.create_tuple(@types, @min, @max), meth_name, @names, @injections, @weaving)
+      callable_t = self.class.create_callable(@types, @block_type, @min, @max)
+      @dispatcher.add_polymorph_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @last_captures)
     end
 
+    # Defines one parameter with type and name
     def param(type, name)
       @types << type
       @names << name
       # mark what should be picked for this position when dispatching
       @weaving << @names.size()-1
+    end
+
+    # Defines one required block parameter that may appear last. If type or name is missing the
+    # defaults are "any callable", and the name is "block"
+    #
+    def required_block_param(*type_and_name)
+      case type_and_name.size
+      when 0
+        type = all_callables()
+        name = 'block'
+      when 1
+        x = type_and_name[0]
+        if x.is_a?(Puppet::Pops::Types::PCallableType)
+          type = x
+          name = 'block'
+        else
+          unless x.is_a?(String) || x.is_a?(Symbol)
+            raise ArgumentError, "Expected block_param name to be a String, got #{x.class}"
+          end
+          type = all_callables()
+          name = x.to_s()
+        end
+      when 2
+        type, name = type_and_name
+      else
+        raise ArgumentError, "block_param accepts max 2 arguments (type, name), got #{type_and_name.size}."
+      end
+
+      unless type.is_a?(Puppet::Pops::Types::PCallableType)
+        raise ArgumentError, "Expected PCallableType, got #{type.class}"
+      end
+
+      unless name.is_a?(String)
+        raise ArgumentError, "Expected block_param name to be a String, got #{name.class}"
+      end
+
+      unless @block_type.nil?
+        raise ArgumentError, "Attempt to redefine block"
+      end
+      @block_type = type
+      @block_name = name
+    end
+
+    # Defines one optional block parameter that may appear last. If type or name is missing the
+    # defaults are "any callable", and the name is "block". The implementor of the dispatch target
+    # must use block = nil when it is optional (or an error is raised when the call is made).
+    #
+    def optional_block_param(*type_and_name)
+      # same as required, only wrap the result in an optional type
+      required_block_param(*type_and_name)
+      @block_type = optional(@block_type)
     end
 
     # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
@@ -368,10 +533,17 @@ module Puppet::Functions
       end
     end
 
-    # Handles creation of a tuple type from strings, puppet types, or ruby types and allows
-    # the min/max occurs of the given types to be given as one or two integer values at the end.
+    # Specifies that the last argument captures the rest.
     #
-    def self.create_tuple(types, from, to)
+    def last_captures_rest
+      @last_captures = true
+    end
+
+    # Handles creation of a callable type from strings, puppet types, or ruby types and allows
+    # the min/max occurs of the given types to be given as one or two integer values at the end.
+    # The given block_type should be Optional[Callable], Callable, or nil.
+    #
+    def self.create_callable(types, block_type, from, to)
       mapped_types = types.map do |t|
         case t
         when String
@@ -385,13 +557,16 @@ module Puppet::Functions
           raise ArgumentError, "Type signature argument must be a Puppet Type, Class, or a String reference to a type. Got #{t.class}"
         end
       end
-      tuple_t = Puppet::Pops::Types::TypeFactory.tuple(*mapped_types)
       if !(from.nil? && to.nil?)
-        Puppet::Pops::Types::TypeFactory.constrain_size(tuple_t, from,to)
-      else
-        tuple_t
+        mapped_types << from
+        mapped_types << to
       end
+      if block_type
+        mapped_types << block_type
+      end
+      Puppet::Pops::Types::TypeFactory.callable(*mapped_types)
     end
+
   end
 
   # This is a smart dispatcher
@@ -421,7 +596,7 @@ module Puppet::Functions
     def dispatch(instance, calling_scope, args)
       tc = Puppet::Pops::Types::TypeCalculator
       actual = tc.infer_set(args)
-      found = @dispatchers.find { |d| tc.assignable?(d.type, actual) }
+      found = @dispatchers.find { |d| tc.callable?(d.type, actual) }
       if found
         found.invoke(instance, calling_scope, args)
       else
@@ -435,8 +610,9 @@ module Puppet::Functions
     # @param method_name [String] - the name of the method that will be called when type matches given arguments
     # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
     #
-    def add_dispatch(type, method_name, param_names, injections, weaving)
-      @dispatchers << Dispatch.new(type, NonPolymorphicVisitor.new(method_name), param_names, injections, weaving)
+    def add_dispatch(type, method_name, param_names, block_name, injections, weaving, last_captures)
+      visitor = NonPolymorphicVisitor.new(method_name)
+      @dispatchers << Dispatch.new(type, visitor, param_names, block_name, injections, weaving, last_captures)
     end
 
     # Adds a polymorph dispatch for one method name
@@ -445,13 +621,13 @@ module Puppet::Functions
     # @param method_name [String] - the name of the (polymorph) method that will be called when type matches given arguments
     # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
     #
-    def add_polymorph_dispatch(type, method_name, param_names, injections, weaving)
+    def add_polymorph_dispatch(type, method_name, param_names, block_name, injections, weaving, last_captures)
       # Type is a CollectionType, its size-type indicates min/max args
       # This includes the polymorph object which needs to be deducted from the
       # number of additional args
       # NOTE: the type is valuable if there are type constraints also on the first arg
       # (better error message)
-      range = type.size_range # get .from, .to, unbound if nil (from must be bound, to can be nil)
+      range = type.param_types.size_range
       raise ArgumentError, "polymorph dispath on collection type without range" unless range
       raise ArgumentError, "polymorph dispatch on signature without object" if range[0] < 1
       from = range[0] - 1 # The object itself is not included
@@ -461,47 +637,62 @@ module Puppet::Functions
         to += injections.size
       end
       to = (to == Puppet::Pops::Types::INFINITY) ? -1 : to
-      @dispatchers << Dispatch.new(type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names, injections, weaving)
-      # @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names, injections, weaving ]
+      visitor = Puppet::Pops::Visitor.new(self, method_name, from, to)
+      @dispatchers << Dispatch.new(type, visitor, param_names, block_name, injections, weaving, last_captures)
     end
 
     # Produces a CallableType for a single signature, and a Variant[<callables>] otherwise
     #
     def to_type()
-        callables = dispatchers.map do | dispatch |
-          t = Puppet::Pops::Types::PCallableType.new()
-          # TODO: handle that dispatch.type may be an ArrayType instead of a TupleType
-          t2 = dispatch.type
-          t.param_types = Puppet::Pops::Types::TypeCalculator.copy_as_tuple(t2)
-          # TODO: Function does not have a block type yet
-          t
-        end
-      if callables.size > 1
-        # multiple signatures, produce a Variant type of Callable1-n
-        t = Puppet::Pops::Types::PVariantType.new()
-        t.types = callables
-        t
-      else
-        # single signature, produce single Callable
-        callables.pop
-      end
+      # make a copy to make sure it can be contained by someone else (even if it is not contained here, it
+      # should be treated as immutable).
+      #
+      callables = dispatchers.map { | dispatch | dispatch.type.copy }
+
+      # multiple signatures, produce a Variant type of Callable1-n (must copy them)
+      # single signature, produce single Callable
+      callables.size > 1 ?  Puppet::Pops::Types::TypeFactory.variant(*callables) : callables.pop
+    end
+
+    def signatures
+      @dispatchers
     end
 
     # @api private
     #
-    class Dispatch
+    class Dispatch < Puppet::Pops::Evaluator::CallableSignature
+      # @api public
       attr_reader :type
       attr_reader :visitor
+      # TODO: refactor to parameter_names since that makes it API
       attr_reader :param_names
       attr_reader :injections
-      attr_reader :weaving
 
-      def initialize(type, visitor, param_names, injections, weaving)
+      # Describes how arguments are woven if there are injections, a regular argument is a given arg index, an array
+      # an injection description.
+      #
+      attr_reader :weaving
+      # @api public
+      attr_reader :block_name
+
+      def initialize(type, visitor, param_names, block_name, injections, weaving, last_captures)
         @type = type
         @visitor = visitor
         @param_names = param_names || []
+        @block_name = block_name
         @injections = injections || []
         @weaving = weaving
+        @last_captures = last_captures
+      end
+
+      # @api public
+      def parameter_names
+        @param_names
+      end
+
+      # @api public
+      def last_captures_rest?
+        !! @last_captures
       end
 
       def invoke(instance, calling_scope, args)
@@ -539,12 +730,17 @@ module Puppet::Functions
     def diff_string(name, args_type)
       result = [ ]
       if @dispatchers.size < 2
-        params_type  = @dispatchers[ 0 ].type
-        params_names = @dispatchers[ 0 ].param_names
-        result << "expected:\n  #{name}(#{signature_string(params_type, params_names)}) - #{arg_count_string(params_type)}"
+        dispatch = @dispatchers[ 0 ]
+        params_type  = dispatch.type.param_types
+        block_type   = dispatch.type.block_type
+        params_names = dispatch.param_names
+        result << "expected:\n  #{name}(#{signature_string(dispatch)}) - #{arg_count_string(dispatch.type)}"
       else
         result << "expected one of:\n"
-        result << (@dispatchers.map {|d| "  #{name}(#{signature_string(d.type, d.param_names)}) - #{arg_count_string(d.type)}"}.join("\n"))
+        result << (@dispatchers.map do |d|
+          params_type = d.type.param_types
+          "  #{name}(#{signature_string(d)}) - #{arg_count_string(d.type)}"
+        end.join("\n"))
       end
       result << "\nactual:\n  #{name}(#{arg_types_string(args_type)}) - #{arg_count_string(args_type)}"
       result.join('')
@@ -552,42 +748,62 @@ module Puppet::Functions
 
     # Produces a string for the signature(s)
     #
-    def signature_string(args_type, param_names)
-      size_type = args_type.size_type
+    def signature_string(dispatch) # args_type, param_names
+      param_types  = dispatch.type.param_types
+      block_type   = dispatch.type.block_type
+      param_names = dispatch.param_names
+
+      from, to = param_types.size_range
+      if from == 0 && to == 0
+        # No parameters function
+        return ''
+      end
+
+      required_count = from
+      # there may be more names than there are types, and count needs to be subtracted from the count
+      # to make it correct for the last named element
+      adjust = max(0, param_names.size() -1)
+      last_range = [max(0, (from - adjust)), (to - adjust)]
+
       types =
-      case args_type
+      case param_types
       when Puppet::Pops::Types::PTupleType
-        last_range = args_type.repeat_last_range
-        required_count, _ = args_type.size_range
-        args_type.types
+        param_types.types
       when Puppet::Pops::Types::PArrayType
-        from, to = args_type.size_range
-        required_count = from
-        # array has just one element, but there may be multiple names that needs to be subtracted from the count
-        # to make it correct for the last named element
-        adjust = max(0, param_names.size() -1)
-        last_range = [max(0, (from - adjust)), (to - adjust)]
-        [ args_type.element_type ]
+        [ param_types.element_type ]
       end
       tc = Puppet::Pops::Types::TypeCalculator
 
       # join type with names (types are always present, names are optional)
       # separate entries with comma
       #
+      result =
       if param_names.empty?
-        result = types.each_with_index.map {|t, index| tc.string(t) + opt_value_indicator(index, required_count, 0) }.join(', ')
+        types.each_with_index.map {|t, index| tc.string(t) + opt_value_indicator(index, required_count, 0) }
       else
         limit = param_names.size
         result = param_names.each_with_index.map do |name, index|
           [tc.string(types[index] || types[-1]), name].join(' ') + opt_value_indicator(index, required_count, limit)
-        end.join(', ')
-      end
+        end
+      end.join(', ')
 
       # Add {from, to} for the last type
       # This works for both Array and Tuple since it describes the allowed count of the "last" type element
       # for both. It does not show anything when the range is {1,1}.
       #
       result += range_string(last_range)
+
+      # If there is a block, include it with its own optional count {0,1}
+      case dispatch.type.block_type
+      when Puppet::Pops::Types::POptionalType
+        result << ', ' unless result == ''
+        result << "#{tc.string(dispatch.type.block_type.optional_type)} #{dispatch.block_name} {0,1}"
+      when Puppet::Pops::Types::PCallableType
+        result << ', ' unless result == ''
+        result << "#{tc.string(dispatch.type.block_type)} #{dispatch.block_name}"
+      when NilClass
+        # nothing
+      end
       result
     end
 
@@ -602,7 +818,24 @@ module Puppet::Functions
     end
 
     def arg_count_string(args_type)
-      "arg count #{range_string(args_type.size_range, false)}"
+      if args_type.is_a?(Puppet::Pops::Types::PCallableType)
+        size_range = args_type.param_types.size_range # regular parameters
+        adjust_range=
+        case args_type.block_type
+        when Puppet::Pops::Types::POptionalType
+          size_range[1] += 1
+        when Puppet::Pops::Types::PCallableType
+          size_range[0] += 1
+          size_range[1] += 1
+        when NilClass
+          # nothing
+        else
+          raise ArgumentError, "Internal Error, only nil, Callable, and Optional[Callable] supported by Callable block type"
+        end
+      else
+        size_range = args_type.size_range
+      end
+      "arg count #{range_string(size_range, false)}"
     end
 
     def arg_types_string(args_type)
@@ -635,8 +868,7 @@ module Puppet::Functions
     # * to is INFINITY => {from, }
     #
     def range_string(size_range, squelch_one = true)
-      from = size_range[ 0 ]
-      to = size_range[ 1 ]
+      from, to = size_range
       if from == to
         (squelch_one && from == 1) ? '' : "{#{from}}"
       elsif to == Puppet::Pops::Types::INFINITY
