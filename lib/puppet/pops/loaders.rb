@@ -95,7 +95,8 @@ class Puppet::Pops::Loaders
     loader_name = "environment:#{current_environment.name}"
     env_dir = Puppet[:environmentdir]
     if env_dir.nil?
-      loader = Puppet::Pops::Loader::NullLoader.new(puppet_system_loader, loader_name)
+      # Use an environment loader that can be populated externally
+      loader = Puppet::Pops::Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
     else
       envdir_path = File.join(env_dir, current_environment.name.to_s)
       # TODO: Representing Environment as a Module - needs something different (not all types are supported),

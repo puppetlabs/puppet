@@ -53,6 +53,12 @@ class Puppet::Pops::Loader::BaseLoader < Puppet::Pops::Loader::Loader
     @named_values[typed_name] = Puppet::Pops::Loader::Loader::NamedEntry.new(typed_name, value, origin)
   end
 
+  # @api private
+  #
+  def add_entry(type, name, value, origin)
+    set_entry(Puppet::Pops::Loader::Loader::TypedName.new(type, name), value, origin)
+  end
+
   # Promotes an already created entry (typically from another loader) to this loader
   #
   # @api private

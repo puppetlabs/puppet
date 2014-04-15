@@ -51,6 +51,17 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
     created.new(closure_scope, loader)
   end
 
+  # Creates Function class and instantiates it based on a FunctionDefinition model
+  # @return [Array<Puppet::Pops::Loader::Loader::TypedName, Puppet::Pops::Functions.Function>] - array of 
+  #   typed name, and an instantiated function with global scope closure associated with the given loader
+  #
+  def self.create_from_model(function_definition, loader)
+    closure_scope = Puppet.lookup(:global_scope) { {} }
+    created = create_function_class(function_definition, closure_scope)
+    typed_name = Puppet::Pops::Loader::Loader::TypedName.new(:function, function_definition.name)
+    [typed_name, created.new(closure_scope, loader)]
+  end
+
   def self.create_function_class(function_definition, closure_scope)
     method_name = :"#{function_definition.name.split(/::/).slice(-1)}"
     closure = Puppet::Pops::Evaluator::Closure.new(

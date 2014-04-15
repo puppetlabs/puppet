@@ -232,10 +232,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Call via 4x API if it is available, and the function exists
     #
     if loaders = Puppet.lookup(:loaders) {nil}
-      # find the loader that loaded the code, or use the system loader
-      adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
-      loader = adapter.nil? ? loaders.puppet_system_loader : adapter.loader
-      if loader && func = loader.load(:function, name)
+      if loaders && func = loaders.environment_loader.load(:function, name)
         return func.call(scope, *args)
       end
     end
