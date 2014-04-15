@@ -2,11 +2,6 @@
 # This operator is part of evaluation.
 #
 class Puppet::Pops::Evaluator::AccessOperator
-  # Provides access to the Puppet 3.x runtime (scope, etc.)
-  # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
-  #
-  include Puppet::Pops::Evaluator::Runtime3Support
-
   Issues = Puppet::Pops::Issues
   TYPEFACTORY = Puppet::Pops::Types::TypeFactory
 
@@ -14,11 +9,13 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   # Initialize with AccessExpression to enable reporting issues
   # @param access_expression [Puppet::Pops::Model::AccessExpression] the semantic object being evaluated
+  # @param runtime the runtime environment to use
   # @return [void]
   #
-  def initialize(access_expression)
+  def initialize(access_expression, runtime)
     @@access_visitor ||= Puppet::Pops::Visitor.new(self, "access", 2, nil)
     @semantic = access_expression
+    @runtime = runtime
   end
 
   def access (o, scope, *keys)
@@ -28,17 +25,17 @@ class Puppet::Pops::Evaluator::AccessOperator
   protected
 
   def access_Object(o, scope, keys)
-    fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator=>'[]', :left_value => o)
+    @runtime.fail(Issues::OPERATOR_NOT_APPLICABLE, @semantic.left_expr, :operator=>'[]', :left_value => o)
   end
 
   def access_String(o, scope, keys)
     keys.flatten!
     result = case keys.size
     when 0
-      fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
       # Note that Ruby 1.8.7 requires a length of 1 to produce a String
-      k1 = coerce_numeric(keys[0], @semantic.keys, scope)
+      k1 = @runtime.coerce_numeric(keys[0], @semantic.keys, scope)
       bad_access_key_type(o, 0, k1, Integer) unless k1.is_a?(Integer)
       k2 = 1
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
@@ -49,8 +46,8 @@ class Puppet::Pops::Evaluator::AccessOperator
         o[ k1, k2 ]
       end
     when 2
-      k1 = coerce_numeric(keys[0], @semantic.keys, scope)
-      k2 = coerce_numeric(keys[1], @semantic.keys, scope)
+      k1 = @runtime.coerce_numeric(keys[0], @semantic.keys, scope)
+      k2 = @runtime.coerce_numeric(keys[1], @semantic.keys, scope)
       [k1, k2].each_with_index { |k,i| bad_access_key_type(o, i, k, Integer) unless k.is_a?(Integer) }
 
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos (negative is count from end)
@@ -62,7 +59,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       end
       o[ k1, k2 ]
     else
-      fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
     # Specified as: an index outside of range, or empty result == empty string
     (result.nil? || result.empty?) ? '' : result
@@ -74,7 +71,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.flatten!
     unless keys.size == 1
       blamed = keys.size == 0 ? @semantic : @semantic.keys[1]
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :actual => keys.size)
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :actual => keys.size)
     end
     assert_keys(keys, o, 1, 1, String, Regexp)
     Puppet::Pops::Types::TypeFactory.regexp(*keys)
@@ -86,17 +83,17 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.flatten!
     case keys.size
     when 0
-      fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
-      k = coerce_numeric(keys[0], @semantic.keys[0], scope)
+      k = @runtime.coerce_numeric(keys[0], @semantic.keys[0], scope)
       unless k.is_a?(Integer)
         bad_access_key_type(o, 0, k, Integer)
       end
       o[k]
     when 2
       # A slice [from, to] with support for -1 to mean start, or end respectively.
-      k1 = coerce_numeric(keys[0], @semantic.keys[0], scope)
-      k2 = coerce_numeric(keys[1], @semantic.keys[1], scope)
+      k1 = @runtime.coerce_numeric(keys[0], @semantic.keys[0], scope)
+      k2 = @runtime.coerce_numeric(keys[1], @semantic.keys[1], scope)
 
       [k1, k2].each_with_index { |k,i| bad_access_key_type(o, i, k, Integer) unless k.is_a?(Integer) }
 
@@ -113,7 +110,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       result = o[ k1, k2 ]
       result.nil? ? [] : result
     else
-      fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_ARRAY_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
   end
 
@@ -142,7 +139,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
     case result.size
     when 0
-      fail(Puppet::Pops::Issues::BAD_HASH_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_HASH_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     when 1
       result.pop
     else
@@ -200,7 +197,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     when 2
       size_t = collection_size_t(0, keys[0], keys[1])
     else
-      fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic, {:actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic, {:actual => keys.size})
     end
     string_t = Puppet::Pops::Types::TypeFactory.string()
     string_t.size_type = size_t
@@ -218,7 +215,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def assert_keys(keys, o, min, max, *allowed_classes)
     size = keys.size
     unless size.between?(min, max || INFINITY)
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>1, :max => max, :actual => keys.size)
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>1, :max => max, :actual => keys.size)
     end
     keys.each_with_index do |k, i|
       unless allowed_classes.any? {|clazz| k.is_a?(clazz) }
@@ -228,7 +225,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   end
 
   def bad_access_key_type(lhs, key_index, actual, *expected_classes)
-    fail(Puppet::Pops::Issues::BAD_SLICE_KEY_TYPE, @semantic.keys[key_index], {
+    @runtime.fail(Puppet::Pops::Issues::BAD_SLICE_KEY_TYPE, @semantic.keys[key_index], {
       :left_value => lhs,
       :actual => bad_key_type_name(actual),
       :expected_classes => expected_classes
@@ -249,7 +246,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def bad_type_specialization_key_type(type, key_index, actual, *expected_classes)
     label_provider = Puppet::Pops::Model::ModelLabelProvider.new()
     expected = expected_classes.map {|c| label_provider.label(c) }.join(' or ')
-    fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
+    @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[key_index], {
       :type => type,
       :message => "Cannot use #{bad_key_type_name(actual)} where #{expected} is expected"
     })
@@ -265,13 +262,13 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.flatten!
     if keys.size == 1
       unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => keys[0].class})
+        @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => keys[0].class})
       end
       result = Puppet::Pops::Types::POptionalType.new()
       result.optional_type = keys[0]
       result
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Optional-Type', :min => 1, :actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Optional-Type', :min => 1, :actual => keys.size})
     end
   end
 
@@ -279,13 +276,13 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.flatten!
     if keys.size == 1
       unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Type-Type', :actual => keys[0].class})
+        @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Type-Type', :actual => keys[0].class})
       end
       result = Puppet::Pops::Types::PType.new()
       result.type = keys[0]
       result
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Type-Type', :min => 1, :actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {:base_type => 'Type-Type', :min => 1, :actual => keys.size})
     end
   end
 
@@ -299,10 +296,10 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PIntegerType(o, scope, keys)
     keys.flatten!
     unless keys.size.between?(1, 2)
-      fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_ARITY, @semantic, {:actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_ARITY, @semantic, {:actual => keys.size})
     end
     keys.each_with_index do |x, index|
-      fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_TYPE, @semantic.keys[index],
+      @runtime.fail(Puppet::Pops::Issues::BAD_INTEGER_SLICE_TYPE, @semantic.keys[index],
         {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
     end
     ranged_integer = Puppet::Pops::Types::PIntegerType.new()
@@ -315,10 +312,10 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PFloatType(o, scope, keys)
     keys.flatten!
     unless keys.size.between?(1, 2)
-      fail(Puppet::Pops::Issues::BAD_FLOAT_SLICE_ARITY, @semantic, {:actual => keys.size})
+      @runtime.fail(Puppet::Pops::Issues::BAD_FLOAT_SLICE_ARITY, @semantic, {:actual => keys.size})
     end
     keys.each_with_index do |x, index|
-      fail(Puppet::Pops::Issues::BAD_FLOAT_SLICE_TYPE, @semantic.keys[index],
+      @runtime.fail(Puppet::Pops::Issues::BAD_FLOAT_SLICE_TYPE, @semantic.keys[index],
         {:actual => x.class}) unless (x.is_a?(Float) || x.is_a?(Integer) || x == :default)
     end
     ranged_float = Puppet::Pops::Types::PFloatType.new()
@@ -336,7 +333,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.flatten!
     keys[0,2].each_with_index do |k, index|
       unless k.is_a?(Puppet::Pops::Types::PAbstractType)
-        fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
+        @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
       end
     end
     case keys.size
@@ -363,7 +360,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       size_t = collection_size_t(1, keys[2], keys[3])
       result
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, {
         :base_type => 'Hash-Type', :min => 1, :max => 4, :actual => keys.size
       })
     end
@@ -380,7 +377,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     when 2
       size_t = collection_size_t(1, keys[0], keys[1])
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Collection-Type', :min => 1, :max => 2, :actual => keys.size})
     end
     result = Puppet::Pops::Types::PCollectionType.new()
@@ -400,11 +397,11 @@ class Puppet::Pops::Evaluator::AccessOperator
     when 3
       size_t = collection_size_t(1, keys[1], keys[2])
     else
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Array-Type', :min => 1, :max => 3, :actual => keys.size})
     end
     unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
     end
     result = Puppet::Pops::Types::PArrayType.new()
     result.element_type = keys[0]
@@ -418,7 +415,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       keys[0].copy
     else
       keys.each_with_index do |x, index|
-        fail(Puppet::Pops::Issues::BAD_COLLECTION_SLICE_TYPE, @semantic.keys[start_index + index],
+        @runtime.fail(Puppet::Pops::Issues::BAD_COLLECTION_SLICE_TYPE, @semantic.keys[start_index + index],
           {:actual => x.class}) unless (x.is_a?(Integer) || x == :default)
       end
       ranged_integer = Puppet::Pops::Types::PIntegerType.new()
@@ -445,7 +442,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
 
     if keys.size == 0
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
         :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
     end
 
@@ -461,7 +458,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     else
       # blame given left expression if it defined the type, else the first given key expression
       blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
-      fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => type_name.class})
+      @runtime.fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => type_name.class})
     end
 
     # The result is an array if multiple titles are given, or if titles are specified with an array
@@ -477,26 +474,25 @@ class Puppet::Pops::Evaluator::AccessOperator
     # Return an empty array
     #
     if keys.empty? && keys_orig_size > 0
-      optionally_fail(Puppet::Pops::Issues::EMPTY_RESOURCE_SPECIALIZATION, blamed)
+      @runtime.optionally_fail(Puppet::Pops::Issues::EMPTY_RESOURCE_SPECIALIZATION, blamed)
       return result_type_array ? [] : nil
     end
 
     if !o.title.nil?
       # lookup resource and return one or more parameter values
-      resource = find_resource(scope, o.type_name, o.title)
+      resource = @runtime.find_resource(scope, o.type_name, o.title)
       unless resource
-        fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => o.type_name, :title => o.title})
+        @runtime.fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => o.type_name, :title => o.title})
       end
       result = keys.map do |k|
-        unless is_parameter_of_resource?(scope, resource, k)
-          fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
+        unless @runtime.is_parameter_of_resource?(scope, resource, k)
+          @runtime.fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
             {:type_name => o.type_name, :title => o.title, :param_name=>k})
         end
-        get_resource_parameter_value(scope, resource, k)
+        @runtime.get_resource_parameter_value(scope, resource, k)
       end
       return result_type_array ? result : result.pop
     end
-
 
     keys = [:no_title] if keys.size < 1 # if there was only a type_name and it was consumed
     result = keys.each_with_index.map do |t, i|
@@ -510,7 +506,7 @@ class Puppet::Pops::Evaluator::AccessOperator
           t.class.name
         end
         index = keys_orig_size != keys.size ? i+1 : i
-        fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[index], {
+        @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SPECIALIZATION, @semantic.keys[index], {
           :type => o,
           :message => "Cannot use #{type_to_report} where String is expected"
         })
@@ -537,7 +533,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     keys.compact!
 
     if keys_orig_size == 0
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
+      @runtime.fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
         :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
     end
 
@@ -546,22 +542,22 @@ class Puppet::Pops::Evaluator::AccessOperator
     # Return an empty array
     #
     if keys.empty? && keys_orig_size > 0
-      optionally_fail(Puppet::Pops::Issues::EMPTY_RESOURCE_SPECIALIZATION, blamed)
+      @runtime.optionally_fail(Puppet::Pops::Issues::EMPTY_RESOURCE_SPECIALIZATION, blamed)
       return result_type_array ? [] : nil
     end
 
     if ! o.class_name.nil?
       # lookup class resource and return one or more parameter values
-      resource = find_resource(scope, 'class', o.class_name)
+      resource = @runtime.find_resource(scope, 'class', o.class_name)
       unless resource
-        fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => 'Class', :title => o.class_name})
+        @runtime.fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => 'Class', :title => o.class_name})
       end
       result = keys.map do |k|
-        unless is_parameter_of_resource?(scope, resource, k)
-          fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
+        unless @runtime.is_parameter_of_resource?(scope, resource, k)
+          @runtime.fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
             {:type_name => 'Class', :title => o.class_name, :param_name=>k})
         end
-        get_resource_parameter_value(scope, resource, k)
+        @runtime.get_resource_parameter_value(scope, resource, k)
       end
       return result_type_array ? result : result.pop
     end
@@ -577,10 +573,10 @@ class Puppet::Pops::Evaluator::AccessOperator
         c = c.type_name.downcase.sub(/^::/, '')
       end
       unless c.is_a?(String)
-        fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
+        @runtime.fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
       end
       if c !~ Puppet::Pops::Patterns::NAME
-        fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
+        @runtime.fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
       end
       ctype.class_name = c.downcase.sub(/^::/,'')
       ctype

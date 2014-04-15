@@ -1,9 +1,7 @@
-# A module with bindings between the new evaluator and the 3x runtime.
-# The intention is to separate all calls into scope, compiler, resource, etc. in this module
-# to make it easier to later refactor the evaluator for better implementations of the 3x classes.
+# A class with bindings between the new evaluator and the 4x runtime.
 #
 # @api private
-class Puppet::Pops::Evaluator::Runtime3Support
+class Puppet::Pops::Evaluator::Runtime4Support
   # Fails the evaluation of _semantic_ with a given issue.
   #
   # @param issue [Puppet::Pops::Issue] the issue to report
@@ -13,21 +11,6 @@ class Puppet::Pops::Evaluator::Runtime3Support
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
   def fail(issue, semantic, options={}, except=nil)
-    optionally_fail(issue, semantic, options, except)
-    # an error should have been raised since fail always fails
-    raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
-  end
-
-  # Optionally (based on severity) Fails the evaluation of _semantic_ with a given issue
-  # If the given issue is configured to be of severity < :error it is only reported, and the function returns.
-  #
-  # @param issue [Puppet::Pops::Issue] the issue to report
-  # @param semantic [Puppet::Pops::ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
-  # @param options [Hash] hash of optional named data elements for the given issue
-  # @return [!] this method does not return
-  # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
-  #
-  def optionally_fail(issue, semantic, options={}, except=nil)
     if except.nil?
       # Want a stacktrace, and it must be passed as an exception
       begin
@@ -40,97 +23,71 @@ class Puppet::Pops::Evaluator::Runtime3Support
   end
 
   # Binds the given variable name to the given value in the given scope.
-  # The reference object `o` is intended to be used for origin information - the 3x scope implementation
-  # only makes use of location when there is an error. This is now handled by other mechanisms; first a check
-  # is made if a variable exists and an error is raised if attempting to change an immutable value. Errors
-  # in name, numeric variable assignment etc. have also been validated prior to this call. In the event the
-  # scope.setvar still raises an error, the general exception handling for evaluation of the assignment
-  # expression knows about its location. Because of this, there is no need to extract the location for each
-  # setting (extraction is somewhat expensive since 3x requires line instead of offset).
+  # The reference object `o` is intended to be used for origin information.
+  #
+  # @param name [String]
+  # @param value [Object]
+  # @param o [???]
+  # @param scope [Puppet::Pops::Evaluator::Scope]
+  # @raise [Puppet::ParseError]
+  # @todo Change from ParseError to EvaluationError
   #
   def set_variable(name, value, o, scope)
-    # Scope also checks this but requires that location information are passed as options.
-    # Those are expensive to calculate and a test is instead made here to enable failing with better information.
-    # The error is not specific enough to allow catching it - need to check the actual message text.
-    # TODO: Improve the messy implementation in Scope.
-    #
-    if scope.bound?(name)
-      if Puppet::Parser::Scope::RESERVED_VARIABLE_NAMES.include?(name)
-        fail(Puppet::Pops::Issues::ILLEGAL_RESERVED_ASSIGNMENT, o, {:name => name} )
-      else
-        fail(Puppet::Pops::Issues::ILLEGAL_REASSIGNMENT, o, {:name => name} )
-      end
-    end
-    scope.setvar(name, value)
+    scope.bind(name, value)
   end
 
   # Returns the value of the variable (nil is returned if variable has no value, or if variable does not exist)
   #
+  # @param name [String]
+  # @param o [????]
+  # @param scope [Puppet::Pops::Evaluator::Scope]
+  # @return [Object]
+  # @raise [Puppet::ParseError]
+  # @todo Change from ParseError to EvaluationError
+  #
   def get_variable_value(name, o, scope)
-    # Puppet 3x stores all variables as strings (then converts them back to numeric with a regexp... to see if it is a match variable)
-    # Not ideal, scope should support numeric lookup directly instead.
-    # TODO: consider fixing scope
-    catch(:undefined_variable) {
-      return scope.lookupvar(name.to_s)
-    }
-    # It is always ok to reference numeric variables even if they are not assigned. They are always undef
-    # if not set by a match expression.
-    #
-    unless name =~ Puppet::Pops::Patterns::NUMERIC_VAR_NAME
-      fail(Puppet::Pops::Issues::UNKNOWN_VARIABLE, o, {:name => name})
-    end
+    scope.lookup(name)
   end
 
   # Returns true if the variable of the given name is set in the given most nested scope. True is returned even if
   # variable is bound to nil.
   #
+  # @param name [String]
+  #
   def variable_bound?(name, scope)
-    scope.bound?(name.to_s)
   end
 
   # Returns true if the variable is bound to a value or nil, in the scope or it's parent scopes.
   #
   def variable_exists?(name, scope)
-    scope.exist?(name.to_s)
   end
 
   def set_match_data(match_data, o, scope)
-    # See set_variable for rationale for not passing file and line to ephemeral_from.
-    # NOTE: The 3x scope adds one ephemeral(match) to its internal stack per match that succeeds ! It never
-    # clears anything. Thus a context that performs many matches will get very deep (there simply is no way to
-    # clear the match variables without rolling back the ephemeral stack.)
-    # This implementation does not attempt to fix this, it behaves the same bad way.
-    unless match_data.nil?
-      scope.ephemeral_from(match_data)
-    end
   end
 
-  # Creates a local scope with vairalbes set from a hash of variable name to value
+  # Creates a local scope with variables set from a hash of variable name to value
+  #
+  # @param hash [Hash{String => Object}]
+  # @param scope [Puppet::Pops::Evaluator::Scope]
+  # @return [Puppet::Pops::Evaluator::Scope]
   #
   def create_local_scope_from(hash, scope)
-    # two dummy values are needed since the scope tries to give an error message (can not happen in this
-    # case - it is just wrong, the error should be reported by the caller who knows in more detail where it
-    # is in the source.
-    #
-    raise ArgumentError, "Internal error - attempt to create a local scope without a hash" unless hash.is_a?(Hash)
-    scope.ephemeral_from(hash)
   end
 
   # Creates a nested match scope
+  #
+  # @param scope [Puppet::Pops::Evaluator::Scope]
+  # @return [Puppet::Pops::Evaluator::Scope]
   def create_match_scope_from(scope)
-    # Create a transparent match scope (for future matches)
-    scope.new_match_scope(nil)
   end
 
   def get_scope_nesting_level(scope)
-    scope.ephemeral_level
   end
 
+  # Yup, 3x uses this method to reset the level, it also supports passing :all to destroy all
+  # ephemeral/local scopes - which is a sure way to create havoc.
+  #
   def set_scope_nesting_level(scope, level)
-    # Yup, 3x uses this method to reset the level, it also supports passing :all to destroy all 
-    # ephemeral/local scopes - which is a sure way to create havoc.
-    #
-    scope.unset_ephemeral_var(level)
   end
 
   # Adds a relationship between the given `source` and `target` of the given `relationship_type`
@@ -227,27 +184,25 @@ class Puppet::Pops::Evaluator::Runtime3Support
     n
   end
 
+  # Asserts that the given function name resolves to an available function. The function is loaded
+  # as a side effect. Fails if the function does not exist.
+  #
+  def assert_function_available(name, o, scope)
+    #fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
+  end
+
   def call_function(name, args, o, scope)
-    # Call via 4x API if it is available, and the function exists
-    #
-    if loaders = Puppet.lookup(:loaders) {nil}
-      # find the loader that loaded the code, or use the system loader
-      adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
-      loader = adapter.nil? ? loaders.puppet_system_loader : adapter.loader
-      if loader && func = loader.load(:function, name)
-        return func.call(scope, *args)
-      end
-    end
-
-    fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
-
-    # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
-    # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-    # NOTE: Passing an empty string last converts :undef to empty string
+    # This is all temporary until we can get real function calls implemented
     mapped_args = args.map {|a| convert(a, scope, '') }
-    result = scope.send("function_#{name}", mapped_args)
-    # Prevent non r-value functions from leaking their result (they are not written to care about this)
-    Puppet::Parser::Functions.rvalue?(name) ? result : nil
+    function_obj = Object.new
+    function_obj.send(:extend, Puppet::Util::Logging)
+    function_obj.send(:extend, Puppet::Parser::Functions.environment_module(Puppet.lookup(:root_environment)))
+    function_obj.send("function_#{name}", mapped_args)
+  end
+
+  # Returns true if the function produces a value
+  def rvalue_function?(name, o, scope)
+    Puppet::Parser::Functions.rvalue?(name)
   end
 
   # The o is used for source reference
@@ -261,7 +216,7 @@ class Puppet::Pops::Evaluator::Runtime3Support
     )
   end
 
-  def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters, type_calculator)
+  def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
 
     # TODO: Unknown resource causes creation of Resource to fail with ArgumentError, should give
     # a proper Issue. Now the result is "Error while evaluating a Resource Statement" with the message
@@ -297,14 +252,9 @@ class Puppet::Pops::Evaluator::Runtime3Support
         end
         scope.compiler.add_resource(scope, resource)
         scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == 'class'
-
         # Turn the resource into a PType (a reference to a resource type)
         # weed out nil's
-        if resource.nil?
-          nil
-        else
-          type_calculator.infer(resource)
-        end
+        resource_to_ptype(resource)
     end
   end
 
@@ -454,21 +404,14 @@ class Puppet::Pops::Evaluator::Runtime3Support
     # Needs conversion by calling scope to resolve the name and possibly return a different name
     # Resolution can only be called with an array, and returns an array. Here there is only one name
     type, titles = scope.resolve_type_and_titles(o.type_name, [o.title])
-    # Note: a title of nil makes Resource class throw error with information that is wrong
-    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
+    Puppet::Resource.new(type, titles[0])
   end
 
   def convert_PHostClassType(o, scope, undef_value)
     # Needs conversion by calling scope to resolve the name and possibly return a different name
     # Resolution can only be called with an array, and returns an array. Here there is only one name
     type, titles = scope.resolve_type_and_titles('class', [o.class_name])
-    # Note: a title of nil makes Resource class throw error with information that is wrong
-    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
-  end
-
-  def find_closest_positioned(o)
-    return nil if o.nil? || o.is_a?(Puppet::Pops::Model::Program)
-    o.offset.nil? ? find_closest_positioned(o.eContainer) : Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
+    Puppet::Resource.new(type, titles[0])
   end
 
   private
@@ -493,39 +436,25 @@ class Puppet::Pops::Evaluator::Runtime3Support
     [source_pos.locator.file, source_pos.line]
   end
 
+  def find_closest_positioned(o)
+    return nil if o.nil? || o.is_a?(Puppet::Pops::Model::Program)
+    o.offset.nil? ? find_closest_positioned(o.eContainer) : Puppet::Pops::Adapters::SourcePosAdapter.adapt(o)
+  end
+
   # Creates a diagnostic producer
   def diagnostic_producer
     Puppet::Pops::Validation::DiagnosticProducer.new(
       ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
-      SeverityProducer.new(), # All issues are errors
-#      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
+      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
       Puppet::Pops::Model::ModelLabelProvider.new())
-  end
-
-  # Configure the severity of failures
-  class SeverityProducer < Puppet::Pops::Validation::SeverityProducer
-    Issues = Puppet::Pops::Issues
-
-    def initialize
-      super
-      p = self
-      # Issues triggering warning only if --debug is on
-      if Puppet[:debug]
-        p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :warning
-      else
-        p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
-      end
-    end
   end
 
   # An acceptor of diagnostics that immediately raises an exception.
   class ExceptionRaisingAcceptor < Puppet::Pops::Validation::Acceptor
     def accept(diagnostic)
       super
-      Puppet::Pops::IssueReporter.assert_and_report(self, {:message => "Evaluation Error:", :emit_warnings => true })
-      if errors?
-        raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
-      end
+      Puppet::Pops::IssueReporter.assert_and_report(self, {:message => "Evaluation Error:" })
+      raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
     end
   end
 

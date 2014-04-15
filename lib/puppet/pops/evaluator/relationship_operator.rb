@@ -8,11 +8,6 @@
 #
 class Puppet::Pops::Evaluator::RelationshipOperator
 
-  # Provides access to the Puppet 3.x runtime (scope, etc.)
-  # This separation has been made to make it easier to later migrate the evaluator to an improved runtime.
-  #
-  include Puppet::Pops::Evaluator::Runtime3Support
-
   Issues = Puppet::Pops::Issues
 
   class IllegalRelationshipOperandError < RuntimeError
@@ -29,7 +24,9 @@ class Puppet::Pops::Evaluator::RelationshipOperator
     end
   end
 
-  def initialize
+  def initialize(runtime)
+    @runtime = runtime
+
     @type_transformer_visitor = Puppet::Pops::Visitor.new(self, "transform", 1, 1)
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
     @type_parser = Puppet::Pops::Types::TypeParser.new()
@@ -139,7 +136,7 @@ class Puppet::Pops::Evaluator::RelationshipOperator
       source, target = reverse_operator?(relationship_expression) ? real.reverse : real
 
       # Add the relationships to the catalog
-      source.each {|s| target.each {|t| add_relationship(s, t, RELATION_TYPE[relationship_expression.operator], scope) }}
+      source.each {|s| target.each {|t| @runtime.add_relationship(s, t, RELATION_TYPE[relationship_expression.operator], scope) }}
 
       # Produce the transformed source RHS (if this is a chain, this does not need to be done again)
       real.slice(1)
