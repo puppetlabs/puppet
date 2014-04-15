@@ -234,6 +234,8 @@ module Puppet::Pops::Model
   class Parameter < Positioned
     has_attr 'name', String, :lowerBound => 1
     contains_one_uni 'value', Expression
+    contains_one_uni 'type_expr', Expression, :lowerBound => 0
+    has_attr 'captures_rest', Boolean
   end
 
   # Abstract base class for definitions.
