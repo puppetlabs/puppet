@@ -9,6 +9,10 @@ module Puppet::FileBucketFile
 
     desc "Store files in a directory set based on their checksums."
 
+    def initialize
+      Puppet.settings.use(:main)
+    end
+
     def find(request)
       checksum, files_original_path = request_to_checksum_and_path(request)
       contents_file = path_for(request.options[:bucket_path], checksum, 'contents')
@@ -104,8 +108,9 @@ module Puppet::FileBucketFile
       if path == '' # Treat "md5/<checksum>/" like "md5/<checksum>"
         path = nil
       end
-      raise "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != 'md5'
-      raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{32}$/
+      raise ArgumentError, "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != Puppet[:digest_algorithm]
+      expected = method(checksum_type + "_hex_length").call
+      raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{#{expected}}$/
       [checksum, path]
     end
 
