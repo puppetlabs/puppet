@@ -87,7 +87,7 @@ describe Puppet::FileServing::Metadata do
   end
 end
 
-describe Puppet::FileServing::Metadata do
+describe Puppet::FileServing::Metadata, :uses_checksums => true do
   include JSONMatchers
   include PuppetSpec::Files
 
@@ -120,15 +120,13 @@ describe Puppet::FileServing::Metadata do
           metadata.mode.should == 0755
         end
 
-        describe "#checksum" do
-          let(:checksum) { Digest::MD5.hexdigest("some content\n") }
-
+        using_checksums_describe "#checksum" do
           before :each do
-            File.open(path, "wb") {|f| f.print("some content\n")}
+            File.open(path, "wb") {|f| f.print(plaintext)}
           end
 
-          it "should default to a checksum of type MD5 with the file's current checksum" do
-            metadata.checksum.should == "{md5}#{checksum}"
+          it "should default to a checksum of the proper type with the file's current checksum" do
+            metadata.checksum.should == "{#{digest_algorithm}}#{checksum}"
           end
 
           it "should give a mtime checksum when checksum_type is set" do
@@ -222,15 +220,14 @@ describe Puppet::FileServing::Metadata do
     end
 
     describe "when collecting attributes" do
-      describe "when managing links" do
+      using_checksums_describe "when managing links" do
         # 'path' is a link that points to 'target'
         let(:path) { tmpfile('file_serving_metadata_link') }
         let(:target) { tmpfile('file_serving_metadata_target') }
-        let(:checksum) { Digest::MD5.hexdigest("some content\n") }
         let(:fmode) { Puppet::FileSystem.lstat(path).mode & 0777 }
 
         before :each do
-          File.open(target, "wb") {|f| f.print("some content\n")}
+          File.open(target, "wb") {|f| f.print(plaintext)}
           set_mode(0644, target)
 
           Puppet::FileSystem.symlink(target, path)
@@ -246,11 +243,11 @@ describe Puppet::FileServing::Metadata do
       end
     end
 
-    describe Puppet::FileServing::Metadata, " when finding the file to use for setting attributes" do
+    using_checksums_describe Puppet::FileServing::Metadata, " when finding the file to use for setting attributes" do
       let(:path) { tmpfile('file_serving_metadata_find_file') }
 
       before :each do
-        File.open(path, "wb") {|f| f.print("some content\n")}
+        File.open(path, "wb") {|f| f.print(plaintext)}
         set_mode(0755, path)
       end
 
@@ -369,7 +366,8 @@ describe Puppet::FileServing::Metadata do
 end
 
 
-describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppet.features.manages_symlinks? do
+describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppet.features.manages_symlinks?, :uses_checksums => true do
+using_checksums_describe "" do
   describe "when links are managed" do
     before do
       path = "/base/path/my/file"
@@ -378,14 +376,14 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
       stub_file = stub(:readlink => "/some/other/path", :lstat => stat)
       Puppet::FileSystem.expects(:lstat).with(path).at_least_once.returns stat
       Puppet::FileSystem.expects(:readlink).with(path).at_least_once.returns "/some/other/path"
-      @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
-      @file.stubs(:md5_file).returns(@checksum)           #
+      @file.stubs("#{digest_algorithm}_file".intern).returns(checksum) # Remove these when :managed links are no longer checksumed.
 
       if Puppet.features.microsoft_windows?
         win_stat = stub('win_stat', :owner => 'snarf', :group => 'thundercats',
           :ftype => 'link', :mode => 0755)
         Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
       end
+
     end
 
     it "should store the destination of the link in :destination if links are :manage" do
@@ -399,7 +397,7 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
     end
     it "should collect the checksum if links are :manage" do # see pending note above
       @file.collect
-      @file.checksum.should == "{md5}#{@checksum}"
+      @file.checksum.should == "{#{digest_algorithm}}#{checksum}"
     end
   end
 
@@ -417,8 +415,7 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
         Puppet::FileServing::Metadata::WindowsStat.stubs(:new).returns win_stat
       end
 
-      @checksum = Digest::MD5.hexdigest("some content\n")
-      @file.stubs(:md5_file).returns(@checksum)
+      @file.stubs("#{digest_algorithm}_file".intern).returns(checksum)
     end
     it "should not store the destination of the link in :destination if links are :follow" do
       @file.collect
@@ -426,7 +423,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :if => Puppe
     end
     it "should collect the checksum if links are :follow" do
       @file.collect
-      @file.checksum.should == "{md5}#{@checksum}"
+      @file.checksum.should == "{#{digest_algorithm}}#{checksum}"
     end
   end
+end
 end
