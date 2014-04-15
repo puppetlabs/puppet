@@ -27,11 +27,17 @@ class Puppet::FileBucket::File
     :s
   end
 
+  include Puppet::Util::Checksums
+
   def initialize(contents, options = {})
     raise ArgumentError.new("contents must be a String, got a #{contents.class}") unless contents.is_a?(String)
     @contents = contents
 
     @bucket_path = options.delete(:bucket_path)
+    Puppet.settings.use('main')
+    @checksum_type = Puppet[:digest_algorithm] || 'md5'
+    @checksum_type = @checksum_type.intern unless @checksum_type.is_a? Symbol
+    raise ArgumentError.new("invalid checksum type #@checksum_type") unless known_checksum_types.include? @checksum_type
     raise ArgumentError.new("Unknown option(s): #{options.keys.join(', ')}") unless options.empty?
   end
 
@@ -46,7 +52,7 @@ class Puppet::FileBucket::File
   end
 
   def checksum_type
-    'md5'
+    @checksum_type.to_s
   end
 
   def checksum
@@ -54,7 +60,8 @@ class Puppet::FileBucket::File
   end
 
   def checksum_data
-    @checksum_data ||= Digest::MD5.hexdigest(contents)
+    algorithm = method(@checksum_type)
+    @checksum_data ||= algorithm.call(contents)
   end
 
   def to_s
