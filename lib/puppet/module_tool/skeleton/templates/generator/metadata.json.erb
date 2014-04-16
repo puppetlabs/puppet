@@ -1,9 +1,1 @@
-{
-  "name": <%= @hash['name'].to_json %>,
-  "version": <%= @hash['version'].to_json %>,
-  "author": <%= @hash['author'].to_json %>,
-  "summary": <%= @hash['summary'].to_json %>,
-  "license": <%= @hash['license'].to_json %>,
-  "source": <%= @hash['source'].to_json %>,
-<%= @remaining_keys.map { |k| "#{k.to_json}: #{PSON.pretty_generate(@hash[k])}" }.join(",\n").gsub(/^/, '  ') %>
-}
+<%= metadata.to_json %>

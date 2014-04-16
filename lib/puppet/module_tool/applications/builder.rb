@@ -40,7 +40,7 @@ module Puppet::ModuleTool
       def pack
         FileUtils.rm archive_file rescue nil
 
-        tar = Puppet::ModuleTool::Tar.instance(metadata.to_hash['name'])
+        tar = Puppet::ModuleTool::Tar.instance(metadata.dashed_name)
         Dir.chdir(@pkg_path) do
           tar.pack(metadata.release_name, archive_file)
         end
@@ -71,7 +71,7 @@ module Puppet::ModuleTool
         unless File.exist?(metadata_path)
           # Legacy build: Metadata was parsed from Modulefile; write it out
           File.open(metadata_path, 'w') do |f|
-            f.write(PSON.pretty_generate(metadata))
+            f.write(metadata.to_json)
           end
         end
 
