@@ -67,7 +67,9 @@ Puppet::Parser::Functions::newfunction(
   pblock = args[1]
 
   raise ArgumentError, ("filter(): wrong argument type (#{pblock.class}; must be a parameterized block.") unless pblock.respond_to?(:puppet_lambda)
-  serving_size = pblock.parameter_count
+
+  # if captures rest, use a serving size of 2
+  serving_size = pblock.last_captures_rest? ? 2 : pblock.parameter_count
   if serving_size == 0
     raise ArgumentError, "filter(): block must define at least one parameter; value. Block has 0."
   end
