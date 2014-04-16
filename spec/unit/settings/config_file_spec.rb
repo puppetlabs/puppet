@@ -5,12 +5,6 @@ require 'puppet/settings/config_file'
 describe Puppet::Settings::ConfigFile do
   NOTHING = {}
 
-  def section_containing(data)
-    meta = data[:meta] || {}
-    values = data.reject { |key, _| key == :meta }
-    values.merge({ :_meta => Hash[values.keys.collect { |key| [key, meta[key] || {}] }] })
-  end
-
   def the_parse_of(*lines)
     config.parse_file(filename, lines.join("\n"))
   end
