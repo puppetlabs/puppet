@@ -71,4 +71,27 @@ describe Puppet::Context do
       expect(context.lookup("a")).to eq(1)
     end
   end
+
+  context 'support lazy entries' do
+    it 'by evaluating a bound proc' do
+      result = nil
+      context.override(:a => lambda {|| 'yay'}) do
+        result = context.lookup(:a)
+      end
+      expect(result).to eq('yay')
+    end
+
+    it 'by memoizing the bound value' do
+      result1 = nil
+      result2 = nil
+      original = 'yay'
+      context.override(:a => lambda {|| tmp = original; original = 'no'; tmp}) do
+        result1 = context.lookup(:a)
+        result2 = context.lookup(:a)
+      end
+      expect(result1).to eq('yay')
+      expect(original).to eq('no')
+      expect(result2).to eq('yay')
+    end
+  end
 end
