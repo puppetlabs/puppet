@@ -93,21 +93,31 @@ describe Puppet::Util::Logging do
   end
 
   describe "when sending a deprecation warning" do
-    it "should log the message with warn" do
+    it "logs the message with warn" do
       @logger.expects(:warning).with do |msg|
         msg =~ /^foo\n/
       end
       @logger.deprecation_warning 'foo'
     end
 
-    it "should only log each offending line once" do
+    it "only logs each offending line once" do
       @logger.expects(:warning).with do |msg|
         msg =~ /^foo\n/
       end .once
       5.times { @logger.deprecation_warning 'foo' }
     end
 
-    it "should only log the first 100 messages" do
+    it "ensures that deprecations from same origin are logged if their keys differ" do
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo/)).times(5)
+      5.times { |i| @logger.deprecation_warning('deprecated foo', :key => "foo#{i}") }
+    end
+
+    it "does not duplicate deprecations for a given key" do
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo/)).once
+      5.times { @logger.deprecation_warning('deprecated foo', :key => 'foo-msg') }
+    end
+
+    it "only logs the first 100 messages" do
       (1..100).each { |i|
         @logger.expects(:warning).with do |msg|
           msg =~ /^#{i}\n/
