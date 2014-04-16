@@ -38,9 +38,25 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       parser.parse_string(source, __FILE__)
     end
 
-    it 'is not allowed in function anywhere but last' do
+    it 'is not allowed in function except last' do
       source = <<-CODE
         function foo(*$a, $b) { $a + $b[0] }
+      CODE
+      expect do
+        parser.parse_string(source, __FILE__)
+      end.to raise_error(Puppet::ParseError, /Parameter \$a is not last, and has 'captures rest'/)
+    end
+
+    it 'is allowed in lambda when placed last' do
+      source = <<-CODE
+        foo() |$a, *$b| { $a + $b[0] }
+      CODE
+      parser.parse_string(source, __FILE__)
+    end
+
+    it 'is not allowed in lambda except last' do
+      source = <<-CODE
+        foo() |*$a, $b| { $a + $b[0] }
       CODE
       expect do
         parser.parse_string(source, __FILE__)
