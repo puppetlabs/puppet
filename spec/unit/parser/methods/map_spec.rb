@@ -100,6 +100,18 @@ describe 'the map method' do
       catalog.resource(:file, "/file_c")['ensure'].should == 'present'
     end
 
+    it 'map on a hash using captures-last parameter' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+      $a = {'a'=>present,'b'=>absent,'c'=>present}
+      $a.map |*$kv|{ file { "/file_${kv[0]}": ensure => $kv[1] }
+        }
+      MANIFEST
+
+      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
+      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+    end
+
     it 'each on a hash selecting value' do
       catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'a'=>1,'b'=>2,'c'=>3}
@@ -111,7 +123,7 @@ describe 'the map method' do
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
 
-    it 'each on a hash selecting value - using two bloc parameters' do
+    it 'each on a hash selecting value - using two block parameters' do
       catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'a'=>1,'b'=>2,'c'=>3}
       $a.map |$k,$v|{ file { "/file_$v": ensure => present } }
