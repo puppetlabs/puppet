@@ -49,7 +49,7 @@ class Puppet::Pops::Loader::DependencyLoader < Puppet::Pops::Loader::BaseLoader
   end
 
   def to_s()
-    "(DependencyLoader '#{@name}' [" + @dependency_loaders.map {|loader| loader.to_s }.join(' ,') + "])"
+    "(DependencyLoader '#{@loader_name}' [" + @dependency_loaders.map {|loader| loader.to_s }.join(' ,') + "])"
   end
 
   private

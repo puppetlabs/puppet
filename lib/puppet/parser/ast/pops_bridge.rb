@@ -181,7 +181,8 @@ class Puppet::Parser::AST::PopsBridge
         #        A private environment loader could be used for logic outside of modules, then only that logic
         #        would see the function.
         #
-        loaders.environment_loader()
+        # Use the private loader, this function may see the environment's dependencies (currently, all modules)
+        loaders.private_environment_loader()
       else
         # TODO : Later check if function is private, and then add it to
         #        private_loader_for_module
