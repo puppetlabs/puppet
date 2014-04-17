@@ -181,6 +181,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'1' < 1.1"      => true,
       "1.0 == 1 "      => true,
       "1.0 < 2  "      => true,
+      "1.0 < 'a'"      => true,
       "'1.0' < 1.1"    => true,
       "'1.0' < 'a'"    => true,
       "'1.0' < '' "    => true,
