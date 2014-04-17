@@ -40,6 +40,11 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
       raise ArgumentError, "The code loaded from #{source_ref} contains additional logic - can only contain the function #{typed_name.name}"
     end
 
+    # Adapt the function definition with loader - this is used from logic contained in it body to find the
+    # loader to use when making calls to the new function API. Such logic have a hard time finding the closure (where
+    # the loader is known - hence this mechanism
+    Puppet::Pops::Adapters::LoaderAdapter.adapt(the_function_definition).loader = loader
+
     # TODO: Cheating wrt. scope - assuming it is found in the context
     closure_scope = Puppet.lookup(:global_scope) { {} }
 
