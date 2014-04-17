@@ -35,7 +35,7 @@ class Puppet::Pops::Loader::Loader
   # @api public
   #
   def load(type, name)
-    if result = load_typed(TypedName.new(type, name))
+    if result = load_typed(TypedName.new(type, name.to_s))
       result.value
     end
   end
@@ -139,7 +139,7 @@ class Puppet::Pops::Loader::Loader
     def initialize(type, name)
       @type = type
       # relativize the name (get rid of leading ::), and make the split string available
-      @name_parts = name.split(/::/)
+      @name_parts = name.to_s.split(/::/)
       @name_parts.shift if name_parts[0].empty?
       @name = name_parts.join('::')
       @qualified = name_parts.size > 1
