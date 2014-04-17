@@ -7,7 +7,6 @@ module Puppet::ModuleTool
       def self.unpack(filename, target)
         app = self.new(filename, :target_dir => target)
         app.unpack
-        app.root_dir
         app.move_into(target)
       end
 
@@ -71,16 +70,15 @@ module Puppet::ModuleTool
         dir.rmtree if dir.exist?
         FileUtils.mv(root_dir, dir)
       ensure
-        tmpdir.rmtree
+        FileUtils.rmtree(tmpdir)
       end
 
       # Obtain a suitable temporary path for unpacking tarballs
       #
       # @api private
-      # @return [Pathname] path to temporary unpacking location
+      # @return [String] path to temporary unpacking location
       def tmpdir
         @dir ||= Dir.mktmpdir('tmp-unpacker', Puppet::Forge::Cache.base_path)
-        Pathname.new(@dir)
       end
     end
   end

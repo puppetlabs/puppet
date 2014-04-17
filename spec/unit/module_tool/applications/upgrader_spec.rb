@@ -56,7 +56,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
         before { preinstall('pmtacceptance-stdlib', '1.0.0') }
 
         context 'without options' do
-          it 'properly upgrades the module' do
+          it 'properly upgrades the module to the greatest version' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('4.1.0')
           end
@@ -68,7 +68,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
           end
 
           context 'not matching the installed version' do
-            it 'properly upgrades the module within that version range' do
+            it 'properly upgrades the module to the greatest version within that range' do
               subject.should include :result => :success
               graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('3.2.0')
             end
@@ -78,7 +78,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
             context 'with more recent version' do
               before { preinstall('pmtacceptance-stdlib', '3.0.0')}
 
-              it 'properly upgrades the module within that version range' do
+              it 'properly upgrades the module to the greatest version within that range' do
                 subject.should include :result => :success
                 graph_should_include 'pmtacceptance-stdlib', v('3.0.0') => v('3.2.0')
               end
@@ -98,7 +98,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
                   super.merge(:force => true)
                 end
 
-                it 'performs the upgrade' do
+                it 'overwrites the installed module with the greatest version matching that range' do
                   subject.should include :result => :success
                   graph_should_include 'pmtacceptance-stdlib', v('3.2.0') => v('3.2.0')
                 end
@@ -109,6 +109,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
       end
 
       context 'that is depended upon' do
+        # pmtacceptance-keystone depends on pmtacceptance-mysql  >=0.6.1 <1.0.0
         before { preinstall('pmtacceptance-keystone', '2.1.0') }
         before { preinstall('pmtacceptance-mysql', '0.9.0') }
 
@@ -117,7 +118,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
         context 'and out of date' do
           before { preinstall('pmtacceptance-mysql', '0.8.0') }
 
-          it 'properly upgrades the module within that version range' do
+          it 'properly upgrades to the greatest version matching the dependency' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-mysql', v('0.8.0') => v('0.9.0')
           end
@@ -145,7 +146,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
               super.merge(:force => true)
             end
 
-            it 'properly upgrades the module within that version range' do
+            it 'overwrites the installed module with the specified version' do
               subject.should include :result => :success
               graph_should_include 'pmtacceptance-mysql', v('0.9.0') => v('2.1.0')
             end
@@ -175,7 +176,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
           before { preinstall('pmtacceptance-apache', '0.0.3') }
           let(:module) { 'pmtacceptance-apache' }
 
-          it 'upgrades the module and installs the relevant dependencies' do
+          it 'upgrades the module and installs the missing dependencies' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-apache', v('0.0.3') => v('0.1.1')
             graph_should_include 'pmtacceptance-stdlib', nil => v('4.1.0'), :action => :install
@@ -183,11 +184,13 @@ describe Puppet::ModuleTool::Applications::Upgrader do
         end
 
         context 'with older major versions' do
+          # pmtacceptance-apache 0.0.4 has no dependency on pmtacceptance-stdlib
+          # the next available version (0.1.1) and all subsequent versions depend on pmtacceptance-stdlib >= 2.2.1
           before { preinstall('pmtacceptance-apache', '0.0.3') }
           before { preinstall('pmtacceptance-stdlib', '1.0.0') }
           let(:module) { 'pmtacceptance-apache' }
 
-          it 'limits the upgrade to versions that get along' do
+          it 'refuses to upgrade the installed dependency to a new major version, but upgrades the module to the greatest compatible version' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-apache', v('0.0.3') => v('0.0.4')
           end
@@ -197,7 +200,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
               super.merge(:ignore_dependencies => true)
             end
 
-            it 'properly upgrades the module' do
+            it 'upgrades the module to the greatest available version' do
               subject.should include :result => :success
               graph_should_include 'pmtacceptance-apache', v('0.0.3') => v('0.10.0')
             end
@@ -209,7 +212,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
           before { preinstall('pmtacceptance-stdlib', '2.0.0') }
           let(:module) { 'pmtacceptance-apache' }
 
-          it 'upgrades the module and upgrades the relevant dependencies' do
+          it 'upgrades the module and its dependencies to their greatest compatible versions' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-apache', v('0.0.3') => v('0.10.0')
             graph_should_include 'pmtacceptance-stdlib', v('2.0.0') => v('2.6.0')
@@ -221,7 +224,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
           before { preinstall('pmtacceptance-stdlib', '2.4.0') }
           let(:module) { 'pmtacceptance-apache' }
 
-          it 'upgrades the module only' do
+          it 'upgrades the module to the greatest available version' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-apache', v('0.0.3') => v('0.10.0')
             graph_should_include 'pmtacceptance-stdlib', nil
@@ -233,7 +236,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
           before { preinstall('pmtacceptance-stdlib', '2.6.0') }
           let(:module) { 'pmtacceptance-apache' }
 
-          it 'upgrades the module only' do
+          it 'upgrades the module to the greatest available version' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-apache', v('0.0.3') => v('0.10.0')
             graph_should_include 'pmtacceptance-stdlib', nil
@@ -241,13 +244,19 @@ describe Puppet::ModuleTool::Applications::Upgrader do
         end
 
         context 'with shared dependencies' do
+          # bacula 0.0.3 depends on stdlib >= 2.2.0 and pmtacceptance/mysql >= 1.0.0
+          # bacula 0.0.2 depends on stdlib >= 2.2.0 and pmtacceptance/mysql >= 0.0.1
+          # bacula 0.0.1 depends on stdlib >= 2.2.0
+
+          # keystone 2.1.0 depends on pmtacceptance/stdlib >= 2.5.0 and pmtacceptance/mysql >=0.6.1 <1.0.0
+
           before { preinstall('pmtacceptance-bacula', '0.0.1') }
           before { preinstall('pmtacceptance-mysql', '0.9.0') }
           before { preinstall('pmtacceptance-keystone', '2.1.0') }
 
           let(:module) { 'pmtacceptance-bacula' }
 
-          it 'upgrades the module to an acceptable compromise' do
+          it 'upgrades the module to the greatest version compatible with all other installed modules' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-bacula', v('0.0.1') => v('0.0.2')
           end
@@ -257,7 +266,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
               super.merge(:force => true)
             end
 
-            it 'properly upgrades the module' do
+            it 'upgrades the module to the greatest version available' do
               subject.should include :result => :success
               graph_should_include 'pmtacceptance-bacula', v('0.0.1') => v('0.0.3')
             end
@@ -269,18 +278,18 @@ describe Puppet::ModuleTool::Applications::Upgrader do
           before { preinstall('pmtacceptance-stdlib', '1.0.0', :into => secondary_dir) }
           let(:module) { 'pmtacceptance-apache' }
 
-          context 'without dependency updates' do
-            it 'upgrades the module only' do
+          context 'with older major versions' do
+            it 'upgrades the module to the greatest version compatible with the installed modules' do
               subject.should include :result => :success
               graph_should_include 'pmtacceptance-apache', v('0.0.3') => v('0.0.4')
               graph_should_include 'pmtacceptance-stdlib', nil
             end
           end
 
-          context 'with dependency updates' do
+          context 'with satisfying major versions' do
             before { preinstall('pmtacceptance-stdlib', '2.0.0', :into => secondary_dir) }
 
-            it 'upgrades the module and dependencies in-place' do
+            it 'upgrades the module and its dependencies to their greatest compatible versions, in-place' do
               subject.should include :result => :success
               graph_should_include 'pmtacceptance-apache', v('0.0.3') => v('0.10.0')
               graph_should_include 'pmtacceptance-stdlib', v('2.0.0') => v('2.6.0'), :path => secondary_dir

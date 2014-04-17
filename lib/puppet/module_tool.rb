@@ -97,11 +97,11 @@ module Puppet
           version_string = "#{previous_version} -> #{version_string}"
         end
 
-        mod[:text] = "#{mod[:release].name} (#{colorize(:cyan, version_string)})"
+        mod[:text] = "#{mod[:name]} (#{colorize(:cyan, version_string)})"
         mod[:text] += " [#{mod[:path]}]" unless mod[:path].to_s == dir.to_s
 
         deps = (mod[:dependencies] || [])
-        deps.sort! { |a, b| a[:release].name <=> b[:release].name }
+        deps.sort! { |a, b| a[:name] <=> b[:name] }
         build_tree(deps, dir)
       end
     end
@@ -114,6 +114,7 @@ module Puppet
     # modifying the options parameter.  This same hash is referenced both
     # when_invoked and when_rendering.  For this reason, we are not returning
     # a duplicate.
+    # @todo Validate the above note...
     #
     # An :environment_instance and a :target_dir are added/updated in the
     # options parameter.
@@ -132,6 +133,15 @@ module Puppet
       options[:target_dir] = face_environment.full_modulepath.first
     end
 
+    # Given a hash of options, we should discover or create a
+    # {Puppet::Node::Environment} instance that reflects the provided options.
+    #
+    # Generally speaking, the `:modulepath` parameter should supercede all
+    # others, the `:environment` parameter should follow after that, and we
+    # should default to Puppet's current environment.
+    #
+    # @param options [{Symbol => Object}] the options to derive environment from
+    # @return void
     def self.environment_from_options(options)
       if options[:modulepath]
         path = options[:modulepath].split(File::PATH_SEPARATOR)

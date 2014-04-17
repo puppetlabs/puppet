@@ -31,13 +31,20 @@ module Puppet::ModuleTool
         @local_tarball = Puppet::FileSystem.exist?(name)
 
         if @local_tarball
-          Semantic::Dependency.add_source(local_tarball_source)
           release = local_tarball_source.release
           @name = release.name
           options[:version] = release.version.to_s
-        end
+          Semantic::Dependency.add_source(local_tarball_source)
 
-        unless @local_tarball && @ignore_dependencies
+          # If we're operating on a local tarball and ignoring dependencies, we
+          # don't need to search any additional sources.  This will cut down on
+          # unnecessary network traffic.
+          unless @ignore_dependencies
+            Semantic::Dependency.add_source(installed_modules_source)
+            Semantic::Dependency.add_source(module_repository)
+          end
+
+        else
           Semantic::Dependency.add_source(installed_modules_source) unless forced?
           Semantic::Dependency.add_source(module_repository)
         end

@@ -198,12 +198,13 @@ describe Puppet::ModuleTool::Applications::Installer do
     end
 
     context 'with a specified' do
+
       context 'version' do
         def options
           super.merge(:version => '3.0.0')
         end
 
-        it 'installs the appropriate release' do
+        it 'installs the specified release (or a prerelease thereof)' do
           subject.should include :result => :success
           graph_should_include 'pmtacceptance-stdlib', nil => v('3.0.0')
         end
@@ -214,7 +215,7 @@ describe Puppet::ModuleTool::Applications::Installer do
           super.merge(:version => '3.x')
         end
 
-        it 'installs the appropriate release' do
+        it 'installs the greatest available version matching that range' do
           subject.should include :result => :success
           graph_should_include 'pmtacceptance-stdlib', nil => v('3.2.0')
         end
@@ -225,7 +226,7 @@ describe Puppet::ModuleTool::Applications::Installer do
       before { preinstall('pmtacceptance-keystone', '2.1.0') }
       let(:module)  { 'pmtacceptance-mysql' }
 
-      it 'installs an appropriate release' do
+      it 'installs the greatest available version meeting the dependency constraints' do
         subject.should include :result => :success
         graph_should_include 'pmtacceptance-mysql', nil => v('0.9.0')
       end
@@ -235,7 +236,7 @@ describe Puppet::ModuleTool::Applications::Installer do
           super.merge(:version => '0.8.0')
         end
 
-        it 'installs a matching release' do
+        it 'installs the greatest available version satisfying both constraints' do
           subject.should include :result => :success
           graph_should_include 'pmtacceptance-mysql', nil => v('0.8.0')
         end
@@ -246,7 +247,7 @@ describe Puppet::ModuleTool::Applications::Installer do
           super.merge(:version => '> 1.0.0')
         end
 
-        it 'fails to install' do
+        it 'fails to install, since there is no version that can satisfy both constraints' do
           subject.should include :result => :failure
         end
 
@@ -255,7 +256,7 @@ describe Puppet::ModuleTool::Applications::Installer do
             super.merge(:ignore_dependencies => true)
           end
 
-          it 'fails to install' do
+          it 'fails to install, since ignore_dependencies should still respect dependencies from installed modules' do
             subject.should include :result => :failure
           end
         end
@@ -265,7 +266,7 @@ describe Puppet::ModuleTool::Applications::Installer do
             super.merge(:force => true)
           end
 
-          it 'installs an appropriate version' do
+          it 'installs the greatest available version, ignoring dependencies' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-mysql', nil => v('2.1.0')
           end
@@ -277,7 +278,7 @@ describe Puppet::ModuleTool::Applications::Installer do
       before { preinstall('pmtacceptance-stdlib', '1.0.0') }
 
       context 'but matching the requested version' do
-        it 'does nothing' do
+        it 'does nothing, since the installed version satisfies' do
           subject.should include :result => :noop
         end
 
@@ -286,7 +287,7 @@ describe Puppet::ModuleTool::Applications::Installer do
             super.merge(:force => true)
           end
 
-          it 'does reinstalls the module' do
+          it 'does reinstall the module' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('4.1.0')
           end
@@ -298,7 +299,7 @@ describe Puppet::ModuleTool::Applications::Installer do
             mark_changed(release.mod.path)
           end
 
-          it 'does nothing' do
+          it 'does nothing, since local changes do not affect that' do
             subject.should include :result => :noop
           end
 
@@ -307,7 +308,7 @@ describe Puppet::ModuleTool::Applications::Installer do
               super.merge(:force => true)
             end
 
-            it 'does reinstalls the module' do
+            it 'does reinstall the module, since --force ignores local changes' do
               subject.should include :result => :success
               graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('4.1.0')
             end
@@ -320,7 +321,7 @@ describe Puppet::ModuleTool::Applications::Installer do
           super.merge(:version => '2.x')
         end
 
-        it 'fails if the module is not already installed' do
+        it 'fails to install the module, since it is already installed' do
           subject.should include :result => :failure
           subject[:error].should include :oneline => "'pmtacceptance-stdlib' (v2.x) requested; 'pmtacceptance-stdlib' (v1.0.0) already installed"
         end
@@ -330,7 +331,7 @@ describe Puppet::ModuleTool::Applications::Installer do
             super.merge(:force => true)
           end
 
-          it 'does reinstalls the module' do
+          it 'installs the greatest version matching the new version range' do
             subject.should include :result => :success
             graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('2.6.0')
           end
@@ -342,7 +343,7 @@ describe Puppet::ModuleTool::Applications::Installer do
       let(:module) { 'pmtacceptance-stdlib' }
       before { preinstall('puppetlabs-stdlib', '4.1.0') }
 
-      it 'fails to install' do
+      it 'fails to install, since two modules with the same name cannot be installed simultaneously' do
         subject.should include :result => :failure
       end
 
@@ -351,7 +352,7 @@ describe Puppet::ModuleTool::Applications::Installer do
           super.merge(:force => true)
         end
 
-        it 'installs an appropriate version' do
+        it 'overwrites the existing module with the greatest version of the requested module' do
           subject.should include :result => :success
           graph_should_include 'pmtacceptance-stdlib', nil => v('4.1.0')
         end

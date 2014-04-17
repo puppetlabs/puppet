@@ -86,7 +86,7 @@ describe Puppet::Forge do
   end
 
   let(:search_results) do
-    PSON.parse(http_response)['results'].map do |hash|
+    JSON.parse(http_response)['results'].map do |hash|
       hash.merge(
         "author" => "puppetlabs",
         "name" => "bacula",

@@ -1,4 +1,6 @@
 require 'spec_helper'
+require 'json'
+
 require 'puppet/module_tool/applications'
 require 'puppet_spec/modules'
 
@@ -19,7 +21,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
       FileUtils.mkdir(File.join(dest, 'extractedmodule'))
       File.open(File.join(dest, 'extractedmodule', 'metadata.json'), 'w+') do |file|
-        file.puts PSON.generate('name' => module_name, 'version' => '1.0.0')
+        file.puts JSON.generate('name' => module_name, 'version' => '1.0.0')
       end
       true
     end

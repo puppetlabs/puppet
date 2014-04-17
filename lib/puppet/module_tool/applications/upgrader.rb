@@ -46,6 +46,20 @@ module Puppet::ModuleTool
           end
 
           mod = installed_modules[name]
+
+          # `priority` is an attribute of a `Semantic::Dependency::Source`,
+          # which is delegated through `ModuleRelease` instances for the sake of
+          # comparison (sorting). By default, the `InstalledModules` source has
+          # a priority of 10 (making it the most preferable source, so that
+          # already installed versions of modules are selected in preference to
+          # modules from e.g. the Forge). Since we are specifically looking to
+          # upgrade this module, we don't want the installed version of this
+          # module to be chosen in preference to those with higher versions.
+          #
+          # This implementation is suboptimal, and since we can expect this sort
+          # of behavior to be reasonably common in Semantic, we should probably
+          # see about implementing a `ModuleRelease#override_priority` method
+          # (or something similar).
           def mod.priority
             0
           end
