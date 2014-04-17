@@ -1,5 +1,6 @@
 require 'net/http'
 require 'semver'
+require 'json'
 require 'puppet/util/colors'
 
 module Puppet::ModuleTool
@@ -26,7 +27,7 @@ module Puppet::ModuleTool
         when Net::HTTPOK, Net::HTTPCreated
           Puppet.notice success
         else
-          errors = PSON.parse(response.body)['error'] rescue "HTTP #{response.code}, #{response.body}"
+          errors = JSON.parse(response.body)['error'] rescue "HTTP #{response.code}, #{response.body}"
           Puppet.warning "#{failure} (#{errors})"
         end
       end
@@ -51,8 +52,8 @@ module Puppet::ModuleTool
           if File.file?(extra_metadata_path)
             File.open(extra_metadata_path) do |f|
               begin
-                @metadata.extra_metadata = PSON.load(f)
-              rescue PSON::ParserError
+                @metadata.extra_metadata = JSON.load(f)
+              rescue JSON::ParserError
                 raise ArgumentError, "Could not parse JSON #{extra_metadata_path}", $!.backtrace
               end
             end

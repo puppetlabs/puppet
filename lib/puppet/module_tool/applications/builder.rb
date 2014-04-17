@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'json'
 
 module Puppet::ModuleTool
   module Applications

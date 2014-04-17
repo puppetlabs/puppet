@@ -1,3 +1,4 @@
+require 'json'
 require 'puppet/error'
 require 'puppet/forge'
 
@@ -82,11 +83,11 @@ Could not connect to #{@uri}
       @response = "#{response.code} #{response.message.strip}"
 
       begin
-        body = PSON.parse(response.body)
+        body = JSON.parse(response.body)
         if body['message']
           @message ||= body['message'].strip
         end
-      rescue PSON::ParserError
+      rescue JSON::ParserError
       end
 
       message = "Could not execute operation for '#{@input}'. Detail: "
