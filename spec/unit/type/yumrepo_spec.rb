@@ -5,6 +5,9 @@ shared_examples_for "a yumrepo parameter that can be absent" do |param|
   it "can be set as :absent" do
     described_class.new(:name => 'puppetlabs', param => :absent)
   end
+  it "can be set as \"absent\"" do
+    described_class.new(:name => 'puppetlabs', param => 'absent')
+  end
 end
 
 shared_examples_for "a yumrepo parameter that expects a boolean parameter" do |param|
