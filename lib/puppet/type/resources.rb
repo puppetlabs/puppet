@@ -49,7 +49,7 @@ Puppet::Type.newtype(:resources) do
       when /^\d+/
         Integer(value)
       when :true, true
-        500
+        @resource.system_users_max_uid
       when :false, false
         false
       when Integer; value
@@ -60,7 +60,7 @@ Puppet::Type.newtype(:resources) do
 
     defaultto {
       if @resource[:name] == "user"
-        500
+        @resource.system_users_max_uid
       else
         nil
       end
@@ -159,5 +159,14 @@ Puppet::Type.newtype(:resources) do
 
   def system_users
     %w{root nobody bin noaccess daemon sys}
+  end
+
+  def system_users_max_uid
+    case Facter.value('operatingsystem')
+    when 'Debian', 'OpenBSD'
+      999
+    else
+      500
+    end
   end
 end
