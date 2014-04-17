@@ -392,7 +392,7 @@ class Puppet::Settings
     end
 
     if FULLY_DEPRECATED_SETTINGS.include?(str)
-      Puppet.deprecation_warning("Setting #{str} is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
+      Puppet.deprecation_warning("Setting #{str} is deprecated. See http://links.puppetlabs.com/env-settings-deprecations", "setting-#{str}")
     end
 
     @value_sets[:cli].set(str, value)
@@ -1063,11 +1063,11 @@ Generated on #{Time.now}.
 
     sections.each do |section|
       DEPRECATED_ENVIRONMENT_SETTINGS.each do |s|
-        Puppet.deprecation_warning("Setting #{s} is deprecated in puppet.conf. See http://links.puppetlabs.com/env-settings-deprecations") if !section.setting(s).nil?
+        Puppet.deprecation_warning("Setting #{s} is deprecated in puppet.conf. See http://links.puppetlabs.com/env-settings-deprecations", "puppet-conf-setting-#{s}") if !section.setting(s).nil?
       end
 
       FULLY_DEPRECATED_SETTINGS.each do |s|
-        Puppet.deprecation_warning("Setting #{s} is deprecated. See http://links.puppetlabs.com/env-settings-deprecations") if !section.setting(s).nil?
+        Puppet.deprecation_warning("Setting #{s} is deprecated. See http://links.puppetlabs.com/env-settings-deprecations", "setting-#{s}") if !section.setting(s).nil?
       end
     end
   end

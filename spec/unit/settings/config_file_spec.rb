@@ -5,12 +5,6 @@ require 'puppet/settings/config_file'
 describe Puppet::Settings::ConfigFile do
   NOTHING = {}
 
-  def section_containing(data)
-    meta = data[:meta] || {}
-    values = data.reject { |key, _| key == :meta }
-    values.merge({ :_meta => Hash[values.keys.collect { |key| [key, meta[key] || {}] }] })
-  end
-
   def the_parse_of(*lines)
     config.parse_file(filename, lines.join("\n"))
   end
@@ -128,6 +122,35 @@ badline
     expect { the_parse_of("[main]\n[global_defaults]") }.
       to raise_error Puppet::Error,
         "Illegal section 'global_defaults' in config file #{filename} at line 2"
+  end
+
+  it "issues a single deprecation warning when any section other than main, master, agent or user is parsed" do
+    text = "[legacy]
+    one = 'e'
+    two = 'f'
+    [also_deprecated]
+    one = 'g'
+    "
+
+    config.parse_file(filename, text)
+
+    expect(@logs.map(&:message).grep(/Sections other than/)).to have_exactly(1).item
+  end
+
+  it "does not issue a deprecation warning for main, master, agent or user sections" do
+    text = "[main]
+    one = 'a'
+    [master]
+    one = 'b'
+    [agent]
+    one = 'c'
+    [user]
+    one = 'd'
+    "
+
+    Puppet.expects(:deprecation_warning).never
+
+    config.parse_file(filename, text)
   end
 
   it "transforms values with the given function" do

@@ -1006,7 +1006,7 @@ describe Puppet::Settings do
       context "in puppet.conf" do
 
         def assert_puppet_conf_deprecation(setting, matches)
-          Puppet.expects(:deprecation_warning).with(regexp_matches(matches))
+          Puppet.expects(:deprecation_warning).with(regexp_matches(matches), anything)
 
           val = "/you/can/set/this/but/will/get/warning"
           text = "[main]
@@ -1038,7 +1038,7 @@ describe Puppet::Settings do
 
       context "on the command line" do
         def assert_command_line_deprecation(setting, message)
-          Puppet.expects(:deprecation_warning).with(message)
+          Puppet.expects(:deprecation_warning).with(message, anything)
 
           args = ["--#{setting}", "/some/value"]
           Puppet.settings.send(:parse_global_options, args)
