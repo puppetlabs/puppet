@@ -221,9 +221,6 @@ class Puppet::Pops::Validation::Checker4_0
   def check_FunctionDefinition(o)
     # super class check
     check_NamedDefinition(o)
-    if o.name !~ /.+::/
-      acceptor.accept(Issues::NON_NAMESPACED_FUNCTION, o, {:name=>o.name})
-    end
   end
 
   def check_IfExpression(o)

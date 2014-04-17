@@ -205,7 +205,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       #
       # "given" is always an optional entry. If a parameter was provided then
       # the entry will be in the array, otherwise the m array will be a
-      # single element.a = []
+      # single element.
       given_argument = m[1]
       argument_name = m[0].name
       default_expression = m[0].value
