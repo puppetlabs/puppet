@@ -213,11 +213,11 @@ module Puppet
     end
 
     private
+
     def scheme
       (uri and uri.scheme)
     end
 
-    private
     def found?
       ! (metadata.nil? or metadata.ftype.nil?)
     end
