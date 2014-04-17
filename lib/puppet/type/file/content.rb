@@ -206,7 +206,9 @@ module Puppet
     end
 
     def get_from_source(source_or_content, &block)
-      request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path.sub(/^\//,''), nil, :environment => resource.catalog.environment)
+      source = source_or_content.uri
+
+      request = Puppet::Indirector::Request.new(:file_content, :find, source.to_s, nil, :environment => resource.catalog.environment)
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)

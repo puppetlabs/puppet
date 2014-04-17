@@ -301,7 +301,7 @@ describe content do
       it "should fail if a file bucket cannot be retrieved" do
         @content.should = "{md5}foo"
         @content.resource.expects(:bucket).returns nil
-        lambda { @content.write(@fh) }.should raise_error(Puppet::Error)
+        expect { @content.write(@fh) }.to raise_error(Puppet::Error)
       end
 
       it "should fail if the file bucket cannot find any content" do
@@ -309,7 +309,7 @@ describe content do
         bucket = stub 'bucket'
         @content.resource.expects(:bucket).returns bucket
         bucket.expects(:getfile).with("foo").raises "foobar"
-        lambda { @content.write(@fh) }.should raise_error(Puppet::Error)
+        expect { @content.write(@fh) }.to raise_error(Puppet::Error)
       end
 
       it "should write the returned content to the file" do
@@ -349,6 +349,50 @@ describe content do
       end
     end
 
+    describe "from an explicit fileserver" do
+      before(:each) do
+        @sourcename = "puppet://somehostname/test/foo"
+
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :catalog => @catalog
+        @response = stub_everything 'response', :code => "200"
+        @source_content = "source file content\n"*10000
+        @response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
+
+        @conn = mock('connection')
+        @conn.stubs(:request_get).yields @response
+
+
+        Puppet::Network::HttpPool.expects(:http_instance).with('somehostname',any_parameters).returns( @conn).at_least_once
+
+        @content = @resource.newattr(:content)
+        @source = @resource.newattr(:source)
+        @source.stubs(:metadata).returns stub_everything('metadata', :source => @sourcename, :ftype => 'file')
+      end
+
+      it "should write the contents to the file" do
+        @resource.write(@source)
+
+        Puppet::FileSystem.binread(@filename).should == @source_content
+      end
+
+      it "should not write anything if source is not found" do
+        @response.stubs(:code).returns("404")
+        expect { @resource.write(@source) }.to raise_error(Net::HTTPError, /404/)
+        File.read(@filename).should == "initial file content"
+      end
+
+      it "should raise an HTTP error in case of server error" do
+        @response.stubs(:code).returns("500")
+        expect { @content.write(@fh) }.to raise_error(Net::HTTPError, /500/)
+      end
+
+      it "should return the checksum computed" do
+        File.open(@filename, 'w') do |file|
+          @content.write(file).should == "{md5}#{Digest::MD5.hexdigest(@source_content)}"
+        end
+      end
+    end
+
     describe "from remote source" do
       before(:each) do
         @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :catalog => @catalog
@@ -374,13 +418,13 @@ describe content do
 
       it "should not write anything if source is not found" do
         @response.stubs(:code).returns("404")
-        lambda {@resource.write(@source)}.should raise_error(Net::HTTPError) { |e| e.message =~ /404/ }
+        expect {@resource.write(@source)}.to raise_error(Net::HTTPError, /404/)
         File.read(@filename).should == "initial file content"
       end
 
       it "should raise an HTTP error in case of server error" do
         @response.stubs(:code).returns("500")
-        lambda { @content.write(@fh) }.should raise_error { |e| e.message.include? @source_content }
+        expect { @content.write(@fh) }.to raise_error(Net::HTTPError, /500/)
       end
 
       it "should return the checksum computed" do
