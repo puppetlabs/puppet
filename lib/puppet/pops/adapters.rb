@@ -83,6 +83,13 @@ module Puppet::Pops::Adapters
     def extract_text
       locator.string.slice(offset, length)
     end
+
+    # Produces an URI with path?line=n&pos=n. If origin is unknown the URI is string:?line=n&pos=n
+    def to_uri
+      f = locator.file
+      f = 'string:' if f.nil? || f.empty?
+      URI("#{f}?line=#{line.to_s}&pos=#{pos.to_s}")
+    end
   end
 
   # A LoaderAdapter adapts an object with a {Puppet::Pops::Loader}. This is used to make further loading from the

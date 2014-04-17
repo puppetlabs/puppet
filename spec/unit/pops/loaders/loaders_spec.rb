@@ -23,9 +23,12 @@ describe 'loaders' do
   it 'creates an environment loader' do
     loaders = Puppet::Pops::Loaders.new()
     # When this test is running, there is no environments dir configured, and a NullLoader is therefore used a.t.m
-    expect(loaders.environment_loader().class).to be(Puppet::Pops::Loader::NullLoader)
+    expect(loaders.public_environment_loader().class).to be(Puppet::Pops::Loader::SimpleEnvironmentLoader)
     # The default name of the enironment is '*root*', and the loader should identify itself that way
-    expect(loaders.environment_loader().to_s).to eql("(NullLoader 'environment:*root*')")
+    expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment:*root*')")
+
+    expect(loaders.private_environment_loader().class).to be(Puppet::Pops::Loader::DependencyLoader)
+    expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment' [])")
   end
 
   context 'when delegating 3x to 4x' do

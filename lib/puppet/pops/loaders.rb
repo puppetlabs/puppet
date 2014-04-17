@@ -3,7 +3,8 @@ class Puppet::Pops::Loaders
 
   attr_reader :static_loader
   attr_reader :puppet_system_loader
-  attr_reader :environment_loader
+  attr_reader :public_environment_loader
+  attr_reader :private_environment_loader
 
   def initialize()
     # The static loader can only be changed after a reboot
@@ -20,7 +21,7 @@ class Puppet::Pops::Loaders
     #    concept of environment the same way as when running as a master (except when doing apply).
     #    The creation mechanisms should probably differ between the two.
     #
-    @environment_loader = create_environment_loader()
+    @private_environment_loader = create_environment_loader()
 
     # 3. module loaders are set up from the create_environment_loader, they register themselves
   end
@@ -95,7 +96,8 @@ class Puppet::Pops::Loaders
     loader_name = "environment:#{current_environment.name}"
     env_dir = Puppet[:environmentdir]
     if env_dir.nil?
-      loader = Puppet::Pops::Loader::NullLoader.new(puppet_system_loader, loader_name)
+      # Use an environment loader that can be populated externally
+      loader = Puppet::Pops::Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
     else
       envdir_path = File.join(env_dir, current_environment.name.to_s)
       # TODO: Representing Environment as a Module - needs something different (not all types are supported),
@@ -106,6 +108,14 @@ class Puppet::Pops::Loaders
     end
     # An environment has a module path even if it has a null loader
     configure_loaders_for_modules(loader, current_environment)
+    # modules should see this loader
+    @public_environment_loader = loader
+
+    # Code in the environment gets to see all modules (since there is no metadata for the environment)
+    # but since this is not given to the module loaders, they can not load global code (since they can not
+    # have prior knowledge about this
+    loader = Puppet::Pops::Loader::DependencyLoader.new(loader, "environment", @module_resolver.all_module_loaders())
+
     loader
   end
 
@@ -141,7 +151,7 @@ class Puppet::Pops::Loaders
       @state = :initial
       @puppet_module = puppet_module
       @resolutions = []
-      @loader = nil
+      @public_loader = nil
       @private_loader = nil
     end
 
@@ -184,7 +194,7 @@ class Puppet::Pops::Loaders
     end
 
     def all_module_loaders
-      @all_module_loaders ||= @index.map {|md| md.loader }
+      @all_module_loaders ||= @index.values.map {|md| md.public_loader }
     end
 
     def resolve(module_data)

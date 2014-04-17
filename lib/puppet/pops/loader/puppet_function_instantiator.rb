@@ -40,6 +40,11 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
       raise ArgumentError, "The code loaded from #{source_ref} contains additional logic - can only contain the function #{typed_name.name}"
     end
 
+    # Adapt the function definition with loader - this is used from logic contained in it body to find the
+    # loader to use when making calls to the new function API. Such logic have a hard time finding the closure (where
+    # the loader is known - hence this mechanism
+    Puppet::Pops::Adapters::LoaderAdapter.adapt(the_function_definition).loader = loader
+
     # TODO: Cheating wrt. scope - assuming it is found in the context
     closure_scope = Puppet.lookup(:global_scope) { {} }
 
@@ -49,6 +54,17 @@ class Puppet::Pops::Loader::PuppetFunctionInstantiator
     # It should be bound to global scope
 
     created.new(closure_scope, loader)
+  end
+
+  # Creates Function class and instantiates it based on a FunctionDefinition model
+  # @return [Array<Puppet::Pops::Loader::Loader::TypedName, Puppet::Pops::Functions.Function>] - array of 
+  #   typed name, and an instantiated function with global scope closure associated with the given loader
+  #
+  def self.create_from_model(function_definition, loader)
+    closure_scope = Puppet.lookup(:global_scope) { {} }
+    created = create_function_class(function_definition, closure_scope)
+    typed_name = Puppet::Pops::Loader::Loader::TypedName.new(:function, function_definition.name)
+    [typed_name, created.new(closure_scope, loader)]
   end
 
   def self.create_function_class(function_definition, closure_scope)

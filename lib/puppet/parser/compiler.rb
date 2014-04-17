@@ -37,6 +37,11 @@ class Puppet::Parser::Compiler
   #
   attr_accessor :injector
 
+  # Access to the configured loaders for 4x
+  # @return [Puppet::Pops::Loader::Loaders] the configured loaders
+  # @api private
+  attr_reader :loaders
+
   # The injector that provides lookup services during the creation of the {#injector}.
   # @return [Puppet::Pops::Binder::Injector, nil] The injector that provides lookup services during injector creation
   #   for this compiler/environment
@@ -98,46 +103,48 @@ class Puppet::Parser::Compiler
   # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
   # This is the main entry into our catalog.
   def compile
-    Puppet.override({ :current_environment => environment }, "For compiling #{node.name}") do
+    Puppet.override( @context_overrides , "For compiling #{node.name}") do
       # Set the client's parameters into the top scope.
       Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
 
       Puppet::Util::Profiler.profile("Compile: Created settings scope") { create_settings_scope }
 
       if is_binder_active?
-        Puppet::Util::Profiler.profile("Compile: Created injector") { create_injector }
+        # create injector, if not already created - this is for 3x that does not trigger
+        # lazy loading of injector via context
+        Puppet::Util::Profiler.profile("Compile: Created injector") { injector }
       end
 
-      Puppet.override(context_overrides4x) do
+      Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
 
-        Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
+      Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
 
-        Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
+      Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
 
-        Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
+      Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
 
-        Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
+      Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
 
-        Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
+      fail_on_unevaluated
 
-        fail_on_unevaluated
-
-        @catalog
-      end
+      @catalog
     end
   end
 
   # Constructs the overrides for the context
-  def context_overrides4x()
+  def context_overrides()
     if Puppet[:parser] == 'future'
       require 'puppet/loaders'
       {
-        :global_scope => {},                      # 4x placeholder for new global scope
-        :loaders => Puppet::Pops::Loaders.new(),  # 4x loaders
-        :injector => injector()                   # 4x API - via context instead of via compiler
+        :current_environment => environment,
+        :global_scope => @topscope,             # 4x placeholder for new global scope
+        :loaders  => lambda {|| loaders() },    # 4x loaders
+        :injector => lambda {|| injector() }    # 4x API - via context instead of via compiler
       }
     else
-      {}
+      {
+        :current_environment => environment,
+      }
     end
   end
 
@@ -247,6 +254,10 @@ class Puppet::Parser::Compiler
   def injector
     create_injector if @injector.nil?
     @injector
+  end
+
+  def loaders
+    @loaders ||= Puppet::Pops::Loaders.new()
   end
 
   def boot_injector
@@ -489,12 +500,27 @@ class Puppet::Parser::Compiler
 
     # For maintaining the relationship between scopes and their resources.
     @catalog = Puppet::Resource::Catalog.new(@node.name)
-    @catalog.version = known_resource_types.version
+
+    # MOVED HERE - SCOPE IS NEEDED (MOVE-SCOPE)
+    # Create the initial scope, it is needed early
+    @topscope = Puppet::Parser::Scope.new(self)
+
+    # Need to compute overrides here, and remember them, because we are about to
+    # enter the magic zone of known_resource_types and intial import.
+    # Expensive entries in the context are bound lazily.
+    @context_overrides = context_overrides()
+
+    # This construct ensures that initial import (triggered by instantiating
+    # the structure 'known_resource_types') has a configured context
+    # It cannot survive the initvars method, and is later reinstated
+    # as part of compiling...
+    #
+    Puppet.override( @context_overrides , "For initializing compiler") do
+      # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
+      @catalog.version = known_resource_types.version
+    end
 
     @catalog.environment = @node.environment.to_s
-
-    # Create our initial scope and a resource that will evaluate main.
-    @topscope = Puppet::Parser::Scope.new(self)
 
     @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))
 

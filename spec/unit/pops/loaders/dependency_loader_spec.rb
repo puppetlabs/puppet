@@ -18,7 +18,7 @@ describe 'dependency loader' do
       dep_loader = Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
       expect do
         dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
-      end.to raise_error(Puppet::ParseError, /A Puppet Function must be defined within a module name-space. The name 'foo' is unacceptable/)
+      end.to raise_error(ArgumentError, /produced function with the wrong name, expected testmodule::foo, actual foo/)
     end
 
     it 'can load something in a qualified name space' do

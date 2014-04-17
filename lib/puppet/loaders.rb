@@ -14,6 +14,7 @@ module Puppet
       require 'puppet/pops/loader/ruby_function_instantiator'
       require 'puppet/pops/loader/ruby_legacy_function_instantiator'
       require 'puppet/pops/loader/loader_paths'
+      require 'puppet/pops/loader/simple_environment_loader'
     end
   end
 

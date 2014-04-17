@@ -34,7 +34,7 @@ class Puppet::Pops::Loader::NullLoader < Puppet::Pops::Loader::Loader
   end
 
   # Cannot store anything
-  def set_entry(typed_name, value)
+  def set_entry(typed_name, value, origin = nil)
     nil
   end
 
