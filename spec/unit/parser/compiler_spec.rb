@@ -646,7 +646,7 @@ describe Puppet::Parser::Compiler do
       @node.classes = klass
       klass = Puppet::Resource::Type.new(:hostclass, 'foo', :arguments => {})
       @compiler.topscope.known_resource_types.add klass
-      lambda { @compiler.compile }.should raise_error(Puppet::ParseError, "Invalid parameter 3")
+      lambda { @compiler.compile }.should raise_error(Puppet::ParseError, "Invalid parameter 3 on Class[Foo]")
     end
 
     it "should ensure class is in catalog without params" do
