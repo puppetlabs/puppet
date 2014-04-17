@@ -55,7 +55,7 @@ module Puppet::Util::Logging
 
   class DeprecationWarning < Exception; end
 
-  # Log a warning indicating that the code path is deprecated.  Note that this
+  # Logs a warning indicating that the code path is deprecated.  Note that this
   # method keeps track of the offending lines of code that triggered the
   # deprecation warning, and will only log a warning once per offending line of
   # code.  It will also stop logging deprecation warnings altogether after 100
@@ -67,11 +67,10 @@ module Puppet::Util::Logging
   def deprecation_warning(message, key = nil)
     $deprecation_warnings ||= {}
     if $deprecation_warnings.length < 100 then
-      offender = get_deprecation_offender()
-      key ||= offender
+      key ||= (offender = get_deprecation_offender)
       if (! $deprecation_warnings.has_key?(key)) then
         $deprecation_warnings[key] = message
-        warning("#{message}\n   (at #{offender.join('; ')})")
+        warning("#{message}\n   (at #{(offender || get_deprecation_offender).join('; ')})")
       end
     end
   end
