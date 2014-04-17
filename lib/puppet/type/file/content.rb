@@ -207,9 +207,7 @@ module Puppet
 
     def get_from_source(source_or_content, &block)
       source = source_or_content.uri
-      if source.nil?
-          source = source_or_content.full_path.sub(/^\//,'')
-      end
+
       request = Puppet::Indirector::Request.new(:file_content, :find, source.to_s, nil, :environment => resource.catalog.environment)
 
       request.do_request(:fileserver) do |req|
