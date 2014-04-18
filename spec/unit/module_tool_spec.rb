@@ -156,7 +156,7 @@ TREE
   describe '.set_option_defaults' do
     let(:options) { {} }
     let(:modulepath) { ['/env/module/path', '/global/module/path'] }
-    let(:environment_name) { 'current_environment' }
+    let(:environment_name) { :current_environment }
     let(:environment) { Puppet::Node::Environment.create(environment_name, modulepath) }
 
     subject do

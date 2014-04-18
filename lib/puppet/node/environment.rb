@@ -97,9 +97,9 @@ class Puppet::Node::Environment
   #   objects, so this will not be invoked with the normal Ruby initialization
   #   semantics.
   #
-  # @param name [#to_sym] The environment name
+  # @param name [Symbol] The environment name
   def initialize(name, modulepath, manifest, config_version)
-    @name = name.to_sym
+    @name = name
     @modulepath = modulepath
     @manifest = manifest
     @config_version = config_version
