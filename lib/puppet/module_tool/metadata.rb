@@ -69,8 +69,10 @@ module Puppet::ModuleTool
       return if name =~ /\A[a-z0-9]+[-\/][a-z][a-z0-9_]*\Z/i
 
       namespace, modname = name.split(/[-\/]/, 2)
+      modname = :namespace_missing if namespace == ''
+
       err = case modname
-      when nil
+      when nil, '', :namespace_missing
         "the field must be a namespaced module name"
       when /[^a-z0-9_]/i
         "the module name contains non-alphanumeric (or underscore) characters"

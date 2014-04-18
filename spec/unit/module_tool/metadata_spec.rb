@@ -53,6 +53,22 @@ describe Puppet::ModuleTool::Metadata do
         end
       end
 
+      context "(missing namespace)" do
+        let(:data) { { 'name' => '/mymodule' } }
+
+        it "raises an exception" do
+          expect { subject }.to raise_error(ArgumentError, "Invalid 'name' field in metadata.json: the field must be a namespaced module name")
+        end
+      end
+
+      context "(missing module name)" do
+        let(:data) { { 'name' => 'namespace/' } }
+
+        it "raises an exception" do
+          expect { subject }.to raise_error(ArgumentError, "Invalid 'name' field in metadata.json: the field must be a namespaced module name")
+        end
+      end
+
       context "(invalid namespace)" do
         let(:data) { { 'name' => "dolla'bill$-mymodule" } }
 
