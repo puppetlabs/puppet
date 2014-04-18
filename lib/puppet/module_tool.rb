@@ -141,7 +141,7 @@ module Puppet
     # should default to Puppet's current environment.
     #
     # @param options [{Symbol => Object}] the options to derive environment from
-    # @return void
+    # @return [Puppet::Node::Environment] the environment described by the options
     def self.environment_from_options(options)
       if options[:modulepath]
         path = options[:modulepath].split(File::PATH_SEPARATOR)
