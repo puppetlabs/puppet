@@ -3,7 +3,6 @@
 class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSignature
   # @api public
   attr_reader :type
-  attr_reader :visitor
   # TODO: refactor to parameter_names since that makes it API
   attr_reader :param_names
   attr_reader :injections
@@ -15,9 +14,9 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
   # @api public
   attr_reader :block_name
 
-  def initialize(type, visitor, param_names, block_name, injections, weaving, last_captures)
+  def initialize(type, method_name, param_names, block_name, injections, weaving, last_captures)
     @type = type
-    @visitor = visitor
+    @method_name = method_name
     @param_names = param_names || []
     @block_name = block_name
     @injections = injections || []
@@ -36,7 +35,7 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
   end
 
   def invoke(instance, calling_scope, args)
-    @visitor.visit_this(instance, *weave(calling_scope, args))
+    instance.send(@method_name, *weave(calling_scope, args))
   end
 
   def weave(scope, args)

@@ -41,34 +41,7 @@ class Puppet::Pops::Functions::Dispatcher
   # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
   #
   def add_dispatch(type, method_name, param_names, block_name, injections, weaving, last_captures)
-    visitor = NonPolymorphicVisitor.new(method_name)
-    @dispatchers << Puppet::Pops::Functions::Dispatch.new(type, visitor, param_names, block_name, injections, weaving, last_captures)
-  end
-
-  # Adds a polymorph dispatch for one method name
-  #
-  # @param type [Puppet::Pops::Types::PArrayType, Puppet::Pops::Types::PTupleType] - type describing signature
-  # @param method_name [String] - the name of the (polymorph) method that will be called when type matches given arguments
-  # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
-  #
-  def add_polymorph_dispatch(type, method_name, param_names, block_name, injections, weaving, last_captures)
-    # Type is a CollectionType, its size-type indicates min/max args
-    # This includes the polymorph object which needs to be deducted from the
-    # number of additional args
-    # NOTE: the type is valuable if there are type constraints also on the first arg
-    # (better error message)
-    range = type.param_types.size_range
-    raise ArgumentError, "polymorph dispath on collection type without range" unless range
-    raise ArgumentError, "polymorph dispatch on signature without object" if range[0] < 1
-    from = range[0] - 1 # The object itself is not included
-    to = range[1] -1 # object not included here either (it may be infinity, but does not matter)
-    if !injections.empty?
-      from += injections.size
-      to += injections.size
-    end
-    to = (to == Puppet::Pops::Types::INFINITY) ? -1 : to
-    visitor = Puppet::Pops::Visitor.new(self, method_name, from, to)
-    @dispatchers << Puppet::Pops::Functions::Dispatch.new(type, visitor, param_names, block_name, injections, weaving, last_captures)
+    @dispatchers << Puppet::Pops::Functions::Dispatch.new(type, method_name, param_names, block_name, injections, weaving, last_captures)
   end
 
   # Produces a CallableType for a single signature, and a Variant[<callables>] otherwise
@@ -242,18 +215,6 @@ class Puppet::Pops::Functions::Dispatcher
       '?'
     else
       "{#{from},#{to}}"
-    end
-  end
-
-  # Simple non Polymorphic Visitor
-  class NonPolymorphicVisitor
-    attr_reader :name
-    def initialize(name)
-      @name = name
-    end
-
-    def visit_this(instance, *args)
-      instance.send(name, *args)
     end
   end
 end

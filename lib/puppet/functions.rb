@@ -36,6 +36,10 @@ module Puppet::Functions
   # When a call is processed the given type signatures are tested in the order they were defined - the first signature
   # with matching type wins.
   #
+  # Type arguments may be Puppet Type References in String form, Ruby classes (for basic types), or Puppet Type instances
+  # as created by the Puppet::Pops::Types::TypeFactory. To make type creation convenient, the logic that builds a dispatcher
+  # redirects any calls to the type factory.
+  #
   # Argument Count and Capture Rest
   # ---
   # If nothing is specified, the number of arguments given to the function must be the same as the number of parameters
@@ -58,40 +62,6 @@ module Puppet::Functions
   #   def foo(a, b=0, c=0, *d)
   #     ...
   #   end
-  #
-  # Polymorphic Dispatch
-  # ---
-  # The dispatcher also supports polymorphic dispatch where the method to call is selected based on the type of the
-  # first argument. It is possible to mix regular and polymorphic dispatching, the first with a matching signature wins
-  # in all cases. (Typically one or the other dispatch type is selected for a given function).
-  #
-  # Polymorphic dispatch is based on a method prefix, followed by "_ClassName" where "ClassName" is the simple name
-  # of the class of the first argument.
-  #
-  # @example using polymorphic dispatch
-  #   Puppet::Functions.create_function('label') do
-  #     dispatch_polymorph do
-  #       param Object, 'label'
-  #     end
-  #
-  #     def label_Object(o)
-  #       "A Ruby object of class #{o.class}"
-  #     end
-  #
-  #     def label_String(o)
-  #       "A String with value '#{o}'"
-  #     end
-  #   end
-  #
-  # In this example, if the argument is a String, a special label is produced and for all others a generic label is
-  # produced. It is now easy to add `label_` methods for other classes as needed without changing the dispatch.
-  #
-  # The type specification of the signature that follows the name of the method are given to the
-  # `Puppet::Pops::Types::TypeFactory` to create a PTupleType.
-  #
-  # Arguments may be Puppet Type References in String form, Ruby classes (for basic types), or Puppet Type instances
-  # as created by the Puppet::Pops::Types::TypeFactory. To make type creation convenient, the logic that builds a dispatcher
-  # redirects any calls to the type factory.
   #
   # Injection Support
   # ===
@@ -324,13 +294,6 @@ module Puppet::Functions
       end
     end
 
-    def self.dispatch_polymorph(meth_name, &block)
-      builder = DispatcherBuilder.new(dispatcher)
-      builder.instance_eval do
-        dispatch_polymorph(meth_name, &block)
-      end
-    end
-
     # Defines class level injected attribute with reader method
     #
     def self.attr_injected(type, attribute_name, injection_name = nil)
@@ -417,21 +380,6 @@ module Puppet::Functions
       self.instance_eval &block
       callable_t = self.class.create_callable(@types, @block_type, @min, @max)
       @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @last_captures)
-    end
-
-    def dispatch_polymorph(meth_name, &block)
-      @types = []
-      @names = []
-      @weaving = []
-      @injections = []
-      @min = nil
-      @max = nil
-      @last_captures = false
-      @block_type = nil
-      @block_name = nil
-      self.instance_eval &block
-      callable_t = self.class.create_callable(@types, @block_type, @min, @max)
-      @dispatcher.add_polymorph_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @last_captures)
     end
 
     # Defines one parameter with type and name

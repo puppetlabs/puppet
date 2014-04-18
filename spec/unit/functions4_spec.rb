@@ -120,11 +120,12 @@ actual:
     # this tests that meta programming / construction puts class attributes in the correct class
     f1 = create_min_function_class()
     f2 = create_max_function_class()
+
     d1 = f1.dispatcher
     d2 = f2.dispatcher
+
     expect(d1).to_not eql(d2)
     expect(d1.dispatchers[0]).to_not eql(d2.dispatchers[0])
-    expect(d1.dispatchers[0].visitor).to_not eql(d2.dispatchers[0].visitor.name)
   end
 
   context 'when using regular dispatch' do
@@ -207,28 +208,6 @@ actual:
   min(Integer, Integer, Integer) - arg count {3}")
     end
 
-    it 'a function can be created using polymorph dispatch and called' do
-      f = create_function_with_polymorph_dispatch()
-      func = f.new(:closure_scope, :loader)
-      expect(func.call({}, 3,4)).to eql(3)
-      expect(func.call({}, 'Apple', 'Banana')).to eql('Apple')
-    end
-
-    it 'an error is raised with reference to polymorph method when called with mis-matched arguments' do
-      f = create_function_with_polymorph_dispatch()
-      # TODO: Bogus parameters, not yet used
-      func = f.new(:closure_scope, :loader)
-      expect(func.is_a?(Puppet::Functions::Function)).to be_true
-      expect do
-        func.call({}, 10, 10, 10)
-      end.to raise_error(ArgumentError,
-"function 'min' called with mis-matched arguments
-expected:
-  min(Scalar a, Scalar b) - arg count {2}
-actual:
-  min(Integer, Integer, Integer) - arg count {3}")
-    end
-
     context 'can use injection' do
       before :all do
         injector = Puppet::Pops::Binder::Injector.create('test') do
@@ -252,13 +231,6 @@ actual:
 
       it 'parameters can be injected and woven with regular dispatch' do
         f1 = create_function_with_param_injection_regular()
-        f = f1.new(:closure_scope, :loader)
-        expect(f.call(nil, 10, 20)).to eql("evoe! 10, and 20 < 42 = true")
-        expect(f.call(nil, 50, 20)).to eql("evoe! 50, and 20 < 42 = false")
-      end
-
-      it 'parameters can be injected and woven with polymorph dispatch' do
-        f1 = create_function_with_param_injection_poly()
         f = f1.new(:closure_scope, :loader)
         expect(f.call(nil, 10, 20)).to eql("evoe! 10, and 20 < 42 = true")
         expect(f.call(nil, 50, 20)).to eql("evoe! 50, and 20 < 42 = false")
@@ -588,28 +560,6 @@ actual:
     end
   end
 
-  def create_function_with_polymorph_dispatch
-    f = Puppet::Functions.create_function('min') do
-      dispatch_polymorph :min do
-        param scalar, 'a'
-        param scalar, 'b'
-      end
-
-      def min_Numeric(x,y)
-        x <= y ? x : y
-      end
-
-      def min_String(x,y)
-        cmp = (x.downcase <=> y.downcase)
-        cmp <= 0 ? x : y
-      end
-
-      def min_Object(x,y)
-        raise ArgumentError, "min(): Only Numeric and String arguments are supported"
-      end
-    end
-  end
-
   def create_function_with_class_injection
     f = Puppet::Functions.create_function('test') do
       attr_injected type_of(FunctionAPISpecModule::TestDuck), :test_attr
@@ -618,26 +568,6 @@ actual:
 
       def test(x,y,a=1, b=1, *c)
         x <= y ? x : y
-      end
-    end
-  end
-
-  def create_function_with_param_injection_poly
-    f = Puppet::Functions.create_function('test') do
-      attr_injected type_of(FunctionAPISpecModule::TestDuck), :test_attr
-      attr_injected string(), :test_attr2, "a_string"
-      attr_injected_producer integer(), :serial, "an_int"
-
-      dispatch_polymorph :test do
-        injected_param string, 'x', 'a_string'
-        injected_producer_param integer, 'y', 'an_int'
-        param scalar, 'a'
-        param scalar, 'b'
-      end
-
-      def test_String(x,y,a,b)
-        y_produced = y.produce(nil)
-        "#{x}! #{a}, and #{b} < #{y_produced} = #{ !!(a < y_produced && b < y_produced)}"
       end
     end
   end
