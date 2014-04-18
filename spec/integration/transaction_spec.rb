@@ -193,6 +193,22 @@ describe Puppet::Transaction do
     Puppet::FileSystem.exist?(file2).should be_true
   end
 
+  it "should apply no resources whatsoever if a pre_run_check fails" do
+    path = tmpfile("path")
+    file = Puppet::Type.type(:file).new(
+      :path => path,
+      :ensure => "file"
+    )
+    notify = Puppet::Type.type(:notify).new(
+      :title => "foo"
+    )
+    notify.expects(:pre_run_check).raises(Puppet::Error, "fail for testing")
+
+    catalog = mk_catalog(file, notify)
+    catalog.apply
+    Puppet::FileSystem.exist?(path).should_not be_true
+  end
+
   it "should not let one failed refresh result in other refreshes failing" do
     path = tmpfile("path")
     newfile = tmpfile("file")
