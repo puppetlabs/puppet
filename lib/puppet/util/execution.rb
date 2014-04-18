@@ -72,7 +72,7 @@ module Puppet::Util::Execution
     # a predictable output
     english_env = ENV.to_hash.merge( {'LANG' => 'C', 'LC_ALL' => 'C'} )
     output = Puppet::Util.withenv(english_env) do
-      open("| #{command_str} 2>&1") do |pipe|
+      open("| #{command_str} 2>&1", 'w+') do |pipe|
         yield pipe
       end
     end
