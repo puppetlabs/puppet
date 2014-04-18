@@ -18,6 +18,8 @@ PACKAGES = {
   :debian => [
     ['git', 'git-core'],
     'ruby',
+  ],
+  :debian_ruby18 => [
     'libjson-ruby',
   ],
   :solaris => [
