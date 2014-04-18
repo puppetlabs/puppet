@@ -1,11 +1,12 @@
 require 'spec_helper'
 require 'puppet/module_tool/applications'
-require 'tmpdir'
+require 'puppet_spec/files'
 require 'pathname'
 
 describe Puppet::ModuleTool::Applications::Checksummer do
-  let(:tmpdir) { Pathname.new(Dir.mktmpdir('checksummer')) }
-  after { FileUtils.remove_entry_secure(tmpdir) }
+  let(:tmpdir) do
+    Pathname.new(PuppetSpec::Files.tmpdir('checksummer'))
+  end
 
   let(:checksums) { Puppet::ModuleTool::Checksums.new(tmpdir).data }
 
