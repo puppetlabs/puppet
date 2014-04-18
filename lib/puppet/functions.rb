@@ -317,11 +317,6 @@ module Puppet::Functions
       raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found"
     end
 
-    def self.define_dispatch(&block)
-      builder = DispatcherBuilder.new(dispatcher)
-      builder.instance_eval &block
-    end
-
     def self.dispatch(meth_name, &block)
       builder = DispatcherBuilder.new(dispatcher)
       builder.instance_eval do
