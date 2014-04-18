@@ -10,7 +10,6 @@ module Puppet
       require 'puppet/pops/loader/dependency_loader'
       require 'puppet/pops/loader/null_loader'
       require 'puppet/pops/loader/static_loader'
-      require 'puppet/pops/loader/puppet_function_instantiator'
       require 'puppet/pops/loader/ruby_function_instantiator'
       require 'puppet/pops/loader/ruby_legacy_function_instantiator'
       require 'puppet/pops/loader/loader_paths'

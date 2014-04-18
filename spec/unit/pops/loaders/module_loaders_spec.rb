@@ -9,29 +9,6 @@ describe 'module loaders' do
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
 
   describe 'FileBased module loader' do
-    it 'loading a .pp function in global name space raises an error' do
-      module_dir = dir_containing('testmodule', {
-      'functions' => {
-        'foo.pp' => 'function foo() { yay }'}})
-
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
-      expect do
-        module_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
-      end.to raise_error(ArgumentError, /produced function with the wrong name, expected testmodule::foo, actual foo/)
-
-    end
-
-    it 'can load a .pp function in a qualified name space' do
-      module_dir = dir_containing('testmodule', {
-      'functions' => {
-          'foo.pp' => 'function testmodule::foo() { yay }'}})
-
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
-      function = module_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
-      expect(function.class.name).to eq('testmodule::foo')
-      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
-    end
-
     it 'can load a 4x function API ruby function in global name space' do
       module_dir = dir_containing('testmodule', {
         'lib' => {
@@ -81,16 +58,27 @@ describe 'module loaders' do
 
     it 'makes parent loader win over entries in child' do
       module_dir = dir_containing('testmodule', {
-      'functions' => {
-        'foo.pp' => 'function testmodule::foo() { yay }'}})
-
+        'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
+          'foo.rb' => <<-CODE
+             Puppet::Functions.create_function('testmodule::foo') do
+               def foo()
+                 'yay'
+               end
+             end
+          CODE
+        }}}}})
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
-      module_dir2 = dir_containing('testmodule2', {
-      'functions' => {
-        'foo.pp' => 'fail(should not happen)'}})
 
+      module_dir2 = dir_containing('testmodule2', {
+        'lib' => { 'puppet' => { 'functions' => { 'testmodule2' => {
+          'foo.rb' => <<-CODE
+             raise "should not get here"
+          CODE
+        }}}}})
       module_loader2 = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(module_loader, 'testmodule2', module_dir2, 'test2')
+
       function = module_loader2.load_typed(typed_name(:function, 'testmodule::foo')).value
+
       expect(function.class.name).to eq('testmodule::foo')
       expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
     end

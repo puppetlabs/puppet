@@ -16,9 +16,9 @@ module Puppet::Pops::Loader::LoaderPaths
     case type # typed_name.type
     when :function
       if Puppet[:biff] == true
-        [FunctionPath4x.new(loader), FunctionPath3x.new(loader), FunctionPathPP.new(loader)]
+        [FunctionPath4x.new(loader), FunctionPath3x.new(loader)]
       else
-        [FunctionPath4x.new(loader), FunctionPathPP.new(loader)]
+        [FunctionPath4x.new(loader)]
       end
 
     # when :xxx # TODO: Add all other types
@@ -58,7 +58,6 @@ module Puppet::Pops::Loader::LoaderPaths
     # Effective path is the generic path + the name part(s) + extension.
     #
     def effective_path(typed_name, start_index_in_name)
-#      "#{File.join(generic_path, typed_name.name_parts[ start_index_in_name..-1 ])}#{extension}"
       "#{File.join(generic_path, typed_name.name_parts)}#{extension}"
     end
 
@@ -78,22 +77,7 @@ module Puppet::Pops::Loader::LoaderPaths
 
     # Duplication of extension information, but avoids one call
     def effective_path(typed_name, start_index_in_name)
-#      "#{File.join(generic_path, typed_name.name_parts[ start_index_in_name..-1 ])}.rb"
       "#{File.join(generic_path, typed_name.name_parts)}.rb"
-    end
-  end
-
-  class PuppetSmartPath < SmartPath
-    def extension
-      ".pp"
-    end
-
-    # Duplication of extension information, but avoids one call
-    def effective_path(typed_name, start_index_in_name)
-      # Puppet name to path always skips the name-space as that is part of the generic path
-      # i.e. <module>/mumodule/functions/foo.pp is the function mymodule::foo
-      "#{File.join(generic_path, typed_name.name_parts[ 1..-1 ])}.pp"
-#      "#{File.join(generic_path, typed_name.name_parts)}.pp"
     end
   end
 
@@ -118,18 +102,6 @@ module Puppet::Pops::Loader::LoaderPaths
 
     def instantiator()
       Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
-    end
-  end
-
-  class FunctionPathPP < PuppetSmartPath
-    FUNCTION_PATH_PP = 'functions'
-
-    def relative_path
-      FUNCTION_PATH_PP
-    end
-
-    def instantiator()
-      Puppet::Pops::Loader::PuppetFunctionInstantiator
     end
   end
 

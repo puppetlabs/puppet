@@ -29,29 +29,27 @@ describe 'loader paths' do
        # Must have a File/Path based loader to talk to
        module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
        effective_paths = Puppet::Pops::Loader::LoaderPaths.relative_paths_for_type(:function, module_loader)
-       expect(effective_paths.size).to be_eql(3)
+       expect(effective_paths.size).to be_eql(2)
        # 4x
        expect(effective_paths[0].generic_path).to be_eql(File.join(module_dir, 'lib', 'puppet', 'functions'))
        # 3x
        expect(effective_paths[1].generic_path).to be_eql(File.join(module_dir, 'lib', 'puppet','parser', 'functions'))
-       # .pp
-       expect(effective_paths[2].generic_path).to be_eql(File.join(module_dir, 'functions'))
     end
 
     it 'module loader has smart-paths that prunes unavailable paths' do
-      module_dir = dir_containing('testmodule', {'functions' => {'foo.pp' => 'function foo() { yay }'} })
-      # Must have a File/Path based loader to talk to
+      module_dir = dir_containing('testmodule', {'lib' => {'puppet' => {'functions' => {'foo.rb' => 'Puppet::Functions.create_function("testmodule::foo") { def foo; end; }' }}}})
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
+
       effective_paths = module_loader.smart_paths.effective_paths(:function)
+
       expect(effective_paths.size).to be_eql(1)
-      expect(effective_paths[0].generic_path).to be_eql(File.join(module_dir, 'functions'))
+      expect(effective_paths[0].generic_path).to be_eql(File.join(module_dir, 'lib', 'puppet', 'functions'))
       expect(module_loader.path_index.size).to be_eql(1)
-      expect(module_loader.path_index.include?(File.join(module_dir, 'functions', 'foo.pp'))).to be(true)
+      expect(module_loader.path_index.include?(File.join(module_dir, 'lib', 'puppet', 'functions', 'foo.rb'))).to be(true)
     end
 
     it 'all function smart-paths produces entries if they exist' do
       module_dir = dir_containing('testmodule', {
-        'functions' => {'foo.pp' => 'function foo() { yay }'},
         'lib' => {
           'puppet' => {
             'functions' => {'foo4x.rb' => 'ignored in this test'},
@@ -62,10 +60,9 @@ describe 'loader paths' do
       # Must have a File/Path based loader to talk to
       module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
       effective_paths = module_loader.smart_paths.effective_paths(:function)
-      expect(effective_paths.size).to eq(3)
-      expect(module_loader.path_index.size).to eq(3)
+      expect(effective_paths.size).to eq(2)
+      expect(module_loader.path_index.size).to eq(2)
       path_index = module_loader.path_index
-      expect(path_index.include?(File.join(module_dir, 'functions', 'foo.pp'))).to eq(true)
       expect(path_index.include?(File.join(module_dir, 'lib', 'puppet', 'functions', 'foo4x.rb'))).to eq(true)
       expect(path_index.include?(File.join(module_dir, 'lib', 'puppet', 'parser', 'functions', 'foo3x.rb'))).to eq(true)
     end

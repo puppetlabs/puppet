@@ -62,14 +62,6 @@ describe 'loaders' do
       modulea_loader = loaders.public_loader_for_module('modulea')
       expect(modulea_loader.class).to eql(Puppet::Pops::Loader::ModuleLoaders::FileBased)
 
-      function = modulea_loader.load_typed(typed_name(:function, 'modulea::func_a')).value
-      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
-      expect(function.class.name).to eq('modulea::func_a')
-
-      function = modulea_loader.load_typed(typed_name(:function, 'modulea::nested::func_a')).value
-      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
-      expect(function.class.name).to eq('modulea::nested::func_a')
-
       function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
       expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
       expect(function.class.name).to eq('rb_func_a')
