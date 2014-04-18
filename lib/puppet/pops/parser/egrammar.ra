@@ -594,10 +594,13 @@ node_definition_expression
 #---FUNCTION DEFINITION
 #
 function_definition
-  : FUNCTION classname parameter_list LBRACE opt_statements RBRACE {
-      result = add_definition(Factory.FUNCTION(val[1][:value], val[2], val[4]))
-      loc result, val[0], val[5]
-    }
+  : FUNCTION { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+  # For now the function word will just be reserved, in the future it will
+  # produce a function definition
+  # FUNCTION classname parameter_list LBRACE opt_statements RBRACE {
+  #   result = add_definition(Factory.FUNCTION(val[1][:value], val[2], val[4]))
+  #   loc result, val[0], val[5]
+  # }
 
 #---NAMES AND PARAMETERS COMMON TO SEVERAL RULES
 #   Produces String

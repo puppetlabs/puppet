@@ -218,11 +218,6 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
-  def check_FunctionDefinition(o)
-    # super class check
-    check_NamedDefinition(o)
-  end
-
   def check_IfExpression(o)
     rvalue(o.test)
   end

@@ -237,12 +237,6 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
-  def dump_FunctionDefinition o
-    result = dump_NamedDefinition(o)
-    result[0] = 'function'
-    result
-  end
-
   def dump_ResourceOverrideExpression o
     result = ["override", do_dump(o.resources), :indent]
     o.operations.each do |p|

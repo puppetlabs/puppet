@@ -699,10 +699,6 @@ class Puppet::Pops::Model::Factory
     new(Model::ResourceTypeDefinition, name, parameters, body)
   end
 
-  def self.FUNCTION(name, parameters, body)
-    new(Model::FunctionDefinition, name, parameters, body)
-  end
-
   def self.LAMBDA(parameters, body)
     new(Model::LambdaExpression, parameters, body)
   end
@@ -711,9 +707,9 @@ class Puppet::Pops::Model::Factory
     o.nil? || o.is_a?(Puppet::Pops::Model::Nop)
   end
 
-  STATEMENT_CALLS = { 
-    'require' => true, 
-    'realize' => true, 
+  STATEMENT_CALLS = {
+    'require' => true,
+    'realize' => true,
     'include' => true,
     'contain' => true,
 
