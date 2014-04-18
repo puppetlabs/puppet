@@ -68,7 +68,7 @@ file { "#{testdir}/hiera.yaml":
 :yaml:
   :datadir: "#{environmentsdir}/%{environment}/hiera"
 :hierarchy:
-  - '%{environment}'
+  - "%{environment}"
   - common
   ',
 }
