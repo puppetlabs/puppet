@@ -40,6 +40,8 @@ module Puppet
 
     feature :controllable, "The provider uses a control variable."
 
+    feature :flaggable, "The provider can pass flags to the service."
+
     newproperty(:enable, :required_features => :enableable) do
       desc "Whether a service should be enabled to start at boot.
         This property behaves quite differently depending on the platform;
@@ -98,6 +100,10 @@ module Puppet
 
         event
       end
+    end
+
+    newproperty(:flags, :required_features => :flaggable) do
+      desc "Specify a string of flags to pass to the startup script."
     end
 
     newparam(:binary) do
