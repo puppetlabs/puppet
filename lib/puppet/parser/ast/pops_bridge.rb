@@ -91,10 +91,6 @@ class Puppet::Parser::AST::PopsBridge
           instantiate_ResourceTypeDefinition(d, modname)
         when Puppet::Pops::Model::NodeDefinition
           instantiate_NodeDefinition(d, modname)
-        when Puppet::Pops::Model::FunctionDefinition
-          instantiate_FunctionDefinition(d, modname)
-          # The 3x logic calling this will not know what to do with the result, it is compacted away at the end
-          next
         else
           raise Puppet::ParseError, "Internal Error: Unknown type of definition - got '#{d.class}'"
         end
