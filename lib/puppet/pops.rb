@@ -93,11 +93,14 @@ module Puppet
       require 'puppet/pops/evaluator/evaluator_impl'
       require 'puppet/pops/evaluator/epp_evaluator'
     end
+
     module Functions
-      require 'puppet/functions'
+      require 'puppet/pops/functions/dispatch'
+      require 'puppet/pops/functions/dispatcher'
     end
   end
 
   require 'puppet/parser/ast/pops_bridge'
   require 'puppet/bindings'
+  require 'puppet/functions'
 end
