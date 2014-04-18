@@ -13,8 +13,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   self::YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
 
-  attr_accessor :latest_info
-
   if command('rpm')
     confine :true => begin
       rpm('--version')
@@ -30,28 +28,44 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   def self.prefetch(packages)
     raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
     super
-    return unless packages.detect { |name, package| package.should(:ensure) == :latest }
+  end
 
-    # collect our 'latest' info
-    updates = {}
+  # Retrieve the latest package version information for a given package name.
+  #
+  # @api private
+  # @param package [String] The name of the package to query
+  # @return [Hash<Symbol, String>]
+  def self.latest_package_version(package)
+    if @latest_versions.nil?
+      @latest_versions = fetch_latest_versions
+    end
+
+    @latest_versions[package].first
+  end
+
+  # Search for all installed packages that have newer versions.
+  #
+  # @api private
+  # @return [Hash<String, Array<Hash<String, String>>>]
+  def self.fetch_latest_versions
+    latest_versions = Hash.new {|h, k| h[k] = []}
+
     python(self::YUMHELPER).each_line do |l|
-      l.chomp!
-      next if l.empty?
-      if l[0,4] == "_pkg"
-        hash = nevra_to_hash(l[5..-1])
-        [hash[:name], "#{hash[:name]}.#{hash[:arch]}"].each  do |n|
-          updates[n] ||= []
-          updates[n] << hash
-        end
-      end
-    end
+      if (match = l.match /^_pkg (.*)$/)
+        hash = nevra_to_hash(match[1])
 
-    # Add our 'latest' info to the providers.
-    packages.each do |name, package|
-      if info = updates[package[:name]]
-        package.provider.latest_info = info[0]
+        short_name = hash[:name]
+        long_name  = "#{hash[:name]}.#{hash[:arch]}"
+
+        latest_versions[short_name] << hash
+        latest_versions[long_name]  << hash
       end
     end
+    latest_versions
+  end
+
+  def self.clear
+    @latest_versions = nil
   end
 
   def install
@@ -88,7 +102,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   # What's the latest package version available?
   def latest
-    upd = latest_info
+    upd = self.class.latest_package_version(@resource[:name])
     unless upd.nil?
       # FIXME: there could be more than one update for a package
       # because of multiarch
@@ -110,4 +124,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     yum "-y", :erase, @resource[:name]
   end
 
+  # @deprecated
+  def latest_info
+    Puppet.deprecation_warning("#{self.class}#{__method__} is deprecated and no longer used")
+    @latest_info
+  end
+
+  # @deprecated
+  def latest_info=(latest)
+    Puppet.deprecation_warning("#{self.class}#{__method__} is deprecated and no longer used")
+    @latest_info = latest
+  end
 end
