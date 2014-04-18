@@ -70,7 +70,7 @@ describe Puppet::ModuleTool::Metadata do
       end
 
       context "(module name starts with a number)" do
-        let(:data) { { 'name' => "dollabills-5dolla'" } }
+        let(:data) { { 'name' => "dollabills-5dollars" } }
 
         it "raises an exception" do
           expect { subject }.to raise_error(ArgumentError, "Invalid 'name' field in metadata.json: the module name must begin with a letter")

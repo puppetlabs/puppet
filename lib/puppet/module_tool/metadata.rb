@@ -68,17 +68,16 @@ module Puppet::ModuleTool
     def validate_name(name)
       return if name =~ /\A[a-z0-9]+[-\/][a-z][a-z0-9_]*\Z/i
 
-      err = if name =~ /[-\/]/
-        namespace, modname = name.split(/[-\/]/, 2)
-        if modname =~ /^[a-z][a-z0-9_]*$/i
-          "the namespace contains non-alphanumeric characters"
-        elsif modname =~ /^[a-z]/i
-          "the module name contains non-alphanumeric (or underscore) characters"
-        else
-          "the module name must begin with a letter"
-        end
-      else
+      namespace, modname = name.split(/[-\/]/, 2)
+      err = case modname
+      when nil
         "the field must be a namespaced module name"
+      when /[^a-z0-9_]/i
+        "the module name contains non-alphanumeric (or underscore) characters"
+      when /^[^a-z]/i
+        "the module name must begin with a letter"
+      else
+        "the namespace contains non-alphanumeric characters"
       end
 
       raise ArgumentError, "Invalid 'name' field in metadata.json: #{err}"
