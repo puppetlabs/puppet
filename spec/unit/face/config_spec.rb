@@ -3,22 +3,23 @@ require 'spec_helper'
 require 'puppet/face'
 
 describe Puppet::Face[:config, '0.0.1'] do
+
+  FS = Puppet::FileSystem
+
   it "prints a single setting without the name" do
     Puppet[:trace] = true
 
-    subject.expects(:puts).with(true)
-
-    subject.print("trace").should be_nil
+    expect { subject.print("trace") }.to have_printed('true')
   end
 
   it "prints multiple settings with the names" do
     Puppet[:trace] = true
     Puppet[:syslogfacility] = "file"
 
-    subject.expects(:puts).with("trace = true")
-    subject.expects(:puts).with("syslogfacility = file")
-
-    subject.print("trace", "syslogfacility")
+    expect { subject.print("trace", "syslogfacility") }.to have_printed(<<-OUTPUT)
+trace = true
+syslogfacility = file
+    OUTPUT
   end
 
   it "prints the setting from the selected section" do
@@ -27,12 +28,10 @@ describe Puppet::Face[:config, '0.0.1'] do
     syslogfacility = file
     CONF
 
-    subject.expects(:puts).with("file")
-
-    subject.print("syslogfacility", :section => "other")
+    expect { subject.print("syslogfacility", :section => "other") }.to have_printed('file')
   end
 
-  it "should default to all when no arguments are given" do
+  it "defaults to all when no arguments are given" do
     subject.expects(:puts).times(Puppet.settings.to_a.length)
 
     subject.print
@@ -42,5 +41,104 @@ describe Puppet::Face[:config, '0.0.1'] do
     subject.expects(:puts).times(Puppet.settings.to_a.length)
 
     subject.print('all')
+  end
+
+  shared_examples_for :config_printing_a_section do |section|
+
+    def add_section_option(args, section)
+      args << { :section => section } if section
+      args
+    end
+
+    it "prints directory env settings for an env that exists" do
+      FS.overlay(
+        FS::MemoryFile.a_directory("/dev/null/environments", [
+          FS::MemoryFile.a_directory("production", [
+            FS::MemoryFile.a_missing_file("environment.conf"),
+          ]),
+        ])
+      ) do
+        args = "environmentpath","manifest","modulepath","environment","basemodulepath"
+        expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+environmentpath = /dev/null/environments
+manifest = /dev/null/environments/production/manifests
+modulepath = /dev/null/environments/production/modules#{File::PATH_SEPARATOR}/some/base
+environment = production
+basemodulepath = /some/base
+        OUTPUT
+      end
+    end
+
+    it "interpolates settings in environment.conf" do
+      FS.overlay(
+        FS::MemoryFile.a_directory("/dev/null/environments", [
+          FS::MemoryFile.a_directory("production", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", <<-CONTENT),
+            modulepath=/custom/modules#{File::PATH_SEPARATOR}$basemodulepath
+            CONTENT
+          ]),
+        ])
+      ) do
+        args = "environmentpath","manifest","modulepath","environment","basemodulepath"
+        expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+environmentpath = /dev/null/environments
+manifest = /dev/null/environments/production/manifests
+modulepath = /custom/modules#{File::PATH_SEPARATOR}/some/base
+environment = production
+basemodulepath = /some/base
+        OUTPUT
+      end
+    end
+
+    it "prints the default configured env settings for an env that does not exist" do
+      Puppet[:environment] = 'doesnotexist'
+
+      FS.overlay(
+        FS::MemoryFile.a_directory("/dev/null/environments", [
+          FS::MemoryFile.a_missing_file("doesnotexist")
+        ])
+      ) do
+        args = "environmentpath","manifest","modulepath","environment","basemodulepath"
+        expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
+environmentpath = /dev/null/environments
+manifest = no_manifest
+modulepath = 
+environment = doesnotexist
+basemodulepath = /some/base
+        OUTPUT
+      end
+    end
+  end
+
+  context "when printing environment settings" do
+    before(:each) do
+      Puppet.settings.stubs(:global_defaults_initialized?).returns(:true)
+    end
+
+    context "from main section" do
+      before(:each) do
+        Puppet.settings.parse_config(<<-CONF)
+        [main]
+        environmentpath=$confdir/environments
+        basemodulepath=/some/base
+        CONF
+      end
+
+      it_behaves_like :config_printing_a_section
+    end
+
+    context "from master section" do
+
+      before(:each) do
+        Puppet.settings.parse_config(<<-CONF)
+        [master]
+        environmentpath=$confdir/environments
+        basemodulepath=/some/base
+        CONF
+        Puppet.settings.stubs(:global_defaults_initialized?).returns(:true)
+      end
+
+      it_behaves_like :config_printing_a_section, :master
+    end
   end
 end

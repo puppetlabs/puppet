@@ -33,6 +33,14 @@ class Puppet::Settings::EnvironmentConf
     new(path_to_env, section, global_module_path)
   end
 
+  # Provides a configuration object tied directly to the passed environment.
+  # Configuration values are exactly those returned by the environment object,
+  # without interpolation.  This is a special case for the default configured
+  # environment returned by the Puppet::Environments::StaticPrivate loader.
+  def self.static_for(environment)
+    Static.new(environment)
+  end
+
   attr_reader :section
 
   # Create through EnvironmentConf.load_from()
@@ -100,4 +108,26 @@ class Puppet::Settings::EnvironmentConf
       File.expand_path(path, @path_to_env)
     end
   end
+
+  # Models configuration for an environment that is not loaded from a directory.
+  #
+  # @api private
+  class Static
+    def initialize(environment)
+      @environment = environment
+    end
+
+    def manifest
+      @environment.manifest
+    end
+
+    def modulepath
+      @environment.modulepath.join(File::PATH_SEPARATOR)
+    end
+
+    def config_version
+      @environment.config_version
+    end
+  end
+
 end

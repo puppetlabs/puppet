@@ -68,9 +68,17 @@ module Puppet::Environments
       end
     end
 
+    # Returns a basic environment configuration object tied to the environment's
+    # implementation values.  Will not interpolate.
+    #
     # @!macro loader_get_conf
     def get_conf(name)
-      nil
+      env = get(name)
+      if env
+        Puppet::Settings::EnvironmentConf.static_for(env)
+      else
+        nil
+      end
     end
   end
 

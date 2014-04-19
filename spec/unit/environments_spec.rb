@@ -298,6 +298,44 @@ config_version=$vardir/random/scripts
     end
   end
 
+  describe "static loaders" do
+    let(:static1) { Puppet::Node::Environment.create(:static1, []) }
+    let(:static2) { Puppet::Node::Environment.create(:static2, []) }
+    let(:loader) { Puppet::Environments::Static.new(static1, static2) }
+
+    it "lists environments" do
+      expect(loader.list).to eq([static1, static2])
+    end
+
+    it "gets an environment" do
+      expect(loader.get(:static2)).to eq(static2)
+    end
+
+    it "returns nil if env not found" do
+      expect(loader.get(:doesnotexist)).to be_nil
+    end
+
+    it "gets a basic conf" do
+      conf = loader.get_conf(:static1)
+      expect(conf.modulepath).to eq('')
+      expect(conf.manifest).to eq(:no_manifest)
+      expect(conf.config_version).to be_nil
+    end
+
+    it "returns nil if you request a configuration from an env that doesn't exist" do
+      expect(loader.get_conf(:doesnotexist)).to be_nil
+    end
+
+    context "that are private" do
+      let(:private_env) { Puppet::Node::Environment.create(:private, []) }
+      let(:loader) { Puppet::Environments::StaticPrivate.new(private_env) }
+
+      it "lists nothing" do
+        expect(loader.list).to eq([])
+      end
+    end
+  end
+
   RSpec::Matchers.define :environment do |name|
     match do |env|
       env.name == name &&
