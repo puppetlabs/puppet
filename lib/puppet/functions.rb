@@ -1,8 +1,10 @@
 module Puppet::Functions
-  # Creates a new Puppet Function Class with the given func_name with functionality defined by the given block.
-  # The func name should be an unqualified lower case name. The block is evaluated as when a derived Ruby class
-  # is created and it is intended (in the simplest case) that the user defines the actual function in a method named
-  # the same as the function (as shown in the first example below).
+  # Creates a new Puppet Function Class with the given func_name with
+  # functionality defined by the given block.  The func name should be an
+  # unqualified lower case name. The block is evaluated as when a derived Ruby
+  # class is created and it is intended (in the simplest case) that the user
+  # defines the actual function in a method named the same as the function (as
+  # shown in the first example below).
   #
   # @example A simple function
   #   Puppet::Functions.create_function('min') do
@@ -11,13 +13,16 @@ module Puppet::Functions
   #     end
   #   end
   #
-  # Documentation for the function should be placed as comments to the method(s) that define the functionality
-  # The simplest form of defining a function introspects the method signature (in the example `min(a,b)`) and
-  # infers that this means that there are 2 required arguments of Object type. If something else is wanted
-  # the method `dispatch` should be called in the block defining the function to define the details of dispatching
-  # a call of the function.
+  # Documentation for the function should be placed as comments to the
+  # method(s) that define the functionality The simplest form of defining a
+  # function introspects the method signature (in the example `min(a,b)`) and
+  # infers that this means that there are 2 required arguments of Object type.
+  # If something else is wanted the method `dispatch` should be called in the
+  # block defining the function to define the details of dispatching a call of
+  # the function.
   #
-  # In the next example, the function is enhanced to check that arguments are of numeric type.
+  # In the next example, the function is enhanced to check that arguments are
+  # of numeric type.
   #
   # @example dispatch and type checking
   #   Puppet::Functions.create_function('min') do
@@ -31,10 +36,11 @@ module Puppet::Functions
   #     end
   #   end
   #
-  # It is possible to specify multiple type signatures as defined by the param specification in the dispatch method, and
-  # dispatch to the same, or alternative methods.
-  # When a call is processed the given type signatures are tested in the order they were defined - the first signature
-  # with matching type wins.
+  # It is possible to specify multiple type signatures as defined by the param
+  # specification in the dispatch method, and dispatch to the same, or
+  # alternative methods.  When a call is processed the given type signatures
+  # are tested in the order they were defined - the first signature with
+  # matching type wins.
   #
   # Type arguments may be Puppet Type References in String form or Ruby classes
   # (for basic types). To make type creation convenient, the logic that builds
@@ -42,16 +48,21 @@ module Puppet::Functions
   #
   # Argument Count and Capture Rest
   # ---
-  # If nothing is specified, the number of arguments given to the function must be the same as the number of parameters
-  # (parameters that perform injection not included). If something else is wanted, the method `arg_count` specifies
-  # the minimum and maximum number of given arguments. Thus, to indicate that parameters are optional, set min to
-  # a value lower than the number of specified parameters, and max to the number of specified parameters.
+  # If nothing is specified, the number of arguments given to the function must
+  # be the same as the number of parameters (parameters that perform injection
+  # not included). If something else is wanted, the method `arg_count`
+  # specifies the minimum and maximum number of given arguments. Thus, to
+  # indicate that parameters are optional, set min to a value lower than the
+  # number of specified parameters, and max to the number of specified
+  # parameters.
   #
-  # To express that the last parameter captures the rest, the method `last_captures_rest` can be called. This is
-  # an indicator to those that obtain information about the function (for the purpose of displaying error messages etc.)
-  # For a Function, there the call is processed the same way irrespective how the `last_captures_rest`, and it is up
-  # to the implementor of the target method to decide who the specified min/max number of arguments are laid out.
-  # This is shown in the following example:
+  # To express that the last parameter captures the rest, the method
+  # `last_captures_rest` can be called. This is an indicator to those that
+  # obtain information about the function (for the purpose of displaying error
+  # messages etc.) For a Function, there the call is processed the same way
+  # irrespective how the `last_captures_rest`, and it is up to the implementor
+  # of the target method to decide who the specified min/max number of
+  # arguments are laid out.  This is shown in the following example:
   #
   # @example variable number of args to
   #   dispatch :foo do
@@ -65,14 +76,17 @@ module Puppet::Functions
   #
   # Injection Support
   # ===
-  # The Function API supports injection of data and services. It is possible to make injection that takes effect
-  # when the function is loaded (for services and runtime configuration that does not change depending on how/from where
-  # in what context the function is called. It is also possible to inject and weave argument values into a call.
+  # The Function API supports injection of data and services. It is possible to
+  # make injection that takes effect when the function is loaded (for services
+  # and runtime configuration that does not change depending on how/from where
+  # in what context the function is called. It is also possible to inject and
+  # weave argument values into a call.
   #
   # Injection of attributes
   # ---
-  # Injection of attributes is performed by one of the methods `attr_injected`, and `attr_injected_producer`.
-  # The injected attributes are available via accessor method calls.
+  # Injection of attributes is performed by one of the methods `attr_injected`,
+  # and `attr_injected_producer`.  The injected attributes are available via
+  # accessor method calls.
   #
   # @example using injected attributes
   #   Puppet::Functions.create_function('test') do
@@ -85,9 +99,10 @@ module Puppet::Functions
   #
   # Injection and Weaving of parameters
   # ---
-  # It is possible to inject and weave parameters into a call. These extra parameters are not part of
-  # the parameters passed from the Puppet logic, and they can not be overridden by parameters given as arguments
-  # in the call. They are invisible to the Puppet Language.
+  # It is possible to inject and weave parameters into a call. These extra
+  # parameters are not part of the parameters passed from the Puppet logic, and
+  # they can not be overridden by parameters given as arguments in the call.
+  # They are invisible to the Puppet Language.
   #
   # @example using injected parameters
   #   Puppet::Functions.create_function('test') do
@@ -108,14 +123,18 @@ module Puppet::Functions
   #
   # Using injected value as default
   # ---
-  # Default value assignment is handled by using the regular Ruby mechanism (a value is assigned to the variable).
-  # The dispatch simply indicates that the value is optional. If the default value should be injected, it can be
+  # Default value assignment is handled by using the regular Ruby mechanism (a
+  # value is assigned to the variable).  The dispatch simply indicates that the
+  # value is optional. If the default value should be injected, it can be
   # handled different ways depending on what is desired:
   #
-  # * by calling the accessor method for an injected Function class attribute. This is suitable if the
-  #   value is constant across all instantiations of the function, and across all calls.
-  # * by injecting a parameter into the call to the left of the parameter, and then assigning that as the default value.
-  # * One of the above forms, but using an injected producer instead of a directly injected value.
+  # * by calling the accessor method for an injected Function class attribute.
+  #   This is suitable if the value is constant across all instantiations of the
+  #   function, and across all calls.
+  # * by injecting a parameter into the call
+  #   to the left of the parameter, and then assigning that as the default value.
+  # * One of the above forms, but using an injected producer instead of a
+  #   directly injected value.
   #
   # @example method with injected default values
   #   Puppet::Functions.create_function('test') do
@@ -131,23 +150,29 @@ module Puppet::Functions
   #
   # Access to Scope
   # ---
-  # In general, functions should not need access to scope; they should be written to act on their given input
-  # only. If they absolutely must look up variable values, they should do so via the closure scope (the scope where they
-  # are defined) - this is done by calling `closure_scope()`.
+  # In general, functions should not need access to scope; they should be
+  # written to act on their given input only. If they absolutely must look up
+  # variable values, they should do so via the closure scope (the scope where
+  # they are defined) - this is done by calling `closure_scope()`.
   #
-  # For Puppet System Functions where access to the calling scope may be essential the implementor of the function may
-  # override the `Function.call` method to pass the scope on to the method(s) implementing the body of the function.
+  # For Puppet System Functions where access to the calling scope may be
+  # essential the implementor of the function may override the `Function.call`
+  # method to pass the scope on to the method(s) implementing the body of the
+  # function.
   #
   # Calling other Functions
   # ---
-  # Calling other functions by name is directly supported via `call_funcion(name, *args)`. This allows a function
-  # to call other functions visible from its loader.
+  # Calling other functions by name is directly supported via
+  # `call_funcion(name, *args)`. This allows a function to call other functions
+  # visible from its loader.
   #
   # @todo Optimizations
   #
-  #   Unoptimized implementation. The delegation chain is longer than required, and arguments are passed with splat.
-  #   The chain Function -> class -> Dispatcher -> Dispatch -> Visitor can be shortened for non polymorph dispatching.
-  #   Also, when there is only one signature (single Dispatch), a different Dispatcher could short circuit the search.
+  #   Unoptimized implementation. The delegation chain is longer than required,
+  #   and arguments are passed with splat.  The chain Function -> class ->
+  #   Dispatcher -> Dispatch -> Visitor can be shortened for non polymorph
+  #   dispatching.  Also, when there is only one signature (single Dispatch), a
+  #   different Dispatcher could short circuit the search.
   #
   # @param func_name [String, Symbol] a simple or qualified function name
   # @param &block [Proc] the block that defines the methods and dispatch of the Function to create
