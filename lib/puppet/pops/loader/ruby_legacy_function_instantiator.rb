@@ -99,7 +99,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       #
       dispatch :__relay__call__ do
         # Use Puppet Type Object (not Optional[Object] since the 3x API passes undef as empty string).
-        param object, 'args'
+        param 'Object', 'args'
         # Specify arg count (transformed from 3x function arity specification).
         arg_count(min_arg_count, max_arg_count)
       end

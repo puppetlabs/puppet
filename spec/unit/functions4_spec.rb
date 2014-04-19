@@ -562,9 +562,9 @@ actual:
 
   def create_function_with_class_injection
     f = Puppet::Functions.create_function('test') do
-      attr_injected type_of(FunctionAPISpecModule::TestDuck), :test_attr
-      attr_injected string(), :test_attr2, "a_string"
-      attr_injected_producer integer(), :serial, "an_int"
+      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
+      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
+      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
 
       def test(x,y,a=1, b=1, *c)
         x <= y ? x : y
@@ -574,15 +574,15 @@ actual:
 
   def create_function_with_param_injection_regular
     f = Puppet::Functions.create_function('test') do
-      attr_injected type_of(FunctionAPISpecModule::TestDuck), :test_attr
-      attr_injected string(), :test_attr2, "a_string"
-      attr_injected_producer integer(), :serial, "an_int"
+      attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
+      attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
+      attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
 
       dispatch :test do
-        injected_param string, 'x', 'a_string'
-        injected_producer_param integer, 'y', 'an_int'
-        param scalar, 'a'
-        param scalar, 'b'
+        injected_param Puppet::Pops::Types::TypeFactory.string, 'x', 'a_string'
+        injected_producer_param Puppet::Pops::Types::TypeFactory.integer, 'y', 'an_int'
+        param 'Scalar', 'a'
+        param 'Scalar', 'b'
       end
 
       def test(x,y,a,b)
@@ -624,8 +624,7 @@ actual:
     f = Puppet::Functions.create_function('test') do
       dispatch :test do
         param Integer, 'x'
-        # use defaults, any callable, name is 'block'
-        required_block_param callable()
+        required_block_param
       end
       def test(x, block)
         # returns the block to make it easy to test what it got when called
@@ -639,7 +638,7 @@ actual:
       dispatch :test do
         param Integer, 'x'
         # use defaults, any callable, name is 'block'
-        required_block_param(callable(), 'the_block')
+        required_block_param('Callable', 'the_block')
       end
       def test(x, block)
         # returns the block to make it easy to test what it got when called

@@ -36,9 +36,9 @@ module Puppet::Functions
   # When a call is processed the given type signatures are tested in the order they were defined - the first signature
   # with matching type wins.
   #
-  # Type arguments may be Puppet Type References in String form, Ruby classes (for basic types), or Puppet Type instances
-  # as created by the Puppet::Pops::Types::TypeFactory. To make type creation convenient, the logic that builds a dispatcher
-  # redirects any calls to the type factory.
+  # Type arguments may be Puppet Type References in String form or Ruby classes
+  # (for basic types). To make type creation convenient, the logic that builds
+  # a dispatcher redirects any calls to the type factory.
   #
   # Argument Count and Capture Rest
   # ---
@@ -324,20 +324,6 @@ module Puppet::Functions
       @dispatcher ||= Puppet::Pops::Functions::Dispatcher.new
     end
 
-    # Delegates method calls not supported by Function.class to the TypeFactory
-    #
-    def self.method_missing(meth, *args, &block)
-      if Puppet::Pops::Types::TypeFactory.respond_to?(meth)
-        Puppet::Pops::Types::TypeFactory.send(meth, *args, &block)
-      else
-        super
-      end
-    end
-
-    def self.respond_to?(meth, include_all=false)
-      Puppet::Pops::Types::TypeFactory.respond_to?(meth, include_all) || super
-    end
-
     # Produces information about parameters in a way that is compatible with Closure
     #
     def self.signatures
@@ -347,21 +333,9 @@ module Puppet::Functions
 
   class DispatcherBuilder
     def initialize(dispatcher)
+      @type_parser = Puppet::Pops::Types::TypeParser.new
+      @all_callables = Puppet::Pops::Types::TypeFactory.all_callables
       @dispatcher = dispatcher
-    end
-
-    # Delegates method calls not supported by Function.class to the TypeFactory
-    #
-    def method_missing(meth, *args, &block)
-      if Puppet::Pops::Types::TypeFactory.respond_to?(meth)
-        Puppet::Pops::Types::TypeFactory.send(meth, *args, &block)
-      else
-        super
-      end
-    end
-
-    def respond_to?(meth, include_all=false)
-      Puppet::Pops::Types::TypeFactory.respond_to?(meth, include_all) || super
     end
 
     def dispatch(meth_name, &block)
@@ -378,7 +352,7 @@ module Puppet::Functions
       @block_type = nil
       @block_name = nil
       self.instance_eval &block
-      callable_t = self.class.create_callable(@types, @block_type, @min, @max)
+      callable_t = create_callable(@types, @block_type, @min, @max)
       @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @last_captures)
     end
 
@@ -390,28 +364,21 @@ module Puppet::Functions
       @weaving << @names.size()-1
     end
 
-    # Defines one required block parameter that may appear last. If type or name is missing the
-    # defaults are "any callable", and the name is "block"
+    # Defines one required block parameter that may appear last. If type and name is missing the
+    # default type is "Callable", and the name is "block". If only one
+    # parameter is given, then that is the name and the type is "Callable".
     #
     def required_block_param(*type_and_name)
       case type_and_name.size
       when 0
-        type = all_callables()
+        type = @all_callables
         name = 'block'
       when 1
-        x = type_and_name[0]
-        if x.is_a?(Puppet::Pops::Types::PCallableType)
-          type = x
-          name = 'block'
-        else
-          unless x.is_a?(String) || x.is_a?(Symbol)
-            raise ArgumentError, "Expected block_param name to be a String, got #{x.class}"
-          end
-          type = all_callables()
-          name = x.to_s()
-        end
+        type = @all_callables
+        name = type_and_name[0]
       when 2
-        type, name = type_and_name
+        type_string, name = type_and_name
+        type = @type_parser.parse(type_string)
       else
         raise ArgumentError, "block_param accepts max 2 arguments (type, name), got #{type_and_name.size}."
       end
@@ -424,11 +391,12 @@ module Puppet::Functions
         raise ArgumentError, "Expected block_param name to be a String, got #{name.class}"
       end
 
-      unless @block_type.nil?
+      if @block_type.nil?
+        @block_type = type
+        @block_name = name
+      else
         raise ArgumentError, "Attempt to redefine block"
       end
-      @block_type = type
-      @block_name = name
     end
 
     # Defines one optional block parameter that may appear last. If type or name is missing the
@@ -438,7 +406,7 @@ module Puppet::Functions
     def optional_block_param(*type_and_name)
       # same as required, only wrap the result in an optional type
       required_block_param(*type_and_name)
-      @block_type = optional(@block_type)
+      @block_type = Puppet::Pops::Types::TypeFactory.optional(@block_type)
     end
 
     # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
@@ -486,18 +454,15 @@ module Puppet::Functions
     # the min/max occurs of the given types to be given as one or two integer values at the end.
     # The given block_type should be Optional[Callable], Callable, or nil.
     #
-    def self.create_callable(types, block_type, from, to)
+    def create_callable(types, block_type, from, to)
       mapped_types = types.map do |t|
         case t
         when String
-          type_parser ||= Puppet::Pops::Types::TypeParser.new
-          type_parser.parse(t)
-        when Puppet::Pops::Types::PAbstractType
-          t
+          @type_parser.parse(t)
         when Class
           Puppet::Pops::Types::TypeFactory.type_of(t)
         else
-          raise ArgumentError, "Type signature argument must be a Puppet Type, Class, or a String reference to a type. Got #{t.class}"
+          raise ArgumentError, "Type signature argument must be a Ruby Type Class, or a String reference to a Puppet Data Type. Got #{t.class}"
         end
       end
       if !(from.nil? && to.nil?)
