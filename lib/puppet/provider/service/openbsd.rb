@@ -210,7 +210,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   # return the array with the current resource added
   # @api private
   def pkg_scripts_append
-    [pkg_scripts(), resource[:name]].flatten.sort.uniq
+    [pkg_scripts(), resource[:name]].flatten.uniq
   end
 
   # return the array without the current resource
