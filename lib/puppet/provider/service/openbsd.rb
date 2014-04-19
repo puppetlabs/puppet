@@ -245,12 +245,11 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
     content
   end
 
-  # Determine if the rc script is included in base, or if it exists as a result
-  # of a package installation.
+  # Determine if the rc script is included in base
   # @api private
   def in_base?
-    system("/usr/sbin/pkg_info -qE /etc/rc.d/#{self.name}> /dev/null")
-    $?.exitstatus == 1
+    script = File.readlines(self.class.rcconf).find {|s| s =~ /^#{rcvar_name}/ }
+    !script.nil?
   end
 
   # @api private
