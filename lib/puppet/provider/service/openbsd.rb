@@ -172,7 +172,9 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
     end
 
     if flags.nil?
-      append = resource[:name] + '_flags=""'
+      if in_base?
+	append = resource[:name] + '_flags=""'
+     end
     else
       append = resource[:name] + '_flags="' + flags + '"'
     end
