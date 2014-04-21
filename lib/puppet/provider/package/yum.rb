@@ -71,18 +71,16 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     args.concat(enablerepo.map { |repo| ['-e', repo] }.flatten)
     args.concat(disablerepo.map { |repo| ['-d', repo] }.flatten)
 
-    python(args).each_line do |l|
-      if (match = l.match /^_pkg (.*)$/)
-        hash = nevra_to_hash(match[1])
+    python(args).scan(/^_pkg (.*)$/) do |match|
+      hash = nevra_to_hash(match[0])
 
-        # Create entries for both the package name without a version and a
-        # version since yum considers those as mostly interchangeable.
-        short_name = hash[:name]
-        long_name  = "#{hash[:name]}.#{hash[:arch]}"
+      # Create entries for both the package name without a version and a
+      # version since yum considers those as mostly interchangeable.
+      short_name = hash[:name]
+      long_name  = "#{hash[:name]}.#{hash[:arch]}"
 
-        latest_versions[short_name] << hash
-        latest_versions[long_name]  << hash
-      end
+      latest_versions[short_name] << hash
+      latest_versions[long_name]  << hash
     end
     latest_versions
   end
