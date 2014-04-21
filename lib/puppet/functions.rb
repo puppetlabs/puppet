@@ -178,13 +178,13 @@ module Puppet::Functions
   # @param &block [Proc] the block that defines the methods and dispatch of the Function to create
   # @return [Class<Function>] the newly created Function class
   #
-  def self.create_function(func_name, &block)
+  def self.create_function(func_name, function_base = Function, &block)
     func_name = func_name.to_s
     # Creates an anonymous class to represent the function
     # The idea being that it is garbage collected when there are no more
     # references to it.
     #
-    the_class = Class.new(Function, &block)
+    the_class = Class.new(function_base, &block)
 
     # Make the anonymous class appear to have the class-name <func_name>
     # Even if this class is not bound to such a symbol in a global ruby scope and
@@ -263,60 +263,21 @@ module Puppet::Functions
   # Most methods act on the class, except `call`, `closure_scope`, and `loader` which are bound to a
   # particular instance of the function (it is aware of its runtime context).
   #
-  class Function
-    # The scope where the function was defined
-    attr_reader :closure_scope
-
-    # The loader that loaded this function.
-    # Should be used if function wants to load other things.
-    #
-    attr_reader :loader
-
-    def initialize(closure_scope, loader)
-      @closure_scope = closure_scope
-      @loader = loader
-    end
-
-    # Invokes the function via the dispatching logic that performs type check and weaving.
-    # A specialized function may override this method to do its own dispatching and checking of
-    # the raw arguments. A specialized implementation can rearrange arguments, add or remove
-    # arguments and then delegate to the dispatching logic by calling:
-    #
-    # @example Delegating to the dispatcher
-    #     def call(scope, *args)
-    #       manipulated_args = args + ['easter_egg']
-    #       self.class.dispatcher.dispatch(self, scope, manipulated_args)
-    #     end
-    #
-    # System functions that must have access to the calling scope can use this technique. Functions
-    # in general should not need the calling scope. (The closure scope; what is visible where the function
-    # is defined) is available via the method `closure_scope`).
-    #
-    def call(scope, *args)
-      self.class.dispatcher.dispatch(self, scope, args)
-    end
-
-    # Allows the implementation of a function to call other functions by name. The callable functions
-    # are those visible to the same loader that loaded this function (the calling function).
-    #
-    def call_function(function_name, *args)
-      if the_loader = loader
-        func = the_loader.load(:function, function_name)
-        if func
-          return func.call(closure_scope, *args)
-        end
-      end
-      # Raise a generic error to allow upper layers to fill in the details about where in a puppet manifest this
-      # error originates. (Such information is not available here).
-      #
-      raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found"
+  class Function < Puppet::Pops::Functions::Function
+    def self.builder
+      DispatcherBuilder.new(dispatcher)
     end
 
     def self.dispatch(meth_name, &block)
-      builder = DispatcherBuilder.new(dispatcher)
-      builder.instance_eval do
+      builder().instance_eval do
         dispatch(meth_name, &block)
       end
+    end
+  end
+
+  class InjectedFunction < Function
+    def self.builder
+      InjectedDispatchBuilder.new(dispatcher)
     end
 
     # Defines class level injected attribute with reader method
@@ -343,16 +304,6 @@ module Puppet::Functions
         end
         instance_variable_get(ivar)
       end
-    end
-
-    def self.dispatcher
-      @dispatcher ||= Puppet::Pops::Functions::Dispatcher.new
-    end
-
-    # Produces information about parameters in a way that is compatible with Closure
-    #
-    def self.signatures
-      @dispatcher.signatures
     end
   end
 
@@ -434,22 +385,6 @@ module Puppet::Functions
       @block_type = Puppet::Pops::Types::TypeFactory.optional(@block_type)
     end
 
-    # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
-    #
-    def injected_param(type, name, injection_name = '')
-      @injections << [type, name, injection_name]
-      # mark what should be picked for this position when dispatching
-      @weaving << [@injections.size() -1]
-    end
-
-    # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
-    #
-    def injected_producer_param(type, name, injection_name = '')
-      @injections << [type, name, injection_name, :producer]
-      # mark what should be picked for this position when dispatching
-      @weaving << [@injections.size()-1]
-    end
-
     # Specifies the min and max occurance of arguments (of the specified types) if something other than
     # the exact count from the number of specified types). The max value may be specified as -1 if an infinite
     # number of arguments are supported. When max is > than the number of specified types, the last specified type
@@ -498,6 +433,24 @@ module Puppet::Functions
         mapped_types << block_type
       end
       Puppet::Pops::Types::TypeFactory.callable(*mapped_types)
+    end
+  end
+
+  class InjectedDispatchBuilder < DispatcherBuilder
+    # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
+    #
+    def injected_param(type, name, injection_name = '')
+      @injections << [type, name, injection_name]
+      # mark what should be picked for this position when dispatching
+      @weaving << [@injections.size() -1]
+    end
+
+    # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
+    #
+    def injected_producer_param(type, name, injection_name = '')
+      @injections << [type, name, injection_name, :producer]
+      # mark what should be picked for this position when dispatching
+      @weaving << [@injections.size()-1]
     end
   end
 end

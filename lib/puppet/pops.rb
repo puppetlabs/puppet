@@ -95,6 +95,7 @@ module Puppet
     end
 
     module Functions
+      require 'puppet/pops/functions/function'
       require 'puppet/pops/functions/dispatch'
       require 'puppet/pops/functions/dispatcher'
     end
