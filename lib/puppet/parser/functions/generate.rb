@@ -30,7 +30,7 @@ Puppet::Parser::Functions::newfunction(:generate, :arity => -2, :type => :rvalue
       end
 
       begin
-        Dir.chdir(File.dirname(args[0])) { Puppet::Util::Execution.execute(args) }
+        Dir.chdir(File.dirname(args[0])) { Puppet::Util::Execution.execute(args).to_str }
       rescue Puppet::ExecutionFailure => detail
         raise Puppet::ParseError, "Failed to execute generator #{args[0]}: #{detail}", detail.backtrace
       end

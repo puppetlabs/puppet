@@ -110,6 +110,10 @@ describe "the generate function" do
     File.delete(command) if Puppet::FileSystem.exist?(command)
   end
 
+  it "returns the output as a String" do
+    scope.function_generate([command]).class.should == String
+  end
+
   it "should call generator with no arguments" do
     scope.function_generate([command]).should == "a- b-\n"
   end
