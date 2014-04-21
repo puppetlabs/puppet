@@ -36,6 +36,13 @@ step "Upgrade a module that has a more recent version published in a legacy envi
   check_module_upgrade_in.call('legacyenv', "#{master['puppetpath']}/legacyenv/modules")
 end
 
+step 'Enable directory environments' do
+  on master, puppet("config", "set",
+                    "environmentpath", "#{master['puppetpath']}/environments",
+                    "--section", "main",
+                    "--config", puppet_conf)
+end
+
 step "Upgrade a module that has a more recent version published in a directory environment" do
   install_test_module_in.call('direnv')
   check_module_upgrade_in.call('direnv', "#{master['puppetpath']}/environments/direnv/modules")

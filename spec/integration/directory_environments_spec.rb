@@ -10,7 +10,8 @@ describe "directory environments" do
 
   context "with a single directory environmentpath" do
     before(:each) do
-      environmentdir = Puppet[:environmentpath].split(File::PATH_SEPARATOR).first
+      environmentdir = PuppetSpec::Files.tmpdir('envpath')
+      Puppet[:environmentpath] = environmentdir
       FileUtils.mkdir_p(environmentdir + "/direnv/modules")
     end
 

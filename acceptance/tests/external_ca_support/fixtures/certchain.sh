@@ -94,11 +94,11 @@ create_ca_certs() {
             # if this is the root cert, make a self-signed cert
             if [ "$name" = "root" ]; then
                 subj="/CN=Root CA/OU=Server Operations/O=Example Org, LLC"
-                openssl req -new -newkey rsa -days 7300 -nodes -x509 \
+                openssl req -new -newkey rsa:2048 -days 7300 -nodes -x509 \
                   -subj "${subj}" -keyout "ca-${name}.key" -out "ca-${name}.crt"
             else
                 # make a new key for the CA
-                openssl genrsa -out "ca-${name}.key"
+                openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "ca-${name}.key"
 
                 # build a CSR out of it
                 dedent > openssl.tmp << OPENSSL_TMP
@@ -277,7 +277,7 @@ create_leaf_cert() {
     mkdir -p "${dir}"
     (   cd "${dir}"
 
-        openssl genrsa -out "${fname}.key"
+        openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "${fname}.key"
         openssl req -subj "/CN=${fqdn}" -new -key "${fname}.key" -out "${fname}.csr"
         CN="${fqdn}" SAN="DNS:${fqdn}, DNS:${fqdn%%.*}, DNS:puppet, DNS:puppetmaster" \
           openssl ca -config "${B}/${ca}/openssl.conf" -in "${fname}.csr" -notext \
@@ -314,7 +314,7 @@ create_leaf_email_cert() {
     mkdir -p "${dir}"
     (   cd "${dir}"
 
-        openssl genrsa -out "${fname}.key"
+        openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "${fname}.key"
         openssl req -subj "/CN=${fqdn}/emailAddress=test@example.com" -new -key "${fname}.key" -out "${fname}.csr"
 
         openssl ca -config "${B}/${ca}/openssl.conf" -name master_ca_email_config \
@@ -524,7 +524,7 @@ main() {
 
     # Revoke the second agent and see it fail.
     call revoke_leaf_cert agent2.example.org
-    call revoke_leaf_cert master2.example.org master-ca
+    call revoke_leaf_cert master1.example.org master-ca
 
     exit 0
     call set_up_apache

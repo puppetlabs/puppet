@@ -108,19 +108,36 @@ class Puppet::Parser::Compiler
         Puppet::Util::Profiler.profile("Compile: Created injector") { create_injector }
       end
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
+      Puppet.override(context_overrides4x) do
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
+        Puppet::Util::Profiler.profile("Compile: Evaluated main") { evaluate_main }
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
+        Puppet::Util::Profiler.profile("Compile: Evaluated AST node") { evaluate_ast_node }
 
-      Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
+        Puppet::Util::Profiler.profile("Compile: Evaluated node classes") { evaluate_node_classes }
 
-      Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
+        Puppet::Util::Profiler.profile("Compile: Evaluated generators") { evaluate_generators }
 
-      fail_on_unevaluated
+        Puppet::Util::Profiler.profile("Compile: Finished catalog") { finish }
 
-      @catalog
+        fail_on_unevaluated
+
+        @catalog
+      end
+    end
+  end
+
+  # Constructs the overrides for the context
+  def context_overrides4x()
+    if Puppet[:parser] == 'future'
+      require 'puppet/loaders'
+      {
+        :global_scope => {},                      # 4x placeholder for new global scope
+        :loaders => Puppet::Pops::Loaders.new(),  # 4x loaders
+        :injector => injector()                   # 4x API - via context instead of via compiler
+      }
+    else
+      {}
     end
   end
 

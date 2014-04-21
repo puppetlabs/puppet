@@ -140,7 +140,7 @@ describe Puppet::Module do
     end
 
     it "should list modules with unmet version requirement" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       ['test_gte_req', 'test_specific_req', 'foobar'].each do |mod_name|
         metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
@@ -195,7 +195,7 @@ describe Puppet::Module do
     end
 
     it "should consider a dependency without a version requirement to be satisfied" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       mod = PuppetSpec::Modules.create(
         'foobar',
@@ -221,7 +221,7 @@ describe Puppet::Module do
     end
 
     it "should consider a dependency without a semantic version to be unmet" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       metadata_file = "#{@modpath}/foobar/metadata.json"
       Puppet::FileSystem.expects(:exist?).with(metadata_file).times(3).returns true
@@ -267,7 +267,7 @@ describe Puppet::Module do
     end
 
     it "should only list unmet dependencies" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       [name, 'satisfied'].each do |mod_name|
         metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
@@ -310,7 +310,7 @@ describe Puppet::Module do
     end
 
     it "should be empty when all dependencies are met" do
-      env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+      env = Puppet::Node::Environment.create(:testing, [@modpath])
 
       mod = PuppetSpec::Modules.create(
         'mymod2',
@@ -674,7 +674,7 @@ describe Puppet::Module do
   end
 
   it "should know what other modules require it" do
-    env = Puppet::Node::Environment.create(:testing, [@modpath], '')
+    env = Puppet::Node::Environment.create(:testing, [@modpath])
 
     dependable = PuppetSpec::Modules.create(
       'dependable',

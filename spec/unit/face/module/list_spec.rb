@@ -15,7 +15,7 @@ describe "puppet module list" do
     FileUtils.mkdir_p(@modpath2 = File.join(dir, "modpath2"))
     FileUtils.mkdir_p(@modpath3 = File.join(dir, "modpath3"))
 
-    env = Puppet::Node::Environment.create(:env, [@modpath1, @modpath2], '')
+    env = Puppet::Node::Environment.create(:env, [@modpath1, @modpath2])
     Puppet.override(:current_environment => env) do
       example.run
     end
@@ -33,7 +33,7 @@ describe "puppet module list" do
     barmod1 = PuppetSpec::Modules.create('bar', @modpath1)
     foomod2 = PuppetSpec::Modules.create('foo', @modpath2)
 
-    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2, @modpath3], '')
+    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2, @modpath3])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
       Puppet::Face[:module, :current].list(:environment => 'useme')[:modules_by_path].should == {
@@ -51,7 +51,7 @@ describe "puppet module list" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath1)
 
-    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2, @modpath3], '')
+    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2, @modpath3])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
       Puppet::Face[:module, :current].list(:environment => 'useme')[:modules_by_path].should == {
@@ -83,7 +83,7 @@ describe "puppet module list" do
   it "prefers a given modulepath over the modulepath from the given environment" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath2)
-    env = Puppet::Node::Environment.create(:myenv, ['/tmp/notused'], '')
+    env = Puppet::Node::Environment.create(:myenv, ['/tmp/notused'])
 
     modules = Puppet::Face[:module, :current].list(:environment => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")[:modules_by_path]
 
@@ -132,7 +132,7 @@ describe "puppet module list" do
       PuppetSpec::Modules.create('nometadata', modpath)
       PuppetSpec::Modules.create('metadata', modpath, :metadata => {:author => 'metaman'})
 
-      env = Puppet::Node::Environment.create(:environ, [modpath], '')
+      env = Puppet::Node::Environment.create(:environ, [modpath])
       Puppet.override(:current_environment => env) do
         expected = <<-HEREDOC.gsub('          ', '')
           #{modpath}
@@ -149,7 +149,7 @@ describe "puppet module list" do
       path2 = tmpdir('c')
       path3 = tmpdir('a')
 
-      env = Puppet::Node::Environment.create(:environ, [path1, path2, path3], '')
+      env = Puppet::Node::Environment.create(:environ, [path1, path2, path3])
       Puppet.override(:current_environment => env) do
         expected = <<-HEREDOC.gsub('          ', '')
           #{path1} (no modules installed)

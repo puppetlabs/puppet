@@ -7,7 +7,7 @@ describe Puppet::Node::Plain do
   let(:nodename) { "mynode" }
   let(:fact_values) { {:afact => "a value"} }
   let(:facts) { Puppet::Node::Facts.new(nodename, fact_values) }
-  let(:environment) { Puppet::Node::Environment.create(:myenv, [], '') }
+  let(:environment) { Puppet::Node::Environment.create(:myenv, []) }
   let(:request) { Puppet::Indirector::Request.new(:node, :find, nodename, nil, :environment => environment) }
   let(:node_indirection) { Puppet::Node::Plain.new }
 

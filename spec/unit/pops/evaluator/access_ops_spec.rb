@@ -276,10 +276,26 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
       expr = fqr('Class')[literal('apache')]
       expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
+    end
 
+    it 'produces an array of Class when args are in an array' do
       # arguments are flattened
       expr = fqr('Class')[[fqn('apache')]]
-      expect(evaluate(expr)).to be_the_type(types.host_class('apache'))
+      expect(evaluate(expr)[0]).to be_the_type(types.host_class('apache'))
+    end
+
+    it 'produces undef for Class if arg is undef' do
+      # arguments are flattened
+      expr = fqr('Class')[nil]
+      expect(evaluate(expr)).to be_nil
+    end
+
+    it 'produces empty array for Class if arg is [undef]' do
+      # arguments are flattened
+      expr = fqr('Class')[[]]
+      expect(evaluate(expr)).to be_eql([])
+      expr = fqr('Class')[[nil]]
+      expect(evaluate(expr)).to be_eql([])
     end
 
     it 'raises error if access is to no keys' do
@@ -304,9 +320,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect { evaluate(expr) }.to raise_error(/Illegal name/)
     end
 
-    it 'gives an error if an empty array is given as argument' do
-      expr = fqr('Class')[literal([])]
+    it 'gives an error if no keys are given as argument' do
+      expr = fqr('Class')[]
       expect {evaluate(expr)}.to raise_error(/Evaluation Error: Class\[\] accepts 1 or more arguments. Got 0/)
+    end
+
+    it 'produces an empty array if the keys reduce to empty array' do
+      expr = fqr('Class')[literal([[],[]])]
+      expect(evaluate(expr)).to be_eql([])
     end
 
     # Resource
@@ -315,10 +336,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(evaluate(expr)).to be_the_type(types.resource('File'))
       expr = fqr('Resource')[literal('File')]
       expect(evaluate(expr)).to be_the_type(types.resource('File'))
+    end
 
+    it 'does not allow the type to be specified in an array' do
       # arguments are flattened
       expr = fqr('Resource')[[fqr('File')]]
-      expect(evaluate(expr)).to be_the_type(types.resource('File'))
+      expect{evaluate(expr)}.to raise_error(Puppet::ParseError, /must be a resource type or a String/)
     end
 
     it 'produces a specific resource reference type from File[title]' do
@@ -340,14 +363,30 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect(result[1]).to be_the_type(types.resource('File', 'y'))
     end
 
-    it 'gives an error if an empty array is given as argument' do
-      expr = fqr('Resource')[literal([])]
-      expect {evaluate(expr)}.to raise_error(/Evaluation Error: Resource\[\] accepts 1 to 2 arguments. Got 0/)
+    it 'produces undef for Resource if arg is undef' do
+      # arguments are flattened
+      expr = fqr('File')[nil]
+      expect(evaluate(expr)).to be_nil
     end
 
-    it 'gives an error if an empty array is given as argument' do
-      expr = fqr('File')[literal([])]
-      expect {evaluate(expr)}.to raise_error(/Evaluation Error: File\[\] accepts 1 argument. Got 0/)
+    it 'gives an error if no keys are given as argument to Resource' do
+      expr = fqr('Resource')[]
+      expect {evaluate(expr)}.to raise_error(/Evaluation Error: Resource\[\] accepts 1 or more arguments. Got 0/)
+    end
+
+    it 'produces an empty array if the type is given, and keys reduce to empty array for Resource' do
+      expr = fqr('Resource')[fqr('File'),literal([[],[]])]
+      expect(evaluate(expr)).to be_eql([])
+    end
+
+    it 'gives an error i no keys are given as argument to a specific Resource type' do
+      expr = fqr('File')[]
+      expect {evaluate(expr)}.to raise_error(/Evaluation Error: File\[\] accepts 1 or more arguments. Got 0/)
+    end
+
+    it 'produces an empty array if the keys reduce to empty array for a specific Resource tyoe' do
+      expr = fqr('File')[literal([[],[]])]
+      expect(evaluate(expr)).to be_eql([])
     end
 
     it 'gives an error if resource is not found' do
@@ -389,7 +428,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     end
 
     failure_message_for_should do |actual|
-      "expected #{calc.string(type)}, but was #{calc.string(actual)}"
+      "expected #{type.to_s}, but was #{actual.to_s}"
     end
   end
 

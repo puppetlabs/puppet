@@ -6,7 +6,7 @@ require 'puppet/parser/files'
 describe Puppet::Parser::Files do
   include PuppetSpec::Files
 
-  let(:environment) { Puppet::Node::Environment.create(:testing, [], '') }
+  let(:environment) { Puppet::Node::Environment.create(:testing, []) }
 
   before do
     @basepath = make_absolute("/somepath")
@@ -140,7 +140,7 @@ describe Puppet::Parser::Files do
     end
 
     it "does not find the module when it is a different environment" do
-      different_env = Puppet::Node::Environment.create(:different, [], '')
+      different_env = Puppet::Node::Environment.create(:different, [])
       a_module_in_environment(environment, "mymod")
 
       Puppet::Parser::Files.find_manifests_in_modules("mymod/init.pp", different_env).should_not include("mymod")

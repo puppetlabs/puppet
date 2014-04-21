@@ -10,51 +10,6 @@ describe Puppet::Environments do
   FS = Puppet::FileSystem
 
   describe "directories loader" do
-
-    RSpec::Matchers.define :environment do |name|
-      match do |env|
-        env.name == name &&
-          (!@manifest || @manifest == env.manifest) &&
-          (!@modulepath || @modulepath == env.modulepath) &&
-          (!@config_version || @config_version == env.config_version)
-      end
-
-      chain :with_manifest do |manifest|
-        @manifest = manifest
-      end
-
-      chain :with_modulepath do |modulepath|
-        @modulepath = modulepath
-      end
-
-      chain :with_config_version do |config_version|
-        @config_version = config_version
-      end
-
-      description do
-        "environment #{expected}" +
-          (@manifest ? " with manifest #{@manifest}" : "") +
-          (@modulepath ? " with modulepath [#{@modulepath.join(', ')}]" : "") +
-          (@config_version ? " with config_version #{@config_version}" : "")
-      end
-
-      failure_message_for_should do |env|
-        "expected <#{env.name}: modulepath = [#{env.modulepath.join(', ')}], manifest = #{env.manifest}, config_version = #{env.config_version}> to be #{description}"
-      end
-    end
-
-    def loader_from(options, &block)
-      FS.overlay(*options[:filesystem]) do
-        environments = Puppet::Environments::Directories.new(
-          options[:directory],
-          options[:modulepath] || []
-        )
-        Puppet.override(:environments => environments) do
-          yield environments
-        end
-      end
-    end
-
     before(:each) do
       Puppet.settings.initialize_global_settings
     end
@@ -339,6 +294,50 @@ config_version=$vardir/random/scripts
             with_modulepath(modulepath.map(&:path)).
             with_config_version(File.expand_path('/some/script'))
         end
+      end
+    end
+  end
+
+  RSpec::Matchers.define :environment do |name|
+    match do |env|
+      env.name == name &&
+        (!@manifest || @manifest == env.manifest) &&
+        (!@modulepath || @modulepath == env.modulepath) &&
+        (!@config_version || @config_version == env.config_version)
+    end
+
+    chain :with_manifest do |manifest|
+      @manifest = manifest
+    end
+
+    chain :with_modulepath do |modulepath|
+      @modulepath = modulepath
+    end
+
+    chain :with_config_version do |config_version|
+      @config_version = config_version
+    end
+
+    description do
+      "environment #{expected}" +
+        (@manifest ? " with manifest #{@manifest}" : "") +
+        (@modulepath ? " with modulepath [#{@modulepath.join(', ')}]" : "") +
+        (@config_version ? " with config_version #{@config_version}" : "")
+    end
+
+    failure_message_for_should do |env|
+      "expected <#{env.name}: modulepath = [#{env.modulepath.join(', ')}], manifest = #{env.manifest}, config_version = #{env.config_version}> to be #{description}"
+    end
+  end
+
+  def loader_from(options, &block)
+    FS.overlay(*options[:filesystem]) do
+      environments = Puppet::Environments::Directories.new(
+        options[:directory],
+        options[:modulepath] || []
+      )
+      Puppet.override(:environments => environments) do
+        yield environments
       end
     end
   end

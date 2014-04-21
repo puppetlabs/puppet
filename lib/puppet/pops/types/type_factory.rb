@@ -70,6 +70,11 @@ module Puppet::Pops::Types::TypeFactory
     t
   end
 
+  # Convenience method to produce an Optional[Object] type
+  def self.optional_object()
+    optional(object())
+  end
+
   # Produces the Enum type, optionally with specific string values
   # @api public
   #
@@ -135,6 +140,7 @@ module Puppet::Pops::Types::TypeFactory
     if pattern
       t.pattern = pattern.is_a?(Regexp) ? pattern.inspect[1..-2] : pattern
     end
+    t.regexp() unless pattern.nil? # compile pattern to catch errors
     t
   end
 
@@ -145,6 +151,7 @@ module Puppet::Pops::Types::TypeFactory
       when String
         re_T = Types::PRegexpType.new()
         re_T.pattern = re
+        re_T.regexp()  # compile it to catch errors
         t.addPatterns(re_T)
 
       when Regexp
@@ -175,6 +182,62 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.scalar()
     Types::PScalarType.new()
+  end
+
+  # Produces a CallableType matching all callables
+  # @api public
+  #
+  def self.all_callables()
+    return Puppet::Pops::Types::PCallableType.new
+  end
+
+  # Produces a Callable type with one signature without support for a block
+  # Use #with_block, or #with_optional_block to add a block to the callable
+  # If no parameters are given, the Callable will describe a signature
+  # that does not accept parameters. To create a Callable that matches all callables
+  # use {#all_callables}.
+  #
+  # The params is a list of types, where the three last entries may be
+  # optionally followed by min, max count, and a Callable which is taken as the block_type.
+  # If neither min or max are specified the parameters must match exactly.
+  # A min < params.size means that the difference are optional.
+  # If max > params.size means that the last type repeats.
+  # if max is :default, the max value is unbound (infinity).
+  # 
+  # Params are given as a sequence of arguments to {#type_of}.
+  #
+  def self.callable(*params)
+    callable = Types::PCallableType.new()
+    block_t = params[-1].is_a?(Types::PCallableType) ? params.pop : nil
+    # compute a size_type for the signature based on the two last parameters
+    if is_range_parameter?(params[-2]) && is_range_parameter?(params[-1])
+      size_type = range(params[-2], params[-1])
+      params = params[0, params.size - 2]
+    elsif is_range_parameter?(params[-1])
+      size_type = range(params[-1], :default)
+      params = params[0, params.size - 1]
+    end
+
+    types = params.map {|p| type_of(p) }
+
+    # create a signature
+    callable_t = Types::PCallableType.new()
+    tuple_t = tuple(*types)
+    tuple_t.size_type = size_type unless size_type.nil?
+    callable_t.param_types = tuple_t
+
+    callable_t.block_type = block_t
+    callable_t
+  end
+
+  def self.with_block(callable, *block_params)
+    callable.block_type = callable(*block_params)
+    callable
+  end
+
+  def self.with_optional_block(callable, *block_params)
+    callable.block_type = optional(callable(*block_params))
+    callable
   end
 
   # Produces the abstract type Collection

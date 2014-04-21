@@ -360,6 +360,26 @@ module Puppet::Pops::Types
     end
   end
 
+  class PCallableType < PObjectType
+    # Types of parameters and required/optional count
+    contains_one_uni 'param_types', PTupleType, :lowerBound => 1
+
+    # Although being an abstract type reference, only PAbstractCallable, and Optional[Callable] are supported
+    # If not set, the meaning is that block is not supported.
+    #
+    contains_one_uni 'block_type', PAbstractType, :lowerBound => 0
+
+    module ClassModule
+      def hash
+        [self.class, Set.new(param_types), block_type].hash
+      end
+
+      def ==(o)
+        self.class == o.class && args_type == o.args_type && block_type == o.block_type
+      end
+    end
+  end
+
   # @api public
   class PArrayType < PCollectionType
     module ClassModule

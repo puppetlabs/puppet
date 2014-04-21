@@ -28,7 +28,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     Puppet.settings[:modulepath] = "/no/such/file"
 
-    env = Puppet::Node::Environment.create(:foo, [path], '')
+    env = Puppet::Node::Environment.create(:foo, [path])
 
     result = Puppet::FileServing::Content.indirection.search("plugins", :environment => env, :recurse => true)
 

@@ -157,7 +157,7 @@ TREE
     let(:options) { {} }
     let(:modulepath) { ['/env/module/path', '/global/module/path'] }
     let(:environment_name) { 'current_environment' }
-    let(:environment) { Puppet::Node::Environment.create(environment_name, modulepath, '') }
+    let(:environment) { Puppet::Node::Environment.create(environment_name, modulepath) }
 
     subject do
       described_class.set_option_defaults(options)
@@ -193,7 +193,7 @@ TREE
       end
 
       context 'as Puppet::Node::Environment' do
-        let(:env) { Puppet::Node::Environment.create('anonymous', [], '') }
+        let(:env) { Puppet::Node::Environment.create('anonymous', []) }
         let(:options) { { :environment => env } }
 
         it 'assigns the given environment to :environment_instance' do

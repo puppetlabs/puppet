@@ -110,8 +110,12 @@ module Puppet::Functions
   #
   #     test(10, 20)
   #
+  # @param func_name [String, Symbol] a simple or qualified function name
+  # @param &block [Proc] the block that defines the methods and dispatch of the Function to create
+  # @return [Class<Function>] the newly created Function class
+  #
   def self.create_function(func_name, &block)
-
+    func_name = func_name.to_s
     # Creates an anonymous class to represent the function
     # The idea being that it is garbage collected when there are no more
     # references to it.
@@ -134,7 +138,6 @@ module Puppet::Functions
     # This also overrides any attempt to define a name method in the given block
     # (Since it redefines it)
     #
-    # TODO, the final name of the function class should also reflect the name space
     # TODO, enforce name in lower case (to further make it stand out since Ruby class names are upper case)
     #
     the_class.instance_eval do
@@ -148,8 +151,9 @@ module Puppet::Functions
     # define any dispatchers. Fail if function name does not match a given method name in user code.
     #
     if the_class.dispatcher.empty?
-      type, names = default_dispatcher(the_class, func_name)
-      the_class.dispatcher.add_dispatch(type, func_name, names, nil, nil)
+      simple_name = func_name.split(/::/)[-1]
+      type, names = default_dispatcher(the_class, simple_name)
+      the_class.dispatcher.add_dispatch(type, simple_name, names, nil, nil)
     end
 
     # The function class is returned as the result of the create function method
@@ -359,7 +363,7 @@ module Puppet::Functions
       unless max_occurs == :default || (max_occurs.is_a?(Integer) && max_occurs >= 0)
         raise ArgumentError, "max arg_count of function parameter must be an Integer >= 0, or :default, got #{max_occurs.class} '#{max_occurs}'"
       end
-      unless max_occurs == :default || (max_occurs.is_a?(integer) && max_occurs >= min_occurs)
+      unless max_occurs == :default || (max_occurs.is_a?(Integer) && max_occurs >= min_occurs)
         raise ArgumentError, "max arg_count must be :default (infinite) or >= min arg_count, got min: '#{min_occurs}, max: '#{max_occurs}'"
       end
     end
@@ -461,8 +465,30 @@ module Puppet::Functions
       # @dispatchers << [ type, Puppet::Pops::Visitor.new(self, method_name, from, to), param_names, injections, weaving ]
     end
 
-    private
+    # Produces a CallableType for a single signature, and a Variant[<callables>] otherwise
+    #
+    def to_type()
+        callables = dispatchers.map do | dispatch |
+          t = Puppet::Pops::Types::PCallableType.new()
+          # TODO: handle that dispatch.type may be an ArrayType instead of a TupleType
+          t2 = dispatch.type
+          t.param_types = Puppet::Pops::Types::TypeCalculator.copy_as_tuple(t2)
+          # TODO: Function does not have a block type yet
+          t
+        end
+      if callables.size > 1
+        # multiple signatures, produce a Variant type of Callable1-n
+        t = Puppet::Pops::Types::PVariantType.new()
+        t.types = callables
+        t
+      else
+        # single signature, produce single Callable
+        callables.pop
+      end
+    end
 
+    # @api private
+    #
     class Dispatch
       attr_reader :type
       attr_reader :visitor
@@ -483,7 +509,7 @@ module Puppet::Functions
       end
 
       def weave(scope, args)
-        # no nead to weave if there are no injections
+        # no need to weave if there are no injections
         if injections.empty?
           args
         else
@@ -505,6 +531,8 @@ module Puppet::Functions
         end
       end
     end
+
+    private
 
     # Produces a string with the difference between the given arguments and support signature(s).
     #

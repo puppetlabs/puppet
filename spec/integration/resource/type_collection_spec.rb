@@ -12,7 +12,7 @@ describe Puppet::Resource::TypeCollection do
       @dir = tmpfile("autoload_testing")
       FileUtils.mkdir_p @dir
 
-      environment = Puppet::Node::Environment.create(:env, [@dir], '')
+      environment = Puppet::Node::Environment.create(:env, [@dir])
       @code = environment.known_resource_types
     end
 
