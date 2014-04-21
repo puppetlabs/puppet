@@ -368,6 +368,10 @@ module Puppet::Functions
   # under development that will be used for creating "system" functions.
   # ===========================================================================
   #
+  # This is a private, internal, system for creating functions. It supports
+  # everything that the public function definition system supports as well as a
+  # few extra features.
+  #
   # Injection Support
   # ===
   # The Function API supports injection of data and services. It is possible to
@@ -392,9 +396,9 @@ module Puppet::Functions
   #   end
   #
   # @api private
-  class InjectedFunction < Function
+  class InternalFunction < Function
     def self.builder
-      InjectedDispatchBuilder.new(dispatcher)
+      InternalDispatchBuilder.new(dispatcher)
     end
 
     # Defines class level injected attribute with reader method
@@ -481,7 +485,7 @@ module Puppet::Functions
   #   end
   #
   # @api private
-  class InjectedDispatchBuilder < DispatcherBuilder
+  class InternalDispatchBuilder < DispatcherBuilder
     # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
     #
     def injected_param(type, name, injection_name = '')

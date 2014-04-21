@@ -561,7 +561,7 @@ actual:
   end
 
   def create_function_with_class_injection
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InjectedFunction) do
+    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
       attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
       attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
@@ -573,7 +573,7 @@ actual:
   end
 
   def create_function_with_param_injection_regular
-    f = Puppet::Functions.create_function('test', Puppet::Functions::InjectedFunction) do
+    f = Puppet::Functions.create_function('test', Puppet::Functions::InternalFunction) do
       attr_injected Puppet::Pops::Types::TypeFactory.type_of(FunctionAPISpecModule::TestDuck), :test_attr
       attr_injected Puppet::Pops::Types::TypeFactory.string(), :test_attr2, "a_string"
       attr_injected_producer Puppet::Pops::Types::TypeFactory.integer(), :serial, "an_int"
