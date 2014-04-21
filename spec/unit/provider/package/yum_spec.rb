@@ -89,9 +89,32 @@ describe provider_class do
   end
 
   describe 'determining the latest version available for a package' do
+
+    it "passes the value of enablerepo install_options when querying" do
+      resource[:install_options] = [
+        {'--enablerepo' => 'contrib'},
+        {'--enablerepo' => 'centosplus'},
+      ]
+      provider.stubs(:properties).returns({:ensure => '3.4.5'})
+
+      described_class.expects(:latest_package_version).with('mypackage', ['contrib', 'centosplus'], [])
+      provider.latest
+    end
+
+    it "passes the value of disablerepo install_options when querying" do
+      resource[:install_options] = [
+        {'--disablerepo' => 'updates'},
+        {'--disablerepo' => 'centosplus'},
+      ]
+      provider.stubs(:properties).returns({:ensure => '3.4.5'})
+
+      described_class.expects(:latest_package_version).with('mypackage', [], ['updates', 'centosplus'])
+      provider.latest
+    end
+
     describe 'and a newer version is not available' do
       before :each do
-        described_class.stubs(:latest_package_version).with('mypackage').returns nil
+        described_class.stubs(:latest_package_version).with('mypackage', [], []).returns nil
       end
 
       it 'raises an error the package is not installed' do
@@ -119,13 +142,14 @@ describe provider_class do
       end
 
       it 'includes the epoch in the version string' do
-        described_class.stubs(:latest_package_version).returns(latest_version)
+        described_class.stubs(:latest_package_version).with('mypackage', [], []).returns(latest_version)
         provider.latest.should == '1:2.3.4-5'
       end
     end
   end
 
   describe "lazy loading of latest package versions" do
+    before { described_class.clear }
     after { described_class.clear }
 
     let(:mypackage_version) do
@@ -138,19 +162,53 @@ describe provider_class do
       }
     end
 
-    let(:latest_versions) { {'mypackage' => [mypackage_version]} }
+    let(:mypackage_newerversion) do
+      {
+        :name     => 'mypackage',
+        :epoch    => '1',
+        :version  => '4.5.6',
+        :release  => '7',
+        :arch     => 'i686',
+      }
+    end
 
-    it "updates the list of latest packages if the list is unpopulated" do
-      described_class.clear
-      described_class.expects(:fetch_latest_versions).once.returns(latest_versions)
-      expect(described_class.latest_package_version('mypackage')).to eq(mypackage_version)
+    let(:latest_versions) { {'mypackage' => [mypackage_version]} }
+    let(:enabled_versions) { {'mypackage' => [mypackage_newerversion]} }
+
+    it "returns the version hash if the package was found" do
+      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      version = described_class.latest_package_version('mypackage', [], [])
+      expect(version).to eq(mypackage_version)
+    end
+
+    it "is nil if the package was not found in the query" do
+      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      version = described_class.latest_package_version('nopackage', [], [])
+      expect(version).to be_nil
     end
 
     it "caches the package list and reuses that for subsequent queries" do
-      described_class.clear
-      described_class.expects(:fetch_latest_versions).once.returns(latest_versions)
-      expect(described_class.latest_package_version('mypackage')).to eq(mypackage_version)
-      expect(described_class.latest_package_version('mypackage')).to eq(mypackage_version)
+      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+
+      2.times {
+        version = described_class.latest_package_version('mypackage', [], [])
+        expect(version).to eq mypackage_version
+      }
+    end
+
+    it "caches separate lists for each combination of 'enablerepo' and 'disablerepo'" do
+      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      described_class.expects(:fetch_latest_versions).with(['enabled'], ['disabled']).once.returns(enabled_versions)
+
+      2.times {
+        version = described_class.latest_package_version('mypackage', [], [])
+        expect(version).to eq mypackage_version
+      }
+
+      2.times {
+        version = described_class.latest_package_version('mypackage', ['enabled'], ['disabled'])
+        expect(version).to eq(mypackage_newerversion)
+      }
     end
   end
 
@@ -176,8 +234,8 @@ _pkg pixman 0 0.26.2 5.el6_4 i386
 
 
     it "creates an entry for each line that's prefixed with '_pkg'" do
-      described_class.expects(:python).with(described_class::YUMHELPER).returns(yumhelper_single_arch)
-      entries = described_class.fetch_latest_versions
+      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_single_arch)
+      entries = described_class.fetch_latest_versions([], [])
       expect(entries.keys).to include 'nss-tools'
       expect(entries.keys).to include 'pixman'
       expect(entries.keys).to include 'myresource'
@@ -185,8 +243,8 @@ _pkg pixman 0 0.26.2 5.el6_4 i386
     end
 
     it "creates an entry for each package name and architecture" do
-      described_class.expects(:python).with(described_class::YUMHELPER).returns(yumhelper_single_arch)
-      entries = described_class.fetch_latest_versions
+      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_single_arch)
+      entries = described_class.fetch_latest_versions([], [])
       expect(entries.keys).to include 'nss-tools.x86_64'
       expect(entries.keys).to include 'pixman.x86_64'
       expect(entries.keys).to include 'myresource.noarch'
@@ -194,13 +252,39 @@ _pkg pixman 0 0.26.2 5.el6_4 i386
     end
 
     it "stores multiple entries if a package is build for multiple architectures" do
-      described_class.expects(:python).with(described_class::YUMHELPER).returns(yumhelper_multi_arch)
-      entries = described_class.fetch_latest_versions
+      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_multi_arch)
+      entries = described_class.fetch_latest_versions([], [])
+      expect(entries.keys).to include 'nss-tools.x86_64'
+      expect(entries.keys).to include 'pixman.x86_64'
       expect(entries.keys).to include 'nss-tools.i386'
       expect(entries.keys).to include 'pixman.i386'
 
       expect(entries['nss-tools']).to have(2).items
       expect(entries['pixman']).to have(2).items
+    end
+
+    it "passes the repos to enable to the helper" do
+      described_class.expects(:python).with do |script, *args|
+        expect(script).to eq described_class::YUMHELPER
+        expect(args).to eq %w[-e updates -e centosplus]
+      end.returns('')
+      described_class.fetch_latest_versions(['updates', 'centosplus'], [])
+    end
+
+    it "passes the repos to disable to the helper" do
+      described_class.expects(:python).with do |script, *args|
+        expect(script).to eq described_class::YUMHELPER
+        expect(args).to eq %w[-d updates -d centosplus]
+      end.returns('')
+      described_class.fetch_latest_versions([], ['updates', 'centosplus'])
+    end
+
+    it 'passes a combination of repos to the helper' do
+      described_class.expects(:python).with do |script, *args|
+        expect(script).to eq described_class::YUMHELPER
+        expect(args).to eq %w[-e os -e contrib -d updates -d centosplus]
+      end.returns('')
+      described_class.fetch_latest_versions(['os', 'contrib'], ['updates', 'centosplus'])
     end
   end
 end
