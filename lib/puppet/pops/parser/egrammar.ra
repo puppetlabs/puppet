@@ -594,7 +594,7 @@ node_definition_expression
 #---FUNCTION DEFINITION
 #
 function_definition
-  : FUNCTION { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+  : FUNCTION { result = Factory.QNAME(val[0][:value]) ; loc result, val[0] }
   # For now the function word will just be reserved, in the future it will
   # produce a function definition
   # FUNCTION classname parameter_list LBRACE opt_statements RBRACE {
