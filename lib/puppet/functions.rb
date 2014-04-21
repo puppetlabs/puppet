@@ -94,7 +94,7 @@ module Puppet::Functions
   # Calling other Functions
   # ---
   # Calling other functions by name is directly supported via
-  # `call_funcion(name, *args)`. This allows a function to call other functions
+  # `call_function(name, *args)`. This allows a function to call other functions
   # visible from its loader.
   #
   # @todo Optimizations
