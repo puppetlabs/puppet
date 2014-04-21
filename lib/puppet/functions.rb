@@ -32,8 +32,8 @@ module Puppet::Functions
   # @example dispatch and type checking
   #   Puppet::Functions.create_function('min') do
   #     dispatch :min do
-  #       param Numeric, 'a'
-  #       param Numeric, 'b'
+  #       param 'Numeric', 'a'
+  #       param 'Numeric', 'b'
   #     end
   #
   #     def min(a, b)
@@ -70,7 +70,7 @@ module Puppet::Functions
   #
   # @example variable number of args to
   #   dispatch :foo do
-  #     param Numeric, 'up_to_five_numbers'
+  #     param 'Numeric', 'up_to_five_numbers'
   #     arg_count 1, 5
   #   end
   #
@@ -207,7 +207,9 @@ module Puppet::Functions
 
     # @api private
     def self.builder
-      DispatcherBuilder.new(dispatcher)
+      @type_parser ||= Puppet::Pops::Types::TypeParser.new
+      @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
+      DispatcherBuilder.new(dispatcher, @type_parser, @all_callables)
     end
 
     # @api public
@@ -221,9 +223,10 @@ module Puppet::Functions
   # Public api methods of the DispatcherBuilder are available within dispatch()
   # blocks declared in a Puppet::Function.create_function() call.
   class DispatcherBuilder
-    def initialize(dispatcher)
-      @type_parser = Puppet::Pops::Types::TypeParser.new
-      @all_callables = Puppet::Pops::Types::TypeFactory.all_callables
+    # @api private
+    def initialize(dispatcher, type_parser, all_callables)
+      @type_parser = type_parser
+      @all_callables = all_callables
       @dispatcher = dispatcher
     end
 
@@ -231,10 +234,14 @@ module Puppet::Functions
     #
     # @api public
     def param(type, name)
-      @types << type
-      @names << name
-      # mark what should be picked for this position when dispatching
-      @weaving << @names.size()-1
+      if type.is_a?(String)
+        @types << type
+        @names << name
+        # mark what should be picked for this position when dispatching
+        @weaving << @names.size()-1
+      else
+        raise ArgumentError, "Type signature argument must be a String reference to a Puppet Data Type. Got #{type.class}"
+      end
     end
 
     # Defines one required block parameter that may appear last. If type and name is missing the
@@ -334,29 +341,26 @@ module Puppet::Functions
       @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @last_captures)
     end
 
-    # Handles creation of a callable type from strings, puppet types, or ruby types and allows
-    # the min/max occurs of the given types to be given as one or two integer values at the end.
-    # The given block_type should be Optional[Callable], Callable, or nil.
+    # Handles creation of a callable type from strings specifications of puppet
+    # types and allows the min/max occurs of the given types to be given as one
+    # or two integer values at the end.  The given block_type should be
+    # Optional[Callable], Callable, or nil.
     #
     # @api private
     def create_callable(types, block_type, from, to)
       mapped_types = types.map do |t|
-        case t
-        when String
-          @type_parser.parse(t)
-        when Class
-          Puppet::Pops::Types::TypeFactory.type_of(t)
-        else
-          raise ArgumentError, "Type signature argument must be a Ruby Type Class, or a String reference to a Puppet Data Type. Got #{t.class}"
-        end
+        @type_parser.parse(t)
       end
+
       if !(from.nil? && to.nil?)
         mapped_types << from
         mapped_types << to
       end
+
       if block_type
         mapped_types << block_type
       end
+
       Puppet::Pops::Types::TypeFactory.callable(*mapped_types)
     end
   end
@@ -398,7 +402,9 @@ module Puppet::Functions
   # @api private
   class InternalFunction < Function
     def self.builder
-      InternalDispatchBuilder.new(dispatcher)
+      @type_parser ||= Puppet::Pops::Types::TypeParser.new
+      @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
+      InternalDispatchBuilder.new(dispatcher, @type_parser, @all_callables)
     end
 
     # Defines class level injected attribute with reader method
@@ -443,10 +449,10 @@ module Puppet::Functions
   # @example using injected parameters
   #   Puppet::Functions.create_function('test') do
   #     dispatch :test do
-  #       param Scalar, 'a'
-  #       param Scalar, 'b'
-  #       injected_param String, 'larger', 'message_larger'
-  #       injected_param String, 'smaller', 'message_smaller'
+  #       param 'Scalar', 'a'
+  #       param 'Scalar', 'b'
+  #       injected_param 'String', 'larger', 'message_larger'
+  #       injected_param 'String', 'smaller', 'message_smaller'
   #     end
   #     def test(a, b, larger, smaller)
   #       a > b ? larger : smaller
@@ -476,8 +482,8 @@ module Puppet::Functions
   #   Puppet::Functions.create_function('test') do
   #     dispatch :test do
   #       injected_param String, 'b_default', 'b_default_value_key'
-  #       param Scalar, 'a'
-  #       param Scalar, 'b'
+  #       param 'Scalar', 'a'
+  #       param 'Scalar', 'b'
   #     end
   #     def test(b_default, a, b = b_default)
   #       # ...

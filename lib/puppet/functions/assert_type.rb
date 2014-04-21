@@ -13,7 +13,7 @@ Puppet::Functions.create_function(:assert_type) do
   end
 
   dispatch :assert_type_s do
-    param String, 'type_string'
+    param 'String', 'type_string'
     param 'Optional[Object]', 'value'
   end
 

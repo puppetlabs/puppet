@@ -446,7 +446,7 @@ actual:
         # construct ruby function to call
         fc = Puppet::Functions.create_function('testing::test') do
           dispatch :test do
-            param Integer, 'x'
+            param 'Integer', 'x'
             # block called 'the_block', and using "all_callables"
             required_block_param #(all_callables(), 'the_block')
           end
@@ -504,8 +504,8 @@ actual:
   def create_min_function_class_using_dispatch
     f = Puppet::Functions.create_function('min') do
         dispatch :min do
-          param Numeric, 'a'
-          param Numeric, 'b'
+          param 'Numeric', 'a'
+          param 'Numeric', 'b'
         end
       def min(x,y)
         x <= y ? x : y
@@ -516,13 +516,13 @@ actual:
   def create_min_function_class_disptaching_to_two_methods
     f = Puppet::Functions.create_function('min') do
       dispatch :min do
-        param Numeric, 'a'
-        param Numeric, 'b'
+        param 'Numeric', 'a'
+        param 'Numeric', 'b'
       end
 
       dispatch :min_s do
-        param String, 's1'
-        param String, 's2'
+        param 'String', 's1'
+        param 'String', 's2'
       end
 
       def min(x,y)
@@ -547,11 +547,11 @@ actual:
   def create_function_with_optionals_and_varargs_via_dispatch
     f = Puppet::Functions.create_function('min') do
       dispatch :min do
-        param Numeric, 'x'
-        param Numeric, 'y'
-        param Numeric, 'a'
-        param Numeric, 'b'
-        param Numeric, 'c'
+        param 'Numeric', 'x'
+        param 'Numeric', 'y'
+        param 'Numeric', 'a'
+        param 'Numeric', 'b'
+        param 'Numeric', 'c'
         arg_count 2, :default
       end
       def min(x,y,a=1, b=1, *c)
@@ -595,7 +595,7 @@ actual:
   def create_function_with_required_block_all_defaults
     f = Puppet::Functions.create_function('test') do
       dispatch :test do
-        param Integer, 'x'
+        param 'Integer', 'x'
         # use defaults, any callable, name is 'block'
         required_block_param
       end
@@ -609,7 +609,7 @@ actual:
   def create_function_with_required_block_default_type
     f = Puppet::Functions.create_function('test') do
       dispatch :test do
-        param Integer, 'x'
+        param 'Integer', 'x'
         # use defaults, any callable, name is 'block'
         required_block_param 'the_block'
       end
@@ -623,7 +623,7 @@ actual:
   def create_function_with_required_block_given_type
     f = Puppet::Functions.create_function('test') do
       dispatch :test do
-        param Integer, 'x'
+        param 'Integer', 'x'
         required_block_param
       end
       def test(x, block)
@@ -636,7 +636,7 @@ actual:
   def create_function_with_required_block_fully_specified
     f = Puppet::Functions.create_function('test') do
       dispatch :test do
-        param Integer, 'x'
+        param 'Integer', 'x'
         # use defaults, any callable, name is 'block'
         required_block_param('Callable', 'the_block')
       end
@@ -650,7 +650,7 @@ actual:
   def create_function_with_optional_block_all_defaults
     f = Puppet::Functions.create_function('test') do
       dispatch :test do
-        param Integer, 'x'
+        param 'Integer', 'x'
         # use defaults, any callable, name is 'block'
         optional_block_param
       end
