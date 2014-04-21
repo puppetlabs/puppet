@@ -175,7 +175,8 @@ module Puppet::Functions
   #   different Dispatcher could short circuit the search.
   #
   # @param func_name [String, Symbol] a simple or qualified function name
-  # @param &block [Proc] the block that defines the methods and dispatch of the Function to create
+  # @param &block [Proc] the block that defines the methods and dispatch of the
+  #   Function to create
   # @return [Class<Function>] the newly created Function class
   #
   def self.create_function(func_name, function_base = Function, &block)
@@ -192,7 +193,8 @@ module Puppet::Functions
     # This also overrides any attempt to define a name method in the given block
     # (Since it redefines it)
     #
-    # TODO, enforce name in lower case (to further make it stand out since Ruby class names are upper case)
+    # TODO, enforce name in lower case (to further make it stand out since Ruby
+    # class names are upper case)
     #
     the_class.instance_eval do
       @func_name = func_name
@@ -201,8 +203,9 @@ module Puppet::Functions
       end
     end
 
-    # Automatically create an object dispatcher based on introspection if the loaded user code did not
-    # define any dispatchers. Fail if function name does not match a given method name in user code.
+    # Automatically create an object dispatcher based on introspection if the
+    # loaded user code did not define any dispatchers. Fail if function name
+    # does not match a given method name in user code.
     #
     if the_class.dispatcher.empty?
       simple_name = func_name.split(/::/)[-1]
@@ -228,15 +231,17 @@ module Puppet::Functions
     # Ruby 1.8.7 does not have support for details about parameters
     if method.respond_to?(:parameters)
       result = {:req => 0, :opt => 0, :rest => 0 }
-      # TODO: Optimize into one map iteration that produces names map, and sets count as side effect
+      # TODO: Optimize into one map iteration that produces names map, and sets
+      # count as side effect
       method.parameters.each { |p| result[p[0]] += 1 }
       from = result[:req]
       to = result[:rest] > 0 ? :default : from + result[:opt]
       names = method.parameters.map {|p| p[1].to_s }
     else
-      # Cannot correctly compute the signature in Ruby 1.8.7 because arity for optional values is
-      # screwed up (there is no way to get the upper limit), an optional looks the same as a varargs
-      # In this case - the failure will simply come later when the call fails
+      # Cannot correctly compute the signature in Ruby 1.8.7 because arity for
+      # optional values is screwed up (there is no way to get the upper limit),
+      # an optional looks the same as a varargs In this case - the failure will
+      # simply come later when the call fails
       #
       arity = method.arity
       from = arity >= 0 ? arity : -arity -1
@@ -258,10 +263,10 @@ module Puppet::Functions
 
   # Function
   # ===
-  # This class is the base class for all Puppet 4x Function API functions. A specialized class is
-  # created for each puppet function.
-  # Most methods act on the class, except `call`, `closure_scope`, and `loader` which are bound to a
-  # particular instance of the function (it is aware of its runtime context).
+  # This class is the base class for all Puppet 4x Function API functions. A
+  # specialized class is created for each puppet function.  Most methods act on
+  # the class, except `call`, `closure_scope`, and `loader` which are bound to
+  # a particular instance of the function (it is aware of its runtime context).
   #
   class Function < Puppet::Pops::Functions::Function
     def self.builder
@@ -385,10 +390,11 @@ module Puppet::Functions
       @block_type = Puppet::Pops::Types::TypeFactory.optional(@block_type)
     end
 
-    # Specifies the min and max occurance of arguments (of the specified types) if something other than
-    # the exact count from the number of specified types). The max value may be specified as -1 if an infinite
-    # number of arguments are supported. When max is > than the number of specified types, the last specified type
-    # repeats.
+    # Specifies the min and max occurance of arguments (of the specified types)
+    # if something other than the exact count from the number of specified
+    # types). The max value may be specified as -1 if an infinite number of
+    # arguments are supported. When max is > than the number of specified
+    # types, the last specified type repeats.
     #
     def arg_count(min_occurs, max_occurs)
       @min = min_occurs
