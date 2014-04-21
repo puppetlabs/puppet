@@ -1,4 +1,9 @@
 module Puppet::Functions
+  # ===========================================================================
+  # WARNING: This new function API is still under development and may change at
+  # any time
+  # ===========================================================================
+  #
   # Creates a new Puppet Function Class with the given func_name with
   # functionality defined by the given block.  The func name should be an
   # unqualified lower case name. The block is evaluated as when a derived Ruby
@@ -359,6 +364,11 @@ module Puppet::Functions
 
   private
 
+  # ===========================================================================
+  # WARNING: This style of creating functions is not public. It is a system
+  # under development that will be used for creating "system" functions.
+  # ===========================================================================
+  #
   # Injection Support
   # ===
   # The Function API supports injection of data and services. It is possible to
@@ -415,6 +425,11 @@ module Puppet::Functions
     end
   end
 
+  # ===========================================================================
+  # WARNING: This style of creating functions is not public. It is a system
+  # under development that will be used for creating "system" functions.
+  # ===========================================================================
+  #
   # Injection and Weaving of parameters
   # ---
   # It is possible to inject and weave parameters into a call. These extra
