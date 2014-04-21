@@ -48,8 +48,7 @@ module Puppet::Functions
   # matching type wins.
   #
   # Type arguments may be Puppet Type References in String form or Ruby classes
-  # (for basic types). To make type creation convenient, the logic that builds
-  # a dispatcher redirects any calls to the type factory.
+  # (for basic types).
   #
   # Argument Count and Capture Rest
   # ---
