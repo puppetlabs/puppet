@@ -5,7 +5,7 @@ class Puppet::ModuleTool::Tar::Gnu
 
     Dir.chdir(destdir) do
       tarball = Puppet::Util::Execution.execute(['gzip', '-dc', sourcefile])
-      Puppet::Util::Execution.execpipe(['tar', 'xof', '-']) do |pipe|
+      Puppet::Util::Execution.execpipe(['tar', 'xof', '-'], true, 'w+') do |pipe|
         pipe.write(tarball)
       end
 
@@ -17,7 +17,7 @@ class Puppet::ModuleTool::Tar::Gnu
 
   def pack(sourcedir, destfile)
     tarball = Puppet::Util::Execution.execute(['tar', 'cf', '-', sourcedir])
-    Puppet::Util::Execution.execpipe(['gzip', '-c']) do |pipe|
+    Puppet::Util::Execution.execpipe(['gzip', '-c'], true, 'w+') do |pipe|
       pipe.write(tarball)
       pipe.close_write
       File.open(destfile, 'w+') do |file|
