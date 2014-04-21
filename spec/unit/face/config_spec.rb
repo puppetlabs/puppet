@@ -52,7 +52,7 @@ syslogfacility = file
 
     it "prints directory env settings for an env that exists" do
       FS.overlay(
-        FS::MemoryFile.a_directory("/dev/null/environments", [
+        FS::MemoryFile.a_directory(File.expand_path("/dev/null/environments"), [
           FS::MemoryFile.a_directory("production", [
             FS::MemoryFile.a_missing_file("environment.conf"),
           ]),
@@ -60,18 +60,18 @@ syslogfacility = file
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
-environmentpath = /dev/null/environments
-manifest = /dev/null/environments/production/manifests
-modulepath = /dev/null/environments/production/modules#{File::PATH_SEPARATOR}/some/base
+environmentpath = #{File.expand_path("/dev/null/environments")}
+manifest = #{File.expand_path("/dev/null/environments/production/manifests")}
+modulepath = #{File.expand_path("/dev/null/environments/production/modules")}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
 environment = production
-basemodulepath = /some/base
+basemodulepath = #{File.expand_path("/some/base")}
         OUTPUT
       end
     end
 
     it "interpolates settings in environment.conf" do
       FS.overlay(
-        FS::MemoryFile.a_directory("/dev/null/environments", [
+        FS::MemoryFile.a_directory(File.expand_path("/dev/null/environments"), [
           FS::MemoryFile.a_directory("production", [
             FS::MemoryFile.a_regular_file_containing("environment.conf", <<-CONTENT),
             modulepath=/custom/modules#{File::PATH_SEPARATOR}$basemodulepath
@@ -81,11 +81,11 @@ basemodulepath = /some/base
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
-environmentpath = /dev/null/environments
-manifest = /dev/null/environments/production/manifests
-modulepath = /custom/modules#{File::PATH_SEPARATOR}/some/base
+environmentpath = #{File.expand_path("/dev/null/environments")}
+manifest = #{File.expand_path("/dev/null/environments/production/manifests")}
+modulepath = #{File.expand_path("/custom/modules")}#{File::PATH_SEPARATOR}#{File.expand_path("/some/base")}
 environment = production
-basemodulepath = /some/base
+basemodulepath = #{File.expand_path("/some/base")}
         OUTPUT
       end
     end
@@ -94,17 +94,17 @@ basemodulepath = /some/base
       Puppet[:environment] = 'doesnotexist'
 
       FS.overlay(
-        FS::MemoryFile.a_directory("/dev/null/environments", [
+        FS::MemoryFile.a_directory(File.expand_path("/dev/null/environments"), [
           FS::MemoryFile.a_missing_file("doesnotexist")
         ])
       ) do
         args = "environmentpath","manifest","modulepath","environment","basemodulepath"
         expect { subject.print(*add_section_option(args, section)) }.to have_printed(<<-OUTPUT)
-environmentpath = /dev/null/environments
+environmentpath = #{File.expand_path("/dev/null/environments")}
 manifest = no_manifest
 modulepath = 
 environment = doesnotexist
-basemodulepath = /some/base
+basemodulepath = #{File.expand_path("/some/base")}
         OUTPUT
       end
     end
