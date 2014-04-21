@@ -660,6 +660,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         "notify { id: message=>explicit} Notify[id][message]"                   => "explicit",
         "Notify { message=>by_default} notify {foo:} Notify[foo][message]"      => "by_default",
         "notify {foo:} Notify[foo]{message =>by_override} Notify[foo][message]" => "by_override",
+        "notify { foo: tag => evoe} Notify[foo][tag]"                           => "evoe",
+        # Does not produce the defaults for tag
+        "notify { foo: } Notify[foo][tag]"                                      => nil,
       }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
@@ -670,6 +673,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       {
         "notify { xid: message=>explicit} Notify[id][message]"  => /Resource not found/,
         "notify { id: message=>explicit} Notify[id][mustard]"   => /does not have a parameter called 'mustard'/,
+        # NOTE: these meta-esque parameters are not recognized as such
+        "notify { id: message=>explicit} Notify[id][title]"   => /does not have a parameter called 'title'/,
+        "notify { id: message=>explicit} Notify[id]['type']"   => /does not have a parameter called 'type'/,
       }.each do |source, result|
         it "should parse '#{source}' and raise error matching #{result}" do
           expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(result)

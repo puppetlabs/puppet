@@ -487,6 +487,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       unless resource
         fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => o.type_name, :title => o.title})
       end
+
       result = keys.map do |k|
         unless is_parameter_of_resource?(scope, resource, k)
           fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,

@@ -350,15 +350,20 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Returns the value of a resource's parameter by first looking up the parameter in the resource
   # and then in the defaults for the resource. Since the resource exists (it must in order to look up its
   # parameters, any overrides have already been applied). Defaults are not applied to a resource until it
-  # has been finished (which typically has not taked place when this is evaluated; hence the dual lookup).
+  # has been finished (which typically has not taken place when this is evaluated; hence the dual lookup).
   #
   def get_resource_parameter_value(scope, resource, parameter_name)
+    # This gets the parameter value, or nil (for both valid parameters and parameters that do not exist).
     val = resource[parameter_name]
     if val.nil? && defaults = scope.lookupdefaults(resource.type)
       # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
       # name and value.
+      # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded
+      # in the defaults, they may receive hardcoded defaults later (e.g. 'tag').
       param = defaults[parameter_name.to_sym]
-      val = param.value
+      # Some parameters (meta parameters like 'tag') does not return a param from which the value can be obtained
+      # at all times. Instead, they return a nil param until a value has been set.
+      val = param.nil? ? nil : param.value
     end
     val
   end
