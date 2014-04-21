@@ -1,3 +1,17 @@
+# ===========================================================================
+# WARNING: This new function API is still under development and may change at
+# any time
+# ===========================================================================
+#
+# A function in the puppet evaluator.
+#
+# Functions are normally defined by another system, which produces subclasses
+# of this class as well as constructing delegations to call the appropriate methods.
+#
+# This class should rarely be used directly. Instead functions should be
+# constructed using {Puppet::Functions.create_function}.
+#
+# @api public
 class Puppet::Pops::Functions::Function
   # The scope where the function was defined
   attr_reader :closure_scope
@@ -27,6 +41,7 @@ class Puppet::Pops::Functions::Function
   # in general should not need the calling scope. (The closure scope; what is visible where the function
   # is defined) is available via the method `closure_scope`).
   #
+  # @api public
   def call(scope, *args)
     self.class.dispatcher.dispatch(self, scope, args)
   end
@@ -34,6 +49,7 @@ class Puppet::Pops::Functions::Function
   # Allows the implementation of a function to call other functions by name. The callable functions
   # are those visible to the same loader that loaded this function (the calling function).
   #
+  # @api public
   def call_function(function_name, *args)
     if the_loader = loader
       func = the_loader.load(:function, function_name)
@@ -47,12 +63,16 @@ class Puppet::Pops::Functions::Function
     raise ArgumentError, "Function #{self.class.name}(): cannot call function '#{function_name}' - not found"
   end
 
+  # The dispatcher for the function
+  #
+  # @api private
   def self.dispatcher
     @dispatcher ||= Puppet::Pops::Functions::Dispatcher.new
   end
 
   # Produces information about parameters in a way that is compatible with Closure
   #
+  # @api private
   def self.signatures
     @dispatcher.signatures
   end
