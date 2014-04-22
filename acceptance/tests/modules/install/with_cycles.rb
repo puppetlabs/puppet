@@ -20,7 +20,7 @@ step "Install a module with cycles"
 on master, puppet("module install #{module_author}-#{module_name} --version 0.0.1") do
   assert_equal <<-OUTPUT, stdout
 \e[mNotice: Preparing to install into #{master['distmoduledir']} ...\e[0m
-\e[mNotice: Downloading from https://forge.puppetlabs.com ...\e[0m
+\e[mNotice: Downloading from https://forgeapi.puppetlabs.com ...\e[0m
 \e[mNotice: Installing -- do not interrupt ...\e[0m
 #{master['distmoduledir']}
 └─┬ #{module_author}-#{module_name} (\e[0;36mv0.0.1\e[0m)

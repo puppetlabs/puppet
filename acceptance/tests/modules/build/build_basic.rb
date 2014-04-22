@@ -17,7 +17,7 @@ license "Apache Version 2.0"
 summary "Nginx Module"
 description "Nginx"
 project_page "http://github.com/puppetlabs/puppetlabs-ntp"
-dependency "puppetlabs/stdlib", ">= 1.0.0"
+dependency "puppetlabs/stdlub", ">= 1.0.0"
 ';
 }
 PP
