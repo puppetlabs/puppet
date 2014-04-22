@@ -4,6 +4,13 @@ confine :except, :platform => 'windows'
 require 'puppet/acceptance/common_utils'
 extend Puppet::Acceptance::CronUtils
 
+teardown do
+  step "Cron: cleanup"
+  agents.each do |agent|
+    clean agent
+  end
+end
+
 agents.each do |host|
   step "ensure the user exist via puppet"
   setup host
