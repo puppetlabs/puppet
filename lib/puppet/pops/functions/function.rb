@@ -1,7 +1,5 @@
-# ===========================================================================
-# WARNING: This new function API is still under development and may change at
-# any time
-# ===========================================================================
+# @note WARNING: This new function API is still under development and may change at
+#   any time
 #
 # A function in the puppet evaluator.
 #

@@ -1,10 +1,12 @@
-# This is a smart dispatcher
-# For backwards compatible (untyped) API, the dispatcher only enforces simple count, and can be simpler internally
+# Evaluate the dispatches defined as {Puppet::Pops::Functions::Dispatch}
+# instances to call the appropriate method on the
+# {Puppet::Pops::Functions::Function} instance.
 #
 # @api private
 class Puppet::Pops::Functions::Dispatcher
   attr_reader :dispatchers
 
+# @api private
   def initialize()
     @dispatchers = [ ]
   end
@@ -12,6 +14,7 @@ class Puppet::Pops::Functions::Dispatcher
   # Answers if dispatching has been defined
   # @return [Boolean] true if dispatching has been defined
   #
+  # @api private
   def empty?
     @dispatchers.empty?
   end
@@ -23,6 +26,7 @@ class Puppet::Pops::Functions::Dispatcher
   # @param args [Array<Object>] - the given arguments in the form of an Array
   # @return [Object] - what the called function produced
   #
+  # @api private
   def dispatch(instance, calling_scope, args)
     tc = Puppet::Pops::Types::TypeCalculator
     actual = tc.infer_set(args)
@@ -40,12 +44,14 @@ class Puppet::Pops::Functions::Dispatcher
   # @param method_name [String] - the name of the method that will be called when type matches given arguments
   # @param names [Array<String>] - array with names matching the number of parameters specified by type (or empty array)
   #
+  # @api private
   def add_dispatch(type, method_name, param_names, block_name, injections, weaving, last_captures)
     @dispatchers << Puppet::Pops::Functions::Dispatch.new(type, method_name, param_names, block_name, injections, weaving, last_captures)
   end
 
   # Produces a CallableType for a single signature, and a Variant[<callables>] otherwise
   #
+  # @api private
   def to_type()
     # make a copy to make sure it can be contained by someone else (even if it is not contained here, it
     # should be treated as immutable).
@@ -57,6 +63,7 @@ class Puppet::Pops::Functions::Dispatcher
     callables.size > 1 ?  Puppet::Pops::Types::TypeFactory.variant(*callables) : callables.pop
   end
 
+  # @api private
   def signatures
     @dispatchers
   end
@@ -65,6 +72,7 @@ class Puppet::Pops::Functions::Dispatcher
 
   # Produces a string with the difference between the given arguments and support signature(s).
   #
+  # @api private
   def diff_string(name, args_type)
     result = [ ]
     if @dispatchers.size < 2
@@ -86,6 +94,7 @@ class Puppet::Pops::Functions::Dispatcher
 
   # Produces a string for the signature(s)
   #
+  # @api private
   def signature_string(dispatch) # args_type, param_names
     param_types  = dispatch.type.param_types
     block_type   = dispatch.type.block_type
@@ -146,15 +155,18 @@ class Puppet::Pops::Functions::Dispatcher
   end
 
   # Why oh why Ruby do you not have a standard Math.max ?
+  # @api private
   def max(a, b)
     a >= b ? a : b
   end
 
+  # @api private
   def opt_value_indicator(index, required_count, limit)
     count = index + 1
     (count > required_count && count < limit) ? '?' : ''
   end
 
+  # @api private
   def arg_count_string(args_type)
     if args_type.is_a?(Puppet::Pops::Types::PCallableType)
       size_range = args_type.param_types.size_range # regular parameters
@@ -176,6 +188,7 @@ class Puppet::Pops::Functions::Dispatcher
     "arg count #{range_string(size_range, false)}"
   end
 
+  # @api private
   def arg_types_string(args_type)
     types =
     case args_type
@@ -205,6 +218,7 @@ class Puppet::Pops::Functions::Dispatcher
   # * from is 0 and to is 1 => '?'
   # * to is INFINITY => {from, }
   #
+  # @api private
   def range_string(size_range, squelch_one = true)
     from, to = size_range
     if from == to

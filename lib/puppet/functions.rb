@@ -51,8 +51,8 @@
 # Documentation for the function should be placed as comments to the
 # implementation method(s).
 #
-# @todo Documentation of these new functions is not yet tied into the puppet
-#   doc system.
+# @todo Documentation for individual instances of these new functions is not
+#   yet tied into the puppet doc system.
 #
 # @example Dispatching to different methods by type
 #   Puppet::Functions.create_function('math::min') do
@@ -119,7 +119,7 @@
 # @api public
 module Puppet::Functions
   # @param func_name [String, Symbol] a simple or qualified function name
-  # @param &block [Proc] the block that defines the methods and dispatch of the
+  # @param block [Proc] the block that defines the methods and dispatch of the
   #   Function to create
   # @return [Class<Function>] the newly created Function class
   #

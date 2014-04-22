@@ -1,5 +1,10 @@
-# @api private
+# Defines a connection between a implementation method and the signature that
+# the method will handle.
 #
+# This interface should not be used directly. Instead dispatches should be
+# constructed using the DSL defined in {Puppet::Functions}.
+#
+# @api private
 class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSignature
   # @api public
   attr_reader :type
@@ -14,6 +19,7 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
   # @api public
   attr_reader :block_name
 
+  # @api private
   def initialize(type, method_name, param_names, block_name, injections, weaving, last_captures)
     @type = type
     @method_name = method_name
@@ -24,20 +30,22 @@ class Puppet::Pops::Functions::Dispatch < Puppet::Pops::Evaluator::CallableSigna
     @last_captures = last_captures
   end
 
-  # @api public
+  # @api private
   def parameter_names
     @param_names
   end
 
-  # @api public
+  # @api private
   def last_captures_rest?
     !! @last_captures
   end
 
+  # @api private
   def invoke(instance, calling_scope, args)
     instance.send(@method_name, *weave(calling_scope, args))
   end
 
+  # @api private
   def weave(scope, args)
     # no need to weave if there are no injections
     if injections.empty?

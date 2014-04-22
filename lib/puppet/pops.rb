@@ -1,5 +1,14 @@
 module Puppet
-
+  # The Pops language system. This includes the parser, evaluator, AST model, and
+  # Binder.
+  #
+  # @todo Explain how a user should use this to parse and evaluate the puppet
+  #   language.
+  #
+  # @note Warning: Pops is still considered experimental, as such the API may
+  #   change at any time.
+  #
+  # @api public
   module Pops
     require 'puppet/pops/patterns'
     require 'puppet/pops/utils'
@@ -94,6 +103,9 @@ module Puppet
       require 'puppet/pops/evaluator/epp_evaluator'
     end
 
+    # Subsystem for puppet functions defined in ruby.
+    #
+    # @api public
     module Functions
       require 'puppet/pops/functions/function'
       require 'puppet/pops/functions/dispatch'
