@@ -174,12 +174,14 @@ module Puppet::Environments
         name = Puppet::FileSystem.basename_string(envdir)
 
         setting_values = Puppet.settings.values(name, Puppet.settings.preferred_run_mode)
-        Puppet::Node::Environment.create(
+        env = Puppet::Node::Environment.create(
           name.intern,
           Puppet::Node::Environment.split_path(setting_values.interpolate(:modulepath)),
           setting_values.interpolate(:manifest),
           setting_values.interpolate(:config_version)
         )
+        env.watching = false
+        env
       end
     end
 
@@ -249,6 +251,132 @@ module Puppet::Environments
         end
       end
       nil
+    end
+
+  end
+
+# TODO: Possibly include if an entry should depend on a single file changing
+#    class PathEntry < Entry
+#      def initialie(value, path)
+#        super value
+#        @path = path
+#        # if this fails, fail with that error
+#        @mtime = Puppet::FileSystem.stat(@path).mtime.to_i
+#        @check_time = Time.now.to_i
+#        @timeout = Puppet[:filetimeout]
+#      end
+#
+#      def expired?
+#        # skip check if not time to check again
+#        return false unless (Time.now.to_i - @check_time) >= @timeout
+#        # check again
+#        begin
+#          Puppet::FileSystem.stat(@path).mtime.to_i > @mtime
+#        rescue StandardError
+#          # don't care why, it is someone else's problem - state it expired
+#          true
+#        end
+#      end
+#    end
+
+  class Cached < Combined
+    INFINITY = 1.0 / 0.0
+
+    def initialize(*loaders)
+      super
+      @cache = {}
+    end
+
+    def get(name)
+#      log(name, caller) # enable to watch what is being requested, and from where
+      evict_if_expired(name)
+      if result = @cache[name]
+        return result.value
+      elsif (result = super(name))
+        @cache[name] = entry(result)
+        result
+      end
+    end
+
+    # For debugging output of the last 5 callers in short form
+    def log(name, call_stack)
+      closest5 = caller[0..5].map { |pos| pos =~ /([a-z0-9_]+\.rb\:.*$)/; $1 }.join(', ')
+      File.open('envcache.txt', 'a') { |f| f.write("get #{name} from #{closest5}\n") }
+    end
+
+    # Clears the cache of the environment with the given name.
+    # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
+    def clear(name)
+      @cache.delete(name)
+    end
+
+    # Clears all cached environments.
+    # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
+    def clear_all()
+      @cache = {}
+    end
+
+    # This implementation evicts the cache, and always gets the current configuration of the environment
+    # TODO: While this is wasteful since it needs to go on a search for the conf, it is too disruptive to optimize
+    # this.
+    #
+    def get_conf(name)
+      evict_if_expired(name)
+      super name
+    end
+
+    # Creates a suitable cache entry given the time to live for one environment
+    #
+    def entry(env)
+      ttl = (conf = get_conf(env.name)) ? conf.environment_timeout : Puppet.settings.value(:environment_timeout)
+      case ttl
+      when 0
+        NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
+      when INFINITY
+        Entry.new(env)              # Entry that never expires (avoids syscall to get time)
+      else
+        TTLEntry.new(env, ttl)
+      end
+    end
+
+    # Evicts the entry if it has expired
+    #
+    def evict_if_expired(name)
+      if (result = @cache[name]) && result.expired?
+        @cache.delete(name)
+      end
+    end
+
+    # Never evicting entry
+    class Entry
+      attr_reader :value
+
+      def initialize(value)
+        @value = value
+      end
+
+      def expired?
+        false
+      end
+    end
+
+    # Always evicting entry
+    class NotCachedEntry < Entry
+      def expired?
+        true
+      end
+    end
+
+    # Time to Live eviction policy entry
+    class TTLEntry < Entry
+      def initialize(value, ttl_seconds)
+        super value
+        @ttl = Time.now + ttl_seconds
+      end
+
+      def expired?
+        Time.now > @ttl
+      end
     end
   end
 end

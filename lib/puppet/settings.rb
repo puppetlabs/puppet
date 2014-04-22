@@ -18,6 +18,7 @@ class Puppet::Settings
   require 'puppet/settings/boolean_setting'
   require 'puppet/settings/terminus_setting'
   require 'puppet/settings/duration_setting'
+  require 'puppet/settings/ttl_setting'
   require 'puppet/settings/priority_setting'
   require 'puppet/settings/autosign_setting'
   require 'puppet/settings/config_file'
@@ -654,6 +655,7 @@ class Puppet::Settings
       :boolean    => BooleanSetting,
       :terminus   => TerminusSetting,
       :duration   => DurationSetting,
+      :ttl        => TTLSetting,
       :enum       => EnumSetting,
       :priority   => PrioritySetting,
       :autosign   => AutosignSetting,

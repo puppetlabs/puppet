@@ -191,7 +191,8 @@ module Puppet
     end
 
     {
-      :environments => Puppet::Environments::Combined.new(*loaders)
+      :environments => Puppet::Environments::Cached.new(*loaders)
+#        :environments => Puppet::Environments::Combined.new(*loaders)
     }
   end
 
