@@ -83,12 +83,17 @@
 # type 'Object'.
 #
 # To express that the last parameter captures the rest, the method
-# `last_captures_rest` can be called. This is an indicator to those that
-# obtain information about the function (for the purpose of displaying error
-# messages etc.) For a Function, the call is processed the same way
-# irrespective `last_captures_rest`, and it is up to the implementor
-# of the target method to decide who the specified min/max number of
-# arguments are laid out.
+# `last_captures_rest` can be called. This indicates that the last parameter is
+# a varargs parameter and will be passed to the implementing method as an array
+# of the given type.
+#
+# When defining a dispatch for a function, the resulting dispatch matches
+# against the specified argument types and min/max occurrence of optional
+# entries. When the dispatch makes the call to the implementation method the
+# arguments are simply passed and it is the responsibility of the method's
+# implementor to ensure it can handle those arguments (i.e. there is no check
+# that what was declared as optional actually has a default value, and that
+# a "captures rest" is declared using a `*`).
 #
 # @example Varargs
 #   Puppet::Functions.create_function('foo') do
