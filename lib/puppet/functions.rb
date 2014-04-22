@@ -398,10 +398,8 @@ module Puppet::Functions
 
   private
 
-  # ===========================================================================
-  # WARNING: This style of creating functions is not public. It is a system
-  # under development that will be used for creating "system" functions.
-  # ===========================================================================
+  # @note WARNING: This style of creating functions is not public. It is a system
+  #   under development that will be used for creating "system" functions.
   #
   # This is a private, internal, system for creating functions. It supports
   # everything that the public function definition system supports as well as a
@@ -468,10 +466,8 @@ module Puppet::Functions
     end
   end
 
-  # ===========================================================================
-  # WARNING: This style of creating functions is not public. It is a system
-  # under development that will be used for creating "system" functions.
-  # ===========================================================================
+  # @note WARNING: This style of creating functions is not public. It is a system
+  #   under development that will be used for creating "system" functions.
   #
   # Injection and Weaving of parameters
   # ---
