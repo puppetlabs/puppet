@@ -1,109 +1,120 @@
+# @note WARNING: This new function API is still under development and may change at any time
+#
+# Functions in the puppet language can be written in Ruby and distributed in
+# puppet modules. The function is written by creating a file in the module's
+# `lib/puppet/functions/<modulename>` directory, where `<modulename>` is
+# replaces with the module's name. The file should have the name of the module.
+# For example, to create a function named `min` in a module named `math` create
+# a file named `lib/puppet/functions/math/min.rb` in the module. The function
+#
+# A function is implemented by calling {Puppet::Functions.create_function}, and
+# passing it a block that defines the implementation methods of the function.
+#
+# Functions are namespaced inside the module that contains them. The name of
+# the function is prefixed with the name of the module. For example,
+# `math::min`.
+#
+# @example A simple function
+#   Puppet::Functions.create_function('math::min') do
+#     def min(a, b)
+#       a <= b ? a : b
+#     end
+#   end
+#
+# Anatomy of a function
+# ---
+#
+# Functions are composed of four parts: the name, the implementation methods,
+# the signatures, and the dispatches.
+#
+# The name is the string given to the {Puppet::Functions.create_function}
+# method. It specifies how the name that is used in the puppet language, or by
+# other functions, to call this function.
+#
+# The implementation methods are ruby methods (there can be one or more) that
+# provide that actual implementation of the function's behavior. In the
+# simplest case the name of the function (excluding any namespace) and the name
+# of the method are the same. When that is done no other parts (signatures and
+# dispatches) need to be used.
+#
+# Signatures are a way of specifying the types of the function's parameters.
+# The types of any arguments will be checked against the types declared in the
+# signature and an error will be produced if they don't match. The types are
+# defined by using the same syntax for types as in the puppet language.
+#
+# Dispatches are how signatures and implementation methods are tied together.
+# When the function is called, puppet searches the signatures for one that
+# matches the supplied arguments. Each signature is part of a dispatch, that
+# specifies what method should be called for that signature. When the matcher
+# signature is found, the corrosponding method is called.
+#
+# Documentation for the function should be placed as comments to the
+# implementation method(s).
+#
+# @example Dispatching to different methods by type
+#   Puppet::Functions.create_function('math::min') do
+#     dispatch :numeric_min do
+#       param 'Numeric', 'a'
+#       param 'Numeric', 'b'
+#     end
+#
+#     dispatch :string_min do
+#       param 'String', 'a'
+#       param 'String', 'b'
+#     end
+#
+#     def numeric_min(a, b)
+#       a <= b ? a : b
+#     end
+#
+#     def string_min(a, b)
+#       a.downcase <= b.downcase ? a : b
+#     end
+#   end
+#
+# Specifying Signatures
+# ---
+#
+# If nothing is specified, the number of arguments given to the function must
+# be the same as the number of parameters (parameters that perform injection
+# not included), and all of the parameters are of type 'Object'.
+#
+# To express that the last parameter captures the rest, the method
+# `last_captures_rest` can be called. This is an indicator to those that
+# obtain information about the function (for the purpose of displaying error
+# messages etc.) For a Function, there the call is processed the same way
+# irrespective how the `last_captures_rest`, and it is up to the implementor
+# of the target method to decide who the specified min/max number of
+# arguments are laid out.  This is shown in the following example:
+#
+# @example Varargs
+#   Puppet::Functions.create_function('foo') do
+#     dispatch :foo do
+#       param 'Numeric', 'first'
+#       param 'Numeric', 'values'
+#       last_captures_rest
+#     end
+#
+#     def foo(first, *values)
+#       # do something
+#     end
+#   end
+#
+# Access to Scope
+# ---
+# In general, functions should not need access to scope; they should be
+# written to act on their given input only. If they absolutely must look up
+# variable values, they should do so via the closure scope (the scope where
+# they are defined) - this is done by calling `closure_scope()`.
+#
+# Calling other Functions
+# ---
+# Calling other functions by name is directly supported via
+# {Puppet::Pops::Functions::Function#call_function}. This allows a function to
+# call other functions visible from its loader.
+#
+# @api public
 module Puppet::Functions
-  # ===========================================================================
-  # WARNING: This new function API is still under development and may change at
-  # any time
-  # ===========================================================================
-  #
-  # Creates a new Puppet Function Class with the given func_name with
-  # functionality defined by the given block.  The func name should be an
-  # unqualified lower case name. The block is evaluated as when a derived Ruby
-  # class is created and it is intended (in the simplest case) that the user
-  # defines the actual function in a method named the same as the function (as
-  # shown in the first example below).
-  #
-  # @example A simple function
-  #   Puppet::Functions.create_function('min') do
-  #     def min(a, b)
-  #       a <= b ? a : b
-  #     end
-  #   end
-  #
-  # Documentation for the function should be placed as comments to the
-  # method(s) that define the functionality The simplest form of defining a
-  # function introspects the method signature (in the example `min(a,b)`) and
-  # infers that this means that there are 2 required arguments of Object type.
-  # If something else is wanted the method `dispatch` should be called in the
-  # block defining the function to define the details of dispatching a call of
-  # the function.
-  #
-  # In the next example, the function is enhanced to check that arguments are
-  # of numeric type.
-  #
-  # @example dispatch and type checking
-  #   Puppet::Functions.create_function('min') do
-  #     dispatch :min do
-  #       param 'Numeric', 'a'
-  #       param 'Numeric', 'b'
-  #     end
-  #
-  #     def min(a, b)
-  #       a <= b ? a : b
-  #     end
-  #   end
-  #
-  # It is possible to specify multiple type signatures as defined by the param
-  # specification in the dispatch method, and dispatch to the same, or
-  # alternative methods.  When a call is processed the given type signatures
-  # are tested in the order they were defined - the first signature with
-  # matching type wins.
-  #
-  # Type arguments may be Puppet Type References in String form or Ruby classes
-  # (for basic types).
-  #
-  # Argument Count and Capture Rest
-  # ---
-  # If nothing is specified, the number of arguments given to the function must
-  # be the same as the number of parameters (parameters that perform injection
-  # not included). If something else is wanted, the method `arg_count`
-  # specifies the minimum and maximum number of given arguments. Thus, to
-  # indicate that parameters are optional, set min to a value lower than the
-  # number of specified parameters, and max to the number of specified
-  # parameters.
-  #
-  # To express that the last parameter captures the rest, the method
-  # `last_captures_rest` can be called. This is an indicator to those that
-  # obtain information about the function (for the purpose of displaying error
-  # messages etc.) For a Function, there the call is processed the same way
-  # irrespective how the `last_captures_rest`, and it is up to the implementor
-  # of the target method to decide who the specified min/max number of
-  # arguments are laid out.  This is shown in the following example:
-  #
-  # @example variable number of args to
-  #   dispatch :foo do
-  #     param 'Numeric', 'up_to_five_numbers'
-  #     arg_count 1, 5
-  #   end
-  #
-  #   def foo(a, b=0, c=0, *d)
-  #     ...
-  #   end
-  #
-  # Access to Scope
-  # ---
-  # In general, functions should not need access to scope; they should be
-  # written to act on their given input only. If they absolutely must look up
-  # variable values, they should do so via the closure scope (the scope where
-  # they are defined) - this is done by calling `closure_scope()`.
-  #
-  # For Puppet System Functions where access to the calling scope may be
-  # essential the implementor of the function may override the `Function.call`
-  # method to pass the scope on to the method(s) implementing the body of the
-  # function.
-  #
-  # Calling other Functions
-  # ---
-  # Calling other functions by name is directly supported via
-  # `call_function(name, *args)`. This allows a function to call other functions
-  # visible from its loader.
-  #
-  # @todo Optimizations
-  #
-  #   Unoptimized implementation. The delegation chain is longer than required,
-  #   and arguments are passed with splat.  The chain Function -> class ->
-  #   Dispatcher -> Dispatch -> Visitor can be shortened for non polymorph
-  #   dispatching.  Also, when there is only one signature (single Dispatch), a
-  #   different Dispatcher could short circuit the search.
-  #
   # @param func_name [String, Symbol] a simple or qualified function name
   # @param &block [Proc] the block that defines the methods and dispatch of the
   #   Function to create
@@ -202,9 +213,7 @@ module Puppet::Functions
   # Function
   # ===
   # This class is the base class for all Puppet 4x Function API functions. A
-  # specialized class is created for each puppet function.  Most methods act on
-  # the class, except `call`, `closure_scope`, and `loader` which are bound to
-  # a particular instance of the function (it is aware of its runtime context).
+  # specialized class is created for each puppet function.
   #
   # @api public
   class Function < Puppet::Pops::Functions::Function
@@ -216,6 +225,13 @@ module Puppet::Functions
       DispatcherBuilder.new(dispatcher, @type_parser, @all_callables)
     end
 
+    # Dispatch any calls that match the signature to the provided method name.
+    #
+    # @param meth_name [Symbol] The name of the implementation method to call
+    #   when the signature defined in the block matches the arguments to a call
+    #   to the function.
+    # @return [Void]
+    #
     # @api public
     def self.dispatch(meth_name, &block)
       builder().instance_eval do
@@ -226,6 +242,8 @@ module Puppet::Functions
 
   # Public api methods of the DispatcherBuilder are available within dispatch()
   # blocks declared in a Puppet::Function.create_function() call.
+  #
+  # @api public
   class DispatcherBuilder
     # @api private
     def initialize(dispatcher, type_parser, all_callables)
@@ -234,7 +252,13 @@ module Puppet::Functions
       @dispatcher = dispatcher
     end
 
-    # Defines one parameter with type and name
+    # Defines a positional parameter with type and name
+    #
+    # @param type [String] The type specification for the parameter.
+    # @param name [String] The name of the parameter. This is primarily used
+    #   for error message output and does not have to match the name of the
+    #   parameter on the implementation method.
+    # @return [Void]
     #
     # @api public
     def param(type, name)
@@ -405,6 +429,7 @@ module Puppet::Functions
   #
   # @api private
   class InternalFunction < Function
+    # @api private
     def self.builder
       @type_parser ||= Puppet::Pops::Types::TypeParser.new
       @all_callables ||= Puppet::Pops::Types::TypeFactory.all_callables
@@ -413,6 +438,7 @@ module Puppet::Functions
 
     # Defines class level injected attribute with reader method
     #
+    # @api private
     def self.attr_injected(type, attribute_name, injection_name = nil)
       define_method(attribute_name) do
         ivar = :"@#{attribute_name.to_s}"
@@ -426,6 +452,7 @@ module Puppet::Functions
 
     # Defines class level injected producer attribute with reader method
     #
+    # @api private
     def self.attr_injected_producer(type, attribute_name, injection_name = nil)
       define_method(attribute_name) do
         ivar = :"@#{attribute_name.to_s}"
@@ -498,6 +525,7 @@ module Puppet::Functions
   class InternalDispatchBuilder < DispatcherBuilder
     # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
     #
+    # @api private
     def injected_param(type, name, injection_name = '')
       @injections << [type, name, injection_name]
       # mark what should be picked for this position when dispatching
@@ -506,6 +534,7 @@ module Puppet::Functions
 
     # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
     #
+    # @api private
     def injected_producer_param(type, name, injection_name = '')
       @injections << [type, name, injection_name, :producer]
       # mark what should be picked for this position when dispatching
