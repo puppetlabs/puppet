@@ -47,6 +47,12 @@ describe 'the 4x function api' do
     expect(f.name).to eql('min')
   end
 
+  it 'refuses to create functions that are not based on the Function class' do
+    expect do
+      Puppet::Functions.create_function('testing', Object) {}
+    end.to raise_error(ArgumentError, 'Functions must be based on Puppet::Pops::Functions::Function. Got Object')
+  end
+
   it 'a function without arguments can be defined and called without dispatch declaration' do
     f = create_noargs_function_class()
     func = f.new(:closure_scope, :loader)

@@ -111,6 +111,10 @@ module Puppet::Functions
   #
   # @api public
   def self.create_function(func_name, function_base = Function, &block)
+    if function_base.ancestors.none? { |s| s == Puppet::Pops::Functions::Function }
+      raise ArgumentError, "Functions must be based on Puppet::Pops::Functions::Function. Got #{function_base}"
+    end
+
     func_name = func_name.to_s
     # Creates an anonymous class to represent the function
     # The idea being that it is garbage collected when there are no more
