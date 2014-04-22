@@ -3,12 +3,12 @@
 # Functions in the puppet language can be written in Ruby and distributed in
 # puppet modules. The function is written by creating a file in the module's
 # `lib/puppet/functions/<modulename>` directory, where `<modulename>` is
-# replaces with the module's name. The file should have the name of the module.
+# replaced with the module's name. The file should have the name of the function.
 # For example, to create a function named `min` in a module named `math` create
-# a file named `lib/puppet/functions/math/min.rb` in the module. The function
+# a file named `lib/puppet/functions/math/min.rb` in the module.
 #
 # A function is implemented by calling {Puppet::Functions.create_function}, and
-# passing it a block that defines the implementation methods of the function.
+# passing it a block that defines the implementation of the function.
 #
 # Functions are namespaced inside the module that contains them. The name of
 # the function is prefixed with the name of the module. For example,
@@ -28,8 +28,8 @@
 # the signatures, and the dispatches.
 #
 # The name is the string given to the {Puppet::Functions.create_function}
-# method. It specifies how the name that is used in the puppet language, or by
-# other functions, to call this function.
+# method. It specifies the name to use when calling the function in the puppet
+# language, or from other functions.
 #
 # The implementation methods are ruby methods (there can be one or more) that
 # provide that actual implementation of the function's behavior. In the
@@ -44,12 +44,15 @@
 #
 # Dispatches are how signatures and implementation methods are tied together.
 # When the function is called, puppet searches the signatures for one that
-# matches the supplied arguments. Each signature is part of a dispatch, that
-# specifies what method should be called for that signature. When the matcher
-# signature is found, the corrosponding method is called.
+# matches the supplied arguments. Each signature is part of a dispatch, which
+# specifies the method that should be called for that signature. When a
+# matching signature is found, the corrosponding method is called.
 #
 # Documentation for the function should be placed as comments to the
 # implementation method(s).
+#
+# @todo Documentation of these new functions is not yet tied into the puppet
+#   doc system.
 #
 # @example Dispatching to different methods by type
 #   Puppet::Functions.create_function('math::min') do
@@ -76,16 +79,16 @@
 # ---
 #
 # If nothing is specified, the number of arguments given to the function must
-# be the same as the number of parameters (parameters that perform injection
-# not included), and all of the parameters are of type 'Object'.
+# be the same as the number of parameters, and all of the parameters are of
+# type 'Object'.
 #
 # To express that the last parameter captures the rest, the method
 # `last_captures_rest` can be called. This is an indicator to those that
 # obtain information about the function (for the purpose of displaying error
-# messages etc.) For a Function, there the call is processed the same way
-# irrespective how the `last_captures_rest`, and it is up to the implementor
+# messages etc.) For a Function, the call is processed the same way
+# irrespective `last_captures_rest`, and it is up to the implementor
 # of the target method to decide who the specified min/max number of
-# arguments are laid out.  This is shown in the following example:
+# arguments are laid out.
 #
 # @example Varargs
 #   Puppet::Functions.create_function('foo') do
