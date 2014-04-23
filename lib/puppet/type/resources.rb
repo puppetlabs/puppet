@@ -67,6 +67,36 @@ Puppet::Type.newtype(:resources) do
     }
   end
 
+  newparam(:unless_system_group) do
+    desc "This keeps system groups from being purged.  By default, it
+      does not purge groups whose GIDs are less than or equal to 500, but you can specify
+      a different GID as the inclusive limit."
+
+    newvalues(:true, :false, /^\d+$/)
+
+    munge do |value|
+      case value
+      when /^\d+/
+        Integer(value)
+      when :true, true
+        500
+      when :false, false
+        false
+      when Integer; value
+      else
+        raise ArgumentError, "Invalid value #{value.inspect}"
+      end
+    end
+
+    defaultto {
+      if @resource[:name] == "group"
+        500
+      else
+        nil
+      end
+    }
+  end
+
   newparam(:unless_uid) do
      desc "This keeps specific uids or ranges of uids from being purged when purge is true.
        Accepts ranges, integers and (mixed) arrays of both."
@@ -88,6 +118,70 @@ Puppet::Type.newtype(:resources) do
        end
      end
    end
+
+  newparam(:unless_gid) do
+    desc "This keeps specific gids or ranges of gids from being purged when purge is true.
+    Accepts strings (comma separated values matching /\d+/), integers and (mixed) arrays of both.
+    Hint: consider the range() function from stdlib for generating large ranges of GIDs to exclude"
+
+    munge do |value|
+      case value
+        #match strings:
+        # 123
+        # 123, 456
+        when /^\d+(?:\s*,\s*\d+)*$/
+          value.split(/\s*,\s*/).collect do |v|
+            v.to_i
+          end
+        when Integer
+          [value]
+        when Array
+          value.collect do |v|
+            if v.is_a? Integer
+              v
+            elsif v =~ /^\d+$/
+              v.to_i
+            else
+              raise ArgumentError, "Invalid value in array #{v.inspect}"
+            end
+          end
+        else
+          raise ArgumentError, "Invalid value #{value.inspect}"
+      end
+    end
+  end
+
+  newparam(:only_gid) do
+    desc "Purges only groups whos GIDs are in the supplied array.
+    Accepts strings (comma separated values matching /\d+/), integers and (mixed) arrays of both.
+    Hint: consider the range() function from stdlib for generating large ranges of GIDs to exclude"
+
+    munge do |value|
+      case value
+        #match strings:
+        # 123
+        # 123, 456
+        when /^\d+(?:\s*,\s*\d+)*$/
+          value.split(/\s*,\s*/).collect do |v|
+            v.to_i
+          end
+        when Integer
+          [value]
+        when Array
+          value.collect do |v|
+            if v.is_a? Integer
+              v
+            elsif v =~ /^\d+$/
+              v.to_i
+            else
+              raise ArgumentError, "Invalid value in array #{v.inspect}"
+            end
+          end
+        else
+          raise ArgumentError, "Invalid value #{value.inspect}"
+      end
+    end
+  end
 
   def check(resource)
     @checkmethod ||= "#{self[:name]}_check"
@@ -157,7 +251,54 @@ Puppet::Type.newtype(:resources) do
     current_uid > self[:unless_system_user]
   end
 
+  def group_check(resource)
+    return true unless self[:name] == "group"
+    return true unless self[:unless_system_group] || self[:unless_gid] || self[:only_gid]
+    resource[:audit] = :gid
+    current_values   = resource.retrieve_resource
+    current_gid      = current_values[resource.property(:gid)]
+    unless_gids      = self[:unless_gid]
+    only_gids        = self[:only_gid]
+
+    if unless_gids && unless_gids.length > 0 && only_gids && only_gids.length > 0
+      #Cant use only_gid and unless_gid at the same time
+      raise ArgumentError, "resources {'group':}: unless_gid and only_gid must not be used at the same time"
+    end
+    
+    if self[:unless_system_group] && only_gids && only_gids.length > 0
+      if only_gids.sort.first <= self[:unless_system_group]
+        #Cant have only_gids and unless_system_group overlap
+        raise ArgumentError, "resources {'group':}: unless_gid and unless_system_group must not overlap"
+      end
+    end
+
+    #Do not remove real system groups regardless.
+    return false if system_groups.include?(resource[:name])
+
+    if only_gids && only_gids.length > 0
+      #If only_gid is specified, make the decision purely based on only_gid, nothing else is relevant
+      only_gids.respond_to?('include?') && only_gids.include?(current_gid) ? true : false
+    else
+      #If unless_gid is specified see if it declares the GID not to be purged
+      if unless_gids && unless_gids.length > 0
+        return false if unless_gids.respond_to?('include?') && unless_gids.include?(current_gid)
+      end
+      
+      #Otherwise, if unless_system_group is specified, see if it disqualifies the GID from purging
+      #If not, return true to purge the GID
+      if self[:unless_system_group]
+        current_gid > self[:unless_system_group]
+      else
+        true
+      end
+    end
+  end
+
   def system_users
     %w{root nobody bin noaccess daemon sys}
+  end
+
+  def system_groups
+    %w{root nobody bin noaccess daemon sys adm lp mail wheel}
   end
 end
