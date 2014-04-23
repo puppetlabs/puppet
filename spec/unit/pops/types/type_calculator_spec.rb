@@ -1128,7 +1128,7 @@ describe 'The type calculator' do
       it 'a Function instance should be considered a Callable' do
         fc = Puppet::Functions.create_function(:foo) do
           dispatch :foo do
-            param String, 'a'
+            param 'String', 'a'
           end
 
           def foo(a)

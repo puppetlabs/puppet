@@ -8,13 +8,13 @@
 #
 Puppet::Functions.create_function(:assert_type) do
   dispatch :assert_type do
-    param type_type(), 'type'
-    param optional(object()), 'value'
+    param 'Type', 'type'
+    param 'Optional[Object]', 'value'
   end
 
   dispatch :assert_type_s do
-    param String, 'type_string'
-    param optional(object()), 'value'
+    param 'String', 'type_string'
+    param 'Optional[Object]', 'value'
   end
 
   # @param type [Type] the type the value must be an instance of
