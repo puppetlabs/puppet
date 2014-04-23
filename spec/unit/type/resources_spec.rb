@@ -202,8 +202,123 @@ describe resources do
           @res.user_check(user).should be_true
         end
       end
-      
     end
+
+    describe "with only_uid" do
+      describe "with a comma separated string of uids" do
+        before do
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :only_uid => '15000, 15001, 15002'
+          @res.catalog = Puppet::Resource::Catalog.new
+        end
+
+        it "should not purge uids that are not in a specified array" do
+          user_hash = {:name => 'special_user', :uid => 25_000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_false
+        end
+
+        it "should purge uids that are in a specified array" do
+          user_hash = {:name => 'special_user', :uid => 15000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_true
+        end
+      end
+
+      describe "with a uid array" do
+        before do
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :only_uid => [15_000, 15_001, 15_002]
+          @res.catalog = Puppet::Resource::Catalog.new
+        end
+
+        it "should not purge uids that are not in a specified array" do
+          user_hash = {:name => 'special_user', :uid => 25_000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_false
+        end
+
+        it "should purge uids that are in a specified array" do
+          user_hash = {:name => 'special_user', :uid => 15000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_true
+        end
+      end
+
+      describe "with a single uid integer" do
+        before do
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :only_uid => 15_000
+          @res.catalog = Puppet::Resource::Catalog.new
+        end
+
+        it "should not purge uids that are not specified" do
+          user_hash = {:name => 'special_user', :uid => 25_000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_false
+        end
+
+        it "should purge uids that are specified" do
+          user_hash = {:name => 'special_user', :uid => 15_000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_true
+        end
+      end
+
+      describe "with a single uid string" do
+        before do
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :only_uid => '15000'
+          @res.catalog = Puppet::Resource::Catalog.new
+        end
+
+        it "should not purge uids that are not specified" do
+          user_hash = {:name => 'special_user', :uid => 25_000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_false
+        end
+
+        it "should purge uids that are specified" do
+          user_hash = {:name => 'special_user', :uid => 15_000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_true
+        end
+      end
+    end
+
+    describe "with unless_uid and only_uid" do
+      describe "with overlapping unless_git and only_uid" do
+        before do
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_uid => [15_000, 15_001, 15_002], :only_uid => [15_000]
+          @res.catalog = Puppet::Resource::Catalog.new
+        end
+
+        it "should raise an error" do
+          user_hash = {:name => 'special_user', :uid => 15_000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          expect { @res.user_check(user) }.to raise_error ArgumentError
+        end
+      end
+
+      describe "with overlapping only_uid and unless_system_user" do
+        before do
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :only_uid => [125], :unless_system_user => true
+          @res.catalog = Puppet::Resource::Catalog.new
+        end
+
+        it "should raise an error" do
+          user_hash = {:name => 'special_user', :uid => 125}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          expect { @res.user_check(user) }.to raise_error ArgumentError
+        end
+      end
+    end    
   end
 
   describe "#generate" do
