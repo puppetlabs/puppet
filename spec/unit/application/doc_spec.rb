@@ -262,10 +262,6 @@ describe Puppet::Application::Doc do
         @doc.manifest = false
         Puppet.stubs(:info)
         Puppet[:trace] = false
-        @env = stub 'env'
-        @env.stubs(:modulepath).returns([modules])
-        @env.stubs(:manifest).returns('manifests/site.pp')
-        Puppet::Node::Environment.stubs(:new).returns(@env)
         Puppet[:modulepath] = modules
         Puppet[:manifestdir] = manifests
         @doc.options[:all] = false
@@ -274,6 +270,16 @@ describe Puppet::Application::Doc do
         Puppet.settings.stubs(:define_settings)
         Puppet::Util::RDoc.stubs(:rdoc)
         @doc.command_line.stubs(:args).returns([])
+      end
+
+      around(:each) do |example|
+        @env = stub 'env'
+        @env.stubs(:name).returns(Puppet[:environment].to_sym)
+        @env.stubs(:modulepath).returns([modules])
+        @env.stubs(:manifest).returns('manifests/site.pp')
+        Puppet.override(:environments => Puppet::Environments::Static.new(@env)) do
+          example.run
+        end
       end
 
       it "should set document_all on --all" do

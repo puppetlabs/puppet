@@ -355,11 +355,12 @@ describe Puppet::Network::Rights do
     end
 
     it "should allow setting an environment filters" do
-      Puppet::Node::Environment.stubs(:new).with(:environment).returns(:env)
+      env = Puppet::Node::Environment.create(:acltest, [])
+      Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
+        @acl.restrict_environment(:acltest)
 
-      @acl.restrict_environment(:environment)
-
-      @acl.environment.should == [:env]
+        @acl.environment.should == [env]
+      end
     end
 
     ["on", "yes", "true", true].each do |auth|
@@ -392,11 +393,12 @@ describe Puppet::Network::Rights do
       end
 
       it "should return :dunno if this right is not restricted to the given environment" do
-        Puppet::Node::Environment.stubs(:new).returns(:production)
+        prod = Puppet::Node::Environment.create(:prod, [])
+        Puppet.override(:environments => Puppet::Environments::Static.new(prod)) do
+          @acl.restrict_environment(:production)
 
-        @acl.restrict_environment(:production)
-
-        @acl.allowed?("me","127.0.0.1", { :method => :save, :environment => :development }).should == :dunno
+          @acl.allowed?("me","127.0.0.1", { :method => :save, :environment => :development }).should == :dunno
+        end
       end
 
       it "should return :dunno if this right is not restricted to the given request authentication state" do
