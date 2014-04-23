@@ -47,12 +47,18 @@ class Puppet::Pops::Loaders
 
   def public_loader_for_module(module_name)
     md = @module_resolver[module_name] || (return nil)
-    # Note, this loader is not resolved until it is asked to load something it may contain
+    # Note, this loader is not resolved until there is interest in the visibility of entities from the
+    # perspective of something contained in the module. (Many request may pass through a module loader
+    # without it loading anything.
+    # See {#private_loader_for_module}, and not in {#configure_loaders_for_modules}
     md.public_loader
   end
 
   def private_loader_for_module(module_name)
     md = @module_resolver[module_name] || (return nil)
+    # Since there is interest in the visibility from the perspective of entities contained in the
+    # module, it must be resolved (to provide this visibility).
+    # See {#configure_loaders_for_modules}
     unless md.resolved?
       @module_resolver.resolve(md)
     end
@@ -116,6 +122,11 @@ class Puppet::Pops::Loaders
     # have prior knowledge about this
     loader = Puppet::Pops::Loader::DependencyLoader.new(loader, "environment", @module_resolver.all_module_loaders())
 
+    # The module loader gets the private loader via a lazy operation to look up the module's private loader.
+    # This does not work for an environment since it is not resolved the same way.
+    # TODO: The EnvironmentLoader could be a specialized loader instead of using a ModuleLoader to do the work.
+    #       This is subject to future design - an Environment may move more in the direction of a Module.
+    @public_environment_loader.private_loader = loader
     loader
   end
 
@@ -127,6 +138,11 @@ class Puppet::Pops::Loaders
       mr[puppet_module.name] = md
       md.public_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader, md.name, md.path, md.name)
     end
+    # NOTE: Do not resolve all modules here - this is wasteful if only a subset of modules / functions are used
+    #       The resolution is triggered by asking for a module's private loader, since this means there is interest
+    #       in the visibility from that perspective.
+    #       If later, it is wanted that all resolutions should be made up-front (to capture errors eagerly, this
+    #       can be introduced (better for production), but may be irritating in development mode.
   end
 
   # =LoaderModuleData
@@ -167,6 +183,7 @@ class Puppet::Pops::Loaders
       @puppet_module.path
     end
 
+    # TODO: UNUSED? Remove this
     def requirements
       nil # FAKE: this says "wants to see everything"
     end
@@ -210,7 +227,7 @@ class Puppet::Pops::Loaders
           Puppet.debug("ModuleLoader: module '#{module_data.name}' has unknown dependencies - it will have all other modules visible")
         end
 
-        Puppet::Pops::Loader::DependencyLoader.new(module_data.loader, module_data.name, all_module_loaders())
+        Puppet::Pops::Loader::DependencyLoader.new(module_data.public_loader, module_data.name, all_module_loaders())
       else
         # If module has resolutions they must resolve - it will not see into other modules otherwise
         # TODO: possible give errors if there are unresolved references
@@ -226,7 +243,7 @@ class Puppet::Pops::Loaders
             #  raise Puppet::Pops::Loader::Loader::Error, "Loader Error: Module '#{module_data.name}' has unresolved dependencies - use 'puppet module list --tree' to see information"
         end
         dependency_loaders = pm.dependencies_as_modules.map { |dep| @index[dep.name].loader }
-        Puppet::Pops::Loader::DependencyLoader.new(module_data.loader, module_data.name, dependency_loaders)
+        Puppet::Pops::Loader::DependencyLoader.new(module_data.public_loader, module_data.name, dependency_loaders)
       end
 
     end

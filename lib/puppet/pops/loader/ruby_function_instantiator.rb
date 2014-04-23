@@ -29,6 +29,6 @@ class Puppet::Pops::Loader::RubyFunctionInstantiator
 
     # TODO: Cheating wrt. scope - assuming it is found in the context
     closure_scope = Puppet.lookup(:global_scope) { {} }
-    created.new(closure_scope, loader)
+    created.new(closure_scope, loader.private_loader)
   end
 end

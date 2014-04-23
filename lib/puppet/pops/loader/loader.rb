@@ -87,6 +87,14 @@ class Puppet::Pops::Loader::Loader
     nil
   end
 
+  # Produces the private loader for loaders that have a one (the visibility given to loaded entities).
+  # For loaders that does not provide a private loader, self is returned.
+  #
+  # @api private
+  def private_loader
+    self
+  end
+
   # Binds a value to a name. The name should not start with '::', but may contain multiple segments.
   #
   # @param type [:Symbol] the type of the entity being set
