@@ -33,7 +33,7 @@ describe Puppet::Application::Inspect do
     end
   end
 
-  describe "when executing" do
+  describe "when executing", :uses_checksums => true do
     before :each do
       Puppet[:report] = true
       @inspect.options[:setdest] = true
@@ -54,11 +54,11 @@ describe Puppet::Application::Inspect do
       @inspect.run_command
     end
 
-    it "should audit the specified properties" do
+    using_checksums_it "should audit the specified properties" do
       catalog = Puppet::Resource::Catalog.new
       file = Tempfile.new("foo")
       file.binmode
-      file.puts("file contents")
+      file.print plaintext
       file.close
       resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})
       catalog.add_resource(resource)
@@ -76,7 +76,7 @@ describe Puppet::Application::Inspect do
         property_values.merge(event.property => event.previous_value)
       end
       properties["ensure"].should == :file
-      properties["content"].should == "{md5}#{Digest::MD5.hexdigest("file contents\n")}"
+      properties["content"].should == "{#{algo}}#{checksum}"
       properties.has_key?("target").should == false
     end
 

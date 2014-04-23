@@ -54,7 +54,7 @@
                     "type": "object",
                     "properties": {
                         "type": {
-                            "enum": ["md5", "ctime"]
+                            "enum": ["md5", "sha256", "ctime"]
                         },
                         "value": {
                             "type": "string"
