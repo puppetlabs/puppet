@@ -152,6 +152,7 @@ module Puppet
     Puppet.settings.initialize_app_defaults(Puppet::Settings.app_defaults_for_run_mode(run_mode))
     Puppet.push_context(Puppet.base_context(Puppet.settings), "Initial context after settings initialization")
     Puppet::Parser::Functions.reset
+    Puppet::Util::Log.level = Puppet[:log_level]
   end
   private_class_method :do_initialize_settings_for_run_mode
 
@@ -177,8 +178,17 @@ module Puppet
     environments = settings[:environmentpath]
     modulepath = Puppet::Node::Environment.split_path(settings[:basemodulepath])
 
-    loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
-    loaders << Puppet::Environments::Legacy.new
+    if environments.empty?
+      loaders = [Puppet::Environments::Legacy.new]
+    else
+      loaders = Puppet::Environments::Directories.from_path(environments, modulepath)
+      # in case the configured environment (used for the default sometimes)
+      # doesn't exist
+      loaders << Puppet::Environments::StaticPrivate.new(
+        Puppet::Node::Environment.create(Puppet[:environment].to_sym,
+                                         [],
+                                         Puppet::Node::Environment::NO_MANIFEST))
+    end
 
     {
       :environments => Puppet::Environments::Combined.new(*loaders)

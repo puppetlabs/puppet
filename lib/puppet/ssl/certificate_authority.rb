@@ -80,9 +80,9 @@ class Puppet::SSL::CertificateAuthority
     auto = Puppet[:autosign]
 
     decider = case auto
-      when 'false', false, nil
+      when false
         AutosignNever.new
-      when 'true', true
+      when true
         AutosignAlways.new
       else
         file = Puppet::FileSystem.pathname(auto)

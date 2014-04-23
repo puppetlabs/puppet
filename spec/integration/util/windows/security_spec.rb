@@ -826,6 +826,23 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       end.should_not be_nil
     end
 
+    it "allows deny ACEs with inheritance" do
+      # inheritance can only be set on directories
+      dir = tmpdir('denyaces')
+
+      inherit_flags = Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE |
+          Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
+
+      sd = winsec.get_security_descriptor(dir)
+      sd.dacl.deny(sids[:guest], Windows::File::FILE_ALL_ACCESS, inherit_flags)
+      winsec.set_security_descriptor(dir, sd)
+
+      sd = winsec.get_security_descriptor(dir)
+      sd.dacl.find do |ace|
+        ace.sid == sids[:guest] && ace.flags != 0
+      end.should_not be_nil
+    end
+
     context "when managing mode" do
       it "removes aces for sids that are neither the owner nor group" do
         # add a guest ace, it's never owner or group

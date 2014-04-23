@@ -139,16 +139,16 @@ class Puppet::Resource::TypeCollection
 
   def version
     if !defined?(@version)
-      if environment[:config_version] == ""
+      if environment.config_version.nil? || environment.config_version == ""
         @version = Time.now.to_i
       else
-        @version = Puppet::Util::Execution.execute([environment[:config_version]]).strip
+        @version = Puppet::Util::Execution.execute([environment.config_version]).strip
       end
     end
 
     @version
   rescue Puppet::ExecutionFailure => e
-    raise Puppet::ParseError, "Execution of config_version command `#{environment[:config_version]}` failed: #{e.message}", e.backtrace
+    raise Puppet::ParseError, "Execution of config_version command `#{environment.config_version}` failed: #{e.message}", e.backtrace
   end
 
   def watch_file(filename)

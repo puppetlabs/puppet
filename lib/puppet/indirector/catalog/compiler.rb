@@ -32,7 +32,13 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       end
 
       facts.add_timestamp
-      Puppet::Node::Facts.indirection.save(facts)
+
+      options = {
+        :environment => request.environment,
+        :transaction_uuid => request.options[:transaction_uuid],
+      }
+
+      Puppet::Node::Facts.indirection.save(facts, nil, options)
     end
   end
 

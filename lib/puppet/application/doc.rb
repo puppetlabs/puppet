@@ -173,7 +173,7 @@ HELP
     unless @manifest
       env = Puppet.lookup(:environments).get(Puppet[:environment])
       files += env.modulepath
-      files << ::File.dirname(env[:manifest])
+      files << ::File.dirname(env.manifest)
     end
     files += command_line.args
     Puppet.info "scanning: #{files.inspect}"

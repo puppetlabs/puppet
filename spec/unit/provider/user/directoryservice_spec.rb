@@ -535,18 +535,55 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
 
     it 'should call write_password_to_users_plist when setting the password on 10.8' do
       provider.class.stubs(:get_os_version).returns('10.8')
+      resource[:salt] = pbkdf2_salt_value
+      resource[:iterations] = pbkdf2_iterations_value
+      resource[:password] = pbkdf2_password_hash
+
       provider.expects(:write_password_to_users_plist).with(pbkdf2_password_hash)
-      provider.password = pbkdf2_password_hash
+
+      provider.password = resource[:password]
     end
+
 
     it "should raise an error on 10.7 if a password hash that doesn't contain 136 characters is passed" do
       provider.class.stubs(:get_os_version).returns('10.7')
       expect { provider.password = 'password' }.to raise_error Puppet::Error, /OS X 10\.7 requires a Salted SHA512 hash password of 136 characters\.  Please check your password and try again/
     end
+  end
+
+  describe "passwords on 10.8" do
+    before :each do
+      provider.class.stubs(:get_os_version).returns('10.8')
+    end
 
     it "should raise an error on 10.8 if a password hash that doesn't contain 256 characters is passed" do
-      provider.class.stubs(:get_os_version).returns('10.8')
-      expect { provider.password = 'password' }.to raise_error Puppet::Error, /OS X versions > 10\.7 require a Salted SHA512 PBKDF2 password hash of 256 characters\. Please check your password and try again\./
+      expect do
+        provider.password = 'password'
+      end.to raise_error(Puppet::Error, /OS X versions > 10\.7 require a Salted SHA512 PBKDF2 password hash of 256 characters\. Please check your password and try again\./)
+    end
+
+    it "fails if a password is given but not salt and iterations" do
+      resource[:password] = pbkdf2_password_hash
+
+      expect do
+        provider.password = resource[:password]
+      end.to raise_error(Puppet::Error, /OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash\. This resource is missing: salt, iterations\./)
+    end
+
+    it "fails if salt is given but not password and iterations" do
+      resource[:salt] = pbkdf2_salt_value
+
+      expect do
+        provider.salt = resource[:salt]
+      end.to raise_error(Puppet::Error, /OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash\. This resource is missing: password, iterations\./)
+    end
+
+    it "fails if iterations is given but not password and salt" do
+      resource[:iterations] = pbkdf2_iterations_value
+
+      expect do
+        provider.iterations = resource[:iterations]
+      end.to raise_error(Puppet::Error, /OS X versions > 10\.7 use PBKDF2 password hashes, which requires all three of salt, iterations, and password hash\. This resource is missing: password, salt\./)
     end
   end
 
@@ -604,6 +641,11 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
            'dsAttrTypeStandard:RecordName'            => ['_amavisd', 'amavisd'],
            'dsAttrTypeStandard:RecordType'            => ['dsRecTypeStandard:Groups']
         }]
+    end
+
+    before :each do
+      # Ensure we don't have a value cached from another spec
+      provider.class.instance_variable_set(:@groups, nil) if provider.class.instance_variable_defined? :@groups
     end
 
     it 'should return an array of hashes containing group data' do
@@ -952,6 +994,11 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
   end
 
   describe 'self#get_os_version' do
+    before :each do
+      # Ensure we don't have a value cached from another spec
+      provider.class.instance_variable_set(:@os_version, nil) if provider.class.instance_variable_defined? :@os_version
+    end
+
     it 'should call Facter.value(:macosx_productversion_major) ONLY ONCE no matter how ' +
        'many times get_os_version() is called' do
       Facter.expects(:value).with(:macosx_productversion_major).once.returns('10.8')
@@ -1051,12 +1098,16 @@ describe Puppet::Type.type(:user).provider(:directoryservice) do
     it 'should not raise an error if the password=() method is called on ' +
        'a user without a ShadowHashData key in their user\'s plist on OS X ' +
        'version 10.8' do
+      resource[:salt] = pbkdf2_salt_value
+      resource[:iterations] = pbkdf2_iterations_value
+      resource[:password] = pbkdf2_password_hash
       provider.class.stubs(:get_os_version).returns('10.8')
       provider.stubs(:sleep)
       provider.stubs(:flush_dscl_cache)
+
       provider.expects(:get_users_plist).with('testuser').returns(user_plist_hash)
       provider.expects(:set_salted_pbkdf2).with(user_plist_hash, false, 'entropy', pbkdf2_password_hash)
-      provider.password = pbkdf2_password_hash
+      provider.password = resource[:password]
     end
   end
 end

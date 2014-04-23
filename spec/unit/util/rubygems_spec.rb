@@ -31,6 +31,10 @@ describe Puppet::Util::RubyGems::Source do
     it "#directories returns an empty list" do
       described_class.new.directories.should == []
     end
+
+    it "#clear_paths returns nil" do
+      described_class.new.clear_paths.should be_nil
+    end
   end
 
   describe '::Gems18Source' do
@@ -40,6 +44,11 @@ describe Puppet::Util::RubyGems::Source do
       Gem::Specification.expects(:latest_specs).with(true).returns([fake_gem])
 
       described_class.new.directories.should == [gem_lib]
+    end
+
+    it "#clear_paths calls Gem.clear_paths" do
+      Gem.expects(:clear_paths)
+      described_class.new.clear_paths
     end
   end
 
@@ -62,6 +71,11 @@ describe Puppet::Util::RubyGems::Source do
       source = described_class.new
 
       source.directories.should == [gem_lib]
+    end
+
+    it "#clear_paths calls Gem.clear_paths" do
+      Gem.expects(:clear_paths)
+      described_class.new.clear_paths
     end
   end
 end

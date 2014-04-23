@@ -15,6 +15,9 @@ require 'rgen/metamodel_builder'
 # @api public
 #
 module Puppet::Pops::Types
+  # Used as end in a range
+  INFINITY = 1.0 / 0.0
+  NEGATIVE_INFINITY = -INFINITY
 
   class PAbstractType < Puppet::Pops::Model::PopsObject
     abstract
@@ -134,15 +137,15 @@ module Puppet::Pops::Types
 
       # Returns Float.Infinity if one end of the range is unbound
       def size
-        return 1.0 / 0.0 if from.nil? || to.nil?
+        return INFINITY if from.nil? || to.nil?
         1+(to-from).abs
       end
 
       # Returns the range as an array ordered so the smaller number is always first.
       # The number may be Infinity or -Infinity.
       def range
-        f = from || -(1.0 / 0.0)
-        t = to || (1.0 / 0.0)
+        f = from || NEGATIVE_INFINITY
+        t = to || INFINITY
         if f < t
           [f, t]
         else
@@ -253,9 +256,23 @@ module Puppet::Pops::Types
   class PCollectionType < PObjectType
     contains_one_uni 'element_type', PAbstractType
     contains_one_uni 'size_type', PIntegerType
+
     module ClassModule
+      # Returns an array with from (min) size to (max) size
+      # A negative range value in from is 
+      def size_range
+        return [0, INFINITY] if size_type.nil?
+        f = size_type.from || 0
+        t = size_type.to || INFINITY
+        if f < t
+          [f, t]
+        else
+          [t,f]
+        end
+      end
+
       def hash
-        [self.class, element_type, size].hash
+        [self.class, element_type, size_type].hash
       end
 
       def ==(o)
@@ -307,16 +324,83 @@ module Puppet::Pops::Types
   # @api public
   class PTupleType < PObjectType
     contains_many_uni 'types', PAbstractType, :lowerBound => 1
-    # If set, describes repetition of the last type in types
+    # If set, describes min and max required of the given types - if max > size of
+    # types, the last type entry repeats
+    #
     contains_one_uni 'size_type', PIntegerType, :lowerBound => 0
 
     module ClassModule
+      # Returns the number of elements accepted [min, max] in the tuple
+      def size_range
+        types_size = types.size
+        size_type.nil? ? [types_size, types_size] : size_type.range
+      end
+
+      # Returns the number of accepted occurrences [min, max] of the last type in the tuple
+      # The defaults is [1,1]
+      #
+      def repeat_last_range
+        types_size = types.size
+        if size_type.nil?
+          return [1, 1]
+        end
+        from, to = size_type.range()
+        min = from - (types_size-1)
+        min = min <= 0 ? 0 : min
+        max = to - (types_size-1)
+        [min, max]
+      end
+
       def hash
         [self.class, size_type, Set.new(types)].hash
       end
 
       def ==(o)
         self.class == o.class && types == o.types && size_type == o.size_type
+      end
+    end
+  end
+
+  class PCallableType < PObjectType
+    # Types of parameters and required/optional count
+    contains_one_uni 'param_types', PTupleType, :lowerBound => 1
+
+    # Although being an abstract type reference, only PAbstractCallable, and Optional[Callable] are supported
+    # If not set, the meaning is that block is not supported.
+    #
+    contains_one_uni 'block_type', PAbstractType, :lowerBound => 0
+
+    module ClassModule
+      # Returns the number of accepted arguments [min, max]
+      def size_range
+        param_types.size_range
+      end
+
+      # Returns the number of accepted arguments for the last parameter type [min, max]
+      #
+      def last_range
+        param_types.repeat_last_range
+      end
+
+      # Range [0,0], [0,1], or [1,1] for the block
+      #
+      def block_range
+        case block_type
+        when Puppet::Pops::Types::POptionalType
+          [0,1]
+        when Puppet::Pops::Types::PVariantType, Puppet::Pops::Types::PCallableType
+          [1,1]
+        else
+          [0,0]
+        end
+      end
+
+      def hash
+        [self.class, Set.new(param_types), block_type].hash
+      end
+
+      def ==(o)
+        self.class == o.class && args_type == o.args_type && block_type == o.block_type
       end
     end
   end
@@ -379,7 +463,7 @@ module Puppet::Pops::Types
     # contains_one_uni 'super_type', PHostClassType
     module ClassModule
       def hash
-        [self.class, host_class].hash
+        [self.class, class_name].hash
       end
       def ==(o)
         self.class == o.class && class_name == o.class_name

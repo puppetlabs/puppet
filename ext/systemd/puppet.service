@@ -1,13 +1,12 @@
 [Unit]
 Description=Puppet agent
 Wants=basic.target
-After=basic.target network.target
+After=basic.target network.target puppetmaster.service
 
 [Service]
-Type=forking
 EnvironmentFile=-/etc/sysconfig/puppetagent
-PIDFile=/run/puppet/agent.pid
-ExecStart=/usr/bin/puppet agent $PUPPET_EXTRA_OPTS
+EnvironmentFile=-/etc/sysconfig/puppet
+ExecStart=/usr/bin/puppet agent ${PUPPET_EXTRA_OPTS} --no-daemonize
 
 [Install]
 WantedBy=multi-user.target

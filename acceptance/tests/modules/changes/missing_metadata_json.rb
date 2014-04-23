@@ -14,5 +14,9 @@ step 'Run module changes on a module witch is missing metadata.json'
 on( master, puppet("module changes #{testdir}/nginx"),
     :acceptable_exit_codes => [1] ) do
 
-  assert_match /Error: No file containing checksums found/, stderr
+  pattern = Regexp.new([
+%Q{.*Error: No file containing checksums found.*},
+%Q{.*Error: Try 'puppet help module changes' for usage.*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.stderr)
 end

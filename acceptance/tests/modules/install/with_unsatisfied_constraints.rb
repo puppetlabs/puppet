@@ -4,6 +4,7 @@ extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
 module_name   = "git"
+module_reference = "#{module_author}-#{module_name}"
 module_dependencies = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
@@ -28,7 +29,7 @@ file {
       "author": "jimmy",
       "license": "MIT",
       "dependencies": [
-        { "name": "#{module_author}/stdlib", "version_requirement": "1.x" }
+        { "name": "#{module_author}/stdlub", "version_requirement": "1.x" }
       ]
     }';
 }
@@ -36,13 +37,14 @@ PP
 
 step "Try to install a module that has an unsatisfiable dependency"
 on master, puppet("module install #{module_author}-#{module_name}"), :acceptable_exit_codes => [1] do
-  assert_match(/No version.*will satisfy dependencies/, stderr,
+  assert_match(/No version.*can satisfy all dependencies/, stderr,
         "Unsatisfiable dependency error was not displayed")
   assert_match(/Use `puppet module install --ignore-dependencies/, stderr,
         "Use --ignore-dependencies error was not displayed")
 end
 on master, "[ ! -d #{master['distmoduledir']}/#{module_name} ]"
 
+# FIXME I don't understand what behaviour this looking for?
 step "Install the module with an unsatisfiable dependency"
 on master, puppet("module install #{module_author}-#{module_name} --ignore-dependencies") do
   assert_module_installed_ui(stdout, module_author, module_name)
@@ -50,21 +52,21 @@ end
 on master, "[ -d #{master['distmoduledir']}/#{module_name} ]"
 
 step "Try to install a specific version of the unsatisfiable dependency"
-on master, puppet("module install #{module_author}-stdlib --version 1.x"), :acceptable_exit_codes => [1] do
-  assert_match(/You specified '[^']+' \([^)]+\)[^']+'[^']+' \([^)]+\) requires/, stderr,
-        "Unsatisfiable dependency for specific version error was not displayed")
+on master, puppet("module install #{module_author}-stdlub --version 1.x"), :acceptable_exit_codes => [1] do
+  assert_match(/No version.* can satisfy all dependencies/, stderr,
+        "Unsatisfiable dependency was not displayed")
 end
-on master, "[ ! -d #{master['distmoduledir']}/stdlib ]"
+on master, "[ ! -d #{master['distmoduledir']}/stdlub ]"
 
 step "Try to install any version of the unsatisfiable dependency"
-on master, puppet("module install #{module_author}-stdlib"), :acceptable_exit_codes => [1] do
-  assert_match(/You specified '[^']+' \([^)]+\)[^']+'[^']+' \([^)]+\) requires/, stderr,
-        "Unsatisfiable dependency for specific version error was not displayed")
+on master, puppet("module install #{module_author}-stdlub"), :acceptable_exit_codes => [1] do
+  assert_match(/No version.* can satisfy all dependencies/, stderr,
+        "Unsatisfiable dependency was not displayed")
 end
-on master, "[ ! -d #{master['distmoduledir']}/stdlib ]"
+on master, "[ ! -d #{master['distmoduledir']}/stdlub ]"
 
 step "Install the unsatisfiable dependency with --force"
-on master, puppet("module install #{module_author}-stdlib --force") do
-  assert_module_installed_ui(stdout, module_author, 'stdlib')
+on master, puppet("module install #{module_author}-stdlub --force") do
+  assert_module_installed_ui(stdout, module_author, 'stdlub')
 end
-on master, "[ -d #{master['distmoduledir']}/stdlib ]"
+on master, "[ -d #{master['distmoduledir']}/stdlub ]"

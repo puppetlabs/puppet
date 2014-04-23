@@ -1,8 +1,4 @@
 class Puppet::ModuleTool::Tar::Mini
-  def initialize(module_name)
-    @module_name = module_name
-  end
-
   def unpack(sourcefile, destdir, _)
     Zlib::GzipReader.open(sourcefile) do |reader|
       Archive::Tar::Minitar.unpack(reader, destdir) do |action, name, stats|
@@ -27,15 +23,13 @@ class Puppet::ModuleTool::Tar::Mini
 
   def validate_entry(destdir, path)
     if Pathname.new(path).absolute?
-      raise Puppet::ModuleTool::Errors::InvalidPathInPackageError,
-        :requested_package => @module_name, :entry_path => path, :directory => destdir
+      raise Puppet::ModuleTool::Errors::InvalidPathInPackageError, :entry_path => path, :directory => destdir
     end
 
     path = File.expand_path File.join(destdir, path)
 
     if path !~ /\A#{Regexp.escape destdir}/
-      raise Puppet::ModuleTool::Errors::InvalidPathInPackageError,
-        :requested_package => @module_name, :entry_path => path, :directory => destdir
+      raise Puppet::ModuleTool::Errors::InvalidPathInPackageError, :entry_path => path, :directory => destdir
     end
   end
 end

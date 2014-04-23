@@ -25,7 +25,6 @@ test_name "Puppet returns only resource package declaration when querying an uni
       step "test puppet apply" do
         on(agent, puppet('apply', '-e', %Q|"package {'not-installed-on-this-host': ensure => purged }"|)) do
           assert_match(package_apply_regex, stdout)
-          assert_equal('', stderr)
         end
       end
     end

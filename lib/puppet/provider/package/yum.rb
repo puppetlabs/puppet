@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   remove dependent packages with this provider use the `purgeable` feature, but note this
   feature is destructive and should be used with the utmost care."
 
-  has_feature :versionable
+  has_feature :install_options, :versionable
 
   commands :yum => "yum", :rpm => "rpm", :python => "python"
 
@@ -74,7 +74,9 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       end
     end
 
-    yum "-d", "0", "-e", "0", "-y", operation, wanted
+    args = ["-d", "0", "-e", "0", "-y", install_options, operation, wanted].compact
+    yum *args
+
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is
@@ -107,4 +109,5 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   def purge
     yum "-y", :erase, @resource[:name]
   end
+
 end

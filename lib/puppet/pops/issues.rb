@@ -384,7 +384,7 @@ module Puppet::Pops::Issues
     base_type_label = base_type.is_a?(String) ? base_type : label.a_an_uc(base_type)
     if max == -1 || max == 1.0 / 0.0 # Infinity
       "#{base_type_label}[] accepts #{min} or more arguments. Got #{actual}"
-    elsif max
+    elsif max && max != min
       "#{base_type_label}[] accepts #{min} to #{max} arguments. Got #{actual}"
     else
       "#{base_type_label}[] accepts #{min} #{label.plural_s(min, 'argument')}. Got #{actual}"
@@ -403,6 +403,10 @@ module Puppet::Pops::Issues
     "First argument to Resource[] must be a resource type or a String. Got #{actual}."
   end
 
+  EMPTY_RESOURCE_SPECIALIZATION = issue :EMPTY_RESOURCE_SPECIALIZATION do
+    "Arguments to Resource[] are all empty/undefined"
+  end
+
   ILLEGAL_HOSTCLASS_NAME = hard_issue :ILLEGAL_HOSTCLASS_NAME, :name do
     "Illegal Class name in class reference. #{label.a_an_uc(name)} cannot be used where a String is expected"
   end
@@ -412,6 +416,10 @@ module Puppet::Pops::Issues
   #
   ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINTION_NAME, :name do
     "Unacceptable name. The name '#{name}' is unacceptable as the name of #{label.a_an(semantic)}"
+  end
+
+  NON_NAMESPACED_FUNCTION = hard_issue :NON_NAMESPACED_FUNCTION, :name do
+    "A Puppet Function must be defined within a module name-space. The name '#{name}' is unacceptable."
   end
 
   NOT_NUMERIC = issue :NOT_NUMERIC, :value do

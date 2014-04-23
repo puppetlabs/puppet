@@ -20,7 +20,7 @@ class Puppet::Agent
   end
 
   def can_fork?
-    Puppet.features.posix?
+    Puppet.features.posix? && RUBY_PLATFORM != 'java'
   end
 
   def needing_restart?

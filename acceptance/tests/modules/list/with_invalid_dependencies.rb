@@ -74,10 +74,11 @@ on master, "[ -d #{master['sitemoduledir']}/crick ]"
 
 step "List the installed modules"
 on master, puppet("module list") do |res|
-  assert_equal <<-STDERR, res.stderr
-\e[1;31mWarning: Module 'jimmy-crakorn' (v0.3.0) fails to meet some dependencies:
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
-STDERR
+  pattern = Regexp.new([
+    %Q{.*Warning: Module 'jimmy-crakorn' \\(v0.3.0\\) fails to meet some dependencies:},
+    %Q{  'jimmy-crick' \\(v1.0.1\\) requires 'jimmy-crakorn' \\(v0.4.x\\).*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.stderr)
 
   assert_match /jimmy-crakorn.*invalid/, res.stdout, 'Did not find module jimmy-crick in module site path'
 end
@@ -85,10 +86,11 @@ end
 step "List the installed modules as a dependency tree"
 on master, puppet("module list --tree") do |res|
 
-  assert_equal <<-STDERR, res.stderr
-\e[1;31mWarning: Module 'jimmy-crakorn' (v0.3.0) fails to meet some dependencies:
-  'jimmy-crick' (v1.0.1) requires 'jimmy-crakorn' (v0.4.x)\e[0m
-STDERR
+  pattern = Regexp.new([
+    %Q{.*Warning: Module 'jimmy-crakorn' \\(v0.3.0\\) fails to meet some dependencies:},
+    %Q{  'jimmy-crick' \\(v1.0.1\\) requires 'jimmy-crakorn' \\(v0.4.x\\).*},
+  ].join("\n"), Regexp::MULTILINE)
+  assert_match(pattern, result.stderr)
 
   assert_match /jimmy-crakorn.*\[#{master['distmoduledir']}\].*invalid/, res.stdout
 end

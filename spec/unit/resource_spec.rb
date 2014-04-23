@@ -6,7 +6,7 @@ describe Puppet::Resource do
   include PuppetSpec::Files
 
   let(:basepath) { make_absolute("/somepath") }
-  let(:environment) { Puppet::Node::Environment.create(:testing, [], '') }
+  let(:environment) { Puppet::Node::Environment.create(:testing, []) }
 
   [:catalog, :file, :line].each do |attr|
     it "should have an #{attr} attribute" do

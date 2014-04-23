@@ -219,14 +219,21 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
-  def dump_ResourceTypeDefinition o
-    result = ["define", o.name]
+  def dump_NamedDefinition o
+    # the nil must be replaced with a string
+    result = [nil, o.name]
     result << ["parameters"] + o.parameters.collect {|p| do_dump(p) } if o.parameters.size() > 0
     if o.body
       result << do_dump(o.body)
     else
       result << []
     end
+    result
+  end
+
+  def dump_ResourceTypeDefinition o
+    result = dump_NamedDefinition(o)
+    result[0] = 'define'
     result
   end
 
@@ -241,10 +248,11 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   # Produces parameters as name, or (= name value)
   def dump_Parameter o
+    name_part = "#{o.name}"
     if o.value
-      ["=", o.name, do_dump(o.value)]
+      ["=", name_part, do_dump(o.value)]
     else
-      o.name
+      name_part
     end
   end
 

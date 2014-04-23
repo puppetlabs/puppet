@@ -1,21 +1,27 @@
-require 'net/http'
-require 'open-uri'
-require 'pathname'
-require 'uri'
+require 'puppet/vendor'
+Puppet::Vendor.load_vendored
 
-class Puppet::Forge
-  require 'puppet/forge/errors'
+require 'net/http'
+require 'tempfile'
+require 'uri'
+require 'pathname'
+require 'json'
+require 'semantic'
+
+class Puppet::Forge < Semantic::Dependency::Source
   require 'puppet/forge/cache'
   require 'puppet/forge/repository'
+  require 'puppet/forge/errors'
 
   include Puppet::Forge::Errors
 
-  # +consumer_name+ is a name to be used for identifying the consumer of the
-  # forge and +consumer_semver+ is a SemVer object to identify the version of
-  # the consumer
-  def initialize(consumer_name, consumer_semver)
-    @consumer_name = consumer_name
-    @consumer_semver = consumer_semver
+  USER_AGENT = "PMT/1.1.1 (v3; Net::HTTP)".freeze
+
+  attr_reader :host, :repository
+
+  def initialize(host = Puppet[:module_repository])
+    @host = host
+    @repository = Puppet::Forge::Repository.new(host, USER_AGENT)
   end
 
   # Return a list of module metadata hashes that match the search query.
@@ -46,61 +52,151 @@ class Puppet::Forge
   # @raise [Puppet::Forge::Errors::ResponseError] if the repository returns a
   #   bad HTTP response
   def search(term)
-    server = Puppet.settings[:module_repository]
-    Puppet.notice "Searching #{server} ..."
-    response = repository.make_http_request("/modules.json?q=#{URI.escape(term)}")
+    matches = []
+    uri = "/v3/modules?query=#{URI.escape(term)}"
 
-    case response.code
-    when "200"
-      matches = PSON.parse(response.body)
-    else
-      raise ResponseError.new(:uri => uri.to_s, :input => term, :response => response)
+    while uri
+      response = make_http_request(uri)
+
+      if response.code == '200'
+        result = JSON.parse(response.body)
+        uri = result['pagination']['next']
+        matches.concat result['results']
+      else
+        raise ResponseError.new(:uri => URI.parse(@host).merge(uri) , :input => term, :response => response)
+      end
     end
 
-    matches
+    matches.each do |mod|
+      mod['author'] = mod['owner']['username']
+      mod['tag_list'] = mod['current_release']['tags']
+      mod['full_name'] = "#{mod['author']}/#{mod['name']}"
+      mod['version'] = mod['current_release']['version']
+      mod['project_url'] = mod['homepage_url']
+      mod['desc'] = mod['current_release']['metadata']['summary'] || ''
+    end
   end
 
-  # Return a list of module metadata hashes for the module requested and all
-  # of its dependencies.
+  # Fetches {ModuleRelease} entries for each release of the named module.
   #
-  # @param author [String] module's author name
-  # @param mod_name [String] module name
-  # @param version [String] optional module version number
-  # @return [Array] module and dependency metadata
-  # @raise [Puppet::Forge::Errors::CommunicationError] if there is a network
-  #   related error
-  # @raise [Puppet::Forge::Errors::SSLVerifyError] if there is a problem
-  #   verifying the remote SSL certificate
-  # @raise [Puppet::Forge::Errors::ResponseError] if the repository returns
-  #   an error in its API response or a bad HTTP response
-  def remote_dependency_info(author, mod_name, version)
-    version_string = version ? "&version=#{version}" : ''
-    response = repository.make_http_request("/api/v1/releases.json?module=#{author}/#{mod_name}#{version_string}")
-    json = PSON.parse(response.body) rescue {}
-    case response.code
-    when "200"
-      return json
-    else
-      error = json['error']
-      if error && error =~ /^Module #{author}\/#{mod_name} has no release/
-        return []
+  # @param input [String] the module name to look up
+  # @return [Array<Semantic::Dependency::ModuleRelease>] a list of releases for
+  #         the given name
+  # @see Semantic::Dependency::Source#fetch
+  def fetch(input)
+    name = input.tr('/', '-')
+    uri = "/v3/releases?module=#{name}"
+    releases = []
+
+    while uri
+      response = make_http_request(uri)
+
+      if response.code == '200'
+        response = JSON.parse(response.body)
       else
-        raise ResponseError.new(:uri => uri.to_s, :input => "#{author}/#{mod_name}", :message => error, :response => response)
+        raise ResponseError.new(:uri => URI.parse(@host).merge(uri), :input => input, :response => response)
+      end
+
+      releases.concat(process(response['results']))
+      uri = response['pagination']['next']
+    end
+
+    return releases
+  end
+
+  def make_http_request(*args)
+    @repository.make_http_request(*args)
+  end
+
+  class ModuleRelease < Semantic::Dependency::ModuleRelease
+    attr_reader :install_dir, :metadata
+
+    def initialize(source, data)
+      @data = data
+      @metadata = meta = data['metadata']
+
+      name = meta['name'].tr('/', '-')
+      version = Semantic::Version.parse(meta['version'])
+
+      dependencies = (meta['dependencies'] || [])
+      dependencies.map! do |dep|
+        range = dep['version_requirement'] || dep['versionRequirement'] || '>=0'
+        [
+          dep['name'].tr('/', '-'),
+          (Semantic::VersionRange.parse(range) rescue Semantic::VersionRange::EMPTY_RANGE),
+        ]
+      end
+
+      super(source, name, version, Hash[dependencies])
+    end
+
+    def install(dir)
+      staging_dir = self.prepare
+
+      module_dir = dir + name[/-(.*)/, 1]
+      module_dir.rmtree if module_dir.exist?
+
+      # Make sure unpacked module has the same ownership as the folder we are moving it into.
+      Puppet::ModuleTool::Applications::Unpacker.harmonize_ownership(dir, staging_dir)
+
+      FileUtils.mv(staging_dir, module_dir)
+      @install_dir = dir
+
+      # Return the Pathname object representing the directory where the
+      # module release archive was unpacked the to.
+      return module_dir
+    ensure
+      staging_dir.rmtree if staging_dir.exist?
+    end
+
+    def prepare
+      return @unpacked_into if @unpacked_into
+
+      download(@data['file_uri'], tmpfile)
+      validate_checksum(tmpfile, @data['file_md5'])
+      unpack(tmpfile, tmpdir)
+
+      @unpacked_into = Pathname.new(tmpdir)
+    end
+
+    private
+
+    # Obtain a suitable temporary path for unpacking tarballs
+    #
+    # @return [Pathname] path to temporary unpacking location
+    def tmpdir
+      @dir ||= Dir.mktmpdir(name, Puppet::Forge::Cache.base_path)
+    end
+
+    def tmpfile
+      @file ||= Tempfile.new(name, Puppet::Forge::Cache.base_path).tap do |f|
+        f.binmode
+      end
+    end
+
+    def download(uri, destination)
+      @source.make_http_request(uri, destination)
+      destination.flush and destination.close
+    end
+
+    def validate_checksum(file, checksum)
+      if Digest::MD5.file(file.path).hexdigest != checksum
+        raise RuntimeError, "Downloaded release for #{name} did not match expected checksum"
+      end
+    end
+
+    def unpack(file, destination)
+      begin
+        Puppet::ModuleTool::Applications::Unpacker.unpack(file.path, destination)
+      rescue Puppet::ExecutionFailure => e
+        raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
       end
     end
   end
 
-  def retrieve(release)
-    repository.retrieve(release)
-  end
+  private
 
-  def uri
-    repository.uri
+  def process(list)
+    list.map { |release| ModuleRelease.new(self, release) }
   end
-
-  def repository
-    version = "#{@consumer_name}/#{[@consumer_semver.major, @consumer_semver.minor, @consumer_semver.tiny].join('.')}#{@consumer_semver.special}"
-    @repository ||= Puppet::Forge::Repository.new(Puppet[:module_repository], version)
-  end
-  private :repository
 end

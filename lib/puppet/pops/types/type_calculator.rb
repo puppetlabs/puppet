@@ -102,7 +102,22 @@ class Puppet::Pops::Types::TypeCalculator
     singleton.assignable?(t1,t2)
   end
 
+  # Answers, does the given callable accept the arguments given in args (an array or a tuple)
+  # @param callable [Puppet::Pops::Types::PCallableType] - the callable
+  # @param args [Puppet::Pops::Types::PArrayType, Puppet::Pops::Types::PTupleType] args optionally including a lambda callable at the end
+  # @return [Boolan] true if the callable accepts the arguments
+  #
   # @api public
+  def self.callable?(callable, args)
+    singleton.callable?(callable, args)
+  end
+
+  # Produces a String representation of the given type.
+  # @param t [Puppet::Pops::Types::PAbstractType] the type to produce a string form
+  # @return [String] the type in string form
+  #
+  # @api public
+  #
   def self.string(t)
     singleton.string(t)
   end
@@ -149,6 +164,7 @@ class Puppet::Pops::Types::TypeCalculator
     @@enumerable_visitor ||= Puppet::Pops::Visitor.new(nil,"enumerable",0,0)
     @@extract_visitor ||= Puppet::Pops::Visitor.new(nil,"extract",0,0)
     @@generalize_visitor ||= Puppet::Pops::Visitor.new(nil,"generalize",0,0)
+    @@callable_visitor ||= Puppet::Pops::Visitor.new(nil,"callable",1,1)
 
     da = Types::PArrayType.new()
     da.element_type = Types::PDataType.new()
@@ -191,6 +207,8 @@ class Puppet::Pops::Types::TypeCalculator
     non_empty_string.size_type.from = 1
     non_empty_string.size_type.to = nil # infinity
     @non_empty_string_t = non_empty_string
+
+    @nil_t = Types::PNilType.new
   end
 
   # Convenience method to get a data type for comparisons
@@ -234,13 +252,12 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
-  # Answers 'can an instance of type t2 be assigned to a variable of type t'
+  # Answers 'can an instance of type t2 be assigned to a variable of type t'.
+  # Does not accept nil/undef unless the type accepts it.
+  #
   # @api public
   #
   def assignable?(t, t2)
-    # nil is assignable to anything except to required types
-    return true if is_pnil?(t2)
-
     if t.is_a?(Class)
       t = type(t)
     end
@@ -255,6 +272,14 @@ class Puppet::Pops::Types::TypeCalculator
   # Returns an enumerable if the t represents something that can be iterated
   def enumerable(t)
     @@enumerable_visitor.visit_this_0(self, t)
+  end
+
+  # Answers, does the given callable accept the arguments given in args (an array or a tuple)
+  #
+  def callable?(callable, args)
+    return false if !callable.is_a?(Types::PCallableType)
+    # Note that polymorphism is for the args type, the callable is always a callable
+    @@callable_visitor.visit_this_1(self, args, callable)
   end
 
   # Answers if the two given types describe the same type
@@ -362,7 +387,6 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of(t, o)
-#    return true if o.nil? && !t.is_a?(Types::PRequiredType)
     @@instance_of_visitor.visit_this_1(self, t, o)
   end
 
@@ -383,10 +407,8 @@ class Puppet::Pops::Types::TypeCalculator
   def instance_of_PTupleType(t, o)
     return false unless o.is_a?(Array)
     # compute the tuple's min/max size, and check if that size matches
-    from, to = size_range(t.size_type)
-    size_t = Types::PIntegerType.new()
-    size_t.from = t.types.size - 1 + from
-    size_t.to = t.types.size - 1 + to
+    size_t = t.size_type || Puppet::Pops::Types::TypeFactory.range(*t.size_range)
+
     # compute the array's size as type
     size_t2 = size_as_type(o)
     return false unless assignable?(size_t, size_t2)
@@ -568,6 +590,12 @@ class Puppet::Pops::Types::TypeCalculator
       return Types::PPatternType.new()
     end
 
+    if t1.is_a?(Types::PCallableType) && t2.is_a?(Types::PCallableType)
+      # They do not have the same signature, and one is not assignable to the other,
+      # what remains is the most general form of Callable
+      return Types::PCallableType.new()
+    end
+
     # Common abstract types, from most specific to most general
     if common_numeric?(t1, t2)
       return Types::PNumericType.new()
@@ -662,6 +690,16 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def infer_Closure(o)
+    o.type()
+  end
+
+  # @api private
+  def infer_Function(o)
+    o.class.dispatcher.to_type
+  end
+
+  # @api private
   def infer_Object(o)
     type = Types::PRubyType.new()
     type.ruby_class = o.class.name
@@ -671,7 +709,7 @@ class Puppet::Pops::Types::TypeCalculator
   # The type of all types is PType
   # @api private
   #
-  def infer_PObjectType(o)
+  def infer_PAbstractType(o)
     type = Types::PType.new()
     type.type = o.copy
     type
@@ -745,7 +783,10 @@ class Puppet::Pops::Types::TypeCalculator
   def infer_Resource(o)
     t = Types::PResourceType.new()
     t.type_name = o.type.to_s
-    t.title = o.title
+    # Only Puppet::Resource can have a title that is a symbol :undef, a PResource cannot.
+    # A mapping must be made to empty string. A nil value will result in an error later
+    title = o.title
+    t.title = (title == :undef ? '' : title)
     t
   end
 
@@ -792,15 +833,14 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def infer_set_Array(o)
-    type = Types::PArrayType.new()
-    type.element_type = if o.empty?
-      Types::PNilType.new()
+    if o.empty?
+      type = Types::PArrayType.new()
+      type.element_type = Types::PNilType.new()
+      type.size_type = size_as_type(o)
     else
-      t = Types::PVariantType.new()
-      t.types = o.map() {|x| infer_set(x) }
-      t.types.size == 1 ? t.types[0] : t
+      type = Types::PTupleType.new()
+      type.types = o.map() {|x| infer_set(x) }
     end
-    type.size_type = size_as_type(o)
     type
   end
 
@@ -915,39 +955,60 @@ class Puppet::Pops::Types::TypeCalculator
     end
   end
 
+  # Catch all not callable combinations
+  def callable_Object(o, callable_t)
+    false
+  end
+
+  def callable_PTupleType(args_tuple, callable_t)
+    if args_tuple.size_type
+      raise ArgumentError, "Callable tuple may not have a size constraint when used as args"
+    end
+    # Assume no block was given - i.e. it is nil, and its type is PNilType
+    block_t = @nil_t
+    if args_tuple.types.last.is_a?(Types::PCallableType)
+      # a split is needed to make it possible to use required, optional, and varargs semantics
+      # of the tuple type.
+      #
+      args_tuple = args_tuple.copy
+      # to drop the callable, it must be removed explicitly since this is an rgen array
+      args_tuple.removeTypes(block_t = args_tuple.types.last())
+    else
+      # no block was given, if it is required, the below will fail
+    end
+    # unless argument types match parameter types
+    return false unless assignable?(callable_t.param_types, args_tuple)
+    # unless given block (or no block) matches expected block (or no block)
+    assignable?(callable_t.block_type || @nil_t, block_t)
+  end
+
+  def callable_PArrayType(args_array, callable_t)
+    return false unless assignable?(callable_t.param_types, args_array)
+    # does not support calling with a block, but have to check that callable expects it
+    assignable?(callable_t.block_type || @nil_t, @nil_t)
+  end
+
+  def max(a,b)
+    a >=b ? a : b
+  end
+
+  def min(a,b)
+    a <= b ? a : b
+  end
+
   def assignable_PTupleType(t, t2)
     return true if t == t2 || t.types.empty? && (t2.is_a?(Types::PArrayType))
-    t_regular = t.types[0..-2]
-    t_ranged = t.types[-1]
-    t_from, t_to = size_range(t.size_type)
-    t_required = t_regular.size + t_from
+    size_t = t.size_type || Puppet::Pops::Types::TypeFactory.range(*t.size_range)
 
     if t2.is_a?(Types::PTupleType)
-      t2_regular = t2.types[0..-2]
-      t2_ranged = t2.types[-1]
-      t2_from, t2_to = size_range(t2.size_type)
-      t2_required = t2_regular.size + t2_from
+      size_t2 = t2.size_type || Puppet::Pops::Types::TypeFactory.range(*t2.size_range)
 
-      # tuples with fewer required entries can not be assigned
-      return false if t_required > t2_required
-      # tuples with more optionally available entries can not be assigned
-      return false if t_regular.size + t_to < t2_regular.size + t2_to
-
-      t_required.times do |index|
-        t_entry = tuple_entry_at(t, t_from, t_to, index)
-        t2_entry = tuple_entry_at(t2, t2_from, t2_to, index)
-        return false if t2_entry.nil? || !assignable?(t_entry, t2_entry)
+      # not assignable if the number of types in t2 is outside number of types in t1
+      return false unless assignable?(size_t, size_t2)
+      max(t.types.size, t2.types.size).times do |index|
+        return false unless assignable?((t.types[index] || t.types[-1]), (t2.types[index] || t2.types[-1]))
       end
-      # Handle remainder in t2's required
-      (t2_required - t_required).times do |index|
-        t_entry = tuple_entry_at(t, t_from, t_to, t_required + index)
-        t2_entry = tuple_entry_at(t2, t2_from, t2_to, t_required + index)
-        return false if t2_entry.nil? || !assignable?(t_entry, t2_entry)
-      end
-      # Now only a trailing optional type remains - the last type must always be compatible
-      # irrespective of optionality and count
-      #
-      return assignable?(t_ranged, t2_ranged)
+      true
 
     elsif t2.is_a?(Types::PArrayType)
       t2_entry = t2.element_type
@@ -956,21 +1017,15 @@ class Puppet::Pops::Types::TypeCalculator
       # was handled at the top of this method.
       #
       return false if t2_entry.nil?
-
-      # array type may be size constrained
-      size_t = t2.size_type || @collection_default_size_t
-      min, max = size_t.range
-      # Array with fewer min entries can not be assigned
-      return false if t_required > min
-      # Array with more optionally available entries can not be assigned
-      return false if t_regular.size + t_to < max
-      # each tuple type must be assignable to the element type
-      t_required.times do |index|
-        t_entry = tuple_entry_at(t, t_from, t_to, index)
-        return false unless assignable?(t_entry, t2_entry)
+      size_t = t.size_type || Puppet::Pops::Types::TypeFactory.range(*t.size_range)
+      size_t2 = t2.size_type || @collection_default_size_t
+      return false unless assignable?(size_t, size_t2)
+      min(t.types.size, size_t2.range()[1]).times do |index|
+        return false unless assignable?((t.types[index] || t.types[-1]), t2_entry)
       end
-      # ... and so must the last, possibly optional (ranged) type
-      return assignable?(t_ranged, t2_entry)
+      true
+    else
+      false
     end
   end
 
@@ -1068,6 +1123,9 @@ class Puppet::Pops::Types::TypeCalculator
           # no string can match this enum anyway since it does not accept anything
           false
         end
+      else
+        # no other type matches string
+        false
       end
     elsif t2.is_a?(Types::PStringType)
       # A specific string acts as a set of strings - must have exactly the same strings
@@ -1111,6 +1169,19 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PRegexpType(t, t2)
     t2.is_a?(Types::PRegexpType) && (t.pattern.nil? || t.pattern == t2.pattern)
+  end
+
+  # @api private
+  def assignable_PCallableType(t, t2)
+    return false unless t2.is_a?(Types::PCallableType)
+    # nil param_types means, any other Callable is assignable
+    return true if t.param_types.nil?
+    return false unless assignable?(t.param_types, t2.param_types)
+    # names are ignored, they are just information
+    # Blocks must be compatible
+    this_block_t = t.block_type || @nil_t
+    that_block_t = t2.block_type || @nil_t
+    assignable?(this_block_t, that_block_t)
   end
 
   # @api private
@@ -1203,7 +1274,7 @@ class Puppet::Pops::Types::TypeCalculator
       struct_size = t2.elements.size
       element_type = t.element_type
       ( struct_size >= min && struct_size <= max &&
-        assignable?(t.key_type, @non_emptry_string_t)  &&
+        assignable?(t.key_type, @non_empty_string_t)  &&
         t2.hashed_elements.all? {|k,v| assignable?(element_type, v) })
     else
       false
@@ -1364,6 +1435,35 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
+  def string_PCallableType(t)
+    # generic
+    return "Callable" if t.param_types.nil?
+
+    if t.param_types.types.empty?
+      range = [0, 0]
+    else
+      range = range_array_part(t.param_types.size_type)
+    end
+    types = t.param_types.types.map {|t2| string(t2) }
+
+    params_part= types.join(', ')
+
+    s = "Callable[" << types.join(', ')
+    unless range.empty?
+      (s << ', ') unless types.empty?
+      s << range.join(', ')
+    end
+    # Add block T last (after min, max) if present)
+    #
+    unless t.block_type.nil?
+      (s << ', ') unless types.empty? && range.empty?
+      s << string(t.block_type)
+    end
+    s << "]"
+    s
+  end
+
+  # @api private
   def string_PStructType(t)
     return "Struct" if t.elements.empty?
     "Struct[{" << t.elements.map {|element| string(element) }.join(', ') << "}]"
@@ -1450,6 +1550,21 @@ class Puppet::Pops::Types::TypeCalculator
     # Not enumerable if representing an infinite range
     return nil if t.size == TheInfinity
     t
+  end
+
+  def self.copy_as_tuple(t)
+    case t
+    when Types::PTupleType
+      t.copy
+    when Types::PArrayType
+      # transform array to tuple
+      result = Types::PTupleType.new
+      result.addTypes(t.element_type.copy)
+      result.size_type = t.size_type.nil? ? nil : t.size_type.copy
+      result
+    else
+      raise ArgumentError, "Internal Error: Only Array and Tuple can be given to copy_as_tuple"
+    end
   end
 
   private

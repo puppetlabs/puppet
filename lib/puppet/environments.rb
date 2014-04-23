@@ -31,6 +31,15 @@ module Puppet::Environments
   #   @param name [String,Symbol] The name of environment to find
   #   @return [Puppet::Node::Environment, nil] the requested environment or nil
   #     if it wasn't found
+  #
+  # @!macro [new] loader_get_conf
+  #   Attempt to obtain the initial configuration for the environment.  Not all
+  #   loaders can provide this.
+  #
+  #   @param name [String,Symbol] The name of the environment whose configuration
+  #     we are looking up
+  #   @return [Puppet::Setting::EnvironmentConf, nil] the configuration for the
+  #     requested environment, or nil if not found or no configuration is available
 
   # A source of pre-defined environments.
   #
@@ -57,6 +66,35 @@ module Puppet::Environments
       @environments.find do |env|
         env.name == name.intern
       end
+    end
+
+    # Returns a basic environment configuration object tied to the environment's
+    # implementation values.  Will not interpolate.
+    #
+    # @!macro loader_get_conf
+    def get_conf(name)
+      env = get(name)
+      if env
+        Puppet::Settings::EnvironmentConf.static_for(env)
+      else
+        nil
+      end
+    end
+  end
+
+  # A source of unlisted pre-defined environments.
+  #
+  # Used only for internal bootstrapping environments which are not relevant
+  # to an end user (such as the fall back 'configured' environment).
+  #
+  # @api private
+  class StaticPrivate < Static
+
+    # Unlisted
+    #
+    # @!macro loader_list
+    def list
+      []
     end
   end
 
@@ -97,6 +135,14 @@ module Puppet::Environments
     def get(name)
       Puppet::Node::Environment.new(name)
     end
+
+    # @note we could return something here, but since legacy environments
+    #   are deprecated, there is no point.
+    #
+    # @!macro loader_get_conf
+    def get_conf(name)
+      nil
+    end
   end
 
   # Reads environments from a directory on disk. Each environment is
@@ -115,7 +161,7 @@ module Puppet::Environments
 
     # Generate an array of directory loaders from a path string.
     # @param path [String] path to environment directories
-    # @param global_module_path [String] the global modulepath setting
+    # @param global_module_path [Array<String>] the global modulepath setting
     # @return [Array<Puppet::Environments::Directories>] An array
     #   of configured directory loaders.
     def self.from_path(path, global_module_path)
@@ -132,28 +178,47 @@ module Puppet::Environments
 
     # @!macro loader_list
     def list
-      base = Puppet::FileSystem.path_string(@environment_dir)
+      valid_directories.collect do |envdir|
+        name = Puppet::FileSystem.basename_string(envdir)
 
-      if Puppet::FileSystem.directory?(@environment_dir)
-        Puppet::FileSystem.children(@environment_dir).select do |child|
-          name = Puppet::FileSystem.basename_string(child)
-          Puppet::FileSystem.directory?(child) &&
-             Puppet::Node::Environment.valid_name?(name)
-        end.collect do |child|
-          name = Puppet::FileSystem.basename_string(child)
-          Puppet::Node::Environment.create(
-            name.intern,
-            [File.join(base, name, "modules")] + @global_module_path,
-            File.join(base, name, "manifests"))
-        end
-      else
-        []
+        setting_values = Puppet.settings.values(name, Puppet.settings.preferred_run_mode)
+        Puppet::Node::Environment.create(
+          name.intern,
+          Puppet::Node::Environment.split_path(setting_values.interpolate(:modulepath)),
+          setting_values.interpolate(:manifest),
+          setting_values.interpolate(:config_version)
+        )
       end
     end
 
     # @!macro loader_get
     def get(name)
       list.find { |env| env.name == name.intern }
+    end
+
+    # @!macro loader_get_conf
+    def get_conf(name)
+      valid_directories.each do |envdir|
+        envname = Puppet::FileSystem.basename_string(envdir)
+        if envname == name.to_s
+          return Puppet::Settings::EnvironmentConf.load_from(envdir, @global_module_path)
+        end
+      end
+      nil
+    end
+
+    private
+
+    def valid_directories
+      if Puppet::FileSystem.directory?(@environment_dir)
+        Puppet::FileSystem.children(@environment_dir).select do |child|
+          name = Puppet::FileSystem.basename_string(child)
+          Puppet::FileSystem.directory?(child) &&
+             Puppet::Node::Environment.valid_name?(name)
+        end
+      else
+        []
+      end
     end
   end
 
@@ -179,6 +244,16 @@ module Puppet::Environments
       @loaders.each do |loader|
         if env = loader.get(name)
           return env
+        end
+      end
+      nil
+    end
+
+    # @!macro loader_get_conf
+    def get_conf(name)
+      @loaders.each do |loader|
+        if conf = loader.get_conf(name)
+          return conf
         end
       end
       nil

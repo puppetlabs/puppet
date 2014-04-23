@@ -24,7 +24,7 @@ describe Puppet::Util::Autoload do
     end
 
     it "should collect all of the lib directories that exist in the current environment's module path" do
-      environment = Puppet::Node::Environment.create(:foo, [@dira, @dirb, @dirc], '')
+      environment = Puppet::Node::Environment.create(:foo, [@dira, @dirb, @dirc])
       Dir.expects(:entries).with(@dira).returns %w{. .. one two}
       Dir.expects(:entries).with(@dirb).returns %w{. .. one two}
 

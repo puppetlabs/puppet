@@ -76,6 +76,11 @@ a ticket number.
 * Submit a pull request to the repository in the puppetlabs organization.
 * Update your Jira ticket to mark that you have submitted code and are ready for it to be reviewed (Status: Ready for Merge).
   * Include a link to the pull request in the ticket.
+* The core team looks at Pull Requests on a regular basis in a weekly triage
+  meeting that we hold in a public Google Hangout. The hangout is announced in
+  the weekly status updates that are sent to the puppet-dev list.
+* After feedback has been given we expect responses within two weeks. After two
+  weeks will may close the pull request if it isn't showing any activity.
 
 # Additional Resources
 

@@ -1,44 +1,46 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-provider = Puppet::Type.type(:package).provider(:apt)
+provider_class = Puppet::Type.type(:package).provider(:apt)
 
-describe provider do
-  before do
-    @resource = stub 'resource', :[] => "asdf"
-    @provider = provider.new(@resource)
+describe provider_class do
+  let(:name) { 'asdf' }
 
-    @fakeresult = <<-EOF
-install ok installed asdf 1.0 "asdf summary
- asdf multiline description
- with multiple lines
-EOF
+  let(:resource) do
+    Puppet::Type.type(:package).new(
+      :name     => name,
+      :provider => 'apt'
+    )
+  end
+
+  let(:provider) do
+    provider = provider_class.new
+    provider.resource = resource
+    provider
   end
 
   it "should be versionable" do
-    provider.should be_versionable
+    provider_class.should be_versionable
   end
 
   it "should use :install to update" do
-    @provider.expects(:install)
-    @provider.update
+    provider.expects(:install)
+    provider.update
   end
 
   it "should use 'apt-get remove' to uninstall" do
-    @provider.expects(:aptget).with("-y", "-q", :remove, "asdf")
-
-    @provider.uninstall
+    provider.expects(:aptget).with("-y", "-q", :remove, name)
+    provider.uninstall
   end
 
   it "should use 'apt-get purge' and 'dpkg purge' to purge" do
-    @provider.expects(:aptget).with("-y", "-q", :remove, "--purge", "asdf")
-    @provider.expects(:dpkg).with("--purge", "asdf")
-
-    @provider.purge
+    provider.expects(:aptget).with("-y", "-q", :remove, "--purge", name)
+    provider.expects(:dpkg).with("--purge", name)
+    provider.purge
   end
 
   it "should use 'apt-cache policy' to determine the latest version of a package" do
-    @provider.expects(:aptcache).with(:policy, "asdf").returns "asdf:
+    provider.expects(:aptcache).with(:policy, name).returns "#{name}:
 Installed: 1:1.0
 Candidate: 1:1.1
 Version table:
@@ -47,100 +49,112 @@ Version table:
 *** 1:1.1
   100 /var/lib/dpkg/status"
 
-    @provider.latest.should == "1:1.1"
+    provider.latest.should == "1:1.1"
   end
 
   it "should print and error and return nil if no policy is found" do
-    @provider.expects(:aptcache).with(:policy, "asdf").returns "asdf:"
+    provider.expects(:aptcache).with(:policy, name).returns "#{name}:"
 
-    @provider.expects(:err)
-    @provider.latest.should be_nil
+    provider.expects(:err)
+    provider.latest.should be_nil
   end
 
   it "should be able to preseed" do
-    @provider.should respond_to(:run_preseed)
+    provider.should respond_to(:run_preseed)
   end
 
   it "should preseed with the provided responsefile when preseeding is called for" do
-    @resource.expects(:[]).with(:responsefile).returns "/my/file"
-    Puppet::FileSystem.expects(:exist?).with("/my/file").returns true
+    resource[:responsefile] = '/my/file'
+    Puppet::FileSystem.expects(:exist?).with('/my/file').returns true
 
-    @provider.expects(:info)
-    @provider.expects(:preseed).with("/my/file")
+    provider.expects(:info)
+    provider.expects(:preseed).with('/my/file')
 
-    @provider.run_preseed
+    provider.run_preseed
   end
 
   it "should not preseed if no responsefile is provided" do
-    @resource.expects(:[]).with(:responsefile).returns nil
+    provider.expects(:info)
+    provider.expects(:preseed).never
 
-    @provider.expects(:info)
-    @provider.expects(:preseed).never
-
-    @provider.run_preseed
+    provider.run_preseed
   end
 
   describe "when installing" do
     it "should preseed if a responsefile is provided" do
-      @resource.expects(:[]).with(:responsefile).returns "/my/file"
-      @provider.expects(:run_preseed)
+      resource[:responsefile] = "/my/file"
+      provider.expects(:run_preseed)
 
-      @provider.stubs(:aptget)
-      @provider.install
+      provider.stubs(:aptget)
+      provider.install
     end
 
     it "should check for a cdrom" do
-      @provider.expects(:checkforcdrom)
+      provider.expects(:checkforcdrom)
 
-      @provider.stubs(:aptget)
-      @provider.install
+      provider.stubs(:aptget)
+      provider.install
     end
 
     it "should use 'apt-get install' with the package name if no version is asked for" do
-      @resource.expects(:[]).with(:ensure).returns :installed
-      @provider.expects(:aptget).with { |*command| command[-1] == "asdf" and command[-2] == :install }
+      resource[:ensure] = :installed
+      provider.expects(:aptget).with { |*command| command[-1] == name and command[-2] == :install }
 
-      @provider.install
+      provider.install
     end
 
     it "should specify the package version if one is asked for" do
-      @resource.expects(:[]).with(:ensure).returns "1.0"
-      @provider.expects(:aptget).with { |*command| command[-1] == "asdf=1.0" }
+      resource[:ensure] = '1.0'
+      provider.expects(:aptget).with { |*command| command[-1] == "#{name}=1.0" }
 
-      @provider.install
+      provider.install
     end
 
     it "should use --force-yes if a package version is specified" do
-      @resource.expects(:[]).with(:ensure).returns "1.0"
-      @provider.expects(:aptget).with { |*command| command.include?("--force-yes") }
+      resource[:ensure] = '1.0'
+      provider.expects(:aptget).with { |*command| command.include?("--force-yes") }
 
-      @provider.install
+      provider.install
     end
 
     it "should do a quiet install" do
-      @provider.expects(:aptget).with { |*command| command.include?("-q") }
+      provider.expects(:aptget).with { |*command| command.include?("-q") }
 
-      @provider.install
+      provider.install
     end
 
     it "should default to 'yes' for all questions" do
-      @provider.expects(:aptget).with { |*command| command.include?("-y") }
+      provider.expects(:aptget).with { |*command| command.include?("-y") }
 
-      @provider.install
+      provider.install
     end
 
     it "should keep config files if asked" do
-      @resource.expects(:[]).with(:configfiles).returns :keep
-      @provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confold") }
+      resource[:configfiles] = :keep
+      provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confold") }
 
-      @provider.install
+      provider.install
     end
 
     it "should replace config files if asked" do
-      @resource.expects(:[]).with(:configfiles).returns :replace
-      @provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confnew") }
+      resource[:configfiles] = :replace
+      provider.expects(:aptget).with { |*command| command.include?("DPkg::Options::=--force-confnew") }
 
-      @provider.install
+      provider.install
+    end
+
+    it 'should support string install options' do
+      resource[:install_options] = ['--foo', '--bar']
+      provider.expects(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar', :install, name)
+
+      provider.install
+    end
+
+    it 'should support hash install options' do
+      resource[:install_options] = ['--foo', { '--bar' => 'baz', '--baz' => 'foo' }]
+      provider.expects(:aptget).with('-q', '-y', '-o', 'DPkg::Options::=--force-confold', '--foo', '--bar=baz', '--baz=foo', :install, name)
+
+      provider.install
     end
   end
 end

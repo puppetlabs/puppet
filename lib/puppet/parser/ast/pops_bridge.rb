@@ -55,6 +55,13 @@ class Puppet::Parser::AST::PopsBridge
     end
   end
 
+  class NilAsUndefExpression < Expression
+    def evaluate(scope)
+      result = super
+      result.nil? ? :undef : result
+    end
+  end
+
   # Bridges the top level "Program" produced by the pops parser.
   # Its main purpose is to give one point where all definitions are instantiated (actually defined since the
   # Puppet 3x terminology is somewhat misleading - the definitions are instantiated, but instances of the created types
@@ -85,9 +92,10 @@ class Puppet::Parser::AST::PopsBridge
         when Puppet::Pops::Model::NodeDefinition
           instantiate_NodeDefinition(d, modname)
         else
-          raise Puppet::ParseError("Internal Error: Unknown type of definition - got '#{d.class}'")
+          raise Puppet::ParseError, "Internal Error: Unknown type of definition - got '#{d.class}'"
         end
-      end.flatten() # flatten since node definition may have returned an array
+      end.flatten().compact() # flatten since node definition may have returned an array
+                              # Compact since functions are not understood by compiler
     end
 
     def evaluate(scope)
@@ -109,7 +117,7 @@ class Puppet::Parser::AST::PopsBridge
       # can thus reference all sorts of information. Here the value expression is wrapped in an AST Bridge to a Pops
       # expression since the Pops side can not control the evaluation
       if o.value
-        [ o.name, Expression.new(:value => o.value) ]
+        [ o.name, NilAsUndefExpression.new(:value => o.value) ]
       else
         [ o.name ]
       end
@@ -153,6 +161,39 @@ class Puppet::Parser::AST::PopsBridge
       host_matches.collect do |name|
         Puppet::Resource::Type.new(:node, name, @context.merge(args))
       end
+    end
+
+    # Propagates a found Function to the appropriate loader.
+    # This is for 4x future-evaluator/loader
+    #
+    def instantiate_FunctionDefinition(function_definition, modname)
+      loaders = (Puppet.lookup(:loaders) { nil })
+      unless loaders
+        raise Puppet::ParseError, "Internal Error: Puppet Context ':loaders' missing - cannot define any functions"
+      end
+      loader =
+      if modname.nil? || modname == ""
+        # TODO : Later when functions can be private, a decision is needed regarding what that means.
+        #        A private environment loader could be used for logic outside of modules, then only that logic
+        #        would see the function.
+        #
+        # Use the private loader, this function may see the environment's dependencies (currently, all modules)
+        loaders.private_environment_loader()
+      else
+        # TODO : Later check if function is private, and then add it to
+        #        private_loader_for_module
+        #
+        loaders.public_loader_for_module(modname)
+      end
+      unless loader
+        raise Puppet::ParseError, "Internal Error: did not find public loader for module: '#{modname}'"
+      end
+
+      # Instantiate Function, and store it in the environment loader
+      typed_name, f = Puppet::Pops::Loader::PuppetFunctionInstantiator.create_from_model(function_definition, loader)
+      loader.set_entry(typed_name, f, Puppet::Pops::Adapters::SourcePosAdapter.adapt(function_definition).to_uri)
+
+      nil # do not want the function to inadvertently leak into 3x
     end
 
     def code()

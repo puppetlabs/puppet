@@ -17,7 +17,10 @@ module Puppet
       Puppet 2.7 and newer expect init scripts to have a working status command.
       If this isn't the case for any of your services' init scripts, you will
       need to set `hasstatus` to false and possibly specify a custom status
-      command in the `status` attribute.
+      command in the `status` attribute. As a last resort, Puppet will attempt to
+      search the process table by calling whatever command is listed in the `ps`
+      fact. The default search pattern is the name of the service, but you can
+      specify it with the `pattern` attribute.
 
       **Refresh:** `service` resources can respond to refresh events (via
       `notify`, `subscribe`, or the `~>` arrow). If a `service` receives an
@@ -36,6 +39,8 @@ module Puppet
       :methods => [:disable, :enable, :enabled?]
 
     feature :controllable, "The provider uses a control variable."
+
+    feature :flaggable, "The provider can pass flags to the service."
 
     newproperty(:enable, :required_features => :enableable) do
       desc "Whether a service should be enabled to start at boot.
@@ -95,6 +100,10 @@ module Puppet
 
         event
       end
+    end
+
+    newproperty(:flags, :required_features => :flaggable) do
+      desc "Specify a string of flags to pass to the startup script."
     end
 
     newparam(:binary) do
@@ -158,7 +167,8 @@ module Puppet
         command.
 
         Defaults to the name of the service. The pattern can be a simple string
-        or any legal Ruby pattern."
+        or any legal Ruby pattern, including regular expressions (which should
+        be quoted without enclosing slashes)."
 
       defaultto { @resource[:binary] || @resource[:name] }
     end

@@ -93,9 +93,10 @@ describe list_class do
     end
 
     describe "when calling retrieve" do
+      let(:provider) { @provider }
       before do
         @provider = mock("provider")
-        @property.stubs(:provider).returns(@provider)
+        @property.stubs(:provider).returns(provider)
       end
 
       it "should send 'name' to the provider" do
@@ -114,6 +115,13 @@ describe list_class do
         @provider.stubs(:send).with(:group).returns(:absent)
         @property.stubs(:name).returns(:group)
         @property.retrieve == :absent
+      end
+
+      context "and provider is nil" do
+        let(:provider) { nil }
+        it "should return :absent" do
+          @property.retrieve == :absent
+        end
       end
     end
 

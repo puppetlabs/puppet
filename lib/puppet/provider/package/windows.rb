@@ -105,19 +105,4 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
   def uninstall_options
     join_options(resource[:uninstall_options])
   end
-
-  def join_options(options)
-    return unless options
-
-    options.collect do |val|
-      case val
-      when Hash
-        val.keys.sort.collect do |k|
-          "#{k}=#{val[k]}"
-        end.join(' ')
-      else
-        val
-      end
-    end
-  end
 end

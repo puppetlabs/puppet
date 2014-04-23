@@ -654,6 +654,38 @@ describe Puppet::Settings do
       @settings.send(:parse_config_files)
       @settings.value(:one, "env").should == "envval"
     end
+
+    context "when interpolating a dynamic environments setting" do
+      let(:dynamic_manifestdir) { "manifestdir=/somewhere/$environment/manifests" }
+      let(:environment) { "environment=anenv" }
+
+      before(:each) do
+        @settings.define_settings :main,
+          :manifestdir => { :default => "/manifests", :desc => "manifestdir setting" },
+          :environment => { :default => "production", :desc => "environment setting" }
+      end
+
+      it "interpolates default environment when no environment specified" do
+        text = <<-EOF
+[main]
+#{dynamic_manifestdir}
+        EOF
+        @settings.stubs(:read_file).returns(text)
+        @settings.send(:parse_config_files)
+        expect(@settings.value(:manifestdir)).to eq("/somewhere/production/manifests")
+      end
+ 
+      it "interpolates the set environment when no environment specified" do
+        text = <<-EOF
+[main]
+#{dynamic_manifestdir}
+#{environment}
+        EOF
+        @settings.stubs(:read_file).returns(text)
+        @settings.send(:parse_config_files)
+        expect(@settings.value(:manifestdir)).to eq("/somewhere/anenv/manifests")
+      end
+    end
   end
 
 
@@ -723,7 +755,7 @@ describe Puppet::Settings do
 
       Puppet::FileSystem.expects(:exist?).with(myfile).returns(true)
 
-      File.expects(:read).with(myfile).returns "[main]"
+      Puppet::FileSystem.expects(:read).with(myfile).returns "[main]"
 
       @settings.send(:parse_config_files)
     end
@@ -970,21 +1002,106 @@ describe Puppet::Settings do
       @settings[:myarg].should == ""
     end
 
-    describe "and when reading a non-positive filetimeout value from the config file" do
-      before do
-        @settings.define_settings :foo, :filetimeout => { :default => 5, :desc => "eh" }
+    describe "deprecations" do
+      context "in puppet.conf" do
 
-        somefile = "/some/file"
-        text = "[main]
-        filetimeout = -1
-        "
-        File.expects(:read).with(somefile).returns(text)
-        File.expects(:expand_path).with(somefile).returns somefile
-        @settings[:config] = somefile
+        def assert_puppet_conf_deprecation(setting, matches)
+          Puppet.expects(:deprecation_warning).with(regexp_matches(matches), anything)
+
+          val = "/you/can/set/this/but/will/get/warning"
+          text = "[main]
+          #{setting}=#{val}
+          "
+          Puppet.settings.parse_config(text)
+        end
+
+        it "warns when manifest is set" do
+          assert_puppet_conf_deprecation('manifest', /manifest.*puppet.conf/)
+        end
+
+        it "warns when modulepath is set" do
+          assert_puppet_conf_deprecation('modulepath', /modulepath.*puppet.conf/)
+        end
+
+        it "warns when config_version is set" do
+          assert_puppet_conf_deprecation('config_version', /config_version.*puppet.conf/)
+        end
+
+        it "warns when manifestdir is set" do
+          assert_puppet_conf_deprecation('manifestdir', /Setting manifestdir.*is.*deprecated/)
+        end
+
+        it "warns when templatedir is set" do
+          assert_puppet_conf_deprecation('templatedir', /Setting templatedir.*is.*deprecated/)
+        end
+      end
+
+      context "on the command line" do
+        def assert_command_line_deprecation(setting, message)
+          Puppet.expects(:deprecation_warning).with(message, anything)
+
+          args = ["--#{setting}", "/some/value"]
+          Puppet.settings.send(:parse_global_options, args)
+        end
+
+        def assert_command_line_not_deprecated(setting)
+          Puppet.expects(:deprecation_warning).never
+
+          args = ["--#{setting}", "/some/value"]
+          Puppet.settings.send(:parse_global_options, args)
+        end
+
+        it "does not warn when manifest is set on command line" do
+          assert_command_line_not_deprecated('manifest')
+        end
+
+        it "does not warn when modulepath is set on command line" do
+          assert_command_line_not_deprecated('modulepath')
+        end
+
+        it "does not warn when config_version is set on command line" do
+          assert_command_line_not_deprecated('config_version')
+        end
+
+        it "warns when manifestdir is set on command line" do
+          assert_command_line_deprecation('manifestdir', "Setting manifestdir is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
+        end
+
+        it "warns when templatedir is set on command line" do
+          assert_command_line_deprecation('templatedir', "Setting templatedir is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
+        end
+      end
+
+      context "as settings in the code base" do
+        def assert_accessing_setting_is_deprecated(setting)
+          Puppet.expects(:deprecation_warning).with("Accessing '#{setting}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
+          Puppet.expects(:deprecation_warning).with("Modifying '#{setting}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations")
+          Puppet[setting.intern] = apath = File.expand_path('foo')
+          expect(Puppet[setting.intern]).to eq(apath)
+        end
+
+        it "warns when attempt to access a 'manifest' setting" do
+          assert_accessing_setting_is_deprecated('manifest')
+        end
+
+        it "warns when attempt to access a 'modulepath' setting" do
+          assert_accessing_setting_is_deprecated('modulepath')
+        end
+        it "warns when attempt to access a 'config_version' setting" do
+          assert_accessing_setting_is_deprecated('config_version')
+        end
+
+        it "warns when attempt to access a 'manifestdir' setting" do
+          assert_accessing_setting_is_deprecated('manifestdir')
+        end
+
+        it "warns when attempt to access a 'templatedir' setting" do
+          assert_accessing_setting_is_deprecated('templatedir')
+        end
+
       end
     end
   end
-
 
   describe "when there are multiple config files" do
     let(:main_config_text) { "[main]\none = main\ntwo = main2" }

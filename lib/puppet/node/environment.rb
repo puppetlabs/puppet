@@ -22,8 +22,9 @@ end
 # logging functions. Logging functions are attached to the 'root' environment
 # when {Puppet::Parser::Functions.reset} is called.
 class Puppet::Node::Environment
-
   include Puppet::Util::Cacher
+
+  NO_MANIFEST = :no_manifest
 
   # @api private
   def self.seen
@@ -64,7 +65,8 @@ class Puppet::Node::Environment
 
     obj = self.create(symbol,
              split_path(Puppet.settings.value(:modulepath, symbol)),
-             Puppet.settings.value(:manifest, symbol))
+             Puppet.settings.value(:manifest, symbol),
+             Puppet.settings.value(:config_version, symbol))
     seen[symbol] = obj
   end
 
@@ -72,16 +74,20 @@ class Puppet::Node::Environment
   #
   # @param name [Symbol] the name of the
   # @param modulepath [Array<String>] the list of paths from which to load modules
-  # @param manifest [String] the path to the manifest for the environment
+  # @param manifest [String] the path to the manifest for the environment or
+  # the constant Puppet::Node::Environment::NO_MANIFEST if there is none.
+  # @param config_version [String] path to a script whose output will be added
+  #   to report logs (optional)
   # @return [Puppet::Node::Environment]
   #
   # @api public
-  def self.create(name, modulepath, manifest)
+  def self.create(name, modulepath, manifest = NO_MANIFEST, config_version = nil)
     obj = self.allocate
     obj.send(:initialize,
              name,
              expand_dirs(extralibs() + modulepath),
-             File.expand_path(manifest))
+             manifest == NO_MANIFEST ? manifest : File.expand_path(manifest),
+             config_version)
     obj
   end
 
@@ -92,38 +98,50 @@ class Puppet::Node::Environment
   #   semantics.
   #
   # @param name [Symbol] The environment name
-  def initialize(name, modulepath, manifest)
+  def initialize(name, modulepath, manifest, config_version)
     @name = name
     @modulepath = modulepath
     @manifest = manifest
+    @config_version = config_version
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding any of the passed
   # parameters.
   #
   # @param env_params [Hash<{Symbol => String,Array<String>}>] new environment
-  #   parameters (:modulepath, :manifest)
+  #   parameters (:modulepath, :manifest, :config_version)
   # @return [Puppet::Node::Environment]
   def override_with(env_params)
     return self.class.create(name,
                       env_params[:modulepath] || modulepath,
-                      env_params[:manifest] || manifest)
+                      env_params[:manifest] || manifest,
+                      env_params[:config_version] || config_version)
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding manfiest
-  # and modulepath from the passed settings if they were originally set from
-  # the commandline, or returns self if there is nothing to override.
+  # modulepath, or :config_version from the passed settings if they were
+  # originally set from the commandline, or returns self if there is nothing to
+  # override.
   #
   # @param settings [Puppet::Settings] an initialized puppet settings instance
   # @return [Puppet::Node::Environment] new overridden environment or self if
   #   there are no commandline changes from settings.
   def override_from_commandline(settings)
     overrides = {}
-    overrides[:modulepath] = self.class.split_path(settings[:modulepath]) if settings.set_by_cli?(:modulepath)
-    if settings.set_by_cli?(:manifest) ||
-      (settings.set_by_cli?(:manifestdir) && settings[:manifest].start_with?(settings[:manifestdir]))
-      overrides[:manifest] = settings[:manifest]
+
+    if settings.set_by_cli?(:modulepath)
+      overrides[:modulepath] = self.class.split_path(settings.value(:modulepath))
     end
+
+    if settings.set_by_cli?(:config_version)
+      overrides[:config_version] = settings.value(:config_version)
+    end
+
+    if settings.set_by_cli?(:manifest) ||
+      (settings.set_by_cli?(:manifestdir) && settings.value(:manifest).start_with?(settings.value(:manifestdir)))
+      overrides[:manifest] = settings.value(:manifest)
+    end
+
     overrides.empty? ?
       self :
       self.override_with(overrides)
@@ -180,6 +198,12 @@ class Puppet::Node::Environment
   #   @api public
   #   @return [String] path to the manifest file or directory.
   attr_reader :manifest
+
+  # @!attribute [r] config_version
+  #   @api public
+  #   @return [String] path to a script whose output will be added to report logs
+  #     (optional)
+  attr_reader :config_version
 
   # Return an environment-specific Puppet setting.
   #
@@ -340,22 +364,25 @@ class Puppet::Node::Environment
   #   for an explanation of the return value.
   def module_requirements
     deps = {}
+
     modules.each do |mod|
       next unless mod.forge_name
       deps[mod.forge_name] ||= []
+
       mod.dependencies and mod.dependencies.each do |mod_dep|
-        deps[mod_dep['name']] ||= []
-        dep_details = {
+        dep_name = mod_dep['name'].tr('-', '/')
+        (deps[dep_name] ||= []) << {
           'name'                => mod.forge_name,
           'version'             => mod.version,
           'version_requirement' => mod_dep['version_requirement']
         }
-        deps[mod_dep['name']] << dep_details
       end
     end
+
     deps.each do |mod, mod_deps|
-      deps[mod] = mod_deps.sort_by {|d| d['name']}
+      deps[mod] = mod_deps.sort_by { |d| d['name'] }
     end
+
     deps
   end
 
@@ -459,7 +486,9 @@ class Puppet::Node::Environment
       file = self.manifest
       # if the manifest file is a reference to a directory, parse and combine all .pp files in that
       # directory
-      if File.directory?(file)
+      if file == NO_MANIFEST
+        Puppet::Parser::AST::Hostclass.new('')
+      elsif File.directory?(file)
         parse_results = Dir.entries(file).find_all { |f| f =~ /\.pp$/ }.sort.map do |pp_file|
           parser.file = File.join(file, pp_file)
           parser.parse

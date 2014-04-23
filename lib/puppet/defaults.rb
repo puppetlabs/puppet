@@ -52,6 +52,12 @@ module Puppet
         :owner    => "service",
         :group    => "service",
         :desc     => "The directory in which to store log files",
+    },
+    :log_level => {
+      :default    => 'notice',
+      :type       => :enum,
+      :values     => ["debug","info","notice","warning","err","alert","emerg","crit"],
+      :desc       => "Default logging level",
     }
   )
 
@@ -197,8 +203,14 @@ module Puppet
           this provides the default environment for nodes we know nothing about."
     },
     :environmentpath => {
-      :default => "$confdir/environments",
-      :desc    => "A path of environment directories",
+      :default => "",
+      :desc    => "A search path for directory environments, as a list of directories
+        separated by the system path separator character. (The POSIX path separator
+        is ':', and the Windows path separator is ';'.)
+
+        This setting must have a value set to enable **directory environments.** The
+        recommended value is `$confdir/environments`. For more details, see
+        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
       :type    => :path,
     },
     :diff_args => {
@@ -391,7 +403,11 @@ module Puppet
       :desc       => "How to determine the configuration version.  By default, it will be the
       time that the configuration is parsed, but you can provide a shell script to override how the
       version is determined.  The output of this script will be added to every log message in the
-      reports, allowing you to correlate changes on your hosts to the source version on the server.",
+      reports, allowing you to correlate changes on your hosts to the source version on the server.
+
+      Setting a global value for config_version in puppet.conf is deprecated. Please set a
+      per-environment value in environment.conf instead. For more info, see
+      http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
     },
     :zlib => {
         :default  => true,
@@ -436,7 +452,7 @@ module Puppet
   )
   Puppet.define_settings(:module_tool,
     :module_repository  => {
-      :default  => 'https://forge.puppetlabs.com',
+      :default  => 'https://forgeapi.puppetlabs.com',
       :desc     => "The module repository",
     },
     :module_working_dir => {
@@ -866,13 +882,22 @@ EOT
     :manifestdir => {
       :default    => "$confdir/manifests",
       :type       => :directory,
-      :desc       => "Where puppet master looks for its manifests.",
+      :desc       => "Used to build the default value of the `manifest` setting. Has no other purpose.
+
+        This setting is deprecated."
     },
     :manifest => {
       :default    => "$manifestdir/site.pp",
-      :type       => :file,
-      :desc       => "The entry-point manifest file for puppet master or a directory of manifests
-        to be evaluated in alphabetical order.",
+      :type       => :file_or_directory,
+      :desc       => "The entry-point manifest for puppet master. This can be one file
+        or a directory of manifests to be evaluated in alphabetical order. Puppet manages
+        this path as a directory if one exists or if the path ends with a / or \\.
+
+        Setting a global value for `manifest` in puppet.conf is deprecated. Please use
+        directory environments instead. If you need to use something other than the
+        environment's `manifests` directory as the main manifest, you can set
+        `manifest` in environment.conf. For more info, see
+        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
     },
     :code => {
       :default    => "",
@@ -936,15 +961,30 @@ EOT
     :basemodulepath => {
       :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
       :type => :path,
-      :desc => "The base non-environment specific search path for modules, included
-      also in all directory environment and default legacy environment modulepaths.",
+      :desc => "The search path for **global** modules. Should be specified as a
+        list of directories separated by the system path separator character. (The
+        POSIX path separator is ':', and the Windows path separator is ';'.)
+
+        If you are using directory environments, these are the modules that will
+        be used by _all_ environments. Note that the `modules` directory of the active
+        environment will have priority over any global directories. For more info, see
+        http://docs.puppetlabs.com/puppet/latest/reference/environments.html
+
+        This setting also provides the default value for the deprecated `modulepath`
+        setting, which is used when directory environments are disabled.",
     },
     :modulepath => {
       :default => "$basemodulepath",
       :type => :path,
       :desc => "The search path for modules, as a list of directories separated by the system
         path separator character. (The POSIX path separator is ':', and the
-        Windows path separator is ';'.)",
+        Windows path separator is ';'.)
+
+        Setting a global value for `modulepath` in puppet.conf is deprecated. Please use
+        directory environments instead. If you need to use something other than the
+        default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
+        you can set `modulepath` in environment.conf. For more info, see
+        http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
@@ -1770,7 +1810,9 @@ EOT
         :default  => "$vardir/templates",
         :type     => :directory,
         :desc     => "Where Puppet looks for template files.  Can be a list of colon-separated
-          directories.",
+          directories.
+
+          This setting is deprecated. Please put your templates in modules instead."
     },
 
     :allow_variables_with_dashes => {
@@ -1831,6 +1873,23 @@ EOT
         Available Since Puppet 3.5.
       EOT
     },
+   :biff => {
+     :default => false,
+     :type => :boolean,
+     :hook => proc do |value|
+       if Puppet.settings[:parser] != 'future'
+         Puppet.settings.override_default(:parser, 'future')
+       end
+       if Puppet.settings[:evaluator] != 'future'
+         Puppet.settings.override_default(:evaluator, 'future')
+       end
+     end,
+     :desc => <<-EOT
+       Turns on Biff the catalog builder, future parser, and future evaluator.
+       This is an experimental feature - and this setting may go away before
+       release of Pupet 3.6.
+     EOT
+   },
    :max_errors => {
      :default => 10,
      :desc => <<-'EOT'

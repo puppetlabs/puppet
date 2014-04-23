@@ -398,11 +398,13 @@ module Puppet::Util::Windows::Security
     end
   end
 
-  def add_access_denied_ace(acl, mask, sid)
+  def add_access_denied_ace(acl, mask, sid, inherit = nil)
+    inherit ||= NO_INHERITANCE
+
     string_to_sid_ptr(sid) do |sid_ptr|
       raise Puppet::Util::Windows::Error.new("Invalid SID") unless IsValidSid(sid_ptr)
 
-      unless AddAccessDeniedAce(acl, ACL_REVISION, mask, sid_ptr)
+      unless AddAccessDeniedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr)
         raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
       end
     end
@@ -606,7 +608,7 @@ module Puppet::Util::Windows::Security
                   add_access_allowed_ace(acl, ace.mask, ace.sid, ace.flags)
                 when ACCESS_DENIED_ACE_TYPE
                   #puts "ace: deny, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
-                  add_access_denied_ace(acl, ace.mask, ace.sid)
+                  add_access_denied_ace(acl, ace.mask, ace.sid, ace.flags)
                 else
                   raise "We should never get here"
                   # TODO: this should have been a warning in an earlier commit

@@ -12,6 +12,15 @@ module Puppet::Network; end
 #
 module Puppet::Network::HttpPool
 
+  @http_client_class = Puppet::Network::HTTP::Connection
+
+  def self.http_client_class
+    @http_client_class
+  end
+  def self.http_client_class=(klass)
+    @http_client_class = klass
+  end
+
   # Retrieve a connection for the given host and port.
   #
   # @param host [String] The hostname to connect to
@@ -29,9 +38,9 @@ module Puppet::Network::HttpPool
                  Puppet::SSL::Validator.no_validator()
                end
 
-    Puppet::Network::HTTP::Connection.new(host, port,
-                                          :use_ssl => use_ssl,
-                                          :verify => verifier)
+    http_client_class.new(host, port,
+                            :use_ssl => use_ssl,
+                            :verify => verifier)
   end
 
   # Get an http connection that will be secured with SSL and have the
@@ -46,8 +55,8 @@ module Puppet::Network::HttpPool
   # @api public
   #
   def self.http_ssl_instance(host, port, verifier = Puppet::SSL::Validator.default_validator())
-    Puppet::Network::HTTP::Connection.new(host, port,
-                                          :use_ssl => true,
-                                          :verify => verifier)
+    http_client_class.new(host, port,
+                            :use_ssl => true,
+                            :verify => verifier)
   end
 end

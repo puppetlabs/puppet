@@ -7,6 +7,8 @@ require 'puppet/settings/ini_file'
 #
 class Puppet::Settings::ConfigFile
 
+  ALLOWED_SECTION_NAMES = ['main', 'master', 'agent', 'user'].freeze
+
   ##
   # @param value_converter [Proc] a function that will convert strings into ruby types
   #
@@ -75,6 +77,9 @@ private
     ini.section_lines.collect do |section|
       if section.name == "application_defaults" || section.name == "global_defaults"
         raise Puppet::Error, "Illegal section '#{section.name}' in config file #{file} at line #{section.line_number}"
+      end
+      if !ALLOWED_SECTION_NAMES.include?(section.name)
+        Puppet.deprecation_warning("Sections other than #{ALLOWED_SECTION_NAMES.join(', ')} are deprecated in puppet.conf. Please use the directory environments feature to specify environments. (See http://docs.puppetlabs.com/puppet/latest/reference/environments.html)")
       end
       section.name
     end.uniq

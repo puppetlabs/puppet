@@ -210,7 +210,7 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
-  # for 'class' and 'define'
+  # for 'class', 'define', and function
   def check_NamedDefinition(o)
     top(o.eContainer, o)
     if o.name !~ Puppet::Pops::Patterns::CLASSREF

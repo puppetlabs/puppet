@@ -70,6 +70,9 @@ class Puppet::Util::Feature
   def load_library(lib, name)
     raise ArgumentError, "Libraries must be passed as strings not #{lib.class}" unless lib.is_a?(String)
 
+    @rubygems ||= Puppet::Util::RubyGems::Source.new
+    @rubygems.clear_paths
+
     begin
       require lib
     rescue SystemExit,NoMemoryError

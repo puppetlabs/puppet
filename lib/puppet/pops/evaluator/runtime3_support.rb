@@ -4,6 +4,7 @@
 #
 # @api private
 module Puppet::Pops::Evaluator::Runtime3Support
+
   # Fails the evaluation of _semantic_ with a given issue.
   #
   # @param issue [Puppet::Pops::Issue] the issue to report
@@ -13,6 +14,21 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
   #
   def fail(issue, semantic, options={}, except=nil)
+    optionally_fail(issue, semantic, options, except)
+    # an error should have been raised since fail always fails
+    raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+  end
+
+  # Optionally (based on severity) Fails the evaluation of _semantic_ with a given issue
+  # If the given issue is configured to be of severity < :error it is only reported, and the function returns.
+  #
+  # @param issue [Puppet::Pops::Issue] the issue to report
+  # @param semantic [Puppet::Pops::ModelPopsObject] the object for which evaluation failed in some way. Used to determine origin.
+  # @param options [Hash] hash of optional named data elements for the given issue
+  # @return [!] this method does not return
+  # @raise [Puppet::ParseError] an evaluation error initialized from the arguments (TODO: Change to EvaluationError?)
+  #
+  def optionally_fail(issue, semantic, options={}, except=nil)
     if except.nil?
       # Want a stacktrace, and it must be passed as an exception
       begin
@@ -212,23 +228,27 @@ module Puppet::Pops::Evaluator::Runtime3Support
     n
   end
 
-  # Asserts that the given function name resolves to an available function. The function is loaded
-  # as a side effect. Fails if the function does not exist.
-  #
-  def assert_function_available(name, o, scope)
-    fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
-  end
-
   def call_function(name, args, o, scope)
+    # Call via 4x API if it is available, and the function exists
+    #
+    if loaders = Puppet.lookup(:loaders) {nil}
+      # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
+      adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
+      loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
+      if loader && func = loader.load(:function, name)
+        return func.call(scope, *args)
+      end
+    end
+
+    fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
+
+    # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts :undef to empty string
     mapped_args = args.map {|a| convert(a, scope, '') }
-    scope.send("function_#{name}", mapped_args)
-  end
-
-  # Returns true if the function produces a value
-  def rvalue_function?(name, o, scope)
-    Puppet::Parser::Functions.rvalue?(name)
+    result = scope.send("function_#{name}", mapped_args)
+    # Prevent non r-value functions from leaking their result (they are not written to care about this)
+    Puppet::Parser::Functions.rvalue?(name) ? result : nil
   end
 
   # The o is used for source reference
@@ -330,15 +350,20 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Returns the value of a resource's parameter by first looking up the parameter in the resource
   # and then in the defaults for the resource. Since the resource exists (it must in order to look up its
   # parameters, any overrides have already been applied). Defaults are not applied to a resource until it
-  # has been finished (which typically has not taked place when this is evaluated; hence the dual lookup).
+  # has been finished (which typically has not taken place when this is evaluated; hence the dual lookup).
   #
   def get_resource_parameter_value(scope, resource, parameter_name)
+    # This gets the parameter value, or nil (for both valid parameters and parameters that do not exist).
     val = resource[parameter_name]
     if val.nil? && defaults = scope.lookupdefaults(resource.type)
       # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
       # name and value.
+      # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded
+      # in the defaults, they may receive hardcoded defaults later (e.g. 'tag').
       param = defaults[parameter_name.to_sym]
-      val = param.value
+      # Some parameters (meta parameters like 'tag') does not return a param from which the value can be obtained
+      # at all times. Instead, they return a nil param until a value has been set.
+      val = param.nil? ? nil : param.value
     end
     val
   end
@@ -430,14 +455,16 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Needs conversion by calling scope to resolve the name and possibly return a different name
     # Resolution can only be called with an array, and returns an array. Here there is only one name
     type, titles = scope.resolve_type_and_titles(o.type_name, [o.title])
-    Puppet::Resource.new(type, titles[0])
+    # Note: a title of nil makes Resource class throw error with information that is wrong
+    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
   end
 
   def convert_PHostClassType(o, scope, undef_value)
     # Needs conversion by calling scope to resolve the name and possibly return a different name
     # Resolution can only be called with an array, and returns an array. Here there is only one name
     type, titles = scope.resolve_type_and_titles('class', [o.class_name])
-    Puppet::Resource.new(type, titles[0])
+    # Note: a title of nil makes Resource class throw error with information that is wrong
+    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
   end
 
   private
@@ -471,16 +498,35 @@ module Puppet::Pops::Evaluator::Runtime3Support
   def diagnostic_producer
     Puppet::Pops::Validation::DiagnosticProducer.new(
       ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
-      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
+      SeverityProducer.new(), # All issues are errors
+#      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
       Puppet::Pops::Model::ModelLabelProvider.new())
+  end
+
+  # Configure the severity of failures
+  class SeverityProducer < Puppet::Pops::Validation::SeverityProducer
+    Issues = Puppet::Pops::Issues
+
+    def initialize
+      super
+      p = self
+      # Issues triggering warning only if --debug is on
+      if Puppet[:debug]
+        p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :warning
+      else
+        p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
+      end
+    end
   end
 
   # An acceptor of diagnostics that immediately raises an exception.
   class ExceptionRaisingAcceptor < Puppet::Pops::Validation::Acceptor
     def accept(diagnostic)
       super
-      Puppet::Pops::IssueReporter.assert_and_report(self, {:message => "Evaluation Error:" })
-      raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+      Puppet::Pops::IssueReporter.assert_and_report(self, {:message => "Evaluation Error:", :emit_warnings => true })
+      if errors?
+        raise ArgumentError, "Internal Error: Configuration of runtime error handling wrong: should have raised exception"
+      end
     end
   end
 

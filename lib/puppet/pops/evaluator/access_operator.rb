@@ -73,7 +73,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PRegexpType(o, scope, keys)
     keys.flatten!
     unless keys.size == 1
-      blamed = keys.size == 0 ? @semantic : @semantic.keys[2]
+      blamed = keys.size == 0 ? @semantic : @semantic.keys[1]
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :actual => keys.size)
     end
     assert_keys(keys, o, 1, 1, String, Regexp)
@@ -183,6 +183,10 @@ class Puppet::Pops::Evaluator::AccessOperator
     t
   end
 
+  def access_PCallableType(o, scope, keys)
+    TYPEFACTORY.callable(*keys)
+  end
+
   def access_PStructType(o, scope, keys)
     assert_keys(keys, o, 1, 1, Hash)
     TYPEFACTORY.struct(keys[0])
@@ -214,7 +218,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def assert_keys(keys, o, min, max, *allowed_classes)
     size = keys.size
     unless size.between?(min, max || INFINITY)
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed, :base_type => o, :min=>1, :max => max, :actual => keys.size)
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic, :base_type => o, :min=>1, :max => max, :actual => keys.size)
     end
     keys.each_with_index do |k, i|
       unless allowed_classes.any? {|clazz| k.is_a?(clazz) }
@@ -438,29 +442,16 @@ class Puppet::Pops::Evaluator::AccessOperator
   #   Resource[File, 'foo']['bar'] # => Value of the 'bar' parameter in the File['foo'] resource
   #
   def access_PResourceType(o, scope, keys)
-    keys.flatten!
+    blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
+
     if keys.size == 0
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
-        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)
-    end
-    if !o.title.nil?
-      # lookup resource and return one or more parameter values
-      resource = find_resource(scope, o.type_name, o.title)
-      unless resource
-        fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => o.type_name, :title => o.title})
-      end
-      result = keys.map do |k|
-        unless is_parameter_of_resource?(scope, resource, k)
-          fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
-            {:type_name => o.type_name, :title => o.title, :param_name=>k})
-        end
-        get_resource_parameter_value(scope, resource, k)
-      end
-      return result.size <= 1 ? result.pop : result
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
+        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
     end
 
+    # Must know which concrete resource type to operate on in all cases.
+    # It is not allowed to specify the type in an array arg - e.g. Resource[[File, 'foo']]
     # type_name is LHS type_name if set, else the first given arg
-    keys_orig_size = keys.size
     type_name = o.type_name || keys.shift
     type_name = case type_name
     when Puppet::Pops::Types::PResourceType
@@ -468,9 +459,45 @@ class Puppet::Pops::Evaluator::AccessOperator
     when String
       type_name.downcase
     else
-      blame = keys_orig_size != keys.size ? @semantic.keys[0] : @semantic.left_expr
+      # blame given left expression if it defined the type, else the first given key expression
+      blame = o.type_name.nil? ? @semantic.keys[0] : @semantic.left_expr
       fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => type_name.class})
     end
+
+    # The result is an array if multiple titles are given, or if titles are specified with an array
+    # (possibly multiple arrays, and nested arrays).
+    result_type_array = keys.size > 1 || keys[0].is_a?(Array)
+    keys_orig_size = keys.size
+
+    keys.flatten!
+    keys.compact!
+
+    # If given keys  that were just a mix of empty/nil with empty array as a result.
+    # As opposed to calling the function the wrong way (without any arguments), (configurable issue),
+    # Return an empty array
+    #
+    if keys.empty? && keys_orig_size > 0
+      optionally_fail(Puppet::Pops::Issues::EMPTY_RESOURCE_SPECIALIZATION, blamed)
+      return result_type_array ? [] : nil
+    end
+
+    if !o.title.nil?
+      # lookup resource and return one or more parameter values
+      resource = find_resource(scope, o.type_name, o.title)
+      unless resource
+        fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => o.type_name, :title => o.title})
+      end
+
+      result = keys.map do |k|
+        unless is_parameter_of_resource?(scope, resource, k)
+          fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
+            {:type_name => o.type_name, :title => o.title, :param_name=>k})
+        end
+        get_resource_parameter_value(scope, resource, k)
+      end
+      return result_type_array ? result : result.pop
+    end
+
 
     keys = [:no_title] if keys.size < 1 # if there was only a type_name and it was consumed
     result = keys.each_with_index.map do |t, i|
@@ -495,16 +522,35 @@ class Puppet::Pops::Evaluator::AccessOperator
       rtype.title = (t == :no_title ? nil : t)
       rtype
     end
-    # returns single type as type, else an array of types
-    result.size == 1 ? result.pop : result
+    # returns single type if request was for a single entity, else an array of types (possibly empty)
+    return result_type_array ? result : result.pop
   end
 
   def access_PHostClassType(o, scope, keys)
+    blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
+    keys_orig_size = keys.size
+
+    # The result is an array if multiple classnames are given, or if classnames are specified with an array
+    # (possibly multiple arrays, and nested arrays).
+    result_type_array = keys.size > 1 || keys[0].is_a?(Array)
+
     keys.flatten!
-    if keys.size == 0
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, o,
-        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :actual => 0)
+    keys.compact!
+
+    if keys_orig_size == 0
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
+        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
     end
+
+    # If given keys  that were just a mix of empty/nil with empty array as a result.
+    # As opposed to calling the function the wrong way (without any arguments), (configurable issue),
+    # Return an empty array
+    #
+    if keys.empty? && keys_orig_size > 0
+      optionally_fail(Puppet::Pops::Issues::EMPTY_RESOURCE_SPECIALIZATION, blamed)
+      return result_type_array ? [] : nil
+    end
+
     if ! o.class_name.nil?
       # lookup class resource and return one or more parameter values
       resource = find_resource(scope, 'class', o.class_name)
@@ -518,12 +564,9 @@ class Puppet::Pops::Evaluator::AccessOperator
         end
         get_resource_parameter_value(scope, resource, k)
       end
-      return result.size <= 1 ? result.pop : result
-      # TODO: if [] is applied to specific class, it should be treated the same as getting
-      # a resource parameter. Now it fails the operation
-      #
-      fail(Puppet::Pops::Issues::ILLEGAL_TYPE_SPECIALIZATION, semantic.left_expr, {:kind => 'Class'})
+      return result_type_array ? result : result.pop
     end
+
     # The type argument may be a Resource Type - the Puppet Language allows a reference such as
     # Class[Foo], and this is interpreted as Class[Resource[Foo]] - which is ok as long as the resource
     # does not have a title. This should probably be deprecated.
@@ -531,7 +574,8 @@ class Puppet::Pops::Evaluator::AccessOperator
     result = keys.each_with_index.map do |c, i|
       ctype = Puppet::Pops::Types::PHostClassType.new()
       if c.is_a?(Puppet::Pops::Types::PResourceType) && !c.type_name.nil? && c.title.nil?
-        c = c.type_name.downcase
+        # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
+        c = c.type_name.downcase.sub(/^::/, '')
       end
       unless c.is_a?(String)
         fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
@@ -539,10 +583,11 @@ class Puppet::Pops::Evaluator::AccessOperator
       if c !~ Puppet::Pops::Patterns::NAME
         fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
       end
-      ctype.class_name = c
+      ctype.class_name = c.downcase.sub(/^::/,'')
       ctype
     end
+
     # returns single type as type, else an array of types
-    result.size == 1 ? result.pop : result
+    return result_type_array ? result : result.pop
   end
 end

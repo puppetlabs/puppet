@@ -103,6 +103,7 @@ describe "Puppet::Parser::Compiler" do
         notify_resource[:require].title.should == "Experiment::Baz"
       end
     end
+
     describe "(ticket #13349) when explicitly specifying top scope" do
       ["class {'::bar::baz':}", "include ::bar::baz"].each do |include|
         describe "with #{include}" do
@@ -342,13 +343,23 @@ describe "Puppet::Parser::Compiler" do
 
       it 'an initial underscore in not ok if elsewhere than last segment' do
         node = Puppet::Node.new("testing_x")
-        expect { 
+        expect {
           catalog = compile_to_catalog(<<-MANIFEST, node)
           class a { $_a = 10}
           include a
           notify { 'test': message => $_a::_a }
         MANIFEST
           }.to raise_error(/Illegal variable name/)
+      end
+
+      it 'a missing variable as default value becomes undef' do
+        node = Puppet::Node.new("testing_x")
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+        class a ($b=$x) { notify {$b: message=>'meh'} }
+        include a
+        MANIFEST
+        resource = catalog.resource("Notify[undef]")
+        resource[:message].should == "meh"
       end
     end
 

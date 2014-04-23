@@ -17,6 +17,27 @@ describe Puppet::Network::HttpPool do
       http.port.should    == 54321
     end
 
+    it "should support using an alternate http client implementation" do
+      begin
+        class FooClient
+          def initialize(host, port, options = {})
+            @host = host
+            @port = port
+          end
+          attr_reader :host, :port
+        end
+
+        orig_class = Puppet::Network::HttpPool.http_client_class
+        Puppet::Network::HttpPool.http_client_class = FooClient
+        http = Puppet::Network::HttpPool.http_instance("me", 54321)
+        http.should be_an_instance_of FooClient
+        http.host.should == 'me'
+        http.port.should == 54321
+      ensure
+        Puppet::Network::HttpPool.http_client_class = orig_class
+      end
+    end
+
     it "should enable ssl on the http instance by default" do
       Puppet::Network::HttpPool.http_instance("me", 54321).should be_use_ssl
     end

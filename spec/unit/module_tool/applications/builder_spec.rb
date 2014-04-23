@@ -30,7 +30,7 @@ describe Puppet::ModuleTool::Applications::Builder do
 
     it "packages the module in a tarball named after the module" do
       tarrer = mock('tarrer')
-      Puppet::ModuleTool::Tar.expects(:instance).with(module_name).returns(tarrer)
+      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
       Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
       tarrer.expects(:pack).with(release_name, tarball)
 
@@ -56,7 +56,7 @@ MODULEFILE
 
     it "packages the module in a tarball named after the module" do
       tarrer = mock('tarrer')
-      Puppet::ModuleTool::Tar.expects(:instance).with(module_name).returns(tarrer)
+      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
       Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
       tarrer.expects(:pack).with(release_name, tarball)
 

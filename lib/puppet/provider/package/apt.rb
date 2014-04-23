@@ -4,7 +4,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   desc "Package management via `apt-get`."
 
-  has_feature :versionable
+  has_feature :versionable, :install_options
 
   commands :aptget => "/usr/bin/apt-get"
   commands :aptcache => "/usr/bin/apt-cache"
@@ -63,6 +63,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
       cmd << "--force-yes"
     end
 
+    cmd += install_options if @resource[:install_options]
     cmd << :install << str
 
     aptget(*cmd)
@@ -103,5 +104,9 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     aptget '-y', '-q', :remove, '--purge', @resource[:name]
     # workaround a "bug" in apt, that already removed packages are not purged
     super
+  end
+
+  def install_options
+    join_options(@resource[:install_options])
   end
 end

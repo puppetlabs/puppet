@@ -207,17 +207,17 @@ module Puppet
     def port
       (uri and uri.port) or Puppet.settings[:masterport]
     end
-    private
-
-    def scheme
-      (uri and uri.scheme)
-    end
 
     def uri
       @uri ||= URI.parse(URI.escape(metadata.source))
     end
 
     private
+
+    def scheme
+      (uri and uri.scheme)
+    end
+
     def found?
       ! (metadata.nil? or metadata.ftype.nil?)
     end

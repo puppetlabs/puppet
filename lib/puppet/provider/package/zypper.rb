@@ -41,20 +41,21 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     self.debug "Detected zypper version #{major}.#{minor}.#{patch}"
 
     #zypper version < 1.0 does not support --quiet flag
-    quiet = "--quiet"
     if major < 1
-      quiet = "--terse"
+      quiet = '--terse'
+    else
+      quiet = '--quiet'
     end
 
-    license = "--auto-agree-with-licenses"
-    noconfirm = "--no-confirm"
+    options = [quiet, :install]
 
     #zypper 0.6.13 (OpenSuSE 10.2) does not support auto agree with licenses
-    if major < 1 and minor <= 6 and patch <= 13
-      zypper quiet, :install, noconfirm, install_options, wanted
-    else
-      zypper quiet, :install, license, noconfirm, install_options, wanted
-    end
+    options << '--auto-agree-with-licenses' unless major < 1 and minor <= 6 and patch <= 13
+    options << '--no-confirm'
+    options += install_options if resource[:install_options]
+    options << wanted
+
+    zypper *options
 
     unless self.query
       raise Puppet::ExecutionFailure.new(
@@ -80,24 +81,5 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
   def update
     # zypper install can be used for update, too
     self.install
-  end
-
-  def install_options
-    join_options(resource[:install_options])
-  end
-
-  def join_options(options)
-    return unless options
-
-    options.collect do |val|
-      case val
-      when Hash
-        val.keys.sort.collect do |k|
-          "#{k} '#{val[k]}'"
-        end.join(' ')
-      else
-        val
-      end
-    end
   end
 end

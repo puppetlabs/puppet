@@ -73,6 +73,10 @@ install: build
 	$(INSTALL) -m0644 ext/rack/example-passenger-vhost.conf \
 		$(CURDIR)/debian/puppetmaster-passenger/usr/share/puppetmaster-passenger/apache2.site.conf.tmpl
 
+	# Install example environment README
+	$(INSTALL) -m0644 ext/README.environment \
+		$(CURDIR)/debian/puppet-common/etc/puppet/environments/example_env/README.environment
+
 	# Add ext directory
 	cp -pr ext $(CURDIR)/debian/puppet-common/usr/share/puppet
 	# Remove misc packaging artifacts not applicable to debian

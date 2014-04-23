@@ -64,7 +64,7 @@ class Puppet::Pops::Evaluator::CompareOperator
   def cmp_Numeric(a, b)
     if n2 = Puppet::Pops::Utils.to_n(b)
       a <=> n2
-    elsif b.kind_of(String)
+    elsif b.kind_of?(String)
       # Numeric is always lexiographically smaller than a string, even if the string is empty.
       -1
     else

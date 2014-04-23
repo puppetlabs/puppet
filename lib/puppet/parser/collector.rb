@@ -112,7 +112,7 @@ class Puppet::Parser::Collector
           unless existing.collector_id == item.collector_id
             # unless this is the one we've already collected
             raise Puppet::ParseError,
-              "Another local or imported resource exists with the type and title #{item.ref}"
+              "A duplicate resource was found while collecting exported resources, with the type and title #{item.ref}"
           end
         else
           item.exported = false

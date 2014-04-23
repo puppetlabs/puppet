@@ -74,7 +74,6 @@ on master, "[ -d #{master['sitemoduledir']}/crick ]"
 
 step "List the installed modules"
 on master, puppet("module list --modulepath #{master['distmoduledir']}") do
-  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 #{master['distmoduledir']}
 ├── jimmy-appleseed (\e[0;36mv1.1.0\e[0m)
@@ -91,7 +90,6 @@ end
 
 step "List the installed modules as a dependency tree"
 on master, puppet("module list --tree --modulepath #{master['distmoduledir']}") do
-  assert_equal '', stderr
   assert_equal <<-STDOUT, stdout
 #{master['distmoduledir']}
 └─┬ jimmy-thelock (\e[0;36mv1.0.0\e[0m)

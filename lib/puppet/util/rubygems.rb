@@ -45,6 +45,10 @@ module Puppet::Util::RubyGems
         File.join(spec.full_gem_path, 'lib')
       end
     end
+
+    def clear_paths
+      Gem.clear_paths
+    end
   end
 
   # RubyGems < 1.8.0
@@ -53,6 +57,10 @@ module Puppet::Util::RubyGems
     def directories
       @paths ||= Gem.latest_load_paths
     end
+
+    def clear_paths
+      Gem.clear_paths
+    end
   end
 
   # @api private
@@ -60,6 +68,8 @@ module Puppet::Util::RubyGems
     def directories
       []
     end
+
+    def clear_paths; end
   end
 end
 

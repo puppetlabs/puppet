@@ -5,7 +5,7 @@ require 'matchers/json'
 describe Puppet::Node do
   include JSONMatchers
 
-  let(:environment) { Puppet::Node::Environment.create(:bar, [], '') }
+  let(:environment) { Puppet::Node::Environment.create(:bar, []) }
   let(:env_loader) { Puppet::Environments::Static.new(environment) }
 
   it "should register its document type as Node" do

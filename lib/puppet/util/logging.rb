@@ -55,19 +55,22 @@ module Puppet::Util::Logging
 
   class DeprecationWarning < Exception; end
 
-  # Log a warning indicating that the code path is deprecated.  Note that this method keeps track of the
-  # offending lines of code that triggered the deprecation warning, and will only log a warning once per
-  # offending line of code.  It will also stop logging deprecation warnings altogether after 100 unique
-  # deprecation warnings have been logged.
-  # Parameters:
-  # [message] The message to log (logs via )
-  def deprecation_warning(message)
+  # Logs a warning indicating that the code path is deprecated.  Note that this
+  # method keeps track of the offending lines of code that triggered the
+  # deprecation warning, and will only log a warning once per offending line of
+  # code.  It will also stop logging deprecation warnings altogether after 100
+  # unique deprecation warnings have been logged.
+  #
+  # @param [String] message The message to log (logs via )
+  # @param [String] key Optional key to mark the message as unique. If not
+  #   passed in, the originating call line will be used instead.
+  def deprecation_warning(message, key = nil)
     $deprecation_warnings ||= {}
     if $deprecation_warnings.length < 100 then
-      offender = get_deprecation_offender()
-      if (! $deprecation_warnings.has_key?(offender)) then
-        $deprecation_warnings[offender] = message
-        warning("#{message}\n   (at #{offender})")
+      key ||= (offender = get_deprecation_offender)
+      if (! $deprecation_warnings.has_key?(key)) then
+        $deprecation_warnings[key] = message
+        warning("#{message}\n   (at #{(offender || get_deprecation_offender).join('; ')})")
       end
     end
   end
@@ -78,7 +81,11 @@ module Puppet::Util::Logging
     #
     # let's find the offending line;  we need to jump back up the stack a few steps to find the method that called
     #  the deprecated method
-    caller()[2]
+    if Puppet[:trace]
+      caller()[2..-1]
+    else
+      [caller()[2]]
+    end
   end
 
   def clear_deprecation_warnings

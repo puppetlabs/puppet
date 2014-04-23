@@ -3,6 +3,10 @@
 # and cannot be changed; however a child context can be created, using
 # {#override}, that provides a different value.
 #
+# When binding a {Proc}, the proc is called when the value is looked up, and the result
+# is memoized for subsequent lookups. This provides a lazy mechanism that can be used to
+# delay expensive production of values until they are needed.
+#
 # @api private
 class Puppet::Context
   require 'puppet/context/trusted_information'
@@ -36,7 +40,8 @@ class Puppet::Context
   # @api private
   def lookup(name, &block)
     if @table.include?(name)
-      @table[name]
+      value = @table[name]
+      value.is_a?(Proc) ? (@table[name] = value.call) : value
     elsif block
       block.call
     else

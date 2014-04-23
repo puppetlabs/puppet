@@ -4,10 +4,8 @@ Wants=basic.target
 After=basic.target network.target
 
 [Service]
-Type=forking
 EnvironmentFile=-/etc/sysconfig/puppetmaster
-PIDFile=/run/puppet/master.pid
-ExecStart=/usr/bin/puppet master $PUPPETMASTER_EXTRA_OPTS
+ExecStart=/usr/bin/puppet master ${PUPPETMASTER_EXTRA_OPTS} --no-daemonize
 
 [Install]
 WantedBy=multi-user.target

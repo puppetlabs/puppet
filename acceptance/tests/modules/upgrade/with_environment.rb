@@ -4,7 +4,7 @@ extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
 module_name   = "java"
-module_dependencies = ["stdlib"]
+module_dependencies = ["stdlub"]
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do
@@ -34,6 +34,13 @@ end
 step "Upgrade a module that has a more recent version published in a legacy environment" do
   install_test_module_in.call('legacyenv')
   check_module_upgrade_in.call('legacyenv', "#{master['puppetpath']}/legacyenv/modules")
+end
+
+step 'Enable directory environments' do
+  on master, puppet("config", "set",
+                    "environmentpath", "#{master['puppetpath']}/environments",
+                    "--section", "main",
+                    "--config", puppet_conf)
 end
 
 step "Upgrade a module that has a more recent version published in a directory environment" do

@@ -407,7 +407,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       @compiler.add_resource(@scope, local)
 
       expect { @collector.evaluate }.
-        to raise_error Puppet::ParseError, /exists with the type and title/
+        to raise_error Puppet::ParseError, /A duplicate resource was found while collecting exported resources/
     end
 
     it "should ignore exported resources that match already-collected resources" do
