@@ -203,6 +203,7 @@ module Puppet::Test
       # having to deal with a missing environmentpath we can just set it right
       # here.
       Puppet[:environmentpath] = @environmentpath
+      Puppet[:environment_timeout] = 0
     end
     private_class_method :initialize_settings_before_each
   end
