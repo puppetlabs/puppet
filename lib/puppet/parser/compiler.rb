@@ -104,6 +104,8 @@ class Puppet::Parser::Compiler
   # This is the main entry into our catalog.
   def compile
     Puppet.override( @context_overrides , "For compiling #{node.name}") do
+      @catalog.environment_instance = environment
+
       # Set the client's parameters into the top scope.
       Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
 

@@ -46,8 +46,11 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # Some metadata to help us compile and generally respond to the current state.
   attr_accessor :client_version, :server_version
 
-  # The environment for this catalog
+  # A String representing the environment for this catalog
   attr_accessor :environment
+
+  # The actual environment instance that was used during compilation
+  attr_accessor :environment_instance
 
   # Add classes to our class list.
   def add_class(*classes)
@@ -284,19 +287,21 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Look a resource up by its reference (e.g., File[/etc/passwd]).
   def resource(type, title = nil)
-    # Always create a resource reference, so that it always
-    # canonicalizes how we are referring to them.
-    if title
-      res = Puppet::Resource.new(type, title)
-    else
-      # If they didn't provide a title, then we expect the first
-      # argument to be of the form 'Class[name]', which our
-      # Reference class canonicalizes for us.
-      res = Puppet::Resource.new(nil, type)
+    Puppet.override(:current_environment => environment_instance) do
+      # Always create a resource reference, so that it always
+      # canonicalizes how we are referring to them.
+      if title
+        res = Puppet::Resource.new(type, title)
+      else
+        # If they didn't provide a title, then we expect the first
+        # argument to be of the form 'Class[name]', which our
+        # Reference class canonicalizes for us.
+        res = Puppet::Resource.new(nil, type)
+      end
+      title_key      = [res.type, res.title.to_s]
+      uniqueness_key = [res.type, res.uniqueness_key].flatten
+      @resource_table[title_key] || @resource_table[uniqueness_key]
     end
-    title_key      = [res.type, res.title.to_s]
-    uniqueness_key = [res.type, res.uniqueness_key].flatten
-    @resource_table[title_key] || @resource_table[uniqueness_key]
   end
 
   def resource_refs
@@ -488,6 +493,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     result.version = self.version
     result.environment = self.environment
+    result.environment_instance = self.environment_instance
 
     map = {}
     resources.each do |resource|
