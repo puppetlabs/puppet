@@ -38,10 +38,6 @@ shared_context("when digest_algorithm is set to sha256", :digest_algorithm => 's
   let(:checksum) { '409a11465ed0938227128b1756c677a8480a8b84814f1963853775e15a74d4b4' }
   let(:bucket_dir) { '4/0/9/a/1/1/4/6/409a11465ed0938227128b1756c677a8480a8b84814f1963853775e15a74d4b4' }
 
-  let(:not_bucketed_plaintext) { "other stuff" }
-  let(:not_bucketed_checksum) { '71e19d6834b179eff0012516fa1397c392d5644a3438644e3f23634095a84974' }
-  let(:not_bucketed_bucket_dir) { '7/1/e/1/9/d/6/8/71e19d6834b179eff0012516fa1397c392d5644a3438644e3f23634095a84974' }
-
   def digest(content)
     Puppet::Util::Checksums.sha256(content)
   end
@@ -56,10 +52,6 @@ shared_context("when digest_algorithm is set to md5", :digest_algorithm => 'md5'
   let(:plaintext) { "my\r\ncontents" }
   let(:checksum) { 'f0d7d4e480ad698ed56aeec8b6bd6dea' }
   let(:bucket_dir) { 'f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea' }
-
-  let(:not_bucketed_plaintext) { "other stuff" }
-  let(:not_bucketed_checksum) { 'c0133c37ea4b55af2ade92e1f1337568' }
-  let(:not_bucketed_bucket_dir) { 'c/0/1/3/3/c/3/7/c0133c37ea4b55af2ade92e1f1337568' }
 
   def digest(content)
     Puppet::Util::Checksums.md5(content)

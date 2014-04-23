@@ -101,6 +101,9 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
     end
 
     using_checksums_describe "when servicing a head/find request" do
+      let(:not_bucketed_plaintext) { "other stuff" }
+      let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
+
       describe "when supplying a path" do
         it "should return false/nil if the file isn't bucketed" do
           Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar").should == false
@@ -154,6 +157,9 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
     end
 
     using_checksums_describe "when diffing files", :unless => Puppet.features.microsoft_windows? do
+      let(:not_bucketed_plaintext) { "other stuff" }
+      let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
+
       it "should generate an empty string if there is no diff" do
         checksum = save_bucket_file("I'm the contents of a file")
         Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => checksum).should == ''
