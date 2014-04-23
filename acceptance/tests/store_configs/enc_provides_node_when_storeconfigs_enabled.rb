@@ -36,14 +36,26 @@ $active_record_version = $osfamily ? {
   default => '3.2.16',
 }
 
-package {
-  rubygems:
-    ensure => present;
+# Trusty doesn't have a rubygems package anymore
+# Not sure which other Debian's might follow suit so
+# restricting this narrowly for now
+#
+if $lsbdistid == "Ubuntu" and $lsbdistrelease == "14.04" {
+  package {
+    activerecord:
+      ensure => $active_record_version,
+      provider => 'gem',
+  }
+} else {
+  package {
+    rubygems:
+      ensure => present;
 
-  activerecord:
-    ensure => $active_record_version,
-    provider => 'gem',
-    require => Package[rubygems];
+    activerecord:
+      ensure => $active_record_version,
+      provider => 'gem',
+      require => Package[rubygems];
+  }
 }
 
 if $osfamily == "Debian" {
