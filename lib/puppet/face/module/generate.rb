@@ -20,7 +20,7 @@ Puppet::Face.define(:module, '1.0.0') do
       to leave it blank.
 
       Puppet uses Semantic Versioning (semver.org) to version modules.
-      What version is this module?  [0.0.1]
+      What version is this module?  [0.1.0]
       -->
 
       Who wrote this module?  [puppetlabs]
@@ -44,7 +44,7 @@ Puppet::Face.define(:module, '1.0.0') do
       ----------------------------------------
       {
         "name": "puppetlabs-ssh",
-        "version": "0.0.1",
+        "version": "0.1.0",
         "author": "puppetlabs",
         "summary": null,
         "license": "Apache 2.0",
@@ -112,7 +112,7 @@ Puppet::Face.define(:module, '1.0.0') do
         # to justify its inclusion.
         metadata = Puppet::ModuleTool::Metadata.new.update(
           'name' => name,
-          'version' => '0.0.1',
+          'version' => '0.1.0',
           'dependencies' => [
             { :name => 'puppetlabs-stdlib', :version_range => '>= 1.0.0' }
           ]
