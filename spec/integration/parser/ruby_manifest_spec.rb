@@ -8,12 +8,7 @@ describe "Pure ruby manifests" do
   include PuppetSpec::Files
 
   before do
-    @node = Puppet::Node.new "testnode"
-
-    @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]'
-    @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
     @test_dir = tmpdir('ruby_manifest_test')
-    Puppet.expects(:deprecation_warning).at_least(1)
   end
 
   after do
