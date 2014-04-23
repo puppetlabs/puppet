@@ -8,27 +8,21 @@ require 'puppet_spec/modules'
 describe "puppet module list" do
   include PuppetSpec::Files
 
-  before do
+  around do |example|
     dir = tmpdir("deep_path")
 
-    @modpath1 = File.join(dir, "modpath1")
-    @modpath2 = File.join(dir, "modpath2")
-    @modulepath = "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}"
-    Puppet.settings[:modulepath] = @modulepath
+    FileUtils.mkdir_p(@modpath1 = File.join(dir, "modpath1"))
+    FileUtils.mkdir_p(@modpath2 = File.join(dir, "modpath2"))
+    FileUtils.mkdir_p(@modpath3 = File.join(dir, "modpath3"))
 
-    FileUtils.mkdir_p(@modpath1)
-    FileUtils.mkdir_p(@modpath2)
-  end
-
-  around do |example|
-    Puppet.override(:environments => Puppet::Environments::Legacy.new()) do
+    env = Puppet::Node::Environment.create(:env, [@modpath1, @modpath2])
+    Puppet.override(:current_environment => env) do
       example.run
     end
   end
 
   it "should return an empty list per dir in path if there are no modules" do
-    Puppet.settings[:modulepath] = @modulepath
-    Puppet::Face[:module, :current].list.should == {
+    Puppet::Face[:module, :current].list[:modules_by_path].should == {
       @modpath1 => [],
       @modpath2 => []
     }
@@ -39,15 +33,16 @@ describe "puppet module list" do
     barmod1 = PuppetSpec::Modules.create('bar', @modpath1)
     foomod2 = PuppetSpec::Modules.create('foo', @modpath2)
 
-    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2])
+    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2, @modpath3])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
-      Puppet::Face[:module, :current].list(:environment => 'useme').should == {
+      Puppet::Face[:module, :current].list(:environment => 'useme')[:modules_by_path].should == {
         @modpath1 => [
           Puppet::Module.new('bar', barmod1.path, usedenv),
           Puppet::Module.new('foo', foomod1.path, usedenv)
         ],
-        @modpath2 => [Puppet::Module.new('foo', foomod2.path, usedenv)]
+        @modpath2 => [Puppet::Module.new('foo', foomod2.path, usedenv)],
+        @modpath3 => [],
       }
     end
   end
@@ -56,15 +51,16 @@ describe "puppet module list" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath1)
 
-    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2])
+    usedenv = Puppet::Node::Environment.create(:useme, [@modpath1, @modpath2, @modpath3])
 
     Puppet.override(:environments => Puppet::Environments::Static.new(usedenv)) do
-      Puppet::Face[:module, :current].list(:environment => 'useme').should == {
+      Puppet::Face[:module, :current].list(:environment => 'useme')[:modules_by_path].should == {
         @modpath1 => [
           Puppet::Module.new('bar', barmod.path, usedenv),
           Puppet::Module.new('foo', foomod.path, usedenv)
         ],
-        @modpath2 => []
+        @modpath2 => [],
+        @modpath3 => [],
       }
     end
   end
@@ -73,7 +69,7 @@ describe "puppet module list" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath2)
 
-    modules = Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")
+    modules = Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")[:modules_by_path]
 
     expect(modules[@modpath1].first.name).to eq('foo')
     expect(modules[@modpath1].first.path).to eq(foomod.path)
@@ -88,9 +84,8 @@ describe "puppet module list" do
     foomod = PuppetSpec::Modules.create('foo', @modpath1)
     barmod = PuppetSpec::Modules.create('bar', @modpath2)
     env = Puppet::Node::Environment.create(:myenv, ['/tmp/notused'])
-    Puppet[:modulepath] = ""
 
-    modules = Puppet::Face[:module, :current].list(:environment => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")
+    modules = Puppet::Face[:module, :current].list(:environment => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")[:modules_by_path]
 
     expect(modules[@modpath1].first.name).to eq('foo')
     expect(modules[@modpath1].first.path).to eq(foomod.path)
@@ -104,7 +99,7 @@ describe "puppet module list" do
   end
 
   describe "inline documentation" do
-    subject { Puppet::Face[:module, :current].get_action :list }
+    subject { Puppet::Face[:module, :current].get_action(:list) }
 
     its(:summary)     { should =~ /list.*module/im }
     its(:description) { should =~ /list.*module/im }
@@ -112,33 +107,41 @@ describe "puppet module list" do
     its(:examples)    { should_not be_empty }
   end
 
-  describe "when rendering" do
+  describe "when rendering to console" do
+    let(:face) { Puppet::Face[:module, :current] }
+    let(:action) { face.get_action(:list) }
+
+    def console_output(options={})
+      result = face.list(options)
+      action.when_rendering(:console).call(result, options)
+    end
+
     it "should explicitly state when a modulepath is empty" do
       empty_modpath = tmpdir('empty')
-      Puppet::Face[:module, :current].list_when_rendering_console(
-        { empty_modpath => [] },
-        {:modulepath => empty_modpath}
-      ).should == <<-HEREDOC.gsub('        ', '')
+
+      expected = <<-HEREDOC.gsub('        ', '')
         #{empty_modpath} (no modules installed)
       HEREDOC
+
+      console_output(:modulepath => empty_modpath).should == expected
     end
 
     it "should print both modules with and without metadata" do
       modpath = tmpdir('modpath')
-      Puppet.settings[:modulepath] = modpath
+
       PuppetSpec::Modules.create('nometadata', modpath)
       PuppetSpec::Modules.create('metadata', modpath, :metadata => {:author => 'metaman'})
 
-      dependency_tree = Puppet::Face[:module, :current].list
-
-      output = Puppet::Face[:module, :current].
-        list_when_rendering_console(dependency_tree, {})
-
-      output.should == <<-HEREDOC.gsub('        ', '')
-        #{modpath}
-        ├── metaman-metadata (\e[0;36mv9.9.9\e[0m)
-        └── nometadata (\e[0;36m???\e[0m)
+      env = Puppet::Node::Environment.create(:environ, [modpath])
+      Puppet.override(:current_environment => env) do
+        expected = <<-HEREDOC.gsub('          ', '')
+          #{modpath}
+          ├── metaman-metadata (\e[0;36mv9.9.9\e[0m)
+          └── nometadata (\e[0;36m???\e[0m)
         HEREDOC
+
+        console_output.should == expected
+      end
     end
 
     it "should print the modulepaths in the order they are in the modulepath setting" do
@@ -146,21 +149,16 @@ describe "puppet module list" do
       path2 = tmpdir('c')
       path3 = tmpdir('a')
 
-      sep = File::PATH_SEPARATOR
-      Puppet.settings[:modulepath] = "#{path1}#{sep}#{path2}#{sep}#{path3}"
+      env = Puppet::Node::Environment.create(:environ, [path1, path2, path3])
+      Puppet.override(:current_environment => env) do
+        expected = <<-HEREDOC.gsub('          ', '')
+          #{path1} (no modules installed)
+          #{path2} (no modules installed)
+          #{path3} (no modules installed)
+        HEREDOC
 
-      Puppet::Face[:module, :current].list_when_rendering_console(
-        {
-          path2 => [],
-          path3 => [],
-          path1 => [],
-        },
-        {}
-      ).should == <<-HEREDOC.gsub('        ', '')
-        #{path1} (no modules installed)
-        #{path2} (no modules installed)
-        #{path3} (no modules installed)
-      HEREDOC
+        console_output.should == expected
+      end
     end
 
     it "should print dependencies as a tree" do
@@ -177,19 +175,67 @@ describe "puppet module list" do
         }
       )
 
-      dependency_tree = Puppet::Face[:module, :current].list
-
-      output = Puppet::Face[:module, :current].list_when_rendering_console(
-        dependency_tree,
-        {:tree => true}
-      )
-
-      output.should == <<-HEREDOC.gsub('        ', '')
+      expected = <<-HEREDOC.gsub('        ', '')
         #{@modpath1}
         └─┬ puppetlabs-other_mod (\e[0;36mv1.0.0\e[0m)
           └── puppetlabs-dependable (\e[0;36mv0.0.5\e[0m)
         #{@modpath2} (no modules installed)
-        HEREDOC
+      HEREDOC
+
+      console_output(:tree => true).should == expected
+    end
+
+    it "should print both modules with and without metadata as a tree" do
+      PuppetSpec::Modules.create('nometadata', @modpath1)
+      PuppetSpec::Modules.create('metadata', @modpath1, :metadata => {:author => 'metaman'})
+
+      expected = <<-HEREDOC.gsub('        ', '')
+        #{@modpath1}
+        ├── metaman-metadata (\e[0;36mv9.9.9\e[0m)
+        └── nometadata (\e[0;36m???\e[0m)
+        #{@modpath2} (no modules installed)
+      HEREDOC
+
+      console_output.should == expected
+    end
+
+    it "should warn about missing dependencies" do
+      PuppetSpec::Modules.create('depender', @modpath1, :metadata => {
+        :version => '1.0.0',
+        :dependencies => [{
+          "version_requirement" => ">= 0.0.5",
+          "name"                => "puppetlabs/dependable"
+        }]
+      })
+
+      warning_expectations = [
+        regexp_matches(/Missing dependency 'puppetlabs-dependable'/),
+        regexp_matches(/'puppetlabs-depender' \(v1\.0\.0\) requires 'puppetlabs-dependable' \(>= 0\.0\.5\)/)
+      ]
+
+      Puppet.expects(:warning).with(all_of(*warning_expectations))
+
+      console_output(:tree => true)
+    end
+
+    it "should warn about out of range dependencies" do
+      PuppetSpec::Modules.create('dependable', @modpath1, :metadata => { :version => '0.0.1'})
+      PuppetSpec::Modules.create('depender', @modpath1, :metadata => {
+        :version => '1.0.0',
+        :dependencies => [{
+          "version_requirement" => ">= 0.0.5",
+          "name"                => "puppetlabs/dependable"
+        }]
+      })
+
+      warning_expectations = [
+        regexp_matches(/Module 'puppetlabs-dependable' \(v0\.0\.1\) fails to meet some dependencies/),
+        regexp_matches(/'puppetlabs-depender' \(v1\.0\.0\) requires 'puppetlabs-dependable' \(>= 0\.0\.5\)/)
+      ]
+
+      Puppet.expects(:warning).with(all_of(*warning_expectations))
+
+      console_output(:tree => true)
     end
   end
 end

@@ -8,64 +8,35 @@ module Puppet::ModuleTool::Errors
   end
 
   class VersionAlreadyInstalledError < UpgradeError
+    attr_reader :newer_versions
+
     def initialize(options)
       @module_name       = options[:module_name]
       @requested_version = options[:requested_version]
       @installed_version = options[:installed_version]
       @dependency_name   = options[:dependency_name]
-      @conditions        = options[:conditions]
-      super "Could not upgrade '#{@module_name}';"
+      @newer_versions    = options[:newer_versions]
+      @possible_culprits = options[:possible_culprits]
+      super "Could not upgrade '#{@module_name}'; more recent versions not found"
     end
 
     def multiline
       message = []
       message << "Could not upgrade module '#{@module_name}' (#{vstring})"
-      if @conditions.length == 1 && @conditions.last[:version].nil?
-        message << "  The installed version is already the latest version"
+      if @newer_versions.empty?
+        message << "  The installed version is already the latest version matching #{vstring}"
       else
-        message << "  The installed version is already the best fit for the current dependencies"
-        message += @conditions.select { |c| c[:module] == :you && c[:version] }.map do |c|
-          "    You specified '#{@module_name}' (#{v(c[:version])})"
-        end
-        message += @conditions.select { |c| c[:module] != :you }.sort_by { |c| c[:module] }.map do |c|
-           "    '#{c[:module]}' (#{v(c[:version])}) requires '#{@module_name}' (#{v(c[:dependency])})"
+        message << "  There are #{@newer_versions.length} newer versions"
+        message << "    No combination of dependency upgrades would satisfy all dependencies"
+        unless @possible_culprits.empty?
+          message << "    Dependencies will not be automatically upgraded across major versions"
+          message << "    Upgrading one or more of these modules may permit the upgrade to succeed:"
+          @possible_culprits.each do |name|
+            message << "    - #{name}"
+          end
         end
       end
-      message << "    Use `puppet module install --force` to re-install this module"
-      message.join("\n")
-    end
-  end
-
-  class UnknownModuleError < UpgradeError
-    def initialize(options)
-      @module_name       = options[:module_name]
-      @installed_version = options[:installed_version]
-      @requested_version = options[:requested_version]
-      @repository        = options[:repository]
-      super "Could not upgrade '#{@module_name}'; module is unknown to #{@repository}"
-    end
-
-    def multiline
-      message = []
-      message << "Could not upgrade module '#{@module_name}' (#{vstring})"
-      message << "  Module '#{@module_name}' does not exist on #{@repository}"
-      message.join("\n")
-    end
-  end
-
-  class UnknownVersionError < UpgradeError
-    def initialize(options)
-      @module_name       = options[:module_name]
-      @installed_version = options[:installed_version]
-      @requested_version = options[:requested_version]
-      @repository        = options[:repository]
-      super "Could not upgrade '#{@module_name}' (#{vstring}); module has no versions #{ @requested_version && "matching #{v(@requested_version)} "}published on #{@repository}"
-    end
-
-    def multiline
-      message = []
-      message << "Could not upgrade module '#{@module_name}' (#{vstring})"
-      message << "  No version matching '#{@requested_version || ">= 0.0.0"}' exists on #{@repository}"
+      message << "    Use `puppet module upgrade --force` to upgrade only this module"
       message.join("\n")
     end
   end

@@ -90,16 +90,19 @@ module Puppet
 
     def self.build_tree(mods, dir)
       mods.each do |mod|
-        version_string = mod[:version][:vstring].sub(/^(?!v)/, 'v')
+        version_string = mod[:version].to_s.sub(/^(?!v)/, 'v')
 
         if mod[:action] == :upgrade
-          previous_version = mod[:previous_version].sub(/^(?!v)/, 'v')
+          previous_version = mod[:previous_version].to_s.sub(/^(?!v)/, 'v')
           version_string = "#{previous_version} -> #{version_string}"
         end
 
-        mod[:text] = "#{mod[:module]} (#{colorize(:cyan, version_string)})"
-        mod[:text] += " [#{mod[:path]}]" unless mod[:path] == dir
-        build_tree(mod[:dependencies], dir)
+        mod[:text] = "#{mod[:name]} (#{colorize(:cyan, version_string)})"
+        mod[:text] += " [#{mod[:path]}]" unless mod[:path].to_s == dir.to_s
+
+        deps = (mod[:dependencies] || [])
+        deps.sort! { |a, b| a[:name] <=> b[:name] }
+        build_tree(deps, dir)
       end
     end
 
@@ -111,22 +114,45 @@ module Puppet
     # modifying the options parameter.  This same hash is referenced both
     # when_invoked and when_rendering.  For this reason, we are not returning
     # a duplicate.
+    # @todo Validate the above note...
     #
     # An :environment_instance and a :target_dir are added/updated in the
     # options parameter.
     #
     # @api private
     def self.set_option_defaults(options)
-      current_environment = Puppet.lookup(:current_environment)
-      modulepath =  [options[:target_dir]] + current_environment.full_modulepath
+      current_environment = environment_from_options(options)
 
-      face_environment = current_environment.override_with(
-        :modulepath => modulepath.compact
-      )
+      modulepath = [options[:target_dir]] + current_environment.full_modulepath
+
+      face_environment = current_environment.override_with(:modulepath => modulepath.compact)
 
       options[:environment_instance] = face_environment
+
       # Note: environment will have expanded the path
       options[:target_dir] = face_environment.full_modulepath.first
+    end
+
+    # Given a hash of options, we should discover or create a
+    # {Puppet::Node::Environment} instance that reflects the provided options.
+    #
+    # Generally speaking, the `:modulepath` parameter should supercede all
+    # others, the `:environment` parameter should follow after that, and we
+    # should default to Puppet's current environment.
+    #
+    # @param options [{Symbol => Object}] the options to derive environment from
+    # @return [Puppet::Node::Environment] the environment described by the options
+    def self.environment_from_options(options)
+      if options[:modulepath]
+        path = options[:modulepath].split(File::PATH_SEPARATOR)
+        Puppet::Node::Environment.create(:anonymous, path, '')
+      elsif options[:environment].is_a?(Puppet::Node::Environment)
+        options[:environment]
+      elsif options[:environment]
+        Puppet.lookup(:environments).get(options[:environment])
+      else
+        Puppet.lookup(:current_environment)
+      end
     end
   end
 end
@@ -140,4 +166,5 @@ require 'puppet/module_tool/dependency'
 require 'puppet/module_tool/metadata'
 require 'puppet/module_tool/modulefile'
 require 'puppet/module_tool/skeleton'
+require 'puppet/forge/cache'
 require 'puppet/forge'

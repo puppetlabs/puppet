@@ -97,6 +97,7 @@ describe Puppet::Module do
 
     it "should list modules that are missing" do
       metadata_file = "#{@modpath}/needy/metadata.json"
+      Puppet::FileSystem.expects(:exist?).with(metadata_file).returns true
       mod = PuppetSpec::Modules.create(
         'needy',
         @modpath,
@@ -118,6 +119,7 @@ describe Puppet::Module do
 
     it "should list modules that are missing and have invalid names" do
       metadata_file = "#{@modpath}/needy/metadata.json"
+      Puppet::FileSystem.expects(:exist?).with(metadata_file).returns true
       mod = PuppetSpec::Modules.create(
         'needy',
         @modpath,
@@ -140,6 +142,10 @@ describe Puppet::Module do
     it "should list modules with unmet version requirement" do
       env = Puppet::Node::Environment.create(:testing, [@modpath])
 
+      ['test_gte_req', 'test_specific_req', 'foobar'].each do |mod_name|
+        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
+        Puppet::FileSystem.stubs(:exist?).with(metadata_file).returns true
+      end
       mod = PuppetSpec::Modules.create(
         'test_gte_req',
         @modpath,
@@ -217,6 +223,8 @@ describe Puppet::Module do
     it "should consider a dependency without a semantic version to be unmet" do
       env = Puppet::Node::Environment.create(:testing, [@modpath])
 
+      metadata_file = "#{@modpath}/foobar/metadata.json"
+      Puppet::FileSystem.expects(:exist?).with(metadata_file).times(3).returns true
       mod = PuppetSpec::Modules.create(
         'foobar',
         @modpath,
@@ -261,6 +269,10 @@ describe Puppet::Module do
     it "should only list unmet dependencies" do
       env = Puppet::Node::Environment.create(:testing, [@modpath])
 
+      [name, 'satisfied'].each do |mod_name|
+        metadata_file = "#{@modpath}/#{mod_name}/metadata.json"
+        Puppet::FileSystem.expects(:exist?).with(metadata_file).twice.returns true
+      end
       mod = PuppetSpec::Modules.create(
         name,
         @modpath,

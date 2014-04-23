@@ -1,331 +1,363 @@
 require 'spec_helper'
 require 'puppet/module_tool/applications'
-require 'puppet_spec/modules'
+require 'puppet_spec/module_tool/shared_functions'
+require 'puppet_spec/module_tool/stub_source'
 require 'semver'
 
 describe Puppet::ModuleTool::Applications::Installer do
+  include PuppetSpec::ModuleTool::SharedFunctions
   include PuppetSpec::Files
+  include PuppetSpec::Fixtures
 
-  let(:unpacker)        { stub(:run) }
-  let(:installer_class) { Puppet::ModuleTool::Applications::Installer }
-  let(:modpath1) do
-    path = File.join(tmpdir("installer"), "modpath1")
-    FileUtils.mkdir_p(path)
-    path
-  end
-  let(:stdlib_pkg) do
-    mod = File.join(modpath1, "pmtacceptance-stdlib-0.0.1.tar.gz")
-    FileUtils.touch(mod)
-    mod
-  end
-  let(:env)             { Puppet::Node::Environment.create(:env, [modpath1]) }
-  let(:options)         do
-    {
-      :target_dir => modpath1,
-      :environment_instance => env,
-    }
+  before do
+    FileUtils.mkdir_p(primary_dir)
+    FileUtils.mkdir_p(secondary_dir)
   end
 
-  let(:forge) do
-    forge = mock("Puppet::Forge")
-
-    forge.stubs(:remote_dependency_info).returns(remote_dependency_info)
-    forge.stubs(:uri).returns('forge-dev.puppetlabs.com')
-    remote_dependency_info.each_key do |mod|
-      remote_dependency_info[mod].each do |release|
-        forge.stubs(:retrieve).with(release['file']).returns("/fake_cache#{release['file']}")
-      end
-    end
-
-    forge
-  end
+  let(:vardir)        { tmpdir('installer') }
+  let(:primary_dir)   { File.join(vardir, "primary") }
+  let(:secondary_dir) { File.join(vardir, "secondary") }
+  let(:remote_source) { PuppetSpec::ModuleTool::StubSource.new }
 
   let(:install_dir) do
-    install_dir = mock("Puppet::ModuleTool::InstallDirectory")
-    install_dir.stubs(:prepare)
-    install_dir
-  end
-
-  let(:remote_dependency_info) do
-    {
-      "pmtacceptance/apache" => [
-        { "dependencies" => [],
-          "version"      => "1.0.0-alpha",
-          "file"         => "/pmtacceptance-apache-1.0.0-alpha.tar.gz" },
-        { "dependencies" => [],
-          "version"      => "1.0.0-beta",
-          "file"         => "/pmtacceptance-apache-1.0.0-beta.tar.gz" },
-        { "dependencies" => [],
-          "version"      => "1.0.0-rc1",
-          "file"         => "/pmtacceptance-apache-1.0.0-rc1.tar.gz" },
-      ],
-      "pmtacceptance/stdlib" => [
-        { "dependencies" => [],
-          "version"      => "0.0.1",
-          "file"         => "/pmtacceptance-stdlib-0.0.1.tar.gz" },
-        { "dependencies" => [],
-          "version"      => "0.0.2",
-          "file"         => "/pmtacceptance-stdlib-0.0.2.tar.gz" },
-        { "dependencies" => [],
-          "version"      => "1.0.0-pre",
-          "file"         => "/pmtacceptance-stdlib-1.0.0-pre.tar.gz" },
-        { "dependencies" => [],
-          "version"      => "1.0.0",
-          "file"         => "/pmtacceptance-stdlib-1.0.0.tar.gz" },
-        { "dependencies" => [],
-          "version"      => "1.5.0-pre",
-          "file"         => "/pmtacceptance-stdlib-1.5.0-pre.tar.gz" },
-      ],
-      "pmtacceptance/java" => [
-        { "dependencies" => [["pmtacceptance/stdlib", ">= 0.0.1"]],
-          "version"      => "1.7.0",
-          "file"         => "/pmtacceptance-java-1.7.0.tar.gz" },
-        { "dependencies" => [["pmtacceptance/stdlib", "1.0.0"]],
-          "version"      => "1.7.1",
-          "file"         => "/pmtacceptance-java-1.7.1.tar.gz" }
-      ],
-      "pmtacceptance/apollo" => [
-        { "dependencies" => [
-            ["pmtacceptance/java", "1.7.1"],
-            ["pmtacceptance/stdlib", "0.0.1"]
-          ],
-          "version" => "0.0.1",
-          "file"    => "/pmtacceptance-apollo-0.0.1.tar.gz" },
-        { "dependencies" => [
-            ["pmtacceptance/java", ">= 1.7.0"],
-            ["pmtacceptance/stdlib", ">= 1.0.0"]
-          ],
-          "version" => "0.0.2",
-          "file"    => "/pmtacceptance-apollo-0.0.2.tar.gz" }
-      ]
-    }
-  end
-
-  describe "the behavior of .is_module_package?" do
-    it "should return true when file is a module package" do
-      installer = installer_class.new("foo", forge, install_dir, options)
-      installer.send(:is_module_package?, stdlib_pkg).should be_true
-    end
-
-    it "should return false when file is not a module package" do
-      installer = installer_class.new("foo", forge, install_dir, options)
-      installer.send(:is_module_package?, "pmtacceptance-apollo-0.0.2.tar").
-        should be_false
+    mock("Puppet::ModuleTool::InstallDirectory").tap do |dir|
+      dir.stubs(:prepare)
+      dir.stubs(:target).returns(primary_dir)
     end
   end
 
-  context "when the source is a repository" do
-    it "should require a valid name" do
-      lambda { installer_class.run('puppet', install_dir, params) }.should
-        raise_error(ArgumentError, "Could not install module with invalid name: puppet")
+  before do
+    Semantic::Dependency.clear_sources
+    installer = Puppet::ModuleTool::Applications::Installer.any_instance
+    installer.stubs(:module_repository).returns(remote_source)
+  end
+
+  def installer(modname, target_dir, options)
+    Puppet::ModuleTool.set_option_defaults(options)
+    Puppet::ModuleTool::Applications::Installer.new(modname, target_dir, options)
+  end
+
+  let(:environment) do
+    Puppet.lookup(:current_environment).override_with(
+      :vardir     => vardir,
+      :modulepath => [ primary_dir, secondary_dir ]
+    )
+  end
+
+  context '#run' do
+    let(:module) { 'pmtacceptance-stdlib' }
+
+    def options
+      { :environment => environment }
     end
 
-    it "should install the current stable version of the requested module" do
-      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-        with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
-        returns(unpacker)
-      results = installer_class.run('pmtacceptance-stdlib', forge, install_dir, options)
-      results[:installed_modules].length == 1
-      results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
-      results[:installed_modules][0][:version][:vstring].should == "1.0.0"
+    let(:application) { installer(self.module, install_dir, options) }
+    subject { application.run }
+
+    it 'installs the specified module' do
+      subject.should include :result => :success
+      graph_should_include 'pmtacceptance-stdlib', nil => v('4.1.0')
     end
 
-    it "should install the most recent version of requested module in the absence of a stable version" do
-      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-        with('/fake_cache/pmtacceptance-apache-1.0.0-rc1.tar.gz', options).
-        returns(unpacker)
-      results = installer_class.run('pmtacceptance-apache', forge, install_dir, options)
-      results[:installed_modules].length == 1
-      results[:installed_modules][0][:module].should == "pmtacceptance-apache"
-      results[:installed_modules][0][:version][:vstring].should == "1.0.0-rc1"
-    end
+    context 'with a tarball file' do
+      let(:module) { fixtures('stdlib.tgz') }
 
-    it "should install the most recent stable version of requested module for the requested version range" do
-      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-        with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options.merge(:version => '1.x')).
-        returns(unpacker)
-      results = installer_class.run('pmtacceptance-stdlib', forge, install_dir, options.merge(:version => '1.x'))
-      results[:installed_modules].length == 1
-      results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
-      results[:installed_modules][0][:version][:vstring].should == "1.0.0"
-    end
-
-    it "should install the most recent version of requested module for the requested version range in the absence of a stable version" do
-      Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-      with('/fake_cache/pmtacceptance-stdlib-1.5.0-pre.tar.gz', options.merge(:version => '1.5.0-pre')).
-        returns(unpacker)
-      results = installer_class.run('pmtacceptance-stdlib', forge, install_dir, options.merge(:version => '1.5.0-pre'))
-      results[:installed_modules].length == 1
-      results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
-      results[:installed_modules][0][:version][:vstring].should == "1.5.0-pre"
-    end
-
-    context "should check the target directory" do
-      let(:installer) do
-        installer_class.new('pmtacceptance-stdlib', forge, install_dir, options)
+      it 'installs the specified tarball' do
+        subject.should include :result => :success
+        graph_should_include 'puppetlabs-stdlib', nil => v('3.2.0')
       end
 
-      def expect_normal_unpacker
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
-          returns(unpacker)
-      end
-
-      def expect_normal_results
-        results
-      end
-
-      it "(#15202) prepares the install directory" do
-        expect_normal_unpacker
-        install_dir.expects(:prepare).with("pmtacceptance-stdlib", "latest")
-
-        results = installer.run
-
-        results[:installed_modules].length.should eq 1
-        results[:installed_modules][0][:module].should == "pmtacceptance-stdlib"
-        results[:installed_modules][0][:version][:vstring].should == "1.0.0"
-      end
-
-      it "(#15202) reports an error when the install directory cannot be prepared" do
-        install_dir.expects(:prepare).with("pmtacceptance-stdlib", "latest").
-          raises(Puppet::ModuleTool::Errors::PermissionDeniedCreateInstallDirectoryError.new("original", :module => "pmtacceptance-stdlib"))
-
-        results = installer.run
-
-        results[:result].should == :failure
-        results[:error][:oneline].should =~ /Permission is denied/
-      end
-    end
-
-    context "when the requested module has dependencies" do
-      it "should install dependencies" do
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
-          returns(unpacker)
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
-          returns(unpacker)
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options).
-          returns(unpacker)
-
-        results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
-        installed_dependencies = results[:installed_modules][0][:dependencies]
-
-        dependencies = installed_dependencies.inject({}) do |result, dep|
-          result[dep[:module]] = dep[:version][:vstring]
-          result
+      context 'with --ignore-dependencies' do
+        def options
+          super.merge(:ignore_dependencies => true)
         end
 
-        dependencies.length.should == 2
-        dependencies['pmtacceptance-java'].should   == '1.7.1'
-        dependencies['pmtacceptance-stdlib'].should == '1.0.0'
+        it 'installs the specified tarball' do
+          remote_source.expects(:fetch).never
+          subject.should include :result => :success
+          graph_should_include 'puppetlabs-stdlib', nil => v('3.2.0')
+        end
       end
 
-      it "should install requested module if the '--force' flag is used" do
-        options.merge!(:force => true)
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
-          returns(unpacker)
-        results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
-        results[:installed_modules][0][:module].should == "pmtacceptance-apollo"
-      end
+      context 'with dependencies' do
+        let(:module) { fixtures('java.tgz') }
 
-      it "should not install dependencies if the '--force' flag is used" do
-        options.merge!(:force => true)
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
-          returns(unpacker)
-        results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
-        dependencies = results[:installed_modules][0][:dependencies]
-        dependencies.should == []
-      end
+        it 'installs the specified tarball' do
+          subject.should include :result => :success
+          graph_should_include 'puppetlabs-java', nil => v('1.0.0')
+          graph_should_include 'puppetlabs-stdlib', nil => v('4.1.0')
+        end
 
-      it "should not install dependencies if the '--ignore-dependencies' flag is used" do
-        options.merge!(:ignore_dependencies => true)
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
-          returns(unpacker)
-        results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
-        dependencies = results[:installed_modules][0][:dependencies]
-        dependencies.should == []
-      end
+        context 'with --ignore-dependencies' do
+          def options
+            super.merge(:ignore_dependencies => true)
+          end
 
-      it "should set an error if dependencies can't be resolved" do
-        options.merge!(:version => '0.0.1')
-        oneline = "'pmtacceptance-apollo' (v0.0.1) requested; Invalid dependency cycle"
-        multiline = <<-MSG.strip
-Could not install module 'pmtacceptance-apollo' (v0.0.1)
-  No version of 'pmtacceptance-stdlib' will satisfy dependencies
-    You specified 'pmtacceptance-apollo' (v0.0.1),
-    which depends on 'pmtacceptance-java' (v1.7.1),
-    which depends on 'pmtacceptance-stdlib' (v1.0.0)
-    Use `puppet module install --force` to install this module anyway
-MSG
-
-        results = installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
-        results[:result].should == :failure
-        results[:error][:oneline].should == oneline
-        results[:error][:multiline].should == multiline
-      end
-
-      it "resolves conflicts for each dependency only once" do
-        Puppet::Log.level = :debug
-
-        installed_modules = [
-          Puppet::Module.new('ntp', File.join(modpath1, 'ntp'), env.name),
-          Puppet::Module.new('mysql', File.join(modpath1, 'mysql'), env.name),
-          Puppet::Module.new('apache', File.join(modpath1, 'apache'), env.name)
-        ]
-
-        env.stubs(:modules_by_path).returns({modpath1 => installed_modules})
-
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-apollo-0.0.2.tar.gz', options).
-          returns(unpacker)
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-java-1.7.1.tar.gz', options).
-          returns(unpacker)
-        Puppet::ModuleTool::Applications::Unpacker.expects(:new).
-          with('/fake_cache/pmtacceptance-stdlib-1.0.0.tar.gz', options).
-          returns(unpacker)
-
-        installer_class.run('pmtacceptance-apollo', forge, install_dir, options)
-
-        modules = @logs.map do |log|
-          data = log.message.match(/Resolving conflicts for (.*)/)
-          data ? data[1] : nil
-        end.compact
-
-        expect(modules).to eq(["pmtacceptance-apollo", "pmtacceptance-java,pmtacceptance-stdlib"])
+          it 'installs the specified tarball without dependencies' do
+            remote_source.expects(:fetch).never
+            subject.should include :result => :success
+            graph_should_include 'puppetlabs-java', nil => v('1.0.0')
+            graph_should_include 'puppetlabs-stdlib', nil
+          end
+        end
       end
     end
 
-    context "when there are modules installed" do
-      it "should use local version when already exists and satisfies constraints"
-      it "should reinstall the local version if force is used"
-      it "should upgrade local version when necessary to satisfy constraints"
-      it "should error when a local version can't be upgraded to satisfy constraints"
+    context 'with dependencies' do
+      let(:module) { 'pmtacceptance-apache' }
+
+      it 'installs the specified module and its dependencies' do
+        subject.should include :result => :success
+        graph_should_include 'pmtacceptance-apache', nil => v('0.10.0')
+        graph_should_include 'pmtacceptance-stdlib', nil => v('4.1.0')
+      end
+
+      context 'and using --ignore_dependencies' do
+        def options
+          super.merge(:ignore_dependencies => true)
+        end
+
+        it 'installs only the specified module' do
+          subject.should include :result => :success
+          graph_should_include 'pmtacceptance-apache', nil => v('0.10.0')
+          graph_should_include 'pmtacceptance-stdlib', nil
+        end
+      end
+
+      context 'that are already installed' do
+        context 'and satisfied' do
+          before { preinstall('pmtacceptance-stdlib', '4.1.0') }
+
+          it 'installs only the specified module' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-apache', nil => v('0.10.0')
+            graph_should_include 'pmtacceptance-stdlib', :path => primary_dir
+          end
+
+          context '(outdated but suitable version)' do
+            before { preinstall('pmtacceptance-stdlib', '2.4.0') }
+
+            it 'installs only the specified module' do
+              subject.should include :result => :success
+              graph_should_include 'pmtacceptance-apache', nil => v('0.10.0')
+              graph_should_include 'pmtacceptance-stdlib', v('2.4.0') => v('2.4.0'), :path => primary_dir
+            end
+          end
+
+          context '(outdated and unsuitable version)' do
+            before { preinstall('pmtacceptance-stdlib', '1.0.0') }
+
+            it 'installs a version that is compatible with the installed dependencies' do
+              subject.should include :result => :success
+              graph_should_include 'pmtacceptance-apache', nil => v('0.0.4')
+              graph_should_include 'pmtacceptance-stdlib', nil
+            end
+          end
+        end
+
+        context 'but not satisfied' do
+          let(:module) { 'pmtacceptance-keystone' }
+
+          def options
+            super.merge(:version => '2.0.0')
+          end
+
+          before { preinstall('pmtacceptance-mysql', '2.1.0') }
+
+          it 'installs only the specified module' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-keystone', nil => v('2.0.0')
+            graph_should_include 'pmtacceptance-mysql', v('2.1.0') => v('2.1.0')
+            graph_should_include 'pmtacceptance-stdlib', nil
+          end
+        end
+      end
+
+      context 'that are already installed in other modulepath directories' do
+        before { preinstall('pmtacceptance-stdlib', '1.0.0', :into => secondary_dir) }
+        let(:module) { 'pmtacceptance-apache' }
+
+        context 'without dependency updates' do
+          it 'installs the module only' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-apache', nil => v('0.0.4')
+            graph_should_include 'pmtacceptance-stdlib', nil
+          end
+        end
+
+        context 'with dependency updates' do
+          before { preinstall('pmtacceptance-stdlib', '2.0.0', :into => secondary_dir) }
+
+          it 'installs the module and upgrades dependencies in-place' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-apache', nil => v('0.10.0')
+            graph_should_include 'pmtacceptance-stdlib', v('2.0.0') => v('2.6.0'), :path => secondary_dir
+          end
+        end
+      end
     end
 
-    context "when a local module needs upgrading to satisfy constraints but has changes" do
-      it "should error"
-      it "should warn and continue if force is used"
+    context 'with a specified' do
+
+      context 'version' do
+        def options
+          super.merge(:version => '3.0.0')
+        end
+
+        it 'installs the specified release (or a prerelease thereof)' do
+          subject.should include :result => :success
+          graph_should_include 'pmtacceptance-stdlib', nil => v('3.0.0')
+        end
+      end
+
+      context 'version range' do
+        def options
+          super.merge(:version => '3.x')
+        end
+
+        it 'installs the greatest available version matching that range' do
+          subject.should include :result => :success
+          graph_should_include 'pmtacceptance-stdlib', nil => v('3.2.0')
+        end
+      end
     end
 
-    it "should error when a local version of a dependency has no version metadata"
-    it "should error when a local version of a dependency has a non-semver version"
-    it "should error when a local version of a dependency has a different forge name"
-    it "should error when a local version of a dependency has no metadata"
-  end
+    context 'when depended upon' do
+      before { preinstall('pmtacceptance-keystone', '2.1.0') }
+      let(:module)  { 'pmtacceptance-mysql' }
 
-  context "when the source is a filesystem" do
-    before do
-      @sourcedir = tmpdir('sourcedir')
+      it 'installs the greatest available version meeting the dependency constraints' do
+        subject.should include :result => :success
+        graph_should_include 'pmtacceptance-mysql', nil => v('0.9.0')
+      end
+
+      context 'with a --version that can satisfy' do
+        def options
+          super.merge(:version => '0.8.0')
+        end
+
+        it 'installs the greatest available version satisfying both constraints' do
+          subject.should include :result => :success
+          graph_should_include 'pmtacceptance-mysql', nil => v('0.8.0')
+        end
+      end
+
+      context 'with a --version that cannot satisfy' do
+        def options
+          super.merge(:version => '> 1.0.0')
+        end
+
+        it 'fails to install, since there is no version that can satisfy both constraints' do
+          subject.should include :result => :failure
+        end
+
+        context 'with --ignore-dependencies' do
+          def options
+            super.merge(:ignore_dependencies => true)
+          end
+
+          it 'fails to install, since ignore_dependencies should still respect dependencies from installed modules' do
+            subject.should include :result => :failure
+          end
+        end
+
+        context 'with --force' do
+          def options
+            super.merge(:force => true)
+          end
+
+          it 'installs the greatest available version, ignoring dependencies' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-mysql', nil => v('2.1.0')
+          end
+        end
+      end
     end
 
-    it "should error if it can't parse the name"
+    context 'when already installed' do
+      before { preinstall('pmtacceptance-stdlib', '1.0.0') }
 
-    it "should try to get_release_package_from_filesystem if it has a valid name"
+      context 'but matching the requested version' do
+        it 'does nothing, since the installed version satisfies' do
+          subject.should include :result => :noop
+        end
+
+        context 'with --force' do
+          def options
+            super.merge(:force => true)
+          end
+
+          it 'does reinstall the module' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('4.1.0')
+          end
+        end
+
+        context 'with local changes' do
+          before do
+            release = application.send(:installed_modules)['pmtacceptance-stdlib']
+            mark_changed(release.mod.path)
+          end
+
+          it 'does nothing, since local changes do not affect that' do
+            subject.should include :result => :noop
+          end
+
+          context 'with --force' do
+            def options
+              super.merge(:force => true)
+            end
+
+            it 'does reinstall the module, since --force ignores local changes' do
+              subject.should include :result => :success
+              graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('4.1.0')
+            end
+          end
+        end
+      end
+
+      context 'but not matching the requested version' do
+        def options
+          super.merge(:version => '2.x')
+        end
+
+        it 'fails to install the module, since it is already installed' do
+          subject.should include :result => :failure
+          subject[:error].should include :oneline => "'pmtacceptance-stdlib' (v2.x) requested; 'pmtacceptance-stdlib' (v1.0.0) already installed"
+        end
+
+        context 'with --force' do
+          def options
+            super.merge(:force => true)
+          end
+
+          it 'installs the greatest version matching the new version range' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('2.6.0')
+          end
+        end
+      end
+    end
+
+    context 'when a module with the same name is already installed' do
+      let(:module) { 'pmtacceptance-stdlib' }
+      before { preinstall('puppetlabs-stdlib', '4.1.0') }
+
+      it 'fails to install, since two modules with the same name cannot be installed simultaneously' do
+        subject.should include :result => :failure
+      end
+
+      context 'using --force' do
+        def options
+          super.merge(:force => true)
+        end
+
+        it 'overwrites the existing module with the greatest version of the requested module' do
+          subject.should include :result => :success
+          graph_should_include 'pmtacceptance-stdlib', nil => v('4.1.0')
+        end
+      end
+    end
+
   end
 end

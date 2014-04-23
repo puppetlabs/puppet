@@ -4,7 +4,7 @@ extend Puppet::Acceptance::ModuleUtils
 
 module_author = "pmtacceptance"
 module_name   = "java"
-module_dependencies = ["stdlib"]
+module_dependencies = ["stdlub"]
 
 orig_installed_modules = get_installed_modules_for_hosts hosts
 teardown do

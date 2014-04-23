@@ -26,8 +26,8 @@ step "Install module" do
 end
 
 step "Try to install a module that is already installed" do
-  on master, puppet("module install #{module_reference}"), :acceptable_exit_codes => [1] do
-    assert_match(/#{module_reference}.*is already installed/, stderr,
+  on master, puppet("module install #{module_reference}"), :acceptable_exit_codes => [0] do
+    assert_match(/#{module_reference}.*is already installed/, stdout,
           "Error that module was already installed was not displayed")
   end
   assert_module_installed_on_disk(master, master['distmoduledir'], module_name)

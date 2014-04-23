@@ -3,3 +3,5 @@
 
 require 'safe_yaml'
 require 'puppet/vendor/safe_yaml_patches'
+
+# The vendored library 'semantic' is loaded on demand.

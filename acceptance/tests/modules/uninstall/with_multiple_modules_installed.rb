@@ -7,7 +7,7 @@ stub_forge_on(master)
 
 teardown do
   on master, "rm -rf #{master['distmoduledir']}/java"
-  on master, "rm -rf #{master['distmoduledir']}/stdlib"
+  on master, "rm -rf #{master['distmoduledir']}/stdlub"
 end
 
 on master, "mkdir -p #{testdir}/modules"
@@ -26,7 +26,7 @@ with_puppet_running_on master, master_opts, testdir do
     pattern = Regexp.new([
       "#{master['distmoduledir']}",
       "├── pmtacceptance-java \\(.*v1.6.0.*\\)",
-      "└── pmtacceptance-stdlib \\(.*v1.0.0.*\\)"
+      "└── pmtacceptance-stdlub \\(.*v1.0.0.*\\)"
     ].join("\n"))
     assert_match(pattern, result.output)
   end
@@ -35,7 +35,7 @@ with_puppet_running_on master, master_opts, testdir do
     pattern = Regexp.new([
       "#{testdir}/modules",
       "├── pmtacceptance-java \\(.*v1.7.0.*\\)",
-      "└── pmtacceptance-stdlib \\(.*v1.0.0.*\\)",
+      "└── pmtacceptance-stdlub \\(.*v1.0.0.*\\)",
     ].join("\n"))
     assert_match(pattern, result.output)
   end

@@ -1,3 +1,4 @@
+require 'json'
 require 'puppet/module_tool/checksums'
 
 module Puppet::ModuleTool
@@ -45,7 +46,7 @@ module Puppet::ModuleTool
       private
 
       def metadata
-        PSON.parse(metadata_file.read)
+        JSON.parse(metadata_file.read)
       end
 
       def metadata_file

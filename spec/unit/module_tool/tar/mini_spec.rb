@@ -6,7 +6,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
   let(:destdir)    { File.expand_path '/the/dest/dir' }
   let(:sourcedir)  { '/the/src/dir' }
   let(:destfile)   { '/the/dest/file.tar.gz' }
-  let(:minitar)    { described_class.new('nginx') }
+  let(:minitar)    { described_class.new }
 
   it "unpacks a tar file" do
     unpacks_the_entry(:file_start, 'thefile')

@@ -2,9 +2,9 @@ test_name "puppet module install (with version)"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
-module_author = "puppetlabs"
-module_name = "apache"
-module_version = "0.0.3"
+module_author = "pmtacceptance"
+module_name = "java"
+module_version = "1.7.0"
 module_dependencies   = []
 
 orig_installed_modules = get_installed_modules_for_hosts hosts

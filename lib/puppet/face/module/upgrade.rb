@@ -40,9 +40,9 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--ignore-dependencies" do
-      summary "Do not attempt to install dependencies."
+      summary "Do not attempt to install dependencies"
       description <<-EOT
-        Do not attempt to install dependencies
+        Do not attempt to install dependencies.  (Implied by --force.)
       EOT
     end
 
@@ -57,19 +57,20 @@ Puppet::Face.define(:module, '1.0.0') do
       name = name.gsub('/', '-')
       Puppet.notice "Preparing to upgrade '#{name}' ..."
       Puppet::ModuleTool.set_option_defaults options
-      Puppet::ModuleTool::Applications::Upgrader.new(name, Puppet::Forge.new("PMT", self.version), options).run
+      Puppet::ModuleTool::Applications::Upgrader.new(name, options).run
     end
 
     when_rendering :console do |return_value|
-      if return_value[:result] == :failure
+      if return_value[:result] == :noop
+        Puppet.notice return_value[:error][:multiline]
+        exit 0
+      elsif return_value[:result] == :failure
         Puppet.err(return_value[:error][:multiline])
         exit 1
-      elsif return_value[:result] == :noop
-        Puppet.err(return_value[:error][:multiline])
-        exit 0
       else
-        tree = Puppet::ModuleTool.build_tree(return_value[:affected_modules], return_value[:base_dir])
-        return_value[:base_dir] + "\n" +
+        tree = Puppet::ModuleTool.build_tree(return_value[:graph], return_value[:base_dir])
+
+        "#{return_value[:base_dir]}\n" +
         Puppet::ModuleTool.format_tree(tree)
       end
     end

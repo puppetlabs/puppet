@@ -3,62 +3,41 @@ require 'puppet/face'
 require 'puppet/module_tool'
 
 describe "puppet module uninstall" do
-  subject { Puppet::Face[:module, :current] }
+  include PuppetSpec::Files
 
-  let(:options) do
-    {}
-  end
-  let(:modulepath) { File.expand_path('/module/path') }
-  let(:environment) do
-    Puppet::Node::Environment.create(:env, [modulepath])
-  end
-  let(:expected_options) do
-    {
-      :target_dir  => modulepath,
-      :environment_instance => environment,
-    }
-  end
+  describe "action" do
+    let(:name)    { 'module-name' }
+    let(:options) { Hash.new }
 
-  describe "option validation" do
-    around(:each) do |example|
-      Puppet.override(:current_environment => environment) do
-        example.run
-      end
+    it 'should invoke the Uninstaller app' do
+      args = [ name, options ]
+
+      Puppet::ModuleTool.expects(:set_option_defaults).with(options)
+      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with(*args)
+
+      Puppet::Face[:module, :current].uninstall(name, options)
     end
 
-    context "without any options" do
-      it "should require a name" do
-        pattern = /wrong number of arguments/
-        expect { subject.uninstall }.to raise_error ArgumentError, pattern
+    context 'slash-separated module name' do
+      let(:name) { 'module/name' }
+
+      it 'should invoke the Uninstaller app' do
+        args = [ 'module-name', options ]
+
+        Puppet::ModuleTool.expects(:set_option_defaults).with(options)
+        Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with(*args)
+
+        Puppet::Face[:module, :current].uninstall(name, options)
       end
-
-      it "should not require any options" do
-        Puppet::ModuleTool::Applications::Uninstaller.expects(:run).once
-        subject.uninstall("puppetlabs-apache")
-      end
-    end
-
-    it "should accept the --version option" do
-      options[:version] = "1.0.0"
-      expected_options.merge!(:version => '1.0.0')
-      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
-      subject.uninstall("puppetlabs-apache", options)
-    end
-
-    it "should accept the --force flag" do
-      options[:force] = true
-      expected_options.merge!(:force => true)
-      Puppet::ModuleTool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", has_entries(expected_options)).once
-      subject.uninstall("puppetlabs-apache", options)
     end
   end
 
   describe "inline documentation" do
-    subject { Puppet::Face[:module, :current].get_action :uninstall }
+    subject { Puppet::Face.find_action(:module, :uninstall) }
 
     its(:summary)     { should =~ /uninstall.*module/im }
     its(:description) { should =~ /uninstall.*module/im }
-    its(:returns)     { should =~ /hash of module objects.*/im }
+    its(:returns)     { should =~ /uninstalled modules/i }
     its(:examples)    { should_not be_empty }
 
     %w{ license copyright summary description returns examples }.each do |doc|

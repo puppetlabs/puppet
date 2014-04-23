@@ -1,4 +1,6 @@
+require 'json'
 require 'puppet/error'
+require 'puppet/forge'
 
 # Puppet::Forge specific exceptions
 module Puppet::Forge::Errors
@@ -79,6 +81,14 @@ Could not connect to #{@uri}
       @message = options[:message]
       response = options[:response]
       @response = "#{response.code} #{response.message.strip}"
+
+      begin
+        body = JSON.parse(response.body)
+        if body['message']
+          @message ||= body['message'].strip
+        end
+      rescue JSON::ParserError
+      end
 
       message = "Could not execute operation for '#{@input}'. Detail: "
       message << @message << " / " if @message

@@ -30,16 +30,6 @@ step "Make local changes in installed module" do
   on master, "echo 'changed' >> #{module_path}/README"
 end
 
-step "Try to install a module that is already installed" do
-  on master, puppet("module install #{module_reference}"), :acceptable_exit_codes => [1] do
-    assert_match(/#{module_reference}.*is already installed/, stderr,
-          "Error that module was already installed was not displayed")
-    assert_match(/changes made locally/, stderr,
-          "Error that module has local changes was not displayed")
-  end
-  assert_module_installed_on_disk(master, master['distmoduledir'], module_name)
-end
-
 step "Try to install a specific version of a module that is already installed" do
   on master, puppet("module install #{module_reference} --version 1.x"), :acceptable_exit_codes => [1] do
     assert_match(/Could not install module '#{module_reference}' \(v1.x\)/, stderr,
