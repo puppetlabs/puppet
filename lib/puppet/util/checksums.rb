@@ -4,9 +4,6 @@ require 'digest/sha1'
 # A stand-alone module for calculating checksums
 # in a generic way.
 module Puppet::Util::Checksums
-
-  DEFAULT_DIGEST_ALGORITHM = :md5
-
   # @deprecated
   # In Puppet 4 we should switch this to `module_function` to make these methods
   # private when this class is included.
