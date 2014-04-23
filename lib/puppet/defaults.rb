@@ -356,7 +356,6 @@ module Puppet
       a file (such as manifests or templates) has changed on disk. #{AS_DURATION}",
     },
     :environment_timeout => {
-      # TODO: Should this setting be here as a default (when missing in env conf?
       :default    => "5s",
       :type       => :ttl,
       :desc       => "The time to live for a cached environment. The time is either given #{AS_DURATION}, or
