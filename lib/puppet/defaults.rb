@@ -352,7 +352,7 @@ module Puppet
     },
     :environment_timeout => {
       # TODO: Should this setting be here as a default (when missing in env conf?
-      :default    => "unlimited",
+      :default    => "5s",
       :type       => :ttl,
       :desc       => "The time to live for a cached environment. The time is either given #{AS_DURATION}, or
       the symbolic time 'unlimited' which causes the environment to be cached until reboot."
