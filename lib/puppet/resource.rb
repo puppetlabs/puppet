@@ -251,7 +251,7 @@ class Puppet::Resource
   end
 
   def environment
-    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
+    @environment ||= Puppet.lookup(:current_environment)
   end
 
   def environment=(environment)

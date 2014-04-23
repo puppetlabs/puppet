@@ -19,19 +19,19 @@ describe Puppet::Module do
   end
 
   it "should have a class method that returns a named module from a given environment" do
-    env = mock 'module'
+    env = Puppet::Node::Environment.create(:myenv, [])
     env.expects(:module).with(name).returns "yep"
-    Puppet::Node::Environment.expects(:new).with("myenv").returns env
-
-    Puppet::Module.find(name, "myenv").should == "yep"
+    Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
+      Puppet::Module.find(name, "myenv").should == "yep"
+    end
   end
 
   it "should return nil if asked for a named module that doesn't exist" do
-    env = mock 'module'
+    env = Puppet::Node::Environment.create(:myenv, [])
     env.expects(:module).with(name).returns nil
-    Puppet::Node::Environment.expects(:new).with("myenv").returns env
-
-    Puppet::Module.find(name, "myenv").should be_nil
+    Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
+      Puppet::Module.find(name, "myenv").should be_nil
+    end
   end
 
   describe "attributes" do
