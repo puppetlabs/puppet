@@ -56,14 +56,15 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
     it "should scan the top level even if the file has already parsed" do
       known_type = stub 'known_types'
-      env = stub 'env'
-      Puppet::Node::Environment.stubs(:new).returns(env)
+      env = Puppet::Node::Environment.create(Puppet[:environment].to_sym, [])
       env.stubs(:known_resource_types).returns(known_type)
       known_type.expects(:watching_file?).with("module/manifests/init.pp").returns(true)
+      Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
 
-      @parser.expects(:scan_top_level)
+        @parser.expects(:scan_top_level)
 
-      @parser.scan
+        @parser.scan
+      end
     end
   end
 
