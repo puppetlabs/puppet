@@ -277,7 +277,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # TODO: Revisit and possible improve the accuracy.
     #
     file, line = extract_file_line(o)
-
     # Build a resource for each title
     resource_titles.map do |resource_title|
         resource = Puppet::Parser::Resource.new(
@@ -312,7 +311,13 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # for the type of the name.
     # Note, locations are available per parameter.
     #
-    scope.define_settings(type_name.capitalize, evaluated_parameters)
+    scope.define_settings(capitalize_qualified_name(type_name), evaluated_parameters)
+  end
+
+  # Capitalizes each segment of a qualified name
+  #
+  def capitalize_qualified_name(name)
+    name.split(/::/).map(&:capitalize).join('::')
   end
 
   # Creates resource overrides for all resource type objects in evaluated_resources. The same set of
