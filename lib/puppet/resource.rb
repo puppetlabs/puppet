@@ -251,8 +251,7 @@ class Puppet::Resource
   end
 
   def environment
-    # Yay! Hurray for consistency !!
-    @environment ||= ((Puppet.lookup(:current_environment) {nil}) || Puppet.lookup(:environments).get(Puppet[:environment]))
+    @environment ||= Puppet.lookup(:current_environment)
   end
 
   def environment=(environment)

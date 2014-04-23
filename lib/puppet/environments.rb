@@ -263,30 +263,6 @@ module Puppet::Environments
 
   end
 
-# TODO: Possibly include if an entry should depend on a single file changing
-#    class PathEntry < Entry
-#      def initialie(value, path)
-#        super value
-#        @path = path
-#        # if this fails, fail with that error
-#        @mtime = Puppet::FileSystem.stat(@path).mtime.to_i
-#        @check_time = Time.now.to_i
-#        @timeout = Puppet[:filetimeout]
-#      end
-#
-#      def expired?
-#        # skip check if not time to check again
-#        return false unless (Time.now.to_i - @check_time) >= @timeout
-#        # check again
-#        begin
-#          Puppet::FileSystem.stat(@path).mtime.to_i > @mtime
-#        rescue StandardError
-#          # don't care why, it is someone else's problem - state it expired
-#          true
-#        end
-#      end
-#    end
-
   class Cached < Combined
     INFINITY = 1.0 / 0.0
 
@@ -296,7 +272,6 @@ module Puppet::Environments
     end
 
     def get(name)
-#      log(name, caller) # enable to watch what is being requested, and from where
       evict_if_expired(name)
       if result = @cache[name]
         return result.value
@@ -304,12 +279,6 @@ module Puppet::Environments
         @cache[name] = entry(result)
         result
       end
-    end
-
-    # For debugging output of the last 5 callers in short form
-    def log(name, call_stack)
-      closest5 = caller[0..5].map { |pos| pos =~ /([a-z0-9_]+\.rb\:.*$)/; $1 }.join(', ')
-      File.open('envcache.txt', 'a') { |f| f.write("get #{name} from #{closest5}\n") }
     end
 
     # Clears the cache of the environment with the given name.
