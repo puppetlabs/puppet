@@ -149,9 +149,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       @checksum_type = checksum['type']
       @checksum      = checksum['value']
     end
-    Puppet.settings.use :main
     @checksum_type ||= Puppet[:digest_algorithm]
-    @checksum_type ||= Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
     @ftype       = data.delete('type')
     @destination = data.delete('destination')
     super(path,data)

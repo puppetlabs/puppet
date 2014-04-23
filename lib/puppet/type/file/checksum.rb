@@ -12,9 +12,7 @@ Puppet::Type.type(:file).newparam(:checksum) do
   newvalues "md5", "md5lite", "sha256", "sha256lite", "mtime", "ctime", "none"
 
   defaultto do
-    algo = Puppet[:digest_algorithm] || Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
-    algo = algo.intern unless algo.is_a? Symbol
-    algo
+    Puppet[:digest_algorithm].to_sym
   end
 
   def sum(content)
@@ -40,6 +38,6 @@ Puppet::Type.type(:file).newparam(:checksum) do
   # Return the appropriate digest algorithm with fallbacks in case puppet defaults have not
   # been initialized.
   def digest_algorithm
-    value || Puppet[:digest_algorithm] || Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
+    value || Puppet[:digest_algorithm].to_sym
   end
 end

@@ -188,14 +188,6 @@ HERE
     end
   end
 
-  describe "when initializing" do
-    it "should use the main settings section" do
-      Puppet.settings.expects(:use).with(:main)
-      Puppet::FileBucketFile::File.new
-    end
-  end
-
-
   [true, false].each do |override_bucket_path|
     describe "when bucket path #{if override_bucket_path then 'is' else 'is not' end} overridden" do
       [true, false].each do |supply_path|

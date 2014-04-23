@@ -64,18 +64,6 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
     it "should default to #{metadata[:digest_digest_algorithm]} as the checksum digest_algorithm if the digest_algorithm is not in the name" do
       Puppet::FileBucket::File.new(plaintext).checksum_type.should == digest_algorithm
     end
-
-    it "should reject unknown checksum digest_algorithms" do
-      expect {
-        # `using_checksums_describe` will reset the digest digest_algorithm at the
-        # end of the example group, so we're not permanently changing global
-        # state with this.
-        Puppet.settings.stubs(:use)
-        Puppet[:digest_algorithm] = 'wefoijwefoij23f02j'
-        Puppet::FileBucket::File.new(plaintext)
-      }.to raise_error(ArgumentError, /invalid checksum type wefoijwefoij23f02j/)
-    end
-
   end
 
   describe "when using back-ends" do

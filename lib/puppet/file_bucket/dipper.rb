@@ -12,7 +12,6 @@ class Puppet::FileBucket::Dipper
 
   # Create our bucket client
   def initialize(hash = {})
-    Puppet.settings.use :main
     # Emulate the XMLRPC client
     server      = hash[:Server]
     port        = hash[:Port] || Puppet[:masterport]
@@ -25,8 +24,7 @@ class Puppet::FileBucket::Dipper
       @local_path = nil
       @rest_path = "https://#{server}:#{port}/#{environment}/file_bucket_file/"
     end
-    @checksum_type = Puppet[:digest_algorithm] || Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
-    @checksum_type = @checksum_type.intern unless @checksum_type.is_a? Symbol
+    @checksum_type = Puppet[:digest_algorithm].to_sym
     @digest = method(@checksum_type)
   end
 

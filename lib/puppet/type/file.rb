@@ -613,9 +613,9 @@ Puppet::Type.newtype(:file) do
       end
       children[meta.relative_path] ||= newchild(meta.relative_path)
       children[meta.relative_path][:source] = meta.source
-      algo = Puppet[:digest_algorithm] || Puppet::Util::Checksums::DEFAULT_DIGEST_ALGORITHM
-      algo = algo.intern unless algo.is_a? Symbol
-      children[meta.relative_path][:checksum] = algo if meta.ftype == "file"
+      if meta.ftype == "file"
+        children[meta.relative_path][:checksum] = Puppet[:digest_algorithm].to_sym
+      end
 
       children[meta.relative_path].parameter(:source).metadata = meta
     end
