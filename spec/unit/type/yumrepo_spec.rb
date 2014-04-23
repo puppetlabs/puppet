@@ -218,6 +218,11 @@ describe Puppet::Type.type(:yumrepo) do
       it_behaves_like "a yumrepo parameter that can be absent", :s3_enabled
     end
 
+    describe "skip_if_unavailable" do
+      it_behaves_like "a yumrepo parameter that expects a boolean parameter", :skip_if_unavailable
+      it_behaves_like "a yumrepo parameter that can be absent", :skip_if_unavailable
+    end
+
     describe "sslcacert" do
       it_behaves_like "a yumrepo parameter that can be absent", :sslcacert
     end
