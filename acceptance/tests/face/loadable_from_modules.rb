@@ -18,7 +18,7 @@ agents.each do |agent|
   on agent, puppet("config", "set", "modulepath", dev_modulepath, "--section", "user", "--config", puppetconf)
 
   on agent, 'rm -rf puppetlabs-helloworld'
-  on agent, puppet("module", "generate", "puppetlabs-helloworld")
+  on agent, puppet("module", "generate", "puppetlabs-helloworld", "--skip-interview")
   mkdirs agent, 'puppetlabs-helloworld/lib/puppet/application'
   mkdirs agent, 'puppetlabs-helloworld/lib/puppet/face'
 

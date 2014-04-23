@@ -6,7 +6,7 @@ agents.each do |agent|
   end
 
   step 'generate'
-  on(agent, puppet('module generate foo-bar'))
+  on(agent, puppet('module generate foo-bar --skip-interview'))
 
   step 'build'
   on(agent, puppet('module build foo-bar')) do

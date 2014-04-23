@@ -76,6 +76,14 @@ Puppet::Face.define(:module, '1.0.0') do
       puppetlabs-ssh/tests/init.pp
     EOT
 
+    option "--skip-interview" do
+      summary "Bypass the interactive metadata interview"
+      description <<-EOT
+        Do not attempt to perform a metadata interview.  Primarily useful for automatic
+        execution of `puppet module generate`.
+      EOT
+    end
+
     arguments "<name>"
 
     when_invoked do |name, options|
@@ -115,11 +123,11 @@ Puppet::Face.define(:module, '1.0.0') do
       end
 
       dest = Puppet::ModuleTool::Generate.destination(metadata)
-      result = Puppet::ModuleTool::Generate.generate(metadata).join("\n")
+      result = Puppet::ModuleTool::Generate.generate(metadata, options[:skip_interview])
 
       path = dest.relative_path_from(Pathname.pwd)
       puts "Finished; module generated in #{path}."
-      result
+      result.join("\n")
     end
   end
 end
@@ -127,8 +135,8 @@ end
 module Puppet::ModuleTool::Generate
   module_function
 
-  def generate(metadata)
-    interview(metadata)
+  def generate(metadata, skip_interview = false)
+    interview(metadata) unless skip_interview
     destination = duplicate_skeleton(metadata)
 
     return Dir[destination.basename + '**/*']
