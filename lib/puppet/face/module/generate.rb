@@ -79,6 +79,17 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<name>"
 
     when_invoked do |name, options|
+      # Since we only want to interview if it's being rendered to the console
+      # (i.e. when invoked with `puppet module generate`), we can't do any work
+      # here in the when_invoked block. The result of this block is then
+      # passed to each renderer, which will handle it appropriately; by
+      # returning a simple message like this, every renderer will simply output
+      # the string.
+      # Our `when_rendering :console` handler will ignore this value and
+      # actually generate the module.
+      #
+      # All this is necessary because it is not possible at this point in time
+      # to know what the destination of the output is.
       "This format is not supported by this action."
     end
 
@@ -86,6 +97,11 @@ Puppet::Face.define(:module, '1.0.0') do
       Puppet::ModuleTool.set_option_defaults options
 
       begin
+        # A default dependency for all newly generated modules is being
+        # introduced as a substitute for the comments we used to include in the
+        # Modulefile. While introducing a default dependency is less than
+        # perfectly desirable, the cost is low, and the syntax is obtuse enough
+        # to justify its inclusion.
         metadata = Puppet::ModuleTool::Metadata.new.update(
           'name' => name,
           'version' => '0.0.1',
@@ -95,7 +111,7 @@ Puppet::Face.define(:module, '1.0.0') do
         )
       rescue ArgumentError
         msg = "Could not generate directory #{name.inspect}, you must specify a dash-separated username and module name."
-        raise $!, msg, $!.backtrace
+        raise ArgumentError, msg, $!.backtrace
       end
 
       dest = Puppet::ModuleTool::Generate.destination(metadata)
@@ -113,7 +129,7 @@ module Puppet::ModuleTool::Generate
 
   def generate(metadata)
     interview(metadata)
-    destination = generate_module(metadata)
+    destination = duplicate_skeleton(metadata)
 
     return Dir[destination.basename + '**/*']
   end
@@ -123,17 +139,14 @@ module Puppet::ModuleTool::Generate
     puts "following questions; if the question is not applicable to this module, feel free"
     puts "to leave it blank."
 
-    loop do
-      begin
-        puts
-        puts "Puppet uses Semantic Versioning (semver.org) to version modules."
-        puts "What version is this module?  [#{metadata.version}]"
-        metadata.update 'version' => user_input(metadata.version)
-        break
-      rescue
-        Puppet.err "We're sorry, we could not parse that as a Semantic Version."
-        next
-      end
+    begin
+      puts
+      puts "Puppet uses Semantic Versioning (semver.org) to version modules."
+      puts "What version is this module?  [#{metadata.version}]"
+      metadata.update 'version' => user_input(metadata.version)
+    rescue
+      Puppet.err "We're sorry, we could not parse that as a Semantic Version."
+      retry
     end
 
     puts
@@ -175,7 +188,7 @@ module Puppet::ModuleTool::Generate
 
   def user_input(default=nil)
     print '--> '
-    input = STDIN.gets.chomp
+    input = STDIN.gets.chomp.strip
     input = default if input == ''
     return input
   end
@@ -187,7 +200,7 @@ module Puppet::ModuleTool::Generate
     return @dest
   end
 
-  def generate_module(metadata)
+  def duplicate_skeleton(metadata)
     dest = destination(metadata)
 
     puts
