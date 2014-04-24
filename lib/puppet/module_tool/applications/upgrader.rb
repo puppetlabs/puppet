@@ -71,7 +71,8 @@ module Puppet::ModuleTool
           vstring = mod.version ? "v#{mod.version}" : '???'
           Puppet.notice "Found '#{name}' (#{colorize(:cyan, vstring)}) in #{dir} ..."
           unless forced?
-            if mod.has_metadata? && !Checksummer.run(mod.path).empty?
+            changes = Checksummer.run(mod.path) rescue []
+            if mod.has_metadata? && !changes.empty?
               raise LocalChangesError,
                 :action            => :upgrade,
                 :module_name       => name,

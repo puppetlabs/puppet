@@ -1,11 +1,11 @@
-name    '<%= metadata.full_module_name %>'
+name    '<%= metadata.to_hash['name'] %>'
 version '0.1.0'
-source '<%= metadata.source %>'
-author '<%= metadata.author %>'
-license '<%= metadata.license %>'
-summary '<%= metadata.summary %>'
-description '<%= metadata.description %>'
-project_page '<%= metadata.project_page %>'
+source '<%= metadata.to_hash['source'] %>'
+author '<%= metadata.to_hash['author'] %>'
+license '<%= metadata.to_hash['license'] %>'
+summary '<%= metadata.to_hash['summary'] %>'
+description '<%= metadata.to_hash['description'] %>'
+project_page '<%= metadata.to_hash['project_page'] %>'
 
 ## Add dependencies, if any:
 # dependency 'username/name', '>= 1.2.0'

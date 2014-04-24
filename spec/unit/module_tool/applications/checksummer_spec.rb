@@ -1,134 +1,115 @@
 require 'spec_helper'
 require 'puppet/module_tool/applications'
+require 'puppet_spec/files'
+require 'pathname'
 
 describe Puppet::ModuleTool::Applications::Checksummer do
-  subject {
-    Puppet::ModuleTool::Applications::Checksummer.new(module_install_path)
-  }
-
-  let(:module_install_path) { 'foo' }
-  let(:module_metadata_file) { 'metadata.json' }
-
-  let(:module_install_pathname) {
-    module_install_pathname = mock()
-    Pathname.expects(:new).with(module_install_path).\
-      returns(module_install_pathname)
-    module_install_pathname
-  }
-
-  def stub_module_file_pathname(relative_path, present)
-    module_file_pathname = mock() do
-      expects(:exist?).with().returns(present)
-    end
-
-    module_install_pathname.expects(:+).with(relative_path).\
-      returns(module_file_pathname)
-
-    module_file_pathname
+  let(:tmpdir) do
+    Pathname.new(PuppetSpec::Files.tmpdir('checksummer'))
   end
 
-  context %q{when metadata.json doesn't exist in the specified module install path} do
-    before(:each) do
-      stub_module_file_pathname(module_metadata_file, false)
-      subject.expects(:metadata_file).with().\
-        returns(module_install_pathname + module_metadata_file)
+  let(:checksums) { Puppet::ModuleTool::Checksums.new(tmpdir).data }
+
+  subject do
+    described_class.run(tmpdir)
+  end
+
+  before do
+    File.open(tmpdir + 'README', 'w') { |f| f.puts "This is a README!" }
+    File.open(tmpdir + 'CHANGES', 'w') { |f| f.puts "This is a changelog!" }
+    File.open(tmpdir + 'DELETEME', 'w') { |f| f.puts "I've got a really good feeling about this!" }
+    Dir.mkdir(tmpdir + 'pkg')
+    File.open(tmpdir + 'pkg' + 'build-artifact', 'w') { |f| f.puts "I'm unimportant!" }
+    File.open(tmpdir + 'metadata.json', 'w') { |f| f.puts '{"name": "package-name", "version": "1.0.0"}' }
+    File.open(tmpdir + 'checksums.json', 'w') { |f| f.puts '{}' }
+  end
+
+  context 'with checksums.json' do
+    before do
+      File.open(tmpdir + 'checksums.json', 'w') { |f| f.puts checksums.to_json }
+      File.open(tmpdir + 'CHANGES', 'w') { |f| f.puts "This is a changed log!" }
+      File.open(tmpdir + 'pkg' + 'build-artifact', 'w') { |f| f.puts "I'm still unimportant!" }
+      (tmpdir + 'DELETEME').unlink
     end
 
-    it 'raises an ArgumentError exception' do
-      lambda {
-        subject.run
-      }.should raise_error(ArgumentError, 'No metadata.json found.')
+    it 'reports changed files' do
+      expect(subject).to include 'CHANGES'
+    end
+
+    it 'reports removed files' do
+      expect(subject).to include 'DELETEME'
+    end
+
+    it 'does not report unchanged files' do
+      expect(subject).to_not include 'README'
+    end
+
+    it 'does not report build artifacts' do
+      expect(subject).to_not include 'pkg/build-artifact'
+    end
+
+    it 'does not report checksums.json' do
+      expect(subject).to_not include 'checksums.json'
     end
   end
 
-  context 'when metadata.json exists in the specified module install path' do
-    module_files = {
-      'README'     => '1',
-      'CHANGELOG'  => '2',
-      'Modulefile' => '3',
-    }
-    let(:module_files) { module_files }
-    let(:checksum_computer) {
-      checksum_computer = mock()
-      Puppet::ModuleTool::Checksums.\
-        expects(:new).with(module_install_pathname).\
-        returns(checksum_computer)
-      checksum_computer
-    }
-    # all possible combinations (of all lengths) of the module files
-    module_files_combination =
-      1.upto(module_files.size()).inject([]) { |module_files_combination, n|
-        module_files.keys.combination(n) { |combination|
-          module_files_combination << combination
-        }
-        module_files_combination
-      }
-
-    def stub_module_file_pathname_with_checksum(relative_path, checksum)
-      module_file_pathname =
-        stub_module_file_pathname(relative_path, present = !checksum.nil?)
-      # mock the call of Puppet::ModuleTool::Checksums#checksum
-      expectation = checksum_computer.\
-        expects(:checksum).with(module_file_pathname)
-      if present
-        # return the cheksum directly
-        expectation.returns(checksum)
-      else
-        # if the file is not present, then the method should not be called
-        expectation.times(0)
+  context 'without checksums.json' do
+    context 'but with metadata.json containing checksums' do
+      before do
+        (tmpdir + 'checksums.json').unlink
+        File.open(tmpdir + 'metadata.json', 'w') { |f| f.puts "{\"checksums\":#{checksums.to_json}}" }
+        File.open(tmpdir + 'CHANGES', 'w') { |f| f.puts "This is a changed log!" }
+        File.open(tmpdir + 'pkg' + 'build-artifact', 'w') { |f| f.puts "I'm still unimportant!" }
+        (tmpdir + 'DELETEME').unlink
       end
-      module_file_pathname
-    end
 
-    def stub_module_files(overrides = {})
-      overrides.reject! { |key, value|
-        !module_files.include?(key)
-      }
-      module_files.merge(overrides).each { |relative_path, checksum|
-        stub_module_file_pathname_with_checksum(relative_path, checksum)
-      }
-    end
+      it 'reports changed files' do
+        expect(subject).to include 'CHANGES'
+      end
 
-    before(:each) do
-      stub_module_file_pathname(module_metadata_file, true)
-      subject.expects(:metadata_file).with().\
-        returns(module_install_pathname + module_metadata_file)
-      subject.expects(:metadata).with().\
-        returns({ 'checksums' => module_files })
-    end
+      it 'reports removed files' do
+        expect(subject).to include 'DELETEME'
+      end
 
-    module_files_combination.each do |removed_files|
-      it "reports removed file(s) #{removed_files.inspect}" do
-        stub_module_files(
-          removed_files.inject({}) { |overrides, removed_file|
-            overrides[removed_file] = nil
-            overrides
-          }
-        )
+      it 'does not report unchanged files' do
+        expect(subject).to_not include 'README'
+      end
 
-        subject.run.should == removed_files
+      it 'does not report build artifacts' do
+        expect(subject).to_not include 'pkg/build-artifact'
+      end
+
+      it 'does not report checksums.json' do
+        expect(subject).to_not include 'checksums.json'
       end
     end
 
-    module_files_combination.each do |modified_files|
-      it "reports modified file(s) #{modified_files.inspect}" do
-        stub_module_files(
-          modified_files.inject({}) { |overrides, modified_file|
-            modified_checksum = module_files[modified_file].to_s.succ
-            modified_checksum = ' ' if modified_checksum.empty?
-            overrides[modified_file] = modified_checksum
-            overrides
-          }
-        )
+    context 'and with metadata.json that does not contain checksums' do
+      before do
+        (tmpdir + 'checksums.json').unlink
+        File.open(tmpdir + 'CHANGES', 'w') { |f| f.puts "This is a changed log!" }
+        File.open(tmpdir + 'pkg' + 'build-artifact', 'w') { |f| f.puts "I'm still unimportant!" }
+        (tmpdir + 'DELETEME').unlink
+      end
 
-        subject.run.should == modified_files
+      it 'fails' do
+        expect { subject }.to raise_error(ArgumentError, 'No file containing checksums found.')
       end
     end
 
-    it 'does not report unmodified files' do
-      stub_module_files()
+    context 'and without metadata.json' do
+      before do
+        (tmpdir + 'checksums.json').unlink
+        (tmpdir + 'metadata.json').unlink
 
-      subject.run.should == []
+        File.open(tmpdir + 'CHANGES', 'w') { |f| f.puts "This is a changed log!" }
+        File.open(tmpdir + 'pkg' + 'build-artifact', 'w') { |f| f.puts "I'm still unimportant!" }
+        (tmpdir + 'DELETEME').unlink
+      end
+
+      it 'fails' do
+        expect { subject }.to raise_error(ArgumentError, 'No file containing checksums found.')
+      end
     end
   end
 end

@@ -32,37 +32,45 @@ module Puppet::ModuleTool
         end
       end
 
-      def metadata(require_modulefile = false)
-        unless @metadata
-          unless @path
-            raise ArgumentError, "Could not determine module path"
-          end
-          @metadata = Puppet::ModuleTool::Metadata.new
-          contents = ContentsDescription.new(@path)
-          contents.annotate(@metadata)
-          checksums = Checksums.new(@path)
-          checksums.annotate(@metadata)
-          modulefile_path = File.join(@path, 'Modulefile')
-          if File.file?(modulefile_path)
-            Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
-          elsif require_modulefile
-            raise ArgumentError, "No Modulefile found."
-          end
-          extra_metadata_path = File.join(@path, 'metadata.json')
-          if File.file?(extra_metadata_path)
-            File.open(extra_metadata_path) do |f|
-              begin
-                @metadata.extra_metadata = JSON.load(f)
-              rescue JSON::ParserError
-                raise ArgumentError, "Could not parse JSON #{extra_metadata_path}", $!.backtrace
-              end
-            end
+      def metadata(require_metadata = false)
+        return @metadata if @metadata
+        @metadata = Puppet::ModuleTool::Metadata.new
+
+        unless @path
+          raise ArgumentError, "Could not determine module path"
+        end
+
+        modulefile_path = File.join(@path, 'Modulefile')
+        metadata_path   = File.join(@path, 'metadata.json')
+
+        if File.file?(modulefile_path)
+          if File.file?(metadata_path)
+            Puppet.warning "Modulefile is deprecated. Using metadata.json."
+          else
+            Puppet.warning "Modulefile is deprecated. Building metadata.json from Modulefile."
           end
         end
-        @metadata
+
+        if File.file?(metadata_path)
+          File.open(metadata_path) do |f|
+            begin
+              @metadata.update(JSON.load(f))
+            rescue JSON::ParserError => ex
+              raise ArgumentError, "Could not parse JSON #{metadata_path}", ex.backtrace
+            end
+          end
+
+        elsif File.file?(modulefile_path)
+          Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
+
+        elsif require_metadata
+          raise ArgumentError, "No metadata found for module #{@path}"
+        end
+
+        return @metadata
       end
 
-      def load_modulefile!
+      def load_metadata!
         @metadata = nil
         metadata(true)
       end

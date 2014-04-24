@@ -12,23 +12,16 @@ module Puppet::ModuleTool
 
       def run
         changes = []
-        if metadata_file.exist?
-          sums = Puppet::ModuleTool::Checksums.new(@path)
-          (metadata['checksums'] || {}).each do |child_path, canonical_checksum|
+        sums = Puppet::ModuleTool::Checksums.new(@path)
+        checksums.each do |child_path, canonical_checksum|
 
-            # Work around an issue where modules built with an older version
-            # of PMT would include the metadata.json file in the list of files
-            # checksummed. This causes metadata.json to always report local
-            # changes.
-            next if File.basename(child_path) == "metadata.json"
+          # Avoid checksumming the checksums.json file
+          next if File.basename(child_path) == "checksums.json"
 
-            path = @path + child_path
-            unless path.exist? && canonical_checksum == sums.checksum(path)
-              changes << child_path
-            end
+          path = @path + child_path
+          unless path.exist? && canonical_checksum == sums.checksum(path)
+            changes << child_path
           end
-        else
-          raise ArgumentError, "No metadata.json found."
         end
 
         # Return an Array of strings representing file paths of files that have
@@ -45,12 +38,24 @@ module Puppet::ModuleTool
 
       private
 
-      def metadata
-        JSON.parse(metadata_file.read)
+      def checksums
+        if checksums_file.exist?
+          JSON.parse(checksums_file.read)
+        elsif metadata_file.exist?
+          # Check metadata.json too; legacy modules store their checksums there.
+          JSON.parse(metadata_file.read)['checksums'] or
+          raise ArgumentError, "No file containing checksums found."
+        else
+          raise ArgumentError, "No file containing checksums found."
+        end
       end
 
       def metadata_file
-        (@path + 'metadata.json')
+        @path + 'metadata.json'
+      end
+
+      def checksums_file
+        @path + 'checksums.json'
       end
     end
   end

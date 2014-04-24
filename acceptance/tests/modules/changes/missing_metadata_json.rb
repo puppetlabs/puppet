@@ -15,7 +15,7 @@ on( master, puppet("module changes #{testdir}/nginx"),
     :acceptable_exit_codes => [1] ) do
 
   pattern = Regexp.new([
-%Q{.*Error: No metadata.json found..*},
+%Q{.*Error: No file containing checksums found.*},
 %Q{.*Error: Try 'puppet help module changes' for usage.*},
   ].join("\n"), Regexp::MULTILINE)
   assert_match(pattern, result.stderr)

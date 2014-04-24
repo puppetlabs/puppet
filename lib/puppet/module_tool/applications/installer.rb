@@ -64,7 +64,7 @@ module Puppet::ModuleTool
                 results[:version] = mod.version
                 return results
               else
-                changes = Checksummer.run(installed_modules[name].mod.path)
+                changes = Checksummer.run(installed_modules[name].mod.path) rescue []
                 raise AlreadyInstalledError,
                   :module_name       => name,
                   :installed_version => installed_modules[name].version,
