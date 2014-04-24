@@ -778,7 +778,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end
     name = o.functor_expr.value
-    assert_function_available(name, o, scope)
+
     evaluated_arguments = []
     o.arguments.each do |arg|
       if arg.is_a?(Puppet::Pops::Model::UnfoldExpression)
@@ -805,7 +805,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       fail(Issues::ILLEGAL_EXPRESSION, o.functor_expr, {:feature=>'function name', :container => o})
     end 
     name = name.value # the string function name
-    assert_function_available(name, o, scope)
+
     evaluated_arguments = [receiver]
     (o.arguments || []).each do |arg|
       if arg.is_a?(Puppet::Pops::Model::UnfoldExpression)
