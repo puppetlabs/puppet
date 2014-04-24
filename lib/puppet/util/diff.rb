@@ -10,7 +10,9 @@ module Puppet::Util::Diff
 
     command = [diff_cmd]
     if args = Puppet[:diff_args] and args != ""
-      command << args
+      args.split(' ').each do|arg|
+        command << arg
+      end
     end
     command << old << new
     Puppet::Util::Execution.execute(command, :failonfail => false, :combine => false)

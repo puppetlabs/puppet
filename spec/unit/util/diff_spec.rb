@@ -13,6 +13,14 @@ describe Puppet::Util::Diff do
       subject.diff('a', 'b').should == 'baz'
     end
 
+    it "should execute the diff command with multiple arguments" do
+      Puppet[:diff] = 'foo'
+      Puppet[:diff_args] = 'bar qux'
+
+      Puppet::Util::Execution.expects(:execute).with(['foo', 'bar', 'qux', 'a', 'b'], anything).returns('baz')
+      subject.diff('a', 'b').should == 'baz'
+    end
+
     it "should omit diff arguments if none are specified" do
       Puppet[:diff] = 'foo'
       Puppet[:diff_args] = ''
