@@ -126,6 +126,19 @@ module Puppet::ModuleTool
         end
       end
 
+      class CopiedFileNode < Node
+        def self.matches?(path)
+          path.file? && path.extname == '.copy'
+        end
+        def target
+          path = super
+          path.parent + path.basename('.copy')
+        end
+        def install!
+          FileUtils.cp(@source, target)
+        end
+      end
+
       class ParsedFileNode < Node
         def self.matches?(path)
           path.file? && path.extname == '.erb'
