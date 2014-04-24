@@ -211,7 +211,8 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/.*/, :absent)
     validate do |value|
-      unless value == :absent or (1..99).include?(value.to_i)
+      next if value.to_s == 'absent'
+      unless (1..99).include?(value.to_i)
         fail("Must be within range 1-99")
       end
     end
