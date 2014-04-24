@@ -94,6 +94,7 @@ describe Puppet::ModuleTool::Metadata do
       end
     end
 
+
     context "with an invalid version" do
       let(:data) { { 'version' => '3.0' } }
 
@@ -101,6 +102,60 @@ describe Puppet::ModuleTool::Metadata do
         expect { subject }.to raise_error(ArgumentError, "Invalid 'version' field in metadata.json: version string cannot be parsed as a valid Semantic Version")
       end
     end
+
+    context "with a valid source" do
+      context "which is a GitHub URL" do
+        context "with a scheme" do
+          before { metadata.update('source' => 'https://github.com/billgates/amazingness') }
+
+          it "predicts a default project_page" do
+            subject.to_hash['project_page'].should == 'https://github.com/billgates/amazingness'
+          end
+
+          it "predicts a default issues_url" do
+            subject.to_hash['issues_url'].should == 'https://github.com/billgates/amazingness/issues'
+          end
+        end
+
+        context "without a scheme" do
+          before { metadata.update('source' => 'github.com/billgates/amazingness') }
+
+          it "predicts a default project_page" do
+            subject.to_hash['project_page'].should == 'https://github.com/billgates/amazingness'
+          end
+
+          it "predicts a default issues_url" do
+            subject.to_hash['issues_url'].should == 'https://github.com/billgates/amazingness/issues'
+          end
+        end
+      end
+
+      context "which is not a GitHub URL" do
+        before { metadata.update('source' => 'https://notgithub.com/billgates/amazingness') }
+
+        it "does not predict a default project_page" do
+          subject.to_hash['project_page'].should be nil
+        end
+
+        it "does not predict a default issues_url" do
+          subject.to_hash['issues_url'].should be nil
+        end
+      end
+
+      context "which is not a URL" do
+        before { metadata.update('source' => 'my brain') }
+
+        it "does not predict a default project_page" do
+          subject.to_hash['project_page'].should be nil
+        end
+
+        it "does not predict a default issues_url" do
+          subject.to_hash['issues_url'].should be nil
+        end
+      end
+
+    end
+
   end
 
   describe '#dashed_name' do
@@ -148,12 +203,12 @@ describe Puppet::ModuleTool::Metadata do
     subject { metadata.to_hash }
 
     its(:keys) do
-      subject.sort.should == %w[ name version author summary license source dependencies ].sort
+      subject.sort.should == %w[ name version author summary license source issues_url project_page dependencies ].sort
     end
 
     describe "['license']" do
       it "defaults to Apache 2" do
-        subject['license'].should == "Apache License, Version 2.0"
+        subject['license'].should == "Apache 2.0"
       end
     end
 

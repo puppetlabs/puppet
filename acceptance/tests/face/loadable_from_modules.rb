@@ -18,7 +18,7 @@ agents.each do |agent|
   on agent, puppet("config", "set", "modulepath", dev_modulepath, "--section", "user", "--config", puppetconf)
 
   on agent, 'rm -rf puppetlabs-helloworld'
-  on agent, puppet("module", "generate", "puppetlabs-helloworld")
+  on agent, puppet("module", "generate", "puppetlabs-helloworld", "--skip-interview")
   mkdirs agent, 'puppetlabs-helloworld/lib/puppet/application'
   mkdirs agent, 'puppetlabs-helloworld/lib/puppet/face'
 
@@ -32,7 +32,7 @@ end
 EOM
 
   create_remote_file(agent, "puppetlabs-helloworld/lib/puppet/face/helloworld.rb", <<'EOM')
-Puppet::Face.define(:helloworld, '0.0.1') do
+Puppet::Face.define(:helloworld, '0.1.0') do
   summary "Hello world face"
   description "This is the hello world face"
 
@@ -63,8 +63,6 @@ end
 EOM
 
   on agent, puppet('module', 'build', 'puppetlabs-helloworld')
-  # Why from 3.1.1 -> 3.2.0 did the version of this module change from 0.0.1
-  # to 0.1.0 but the api within the face didn't?
   on agent, puppet('module', 'install', '--ignore-dependencies', '--target-dir', dev_modulepath, 'puppetlabs-helloworld/pkg/puppetlabs-helloworld-0.1.0.tar.gz')
 
   on(agent, puppet('help', '--config', puppetconf)) do
