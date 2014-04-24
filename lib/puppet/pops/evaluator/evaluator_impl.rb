@@ -82,8 +82,14 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def evaluate(target, scope)
     begin
       @@eval_visitor.visit_this_1(self, target, scope)
+
+    rescue Puppet::Pops::SemanticError => e
+      # a raised issue may not know the semantic target
+      fail(e.issue, e.semantic || target, e.options, e)
+
     rescue StandardError => e
       if e.is_a? Puppet::ParseError
+        # ParseError's are supposed to be fully configured with location information
         raise e
       end
       fail(Issues::RUNTIME_ERROR, target, {:detail => e.message}, e)

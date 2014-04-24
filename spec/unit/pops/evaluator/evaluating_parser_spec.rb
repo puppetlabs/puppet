@@ -972,6 +972,20 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
   end
+  context "Handles Deprecations and Discontinuations" do
+    around(:each) do |example|
+      Puppet.override({:loaders => Puppet::Pops::Loaders.new}, 'test') do
+        example.run
+      end
+    end
+
+    it 'of import statements' do
+      source = "\nimport foo"
+      # Error references position 5 at the opening '{'
+      # Set file to nil to make it easier to match with line number (no file name in output)
+      expect { parser.evaluate_string(scope, source) }.to raise_error(/'import' has been discontinued.*line 2:1/)
+    end
+  end
 
   context "Detailed Error messages are reported" do
     it 'for illegal type references' do
