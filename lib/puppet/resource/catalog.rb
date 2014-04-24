@@ -333,6 +333,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
       result.environment = environment
     end
 
+    result.environment_instance = Puppet::Node::Environment.create(:agent, [])
+
     if resources = data['resources']
       result.add_resource(*resources.collect do |res|
         Puppet::Resource.from_data_hash(res)
