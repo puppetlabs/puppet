@@ -27,8 +27,6 @@ class Puppet::FileBucket::File
     :s
   end
 
-  include Puppet::Util::Checksums
-
   def initialize(contents, options = {})
     raise ArgumentError.new("contents must be a String, got a #{contents.class}") unless contents.is_a?(String)
     @contents = contents
@@ -57,7 +55,7 @@ class Puppet::FileBucket::File
   end
 
   def checksum_data
-    algorithm = method(@checksum_type)
+    algorithm = Puppet::Util::Checksums.method(@checksum_type)
     @checksum_data ||= algorithm.call(contents)
   end
 
