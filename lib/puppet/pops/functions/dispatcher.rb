@@ -212,11 +212,14 @@ class Puppet::Pops::Functions::Dispatcher
     result
   end
 
-  # Formats a range into a string {from, to} with optimizations when:
-  # * from and to are equal => {from}
-  # * from and to are both and 1 and squelch_one == true => ''
-  # * from is 0 and to is 1 => '?'
-  # * to is INFINITY => {from, }
+  # Formats a range into a string of the form: `{from, to}`
+  #
+  # The following cases are optimized:
+  #
+  #   * from and to are equal => `{from}`
+  #   * from and to are both and 1 and squelch_one == true => `''`
+  #   * from is 0 and to is 1 => `'?'`
+  #   * to is INFINITY => `{from, }`
   #
   # @api private
   def range_string(size_range, squelch_one = true)
