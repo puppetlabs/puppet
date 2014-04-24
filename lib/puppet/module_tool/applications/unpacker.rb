@@ -39,7 +39,7 @@ module Puppet::ModuleTool
       # @api private
       def unpack
         begin
-          Puppet::ModuleTool::Tar.instance.unpack(@filename.to_s, tmpdir.to_s, [@module_path.stat.uid, @module_path.stat.gid].join(':'))
+          Puppet::ModuleTool::Tar.instance.unpack(@filename.to_s, tmpdir, [@module_path.stat.uid, @module_path.stat.gid].join(':'))
         rescue Puppet::ExecutionFailure => e
           raise RuntimeError, "Could not extract contents of module archive: #{e.message}"
         end
