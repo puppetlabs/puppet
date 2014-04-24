@@ -40,7 +40,9 @@ do |args|
 
   result = []
   args.flatten.each do |word|
-    if word.length != 0 and word.count(safe) == word.length
+    if word.length == 0 || word =~ /\A\s+\Z/
+      # do nothing
+    elsif word.count(safe) == word.length
       result << word
     elsif word.count(dangerous) == 0
       result << ('"' + word + '"')

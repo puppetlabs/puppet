@@ -41,6 +41,16 @@ describe "the shellquote function" do
       should == "'$PATH' 'foo$bar' '\"x$\"'"
   end
 
+  it "should ignore empty words" do
+    scope.function_shellquote(['foo', '', '--bar']).
+      should == "foo --bar"
+  end
+
+  it "should ignore words with only whitespace" do
+    scope.function_shellquote(['foo', "  \t", '--bar']).
+	  should == "foo --bar"
+  end
+
   it "should deal with apostrophes (single quotes)" do
     scope.function_shellquote(["'foo'bar'", "`$'EDITOR'`"]).
       should == '"\'foo\'bar\'" "\\`\\$\'EDITOR\'\\`"'
