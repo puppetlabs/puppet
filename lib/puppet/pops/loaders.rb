@@ -95,18 +95,8 @@ class Puppet::Pops::Loaders
     # The environment is not a namespace, so give it a nil "module_name"
     module_name = nil
     loader_name = "environment:#{environment.name}"
-    env_dir = Puppet[:environmentdir]
-    if env_dir.nil?
-      # Use an environment loader that can be populated externally
-      loader = Puppet::Pops::Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
-    else
-      envdir_path = File.join(env_dir, environment.name.to_s)
-      # TODO: Representing Environment as a Module - needs something different (not all types are supported),
-      # and it must be able to import .pp code from 3x manifest setting, or from code setting as well as from
-      # a manifests directory under the environment's root. The below is cheating...
-      #
-      loader = Puppet::Pops::Loader::ModuleLoaders::FileBased(puppet_system_loader, module_name, envdir_path, loader_name)
-    end
+    loader = Puppet::Pops::Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
+
     # An environment has a module path even if it has a null loader
     configure_loaders_for_modules(loader, environment)
     # modules should see this loader
