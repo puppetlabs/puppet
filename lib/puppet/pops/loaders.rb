@@ -168,11 +168,6 @@ class Puppet::Pops::Loaders
       @puppet_module.path
     end
 
-    # TODO: UNUSED? Remove this
-    def requirements
-      nil # FAKE: this says "wants to see everything"
-    end
-
     def resolved?
       @state == :resolved
     end
