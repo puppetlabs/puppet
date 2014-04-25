@@ -146,6 +146,7 @@ describe Puppet::Settings::FileSetting do
     it "should manage existent files even if 'create_files' is not enabled" do
       @file.expects(:create_files?).returns false
       @file.expects(:type).returns :file
+      Puppet::FileSystem.stubs(:exist?)
       Puppet::FileSystem.expects(:exist?).with(@basepath).returns true
       @file.to_resource.should be_instance_of(Puppet::Resource)
     end
