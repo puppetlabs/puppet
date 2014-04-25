@@ -1314,7 +1314,19 @@ class Type
   newmetaparam(:loglevel) do
     desc "Sets the level that information will be logged.
       The log levels have the biggest impact when logs are sent to
-      syslog (which is currently the default)."
+      syslog (which is currently the default).
+
+      The order of the log levels, in decreasing priority, is:
+
+      * `crit`
+      * `emerg`
+      * `alert`
+      * `err`
+      * `warning`
+      * `notice`
+      * `info` / `verbose`
+      * `debug`
+      "
     defaultto :notice
 
     newvalues(*Puppet::Util::Log.levels)
