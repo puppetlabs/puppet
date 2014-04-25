@@ -8,7 +8,15 @@ describe 'dependency loader' do
 
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
 
+
   describe 'FileBased module loader' do
+    around(:each) do |example|
+      loaders = Puppet::Pops::Loaders.new()
+      Puppet.override({:loaders => loaders}, "test-example") do
+        example.run
+      end
+    end
+
     it 'load something in global name space raises an error' do
       module_dir = dir_containing('testmodule', {
       'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {

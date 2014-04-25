@@ -5,9 +5,16 @@ require 'puppet/loaders'
 describe 'the assert_type function' do
 
   after(:all) { Puppet::Pops::Loaders.clear }
-  let(:func) do
+
+  around(:each) do |example|
     loaders = Puppet::Pops::Loaders.new()
-    loaders.puppet_system_loader.load(:function, 'assert_type')
+    Puppet.override({:loaders => loaders}, "test-example") do
+      example.run
+    end
+  end
+
+  let(:func) do
+    Puppet.lookup(:loaders).puppet_system_loader.load(:function, 'assert_type')
   end
 
   it 'asserts compliant type by returning the value' do

@@ -31,6 +31,13 @@ module Puppet::Pops::Loader::ModuleLoaders
     # A map of type to smart-paths that help with minimizing the number of paths to scan
     attr_reader :smart_paths
 
+    # A Module Loader has a private loader, it is lazily obtained on request to provide the visibility
+    # for entities contained in the module. Since a ModuleLoader also represents an environment and it is
+    # created a different way, this loader can be set explicitly by the loaders bootstrap logic.
+    #
+    # @api private
+    attr_accessor :private_loader
+
     # Initialize a kind of ModuleLoader for one module
     # @param parent_loader [Puppet::Pops::Loader] loader with higher priority
     # @param module_name [String] the name of the module (non qualified name), may be nil for a global "component"
@@ -145,6 +152,12 @@ module Puppet::Pops::Loader::ModuleLoaders
     #
     def get_source_ref(relative_path)
       raise NotImplementedError.new
+    end
+
+    # Produces the private loader for the module. If this module is not already resolved, this will trigger resolution
+    #
+    def private_loader
+      @private_loader ||= Puppet.lookup(:loaders).private_loader_for_module(module_name)
     end
   end
 
