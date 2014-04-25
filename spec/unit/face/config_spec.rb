@@ -2,6 +2,7 @@
 require 'spec_helper'
 require 'puppet/face'
 
+module PuppetFaceSpecs 
 describe Puppet::Face[:config, '0.0.1'] do
 
   FS = Puppet::FileSystem
@@ -141,4 +142,5 @@ basemodulepath = #{File.expand_path("/some/base")}
       it_behaves_like :config_printing_a_section, :master
     end
   end
+end
 end
