@@ -3,9 +3,9 @@ require 'puppet/environments'
 require 'puppet/file_system'
 require 'matchers/include'
 
+module PuppetEnvironments
 describe Puppet::Environments do
   include Matchers::Include
-  include PuppetSpec::Files
 
   FS = Puppet::FileSystem
 
@@ -379,4 +379,5 @@ config_version=$vardir/random/scripts
       end
     end
   end
+end
 end
