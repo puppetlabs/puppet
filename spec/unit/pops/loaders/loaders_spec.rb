@@ -7,14 +7,11 @@ require 'puppet/loaders'
 describe 'loaders' do
   include PuppetSpec::Files
 
-  let(:empty_test_env) { Puppet::Node::Environment.create(:testing, []) }
-
-  def config_dir(config_name)
-    my_fixture(config_name)
-  end
+  let(:module_without_metadata) { File.join(config_dir('wo_metadata_module'), 'modules') }
+  let(:module_with_metadata) { File.join(config_dir('single_module'), 'modules') }
+  let(:empty_test_env) { environment_for() }
 
   # Loaders caches the puppet_system_loader, must reset between tests
-  #
   before(:each) { Puppet::Pops::Loaders.clear() }
 
   it 'creates a puppet_system loader' do
@@ -26,7 +23,7 @@ describe 'loaders' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
 
     expect(loaders.public_environment_loader()).to be_a(Puppet::Pops::Loader::SimpleEnvironmentLoader)
-    expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment:testing')")
+    expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment:*test*')")
     expect(loaders.private_environment_loader()).to be_a(Puppet::Pops::Loader::DependencyLoader)
     expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment' [])")
   end
@@ -42,9 +39,8 @@ describe 'loaders' do
     expect(function).to be_a(Puppet::Functions::Function)
   end
 
-  it 'can load from a module path with a single module using the qualified or unqualified name' do
-    env = Puppet::Node::Environment.create(:'*test*', [File.join(config_dir('single_module'), 'modules')], '')
-    loaders = Puppet::Pops::Loaders.new(env)
+  it 'can load a function using a qualified or unqualified name from a module with metadata' do
+    loaders = Puppet::Pops::Loaders.new(environment_for(module_with_metadata))
     Puppet.override({:loaders => loaders}, 'testcase') do
       modulea_loader = loaders.public_loader_for_module('modulea')
 
@@ -58,48 +54,47 @@ describe 'loaders' do
     end
   end
 
-  context 'loading from path with two module, one without meta-data' do
-    let(:env) { Puppet::Node::Environment.create(:'*test*', [File.join(config_dir('single_module'), 'modules'), File.join(config_dir('wo_metadata_module'), 'modules')], '')}
+  it 'can load a function with a qualified name from module without metadata' do
+    loaders = Puppet::Pops::Loaders.new(environment_for(module_without_metadata))
+    Puppet.override({:loaders => loaders}, 'testcase') do
+      moduleb_loader = loaders.public_loader_for_module('moduleb')
 
-    it 'can load from module with metadata' do
-      loaders = Puppet::Pops::Loaders.new(env)
-      Puppet.override({:loaders => loaders}, 'testcase') do
-        modulea_loader = loaders.public_loader_for_module('modulea')
+      function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
 
-        unqualified_function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
-        qualified_function = modulea_loader.load_typed(typed_name(:function, 'modulea::rb_func_a')).value
-
-        expect(unqualified_function).to be_a(Puppet::Functions::Function)
-        expect(qualified_function).to be_a(Puppet::Functions::Function)
-        expect(unqualified_function.class.name).to eq('rb_func_a')
-        expect(qualified_function.class.name).to eq('modulea::rb_func_a')
-      end
+      expect(function).to be_a(Puppet::Functions::Function)
+      expect(function.class.name).to eq('moduleb::rb_func_b')
     end
+  end
 
-    it 'can load from module without metadata' do
-      loaders = Puppet::Pops::Loaders.new(env)
-      Puppet.override({:loaders => loaders}, 'testcase') do
-        moduleb_loader = loaders.public_loader_for_module('moduleb')
+  it 'cannot load an unqualified function from a module without metadata' do
+    loaders = Puppet::Pops::Loaders.new(environment_for(module_without_metadata))
+    Puppet.override({:loaders => loaders}, 'testcase') do
+      moduleb_loader = loaders.public_loader_for_module('moduleb')
 
-        function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
-
-        expect(function).to be_a(Puppet::Functions::Function)
-        expect(function.class.name).to eq('moduleb::rb_func_b')
-      end
+      expect(moduleb_loader.load_typed(typed_name(:function, 'rb_func_b'))).to be_nil
     end
+  end
 
-    it 'module without metadata has all modules visible' do
-      loaders = Puppet::Pops::Loaders.new(env)
-      Puppet.override({:loaders => loaders}, 'testcase') do
-        moduleb_loader = loaders.private_loader_for_module('moduleb')
-        function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
+  it 'makes all other modules visible to a module without metadata' do
+    env = environment_for(module_with_metadata, module_without_metadata)
+    loaders = Puppet::Pops::Loaders.new(env)
+    Puppet.override({:loaders => loaders}, 'testcase') do
+      moduleb_loader = loaders.private_loader_for_module('moduleb')
+      function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
 
-        expect(function.call({})).to eql("I am modulea::rb_func_a() + I am moduleb::rb_func_b()")
-      end
+      expect(function.call({})).to eql("I am modulea::rb_func_a() + I am moduleb::rb_func_b()")
     end
+  end
+
+  def environment_for(*module_paths)
+    Puppet::Node::Environment.create(:'*test*', module_paths, '')
   end
 
   def typed_name(type, name)
     Puppet::Pops::Loader::Loader::TypedName.new(type, name)
+  end
+
+  def config_dir(config_name)
+    my_fixture(config_name)
   end
 end
