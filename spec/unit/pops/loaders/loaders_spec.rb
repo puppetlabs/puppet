@@ -19,47 +19,42 @@ describe 'loaders' do
 
   it 'creates a puppet_system loader' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
-    expect(loaders.puppet_system_loader().class).to be(Puppet::Pops::Loader::ModuleLoaders::FileBased)
+    expect(loaders.puppet_system_loader()).to be_a(Puppet::Pops::Loader::ModuleLoaders::FileBased)
   end
 
   it 'creates an environment loader' do
     loaders = Puppet::Pops::Loaders.new(empty_test_env)
 
-    expect(loaders.public_environment_loader().class).to be(Puppet::Pops::Loader::SimpleEnvironmentLoader)
+    expect(loaders.public_environment_loader()).to be_a(Puppet::Pops::Loader::SimpleEnvironmentLoader)
     expect(loaders.public_environment_loader().to_s).to eql("(SimpleEnvironmentLoader 'environment:testing')")
-    expect(loaders.private_environment_loader().class).to be(Puppet::Pops::Loader::DependencyLoader)
+    expect(loaders.private_environment_loader()).to be_a(Puppet::Pops::Loader::DependencyLoader)
     expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment' [])")
   end
 
-  context 'when delegating 3x to 4x' do
-    before(:each) { Puppet[:biff] = true }
+  it 'can load 3x system functions' do
+    Puppet[:biff] = true
+    loaders = Puppet::Pops::Loaders.new(empty_test_env)
+    puppet_loader = loaders.puppet_system_loader()
 
-    it 'the puppet system loader can load 3x functions' do
-      loaders = Puppet::Pops::Loaders.new(empty_test_env)
-      puppet_loader = loaders.puppet_system_loader()
-      function = puppet_loader.load_typed(typed_name(:function, 'sprintf')).value
-      expect(function.class.name).to eq('sprintf')
-      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
-    end
+    function = puppet_loader.load_typed(typed_name(:function, 'sprintf')).value
+
+    expect(function.class.name).to eq('sprintf')
+    expect(function).to be_a(Puppet::Functions::Function)
   end
 
-  context 'loading from path with single module' do
-    let(:env) { Puppet::Node::Environment.create(:'*test*', [File.join(config_dir('single_module'), 'modules')], '') }
+  it 'can load from a module path with a single module using the qualified or unqualified name' do
+    env = Puppet::Node::Environment.create(:'*test*', [File.join(config_dir('single_module'), 'modules')], '')
+    loaders = Puppet::Pops::Loaders.new(env)
+    Puppet.override({:loaders => loaders}, 'testcase') do
+      modulea_loader = loaders.public_loader_for_module('modulea')
 
-    it 'can load from a module path' do
-      loaders = Puppet::Pops::Loaders.new(env)
-      Puppet.override({:loaders => loaders}, 'testcase') do
-        modulea_loader = loaders.public_loader_for_module('modulea')
-        expect(modulea_loader.class).to eql(Puppet::Pops::Loader::ModuleLoaders::FileBased)
+      unqualified_function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
+      qualified_function = modulea_loader.load_typed(typed_name(:function, 'modulea::rb_func_a')).value
 
-        function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
-        expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
-        expect(function.class.name).to eq('rb_func_a')
-
-        function = modulea_loader.load_typed(typed_name(:function, 'modulea::rb_func_a')).value
-        expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
-        expect(function.class.name).to eq('modulea::rb_func_a')
-      end
+      expect(unqualified_function).to be_a(Puppet::Functions::Function)
+      expect(qualified_function).to be_a(Puppet::Functions::Function)
+      expect(unqualified_function.class.name).to eq('rb_func_a')
+      expect(qualified_function.class.name).to eq('modulea::rb_func_a')
     end
   end
 
@@ -70,26 +65,25 @@ describe 'loaders' do
       loaders = Puppet::Pops::Loaders.new(env)
       Puppet.override({:loaders => loaders}, 'testcase') do
         modulea_loader = loaders.public_loader_for_module('modulea')
-        expect(modulea_loader.class).to eql(Puppet::Pops::Loader::ModuleLoaders::FileBased)
 
-        function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
-        expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
-        expect(function.class.name).to eq('rb_func_a')
+        unqualified_function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
+        qualified_function = modulea_loader.load_typed(typed_name(:function, 'modulea::rb_func_a')).value
 
-        function = modulea_loader.load_typed(typed_name(:function, 'modulea::rb_func_a')).value
-        expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
-        expect(function.class.name).to eq('modulea::rb_func_a')
+        expect(unqualified_function).to be_a(Puppet::Functions::Function)
+        expect(qualified_function).to be_a(Puppet::Functions::Function)
+        expect(unqualified_function.class.name).to eq('rb_func_a')
+        expect(qualified_function.class.name).to eq('modulea::rb_func_a')
       end
     end
 
-    it 'can load from module with metadata' do
+    it 'can load from module without metadata' do
       loaders = Puppet::Pops::Loaders.new(env)
       Puppet.override({:loaders => loaders}, 'testcase') do
         moduleb_loader = loaders.public_loader_for_module('moduleb')
-        expect(moduleb_loader.class).to eql(Puppet::Pops::Loader::ModuleLoaders::FileBased)
 
         function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
-        expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
+
+        expect(function).to be_a(Puppet::Functions::Function)
         expect(function.class.name).to eq('moduleb::rb_func_b')
       end
     end
@@ -98,10 +92,9 @@ describe 'loaders' do
       loaders = Puppet::Pops::Loaders.new(env)
       Puppet.override({:loaders => loaders}, 'testcase') do
         moduleb_loader = loaders.private_loader_for_module('moduleb')
-
         function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
-        result = function.call({})
-        expect(result).to eql("I am modulea::rb_func_a() + I am moduleb::rb_func_b()")
+
+        expect(function.call({})).to eql("I am modulea::rb_func_a() + I am moduleb::rb_func_b()")
       end
     end
   end
