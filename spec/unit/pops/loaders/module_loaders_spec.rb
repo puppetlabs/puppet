@@ -7,8 +7,9 @@ describe 'FileBased module loader' do
   include PuppetSpec::Files
 
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
+
   around(:each) do |example|
-    loaders = Puppet::Pops::Loaders.new()
+    loaders = Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))
     Puppet.override({:loaders => loaders}, "test-example") do
       example.run
     end

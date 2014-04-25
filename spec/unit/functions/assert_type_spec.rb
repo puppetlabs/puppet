@@ -7,7 +7,7 @@ describe 'the assert_type function' do
   after(:all) { Puppet::Pops::Loaders.clear }
 
   around(:each) do |example|
-    loaders = Puppet::Pops::Loaders.new()
+    loaders = Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))
     Puppet.override({:loaders => loaders}, "test-example") do
       example.run
     end

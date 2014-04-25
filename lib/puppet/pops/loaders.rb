@@ -6,7 +6,7 @@ class Puppet::Pops::Loaders
   attr_reader :public_environment_loader
   attr_reader :private_environment_loader
 
-  def initialize()
+  def initialize(environment)
     # The static loader can only be changed after a reboot
     @@static_loader ||= Puppet::Pops::Loader::StaticLoader.new()
 
@@ -21,7 +21,7 @@ class Puppet::Pops::Loaders
     #    concept of environment the same way as when running as a master (except when doing apply).
     #    The creation mechanisms should probably differ between the two.
     #
-    @private_environment_loader = create_environment_loader()
+    @private_environment_loader = create_environment_loader(environment)
 
     # 3. module loaders are set up from the create_environment_loader, they register themselves
   end
@@ -80,7 +80,7 @@ class Puppet::Pops::Loaders
     Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, module_name, puppet_lib, loader_name)
   end
 
-  def create_environment_loader()
+  def create_environment_loader(environment)
     # This defines where to start parsing/evaluating - the "initial import" (to use 3x terminology)
     # Is either a reference to a single .pp file, or a directory of manifests. If the environment becomes
     # a module and can hold functions, types etc. then these are available across all other modules without
@@ -96,16 +96,15 @@ class Puppet::Pops::Loaders
     # available modules. (3x is everyone sees everything).
     # Puppet binder currently reads confdir/bindings - that is bad, it should be using the new environment support.
 
-    current_environment = Puppet.lookup(:current_environment)
     # The environment is not a namespace, so give it a nil "module_name"
     module_name = nil
-    loader_name = "environment:#{current_environment.name}"
+    loader_name = "environment:#{environment.name}"
     env_dir = Puppet[:environmentdir]
     if env_dir.nil?
       # Use an environment loader that can be populated externally
       loader = Puppet::Pops::Loader::SimpleEnvironmentLoader.new(puppet_system_loader, loader_name)
     else
-      envdir_path = File.join(env_dir, current_environment.name.to_s)
+      envdir_path = File.join(env_dir, environment.name.to_s)
       # TODO: Representing Environment as a Module - needs something different (not all types are supported),
       # and it must be able to import .pp code from 3x manifest setting, or from code setting as well as from
       # a manifests directory under the environment's root. The below is cheating...
@@ -113,7 +112,7 @@ class Puppet::Pops::Loaders
       loader = Puppet::Pops::Loader::ModuleLoaders::FileBased(puppet_system_loader, module_name, envdir_path, loader_name)
     end
     # An environment has a module path even if it has a null loader
-    configure_loaders_for_modules(loader, current_environment)
+    configure_loaders_for_modules(loader, environment)
     # modules should see this loader
     @public_environment_loader = loader
 
@@ -130,9 +129,9 @@ class Puppet::Pops::Loaders
     loader
   end
 
-  def configure_loaders_for_modules(parent_loader, current_environment)
+  def configure_loaders_for_modules(parent_loader, environment)
     @module_resolver = mr = ModuleResolver.new()
-    current_environment.modules.each do |puppet_module|
+    environment.modules.each do |puppet_module|
       # Create data about this module
       md = LoaderModuleData.new(puppet_module)
       mr[puppet_module.name] = md

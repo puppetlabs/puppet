@@ -391,7 +391,7 @@ actual:
 
     context 'supports calling other functions' do
       before(:all) do
-        Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new()})
+        Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))})
       end
 
       after(:all) do
@@ -425,7 +425,7 @@ actual:
 
     context 'supports calling ruby functions with lambda from puppet' do
       before(:all) do
-        Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new()})
+        Puppet.push_context( {:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))})
       end
 
       after(:all) do
