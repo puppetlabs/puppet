@@ -13,14 +13,13 @@ describe "apply" do
   describe "when applying provided catalogs" do
     it "can apply catalogs provided in a file in pson" do
       file_to_create = tmpfile("pson_catalog")
-      catalog = Puppet::Resource::Catalog.new
+      catalog = Puppet::Resource::Catalog.new('mine', Puppet.lookup(:environments).get(Puppet[:environment]))
       resource = Puppet::Resource.new(:file, file_to_create, :parameters => {:content => "my stuff"})
       catalog.add_resource resource
 
       manifest = tmpfile("manifest")
 
       File.open(manifest, "w") { |f| f.print catalog.to_pson }
-
       puppet = Puppet::Application[:apply]
       puppet.options[:catalog] = manifest
 

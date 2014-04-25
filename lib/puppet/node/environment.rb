@@ -91,6 +91,21 @@ class Puppet::Node::Environment
     obj
   end
 
+  # A "reference" to a remote environment. The created environment instance
+  # isn't expected to exist on the local system, but is instead a reference to
+  # environment information on a remote system. For instance when a catalog is
+  # being applied, this will be used on the agent.
+  #
+  # @note This does not provide access to the information of the remote
+  # environment's modules, manifest, or anything else. It is simply a value
+  # object to pass around and use as an environment.
+  #
+  # @param name [Symbol] The name of the remote environment
+  #
+  def self.remote(name)
+    create(name, [], NO_MANIFEST)
+  end
+
   # Instantiate a new environment
   #
   # @note {Puppet::Node::Environment.new} is overridden to return memoized
@@ -543,4 +558,10 @@ class Puppet::Node::Environment
   def empty_parse_result
     return Puppet::Parser::AST::Hostclass.new('')
   end
+
+  # A special "null" environment
+  #
+  # This environment should be used when there is no specific environment in
+  # effect.
+  NONE = create(:none, [])
 end

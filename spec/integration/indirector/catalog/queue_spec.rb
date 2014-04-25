@@ -6,7 +6,7 @@ require 'puppet/resource/catalog'
 describe "Puppet::Resource::Catalog::Queue" do
   before do
     Puppet::Resource::Catalog.indirection.terminus(:queue)
-    @catalog = Puppet::Resource::Catalog.new("foo")
+    @catalog = Puppet::Resource::Catalog.new("foo", Puppet::Node::Environment::NONE)
 
     @one = Puppet::Resource.new(:file, "/one")
     @two = Puppet::Resource.new(:file, "/two")

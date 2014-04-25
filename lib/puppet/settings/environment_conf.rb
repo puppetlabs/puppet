@@ -138,6 +138,10 @@ class Puppet::Settings::EnvironmentConf
     def config_version
       @environment.config_version
     end
+
+    def environment_timeout
+      0
+    end
   end
 
 end

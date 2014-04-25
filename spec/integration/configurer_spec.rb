@@ -16,13 +16,13 @@ describe Puppet::Configurer do
 
       configurer = Puppet::Configurer.new
       configurer.stubs(:download_plugins?).returns true
-      configurer.download_plugins
+      configurer.download_plugins(Puppet::Node::Environment.remote(:testing))
     end
   end
 
   describe "when running" do
     before(:each) do
-      @catalog = Puppet::Resource::Catalog.new
+      @catalog = Puppet::Resource::Catalog.new("testing", Puppet.lookup(:environments).get(Puppet[:environment]))
       @catalog.add_resource(Puppet::Type.type(:notify).new(:title => "testing"))
 
       # Make sure we don't try to persist the local state after the transaction ran,

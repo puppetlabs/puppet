@@ -235,15 +235,17 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     host_config
   end
 
-  def initialize(name = nil)
+  def initialize(name = nil, environment = Puppet::Node::Environment::NONE)
     super()
-    @name = name if name
+    @name = name
     @classes = []
     @resource_table = {}
     @resources = []
     @relationship_graph = nil
 
     @host_config = true
+    @environment_instance = environment
+    @environment = environment.to_s
 
     @aliases = {}
 
@@ -287,21 +289,20 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   # Look a resource up by its reference (e.g., File[/etc/passwd]).
   def resource(type, title = nil)
-    Puppet.override(:current_environment => environment_instance) do
-      # Always create a resource reference, so that it always
-      # canonicalizes how we are referring to them.
-      if title
-        res = Puppet::Resource.new(type, title)
-      else
-        # If they didn't provide a title, then we expect the first
-        # argument to be of the form 'Class[name]', which our
-        # Reference class canonicalizes for us.
-        res = Puppet::Resource.new(nil, type)
-      end
-      title_key      = [res.type, res.title.to_s]
-      uniqueness_key = [res.type, res.uniqueness_key].flatten
-      @resource_table[title_key] || @resource_table[uniqueness_key]
+    # Always create a resource reference, so that it always
+    # canonicalizes how we are referring to them.
+    if title
+      res = Puppet::Resource.new(type, title)
+    else
+      # If they didn't provide a title, then we expect the first
+      # argument to be of the form 'Class[name]', which our
+      # Reference class canonicalizes for us.
+      res = Puppet::Resource.new(nil, type)
     end
+    res.catalog = self
+    title_key      = [res.type, res.title.to_s]
+    uniqueness_key = [res.type, res.uniqueness_key].flatten
+    @resource_table[title_key] || @resource_table[uniqueness_key]
   end
 
   def resource_refs
@@ -319,7 +320,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def self.from_data_hash(data)
-    result = new(data['name'])
+    result = new(data['name'], Puppet::Node::Environment::NONE)
 
     if tags = data['tags']
       result.tag(*tags)
@@ -331,9 +332,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     if environment = data['environment']
       result.environment = environment
+      result.environment_instance = Puppet::Node::Environment.remote(environment.to_sym)
     end
-
-    result.environment_instance = Puppet::Node::Environment.create(:agent, [])
 
     if resources = data['resources']
       result.add_resource(*resources.collect do |res|
@@ -491,11 +491,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # This pretty much just converts all of the resources from one class to another, using
   # a conversion method.
   def to_catalog(convert)
-    result = self.class.new(self.name)
+    result = self.class.new(self.name, self.environment_instance)
 
     result.version = self.version
-    result.environment = self.environment
-    result.environment_instance = self.environment_instance
 
     map = {}
     resources.each do |resource|

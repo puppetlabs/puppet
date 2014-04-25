@@ -501,7 +501,7 @@ class Puppet::Parser::Compiler
     @relationships = []
 
     # For maintaining the relationship between scopes and their resources.
-    @catalog = Puppet::Resource::Catalog.new(@node.name)
+    @catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
 
     # MOVED HERE - SCOPE IS NEEDED (MOVE-SCOPE)
     # Create the initial scope, it is needed early
@@ -521,8 +521,6 @@ class Puppet::Parser::Compiler
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
       @catalog.version = known_resource_types.version
     end
-
-    @catalog.environment = @node.environment.to_s
 
     @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))
 

@@ -874,7 +874,7 @@ class Puppet::Settings
   def to_catalog(*sections)
     sections = nil if sections.empty?
 
-    catalog = Puppet::Resource::Catalog.new("Settings")
+    catalog = Puppet::Resource::Catalog.new("Settings", Puppet::Node::Environment::NONE)
 
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
       file = @config[key]
