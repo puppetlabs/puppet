@@ -41,10 +41,6 @@ class Puppet::Pops::Loaders
     @@puppet_system_loader
   end
 
-  def self.create_loaders()
-    self.new()
-  end
-
   def public_loader_for_module(module_name)
     md = @module_resolver[module_name] || (return nil)
     # Note, this loader is not resolved until there is interest in the visibility of entities from the
