@@ -25,6 +25,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   defaultfor :osfamily => :solaris, :kernelrelease => '5.11'
 
+  mk_resource_methods
+
   def self.instances
     pkg(:list, '-H').split("\n").map{|l| new(parse_line(l))}
   end
@@ -48,9 +50,9 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     ).merge(
       case flags[1..1]
       when 'f'
-        {:ensure => 'held'}
+        {:held => :true}
       when '-'
-        {}
+        {:held => :false}
       else
         raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[1..1]]
       end
@@ -113,13 +115,14 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     end).merge({:provider => self.name})
   end
 
-  def hold
-    pkg(:freeze, @resource[:name])
-  end
-
-  def unhold
-    r = exec_cmd(command(:pkg), 'unfreeze', @resource[:name])
-    raise Puppet::Error, "Unable to unfreeze #{r[:out]}" unless [0,4].include? r[:exit]
+  def held=(package_held)
+    case package_held
+    when :true
+      pkg(:freeze, @resource[:name])
+    when :false
+      r = exec_cmd(command(:pkg), 'unfreeze', @resource[:name])
+      raise Puppet::Error, "Unable to unfreeze #{r[:out]}" unless [0,4].include? r[:exit]
+    end
   end
 
   # Return the version of the package. Note that the bug
@@ -143,12 +146,13 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     name = @resource[:name]
     should = @resource[:ensure]
     # always unhold if explicitly told to install/update
-    self.unhold
-    unless should.is_a? Symbol
-      name += "@#{should}"
+    self.held=:false
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+    if package_version
+      name += "@#{package_version}"
       is = self.query
       unless is[:ensure].to_sym == :absent
-        self.uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+        self.uninstall if Puppet::Util::Package.versioncmp(package_version, is[:ensure]) < 0
       end
     end
     r = exec_cmd(command(:pkg), 'install', '--accept', name)
@@ -166,6 +170,10 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     end
     cmd << @resource[:name]
     pkg cmd
+  end
+
+  def version=
+    self.install
   end
 
   # update the package to the latest version available

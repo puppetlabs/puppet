@@ -104,16 +104,13 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     self.debug "Ensuring => #{should}"
     operation = :install
 
-    case should
-    when true, false, Symbol
-      # pass
-      should = nil
-    else
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+    if package_version
       # Add the package version
-      wanted += "-#{should}"
+      wanted += "-#{package_version}"
       is = self.query
-      if is && Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
-        self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
+      if is && Puppet::Util::Package.versioncmp(package_version, is[:ensure]) < 0
+        self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{package_version}"
         operation = :downgrade
       end
     end
@@ -123,14 +120,18 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
 
     # If a version was specified, query again to see if it is a matching version
-    if should
+    if package_version
       is = self.query
       raise Puppet::Error, "Could not find package #{self.name}" unless is
 
       # FIXME: Should we raise an exception even if should == :latest
       # and yum updated us to a version other than @param_hash[:ensure] ?
-      raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead" if should != is[:ensure]
+      raise Puppet::Error, "Failed to update to version #{package_version}, got version #{is[:ensure]} instead" if package_version != is[:ensure]
     end
+  end
+
+  def version=
+    self.install
   end
 
   # What's the latest package version available?

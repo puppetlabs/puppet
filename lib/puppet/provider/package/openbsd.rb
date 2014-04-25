@@ -147,6 +147,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
     parse_pkgconf
 
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+
     if @resource[:source][-1,1] == ::File::SEPARATOR
       e_vars = { 'PKG_PATH' => @resource[:source] }
       # In case of a real update (i.e., the package already exists) then
@@ -159,7 +161,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         # Don't depend on get_version for updates.
         full_name = @resource[:name]
       else
-        full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-').chomp('-')
+        full_name = [ @resource[:name], get_version || package_version, @resource[:flavor] ].join('-').chomp('-').chomp('-')
       end
     else
       e_vars = {}
@@ -174,6 +176,10 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     end
 
     Puppet::Util.withenv(e_vars) { pkgadd cmd.flatten.compact }
+  end
+
+  def version=
+    self.install
   end
 
   def get_version

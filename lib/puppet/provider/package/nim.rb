@@ -61,7 +61,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
     pkg = @resource[:name]
 
-    version_specified = (useversion and (! @resource.should(:ensure).is_a? Symbol))
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
 
     # This is unfortunate for a couple of reasons.  First, because of a subtle
     # difference in the command-line syntax for installing an RPM vs an
@@ -80,26 +80,25 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     # switch back to the metaprogrammed stuff, and just parse all of the output
     # in Ruby... but we'd be doing an awful lot of unnecessary work.
     showres_command = "/usr/sbin/nimclient -o showres -a resource=#{source} |/usr/bin/grep -p -E "
-    if (version_specified)
-      version = @resource.should(:ensure)
-      showres_command << "'#{Regexp.escape(pkg)}( |-)#{Regexp.escape(version)}'"
+    if (package_version)
+      showres_command << "'#{Regexp.escape(pkg)}( |-)#{Regexp.escape(package_version)}'"
     else
-      version = nil
       showres_command << "'#{Regexp.escape(pkg)}'"
     end
     output = Puppet::Util.execute(showres_command)
 
 
-    if (version_specified)
-      package_type = determine_package_type(output, pkg, version)
+    if (package_version)
+      package_type = determine_package_type(output, pkg, package_version)
+      showres_version = package_version
     else
-      package_type, version = determine_latest_version(output, pkg)
+      package_type, showres_version = determine_latest_version(output, pkg)
     end
 
     if (package_type == nil)
       errmsg = "Unable to find package '#{pkg}' "
-      if (version_specified)
-        errmsg << "with version '#{version}' "
+      if (package_version)
+        errmsg << "with version '#{package_version}' "
       end
       errmsg << "on lpp_source '#{source}'"
       self.fail errmsg
@@ -110,7 +109,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     # to add that value to our installation command.  However, if there is only
     # one version of the package available, `version` will be set to `nil`, and
     # we don't need to add the version string to the command.
-    if (version)
+    if (showres_version)
       # Now we know if the package type is RPM or not, and we can adjust our
       # `pkg` string for passing to the install command accordingly.
       if (package_type == :rpm)
@@ -122,7 +121,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
         version_separator = " "
       end
 
-      pkg += version_separator + version
+      pkg += version_separator + showres_version
     end
 
     # NOTE: the installp flags here are ignored (but harmless) for RPMs
@@ -142,6 +141,9 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     end
   end
 
+  def version=
+    self.install
+  end
 
   private
 

@@ -26,18 +26,21 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     should = @resource.should(:ensure)
 
     str = @resource[:name]
-    case should
-    when true, false, Symbol
-      # pass
-    else
-      # Add the package version
-      str += "=#{should}"
+
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+    if package_version
+      str += "=#{package_version}"
     end
+
     cmd = %w{-b -q -y}
 
     cmd << :install << str
 
     finkcmd(cmd)
+  end
+
+  def version=
+    self.install
   end
 
   # What's the latest package version available?

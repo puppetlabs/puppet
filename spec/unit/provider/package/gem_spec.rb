@@ -59,6 +59,18 @@ describe provider_class do
       provider.install
     end
 
+    it "should allow specifying a version with the ensure property" do
+      resource[:ensure] = '1.0'
+      provider.expects(:execute).with { |args| args[2] == '-v' && args[3] == '1.0' }.returns ''
+      provider.install
+    end
+
+    it "should allow specifying a version with the version property" do
+      resource[:version] = '1.0'
+      provider.expects(:execute).with { |args| args[2] == '-v' && args[3] == '1.0' }.returns ''
+      provider.install
+    end
+
     describe "when a source is specified" do
       describe "as a normal file" do
         it "should use the file name instead of the gem name" do

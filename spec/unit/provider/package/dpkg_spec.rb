@@ -15,7 +15,12 @@ describe provider_class do
     {:failonfail => true, :combine => true, :custom_environment => {}}
   end
   let(:resource_name) { 'package' }
-  let(:resource) { stub 'resource', :[] => resource_name }
+  let(:resource) do
+    Puppet::Type.type(:package).new(
+      :name     => resource_name,
+      :provider => 'dpkg',
+    )
+  end
   let(:provider) { provider_class.new(resource) }
 
   it "has documentation" do
@@ -33,7 +38,7 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields bash_installed_io
 
       installed = mock 'bash'
-      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns installed
+      provider_class.expects(:new).with(:ensure => :installed, :version => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg, :held => :false).returns installed
 
       expect(provider_class.instances).to eq([installed])
     end
@@ -42,9 +47,9 @@ describe provider_class do
       Puppet::Util::Execution.expects(:execpipe).with(execpipe_args).yields all_installed_io
 
       bash = mock 'bash'
-      provider_class.expects(:new).with(:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg).returns bash
+      provider_class.expects(:new).with(:ensure => :installed, :version => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg, :held => :false).returns bash
       vim = mock 'vim'
-      provider_class.expects(:new).with(:ensure => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg).returns vim
+      provider_class.expects(:new).with(:ensure => :installed, :version => "2:7.3.547-6ubuntu5", :error => "ok", :desired => "install", :name => "vim", :status => "installed", :provider => :dpkg, :held => :false).returns vim
 
       expect(provider_class.instances).to eq([bash, vim])
     end
@@ -84,7 +89,7 @@ describe provider_class do
     it "returns a hash of the found package status for an installed package" do
       dpkg_query_execution_returns(bash_installed_output)
 
-      expect(provider.query).to eq({:ensure => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg})
+      expect(provider.query).to eq({:ensure => :installed, :version => "4.2-5ubuntu3", :error => "ok", :desired => "install", :name => "bash", :status => "installed", :provider => :dpkg, :held => :false})
     end
 
     it "considers the package absent if the dpkg-query result cannot be interpreted" do
@@ -129,7 +134,7 @@ describe provider_class do
 
     it "considers the package held if its state is 'hold'" do
       dpkg_query_execution_returns(bash_installed_output.gsub("install","hold"))
-      expect(provider.query[:ensure]).to eq(:held)
+      expect(provider.query[:held]).to eq(:true)
     end
 
     describe "parsing tests" do
@@ -138,10 +143,11 @@ describe provider_class do
         {
           :desired => 'desired',
           :error => 'ok',
-          :status => 'status',
+          :status => 'installed',
           :name => resource_name,
-          :ensure => 'ensure',
+          :ensure => :installed,
           :provider => :dpkg,
+          :version => 'version',
         }
       end
       let(:package_not_found_hash) do
@@ -156,9 +162,9 @@ describe provider_class do
         expect(provider.query).to eq(gold_hash)
       end
 
-      it "parses properly even if optional ensure field is missing" do
-        no_ensure = 'desired ok status name '
-        parser_test(no_ensure, package_hash.merge(:ensure => ''))
+      it "parses properly even if optional version field is missing" do
+        no_ensure = 'desired ok installed name '
+        parser_test(no_ensure, package_hash.merge(:version => ''))
       end
 
       it "provides debug logging of unparsable lines" do
@@ -175,44 +181,44 @@ describe provider_class do
   end
 
   describe "when installing" do
-    before do
-      resource.stubs(:[]).with(:source).returns "mypkg"
-    end
-
     it "fails to install if no source is specified in the resource" do
-      resource.expects(:[]).with(:source).returns nil
-
-      expect { provider.install }.to raise_error(ArgumentError)
+      provider.install
+      expect { provider.flush }.to raise_error(ArgumentError)
     end
 
     it "uses 'dpkg -i' to install the package" do
-      resource.expects(:[]).with(:source).returns "mypackagefile"
-      provider.expects(:unhold)
+      resource[:source] = 'mypackagefile'
       provider.expects(:dpkg).with { |*command| command[-1] == "mypackagefile"  and command[-2] == "-i" }
 
       provider.install
+      provider.flush
     end
 
     it "keeps old config files if told to do so" do
-      resource.expects(:[]).with(:configfiles).returns :keep
-      provider.expects(:unhold)
+      resource[:source] = '/tmp/package'
+      resource[:configfiles] = :keep
       provider.expects(:dpkg).with { |*command| command[0] == "--force-confold" }
 
       provider.install
+      provider.flush
     end
 
     it "replaces old config files if told to do so" do
-      resource.expects(:[]).with(:configfiles).returns :replace
-      provider.expects(:unhold)
+      resource[:source] = '/tmp/package'
+      resource[:configfiles] = :replace
       provider.expects(:dpkg).with { |*command| command[0] == "--force-confnew" }
 
       provider.install
+      provider.flush
     end
 
     it "ensures any hold is removed" do
-      provider.expects(:unhold).once
+      resource[:held] = true
+      resource[:source] = '/tmp/package'
+      provider.expects(:flush_held=).twice
       provider.expects(:dpkg)
       provider.install
+      provider.flush
     end
   end
 
@@ -227,19 +233,21 @@ describe provider_class do
     it "installs first if holding" do
       provider.stubs(:execute)
       provider.expects(:install).once
-      provider.hold
+      provider.install
+      provider.held=:true
+      provider.flush
     end
 
     it "executes dpkg --set-selections when holding" do
-      provider.stubs(:install)
-      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
-      provider.hold
+      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => true, :combine => false, :stdinfile => tempfile.path}).once
+      provider.held=:true
+      provider.flush
     end
 
     it "executes dpkg --set-selections when unholding" do
-      provider.stubs(:install)
-      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => false, :combine => false, :stdinfile => tempfile.path}).once
-      provider.hold
+      provider.expects(:execute).with([:dpkg, '--set-selections'], {:failonfail => true, :combine => false, :stdinfile => tempfile.path}).once
+      provider.held=:false
+      provider.flush
     end
   end
 
@@ -250,7 +258,7 @@ describe provider_class do
 
   describe "when determining latest available version" do
     it "returns the version found by dpkg-deb" do
-      resource.expects(:[]).with(:source).returns "myfile"
+      resource[:source] = "myfile"
       provider.expects(:dpkg_deb).with { |*command| command[-1] == "myfile" }.returns "package\t1.0"
       expect(provider.latest).to eq("1.0")
     end

@@ -75,7 +75,10 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
   def install(useversion = true)
     command = [command(:gemcmd), "install"]
-    command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
+
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+
+    command << "-v" << package_version if package_version and useversion
 
     if source = resource[:source]
       begin
@@ -115,6 +118,10 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     hash = self.class.gemlist(gemlist_options)
 
     hash[:ensure][0]
+  end
+
+  def version=
+    self.install
   end
 
   def query

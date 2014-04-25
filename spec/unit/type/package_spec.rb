@@ -22,12 +22,16 @@ describe Puppet::Type.type(:package) do
     Puppet::Type.type(:package).provider_feature(:purgeable).methods.should == [:purge]
   end
 
-  it "should have a :versionable feature" do
-    Puppet::Type.type(:package).provider_feature(:versionable).should_not be_nil
+  it "should have a :versionable feature that requires :version and :version=" do
+    Puppet::Type.type(:package).provider_feature(:versionable).methods.should == [:version, :version=]
   end
 
   it "should have a :package_settings feature that requires :package_settings_insync?, :package_settings and :package_settings=" do
     Puppet::Type.type(:package).provider_feature(:package_settings).methods.should == [:package_settings_insync?, :package_settings, :package_settings=]
+  end
+
+  it "should have a :hold feature that requires :held and :held=" do
+    Puppet::Type.type(:package).provider_feature(:holdable).methods.should == [:held, :held=]
   end
 
   it "should default to being installed" do
@@ -154,6 +158,7 @@ describe Puppet::Type.type(:package) do
         :clear           => nil,
         :satisfies?      => true,
         :name            => :mock,
+        :held            => false,
         :validate_source => nil
       )
       Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
@@ -239,7 +244,7 @@ describe Puppet::Type.type(:package) do
       end
 
       it "should upgrade if the current version is not equal to the latest version" do
-        @provider.stubs(:properties).returns(:ensure => "1.0")
+        @provider.stubs(:properties).returns(:ensure => :installed, :version => "1.0")
         @provider.stubs(:latest).returns("2.0")
         @provider.expects(:update)
         @catalog.apply
@@ -256,6 +261,36 @@ describe Puppet::Type.type(:package) do
         @provider.stubs(:properties).returns(:ensure => :present)
         @provider.stubs(:latest).returns("1.0")
         @provider.expects(:update).never
+        @catalog.apply
+      end
+    end
+
+    describe Puppet::Type.type(:package), "when a version property is specifided" do
+      include PackageEvaluationTesting
+
+      before do
+        @package[:ensure] = :installed
+        @package[:version] = "1.0"
+      end
+
+      it "should do nothing if the current version is equal to the desired version" do
+        @provider.stubs(:properties).returns({ :ensure => :installed, :version => "1.0"})
+        @provider.stubs(:version).returns('1.0')
+        @package.property(:version).insync?('1.0').should be_true
+        @provider.expects(:version=).never
+        @catalog.apply
+      end
+
+      it "should install if the current version is not equal to the specified version" do
+        @provider.stubs(:properties).returns({ :ensure => :installed, :version => "2.0"})
+        @provider.stubs(:version).returns('2.0')
+        @package.property(:version).insync?('2.0').should be_false
+        @provider.expects(:respond_to?).with('version=').returns(true)
+        @provider.expects(:respond_to?).with('held=').returns(true)
+        @provider.expects(:respond_to?).with(:flush).returns(true)
+        @provider.expects(:version=)
+        @provider.expects(:held=)
+        @provider.expects('flush')
         @catalog.apply
       end
     end
@@ -288,11 +323,23 @@ describe Puppet::Type.type(:package) do
         @catalog.apply
       end
 
+      it "should place the package on hold if it is not on hold" do
+        package = Puppet::Type.type(:package).new({:name => "yay", :ensure => '1.0'})
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource(package)
+        @provider.stubs(:properties).returns({:ensure => "1.0", :held => :false})
+        @provider.expects(:respond_to?).with('held=').returns(true)
+        @provider.expects(:respond_to?).with(:flush).returns(false)
+        @provider.expects(:held).returns(:false)
+        @provider.expects(:held=)
+        catalog.apply
+      end
+
       describe "when current value is an array" do
         let(:installed_versions) { ["1.0", "2.0", "3.0"] }
 
         before (:each) do
-          @provider.stubs(:properties).returns(:ensure => installed_versions)
+          @provider.stubs(:properties).returns(:ensure => :installed, :version => installed_versions)
         end
 
         it "should install if value not in the array" do

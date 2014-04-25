@@ -55,13 +55,16 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def install
-    should = @resource.should(:ensure)
     name = package_name
-    unless should == :present or should == :latest
-      # We must install a specific version
-      name = "=#{name}-#{should}"
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+    if package_version
+      name = "=#{name}-#{package_version}"
     end
     emerge name
+  end
+
+  def version=
+    self.install
   end
 
   # The common package name format.

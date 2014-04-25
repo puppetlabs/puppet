@@ -43,7 +43,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       end
       {'i--' => 'installed', '---'=> 'known'}.each do |k, v|
         it "should return known values" do
-          described_class.ifo_flag(k).should == {:status => v}
+          described_class.ifo_flag(k).should == {:status => v, :held => :false}
         end
       end
     end
@@ -54,9 +54,9 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         }.to raise_error(ArgumentError, /Unknown line format/)
       end
       {
-        'spkg       0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg},
-        'spkg (me)  0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg, :publisher => 'me'},
-        'spkg (me)  0.0.7  if-' => {:name => 'spkg', :ensure => 'held', :status => 'installed', :provider => :pkg, :publisher => 'me'},
+        'spkg       0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :held => :false, :provider => :pkg},
+        'spkg (me)  0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :held => :false, :provider => :pkg, :publisher => 'me'},
+        'spkg (me)  0.0.7  if-' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :held => :true, :provider => :pkg, :publisher => 'me'},
         'spkg       0.0.7  installed -----' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg},
         'spkg (me)  0.0.7  installed -----' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg, :publisher => 'me'},
        }.each do |k, v|
@@ -199,6 +199,15 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         resource[:ensure] = '0.0.7'
         provider.expects(:query).with().returns({:ensure => '0.0.8'})
         provider.expects(:uninstall).with()
+        $CHILD_STATUS.stubs(:exitstatus).returns 0
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
+        Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@0.0.7'], {:failonfail => false, :combine => true}).returns ''
+        provider.install
+      end
+      it "should install specific version when using the version property" do
+        resource[:ensure] = :installed
+        resource[:version] = '0.0.7'
+        provider.expects(:query).with().returns({:ensure => :absent})
         $CHILD_STATUS.stubs(:exitstatus).returns 0
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'unfreeze', 'dummy'], {:failonfail => false, :combine => true})
         Puppet::Util::Execution.expects(:execute).with(['/bin/pkg', 'install', '--accept', 'dummy@0.0.7'], {:failonfail => false, :combine => true}).returns ''

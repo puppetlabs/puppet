@@ -85,9 +85,11 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
       self.fail "A directory is required which will be used to find packages"
     end
 
+    package_version = @resource[:ensure].is_a?(String) ? @resource[:ensure] : @resource[:version]
+
     pkg = @resource[:name]
 
-    pkg += " #{@resource.should(:ensure)}" if (! @resource.should(:ensure).is_a? Symbol) and useversion
+    pkg += " #{package_version}" if package_version and useversion
 
     output = installp "-acgwXY", "-d", source, pkg
 
@@ -96,6 +98,10 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
       self.fail "aix package provider is unable to downgrade packages"
     end
+  end
+
+  def version=
+    self.install
   end
 
   def self.pkglist(hash = {})
