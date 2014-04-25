@@ -3,6 +3,7 @@ require 'spec_helper'
 
 require 'puppet/indirector/facts/facter'
 
+module PuppetNodeFactsFacter
 describe Puppet::Node::Facts::Facter do
   FS = Puppet::FileSystem
 
@@ -198,4 +199,5 @@ describe Puppet::Node::Facts::Facter do
       Facter.search_external_path.include?("#{one}/mymodule/facts.d")
     end
   end
+end
 end
