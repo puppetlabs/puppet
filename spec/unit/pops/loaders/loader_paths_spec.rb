@@ -9,12 +9,6 @@ describe 'loader paths' do
 
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
 
-  it 'expects dir_containing to create a temp directory structure from a hash' do
-    module_dir = dir_containing('testmodule', { 'test.txt' => 'Hello world', 'sub' => { 'foo.txt' => 'foo'}})
-    expect(File.read(File.join(module_dir, 'test.txt'))).to be_eql('Hello world')
-    expect(File.read(File.join(module_dir, 'sub', 'foo.txt'))).to be_eql('foo')
-  end
-
   describe 'the relative_path_for_types method' do
     it 'produces paths to load in precendence order' do
       module_dir = dir_containing('testmodule', {
