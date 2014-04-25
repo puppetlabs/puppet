@@ -191,6 +191,18 @@ class Puppet::Pops::Loaders
     def resolved?
       @state == :resolved
     end
+
+    def restrict_to_dependencies?
+      @puppet_module.has_metadata?
+    end
+
+    def unmet_dependencies?
+      @puppet_module.unmet_dependencies.any?
+    end
+
+    def dependency_names
+      @puppet_module.dependencies_as_modules.collect(&:name)
+    end
   end
 
   # Resolves module loaders - resolution of model dependencies is done by Puppet::Module
@@ -215,37 +227,34 @@ class Puppet::Pops::Loaders
     end
 
     def resolve(module_data)
-      return if module_data.resolved?
-      pm = module_data.puppet_module
-      # Resolution rules
-      # If dependencies.nil? means "see all other modules" (This to make older modules work, and modules w/o metadata)
-      # TODO: Control via flag/feature ?
-      module_data.private_loader =
-      if pm.dependencies.nil?
-        # see everything
-        if Puppet::Util::Log.level == :debug
-          Puppet.debug("ModuleLoader: module '#{module_data.name}' has unknown dependencies - it will have all other modules visible")
-        end
-
-        Puppet::Pops::Loader::DependencyLoader.new(module_data.public_loader, module_data.name, all_module_loaders())
+      if module_data.resolved?
+        return
       else
-        # If module has resolutions they must resolve - it will not see into other modules otherwise
-        # TODO: possible give errors if there are unresolved references
-        #       i.e. !pm.unmet_dependencies.empty? (if module lacks metadata it is considered to have met all).
-        #       The face "module" can display error information.
-        #       Here, we are just giving up without explaining - the user can check with the module face (or console)
-        #
-        unless pm.unmet_dependencies.empty?
-          # TODO: Exception or just warning?
-          Puppet.warning("ModuleLoader: module '#{module_data.name}' has unresolved dependencies"+
-            " - it will only see those that are resolved."+
-            " Use 'puppet module list --tree' to see information about modules")
-            #  raise Puppet::Pops::Loader::Loader::Error, "Loader Error: Module '#{module_data.name}' has unresolved dependencies - use 'puppet module list --tree' to see information"
-        end
-        dependency_loaders = pm.dependencies_as_modules.map { |dep| @index[dep.name].loader }
-        Puppet::Pops::Loader::DependencyLoader.new(module_data.public_loader, module_data.name, dependency_loaders)
+        module_data.private_loader =
+          if module_data.restrict_to_dependencies?
+            create_loader_with_only_dependencies_visible(module_data)
+          else
+            create_loader_with_all_modules_visible(module_data)
+          end
       end
+    end
 
+    private
+
+    def create_loader_with_all_modules_visible(from_module_data)
+      Puppet.debug("ModuleLoader: module '#{from_module_data.name}' has unknown dependencies - it will have all other modules visible")
+
+      Puppet::Pops::Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, all_module_loaders())
+    end
+
+    def create_loader_with_only_dependencies_visible(from_module_data)
+      if from_module_data.unmet_dependencies?
+        Puppet.warning("ModuleLoader: module '#{from_module_data.name}' has unresolved dependencies"+
+          " - it will only see those that are resolved."+
+          " Use 'puppet module list --tree' to see information about modules")
+      end
+      dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].loader }
+      Puppet::Pops::Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, dependency_loaders)
     end
   end
 end
