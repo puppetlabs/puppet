@@ -535,21 +535,23 @@ class Puppet::Pops::Validation::Checker4_0
     false
   end
 
+  def idem_Nop(o)
+    true
+  end
+
+  def idem_NilClass(o)
+    true
+  end
+
   def idem_Literal(o)
     true
   end
 
   def idem_LiteralList(o)
-    # is not idem if at least one entry is not idem
-    ! values.any? {|expr| !idem(expr) }
+    true
   end
 
   def idem_LiteralHash(o)
-    # is not idem if at least one entry has non idem key or value
-    ! entries.any? {|entry| !(idem(entry.key) || idem(entry.value)) }
-  end
-
-  def idem_VariableExpression(o)
     true
   end
 
@@ -558,25 +560,78 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def idem_AccessExpression(o)
-    return false if !idem(o.left_key)
-    ! keys.any? {|key| !idem(key) }
+    true
   end
 
   def idem_BinaryExpression(o)
-    return false if !idem(o.left_expr)
-    idem(o.right_expr)
+    true
   end
 
   def idem_RelationshipExpression(o)
+    # Always side effect
     false
   end
 
   def idem_AssignmentExpression(o)
+    # Always side effect
     false
   end
 
+  # Handles UnaryMinusExpression, NotExpression, VariableExpression
   def idem_UnaryExpression(o)
+    true
+  end
+
+  # Allow (no-effect parentheses) to be used around a productive expression
+  def idem_ParenthesizedExpression(o)
     idem(o.expr)
+  end
+
+  def idem_RenderExpression(o)
+    false
+  end
+
+  def idem_RenderStringExpression(o)
+    false
+  end
+
+  def idem_BlockExpression(o)
+    # productive if there is at least one productive expression
+    ! o.statements.any? {|expr| !idem(expr) }
+  end
+
+  # Returns true even though there may be interpolated expressions that have side effect.
+  # Report as idem anyway, as it is very bad design to evaluate an interpolated string for its
+  # side effect only.
+  def idem_ConcatenatedString(o)
+    true
+  end
+
+  # Heredoc is just a string, but may contain interpolated string (which may have side effects).
+  # This is still bad design and should be reported as idem.
+  def idem_HeredocExpression(o)
+    true
+  end
+
+  # May technically have side effects inside the Selector, but this is bad design - treat as idem
+  def idem_SelectorExpression(o)
+    true
+  end
+
+  def idem_IfExpression(o)
+    [o.test, o.then_expr, o.else_expr].all? {|e| idem(e) }
+  end
+
+  # Case expression is idem, if test, and all options are idem
+  def idem_CaseExpression(o)
+    return false if !idem(o.test)
+    ! o.options.any? {|opt| !idem(opt) }
+  end
+
+  # An option is idem if values and the then_expression are idem
+  def idem_CaseOption(o)
+    return false if o.values.any? { |value| !idem(value) }
+    idem(o.then_expr)
   end
 
   #--- NON POLYMORPH, NON CHECKING CODE

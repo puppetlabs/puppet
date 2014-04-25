@@ -472,10 +472,10 @@ module Puppet::Pops::Issues
   end
 
   IDEM_EXPRESSION_NOT_LAST = issue :IDEM_EXPRESSION_NOT_LAST do
-    "An expression without side effect may only be placed last in a block/sequence"
+    "This #{label.label(semantic)} is not productive. A non productive construct may only be placed last in a block/sequence"
   end
 
   IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
-    "The last expression in a body of #{label.a_an(container)} can not be a side effect free expression/value"
+    "This #{label.label(semantic)} is not productive. #{label.a_an_uc(container)} can not end with a non productive construct"
   end
 end

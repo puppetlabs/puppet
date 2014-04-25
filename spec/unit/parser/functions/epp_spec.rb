@@ -38,7 +38,7 @@ describe "the epp function" do
 
     it "gets shadowed variable if args are given and parameters are specified" do
       scope['x'] = 'wrong one'
-      eval_template_with_args("<%-( $x )-%><%= $x == correct %>", 'x' => 'correct').should == "true"
+      eval_template_with_args("<%- |$x| -%><%= $x == correct %>", 'x' => 'correct').should == "true"
     end
 
     it "raises an error if required variable is not given" do
