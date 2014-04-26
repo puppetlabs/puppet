@@ -257,7 +257,7 @@ class Puppet::Parser::Compiler
   end
 
   def loaders
-    @loaders ||= Puppet::Pops::Loaders.new()
+    @loaders ||= Puppet::Pops::Loaders.new(environment)
   end
 
   def boot_injector
