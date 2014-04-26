@@ -233,7 +233,7 @@ class Puppet::Pops::Loaders
           " - it will only see those that are resolved."+
           " Use 'puppet module list --tree' to see information about modules")
       end
-      dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].loader }
+      dependency_loaders = from_module_data.dependency_names.collect { |name| @index[name].public_loader }
       Puppet::Pops::Loader::DependencyLoader.new(from_module_data.public_loader, from_module_data.name, dependency_loaders)
     end
   end

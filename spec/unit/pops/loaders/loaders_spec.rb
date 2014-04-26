@@ -9,6 +9,7 @@ describe 'loaders' do
 
   let(:module_without_metadata) { File.join(config_dir('wo_metadata_module'), 'modules') }
   let(:module_with_metadata) { File.join(config_dir('single_module'), 'modules') }
+  let(:dependent_modules_with_metadata) { config_dir('dependent_modules_with_metadata') }
   let(:empty_test_env) { environment_for() }
 
   # Loaders caches the puppet_system_loader, must reset between tests
@@ -83,6 +84,17 @@ describe 'loaders' do
       function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
 
       expect(function.call({})).to eql("I am modulea::rb_func_a() + I am moduleb::rb_func_b()")
+    end
+  end
+
+  it 'makes dependent modules visible to a module with metadata' do
+    env = environment_for(dependent_modules_with_metadata)
+    loaders = Puppet::Pops::Loaders.new(env)
+    Puppet.override({:loaders => loaders}, 'testcase') do
+      moduleb_loader = loaders.private_loader_for_module('user')
+      function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
+
+      expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
     end
   end
 
