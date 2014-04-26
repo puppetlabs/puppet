@@ -8,6 +8,7 @@ describe 'loader paths' do
   before(:each) { Puppet[:biff] = true }
 
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
+  let(:unused_loaders) { nil }
 
   describe 'the relative_path_for_types method' do
     it 'produces paths to load in precendence order' do
@@ -20,7 +21,7 @@ describe 'loader paths' do
               'functions' => {},
             }
           }}})
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
+      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, unused_loaders, 'testmodule', module_dir, 'test1')
 
       effective_paths = Puppet::Pops::Loader::LoaderPaths.relative_paths_for_type(:function, module_loader)
 
@@ -32,7 +33,7 @@ describe 'loader paths' do
 
     it 'module loader has smart-paths that prunes unavailable paths' do
       module_dir = dir_containing('testmodule', {'lib' => {'puppet' => {'functions' => {'foo.rb' => 'Puppet::Functions.create_function("testmodule::foo") { def foo; end; }' }}}})
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
+      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, unused_loaders, 'testmodule', module_dir, 'test1')
 
       effective_paths = module_loader.smart_paths.effective_paths(:function)
 
@@ -51,7 +52,7 @@ describe 'loader paths' do
               'functions' => {'foo3x.rb' => 'ignored in this test'},
             }
           }}})
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
+      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, unused_loaders, 'testmodule', module_dir, 'test1')
 
       effective_paths = module_loader.smart_paths.effective_paths(:function)
 

@@ -42,60 +42,53 @@ describe 'loaders' do
 
   it 'can load a function using a qualified or unqualified name from a module with metadata' do
     loaders = Puppet::Pops::Loaders.new(environment_for(module_with_metadata))
-    Puppet.override({:loaders => loaders}, 'testcase') do
-      modulea_loader = loaders.public_loader_for_module('modulea')
+    modulea_loader = loaders.public_loader_for_module('modulea')
 
-      unqualified_function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
-      qualified_function = modulea_loader.load_typed(typed_name(:function, 'modulea::rb_func_a')).value
+    unqualified_function = modulea_loader.load_typed(typed_name(:function, 'rb_func_a')).value
+    qualified_function = modulea_loader.load_typed(typed_name(:function, 'modulea::rb_func_a')).value
 
-      expect(unqualified_function).to be_a(Puppet::Functions::Function)
-      expect(qualified_function).to be_a(Puppet::Functions::Function)
-      expect(unqualified_function.class.name).to eq('rb_func_a')
-      expect(qualified_function.class.name).to eq('modulea::rb_func_a')
-    end
+    expect(unqualified_function).to be_a(Puppet::Functions::Function)
+    expect(qualified_function).to be_a(Puppet::Functions::Function)
+    expect(unqualified_function.class.name).to eq('rb_func_a')
+    expect(qualified_function.class.name).to eq('modulea::rb_func_a')
   end
 
   it 'can load a function with a qualified name from module without metadata' do
     loaders = Puppet::Pops::Loaders.new(environment_for(module_without_metadata))
-    Puppet.override({:loaders => loaders}, 'testcase') do
-      moduleb_loader = loaders.public_loader_for_module('moduleb')
 
-      function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
+    moduleb_loader = loaders.public_loader_for_module('moduleb')
+    function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
 
-      expect(function).to be_a(Puppet::Functions::Function)
-      expect(function.class.name).to eq('moduleb::rb_func_b')
-    end
+    expect(function).to be_a(Puppet::Functions::Function)
+    expect(function.class.name).to eq('moduleb::rb_func_b')
   end
 
   it 'cannot load an unqualified function from a module without metadata' do
     loaders = Puppet::Pops::Loaders.new(environment_for(module_without_metadata))
-    Puppet.override({:loaders => loaders}, 'testcase') do
-      moduleb_loader = loaders.public_loader_for_module('moduleb')
 
-      expect(moduleb_loader.load_typed(typed_name(:function, 'rb_func_b'))).to be_nil
-    end
+    moduleb_loader = loaders.public_loader_for_module('moduleb')
+
+    expect(moduleb_loader.load_typed(typed_name(:function, 'rb_func_b'))).to be_nil
   end
 
   it 'makes all other modules visible to a module without metadata' do
     env = environment_for(module_with_metadata, module_without_metadata)
     loaders = Puppet::Pops::Loaders.new(env)
-    Puppet.override({:loaders => loaders}, 'testcase') do
-      moduleb_loader = loaders.private_loader_for_module('moduleb')
-      function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
 
-      expect(function.call({})).to eql("I am modulea::rb_func_a() + I am moduleb::rb_func_b()")
-    end
+    moduleb_loader = loaders.private_loader_for_module('moduleb')
+    function = moduleb_loader.load_typed(typed_name(:function, 'moduleb::rb_func_b')).value
+
+    expect(function.call({})).to eql("I am modulea::rb_func_a() + I am moduleb::rb_func_b()")
   end
 
   it 'makes dependent modules visible to a module with metadata' do
     env = environment_for(dependent_modules_with_metadata)
     loaders = Puppet::Pops::Loaders.new(env)
-    Puppet.override({:loaders => loaders}, 'testcase') do
-      moduleb_loader = loaders.private_loader_for_module('user')
-      function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
 
-      expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
-    end
+    moduleb_loader = loaders.private_loader_for_module('user')
+    function = moduleb_loader.load_typed(typed_name(:function, 'user::caller')).value
+
+    expect(function.call({})).to eql("usee::callee() was told 'passed value' + I am user::caller()")
   end
 
   def environment_for(*module_paths)

@@ -7,22 +7,16 @@ describe 'dependency loader' do
   include PuppetSpec::Files
 
   let(:static_loader) { Puppet::Pops::Loader::StaticLoader.new() }
+  let(:loaders) { Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, [])) }
 
   describe 'FileBased module loader' do
-    around(:each) do |example|
-      loaders = Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))
-      Puppet.override({:loaders => loaders}, "test-example") do
-        example.run
-      end
-    end
-
     it 'load something in global name space raises an error' do
       module_dir = dir_containing('testmodule', {
       'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
         'foo.rb' => 'Puppet::Functions.create_function("foo") { def foo; end; }'
       }}}}})
 
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
+      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
       dep_loader = Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
       expect do
         dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
@@ -34,7 +28,7 @@ describe 'dependency loader' do
       'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
         'foo.rb' => 'Puppet::Functions.create_function("testmodule::foo") { def foo; end; }'
       }}}}})
-      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, 'testmodule', module_dir, 'test1')
+      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
       dep_loader = Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
 
       function = dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value

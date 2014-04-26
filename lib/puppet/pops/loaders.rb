@@ -73,7 +73,7 @@ class Puppet::Pops::Loaders
     # lib/puppet... e.g.. dirname(__FILE__)/../../..  (i.e. <somewhere>/lib/puppet/pops/loaders.rb).
     #
     puppet_lib = File.join(File.dirname(__FILE__), '../../..')
-    Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, module_name, puppet_lib, loader_name)
+    Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, self, module_name, puppet_lib, loader_name)
   end
 
   def create_environment_loader(environment)
@@ -121,7 +121,7 @@ class Puppet::Pops::Loaders
       # Create data about this module
       md = LoaderModuleData.new(puppet_module)
       mr[puppet_module.name] = md
-      md.public_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader, md.name, md.path, md.name)
+      md.public_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(parent_loader, self, md.name, md.path, md.name)
     end
     # NOTE: Do not resolve all modules here - this is wasteful if only a subset of modules / functions are used
     #       The resolution is triggered by asking for a module's private loader, since this means there is interest
