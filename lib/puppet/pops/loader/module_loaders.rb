@@ -119,7 +119,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     # This optimization exists because many modules have been created from a template and they have
     # empty directories for functions, types, etc. (It is also the place to create a cached index of the content).
     #
-    # @param relative_path [String] a path relative to the module's root
+    # @param smart_path [String] a path relative to the module's root
     # @return [Boolean] true if there is content in the directory appointed by the relative path
     #
     def meaningful_to_search?(smart_path)
@@ -128,7 +128,7 @@ module Puppet::Pops::Loader::ModuleLoaders
 
     # Abstract method that subclasses override to answer if the given relative path exists, and if so returns that path
     #
-    # @param relative_path [String] a path resolved by a smart path against the loader's root (if it has one)
+    # @param resolved_path [String] a path resolved by a smart path against the loader's root (if it has one)
     # @return [Boolean] true if the file exists
     #
     def existing_path(resolved_path)
@@ -138,7 +138,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     # Abstract method that subclasses override to produce the content of the effective path.
     # It should either succeed and return a String or fail with an exception.
     #
-    # @param relative_path [String] a path as resolved by a smart path
+    # @param effective_path [String] a path as resolved by a smart path
     # @return [String] the content of the file
     #
     def get_contents(effective_path)

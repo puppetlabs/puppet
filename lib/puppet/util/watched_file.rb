@@ -8,7 +8,7 @@ class Puppet::Util::WatchedFile
   attr_reader :filename
 
   # @param filename [String] The fully qualified path to the file.
-  # @param file_timeout [Integer] The polling interval for checking for file
+  # @param timer [Puppet::Util::Watcher::Timer] The polling interval for checking for file
   #   changes. Setting the timeout to a negative value will treat the file as
   #   always changed. Defaults to `Puppet[:filetimeout]`
   def initialize(filename, timer = Puppet::Util::Watcher::Timer.new(Puppet[:filetimeout]))

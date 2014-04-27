@@ -2,7 +2,7 @@ module Puppet::Pops::Binder::Config
   # Validates the consistency of a Binder::BinderConfig
   class BinderConfigChecker
     # Create an instance with a diagnostic producer that will receive the result during validation
-    # @param diangostics [DiagnosticProducer] The producer that will receive the diagnostic
+    # @param diagnostics [DiagnosticProducer] The producer that will receive the diagnostic
     # @api public
     #
     def initialize(diagnostics)

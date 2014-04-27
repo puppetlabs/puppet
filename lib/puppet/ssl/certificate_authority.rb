@@ -197,7 +197,6 @@ class Puppet::SSL::CertificateAuthority
   # Created to prevent the case of reading all certs from disk, getting
   # just their names and verifying the cert for each name, which then
   # causes the cert to again be read from disk.
-  # @param name [Array<string>] filter to cerificate names
   #
   # @author Jeff Weiss <jeff.weiss@puppetlabs.com>
   # @api Puppet Enterprise Licensing

@@ -32,7 +32,7 @@ module Puppet::ModuleTool
 
     # Fetches {ModuleRelease} entries for each release of the named module.
     #
-    # @param input [String] the module name to look up
+    # @param name [String] the module name to look up
     # @return [Array<Semantic::Dependency::ModuleRelease>] a list of releases for
     #         the given name
     # @see Semantic::Dependency::Source#fetch

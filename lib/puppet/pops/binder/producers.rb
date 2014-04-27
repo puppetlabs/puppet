@@ -320,7 +320,7 @@ module Puppet::Pops::Binder::Producers
     attr_reader :name
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param binder [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
@@ -349,7 +349,7 @@ module Puppet::Pops::Binder::Producers
     attr_reader :key
 
     # @param injector [Puppet::Pops::Binder::Injector] The injector where the lookup originates
-    # @param binding [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
+    # @param binder [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
     # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup

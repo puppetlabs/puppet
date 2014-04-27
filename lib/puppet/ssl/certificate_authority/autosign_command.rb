@@ -15,7 +15,7 @@ class Puppet::SSL::CertificateAuthority::AutosignCommand
   # Run the autosign command with the given CSR name as an argument and the
   # CSR body on stdin.
   #
-  # @param name [String] The CSR name to check for autosigning
+  # @param csr [String] The CSR name to check for autosigning
   # @return [true, false] If the CSR should be autosigned
   def allowed?(csr)
     name = csr.name
