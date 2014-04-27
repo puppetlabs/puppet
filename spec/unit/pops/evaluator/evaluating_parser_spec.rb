@@ -974,7 +974,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   end
   context "Handles Deprecations and Discontinuations" do
     around(:each) do |example|
-      Puppet.override({:loaders => Puppet::Pops::Loaders.new}, 'test') do
+      Puppet.override({:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))}, 'test') do
         example.run
       end
     end
