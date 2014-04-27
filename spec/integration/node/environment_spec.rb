@@ -74,8 +74,8 @@ describe Puppet::Node::Environment do
 
       catalog = Puppet::Parser::Compiler.compile(node)
 
-      expect(catalog).to have_resource('Class[a]')
-      expect(catalog).to have_resource('Class[b]')
+      expect(catalog).to have_resource('Class[A]')
+      expect(catalog).to have_resource('Class[B]')
       expect(catalog).to have_resource('Notify[variables]').with_parameter(:message, "a: 10, b: 10")
     end
   end
