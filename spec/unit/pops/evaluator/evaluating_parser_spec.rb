@@ -746,7 +746,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
   context "When evaluator performs calls" do
     around(:each) do |example|
-      Puppet.override(:loaders => Puppet::Pops::Loaders.create_loaders()) do
+      Puppet.override(:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
         example.run
       end
     end
