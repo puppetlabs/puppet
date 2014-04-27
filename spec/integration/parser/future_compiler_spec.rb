@@ -61,6 +61,21 @@ describe "Puppet::Parser::Compiler" do
       catalog.resource("Notify[bar_notify]").should_not be_nil
     end
 
+    it 'applies defaults for defines with qualified names (PUP-2302)' do
+      Puppet[:code] = <<-CODE
+        define my::thing($msg = 'foo') { notify {'check_me': message => $msg } }
+        My::Thing { msg => 'evoe' }
+        my::thing { 'name': }
+      CODE
+
+      node = Puppet::Node.new("testnodex")
+      catalog = Puppet::Parser::Compiler.compile(node)
+      node.classes = nil
+      the_notify = catalog.resource("Notify[check_me]")
+      expect(the_notify).to_not be(nil)
+      expect(the_notify[:message]).to eql('evoe')
+    end
+
     describe "when resolving class references" do
       it "should favor local scope, even if there's an included class in topscope" do
         Puppet[:code] = <<-PP
