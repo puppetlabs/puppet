@@ -4,12 +4,13 @@ require 'puppet/parser/parser_factory'
 require 'puppet_spec/compiler'
 require 'puppet_spec/pops'
 require 'puppet_spec/scope'
+require 'matchers/resource'
 require 'rgen/metamodel_builder'
 
 # Test compilation using the future evaluator
-#
 describe "Puppet::Parser::Compiler" do
   include PuppetSpec::Compiler
+  include Matchers::Resource
 
   before :each do
     Puppet[:parser] = 'future'
@@ -46,8 +47,8 @@ describe "Puppet::Parser::Compiler" do
 
       catalog = Puppet::Parser::Compiler.compile(node)
 
-      catalog.resource("Notify[foo_notify]").should_not be_nil
-      catalog.resource("Notify[bar_notify]").should_not be_nil
+      expect(catalog).to have_resource("Notify[foo_notify]")
+      expect(catalog).to have_resource("Notify[bar_notify]")
     end
 
     it 'applies defaults for defines with qualified names (PUP-2302)' do
@@ -57,9 +58,7 @@ describe "Puppet::Parser::Compiler" do
         my::thing { 'name': }
       CODE
 
-      the_notify = catalog.resource("Notify[check_me]")
-      expect(the_notify).to_not be(nil)
-      expect(the_notify[:message]).to eql('evoe')
+      expect(catalog).to have_resource("Notify[check_me]").with_parameter(:message, "evoe")
     end
 
     describe "when resolving class references" do
@@ -77,8 +76,7 @@ describe "Puppet::Parser::Compiler" do
           include experiment::baz
         PP
 
-        notify_resource = catalog.resource( "Notify[x]" )
-        notify_resource[:require].title.should == "Experiment::Baz"
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
 
       it "should favor local scope, even if there's an unincluded class in topscope" do
@@ -94,8 +92,7 @@ describe "Puppet::Parser::Compiler" do
           include experiment::baz
         PP
 
-        notify_resource = catalog.resource( "Notify[x]" )
-        notify_resource[:require].title.should == "Experiment::Baz"
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
     end
 
@@ -116,10 +113,10 @@ describe "Puppet::Parser::Compiler" do
               }
             MANIFEST
 
-            catalog.resource("Class[Bar::Baz]").should_not be_nil
-            catalog.resource("Notify[good!]").should_not be_nil
-            catalog.resource("Class[Foo::Bar::Baz]").should be_nil
-            catalog.resource("Notify[bad!]").should be_nil
+            expect(catalog).to have_resource("Class[Bar::Baz]")
+            expect(catalog).to have_resource("Notify[good!]")
+            expect(catalog).to_not have_resource("Class[Foo::Bar::Baz]")
+            expect(catalog).to_not have_resource("Notify[bad!]")
           end
         end
       end
@@ -290,7 +287,7 @@ describe "Puppet::Parser::Compiler" do
           notify { 'test': message => $a::_a }
         MANIFEST
 
-        catalog.resource("Notify[test]")[:message].should == 10
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, 10)
       end
 
       it 'an initial underscore in not ok if elsewhere than last segment' do
@@ -309,8 +306,7 @@ describe "Puppet::Parser::Compiler" do
           include a
         MANIFEST
 
-        resource = catalog.resource("Notify[undef]")
-        resource[:message].should == "meh"
+        expect(catalog).to have_resource("Notify[undef]").with_parameter(:message, "meh")
       end
     end
 
@@ -328,7 +324,7 @@ describe "Puppet::Parser::Compiler" do
             notify { 'test': message => $trusted[data] }
           MANIFEST
 
-          catalog.resource("Notify[test]")[:message].should == "value"
+          expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "value")
         end
 
         it 'should not allow assignment to $trusted' do
@@ -336,11 +332,10 @@ describe "Puppet::Parser::Compiler" do
           node.trusted_data = { "data" => "value" }
 
           expect do
-            catalog = compile_to_catalog(<<-MANIFEST, node)
+            compile_to_catalog(<<-MANIFEST, node)
               $trusted = 'changed'
               notify { 'test': message => $trusted == 'changed' }
             MANIFEST
-            catalog.resource("Notify[test]")[:message].should == true
           end.to raise_error(Puppet::Error, /Attempt to assign to a reserved variable name: 'trusted'/)
         end
       end
@@ -358,7 +353,7 @@ describe "Puppet::Parser::Compiler" do
             notify { 'test': message => ($trusted == undef) }
           MANIFEST
 
-          catalog.resource("Notify[test]")[:message].should == true
+          expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
         end
 
         it 'should allow assignment to $trusted' do
@@ -367,7 +362,7 @@ describe "Puppet::Parser::Compiler" do
             notify { 'test': message => $trusted == 'changed' }
           MANIFEST
 
-          catalog.resource("Notify[test]")[:message].should == true
+          expect(catalog).to have_resource("Notify[test]").with_parameter(:message, true)
         end
       end
     end
