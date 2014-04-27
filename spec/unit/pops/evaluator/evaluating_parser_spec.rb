@@ -2,6 +2,7 @@ require 'spec_helper'
 
 require 'puppet/pops'
 require 'puppet/pops/evaluator/evaluator_impl'
+require 'puppet/loaders'
 require 'puppet_spec/pops'
 require 'puppet_spec/scope'
 require 'puppet/parser/e4_parser_adapter'
@@ -744,6 +745,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   end
 
   context "When evaluator performs calls" do
+    around(:each) do |example|
+      Puppet.override(:loaders => Puppet::Pops::Loaders.create_loaders()) do
+        example.run
+      end
+    end
+
     let(:populate) do
       parser.evaluate_string(scope, "$a = 10 $b = [1,2,3]")
     end
@@ -770,6 +777,39 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it "provides location information on error in unparenthesized call logic" do
     expect{parser.evaluate_string(scope, "include non_existing_class", __FILE__)}.to raise_error(Puppet::ParseError, /line 1\:1/)
+    end
+
+    it 'defaults can be given in a lambda and used only when arg is missing' do
+      env_loader = Puppet.lookup(:loaders).public_environment_loader
+      fc = Puppet::Functions.create_function(:test) do
+        dispatch :test do
+          param 'Integer', 'count'
+          required_block_param
+        end
+        def test(count, block)
+          block.call({}, *[].fill(10, 0, count))
+        end
+      end
+      the_func = fc.new({}, env_loader)
+      env_loader.add_entry(:function, 'test', the_func, __FILE__)
+      expect(parser.evaluate_string(scope, "test(1) |$x, $y=20| { $x + $y}")).to eql(30)
+      expect(parser.evaluate_string(scope, "test(2) |$x, $y=20| { $x + $y}")).to eql(20)
+    end
+
+    it 'a given undef does not select the default value' do
+      env_loader = Puppet.lookup(:loaders).public_environment_loader
+      fc = Puppet::Functions.create_function(:test) do
+        dispatch :test do
+          param 'Optional[Object]', 'lambda_arg'
+          required_block_param
+        end
+        def test(lambda_arg, block)
+          block.call({}, lambda_arg)
+        end
+      end
+      the_func = fc.new({}, env_loader)
+      env_loader.add_entry(:function, 'test', the_func, __FILE__)
+      expect(parser.evaluate_string(scope, "test(undef) |$x=20| { $x == undef}")).to eql(true)
     end
   end
 

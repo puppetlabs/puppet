@@ -94,8 +94,8 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     from = to - optional_parameter_count
     if from != to
       size_t = Puppet::Pops::Types::PIntegerType.new()
-      size_t.from = size
-      size_t.to = size
+      size_t.from = from
+      size_t.to = to
       tuple_t.size_type = size_t
     end
     t.param_types = tuple_t

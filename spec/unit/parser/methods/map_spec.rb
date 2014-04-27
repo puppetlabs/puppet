@@ -150,6 +150,18 @@ describe 'the map method' do
       end
 
       it "map gets values that are undef" do
+        pending "Test is flawed, but has good intentions - should be rewritten when map has moved to new func API"
+        # The test is broken because:
+        # - a bug caused the given value to always be overridden by a given lambda default
+        # - non existing variable results in nil / undef, which is transformed to empty string in the 3x func API
+        # - when lambda is called, it gets an empty string, and it is then expected to use the default value
+        #
+        # This is not the semantics we want (only missing argument should trigger the default value).
+        # Finally, it is not possible to test missing arguments with the map function since the call adapts itself
+        # to the number of lambda parameters. (There is testing of this elsewhere).
+        #
+        # TODO: Rewrite map function, then test that undef / nil values are passed correctly to the lambda
+        #
         catalog = compile_to_catalog(<<-MANIFEST)
           $a = [$does_not_exist]
           $a.map |$x = "something"| { $x }.each |$i, $v| {
