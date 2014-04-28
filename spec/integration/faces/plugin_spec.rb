@@ -4,6 +4,7 @@ require 'puppet/file_serving/metadata'
 require 'puppet/file_serving/content'
 require 'puppet/indirector/memory'
 
+module PuppetFaceIntegrationSpecs
 describe Puppet::Face[:plugin, '0.0.1'] do
   INDIRECTORS = [
     Puppet::Indirector::FileMetadata,
@@ -49,4 +50,5 @@ describe Puppet::Face[:plugin, '0.0.1'] do
     expect(result).to eq([File.join(Puppet[:vardir],'facts.d')])
     expect(@logs.select { |l| l.level == :err }).to eq([])
   end
+end
 end
