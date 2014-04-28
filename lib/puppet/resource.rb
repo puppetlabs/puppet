@@ -251,7 +251,11 @@ class Puppet::Resource
   end
 
   def environment
-    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
+    @environment ||= if catalog
+                       catalog.environment_instance
+                     else
+                       Puppet::Node::Environment::NONE
+                     end
   end
 
   def environment=(environment)
@@ -383,6 +387,14 @@ class Puppet::Resource
   def copy_as_resource
     result = Puppet::Resource.new(type, title)
 
+    result.file = self.file
+    result.line = self.line
+    result.exported = self.exported
+    result.virtual = self.virtual
+    result.tag(*self.tags)
+    result.environment = environment
+    result.instance_variable_set(:@rstype, resource_type)
+
     to_hash.each do |p, v|
       if v.is_a?(Puppet::Resource)
         v = Puppet::Resource.new(v.type, v.title)
@@ -405,14 +417,6 @@ class Puppet::Resource
                     v
                   end
     end
-
-    result.file = self.file
-    result.line = self.line
-    result.exported = self.exported
-    result.virtual = self.virtual
-    result.tag(*self.tags)
-    result.environment = environment
-    result.instance_variable_set(:@rstype, resource_type)
 
     result
   end

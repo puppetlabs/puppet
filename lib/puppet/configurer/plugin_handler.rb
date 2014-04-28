@@ -3,13 +3,13 @@
 # easier to test.
 module Puppet::Configurer::PluginHandler
   # Retrieve facts from the central server.
-  def download_plugins
+  def download_plugins(environment)
     plugin_downloader = Puppet::Configurer::Downloader.new(
       "plugin",
       Puppet[:plugindest],
       Puppet[:pluginsource],
       Puppet[:pluginsignore],
-      @environment
+      environment
     )
     if Puppet.features.external_facts?
        plugin_fact_downloader = Puppet::Configurer::Downloader.new(
@@ -17,7 +17,7 @@ module Puppet::Configurer::PluginHandler
           Puppet[:pluginfactdest],
           Puppet[:pluginfactsource],
           Puppet[:pluginsignore],
-          @environment
+          environment
        )
        plugin_fact_downloader.evaluate
     end

@@ -91,6 +91,21 @@ class Puppet::Node::Environment
     obj
   end
 
+  # A "reference" to a remote environment. The created environment instance
+  # isn't expected to exist on the local system, but is instead a reference to
+  # environment information on a remote system. For instance when a catalog is
+  # being applied, this will be used on the agent.
+  #
+  # @note This does not provide access to the information of the remote
+  # environment's modules, manifest, or anything else. It is simply a value
+  # object to pass around and use as an environment.
+  #
+  # @param name [Symbol] The name of the remote environment
+  #
+  def self.remote(name)
+    create(name, [], NO_MANIFEST)
+  end
+
   # Instantiate a new environment
   #
   # @note {Puppet::Node::Environment.new} is overridden to return memoized
@@ -103,6 +118,23 @@ class Puppet::Node::Environment
     @modulepath = modulepath
     @manifest = manifest
     @config_version = config_version
+    # set watching to true for legacy environments - the directory based environment loaders will set this to
+    # false for directory based environments after the environment has been created.
+    @watching = true
+  end
+
+  # Returns if files are being watched or not.
+  # @api private
+  #
+  def watching?
+    @watching
+  end
+
+  # Turns watching of files on or off
+  # @param flag [TrueClass, FalseClass] if files should be watched or not
+  # @ api private
+  def watching=(flag)
+    @watching = flag
   end
 
   # Creates a new Puppet::Node::Environment instance, overriding any of the passed
@@ -387,16 +419,24 @@ class Puppet::Node::Environment
   end
 
   # Set a periodic watcher on the file, so we can tell if it has changed.
-  # @param file [File,String] File instance or filename
+  # If watching has been turned off, this call has no effect.
+  # @param file[File,String] File instance or filename
   # @api private
   def watch_file(file)
-    known_resource_types.watch_file(file.to_s)
+    if watching?
+      known_resource_types.watch_file(file.to_s)
+    end
   end
 
+  # Checks if a reparse is required (cache of files is stale).
+  # This call does nothing unless files are being watched.
+  #
   def check_for_reparse
-    if (Puppet[:code] != @parsed_code) || (@known_resource_types && @known_resource_types.require_reparse?)
-      @parsed_code = nil
-      @known_resource_types = nil
+    if watching?
+      if (Puppet[:code] != @parsed_code) || (@known_resource_types && @known_resource_types.require_reparse?)
+        @parsed_code = nil
+        @known_resource_types = nil
+      end
     end
   end
 
@@ -518,4 +558,10 @@ class Puppet::Node::Environment
   def empty_parse_result
     return Puppet::Parser::AST::Hostclass.new('')
   end
+
+  # A special "null" environment
+  #
+  # This environment should be used when there is no specific environment in
+  # effect.
+  NONE = create(:none, [])
 end

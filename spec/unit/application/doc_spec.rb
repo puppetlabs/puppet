@@ -255,17 +255,16 @@ describe Puppet::Application::Doc do
 
   describe "when running" do
     describe "in rdoc mode" do
-      let(:modules) { File.expand_path("modules") }
-      let(:manifests) { File.expand_path("manifests") }
+      include PuppetSpec::Files
+
+      let(:envdir) { tmpdir('env') }
+      let(:modules) { File.join(envdir, "modules") }
+      let(:manifests) { File.join(envdir, "manifests") }
 
       before :each do
         @doc.manifest = false
         Puppet.stubs(:info)
         Puppet[:trace] = false
-        @env = stub 'env'
-        @env.stubs(:modulepath).returns([modules])
-        @env.stubs(:manifest).returns('manifests/site.pp')
-        Puppet::Node::Environment.stubs(:new).returns(@env)
         Puppet[:modulepath] = modules
         Puppet[:manifestdir] = manifests
         @doc.options[:all] = false
@@ -276,6 +275,14 @@ describe Puppet::Application::Doc do
         @doc.command_line.stubs(:args).returns([])
       end
 
+      around(:each) do |example|
+        FileUtils.mkdir_p(modules)
+        @env = Puppet::Node::Environment.create(Puppet[:environment].to_sym, [modules], "#{manifests}/site.pp")
+        Puppet.override(:environments => Puppet::Environments::Static.new(@env)) do
+          example.run
+        end
+      end
+
       it "should set document_all on --all" do
         @doc.options[:all] = true
         Puppet.settings.expects(:[]=).with(:document_all, true)
@@ -284,19 +291,19 @@ describe Puppet::Application::Doc do
       end
 
       it "should call Puppet::Util::RDoc.rdoc in full mode" do
-        Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, 'manifests'], nil)
+        Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, manifests], nil)
         expect { @doc.rdoc }.to exit_with 0
       end
 
       it "should call Puppet::Util::RDoc.rdoc with a charset if --charset has been provided" do
         @doc.options[:charset] = 'utf-8'
-        Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, 'manifests'], "utf-8")
+        Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, manifests], "utf-8")
         expect { @doc.rdoc }.to exit_with 0
       end
 
       it "should call Puppet::Util::RDoc.rdoc in full mode with outputdir set to doc if no --outputdir" do
         @doc.options[:outputdir] = false
-        Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, 'manifests'], nil)
+        Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, manifests], nil)
         expect { @doc.rdoc }.to exit_with 0
       end
 

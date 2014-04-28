@@ -50,14 +50,14 @@ describe "Puppet Network Format" do
     end
 
     it "should be able to serialize a catalog" do
-      cat = Puppet::Resource::Catalog.new('foo')
+      cat = Puppet::Resource::Catalog.new('foo', Puppet::Node::Environment.create(:testing, []))
       cat.add_resource(Puppet::Resource.new(:file, 'my_file'))
       catunpack = MessagePack.unpack(cat.to_msgpack)
       catunpack.should include(
         "tags"=>[],
         "name"=>"foo",
         "version"=>nil,
-        "environment"=>"",
+        "environment"=>"testing",
         "edges"=>[],
         "classes"=>[]
       )

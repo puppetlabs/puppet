@@ -90,7 +90,10 @@ class Puppet::Configurer
   end
 
   def get_facts(options)
-    download_plugins if options[:pluginsync]
+    if options[:pluginsync]
+      remote_environment_for_plugins = Puppet::Node::Environment.remote(@environment)
+      download_plugins(remote_environment_for_plugins)
+    end
 
     if Puppet::Resource::Catalog.indirection.terminus_class == :rest
       # This is a bit complicated.  We need the serialized and escaped facts,

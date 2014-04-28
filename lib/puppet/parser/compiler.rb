@@ -104,6 +104,8 @@ class Puppet::Parser::Compiler
   # This is the main entry into our catalog.
   def compile
     Puppet.override( @context_overrides , "For compiling #{node.name}") do
+      @catalog.environment_instance = environment
+
       # Set the client's parameters into the top scope.
       Puppet::Util::Profiler.profile("Compile: Set node parameters") { set_node_parameters }
 
@@ -499,7 +501,7 @@ class Puppet::Parser::Compiler
     @relationships = []
 
     # For maintaining the relationship between scopes and their resources.
-    @catalog = Puppet::Resource::Catalog.new(@node.name)
+    @catalog = Puppet::Resource::Catalog.new(@node.name, @node.environment)
 
     # MOVED HERE - SCOPE IS NEEDED (MOVE-SCOPE)
     # Create the initial scope, it is needed early
@@ -519,8 +521,6 @@ class Puppet::Parser::Compiler
       # THE MAGIC STARTS HERE ! This triggers parsing, loading etc.
       @catalog.version = known_resource_types.version
     end
-
-    @catalog.environment = @node.environment.to_s
 
     @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @topscope))
 
