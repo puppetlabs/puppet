@@ -17,17 +17,19 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
    expect(Puppet::FileBucket::File.supported_formats).to include(:s, :pson)
   end
 
-  using_checksums_describe "making round trips through network formats" do
-    it "can make a round trip through `s`" do
-      file = Puppet::FileBucket::File.new(plaintext)
-      tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
-      expect(tripped.contents).to eq(plaintext)
-    end
+  describe "making round trips through network formats" do
+    with_digest_algorithms do
+      it "can make a round trip through `s`" do
+        file = Puppet::FileBucket::File.new(plaintext)
+        tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
+        expect(tripped.contents).to eq(plaintext)
+      end
 
-    it "can make a round trip through `pson`" do
-      file = Puppet::FileBucket::File.new(plaintext)
-      tripped = Puppet::FileBucket::File.convert_from(:pson, file.render(:pson))
-      expect(tripped.contents).to eq(plaintext)
+      it "can make a round trip through `pson`" do
+        file = Puppet::FileBucket::File.new(plaintext)
+        tripped = Puppet::FileBucket::File.convert_from(:pson, file.render(:pson))
+        expect(tripped.contents).to eq(plaintext)
+      end
     end
   end
 
@@ -41,8 +43,8 @@ describe Puppet::FileBucket::File, :uses_checksums => true do
     }.to raise_error(ArgumentError, /Unknown option\(s\): crazy_option/)
   end
 
-  using_checksums_describe "computing content and checksums" do
-    it "using the configured digest algorithm" do
+  with_digest_algorithms do
+    it "it uses #{metadata[:digest_algorithm]} as the configured digest algorithm" do
       file = Puppet::FileBucket::File.new(plaintext)
 
       file.contents.should == plaintext

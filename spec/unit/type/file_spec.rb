@@ -722,8 +722,8 @@ describe Puppet::Type.type(:file) do
 
     # LAK:FIXME This is a bug, but I can't think of a fix for it.  Fortunately it's already
     # filed, and when it's fixed, we'll just fix the whole flow.
-    using_checksums_describe "it should set the checksum type" do
-      it "to #{metadata[:digest_algorithm]} if the remote file is a file" do
+    with_digest_algorithms do
+      it "it should set the checksum type to #{metadata[:digest_algorithm]} if the remote file is a file" do
         @first.stubs(:ftype).returns "file"
         file.stubs(:perform_recursion).returns [@first]
         @resource.stubs(:[]=)

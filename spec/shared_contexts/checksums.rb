@@ -15,14 +15,10 @@ DIGEST_ALGORITHMS_TO_TRY = ['md5', 'sha256']
 
 shared_context('with supported digest algorithms', :uses_checksums => true) do
 
-  # Drop-in replacement for the describe class method, which makes an
-  # example group containing one copy of the given group for each
-  # value of the :digest_algorithm Puppet setting given in
-  # DIGEST_ALGORITHMS_TO_TRY.
-  def self.using_checksums_describe(*args, &block)
-    DIGEST_ALGORITHMS_TO_TRY.each do |algorithm|
-      describe("when digest_algorithm is #{algorithm}", :digest_algorithm => algorithm) do
-        describe(*args, &block)
+  def self.with_digest_algorithms(&block)
+    DIGEST_ALGORITHMS_TO_TRY.each do |digest_algorithm|
+      describe("when digest_algorithm is #{digest_algorithm}", :digest_algorithm => digest_algorithm) do
+        instance_eval(&block)
       end
     end
   end

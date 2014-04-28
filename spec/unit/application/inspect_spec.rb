@@ -54,7 +54,7 @@ describe Puppet::Application::Inspect do
       @inspect.run_command
     end
 
-    using_checksums_describe "auditing with supported digest algorithms" do
+    with_digest_algorithms do
       it "should audit the specified properties" do
         catalog = Puppet::Resource::Catalog.new
         file = Tempfile.new("foo")
