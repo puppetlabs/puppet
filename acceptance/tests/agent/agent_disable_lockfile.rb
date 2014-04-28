@@ -42,7 +42,7 @@ tuples.each do |expected_message, explicitly_specify_message|
           on(agent, puppet('agent', "--disable"))
         end
 
-        agent_disabled_lockfile = "#{agent['puppetvardir']}/state/agent_disabled.lock"
+        agent_disabled_lockfile = "#{agent.puppet['vardir']}/state/agent_disabled.lock"
         unless file_exists?(agent, agent_disabled_lockfile) then
           fail_test("Failed to create disabled lock file '#{agent_disabled_lockfile}' on agent '#{agent}'")
         end
@@ -73,7 +73,7 @@ tuples.each do |expected_message, explicitly_specify_message|
     step "enable the agent (message: '#{expected_message}')" do
       agents.each do |agent|
 
-        agent_disabled_lockfile = "#{agent['puppetvardir']}/state/agent_disabled.lock"
+        agent_disabled_lockfile = "#{agent.puppet['vardir']}/state/agent_disabled.lock"
         on(agent, puppet('agent', "--enable"))
         if file_exists?(agent, agent_disabled_lockfile) then
           fail_test("Failed to remove disabled lock file '#{agent_disabled_lockfile}' on agent '#{agent}'")
