@@ -1,23 +1,45 @@
 require 'puppet/util/inifile'
 
 Puppet::Type.type(:yumrepo).provide(:inifile) do
-  desc 'Manage yum repos'
+  desc <<-EOD
+    Manage yum repo configurations by parsing yum INI configuration files.
+
+    ## Fetching instances
+
+    When fetching repo instances, directory entries in '/etc/yum/repos.d',
+    '/etc/yum.repos.d', and the directory optionally specified by the reposdir
+    key in '/etc/yum.conf' will be checked. If a given directory does not exist it
+    will be ignored. In addition, all sections in '/etc/yum.conf' aside from
+    'main' will be created as sections.
+
+    ## Storing instances
+
+    When creating a new repository, a new section will be added in the first
+    yum repo directory that exists. The custom directory specified by the
+    '/etc/yum.conf' reposdir property is checked first, followed by
+    '/etc/yum/repos.d', and then '/etc/yum.repos.d'. If none of these exist, the
+    section will be created in '/etc/yum.conf'.
+  EOD
 
   PROPERTIES = Puppet::Type.type(:yumrepo).validproperties
 
-  # @return [Array<Puppet::Providers>] Return all the providers built up from
-  #   discovered content on the local node.
+  # Retrieve all providers based on existing yum repositories
+  #
+  # @api public
+  # @return [Array<Puppet::Provider>] providers generated from existing yum
+  #   repository definitions.
   def self.instances
     instances = []
-    # Iterate over each section of our virtual file.
+
     virtual_inifile.each_section do |section|
+      # Ignore the 'main' section in yum.conf since it's not a repository.
+      next if section.name == "main"
+
       attributes_hash = {:name => section.name, :ensure => :present, :provider => :yumrepo}
-      # We need to build up a attributes hash
+
       section.entries.each do |key, value|
         key = key.to_sym
         if valid_property?(key)
-          # We strip the values here to handle cases where distros set values
-          # like enabled = 1 with spaces.
           attributes_hash[key] = value
         elsif key == :name
           attributes_hash[:descr] = value
@@ -25,11 +47,15 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
       end
       instances << new(attributes_hash)
     end
-  return instances
+
+    instances
   end
 
-  # @param resources [Array<Puppet::Resource>] Resources to prefetch.
-  # @return [Array<Puppet::Resource>] Resources with providers set.
+  # Match catalog type instances to provider instances.
+  #
+  # @api public
+  # @param resources [Array<Puppet::Type::Yumrepo>] Resources to prefetch.
+  # @return [void]
   def self.prefetch(resources)
     repos = instances
     resources.keys.each do |name|
@@ -39,10 +65,12 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     end
   end
 
-  # Return a list of existing directories that could contain repo files.  Fail if none found.
+  # Return a list of existing directories that could contain repo files.
+  #
+  # @api private
   # @param conf [String] Configuration file to look for directories in.
-  # @param dirs [Array] Default locations for yum repos.
-  # @return [Array] Directories that were found to exist on the node.
+  # @param dirs [Array<String>] Default locations for yum repos.
+  # @return [Array<String>] All present directories that may contain yum repo configs.
   def self.reposdir(conf='/etc/yum.conf', dirs=['/etc/yum.repos.d', '/etc/yum/repos.d'])
     reposdir = find_conf_value('reposdir', conf)
     dirs << reposdir if reposdir
@@ -51,70 +79,103 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     # dirs.select! { |dir| Puppet::FileSystem.exist?(dir) }
     dirs.delete_if { |dir| ! Puppet::FileSystem.exist?(dir)  }
     if dirs.empty?
-      fail('No yum directories were found on the local filesystem')
-    else
-      return dirs
+      Puppet.debug('No yum directories were found on the local filesystem')
     end
+
+    dirs
+  end
+
+  # Used for testing only
+  # @api private
+  def self.clear
+    @virtual = nil
   end
 
   # Helper method to look up specific values in ini style files.
-  # @todo Migrate this into Puppet::Util::IniConfig.
+  #
+  # @api private
   # @param value [String] Value to look for in the configuration file.
   # @param conf [String] Configuration file to check for value.
   # @return [String] The value of a looked up key from the configuration file.
   def self.find_conf_value(value, conf='/etc/yum.conf')
     if Puppet::FileSystem.exist?(conf)
-      contents = Puppet::FileSystem.read(conf)
-      match = /^#{value}\s*=\s*(.*)/.match(contents)
+      file = Puppet::Util::IniConfig::PhysicalFile.new(conf)
+      if (main = file.get_section('main'))
+        main[value]
+      end
     end
-
-    return match.captures[0] if match
   end
 
-  # Build a virtual inifile by reading in numerous .repo
-  # files into a single virtual file to ease manipulation.
+  # Enumerate all files that may contain yum repository configs.
+  # '/etc/yum.conf' is always included.
+  #
+  # @api private
+  # @return [Array<String>
+  def self.repofiles
+    files = ["/etc/yum.conf"]
+    reposdir.each do |dir|
+      Dir.glob("#{dir}/*.repo").each do |file|
+        files << file
+      end
+    end
+
+    files
+  end
+
+  # Build a virtual inifile by reading in numerous .repo files into a single
+  # virtual file to ease manipulation.
+  # @api private
   # @return [Puppet::Util::IniConfig::File] The virtual inifile representing
   #   multiple real files.
   def self.virtual_inifile
     unless @virtual
       @virtual = Puppet::Util::IniConfig::File.new
-      reposdir.each do |dir|
-        Dir.glob("#{dir}/*.repo").each do |file|
-          @virtual.read(file) if Puppet::FileSystem.file?(file)
-        end
+      self.repofiles.each do |file|
+        @virtual.read(file) if Puppet::FileSystem.file?(file)
       end
     end
     return @virtual
   end
 
+  # Is the given key a valid type property?
+  #
+  # @api private
   # @param key [String] The property to look up.
   # @return [Boolean] Returns true if the property is defined in the type.
   def self.valid_property?(key)
     PROPERTIES.include?(key)
   end
 
-  # We need to return a valid section from the larger virtual inifile here,
-  # which we do by first looking it up and then creating a new section for
-  # the appropriate name if none was found.
+  # Return an existing INI section or create a new section in the default location
+  #
+  # The default location is determined based on what yum repo directories
+  # and files are present. If /etc/yum.conf has a value for 'reposdir' then that
+  # is preferred. If no such INI property is found then the first default yum
+  # repo directory that is present is used. If no default directories exist then
+  # /etc/yum.conf is used.
+  #
   # @param name [String] Section name to lookup in the virtual inifile.
   # @return [Puppet::Util::IniConfig] The IniConfig section
   def self.section(name)
     result = self.virtual_inifile[name]
     # Create a new section if not found.
     unless result
-      # Previously we did an .each on reposdir with the effect that we
-      # constantly created and overwrote result until the last entry of
-      # the array.  This was done because the ordering is
-      # [defaults, custom] for reposdir and we want to use the custom if
-      # we have it and the defaults if not.
-      path = ::File.join(reposdir.last, "#{name}.repo")
-      Puppet.info("create new repo #{name} in file #{path}")
+      dirs = reposdir()
+      if dirs.empty?
+        # If no repo directories are present, default to using yum.conf.
+        path = '/etc/yum.conf'
+      else
+        # The ordering of reposdir is [defaults, custom], and we want to use
+        # the custom directory if present.
+        path = File.join(dirs.last, "#{name}.repo")
+      end
       result = self.virtual_inifile.add_section(name, path)
     end
     result
   end
 
-  # Here we store all modifications to disk, forcing the output file to 0644 if it differs.
+  # Save all yum repository files and force the mode to 0644
+  # @api private
   # @return [void]
   def self.store
     inifile = self.virtual_inifile
@@ -130,6 +191,10 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     end
   end
 
+  # Create a new section for the given repository and set all the specified
+  # properties in the section.
+  #
+  # @api public
   # @return [void]
   def create
     @property_hash[:ensure] = :present
@@ -143,20 +208,26 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     PROPERTIES.each do |property|
       next if property == :ensure
 
-
       if value = @resource.should(property)
         self.send("#{property}=", value)
       end
     end
   end
 
-  # @return [Boolean] Returns true if ensure => present.
+  # Does the given repository already exist?
+  #
+  # @api public
+  # @return [Boolean]
   def exists?
     @property_hash[:ensure] == :present
   end
 
-  # We don't actually destroy the file here, merely mark it for
-  # destruction in the section.
+  # Mark the given repository section for destruction.
+  #
+  # The actual removal of the section will be handled by {#flush} after the
+  # resource has been fully evaluated.
+  #
+  # @api public
   # @return [void]
   def destroy
     # Flag file for deletion on flush.
@@ -165,6 +236,9 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     @property_hash.clear
   end
 
+  # Finalize the application of the given resource.
+  #
+  # @api public
   # @return [void]
   def flush
     self.class.store
@@ -216,7 +290,6 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
     @property_hash[property] = value
   end
 
-  # @return [void]
   def section(name)
     self.class.section(name)
   end
