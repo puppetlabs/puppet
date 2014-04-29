@@ -55,7 +55,6 @@ describe Puppet::Type.type(:service).provider(:systemd) do
         autovt@.service
         avahi-daemon.service
         blk-availability.service
-        brandbot.service
       }
     end
   end

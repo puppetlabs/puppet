@@ -11,7 +11,7 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
   def self.instances
     i = []
     output = systemctl('list-unit-files', '--type', 'service', '--full', '--all',  '--no-pager')
-    output.scan(/^(\S+)\s+(disabled|enabled|static)\s*$/i).each do |m|
+    output.scan(/^(\S+)\s+(disabled|enabled)\s*$/i).each do |m|
       i << new(:name => m[0])
     end
     return i
