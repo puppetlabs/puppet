@@ -5,7 +5,7 @@ require 'puppet/file_serving/content'
 require 'puppet/indirector/memory'
 
 module PuppetFaceIntegrationSpecs
-describe Puppet::Face[:plugin, '0.0.1'] do
+describe "Puppet plugin face" do
   INDIRECTORS = [
     Puppet::Indirector::FileMetadata,
     Puppet::Indirector::FileContent,
@@ -27,6 +27,8 @@ describe Puppet::Face[:plugin, '0.0.1'] do
 
   before do
     FileUtils.mkdir(Puppet[:vardir])
+    FileUtils.mkdir(File.join(Puppet[:vardir], 'lib'))
+    FileUtils.mkdir(File.join(Puppet[:vardir], 'facts.d'))
     @termini_classes = {}
     INDIRECTED_CLASSES.each do |indirected|
       @termini_classes[indirected] = indirected.indirection.terminus_class
@@ -44,11 +46,17 @@ describe Puppet::Face[:plugin, '0.0.1'] do
     end
   end
 
-  it "processes a download request without logging errors" do
-    Puppet[:trace] = true
-    result = subject.download
-    expect(result).to eq([File.join(Puppet[:vardir],'facts.d')])
-    expect(@logs.select { |l| l.level == :err }).to eq([])
+  def init_cli_args_and_apply_app(args = ["download"])
+    Puppet::Application.find(:plugin).new(stub('command_line', :subcommand_name => :plugin, :args => args))
+  end
+
+  it "processes a download request" do
+    app = init_cli_args_and_apply_app
+    expect do
+      expect {
+        app.run
+      }.to exit_with(0)
+    end.to have_printed(/No plugins downloaded/)
   end
 end
 end
