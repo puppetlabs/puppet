@@ -85,7 +85,7 @@ Puppet::Type.newtype(:augeas) do
       where:
 
       * `AUGEAS_PATH` is a valid path scoped by the context
-      * `MATCH_PATH` is a valid match synatx scoped by the context
+      * `MATCH_PATH` is a valid match syntax scoped by the context
       * `COMPARATOR` is one of `>, >=, !=, ==, <=,` or `<`
       * `STRING` is a string
       * `INT` is a number
