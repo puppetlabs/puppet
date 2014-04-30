@@ -75,7 +75,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             checksum = save_bucket_file(plaintext, "/foo/bar")
             checksum = save_bucket_file(plaintext, "/foo/bar")
             dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            File.read("#{dir_path}/contents").should == plaintext
+            Puppet::FileSystem.binread("#{dir_path}/contents").should == plaintext
             File.read("#{dir_path}/paths").should == "foo/bar\n"
           end
 
@@ -85,7 +85,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             checksum = save_bucket_file(plaintext, "/foo/baz")
 
             dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            File.read("#{dir_path}/contents").should == plaintext
+            Puppet::FileSystem.binread("#{dir_path}/contents").should == plaintext
             File.read("#{dir_path}/paths").should == "foo/bar\nfoo/baz\n"
           end
         end
@@ -97,7 +97,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
             checksum = save_bucket_file(plaintext, "")
 
             dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
-            File.read("#{dir_path}/contents").should == plaintext
+            Puppet::FileSystem.binread("#{dir_path}/contents").should == plaintext
             File.read("#{dir_path}/paths").should == ""
           end
         end
@@ -236,7 +236,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
 
               def make_bucketed_file
                 FileUtils.mkdir_p(@dir)
-                File.open(@contents_path, 'w') { |f| f.write plaintext }
+                File.open(@contents_path, 'wb') { |f| f.write plaintext }
               end
 
               it "should return an instance of Puppet::FileBucket::File created with the content if the file exists" do
@@ -275,7 +275,7 @@ describe Puppet::FileBucketFile::File, :uses_checksums => true do
                 request = Puppet::Indirector::Request.new(:indirection_name, :save, key, file_instance)
 
                 @store.save(request)
-                File.read("#{@dir}/contents").should == plaintext
+                Puppet::FileSystem.binread("#{@dir}/contents").should == plaintext
               end
             end
           end
