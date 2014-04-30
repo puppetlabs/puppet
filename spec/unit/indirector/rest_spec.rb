@@ -277,6 +277,14 @@ describe Puppet::Indirector::REST do
       terminus.find(request).should == nil
     end
 
+    it 'raises a warning for a 404' do
+      response = mock_response('404', 'this is the notfound you are looking for')
+      connection.expects(:get).returns(response)
+      expected_message = 'Find /production/test_model/foo? resulted in 404 with the message: this is the notfound you are looking for'
+      Puppet::Util::Warnings.expects(:maybe_log).with(expected_message, Puppet::TestModel::Rest)
+      terminus.find(request)
+    end
+
     it "asks the model to deserialize the response body and sets the name on the resulting object to the find key" do
       connection.expects(:get).returns response
 
