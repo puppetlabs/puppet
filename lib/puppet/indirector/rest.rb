@@ -104,7 +104,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       result.name = request.key if result.respond_to?(:name=)
       result
 
-    elsif is_http_400?(response)
+    elsif is_http_404?(response)
       # 404 gets special treatment as the indirector API can not produce a meaningful
       # reason to why something is not found - it may not be the thing the user is
       # expecting to find that is missing, but something else (like the environment).
@@ -209,7 +209,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
   end
 
-  def is_http_400?(response)
+  def is_http_404?(response)
     response.code == "404"
   end
 
