@@ -43,7 +43,7 @@ describe Puppet::Type.type(:package).provider(:pkg) do
       end
       {'i--' => 'installed', '---'=> 'known'}.each do |k, v|
         it "should return known values" do
-          described_class.ifo_flag(k).should == {:status => v}
+          described_class.ifo_flag(k).should == {:status => v, :hold => :false}
         end
       end
     end
@@ -54,9 +54,9 @@ describe Puppet::Type.type(:package).provider(:pkg) do
         }.to raise_error(ArgumentError, /Unknown line format/)
       end
       {
-        'spkg       0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg},
-        'spkg (me)  0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg, :publisher => 'me'},
-        'spkg (me)  0.0.7  if-' => {:name => 'spkg', :ensure => 'held', :status => 'installed', :provider => :pkg, :publisher => 'me'},
+        'spkg       0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :hold => :false, :provider => :pkg},
+        'spkg (me)  0.0.7  i--' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :hold => :false, :provider => :pkg, :publisher => 'me'},
+        'spkg (me)  0.0.7  if-' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :hold => :true, :provider => :pkg, :publisher => 'me'},
         'spkg       0.0.7  installed -----' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg},
         'spkg (me)  0.0.7  installed -----' => {:name => 'spkg', :ensure => '0.0.7', :status => 'installed', :provider => :pkg, :publisher => 'me'},
        }.each do |k, v|

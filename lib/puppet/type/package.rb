@@ -45,7 +45,7 @@ module Puppet
         other package dependencies unless explicit action is taken by
         a user or another package. Held is considered a superset of
         installed.",
-      :methods => [:hold]
+      :methods => [:hold, :hold=]
     feature :install_options, "The provider accepts options to be
       passed to the installer command."
     feature :uninstall_options, "The provider accepts options to be
@@ -78,10 +78,6 @@ module Puppet
 
       newvalue(:purged, :event => :package_purged, :required_features => :purgeable) do
         provider.purge
-      end
-
-      newvalue(:held, :event => :package_held, :required_features => :holdable) do
-        provider.hold
       end
 
       # Alias the 'present' value.
@@ -368,6 +364,18 @@ module Puppet
         Normally apt will bail if you try this."
 
       newvalues(:true, :false)
+    end
+
+    newproperty(:hold, :required_features => :holdable) do
+      desc "Hold the package at its current version, and do not upgrade"
+      newvalues(:true, :false)
+      defaultto do
+        if @resource[:ensure].is_a?(String)
+          :true
+        else
+          :false
+        end
+      end
     end
 
     newparam(:flavor) do
