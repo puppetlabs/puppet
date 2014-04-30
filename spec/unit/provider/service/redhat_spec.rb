@@ -55,8 +55,8 @@ describe provider_class, :as_platform => :posix do
     end
   end
 
-  it "(#15797) should use 'on' when calling enable" do
-    provider_class.expects(:chkconfig).with(@resource[:name], :on)
+  it "(#15797) should use 'resetpriorities' when calling enable" do
+    provider_class.expects(:chkconfig).with(@resource[:name], :resetpriorities)
     @provider.enable
   end
 
@@ -69,7 +69,7 @@ describe provider_class, :as_platform => :posix do
     @provider.should respond_to(:enabled?)
   end
 
-  describe "when checking enabled? on Suse" do
+  describe "when checking enabled? resetpriorities Suse" do
     before :each do
       Facter.expects(:value).with(:osfamily).returns 'Suse'
     end
