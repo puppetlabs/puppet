@@ -31,13 +31,20 @@ module Puppet::Pops::Loader::ModuleLoaders
     # A map of type to smart-paths that help with minimizing the number of paths to scan
     attr_reader :smart_paths
 
+    # A Module Loader has a private loader, it is lazily obtained on request to provide the visibility
+    # for entities contained in the module. Since a ModuleLoader also represents an environment and it is
+    # created a different way, this loader can be set explicitly by the loaders bootstrap logic.
+    #
+    # @api private
+    attr_accessor :private_loader
+
     # Initialize a kind of ModuleLoader for one module
     # @param parent_loader [Puppet::Pops::Loader] loader with higher priority
     # @param module_name [String] the name of the module (non qualified name), may be nil for a global "component"
     # @param path [String] the path to the root of the module (semantics defined by subclass)
     # @param loader_name [String] a name that is used for human identification (useful when module_name is nil)
     #
-    def initialize(parent_loader, module_name, path, loader_name)
+    def initialize(parent_loader, loaders, module_name, path, loader_name)
       super parent_loader, loader_name
 
       # Irrespective of the path referencing a directory or file, the path must exist.
@@ -48,6 +55,7 @@ module Puppet::Pops::Loader::ModuleLoaders
       @module_name = module_name
       @path = path
       @smart_paths = Puppet::Pops::Loader::LoaderPaths::SmartPaths.new(self)
+      @loaders = loaders
     end
 
     # Finds typed/named entity in this module
@@ -111,7 +119,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     # This optimization exists because many modules have been created from a template and they have
     # empty directories for functions, types, etc. (It is also the place to create a cached index of the content).
     #
-    # @param relative_path [String] a path relative to the module's root
+    # @param smart_path [String] a path relative to the module's root
     # @return [Boolean] true if there is content in the directory appointed by the relative path
     #
     def meaningful_to_search?(smart_path)
@@ -120,7 +128,7 @@ module Puppet::Pops::Loader::ModuleLoaders
 
     # Abstract method that subclasses override to answer if the given relative path exists, and if so returns that path
     #
-    # @param relative_path [String] a path resolved by a smart path against the loader's root (if it has one)
+    # @param resolved_path [String] a path resolved by a smart path against the loader's root (if it has one)
     # @return [Boolean] true if the file exists
     #
     def existing_path(resolved_path)
@@ -130,7 +138,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     # Abstract method that subclasses override to produce the content of the effective path.
     # It should either succeed and return a String or fail with an exception.
     #
-    # @param relative_path [String] a path as resolved by a smart path
+    # @param effective_path [String] a path as resolved by a smart path
     # @return [String] the content of the file
     #
     def get_contents(effective_path)
@@ -145,6 +153,12 @@ module Puppet::Pops::Loader::ModuleLoaders
     #
     def get_source_ref(relative_path)
       raise NotImplementedError.new
+    end
+
+    # Produces the private loader for the module. If this module is not already resolved, this will trigger resolution
+    #
+    def private_loader
+      @private_loader ||= @loaders.private_loader_for_module(module_name)
     end
   end
 
@@ -162,7 +176,7 @@ module Puppet::Pops::Loader::ModuleLoaders
     # @param path [String] the path to the root of the module (semantics defined by subclass)
     # @param loader_name [String] a name that identifies the loader
     #
-    def initialize(parent_loader, module_name, path, loader_name)
+    def initialize(parent_loader, loaders, module_name, path, loader_name)
       super
       unless Puppet::FileSystem.directory?(path)
         raise ArgumentError, "The given module root path '#{path}' is not a directory (required for file system based module path entry)"
@@ -216,9 +230,9 @@ module Puppet::Pops::Loader::ModuleLoaders
     # * gem_ref - [URI, String] gem reference to the root of the module (URI, gem://gemname/optional/path/in/gem), or
     #     just the gem's name as a String.
     #
-    def initialize(parent_loader, module_name, gem_ref, loader_name)
+    def initialize(parent_loader, loaders, module_name, gem_ref, loader_name)
       @gem_ref = gem_ref
-      super parent_loader, module_name, gem_dir(gem_ref), loader_name
+      super parent_loader, loaders, module_name, gem_dir(gem_ref), loader_name
     end
 
     def to_s()

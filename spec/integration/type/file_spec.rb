@@ -10,7 +10,7 @@ if Puppet.features.microsoft_windows?
   end
 end
 
-describe Puppet::Type.type(:file) do
+describe Puppet::Type.type(:file), :uses_checksums => true do
   include PuppetSpec::Files
 
   let(:catalog) { Puppet::Resource::Catalog.new }
@@ -402,109 +402,111 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when writing files" do
-    it "should backup files to a filebucket when one is configured" do
-      filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-      file = described_class.new :path => path, :backup => "mybucket", :content => "foo"
-      catalog.add_resource file
-      catalog.add_resource filebucket
+    with_digest_algorithms do
+      it "should backup files to a filebucket when one is configured" do
+        filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
+        file = described_class.new :path => path, :backup => "mybucket", :content => "foo"
+        catalog.add_resource file
+        catalog.add_resource filebucket
 
-      File.open(file[:path], "w") { |f| f.write("bar") }
+        File.open(file[:path], "w") { |f| f.write("bar") }
 
-      md5 = Digest::MD5.hexdigest("bar")
+        d = digest(IO.binread(file[:path]))
 
-      catalog.apply
+        catalog.apply
 
-      filebucket.bucket.getfile(md5).should == "bar"
-    end
+        filebucket.bucket.getfile(d).should == "bar"
+      end
 
-    it "should backup files in the local directory when a backup string is provided" do
-      file = described_class.new :path => path, :backup => ".bak", :content => "foo"
-      catalog.add_resource file
+      it "should backup files in the local directory when a backup string is provided" do
+        file = described_class.new :path => path, :backup => ".bak", :content => "foo"
+        catalog.add_resource file
 
-      File.open(file[:path], "w") { |f| f.puts "bar" }
+        File.open(file[:path], "w") { |f| f.puts "bar" }
 
-      catalog.apply
+        catalog.apply
 
-      backup = file[:path] + ".bak"
-      Puppet::FileSystem.exist?(backup).should be_true
-      File.read(backup).should == "bar\n"
-    end
+        backup = file[:path] + ".bak"
+        Puppet::FileSystem.exist?(backup).should be_true
+        File.read(backup).should == "bar\n"
+      end
 
-    it "should fail if no backup can be performed" do
-      dir = tmpdir("backups")
+      it "should fail if no backup can be performed" do
+        dir = tmpdir("backups")
 
-      file = described_class.new :path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"
-      catalog.add_resource file
+        file = described_class.new :path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"
+        catalog.add_resource file
 
-      File.open(file[:path], 'w') { |f| f.puts "bar" }
+        File.open(file[:path], 'w') { |f| f.puts "bar" }
 
-      # Create a directory where the backup should be so that writing to it fails
-      Dir.mkdir(File.join(dir, "testfile.bak"))
+        # Create a directory where the backup should be so that writing to it fails
+        Dir.mkdir(File.join(dir, "testfile.bak"))
 
-      Puppet::Util::Log.stubs(:newmessage)
+        Puppet::Util::Log.stubs(:newmessage)
 
-      catalog.apply
+        catalog.apply
 
-      File.read(file[:path]).should == "bar\n"
-    end
+        File.read(file[:path]).should == "bar\n"
+      end
 
-    it "should not backup symlinks", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
-      link = tmpfile("link")
-      dest1 = tmpfile("dest1")
-      dest2 = tmpfile("dest2")
-      bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-      file = described_class.new :path => link, :target => dest2, :ensure => :link, :backup => "mybucket"
-      catalog.add_resource file
-      catalog.add_resource bucket
+      it "should not backup symlinks", :if => described_class.defaultprovider.feature?(:manages_symlinks) do
+        link = tmpfile("link")
+        dest1 = tmpfile("dest1")
+        dest2 = tmpfile("dest2")
+        bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
+        file = described_class.new :path => link, :target => dest2, :ensure => :link, :backup => "mybucket"
+        catalog.add_resource file
+        catalog.add_resource bucket
 
-      File.open(dest1, "w") { |f| f.puts "whatever" }
-      Puppet::FileSystem.symlink(dest1, link)
+        File.open(dest1, "w") { |f| f.puts "whatever" }
+        Puppet::FileSystem.symlink(dest1, link)
 
-      md5 = Digest::MD5.hexdigest(File.read(file[:path]))
+        d = digest(File.read(file[:path]))
 
-      catalog.apply
+        catalog.apply
 
-      Puppet::FileSystem.readlink(link).should == dest2
-      Puppet::FileSystem.exist?(bucket[:path]).should be_false
-    end
+        Puppet::FileSystem.readlink(link).should == dest2
+        Puppet::FileSystem.exist?(bucket[:path]).should be_false
+      end
 
-    it "should backup directories to the local filesystem by copying the whole directory" do
-      file = described_class.new :path => path, :backup => ".bak", :content => "foo", :force => true
-      catalog.add_resource file
+      it "should backup directories to the local filesystem by copying the whole directory" do
+        file = described_class.new :path => path, :backup => ".bak", :content => "foo", :force => true
+        catalog.add_resource file
 
-      Dir.mkdir(path)
+        Dir.mkdir(path)
 
-      otherfile = File.join(path, "foo")
-      File.open(otherfile, "w") { |f| f.print "yay" }
+        otherfile = File.join(path, "foo")
+        File.open(otherfile, "w") { |f| f.print "yay" }
 
-      catalog.apply
+        catalog.apply
 
-      backup = "#{path}.bak"
-      FileTest.should be_directory(backup)
+        backup = "#{path}.bak"
+        FileTest.should be_directory(backup)
 
-      File.read(File.join(backup, "foo")).should == "yay"
-    end
+        File.read(File.join(backup, "foo")).should == "yay"
+      end
 
-    it "should backup directories to filebuckets by backing up each file separately" do
-      bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-      file = described_class.new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
-      catalog.add_resource file
-      catalog.add_resource bucket
+      it "should backup directories to filebuckets by backing up each file separately" do
+        bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
+        file = described_class.new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
+        catalog.add_resource file
+        catalog.add_resource bucket
 
-      Dir.mkdir(file[:path])
-      foofile = File.join(file[:path], "foo")
-      barfile = File.join(file[:path], "bar")
-      File.open(foofile, "w") { |f| f.print "fooyay" }
-      File.open(barfile, "w") { |f| f.print "baryay" }
+        Dir.mkdir(file[:path])
+        foofile = File.join(file[:path], "foo")
+        barfile = File.join(file[:path], "bar")
+        File.open(foofile, "w") { |f| f.print "fooyay" }
+        File.open(barfile, "w") { |f| f.print "baryay" }
 
 
-      foomd5 = Digest::MD5.hexdigest(File.read(foofile))
-      barmd5 = Digest::MD5.hexdigest(File.read(barfile))
+        food = digest(File.read(foofile))
+        bard = digest(File.read(barfile))
 
-      catalog.apply
+        catalog.apply
 
-      bucket.bucket.getfile(foomd5).should == "fooyay"
-      bucket.bucket.getfile(barmd5).should == "baryay"
+        bucket.bucket.getfile(food).should == "fooyay"
+        bucket.bucket.getfile(bard).should == "baryay"
+      end
     end
   end
 

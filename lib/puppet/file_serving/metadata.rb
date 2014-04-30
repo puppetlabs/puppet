@@ -149,7 +149,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       @checksum_type = checksum['type']
       @checksum      = checksum['value']
     end
-    @checksum_type ||= "md5"
+    @checksum_type ||= Puppet[:digest_algorithm]
     @ftype       = data.delete('type')
     @destination = data.delete('destination')
     super(path,data)

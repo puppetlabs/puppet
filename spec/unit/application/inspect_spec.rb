@@ -33,7 +33,7 @@ describe Puppet::Application::Inspect do
     end
   end
 
-  describe "when executing" do
+  describe "when executing", :uses_checksums => true do
     before :each do
       Puppet[:report] = true
       @inspect.options[:setdest] = true
@@ -54,30 +54,32 @@ describe Puppet::Application::Inspect do
       @inspect.run_command
     end
 
-    it "should audit the specified properties" do
-      catalog = Puppet::Resource::Catalog.new
-      file = Tempfile.new("foo")
-      file.binmode
-      file.puts("file contents")
-      file.close
-      resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})
-      catalog.add_resource(resource)
-      Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(catalog)
+    with_digest_algorithms do
+      it "should audit the specified properties" do
+        catalog = Puppet::Resource::Catalog.new
+        file = Tempfile.new("foo")
+        file.binmode
+        file.print plaintext
+        file.close
+        resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})
+        catalog.add_resource(resource)
+        Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(catalog)
 
-      events = nil
+        events = nil
 
-      Puppet::Transaction::Report::Rest.any_instance.expects(:save).with do |request|
-        events = request.instance.resource_statuses.values.first.events
+        Puppet::Transaction::Report::Rest.any_instance.expects(:save).with do |request|
+          events = request.instance.resource_statuses.values.first.events
+        end
+
+        @inspect.run_command
+
+        properties = events.inject({}) do |property_values, event|
+          property_values.merge(event.property => event.previous_value)
+        end
+        properties["ensure"].should == :file
+        properties["content"].should == "{#{digest_algorithm}}#{checksum}"
+        properties.has_key?("target").should == false
       end
-
-      @inspect.run_command
-
-      properties = events.inject({}) do |property_values, event|
-        property_values.merge(event.property => event.previous_value)
-      end
-      properties["ensure"].should == :file
-      properties["content"].should == "{md5}#{Digest::MD5.hexdigest("file contents\n")}"
-      properties.has_key?("target").should == false
     end
 
     it "should set audited to true for all events" do

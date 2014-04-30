@@ -138,8 +138,9 @@ module Puppet::ModuleTool::Generate
   def generate(metadata, skip_interview = false)
     interview(metadata) unless skip_interview
     destination = duplicate_skeleton(metadata)
+    all_files = destination.basename + '**/*'
 
-    return Dir[destination.basename + '**/*']
+    return Dir[all_files.to_s]
   end
 
   def interview(metadata)
@@ -221,7 +222,9 @@ module Puppet::ModuleTool::Generate
 
   def populate_erb_templates(metadata, destination)
     Puppet.notice "Populating ERB templates..."
-    Dir[destination + '**/*.erb'].each do |erb|
+
+    templates = destination + '**/*.erb'
+    Dir[templates.to_s].each do |erb|
       path = Pathname.new(erb)
       content = ERB.new(path.read).result(binding)
 

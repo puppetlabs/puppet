@@ -978,6 +978,7 @@ end
 
 require 'puppet/indirector/memory'
 
+module CertificateAuthorityGenerateSpecs
 describe "CertificateAuthority.generate" do
 
   def expect_to_increment_serial_file
@@ -1102,4 +1103,5 @@ describe "CertificateAuthority.generate" do
       end
     end
   end
+end
 end

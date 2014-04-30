@@ -1,7 +1,7 @@
 # Configuration settings for a single directory Environment.
 # @api private
 class Puppet::Settings::EnvironmentConf
-  VALID_SETTINGS = [:modulepath, :manifest, :config_version].freeze
+  VALID_SETTINGS = [:modulepath, :manifest, :config_version, :environment_timeout].freeze
 
   # Given a path to a directory environment, attempts to load and parse an
   # environment.conf in ini format, and return an EnvironmentConf instance.
@@ -53,6 +53,16 @@ class Puppet::Settings::EnvironmentConf
   def manifest
     get_setting(:manifest, File.join(@path_to_env, "manifests")) do |manifest|
       absolute(manifest)
+    end
+  end
+
+  def environment_timeout
+    # gen env specific config or use the default value
+    get_setting(:environment_timeout, Puppet.settings.value(:environment_timeout)) do |ttl|
+      # munges the string form statically without really needed the settings system, only
+      # its ability to munge "4s, 3m, 5d, and 'unlimited' into seconds - if already munged into
+      # numeric form, the TTLSetting handles that.
+      Puppet::Settings::TTLSetting.munge(ttl, 'environment_timeout')
     end
   end
 
@@ -127,6 +137,10 @@ class Puppet::Settings::EnvironmentConf
 
     def config_version
       @environment.config_version
+    end
+
+    def environment_timeout
+      0
     end
   end
 

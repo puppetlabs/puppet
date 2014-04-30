@@ -355,6 +355,12 @@ module Puppet
       configuration files.  This timeout determines how quickly Puppet checks whether
       a file (such as manifests or templates) has changed on disk. #{AS_DURATION}",
     },
+    :environment_timeout => {
+      :default    => "5s",
+      :type       => :ttl,
+      :desc       => "The time to live for a cached environment. The time is either given #{AS_DURATION}, or
+      the word 'unlimited' which causes the environment to be cached until the master is restarted."
+    },
     :queue_type => {
       :default    => "stomp",
       :desc       => "Which type of queue to use for asynchronous processing.",
@@ -695,6 +701,13 @@ EOT
       :type     => :duration,
       :desc     => "The window of time leading up to a certificate's expiration that a notification
         will be logged. This applies to CA, master, and agent certificates. #{AS_DURATION}"
+    },
+    :digest_algorithm => {
+        :default  => 'md5',
+        :type     => :enum,
+        :values => ["md5", "sha256"],
+        :desc     => 'Which digest algorithm to use for file resources and the filebucket.
+                      Valid values are md5, sha256. Default is md5.',
     }
   )
 

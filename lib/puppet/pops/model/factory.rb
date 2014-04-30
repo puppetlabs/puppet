@@ -720,6 +720,7 @@ class Puppet::Pops::Model::Factory
     'error'   => true,
 
     'fail'    => true,
+    'import'  => true  # discontinued, but transform it to make it call error reporting function
   }
   # Returns true if the given name is a "statement keyword" (require, include, contain,
   # error, notice, info, debug

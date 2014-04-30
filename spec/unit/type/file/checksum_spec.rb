@@ -30,6 +30,12 @@ describe checksum do
     @checksum.sum("foobar").should == "{md5}#{sum}"
   end
 
+  it "when using digest_algorithm 'sha256' should return the summed contents with a checksum label" do
+    sum = Digest::SHA256.hexdigest("foobar")
+    @resource[:checksum] = :sha256
+    @checksum.sum("foobar").should == "{sha256}#{sum}"
+  end
+
   it "should use :md5 as its default type" do
     @checksum.default.should == :md5
   end

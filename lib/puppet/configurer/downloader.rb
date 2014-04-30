@@ -30,10 +30,9 @@ class Puppet::Configurer::Downloader
   end
 
   def catalog
-    catalog = Puppet::Resource::Catalog.new
+    catalog = Puppet::Resource::Catalog.new("PluginSync", @environment)
     catalog.host_config = false
     catalog.add_resource(file)
-    catalog.environment = @environment
     catalog
   end
 

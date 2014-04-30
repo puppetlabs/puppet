@@ -213,7 +213,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @note
     #   This is only needed if something other than the default type `Data` is wanted, or if the wanted type is
     #   not provided by one of the convenience methods {#array_of_data}, {#boolean}, {#float}, {#hash_of_data},
-    #   {#integer}, {#literal}, {#pattern}, {#string}, or one of the collection methods {#array_of}, or {#hash_of}.
+    #   {#integer}, {#scalar}, {#pattern}, {#string}, or one of the collection methods {#array_of}, or {#hash_of}.
     #
     # To create a type, use the method {#type_factory}, to obtain the type.
     # @example creating a Hash with Integer key and Array[Integer] element type

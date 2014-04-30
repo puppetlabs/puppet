@@ -6,6 +6,8 @@
 #
 class Puppet::Pops::Loader::SimpleEnvironmentLoader < Puppet::Pops::Loader::BaseLoader
 
+  attr_accessor :private_loader
+
   # Never finds anything, everything "loaded" is set externally
   def find(typed_name)
     nil

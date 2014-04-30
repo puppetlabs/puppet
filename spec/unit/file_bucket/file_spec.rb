@@ -1,19 +1,13 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
-
 require 'puppet/file_bucket/file'
-require 'digest/md5'
-require 'digest/sha1'
 
-describe Puppet::FileBucket::File do
+
+describe Puppet::FileBucket::File, :uses_checksums => true do
   include PuppetSpec::Files
 
-  let(:contents) { "file\r\n contents" }
-  let(:digest) { "8b3702ad1aed1ace7e32bde76ffffb2d" }
-  let(:checksum) { "{md5}#{digest}" }
   # this is the default from spec_helper, but it keeps getting reset at odd times
   let(:bucketdir) { Puppet[:bucketdir] = tmpdir('bucket') }
-  let(:destdir) { File.join(bucketdir, "8/b/3/7/0/2/a/d/#{digest}") }
 
   it "defaults to serializing to `:s`" do
     expect(Puppet::FileBucket::File.default_format).to eq(:s)
@@ -23,25 +17,20 @@ describe Puppet::FileBucket::File do
    expect(Puppet::FileBucket::File.supported_formats).to include(:s, :pson)
   end
 
-  it "can make a round trip through `s`" do
-    file = Puppet::FileBucket::File.new(contents)
+  describe "making round trips through network formats" do
+    with_digest_algorithms do
+      it "can make a round trip through `s`" do
+        file = Puppet::FileBucket::File.new(plaintext)
+        tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
+        expect(tripped.contents).to eq(plaintext)
+      end
 
-    tripped = Puppet::FileBucket::File.convert_from(:s, file.render)
-
-    expect(tripped.contents).to eq(contents)
-  end
-
-  it "can make a round trip through `pson`" do
-    file = Puppet::FileBucket::File.new(contents)
-
-    tripped = Puppet::FileBucket::File.convert_from(:pson, file.render(:pson))
-
-    expect(tripped.contents).to eq(contents)
-  end
-
-  it "should raise an error if changing content" do
-    x = Puppet::FileBucket::File.new("first")
-    expect { x.contents = "new" }.to raise_error(NoMethodError, /undefined method .contents=/)
+      it "can make a round trip through `pson`" do
+        file = Puppet::FileBucket::File.new(plaintext)
+        tripped = Puppet::FileBucket::File.convert_from(:pson, file.render(:pson))
+        expect(tripped.contents).to eq(plaintext)
+      end
+    end
   end
 
   it "should require contents to be a string" do
@@ -54,16 +43,15 @@ describe Puppet::FileBucket::File do
     }.to raise_error(ArgumentError, /Unknown option\(s\): crazy_option/)
   end
 
-  it "should set the contents appropriately" do
-    Puppet::FileBucket::File.new(contents).contents.should == contents
-  end
+  with_digest_algorithms do
+    it "it uses #{metadata[:digest_algorithm]} as the configured digest algorithm" do
+      file = Puppet::FileBucket::File.new(plaintext)
 
-  it "should default to 'md5' as the checksum algorithm if the algorithm is not in the name" do
-    Puppet::FileBucket::File.new(contents).checksum_type.should == "md5"
-  end
-
-  it "should calculate the checksum" do
-    Puppet::FileBucket::File.new(contents).checksum.should == checksum
+      file.contents.should == plaintext
+      file.checksum_type.should == digest_algorithm
+      file.checksum.should == "{#{digest_algorithm}}#{checksum}"
+      file.name.should == "#{digest_algorithm}/#{checksum}"
+    end
   end
 
   describe "when using back-ends" do
@@ -76,15 +64,6 @@ describe Puppet::FileBucket::File do
     end
   end
 
-  it "should return a url-ish name" do
-    Puppet::FileBucket::File.new(contents).name.should == "md5/#{digest}"
-  end
-
-  it "should reject a url-ish name with an invalid checksum" do
-    bucket = Puppet::FileBucket::File.new(contents)
-    expect { bucket.name = "sha1/ae548c0cd614fb7885aaa0b6cb191c34/new/path" }.to raise_error(NoMethodError, /undefined method .name=/)
-  end
-
   it "should convert the contents to PSON" do
     Puppet.expects(:deprecation_warning).with('Serializing Puppet::FileBucket::File objects to pson is deprecated.')
     Puppet::FileBucket::File.new("file contents").to_pson.should == '{"contents":"file contents"}'
@@ -93,36 +72,5 @@ describe Puppet::FileBucket::File do
   it "should load from PSON" do
     Puppet.expects(:deprecation_warning).with('Deserializing Puppet::FileBucket::File objects from pson is deprecated. Upgrade to a newer version.')
     Puppet::FileBucket::File.from_pson({"contents"=>"file contents"}).contents.should == "file contents"
-  end
-
-  def make_bucketed_file
-    FileUtils.mkdir_p(destdir)
-    File.open("#{destdir}/contents", 'wb') { |f| f.write contents }
-  end
-
-  describe "using the indirector's find method" do
-    it "should return nil if a file doesn't exist" do
-      bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{digest}")
-      bucketfile.should == nil
-    end
-
-    it "should find a filebucket if the file exists" do
-      make_bucketed_file
-      bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{digest}")
-      bucketfile.checksum.should == checksum
-    end
-
-    describe "using RESTish digest notation" do
-      it "should return nil if a file doesn't exist" do
-        bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{digest}")
-        bucketfile.should == nil
-      end
-
-      it "should find a filebucket if the file exists" do
-        make_bucketed_file
-        bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{digest}")
-        bucketfile.checksum.should == checksum
-      end
-    end
   end
 end

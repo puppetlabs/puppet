@@ -103,6 +103,20 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       result = deserialize_find(content_type, body)
       result.name = request.key if result.respond_to?(:name=)
       result
+
+    elsif is_http_404?(response)
+      # 404 gets special treatment as the indirector API can not produce a meaningful
+      # reason to why something is not found - it may not be the thing the user is
+      # expecting to find that is missing, but something else (like the environment).
+      # While this way of handling the issue is not perfect, there is at least a warning
+      # that makes a user aware of the reason for the failure.
+      #
+      content_type, body = parse_response(response)
+      msg = "Find #{uri_with_query_string} resulted in 404 with the message: #{body}"
+      # warn_once
+      Puppet::Util::Warnings.maybe_log(msg, self.class){ Puppet.warning msg }
+      nil
+
     else
       nil
     end
@@ -193,6 +207,10 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       # Raise the http error if we didn't get a 'success' of some kind.
       raise convert_to_http_error(response)
     end
+  end
+
+  def is_http_404?(response)
+    response.code == "404"
   end
 
   def convert_to_http_error(response)

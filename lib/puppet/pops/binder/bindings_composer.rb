@@ -20,7 +20,7 @@ class Puppet::Pops::Binder::BindingsComposer
   # @api private
   attr_reader :scheme_handlers
 
-  # @return Hash<String, Puppet::Module> map of module name to module instance
+  # @return [Hash{String => Puppet::Module}] map of module name to module instance
   # @api private
   attr_reader :name_to_module
 

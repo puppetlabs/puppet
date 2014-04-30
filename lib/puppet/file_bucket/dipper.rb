@@ -4,6 +4,7 @@ require 'puppet/file_bucket/file'
 require 'puppet/indirector/request'
 
 class Puppet::FileBucket::Dipper
+  include Puppet::Util::Checksums
   # This is a transitional implementation that uses REST
   # to access remote filebucket files.
 
@@ -23,6 +24,8 @@ class Puppet::FileBucket::Dipper
       @local_path = nil
       @rest_path = "https://#{server}:#{port}/#{environment}/file_bucket_file/"
     end
+    @checksum_type = Puppet[:digest_algorithm].to_sym
+    @digest = method(@checksum_type)
   end
 
   def local?
@@ -56,7 +59,7 @@ class Puppet::FileBucket::Dipper
 
   # Retrieve a file by sum.
   def getfile(sum)
-    source_path = "#{@rest_path}md5/#{sum}"
+    source_path = "#{@rest_path}#{@checksum_type}/#{sum}"
     file_bucket_file = Puppet::FileBucket::File.indirection.find(source_path, :bucket_path => @local_path)
 
     raise Puppet::Error, "File not found" unless file_bucket_file
@@ -68,7 +71,7 @@ class Puppet::FileBucket::Dipper
     restore = true
     file_handle = Puppet::FileSystem.pathname(file)
     if Puppet::FileSystem.exist?(file_handle)
-      cursum = Digest::MD5.hexdigest(Puppet::FileSystem.binread(file_handle))
+      cursum = @digest.call(Puppet::FileSystem.binread(file_handle))
 
       # if the checksum has changed...
       # this might be extra effort
@@ -79,7 +82,7 @@ class Puppet::FileBucket::Dipper
 
     if restore
       if newcontents = getfile(sum)
-        newsum = Digest::MD5.hexdigest(newcontents)
+        newsum = @digest.call(newcontents)
         changed = nil
         if Puppet::FileSystem.exist?(file_handle) and ! Puppet::FileSystem.writable?(file_handle)
           changed = Puppet::FileSystem.stat(file_handle).mode

@@ -466,4 +466,8 @@ module Puppet::Pops::Issues
   ILLEGAL_EPP_PARAMETERS = issue :ILLEGAL_EPP_PARAMETERS do
     "Ambiguous EPP parameter expression. Probably missing '<%-' before parameters to remove leading whitespace"
   end
+
+  DISCONTINUED_IMPORT = hard_issue :DISCONTINUED_IMPORT do
+    "Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppetlabs.com/puppet-import-deprecation"
+  end
 end

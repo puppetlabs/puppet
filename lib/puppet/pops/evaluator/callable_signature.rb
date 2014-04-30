@@ -16,7 +16,7 @@ class Puppet::Pops::Evaluator::CallableSignature
   #
   # A derived class must implement this method.
   #
-  # @return Array<String> - an array of names (that may be empty if names are unavailable)
+  # @return [Array<String>] - an array of names (that may be empty if names are unavailable)
   #
   # @api public
   #
@@ -61,7 +61,7 @@ class Puppet::Pops::Evaluator::CallableSignature
   # Returns a range indicating the optionality of a block. One of [0,0] (does not accept block), [0,1] (optional
   # block), and [1,1] (block required)
   #
-  # @return Array[Integer, Integer] the range of the block parameter
+  # @return [Array(Integer, Integer)] the range of the block parameter
   #
   def block_range
     type.block_range
@@ -70,7 +70,7 @@ class Puppet::Pops::Evaluator::CallableSignature
   # Returns the range of required/optional argument values as an array of [min, max], where an infinite
   # end is given as INFINITY. To test against infinity, use the infinity? method.
   #
-  # @return Array[Integer, Numeric] - an Array with [min, max]
+  # @return [Array[Integer, Numeric]] - an Array with [min, max]
   #
   # @api public
   #

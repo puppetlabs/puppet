@@ -22,6 +22,7 @@ module Puppet
     require 'puppet/pops/containment'
 
     require 'puppet/pops/issues'
+    require 'puppet/pops/semantic_error'
     require 'puppet/pops/label_provider'
     require 'puppet/pops/validation'
     require 'puppet/pops/issue_reporter'

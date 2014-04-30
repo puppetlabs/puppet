@@ -32,6 +32,7 @@ class Puppet::FileBucket::File
     @contents = contents
 
     @bucket_path = options.delete(:bucket_path)
+    @checksum_type = Puppet[:digest_algorithm].to_sym
     raise ArgumentError.new("Unknown option(s): #{options.keys.join(', ')}") unless options.empty?
   end
 
@@ -46,7 +47,7 @@ class Puppet::FileBucket::File
   end
 
   def checksum_type
-    'md5'
+    @checksum_type.to_s
   end
 
   def checksum
@@ -54,7 +55,8 @@ class Puppet::FileBucket::File
   end
 
   def checksum_data
-    @checksum_data ||= Digest::MD5.hexdigest(contents)
+    algorithm = Puppet::Util::Checksums.method(@checksum_type)
+    @checksum_data ||= algorithm.call(contents)
   end
 
   def to_s

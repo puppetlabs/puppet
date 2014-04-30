@@ -18,6 +18,7 @@ class Puppet::Settings
   require 'puppet/settings/boolean_setting'
   require 'puppet/settings/terminus_setting'
   require 'puppet/settings/duration_setting'
+  require 'puppet/settings/ttl_setting'
   require 'puppet/settings/priority_setting'
   require 'puppet/settings/autosign_setting'
   require 'puppet/settings/config_file'
@@ -654,6 +655,7 @@ class Puppet::Settings
       :boolean    => BooleanSetting,
       :terminus   => TerminusSetting,
       :duration   => DurationSetting,
+      :ttl        => TTLSetting,
       :enum       => EnumSetting,
       :priority   => PrioritySetting,
       :autosign   => AutosignSetting,
@@ -872,7 +874,7 @@ class Puppet::Settings
   def to_catalog(*sections)
     sections = nil if sections.empty?
 
-    catalog = Puppet::Resource::Catalog.new("Settings")
+    catalog = Puppet::Resource::Catalog.new("Settings", Puppet::Node::Environment::NONE)
 
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
       file = @config[key]

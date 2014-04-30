@@ -38,16 +38,20 @@ Puppet::Face.define(:plugin, '0.0.1') do
 
     when_invoked do |options|
       require 'puppet/configurer/downloader'
-      Puppet::Configurer::Downloader.new("plugin",
+      remote_environment_for_plugins = Puppet::Node::Environment.remote(Puppet[:environment])
+      result = Puppet::Configurer::Downloader.new("plugin",
                                          Puppet[:plugindest],
                                          Puppet[:pluginsource],
-                                         Puppet[:pluginsignore]).evaluate
+                                         Puppet[:pluginsignore],
+                                         remote_environment_for_plugins).evaluate
       if Puppet.features.external_facts?
-          Puppet::Configurer::Downloader.new("pluginfacts",
+          result += Puppet::Configurer::Downloader.new("pluginfacts",
                                              Puppet[:pluginfactdest],
                                              Puppet[:pluginfactsource],
-                                             Puppet[:pluginsignore]).evaluate
+                                             Puppet[:pluginsignore],
+                                             remote_environment_for_plugins).evaluate
       end
+      result
     end
 
     when_rendering :console do |value|
