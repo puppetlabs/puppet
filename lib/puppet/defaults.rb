@@ -57,7 +57,17 @@ module Puppet
       :default    => 'notice',
       :type       => :enum,
       :values     => ["debug","info","notice","warning","err","alert","emerg","crit"],
-      :desc       => "Default logging level",
+      :desc       => "Default logging level for messages from Puppet. Allowed values are:
+
+        * debug
+        * info
+        * notice
+        * warning
+        * err
+        * alert
+        * emerg
+        * crit
+        ",
     }
   )
 
