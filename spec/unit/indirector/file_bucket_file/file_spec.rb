@@ -4,15 +4,11 @@ require 'spec_helper'
 require 'puppet/indirector/file_bucket_file/file'
 require 'puppet/util/platform'
 
-describe Puppet::FileBucketFile::File do
+describe Puppet::FileBucketFile::File, :uses_checksums => true do
   include PuppetSpec::Files
 
   describe "non-stubbing tests" do
     include PuppetSpec::Files
-
-    before do
-      Puppet[:bucketdir] = tmpdir('bucketdir')
-    end
 
     def save_bucket_file(contents, path = "/who_cares")
       bucket_file = Puppet::FileBucket::File.new(contents)
@@ -64,93 +60,102 @@ describe Puppet::FileBucketFile::File do
       end
 
       describe "when supplying a path" do
-        it "should store the path if not already stored" do
-          checksum = save_bucket_file("stuff\r\n", "/foo/bar")
+        with_digest_algorithms do
+          it "should store the path if not already stored" do
+            checksum = save_bucket_file(plaintext, "/foo/bar")
 
-          dir_path = "#{Puppet[:bucketdir]}/f/c/7/7/7/c/0/b/fc777c0bc467e1ab98b4c6915af802ec"
-          contents_file = "#{dir_path}/contents"
-          paths_file = "#{dir_path}/paths"
-          Puppet::FileSystem.binread(contents_file).should == "stuff\r\n"
-          Puppet::FileSystem.read(paths_file).should == "foo/bar\n"
-        end
+            dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
+            contents_file = "#{dir_path}/contents"
+            paths_file = "#{dir_path}/paths"
+            Puppet::FileSystem.binread(contents_file).should == plaintext
+            Puppet::FileSystem.read(paths_file).should == "foo/bar\n"
+          end
 
-        it "should leave the paths file alone if the path is already stored" do
-          checksum = save_bucket_file("stuff", "/foo/bar")
+          it "should leave the paths file alone if the path is already stored" do
+            checksum = save_bucket_file(plaintext, "/foo/bar")
+            checksum = save_bucket_file(plaintext, "/foo/bar")
+            dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
+            File.read("#{dir_path}/contents").should == plaintext
+            File.read("#{dir_path}/paths").should == "foo/bar\n"
+          end
 
-          checksum = save_bucket_file("stuff", "/foo/bar")
+          it "should store an additional path if the new path differs from those already stored" do
+            checksum = save_bucket_file(plaintext, "/foo/bar")
 
-          dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
-          File.read("#{dir_path}/contents").should == "stuff"
-          File.read("#{dir_path}/paths").should == "foo/bar\n"
-        end
+            checksum = save_bucket_file(plaintext, "/foo/baz")
 
-        it "should store an additional path if the new path differs from those already stored" do
-          checksum = save_bucket_file("stuff", "/foo/bar")
-
-          checksum = save_bucket_file("stuff", "/foo/baz")
-
-          dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
-          File.read("#{dir_path}/contents").should == "stuff"
-          File.read("#{dir_path}/paths").should == "foo/bar\nfoo/baz\n"
+            dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
+            File.read("#{dir_path}/contents").should == plaintext
+            File.read("#{dir_path}/paths").should == "foo/bar\nfoo/baz\n"
+          end
         end
       end
 
       describe "when not supplying a path" do
-        it "should save the file and create an empty paths file" do
-          checksum = save_bucket_file("stuff", "")
+        with_digest_algorithms do
+          it "should save the file and create an empty paths file" do
+            checksum = save_bucket_file(plaintext, "")
 
-          dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
-          File.read("#{dir_path}/contents").should == "stuff"
-          File.read("#{dir_path}/paths").should == ""
+            dir_path = "#{Puppet[:bucketdir]}/#{bucket_dir}"
+            File.read("#{dir_path}/contents").should == plaintext
+            File.read("#{dir_path}/paths").should == ""
+          end
         end
       end
     end
 
     describe "when servicing a head/find request" do
-      describe "when supplying a path" do
-        it "should return false/nil if the file isn't bucketed" do
-          Puppet::FileBucket::File.indirection.head("md5/0ae2ec1980410229885fe72f7b44fe55/foo/bar").should == false
-          Puppet::FileBucket::File.indirection.find("md5/0ae2ec1980410229885fe72f7b44fe55/foo/bar").should == nil
+      with_digest_algorithms do
+        let(:not_bucketed_plaintext) { "other stuff" }
+        let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
+
+        describe "when supplying a path" do
+          it "should return false/nil if the file isn't bucketed" do
+            Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar").should == false
+            Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}/foo/bar").should == nil
+          end
+
+          it "should return false/nil if the file is bucketed but with a different path" do
+            checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
+
+            Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/baz").should == false
+            Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/baz").should == nil
+          end
+
+          it "should return true/file if the file is already bucketed with the given path" do
+            contents = "I'm the contents of a file"
+
+            checksum = save_bucket_file(contents, '/foo/bar')
+
+            Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}/foo/bar").should == true
+            find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}/foo/bar")
+            find_result.checksum.should == "{#{digest_algorithm}}#{checksum}"
+            find_result.to_s.should == contents
+          end
         end
 
-        it "should return false/nil if the file is bucketed but with a different path" do
-          checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
+        describe "when not supplying a path" do
+          [false, true].each do |trailing_slash|
+            describe "#{trailing_slash ? 'with' : 'without'} a trailing slash" do
+              trailing_string = trailing_slash ? '/' : ''
 
-          Puppet::FileBucket::File.indirection.head("md5/#{checksum}/foo/baz").should == false
-          Puppet::FileBucket::File.indirection.find("md5/#{checksum}/foo/baz").should == nil
-        end
+              it "should return false/nil if the file isn't bucketed" do
+                Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{not_bucketed_checksum}#{trailing_string}").should == false
+                Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}#{trailing_string}").should == nil
+              end
 
-        it "should return true/file if the file is already bucketed with the given path" do
-          contents = "I'm the contents of a file"
+              it "should return true/file if the file is already bucketed" do
+                # this one replaces most of the lets in the "when
+                # digest_digest_algorithm is set..." shared context, but it still needs digest_algorithm
+                contents = "I'm the contents of a file"
 
-          checksum = save_bucket_file(contents, '/foo/bar')
+                checksum = save_bucket_file(contents, '/foo/bar')
 
-          Puppet::FileBucket::File.indirection.head("md5/#{checksum}/foo/bar").should == true
-          find_result = Puppet::FileBucket::File.indirection.find("md5/#{checksum}/foo/bar")
-          find_result.checksum.should == "{md5}#{checksum}"
-          find_result.to_s.should == contents
-        end
-      end
-
-      describe "when not supplying a path" do
-        [false, true].each do |trailing_slash|
-          describe "#{trailing_slash ? 'with' : 'without'} a trailing slash" do
-            trailing_string = trailing_slash ? '/' : ''
-
-            it "should return false/nil if the file isn't bucketed" do
-              Puppet::FileBucket::File.indirection.head("md5/0ae2ec1980410229885fe72f7b44fe55#{trailing_string}").should == false
-              Puppet::FileBucket::File.indirection.find("md5/0ae2ec1980410229885fe72f7b44fe55#{trailing_string}").should == nil
-            end
-
-            it "should return true/file if the file is already bucketed" do
-              contents = "I'm the contents of a file"
-
-              checksum = save_bucket_file(contents, '/foo/bar')
-
-              Puppet::FileBucket::File.indirection.head("md5/#{checksum}#{trailing_string}").should == true
-              find_result = Puppet::FileBucket::File.indirection.find("md5/#{checksum}#{trailing_string}")
-              find_result.checksum.should == "{md5}#{checksum}"
-              find_result.to_s.should == contents
+                Puppet::FileBucket::File.indirection.head("#{digest_algorithm}/#{checksum}#{trailing_string}").should == true
+                find_result = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}#{trailing_string}")
+                find_result.checksum.should == "{#{digest_algorithm}}#{checksum}"
+                find_result.to_s.should == contents
+              end
             end
           end
         end
@@ -158,124 +163,120 @@ describe Puppet::FileBucketFile::File do
     end
 
     describe "when diffing files", :unless => Puppet.features.microsoft_windows? do
-      it "should generate an empty string if there is no diff" do
-        checksum = save_bucket_file("I'm the contents of a file")
-        Puppet::FileBucket::File.indirection.find("md5/#{checksum}", :diff_with => checksum).should == ''
-      end
+      with_digest_algorithms do
+        let(:not_bucketed_plaintext) { "other stuff" }
+        let(:not_bucketed_checksum) { digest(not_bucketed_plaintext) }
 
-      it "should generate a proper diff if there is a diff" do
-        checksum1 = save_bucket_file("foo\nbar\nbaz")
-        checksum2 = save_bucket_file("foo\nbiz\nbaz")
+        it "should generate an empty string if there is no diff" do
+          checksum = save_bucket_file("I'm the contents of a file")
+          Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => checksum).should == ''
+        end
 
-        diff = Puppet::FileBucket::File.indirection.find("md5/#{checksum1}", :diff_with => checksum2)
-        diff.should == <<HERE
-2c2
-< bar
----
-> biz
-HERE
-      end
+        it "should generate a proper diff if there is a diff" do
+          checksum1 = save_bucket_file("foo\nbar\nbaz")
+          checksum2 = save_bucket_file("foo\nbiz\nbaz")
 
-      it "should raise an exception if the hash to diff against isn't found" do
-        bogus_checksum = "d1bf072d0e2c6e20e3fbd23f022089a1"
-        checksum = save_bucket_file("whatever")
+          diff = Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum1}", :diff_with => checksum2)
+          diff.should == "2c2\n< bar\n---\n> biz\n"
+        end
 
-        expect do
-          Puppet::FileBucket::File.indirection.find("md5/#{checksum}", :diff_with => bogus_checksum)
-        end.to raise_error "could not find diff_with #{bogus_checksum}"
-      end
+        it "should raise an exception if the hash to diff against isn't found" do
+          checksum = save_bucket_file("whatever")
 
-      it "should return nil if the hash to diff from isn't found" do
-        bogus_checksum = "d1bf072d0e2c6e20e3fbd23f022089a1"
-        checksum = save_bucket_file("whatever")
+          expect do
+            Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{checksum}", :diff_with => not_bucketed_checksum)
+          end.to raise_error "could not find diff_with #{not_bucketed_checksum}"
+        end
 
-        Puppet::FileBucket::File.indirection.find("md5/#{bogus_checksum}", :diff_with => checksum).should == nil
+        it "should return nil if the hash to diff from isn't found" do
+          checksum = save_bucket_file("whatever")
+
+          Puppet::FileBucket::File.indirection.find("#{digest_algorithm}/#{not_bucketed_checksum}", :diff_with => checksum).should == nil
+        end
       end
     end
   end
 
   [true, false].each do |override_bucket_path|
-    describe "when bucket path #{if override_bucket_path then 'is' else 'is not' end} overridden" do
+    describe "when bucket path #{override_bucket_path ? 'is' : 'is not'} overridden" do
       [true, false].each do |supply_path|
         describe "when #{supply_path ? 'supplying' : 'not supplying'} a path" do
-          before :each do
-            Puppet.settings.stubs(:use)
-            @store = Puppet::FileBucketFile::File.new
-            @contents = "my content"
-
-            @digest = "f2bfa7fc155c4f42cb91404198dda01f"
-            @digest.should == Digest::MD5.hexdigest(@contents)
-
-            @bucket_dir = tmpdir("bucket")
-
-            if override_bucket_path
-              Puppet[:bucketdir] = "/bogus/path" # should not be used
-            else
-              Puppet[:bucketdir] = @bucket_dir
-            end
-
-            @dir = "#{@bucket_dir}/f/2/b/f/a/7/f/c/f2bfa7fc155c4f42cb91404198dda01f"
-            @contents_path = "#{@dir}/contents"
-          end
-
-          describe "when retrieving files" do
+          with_digest_algorithms do
             before :each do
+              Puppet.settings.stubs(:use)
+              @store = Puppet::FileBucketFile::File.new
 
-              request_options = {}
+              @bucket_top_dir = tmpdir("bucket")
+
               if override_bucket_path
-                request_options[:bucket_path] = @bucket_dir
-              end
-
-              key = "md5/#{@digest}"
-              if supply_path
-                key += "/path/to/file"
-              end
-
-              @request = Puppet::Indirector::Request.new(:indirection_name, :find, key, nil, request_options)
-            end
-
-            def make_bucketed_file
-              FileUtils.mkdir_p(@dir)
-              File.open(@contents_path, 'w') { |f| f.write @contents }
-            end
-
-            it "should return an instance of Puppet::FileBucket::File created with the content if the file exists" do
-              make_bucketed_file
-
-              if supply_path
-                @store.find(@request).should == nil
-                @store.head(@request).should == false # because path didn't match
+                Puppet[:bucketdir] = "/bogus/path" # should not be used
               else
-                bucketfile = @store.find(@request)
-                bucketfile.should be_a(Puppet::FileBucket::File)
-                bucketfile.contents.should == @contents
-                @store.head(@request).should == true
+                Puppet[:bucketdir] = @bucket_top_dir
+              end
+
+              @dir = "#{@bucket_top_dir}/#{bucket_dir}"
+              @contents_path = "#{@dir}/contents"
+            end
+
+            describe "when retrieving files" do
+              before :each do
+
+                request_options = {}
+                if override_bucket_path
+                  request_options[:bucket_path] = @bucket_top_dir
+                end
+
+                key = "#{digest_algorithm}/#{checksum}"
+                if supply_path
+                  key += "/path/to/file"
+                end
+
+                @request = Puppet::Indirector::Request.new(:indirection_name, :find, key, nil, request_options)
+              end
+
+              def make_bucketed_file
+                FileUtils.mkdir_p(@dir)
+                File.open(@contents_path, 'w') { |f| f.write plaintext }
+              end
+
+              it "should return an instance of Puppet::FileBucket::File created with the content if the file exists" do
+                make_bucketed_file
+
+                if supply_path
+                  @store.find(@request).should == nil
+                  @store.head(@request).should == false # because path didn't match
+                else
+                  bucketfile = @store.find(@request)
+                  bucketfile.should be_a(Puppet::FileBucket::File)
+                  bucketfile.contents.should == plaintext
+                  @store.head(@request).should == true
+                end
+              end
+
+              it "should return nil if no file is found" do
+                @store.find(@request).should be_nil
+                @store.head(@request).should == false
               end
             end
 
-            it "should return nil if no file is found" do
-              @store.find(@request).should be_nil
-              @store.head(@request).should == false
-            end
-          end
+            describe "when saving files" do
+              it "should save the contents to the calculated path" do
+                options = {}
+                if override_bucket_path
+                  options[:bucket_path] = @bucket_top_dir
+                end
 
-          describe "when saving files" do
-            it "should save the contents to the calculated path" do
-              options = {}
-              if override_bucket_path
-                options[:bucket_path] = @bucket_dir
+                key = "#{digest_algorithm}/#{checksum}"
+                if supply_path
+                  key += "//path/to/file"
+                end
+
+                file_instance = Puppet::FileBucket::File.new(plaintext, options)
+                request = Puppet::Indirector::Request.new(:indirection_name, :save, key, file_instance)
+
+                @store.save(request)
+                File.read("#{@dir}/contents").should == plaintext
               end
-
-              key = "md5/#{@digest}"
-              if supply_path
-                key += "//path/to/file"
-              end
-
-              file_instance = Puppet::FileBucket::File.new(@contents, options)
-              request = Puppet::Indirector::Request.new(:indirection_name, :save, key, file_instance)
-
-              @store.save(request)
-              File.read("#{@dir}/contents").should == @contents
             end
           end
         end

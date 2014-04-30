@@ -4,6 +4,11 @@ require 'digest/sha1'
 # A stand-alone module for calculating checksums
 # in a generic way.
 module Puppet::Util::Checksums
+  # @deprecated
+  # In Puppet 4 we should switch this to `module_function` to make these methods
+  # private when this class is included.
+  extend self
+
   # It's not a good idea to use some of these in some contexts: for example, I
   # wouldn't try bucketing a file using the :none checksum type.
   def known_checksum_types
