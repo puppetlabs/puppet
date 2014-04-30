@@ -88,61 +88,132 @@ describe provider_class do
     provider.should be_versionable
   end
 
-  describe '#latest' do
-    describe 'when latest_info is nil' do
+  describe 'determining the latest version available for a package' do
+
+    it "passes the value of enablerepo install_options when querying" do
+      resource[:install_options] = [
+        {'--enablerepo' => 'contrib'},
+        {'--enablerepo' => 'centosplus'},
+      ]
+      provider.stubs(:properties).returns({:ensure => '3.4.5'})
+
+      described_class.expects(:latest_package_version).with('mypackage', ['contrib', 'centosplus'], [])
+      provider.latest
+    end
+
+    it "passes the value of disablerepo install_options when querying" do
+      resource[:install_options] = [
+        {'--disablerepo' => 'updates'},
+        {'--disablerepo' => 'centosplus'},
+      ]
+      provider.stubs(:properties).returns({:ensure => '3.4.5'})
+
+      described_class.expects(:latest_package_version).with('mypackage', [], ['updates', 'centosplus'])
+      provider.latest
+    end
+
+    describe 'and a newer version is not available' do
       before :each do
-        provider.stubs(:latest_info).returns(nil)
+        described_class.stubs(:latest_package_version).with('mypackage', [], []).returns nil
       end
 
-      it 'raises if ensure is absent and latest_info is nil' do
+      it 'raises an error the package is not installed' do
         provider.stubs(:properties).returns({:ensure => :absent})
-
-        expect { provider.latest }.to raise_error(
-          Puppet::DevError,
-          'Tried to get latest on a missing package'
-        )
+        expect {
+          provider.latest
+        }.to raise_error(Puppet::DevError, 'Tried to get latest on a missing package')
       end
 
-      it 'returns the ensure value if the package is not already installed' do
+      it 'returns version of the currently installed package' do
         provider.stubs(:properties).returns({:ensure => '3.4.5'})
-
         provider.latest.should == '3.4.5'
       end
     end
 
-    describe 'when latest_info is populated' do
-      before :each do
-        provider.stubs(:latest_info).returns({
+    describe 'and a newer version is available' do
+      let(:latest_version) do
+        {
           :name     => 'mypackage',
           :epoch    => '1',
           :version  => '2.3.4',
           :release  => '5',
           :arch     => 'i686',
-          :provider => :yum,
-          :ensure   => '2.3.4-5'
-        })
+        }
       end
 
       it 'includes the epoch in the version string' do
+        described_class.stubs(:latest_package_version).with('mypackage', [], []).returns(latest_version)
         provider.latest.should == '1:2.3.4-5'
       end
     end
   end
 
-  describe 'prefetching' do
-    let(:nevra_format) { Puppet::Type::Package::ProviderRpm::NEVRA_FORMAT }
+  describe "lazy loading of latest package versions" do
+    before { described_class.clear }
+    after { described_class.clear }
 
-    let(:packages) do
-      <<-RPM_OUTPUT
-      cracklib-dicts 0 2.8.9 3.3 x86_64
-      basesystem 0 8.0 5.1.1.el5.centos noarch
-      chkconfig 0 1.3.30.2 2.el5 x86_64
-      myresource 0 1.2.3.4 5.el4 noarch
-      mysummaryless 0 1.2.3.4 5.el4 noarch
-      RPM_OUTPUT
+    let(:mypackage_version) do
+      {
+        :name     => 'mypackage',
+        :epoch    => '1',
+        :version  => '2.3.4',
+        :release  => '5',
+        :arch     => 'i686',
+      }
     end
 
-    let(:yumhelper_output) do
+    let(:mypackage_newerversion) do
+      {
+        :name     => 'mypackage',
+        :epoch    => '1',
+        :version  => '4.5.6',
+        :release  => '7',
+        :arch     => 'i686',
+      }
+    end
+
+    let(:latest_versions) { {'mypackage' => [mypackage_version]} }
+    let(:enabled_versions) { {'mypackage' => [mypackage_newerversion]} }
+
+    it "returns the version hash if the package was found" do
+      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      version = described_class.latest_package_version('mypackage', [], [])
+      expect(version).to eq(mypackage_version)
+    end
+
+    it "is nil if the package was not found in the query" do
+      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      version = described_class.latest_package_version('nopackage', [], [])
+      expect(version).to be_nil
+    end
+
+    it "caches the package list and reuses that for subsequent queries" do
+      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+
+      2.times {
+        version = described_class.latest_package_version('mypackage', [], [])
+        expect(version).to eq mypackage_version
+      }
+    end
+
+    it "caches separate lists for each combination of 'enablerepo' and 'disablerepo'" do
+      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      described_class.expects(:fetch_latest_versions).with(['enabled'], ['disabled']).once.returns(enabled_versions)
+
+      2.times {
+        version = described_class.latest_package_version('mypackage', [], [])
+        expect(version).to eq mypackage_version
+      }
+
+      2.times {
+        version = described_class.latest_package_version('mypackage', ['enabled'], ['disabled'])
+        expect(version).to eq(mypackage_newerversion)
+      }
+    end
+  end
+
+  describe "querying for the latest version of all packages" do
+    let(:yumhelper_single_arch) do
       <<-YUMHELPER_OUTPUT
  * base: centos.tcpdiag.net
  * extras: centos.mirrors.hoobly.com
@@ -154,62 +225,66 @@ _pkg mysummaryless 0 1.2.3.4 5.el4 noarch
      YUMHELPER_OUTPUT
     end
 
-    let(:execute_options) do
-      {:failonfail => true, :combine => true, :custom_environment => {}}
+    let(:yumhelper_multi_arch) do
+      yumhelper_single_arch + <<-YUMHELPER_OUTPUT
+_pkg nss-tools 0 3.14.3 4.el6_4 i386
+_pkg pixman 0 0.26.2 5.el6_4 i386
+      YUMHELPER_OUTPUT
     end
 
-    let(:rpm_version) { "RPM version 4.8.0\n" }
 
-    let(:package_type) { Puppet::Type.type(:package) }
-    let(:yum_provider) { provider_class }
-
-    def pretend_we_are_root_for_yum_provider
-      Process.stubs(:euid).returns(0)
+    it "creates an entry for each line that's prefixed with '_pkg'" do
+      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_single_arch)
+      entries = described_class.fetch_latest_versions([], [])
+      expect(entries.keys).to include 'nss-tools'
+      expect(entries.keys).to include 'pixman'
+      expect(entries.keys).to include 'myresource'
+      expect(entries.keys).to include 'mysummaryless'
     end
 
-    def expect_yum_provider_to_provide_rpm
-      Puppet::Type::Package::ProviderYum.stubs(:rpm).with('--version').returns(rpm_version)
-      Puppet::Type::Package::ProviderYum.expects(:command).with(:rpm).returns("/bin/rpm")
+    it "creates an entry for each package name and architecture" do
+      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_single_arch)
+      entries = described_class.fetch_latest_versions([], [])
+      expect(entries.keys).to include 'nss-tools.x86_64'
+      expect(entries.keys).to include 'pixman.x86_64'
+      expect(entries.keys).to include 'myresource.noarch'
+      expect(entries.keys).to include 'mysummaryless.noarch'
     end
 
-    def expect_execpipe_to_provide_package_info_for_an_rpm_query
-      Puppet::Util::Execution.expects(:execpipe).with("/bin/rpm -qa --nosignature --nodigest --qf '#{nevra_format}'").yields(packages)
+    it "stores multiple entries if a package is build for multiple architectures" do
+      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_multi_arch)
+      entries = described_class.fetch_latest_versions([], [])
+      expect(entries.keys).to include 'nss-tools.x86_64'
+      expect(entries.keys).to include 'pixman.x86_64'
+      expect(entries.keys).to include 'nss-tools.i386'
+      expect(entries.keys).to include 'pixman.i386'
+
+      expect(entries['nss-tools']).to have(2).items
+      expect(entries['pixman']).to have(2).items
     end
 
-    def expect_python_yumhelper_call_to_return_latest_info
-      Puppet::Type::Package::ProviderYum.expects(:python).with(regexp_matches(/yumhelper.py$/)).returns(yumhelper_output)
+    it "passes the repos to enable to the helper" do
+      described_class.expects(:python).with do |script, *args|
+        expect(script).to eq described_class::YUMHELPER
+        expect(args).to eq %w[-e updates -e centosplus]
+      end.returns('')
+      described_class.fetch_latest_versions(['updates', 'centosplus'], [])
     end
 
-    def a_package_type_instance_with_yum_provider_and_ensure_latest(name)
-      type_instance = package_type.new(:name => name)
-      type_instance.provider = yum_provider.new
-      type_instance[:ensure] = :latest
-      return type_instance
+    it "passes the repos to disable to the helper" do
+      described_class.expects(:python).with do |script, *args|
+        expect(script).to eq described_class::YUMHELPER
+        expect(args).to eq %w[-d updates -d centosplus]
+      end.returns('')
+      described_class.fetch_latest_versions([], ['updates', 'centosplus'])
     end
 
-    before do
-      pretend_we_are_root_for_yum_provider
-      expect_yum_provider_to_provide_rpm
-      expect_execpipe_to_provide_package_info_for_an_rpm_query
-      expect_python_yumhelper_call_to_return_latest_info
-    end
-
-    it "injects latest provider info into passed resources when prefetching" do
-      myresource = a_package_type_instance_with_yum_provider_and_ensure_latest('myresource')
-      mysummaryless = a_package_type_instance_with_yum_provider_and_ensure_latest('mysummaryless')
-
-      yum_provider.prefetch({ "myresource" => myresource, "mysummaryless" => mysummaryless })
-
-      expect(@logs.map(&:message).grep(/^Failed to match rpm line/)).to be_empty
-      expect(myresource.provider.latest_info).to eq({
-        :name=>"myresource",
-        :epoch=>"0",
-        :version=>"1.2.3.4",
-        :release=>"5.el4",
-        :arch=>"noarch",
-        :provider=>:yum,
-        :ensure=>"1.2.3.4-5.el4"
-      })
+    it 'passes a combination of repos to the helper' do
+      described_class.expects(:python).with do |script, *args|
+        expect(script).to eq described_class::YUMHELPER
+        expect(args).to eq %w[-e os -e contrib -d updates -d centosplus]
+      end.returns('')
+      described_class.fetch_latest_versions(['os', 'contrib'], ['updates', 'centosplus'])
     end
   end
 end
