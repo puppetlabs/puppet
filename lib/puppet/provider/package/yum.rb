@@ -5,7 +5,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   Using this provider's `uninstallable` feature will not remove dependent packages. To
   remove dependent packages with this provider use the `purgeable` feature, but note this
-  feature is destructive and should be used with the utmost care."
+  feature is destructive and should be used with the utmost care.
+
+  This provider supports the `install_options` attribute, which allows command-line flags to be passed to yum.
+  These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+  or an array where each element is either a string or a hash."
 
   has_feature :install_options, :versionable
 
