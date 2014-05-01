@@ -358,8 +358,10 @@ module Puppet
     :environment_timeout => {
       :default    => "5s",
       :type       => :ttl,
-      :desc       => "The time to live for a cached environment. The time is either given #{AS_DURATION}, or
-      the word 'unlimited' which causes the environment to be cached until the master is restarted."
+      :desc       => "The time to live for a cached environment.
+      #{AS_DURATION}
+      This setting can also be set to `unlimited`, which causes the environment to
+      be cached until the master is restarted."
     },
     :queue_type => {
       :default    => "stomp",
