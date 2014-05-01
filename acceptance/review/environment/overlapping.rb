@@ -18,6 +18,23 @@ file { "#{testdir}/environments/testing/manifests/site.pp":
     include service_mod
   '
 }
+
+file { "#{testdir}/environments/testing/environment.conf":
+  ensure => file,
+  content => '
+    modulepath = modules:$basemodulepath
+    manifest = manifests
+    config_version = local-version.sh
+  '
+}
+
+file { "#{testdir}/environments/testing/local-version.sh":
+    ensure => file,
+    content => '#! /usr/bin/env bash
+    echo "local testing"',
+    mode => 755,
+  ;
+}
 MANIFEST
 
 results = {}
@@ -30,10 +47,10 @@ overlapping_environment_scenario = "Testing overlapping environment configuratio
 step overlapping_environment_scenario
 master_opts = {
   'main' => {
-    'basemodulepath' => '$confdir/services/$environment/modules',
+    'basemodulepath' => '$confdir/services/testing/modules',
     'environmentpath' => '$confdir/environments',
     'manifest' => '$confdir/environments/$environment/manifests',
-    'modulepath' => '$confdir/environments/$environment/modules:$confdir/services/$environment/modules',
+    'modulepath' => '$confdir/environments/$environment/modules',
     'config_version' => '$confdir/static-version.sh',
   },
   'testing' => {
@@ -60,9 +77,9 @@ directory_environment_exists_expectations = {
   :puppet_config => {
     :exit_code => 0,
     :matches => [%r{manifest.*/tmp.*/environments/testing/manifests$},
-                 %r{modulepath.*/tmp.*/environments/testing/modules:.+},
+                 %r{modulepath.*/tmp.*/environments/testing/modules:/tmp.*/services/testing/modules$},
                  %r{basemodulepath.*/tmp.*/services/testing/modules},
-                 %r{config_version.*/tmp.*/static-version.sh$}]
+                 %r{config_version.*/tmp.*/local-version.sh$}]
   },
   :puppet_module_install => {
     :exit_code => 0,
@@ -79,9 +96,10 @@ directory_environment_exists_expectations = {
   },
   :puppet_agent => {
     :exit_code => 2,
-    :matches => [%r{Applying configuration version 'static'},
-                 %r{in directory testing environment site.pp},
-                 %r{include directory testing environment testing_mod}],
+    :matches => [%r{Applying configuration version 'local testing'},
+                 %r{in environments/testing/manifests/site.pp},
+                 %r{include directory testing environment testing_mod},
+                 %r{include service testing environment service_mod}],
   },
 }
 review[overlapping_environment_scenario] = review_results(
