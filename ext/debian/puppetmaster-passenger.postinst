@@ -64,17 +64,17 @@ if [ "$1" = "configure" ]; then
         # Setup apache2 configuration files
         APACHE2_SITE_FILE="/etc/apache2/sites-available/$(apache2_puppetmaster_sitename)"
         if  [ ! -e "${APACHE2_SITE_FILE}" ]; then
-            cp /usr/share/puppetmaster-passenger/apache2.site.conf.tmpl "${APACHE2_SITE_FILE}"
-            # Fix path to SSL files
-            sed -r -i "s|(SSLCertificateFile\s+).+$|\1$(puppet master --configprint hostcert)|" "${APACHE2_SITE_FILE}"
-            sed -r -i "s|(SSLCertificateKeyFile\s+).+$|\1$(puppet master --configprint hostprivkey)|" "${APACHE2_SITE_FILE}"
-            sed -r -i "s|(SSLCACertificateFile\s+).+$|\1$(puppet master --configprint localcacert)|" "${APACHE2_SITE_FILE}"
-            sed -r -i "s|(SSLCertificateChainFile\s+).+$|\1$(puppet master --configprint localcacert)|" "${APACHE2_SITE_FILE}"
-            sed -r -i "s|(SSLCARevocationFile\s+).+$|\1$(puppet master --configprint cacrl)|" "${APACHE2_SITE_FILE}"
-
-            # Fix path to rack docroot and directory
-            sed -r -i "s|DocumentRoot /etc/puppet/rack/public|DocumentRoot /usr/share/puppet/rack/puppetmasterd/public|g" "${APACHE2_SITE_FILE}"
-            sed -r -i "s|<Directory /etc/puppet/rack/>|<Directory /usr/share/puppet/rack/puppetmasterd/>|g" "${APACHE2_SITE_FILE}"
+            tempfile=$(mktemp)
+            sed -r \
+                -e "s|(SSLCertificateFile\s+).+$|\1$(puppet master --configprint hostcert)|" \
+                -e "s|(SSLCertificateKeyFile\s+).+$|\1$(puppet master --configprint hostprivkey)|" \
+                -e "s|(SSLCACertificateFile\s+).+$|\1$(puppet master --configprint localcacert)|" \
+                -e "s|(SSLCertificateChainFile\s+).+$|\1$(puppet master --configprint localcacert)|" \
+                -e "s|(SSLCARevocationFile\s+).+$|\1$(puppet master --configprint cacrl)|" \
+                -e "s|DocumentRoot /etc/puppet/rack/public|DocumentRoot /usr/share/puppet/rack/puppetmasterd/public|" \
+                -e "s|<Directory /etc/puppet/rack/>|<Directory /usr/share/puppet/rack/puppetmasterd/>|" \
+                /usr/share/puppetmaster-passenger/apache2.site.conf.tmpl > $tempfile
+            mv $tempfile "${APACHE2_SITE_FILE}"
         fi
 
         # Enable needed modules
