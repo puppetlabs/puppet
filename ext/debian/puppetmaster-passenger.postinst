@@ -34,6 +34,21 @@ restart_apache2() {
     fi
 }
 
+# We may need to update the passenger directives in the apache vhost because
+# RailsAutoDetect and RackAutoDetect were removed in passenger 4.0.0
+#       see http://www.modrails.com/documentation/Users%20guide%20Apache.html#_railsautodetect_rackautodetect_and_wsgiautodetect
+update_vhost_for_passenger4() {
+    # Get passenger version from dpkg.
+    # This will end in tears…
+    passenger_version="$(dpkg-query --showformat='${Version}\n' --show libapache2-mod-passenger)"
+    if dpkg --compare-versions "$passenger_version" gt "4.0~"; then
+        sed -r -i \
+            -e "/RailsAutoDetect/d" \
+            -e "/RackAutoDetect/d" \
+            $tempfile
+    fi
+}
+
 if [ "$1" = "configure" ]; then
 
     # Change the owner of the rack config.ru to be the puppet user
@@ -74,6 +89,7 @@ if [ "$1" = "configure" ]; then
                 -e "s|DocumentRoot /etc/puppet/rack/public|DocumentRoot /usr/share/puppet/rack/puppetmasterd/public|" \
                 -e "s|<Directory /etc/puppet/rack/>|<Directory /usr/share/puppet/rack/puppetmasterd/>|" \
                 /usr/share/puppetmaster-passenger/apache2.site.conf.tmpl > $tempfile
+            update_vhost_for_passenger4
             mv $tempfile "${APACHE2_SITE_FILE}"
         fi
 
