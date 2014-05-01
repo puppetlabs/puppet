@@ -256,5 +256,16 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
   def user
     @property_hash[:user] || @property_hash[:target]
   end
+
+  # Include all plausible crontab files on the system
+  # in the list of targets (#11383)
+  def self.targets(resources = nil)
+    targets = super(resources)
+    Puppet::Util::FileType.enumerate_crontabs do |target|
+      targets << target
+    end
+    targets.uniq
+  end
+
 end
 

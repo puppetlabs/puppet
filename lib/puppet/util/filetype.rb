@@ -94,6 +94,33 @@ class Puppet::Util::FileType
     end
   end
 
+  CRONTAB_DIR = case Facter.value("osfamily")
+    when "Debian", "HP-UX"
+      "/var/spool/cron/crontabs"
+    when /BSD/
+      "/var/cron/tabs"
+    when "Darwin"
+      "/usr/lib/cron/tabs/"
+    else
+      "/var/spool/cron"
+  end
+
+  # Yield the names of all crontab files stored on the local system.
+  #
+  # @note Ignores files that are not writable for the puppet process.
+  # 
+  # @api public
+  def self.enumerate_crontabs
+    #puts "checking #{CRONTAB_DIR} for readability"
+    return unless File.readable?(CRONTAB_DIR)
+    #puts "CHECK"
+    Dir.foreach(CRONTAB_DIR) do |file|
+      path = "#{CRONTAB_DIR}/#{file}"
+      #puts "checking #{path} for readability"
+      yield(file) if File.file?(path) and File.writable?(path)
+    end
+  end
+
   # Operate on plain files.
   newfiletype(:flat) do
     # Back the file up before replacing it.
