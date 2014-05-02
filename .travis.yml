@@ -4,10 +4,10 @@ script: "bundle exec rake \"parallel:spec[1]\""
 notifications:
   email: false
 rvm:
-  - 2.1.0
+  - 2.1.1
   - 2.0.0
   - 1.9.3
-  - 1.8.7
+  - 1.8.7-p374
   - ruby-head
   - jruby-19mode
 matrix:
