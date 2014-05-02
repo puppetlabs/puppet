@@ -198,7 +198,7 @@ config_version=/some/script
             with_config_version(File.expand_path('/some/script'))
         end
 
-        expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*#{envdir}\/env1.*may not have sections.*ignored: 'foo'/)
+        expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*\/env1.*may not have sections.*ignored: 'foo'/)
       end
 
       it "logs a warning, but processes the main settings if there are any extraneous settings" do
@@ -214,7 +214,7 @@ config_version=/some/script
             with_config_version(File.expand_path('/some/script'))
         end
 
-        expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*#{envdir}\/env1.*unknown setting.*dog, cat/)
+        expect(@logs.map(&:to_s).join).to match(/Invalid.*at.*\/env1.*unknown setting.*dog, cat/)
       end
 
       it "interpretes relative paths from the environment's directory" do
