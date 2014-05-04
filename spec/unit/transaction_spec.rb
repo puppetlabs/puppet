@@ -288,6 +288,9 @@ describe Puppet::Transaction do
     before :each do
       catalog.add_resource generator
       generator.stubs(:generate).returns generated
+      # avoid crude failures because of nil resources that result
+      # from implicit containment and lacking containers
+      catalog.stubs(:container_of).returns generator
     end
 
     it "should call 'generate' on all created resources" do
