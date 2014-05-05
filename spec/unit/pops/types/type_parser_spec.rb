@@ -5,7 +5,8 @@ describe Puppet::Pops::Types::TypeParser do
   extend RSpec::Matchers::DSL
 
   let(:parser) { Puppet::Pops::Types::TypeParser.new }
-  let(:types) { Puppet::Pops::Types::TypeFactory }
+  let(:types)  { Puppet::Pops::Types::TypeFactory }
+
 
   it "rejects a puppet expression" do
     expect { parser.parse("1 + 1") }.to raise_error(Puppet::ParseError, /The expression <1 \+ 1> is not a valid type specification/)
@@ -111,6 +112,18 @@ describe Puppet::Pops::Types::TypeParser do
   it "parses struct type" do
     struct_t = types.struct({'a'=>Integer, 'b'=>String})
     expect(the_type_parsed_from(struct_t)).to be_the_type(struct_t)
+  end
+
+  describe "handles parsing of patterns and regexp" do
+    { 'Pattern[/([a-z]+)([1-9]+)/]'        => [:pattern, [/([a-z]+)([1-9]+)/]],
+      'Pattern["([a-z]+)([1-9]+)"]'        => [:pattern, [/([a-z]+)([1-9]+)/]],
+      'Regexp[/([a-z]+)([1-9]+)/]'         => [:regexp,  [/([a-z]+)([1-9]+)/]],
+      'Pattern[/x9/, /([a-z]+)([1-9]+)/]'  => [:pattern, [/x9/, /([a-z]+)([1-9]+)/]],
+    }.each do |source, type|
+      it "such that the source '#{source}' yields the type #{type.to_s}" do
+        expect(parser.parse(source)).to be_the_type(Puppet::Pops::Types::TypeFactory.send(type[0], *type[1]))
+      end
+    end
   end
 
   it "rejects an collection spec with the wrong number of parameters" do
