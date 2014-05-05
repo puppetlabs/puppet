@@ -2,7 +2,6 @@ require 'fileutils'
 require 'puppet/util/lockfile'
 
 class Puppet::Util::Pidlock
-
   def initialize(lockfile)
     @lockfile = Puppet::Util::Lockfile.new(lockfile)
   end
@@ -22,7 +21,7 @@ class Puppet::Util::Pidlock
     @lockfile.lock(Process.pid)
   end
 
-  def unlock()
+  def unlock
     if mine?
       return @lockfile.unlock
     else
@@ -31,7 +30,12 @@ class Puppet::Util::Pidlock
   end
 
   def lock_pid
-    @lockfile.lock_data.to_i
+    pid = @lockfile.lock_data
+    if pid =~ /\A[0-9]/
+      pid.to_i
+    else
+      nil
+    end
   end
 
   def file_path
@@ -39,7 +43,7 @@ class Puppet::Util::Pidlock
   end
 
   def clear_if_stale
-    return if lock_pid.nil?
+    return @lockfile.unlock if lock_pid.nil?
 
     errors = [Errno::ESRCH]
     # Process::Error can only happen, and is only defined, on Windows
@@ -52,5 +56,4 @@ class Puppet::Util::Pidlock
     end
   end
   private :clear_if_stale
-
 end
