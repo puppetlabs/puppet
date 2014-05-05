@@ -548,7 +548,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   # Evaluates matching expressions with type, string or regexp rhs expression.
-  # If RHS is a type, the =~ matches compatible (assignable?) type.
+  # If RHS is a type, the =~ matches compatible (instance? of) type.
   #
   # @example
   #   x =~ /abc.*/
@@ -559,21 +559,20 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #   x =~ "${y}.*"
   # @example
   #   [1,2,3] =~ Array[Integer[1,10]]
+  #
+  # Note that a string is not instance? of Regexp, only Regular expressions are.
+  # The Pattern type should instead be used as it is specified as subtype of String.
+  #
   # @return [Boolean] if a match was made or not. Also sets $0..$n to matchdata in current scope.
   #
   def eval_MatchExpression o, scope
     left, pattern = eval_BinaryExpression o, scope
     # matches RHS types as instance of for all types except a parameterized Regexp[R]
     if pattern.is_a?(Puppet::Pops::Types::PAbstractType)
-      if pattern.is_a?(Puppet::Pops::Types::PRegexpType) && pattern.pattern
-        # A qualified PRegexpType, get its ruby regexp
-        pattern = pattern.regexp
-      else
-        # evaluate as instance?
-        matched = @@type_calculator.instance?(pattern, left)
-        # convert match result to Boolean true, or false
-        return o.operator == :'=~' ? !!matched : !matched
-      end
+      # evaluate as instance? of type check
+      matched = @@type_calculator.instance?(pattern, left)
+      # convert match result to Boolean true, or false
+      return o.operator == :'=~' ? !!matched : !matched
     end
 
     begin

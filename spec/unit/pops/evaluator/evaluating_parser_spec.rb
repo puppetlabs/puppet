@@ -206,7 +206,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "'a' !~ 'b.*'"                    => true,
       '$x = a; a =~ "$x.*"'             => true,
       "a =~ Pattern['a.*']"             => true,
-      "a =~ Regexp['a.*']"              => true,
+      "a =~ Regexp['a.*']"              => false, # String is not subtype of Regexp. PUP-957
       "$x = /a.*/ a =~ $x"              => true,
       "$x = Pattern['a.*'] a =~ $x"     => true,
       "1 =~ Integer"                    => true,
