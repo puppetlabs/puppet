@@ -76,6 +76,10 @@ class Puppet::Pops::Types::TypeParser
     o.value
   end
 
+  def interpret_LiteralRegularExpression(o)
+    o.value
+  end
+
   # @api private
   def interpret_String(o)
     o
@@ -297,22 +301,22 @@ class Puppet::Pops::Types::TypeParser
 
     when "enum"
       # 1..m parameters being strings
-      raise_invalid_parameters_error("Enum", "1 or more", parameters.size) unless parameters.size > 1
+      raise_invalid_parameters_error("Enum", "1 or more", parameters.size) unless parameters.size >= 1
       TYPES.enum(*parameters)
 
     when "pattern"
       # 1..m parameters being strings or regular expressions
-      raise_invalid_parameters_error("Pattern", "1 or more", parameters.size) unless parameters.size > 1
+      raise_invalid_parameters_error("Pattern", "1 or more", parameters.size) unless parameters.size >= 1
       TYPES.pattern(*parameters)
 
     when "variant"
       # 1..m parameters being strings or regular expressions
-      raise_invalid_parameters_error("Variant", "1 or more", parameters.size) unless parameters.size > 1
+      raise_invalid_parameters_error("Variant", "1 or more", parameters.size) unless parameters.size >= 1
       TYPES.variant(*parameters)
 
     when "tuple"
       # 1..m parameters being types (last two optionally integer or literal default
-      raise_invalid_parameters_error("Tuple", "1 or more", parameters.size) unless parameters.size > 1
+      raise_invalid_parameters_error("Tuple", "1 or more", parameters.size) unless parameters.size >= 1
       length = parameters.size
       if TYPES.is_range_parameter?(parameters[-2])
         # min, max specification
