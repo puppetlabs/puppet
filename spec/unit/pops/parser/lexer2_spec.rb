@@ -21,7 +21,7 @@ describe 'Lexer2' do
   include EgrammarLexer2Spec
 
   {
-    :LBRACK => '[',
+    :LISTSTART => '[',
     :RBRACK => ']',
     :LBRACE => '{',
     :RBRACE => '}',
@@ -67,6 +67,10 @@ describe 'Lexer2' do
     it "should lex a token named #{name.to_s}" do
       tokens_scanned_from(string).should match_tokens2(name)
     end
+  end
+
+  it "should lex [ in position after non whitespace as LBRACK" do
+    tokens_scanned_from("a[").should match_tokens2(:NAME, :LBRACK)
   end
 
   {
@@ -221,7 +225,7 @@ describe 'Lexer2' do
 
   it "differentiates between foo[x] and foo [x] (whitespace)" do
     tokens_scanned_from("$a[1]").should match_tokens2(:VARIABLE, :LBRACK, :NUMBER, :RBRACK)
-    tokens_scanned_from("$a [1]").should match_tokens2(:VARIABLE, :LBRACK, :NUMBER, :RBRACK)
+    tokens_scanned_from("$a [1]").should match_tokens2(:VARIABLE, :LISTSTART, :NUMBER, :RBRACK)
     tokens_scanned_from("a[1]").should match_tokens2(:NAME, :LBRACK, :NUMBER, :RBRACK)
     tokens_scanned_from("a [1]").should match_tokens2(:NAME, :LISTSTART, :NUMBER, :RBRACK)
     tokens_scanned_from(" if \n\r\t\nif if ").should match_tokens2(:IF, :IF, :IF)
@@ -249,7 +253,9 @@ describe 'Lexer2' do
     "!~" => [:NOMATCH, "!~ /./"],
     ","  => [:COMMA, ", /./"],
     "("  => [:LPAREN, "( /./"],
-    "["  => [:LBRACK, "[ /./"],
+    "["  => [:LISTSTART, "[ /./"],
+    "["  => [[:NAME, :LBRACK], "a[ /./"],
+    "["  => [[:NAME, :LISTSTART], "a [ /./"],
     "{"  => [:LBRACE, "{ /./"],
     "+"  => [:PLUS, "+ /./"],
     "-"  => [:MINUS, "- /./"],
@@ -257,7 +263,8 @@ describe 'Lexer2' do
     ";"  => [:SEMIC, "; /./"],
   }.each do |token, entry|
     it "should lex regexp after '#{token}'" do
-      tokens_scanned_from(entry[1]).should match_tokens2(entry[0], :REGEX)
+      expected = [entry[0], :REGEX].flatten
+      tokens_scanned_from(entry[1]).should match_tokens2(*expected)
     end
   end
 
