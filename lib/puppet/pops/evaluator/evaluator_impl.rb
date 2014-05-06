@@ -203,21 +203,19 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       # m can be one of
       # m = [Parameter{name => "name", value => nil], "given"]
       #   | [Parameter{name => "name", value => Expression}, "given"]
+      #   | [Parameter{name => "name", value => Expression}, :missing]
       #
-      # "given" is always an optional entry. If a parameter was provided then
-      # the entry will be in the array, otherwise the m array will be a
-      # single element.
+      # "given" may be nil or :undef which means that this is the value to use,
+      # not a default expression.
+      #
       given_argument = m[1]
       argument_name = m[0].name
       default_expression = m[0].value
 
       # Use default value if a value was not given (NOTE: An :undef overrides - just a nil overrides default in ruby).
       value =
-      if given_argument == :missing && default_expression
-        # undef was given, use default when it exists
-        evaluate(default_expression, scope)
-      elsif m.size == 1 && default_expression
-        # no given value, use the default
+      if given_argument == :missing
+        # nothing was given, use default (it is guaranteed to exist)
         evaluate(default_expression, scope)
       else
         # use the given value
