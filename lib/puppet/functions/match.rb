@@ -72,6 +72,7 @@ Puppet::Functions.create_function(:match) do
   end
 
   def match_PRegexpType(regexp_t, s)
+    raise ArgumentError, "Given Regexp Type has no regular expression" unless regexp_t.pattern
     do_match(s, regexp_t.regexp)
   end
 

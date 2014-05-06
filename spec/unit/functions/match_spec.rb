@@ -47,6 +47,10 @@ describe 'the match function' do
     expect(func.call({}, ['abc123', '2a', 'xyz2'], /([a-z]+)[1-9]+/)).to eql([['abc123', 'abc'], nil, ['xyz2', 'xyz']])
   end
 
+  it 'raises error if Regexp type without regexp is used' do
+    expect{func.call({}, 'abc123', type('Regexp'))}.to raise_error(ArgumentError, /Given Regexp Type has no regular expression/)
+  end
+
   def type(s)
     Puppet::Pops::Types::TypeParser.new.parse(s) 
   end
