@@ -195,30 +195,36 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
     raise ArgumentError, "Too many arguments: #{args.size} for #{parameters.size}" unless args.size <= parameters.size
 
-    # associate values with parameters
-    merged = parameters.zip(args)
     # calculate missing arguments
-    missing = parameters.slice(args.size, parameters.size - args.size).select {|p| p.value.nil? }
+    args_diff = parameters.size - args.size
+    missing = parameters.slice(args.size, args_diff).select {|p| p.value.nil? }
     unless missing.empty?
       optional = parameters.count { |p| !p.value.nil? }
       raise ArgumentError, "Too few arguments; #{args.size} for #{optional > 0 ? ' min ' : ''}#{parameters.size - optional}"
     end
+    # associate values with parameters (pad missing with :missing)
+    merged = parameters.zip(args.fill(:missing, args.size, args_diff))
 
     evaluated = merged.collect do |m|
       # m can be one of
       # m = [Parameter{name => "name", value => nil], "given"]
       #   | [Parameter{name => "name", value => Expression}, "given"]
+      #   | [Parameter{name => "name", value => Expression}, :missing]
       #
-      # "given" is always an optional entry. If a parameter was provided then
-      # the entry will be in the array, otherwise the m array will be a
-      # single element.
+      # "given" may be nil or :undef which means that this is the value to use,
+      # not a default expression.
+      #
       given_argument = m[1]
       argument_name = m[0].name
       default_expression = m[0].value
 
-      value = if default_expression
+      # Use default value if a value was not given (NOTE: An :undef overrides - just a nil overrides default in ruby).
+      value =
+      if given_argument == :missing
+        # nothing was given, use default (it is guaranteed to exist)
         evaluate(default_expression, scope)
       else
+        # use the given value
         given_argument
       end
       [argument_name, value]
