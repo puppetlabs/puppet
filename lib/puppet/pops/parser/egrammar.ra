@@ -36,6 +36,7 @@ prechigh
   left  QMARK
   left  LCOLLECT LLCOLLECT
   right NOT
+  nonassoc SPLAT
   nonassoc UMINUS
   left  IN
   left  MATCH NOMATCH
@@ -111,6 +112,7 @@ expression
   | expression LSHIFT       expression                 { result = val[0] <<  val[2]       ; loc result, val[1] }
   | expression RSHIFT       expression                 { result = val[0] >>  val[2]       ; loc result, val[1] }
   |            MINUS        expression         =UMINUS { result = val[1].minus()          ; loc result, val[0] }
+  |            TIMES        expression         =SPLAT  { result = val[1].unfold()         ; loc result, val[0] }
   | expression NOTEQUAL     expression                 { result = val[0].ne  val[2]       ; loc result, val[1] }
   | expression ISEQUAL      expression                 { result = val[0] ==  val[2]       ; loc result, val[1] }
   | expression GREATERTHAN  expression                 { result = val[0] >   val[2]       ; loc result, val[1] }

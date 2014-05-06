@@ -369,6 +369,8 @@ class Puppet::Pops::Model::Factory
 
   def minus();  f_build_unary(Model::UnaryMinusExpression, self);         end
 
+  def unfold(); f_build_unary(Model::UnfoldExpression, self);             end
+
   def text();   f_build_unary(Model::TextExpression, self);               end
 
   def var();    f_build_unary(Model::VariableExpression, self);           end
@@ -510,6 +512,8 @@ class Puppet::Pops::Model::Factory
   def self.literal(o);                   new(o);                                                 end
 
   def self.minus(o);                     new(o).minus;                                           end
+
+  def self.unfold(o);                    new(o).unfold;                                          end
 
   def self.var(o);                       new(o).var;                                             end
 
