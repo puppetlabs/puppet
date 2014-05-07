@@ -196,10 +196,12 @@ describe Puppet::Interface::FaceCollection do
   context "faulty faces" do
     before :each do
       $:.unshift "#{PuppetSpec::FIXTURE_DIR}/faulty_face"
+      Puppet::Util::Autoload.reset_search_directories_cache!
     end
 
     after :each do
       $:.delete_if {|x| x == "#{PuppetSpec::FIXTURE_DIR}/faulty_face"}
+      Puppet::Util::Autoload.reset_search_directories_cache!
     end
 
     it "should not die if a face has a syntax error" do

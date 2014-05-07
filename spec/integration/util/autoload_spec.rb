@@ -36,7 +36,10 @@ describe Puppet::Util::Autoload do
 
   def with_loader(name, path)
     dir = tmpfile(name + path)
+    # changing LOAD_PATH is rather rare and should not be handled internally
+    # by autoload caching
     $LOAD_PATH << dir
+    Puppet::Util::Autoload.reset_search_directories_cache!
     Dir.mkdir(dir)
     rbdir = File.join(dir, path.to_s)
     Dir.mkdir(rbdir)
