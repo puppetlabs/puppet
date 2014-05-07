@@ -121,8 +121,6 @@ class Puppet::Configurer
   def apply_catalog(catalog, options)
     report = options[:report]
     report.configuration_version = catalog.version
-    report.transaction_uuid = @transaction_uuid
-    report.environment = @environment
 
     benchmark(:notice, "Finished catalog run") do
       catalog.apply(options)
@@ -140,7 +138,11 @@ class Puppet::Configurer
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
-    options[:report] ||= Puppet::Transaction::Report.new("apply")
+    # We create the report pre-populated with default settings for
+    # environment and transaction_uuid very early, this is to ensure
+    # they are sent regardless of any catalog compilation failures or
+    # exceptions.
+    options[:report] ||= Puppet::Transaction::Report.new("apply", nil, @environment, @transaction_uuid)
     report = options[:report]
     init_storage
 
@@ -159,6 +161,7 @@ class Puppet::Configurer
             if node.environment.to_s != @environment
               Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
               @environment = node.environment.to_s
+              report.environment = @environment
               query_options = nil
             end
           end
@@ -190,6 +193,7 @@ class Puppet::Configurer
         end
         Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
         @environment = catalog.environment
+        report.environment = @environment
         return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
         tries += 1
       end
