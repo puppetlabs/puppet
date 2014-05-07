@@ -25,6 +25,22 @@ describe 'The "contain" function' do
     expect(catalog.classes).to include("contained")
   end
 
+  it "includes the class when using a fully qualified anchored name" do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      class contained {
+        notify { "contained": }
+      }
+
+      class container {
+        contain ::contained
+      }
+
+      include container
+    MANIFEST
+
+    expect(catalog.classes).to include("contained")
+  end
+
   it "makes the class contained in the current class" do
     catalog = compile_to_catalog(<<-MANIFEST)
       class contained {
