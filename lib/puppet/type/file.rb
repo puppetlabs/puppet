@@ -126,17 +126,34 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:recurse) do
-    desc "Whether and how to do recursive file management. Options are:
+    desc "Whether to recursively manage the _contents_ of a directory. This attribute
+      is only used when `ensure => directory` is set. The allowed values are:
 
-      * `inf,true` --- Regular style recursion on both remote and local
-        directory structure.  See `recurselimit` to specify a limit to the
-        recursion depth.
-      * `remote` --- Descends recursively into the remote (source) directory
-        but not the local (destination) directory. Allows copying of
-        a few files into a directory containing many
-        unmanaged files without scanning all the local files.
-        This can only be used when a source parameter is specified.
-      * `false` --- Default of no recursion.
+      * `false` --- The default behavior. The contents of the directory will not be
+        automatically managed.
+      * `remote` --- If the `source` attribute is set, Puppet will automatically
+        manage the contents of the source directory (or directories), ensuring
+        that equivalent files and directories exist on the target system and
+        that their contents match.
+
+        Using `remote` will disable the `purge` attribute, but results in faster
+        catalog application than `recurse => true`.
+
+        The `source` attribute is mandatory when `recurse => remote`.
+      * `true` --- If the `source` attribute is set, this behaves similarly to
+        `recurse => remote`, automatically managing files from the source directory.
+
+        This also enables the `purge` attribute, which can delete unmanaged
+        files from a directory. See the description of `purge` for more details.
+
+        The `source` attribute is not mandatory when using `recurse => true`, so you
+        can enable purging in directories where all files are managed individually.
+
+        (Note: `inf` is an out-of-date synonym for `true`.)
+
+      By default, setting recurse to `remote` or `true` will manage _all_
+      subdirectories. You can use the `recurselimit` attribute to limit the
+      recursion depth.
     "
 
     newvalues(:true, :false, :inf, :remote)
@@ -155,7 +172,24 @@ Puppet::Type.newtype(:file) do
   end
 
   newparam(:recurselimit) do
-    desc "How deeply to do recursive management."
+    desc "How far Puppet should descend into subdirectories, when using
+      `ensure => directory` and either `recurse => true` or `recurse => remote`.
+      The recursion limit affects which files will be copied from the `source`
+      directory, as well as which files can be purged when `purge => true`.
+
+      Setting `recurselimit => 0` is the same as setting `recurse => false` ---
+      Puppet will manage the directory, but all of its contents will be treated
+      as unmanaged.
+
+      Setting `recurselimit => 1` will manage files and directories that are
+      directly inside the directory, but will not manage the contents of any
+      subdirectories.
+
+      Setting `recurselimit => 2` will manage the direct contents of the
+      directory, as well as the contents of the _first_ level of subdirectories.
+
+      And so on --- 3 will manage the contents of the second level of
+      subdirectories, etc."
 
     newvalues(/^[0-9]+$/)
 
@@ -218,7 +252,7 @@ Puppet::Type.newtype(:file) do
 
   newparam(:purge, :boolean => true, :parent => Puppet::Parameter::Boolean) do
     desc "Whether unmanaged files should be purged. This option only makes
-      sense when managing directories with `recurse => true`.
+      sense when `ensure => directory` and `recurse => true`.
 
       * When recursively duplicating an entire directory with the `source`
         attribute, `purge => true` will automatically purge any files
@@ -228,7 +262,14 @@ Puppet::Type.newtype(:file) do
         specifically managed.
 
       If you have a filebucket configured, the purged files will be uploaded,
-      but if you do not, this will destroy data."
+      but if you do not, this will destroy data.
+
+      Unless `force => true` is set, purging will **not** delete directories,
+      although it will delete the files they contain.
+
+      If `recurselimit` is set and you aren't using `force => true`, purging
+      will obey the recursion limit; files in any subdirectories deeper than the
+      limit will be treated as unmanaged and left alone."
 
     defaultto :false
   end
