@@ -36,7 +36,8 @@ class Puppet::Forge
 
     # Return contents of file at the given URI's +uri+.
     def read_retrieve(uri)
-      return uri.read
+      parsed_url = "#{uri.scheme}://#{uri.host}#{uri.path}"
+      return open(parsed_url, :http_basic_authentication=>[uri.user, uri.password]) {|f| f.read}
     end
 
     # Return Pathname for repository's cache directory, create it if needed.
