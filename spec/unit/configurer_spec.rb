@@ -530,6 +530,13 @@ describe Puppet::Configurer do
     end
   end
 
+  describe "when requesting a node" do
+    it "uses the transaction uuid in the request" do
+      Puppet::Node.indirection.expects(:find).with(anything, has_entries(:transaction_uuid => anything)).twice
+      @agent.run
+    end
+  end
+
   describe "when retrieving a catalog" do
     before do
       Puppet.settings.stubs(:use).returns(true)
