@@ -144,7 +144,4 @@ describe "validating 4x" do
   def parse(source)
     Puppet::Pops::Parser::Parser.new().parse_string(source)
   end
-  def literals()
-    
-  end
 end
