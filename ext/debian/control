@@ -99,7 +99,7 @@ Description: Centralized configuration management - master startup and compatibi
 
 Package: puppetmaster-passenger
 Architecture: all
-Depends: ${misc:Depends}, ruby | ruby-interpreter, puppetmaster-common (= ${source:Version}), facter (>= 1.7.0), lsb-base, libapache2-mod-passenger
+Depends: ${misc:Depends}, ruby | ruby-interpreter, puppetmaster-common (= ${source:Version}), facter (>= 1.7.0), lsb-base, apache2, libapache2-mod-passenger
 Conflicts: puppetmaster (<< 2.6.1~rc2-1)
 Replaces: puppetmaster (<< 2.6.1~rc2-1)
 Description: Centralised configuration management - master setup to run under mod passenger
