@@ -675,8 +675,17 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       if o.options.find do |co|
         # the first case option that matches
         if co.values.find do |c|
-          the_default = co.then_expr if c.is_a? Puppet::Pops::Model::LiteralDefault
-          is_match?(test, evaluate(c, scope), c, scope)
+          case c
+          when Puppet::Pops::Model::LiteralDefault
+            the_default = co.then_expr
+            is_match?(test, evaluate(c, scope), c, scope)
+          when Puppet::Pops::Model::UnfoldExpression
+            # not ideal for error reporting, since it is not known which unfolded result
+            # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
+            evaluate(c, scope).any? {|v| is_match?(test, v, c, scope) }
+          else
+            is_match?(test, evaluate(c, scope), c, scope)
+          end
         end
         result = evaluate(co.then_expr, scope)
         true # the option was picked
@@ -819,8 +828,17 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     with_guarded_scope(scope) do
       test = evaluate(o.left_expr, scope)
       selected = o.selectors.find do |s|
-        candidate = evaluate(s.matching_expr, scope)
-        candidate == :default || is_match?(test, candidate, s.matching_expr, scope)
+        me = s.matching_expr
+        case me
+        when Puppet::Pops::Model::LiteralDefault
+          true
+        when Puppet::Pops::Model::UnfoldExpression
+          # not ideal for error reporting, since it is not known which unfolded result
+          # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
+          evaluate(me, scope).any? {|v| is_match?(test, v, me, scope) }
+        else
+          is_match?(test, evaluate(me, scope), me, scope)
+        end
       end
       if selected
         evaluate(selected.value_expr, scope)

@@ -459,6 +459,9 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "case Integer {
          Integer : { no }
          Type[Integer] : { yes } }"                          => 'yes',
+      # supports unfold
+      "case ringo {
+         *[paul, john, ringo, george] : { 'beatle' } }"       => 'beatle',
 
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
@@ -473,12 +476,14 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "3 ? { 1 => no, default => yes, 3 => no }"          => 'yes',
       "'banana' ? { /.*(ana).*/  => $1 }"                 => 'ana',
       "[2] ? { Array[String] => yes, Array => yes}"       => 'yes',
+      "ringo ? *[paul, john, ringo, george] => 'beatle'"  => 'beatle',
     }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
         end
       end
   end
+
   context "When evaluator evaluated unfold" do
     {
       "*[1,2,3]"             => [1,2,3],
