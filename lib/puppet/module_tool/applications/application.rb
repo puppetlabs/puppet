@@ -43,14 +43,6 @@ module Puppet::ModuleTool
         modulefile_path = File.join(@path, 'Modulefile')
         metadata_path   = File.join(@path, 'metadata.json')
 
-        if File.file?(modulefile_path)
-          if File.file?(metadata_path)
-            Puppet.warning "Modulefile is deprecated. Using metadata.json."
-          else
-            Puppet.warning "Modulefile is deprecated. Building metadata.json from Modulefile."
-          end
-        end
-
         if File.file?(metadata_path)
           File.open(metadata_path) do |f|
             begin
@@ -59,11 +51,20 @@ module Puppet::ModuleTool
               raise ArgumentError, "Could not parse JSON #{metadata_path}", ex.backtrace
             end
           end
+        end
 
-        elsif File.file?(modulefile_path)
+        if File.file?(modulefile_path)
+          if File.file?(metadata_path)
+            Puppet.warning "Modulefile is deprecated. Merging your Modulefile and metadata.json."
+          else
+            Puppet.warning "Modulefile is deprecated. Building metadata.json from Modulefile."
+          end
+
           Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
+        end
 
-        elsif require_metadata
+        has_metadata = File.file?(modulefile_path) || File.file?(metadata_path)
+        if !has_metadata && require_metadata
           raise ArgumentError, "No metadata found for module #{@path}"
         end
 
