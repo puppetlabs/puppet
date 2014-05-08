@@ -145,9 +145,9 @@ module Puppet
               platform_configs_dir
             )
 
-            link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s/products/%s/" % [sha, variant, version, arch]
+            link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s%s/products/%s/" % [sha, variant, fedora_prefix, version, arch]
             if not link_exists?(link)
-              link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s/devel/%s/" % [sha, variant, version, arch]
+              link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s%s/devel/%s/" % [sha, variant, fedora_prefix, version, arch]
             end
             if not link_exists?(link)
               raise "Unable to reach a repo directory at #{link}"
