@@ -186,19 +186,19 @@ describe 'InstallUtils' do
     )
 
     it_should_behave_like(:redhat_platforms,
-      'fedora-18-x86_64',
+      'fedora-20-x86_64',
       'abcdef10',
       {
         :rpm => [
           "http://yum.puppetlabs.com",
-          "puppetlabs-release-fedora-18.noarch.rpm",
+          "puppetlabs-release-fedora-20.noarch.rpm",
         ],
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
-          "pl-puppet-abcdef10-fedora-f18-x86_64.repo",
+          "pl-puppet-abcdef10-fedora-f20-x86_64.repo",
         ],
         :repo_dir => [
-          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/fedora/18/products/x86_64/",
+          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/fedora/f20/products/x86_64/",
           "x86_64",
         ],
       },
