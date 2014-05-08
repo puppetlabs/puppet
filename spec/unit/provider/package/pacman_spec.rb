@@ -14,7 +14,7 @@ describe provider do
     provider.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
     resolver.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
     provider.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
-    @resource = Puppet::Type.type(:package).new(:name => 'package')
+    @resource = Puppet::Type.type(:package).new(:name => 'package', :provider => 'pacman')
     @provider = provider.new(@resource)
   end
 
@@ -292,4 +292,47 @@ EOF
       @provider.latest.should == "1.00.2-3"
     end
   end
+
+  context "#install_options" do
+    it "should return nil by default" do
+      @provider.install_options.should be_nil
+    end
+
+    it "should return install_options when set" do
+      @resource[:install_options] = ['-n']
+      @resource[:install_options].should == ['-n']
+    end
+
+    it "should return multiple install_options when set" do
+      @resource[:install_options] = ['-L', '/opt/puppet']
+      @resource[:install_options].should == ['-L', '/opt/puppet']
+    end
+
+    it 'should return install_options when set as hash' do
+      @resource[:install_options] = { '-Darch' => 'vax' }
+      @provider.install_options.should == ['-Darch=vax']
+    end
+  end
+
+  context "#uninstall_options" do
+    it "should return nil by default" do
+      @provider.uninstall_options.should be_nil
+    end
+
+    it "should return uninstall_options when set" do
+      @provider.resource[:uninstall_options] = ['-n']
+      @provider.resource[:uninstall_options].should == ['-n']
+    end
+
+    it "should return multiple uninstall_options when set" do
+      @provider.resource[:uninstall_options] = ['-q', '-c']
+      @provider.resource[:uninstall_options].should == ['-q', '-c']
+    end
+
+    it 'should return uninstall_options when set as hash' do
+      @provider.resource[:uninstall_options] = { '-Dbaddepend' => '1' }
+      @provider.uninstall_options.should == ['-Dbaddepend=1']
+    end
+  end
+
 end
