@@ -65,4 +65,83 @@ describe "validating 4x" do
     expect(validate(fqn('::_aa').var())).to_not have_issue(Puppet::Pops::Issues::ILLEGAL_VAR_NAME)
   end
 
+  context 'for non productive expressions' do
+    [ '1',
+      '3.14',
+      "'a'",
+      '"a"',
+      '"${$a=10}"', # interpolation with side effect
+      'false',
+      'true',
+      'default',
+      'undef',
+      '[1,2,3]',
+      '{a=>10}',
+      'if 1 {2}',
+      'if 1 {2} else {3}',
+      'if 1 {2} elsif 3 {4}',
+      'unless 1 {2}',
+      'unless 1 {2} else {3}',
+      '1 ? 2 => 3',
+      '1 ? { 2 => 3}',
+      '-1',
+      '-foo()', # unary minus on productive
+      '1+2',
+      '1<2',
+      '(1<2)',
+      '!true',
+      '!foo()', # not on productive
+      '$a',
+      '$a[1]',
+      'name',
+      'Type',
+      'Type[foo]'
+      ].each do |expr|
+      it "produces error for non productive: #{expr}" do
+        source = "#{expr}; $a = 10"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::IDEM_EXPRESSION_NOT_LAST)
+      end
+
+      it "does not produce error when last for non productive: #{expr}" do
+        source = " $a = 10; #{expr}"
+        expect(validate(parse(source))).to_not have_issue(Puppet::Pops::Issues::IDEM_EXPRESSION_NOT_LAST)
+      end
+    end
+
+    [
+      'if 1 {$a = 1}',
+      'if 1 {2} else {$a=1}',
+      'if 1 {2} elsif 3 {$a=1}',
+      'unless 1 {$a=1}',
+      'unless 1 {2} else {$a=1}',
+      '$a = 1 ? 2 => 3',
+      '$a = 1 ? { 2 => 3}',
+      'Foo[a] -> Foo[b]',
+      '($a=1)',
+      'foo()',
+      '$a.foo()'
+      ].each do |expr|
+
+      it "does not produce error when for productive: #{expr}" do
+        source = "#{expr}; $x = 1"
+        expect(validate(parse(source))).to_not have_issue(Puppet::Pops::Issues::IDEM_EXPRESSION_NOT_LAST)
+      end
+    end
+
+    ['class', 'define', 'node'].each do |type|
+      it "flags non productive expression last in #{type}" do
+        source = <<-SOURCE
+          #{type} nope {
+            1
+          }
+          end
+        SOURCE
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::IDEM_NOT_ALLOWED_LAST)
+      end
+    end
+  end
+
+  def parse(source)
+    Puppet::Pops::Parser::Parser.new().parse_string(source)
+  end
 end
