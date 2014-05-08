@@ -1475,7 +1475,7 @@ EOT
     :ordering => {
       :type => :enum,
       :values => ["manifest", "title-hash", "random"],
-      :default => "title-hash",
+      :default => "manifest",
       :desc => "How unrelated resources should be ordered when applying a catalog.
       Allowed values are `title-hash`, `manifest`, and `random`. This
       setting affects puppet agent and puppet apply, but not puppet master.
