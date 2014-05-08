@@ -22,13 +22,6 @@ class Puppet::Configurer
     "Puppet configuration client"
   end
 
-  class << self
-    # Puppet agent should only have one instance running, and we need a
-    # way to retrieve it.
-    attr_accessor :instance
-    include Puppet::Util
-  end
-
   def execute_postrun_command
     execute_from_setting(:postrun_command)
   end
@@ -51,11 +44,9 @@ class Puppet::Configurer
     end
   end
 
-  # Just so we can specify that we are "the" instance.
   def initialize
     Puppet.settings.use(:main, :ssl, :agent)
 
-    self.class.instance = self
     @running = false
     @splayed = false
     @environment = Puppet[:environment]
