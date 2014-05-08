@@ -25,7 +25,7 @@ agents.each do |agent|
 
   step "Cron: allow changing command"
   apply_manifest_on(agent, 'cron { "myjob": command => "/bin/true", user    => "tstuser", hour    => "*", minute  => [1], ensure  => present,}') do
-    assert_match(/command changed '.bin.false' to '.bin.true'/, result.stdout, "err: #{agent}")
+    assert_match(/command changed '.bin.false'.* to '.bin.true'/, result.stdout, "err: #{agent}")
   end
   run_cron_on(agent,:list,'tstuser') do
     assert_match(/1 . . . . .bin.true/, result.stdout, "err: #{agent}")
@@ -41,7 +41,7 @@ agents.each do |agent|
 
   step "Cron: allow changing time(array)"
   apply_manifest_on(agent, 'cron { "myjob": command => "/bin/true", user    => "tstuser", hour    => ["1","2"], minute  => [1], ensure  => present,}') do
-    assert_match(/hour: hour changed '1' to '1,2'/, result.stdout, "err: #{agent}")
+    assert_match(/hour: hour changed '1'.* to '1,2'/, result.stdout, "err: #{agent}")
   end
   run_cron_on(agent,:list,'tstuser') do
     assert_match(/1 1,2 . . . .bin.true/, result.stdout, "err: #{agent}")
@@ -49,7 +49,7 @@ agents.each do |agent|
 
   step "Cron: allow changing time(array modification)"
   apply_manifest_on(agent, 'cron { "myjob": command => "/bin/true", user    => "tstuser", hour    => ["3","2"], minute  => [1], ensure  => present,}') do
-    assert_match(/hour: hour changed '1,2' to '3,2'/, result.stdout, "err: #{agent}")
+    assert_match(/hour: hour changed '1,2'.* to '3,2'/, result.stdout, "err: #{agent}")
   end
   run_cron_on(agent,:list,'tstuser') do
     assert_match(/1 3,2 . . . .bin.true/, result.stdout, "err: #{agent}")
