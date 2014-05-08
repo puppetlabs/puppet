@@ -15,6 +15,13 @@ Puppet::Face.define(:parser, '0.0.1') do
       This action validates Puppet DSL syntax without compiling a catalog or
       syncing any resources. If no manifest files are provided, it will
       validate the default site manifest.
+
+      When validating with --parser current, the validation stops after the first
+      encountered issue.
+
+      When validating with --parser future, multiple issues per file are reported up
+      to the settings of max_error, and max_warnings. The processing stops
+      after having reported issues for the first encountered file with errors.
     EOT
     examples <<-'EOT'
       Validate the default site manifest at /etc/puppet/manifests/site.pp:
@@ -54,10 +61,8 @@ Puppet::Face.define(:parser, '0.0.1') do
 
   # @api private
   def validate_manifest(manifest = nil)
-    configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
-    validation_environment = manifest ?
-      configured_environment.override_with(:manifest => manifest) :
-      configured_environment
+    env = Puppet.lookup(:current_environment)
+    validation_environment = manifest ? env.override_with(:manifest => manifest) : env
 
     validation_environment.known_resource_types.clear
 
