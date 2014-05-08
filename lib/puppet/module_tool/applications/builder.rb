@@ -69,11 +69,11 @@ module Puppet::ModuleTool
       def write_json
         metadata_path = File.join(build_path, 'metadata.json')
 
-        unless File.exist?(metadata_path)
-          # Legacy build: Metadata was parsed from Modulefile; write it out
-          File.open(metadata_path, 'w') do |f|
-            f.write(metadata.to_json)
-          end
+        # TODO: This may necessarily change the order in which the metadata.json
+        # file is packaged from what was written by the user.  This is a
+        # regretable, but required for now.
+        File.open(metadata_path, 'w') do |f|
+          f.write(metadata.to_json)
         end
 
         File.open(File.join(build_path, 'checksums.json'), 'w') do |f|

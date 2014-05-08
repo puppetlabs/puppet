@@ -5,6 +5,7 @@ module Puppet::ModuleTool
 
   class Dependency
     include Puppet::Network::FormatSupport
+    alias :to_json :to_pson
 
     attr_reader :full_module_name, :username, :name, :version_requirement, :repository
 
