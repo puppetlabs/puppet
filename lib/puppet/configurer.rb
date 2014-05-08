@@ -123,10 +123,6 @@ class Puppet::Configurer
     report
   end
 
-  def get_transaction_uuid
-    { :transaction_uuid => @transaction_uuid }
-  end
-
   # The code that actually runs the catalog.
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
@@ -146,7 +142,7 @@ class Puppet::Configurer
       unless options[:catalog]
         begin
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-              :environment => @environment, :ignore_cache => true)
+              :environment => @environment, :ignore_cache => true, :transaction_uuid => @transaction_uuid)
             if node.environment.to_s != @environment
               Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
               @environment = node.environment.to_s
@@ -163,8 +159,9 @@ class Puppet::Configurer
 
       query_options = get_facts(options) unless query_options
 
-      # add the transaction uuid to the catalog query options hash
-      query_options.merge! get_transaction_uuid if query_options
+      # get_facts returns nil during puppet apply
+      query_options ||= {}
+      query_options[:transaction_uuid] = @transaction_uuid
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
         return nil
