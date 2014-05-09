@@ -18,7 +18,9 @@ begun, and will be finished before the containing class is finished.
   scope.function_include(classes)
 
   classes.each do |class_name|
-    class_resource = scope.catalog.resource("Class", class_name)
+    # Remove global anchor since it is not part of the resource title and what was just
+    # included is then not found.
+    class_resource = scope.catalog.resource("Class", class_name.sub(/^::/, ''))
     if ! scope.catalog.edge?(scope.resource, class_resource)
       scope.catalog.add_edge(scope.resource, class_resource)
     end
