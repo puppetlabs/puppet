@@ -683,15 +683,71 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       # Resource default and override expressions and resource parameter access with []
       {
+        # Properties
         "notify { id: message=>explicit} Notify[id][message]"                   => "explicit",
         "Notify { message=>by_default} notify {foo:} Notify[foo][message]"      => "by_default",
         "notify {foo:} Notify[foo]{message =>by_override} Notify[foo][message]" => "by_override",
+        # Parameters
+        "notify { id: withpath=>explicit} Notify[id][withpath]"                 => "explicit",
+        "Notify { withpath=>by_default } notify { foo: } Notify[foo][withpath]" => "by_default",
+        "notify {foo:}
+         Notify[foo]{withpath=>by_override}
+         Notify[foo][withpath]"                                                 => "by_override",
+        # Metaparameters
         "notify { foo: tag => evoe} Notify[foo][tag]"                           => "evoe",
-        # Does not produce the defaults for tag
+        # Does not produce the defaults for tag parameter (title, type or names of scopes)
         "notify { foo: } Notify[foo][tag]"                                      => nil,
+        # But a default may be specified on the type
+        "Notify { tag=>by_default } notify { foo: } Notify[foo][tag]"           => "by_default",
+        "Notify { tag=>by_default }
+         notify { foo: }
+         Notify[foo]{ tag=>by_override }
+         Notify[foo][tag]"                                                      => "by_override",
       }.each do |source, result|
         it "should parse and evaluate the expression '#{source}' to #{result}" do
           parser.evaluate_string(scope, source, __FILE__).should == result
+        end
+      end
+
+      # Virtual and realized resource default and overridden resource parameter access with []
+      {
+        # Properties
+        "@notify { id: message=>explicit } Notify[id][message]"                 => "explicit",
+        "@notify { id: message=>explicit }
+         realize Notify[id]
+         Notify[id][message]"                                                   => "explicit",
+        "Notify { message=>by_default } @notify { id: } Notify[id][message]"    => "by_default",
+        "Notify { message=>by_default }
+         @notify { id: tag=>thisone }
+         Notify <| tag == thisone |>;
+         Notify[id][message]"                                                   => "by_default",
+        "@notify { id: } Notify[id]{message=>by_override} Notify[id][message]"  => "by_override",
+        # Parameters
+        "@notify { id: withpath=>explicit } Notify[id][withpath]"               => "explicit",
+        "Notify { withpath=>by_default }
+         @notify { id: }
+         Notify[id][withpath]"                                                  => "by_default",
+        "@notify { id: }
+         realize Notify[id]
+         Notify[id]{withpath=>by_override}
+         Notify[id][withpath]"                                                  => "by_override",
+        # Metaparameters
+        "@notify { id: tag=>explicit } Notify[id][tag]"                         => "explicit",
+      }.each do |source, result|
+        it "parses and evaluates virtual and realized resources in the expression '#{source}' to #{result}" do
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
+        end
+      end
+
+      # Exported resource attributes
+      {
+        "@@notify { id: message=>explicit } Notify[id][message]"                => "explicit",
+        "@@notify { id: message=>explicit, tag=>thisone }
+         Notify <<| tag == thisone |>>
+         Notify[id][message]"                                                   => "explicit",
+      }.each do |source, result|
+        it "parses and evaluates exported resources in the expression '#{source}' to #{result}" do
+          expect(parser.evaluate_string(scope, source, __FILE__)).to eq(result)
         end
       end
 
@@ -702,6 +758,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         # NOTE: these meta-esque parameters are not recognized as such
         "notify { id: message=>explicit} Notify[id][title]"   => /does not have a parameter called 'title'/,
         "notify { id: message=>explicit} Notify[id]['type']"   => /does not have a parameter called 'type'/,
+        "notify { id: message=>explicit } Notify[id]{message=>override}" => /'message' is already set on Notify\[id\]/
       }.each do |source, result|
         it "should parse '#{source}' and raise error matching #{result}" do
           expect { parser.evaluate_string(scope, source, __FILE__)}.to raise_error(result)
