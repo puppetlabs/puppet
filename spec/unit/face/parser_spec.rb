@@ -43,11 +43,9 @@ describe Puppet::Face[:parser, :current] do
     it "parses supplied manifest files in the context of a directory environment" do
       manifest = file_containing('test.pp', "{ invalid =>")
 
-      env_loader = Puppet::Environments::Static.new(
-        Puppet::Node::Environment.create(:special, [])
-      )
-      Puppet.override(:environments => env_loader) do
-        Puppet[:environment] = 'special'
+      env = Puppet::Node::Environment.create(:special, [])
+      env_loader = Puppet::Environments::Static.new(env)
+      Puppet.override({:environments => env_loader, :current_environment => env}) do
         expect { parser.validate(manifest) }.to exit_with(1)
       end
 
