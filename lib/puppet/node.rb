@@ -61,6 +61,10 @@ class Puppet::Node
       self.environment = env
       @environment
     else
+      # This should not be :current_environment, this is the default
+      # for a node when it has not specified its environment
+      # Tt will be used to establish what the current environment is.
+      #
       Puppet.lookup(:environments).get(Puppet[:environment])
     end
   end
