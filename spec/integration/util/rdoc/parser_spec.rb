@@ -127,6 +127,13 @@ end
     end.should_not(be_empty, "Could not match #{content_patterns} in any of the files found in #{glob}")
   end
 
+  around(:each) do |example|
+    env = Puppet::Node::Environment.create(:doc_test_env, [modules_dir], manifests_dir)
+    Puppet.override({:environments => Puppet::Environments::Static.new(env), :current_environment => env}) do
+      example.run
+    end
+  end
+
   before :each do
     prepare_manifests_and_modules
     Puppet.settings[:document_all] = document_all

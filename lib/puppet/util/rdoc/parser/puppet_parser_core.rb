@@ -24,7 +24,7 @@ module RDoc::PuppetParserCore
 
   # main entry point
   def scan
-    environment = Puppet.lookup(:environments).get(Puppet[:environment])
+    environment = Puppet.lookup(:current_environment)
     known_resource_types = environment.known_resource_types
     unless known_resource_types.watching_file?(@input_file_name)
       Puppet.info "rdoc: scanning #{@input_file_name}"
