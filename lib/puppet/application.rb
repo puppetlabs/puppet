@@ -354,6 +354,10 @@ class Application
     end
 
     Puppet.override(Puppet.base_context(Puppet.settings)) do
+      # This use of configured environment is correct, this is used to establish
+      # the defaults for an application that does not override, or where an override
+      # has not been made from the command line.
+      #
       configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
       configured_environment = configured_environment.override_from_commandline(Puppet.settings)
 
