@@ -9,9 +9,6 @@ class Puppet::Util::Windows::RootCerts
   include Enumerable
   extend FFI::Library
 
-  typedef :ulong, :dword
-  typedef :uintptr_t, :handle
-
   def initialize(roots)
     @roots = roots
   end
@@ -59,9 +56,16 @@ class Puppet::Util::Windows::RootCerts
 
   private
 
-  # typedef ULONG_PTR HCRYPTPROV_LEGACY;
   # typedef void *HCERTSTORE;
 
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa377189(v=vs.85).aspx
+  # typedef struct _CERT_CONTEXT {
+  #   DWORD      dwCertEncodingType;
+  #   BYTE       *pbCertEncoded;
+  #   DWORD      cbCertEncoded;
+  #   PCERT_INFO pCertInfo;
+  #   HCERTSTORE hCertStore;
+  # } CERT_CONTEXT, *PCERT_CONTEXT;typedef const CERT_CONTEXT *PCCERT_CONTEXT;
   class CERT_CONTEXT < FFI::Struct
     layout(
       :dwCertEncodingType, :dword,
@@ -72,15 +76,18 @@ class Puppet::Util::Windows::RootCerts
     )
   end
 
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376560(v=vs.85).aspx
   # HCERTSTORE
   # WINAPI
   # CertOpenSystemStoreA(
   #   __in_opt HCRYPTPROV_LEGACY hProv,
   #   __in LPCSTR szSubsystemProtocol
   #   );
+  # typedef ULONG_PTR HCRYPTPROV_LEGACY;
   ffi_lib :crypt32
-  attach_function :CertOpenSystemStoreA, [:pointer, :string], :handle
+  attach_function :CertOpenSystemStoreA, [:ulong_ptr, :lpcstr], :handle
 
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376050(v=vs.85).aspx
   # PCCERT_CONTEXT
   # WINAPI
   # CertEnumCertificatesInStore(
@@ -90,6 +97,7 @@ class Puppet::Util::Windows::RootCerts
   ffi_lib :crypt32
   attach_function :CertEnumCertificatesInStore, [:handle, :pointer], :pointer
 
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376026(v=vs.85).aspx
   # BOOL
   # WINAPI
   # CertCloseStore(

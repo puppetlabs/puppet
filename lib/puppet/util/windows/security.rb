@@ -564,8 +564,8 @@ module Puppet::Util::Windows::Security
           owner = sid_ptr_to_string(owner_sid.unpack('L')[0])
           group = sid_ptr_to_string(group_sid.unpack('L')[0])
 
-          control = FFI::MemoryPointer.new(:uint16, 1)
-          revision = FFI::MemoryPointer.new(:uint32, 1)
+          control = FFI::MemoryPointer.new(:word, 1)
+          revision = FFI::MemoryPointer.new(:dword, 1)
           ffsd = FFI::Pointer.new(ppsd.unpack('L')[0])
 
           if ! API.get_security_descriptor_control(ffsd, control, revision)
@@ -636,9 +636,11 @@ module Puppet::Util::Windows::Security
 
   module API
     extend FFI::Library
-    ffi_lib 'kernel32'
     ffi_convention :stdcall
 
+    # http://msdn.microsoft.com/en-us/library/windows/hardware/ff556610(v=vs.85).aspx
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379561(v=vs.85).aspx
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446647(v=vs.85).aspx
     # typedef WORD SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
     # BOOL WINAPI GetSecurityDescriptorControl(
     #   _In_   PSECURITY_DESCRIPTOR pSecurityDescriptor,
@@ -646,6 +648,7 @@ module Puppet::Util::Windows::Security
     #   _Out_  LPDWORD lpdwRevision
     # );
     ffi_lib :advapi32
-    attach_function :get_security_descriptor_control, :GetSecurityDescriptorControl, [:pointer, :pointer, :pointer], :bool
+    attach_function :get_security_descriptor_control, :GetSecurityDescriptorControl,
+      [:pointer, :lpword, :lpdword], :bool
   end
 end

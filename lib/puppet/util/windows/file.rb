@@ -15,8 +15,8 @@ module Puppet::Util::Windows::File
       source_encoded,
       backup_file,
       flags,
-      0,
-      0
+      FFI::Pointer::NULL,
+      FFI::Pointer::NULL
     )
 
     return true if result
@@ -37,7 +37,6 @@ module Puppet::Util::Windows::File
 
   module API
     extend FFI::Library
-    ffi_lib 'kernel32'
     ffi_convention :stdcall
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365512(v=vs.85).aspx
@@ -51,8 +50,9 @@ module Puppet::Util::Windows::File
     #   _Reserved_  LPVOID lpExclude,
     #   _Reserved_  LPVOID lpReserved
     # );
+    ffi_lib 'kernel32'
     attach_function :replace_file, :ReplaceFileW,
-      [:buffer_in, :buffer_in, :buffer_in, :uint, :uint, :uint], :bool
+      [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpvoid, :lpvoid], :bool
 
     # BOOLEAN WINAPI CreateSymbolicLink(
     #   _In_  LPTSTR lpSymlinkFileName, - symbolic link to be created
@@ -61,16 +61,18 @@ module Puppet::Util::Windows::File
     # );
     # rescue on Windows < 6.0 so that code doesn't explode
     begin
+      ffi_lib 'kernel32'
       attach_function :create_symbolic_link, :CreateSymbolicLinkW,
-        [:buffer_in, :buffer_in, :uint], :bool
+        [:lpwstr, :lpwstr, :dword], :bool
     rescue LoadError
     end
 
     # DWORD WINAPI GetFileAttributes(
     #   _In_  LPCTSTR lpFileName
     # );
+    ffi_lib 'kernel32'
     attach_function :get_file_attributes, :GetFileAttributesW,
-      [:buffer_in], :uint
+      [:lpcwstr], :dword
 
     # HANDLE WINAPI CreateFile(
     #   _In_      LPCTSTR lpFileName,
@@ -81,8 +83,9 @@ module Puppet::Util::Windows::File
     #   _In_      DWORD dwFlagsAndAttributes,
     #   _In_opt_  HANDLE hTemplateFile
     # );
+    ffi_lib 'kernel32'
     attach_function :create_file, :CreateFileW,
-      [:buffer_in, :uint, :uint, :pointer, :uint, :uint, :uint], :uint
+      [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa363216(v=vs.85).aspx
     # BOOL WINAPI DeviceIoControl(
@@ -95,8 +98,9 @@ module Puppet::Util::Windows::File
     #   _Out_opt_    LPDWORD lpBytesReturned,
     #   _Inout_opt_  LPOVERLAPPED lpOverlapped
     # );
+    ffi_lib 'kernel32'
     attach_function :device_io_control, :DeviceIoControl,
-      [:uint, :uint, :pointer, :uint, :pointer, :uint, :pointer, :pointer], :bool
+      [:handle, :dword, :lpvoid, :dword, :lpvoid, :dword, :lpdword, :pointer], :bool
 
     MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
 
@@ -105,22 +109,25 @@ module Puppet::Util::Windows::File
     # http://msdn.microsoft.com/en-us/library/windows/hardware/ff552012(v=vs.85).aspx
     # struct is always MAXIMUM_REPARSE_DATA_BUFFER_SIZE bytes
     class ReparseDataBuffer < FFI::Struct
-      layout :reparse_tag, :uint,
+      layout :reparse_tag, :win32_ulong,
              :reparse_data_length, :ushort,
              :reserved, :ushort,
              :substitute_name_offset, :ushort,
              :substitute_name_length, :ushort,
              :print_name_offset, :ushort,
              :print_name_length, :ushort,
-             :flags, :uint,
+             :flags, :win32_ulong,
              # max less above fields dword / uint 4 bytes, ushort 2 bytes
-             :path_buffer, [:uchar, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
+             # technically a WCHAR buffer, but we care about size in bytes here
+             :path_buffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
     end
 
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
     # BOOL WINAPI CloseHandle(
     #   _In_  HANDLE hObject
     # );
-    attach_function :close_handle, :CloseHandle, [:uint], :bool
+    ffi_lib 'kernel32'
+    attach_function :close_handle, :CloseHandle, [:handle], :bool
   end
 
   def symlink(target, symlink)
@@ -165,7 +172,7 @@ module Puppet::Util::Windows::File
       io_control_code,
       in_buffer, in_buffer.nil? ? 0 : in_buffer.size,
       out_buffer, out_buffer.size,
-      FFI::MemoryPointer.new(:uint, 1),
+      FFI::MemoryPointer.new(:dword, 1),
       nil
     )
 

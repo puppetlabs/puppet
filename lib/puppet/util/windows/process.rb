@@ -13,18 +13,17 @@ module Puppet::Util::Windows::Process
     extend FFI::Library
     ffi_convention :stdcall
 
-    ffi_lib 'kernel32'
-
     # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
     # HANDLE WINAPI GetCurrentProcess(void);
-    attach_function :get_current_process, :GetCurrentProcess, [], :uint
+    ffi_lib 'kernel32'
+    attach_function :get_current_process, :GetCurrentProcess, [], :handle
 
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
     # BOOL WINAPI CloseHandle(
     #   _In_  HANDLE hObject
     # );
-    attach_function :close_handle, :CloseHandle, [:uint], :bool
-
-    ffi_lib 'advapi32'
+    ffi_lib 'kernel32'
+    attach_function :close_handle, :CloseHandle, [:handle], :bool
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
     # BOOL WINAPI OpenProcessToken(
@@ -32,8 +31,9 @@ module Puppet::Util::Windows::Process
     #   _In_   DWORD DesiredAccess,
     #   _Out_  PHANDLE TokenHandle
     # );
+    ffi_lib 'advapi32'
     attach_function :open_process_token, :OpenProcessToken,
-      [:uint, :uint, :pointer], :bool
+      [:handle, :dword, :phandle], :bool
 
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
@@ -42,8 +42,8 @@ module Puppet::Util::Windows::Process
     #   LONG  HighPart;
     # } LUID, *PLUID;
     class LUID < FFI::Struct
-      layout :low_part, :uint,
-             :high_part, :int
+      layout :low_part, :dword,
+             :high_part, :win32_long
     end
 
     # http://msdn.microsoft.com/en-us/library/Windows/desktop/aa379180(v=vs.85).aspx
@@ -52,8 +52,9 @@ module Puppet::Util::Windows::Process
     #   _In_      LPCTSTR lpName,
     #   _Out_     PLUID lpLuid
     # );
+    ffi_lib 'advapi32'
     attach_function :lookup_privilege_value, :LookupPrivilegeValueA,
-      [:string, :string, :pointer], :bool
+      [:lpcstr, :lpcstr, :pointer], :bool
 
     Token_Information = enum(
         :token_user, 1,
@@ -94,7 +95,7 @@ module Puppet::Util::Windows::Process
     # } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
     class LUID_And_Attributes < FFI::Struct
       layout :luid, LUID,
-             :attributes, :uint
+             :attributes, :dword
     end
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379630(v=vs.85).aspx
@@ -103,7 +104,7 @@ module Puppet::Util::Windows::Process
     #   LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
     # } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
     class Token_Privileges < FFI::Struct
-      layout :privilege_count, :uint,
+      layout :privilege_count, :dword,
              :privileges, [LUID_And_Attributes, 1]    # placeholder for offset
     end
 
@@ -115,8 +116,9 @@ module Puppet::Util::Windows::Process
     #   _In_       DWORD TokenInformationLength,
     #   _Out_      PDWORD ReturnLength
     # );
+    ffi_lib 'advapi32'
     attach_function :get_token_information, :GetTokenInformation,
-      [:uint, Token_Information, :pointer, :uint, :pointer ], :bool
+      [:handle, Token_Information, :lpvoid, :dword, :pdword ], :bool
   end
 
   def execute(command, arguments, stdin, stdout, stderr)
@@ -152,7 +154,7 @@ module Puppet::Util::Windows::Process
   module_function :get_current_process
 
   def open_process_token(handle, desired_access)
-    token_handle_ptr = FFI::MemoryPointer.new(:uint, 1)
+    token_handle_ptr = FFI::MemoryPointer.new(:handle, 1)
     result = API.open_process_token(handle, desired_access, token_handle_ptr)
     if !result
       raise Puppet::Util::Windows::Error.new(
@@ -183,7 +185,7 @@ module Puppet::Util::Windows::Process
 
   def get_token_information(token_handle, token_information)
     # to determine buffer size
-    return_length_ptr = FFI::MemoryPointer.new(:uint, 1)
+    return_length_ptr = FFI::MemoryPointer.new(:dword, 1)
     result = API.get_token_information(token_handle, token_information, nil, 0, return_length_ptr)
     return_length = return_length_ptr.read_uint
 
