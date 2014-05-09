@@ -149,6 +149,8 @@ module Puppet
       elsif options[:environment].is_a?(Puppet::Node::Environment)
         options[:environment]
       elsif options[:environment]
+        # This use of looking up an environment is correct since it honours
+        # a reguest to get a particular environment via environment name.
         Puppet.lookup(:environments).get(options[:environment])
       else
         Puppet.lookup(:current_environment)
