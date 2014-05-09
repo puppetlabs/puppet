@@ -28,7 +28,7 @@ agents.each do |agent|
 
   step "Zone: path - should change the path if it is switched before install"
   apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt2" }') do
-    assert_match(/path changed '.tstzones.mnt' to '.tstzones.mnt2'/, result.stdout, "err: #{agent}")
+    assert_match(/path changed '.tstzones.mnt'.* to '.tstzones.mnt2'/, result.stdout, "err: #{agent}")
   end
 
   step "Zone: path - verify the path is correct"
@@ -38,7 +38,7 @@ agents.each do |agent|
 
   step "Zone: path - revert to original path"
   apply_manifest_on(agent, 'zone {tstzone : ensure=>configured, iptype=>shared, path=>"/tstzones/mnt" }') do
-    assert_match(/path changed '.tstzones.mnt2' to '.tstzones.mnt'/, result.stdout, "err: #{agent}")
+    assert_match(/path changed '.tstzones.mnt2'.* to '.tstzones.mnt'/, result.stdout, "err: #{agent}")
   end
 
   step "Zone: path - verify that we have correct path"

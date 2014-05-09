@@ -27,7 +27,7 @@ agents.each do |agent|
 
   step "ZFS: change mount point and verify"
   apply_manifest_on(agent, 'zfs {"tstpool/tstfs": ensure=>present,  mountpoint=>"/ztstpool/mnt2"}') do
-    assert_match( /mountpoint changed '.ztstpool.mnt' to '.ztstpool.mnt2'/, result.stdout, "err: #{agent}")
+    assert_match( /mountpoint changed '.ztstpool.mnt'.* to '.ztstpool.mnt2'/, result.stdout, "err: #{agent}")
   end
 
   step "ZFS: change mount point and verify idempotence"

@@ -20,9 +20,9 @@ agents.each do |agent|
     assert_match( /.*/, result.stdout, "err: #{agent}")
   end
 
-  step "SMF: ensre it is created with a manifest"
+  step "SMF: ensure it is created with a manifest"
   apply_manifest_on(agent, 'service {tstapp : ensure=>running, manifest=>"%s"}' % manifest) do
-    assert_match( / ensure changed 'stopped' to 'running'/, result.stdout, "err: #{agent}")
+    assert_match( / ensure changed 'stopped'.* to 'running'/, result.stdout, "err: #{agent}")
   end
   step "SMF: verify it with puppet"
   on agent, "puppet resource service tstapp" do
@@ -35,6 +35,6 @@ agents.each do |agent|
   end
   step "SMF: stop the service"
   apply_manifest_on(agent, 'service {tstapp : ensure=>stopped}') do
-    assert_match( /changed 'running' to 'stopped'/, result.stdout, "err: #{agent}")
+    assert_match( /changed 'running'.* to 'stopped'/, result.stdout, "err: #{agent}")
   end
 end
