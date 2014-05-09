@@ -18,30 +18,12 @@ The `include` function does not cause classes to be contained in the class
 where they are declared. For that, see the `contain` function. It also
 does not create a dependency relationship between the declared class and the
 surrounding class; for that, see the `require` function.") do |vals|
-    if vals.is_a?(Array)
-      # Protect against array inside array
-      vals = vals.flatten
-    else
-      vals = [vals]
-    end
+  if vals.is_a?(Array)
+    # Protect against array inside array
+    vals = vals.flatten
+  else
+    vals = [vals]
+  end
 
-    # The 'false' disables lazy evaluation.
-    klasses = compiler.evaluate_classes(vals, self, false)
-
-    missing = vals.find_all do |klass|
-      ! klasses.include?(klass)
-    end
-
-    unless missing.empty?
-      # Throw an error if we didn't evaluate all of the classes.
-      str = "Could not find class"
-      str += "es" if missing.length > 1
-
-      str += " " + missing.join(", ")
-
-      if n = namespaces and ! n.empty? and n != [""]
-        str += " in namespaces #{@namespaces.join(", ")}"
-      end
-      self.fail Puppet::ParseError, str
-    end
+  compiler.evaluate_classes(vals, self, false)
 end

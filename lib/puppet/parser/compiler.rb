@@ -197,6 +197,7 @@ class Puppet::Parser::Compiler
   # for more detail.  --jeffweiss 26 apr 2012
   def evaluate_classes(classes, scope, lazy_evaluate = true, fqname = false)
     raise Puppet::DevError, "No source for scope passed to evaluate_classes" unless scope.source
+    resources = []
     class_parameters = nil
     # if we are a param class, save the classes hash
     # and transform classes to be the keys
@@ -213,17 +214,23 @@ class Puppet::Parser::Compiler
         if class_parameters
           resource = klass.ensure_in_catalog(scope, class_parameters[name] || {})
         else
-          next if scope.class_scope(klass)
+          if scope.class_scope(klass)
+            resources << scope.class_scope(klass).resource
+            next
+          end
           resource = klass.ensure_in_catalog(scope)
         end
 
         # If they've disabled lazy evaluation (which the :include function does),
         # then evaluate our resource immediately.
         resource.evaluate unless lazy_evaluate
+        resources << resource
       else
         raise Puppet::Error, "Could not find class #{name} for #{node.name}"
       end
     end
+
+    resources
   end
 
   def evaluate_relationships

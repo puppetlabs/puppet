@@ -15,14 +15,14 @@ begun, and will be finished before the containing class is finished.
 ) do |classes|
   scope = self
 
-  scope.function_include(classes)
+  included = scope.function_include(classes)
 
-  classes.each do |class_name|
+  included.each do |resource|
     # Remove global anchor since it is not part of the resource title and what was just
     # included is then not found.
-    class_resource = scope.catalog.resource("Class", class_name.sub(/^::/, ''))
-    if ! scope.catalog.edge?(scope.resource, class_resource)
-      scope.catalog.add_edge(scope.resource, class_resource)
+    #class_resource = scope.catalog.resource("Class", class_name.sub(/^::/, ''))
+    if ! scope.catalog.edge?(scope.resource, resource)
+      scope.catalog.add_edge(scope.resource, resource)
     end
   end
 end
