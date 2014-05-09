@@ -1,6 +1,14 @@
 require 'ffi'
 
 module Puppet::Util::Windows::APITypes
+  module ::FFI::Library
+    # Wrapper method for attach_function + private
+    def attach_function_private(*args)
+      attach_function(*args)
+      private args[0]
+    end
+  end
+
   # FFI Types
   # https://github.com/ffi/ffi/wiki/Types
 

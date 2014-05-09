@@ -54,8 +54,7 @@ class Puppet::Util::Windows::RootCerts
     certs
   end
 
-  private
-
+  ffi_convention :stdcall
   # typedef void *HCERTSTORE;
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa377189(v=vs.85).aspx
@@ -85,7 +84,7 @@ class Puppet::Util::Windows::RootCerts
   #   );
   # typedef ULONG_PTR HCRYPTPROV_LEGACY;
   ffi_lib :crypt32
-  attach_function :CertOpenSystemStoreA, [:ulong_ptr, :lpcstr], :handle
+  attach_function_private :CertOpenSystemStoreA, [:ulong_ptr, :lpcstr], :handle
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376050(v=vs.85).aspx
   # PCCERT_CONTEXT
@@ -95,7 +94,7 @@ class Puppet::Util::Windows::RootCerts
   #   __in_opt PCCERT_CONTEXT pPrevCertContext
   #   );
   ffi_lib :crypt32
-  attach_function :CertEnumCertificatesInStore, [:handle, :pointer], :pointer
+  attach_function_private :CertEnumCertificatesInStore, [:handle, :pointer], :pointer
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376026(v=vs.85).aspx
   # BOOL
@@ -105,5 +104,5 @@ class Puppet::Util::Windows::RootCerts
   #   __in DWORD dwFlags
   #   );
   ffi_lib :crypt32
-  attach_function :CertCloseStore, [:handle, :dword], :bool
+  attach_function_private :CertCloseStore, [:handle, :dword], :bool
 end
