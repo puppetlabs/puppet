@@ -15,12 +15,15 @@ class Puppet::FileSystem::MemoryFile
     new(path, :exist? => true, :executable? => true)
   end
 
-  def self.a_directory(path, children = [])
+  def self.a_directory(path, children = [], options = {})
     new(path,
-        :exist? => true,
-        :excutable? => true,
-        :directory? => true,
-        :children => children)
+        options.merge({
+          :exist? => true,
+          :excutable? => true,
+          :directory? => true,
+          :children => children,
+        })
+       )
   end
 
   def initialize(path, properties)
@@ -34,6 +37,7 @@ class Puppet::FileSystem::MemoryFile
   def directory?; @properties[:directory?]; end
   def exist?; @properties[:exist?]; end
   def executable?; @properties[:executable?]; end
+  def ctime; @properties[:ctime]; end
 
   def each_line(&block)
     handle.each_line(&block)
