@@ -48,6 +48,15 @@ module Puppet::Environments
   #     we are looking up
   #   @return [Puppet::Setting::EnvironmentConf, nil] the configuration for the
   #     requested environment, or nil if not found or no configuration is available
+  #
+  # @!macro [new] loader_get_environment_dir
+  #   Attempt to obtain the parent environment dir of a given environment.  Only the
+  #     directories environments can provide this value.
+  #
+  #   @param name [String,Symbol] The name of the environment whose configuration
+  #     we are looking up
+  #   @return [String, nil] the path to the environment directory for the
+  #     requested environment, or nil if not found or no directory is available
 
   # A source of pre-defined environments.
   #
@@ -87,6 +96,13 @@ module Puppet::Environments
       else
         nil
       end
+    end
+
+    # @note There's no environment dir per definition in static environments
+    #
+    # @!macro loader_get_environment_dir
+    def get_environment_dir(name)
+      nil
     end
   end
 
@@ -149,6 +165,13 @@ module Puppet::Environments
     #
     # @!macro loader_get_conf
     def get_conf(name)
+      nil
+    end
+
+    # @note There's no environment dir per definition in legacy environments
+    #
+    # @!macro loader_get_environment_dir
+    def get_environment_dir(name)
       nil
     end
   end
@@ -217,6 +240,17 @@ module Puppet::Environments
       nil
     end
 
+    # @!macro loader_get_environment_dir
+    def get_environment_dir(name)
+      valid_directories.each do |envdir|
+        envname = Puppet::FileSystem.basename_string(envdir)
+        if envname == name.to_s
+          return envdir
+        end
+      end
+      nil
+    end
+
     private
 
     def valid_directories
@@ -264,6 +298,16 @@ module Puppet::Environments
       @loaders.each do |loader|
         if conf = loader.get_conf(name)
           return conf
+        end
+      end
+      nil
+    end
+
+    # @!macro loader_get_environment_dir
+    def get_environment_dir(name)
+      @loaders.each do |loader|
+        if envdir = loader.get_environment_dir(name)
+          return envdir
         end
       end
       nil

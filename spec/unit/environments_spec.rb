@@ -106,6 +106,19 @@ describe Puppet::Environments do
       end
     end
 
+    it "returns a given environment directory" do
+      directory_tree = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+        FS::MemoryFile.a_directory("env1", [
+          FS::MemoryFile.a_missing_file("environment.conf"),
+        ])
+      ])
+
+      loader_from(:filesystem => [directory_tree],
+                  :directory => directory_tree) do |loader|
+        expect(loader.get_environment_dir("env1")).to eq(Puppet::FileSystem.children(directory_tree).first)
+      end
+    end
+
     context "with an environment.conf" do
       let(:envdir) do
         FS::MemoryFile.a_directory(File.expand_path("envdir"), [
