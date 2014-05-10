@@ -74,6 +74,10 @@ class Puppet::FileSystem::MemoryImpl
     Stat.new(assert_path(path).ctime)
   end
 
+  def touch(path)
+    assert_path(path).touch
+  end
+
   private
 
   def find(path)

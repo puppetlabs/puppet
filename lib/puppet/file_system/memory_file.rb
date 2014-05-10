@@ -39,6 +39,10 @@ class Puppet::FileSystem::MemoryFile
   def executable?; @properties[:executable?]; end
   def ctime; @properties[:ctime]; end
 
+  def touch
+    @properties[:ctime] = Time.now
+  end
+
   def each_line(&block)
     handle.each_line(&block)
   end
