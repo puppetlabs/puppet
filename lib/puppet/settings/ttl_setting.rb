@@ -4,6 +4,7 @@
 #
 class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
   INFINITY = 1.0 / 0.0
+  MANUAL = -INFINITY
 
   # How we convert from various units to seconds.
   UNITMAP = {
@@ -30,8 +31,11 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
   # Convert the value to Numeric, parsing numeric string with units if necessary.
   def self.munge(value, param_name)
     case
+    when value == 'manual'
+      MANUAL
+
     when value.is_a?(Numeric)
-      if value < 0
+      if value < 0 && value != MANUAL
         raise Puppet::Settings::ValidationError, "Invalid negative 'time to live' #{value.inspect} - did you mean 'unlimited'?"
       end
       value
