@@ -349,6 +349,136 @@ config_version=$vardir/random/scripts
     end
   end
 
+  describe "with a cache" do
+
+    ORIGIN = Time.at(12345678)
+
+    before :each do
+      Time.stubs(:now).returns(ORIGIN)
+    end
+
+    describe "which never expires" do
+      content = <<-EOF
+  environment_timeout = unlimited
+  manifest=relative/manifest
+  modulepath=relative/modules
+  config_version=relative/script
+      EOF
+
+      let(:envdir) {
+        envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+          FS::MemoryFile.a_directory("env1", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", content),
+            FS::MemoryFile.a_directory("modules"),
+            FS::MemoryFile.a_directory("manifests"),
+          ]),
+        ])
+      }
+
+      it "never expires" do
+        cached_loader_from(:filesystem => envdir,
+                           :directory => envdir) do |loader|
+          original = loader.get("env1")
+          Time.stubs(:now).returns(ORIGIN + 10 * 86400 * 365)
+          expect(loader.get("env1")).to equal(original)
+        end
+      end
+    end
+
+    describe "which expires with a ttl" do
+      content = <<-EOF
+  environment_timeout = 5s
+  manifest=relative/manifest
+  modulepath=relative/modules
+  config_version=relative/script
+      EOF
+
+      let(:envdir) {
+        envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+          FS::MemoryFile.a_directory("env1", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", content),
+            FS::MemoryFile.a_directory("modules"),
+            FS::MemoryFile.a_directory("manifests"),
+          ]),
+        ])
+      }
+
+      it "has an environment_timeout" do
+        cached_loader_from(:filesystem => envdir,
+                           :directory => envdir) do |loader|
+          expect(loader.get_conf("env1").environment_timeout).to eq(5)
+        end
+      end
+
+      it "serves the cached environment" do
+        cached_loader_from(:filesystem => envdir,
+                           :directory => envdir) do |loader|
+          expect(loader.get("env1")).to equal(loader.get("env1"))
+        end
+      end
+
+      it "recreates the environment after the ttl" do
+        cached_loader_from(:filesystem => envdir,
+                           :directory => envdir) do |loader|
+          original = loader.get("env1")
+          Time.stubs(:now).returns(ORIGIN + 20)
+          expect(loader.get("env1")).not_to equal(original)
+        end
+      end
+    end
+
+    describe "manually flushed" do
+      content = <<-EOF
+  environment_timeout = manual
+  manifest=relative/manifest
+  modulepath=relative/modules
+  config_version=relative/script
+      EOF
+
+      let(:envdir) {
+        envdir = FS::MemoryFile.a_directory(File.expand_path("envdir"), [
+          FS::MemoryFile.a_directory("env1", [
+            FS::MemoryFile.a_regular_file_containing("environment.conf", content),
+            FS::MemoryFile.a_directory("modules"),
+            FS::MemoryFile.a_directory("manifests"),
+          ]),
+        ], :ctime => ORIGIN.to_i)
+      }
+
+      it "serves the cached environment" do
+        cached_loader_from(:filesystem => envdir,
+                           :directory => envdir) do |loader|
+          original = loader.get("env1")
+          Time.stubs(:now).returns(ORIGIN + 10 * 86400 * 365)
+          expect(loader.get("env1")).to equal(original)
+        end
+      end
+
+      it "recreates the environment when the environment directory is touched" do
+        cached_loader_from(:filesystem => envdir,
+                           :directory => envdir) do |loader|
+          original = loader.get("env1")
+          Time.stubs(:now).returns(ORIGIN + 20)
+          Puppet::FileSystem.touch(envdir.children.first)
+          Time.stubs(:now).returns(ORIGIN + 40)
+          expect(loader.get("env1")).not_to equal(original)
+          expect(loader.get("env1")).to equal(loader.get("env1"))
+        end
+      end
+
+      it "won't invalidate before waiting 1s" do
+        cached_loader_from(:filesystem => envdir,
+                           :directory => envdir) do |loader|
+          original = loader.get("env1")
+          Puppet::FileSystem.touch(envdir.children.first)
+          expect(loader.get("env1")).to equal(original)
+          Time.stubs(:now).returns(ORIGIN + 1)
+          expect(loader.get("env1")).not_to equal(original)
+        end
+      end
+    end
+  end
+
   RSpec::Matchers.define :environment do |name|
     match do |env|
       env.name == name &&
@@ -387,6 +517,18 @@ config_version=$vardir/random/scripts
         options[:directory],
         options[:modulepath] || []
       )
+      Puppet.override(:environments => environments) do
+        yield environments
+      end
+    end
+  end
+
+  def cached_loader_from(options, &block)
+    FS.overlay(*options[:filesystem]) do
+      environments = Puppet::Environments::Cached.new(Puppet::Environments::Directories.new(
+        options[:directory],
+        options[:modulepath] || []
+      ))
       Puppet.override(:environments => environments) do
         yield environments
       end

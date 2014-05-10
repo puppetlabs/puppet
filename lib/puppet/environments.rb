@@ -317,6 +317,7 @@ module Puppet::Environments
 
   class Cached < Combined
     INFINITY = 1.0 / 0.0
+    MANUAL = -INFINITY
 
     def initialize(*loaders)
       super
@@ -334,13 +335,11 @@ module Puppet::Environments
     end
 
     # Clears the cache of the environment with the given name.
-    # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear(name)
       @cache.delete(name)
     end
 
     # Clears all cached environments.
-    # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear_all()
       @cache = {}
     end
@@ -363,6 +362,9 @@ module Puppet::Environments
         NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
       when INFINITY
         Entry.new(env)              # Entry that never expires (avoids syscall to get time)
+      when MANUAL
+        # Entry that expires on demand (when the environment directory is touched)
+        ManualEntry.new(env, get_environment_dir(env.name))
       else
         TTLEntry.new(env, ttl)
       end
@@ -393,6 +395,48 @@ module Puppet::Environments
     class NotCachedEntry < Entry
       def expired?
         true
+      end
+    end
+
+    # File based eviction policy entry
+    # when the watched_file file mtime changes
+    # the entry is marked as expired
+    class ManualEntry < Entry
+
+      # how long (in seconds) to wait before
+      # being allowed to stat the watched_file
+      # again.
+      STAT_TIMEOUT = 1
+
+      def initialize(value, watched_file)
+        super value
+        unless Puppet::FileSystem.exist?(watched_file)
+          raise "Watched environment directory #{watched_file} doesn't exist"
+        end
+        @last_time = Time.now
+        @watched_file = watched_file
+        @watched_file_ctime = watched_file_ctime
+      end
+
+      def expired?
+        ctime = watched_file_ctime
+        result = @watched_file_ctime != ctime
+        @watched_file_ctime = ctime
+        result
+      end
+
+      private
+
+      # return the watched_file ctime, but limit the rate
+      # to 1/STAT_TIMEOUT calls to stat per seconds
+      def watched_file_ctime
+        now = Time.now
+        if @last_time + STAT_TIMEOUT <= now
+          @last_time = now
+          Puppet::FileSystem.stat(@watched_file).ctime
+        else
+          @watched_file_ctime
+        end
       end
     end
 
