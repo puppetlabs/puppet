@@ -224,7 +224,7 @@ class Puppet::Property < Puppet::Parameter
       elsif newvalue == :absent or newvalue == [:absent]
         return "undefined '#{name}' from #{self.class.format_value_for_display is_to_s(current_value)}"
       else
-        return "#{name} changed #{self.class.format_value_for_display is_to_s(current_value)} to #{self.class.format_value_for_display should_to_s(newvalue)}"
+        return "#{name} changed #{self.class.format_value_for_display is_to_s(current_value)} of type #{current_value.class} to #{self.class.format_value_for_display should_to_s(newvalue)} of type #{newvalue.class}"
       end
     rescue Puppet::Error, Puppet::DevError
       raise

@@ -93,6 +93,9 @@ module Puppet::Pops::Model
   #
   class UnaryMinusExpression < UnaryExpression; end
 
+  # Unfolds an array (a.k.a 'splat')
+  class UnfoldExpression < UnaryExpression; end
+
   # An assignment expression assigns a value to the lval() of the left_expr.
   #
   class AssignmentExpression < BinaryExpression

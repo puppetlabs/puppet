@@ -2,7 +2,11 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality
   include Puppet::Util::Package
 
-  desc "Package management via `apt-get`."
+  desc "Package management via `apt-get`.
+
+    This provider supports the `install_options` attribute, which allows command-line flags to be passed to apt-get.
+    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+    or an array where each element is either a string or a hash."
 
   has_feature :versionable, :install_options
 

@@ -20,7 +20,7 @@ module FileModeAssertions
 
   def assert_mode_change(agent, manifest, path, symbolic_mode, start_mode, expected_mode)
     testcase.apply_manifest_on(agent, manifest) do
-      assert_match(/mode changed '#{'%04o' % start_mode}' to '#{'%04o' % expected_mode}'/, testcase.stdout,
+      assert_match(/mode changed '#{'%04o' % start_mode}'.* to '#{'%04o' % expected_mode}'/, testcase.stdout,
                    "couldn't set mode to #{symbolic_mode}")
     end
 

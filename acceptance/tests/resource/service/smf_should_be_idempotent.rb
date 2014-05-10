@@ -18,7 +18,7 @@ agents.each do |agent|
 
   step "SMF: ensre it is created with a manifest"
   apply_manifest_on(agent, 'service {tstapp : ensure=>running, manifest=>"%s"}' % manifest) do
-    assert_match( / ensure changed 'stopped' to 'running'/, result.stdout, "err: #{agent}")
+    assert_match( / ensure changed 'stopped'.* to 'running'/, result.stdout, "err: #{agent}")
   end
 
   step "SMF: verify with svcs that the service is online"

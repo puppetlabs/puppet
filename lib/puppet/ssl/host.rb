@@ -222,8 +222,9 @@ To fix this, remove the certificate from both the master and the agent and then 
 On the master:
   puppet cert clean #{Puppet[:certname]}
 On the agent:
-  rm -f #{Puppet[:hostcert]}
-  puppet agent -t
+  1a. On most platforms: find #{Puppet[:ssldir]} -name #{Puppet[:certname]}.pem -delete
+  1b. On Windows: del "#{Puppet[:ssldir]}/#{Puppet[:certname]}.pem" /f
+  2. puppet agent -t
 ERROR_STRING
     end
   end

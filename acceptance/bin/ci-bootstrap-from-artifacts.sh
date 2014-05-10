@@ -12,9 +12,9 @@
 
 set -x
 
-# Use our internal rubygems mirror for the bundle install
+# If $GEM_SOURCE is not set, fall back to rubygems.org
 if [ -z $GEM_SOURCE ]; then
-  export GEM_SOURCE='http://rubygems.delivery.puppetlabs.net'
+  export GEM_SOURCE='https://rubygems.org'
 fi
 
 echo "SHA: ${SHA}"

@@ -7,6 +7,13 @@ describe 'InstallUtils' do
     include Puppet::Acceptance::InstallUtils
   end
 
+  class Platform < String
+
+    def with_version_codename
+      self
+    end
+  end
+
   class TestHost
     attr_accessor :config
     def initialize(config = {})
@@ -41,7 +48,7 @@ describe 'InstallUtils' do
       before do
         logger = mock('logger', :notify => nil)
         host.stubs(:logger).returns(logger)
-        host.config['platform'] = platform
+        host.config['platform'] = Platform.new(platform)
       end
 
       it "installs packages on a host" do
@@ -89,12 +96,38 @@ describe 'InstallUtils' do
     end
   end
 
+  describe "fetch_remote_dir" do
+    before do
+      logger = stub('logger', {:notify => nil, :debug => nil})
+      testcase.stubs(:logger).returns(logger)
+    end
+
+    it "calls wget with the right amount of cut dirs for url that ends in '/'" do
+      url = 'http://builds.puppetlabs.lan/puppet/7807591405af849da2ad6534c66bd2d4efff604f/repos/el/6/devel/x86_64/'
+      testcase.expects(:`).with("wget -nv -P dir --reject \"index.html*\",\"*.gif\" --cut-dirs=6 -np -nH --no-check-certificate -r #{url} 2>&1").returns("log")
+
+      expect( testcase.fetch_remote_dir(url, 'dir')).to eql('dir/x86_64')
+    end
+
+    it "calls wget with the right amount of cut dirs for url that doesn't end in '/'" do
+      url = 'http://builds.puppetlabs.lan/puppet/7807591405af849da2ad6534c66bd2d4efff604f/repos/apt/wheezy'
+      testcase.expects(:`).with("wget -nv -P dir --reject \"index.html*\",\"*.gif\" --cut-dirs=4 -np -nH --no-check-certificate -r #{url}/ 2>&1").returns("log")
+
+      expect( testcase.fetch_remote_dir(url, 'dir')).to eql('dir/wheezy')
+    end
+
+  end
+
   shared_examples_for :redhat_platforms do |platform,sha,files|
+    before do
+      host.config['platform'] = Platform.new(platform)
+    end
+
     it "fetches and installs repo configurations for #{platform}" do
-      host.config['platform'] = platform
       platform_configs_dir = "repo-configs/#{platform}"
 
-      rpm_file = files[:rpm]
+      rpm_url = files[:rpm][0]
+      rpm_file = files[:rpm][1]
       testcase.expects(:fetch).with(
         "http://yum.puppetlabs.com",
         rpm_file,
@@ -109,10 +142,21 @@ describe 'InstallUtils' do
         platform_configs_dir
       ).returns("#{platform_configs_dir}/#{repo_file}")
 
-      testcase.expects(:on).with(host, regexp_matches(/rm.*repo; rm.*rpm/))
+      repo_dir_url = files[:repo_dir][0]
+      repo_dir     = files[:repo_dir][1]
+      testcase.expects(:link_exists?).returns( true )
+      testcase.expects(:fetch_remote_dir).with(
+        repo_dir_url,
+        platform_configs_dir
+      ).returns("#{platform_configs_dir}/#{repo_dir}")
+      testcase.expects(:link_exists?).returns( true )
+  
+      testcase.expects(:on).with(host, regexp_matches(/rm.*repo; rm.*rpm; rm.*#{repo_dir}/))
       testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{rpm_file}", '/root')
       testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{repo_file}", '/root')
+      testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{repo_dir}", '/root')
       testcase.expects(:on).with(host, regexp_matches(%r{mv.*repo /etc/yum.repos.d}))
+      testcase.expects(:on).with(host, regexp_matches(%r{find /etc/yum.repos.d/ -name .*}))
       testcase.expects(:on).with(host, regexp_matches(%r{rpm.*/root/.*rpm}))
 
       testcase.install_repos_on(host, sha, 'repo-configs')
@@ -126,22 +170,36 @@ describe 'InstallUtils' do
       'el-6-i386',
       'abcdef10',
       {
-        :rpm => "puppetlabs-release-el-6.noarch.rpm",
+        :rpm => [
+          "http://yum.puppetlabs.com",
+          "puppetlabs-release-el-6.noarch.rpm",
+        ],
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
           "pl-puppet-abcdef10-el-6-i386.repo",
+        ],
+        :repo_dir => [
+          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/el/6/products/i386/",
+          "i386",
         ],
       },
     )
 
     it_should_behave_like(:redhat_platforms,
-      'fedora-18-x86_64',
+      'fedora-20-x86_64',
       'abcdef10',
       {
-        :rpm => "puppetlabs-release-fedora-18.noarch.rpm",
+        :rpm => [
+          "http://yum.puppetlabs.com",
+          "puppetlabs-release-fedora-20.noarch.rpm",
+        ],
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
-          "pl-puppet-abcdef10-fedora-f18-x86_64.repo",
+          "pl-puppet-abcdef10-fedora-f20-x86_64.repo",
+        ],
+        :repo_dir => [
+          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/fedora/f20/products/x86_64/",
+          "x86_64",
         ],
       },
     )
@@ -150,16 +208,23 @@ describe 'InstallUtils' do
       'centos-5-x86_64',
       'abcdef10',
       {
-        :rpm => "puppetlabs-release-el-5.noarch.rpm",
+        :rpm => [
+          "http://yum.puppetlabs.com",
+          "puppetlabs-release-el-5.noarch.rpm",
+        ],
         :repo => [
           "http://builds.puppetlabs.lan/puppet/abcdef10/repo_configs/rpm/",
           "pl-puppet-abcdef10-el-5-x86_64.repo",
+        ],
+        :repo_dir => [
+          "http://builds.puppetlabs.lan/puppet/abcdef10/repos/el/5/products/x86_64/",
+          "x86_64",
         ],
       },
     )
 
     it "installs on a debian host" do
-      host.config['platform'] = platform = 'ubuntu-precise-x86_64'
+      host.config['platform'] = platform = Platform.new('ubuntu-precise-x86_64')
       platform_configs_dir = "repo-configs/#{platform}"
 
       deb = "puppetlabs-release-precise.deb"
@@ -176,11 +241,19 @@ describe 'InstallUtils' do
         platform_configs_dir
       ).returns("#{platform_configs_dir}/#{list}")
 
-      testcase.expects(:on).with(host, regexp_matches(/rm.*list; rm.*deb/))
+      testcase.expects(:fetch_remote_dir).with(
+        "http://builds.puppetlabs.lan/puppet/#{sha}/repos/apt/precise",
+        platform_configs_dir
+      ).returns("#{platform_configs_dir}/precise")
+
+      testcase.expects(:on).with(host, regexp_matches(/rm.*list; rm.*deb; rm.*/))
       testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{deb}", '/root')
       testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/#{list}", '/root')
+      testcase.expects(:scp_to).with(host, "#{platform_configs_dir}/precise", '/root')
       testcase.expects(:on).with(host, regexp_matches(%r{mv.*list /etc/apt/sources.list.d}))
+      testcase.expects(:on).with(host, regexp_matches(%r{find /etc/apt/sources.list.d/ -name .*}))
       testcase.expects(:on).with(host, regexp_matches(%r{dpkg -i.*/root/.*deb}))
+      testcase.expects(:on).with(host, regexp_matches(%r{apt-get update}))
 
       testcase.install_repos_on(host, sha, 'repo-configs')
     end

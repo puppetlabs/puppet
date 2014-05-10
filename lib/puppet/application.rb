@@ -368,6 +368,7 @@ class Application
         exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
         exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
         exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+        exit_on_fail("log runtime debug info")                       { log_runtime_environment }
         exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
       end
     end
@@ -419,6 +420,26 @@ class Application
       application_routes = routes[name.to_s]
       Puppet::Indirector.configure_routes(application_routes) if application_routes
     end
+  end
+
+  # Output basic information about the runtime environment for debugging
+  # purposes.
+  #
+  # @api public
+  #
+  # @param extra_info [Hash{String => #to_s}] a flat hash of extra information
+  #   to log. Intended to be passed to super by subclasses.
+  # @return [void]
+  def log_runtime_environment(extra_info=nil)
+    runtime_info = {
+      'puppet_version' => Puppet.version,
+      'ruby_version'   => RUBY_VERSION,
+      'run_mode'       => self.class.run_mode.name,
+    }
+    runtime_info['default_encoding'] = Encoding.default_external if RUBY_VERSION >= '1.9.3'
+    runtime_info.merge!(extra_info) unless extra_info.nil?
+
+    Puppet.debug 'Runtime environment: ' + runtime_info.map{|k,v| k + '=' + v.to_s}.join(', ')
   end
 
   def parse_options

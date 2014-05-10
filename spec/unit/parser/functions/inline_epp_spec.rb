@@ -57,7 +57,7 @@ describe "the inline_epp function" do
   end
 
   it "renders a block expression" do
-    eval_template_with_args("<%= {($x) $x + 1} %>", 'x' => 2).should == "3"
+    eval_template_with_args("<%= { $y = $x $x + 1} %>", 'x' => 2).should == "3"
   end
 
   # although never a problem with epp

@@ -77,9 +77,9 @@ module Puppet
       defaultto "0"
 
       attr_reader :output
-      desc "The expected return code(s).  An error will be returned if the
-        executed command returns something else.  Defaults to 0. Can be
-        specified as an array of acceptable return codes or a single value."
+      desc "The expected exit code(s).  An error will be returned if the
+        executed command has some other exit code.  Defaults to 0. Can be
+        specified as an array of acceptable exit codes or a single value."
 
       # Make output a bit prettier
       def change_to_s(currentvalue, newvalue)
@@ -382,7 +382,7 @@ module Puppet
     newcheck(:unless) do
       desc <<-'EOT'
         If this parameter is set, then this `exec` will run unless
-        the command returns 0.  For example:
+        the command has an exit code of 0.  For example:
 
             exec { "/bin/echo root >> /usr/lib/cron/cron.allow":
               path   => "/usr/bin:/usr/sbin:/bin",
@@ -394,6 +394,8 @@ module Puppet
 
         Note that this command follows the same rules as the main command,
         which is to say that it must be fully qualified if the path is not set.
+        It also uses the same provider as the main command, so any behavior
+        that differs by provider will match.
       EOT
 
       validate do |cmds|
@@ -424,7 +426,7 @@ module Puppet
     newcheck(:onlyif) do
       desc <<-'EOT'
         If this parameter is set, then this `exec` will only run if
-        the command returns 0.  For example:
+        the command has an exit code of 0.  For example:
 
             exec { "logrotate":
               path   => "/usr/bin:/usr/sbin:/bin",
@@ -435,6 +437,8 @@ module Puppet
 
         Note that this command follows the same rules as the main command,
         which is to say that it must be fully qualified if the path is not set.
+        It also uses the same provider as the main command, so any behavior
+        that differs by provider will match.
 
         Also note that onlyif can take an array as its value, e.g.:
 

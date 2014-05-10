@@ -3,7 +3,7 @@
 
 # Fedora 17 ships with ruby 1.9, RHEL 7 with ruby 2.0, which use vendorlibdir instead
 # of sitelibdir. Adjust our target if installing on f17 or rhel7.
-%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7 || 0%{?amzn} >= 1
 %global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["vendorlibdir"]')
 %else
 %global puppet_libdir   %(ruby -rrbconfig -e 'puts RbConfig::CONFIG["sitelibdir"]')
@@ -49,7 +49,7 @@ Requires:       rubygem-json
 %if 0%{?fedora} || 0%{?rhel} >= 6
 %{!?_without_selinux:Requires: ruby(selinux), libselinux-utils}
 %else
-%if 0%{?rhel} && 0%{?rhel} == 5
+%if ( 0%{?rhel} && 0%{?rhel} == 5 ) || 0%{?amzn} >= 1
 %{!?_without_selinux:Requires: libselinux-ruby, libselinux-utils}
 %endif
 %endif

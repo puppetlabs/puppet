@@ -10,6 +10,11 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     This provider requires a `source` attribute when installing the package.
     It accepts paths to local files, mapped drives, or UNC paths.
 
+    This provider supports the `install_options` and `uninstall_options`
+    attributes, which allow command-line flags to be passed to the installer.
+    These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
+    or an array where each element is either a string or a hash.
+
     If the executable requires special arguments to perform a silent install or
     uninstall, then the appropriate arguments should be specified using the
     `install_options` or `uninstall_options` attributes, respectively.  Puppet

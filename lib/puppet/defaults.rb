@@ -57,7 +57,17 @@ module Puppet
       :default    => 'notice',
       :type       => :enum,
       :values     => ["debug","info","notice","warning","err","alert","emerg","crit"],
-      :desc       => "Default logging level",
+      :desc       => "Default logging level for messages from Puppet. Allowed values are:
+
+        * debug
+        * info
+        * notice
+        * warning
+        * err
+        * alert
+        * emerg
+        * crit
+        ",
     }
   )
 
@@ -358,8 +368,10 @@ module Puppet
     :environment_timeout => {
       :default    => "5s",
       :type       => :ttl,
-      :desc       => "The time to live for a cached environment. The time is either given #{AS_DURATION}, or
-      the word 'unlimited' which causes the environment to be cached until the master is restarted."
+      :desc       => "The time to live for a cached environment.
+      #{AS_DURATION}
+      This setting can also be set to `unlimited`, which causes the environment to
+      be cached until the master is restarted."
     },
     :queue_type => {
       :default    => "stomp",
@@ -477,8 +489,29 @@ module Puppet
     # We have to downcase the fqdn, because the current ssl stuff (as oppsed to in master) doesn't have good facilities for
     # manipulating naming.
     :certname => {
-      :default => Puppet::Settings.default_certname.downcase, :desc => "The name to use when handling certificates.  Defaults
-      to the fully qualified domain name.",
+      :default => Puppet::Settings.default_certname.downcase, :desc => "The name to use when handling certificates. When a node
+        requests a certificate from the CA puppet master, it uses the value of the
+        `certname` setting as its requested Subject CN.
+
+        This is the name used when managing a node's permissions in
+        [auth.conf](http://docs.puppetlabs.com/puppet/latest/reference/config_file_auth.html).
+        In most cases, it is also used as the node's name when matching
+        [node definitions](http://docs.puppetlabs.com/puppet/latest/reference/lang_node_definitions.html)
+        and requesting data from an ENC. (This can be changed with the `node_name_value`
+        and `node_name_fact` settings, although you should only do so if you have
+        a compelling reason.)
+
+        A node's certname is available in Puppet manifests as `$trusted['certname']`. (See
+        [Facts and Built-In Variables](http://docs.puppetlabs.com/puppet/latest/reference/lang_facts_and_builtin_vars.html)
+        for more details.)
+
+        * For best compatibility, you should limit the value of `certname` to
+          only use letters, numbers, periods, underscores, and dashes. (That is,
+          it should match `/\A[a-z0-9._-]+\Z/`.)
+        * The special value `ca` is reserved, and can't be used as the certname
+          for a normal node.
+
+        Defaults to the node's fully qualified domain name.",
       :call_hook => :on_define_and_write, # Call our hook with the default value, so we're always downcased
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
     :certdnsnames => {

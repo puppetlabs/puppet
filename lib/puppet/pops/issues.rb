@@ -470,4 +470,12 @@ module Puppet::Pops::Issues
   DISCONTINUED_IMPORT = hard_issue :DISCONTINUED_IMPORT do
     "Use of 'import' has been discontinued in favor of a manifest directory. See http://links.puppetlabs.com/puppet-import-deprecation"
   end
+
+  IDEM_EXPRESSION_NOT_LAST = issue :IDEM_EXPRESSION_NOT_LAST do
+    "This #{label.label(semantic)} is not productive. A non productive construct may only be placed last in a block/sequence"
+  end
+
+  IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
+    "This #{label.label(semantic)} is not productive. #{label.a_an_uc(container)} can not end with a non productive construct"
+  end
 end

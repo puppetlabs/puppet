@@ -1,4 +1,6 @@
 require 'open-uri'
+require 'open3'
+require 'uri'
 
 module Puppet
   module Acceptance
@@ -69,6 +71,34 @@ module Puppet
         return dst
       end
 
+      def fetch_remote_dir(url, dst_dir)
+        logger.notify "fetch_remote_dir (url: #{url}, dst_dir #{dst_dir})"
+        if url[-1, 1] !~ /\//
+          url += '/'
+        end
+        url = URI.parse(url)
+        chunks = url.path.split('/')
+        dst = File.join(dst_dir, chunks.last)
+        #determine directory structure to cut
+        #only want to keep the last directory, thus cut total number of dirs - 2 (hostname + last dir name)
+        cut = chunks.length - 2
+        wget_command = "wget -nv -P #{dst_dir} --reject \"index.html*\",\"*.gif\" --cut-dirs=#{cut} -np -nH --no-check-certificate -r #{url}"
+
+        logger.notify "Fetching remote directory: #{url}"
+        logger.notify "  and saving to #{dst}"
+        logger.notify "  using command: #{wget_command}"
+
+        #in ruby 1.9+ we can upgrade this to popen3 to gain access to the subprocess pid
+        result = `#{wget_command} 2>&1`
+        result.each_line do |line|
+          logger.debug(line)
+        end
+        if $?.to_i != 0
+          raise "Failed to fetch_remote_dir '#{url}' (exit code #{$?}"
+        end
+        dst
+      end
+
       def stop_firewall_on(host)
         case host['platform']
         when /debian/
@@ -85,7 +115,7 @@ module Puppet
       end
 
       def install_repos_on(host, sha, repo_configs_dir)
-        platform = host['platform']
+        platform = host['platform'].with_version_codename
         platform_configs_dir = File.join(repo_configs_dir,platform)
 
         case platform
@@ -115,12 +145,23 @@ module Puppet
               platform_configs_dir
             )
 
-            on host, "rm -rf /root/*.repo; rm -rf /root/*.rpm"
+            link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s%s/products/%s/" % [sha, variant, fedora_prefix, version, arch]
+            if not link_exists?(link)
+              link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s%s/devel/%s/" % [sha, variant, fedora_prefix, version, arch]
+            end
+            if not link_exists?(link)
+              raise "Unable to reach a repo directory at #{link}"
+            end
+            repo_dir = fetch_remote_dir(link, platform_configs_dir)
+
+            on host, "rm -rf /root/*.repo; rm -rf /root/*.rpm; rm -rf /root/#{arch}"
 
             scp_to host, rpm, '/root'
             scp_to host, repo, '/root'
+            scp_to host, repo_dir, '/root'
 
             on host, "mv /root/*.repo /etc/yum.repos.d"
+            on host, "find /etc/yum.repos.d/ -name \"*.repo\" -exec sed -i \"s/baseurl\\s*=\\s*http:\\/\\/builds.puppetlabs.lan.*$/baseurl=file:\\/\\/\\/root\\/#{arch}/\" {} \\;"
             on host, "rpm -Uvh --force /root/*.rpm"
 
           when /^(debian|ubuntu)-([^-]+)-(.+)$/
@@ -140,13 +181,18 @@ module Puppet
               platform_configs_dir
             )
 
-            on host, "rm -rf /root/*.list; rm -rf /root/*.deb"
+            repo_dir = fetch_remote_dir("http://builds.puppetlabs.lan/puppet/%s/repos/apt/%s" % [sha, version], platform_configs_dir)
+
+            on host, "rm -rf /root/*.list; rm -rf /root/*.deb; rm -rf /root/#{version}"
 
             scp_to host, deb, '/root'
             scp_to host, list, '/root'
+            scp_to host, repo_dir, '/root'
 
             on host, "mv /root/*.list /etc/apt/sources.list.d"
+            on host, "find /etc/apt/sources.list.d/ -name \"*.list\" -exec sed -i \"s/deb\\s\\+http:\\/\\/builds.puppetlabs.lan.*$/deb file:\\/\\/\\/root\\/#{version} #{version} main/\" {} \\;"
             on host, "dpkg -i --force-all /root/*.deb"
+            on host, "apt-get update"
           else
             host.logger.notify("No repository installation step for #{platform} yet...")
         end
