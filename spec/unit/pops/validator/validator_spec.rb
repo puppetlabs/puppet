@@ -141,6 +141,15 @@ describe "validating 4x" do
     end
   end
 
+  context 'for reserved words' do
+    ['function', 'private', 'type', 'attr'].each do |word|
+      it "produces an error for the word '#{word}'" do
+        source = "$a = #{word}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_WORD)
+      end
+    end
+  end
+
   def parse(source)
     Puppet::Pops::Parser::Parser.new().parse_string(source)
   end

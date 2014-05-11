@@ -19,6 +19,7 @@ token NUMBER
 token HEREDOC SUBLOCATE
 token RENDER_STRING RENDER_EXPR EPP_START EPP_END EPP_END_TRIM
 token FUNCTION
+token PRIVATE ATTR TYPE
 token LOW
 
 prechigh
@@ -153,7 +154,7 @@ primary_expression
   | hostclass_expression
   | node_definition_expression
   | epp_render_expression
-  | function_definition
+  | reserved_word
 
 # Allways have the same value
 literal_expression
@@ -599,8 +600,7 @@ node_definition_expression
 
 #---FUNCTION DEFINITION
 #
-function_definition
-  : FUNCTION { result = Factory.QNAME(val[0][:value]) ; loc result, val[0] }
+#function_definition
   # For now the function word will just be reserved, in the future it will
   # produce a function definition
   # FUNCTION classname parameter_list LBRACE opt_statements RBRACE {
@@ -643,6 +643,14 @@ parameter
 #
 variable
   : VARIABLE { result = Factory.fqn(val[0][:value]).var ; loc result, val[0] }
+
+#---RESERVED WORDS
+#
+reserved_word
+  : FUNCTION  { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
+  | PRIVATE   { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
+  | TYPE      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
+  | ATTR      { result = Factory.RESERVED(val[0][:value]) ; loc result, val[0] }
 
 #---LITERALS (dynamic and static)
 #

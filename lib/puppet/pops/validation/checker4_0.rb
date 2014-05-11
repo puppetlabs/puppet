@@ -346,6 +346,10 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  def check_ReservedWord(o)
+    acceptor.accept(Issues::RESERVED_WORD, o, :word => o.word)
+  end
+
   def check_SelectorExpression(o)
     rvalue(o.left_expr)
   end

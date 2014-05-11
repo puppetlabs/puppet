@@ -488,6 +488,11 @@ module Puppet::Pops::Model
     has_attr 'value', String, :lowerBound => 1
   end
 
+  # Represents a parsed reserved word
+  class ReservedWord < LiteralValue
+    has_attr 'word', String, :lowerBound => 1
+  end
+
   # A DSL CLASSREF (one or multiple parts separated by '::' where (at least) the first part starts with an upper case letter).
   #
   class QualifiedReference < LiteralValue
