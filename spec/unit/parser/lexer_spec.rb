@@ -850,7 +850,7 @@ end
 describe 'Puppet::Parser::Lexer handles reserved words' do
     ['function', 'private', 'attr', 'type'].each do |reserved_bare_word|
       it "by warning if '#{reserved_bare_word}' is used as bare word" do
-        Puppet.expects(:warning).once
+        Puppet.expects(:deprecation_warning).once
         expect(tokens_scanned_from(reserved_bare_word)).to eq([[:NAME, {:value=>reserved_bare_word, :line => 1}]])
       end
     end
