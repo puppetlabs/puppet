@@ -250,6 +250,10 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
     result
   end
 
+  def dump_ReservedWord o
+    [ 'reserved', o.word ]
+  end
+
   # Produces parameters as name, or (= name value)
   def dump_Parameter o
     name_part = "#{o.name}"

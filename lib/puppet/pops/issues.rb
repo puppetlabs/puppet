@@ -478,4 +478,8 @@ module Puppet::Pops::Issues
   IDEM_NOT_ALLOWED_LAST = hard_issue :IDEM_NOT_ALLOWED_LAST, :container do
     "This #{label.label(semantic)} is not productive. #{label.a_an_uc(container)} can not end with a non productive construct"
   end
+
+  RESERVED_WORD = hard_issue :RESERWED_WORD, :word do
+    "Use of reserved word: #{word}, must be quoted if intended to be a String value"
+  end
 end

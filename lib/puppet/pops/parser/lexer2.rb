@@ -127,6 +127,9 @@ class Puppet::Pops::Parser::Lexer2
     "in"       => [:IN,       'in',       2],
     "unless"   => [:UNLESS,   'unless',   6],
     "function" => [:FUNCTION, 'function', 8],
+    "type"     => [:TYPE,     'type',     4],
+    "attr"     => [:ATTR,     'attr',     4],
+    "private"  => [:PRIVATE,  'private',  7],
   }
   KEYWORDS.each {|k,v| v[1].freeze; v.freeze }
   KEYWORDS.freeze
