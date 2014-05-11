@@ -1,6 +1,6 @@
 source ENV['GEM_SOURCE'] || "https://rubygems.org"
 
-gem "beaker", "~> 1.10.0"
+gem "beaker", "~> 1.11.0"
 gem 'rake', "~> 10.1.0"
 
 group(:test) do
