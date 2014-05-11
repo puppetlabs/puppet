@@ -23,6 +23,18 @@ describe Puppet::Settings::TTLSetting do
     expect(ttl_setting.munge("manual")).to eq(Puppet::Settings::TTLSetting::MANUAL)
   end
 
+  it "allows unmunging manual" do
+    expect(Puppet::Settings::TTLSetting.unmunge(Puppet::Settings::TTLSetting::MANUAL)).to eq('manual')
+  end
+
+  it "allows unmunging unlimited" do
+    expect(Puppet::Settings::TTLSetting.unmunge(Puppet::Settings::TTLSetting::INFINITY)).to eq('unlimited')
+  end
+
+  it "allows unmunging numeric TTL" do
+    expect(Puppet::Settings::TTLSetting.unmunge(234523)).to eq('2d 17h 8m 43s')
+  end
+
   def ttl_setting
     Puppet::Settings::TTLSetting.new(:settings => mock('settings'),
                                       :name => "testing",

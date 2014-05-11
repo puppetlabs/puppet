@@ -49,4 +49,33 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
       raise Puppet::Settings::ValidationError, "Invalid 'time to live' format '#{value.inspect}' for parameter: #{param_name}"
     end
   end
+
+  def self.unmunge(ttl, param_name = 'unknown')
+    case
+    when ttl == MANUAL
+      'manual'
+    when ttl == INFINITY
+      'unlimited'
+    when ttl.is_a?(Numeric)
+      multiples = [UNITMAP['y'], UNITMAP['d'], UNITMAP['h'], UNITMAP['m'], UNITMAP['s']]
+      digits = []
+      multiples.inject(ttl.to_f.round) do |total, multiple|
+        # Divide into largest unit
+        digits << total / multiple
+        total % multiple # The remainder will be divided as the next largest
+      end
+
+      # format
+      units = ['y','d','h','m','s']
+      digits.zip(units).map { |v,u|
+        if v > 0
+          "#{v}#{u}"
+        else
+          nil
+        end
+      }.reject(&:nil?).join(" ")
+    else
+      raise Puppet::Settings::ValidationError, "Invalid 'time to live' format '#{ttl}' for parameter: #{param_name}"
+    end
+  end
 end
