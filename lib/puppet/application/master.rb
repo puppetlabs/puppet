@@ -162,7 +162,6 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def compile
-    Puppet::Util::Log.newdestination :console
     begin
       unless catalog = Puppet::Resource::Catalog.indirection.find(options[:node])
         raise "Could not compile catalog for #{options[:node]}"
