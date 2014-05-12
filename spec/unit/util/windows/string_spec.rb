@@ -50,5 +50,9 @@ describe "Puppet::Util::Windows::String", :if => Puppet.features.microsoft_windo
     it "should convert an UTF-32BE string" do
       converts_to_wide_string("bob\u00E8".encode(Encoding::UTF_32BE))
     end
+
+    it "should return a nil when given a nil" do
+      wide_string(nil).should == nil
+    end
   end
 end
