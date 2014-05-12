@@ -164,7 +164,7 @@ HELP
   end
 
   def run_command
-    return[:rdoc].include?(options[:mode]) ? send(options[:mode]) : other
+    return [:rdoc].include?(options[:mode]) ? send(options[:mode]) : other
   end
 
   def rdoc
@@ -173,7 +173,7 @@ HELP
     unless @manifest
       env = Puppet.lookup(:current_environment)
       files += env.modulepath
-      files << ::File.dirname(env.manifest) unless env.manifest == :no_manifest
+      files << ::File.dirname(env.manifest) if env.manifest != Puppet::Node::Environment::NO_MANIFEST
     end
     files += command_line.args
     Puppet.info "scanning: #{files.inspect}"

@@ -35,11 +35,12 @@ describe Puppet::Application::Doc do
       end
 
       puppet = Puppet::Application[:doc]
-      Puppet[:modulepath] = modules_dir
-      Puppet[:manifest] = site_file
       puppet.options[:mode] = :rdoc
 
-      expect { puppet.run_command }.to exit_with 0
+      env = Puppet::Node::Environment.create(:rdoc, [modules_dir], site_file) 
+      Puppet.override(:current_environment =>  env) do
+        expect { puppet.run_command }.to exit_with 0
+      end
 
       Puppet::FileSystem.exist?('doc').should be_true
     ensure
