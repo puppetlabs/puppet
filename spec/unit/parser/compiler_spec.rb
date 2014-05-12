@@ -681,7 +681,7 @@ describe Puppet::Parser::Compiler do
     it "should skip classes that have already been evaluated" do
       @compiler.catalog.stubs(:tag)
 
-      @scope.stubs(:class_scope).with(@class).returns("something")
+      @scope.stubs(:class_scope).with(@class).returns(@scope)
 
       @compiler.expects(:add_resource).never
 
@@ -694,7 +694,7 @@ describe Puppet::Parser::Compiler do
     it "should skip classes previously evaluated with different capitalization" do
       @compiler.catalog.stubs(:tag)
       @scope.stubs(:find_hostclass).with("MyClass",{:assume_fqname => false}).returns(@class)
-      @scope.stubs(:class_scope).with(@class).returns("something")
+      @scope.stubs(:class_scope).with(@class).returns(@scope)
       @compiler.expects(:add_resource).never
       @resource.expects(:evaluate).never
       Puppet::Parser::Resource.expects(:new).never
