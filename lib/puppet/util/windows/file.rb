@@ -2,7 +2,6 @@ require 'puppet/util/windows'
 
 module Puppet::Util::Windows::File
   require 'ffi'
-  require 'windows/api'
   extend FFI::Library
   extend Puppet::Util::Windows::String
 
@@ -26,12 +25,12 @@ module Puppet::Util::Windows::File
   end
   module_function :replace_file
 
-  MoveFileEx = Windows::API.new('MoveFileExW', 'PPL', 'B')
   def move_file_ex(source, target, flags = 0)
-    result = MoveFileEx.call(wide_string(source.to_s),
-                             wide_string(target.to_s),
-                             flags)
-    return true unless result == 0
+    result = MoveFileExW(wide_string(source.to_s),
+                         wide_string(target.to_s),
+                         flags)
+
+    return true if result
     raise Puppet::Util::Windows::Error.
       new("MoveFileEx(#{source}, #{target}, #{flags.to_s(8)})")
   end
@@ -53,6 +52,16 @@ module Puppet::Util::Windows::File
   ffi_lib 'kernel32'
   attach_function_private :ReplaceFileW,
     [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpvoid, :lpvoid], :bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365240(v=vs.85).aspx
+  # BOOL WINAPI MoveFileEx(
+  #   _In_      LPCTSTR lpExistingFileName,
+  #   _In_opt_  LPCTSTR lpNewFileName,
+  #   _In_      DWORD dwFlags
+  # );
+  ffi_lib 'kernel32'
+  attach_function_private :MoveFileExW,
+    [:lpcwstr, :lpcwstr, :dword], :bool
 
   # BOOLEAN WINAPI CreateSymbolicLink(
   #   _In_  LPTSTR lpSymlinkFileName, - symbolic link to be created
