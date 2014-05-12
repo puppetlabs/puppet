@@ -257,11 +257,4 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def deserialize_save(content_type, body)
     nil
   end
-
-  def environment
-    # The lookup of the environment from the configuration is correct here
-    # as this is used to establish the environment to use for a rest request in general.
-    #
-    Puppet.lookup(:environments).get(Puppet[:environment])
-  end
 end
