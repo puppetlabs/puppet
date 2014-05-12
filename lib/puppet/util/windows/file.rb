@@ -4,10 +4,11 @@ module Puppet::Util::Windows::File
   require 'ffi'
   require 'windows/api'
   extend FFI::Library
+  extend Puppet::Util::Windows::String
 
   def replace_file(target, source)
-    target_encoded = Puppet::Util::Windows::String.wide_string(target.to_s)
-    source_encoded = Puppet::Util::Windows::String.wide_string(source.to_s)
+    target_encoded = wide_string(target.to_s)
+    source_encoded = wide_string(source.to_s)
 
     flags = 0x1
     backup_file = nil
@@ -27,8 +28,8 @@ module Puppet::Util::Windows::File
 
   MoveFileEx = Windows::API.new('MoveFileExW', 'PPL', 'B')
   def move_file_ex(source, target, flags = 0)
-    result = MoveFileEx.call(Puppet::Util::Windows::String.wide_string(source.to_s),
-                             Puppet::Util::Windows::String.wide_string(target.to_s),
+    result = MoveFileEx.call(wide_string(source.to_s),
+                             wide_string(target.to_s),
                              flags)
     return true unless result == 0
     raise Puppet::Util::Windows::Error.
@@ -130,8 +131,8 @@ module Puppet::Util::Windows::File
 
   def symlink(target, symlink)
     flags = File.directory?(target) ? 0x1 : 0x0
-    result = CreateSymbolicLinkW(Puppet::Util::Windows::String.wide_string(symlink.to_s),
-      Puppet::Util::Windows::String.wide_string(target.to_s), flags)
+    result = CreateSymbolicLinkW(wide_string(symlink.to_s),
+      wide_string(target.to_s), flags)
     return true if result
     raise Puppet::Util::Windows::Error.new(
       "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})")
@@ -140,7 +141,7 @@ module Puppet::Util::Windows::File
 
   INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
   def self.get_file_attributes(file_name)
-    result = GetFileAttributesW(Puppet::Util::Windows::String.wide_string(file_name.to_s))
+    result = GetFileAttributesW(wide_string(file_name.to_s))
     return result unless result == INVALID_FILE_ATTRIBUTES
     raise Puppet::Util::Windows::Error.new("GetFileAttributes(#{file_name})")
   end
@@ -149,7 +150,7 @@ module Puppet::Util::Windows::File
   def self.create_file(file_name, desired_access, share_mode, security_attributes,
     creation_disposition, flags_and_attributes, template_file_handle)
 
-    result = CreateFileW(Puppet::Util::Windows::String.wide_string(file_name.to_s),
+    result = CreateFileW(wide_string(file_name.to_s),
       desired_access, share_mode, security_attributes, creation_disposition,
       flags_and_attributes, template_file_handle)
 
@@ -202,7 +203,7 @@ module Puppet::Util::Windows::File
   def self.open_symlink(link_name)
     begin
       yield handle = create_file(
-      Puppet::Util::Windows::String.wide_string(link_name.to_s),
+      wide_string(link_name.to_s),
       GENERIC_READ,
       FILE_SHARE_READ,
       nil, # security_attributes
