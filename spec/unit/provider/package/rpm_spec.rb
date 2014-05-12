@@ -44,6 +44,13 @@ describe provider_class do
     Puppet::Util::Execution.expects(:execute).with(["/bin/rpm", "--version"], execute_options).returns(rpm_version).at_most_once
   end
 
+  describe 'provider features' do
+    it { should be_versionable }
+    it { should be_install_options }
+    it { should be_uninstall_options }
+    it { should be_virtual_packages }
+  end
+
   describe "self.instances" do
     describe "with a modern version of RPM" do
       it "includes all the modern flags" do
@@ -277,12 +284,11 @@ describe provider_class do
       Puppet.expects(:debug).never
       expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format]
       Puppet::Util::Execution.expects(:execute).with(expected_args, execute_options).raises Puppet::ExecutionFailure.new("package #{resource_name} is not installed")
-      Puppet::Util::Execution.expects(:execute).with(expected_args + ["--whatprovides"], execute_options).raises Puppet::ExecutionFailure.new("no package provides #{resource_name}")
       expect(provider.query).to be_nil
     end
 
     it "parses virtual package" do
-      #Puppet.expects(:debug).never
+      provider.resource[:allow_virtual] = true
       expected_args = ["/bin/rpm", "-q", resource_name, "--nosignature", "--nodigest", "--qf", nevra_format]
       Puppet::Util::Execution.expects(:execute).with(expected_args, execute_options).raises Puppet::ExecutionFailure.new("package #{resource_name} is not installed")
       Puppet::Util::Execution.expects(:execute).with(expected_args + ["--whatprovides"], execute_options).returns "myresource 0 1.2.3.4 5.el4 noarch\n"

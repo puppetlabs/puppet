@@ -36,7 +36,7 @@ describe Puppet::Type.type(:package) do
   end
 
   describe "when validating attributes" do
-    [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom].each do |param|
+    [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom, :allow_virtual].each do |param|
       it "should have a #{param} parameter" do
         Puppet::Type.type(:package).attrtype(param).should == :param
       end
@@ -117,6 +117,26 @@ describe Puppet::Type.type(:package) do
       expect do
         Puppet::Type.type(:package).new(:name => ["error"])
       end.to raise_error(Puppet::ResourceError, /Name must be a String/)
+    end
+
+    it "should issue deprecation warning for default allow_virtual for a provider that supports virtual packages" do
+      Puppet.expects(:deprecation_warning).with('The package type\'s allow_virtual parameter will be changing its default value from false to true in a future release. If you do not want to allow virtual packages, please explicitly set allow_virtual to false.')
+      Puppet::Type.type(:package).new(:name => 'yay', :provider => :yum)
+    end
+
+    it "should not issue deprecation warning for allow_virtual set to false for a provider that supports virtual packages" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet::Type.type(:package).new(:name => 'yay', :provider => :yum, :allow_virtual => false)
+    end
+
+    it "should not issue deprecation warning for allow_virtual set to true for a provider that supports virtual packages" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet::Type.type(:package).new(:name => 'yay', :provider => :yum, :allow_virtual => true)
+    end
+
+    it "should not issue deprecation warning for default allow_virtual for a provider that does not support virtual packages" do
+      Puppet.expects(:deprecation_warning).never
+      Puppet::Type.type(:package).new(:name => 'yay', :provider => :apt)
     end
   end
 

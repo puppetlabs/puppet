@@ -27,6 +27,12 @@ describe provider_class do
     provider.stubs(:get).with(:arch).returns 'i386'
   end
 
+  describe 'provider features' do
+    it { should be_versionable }
+    it { should be_install_options }
+    it { should be_virtual_packages }
+  end
+
   # provider should repond to the following methods
    [:install, :latest, :update, :purge, :install_options].each do |method|
      it "should have a(n) #{method}" do

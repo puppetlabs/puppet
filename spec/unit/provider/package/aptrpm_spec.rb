@@ -26,7 +26,6 @@ describe Puppet::Type.type(:package).provider(:aptrpm) do
 
     it "should report absent packages" do
       rpm.raises(Puppet::ExecutionFailure, "couldn't find rpm")
-      rpm(rpm_args + ['--whatprovides']).raises(Puppet::ExecutionFailure, 'no package provides faff')
       pkg.property(:ensure).retrieve.should == :absent
     end
 
