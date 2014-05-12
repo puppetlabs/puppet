@@ -6,16 +6,26 @@ describe 'node statements' do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  shared_examples_for 'future unsupported nodes' do |reason|
-    it 'selects the first node with a matching name', :pending => reason do
-      catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("1nodename"))
-      node 1nodename { notify { matched: } }
-      MANIFEST
+  it 'is unable to parse a name that is an invalid number' do
+    Puppet[:parser] = 'future'
 
-      expect(catalog).to have_resource('Notify[matched]')
-    end
+    expect do
+      compile_to_catalog('node 5name {} ')
+    end.to raise_error(Puppet::Error, /Illegal number/)
+  end
 
-    it 'selects a node where the name is just a number', :pending => reason do
+  it 'parses a node name that is dotted numbers' do
+    Puppet[:parser] = 'future'
+
+    catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("1.2.3.4"))
+    node 1.2.3.4 { notify { matched: } }
+    MANIFEST
+
+    expect(catalog).to have_resource('Notify[matched]')
+  end
+
+  shared_examples_for 'nodes' do
+    it 'selects a node where the name is just a number' do
       # Future parser doesn't allow a number in this position
       catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("5"))
       node 5 { notify { 'matched': } }
@@ -23,9 +33,7 @@ describe 'node statements' do
 
       expect(catalog).to have_resource('Notify[matched]')
     end
-  end
 
-  shared_examples_for 'supported nodes' do
     it 'selects the node with a matching name' do
       catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodename"))
       node noden {}
@@ -147,15 +155,13 @@ describe 'node statements' do
     before :each do
       Puppet[:parser] = 'current'
     end
-    it_behaves_like 'supported nodes'
-    it_behaves_like 'future unsupported nodes'
+    it_behaves_like 'nodes'
   end
 
   describe 'using future parser' do
     before :each do
       Puppet[:parser] = 'future'
     end
-    it_behaves_like 'supported nodes'
-    it_behaves_like 'future unsupported nodes', 'does not work on future parser'
+    it_behaves_like 'nodes'
   end
 end
