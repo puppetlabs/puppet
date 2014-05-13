@@ -48,12 +48,11 @@ module Puppet::ModuleTool
         @metadata = mod.metadata
         name = mod.forge_name.tr('/', '-')
         version = Semantic::Version.parse(mod.version)
+        release = "#{name}@#{version}"
 
         if mod.dependencies
           dependencies = mod.dependencies.map do |dep|
-            range = dep['version_requirement'] || dep['versionRequirement'] || '>=0'
-            range = Semantic::VersionRange.parse(range) rescue Semantic::VersionRange::EMPTY_RANGE
-            [ dep['name'].tr('/', '-'), range ]
+            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
           end
           dependencies = Hash[dependencies]
         end
