@@ -1366,6 +1366,44 @@ describe Puppet::Settings do
       end
     end
 
+    describe "adding default directory environment to the catalog" do
+      let(:tmpenv) { tmpdir("envs") }
+      let(:default_path) { "#{tmpenv}/environments" }
+      before(:each) do
+        @settings.define_settings :main,
+          :environment     => { :default => "production", :desc => "env"},
+          :environmentpath => { :type => :path, :default => default_path, :desc => "envpath"}
+      end
+
+      it "adds if environmentpath exists" do
+        envpath = "#{tmpenv}/custom_envpath"
+        @settings[:environmentpath] = envpath
+        Dir.mkdir(envpath)
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to include(["File", "#{envpath}/production"])
+      end
+
+      it "adds the first directory of environmentpath" do
+        envdir = "#{tmpenv}/custom_envpath"
+        envpath = "#{envdir}:/some/other/envdir"
+        @settings[:environmentpath] = envpath
+        Dir.mkdir(envdir)
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to include(["File", "#{envdir}/production"])
+      end
+
+      it "handles a non-existent environmentpath" do
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to be_empty
+      end
+
+      it "handles a default environmentpath" do
+        Dir.mkdir(default_path)
+        catalog = @settings.to_catalog
+        expect(catalog.resource_keys).to include(["File", "#{default_path}/production"])
+      end
+    end
+
     describe "when adding users and groups to the catalog" do
       before do
         Puppet.features.stubs(:root?).returns true
