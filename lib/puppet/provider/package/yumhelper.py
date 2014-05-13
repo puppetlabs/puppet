@@ -74,7 +74,7 @@ def shell_out():
         if disable:
             repostring += " '--disablerepo=%s'" % ",".join(disable)
         if enable:
-            repostring += " '--disablerepo=%s'" % ",".join(enable)
+            repostring += " '--enablerepo=%s'" % ",".join(enable)
         p = popen("/usr/bin/env yum%s check-update 2>&1" % repostring)
         output = p.readlines()
         rc = p.close()
