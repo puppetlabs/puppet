@@ -259,6 +259,7 @@ describe Puppet::Application::Doc do
 
       let(:envdir) { tmpdir('env') }
       let(:modules) { File.join(envdir, "modules") }
+      let(:modules2) { File.join(envdir, "modules2") }
       let(:manifests) { File.join(envdir, "manifests") }
 
       before :each do
@@ -277,8 +278,8 @@ describe Puppet::Application::Doc do
 
       around(:each) do |example|
         FileUtils.mkdir_p(modules)
-        @env = Puppet::Node::Environment.create(Puppet[:environment].to_sym, [modules], "#{manifests}/site.pp")
-        Puppet.override(:environments => Puppet::Environments::Static.new(@env)) do
+        env = Puppet::Node::Environment.create(Puppet[:environment].to_sym, [modules], "#{manifests}/site.pp")
+        Puppet.override({:environments => Puppet::Environments::Static.new(env), :current_environment => env}) do
           example.run
         end
       end
@@ -287,39 +288,42 @@ describe Puppet::Application::Doc do
         @doc.options[:all] = true
         Puppet.settings.expects(:[]=).with(:document_all, true)
 
-        expect { @doc.rdoc }.to exit_with 0
+        expect { @doc.rdoc }.to exit_with(0)
       end
 
       it "should call Puppet::Util::RDoc.rdoc in full mode" do
         Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, manifests], nil)
-        expect { @doc.rdoc }.to exit_with 0
+        expect { @doc.rdoc }.to exit_with(0)
       end
 
       it "should call Puppet::Util::RDoc.rdoc with a charset if --charset has been provided" do
         @doc.options[:charset] = 'utf-8'
         Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, manifests], "utf-8")
-        expect { @doc.rdoc }.to exit_with 0
+        expect { @doc.rdoc }.to exit_with(0)
       end
 
       it "should call Puppet::Util::RDoc.rdoc in full mode with outputdir set to doc if no --outputdir" do
         @doc.options[:outputdir] = false
         Puppet::Util::RDoc.expects(:rdoc).with('doc', [modules, manifests], nil)
-        expect { @doc.rdoc }.to exit_with 0
+        expect { @doc.rdoc }.to exit_with(0)
       end
 
       it "should call Puppet::Util::RDoc.manifestdoc in manifest mode" do
         @doc.manifest = true
         Puppet::Util::RDoc.expects(:manifestdoc)
-        expect { @doc.rdoc }.to exit_with 0
+        expect { @doc.rdoc }.to exit_with(0)
       end
 
       it "should get modulepath and manifestdir values from the environment" do
-        @env.expects(:modulepath).returns(['envmodules1','envmodules2'])
-        @env.expects(:manifest).returns('envmanifests/site.pp')
-
-        Puppet::Util::RDoc.expects(:rdoc).with('doc', ['envmodules1','envmodules2','envmanifests'], nil)
-
-        expect { @doc.rdoc }.to exit_with 0
+        FileUtils.mkdir_p(modules)
+        FileUtils.mkdir_p(modules2)
+        env = Puppet::Node::Environment.create(Puppet[:environment].to_sym,
+          [modules, modules2],
+          "envmanifests/site.pp")
+        Puppet.override({:environments => Puppet::Environments::Static.new(env), :current_environment => env}) do
+           Puppet::Util::RDoc.stubs(:rdoc).with('doc', [modules.to_s, modules2.to_s, env.manifest.to_s], nil)
+          expect { @doc.rdoc }.to exit_with(0)
+        end
       end
     end
 
