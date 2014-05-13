@@ -3,6 +3,7 @@
 set -e
 
 sitename="puppetmaster"
+apache2_version="$(dpkg-query --showformat='${Version}\n' --show apache2)"
 
 # The debian provided a2* utils in Apache 2.4 uses "site name" as
 # argument, while the version in Apache 2.2 uses "file name".
@@ -14,7 +15,6 @@ sitename="puppetmaster"
 # This will end in tears…
 # Can be removed when we only support apache >= 2.4
 apache2_puppetmaster_sitename() {
-    apache2_version="$(dpkg-query --showformat='${Version}\n' --show apache2)"
     if dpkg --compare-versions "$apache2_version" gt "2.4~"; then
         echo "${sitename}.conf"
     else
@@ -46,6 +46,23 @@ update_vhost_for_passenger4() {
             -e "/RailsAutoDetect/d" \
             -e "/RackAutoDetect/d" \
             $tempfile
+    fi
+}
+
+# In Apache 2.2, if either the SSLCARevocationFile or SSLCARevocationPath
+# directives were specified then the specified file(s) would be checked when
+# establishing an SSL connection. Apache 2.4+ the SSLCARevocationCheck directive
+# was added to control how CRLs were checked when verifying a connection and had
+# a default value of none.  This means that Apache defaults to ignoring CRLs even
+# if paths are specified to CRL files.
+#
+# This function automatically uncomments the SSLCARevocationCheck directive when
+# the currently installed version of Apache is 2.4.
+update_vhost_for_apache24() {
+    if dpkg --compare-versions "$apache2_version" gt "2.4~"; then
+        sed -r -i \
+            -e "/# SSLCARevocationCheck/s/# //" \
+        $tempfile
     fi
 }
 
@@ -90,6 +107,7 @@ if [ "$1" = "configure" ]; then
                 -e "s|<Directory /etc/puppet/rack/>|<Directory /usr/share/puppet/rack/puppetmasterd/>|" \
                 /usr/share/puppetmaster-passenger/apache2.site.conf.tmpl > $tempfile
             update_vhost_for_passenger4
+            update_vhost_for_apache24
             mv $tempfile "${APACHE2_SITE_FILE}"
         fi
 
