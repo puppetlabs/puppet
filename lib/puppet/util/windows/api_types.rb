@@ -94,8 +94,9 @@ module Puppet::Util::Windows::APITypes
   # http://blogs.msdn.com/b/oldnewthing/archive/2011/03/28/10146459.aspx
   FFI.typedef :int32, :win32_bool
 
-  # NOTE: FFI already defines ushort as a 16-bit unsigned like this:
+  # NOTE: FFI already defines (u)short as a 16-bit (un)signed like this:
   # FFI.typedef :uint16, :ushort
+  # FFI.typedef :int16, :short
 
   # 8 bits per byte
   FFI.typedef :uchar, :byte

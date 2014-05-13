@@ -82,39 +82,66 @@ module Puppet::Util::Colors
   if Puppet::Util::Platform.windows?
     # We're on windows, need win32console for color to work
     begin
-      require 'Win32API'
+      require 'ffi'
       require 'win32console'
-      require 'puppet/util/windows/string'
 
       # The win32console gem uses ANSI functions for writing to the console
       # which doesn't work for unicode strings, e.g. module tool. Ruby 1.9
       # does the same thing, but doesn't account for ANSI escape sequences
       class WideConsole < Win32::Console
-        WriteConsole                = Win32API.new( "kernel32", "WriteConsoleW", ['l', 'p', 'l', 'p', 'p'], 'l' )
-        WriteConsoleOutputCharacter = Win32API.new( "kernel32", "WriteConsoleOutputCharacterW", ['l', 'p', 'l', 'l', 'p'], 'l' )
+        extend FFI::Library
+
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms687401(v=vs.85).aspx
+        # BOOL WINAPI WriteConsole(
+        #   _In_        HANDLE hConsoleOutput,
+        #   _In_        const VOID *lpBuffer,
+        #   _In_        DWORD nNumberOfCharsToWrite,
+        #   _Out_       LPDWORD lpNumberOfCharsWritten,
+        #   _Reserved_  LPVOID lpReserved
+        # );
+        ffi_lib :kernel32
+        attach_function_private :WriteConsoleW,
+          [:handle, :lpcwstr, :dword, :lpdword, :lpvoid], :win32_bool
+
+        # typedef struct _COORD {
+        #   SHORT X;
+        #   SHORT Y;
+        # } COORD, *PCOORD;
+        class COORD < FFI::Struct
+          layout :X, :short,
+                 :Y, :short
+        end
+
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms687410(v=vs.85).aspx
+        # BOOL WINAPI WriteConsoleOutputCharacter(
+        #   _In_   HANDLE hConsoleOutput,
+        #   _In_   LPCTSTR lpCharacter,
+        #   _In_   DWORD nLength,
+        #   _In_   COORD dwWriteCoord,
+        #   _Out_  LPDWORD lpNumberOfCharsWritten
+        # );
+        ffi_lib :kernel32
+        attach_function_private :WriteConsoleOutputCharacterW,
+          [:handle, :lpcwstr, :dword, COORD, :lpdword], :win32_bool
 
         def initialize(t = nil)
           super(t)
         end
 
         def WriteChar(str, col, row)
-          dwWriteCoord = (row << 16) + col
-          lpNumberOfCharsWritten = ' ' * 4
-          utf16, nChars = string_encode(str)
-          WriteConsoleOutputCharacter.call(@handle, utf16, nChars, dwWriteCoord, lpNumberOfCharsWritten)
-          lpNumberOfCharsWritten.unpack('L')
+          writeCoord = COORD.new()
+          writeCoord[:X] = row
+          writeCoord[:Y] = col
+
+          numberOfCharsWritten_ptr = FFI::MemoryPointer.new(:dword, 1)
+          WriteConsoleOutputCharacterW(@handle, FFI::MemoryPointer.from_string_to_wide_string(str),
+            str.length, writeCoord, numberOfCharsWritten_ptr)
+          numberOfCharsWritten_ptr.read_dword
         end
 
         def Write(str)
-          written = 0.chr * 4
-          reserved = 0.chr * 4
-          utf16, nChars = string_encode(str)
-          WriteConsole.call(@handle, utf16, nChars, written, reserved)
-        end
-
-        def string_encode(str)
-          wstr = Puppet::Util::Windows::String.wide_string(str)
-          [wstr, wstr.length - 1]
+          WriteConsoleW(@handle, FFI::MemoryPointer.from_string_to_wide_string(str),
+            str.length, FFI::MemoryPointer.new(:dword, 1), FFI::MemoryPointer::NULL)
         end
       end
 
