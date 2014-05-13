@@ -26,6 +26,8 @@ module Puppet::Util::Windows::APITypes
       read_int32 != 0
     end
 
+    alias_method :read_dword, :read_uint32
+
     def read_handle
       type_size == 4 ? read_uint32 : read_uint64
     end
@@ -35,6 +37,8 @@ module Puppet::Util::Windows::APITypes
       str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
       str.encode(Encoding.default_external)
     end
+
+    alias_method :write_dword, :write_uint32
   end
 
   # FFI Types
