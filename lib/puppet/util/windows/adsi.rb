@@ -1,5 +1,9 @@
 module Puppet::Util::Windows::ADSI
+  require 'ffi'
+
   class << self
+    extend FFI::Library
+
     def connectable?(uri)
       begin
         !! connect(uri)
@@ -24,11 +28,31 @@ module Puppet::Util::Windows::ADSI
       Puppet::Util::Windows::ADSI.connect(computer_uri).Delete(resource_type, name)
     end
 
+    ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
+    # BOOL WINAPI GetComputerName(
+    #   _Out_    LPTSTR lpBuffer,
+    #   _Inout_  LPDWORD lpnSize
+    # );
+    ffi_lib :kernel32
+    attach_function_private :GetComputerNameW,
+      [:lpwstr, :lpdword], :bool
+
+    # taken from winbase.h
+    MAX_COMPUTERNAME_LENGTH = 31
+
     def computer_name
       unless @computer_name
-        buf = " " * 128
-        Win32API.new('kernel32', 'GetComputerName', ['P','P'], 'I').call(buf, buf.length.to_s)
-        @computer_name = buf.unpack("A*")[0]
+        max_length = MAX_COMPUTERNAME_LENGTH + 1 # NULL terminated
+        buffer = FFI::MemoryPointer.new(max_length * 2) # wide string
+        buffer_size = FFI::MemoryPointer.new(:dword, 1)
+        buffer_size.write_dword(max_length) # length in TCHARs
+
+        if ! GetComputerNameW(buffer, buffer_size)
+          raise Puppet::Util::Windows::Error.new("Failed to get computer name")
+        end
+        @computer_name = buffer.read_wide_string(buffer_size.read_dword)
       end
       @computer_name
     end

@@ -52,6 +52,13 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
     end
   end
 
+  describe ".computer_name" do
+    it "should return a non-empty ComputerName string" do
+      Puppet::Util::Windows::ADSI.instance_variable_set(:@computer_name, nil)
+      Puppet::Util::Windows::ADSI.computer_name.should_not be_empty
+    end
+  end
+
   describe ".sid_uri" do
     it "should raise an error when the input is not a SID object" do
       [Object.new, {}, 1, :symbol, '', nil].each do |input|
