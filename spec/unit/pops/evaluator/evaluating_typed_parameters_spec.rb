@@ -32,6 +32,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
   context "captures-rest parameter" do
     it 'is allowed in function when placed last' do
+      pending 'puppet functions not yet supported'
       source = <<-CODE
         function foo($a, *$b) { $a + $b[0] }
       CODE
@@ -39,6 +40,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'is not allowed in function except last' do
+      pending 'puppet functions not yet supported'
       source = <<-CODE
         function foo(*$a, $b) { $a + $b[0] }
       CODE

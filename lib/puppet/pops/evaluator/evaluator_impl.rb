@@ -200,30 +200,19 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       raise ArgumentError, "Too many arguments: #{args_size} for #{parameters_size}"
     end
 
-#<<<<<<< HEAD
-#    # calculate missing arguments
-#    args_diff = parameters.size - args.size
-#    missing = parameters.slice(args.size, args_diff).select {|p| p.value.nil? }
-#    unless missing.empty?
-#      optional = parameters.count { |p| !p.value.nil? }
-#      raise ArgumentError, "Too few arguments; #{args.size} for #{optional > 0 ? ' min ' : ''}#{parameters.size - optional}"
-#    end
-#    # associate values with parameters (pad missing with :missing)
-#    merged = parameters.zip(args.fill(:missing, args.size, args_diff))
-#
-#=======
+    args_diff = parameters.size - args.size
     # associate values with parameters (NOTE: excess args for captures rest are not included in merged)
-    merged = parameters.zip(args)
+    merged = parameters.zip(args.fill(:missing, args.size, args_diff)) #args)
 
     # calculate missing arguments
-    if args_size < parameters_size
-      missing = parameters.slice(args_size, parameters_size - args_size).select {|p| p.value.nil? }
+    if args_diff > 0
+      missing = parameters.slice(args_size, args_diff).select {|p| p.value.nil? }
       unless missing.empty?
         optional = parameters.count { |p| !p.value.nil? || p.captures_rest }
         raise ArgumentError, "Too few arguments; #{args_size} for #{optional > 0 ? ' min ' : ''}#{parameters_size - optional}"
       end
     end
-#>>>>>>> 0582fa7... (PUP-514) Support last_captures_rest for lambdas
+
     evaluated = merged.collect do |m|
       # m can be one of
       # m = [Parameter{name => "name", value => nil], "given"]
@@ -233,29 +222,15 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       # "given" may be nil or :undef which means that this is the value to use,
       # not a default expression.
       #
-#<<<<<<< HEAD
-#      given_argument = m[1]
-#      argument_name = m[0].name
-#      default_expression = m[0].value
-#
-#      # Use default value if a value was not given (NOTE: An :undef overrides - just a nil overrides default in ruby).
-#      value =
-#      if given_argument == :missing
-#        # nothing was given, use default (it is guaranteed to exist)
-#        evaluate(default_expression, scope)
-#      else
-#        # use the given value
-#        given_argument
-#=======
-      # "given" is always an optional entry. If a parameter was provided then
-      # the entry will be in the array, otherwise the m array will be a
-      # single element.
+
+      # "given" is always present. If a parameter was provided then
+      # the entry is that value, else the symbol :missing
       given_argument = m[ 1 ]
       argument_name = m[ 0 ].name
       param_captures = m[ 0 ].captures_rest
       default_expression = m[ 0 ].value
 
-      if m.size == 1
+      if given_argument == :missing
         # not given
         if default_expression
           # not given, has default
@@ -286,15 +261,15 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
             value = [value] unless value.is_a?(Array)
           end
         else
-          # Do not use given if there is a default and given is nil / undefined
-          # else, let the value through
-          if (given_argument.nil? || given_argument == :undef) && default_expression
-            value = evaluate(default_expression, scope)
-          else
-            value = given_argument
-          end
+          # DEBATEABLE, since undef/nil selects default elsewhere (if changing, tests also needs changing).
+          #          # Do not use given if there is a default and given is nil / undefined
+          #          # else, let the value through
+          #          if (given_argument.nil? || given_argument == :undef) && default_expression
+          #            value = evaluate(default_expression, scope)
+          #          else
+          value = given_argument
+          #          end
         end
-#>>>>>>> 0582fa7... (PUP-514) Support last_captures_rest for lambdas
       end
       [ argument_name, value ]
     end

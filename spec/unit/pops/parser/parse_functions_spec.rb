@@ -10,18 +10,22 @@ describe "egrammar parsing function definitions" do
 
   context "when defining a function" do
     it "it can be dumped" do
+      pending 'puppet functions not yet supported'
       dump(parse("function foo() { }")).should == "(function foo ())"
     end
 
     it "typed parameters are dumped" do
+      pending 'puppet functions not yet supported'
       dump(parse("function foo(String $a) { }")).should == "(function foo (parameters (t string a)) ())"
     end
 
     it "last captures rest is dumped" do
+      pending 'puppet functions not yet supported'
       dump(parse("function foo(String *$a) { }")).should == "(function foo (parameters (t string *a)) ())"
     end
 
     it "the body is dumped" do
+      pending 'puppet functions not yet supported'
       dump(parse("function foo() { 10 }")).should == "(function foo (block 10))"
     end
   end
