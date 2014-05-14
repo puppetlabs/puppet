@@ -37,6 +37,14 @@ describe provider_class do
     ENV.should_not be_key('PKG_PATH')
   end
 
+  describe 'provider features' do
+    it { should be_installable }
+    it { should be_uninstallable }
+    it { should be_install_options }
+    it { should be_uninstall_options }
+    it { should be_versionable }
+  end
+
   before :each do
     # Stub some provider methods to avoid needing the actual software
     # installed, so we can test on whatever platform we want.
@@ -45,7 +53,7 @@ describe provider_class do
     provider_class.stubs(:command).with(:pkgdelete).returns('/bin/pkg_delete')
   end
 
-  context "::instances" do
+  context "#instances" do
     it "should return nil if execution failed" do
       provider_class.expects(:execpipe).raises(Puppet::ExecutionFailure, 'wawawa')
       provider_class.instances.should be_nil
@@ -279,7 +287,7 @@ describe provider_class do
       provider.install_options.should == ['-Darch=vax']
     end
   end
-  
+
   context "#uninstall_options" do
     it "should return nill by default" do
       provider.uninstall_options.should be_nil
@@ -300,12 +308,20 @@ describe provider_class do
       provider.uninstall_options.should == ['-Dbaddepend=1']
     end
   end
-  
+
   context "#uninstall" do
     describe 'when uninstalling' do
       it 'should use erase to purge' do
         provider.expects(:pkgdelete).with('-c', '-q', 'bash')
         provider.purge
+      end
+    end
+
+    describe 'with uninstall_options' do
+      it 'should use uninstall_options as Array' do
+        provider.resource[:uninstall_options] = ['-q', '-c']
+        provider.expects(:pkgdelete).with(['-q', '-c'], 'bash')
+        provider.uninstall
       end
     end
   end
