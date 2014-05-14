@@ -297,9 +297,8 @@ class Type
   end
 
   # Returns the documentation for a given meta-parameter of this type.
-  # @todo the type for the param metaparam
-  # @param metaparam [??? Puppet::Parameter] the meta-parameter to get documentation for.
-  # @return [String] the documentation associated with the given meta-parameter, or nil of not such documentation
+  # @param metaparam [Puppet::Parameter] the meta-parameter to get documentation for.
+  # @return [String] the documentation associated with the given meta-parameter, or nil of no such documentation
   #   exists.
   # @raise if the given metaparam is not a meta-parameter in this type
   #
@@ -308,7 +307,7 @@ class Type
   end
 
   # Creates a new meta-parameter.
-  # This creates a new meta-parameter that is added to all types.
+  # This creates a new meta-parameter that is added to this and all inheriting types.
   # @param name [Symbol] the name of the parameter
   # @param options [Hash] a hash with options.
   # @option options [Class<inherits Puppet::Parameter>] :parent (Puppet::Parameter) the super class of this parameter
@@ -349,9 +348,9 @@ class Type
     param
   end
 
-  # Returns parameters that act as a key.
+  # Returns the list of parameters that comprise the uniqueness key.
   # All parameters that return true from #isnamevar? or is named `:name` are included in the returned result.
-  # @todo would like a better explanation
+  # @see uniqueness_key
   # @return [Array<Puppet::Parameter>] WARNING: this return type is uncertain
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
@@ -362,7 +361,7 @@ class Type
   end
 
   # Returns cached {key_attribute_parameters} names
-  # @todo what is a 'key_attribute' ?
+  # @todo what is a 'key_attribute' ? Proposal: A particle of a multipart namevar.
   # @return [Array<String>] cached key_attribute names
   #
   def self.key_attributes
@@ -408,8 +407,9 @@ class Type
     end
   end
 
-  # Produces a _uniqueness_key_
-  # @todo Explain what a uniqueness_key is
+  # Produces a resource's _uniqueness_key_
+  # This key is an array of all key attributes' values. Each distinct tuple must be unique for each resource type.
+  # @see key_attributes
   # @return [Object] an object that is a _uniqueness_key_ for this object
   #
   def uniqueness_key
@@ -661,10 +661,8 @@ class Type
     nil
   end
 
-  # Removes a property from the object; useful in testing or in cleanup
+  # Removes an attribute from the object; useful in testing or in cleanup
   # when an error has been encountered
-  # @todo Incomprehensible - the comment says "Remove a property", the code refers to @parameters, and
-  #   the method parameter is called "attr" - What is it, property, parameter, both (i.e an attribute) or what?
   # @todo Don't know what the attr is (name or Property/Parameter?). Guessing it is a String name...
   # @todo Is it possible to delete a meta-parameter?
   # @todo What does delete mean? Is it deleted from the type or is its value state 'is'/'should' deleted?
@@ -1822,8 +1820,8 @@ class Type
         }.join
       end
 
-      # @todo this does what? where and how?
-      # @return [String] the name of the provider
+      # For each resource, the provider param defaults to
+      # the type's default provider
       defaultto {
         prov = @resource.class.defaultprovider
         prov.name if prov
@@ -1924,11 +1922,12 @@ class Type
   # All of the relationship code.
 
   # Adds a block producing a single name (or list of names) of the given resource type name to autorequire.
+  # Resources in the catalog that have the named type and a title that is included in the result will be linked
+  # to the calling resource as a requirement.
+  #
   # @example Autorequire the files File['foo', 'bar']
   #   autorequire( 'file', {|| ['foo', 'bar'] })
   #
-  # @todo original = _"Specify a block for generating a list of objects to autorequire.
-  #   This makes it so that you don't have to manually specify things that you clearly require."_
   # @param name [String] the name of a type of which one or several resources should be autorequired e.g. "file"
   # @yield [ ] a block returning list of names of given type to auto require
   # @yieldreturn [String, Array<String>] one or several resource names for the named type
@@ -1991,12 +1990,9 @@ class Type
     reqs
   end
 
-  # Builds the dependencies associated with an individual object.
-  # @todo Which object is the "individual object", as opposed to "object as a group?" or should it simply
-  #   be "this object" as in "this resource" ?
-  # @todo Does this method "build dependencies" or "build what it depends on" ... CONFUSING
+  # Builds the dependencies associated with this resource.
   #
-  # @return [Array<???>] list of WHAT? resources? edges?
+  # @return [Array<Puppet::Relationship>] list of relationships to other resources
   def builddepends
     # Handle the requires
     self.class.relationship_params.collect do |klass|
@@ -2006,8 +2002,8 @@ class Type
     end.flatten.reject { |r| r.nil? }
   end
 
-  # Sets the initial list of tags...
-  # @todo The initial list of tags, that ... that what?
+  # Sets the initial list of tags to associate to this resource.
+  #
   # @return [void] ???
   def tags=(list)
     tag(self.class.name)
@@ -2398,8 +2394,8 @@ class Type
     self.ref
   end
 
-  # @todo What to resource? Which one of the resource forms is prroduced? returned here?
-  # @return [??? Resource] a resource that WHAT???
+  # Convert this resource type instance to a Puppet::Resource.
+  # @return [Puppet::Resource] Returns a serializable representation of this resource
   #
   def to_resource
     resource = self.retrieve_resource
