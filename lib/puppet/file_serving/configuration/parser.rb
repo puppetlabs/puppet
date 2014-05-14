@@ -67,7 +67,7 @@ class Puppet::FileServing::Configuration::Parser
         mount.info "allowing #{val} access"
         mount.allow(val)
       rescue Puppet::AuthStoreError => detail
-        raise ArgumentError.new(detail.to_s, @count, @file)
+        raise ArgumentError.new("#{detail.to_s} in #{@file}, line #{@count}")
       end
     }
   end
@@ -79,14 +79,14 @@ class Puppet::FileServing::Configuration::Parser
         mount.info "denying #{val} access"
         mount.deny(val)
       rescue Puppet::AuthStoreError => detail
-        raise ArgumentError.new(detail.to_s, @count, @file)
+        raise ArgumentError.new("#{detail.to_s} in #{@file}, line #{@count}")
       end
     }
   end
 
   # Create a new mount.
   def newmount(name)
-    raise ArgumentError, "#{@mounts[name]} is already mounted at #{name}", @count, @file if @mounts.include?(name)
+    raise ArgumentError.new("#{@mounts[name]} is already mounted at #{name} in #{@file}, line #{@count}") if @mounts.include?(name)
     case name
     when "modules"
       mount = Mount::Modules.new(name)

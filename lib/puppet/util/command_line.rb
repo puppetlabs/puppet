@@ -125,6 +125,12 @@ module Puppet
           # ruby process, but that requires fixing (#17210, #12173, #8750). So for now
           # we try to restrict to only code that can be autoloaded from the node's
           # environment.
+
+          # PUP-2114 - is the current implementation the correct one?
+          #   Where is current_environment established? Do other applications override this?
+          #   or is this the place that all commands get their "curent environment from" ?
+          #   Or... is this only used to find the commands?
+          #
           if @subcommand_name != 'master' and @subcommand_name != 'agent'
             Puppet.lookup(:environments).get(Puppet[:environment]).each_plugin_directory do |dir|
               $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)

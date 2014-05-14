@@ -43,7 +43,7 @@ class Puppet::Util::Autoload
       name = cleanpath(name).chomp('.rb')
       return true unless loaded.include?(name)
       file, old_mtime = loaded[name]
-      environment = Puppet.lookup(:environments).get(Puppet[:environment])
+      environment = Puppet.lookup(:current_environment)
       return true unless file == get_file(name, environment)
       begin
         old_mtime.to_i != File.mtime(file).to_i

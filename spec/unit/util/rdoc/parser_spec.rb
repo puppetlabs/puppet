@@ -21,6 +21,17 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
   end
 
   describe "when scanning files" do
+    around(:each) do |example|
+      Puppet.override({
+          :current_environment => Puppet::Node::Environment.create(:doc, [], '/somewhere/etc/manifests/site.pp')
+        },
+        "A fake current environment that the application would have established by now"
+      ) do
+
+        example.run
+      end
+    end
+
     it "should parse puppet files with the puppet parser" do
       @parser.stubs(:scan_top_level)
       parser = stub 'parser'
@@ -56,15 +67,12 @@ describe "RDoc::Parser", :if => Puppet.features.rdoc1? do
 
     it "should scan the top level even if the file has already parsed" do
       known_type = stub 'known_types'
-      env = Puppet::Node::Environment.create(Puppet[:environment].to_sym, [])
+      env = Puppet.lookup(:current_environment)
       env.stubs(:known_resource_types).returns(known_type)
       known_type.expects(:watching_file?).with("module/manifests/init.pp").returns(true)
-      Puppet.override(:environments => Puppet::Environments::Static.new(env)) do
+      @parser.expects(:scan_top_level)
 
-        @parser.expects(:scan_top_level)
-
-        @parser.scan
-      end
+      @parser.scan
     end
   end
 

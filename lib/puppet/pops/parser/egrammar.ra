@@ -585,8 +585,12 @@ node_definition_expression
     | regex
 
   dotted_name
-    : NAME        { result = Factory.literal(val[0][:value]); loc result, val[0] }
-    | dotted_name DOT NAME { result = Factory.concat(val[0], '.', val[2][:value]); loc result, val[0], val[2] }
+    : name_or_number   { result = Factory.literal(val[0][:value]); loc result, val[0] }
+    | dotted_name DOT name_or_number { result = Factory.concat(val[0], '.', val[2][:value]); loc result, val[0], val[2] }
+
+  name_or_number
+    : NAME
+    | NUMBER
 
   # Produces Expression, since hostname is an Expression
   nodeparent

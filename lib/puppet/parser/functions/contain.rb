@@ -15,12 +15,12 @@ begun, and will be finished before the containing class is finished.
 ) do |classes|
   scope = self
 
-  scope.function_include(classes)
+  containing_resource = scope.resource
 
-  classes.each do |class_name|
-    class_resource = scope.catalog.resource("Class", class_name)
-    if ! scope.catalog.edge?(scope.resource, class_resource)
-      scope.catalog.add_edge(scope.resource, class_resource)
+  included = scope.function_include(classes)
+  included.each do |resource|
+    if ! scope.catalog.edge?(containing_resource, resource)
+      scope.catalog.add_edge(containing_resource, resource)
     end
   end
 end

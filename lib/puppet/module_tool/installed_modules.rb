@@ -59,17 +59,18 @@ module Puppet::ModuleTool
         @metadata = mod.metadata
         name = mod.forge_name.tr('/', '-')
         version = Semantic::Version.parse(mod.version)
+        release = "#{name}@#{version}"
 
         super(source, name, version, {})
 
         if mod.dependencies
           mod.dependencies.each do |dep|
-            range = dep['version_requirement'] || dep['versionRequirement'] || '>=0'
-            range = Semantic::VersionRange.parse(range) rescue Semantic::VersionRange::EMPTY_RANGE
+            results = Puppet::ModuleTool.parse_module_dependency(release, dep)
+            dep_name, parsed_range, range = results
 
             dep.tap do |dep|
-              add_constraint('initialize', dep['name'].tr('/', '-'), range.to_s) do |node|
-                range === node.version
+              add_constraint('initialize', dep_name, range.to_s) do |node|
+                parsed_range === node.version
               end
             end
           end

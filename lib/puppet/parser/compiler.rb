@@ -204,25 +204,25 @@ class Puppet::Parser::Compiler
       class_parameters = classes
       classes = classes.keys
     end
-    classes.each do |name|
-      # If we can find the class, then make a resource that will evaluate it.
-      if klass = scope.find_hostclass(name, :assume_fqname => fqname)
 
-        # If parameters are passed, then attempt to create a duplicate resource
-        # so the appropriate error is thrown.
-        if class_parameters
-          resource = klass.ensure_in_catalog(scope, class_parameters[name] || {})
-        else
-          next if scope.class_scope(klass)
-          resource = klass.ensure_in_catalog(scope)
-        end
+    hostclasses = classes.collect do |name|
+      scope.find_hostclass(name, :assume_fqname => fqname) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
+    end
 
-        # If they've disabled lazy evaluation (which the :include function does),
-        # then evaluate our resource immediately.
-        resource.evaluate unless lazy_evaluate
-      else
-        raise Puppet::Error, "Could not find class #{name} for #{node.name}"
+    if class_parameters
+      resources = ensure_classes_with_parameters(scope, hostclasses, class_parameters)
+      if !lazy_evaluate
+        resources.each(&:evaluate)
       end
+
+      resources
+    else
+      already_included, newly_included = ensure_classes_without_parameters(scope, hostclasses)
+      if !lazy_evaluate
+        newly_included.each(&:evaluate)
+      end
+
+      already_included + newly_included
     end
   end
 
@@ -298,6 +298,27 @@ class Puppet::Parser::Compiler
   end
 
   private
+
+  def ensure_classes_with_parameters(scope, hostclasses, parameters)
+    hostclasses.collect do |klass|
+      klass.ensure_in_catalog(scope, parameters[klass.name] || {})
+    end
+  end
+
+  def ensure_classes_without_parameters(scope, hostclasses)
+    already_included = []
+    newly_included = []
+    hostclasses.each do |klass|
+      class_scope = scope.class_scope(klass)
+      if class_scope
+        already_included << class_scope.resource
+      else
+        newly_included << klass.ensure_in_catalog(scope)
+      end
+    end
+
+    [already_included, newly_included]
+  end
 
   # If ast nodes are enabled, then see if we can find and evaluate one.
   def evaluate_ast_node

@@ -28,7 +28,8 @@ class Puppet::Module
   # of +path+, return +nil+
   def self.find(modname, environment = nil)
     return nil unless modname
-    env = Puppet.lookup(:environments).get(environment || Puppet[:environment])
+    # Unless a specific environment is given, use the current environment
+    env = environment ? Puppet.lookup(:environments).get(environment) : Puppet.lookup(:current_environment)
     env.module(modname)
   end
 

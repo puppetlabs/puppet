@@ -257,8 +257,4 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   def deserialize_save(content_type, body)
     nil
   end
-
-  def environment
-    Puppet.lookup(:environments).get(Puppet[:environment])
-  end
 end
