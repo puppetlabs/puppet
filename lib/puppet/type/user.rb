@@ -578,12 +578,17 @@ module Puppet
     end
 
     newparam(:purge_ssh_keys) do
-      desc "Purge ssh keys authorized for the user
-            if they are not managed via ssh_authorized_keys. When true,
-            looks for keys in .ssh/authorized_keys in the user's home
-            directory. Possible values are true, false, or an array of
-            paths to file to search for authorized keys. If a path starts
-            with ~ or %h, this token is replaced with the user's home directory."
+      desc "Whether to purge authorized SSH keys for this user if they are not managed
+        with the `ssh_authorized_key` resource type. Allowed values are:
+
+        * `false` (default) --- don't purge SSH keys for this user.
+        * `true` --- look for keys in the `.ssh/authorized_keys` file in the user's
+          home directory. Purge any keys that aren't managed as `ssh_authorized_key`
+          resources.
+        * An array of file paths --- look for keys in all of the files listed. Purge
+          any keys that aren't managed as `ssh_authorized_key` resources. If any of
+          these paths starts with `~` or `%h`, that token will be replaced with
+          the user's home directory."
 
       defaultto :false
 
