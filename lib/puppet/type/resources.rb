@@ -68,26 +68,36 @@ Puppet::Type.newtype(:resources) do
   end
 
   newparam(:unless_uid) do
-     desc "This keeps specific uids or ranges of uids from being purged when purge is true.
-       Accepts ranges, integers and (mixed) arrays of both."
+    desc "This keeps specific uids or ranges of uids from being purged when purge is true.
+    Accepts strings (comma separated values matching /^\d+$/, integers and (mixed) arrays of both.
+    Hint: consider the range() function from stdlib for generating large ranges of UIDs to exclude"
 
-     munge do |value|
-       case value
-       when /^\d+/
-         [Integer(value)]
-       when Integer
-         [value]
-       when Range
-         [value]
-       when Array
-         value
-       when /^\[\d+/
-         value.split(',').collect{|x| x.include?('..') ? Integer(x.split('..')[0])..Integer(x.split('..')[1]) : Integer(x) }
-       else
-         raise ArgumentError, "Invalid value #{value.inspect}"
-       end
-     end
-   end
+    munge do |value|
+      case value
+        #match strings:
+        # 123
+        # 123, 456
+        when /^\d+(?:\s*,\s*\d+)*$/
+          value.split(/\s*,\s*/).collect do |v|
+            v.to_i
+          end
+        when Integer
+          [value]
+        when Array
+          value.collect do |v|
+            if v.is_a? Integer
+              v
+            elsif v =~ /^\d+$/
+              v.to_i
+            else
+              raise ArgumentError, "Invalid value in array #{v.inspect}"
+            end
+          end
+        else
+          raise ArgumentError, "Invalid value #{value.inspect}"
+      end
+    end
+  end
 
   def check(resource)
     @checkmethod ||= "#{self[:name]}_check"
@@ -148,10 +158,7 @@ Puppet::Type.newtype(:resources) do
     return false if system_users.include?(resource[:name])
 
     if unless_uids && unless_uids.length > 0
-      unless_uids.each do |unless_uid|
-        return false if unless_uid == current_uid
-        return false if unless_uid.respond_to?('include?') && unless_uid.include?(current_uid)
-      end
+      return false if unless_uids.respond_to?('include?') && unless_uids.include?(current_uid)
     end
 
     current_uid > self[:unless_system_user]
