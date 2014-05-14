@@ -328,6 +328,26 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       provider.ancestors.should include(Puppet::Provider)
       provider.should == @type.provider(:test_provider)
     end
+
+    describe "with a parent class from another type" do
+      before :each do
+        @parent_type = Puppet::Type.newtype(:provider_parent_type) do
+          newparam(:name) { isnamevar }
+        end
+        @parent_provider = @parent_type.provide(:parent_provider)
+      end
+
+      it "should be created successfully" do
+        child_provider = @type.provide(:child_provider, :parent => @parent_provider)
+        child_provider.ancestors.should include(@parent_provider)
+      end
+
+      it "should be registered as a provider of the child type" do
+        child_provider = @type.provide(:child_provider, :parent => @parent_provider)
+        @type.providers.should include(:child_provider)
+        @parent_type.providers.should_not include(:child_provider)
+      end
+    end
   end
 
   describe "when choosing a default provider" do
