@@ -611,7 +611,7 @@ class Puppet::Parser::Lexer
   def warn_if_reserved(name)
     case name
     when 'private', 'function', 'attr', 'type'
-      msg = "Future reserved word: #{name}, should be quoted. In #{file || '<string>'}:#{line}. See http://links.puppetlabs.com/reserved-words-4"
+      msg = "Future reserved word: #{name}. Either choose a different name or quote the string, if possible. In #{file || '<string>'}:#{line}. See http://links.puppetlabs.com/reserved-words-4"
       Puppet.deprecation_warning(msg, name)
     end
   end
