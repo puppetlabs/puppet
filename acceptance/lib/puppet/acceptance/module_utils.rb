@@ -223,6 +223,19 @@ module Puppet
 
         return puppet_conf
       end
+
+      # Validate that a given string is valid JSON
+      #
+      # @param str [String] JSON string to validate
+      require 'rubygems'
+      require 'json'
+      def json_valid?(str)
+        JSON.parse(str)
+          return true
+        rescue JSON::ParserError
+          return false
+      end
+
     end
   end
 end
