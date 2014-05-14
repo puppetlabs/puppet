@@ -4,6 +4,7 @@
 # systems.
 
 require 'puppet/parameter/package_options'
+require 'puppet/parameter/boolean'
 
 module Puppet
   newtype(:package) do
@@ -54,7 +55,7 @@ module Puppet
       ensured for the given package. The meaning and format of these settings is
       provider-specific.",
       :methods => [:package_settings_insync?, :package_settings, :package_settings=]
-
+    feature :virtual_packages, "The provider accepts virtual package names for install and uninstall."
 
     ensurable do
       desc <<-EOT
@@ -419,6 +420,16 @@ module Puppet
         strings _must_ be double-escaped and backslashes in single-quoted
         strings _may_ be double-escaped.
       EOT
+    end
+
+    newparam(:allow_virtual, :boolean => true, :parent => Puppet::Parameter::Boolean, :required_features => :virtual_packages) do
+      desc 'Specifies if virtual package names are allowed for install and uninstall.'
+
+      # In a future release, this should be defaulted to true and the below deprecation warning removed
+      defaultto do
+        Puppet.deprecation_warning('The package type\'s allow_virtual parameter will be changing its default value from false to true in a future release. If you do not want to allow virtual packages, please explicitly set allow_virtual to false.') unless value
+        false
+      end
     end
 
     autorequire(:file) do
