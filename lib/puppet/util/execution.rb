@@ -33,9 +33,8 @@ module Puppet::Util::Execution
   # which is treated as a set of command arguments to pass through.
   #
   # In either case, the command is passed directly to the shell, STDOUT and
-  # STDERR are connected together, and STDOUT and STDIN are available via the
-  # yielded pipe. (Bear in mind that reading from or writing to a pipe that has
-  # not been opened in read or write mode respectively will block indefinitely.)
+  # STDERR are connected together, and STDOUT will be streamed to the yielded
+  # pipe.
   #
   # @param command [String, Array<String>] the command to execute as one string,
   #   or as parts in an array. The parts of the array are joined with one
@@ -43,7 +42,6 @@ module Puppet::Util::Execution
   #   string to execute.
   # @param failonfail [Boolean] (true) if the execution should fail with
   #   Exception on failure or not.
-  # @param mode [String] ('r') the mode to open the pipe with
   # @yield [pipe] to a block executing a subprocess
   # @yieldparam pipe [IO] the opened pipe
   # @yieldreturn [String] the output to return
@@ -54,7 +52,7 @@ module Puppet::Util::Execution
   #
   # @see Kernel#open for `mode` values
   # @api public
-  def self.execpipe(command, failonfail = true, mode = 'r')
+  def self.execpipe(command, failonfail = true)
     # Paste together an array with spaces.  We used to paste directly
     # together, no spaces, which made for odd invocations; the user had to
     # include whitespace between arguments.
@@ -76,7 +74,7 @@ module Puppet::Util::Execution
     # a predictable output
     english_env = ENV.to_hash.merge( {'LANG' => 'C', 'LC_ALL' => 'C'} )
     output = Puppet::Util.withenv(english_env) do
-      open("| #{command_str} 2>&1", mode) do |pipe|
+      open("| #{command_str} 2>&1") do |pipe|
         yield pipe
       end
     end
