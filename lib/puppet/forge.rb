@@ -117,14 +117,11 @@ class Puppet::Forge < Semantic::Dependency::Source
 
       name = meta['name'].tr('/', '-')
       version = Semantic::Version.parse(meta['version'])
+      release = "#{name}@#{version}"
 
       dependencies = (meta['dependencies'] || [])
       dependencies.map! do |dep|
-        range = dep['version_requirement'] || dep['versionRequirement'] || '>=0'
-        [
-          dep['name'].tr('/', '-'),
-          (Semantic::VersionRange.parse(range) rescue Semantic::VersionRange::EMPTY_RANGE),
-        ]
+        Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
       end
 
       super(source, name, version, Hash[dependencies])
