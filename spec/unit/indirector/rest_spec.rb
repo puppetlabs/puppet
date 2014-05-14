@@ -136,6 +136,12 @@ describe Puppet::Indirector::REST do
   let(:indirection) { Puppet::TestModel.indirection }
   let(:model) { Puppet::TestModel }
 
+  around(:each) do |example|
+    Puppet.override(:current_environment => Puppet::Node::Environment.create(:production, [])) do
+      example.run
+    end
+  end
+
   def mock_response(code, body, content_type='text/plain', encoding=nil)
     obj = stub('http 200 ok', :code => code.to_s, :body => body)
     obj.stubs(:[]).with('content-type').returns(content_type)

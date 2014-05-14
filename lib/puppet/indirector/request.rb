@@ -83,12 +83,9 @@ class Puppet::Indirector::Request
   end
 
   def environment
-    # The lookup of the environment from the configuration is correct here
-    # as this is used to establish the environment to use for a request.
-    # If some other environment should be in effect, it should already
-    # have been set with #environment=
-    #
-    @environment ||= Puppet.lookup(:environments).get(Puppet[:environment])
+    # If environment has not been set directly, we should use the application's
+    # current environment
+    @environment ||= Puppet.lookup(:current_environment)
   end
 
   def environment=(env)

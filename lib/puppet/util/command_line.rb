@@ -126,14 +126,16 @@ module Puppet
           # we try to restrict to only code that can be autoloaded from the node's
           # environment.
 
-          # PUP-2114 - is the current implementation the correct one?
-          #   Where is current_environment established? Do other applications override this?
-          #   or is this the place that all commands get their "curent environment from" ?
-          #   Or... is this only used to find the commands?
+          # PUP-2114 - at this point in the bootstrapping process we do not
+          # have an appropriate application-wide current_environment set.
+          # If we cannot find the configured environment, which may not exist,
+          # we do not attempt to add plugin directories to the load path.
           #
           if @subcommand_name != 'master' and @subcommand_name != 'agent'
-            Puppet.lookup(:environments).get(Puppet[:environment]).each_plugin_directory do |dir|
-              $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
+            if configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
+              configured_environment.each_plugin_directory do |dir|
+                $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)
+              end
             end
           end
 

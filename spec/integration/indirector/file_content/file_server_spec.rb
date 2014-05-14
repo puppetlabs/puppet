@@ -48,9 +48,9 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
     file = File.join(modpath, "files", "myfile")
     File.open(file, "wb") { |f| f.write "1\r\n" }
 
-    Puppet.settings[:modulepath] = path
+    env = Puppet::Node::Environment.create(:foo, [path])
 
-    result = Puppet::FileServing::Content.indirection.find("modules/mymod/myfile")
+    result = Puppet::FileServing::Content.indirection.find("modules/mymod/myfile", :environment => env)
 
     result.should_not be_nil
     result.should be_instance_of(Puppet::FileServing::Content)

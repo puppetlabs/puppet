@@ -15,6 +15,16 @@ describe Puppet::Resource::Catalog::StaticCompiler do
     Facter.stubs(:value)
   end
 
+  around(:each) do |example|
+    Puppet.override({
+        :current_environment => Puppet::Node::Environment.create(:app, []),
+      },
+      "Ensure we are using an environment other than root"
+    ) do
+      example.run
+    end
+  end
+
   let(:request) do
     Puppet::Indirector::Request.new(:the_indirection_named_foo,
                                     :find,
