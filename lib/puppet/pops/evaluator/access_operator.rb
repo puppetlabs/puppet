@@ -580,10 +580,11 @@ class Puppet::Pops::Evaluator::AccessOperator
       unless c.is_a?(String)
         fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
       end
-      if c !~ Puppet::Pops::Patterns::NAME
+      name = c.downcase
+      if name !~ Puppet::Pops::Patterns::NAME
         fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
       end
-      ctype.class_name = c.downcase.sub(/^::/,'')
+      ctype.class_name = name.sub(/^::/,'')
       ctype
     end
 
