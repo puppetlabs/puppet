@@ -16,7 +16,8 @@ class Puppet::Network::HTTP::Route
       :HEAD => [MethodNotAllowedHandler],
       :OPTIONS => [MethodNotAllowedHandler],
       :POST => [MethodNotAllowedHandler],
-      :PUT => [MethodNotAllowedHandler]
+      :PUT => [MethodNotAllowedHandler],
+      :DELETE => [MethodNotAllowedHandler]
     }
     @chained = []
   end
