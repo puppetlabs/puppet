@@ -64,6 +64,7 @@ Puppet::Face.define(:parser, '0.0.1') do
     env = Puppet.lookup(:current_environment)
     validation_environment = manifest ? env.override_with(:manifest => manifest) : env
 
+    validation_environment.check_for_reparse
     validation_environment.known_resource_types.clear
 
   rescue => detail

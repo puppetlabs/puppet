@@ -11,7 +11,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
   or an array where each element is either a string or a hash."
 
-  has_feature :install_options, :versionable
+  has_feature :install_options, :versionable, :virtual_packages
 
   commands :yum => "yum", :rpm => "rpm", :python => "python"
 

@@ -104,11 +104,12 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   end
 
   # Turn our host name into a node object.
-  def find_node(name, environment)
+  def find_node(name, environment, transaction_uuid)
     Puppet::Util::Profiler.profile("Found node information") do
       node = nil
       begin
-        node = Puppet::Node.indirection.find(name, :environment => environment)
+        node = Puppet::Node.indirection.find(name, :environment => environment,
+                                             :transaction_uuid => transaction_uuid)
       rescue => detail
         message = "Failed when searching for node #{name}: #{detail}"
         Puppet.log_exception(detail, message)
@@ -143,7 +144,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     # node's catalog with only one certificate and a modification to auth.conf
     # If no key is provided we can only compile the currently connected node.
     name = request.key || request.node
-    if node = find_node(name, request.environment)
+    if node = find_node(name, request.environment, request.options[:transaction_uuid])
       return node
     end
 

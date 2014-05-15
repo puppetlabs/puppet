@@ -191,6 +191,22 @@ describe Puppet::Resource::Catalog::Compiler do
 
       compiler.find(request)
     end
+
+    it "should pass the transaction_uuid to the node indirection" do
+      uuid = '793ff10d-89f8-4527-a645-3302cbc749f3'
+      node = Puppet::Node.new("thing")
+      compiler = Puppet::Resource::Catalog::Compiler.new
+      compiler.stubs(:compile)
+      request = Puppet::Indirector::Request.new(:catalog, :find, "thing",
+                                                nil, :transaction_uuid => uuid)
+
+      Puppet::Node.indirection.expects(:find).with(
+        "thing",
+        has_entries(:transaction_uuid => uuid)
+      ).returns(node)
+
+      compiler.find(request)
+    end
   end
 
   describe "after finding nodes" do

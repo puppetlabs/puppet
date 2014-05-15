@@ -321,6 +321,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     o.value
   end
 
+  # Reserved Words fail to evaluate
+  #
+  def eval_ReservedWord(o, scope)
+    fail(Puppet::Pops::Issues::RESERVED_WORD, o, {:word => o.word})
+  end
+
   def eval_LiteralDefault(o, scope)
     :default
   end

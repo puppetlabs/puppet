@@ -28,7 +28,7 @@ class Puppet::Parser::Lexer
     # Make the lexer comply with newer API. It does not produce a pos...
     nil
   end
-  
+
   def lex_error msg
     raise Puppet::LexError.new(msg)
   end
@@ -221,6 +221,8 @@ class Puppet::Parser::Lexer
         value = eval(value)
         string_token = TOKENS[:BOOLEAN]
       end
+    else
+      lexer.warn_if_reserved(value)
     end
     [string_token, value]
   end
@@ -603,6 +605,14 @@ class Puppet::Parser::Lexer
   def warn_if_variable_has_hyphen(var_name)
     if var_name.include?('-')
       Puppet.deprecation_warning("Using `-` in variable names is deprecated at #{file || '<string>'}:#{line}. See http://links.puppetlabs.com/puppet-hyphenated-variable-deprecation")
+    end
+  end
+
+  def warn_if_reserved(name)
+    case name
+    when 'private', 'function', 'attr', 'type'
+      msg = "Future reserved word: #{name}. Either choose a different name or quote the string, if possible. In #{file || '<string>'}:#{line}. See http://links.puppetlabs.com/reserved-words-4"
+      Puppet.deprecation_warning(msg, name)
     end
   end
 end

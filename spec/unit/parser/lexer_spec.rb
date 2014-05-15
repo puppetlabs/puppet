@@ -279,7 +279,9 @@ describe Puppet::Parser::Lexer::TOKENS[:NAME] do
 
   it "should return itself and the value if the matched term is not a keyword" do
     Puppet::Parser::Lexer::KEYWORDS.expects(:lookup).returns(nil)
-    @token.convert(stub("lexer"), "myval").should == [Puppet::Parser::Lexer::TOKENS[:NAME], "myval"]
+    lexer = stub("lexer")
+    lexer.expects(:warn_if_reserved).returns(nil)
+    @token.convert(lexer, "myval").should == [Puppet::Parser::Lexer::TOKENS[:NAME], "myval"]
   end
 
   it "should return the keyword token and the value if the matched term is a keyword" do
@@ -843,6 +845,15 @@ describe "Puppet::Parser::Lexer in the old tests" do
   it "should not include excess colons in a variable" do
     tokens_scanned_from("$foo::::bar").should_not be_like([:VARIABLE, "foo::::bar"])
   end
+end
+
+describe 'Puppet::Parser::Lexer handles reserved words' do
+    ['function', 'private', 'attr', 'type'].each do |reserved_bare_word|
+      it "by warning if '#{reserved_bare_word}' is used as bare word" do
+        Puppet.expects(:deprecation_warning).once
+        expect(tokens_scanned_from(reserved_bare_word)).to eq([[:NAME, {:value=>reserved_bare_word, :line => 1}]])
+      end
+    end
 end
 
 describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
