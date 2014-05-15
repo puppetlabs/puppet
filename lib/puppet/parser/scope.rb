@@ -826,6 +826,22 @@ class Puppet::Parser::Scope
     return [type, titles]
   end
 
+  # Makes names passed in the names array absolute if they are relative
+  # Names are now made absolute if Puppet[:parser] == 'future', this will
+  # be the default behavior in Puppet 4.0
+  # TODO: Change this for 4.0 to always make names absolute
+  #
+  # @param names [Array<String>] names to (optinoally) make absolute
+  # @return [Array<String>] names after transformation
+  #
+  def optionally_make_names_absolute(names)
+    if Puppet[:parser] == 'future'
+      names.map {|name| name.sub(/^([^:]{1,2})/, '::\1') }
+    else
+      names
+    end
+  end
+
   private
 
   def extend_with_functions_module

@@ -15,10 +15,17 @@ begun, and will be finished before the containing class is finished.
 ) do |classes|
   scope = self
 
+  # Make call patterns uniform and protected against nested arrays, also make
+  # names absolute if so desired.
+  classes = optionally_make_names_absolute(classes.is_a?(Array) ? classes.flatten : [classes])
+
   containing_resource = scope.resource
 
   included = scope.function_include(classes)
-  included.each do |resource|
+  # This is the same as calling the include function but faster and does not rely on the include
+  # function (which is a statement) to return something (it should not).
+  compiler.evaluate_classes(classes, self, false).each do |resource|
+#  included.each do |resource|
     if ! scope.catalog.edge?(containing_resource, resource)
       scope.catalog.add_edge(containing_resource, resource)
     end

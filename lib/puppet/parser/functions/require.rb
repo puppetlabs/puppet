@@ -28,11 +28,15 @@ Note that this function only works with clients 0.25 and later, and it will
 fail if used with earlier clients.
 
 ") do |vals|
-  # Verify that the 'include' function is loaded
-  method = Puppet::Parser::Functions.function(:include)
+  # Make call patterns uniform and protected against nested arrays, also make
+  # names absolute if so desired.
+  vals = optionally_make_names_absolute(vals.is_a?(Array) ? vals.flatten : [vals])
 
-  send(method, vals)
-  vals = [vals] unless vals.is_a?(Array)
+  # This is the same as calling the include function (but faster) since it again
+  # would otherwise need to perform the optional absolute name transformation
+  # (for no reason since they are already made absolute here).
+  #
+  compiler.evaluate_classes(vals, self, false)
 
   vals.each do |klass|
     # lookup the class in the scopes
