@@ -16,7 +16,8 @@ class Puppet::Network::HTTP::Route
       :HEAD => [MethodNotAllowedHandler],
       :OPTIONS => [MethodNotAllowedHandler],
       :POST => [MethodNotAllowedHandler],
-      :PUT => [MethodNotAllowedHandler]
+      :PUT => [MethodNotAllowedHandler],
+      :DELETE => [MethodNotAllowedHandler]
     }
     @chained = []
   end
@@ -43,6 +44,11 @@ class Puppet::Network::HTTP::Route
 
   def put(*handlers)
     @method_handlers[:PUT] = handlers
+    return self
+  end
+
+  def delete(*handlers)
+    @method_handlers[:DELETE] = handlers
     return self
   end
 
