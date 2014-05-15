@@ -41,6 +41,14 @@ describe Puppet::Network::HTTP::Route do
       expect(res.body).to eq("used")
     end
 
+    it "processes DELETE requests" do
+      route = Puppet::Network::HTTP::Route.path(%r{^/vtest/foo}).delete(respond("used"))
+
+      route.process(request("DELETE", "/vtest/foo"), res)
+
+      expect(res.body).to eq("used")
+    end
+
     it "calls the method handlers in turn" do
       call_count = 0
       handler = lambda { |request, response| call_count += 1 }
