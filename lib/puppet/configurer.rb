@@ -22,13 +22,6 @@ class Puppet::Configurer
     "Puppet configuration client"
   end
 
-  class << self
-    # Puppet agent should only have one instance running, and we need a
-    # way to retrieve it.
-    attr_accessor :instance
-    include Puppet::Util
-  end
-
   def execute_postrun_command
     execute_from_setting(:postrun_command)
   end
@@ -51,11 +44,9 @@ class Puppet::Configurer
     end
   end
 
-  # Just so we can specify that we are "the" instance.
   def initialize
     Puppet.settings.use(:main, :ssl, :agent)
 
-    self.class.instance = self
     @running = false
     @splayed = false
     @environment = Puppet[:environment]
@@ -121,8 +112,6 @@ class Puppet::Configurer
   def apply_catalog(catalog, options)
     report = options[:report]
     report.configuration_version = catalog.version
-    report.transaction_uuid = @transaction_uuid
-    report.environment = @environment
 
     benchmark(:notice, "Finished catalog run") do
       catalog.apply(options)
@@ -132,15 +121,15 @@ class Puppet::Configurer
     report
   end
 
-  def get_transaction_uuid
-    { :transaction_uuid => @transaction_uuid }
-  end
-
   # The code that actually runs the catalog.
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
-    options[:report] ||= Puppet::Transaction::Report.new("apply")
+    # We create the report pre-populated with default settings for
+    # environment and transaction_uuid very early, this is to ensure
+    # they are sent regardless of any catalog compilation failures or
+    # exceptions.
+    options[:report] ||= Puppet::Transaction::Report.new("apply", nil, @environment, @transaction_uuid)
     report = options[:report]
     init_storage
 
@@ -155,10 +144,11 @@ class Puppet::Configurer
       unless options[:catalog]
         begin
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-              :environment => @environment, :ignore_cache => true)
+              :environment => @environment, :ignore_cache => true, :transaction_uuid => @transaction_uuid)
             if node.environment.to_s != @environment
               Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
               @environment = node.environment.to_s
+              report.environment = @environment
               query_options = nil
             end
           end
@@ -172,8 +162,9 @@ class Puppet::Configurer
 
       query_options = get_facts(options) unless query_options
 
-      # add the transaction uuid to the catalog query options hash
-      query_options.merge! get_transaction_uuid if query_options
+      # get_facts returns nil during puppet apply
+      query_options ||= {}
+      query_options[:transaction_uuid] = @transaction_uuid
 
       unless catalog = prepare_and_retrieve_catalog(options, query_options)
         return nil
@@ -190,6 +181,7 @@ class Puppet::Configurer
         end
         Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified environment \"#{catalog.environment}\", restarting agent run with environment \"#{catalog.environment}\""
         @environment = catalog.environment
+        report.environment = @environment
         return nil unless catalog = prepare_and_retrieve_catalog(options, query_options)
         tries += 1
       end
