@@ -49,6 +49,14 @@ describe Puppet::Network::HTTP::Route do
       expect(res.body).to eq("used")
     end
 
+    it "does something when it doesn't know the verb" do
+      route = Puppet::Network::HTTP::Route.path(%r{^/vtest/foo})
+
+      expect do
+        route.process(request("UNKNOWN", "/vtest/foo"), res)
+      end.to raise_error(Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError, /UNKNOWN/)
+    end
+
     it "calls the method handlers in turn" do
       call_count = 0
       handler = lambda { |request, response| call_count += 1 }

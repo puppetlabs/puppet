@@ -3,6 +3,8 @@ class Puppet::Network::HTTP::Route
     raise Puppet::Network::HTTP::Error::HTTPMethodNotAllowedError.new("method #{req.method} not allowed for route #{req.path}", Puppet::Network::HTTP::Issues::UNSUPPORTED_METHOD)
   end
 
+  NO_HANDLERS = [MethodNotAllowedHandler]
+
   attr_reader :path_matcher
 
   def self.path(path_matcher)
@@ -12,12 +14,12 @@ class Puppet::Network::HTTP::Route
   def initialize(path_matcher)
     @path_matcher = path_matcher
     @method_handlers = {
-      :GET => [MethodNotAllowedHandler],
-      :HEAD => [MethodNotAllowedHandler],
-      :OPTIONS => [MethodNotAllowedHandler],
-      :POST => [MethodNotAllowedHandler],
-      :PUT => [MethodNotAllowedHandler],
-      :DELETE => [MethodNotAllowedHandler]
+      :GET => NO_HANDLERS,
+      :HEAD => NO_HANDLERS,
+      :OPTIONS => NO_HANDLERS,
+      :POST => NO_HANDLERS,
+      :PUT => NO_HANDLERS,
+      :DELETE => NO_HANDLERS
     }
     @chained = []
   end
@@ -75,7 +77,8 @@ class Puppet::Network::HTTP::Route
   end
 
   def process(request, response)
-    @method_handlers[request.method.upcase.intern].each do |handler|
+    handlers = @method_handlers[request.method.upcase.intern] || NO_HANDLERS
+    handlers.each do |handler|
       handler.call(request, response)
     end
 
