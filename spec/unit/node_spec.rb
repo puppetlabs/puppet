@@ -157,11 +157,9 @@ describe Puppet::Node do
       Puppet::Node.should read_json_attribute('parameters').from(@node.to_pson).as({"a" => "b", "c" => "d"})
     end
 
-    it "should include the environment" do
-      Puppet.override(:environments => env_loader) do
-        @node.environment = environment
-        Puppet::Node.should read_json_attribute('environment').from(@node.to_pson).as(environment)
-      end
+    it "deserializes environment to environment_name as a string" do
+      @node.environment = environment
+      Puppet::Node.should read_json_attribute('environment_name').from(@node.to_pson).as('bar')
     end
   end
 end

@@ -13,7 +13,7 @@ class Puppet::Node
   indirects :node, :terminus_setting => :node_terminus, :doc => "Where to find node information.
     A node is composed of its name, its facts, and its environment."
 
-  attr_accessor :name, :classes, :source, :ipaddress, :parameters, :trusted_data
+  attr_accessor :name, :classes, :source, :ipaddress, :parameters, :trusted_data, :environment_name
   attr_reader :time, :facts
 
   ::PSON.register_document_type('Node',self)
@@ -24,7 +24,7 @@ class Puppet::Node
     node = new(name)
     node.classes = data['classes']
     node.parameters = data['parameters']
-    node.environment = data['environment']
+    node.environment_name = data['environment']
     node
   end
 
@@ -60,6 +60,9 @@ class Puppet::Node
     elsif env = parameters["environment"]
       self.environment = env
       @environment
+    elsif environment_name
+      self.environment = environment_name
+      @environment
     else
       # This should not be :current_environment, this is the default
       # for a node when it has not specified its environment
@@ -75,6 +78,10 @@ class Puppet::Node
     else
       @environment = env
     end
+  end
+
+  def has_environment_instance?
+    !@environment.nil?
   end
 
   def initialize(name, options = {})
