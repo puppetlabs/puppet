@@ -31,9 +31,9 @@ class Puppet::Util::Pidlock
 
   def lock_pid
     pid = @lockfile.lock_data
-    if pid =~ /\A[0-9]/
-      pid.to_i
-    else
+    begin
+      Integer(pid)
+    rescue ArgumentError, TypeError
       nil
     end
   end
