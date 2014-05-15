@@ -27,10 +27,13 @@ For instance the following manifest, with 'require' instead of 'include' would p
 Note that this function only works with clients 0.25 and later, and it will
 fail if used with earlier clients.
 
+When parser == 'future' the names will be made absolute before
+being used, and `Class[name]`, or `Resource['class', name]` may also be
+used as references.
 ") do |vals|
   # Make call patterns uniform and protected against nested arrays, also make
   # names absolute if so desired.
-  vals = optionally_make_names_absolute(vals.is_a?(Array) ? vals.flatten : [vals])
+  vals = transform_and_assert_classnames(vals.is_a?(Array) ? vals.flatten : [vals])
 
   # This is the same as calling the include function (but faster) since it again
   # would otherwise need to perform the optional absolute name transformation

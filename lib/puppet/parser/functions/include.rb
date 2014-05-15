@@ -19,13 +19,16 @@ where they are declared. For that, see the `contain` function. It also
 does not create a dependency relationship between the declared class and the
 surrounding class; for that, see the `require` function.
 
-When parser == future is turned on, all names are made absolute.
+When parser == 'future' the names will be made absolute before
+being used, and `Class[name]`, or `Resource['class', name]` may also be
+used as references.
+
 ") do |vals|
 
   # Unify call patterns (if called with nested arrays), make names absolute if
   # wanted and evaluate the classes
   compiler.evaluate_classes(
-    optionally_make_names_absolute(
+  transform_and_assert_classnames(
       vals.is_a?(Array) ? vals.flatten : [vals]),
       self, false)
 end

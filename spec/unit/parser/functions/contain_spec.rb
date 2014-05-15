@@ -219,4 +219,47 @@ describe 'The "contain" function' do
       )
     end
   end
+
+  context "When the future parser is in use" do
+    require 'puppet/pops'
+    before(:each) do
+      Puppet[:parser] = 'future'
+      compiler  = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+      @scope = Puppet::Parser::Scope.new(compiler)
+    end
+
+    it 'transforms relative names to absolute' do
+      @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
+      @scope.function_contain(["myclass"])
+    end
+
+    it 'accepts a Class[name] type' do
+      @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
+      @scope.function_include([Puppet::Pops::Types::TypeFactory.host_class('myclass')])
+    end
+
+    it 'accepts a Resource[class, name] type' do
+      @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
+      @scope.function_contain([Puppet::Pops::Types::TypeFactory.resource('class', 'myclass')])
+    end
+
+    it 'raises and error for unspecific Class' do
+      expect {
+      @scope.function_contain([Puppet::Pops::Types::TypeFactory.host_class()])
+      }.to raise_error(ArgumentError, /Cannot use an unspecific Class\[\] Type/)
+    end
+
+    it 'raises and error for Resource that is not of class type' do
+      expect {
+      @scope.function_contain([Puppet::Pops::Types::TypeFactory.resource('file')])
+      }.to raise_error(ArgumentError, /Cannot use a Resource\[file\] where a Resource\['class', name\] is expected/)
+    end
+
+    it 'raises and error for Resource[class] that is unspecific' do
+      expect {
+      @scope.function_contain([Puppet::Pops::Types::TypeFactory.resource('class')])
+      }.to raise_error(ArgumentError, /Cannot use an unspecific Resource\['class'\] where a Resource\['class', name\] is expected/)
+    end
+  end
+
 end

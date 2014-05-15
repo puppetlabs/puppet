@@ -826,17 +826,40 @@ class Puppet::Parser::Scope
     return [type, titles]
   end
 
+  # Transforms references to classes to the form suitable for
+  # lookup in the compiler.
+  #
   # Makes names passed in the names array absolute if they are relative
   # Names are now made absolute if Puppet[:parser] == 'future', this will
   # be the default behavior in Puppet 4.0
+  #
+  # Transforms Class[] and Resource[] type referenes to class name
+  # or raises an error if a Class[] is unspecific, if a Resource is not
+  # a 'class' resource, or if unspecific (no title).
+  #
   # TODO: Change this for 4.0 to always make names absolute
   #
   # @param names [Array<String>] names to (optinoally) make absolute
   # @return [Array<String>] names after transformation
   #
-  def optionally_make_names_absolute(names)
+  def transform_and_assert_classnames(names)
     if Puppet[:parser] == 'future'
-      names.map {|name| name.sub(/^([^:]{1,2})/, '::\1') }
+      names.map do |name|
+        case name
+        when String
+          name.sub(/^([^:]{1,2})/, '::\1')
+
+        when Puppet::Pops::Types::PHostClassType
+          raise ArgumentError, "Cannot use an unspecific Class[] Type" unless name.class_name
+          name.class_name.sub(/^([^:]{1,2})/, '::\1')
+
+        when Puppet::Pops::Types::PResourceType
+          raise ArgumentError, "Cannot use an unspecific Resource[] where a Resource['class', name] is expected" if name.type_name.nil?
+          raise ArgumentError, "Cannot use a Resource[#{name.type_name}] where a Resource['class', name] is expected" unless name.type_name == "class"
+          raise ArgumentError, "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected" if name.title.nil?
+          name.title.sub(/^([^:]{1,2})/, '::\1')
+        end
+      end
     else
       names
     end

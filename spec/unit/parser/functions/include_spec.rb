@@ -46,6 +46,47 @@ describe "the 'include' function" do
 
   it "should raise if the class is not found" do
     @scope.stubs(:source).returns(true)
-    expect { @scope.function_include(["nosuchclass"]) }.to raise_error Puppet::Error
+    expect { @scope.function_include(["nosuchclass"]) }.to raise_error(Puppet::Error)
   end
+
+  context "When the future parser is in use" do
+    require 'puppet/pops'
+    before(:each) do
+      Puppet[:parser] = 'future'
+    end
+
+    it 'transforms relative names to absolute' do
+      @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
+      @scope.function_include(["myclass"])
+    end
+
+    it 'accepts a Class[name] type' do
+      @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
+      @scope.function_include([Puppet::Pops::Types::TypeFactory.host_class('myclass')])
+    end
+
+    it 'accepts a Resource[class, name] type' do
+      @scope.compiler.expects(:evaluate_classes).with(["::myclass"], @scope, false)
+      @scope.function_include([Puppet::Pops::Types::TypeFactory.resource('class', 'myclass')])
+    end
+
+    it 'raises and error for unspecific Class' do
+      expect {
+      @scope.function_include([Puppet::Pops::Types::TypeFactory.host_class()])
+      }.to raise_error(ArgumentError, /Cannot use an unspecific Class\[\] Type/)
+    end
+
+    it 'raises and error for Resource that is not of class type' do
+      expect {
+      @scope.function_include([Puppet::Pops::Types::TypeFactory.resource('file')])
+      }.to raise_error(ArgumentError, /Cannot use a Resource\[file\] where a Resource\['class', name\] is expected/)
+    end
+
+    it 'raises and error for Resource[class] that is unspecific' do
+      expect {
+      @scope.function_include([Puppet::Pops::Types::TypeFactory.resource('class')])
+      }.to raise_error(ArgumentError, /Cannot use an unspecific Resource\['class'\] where a Resource\['class', name\] is expected/)
+    end
+  end
+
 end
