@@ -146,6 +146,11 @@ class Puppet::Pops::Model::Factory
     o
   end
 
+  def build_ReservedWord(o, name)
+    o.word = name
+    o
+  end
+
   def build_KeyedEntry(o, k, v)
     o.key = to_ops(k)
     o.value = to_ops(v)
@@ -595,6 +600,10 @@ class Puppet::Pops::Model::Factory
     LAMBDA(params, new(Model::EppExpression, see_scope, body))
   end
 
+  def self.RESERVED(name)
+    new(Model::ReservedWord, name)
+  end
+
   # TODO: This is the same a fqn factory method, don't know if callers to fqn and QNAME can live with the
   # same result or not yet - refactor into one method when decided.
   #
@@ -768,7 +777,6 @@ class Puppet::Pops::Model::Factory
   # @param left [Factory, Expression] the lhs followed what may be a hash
   def self.transform_resource_wo_title(left, attribute_ops)
     return nil unless attribute_ops.is_a? Array
-#    return nil if attribute_ops.find { |ao| ao.operator == :'+>' }
     keyed_entries = attribute_ops.map do |ao|
       return nil if ao.operator == :'+>'
       KEY_ENTRY(ao.attribute_name, ao.value_expr)
