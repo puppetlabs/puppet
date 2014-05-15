@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   remove dependent packages with this provider use the `purgeable` feature, but note this
   feature is destructive and should be used with the utmost care."
 
-  has_feature :install_options, :versionable
+  has_feature :install_options, :versionable, :virtual_packages
 
   commands :yum => "yum", :rpm => "rpm", :python => "python"
 

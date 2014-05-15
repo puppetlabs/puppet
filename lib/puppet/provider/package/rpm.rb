@@ -15,6 +15,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   has_feature :versionable
   has_feature :install_options
   has_feature :uninstall_options
+  has_feature :virtual_packages
 
   # Note: self:: is required here to keep these constants in the context of what will
   # eventually become this Puppet::Type::Package::ProviderRpm class.
@@ -82,6 +83,8 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     begin
       output = rpm(*cmd)
     rescue Puppet::ExecutionFailure
+      return nil unless @resource.allow_virtual?
+
       # rpm -q exits 1 if package not found
       # retry the query for virtual packages
       cmd << '--whatprovides'
