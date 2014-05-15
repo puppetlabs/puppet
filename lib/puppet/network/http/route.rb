@@ -47,6 +47,11 @@ class Puppet::Network::HTTP::Route
     return self
   end
 
+  def delete(*handlers)
+    @method_handlers[:DELETE] = handlers
+    return self
+  end
+
   def any(*handlers)
     @method_handlers.each do |method, registered_handlers|
       @method_handlers[method] = handlers
