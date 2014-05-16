@@ -320,6 +320,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
       expect { evaluate(expr) }.to raise_error(/Illegal name/)
     end
 
+    it 'downcases capitalized class names' do
+      expr = fqr('Class')['My::Class']
+
+      expect(evaluate(expr)).to be_the_type(types.host_class('my::class'))
+    end
+
     it 'gives an error if no keys are given as argument' do
       expr = fqr('Class')[]
       expect {evaluate(expr)}.to raise_error(/Evaluation Error: Class\[\] accepts 1 or more arguments. Got 0/)
