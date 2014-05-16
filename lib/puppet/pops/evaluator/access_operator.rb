@@ -558,6 +558,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       #
       result = keys.each_with_index.map do |c, i|
         name = if c.is_a?(Puppet::Pops::Types::PResourceType) && !c.type_name.nil? && c.title.nil?
+                 # type_name is already downcase. Don't waste time trying to downcase again
                  c.type_name
                elsif c.is_a?(String)
                  c.downcase
@@ -565,12 +566,11 @@ class Puppet::Pops::Evaluator::AccessOperator
                  fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
                end
 
-        # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-        name = name.downcase.sub(/^::/, '')
 
         if name =~ Puppet::Pops::Patterns::NAME
           ctype = Puppet::Pops::Types::PHostClassType.new()
-          ctype.class_name = name
+          # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
+          ctype.class_name = name.sub(/^::/, '')
           ctype
         else
           fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
