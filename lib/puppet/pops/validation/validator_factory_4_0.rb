@@ -26,6 +26,7 @@ class Puppet::Pops::Validation::ValidatorFactory_4_0 < Puppet::Pops::Validation:
     p[Issues::NAME_WITH_HYPHEN]             = :error
     p[Issues::DEPRECATED_NAME_AS_TYPE]      = :error
     p[Issues::EMPTY_RESOURCE_SPECIALIZATION] = :ignore
+    p[Issues::ILLEGAL_NODE_INHERITANCE]     = :deprecation
     p
   end
 end
