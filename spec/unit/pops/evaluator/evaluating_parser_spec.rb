@@ -811,6 +811,16 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       alt_results.include?(parse_result).should == true
     end
 
+    it 'should accept a variable with leading underscore when used directly' do
+      source = '$_x = 10; "$_x"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('10')
+    end
+
+    it 'should accept a variable with leading underscore when used as an expression' do
+      source = '$_x = 10; "${_x}"'
+      expect(parser.evaluate_string(scope, source, __FILE__)).to eql('10')
+    end
+
     {
       '"value is ${a*2} yo"'  => :error,
     }.each do |source, result|

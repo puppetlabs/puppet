@@ -5,6 +5,7 @@
 class Puppet::Pops::Parser::Parser
 
 token STRING DQPRE DQMID DQPOST
+token WORD
 token LBRACK  RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
 token FALSE EQUALS APPENDS DELETES LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
@@ -666,7 +667,10 @@ quotedtext
   | dq_string
   | heredoc
 
-string          : STRING                 { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+string
+  : STRING  { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+  | WORD    { result = Factory.literal(val[0][:value]) ; loc result, val[0] }
+
 dq_string       : dqpre dqrval           { result = Factory.string(val[0], *val[1]) ; loc result, val[0], val[1][-1] }
 dqpre           : DQPRE                  { result = Factory.literal(val[0][:value]); loc result, val[0] }
 dqpost          : DQPOST                 { result = Factory.literal(val[0][:value]); loc result, val[0] }
