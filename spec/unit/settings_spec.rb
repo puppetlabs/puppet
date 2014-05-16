@@ -1385,7 +1385,7 @@ describe Puppet::Settings do
 
       it "adds the first directory of environmentpath" do
         envdir = "#{tmpenv}/custom_envpath"
-        envpath = "#{envdir}:/some/other/envdir"
+        envpath = "#{envdir}#{File::PATH_SEPARATOR}/some/other/envdir"
         @settings[:environmentpath] = envpath
         Dir.mkdir(envdir)
         catalog = @settings.to_catalog
