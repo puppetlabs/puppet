@@ -193,19 +193,19 @@ describe provider_class do
     let(:enabled_versions) { {name => [mypackage_newerversion]} }
 
     it "returns the version hash if the package was found" do
-      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with([], []).once.returns(latest_versions)
       version = described_class.latest_package_version(name, [], [])
       expect(version).to eq(mypackage_version)
     end
 
     it "is nil if the package was not found in the query" do
-      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with([], []).once.returns(latest_versions)
       version = described_class.latest_package_version('nopackage', [], [])
       expect(version).to be_nil
     end
 
     it "caches the package list and reuses that for subsequent queries" do
-      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with([], []).once.returns(latest_versions)
 
       2.times {
         version = described_class.latest_package_version(name, [], [])
@@ -214,8 +214,8 @@ describe provider_class do
     end
 
     it "caches separate lists for each combination of 'enablerepo' and 'disablerepo'" do
-      described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
-      described_class.expects(:fetch_latest_versions).with(['enabled'], ['disabled']).once.returns(enabled_versions)
+      described_class.expects(:check_updates).with([], []).once.returns(latest_versions)
+      described_class.expects(:check_updates).with(['enabled'], ['disabled']).once.returns(enabled_versions)
 
       2.times {
         version = described_class.latest_package_version(name, [], [])
@@ -229,79 +229,112 @@ describe provider_class do
     end
   end
 
-  describe "querying for the latest version of all packages" do
-    let(:yumhelper_single_arch) do
-      <<-YUMHELPER_OUTPUT
- * base: centos.tcpdiag.net
- * extras: centos.mirrors.hoobly.com
- * updates: mirrors.arsc.edu
-_pkg nss-tools 0 3.14.3 4.el6_4 x86_64
-_pkg pixman 0 0.26.2 5.el6_4 x86_64
-_pkg myresource 0 1.2.3.4 5.el4 noarch
-_pkg mysummaryless 0 1.2.3.4 5.el4 noarch
-     YUMHELPER_OUTPUT
+  describe "executing yum check-update" do
+    before do
+      described_class.stubs(:command).with(:yum).returns '/usr/bin/yum'
     end
 
-    let(:yumhelper_multi_arch) do
-      yumhelper_single_arch + <<-YUMHELPER_OUTPUT
-_pkg nss-tools 0 3.14.3 4.el6_4 i386
-_pkg pixman 0 0.26.2 5.el6_4 i386
-      YUMHELPER_OUTPUT
+    it "passes repos to enable to 'yum check-update'" do
+      Puppet::Util::Execution.expects(:execute).with do |args, *rest|
+        expect(args).to eq %w[/usr/bin/yum check-update -e updates -e centosplus]
+      end.returns(stub(:exitstatus => 0))
+      described_class.check_updates(%w[updates centosplus], [])
     end
 
-
-    it "creates an entry for each line that's prefixed with '_pkg'" do
-      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_single_arch)
-      entries = described_class.fetch_latest_versions([], [])
-      expect(entries.keys).to include 'nss-tools'
-      expect(entries.keys).to include 'pixman'
-      expect(entries.keys).to include 'myresource'
-      expect(entries.keys).to include 'mysummaryless'
+    it "passes repos to disable to 'yum check-update'" do
+      Puppet::Util::Execution.expects(:execute).with do |args, *rest|
+        expect(args).to eq %w[/usr/bin/yum check-update -d updates -d centosplus]
+      end.returns(stub(:exitstatus => 0))
+      described_class.check_updates([],%w[updates centosplus])
     end
 
-    it "creates an entry for each package name and architecture" do
-      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_single_arch)
-      entries = described_class.fetch_latest_versions([], [])
-      expect(entries.keys).to include 'nss-tools.x86_64'
-      expect(entries.keys).to include 'pixman.x86_64'
-      expect(entries.keys).to include 'myresource.noarch'
-      expect(entries.keys).to include 'mysummaryless.noarch'
+    it "passes a combination of repos to enable and disable to 'yum check-update'" do
+      Puppet::Util::Execution.expects(:execute).with do |args, *rest|
+        expect(args).to eq %w[/usr/bin/yum check-update -e os -e contrib -d updates -d centosplus]
+      end.returns(stub(:exitstatus => 0))
+      described_class.check_updates(%w[os contrib], %w[updates centosplus])
     end
 
-    it "stores multiple entries if a package is build for multiple architectures" do
-      described_class.expects(:python).with([described_class::YUMHELPER]).returns(yumhelper_multi_arch)
-      entries = described_class.fetch_latest_versions([], [])
-      expect(entries.keys).to include 'nss-tools.x86_64'
-      expect(entries.keys).to include 'pixman.x86_64'
-      expect(entries.keys).to include 'nss-tools.i386'
-      expect(entries.keys).to include 'pixman.i386'
-
-      expect(entries['nss-tools']).to have(2).items
-      expect(entries['pixman']).to have(2).items
+    it "returns an empty hash if 'yum check-update' returned 0" do
+      Puppet::Util::Execution.expects(:execute).returns(stub :exitstatus => 0)
+      expect(described_class.check_updates([], [])).to be_empty
     end
 
-    it "passes the repos to enable to the helper" do
-      described_class.expects(:python).with do |script, *args|
-        expect(script).to eq described_class::YUMHELPER
-        expect(args).to eq %w[-e updates -e centosplus]
-      end.returns('')
-      described_class.fetch_latest_versions(['updates', 'centosplus'], [])
+    it "returns a populated hash if 'yum check-update returned 100'" do
+      output = stub(:exitstatus => 100)
+      Puppet::Util::Execution.expects(:execute).returns(output)
+      described_class.expects(:parse_updates).with(output).returns({:has => :updates})
+      expect(described_class.check_updates([], [])).to eq({:has => :updates})
     end
 
-    it "passes the repos to disable to the helper" do
-      described_class.expects(:python).with do |script, *args|
-        expect(script).to eq described_class::YUMHELPER
-        expect(args).to eq %w[-d updates -d centosplus]
-      end.returns('')
-      described_class.fetch_latest_versions([], ['updates', 'centosplus'])
+    it "returns an empty hash if 'yum check-update' returned an exit code that was not 0 or 100" do
+      Puppet::Util::Execution.expects(:execute).returns(stub(:exitstatus => 1))
+      described_class.expects(:warn)
+      expect(described_class.check_updates([], [])).to eq({})
+    end
+  end
+
+  describe "parsing the output of check-update" do
+    let(:check_update) do
+      # Trailing whitespace is intentional
+      <<-EOD
+Loaded plugins: fastestmirror
+Determining fastest mirrors
+ * base: centos.sonn.com
+ * epel: ftp.osuosl.org
+ * extras: mirror.web-ster.com
+ * updates: centos.sonn.com
+
+curl.i686                               7.32.0-10.fc20           updates        
+curl.x86_64                             7.32.0-10.fc20           updates        
+gawk.i686                               4.1.0-3.fc20             updates        
+dhclient.i686                           12:4.1.1-38.P1.fc20      updates        
+selinux-policy.noarch                   3.12.1-163.fc20          updates-testing
+      EOD
     end
 
-    it 'passes a combination of repos to the helper' do
-      described_class.expects(:python).with do |script, *args|
-        expect(script).to eq described_class::YUMHELPER
-        expect(args).to eq %w[-e os -e contrib -d updates -d centosplus]
-      end.returns('')
-      described_class.fetch_latest_versions(['os', 'contrib'], ['updates', 'centosplus'])
+    it 'creates an entry for each package keyed on the package name' do
+      output = described_class.parse_updates(check_update)
+      expect(output['curl']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}, {:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
+      expect(output['gawk']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
+      expect(output['dhclient']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
+      expect(output['selinux-policy']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+    end
+
+    it 'creates an entry for each package keyed on the package name and package architecture' do
+      output = described_class.parse_updates(check_update)
+      expect(output['curl.i686']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'i686'}])
+      expect(output['curl.x86_64']).to eq([{:name => 'curl', :epoch => '0', :version => '7.32.0', :release => '10.fc20', :arch => 'x86_64'}])
+      expect(output['gawk.i686']).to eq([{:name => 'gawk', :epoch => '0', :version => '4.1.0', :release => '3.fc20', :arch => 'i686'}])
+      expect(output['dhclient.i686']).to eq([{:name => 'dhclient', :epoch => '12', :version => '4.1.1', :release => '38.P1.fc20', :arch => 'i686'}])
+      expect(output['selinux-policy.noarch']).to eq([{:name => 'selinux-policy', :epoch => '0', :version => '3.12.1', :release => '163.fc20', :arch => 'noarch'}])
+    end
+  end
+
+  describe "parsing a line from yum check-update" do
+    it "splits up the package name and architecture fields" do
+      checkupdate = "curl.i686                               7.32.0-10.fc20           updates"
+
+      parsed = described_class.update_to_hash(checkupdate)
+      expect(parsed[:name]).to eq 'curl'
+      expect(parsed[:arch]).to eq 'i686'
+    end
+
+    it "splits up the epoch, version, and release fields" do
+      checkupdate = "dhclient.i686                            12:4.1.1-38.P1.el6.centos       base"
+      parsed = described_class.update_to_hash(checkupdate)
+      expect(parsed[:epoch]).to eq '12'
+      expect(parsed[:version]).to eq '4.1.1'
+      expect(parsed[:release]).to eq '38.P1.el6.centos'
+    end
+
+    it "sets the epoch to 0 when an epoch is not specified" do
+      checkupdate = "curl.i686                               7.32.0-10.fc20           updates"
+
+      parsed = described_class.update_to_hash(checkupdate)
+      expect(parsed[:epoch]).to eq '0'
+      expect(parsed[:version]).to eq '7.32.0'
+      expect(parsed[:release]).to eq '10.fc20'
     end
   end
 end

@@ -15,8 +15,6 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
   commands :yum => "yum", :rpm => "rpm", :python => "python"
 
-  self::YUMHELPER = File::join(File::dirname(__FILE__), "yumhelper.py")
-
   if command('rpm')
     confine :true => begin
       rpm('--version')
@@ -52,7 +50,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     @latest_versions ||= {}
     if @latest_versions[key].nil?
-      @latest_versions[key] = fetch_latest_versions(enablerepo, disablerepo)
+      @latest_versions[key] = check_updates(enablerepo, disablerepo)
     end
 
     if @latest_versions[key][package]
@@ -68,25 +66,59 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   # @param disablerepo [Array<String>] A list of repositories to disable for this query
   # @return [Hash<String, Array<Hash<String, String>>>] All packages that were
   #   found with a list of found versions for each package.
-  def self.fetch_latest_versions(enablerepo, disablerepo)
-    latest_versions = Hash.new {|h, k| h[k] = []}
-
-    args = [self::YUMHELPER]
+  def self.check_updates(enablerepo, disablerepo)
+    args = [command(:yum), 'check-update']
     args.concat(enablerepo.map { |repo| ['-e', repo] }.flatten)
     args.concat(disablerepo.map { |repo| ['-d', repo] }.flatten)
 
-    python(args).scan(/^_pkg (.*)$/) do |match|
-      hash = nevra_to_hash(match[0])
+    output = Puppet::Util::Execution.execute(args, :failonfail => false, :combine => false)
 
+    updates = {}
+    if output.exitstatus == 100
+      updates = parse_updates(output)
+    elsif output.exitstatus == 0
+      self.debug "yum check-update exited with 0; no package updates available."
+    else
+      self.warn "Could not check for updates, 'yum check-update' exited with #{output.exitstatus}"
+    end
+    updates
+  end
+
+  def self.parse_updates(str)
+    # Strip off all content before the first blank line
+    body = str.partition(/^\s*\n/m).last
+
+    updates = Hash.new { |h, k| h[k] = [] }
+    body.lines.each do |line|
+      hash = update_to_hash(line)
       # Create entries for both the package name without a version and a
       # version since yum considers those as mostly interchangeable.
       short_name = hash[:name]
       long_name  = "#{hash[:name]}.#{hash[:arch]}"
 
-      latest_versions[short_name] << hash
-      latest_versions[long_name]  << hash
+      updates[short_name] << hash
+      updates[long_name] << hash
     end
-    latest_versions
+
+    updates
+  end
+
+  def self.update_to_hash(line)
+    pkgname, pkgversion, *_ = line.split(/\s+/)
+    name, arch = pkgname.split('.')
+
+    match = pkgversion.match(/^(?:(\d+):)?(\S+)-(\S+)$/)
+    epoch = match[1] || '0'
+    version = match[2]
+    release = match[3]
+
+    {
+      :name => name,
+      :epoch => epoch,
+      :version => version,
+      :release => release,
+      :arch    => arch,
+    }
   end
 
   def self.clear
