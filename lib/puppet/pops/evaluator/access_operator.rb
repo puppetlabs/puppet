@@ -530,17 +530,17 @@ class Puppet::Pops::Evaluator::AccessOperator
     blamed = keys.size == 0 ? @semantic : @semantic.keys[0]
     keys_orig_size = keys.size
 
+    if keys_orig_size == 0
+      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
+        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
+    end
+
     # The result is an array if multiple classnames are given, or if classnames are specified with an array
     # (possibly multiple arrays, and nested arrays).
     result_type_array = keys.size > 1 || keys[0].is_a?(Array)
 
     keys.flatten!
     keys.compact!
-
-    if keys_orig_size == 0
-      fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, blamed,
-        :base_type => Puppet::Pops::Types::TypeCalculator.new().string(o), :min => 1, :max => -1, :actual => 0)
-    end
 
     # If given keys  that were just a mix of empty/nil with empty array as a result.
     # As opposed to calling the function the wrong way (without any arguments), (configurable issue),
@@ -551,40 +551,45 @@ class Puppet::Pops::Evaluator::AccessOperator
       return result_type_array ? [] : nil
     end
 
-    if ! o.class_name.nil?
+    if o.class_name.nil?
+      # The type argument may be a Resource Type - the Puppet Language allows a reference such as
+      # Class[Foo], and this is interpreted as Class[Resource[Foo]] - which is ok as long as the resource
+      # does not have a title. This should probably be deprecated.
+      #
+      result = keys.each_with_index.map do |c, i|
+        name = if c.is_a?(Puppet::Pops::Types::PResourceType) && !c.type_name.nil? && c.title.nil?
+                 # type_name is already downcase. Don't waste time trying to downcase again
+                 c.type_name
+               elsif c.is_a?(String)
+                 c.downcase
+               else
+                 fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
+               end
+
+        if name =~ Puppet::Pops::Patterns::NAME
+          ctype = Puppet::Pops::Types::PHostClassType.new()
+          # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
+          ctype.class_name = name.sub(/^::/, '')
+          ctype
+        else
+          fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
+        end
+      end
+    else
       # lookup class resource and return one or more parameter values
       resource = find_resource(scope, 'class', o.class_name)
-      unless resource
+      if resource
+        result = keys.map do |k|
+          if is_parameter_of_resource?(scope, resource, k)
+            get_resource_parameter_value(scope, resource, k)
+          else
+            fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
+              {:type_name => 'Class', :title => o.class_name, :param_name=>k})
+          end
+        end
+      else
         fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE, @semantic, {:type_name => 'Class', :title => o.class_name})
       end
-      result = keys.map do |k|
-        unless is_parameter_of_resource?(scope, resource, k)
-          fail(Puppet::Pops::Issues::UNKNOWN_RESOURCE_PARAMETER, @semantic,
-            {:type_name => 'Class', :title => o.class_name, :param_name=>k})
-        end
-        get_resource_parameter_value(scope, resource, k)
-      end
-      return result_type_array ? result : result.pop
-    end
-
-    # The type argument may be a Resource Type - the Puppet Language allows a reference such as
-    # Class[Foo], and this is interpreted as Class[Resource[Foo]] - which is ok as long as the resource
-    # does not have a title. This should probably be deprecated.
-    #
-    result = keys.each_with_index.map do |c, i|
-      ctype = Puppet::Pops::Types::PHostClassType.new()
-      if c.is_a?(Puppet::Pops::Types::PResourceType) && !c.type_name.nil? && c.title.nil?
-        # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-        c = c.type_name.downcase.sub(/^::/, '')
-      end
-      unless c.is_a?(String)
-        fail(Puppet::Pops::Issues::ILLEGAL_HOSTCLASS_NAME, @semantic.keys[i], {:name => c})
-      end
-      if c !~ Puppet::Pops::Patterns::NAME
-        fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
-      end
-      ctype.class_name = c.downcase.sub(/^::/,'')
-      ctype
     end
 
     # returns single type as type, else an array of types
