@@ -232,14 +232,12 @@ describe Puppet::Indirector::Request do
     Puppet::Indirector::Request.new(:myind, :find, "my key", nil, :environment => env).environment.should equal(env)
   end
 
-  it "should use the configured environment when none is provided" do
+  it "should use the current environment when none is provided" do
     configured = Puppet::Node::Environment.create(:foo, [])
 
     Puppet[:environment] = "foo"
 
-    Puppet.override(:environments => Puppet::Environments::Static.new(configured)) do
-      Puppet::Indirector::Request.new(:myind, :find, "my key", nil).environment.should == configured
-    end
+    expect(Puppet::Indirector::Request.new(:myind, :find, "my key", nil).environment).to eq(Puppet.lookup(:current_environment))
   end
 
   it "should support converting its options to a hash" do

@@ -109,6 +109,9 @@ def run_with_environment(agent, environment, options = {})
     "--server", master,
   ]
   agent_config << '--environment' << environment if environment
+  # This to test how the agent behaves when using the directory environment
+  # loaders (which will not load an environment if it does not exist)
+  agent_config << "--environmentpath='$confdir/environments'" if agent != master
   agent_config << {
     'ENV' => { "FACTER_agent_file_location" => atmp },
   }
