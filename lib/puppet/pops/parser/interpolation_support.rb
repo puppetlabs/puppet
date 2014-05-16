@@ -208,7 +208,7 @@ module Puppet::Pops::Parser::InterpolationSupport
 
   def transform_to_variable(token)
     token_name = token[0]
-    if [:NUMBER, :NAME].include?(token_name) || self.class::KEYWORD_NAMES[token_name]
+    if [:NUMBER, :NAME, :WORD].include?(token_name) || self.class::KEYWORD_NAMES[token_name]
       t = token[1]
       ta = t.token_array
       [:VARIABLE, self.class::TokenValue.new([:VARIABLE, ta[1], ta[2]], t.offset, t.locator)]

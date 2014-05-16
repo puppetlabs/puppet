@@ -87,6 +87,7 @@ class Puppet::Pops::Parser::Lexer2
 
   # Tokens that are always unique to what has been lexed
   TOKEN_STRING         =  [:STRING, nil,          0].freeze
+  TOKEN_WORD           =  [:WORD, nil,            0].freeze
   TOKEN_DQPRE          =  [:DQPRE,  nil,          0].freeze
   TOKEN_DQMID          =  [:DQPRE,  nil,          0].freeze
   TOKEN_DQPOS          =  [:DQPRE,  nil,          0].freeze
@@ -157,6 +158,7 @@ class Puppet::Pops::Parser::Lexer2
   #
   PATTERN_CLASSREF       = %r{((::){0,1}[A-Z][\w]*)+}
   PATTERN_NAME           = %r{((::)?[a-z][\w]*)(::[a-z][\w]*)*}
+
   PATTERN_BARE_WORD      = %r{[a-z_](?:[\w-]*[\w])?}
 
   PATTERN_DOLLAR_VAR     = %r{\$(::)?(\w+::)*\w+}
@@ -573,21 +575,26 @@ class Puppet::Pops::Parser::Lexer2
       end
 
     when 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
+    'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '_'
       value = scn.scan(PATTERN_NAME)
-      # NAME or false start because followed by hyphen(s) and word
-      if value && !scn.match?(/-+\w/)
+      # NAME or false start because followed by hyphen(s), underscore or word
+      if value && !scn.match?(/^-+\w/)
         emit_completed(KEYWORDS[value] || [:NAME, value, scn.pos - before], before)
       else
         # Restart and check entire pattern (for ease of detecting non allowed trailing hyphen)
         scn.pos = before
         value = scn.scan(PATTERN_BARE_WORD)
-        if value
-          emit_completed([:STRING, value, scn.pos - before], before)
+        # If the WORD continues with :: it must be a correct fully qualified name
+        if value && !(fully_qualified = scn.match?(/::/))
+          emit_completed([:WORD, value, scn.pos - before], before)
         else
-          # move to faulty position ([a-z] was ok)
+          # move to faulty position ([a-z_] was ok)
           scn.pos = scn.pos + 1
-          lex_error("Illegal name")
+          if fully_qualified
+            lex_error("Illegal fully qualified name")
+          else
+            lex_error("Illegal name or bare word")
+          end
         end
       end
 
