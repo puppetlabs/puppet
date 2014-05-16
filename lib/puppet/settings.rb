@@ -888,6 +888,7 @@ class Puppet::Settings
     end
 
     add_user_resources(catalog, sections)
+    add_environment_resources(catalog, sections)
 
     catalog
   end
@@ -1083,6 +1084,20 @@ Generated on #{Time.now}.
     raise ArgumentError, "Default #{default} is not a file" unless obj.is_a? FileSetting
 
     obj
+  end
+
+  def add_environment_resources(catalog, sections)
+    path = self[:environmentpath]
+    envdir = path.split(File::PATH_SEPARATOR).first if path
+    configured_environment = self[:environment]
+    if configured_environment == "production" && envdir && Puppet::FileSystem.exist?(envdir)
+      configured_environment_path = File.join(envdir, configured_environment)
+      catalog.add_resource(
+        Puppet::Resource.new(:file,
+                             configured_environment_path,
+                             :parameters => { :ensure => 'directory' })
+      )
+    end
   end
 
   def add_user_resources(catalog, sections)

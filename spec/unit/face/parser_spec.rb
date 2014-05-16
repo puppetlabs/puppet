@@ -57,7 +57,9 @@ describe Puppet::Face[:parser, :current] do
   it "validates the contents of STDIN when no files given and STDIN is not a tty" do
     from_a_piped_input_of("{ invalid =>")
 
-    expect { parser.validate() }.to exit_with(1)
+    Puppet.override(:current_environment => Puppet::Node::Environment.create(:special, [])) do
+      expect { parser.validate() }.to exit_with(1)
+    end
   end
 
   def from_an_interactive_terminal

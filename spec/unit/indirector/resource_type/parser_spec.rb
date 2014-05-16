@@ -7,9 +7,13 @@ require 'puppet_spec/files'
 describe Puppet::Indirector::ResourceType::Parser do
   include PuppetSpec::Files
 
+  let(:environmentpath) { tmpdir("envs") }
+  let(:modulepath) { "#{environmentpath}/test/modules" }
+  let(:environment) { Puppet::Node::Environment.create(:test, [modulepath]) }
   before do
     @terminus = Puppet::Indirector::ResourceType::Parser.new
     @request = Puppet::Indirector::Request.new(:resource_type, :find, "foo", nil)
+    @request.environment = environment
     @krt = @request.environment.known_resource_types
   end
 
@@ -26,19 +30,18 @@ describe Puppet::Indirector::ResourceType::Parser do
     end
 
     it "should attempt to load the type if none is found in memory" do
-      dir = tmpdir("find_a_type")
-      FileUtils.mkdir_p(dir)
-      Puppet[:modulepath] = dir
+      FileUtils.mkdir_p(modulepath)
 
       # Make a new request, since we've reset the env
-      @request = Puppet::Indirector::Request.new(:resource_type, :find, "foo::bar", nil)
+      request = Puppet::Indirector::Request.new(:resource_type, :find, "foo::bar", nil)
+      request.environment = environment
 
-      manifest_path = File.join(dir, "foo", "manifests")
+      manifest_path = File.join(modulepath, "foo", "manifests")
       FileUtils.mkdir_p(manifest_path)
 
       File.open(File.join(manifest_path, "bar.pp"), "w") { |f| f.puts "class foo::bar {}" }
 
-      result = @terminus.find(@request)
+      result = @terminus.find(request)
       result.should be_instance_of(Puppet::Resource::Type)
       result.name.should == "foo::bar"
     end
@@ -108,10 +111,11 @@ describe Puppet::Indirector::ResourceType::Parser do
         second = File.join(dir, "second")
         FileUtils.mkdir_p(first)
         FileUtils.mkdir_p(second)
-        Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
+        environment = Puppet::Node::Environment.create(:test, [first, second])
 
         # Make a new request, since we've reset the env
-        @request = Puppet::Indirector::Request.new(:resource_type, :search, "*", nil)
+        request = Puppet::Indirector::Request.new(:resource_type, :search, "*", nil)
+        request.environment = environment
 
         onepath = File.join(first, "one", "manifests")
         FileUtils.mkdir_p(onepath)
@@ -121,7 +125,7 @@ describe Puppet::Indirector::ResourceType::Parser do
         File.open(File.join(onepath, "oneklass.pp"), "w") { |f| f.puts "class one::oneklass {}" }
         File.open(File.join(twopath, "twoklass.pp"), "w") { |f| f.puts "class two::twoklass {}" }
 
-        result = @terminus.search(@request)
+        result = @terminus.search(request)
         result.find { |t| t.name == "one::oneklass" }.should be_instance_of(Puppet::Resource::Type)
         result.find { |t| t.name == "two::twoklass" }.should be_instance_of(Puppet::Resource::Type)
       end
@@ -228,10 +232,11 @@ describe Puppet::Indirector::ResourceType::Parser do
       second = File.join(dir, "second")
       FileUtils.mkdir_p(first)
       FileUtils.mkdir_p(second)
-      Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
+      environment = Puppet::Node::Environment.create(:test, [first,second])
 
       # Make a new request, since we've reset the env
-      @request = Puppet::Indirector::Request.new(:resource_type, :search, "*", nil)
+      request = Puppet::Indirector::Request.new(:resource_type, :search, "*", nil)
+      request.environment = environment
 
       onepath = File.join(first, "one", "manifests")
       FileUtils.mkdir_p(onepath)
@@ -241,7 +246,7 @@ describe Puppet::Indirector::ResourceType::Parser do
       File.open(File.join(onepath, "oneklass.pp"), "w") { |f| f.puts "class one::oneklass {}" }
       File.open(File.join(twopath, "twoklass.pp"), "w") { |f| f.puts "class two::twoklass {}" }
 
-      result = @terminus.search(@request)
+      result = @terminus.search(request)
       result.find { |t| t.name == "one::oneklass" }.should be_instance_of(Puppet::Resource::Type)
       result.find { |t| t.name == "two::twoklass" }.should be_instance_of(Puppet::Resource::Type)
     end

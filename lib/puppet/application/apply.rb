@@ -187,7 +187,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       configured_environment.override_with(:manifest => manifest) :
       configured_environment
 
-    Puppet.override(:environments => Puppet::Environments::Static.new(apply_environment)) do
+    Puppet.override(:current_environment => apply_environment) do
       # Find our Node
       unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
         raise "Could not find node #{Puppet[:node_name_value]}"

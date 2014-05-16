@@ -145,6 +145,13 @@ class Puppet::Configurer
         begin
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
               :environment => @environment, :ignore_cache => true, :transaction_uuid => @transaction_uuid)
+
+            # If we have deserialized a node from a rest call, we want to set
+            # an environment instance as a simple 'remote' environment reference.
+            if !node.has_environment_instance? && node.environment_name
+              node.environment = Puppet::Node::Environment.remote(node.environment_name)
+            end
+
             if node.environment.to_s != @environment
               Puppet.warning "Local environment: \"#{@environment}\" doesn't match server specified node environment \"#{node.environment}\", switching agent to \"#{node.environment}\"."
               @environment = node.environment.to_s
