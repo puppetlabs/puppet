@@ -498,4 +498,8 @@ module Puppet::Pops::Issues
   UNMATCHED_SELECTOR = hard_issue :UNMATCHED_SELECTOR, :param_value do
     "No matching entry for selector parameter with value '#{param_value}'"
   end
+
+  ILLEGAL_NODE_INHERITANCE = issue :ILLEGAL_NODE_INHERITANCE do
+    "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
+  end
 end
