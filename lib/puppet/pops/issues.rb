@@ -482,4 +482,8 @@ module Puppet::Pops::Issues
   RESERVED_WORD = hard_issue :RESERWED_WORD, :word do
     "Use of reserved word: #{word}, must be quoted if intended to be a String value"
   end
+
+  ILLEGAL_NODE_INHERITANCE = issue :ILLEGAL_NODE_INHERITANCE do
+    "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
+  end
 end
