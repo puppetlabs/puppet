@@ -72,6 +72,45 @@ describe Puppet::Context do
     end
   end
 
+  context "a rollback" do
+    it "returns to the mark" do
+      context.push("a" => 1)
+      context.mark("start")
+      context.push("a" => 2)
+      context.push("a" => 3)
+      context.pop
+
+      context.rollback("start")
+
+      expect(context.lookup("a")).to eq(1)
+    end
+
+    it "rolls back to the mark across a scoped override" do
+      context.push("a" => 1)
+      context.mark("start")
+      context.override("a" => 3) do
+
+        context.rollback("start")
+
+        expect(context.lookup("a")).to eq(1)
+      end
+      expect(context.lookup("a")).to eq(1)
+    end
+
+    it "fails to rollback to an unknown mark" do
+      expect do
+        context.rollback("unknown")
+      end.to raise_error(Puppet::Context::UnknownRollbackMarkError)
+    end
+
+    it "does not allow the same mark to be set twice" do
+      context.mark("duplicate")
+      expect do
+        context.mark("duplicate")
+      end.to raise_error(Puppet::Context::DuplicateRollbackMarkError)
+    end
+  end
+
   context 'support lazy entries' do
     it 'by evaluating a bound proc' do
       result = nil

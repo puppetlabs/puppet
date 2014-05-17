@@ -234,6 +234,16 @@ module Puppet
     @context.override(bindings, description, &block)
   end
 
+  # @api private
+  def self.mark_context(name)
+    @context.mark(name)
+  end
+
+  # @api private
+  def self.rollback_context(name)
+    @context.rollback(name)
+  end
+
   require 'puppet/node'
 
   # The single instance used for normal operation
