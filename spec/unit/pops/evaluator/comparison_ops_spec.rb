@@ -88,10 +88,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     context "of booleans" do
-      it "true  == true  == true"  do; evaluate(literal(true) == literal(true)).should == true  ; end;
-      it "false == false == true" do; evaluate(literal(false) == literal(false)).should == true ; end;
-      it "true == false  != true" do; evaluate(literal(true) == literal(false)).should == false ; end;
-      it "false  == ''  == false"  do; evaluate(literal(false) == literal('')).should == false  ; end;
+      it "true  == true  == true"    do; evaluate(literal(true) == literal(true)).should == true  ; end;
+      it "false == false == true"    do; evaluate(literal(false) == literal(false)).should == true ; end;
+      it "true == false  != true"    do; evaluate(literal(true) == literal(false)).should == false ; end;
+      it "false  == ''  == false"    do; evaluate(literal(false) == literal('')).should == false  ; end;
+      it "undef  == ''  == false"    do; evaluate(literal(:undef) == literal('')).should == false  ; end;
+      it "undef  == undef  == true"  do; evaluate(literal(:undef) == literal(:undef)).should == true  ; end;
+      it "nil    == undef  == true"  do; evaluate(literal(nil) == literal(:undef)).should == true  ; end;
     end
 
     context "of collections" do
