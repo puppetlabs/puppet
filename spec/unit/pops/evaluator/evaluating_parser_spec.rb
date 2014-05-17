@@ -796,7 +796,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "!! true"         => true,
       "!! false"        => false,
       "! 'x'"           => false,
-      "! ''"            => true,
+      "! ''"            => false,
       "! undef"         => true,
       "! [a]"           => false,
       "! []"            => false,
