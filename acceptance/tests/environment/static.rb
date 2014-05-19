@@ -64,7 +64,7 @@ review[existing_legacy_scenario] = review_results(results[existing_legacy_scenar
     :matches => [%r{Applying configuration version 'static'},
                  %r{in legacy testing environment site.pp},
                  %r{include legacy testing environment testing_mod}],
-  },
+  }
 )
 
 step "Reviewing: #{default_environment_scenario}"

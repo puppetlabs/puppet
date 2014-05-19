@@ -64,7 +64,7 @@ review[existing_dynamic_scenario] = review_results(results[existing_dynamic_scen
     :matches => [%r{Applying configuration version 'static'},
                  %r{in dynamic testing environment site.pp},
                  %r{include dynamic testing environment testing_mod}],
-  },
+  }
 )
 
 step "Reviewing: #{default_environment_scenario}"

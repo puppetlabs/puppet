@@ -61,6 +61,7 @@ module Puppet::Test
     # Call this method once per test, prior to execution of each invididual test.
     # @return nil
     def self.before_each_test()
+      Puppet.mark_context("initial testing state")
 
       # We need to preserve the current state of all our indirection cache and
       # terminus classes.  This is pretty important, because changes to these
@@ -153,7 +154,7 @@ module Puppet::Test
       $LOAD_PATH.clear
       $old_load_path.each {|x| $LOAD_PATH << x }
 
-      Puppet.pop_context
+      Puppet.rollback_context("initial testing state")
     end
 
 

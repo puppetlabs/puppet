@@ -144,7 +144,8 @@ class Puppet::Configurer
       unless options[:catalog]
         begin
           if node = Puppet::Node.indirection.find(Puppet[:node_name_value],
-              :environment => @environment, :ignore_cache => true, :transaction_uuid => @transaction_uuid)
+              :environment => @environment, :ignore_cache => true, :transaction_uuid => @transaction_uuid,
+              :fail_on_404 => true)
 
             # If we have deserialized a node from a rest call, we want to set
             # an environment instance as a simple 'remote' environment reference.
@@ -246,7 +247,8 @@ class Puppet::Configurer
   def retrieve_catalog_from_cache(query_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], query_options.merge(:ignore_terminus => true, :environment => @environment))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
+        query_options.merge(:ignore_terminus => true, :environment => @environment))
     end
     Puppet.notice "Using cached catalog"
     result
@@ -258,7 +260,8 @@ class Puppet::Configurer
   def retrieve_new_catalog(query_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], query_options.merge(:ignore_cache => true, :environment => @environment))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value],
+        query_options.merge(:ignore_cache => true, :environment => @environment, :fail_on_404 => true))
     end
     result
   rescue SystemExit,NoMemoryError
