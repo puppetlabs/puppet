@@ -380,6 +380,7 @@ class Application
     exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
     exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
     exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+    exit_on_fail("log runtime debug info")                       { log_runtime_environment }
     exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
   end
 
