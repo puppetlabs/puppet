@@ -49,7 +49,8 @@ describe provider_class do
 
     it 'should call yum install for :installed' do
       resource.stubs(:should).with(:ensure).returns :installed
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage')
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :list, name)
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, name)
       provider.install
     end
 
@@ -59,18 +60,20 @@ describe provider_class do
     end
 
     it 'should be able to set version' do
-      resource[:ensure] = '1.2'
-
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage-1.2')
-      provider.stubs(:query).returns :ensure => '1.2'
+      version = '1.2'
+      resource[:ensure] = version
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :list, name)
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, "#{name}-#{version}")
+      provider.stubs(:query).returns :ensure => version
       provider.install
     end
 
     it 'should be able to downgrade' do
+      current_version = '1.2'
+      version = '1.0'
       resource[:ensure] = '1.0'
-
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, 'mypackage-1.0')
-      provider.stubs(:query).returns(:ensure => '1.2').then.returns(:ensure => '1.0')
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, "#{name}-#{version}")
+      provider.stubs(:query).returns(:ensure => current_version).then.returns(:ensure => version)
       provider.install
     end
 
@@ -78,14 +81,22 @@ describe provider_class do
       resource[:ensure] = :installed
       resource[:install_options] = ['-t', {'-x' => 'expackage'}]
 
-      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', ['-t', '-x=expackage'], :install, 'mypackage')
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', ['-t', '-x=expackage'], :install, name)
+      provider.install
+    end
+
+    it 'allow virtual packages' do
+      resource[:ensure] = :installed
+      resource[:allow_virtual] = true
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :list, name).never
+      provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, name)
       provider.install
     end
   end
 
   describe 'when uninstalling' do
     it 'should use erase to purge' do
-      provider.expects(:yum).with('-y', :erase, 'mypackage')
+      provider.expects(:yum).with('-y', :erase, name)
       provider.purge
     end
   end
@@ -103,7 +114,7 @@ describe provider_class do
       ]
       provider.stubs(:properties).returns({:ensure => '3.4.5'})
 
-      described_class.expects(:latest_package_version).with('mypackage', ['contrib', 'centosplus'], [])
+      described_class.expects(:latest_package_version).with(name, ['contrib', 'centosplus'], [])
       provider.latest
     end
 
@@ -114,13 +125,13 @@ describe provider_class do
       ]
       provider.stubs(:properties).returns({:ensure => '3.4.5'})
 
-      described_class.expects(:latest_package_version).with('mypackage', [], ['updates', 'centosplus'])
+      described_class.expects(:latest_package_version).with(name, [], ['updates', 'centosplus'])
       provider.latest
     end
 
     describe 'and a newer version is not available' do
       before :each do
-        described_class.stubs(:latest_package_version).with('mypackage', [], []).returns nil
+        described_class.stubs(:latest_package_version).with(name, [], []).returns nil
       end
 
       it 'raises an error the package is not installed' do
@@ -139,7 +150,7 @@ describe provider_class do
     describe 'and a newer version is available' do
       let(:latest_version) do
         {
-          :name     => 'mypackage',
+          :name     => name,
           :epoch    => '1',
           :version  => '2.3.4',
           :release  => '5',
@@ -148,7 +159,7 @@ describe provider_class do
       end
 
       it 'includes the epoch in the version string' do
-        described_class.stubs(:latest_package_version).with('mypackage', [], []).returns(latest_version)
+        described_class.stubs(:latest_package_version).with(name, [], []).returns(latest_version)
         provider.latest.should == '1:2.3.4-5'
       end
     end
@@ -160,7 +171,7 @@ describe provider_class do
 
     let(:mypackage_version) do
       {
-        :name     => 'mypackage',
+        :name     => name,
         :epoch    => '1',
         :version  => '2.3.4',
         :release  => '5',
@@ -170,7 +181,7 @@ describe provider_class do
 
     let(:mypackage_newerversion) do
       {
-        :name     => 'mypackage',
+        :name     => name,
         :epoch    => '1',
         :version  => '4.5.6',
         :release  => '7',
@@ -178,12 +189,12 @@ describe provider_class do
       }
     end
 
-    let(:latest_versions) { {'mypackage' => [mypackage_version]} }
-    let(:enabled_versions) { {'mypackage' => [mypackage_newerversion]} }
+    let(:latest_versions) { {name => [mypackage_version]} }
+    let(:enabled_versions) { {name => [mypackage_newerversion]} }
 
     it "returns the version hash if the package was found" do
       described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
-      version = described_class.latest_package_version('mypackage', [], [])
+      version = described_class.latest_package_version(name, [], [])
       expect(version).to eq(mypackage_version)
     end
 
@@ -197,7 +208,7 @@ describe provider_class do
       described_class.expects(:fetch_latest_versions).with([], []).once.returns(latest_versions)
 
       2.times {
-        version = described_class.latest_package_version('mypackage', [], [])
+        version = described_class.latest_package_version(name, [], [])
         expect(version).to eq mypackage_version
       }
     end
@@ -207,12 +218,12 @@ describe provider_class do
       described_class.expects(:fetch_latest_versions).with(['enabled'], ['disabled']).once.returns(enabled_versions)
 
       2.times {
-        version = described_class.latest_package_version('mypackage', [], [])
+        version = described_class.latest_package_version(name, [], [])
         expect(version).to eq mypackage_version
       }
 
       2.times {
-        version = described_class.latest_package_version('mypackage', ['enabled'], ['disabled'])
+        version = described_class.latest_package_version(name, ['enabled'], ['disabled'])
         expect(version).to eq(mypackage_newerversion)
       }
     end
