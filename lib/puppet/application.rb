@@ -353,37 +353,34 @@ class Application
       plugin_hook('initialize_app_defaults') { initialize_app_defaults }
     end
 
-    Puppet.override(Puppet.base_context(Puppet.settings)) do
-      # This use of configured environment is correct, this is used to establish
-      # the defaults for an application that does not override, or where an override
-      # has not been made from the command line.
-      #
-      configured_environment_name = Puppet[:environment]
-      configured_environment = Puppet.lookup(:environments).get(configured_environment_name)
-      if configured_environment.nil?
-        if self.class.run_mode.name != :agent
-          fail(Puppet::Environments::EnvironmentNotFound, configured_environment_name)
-        else
-          configured_environment = Puppet::Node::Environment.remote(configured_environment_name)
-        end
-      end
-      configured_environment = configured_environment.override_from_commandline(Puppet.settings)
-
-      # Setup a new context using the app's configuration
-      Puppet.override({ :current_environment => configured_environment },
-                      "New base context and current environment from application's configuration") do
-        require 'puppet'
-        require 'puppet/util/instrumentation'
-        Puppet::Util::Instrumentation.init
-
-        exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
-        exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
-        exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
-        exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
-        exit_on_fail("log runtime debug info")                       { log_runtime_environment }
-        exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
+    Puppet.push_context(Puppet.base_context(Puppet.settings), "Update for application settings (#{self.class.run_mode})")
+    # This use of configured environment is correct, this is used to establish
+    # the defaults for an application that does not override, or where an override
+    # has not been made from the command line.
+    #
+    configured_environment_name = Puppet[:environment]
+    configured_environment = Puppet.lookup(:environments).get(configured_environment_name)
+    if configured_environment.nil?
+      if self.class.run_mode.name != :agent
+        fail(Puppet::Environments::EnvironmentNotFound, configured_environment_name)
+      else
+        configured_environment = Puppet::Node::Environment.remote(configured_environment_name)
       end
     end
+    configured_environment = configured_environment.override_from_commandline(Puppet.settings)
+
+    # Setup a new context using the app's configuration
+    Puppet.push_context({ :current_environment => configured_environment },
+                    "Update current environment from application's configuration")
+
+    require 'puppet/util/instrumentation'
+    Puppet::Util::Instrumentation.init
+
+    exit_on_fail("initialize")                                   { plugin_hook('preinit')       { preinit } }
+    exit_on_fail("parse application options")                    { plugin_hook('parse_options') { parse_options } }
+    exit_on_fail("prepare for execution")                        { plugin_hook('setup')         { setup } }
+    exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+    exit_on_fail("run")                                          { plugin_hook('run_command')   { run_command } }
   end
 
   def main
