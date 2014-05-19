@@ -67,6 +67,21 @@ describe "the epp function" do
     eval_template("string was: <%= $string %>").should == "string was: the string value"
   end
 
+  describe 'when loading from modules' do
+    include PuppetSpec::Files
+    it 'an epp template is found' do
+      modules_dir = dir_containing('modules', {
+        'testmodule'  => {
+            'templates' => {
+              'the_x.epp' => 'The x is <%= $x %>'
+            }
+        }})
+      Puppet.override({:current_environment => (env = Puppet::Node::Environment.create(:testload, [ modules_dir ]))}, "test") do
+        node.environment = env
+        expect(scope.function_epp([ 'testmodule/the_x.epp', { 'x' => '3'} ])).to eql("The x is 3")
+      end
+    end
+  end
 
   def eval_template_with_args(content, args_hash)
     file_path = tmpdir('epp_spec_content')

@@ -36,6 +36,6 @@ scope where the `epp` function is called from.
   unless Puppet[:parser] == "future"
     raise ArgumentError, "epp(): function is only available when --parser future is in effect"
   end
-  Puppet::Pops::Evaluator::EppEvaluator.epp(self, arguments[0], self.compiler.environment.to_s, arguments[1])
+  Puppet::Pops::Evaluator::EppEvaluator.epp(self, arguments[0], self.compiler.environment, arguments[1])
 
 end

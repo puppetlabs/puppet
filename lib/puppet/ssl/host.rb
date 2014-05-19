@@ -203,7 +203,7 @@ DOC
 
       # get the CA cert first, since it's required for the normal cert
       # to be of any use.
-      return nil unless Certificate.indirection.find("ca") unless ca?
+      return nil unless Certificate.indirection.find("ca", :fail_on_404 => true) unless ca?
       return nil unless @certificate = Certificate.indirection.find(name)
 
       validate_certificate_with_key
