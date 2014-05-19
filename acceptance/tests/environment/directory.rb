@@ -202,7 +202,7 @@ master_environmentpath_expectations = existing_directory_expectations.call('test
     :matches => [%r{include default environment testing_mod}],
     :expect_failure => true,
     :notes => "Runs in user mode and doesn't see the master environmenetpath setting.",
-  },
+  }
 )
 step "Reviewing: #{master_environmentpath_scenario}"
 review[master_environmentpath_scenario] = review_results(
