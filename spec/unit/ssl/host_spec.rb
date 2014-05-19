@@ -512,7 +512,7 @@ describe Puppet::SSL::Host do
 
     it "should find the CA certificate if it does not have a certificate" do
       Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.stubs(:find).with("myname").returns @cert
+      Puppet::SSL::Certificate.indirection.stubs(:find).with("myname", {:fail_on_404 => true}).returns @cert
       @host.certificate
     end
 
@@ -546,13 +546,13 @@ describe Puppet::SSL::Host do
 
     it "should find the certificate in the Certificate class and return the Puppet certificate instance" do
       Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns @cert
+      Puppet::SSL::Certificate.indirection.expects(:find).with("myname",{:fail_on_404 => true}).returns @cert
       @host.certificate.should equal(@cert)
     end
 
     it "should return any previously found certificate" do
       Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
-      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns(@cert).once
+      Puppet::SSL::Certificate.indirection.expects(:find).with("myname", {:fail_on_404 => true}).returns(@cert).once
 
       @host.certificate.should equal(@cert)
       @host.certificate.should equal(@cert)
