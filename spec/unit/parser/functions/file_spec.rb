@@ -27,7 +27,7 @@ describe "the 'file' function" do
 
   it "should read a file" do
     with_file_content('file content') do |name|
-      scope.function_file([name]).should == 'file content'
+      scope.function_file([name]).should == "file content"
     end
   end
 
