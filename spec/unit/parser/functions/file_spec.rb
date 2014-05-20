@@ -41,50 +41,48 @@ describe "the 'file' function" do
     scope.function_file(['mymod/myfile']).should == 'file content'
   end
 
-  it "should return the first file if given two files" do
-    context "with absolute paths" do
-      with_file_content('one') do |one|
-        with_file_content('two') do |two|
-          scope.function_file([one, two]).should == "one"
-        end
+  it "should return the first file if given two files with absolute paths" do
+    with_file_content('one') do |one|
+      with_file_content('two') do |two|
+        scope.function_file([one, two]).should == "one"
       end
     end
+  end
 
-    context "with module paths" do
+  it "should return the first file if given two files with module paths" do
+    mod = mock 'module'
+    environment.expects(:module).with('mymod').returns(mod)
+    mod.expects(:file).with('first').returns('/one/mymod/files/first')
+    mod.expects(:file).with('second').returns('/one/mymod/files/second')
+    Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/first").returns(true)
+    Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/second").returns(true)
+    File.stubs(:read).with('/one/mymod/files/second').returns('first')
+    File.stubs(:read).with('/one/mymod/files/second').returns('second')
+
+    scope.function_file(['mymod/myfile']).should == 'file content'
+  end
+
+  it "should return the first file if given two files with mixed paths, absolute first" do
+    with_file_content('absolute') do |absolute|
       mod = mock 'module'
       environment.expects(:module).with('mymod').returns(mod)
-      mod.expects(:file).with('first').returns('/one/mymod/files/first')
-      mod.expects(:file).with('second').returns('/one/mymod/files/second')
-      Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/first").returns(true)
-      Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/second").returns(true)
-      File.stubs(:read).with('/one/mymod/files/second').returns('first')
-      File.stubs(:read).with('/one/mymod/files/second').returns('second')
+      mod.expects(:file).with('module').returns('/one/mymod/files/module')
+      Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/module").returns true
+      File.stubs(:read).with('/one/mymod/files/module').returns('module')
 
-      scope.function_file(['mymod/myfile']).should == 'file content'
+      scope.function_file([absolute,'mymod/module']).should == 'absolute'
     end
+  end
 
-    context "with mixed paths, absolute first" do
-      with_file_content('absolute') do |absolute|
-        mod = mock 'module'
-        environment.expects(:module).with('mymod').returns(mod)
-        mod.expects(:file).with('module').returns('/one/mymod/files/module')
-        Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/module").returns true
-        File.stubs(:read).with('/one/mymod/files/module').returns('module')
+  it "should return the first file if given two files with mixed paths, module first" do
+    with_file_content('one') do |absolute|
+      mod = mock 'module'
+      environment.expects(:module).with('mymod').returns(mod)
+      mod.expects(:file).with('module').returns('/one/mymod/files/module')
+      Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/module").returns true
+      File.stubs(:read).with('/one/mymod/files/module').returns('module')
 
-        scope.function_file([absolute,'mymod/module']).should == 'absolute'
-      end
-    end
-
-    context "with mixed paths, module first" do
-      with_file_content('one') do |absolute|
-        mod = mock 'module'
-        environment.expects(:module).with('mymod').returns(mod)
-        mod.expects(:file).with('module').returns('/one/mymod/files/module')
-        Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/module").returns true
-        File.stubs(:read).with('/one/mymod/files/module').returns('module')
-
-        scope.function_file(['mymod/module',absolute]).should == 'module'
-      end
+      scope.function_file(['mymod/module',absolute]).should == 'module'
     end
   end
 
