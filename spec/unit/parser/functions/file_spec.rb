@@ -32,13 +32,13 @@ describe "the 'file' function" do
   end
 
   it "should read a file from a module path" do
-    mod = mock 'module'
-    mod.expects(:file).with('myfile').returns('/one/mymod/files/myfile')
-    compiler.environment.expects(:module).with('mymod').returns(mod)
-    Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/myfile").returns true
-    File.stubs(:read).with('/one/mymod/files/myfile').returns('file content')
+    with_file_content('file content') do |name|
+      mod = mock 'module'
+      mod.stubs(:file).with('myfile').returns(name)
+      compiler.environment.stubs(:module).with('mymod').returns(mod)
 
-    scope.function_file(['mymod/myfile']).should == 'file content'
+      scope.function_file(['mymod/myfile']).should == 'file content'
+    end
   end
 
   it "should return the first file if given two files with absolute paths" do
@@ -50,39 +50,39 @@ describe "the 'file' function" do
   end
 
   it "should return the first file if given two files with module paths" do
-    mod = mock 'module'
-    compiler.environment.expects(:module).with('mymod').returns(mod)
-    mod.expects(:file).with('first').returns('/one/mymod/files/first')
-    mod.expects(:file).with('second').returns('/one/mymod/files/second')
-    Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/first").returns(true)
-    Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/second").returns(true)
-    File.stubs(:read).with('/one/mymod/files/second').returns('first')
-    File.stubs(:read).with('/one/mymod/files/second').returns('second')
+    with_file_content('one') do |one|
+      with_file_content('two') do |two|
+        mod = mock 'module'
+        compiler.environment.expects(:module).with('mymod').returns(mod)
+        mod.expects(:file).with('one').returns(one)
+        mod.stubs(:file).with('two').returns(two)
 
-    scope.function_file(['mymod/myfile']).should == 'file content'
+        scope.function_file(['mymod/one','mymod/two']).should == 'one'
+      end
+    end
   end
 
   it "should return the first file if given two files with mixed paths, absolute first" do
-    with_file_content('absolute') do |absolute|
-      mod = mock 'module'
-      compiler.environment.expects(:module).with('mymod').returns(mod)
-      mod.expects(:file).with('module').returns('/one/mymod/files/module')
-      Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/module").returns true
-      File.stubs(:read).with('/one/mymod/files/module').returns('module')
+    with_file_content('one') do |one|
+      with_file_content('two') do |two|
+        mod = mock 'module'
+        compiler.environment.stubs(:module).with('mymod').returns(mod)
+        mod.stubs(:file).with('two').returns(two)
 
-      scope.function_file([absolute,'mymod/module']).should == 'absolute'
+        scope.function_file([one,'mymod/two']).should == 'one'
+      end
     end
   end
 
   it "should return the first file if given two files with mixed paths, module first" do
-    with_file_content('one') do |absolute|
-      mod = mock 'module'
-      compiler.environment.expects(:module).with('mymod').returns(mod)
-      mod.expects(:file).with('module').returns('/one/mymod/files/module')
-      Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/module").returns true
-      File.stubs(:read).with('/one/mymod/files/module').returns('module')
+    with_file_content('one') do |one|
+      with_file_content('two') do |two|
+        mod = mock 'module'
+        compiler.environment.expects(:module).with('mymod').returns(mod)
+        mod.stubs(:file).with('two').returns(two)
 
-      scope.function_file(['mymod/module',absolute]).should == 'module'
+        scope.function_file(['mymod/two',one]).should == 'two'
+      end
     end
   end
 
