@@ -2,122 +2,135 @@ require 'puppet/util/windows'
 require 'windows/process'
 require 'windows/handle'
 require 'windows/synchronize'
+require 'ffi'
 
 module Puppet::Util::Windows::Process
   extend ::Windows::Process
   extend ::Windows::Handle
   extend ::Windows::Synchronize
 
-  module API
-    require 'ffi'
-    extend FFI::Library
-    ffi_convention :stdcall
+  extend FFI::Library
+  ffi_convention :stdcall
 
-    ffi_lib 'kernel32'
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
+  # HANDLE WINAPI GetCurrentProcess(void);
+  ffi_lib 'kernel32'
+  attach_function_private :GetCurrentProcess, [], :handle
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
-    # HANDLE WINAPI GetCurrentProcess(void);
-    attach_function :get_current_process, :GetCurrentProcess, [], :uint
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
+  # BOOL WINAPI CloseHandle(
+  #   _In_  HANDLE hObject
+  # );
+  ffi_lib 'kernel32'
+  attach_function_private :CloseHandle, [:handle], :bool
 
-    # BOOL WINAPI CloseHandle(
-    #   _In_  HANDLE hObject
-    # );
-    attach_function :close_handle, :CloseHandle, [:uint], :bool
-
-    ffi_lib 'advapi32'
-
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
-    # BOOL WINAPI OpenProcessToken(
-    #   _In_   HANDLE ProcessHandle,
-    #   _In_   DWORD DesiredAccess,
-    #   _Out_  PHANDLE TokenHandle
-    # );
-    attach_function :open_process_token, :OpenProcessToken,
-      [:uint, :uint, :pointer], :bool
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
+  # BOOL WINAPI OpenProcessToken(
+  #   _In_   HANDLE ProcessHandle,
+  #   _In_   DWORD DesiredAccess,
+  #   _Out_  PHANDLE TokenHandle
+  # );
+  ffi_lib 'advapi32'
+  attach_function_private :OpenProcessToken,
+    [:handle, :dword, :phandle], :bool
 
 
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
-    # typedef struct _LUID {
-    #   DWORD LowPart;
-    #   LONG  HighPart;
-    # } LUID, *PLUID;
-    class LUID < FFI::Struct
-      layout :low_part, :uint,
-             :high_part, :int
-    end
-
-    # http://msdn.microsoft.com/en-us/library/Windows/desktop/aa379180(v=vs.85).aspx
-    # BOOL WINAPI LookupPrivilegeValue(
-    #   _In_opt_  LPCTSTR lpSystemName,
-    #   _In_      LPCTSTR lpName,
-    #   _Out_     PLUID lpLuid
-    # );
-    attach_function :lookup_privilege_value, :LookupPrivilegeValueA,
-      [:string, :string, :pointer], :bool
-
-    Token_Information = enum(
-        :token_user, 1,
-        :token_groups,
-        :token_privileges,
-        :token_owner,
-        :token_primary_group,
-        :token_default_dacl,
-        :token_source,
-        :token_type,
-        :token_impersonation_level,
-        :token_statistics,
-        :token_restricted_sids,
-        :token_session_id,
-        :token_groups_and_privileges,
-        :token_session_reference,
-        :token_sandbox_inert,
-        :token_audit_policy,
-        :token_origin,
-        :token_elevation_type,
-        :token_linked_token,
-        :token_elevation,
-        :token_has_restrictions,
-        :token_access_information,
-        :token_virtualization_allowed,
-        :token_virtualization_enabled,
-        :token_integrity_level,
-        :token_ui_access,
-        :token_mandatory_policy,
-        :token_logon_sid,
-        :max_token_info_class
-      )
-
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379263(v=vs.85).aspx
-    # typedef struct _LUID_AND_ATTRIBUTES {
-    #   LUID  Luid;
-    #   DWORD Attributes;
-    # } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
-    class LUID_And_Attributes < FFI::Struct
-      layout :luid, LUID,
-             :attributes, :uint
-    end
-
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379630(v=vs.85).aspx
-    # typedef struct _TOKEN_PRIVILEGES {
-    #   DWORD               PrivilegeCount;
-    #   LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
-    # } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
-    class Token_Privileges < FFI::Struct
-      layout :privilege_count, :uint,
-             :privileges, [LUID_And_Attributes, 1]    # placeholder for offset
-    end
-
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446671(v=vs.85).aspx
-    # BOOL WINAPI GetTokenInformation(
-    #   _In_       HANDLE TokenHandle,
-    #   _In_       TOKEN_INFORMATION_CLASS TokenInformationClass,
-    #   _Out_opt_  LPVOID TokenInformation,
-    #   _In_       DWORD TokenInformationLength,
-    #   _Out_      PDWORD ReturnLength
-    # );
-    attach_function :get_token_information, :GetTokenInformation,
-      [:uint, Token_Information, :pointer, :uint, :pointer ], :bool
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
+  # typedef struct _LUID {
+  #   DWORD LowPart;
+  #   LONG  HighPart;
+  # } LUID, *PLUID;
+  class LUID < FFI::Struct
+    layout :LowPart, :dword,
+           :HighPart, :win32_long
   end
+
+  # http://msdn.microsoft.com/en-us/library/Windows/desktop/aa379180(v=vs.85).aspx
+  # BOOL WINAPI LookupPrivilegeValue(
+  #   _In_opt_  LPCTSTR lpSystemName,
+  #   _In_      LPCTSTR lpName,
+  #   _Out_     PLUID lpLuid
+  # );
+  ffi_lib 'advapi32'
+  attach_function_private :LookupPrivilegeValueA,
+    [:lpcstr, :lpcstr, :pointer], :bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
+  TOKEN_INFORMATION_CLASS = enum(
+      :TokenUser, 1,
+      :TokenGroups,
+      :TokenPrivileges,
+      :TokenOwner,
+      :TokenPrimaryGroup,
+      :TokenDefaultDacl,
+      :TokenSource,
+      :TokenType,
+      :TokenImpersonationLevel,
+      :TokenStatistics,
+      :TokenRestrictedSids,
+      :TokenSessionId,
+      :TokenGroupsAndPrivileges,
+      :TokenSessionReference,
+      :TokenSandBoxInert,
+      :TokenAuditPolicy,
+      :TokenOrigin,
+      :TokenElevationType,
+      :TokenLinkedToken,
+      :TokenElevation,
+      :TokenHasRestrictions,
+      :TokenAccessInformation,
+      :TokenVirtualizationAllowed,
+      :TokenVirtualizationEnabled,
+      :TokenIntegrityLevel,
+      :TokenUIAccess,
+      :TokenMandatoryPolicy,
+      :TokenLogonSid,
+      :TokenIsAppContainer,
+      :TokenCapabilities,
+      :TokenAppContainerSid,
+      :TokenAppContainerNumber,
+      :TokenUserClaimAttributes,
+      :TokenDeviceClaimAttributes,
+      :TokenRestrictedUserClaimAttributes,
+      :TokenRestrictedDeviceClaimAttributes,
+      :TokenDeviceGroups,
+      :TokenRestrictedDeviceGroups,
+      :TokenSecurityAttributes,
+      :TokenIsRestricted,
+      :MaxTokenInfoClass
+    )
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379263(v=vs.85).aspx
+  # typedef struct _LUID_AND_ATTRIBUTES {
+  #   LUID  Luid;
+  #   DWORD Attributes;
+  # } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
+  class LUID_AND_ATTRIBUTES < FFI::Struct
+    layout :Luid, LUID,
+           :Attributes, :dword
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379630(v=vs.85).aspx
+  # typedef struct _TOKEN_PRIVILEGES {
+  #   DWORD               PrivilegeCount;
+  #   LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
+  # } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
+  class TOKEN_PRIVILEGES < FFI::Struct
+    layout :PrivilegeCount, :dword,
+           :Privileges, [LUID_AND_ATTRIBUTES, 1]    # placeholder for offset
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446671(v=vs.85).aspx
+  # BOOL WINAPI GetTokenInformation(
+  #   _In_       HANDLE TokenHandle,
+  #   _In_       TOKEN_INFORMATION_CLASS TokenInformationClass,
+  #   _Out_opt_  LPVOID TokenInformation,
+  #   _In_       DWORD TokenInformationLength,
+  #   _Out_      PDWORD ReturnLength
+  # );
+  ffi_lib 'advapi32'
+  attach_function_private :GetTokenInformation,
+    [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :bool
 
   def execute(command, arguments, stdin, stdout, stderr)
     Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
@@ -147,13 +160,13 @@ module Puppet::Util::Windows::Process
 
   def get_current_process
     # this pseudo-handle does not require closing per MSDN docs
-    API.get_current_process
+    GetCurrentProcess()
   end
   module_function :get_current_process
 
   def open_process_token(handle, desired_access)
-    token_handle_ptr = FFI::MemoryPointer.new(:uint, 1)
-    result = API.open_process_token(handle, desired_access, token_handle_ptr)
+    token_handle_ptr = FFI::MemoryPointer.new(:handle, 1)
+    result = OpenProcessToken(handle, desired_access, token_handle_ptr)
     if !result
       raise Puppet::Util::Windows::Error.new(
         "OpenProcessToken(#{handle}, #{desired_access.to_s(8)}, #{token_handle_ptr})")
@@ -162,20 +175,20 @@ module Puppet::Util::Windows::Process
     begin
       yield token_handle = token_handle_ptr.read_uint
     ensure
-      API.close_handle(token_handle)
+      CloseHandle(token_handle)
     end
   end
   module_function :open_process_token
 
   def lookup_privilege_value(name, system_name = '')
-    luid = FFI::MemoryPointer.new(API::LUID.size)
-    result = API.lookup_privilege_value(
+    luid = FFI::MemoryPointer.new(LUID.size)
+    result = LookupPrivilegeValueA(
       system_name,
       name.to_s,
       luid
       )
 
-    return API::LUID.new(luid) if result
+    return LUID.new(luid) if result
     raise Puppet::Util::Windows::Error.new(
       "LookupPrivilegeValue(#{system_name}, #{name}, #{luid})")
   end
@@ -183,8 +196,8 @@ module Puppet::Util::Windows::Process
 
   def get_token_information(token_handle, token_information)
     # to determine buffer size
-    return_length_ptr = FFI::MemoryPointer.new(:uint, 1)
-    result = API.get_token_information(token_handle, token_information, nil, 0, return_length_ptr)
+    return_length_ptr = FFI::MemoryPointer.new(:dword, 1)
+    result = GetTokenInformation(token_handle, token_information, nil, 0, return_length_ptr)
     return_length = return_length_ptr.read_uint
 
     if return_length <= 0
@@ -194,7 +207,7 @@ module Puppet::Util::Windows::Process
 
     # re-call API with properly sized buffer for all results
     token_information_buf = FFI::MemoryPointer.new(return_length)
-    result = API.get_token_information(token_handle, token_information,
+    result = GetTokenInformation(token_handle, token_information,
       token_information_buf, return_length, return_length_ptr)
 
     if !result
@@ -203,15 +216,15 @@ module Puppet::Util::Windows::Process
           "#{return_length}, #{return_length_ptr})")
     end
 
-    raw_privileges = API::Token_Privileges.new(token_information_buf)
-    privileges = { :count => raw_privileges[:privilege_count], :privileges => [] }
+    raw_privileges = TOKEN_PRIVILEGES.new(token_information_buf)
+    privileges = { :count => raw_privileges[:PrivilegeCount], :privileges => [] }
 
-    offset = token_information_buf + API::Token_Privileges.offset_of(:privileges)
-    privilege_ptr = FFI::Pointer.new(API::LUID_And_Attributes, offset)
+    offset = token_information_buf + TOKEN_PRIVILEGES.offset_of(:Privileges)
+    privilege_ptr = FFI::Pointer.new(LUID_AND_ATTRIBUTES, offset)
 
-    # extract each instance of LUID_And_Attributes
+    # extract each instance of LUID_AND_ATTRIBUTES
     0.upto(privileges[:count] - 1) do |i|
-      privileges[:privileges] <<  API::LUID_And_Attributes.new(privilege_ptr[i])
+      privileges[:privileges] <<  LUID_AND_ATTRIBUTES.new(privilege_ptr[i])
     end
 
     privileges
@@ -224,8 +237,8 @@ module Puppet::Util::Windows::Process
     handle = get_current_process
     open_process_token(handle, TOKEN_ALL_ACCESS) do |token_handle|
       luid = lookup_privilege_value('SeCreateSymbolicLinkPrivilege')
-      token_info = get_token_information(token_handle, :token_privileges)
-      token_info[:privileges].any? { |p| p[:luid].values == luid.values }
+      token_info = get_token_information(token_handle, :TokenPrivileges)
+      token_info[:privileges].any? { |p| p[:Luid].values == luid.values }
     end
   rescue Puppet::Util::Windows::Error => e
     if e.code == ERROR_NO_SUCH_PRIVILEGE
