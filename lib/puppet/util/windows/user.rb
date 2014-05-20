@@ -1,12 +1,9 @@
 require 'puppet/util/windows'
 
-require 'win32/security'
 require 'facter'
 require 'ffi'
 
 module Puppet::Util::Windows::User
-  include ::Windows::Security
-  extend ::Windows::Security
   extend Puppet::Util::Windows::String
   extend FFI::Library
 
@@ -15,7 +12,7 @@ module Puppet::Util::Windows::User
     return false unless majversion
 
     # if Vista or later, check for unrestricted process token
-    return Win32::Security.elevated_security? unless majversion.to_f < 6.0
+    return Puppet::Util::Windows::Process.elevated_security? unless majversion.to_f < 6.0
 
     # otherwise 2003 or less
     check_token_membership
