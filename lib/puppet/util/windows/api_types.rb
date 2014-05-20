@@ -20,6 +20,12 @@ module Puppet::Util::Windows::APITypes
       ptr
     end
 
+    def read_bool
+      # BOOL is always a 32-bit integer in Win32
+      # some Win32 APIs return 1 for true, while others are non-0
+      read_int32 != 0
+    end
+
     def read_handle
       type_size == 4 ? read_uint32 : read_uint64
     end
@@ -63,6 +69,7 @@ module Puppet::Util::Windows::APITypes
   FFI.typedef :pointer, :pdword
   FFI.typedef :pointer, :phandle
   FFI.typedef :pointer, :ulong_ptr
+  FFI.typedef :pointer, :pbool
 
   # any time LONG / ULONG is in a win32 API definition DO NOT USE platform specific width
   # which is what FFI uses by default
