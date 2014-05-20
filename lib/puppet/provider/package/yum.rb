@@ -90,9 +90,14 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   end
 
   def install
+    wanted = @resource[:name]
+    # If not allowing virtual packages, do a query to ensure a real package exists
+    unless @resource.allow_virtual?
+      yum '-d', '0', '-e', '0', '-y', :list, wanted
+    end
+
     should = @resource.should(:ensure)
     self.debug "Ensuring => #{should}"
-    wanted = @resource[:name]
     operation = :install
 
     case should
@@ -113,12 +118,15 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     yum *args
 
 
-    is = self.query
-    raise Puppet::Error, "Could not find package #{self.name}" unless is
+    # If a version was specified, query again to see if it is a matching version
+    if should
+      is = self.query
+      raise Puppet::Error, "Could not find package #{self.name}" unless is
 
-    # FIXME: Should we raise an exception even if should == :latest
-    # and yum updated us to a version other than @param_hash[:ensure] ?
-    raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead" if should && should != is[:ensure]
+      # FIXME: Should we raise an exception even if should == :latest
+      # and yum updated us to a version other than @param_hash[:ensure] ?
+      raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead" if should != is[:ensure]
+    end
   end
 
   # What's the latest package version available?
