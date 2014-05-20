@@ -34,7 +34,7 @@ describe "the 'file' function" do
   it "should read a file from a module path" do
     mod = mock 'module'
     mod.expects(:file).with('myfile').returns('/one/mymod/files/myfile')
-    environment.expects(:module).with('mymod').returns(mod)
+    compiler.environment.expects(:module).with('mymod').returns(mod)
     Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/myfile").returns true
     File.stubs(:read).with('/one/mymod/files/myfile').returns('file content')
 
@@ -51,7 +51,7 @@ describe "the 'file' function" do
 
   it "should return the first file if given two files with module paths" do
     mod = mock 'module'
-    environment.expects(:module).with('mymod').returns(mod)
+    compiler.environment.expects(:module).with('mymod').returns(mod)
     mod.expects(:file).with('first').returns('/one/mymod/files/first')
     mod.expects(:file).with('second').returns('/one/mymod/files/second')
     Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/first").returns(true)
@@ -65,7 +65,7 @@ describe "the 'file' function" do
   it "should return the first file if given two files with mixed paths, absolute first" do
     with_file_content('absolute') do |absolute|
       mod = mock 'module'
-      environment.expects(:module).with('mymod').returns(mod)
+      compiler.environment.expects(:module).with('mymod').returns(mod)
       mod.expects(:file).with('module').returns('/one/mymod/files/module')
       Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/module").returns true
       File.stubs(:read).with('/one/mymod/files/module').returns('module')
@@ -77,7 +77,7 @@ describe "the 'file' function" do
   it "should return the first file if given two files with mixed paths, module first" do
     with_file_content('one') do |absolute|
       mod = mock 'module'
-      environment.expects(:module).with('mymod').returns(mod)
+      compiler.environment.expects(:module).with('mymod').returns(mod)
       mod.expects(:file).with('module').returns('/one/mymod/files/module')
       Puppet::FileSystem.expects(:exist?).with("/one/mymod/files/module").returns true
       File.stubs(:read).with('/one/mymod/files/module').returns('module')
