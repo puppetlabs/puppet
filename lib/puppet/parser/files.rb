@@ -35,7 +35,7 @@ module Puppet; module Parser; module Files
   def find_file(file, environment)
     # if +file+ is absolute, return it directly
     if file == File.expand_path(file)
-      return template
+      return file
     end
 
     # check in the module's files dir, if there is one
