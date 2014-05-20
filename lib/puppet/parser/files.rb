@@ -4,7 +4,7 @@ module Puppet; module Parser; module Files
 
   module_function
 
-  # Return a list of manifests as absolute filenames matching the given 
+  # Return a list of manifests as absolute filenames matching the given
   # pattern.
   #
   # @param pattern [String] A reference for a file in a module. It is the format "<modulename>/<file glob>"
@@ -23,6 +23,41 @@ module Puppet; module Parser; module Files
       # looking for one might blow up since we load them lazily.
     end
     [nil, []]
+  end
+
+  # Find the concrete file denoted by +file+. If +file+ is absolute,
+  # return it directly. If that fails try to find it as a file in a
+  # module.
+  # In either case, an absolute path is returned, which does not
+  # necessarily refer to an existing file
+  #
+  # @api private
+  def find_file(file, environment)
+    # if +file+ is absolute, return it directly
+    if Puppet::Util.absolute_path?(file)
+      return file
+    end
+
+    # check in the module's files dir, if there is one
+    if module_file = find_file_in_module(file, environment)
+      return module_file
+    end
+
+    nil
+  end
+
+  # @api private
+  def find_file_in_module(file, environment)
+    path, module_file = split_file_path(file)
+
+    # if there's no module_file then +file+ doesn't describe a file in
+    # a module.
+    return nil unless module_file
+
+    if mod = environment.module(path) and f = mod.file(module_file)
+      return f
+    end
+    nil
   end
 
   # Find the concrete file denoted by +file+. If +file+ is absolute,

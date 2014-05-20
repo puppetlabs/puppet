@@ -12,6 +12,25 @@ describe Puppet::Parser::Files do
     @basepath = make_absolute("/somepath")
   end
 
+  describe "when searching for files" do
+    it "should return fully-qualified files directly" do
+      Puppet::Parser::Files.expects(:modulepath).never
+      Puppet::Parser::Files.find_file(@basepath + "/my/file", environment).should == @basepath + "/my/file"
+    end
+
+    it "should return the first found file" do
+      mod = mock 'module'
+      mod.expects(:file).returns("/one/mymod/files/myfile")
+      environment.expects(:module).with("mymod").returns mod
+
+      Puppet::Parser::Files.find_file("mymod/myfile", environment).should == "/one/mymod/files/myfile"
+    end
+
+    it "should return nil if template is not found" do
+      Puppet::Parser::Files.find_file("foomod/myfile", environment).should be_nil
+    end
+  end
+
   describe "when searching for templates" do
     it "should return fully-qualified templates directly" do
       Puppet::Parser::Files.expects(:modulepath).never
