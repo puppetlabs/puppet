@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     These options should be specified as a string (e.g. '--flag'), a hash (e.g. {'--flag' => 'value'}),
     or an array where each element is either a string or a hash."
 
-  has_feature :versionable, :install_options
+  has_feature :versionable, :install_options, :virtual_packages
 
   commands :zypper => "/usr/bin/zypper"
 
@@ -27,7 +27,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     # XXX: We don't actually deal with epochs here.
     case should
     when true, false, Symbol
-      # pass
+      should = nil
     else
       # Add the package version
       wanted = "#{wanted}-#{should}"
@@ -56,6 +56,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     #zypper 0.6.13 (OpenSuSE 10.2) does not support auto agree with licenses
     options << '--auto-agree-with-licenses' unless major < 1 and minor <= 6 and patch <= 13
     options << '--no-confirm'
+    options << '--name' unless @resource.allow_virtual? || should
     options += install_options if resource[:install_options]
     options << wanted
 
