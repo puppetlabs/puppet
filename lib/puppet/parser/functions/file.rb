@@ -7,12 +7,11 @@ Puppet::Parser::Functions::newfunction(
 ) do |vals|
     ret = nil
     vals.each do |file|
-      unless Puppet::Util.absolute_path?(file)
-        raise Puppet::ParseError, "Files must be fully qualified"
-      end
-      if Puppet::FileSystem.exist?(file)
-        ret = File.read(file)
-        break
+      path = Puppet::Parser::Files.find_file(file, scope.compiler.environment)
+        if not path.nil? and Puppet::FileSystem.exist?(path)
+          ret = File.read(path)
+          break
+        end
       end
     end
     if ret

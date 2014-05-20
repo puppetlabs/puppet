@@ -26,6 +26,44 @@ module Puppet; module Parser; module Files
   end
 
   # Find the concrete file denoted by +file+. If +file+ is absolute,
+  # return it directly. If that fails try to find it as a template in a
+  # module.
+  # In either case, an absolute path is returned, which does not
+  # necessarily refer to an existing file
+  #
+  # @api private
+  def find_file(file, environment)
+    # if +file+ is absolute, return it directly
+    if file == File.expand_path(file)
+      return template
+    end
+
+    # check in the module's file dir, if there is one
+    if module_file = find_file_in_module(file, environment)
+      return module_file
+    end
+
+    nil
+  end
+
+  # @api private
+  def find_file_in_module(file, environment)
+    path, module_file = split_file_path(file)
+
+    # Because files don't have an assumed file name, like manifests do,
+    # we treat files with no name as being files in the main template
+    # directory.
+    # if there's no module_file then +file+ doesn't describe a file in
+    # a module.
+    return nil unless module_file
+
+    if mod = environment.module(path) and f = mod.file(module_file)
+      return f
+    end
+    nil
+  end
+
+  # Find the concrete file denoted by +file+. If +file+ is absolute,
   # return it directly. Otherwise try to find relative to the +templatedir+
   # config param.  If that fails try to find it as a template in a
   # module.
