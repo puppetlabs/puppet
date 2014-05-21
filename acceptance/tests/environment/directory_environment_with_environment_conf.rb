@@ -9,8 +9,9 @@ absolute_globalsdir  = "#{testdir}/global-modules"
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
-  owner => puppet,
-  mode => 0700,
+  owner => #{master['user']},
+  group => #{master['group']},
+  mode => 0750,
 }
 
 file {
@@ -19,6 +20,7 @@ file {
   "#{testdir}/environments/direnv":;
   "#{testdir}/environments/direnv/environment.conf":
     ensure => file,
+    mode => 0640,
     content => '
       manifest=#{absolute_manifestdir}
       modulepath=relative-modules:#{absolute_modulesdir}:$basemodulepath
@@ -31,6 +33,7 @@ file {
   "#{testdir}/environments/direnv/relative-modules/relmod/manifests":;
   "#{testdir}/environments/direnv/relative-modules/relmod/manifests/init.pp":
     ensure => file,
+    mode => 0640,
     content => 'class relmod {
       notify { "included relmod": }
     }'
@@ -38,6 +41,7 @@ file {
 
   "#{testdir}/environments/direnv/version_script.sh":
     ensure => file,
+    mode => 0750,
     content => '#!/usr/bin/env sh
 echo "ver123"
 '
@@ -46,6 +50,7 @@ echo "ver123"
   "#{absolute_manifestdir}":;
   "#{absolute_manifestdir}/site.pp":
     ensure => file,
+    mode => 0640,
     content => '
       notify { "direnv site.pp": }
       include relmod
@@ -59,6 +64,7 @@ echo "ver123"
   "#{absolute_modulesdir}/absmod/manifests":;
   "#{absolute_modulesdir}/absmod/manifests/init.pp":
     ensure => file,
+    mode => 0640,
     content => 'class absmod {
       notify { "included absmod": }
     }'
@@ -69,6 +75,7 @@ echo "ver123"
   "#{absolute_globalsdir}/globalmod/manifests":;
   "#{absolute_globalsdir}/globalmod/manifests/init.pp":
     ensure => file,
+    mode => 0640,
     content => 'class globalmod {
       notify { "included globalmod": }
     }'
@@ -82,6 +89,9 @@ master_opts = {
     'basemodulepath' => "#{absolute_globalsdir}",
   }
 }
+if master.is_pe?
+  master_opts['master']['basemodulepath'] << ":#{master['sitemoduledir']}"
+end
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|

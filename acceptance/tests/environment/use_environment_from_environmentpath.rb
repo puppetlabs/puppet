@@ -29,6 +29,7 @@ def generate_module_content(module_name, options = {})
 
   "#{path_to_module}/#{module_name}/manifests/init.pp":
     ensure => file,
+    mode => 0640,
     content => 'class #{module_name} {
       notify { "template-#{module_name}": message => template("#{module_name}/our_template.erb") }
       file { "$agent_file_location/file-#{module_info}": source => "puppet:///modules/#{module_name}/data" }
@@ -36,14 +37,17 @@ def generate_module_content(module_name, options = {})
   ;
   "#{path_to_module}/#{module_name}/lib/facter/environment_fact_#{module_name}.rb":
     ensure => file,
+    mode => 0640,
     content => "Facter.add(:environment_fact_#{module_name}) { setcode { 'environment fact from #{module_info}' } }"
   ;
   "#{path_to_module}/#{module_name}/files/data":
     ensure => file,
+    mode => 0640,
     content => "data file from #{module_info}"
   ;
   "#{path_to_module}/#{module_name}/templates/our_template.erb":
     ensure => file,
+    mode => 0640,
     content => "<%= @environment_fact_#{module_name} %>"
   ;
   EOS
@@ -53,6 +57,7 @@ def generate_site_manifest(path_to_manifest, *modules_to_include)
   manifest_content = <<-EOS
   "#{path_to_manifest}/site.pp":
     ensure => file,
+    mode => 0640,
     content => "#{modules_to_include.map { |m| "include #{m}" }.join("\n")}"
   ;
   EOS
@@ -61,8 +66,9 @@ end
 apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
 File {
   ensure => directory,
-  owner => puppet,
-  mode => 0700,
+  owner => #{master['user']},
+  group => #{master['group']},
+  mode => 0750,
 }
 
 file {
@@ -129,6 +135,9 @@ master_opts = {
     'basemodulepath' => "#{testdir}/modules",
   }
 }
+if master.is_pe?
+  master_opts['master']['basemodulepath'] << ":#{master['sitemoduledir']}"
+end
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
@@ -156,9 +165,13 @@ with_puppet_running_on master, master_opts, testdir do
       end
     end
 
-    run_with_environment(agent, nil, :expected_exit_code => 0) do |tmpdir, result|
-      assert_no_match(/module-atmp/, result.stdout, "module-atmp was included despite no environment being loaded")
-      assert_match(/Loading facts.*globalmod/, result.stdout)
+    if master.is_pe?
+      step("This test cannot run if the production environment directory does not exist, because the fallback production environment puppet creates has an empty modulepath and PE cannot run without it's basemodulepath in /opt.  PUP-2519, which implicitly creates the production environment directory should allow this to run again")
+    else
+      run_with_environment(agent, nil, :expected_exit_code => 0) do |tmpdir, result|
+        assert_no_match(/module-atmp/, result.stdout, "module-atmp was included despite no environment being loaded")
+        assert_match(/Loading facts.*globalmod/, result.stdout)
+      end
     end
   end
 end
