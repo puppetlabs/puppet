@@ -52,7 +52,7 @@ apply_manifest_on(master, <<-MANIFEST , :catch_failures => true)
     ]:
 
     ensure => directory,
-    owner => puppet,
+    owner => #{master['user']},
   }
 MANIFEST
 
