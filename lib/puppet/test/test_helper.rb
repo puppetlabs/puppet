@@ -36,6 +36,19 @@ module Puppet::Test
     # that call Puppet.
     # @return nil
     def self.initialize()
+      # This meta class instance variable is used as a guard to ensure that
+      # before_each, and after_each are only called once. This problem occurs
+      # when there are more than one puppet test infrastructure "orchestrator in us.
+      # The use of both puppetabs-spec_helper, and rodjek-rspec_puppet will cause
+      # two resets of the puppet environment, and will cause problem rolling back to
+      # a known point as there is no way to differentiate where the calls are coming
+      # from. See more information in #before_each_test, and #after_each_test
+      # Note that the variable is only initialized to 0 if nil. This is important
+      # as more than one orchestrator will call initialize. A second call can not
+      # simply set it to 0 since that would potentially destroy an active guard.
+      #
+      @@reentry_count ||= 0
+
       owner = Process.pid
       Puppet.push_context(Puppet.base_context({
         :environmentpath => "",
@@ -58,10 +71,24 @@ module Puppet::Test
     def self.after_all_tests()
     end
 
+    # The name of the rollback mark used in the Puppet.context. This is what
+    # the test infrastructure returns to for each test.
+    #
+    ROLLBACK_MARK = "initial testing state"
+
     # Call this method once per test, prior to execution of each invididual test.
     # @return nil
     def self.before_each_test()
-      Puppet.mark_context("initial testing state")
+      # When using both rspec-puppet and puppet-rspec-helper, there are two packages trying
+      # to be helpful and orchestrate the callback sequence. We let only the first win, the
+      # second callback results in a no-op.
+      # Likewise when entering after_each_test(), a check is made to make tear down happen
+      # only once.
+      #
+      return unless @@reentry_count == 0
+      @@reentry_count = 1
+
+      Puppet.mark_context(ROLLBACK_MARK)
 
       # We need to preserve the current state of all our indirection cache and
       # terminus classes.  This is pretty important, because changes to these
@@ -113,6 +140,11 @@ module Puppet::Test
     # Call this method once per test, after execution of each individual test.
     # @return nil
     def self.after_each_test()
+      # Ensure that a matching tear down only happens once per completed setup
+      # (see #before_each_test).
+      return unless @@reentry_count == 1
+      @@reentry_count = 0
+
       Puppet.settings.send(:clear_everything_for_tests)
 
       Puppet::Util::Storage.clear
@@ -154,7 +186,7 @@ module Puppet::Test
       $LOAD_PATH.clear
       $old_load_path.each {|x| $LOAD_PATH << x }
 
-      Puppet.rollback_context("initial testing state")
+      Puppet.rollback_context(ROLLBACK_MARK)
     end
 
 
