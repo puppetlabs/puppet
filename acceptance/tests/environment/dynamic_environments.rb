@@ -20,14 +20,17 @@ file {
 
 file { "#{envdir}/#{env}/hiera/#{env}.yaml":
   ensure => file,
+  mode => 0640,
   content => 'foo: foo-#{env}',
 }
 file { "#{envdir}/#{env}/hiera/common.yaml":
   ensure => file,
+  mode => 0640,
   content => 'foo: foo-common',
 }
 file { "#{envdir}/#{env}/manifests/site.pp":
   ensure => file,
+  mode => 0640,
   content => '
     notify { "#{env}-site.pp": }
     notify { "hiera":
@@ -38,6 +41,7 @@ file { "#{envdir}/#{env}/manifests/site.pp":
 }
 file { "#{envdir}/#{env}/modules/amod/manifests/init.pp":
   ensure => file,
+  mode => 0640,
   content => '
     class amod {
       notify { "#{env}-amod": }
@@ -62,6 +66,7 @@ file {
 
 file { "#{testdir}/hiera.yaml":
   ensure => file,
+  mode => 0640,
   content => '
 ---
 :backends: yaml
@@ -96,6 +101,9 @@ common_opts = {
     'modulepath' => "#{testdir}/environments/$environment/modules",
     'hiera_config' => "#{testdir}/hiera.yaml",
 }
+if master.is_pe?
+  common_opts['modulepath'] << ":#{master['sitemoduledir']}"
+end
 
 master_opts = {
   'master' => {

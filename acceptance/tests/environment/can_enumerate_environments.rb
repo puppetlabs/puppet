@@ -29,8 +29,9 @@ environments_dir = master.tmpdir("environments")
 apply_manifest_on(master, <<-MANIFEST)
 File {
   ensure => directory,
-  owner => puppet,
-  mode => 0700,
+  owner => #{master['user']},
+  group => #{master['group']},
+  mode => 0750,
 }
 
 file {
@@ -40,11 +41,16 @@ file {
 }
 MANIFEST
 
-with_puppet_running_on(master, {
+master_opts =  {
   :master => {
     :environmentpath => environments_dir
   }
-}) do
+}
+if master.is_pe?
+  master_opts[:master][:basemodulepath] = master['sitemoduledir']
+end
+
+with_puppet_running_on(master, master_opts) do
   agents.each do |agent|
     step "Ensure that an unauthenticated client cannot access the environments list" do
       on agent, "curl -ksv https://#{master}:#{master_port(agent)}/v2.0/environments", :acceptable_exit_codes => [0,7] do
