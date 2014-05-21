@@ -7,7 +7,6 @@ initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
   teardown do
-    remove_temp_dirs
     reset_agent_ssl
   end
 
@@ -53,6 +52,7 @@ test_name "certificate extensions available as trusted data" do
                        "--server", master,
                        "--waitforcert", 0,
                        "--csr_attributes", agent_csr_attributes,
+                       "--certname #{agent}-extensions",
                        'ENV' => { "FACTER_test_dir" => get_test_file_path(agent, "") }),
         :acceptable_exit_codes => [0, 2])
 
@@ -60,7 +60,7 @@ test_name "certificate extensions available as trusted data" do
 
       assert_equal({
           'authenticated' => 'remote',
-          'certname' => fact_on(agent, 'fqdn'),
+          'certname' => "#{agent}-extensions",
           'extensions' => {
             'pp_uuid' => 'b5e63090-5167-11e3-8f96-0800200c9a66',
             'pp_instance_id' => 'i-3fkva',
