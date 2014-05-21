@@ -76,13 +76,23 @@ Puppet.features.add(:manages_symlinks) do
   if ! Puppet::Util::Platform.windows?
     true
   else
-    begin
-      require 'Win32API'
-      Win32API.new('kernel32', 'CreateSymbolicLink', 'SSL', 'B')
-      true
-    rescue LoadError => err
-      Puppet.debug("CreateSymbolicLink is not available")
-      false
+    module WindowsSymlink
+      require 'ffi'
+      extend FFI::Library
+
+      def self.is_implemented
+        begin
+          ffi_lib :kernel32
+          attach_function :CreateSymbolicLinkW, [:lpwstr, :lpwstr, :dword], :bool
+
+          true
+        rescue LoadError => err
+          Puppet.debug("CreateSymbolicLink is not available")
+          false
+        end
+      end
     end
+
+    WindowsSymlink.is_implemented
   end
 end
