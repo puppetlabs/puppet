@@ -1,7 +1,7 @@
 require 'puppet/face'
 require 'puppet/settings/ini_file'
 
-Puppet::Face.define(:config, '0.0.1') do
+Puppet::Face.define(:config, '0.0.2') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
@@ -73,7 +73,7 @@ Puppet::Face.define(:config, '0.0.1') do
         # the requested section
         values = Puppet.settings.values(Puppet[:environment].to_sym, options[:section].to_sym)
         if args.length == 1
-          puts values.interpolate(args[0].to_sym)
+          return values.interpolate(args[0].to_sym)
         else
           args.each do |setting_name|
             puts "#{setting_name} = #{values.interpolate(setting_name.to_sym)}"
@@ -116,4 +116,77 @@ Puppet::Face.define(:config, '0.0.1') do
       nil
     end
   end
+
+  action(:add) do
+    summary "Add an item to a Puppet settings as a comma separated list."
+    arguments "[setting_name] [setting_value]"
+    description <<-'EOT'
+      Add an item to a Puppet settings as a comma separated list.
+    EOT
+    notes <<-'EOT'
+      By default, this action manipulates the configuration in the
+      'main' section. Use the '--section' flag to manipulate other
+      configuration domains.
+    EOT
+    examples <<-'EOT'
+      Add the store report handler:
+
+      $ puppet config add reports store --section master
+    EOT
+
+    when_invoked do |name, value, options|
+      current = Puppet::Face[:config, '0.0.2'].print(name, options)
+      unless current.split(',').include? value
+        Puppet::Face[:config, '0.0.2'].set(name, "#{current},#{value}", options)
+      end
+    end
+  end
+
+  action(:del) do
+    summary "Remove a Puppet setting."
+    arguments "[setting_name] [setting_value]"
+    description <<-'EOT'
+      If two arguments are given, this will remove an item from a comma separated list Puppet setting.
+      If one argument is given, this will remove the setting from the config file completely.
+    EOT
+    notes <<-'EOT'
+      By default, this action manipulates the configuration in the
+      'main' section. Use the '--section' flag to manipulate other
+      configuration domains.
+    EOT
+    examples <<-'EOT'
+      Remove the store report processors from the list of enabled report processors:
+
+      $ puppet config del reports store --section master
+
+      Remove the reporturl setting from the configuration file:
+
+      $ puppet config del reporturl --section master
+    EOT
+
+    when_invoked do |*args|
+      options = args.pop
+      raise ArgumentError, 'requires one or two arguments' unless args.size < 3
+      name, value = args
+
+      if value
+        current = Puppet::Face[:config, '0.0.2'].print(name, options).split(',')
+        if current.include? value
+          current.delete(value)
+          Puppet::Face[:config, '0.0.2'].set(name, "#{current.join(',')}", options)
+        end
+      else
+        path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
+        return nil unless File.file? path
+
+        Puppet::FileSystem.open(path, nil, 'r+') do |file|
+          Puppet::Settings::IniFile.update(file) do |config|
+            config.del(options[:section], name)
+          end
+        end
+      end
+      nil
+    end
+  end
+
 end

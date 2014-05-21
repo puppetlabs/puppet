@@ -44,6 +44,10 @@ class Puppet::Settings::IniFile
     end
   end
 
+  def delete(line)
+    @lines.delete(line)
+  end
+
   def section_lines
     @lines.select { |line| line.is_a?(SectionLine) }
   end
@@ -99,6 +103,13 @@ class Puppet::Settings::IniFile
       end
     end
 
+    def del(section, name)
+      setting = @config.setting(section, name)
+      if setting
+        del_setting(section, name)
+      end
+    end
+
     private
 
     def add_setting(section_name, name, value)
@@ -111,6 +122,14 @@ class Puppet::Settings::IniFile
       end
 
       @config.insert_after(previous_line, SettingLine.new("", name, " = ", value, ""))
+    end
+
+    def del_setting(section_name, name)
+      section = @config.section_line(section_name)
+      unless section.nil?
+        line = @config.lines_in(section_name).select {|l| l.name == name }.first
+        @config.delete(line)
+      end
     end
   end
 
