@@ -111,6 +111,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PStructType,
         Puppet::Pops::Types::PTupleType,
         Puppet::Pops::Types::PCallableType,
+        Puppet::Pops::Types::PType,
       ]
     end
 

@@ -43,9 +43,18 @@ module Puppet::Pops::Types
     end
   end
 
+  # Base type for all types except {Puppet::Pops::Types::PType PType}, the type of types.
+  # @api public
+  class PObjectType < PAbstractType
+
+    module ClassModule
+    end
+
+  end
+
   # The type of types.
   # @api public
-  class PType < PAbstractType
+  class PType < PObjectType
     contains_one_uni 'type', PAbstractType
     module ClassModule
       def hash
@@ -56,15 +65,6 @@ module Puppet::Pops::Types
         self.class == o.class && type == o.type
       end
     end
-  end
-
-  # Base type for all types except {Puppet::Pops::Types::PType PType}, the type of types.
-  # @api public
-  class PObjectType < PAbstractType
-
-    module ClassModule
-    end
-
   end
 
   # @api public
