@@ -106,11 +106,15 @@ Puppet::Face.define(:config, '0.0.2') do
     EOT
 
     when_invoked do |name, value, options|
-      path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
-      Puppet::FileSystem.touch(path)
-      Puppet::FileSystem.open(path, nil, 'r+') do |file|
-        Puppet::Settings::IniFile.update(file) do |config|
-          config.set(options[:section], name, value)
+      if value.empty?
+        Puppet::Face[:config, '0.0.2'].del(name, options)
+      else
+        path = Puppet::FileSystem.pathname(Puppet.settings.which_configuration_file)
+        Puppet::FileSystem.touch(path)
+        Puppet::FileSystem.open(path, nil, 'r+') do |file|
+          Puppet::Settings::IniFile.update(file) do |config|
+            config.set(options[:section], name, value)
+          end
         end
       end
       nil
