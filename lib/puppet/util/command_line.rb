@@ -158,17 +158,19 @@ module Puppet
         end
       end
 
+
       # @api private
       class NilSubcommand
         def initialize(command_line)
           @command_line = command_line
         end
 
-        def run
+        def run(msg = nil)
           if @command_line.args.include? "--version" or @command_line.args.include? "-V"
             puts Puppet.version
           else
-            puts "See 'puppet help' for help on available puppet subcommands"
+            puts msg unless msg == nil
+            abort "See 'puppet help' for help on available puppet subcommands"
           end
         end
       end
@@ -179,10 +181,8 @@ module Puppet
           @subcommand_name = subcommand_name
           super(command_line)
         end
-
         def run
-          puts "Error: Unknown Puppet subcommand '#{@subcommand_name}'"
-          super
+          super "Error: Unknown Puppet subcommand '#{@subcommand_name}'\n"
         end
       end
     end
