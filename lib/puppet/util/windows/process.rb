@@ -1,19 +1,11 @@
 require 'puppet/util/windows'
-require 'windows/process'
-require 'windows/handle'
-require 'windows/synchronize'
+require 'win32/process'
 require 'ffi'
 
 module Puppet::Util::Windows::Process
-  extend ::Windows::Process
-  extend ::Windows::Handle
-  extend ::Windows::Synchronize
-
   extend FFI::Library
 
-
-
-
+  WAIT_TIMEOUT = 0x102
 
   def execute(command, arguments, stdin, stdout, stderr)
     Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
@@ -21,15 +13,15 @@ module Puppet::Util::Windows::Process
   module_function :execute
 
   def wait_process(handle)
-    while WaitForSingleObject(handle, 0) == Windows::Synchronize::WAIT_TIMEOUT
+    while WaitForSingleObject(handle, 0) == WAIT_TIMEOUT
       sleep(1)
     end
 
-    exit_status = [0].pack('L')
+    exit_status = FFI::MemoryPointer.new(:dword, 1)
     unless GetExitCodeProcess(handle, exit_status)
       raise Puppet::Util::Windows::Error.new("Failed to get child process exit code")
     end
-    exit_status = exit_status.unpack('L').first
+    exit_status = exit_status.read_dword
 
     # $CHILD_STATUS is not set when calling win32/process Process.create
     # and since it's read-only, we can't set it. But we can execute a
@@ -171,6 +163,24 @@ module Puppet::Util::Windows::Process
 
   ffi_convention :stdcall
 
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms687032(v=vs.85).aspx
+  # DWORD WINAPI WaitForSingleObject(
+  #   _In_  HANDLE hHandle,
+  #   _In_  DWORD dwMilliseconds
+  # );
+  ffi_lib 'kernel32'
+  attach_function_private :WaitForSingleObject,
+    [:handle, :dword], :dword
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683189(v=vs.85).aspx
+  # BOOL WINAPI GetExitCodeProcess(
+  #   _In_   HANDLE hProcess,
+  #   _Out_  LPDWORD lpExitCode
+  # );
+  ffi_lib 'kernel32'
+  attach_function_private :GetExitCodeProcess,
+    [:handle, :lpdword], :win32_bool
+
   # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
   # HANDLE WINAPI GetCurrentProcess(void);
   ffi_lib 'kernel32'
@@ -191,7 +201,7 @@ module Puppet::Util::Windows::Process
   # );
   ffi_lib 'advapi32'
   attach_function_private :OpenProcessToken,
-                          [:handle, :dword, :phandle], :win32_bool
+    [:handle, :dword, :phandle], :win32_bool
 
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
@@ -212,7 +222,7 @@ module Puppet::Util::Windows::Process
   # );
   ffi_lib 'advapi32'
   attach_function_private :LookupPrivilegeValueA,
-                          [:lpcstr, :lpcstr, :pointer], :win32_bool
+    [:lpcstr, :lpcstr, :pointer], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
   TOKEN_INFORMATION_CLASS = enum(
@@ -297,5 +307,5 @@ module Puppet::Util::Windows::Process
   # );
   ffi_lib 'advapi32'
   attach_function_private :GetTokenInformation,
-                          [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
+    [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
 end
