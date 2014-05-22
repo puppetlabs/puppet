@@ -2,7 +2,6 @@ require 'puppet/parameter'
 
 if Puppet.features.microsoft_windows?
   require 'win32/taskscheduler'
-  require 'puppet/util/adsi'
 end
 
 Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do

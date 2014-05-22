@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:user).provider(:windows_adsi) do
+describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.features.microsoft_windows? do
   let(:resource) do
     Puppet::Type.type(:user).new(
       :title => 'testuser',
@@ -16,8 +16,8 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
   let(:connection) { stub 'connection' }
 
   before :each do
-    Puppet::Util::ADSI.stubs(:computer_name).returns('testcomputername')
-    Puppet::Util::ADSI.stubs(:connect).returns connection
+    Puppet::Util::Windows::ADSI.stubs(:computer_name).returns('testcomputername')
+    Puppet::Util::Windows::ADSI.stubs(:connect).returns connection
   end
 
   describe ".instances" do
@@ -30,8 +30,8 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     end
   end
 
-  it "should provide access to a Puppet::Util::ADSI::User object" do
-    provider.user.should be_a(Puppet::Util::ADSI::User)
+  it "should provide access to a Puppet::Util::Windows::ADSI::User object" do
+    provider.user.should be_a(Puppet::Util::Windows::ADSI::User)
   end
 
   describe "when managing groups" do
@@ -68,7 +68,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
       resource[:home]       = 'C:\Users\testuser'
 
       user = stub 'user'
-      Puppet::Util::ADSI::User.expects(:create).with('testuser').returns user
+      Puppet::Util::Windows::ADSI::User.expects(:create).with('testuser').returns user
 
       user.stubs(:groups).returns(['group2', 'group3'])
 
@@ -82,12 +82,12 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
       provider.create
     end
 
-    it "should load the profile if managehome is set", :if => Puppet.features.microsoft_windows? do
+    it "should load the profile if managehome is set" do
       resource[:password] = '0xDeadBeef'
       resource[:managehome] = true
 
       user = stub_everything 'user'
-      Puppet::Util::ADSI::User.expects(:create).with('testuser').returns user
+      Puppet::Util::Windows::ADSI::User.expects(:create).with('testuser').returns user
       Puppet::Util::Windows::User.expects(:load_profile).with('testuser', '0xDeadBeef')
 
       provider.create
@@ -115,18 +115,18 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     end
 
     it 'should not create a user if a group by the same name exists' do
-      Puppet::Util::ADSI::User.expects(:create).with('testuser').raises( Puppet::Error.new("Cannot create user if group 'testuser' exists.") )
+      Puppet::Util::Windows::ADSI::User.expects(:create).with('testuser').raises( Puppet::Error.new("Cannot create user if group 'testuser' exists.") )
       expect{ provider.create }.to raise_error( Puppet::Error,
         /Cannot create user if group 'testuser' exists./ )
     end
   end
 
   it 'should be able to test whether a user exists' do
-    Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
-    Puppet::Util::ADSI.stubs(:connect).returns stub('connection')
+    Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
+    Puppet::Util::Windows::ADSI.stubs(:connect).returns stub('connection')
     provider.should be_exists
 
-    Puppet::Util::ADSI.stubs(:connect).returns nil
+    Puppet::Util::Windows::ADSI.stubs(:connect).returns nil
     provider.should_not be_exists
   end
 
@@ -136,12 +136,12 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     provider.delete
   end
 
-  it 'should delete the profile if managehome is set', :if => Puppet.features.microsoft_windows? do
+  it 'should delete the profile if managehome is set' do
     resource[:managehome] = true
 
     sid = 'S-A-B-C'
     Puppet::Util::Windows::Security.expects(:name_to_sid).with('testuser').returns(sid)
-    Puppet::Util::ADSI::UserProfile.expects(:delete).with(sid)
+    Puppet::Util::Windows::ADSI::UserProfile.expects(:delete).with(sid)
     connection.expects(:Delete).with('user', 'testuser')
 
     provider.delete
@@ -153,7 +153,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     provider.flush
   end
 
-  it "should return the user's SID as uid", :if => Puppet.features.microsoft_windows? do
+  it "should return the user's SID as uid" do
     Puppet::Util::Windows::Security.expects(:name_to_sid).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
 
     provider.uid.should == 'S-1-5-21-1362942247-2130103807-3279964888-1111'
