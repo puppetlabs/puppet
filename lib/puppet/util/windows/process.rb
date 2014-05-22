@@ -10,135 +10,10 @@ module Puppet::Util::Windows::Process
   extend ::Windows::Synchronize
 
   extend FFI::Library
-  ffi_convention :stdcall
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
-  # HANDLE WINAPI GetCurrentProcess(void);
-  ffi_lib 'kernel32'
-  attach_function_private :GetCurrentProcess, [], :handle
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
-  # BOOL WINAPI CloseHandle(
-  #   _In_  HANDLE hObject
-  # );
-  ffi_lib 'kernel32'
-  attach_function_private :CloseHandle, [:handle], :win32_bool
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
-  # BOOL WINAPI OpenProcessToken(
-  #   _In_   HANDLE ProcessHandle,
-  #   _In_   DWORD DesiredAccess,
-  #   _Out_  PHANDLE TokenHandle
-  # );
-  ffi_lib 'advapi32'
-  attach_function_private :OpenProcessToken,
-    [:handle, :dword, :phandle], :win32_bool
 
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
-  # typedef struct _LUID {
-  #   DWORD LowPart;
-  #   LONG  HighPart;
-  # } LUID, *PLUID;
-  class LUID < FFI::Struct
-    layout :LowPart, :dword,
-           :HighPart, :win32_long
-  end
 
-  # http://msdn.microsoft.com/en-us/library/Windows/desktop/aa379180(v=vs.85).aspx
-  # BOOL WINAPI LookupPrivilegeValue(
-  #   _In_opt_  LPCTSTR lpSystemName,
-  #   _In_      LPCTSTR lpName,
-  #   _Out_     PLUID lpLuid
-  # );
-  ffi_lib 'advapi32'
-  attach_function_private :LookupPrivilegeValueA,
-    [:lpcstr, :lpcstr, :pointer], :win32_bool
 
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
-  TOKEN_INFORMATION_CLASS = enum(
-      :TokenUser, 1,
-      :TokenGroups,
-      :TokenPrivileges,
-      :TokenOwner,
-      :TokenPrimaryGroup,
-      :TokenDefaultDacl,
-      :TokenSource,
-      :TokenType,
-      :TokenImpersonationLevel,
-      :TokenStatistics,
-      :TokenRestrictedSids,
-      :TokenSessionId,
-      :TokenGroupsAndPrivileges,
-      :TokenSessionReference,
-      :TokenSandBoxInert,
-      :TokenAuditPolicy,
-      :TokenOrigin,
-      :TokenElevationType,
-      :TokenLinkedToken,
-      :TokenElevation,
-      :TokenHasRestrictions,
-      :TokenAccessInformation,
-      :TokenVirtualizationAllowed,
-      :TokenVirtualizationEnabled,
-      :TokenIntegrityLevel,
-      :TokenUIAccess,
-      :TokenMandatoryPolicy,
-      :TokenLogonSid,
-      :TokenIsAppContainer,
-      :TokenCapabilities,
-      :TokenAppContainerSid,
-      :TokenAppContainerNumber,
-      :TokenUserClaimAttributes,
-      :TokenDeviceClaimAttributes,
-      :TokenRestrictedUserClaimAttributes,
-      :TokenRestrictedDeviceClaimAttributes,
-      :TokenDeviceGroups,
-      :TokenRestrictedDeviceGroups,
-      :TokenSecurityAttributes,
-      :TokenIsRestricted,
-      :MaxTokenInfoClass
-    )
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379263(v=vs.85).aspx
-  # typedef struct _LUID_AND_ATTRIBUTES {
-  #   LUID  Luid;
-  #   DWORD Attributes;
-  # } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
-  class LUID_AND_ATTRIBUTES < FFI::Struct
-    layout :Luid, LUID,
-           :Attributes, :dword
-  end
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379630(v=vs.85).aspx
-  # typedef struct _TOKEN_PRIVILEGES {
-  #   DWORD               PrivilegeCount;
-  #   LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
-  # } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
-  class TOKEN_PRIVILEGES < FFI::Struct
-    layout :PrivilegeCount, :dword,
-           :Privileges, [LUID_AND_ATTRIBUTES, 1]    # placeholder for offset
-  end
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/bb530717(v=vs.85).aspx
-  # typedef struct _TOKEN_ELEVATION {
-  #   DWORD TokenIsElevated;
-  # } TOKEN_ELEVATION, *PTOKEN_ELEVATION;
-  class TOKEN_ELEVATION < FFI::Struct
-    layout :TokenIsElevated, :dword
-  end
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446671(v=vs.85).aspx
-  # BOOL WINAPI GetTokenInformation(
-  #   _In_       HANDLE TokenHandle,
-  #   _In_       TOKEN_INFORMATION_CLASS TokenInformationClass,
-  #   _Out_opt_  LPVOID TokenInformation,
-  #   _In_       DWORD TokenInformationLength,
-  #   _Out_      PDWORD ReturnLength
-  # );
-  ffi_lib 'advapi32'
-  attach_function_private :GetTokenInformation,
-    [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
 
   def execute(command, arguments, stdin, stdout, stderr)
     Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
@@ -292,4 +167,135 @@ module Puppet::Util::Windows::Process
     CloseHandle(handle)
   end
   module_function :elevated_security?
+
+
+  ffi_convention :stdcall
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
+  # HANDLE WINAPI GetCurrentProcess(void);
+  ffi_lib 'kernel32'
+  attach_function_private :GetCurrentProcess, [], :handle
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
+  # BOOL WINAPI CloseHandle(
+  #   _In_  HANDLE hObject
+  # );
+  ffi_lib 'kernel32'
+  attach_function_private :CloseHandle, [:handle], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
+  # BOOL WINAPI OpenProcessToken(
+  #   _In_   HANDLE ProcessHandle,
+  #   _In_   DWORD DesiredAccess,
+  #   _Out_  PHANDLE TokenHandle
+  # );
+  ffi_lib 'advapi32'
+  attach_function_private :OpenProcessToken,
+                          [:handle, :dword, :phandle], :win32_bool
+
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
+  # typedef struct _LUID {
+  #   DWORD LowPart;
+  #   LONG  HighPart;
+  # } LUID, *PLUID;
+  class LUID < FFI::Struct
+    layout :LowPart, :dword,
+           :HighPart, :win32_long
+  end
+
+  # http://msdn.microsoft.com/en-us/library/Windows/desktop/aa379180(v=vs.85).aspx
+  # BOOL WINAPI LookupPrivilegeValue(
+  #   _In_opt_  LPCTSTR lpSystemName,
+  #   _In_      LPCTSTR lpName,
+  #   _Out_     PLUID lpLuid
+  # );
+  ffi_lib 'advapi32'
+  attach_function_private :LookupPrivilegeValueA,
+                          [:lpcstr, :lpcstr, :pointer], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
+  TOKEN_INFORMATION_CLASS = enum(
+      :TokenUser, 1,
+      :TokenGroups,
+      :TokenPrivileges,
+      :TokenOwner,
+      :TokenPrimaryGroup,
+      :TokenDefaultDacl,
+      :TokenSource,
+      :TokenType,
+      :TokenImpersonationLevel,
+      :TokenStatistics,
+      :TokenRestrictedSids,
+      :TokenSessionId,
+      :TokenGroupsAndPrivileges,
+      :TokenSessionReference,
+      :TokenSandBoxInert,
+      :TokenAuditPolicy,
+      :TokenOrigin,
+      :TokenElevationType,
+      :TokenLinkedToken,
+      :TokenElevation,
+      :TokenHasRestrictions,
+      :TokenAccessInformation,
+      :TokenVirtualizationAllowed,
+      :TokenVirtualizationEnabled,
+      :TokenIntegrityLevel,
+      :TokenUIAccess,
+      :TokenMandatoryPolicy,
+      :TokenLogonSid,
+      :TokenIsAppContainer,
+      :TokenCapabilities,
+      :TokenAppContainerSid,
+      :TokenAppContainerNumber,
+      :TokenUserClaimAttributes,
+      :TokenDeviceClaimAttributes,
+      :TokenRestrictedUserClaimAttributes,
+      :TokenRestrictedDeviceClaimAttributes,
+      :TokenDeviceGroups,
+      :TokenRestrictedDeviceGroups,
+      :TokenSecurityAttributes,
+      :TokenIsRestricted,
+      :MaxTokenInfoClass
+  )
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379263(v=vs.85).aspx
+  # typedef struct _LUID_AND_ATTRIBUTES {
+  #   LUID  Luid;
+  #   DWORD Attributes;
+  # } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
+  class LUID_AND_ATTRIBUTES < FFI::Struct
+    layout :Luid, LUID,
+           :Attributes, :dword
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379630(v=vs.85).aspx
+  # typedef struct _TOKEN_PRIVILEGES {
+  #   DWORD               PrivilegeCount;
+  #   LUID_AND_ATTRIBUTES Privileges[ANYSIZE_ARRAY];
+  # } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;
+  class TOKEN_PRIVILEGES < FFI::Struct
+    layout :PrivilegeCount, :dword,
+           :Privileges, [LUID_AND_ATTRIBUTES, 1]    # placeholder for offset
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/bb530717(v=vs.85).aspx
+  # typedef struct _TOKEN_ELEVATION {
+  #   DWORD TokenIsElevated;
+  # } TOKEN_ELEVATION, *PTOKEN_ELEVATION;
+  class TOKEN_ELEVATION < FFI::Struct
+    layout :TokenIsElevated, :dword
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446671(v=vs.85).aspx
+  # BOOL WINAPI GetTokenInformation(
+  #   _In_       HANDLE TokenHandle,
+  #   _In_       TOKEN_INFORMATION_CLASS TokenInformationClass,
+  #   _Out_opt_  LPVOID TokenInformation,
+  #   _In_       DWORD TokenInformationLength,
+  #   _Out_      PDWORD ReturnLength
+  # );
+  ffi_lib 'advapi32'
+  attach_function_private :GetTokenInformation,
+                          [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
 end
