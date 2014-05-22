@@ -85,7 +85,7 @@ describe Puppet::Util::Pidlock do
     end
   end
 
-  describe '#pid?' do
+  describe '#lock_pid' do
     it 'should return nil if the pid is empty' do
       # fake pid to get empty lockfile
       Process.stubs(:pid).returns('')
