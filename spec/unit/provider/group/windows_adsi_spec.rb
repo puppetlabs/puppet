@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:group).provider(:windows_adsi) do
+describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.features.microsoft_windows? do
   let(:resource) do
     Puppet::Type.type(:group).new(
       :title => 'testers',
@@ -15,8 +15,8 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
   let(:connection) { stub 'connection' }
 
   before :each do
-    Puppet::Util::ADSI.stubs(:computer_name).returns('testcomputername')
-    Puppet::Util::ADSI.stubs(:connect).returns connection
+    Puppet::Util::Windows::ADSI.stubs(:computer_name).returns('testcomputername')
+    Puppet::Util::Windows::ADSI.stubs(:connect).returns connection
   end
 
   describe ".instances" do
@@ -30,7 +30,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     end
   end
 
-  describe "group type :members property helpers", :if => Puppet.features.microsoft_windows? do
+  describe "group type :members property helpers" do
 
     let(:user1) { stub(:account => 'user1', :domain => '.', :to_s => 'user1sid') }
     let(:user2) { stub(:account => 'user2', :domain => '.', :to_s => 'user2sid') }
@@ -89,7 +89,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
       provider.members.should =~ ['user1', 'user2', 'user3']
     end
 
-    it "should be able to set group members", :if => Puppet.features.microsoft_windows? do
+    it "should be able to set group members" do
       provider.group.stubs(:members).returns ['user1', 'user2']
 
       member_sids = [
@@ -115,7 +115,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
       resource[:members] = ['user1', 'user2']
 
       group = stub 'group'
-      Puppet::Util::ADSI::Group.expects(:create).with('testers').returns group
+      Puppet::Util::Windows::ADSI::Group.expects(:create).with('testers').returns group
 
       create = sequence('create')
       group.expects(:commit).in_sequence(create)
@@ -125,7 +125,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     end
 
     it 'should not create a group if a user by the same name exists' do
-      Puppet::Util::ADSI::Group.expects(:create).with('testers').raises( Puppet::Error.new("Cannot create group if user 'testers' exists.") )
+      Puppet::Util::Windows::ADSI::Group.expects(:create).with('testers').raises( Puppet::Error.new("Cannot create group if user 'testers' exists.") )
       expect{ provider.create }.to raise_error( Puppet::Error,
         /Cannot create group if user 'testers' exists./ )
     end
@@ -138,11 +138,11 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
   end
 
   it "should be able to test whether a group exists" do
-    Puppet::Util::ADSI.stubs(:sid_uri_safe).returns(nil)
-    Puppet::Util::ADSI.stubs(:connect).returns stub('connection')
+    Puppet::Util::Windows::ADSI.stubs(:sid_uri_safe).returns(nil)
+    Puppet::Util::Windows::ADSI.stubs(:connect).returns stub('connection')
     provider.should be_exists
 
-    Puppet::Util::ADSI.stubs(:connect).returns nil
+    Puppet::Util::Windows::ADSI.stubs(:connect).returns nil
     provider.should_not be_exists
   end
 
@@ -152,7 +152,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     provider.delete
   end
 
-  it "should report the group's SID as gid", :if => Puppet.features.microsoft_windows? do
+  it "should report the group's SID as gid" do
     Puppet::Util::Windows::Security.expects(:name_to_sid).with('testers').returns('S-1-5-32-547')
     provider.gid.should == 'S-1-5-32-547'
   end
@@ -162,7 +162,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     provider.send(:gid=, 500)
   end
 
-  it "should prefer the domain component from the resolved SID", :if => Puppet.features.microsoft_windows? do
+  it "should prefer the domain component from the resolved SID" do
     provider.members_to_s(['.\Administrators']).should == 'BUILTIN\Administrators'
   end
 end

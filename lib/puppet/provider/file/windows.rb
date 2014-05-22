@@ -8,7 +8,6 @@ Puppet::Type.type(:file).provide :windows do
 
   if Puppet.features.microsoft_windows?
     require 'puppet/util/windows'
-    require 'puppet/util/adsi'
     include Puppet::Util::Windows::Security
   end
 
