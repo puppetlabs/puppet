@@ -120,6 +120,14 @@ module Puppet::Util::Windows::Process
            :Privileges, [LUID_AND_ATTRIBUTES, 1]    # placeholder for offset
   end
 
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/bb530717(v=vs.85).aspx
+  # typedef struct _TOKEN_ELEVATION {
+  #   DWORD TokenIsElevated;
+  # } TOKEN_ELEVATION, *PTOKEN_ELEVATION;
+  class TOKEN_ELEVATION < FFI::Struct
+    layout :TokenIsElevated, :dword
+  end
+
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446671(v=vs.85).aspx
   # BOOL WINAPI GetTokenInformation(
   #   _In_       HANDLE TokenHandle,
@@ -216,6 +224,11 @@ module Puppet::Util::Windows::Process
           "#{return_length}, #{return_length_ptr})")
     end
 
+    token_information_buf
+  end
+  module_function :get_token_information
+
+  def parse_token_information_as_token_privileges(token_information_buf)
     raw_privileges = TOKEN_PRIVILEGES.new(token_information_buf)
     privileges = { :count => raw_privileges[:PrivilegeCount], :privileges => [] }
 
@@ -229,7 +242,12 @@ module Puppet::Util::Windows::Process
 
     privileges
   end
-  module_function :get_token_information
+  module_function :parse_token_information_as_token_privileges
+
+  def parse_token_information_as_token_elevation(token_information_buf)
+    TOKEN_ELEVATION.new(token_information_buf)
+  end
+  module_function :parse_token_information_as_token_elevation
 
   TOKEN_ALL_ACCESS = 0xF01FF
   ERROR_NO_SUCH_PRIVILEGE = 1313
@@ -238,7 +256,8 @@ module Puppet::Util::Windows::Process
     open_process_token(handle, TOKEN_ALL_ACCESS) do |token_handle|
       luid = lookup_privilege_value('SeCreateSymbolicLinkPrivilege')
       token_info = get_token_information(token_handle, :TokenPrivileges)
-      token_info[:privileges].any? { |p| p[:Luid].values == luid.values }
+      token_privileges = parse_token_information_as_token_privileges(token_info)
+      token_privileges[:privileges].any? { |p| p[:Luid].values == luid.values }
     end
   rescue Puppet::Util::Windows::Error => e
     if e.code == ERROR_NO_SUCH_PRIVILEGE
@@ -248,4 +267,29 @@ module Puppet::Util::Windows::Process
     end
   end
   module_function :process_privilege_symlink?
+
+  TOKEN_QUERY = 0x0008
+  # Returns whether or not the owner of the current process is running
+  # with elevated security privileges.
+  #
+  # Only supported on Windows Vista or later.
+  #
+  def elevated_security?
+    handle = get_current_process
+    open_process_token(handle, TOKEN_QUERY) do |token_handle|
+      token_info = get_token_information(token_handle, :TokenElevation)
+      token_elevation = parse_token_information_as_token_elevation(token_info)
+      # TokenIsElevated member of the TOKEN_ELEVATION struct
+      token_elevation[:TokenIsElevated] != 0
+    end
+  rescue Puppet::Util::Windows::Error => e
+    if e.code == ERROR_NO_SUCH_PRIVILEGE
+      false # pre-Vista
+    else
+      raise e
+    end
+  ensure
+    CloseHandle(handle)
+  end
+  module_function :elevated_security?
 end
