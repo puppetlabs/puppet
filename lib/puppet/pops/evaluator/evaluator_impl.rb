@@ -833,11 +833,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     #
     with_guarded_scope(scope) do
       test = evaluate(o.left_expr, scope)
+      the_default = nil
       selected = o.selectors.find do |s|
         me = s.matching_expr
         case me
         when Puppet::Pops::Model::LiteralDefault
-          true
+          the_default = s.value_expr
+          false
         when Puppet::Pops::Model::UnfoldExpression
           # not ideal for error reporting, since it is not known which unfolded result
           # that caused an error - the entire unfold expression is blamed (i.e. the var c, passed to is_match?)
@@ -848,8 +850,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       end
       if selected
         evaluate(selected.value_expr, scope)
+      elsif the_default
+        evaluate(the_default, scope)
       else
-        nil
+        fail(Issues::UNMATCHED_SELECTOR, o.left_expr, :param_value => test)
       end
     end
   end

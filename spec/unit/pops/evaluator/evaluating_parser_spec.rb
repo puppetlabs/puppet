@@ -471,9 +471,11 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     {
       "2 ? { 1 => no, 2 => yes}"                          => 'yes',
-      "3 ? { 1 => no, 2 => no}"                           => nil,
       "3 ? { 1 => no, 2 => no, default => yes }"          => 'yes',
-      "3 ? { 1 => no, default => yes, 3 => no }"          => 'yes',
+      "3 ? { 1 => no, default => yes, 3 => no }"          => 'no',
+      "3 ? { 1 => no, 3 => no, default => yes }"          => 'no',
+      "4 ? { 1 => no, default => yes, 3 => no }"          => 'yes',
+      "4 ? { 1 => no, 3 => no, default => yes }"          => 'yes',
       "'banana' ? { /.*(ana).*/  => $1 }"                 => 'ana',
       "[2] ? { Array[String] => yes, Array => yes}"       => 'yes',
       "ringo ? *[paul, john, ringo, george] => 'beatle'"  => 'beatle',
@@ -482,6 +484,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           parser.evaluate_string(scope, source, __FILE__).should == result
         end
       end
+
+    it 'fails if a selector does not match' do
+      expect{parser.evaluate_string(scope, "2 ? 3 => 4")}.to raise_error(/No matching entry for selector parameter with value '2'/)
+    end
   end
 
   context "When evaluator evaluated unfold" do
