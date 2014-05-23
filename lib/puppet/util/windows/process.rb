@@ -18,7 +18,7 @@ module Puppet::Util::Windows::Process
     end
 
     exit_status = FFI::MemoryPointer.new(:dword, 1)
-    unless GetExitCodeProcess(handle, exit_status)
+    if GetExitCodeProcess(handle, exit_status) == FFI::WIN32_FALSE
       raise Puppet::Util::Windows::Error.new("Failed to get child process exit code")
     end
     exit_status = exit_status.read_dword
