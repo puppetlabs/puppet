@@ -88,5 +88,12 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
         Puppet::Util::Windows::User.password_is?(username, nil).should be_false
       end
     end
+
+    describe "check_token_membership" do
+      it "should not raise an error" do
+        # added just to call an FFI code path on all platforms
+        lambda { Puppet::Util::Windows::User.check_token_membership }.should_not raise_error
+      end
+    end
   end
 end

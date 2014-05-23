@@ -569,7 +569,7 @@ module Puppet::Util::Windows::Security
           revision = FFI::MemoryPointer.new(:dword, 1)
           ffsd = FFI::Pointer.new(ppsd.unpack('L')[0])
 
-          if ! GetSecurityDescriptorControl(ffsd, control, revision)
+          if GetSecurityDescriptorControl(ffsd, control, revision) == FFI::WIN32_FALSE
             raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
           end
 
@@ -648,5 +648,5 @@ module Puppet::Util::Windows::Security
   # );
   ffi_lib :advapi32
   attach_function_private :GetSecurityDescriptorControl,
-    [:pointer, :lpword, :lpdword], :bool
+    [:pointer, :lpword, :lpdword], :win32_bool
 end

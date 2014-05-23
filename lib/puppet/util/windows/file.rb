@@ -20,7 +20,7 @@ module Puppet::Util::Windows::File
       FFI::Pointer::NULL
     )
 
-    return true if result
+    return true if result != FFI::WIN32_FALSE
     raise Puppet::Util::Windows::Error.new("ReplaceFile(#{target}, #{source})")
   end
   module_function :replace_file
@@ -30,7 +30,7 @@ module Puppet::Util::Windows::File
                          wide_string(target.to_s),
                          flags)
 
-    return true if result
+    return true if result != FFI::WIN32_FALSE
     raise Puppet::Util::Windows::Error.
       new("MoveFileEx(#{source}, #{target}, #{flags.to_s(8)})")
   end
@@ -51,7 +51,7 @@ module Puppet::Util::Windows::File
   # );
   ffi_lib 'kernel32'
   attach_function_private :ReplaceFileW,
-    [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpvoid, :lpvoid], :bool
+    [:lpcwstr, :lpcwstr, :lpcwstr, :dword, :lpvoid, :lpvoid], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365240(v=vs.85).aspx
   # BOOL WINAPI MoveFileEx(
@@ -61,7 +61,7 @@ module Puppet::Util::Windows::File
   # );
   ffi_lib 'kernel32'
   attach_function_private :MoveFileExW,
-    [:lpcwstr, :lpcwstr, :dword], :bool
+    [:lpcwstr, :lpcwstr, :dword], :win32_bool
 
   # BOOLEAN WINAPI CreateSymbolicLink(
   #   _In_  LPTSTR lpSymlinkFileName, - symbolic link to be created
@@ -72,7 +72,7 @@ module Puppet::Util::Windows::File
   begin
     ffi_lib 'kernel32'
     attach_function_private :CreateSymbolicLinkW,
-      [:lpwstr, :lpwstr, :dword], :bool
+      [:lpwstr, :lpwstr, :dword], :win32_bool
   rescue LoadError
   end
 
@@ -109,7 +109,7 @@ module Puppet::Util::Windows::File
   # );
   ffi_lib 'kernel32'
   attach_function_private :DeviceIoControl,
-    [:handle, :dword, :lpvoid, :dword, :lpvoid, :dword, :lpdword, :pointer], :bool
+    [:handle, :dword, :lpvoid, :dword, :lpvoid, :dword, :lpdword, :pointer], :win32_bool
 
   MAXIMUM_REPARSE_DATA_BUFFER_SIZE = 16384
 
@@ -136,13 +136,13 @@ module Puppet::Util::Windows::File
   #   _In_  HANDLE hObject
   # );
   ffi_lib 'kernel32'
-  attach_function_private :CloseHandle, [:handle], :bool
+  attach_function_private :CloseHandle, [:handle], :win32_bool
 
   def symlink(target, symlink)
     flags = File.directory?(target) ? 0x1 : 0x0
     result = CreateSymbolicLinkW(wide_string(symlink.to_s),
       wide_string(target.to_s), flags)
-    return true if result
+    return true if result != FFI::WIN32_FALSE
     raise Puppet::Util::Windows::Error.new(
       "CreateSymbolicLink(#{symlink}, #{target}, #{flags.to_s(8)})")
   end
@@ -184,7 +184,7 @@ module Puppet::Util::Windows::File
       nil
     )
 
-    return out_buffer if result
+    return out_buffer if result != FFI::WIN32_FALSE
     raise Puppet::Util::Windows::Error.new(
       "DeviceIoControl(#{handle}, #{io_control_code}, " +
       "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
