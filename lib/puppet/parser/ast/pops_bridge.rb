@@ -133,8 +133,10 @@ class Puppet::Parser::AST::PopsBridge
       return result if typed_parameters.empty?
 
       # If there are typed parameters, they need to be evaluated to produce the corresponding type
-      # instances. This evaluation requires a scope. If wed do not get one, the task is impossible to
-      # carry out, and a warning is logged.
+      # instances. This evaluation requires a scope. A scope is not available when doing deserialization
+      # (there is also no initialized evaluator). When running apply and test however, the environment is
+      # reused and we may reenter without a scope (which is fine). A debug message is then output in case
+      # there is the need to track down the odd corner case. See {#obtain_scope}.
       #
       return result unless scope = obtain_scope
       typed_parameters.each do |p|
@@ -146,13 +148,11 @@ class Puppet::Parser::AST::PopsBridge
     # Obtains the scope or issues a warning if :global_scope is not bound
     def obtain_scope
       scope = Puppet.lookup(:global_scope) do
-        # This can occur when testing, it is not sure if this is a valid real world use case
-        # This may occur when deserializing a catalog - which is not a disaster
-        # but may result in values being given to puppet logic that has not been type checked when there is an expectancy
-        # to do so. If the catalog that is deserialized is produced by a version of the type where type checking
-        # was not in place, it may result in errors.
-        #
-        Puppet.warning("Instantiating Resource with type checked parameters - scope is missing, cannot perform type checking, please report use case")
+        # This occurs when testing and when applying a catalog (there is no scope available then), and
+        # when running tests that run a partial setup.
+        # This is bad if the logic is trying to compile, but a warning can not be issues since it is a normal
+        # use case that there is no scope when requesting the type in order to just get the parameters.
+        Puppet.debug("Instantiating Resource with type checked parameters - scope is missing, cannot perform type checking, please report use case")
         nil
       end
       scope
