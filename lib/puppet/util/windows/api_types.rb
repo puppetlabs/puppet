@@ -2,12 +2,20 @@ require 'ffi'
 require 'puppet/util/windows/string'
 
 module Puppet::Util::Windows::APITypes
+  module ::FFI
+    WIN32_FALSE = 0
+  end
+
   module ::FFI::Library
     # Wrapper method for attach_function + private
     def attach_function_private(*args)
       attach_function(*args)
       private args[0]
     end
+  end
+
+  class ::FFI::Pointer
+    NULL_HANDLE = 0
   end
 
   class ::FFI::MemoryPointer
@@ -20,10 +28,10 @@ module Puppet::Util::Windows::APITypes
       ptr
     end
 
-    def read_bool
+    def read_win32_bool
       # BOOL is always a 32-bit integer in Win32
       # some Win32 APIs return 1 for true, while others are non-0
-      read_int32 != 0
+      read_int32 != FFI::WIN32_FALSE
     end
 
     alias_method :read_dword, :read_uint32
@@ -81,6 +89,10 @@ module Puppet::Util::Windows::APITypes
   # NOTE: not a good idea to redefine FFI :ulong since other typedefs may rely on it
   FFI.typedef :uint32, :win32_ulong
   FFI.typedef :int32, :win32_long
+  # FFI bool can be only 1 byte at times,
+  # Win32 BOOL is a signed int, and is always 4 bytes, even on x64
+  # http://blogs.msdn.com/b/oldnewthing/archive/2011/03/28/10146459.aspx
+  FFI.typedef :int32, :win32_bool
 
   # NOTE: FFI already defines ushort as a 16-bit unsigned like this:
   # FFI.typedef :uint16, :ushort

@@ -104,5 +104,5 @@ class Puppet::Util::Windows::RootCerts
   #   __in DWORD dwFlags
   #   );
   ffi_lib :crypt32
-  attach_function_private :CertCloseStore, [:handle, :dword], :bool
+  attach_function_private :CertCloseStore, [:handle, :dword], :win32_bool
 end

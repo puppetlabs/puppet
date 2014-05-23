@@ -22,7 +22,7 @@ module Puppet::Util::Windows::Process
   #   _In_  HANDLE hObject
   # );
   ffi_lib 'kernel32'
-  attach_function_private :CloseHandle, [:handle], :bool
+  attach_function_private :CloseHandle, [:handle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
   # BOOL WINAPI OpenProcessToken(
@@ -32,7 +32,7 @@ module Puppet::Util::Windows::Process
   # );
   ffi_lib 'advapi32'
   attach_function_private :OpenProcessToken,
-    [:handle, :dword, :phandle], :bool
+    [:handle, :dword, :phandle], :win32_bool
 
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379261(v=vs.85).aspx
@@ -53,7 +53,7 @@ module Puppet::Util::Windows::Process
   # );
   ffi_lib 'advapi32'
   attach_function_private :LookupPrivilegeValueA,
-    [:lpcstr, :lpcstr, :pointer], :bool
+    [:lpcstr, :lpcstr, :pointer], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
   TOKEN_INFORMATION_CLASS = enum(
@@ -138,7 +138,7 @@ module Puppet::Util::Windows::Process
   # );
   ffi_lib 'advapi32'
   attach_function_private :GetTokenInformation,
-    [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :bool
+    [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
 
   def execute(command, arguments, stdin, stdout, stderr)
     Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr}, :close_handles => false )
@@ -175,7 +175,7 @@ module Puppet::Util::Windows::Process
   def open_process_token(handle, desired_access)
     token_handle_ptr = FFI::MemoryPointer.new(:handle, 1)
     result = OpenProcessToken(handle, desired_access, token_handle_ptr)
-    if !result
+    if result == FFI::WIN32_FALSE
       raise Puppet::Util::Windows::Error.new(
         "OpenProcessToken(#{handle}, #{desired_access.to_s(8)}, #{token_handle_ptr})")
     end
@@ -196,7 +196,7 @@ module Puppet::Util::Windows::Process
       luid
       )
 
-    return LUID.new(luid) if result
+    return LUID.new(luid) if result != FFI::WIN32_FALSE
     raise Puppet::Util::Windows::Error.new(
       "LookupPrivilegeValue(#{system_name}, #{name}, #{luid})")
   end
@@ -218,7 +218,7 @@ module Puppet::Util::Windows::Process
     result = GetTokenInformation(token_handle, token_information,
       token_information_buf, return_length, return_length_ptr)
 
-    if !result
+    if result == FFI::WIN32_FALSE
       raise Puppet::Util::Windows::Error.new(
         "GetTokenInformation(#{token_handle}, #{token_information}, #{token_information_buf}, " +
           "#{return_length}, #{return_length_ptr})")

@@ -37,7 +37,7 @@ module Puppet::Util::Windows::ADSI
     # );
     ffi_lib :kernel32
     attach_function_private :GetComputerNameW,
-      [:lpwstr, :lpdword], :bool
+      [:lpwstr, :lpdword], :win32_bool
 
     # taken from winbase.h
     MAX_COMPUTERNAME_LENGTH = 31
@@ -49,7 +49,7 @@ module Puppet::Util::Windows::ADSI
         buffer_size = FFI::MemoryPointer.new(:dword, 1)
         buffer_size.write_dword(max_length) # length in TCHARs
 
-        if ! GetComputerNameW(buffer, buffer_size)
+        if GetComputerNameW(buffer, buffer_size) == FFI::WIN32_FALSE
           raise Puppet::Util::Windows::Error.new("Failed to get computer name")
         end
         @computer_name = buffer.read_wide_string(buffer_size.read_dword)

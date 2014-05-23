@@ -28,21 +28,21 @@ module Puppet::Util::Windows::User
     size_pointer = FFI::MemoryPointer.new(:dword, 1)
     size_pointer.write_uint32(SECURITY_MAX_SID_SIZE)
 
-    unless CreateWellKnownSid(:WinBuiltinAdministratorsSid,  FFI::Pointer::NULL, sid_pointer, size_pointer)
+    if CreateWellKnownSid(:WinBuiltinAdministratorsSid, FFI::Pointer::NULL, sid_pointer, size_pointer) == FFI::WIN32_FALSE
       raise Puppet::Util::Windows::Error.new("Failed to create administrators SID")
     end
 
-    unless IsValidSid(sid_pointer)
+    if IsValidSid(sid_pointer) == FFI::WIN32_FALSE
       raise Puppet::Util::Windows::Error.new("Invalid SID")
     end
 
-    ismember_pointer = FFI::MemoryPointer.new(:bool, 1)
-    unless CheckTokenMembership(FFI::Pointer::NULL, sid_pointer, ismember_pointer)
+    ismember_pointer = FFI::MemoryPointer.new(:win32_bool, 1)
+    if CheckTokenMembership(FFI::Pointer::NULL_HANDLE, sid_pointer, ismember_pointer) == FFI::WIN32_FALSE
       raise Puppet::Util::Windows::Error.new("Failed to check membership")
     end
 
     # Is administrators SID enabled in calling thread's access token?
-    ismember_pointer.read_bool
+    ismember_pointer.read_win32_bool
   end
   module_function :check_token_membership
 
@@ -59,8 +59,8 @@ module Puppet::Util::Windows::User
     fLOGON32_PROVIDER_DEFAULT = 0
 
     token_pointer = FFI::MemoryPointer.new(:handle, 1)
-    if ! LogonUserW(wide_string(name), wide_string('.'), wide_string(password),
-        fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer)
+    if LogonUserW(wide_string(name), wide_string('.'), wide_string(password),
+        fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
       raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
     end
 
@@ -81,13 +81,13 @@ module Puppet::Util::Windows::User
       pi[:lpUserName] = FFI::MemoryPointer.from_string_to_wide_string(user)
 
       # Load the profile. Since it doesn't exist, it will be created
-      if ! LoadUserProfileW(token, pi.pointer)
+      if LoadUserProfileW(token, pi.pointer) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Failed to load user profile #{user.inspect}")
       end
 
       Puppet.debug("Loaded profile for #{user}")
 
-      if ! UnloadUserProfile(token, pi[:hProfile])
+      if UnloadUserProfile(token, pi[:hProfile]) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Failed to unload user profile #{user.inspect}")
       end
     end
@@ -107,14 +107,14 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :LogonUserW,
-    [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :bool
+    [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
   # BOOL WINAPI CloseHandle(
   #   _In_  HANDLE hObject
   # );
   ffi_lib 'kernel32'
-  attach_function_private :CloseHandle, [:handle], :bool
+  attach_function_private :CloseHandle, [:handle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/bb773378(v=vs.85).aspx
   # typedef struct _PROFILEINFO {
@@ -147,7 +147,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :userenv
   attach_function_private :LoadUserProfileW,
-    [:handle, :pointer], :bool
+    [:handle, :pointer], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/bb762282(v=vs.85).aspx
   # BOOL WINAPI UnloadUserProfile(
@@ -156,7 +156,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :userenv
   attach_function_private :UnloadUserProfile,
-    [:handle, :handle], :bool
+    [:handle, :handle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376389(v=vs.85).aspx
   # BOOL WINAPI CheckTokenMembership(
@@ -166,7 +166,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :CheckTokenMembership,
-    [:handle, :pointer, :pbool], :bool
+    [:handle, :pointer, :pbool], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379650(v=vs.85).aspx
   WELL_KNOWN_SID_TYPE = enum(
@@ -276,7 +276,7 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :CreateWellKnownSid,
-    [WELL_KNOWN_SID_TYPE, :pointer, :pointer, :lpdword], :bool
+    [WELL_KNOWN_SID_TYPE, :pointer, :pointer, :lpdword], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
   # BOOL WINAPI IsValidSid(
@@ -284,5 +284,5 @@ module Puppet::Util::Windows::User
   # );
   ffi_lib :advapi32
   attach_function_private :IsValidSid,
-    [:pointer], :bool
+    [:pointer], :win32_bool
 end
