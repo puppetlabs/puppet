@@ -224,7 +224,7 @@ module Puppet::ModuleTool::Generate
     Puppet.notice "Populating ERB templates..."
 
     templates = destination + '**/*.erb'
-    Dir[templates.to_s].each do |erb|
+    Dir.glob(templates.to_s, File::FNM_DOTMATCH).each do |erb|
       path = Pathname.new(erb)
       content = ERB.new(path.read).result(binding)
 
