@@ -1,4 +1,4 @@
-require 'puppet/util/adsi'
+require 'puppet/util/windows'
 
 Puppet::Type.type(:group).provide :windows_adsi do
   desc "Local group management for Windows. Group members can be both users and groups.
@@ -22,7 +22,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
     return false if current.empty? != should_empty
 
     # dupes automatically weeded out when hashes built
-    Puppet::Util::ADSI::Group.name_sid_hash(current) == Puppet::Util::ADSI::Group.name_sid_hash(should)
+    Puppet::Util::Windows::ADSI::Group.name_sid_hash(current) == Puppet::Util::Windows::ADSI::Group.name_sid_hash(should)
   end
 
   def members_to_s(users)
@@ -30,7 +30,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
     users = users.map do |user_name|
       sid = Puppet::Util::Windows::Security.name_to_sid_object(user_name)
       if sid.account =~ /\\/
-        account, _ = Puppet::Util::ADSI::User.parse_name(sid.account)
+        account, _ = Puppet::Util::Windows::ADSI::User.parse_name(sid.account)
       else
         account = sid.account
       end
@@ -41,7 +41,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def group
-    @group ||= Puppet::Util::ADSI::Group.new(@resource[:name])
+    @group ||= Puppet::Util::Windows::ADSI::Group.new(@resource[:name])
   end
 
   def members
@@ -53,18 +53,18 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def create
-    @group = Puppet::Util::ADSI::Group.create(@resource[:name])
+    @group = Puppet::Util::Windows::ADSI::Group.create(@resource[:name])
     @group.commit
 
     self.members = @resource[:members]
   end
 
   def exists?
-    Puppet::Util::ADSI::Group.exists?(@resource[:name])
+    Puppet::Util::Windows::ADSI::Group.exists?(@resource[:name])
   end
 
   def delete
-    Puppet::Util::ADSI::Group.delete(@resource[:name])
+    Puppet::Util::Windows::ADSI::Group.delete(@resource[:name])
   end
 
   # Only flush if we created or modified a group, not deleted
@@ -81,6 +81,6 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def self.instances
-    Puppet::Util::ADSI::Group.map { |g| new(:ensure => :present, :name => g.name) }
+    Puppet::Util::Windows::ADSI::Group.map { |g| new(:ensure => :present, :name => g.name) }
   end
 end

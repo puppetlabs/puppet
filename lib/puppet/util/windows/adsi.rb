@@ -1,5 +1,9 @@
-module Puppet::Util::ADSI
+module Puppet::Util::Windows::ADSI
+  require 'ffi'
+
   class << self
+    extend FFI::Library
+
     def connectable?(uri)
       begin
         !! connect(uri)
@@ -17,18 +21,38 @@ module Puppet::Util::ADSI
     end
 
     def create(name, resource_type)
-      Puppet::Util::ADSI.connect(computer_uri).Create(resource_type, name)
+      Puppet::Util::Windows::ADSI.connect(computer_uri).Create(resource_type, name)
     end
 
     def delete(name, resource_type)
-      Puppet::Util::ADSI.connect(computer_uri).Delete(resource_type, name)
+      Puppet::Util::Windows::ADSI.connect(computer_uri).Delete(resource_type, name)
     end
+
+    ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
+    # BOOL WINAPI GetComputerName(
+    #   _Out_    LPTSTR lpBuffer,
+    #   _Inout_  LPDWORD lpnSize
+    # );
+    ffi_lib :kernel32
+    attach_function_private :GetComputerNameW,
+      [:lpwstr, :lpdword], :bool
+
+    # taken from winbase.h
+    MAX_COMPUTERNAME_LENGTH = 31
 
     def computer_name
       unless @computer_name
-        buf = " " * 128
-        Win32API.new('kernel32', 'GetComputerName', ['P','P'], 'I').call(buf, buf.length.to_s)
-        @computer_name = buf.unpack("A*")[0]
+        max_length = MAX_COMPUTERNAME_LENGTH + 1 # NULL terminated
+        buffer = FFI::MemoryPointer.new(max_length * 2) # wide string
+        buffer_size = FFI::MemoryPointer.new(:dword, 1)
+        buffer_size.write_dword(max_length) # length in TCHARs
+
+        if ! GetComputerNameW(buffer, buffer_size)
+          raise Puppet::Util::Windows::Error.new("Failed to get computer name")
+        end
+        @computer_name = buffer.read_wide_string(buffer_size.read_dword)
       end
       @computer_name
     end
@@ -71,7 +95,7 @@ module Puppet::Util::ADSI
     end
 
     def sid_for_account(name)
-      Puppet.deprecation_warning "Puppet::Util::ADSI.sid_for_account is deprecated and will be removed in 3.0, use Puppet::Util::Windows::SID.name_to_sid instead."
+      Puppet.deprecation_warning "Puppet::Util::Windows::ADSI.sid_for_account is deprecated and will be removed in 3.0, use Puppet::Util::Windows::SID.name_to_sid instead."
 
       Puppet::Util::Windows::Security.name_to_sid(name)
     end
@@ -100,7 +124,7 @@ module Puppet::Util::ADSI
     end
 
     def native_user
-      @native_user ||= Puppet::Util::ADSI.connect(self.class.uri(*self.class.parse_name(@name)))
+      @native_user ||= Puppet::Util::Windows::ADSI.connect(self.class.uri(*self.class.parse_name(@name)))
     end
 
     def sid
@@ -108,11 +132,11 @@ module Puppet::Util::ADSI
     end
 
     def self.uri(name, host = '.')
-      if sid_uri = Puppet::Util::ADSI.sid_uri_safe(name) then return sid_uri end
+      if sid_uri = Puppet::Util::Windows::ADSI.sid_uri_safe(name) then return sid_uri end
 
       host = '.' if ['NT AUTHORITY', 'BUILTIN', Socket.gethostname].include?(host)
 
-      Puppet::Util::ADSI.uri(name, 'user', host)
+      Puppet::Util::Windows::ADSI.uri(name, 'user', host)
     end
 
     def uri
@@ -168,14 +192,14 @@ module Puppet::Util::ADSI
 
     def add_to_groups(*group_names)
       group_names.each do |group_name|
-        Puppet::Util::ADSI::Group.new(group_name).add_member_sids(sid)
+        Puppet::Util::Windows::ADSI::Group.new(group_name).add_member_sids(sid)
       end
     end
     alias add_to_group add_to_groups
 
     def remove_from_groups(*group_names)
       group_names.each do |group_name|
-        Puppet::Util::ADSI::Group.new(group_name).remove_member_sids(sid)
+        Puppet::Util::Windows::ADSI::Group.new(group_name).remove_member_sids(sid)
       end
     end
     alias remove_from_group remove_from_groups
@@ -199,20 +223,20 @@ module Puppet::Util::ADSI
 
     def self.create(name)
       # Windows error 1379: The specified local group already exists.
-      raise Puppet::Error.new( "Cannot create user if group '#{name}' exists." ) if Puppet::Util::ADSI::Group.exists? name
-      new(name, Puppet::Util::ADSI.create(name, 'user'))
+      raise Puppet::Error.new( "Cannot create user if group '#{name}' exists." ) if Puppet::Util::Windows::ADSI::Group.exists? name
+      new(name, Puppet::Util::Windows::ADSI.create(name, 'user'))
     end
 
     def self.exists?(name)
-      Puppet::Util::ADSI::connectable?(User.uri(*User.parse_name(name)))
+      Puppet::Util::Windows::ADSI::connectable?(User.uri(*User.parse_name(name)))
     end
 
     def self.delete(name)
-      Puppet::Util::ADSI.delete(name, 'user')
+      Puppet::Util::Windows::ADSI.delete(name, 'user')
     end
 
     def self.each(&block)
-      wql = Puppet::Util::ADSI.execquery('select name from win32_useraccount where localaccount = "TRUE"')
+      wql = Puppet::Util::Windows::ADSI.execquery('select name from win32_useraccount where localaccount = "TRUE"')
 
       users = []
       wql.each do |u|
@@ -226,7 +250,7 @@ module Puppet::Util::ADSI
   class UserProfile
     def self.delete(sid)
       begin
-        Puppet::Util::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
+        Puppet::Util::Windows::ADSI.wmi_connection.Delete("Win32_UserProfile.SID='#{sid}'")
       rescue => e
         # http://social.technet.microsoft.com/Forums/en/ITCG/thread/0f190051-ac96-4bf1-a47f-6b864bfacee5
         # Prior to Vista SP1, there's no builtin way to programmatically
@@ -254,13 +278,13 @@ module Puppet::Util::ADSI
     end
 
     def self.uri(name, host = '.')
-      if sid_uri = Puppet::Util::ADSI.sid_uri_safe(name) then return sid_uri end
+      if sid_uri = Puppet::Util::Windows::ADSI.sid_uri_safe(name) then return sid_uri end
 
-      Puppet::Util::ADSI.uri(name, 'group', host)
+      Puppet::Util::Windows::ADSI.uri(name, 'group', host)
     end
 
     def native_group
-      @native_group ||= Puppet::Util::ADSI.connect(uri)
+      @native_group ||= Puppet::Util::Windows::ADSI.connect(uri)
     end
 
     def commit
@@ -285,14 +309,14 @@ module Puppet::Util::ADSI
     end
 
     def add_members(*names)
-      Puppet.deprecation_warning('Puppet::Util::ADSI::Group#add_members is deprecated; please use Puppet::Util::ADSI::Group#add_member_sids')
+      Puppet.deprecation_warning('Puppet::Util::Windows::ADSI::Group#add_members is deprecated; please use Puppet::Util::Windows::ADSI::Group#add_member_sids')
       sids = self.class.name_sid_hash(names)
       add_member_sids(*sids.values)
     end
     alias add_member add_members
 
     def remove_members(*names)
-      Puppet.deprecation_warning('Puppet::Util::ADSI::Group#remove_members is deprecated; please use Puppet::Util::ADSI::Group#remove_member_sids')
+      Puppet.deprecation_warning('Puppet::Util::Windows::ADSI::Group#remove_members is deprecated; please use Puppet::Util::Windows::ADSI::Group#remove_member_sids')
       sids = self.class.name_sid_hash(names)
       remove_member_sids(*sids.values)
     end
@@ -300,13 +324,13 @@ module Puppet::Util::ADSI
 
     def add_member_sids(*sids)
       sids.each do |sid|
-        native_group.Add(Puppet::Util::ADSI.sid_uri(sid))
+        native_group.Add(Puppet::Util::Windows::ADSI.sid_uri(sid))
       end
     end
 
     def remove_member_sids(*sids)
       sids.each do |sid|
-        native_group.Remove(Puppet::Util::ADSI.sid_uri(sid))
+        native_group.Remove(Puppet::Util::Windows::ADSI.sid_uri(sid))
       end
     end
 
@@ -342,20 +366,20 @@ module Puppet::Util::ADSI
 
     def self.create(name)
       # Windows error 2224: The account already exists.
-      raise Puppet::Error.new( "Cannot create group if user '#{name}' exists." ) if Puppet::Util::ADSI::User.exists? name
-      new(name, Puppet::Util::ADSI.create(name, 'group'))
+      raise Puppet::Error.new( "Cannot create group if user '#{name}' exists." ) if Puppet::Util::Windows::ADSI::User.exists? name
+      new(name, Puppet::Util::Windows::ADSI.create(name, 'group'))
     end
 
     def self.exists?(name)
-      Puppet::Util::ADSI.connectable?(Group.uri(name))
+      Puppet::Util::Windows::ADSI.connectable?(Group.uri(name))
     end
 
     def self.delete(name)
-      Puppet::Util::ADSI.delete(name, 'group')
+      Puppet::Util::Windows::ADSI.delete(name, 'group')
     end
 
     def self.each(&block)
-      wql = Puppet::Util::ADSI.execquery( 'select name from win32_group where localaccount = "TRUE"' )
+      wql = Puppet::Util::Windows::ADSI.execquery( 'select name from win32_group where localaccount = "TRUE"' )
 
       groups = []
       wql.each do |g|
