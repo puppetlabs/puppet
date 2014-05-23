@@ -241,6 +241,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       "/ana/ in bananas"              => true,
       "/xxx/ in bananas"              => false,
       "ANA in bananas"                => false, # ANA is a type, not a String
+      "String[1] in bananas"          => false, # Philosophically true though :-)
       "'ANA' in bananas"              => true,
       "ana in 'BANANAS'"              => true,
       "/ana/ in 'BANANAS'"            => false,
