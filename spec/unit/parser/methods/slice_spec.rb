@@ -41,6 +41,19 @@ describe 'methods' do
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
 
+    it 'slice with captures last' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = [1, present, 2, absent, 3, present]
+        $a.slice(2) |*$kv| {
+          file { "/file_${$kv[0]}": ensure => $kv[1] }
+        }
+      MANIFEST
+
+      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
+      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+    end
+
     it 'slice with one parameter' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1, present, 2, absent, 3, present]

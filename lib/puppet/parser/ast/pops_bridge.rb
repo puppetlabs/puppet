@@ -123,10 +123,46 @@ class Puppet::Parser::AST::PopsBridge
       end
     end
 
+    def create_type_map(definition)
+      result = {}
+      # No need to do anything if there are no parameters
+      return result unless definition.parameters.size > 0
+
+      # No need to do anything if there are no typed parameters
+      typed_parameters = definition.parameters.select {|p| p.type_expr }
+      return result if typed_parameters.empty?
+
+      # If there are typed parameters, they need to be evaluated to produce the corresponding type
+      # instances. This evaluation requires a scope. If wed do not get one, the task is impossible to
+      # carry out, and a warning is logged.
+      #
+      return result unless scope = obtain_scope
+      typed_parameters.each do |p|
+        result[ p.name ] =  @@evaluator.evaluate(scope, p.type_expr) if p.type_expr
+      end
+      result
+    end
+
+    # Obtains the scope or issues a warning if :global_scope is not bound
+    def obtain_scope
+      scope = Puppet.lookup(:global_scope) do
+        # This can occur when testing, it is not sure if this is a valid real world use case
+        # This may occur when deserializing a catalog - which is not a disaster
+        # but may result in values being given to puppet logic that has not been type checked when there is an expectancy
+        # to do so. If the catalog that is deserialized is produced by a version of the type where type checking
+        # was not in place, it may result in errors.
+        #
+        Puppet.warning("Instantiating Resource with type checked parameters - scope is missing, cannot perform type checking, please report use case")
+        nil
+      end
+      scope
+    end
+
     # Produces a hash with data for Definition and HostClass
     def args_from_definition(o, modname)
       args = {
        :arguments => o.parameters.collect {|p| instantiate_Parameter(p) },
+       :argument_types => create_type_map(o),
        :module_name => modname
       }
       unless is_nop?(o.body)

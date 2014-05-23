@@ -73,6 +73,18 @@ describe 'the filter method' do
     catalog.resource(:file, "/file_orange")['ensure'].should == 'present'
   end
 
+  it 'can filter array using index and value (using captures-rest)' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $a = ['strawberry','blueberry','orange']
+      $b = $a.filter |*$ix|{ $ix[0]  == 0 or $ix[0] ==2}
+      file { "/file_${b[0]}": ensure => present }
+      file { "/file_${b[1]}": ensure => present }
+    MANIFEST
+
+    catalog.resource(:file, "/file_strawberry")['ensure'].should == 'present'
+    catalog.resource(:file, "/file_orange")['ensure'].should == 'present'
+  end
+
   it 'filters on a hash (all berries) by key' do
     catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'strawberry'=>'red','blueberry'=>'blue','orange'=>'orange'}

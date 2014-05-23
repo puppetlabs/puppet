@@ -113,9 +113,14 @@ describe "A catalog" do
   end
 
   def master_and_agent_catalogs_for(manifest)
-    master_catalog = Puppet::Resource::Catalog::Compiler.new.filter(compile_to_catalog(manifest))
+    # There are issues with this sequence, the compilation via the indirector work
+    # as expected, it sets up the context and compiles. The second use of the catalog,
+    # to convert it again goes into initial_import, and performs evaluation but without
+    # a fully configured context.
+    #
+    compiler = Puppet::Resource::Catalog::Compiler.new
+    master_catalog = compiler.filter(compile_to_catalog(manifest))
     agent_catalog = Puppet::Resource::Catalog.convert_from(:pson, master_catalog.render(:pson))
-
     [master_catalog, agent_catalog]
   end
 

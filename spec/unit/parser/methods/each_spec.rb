@@ -61,6 +61,7 @@ describe 'the each method' do
       catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
       catalog.resource(:file, "/file_c")['ensure'].should == 'present'
     end
+
     it 'each on a hash selecting key and value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {'a'=>present,'b'=>absent,'c'=>present}
@@ -73,7 +74,21 @@ describe 'the each method' do
       catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
       catalog.resource(:file, "/file_c")['ensure'].should == 'present'
     end
+
+    it 'each on a hash selecting key and value (using captures-last parameter)' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = {'a'=>present,'b'=>absent,'c'=>present}
+        $a.each |*$kv| {
+          file { "/file_${kv[0]}": ensure => $kv[1] }
+        }
+      MANIFEST
+
+      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
+      catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
+      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+    end
   end
+
   context "should produce receiver" do
     it 'each checking produced value using single expression' do
       catalog = compile_to_catalog(<<-MANIFEST)

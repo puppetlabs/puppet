@@ -192,18 +192,26 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Closure)
     pblock = closure.model
     parameters = pblock.parameters || []
+    parameters_size = parameters.size
+    last_captures_rest = parameters_size > 0 && parameters[-1].captures_rest
+    args_size = args.size
 
-    raise ArgumentError, "Too many arguments: #{args.size} for #{parameters.size}" unless args.size <= parameters.size
+    unless args_size <= parameters_size || last_captures_rest
+      raise ArgumentError, "Too many arguments: #{args_size} for #{parameters_size}"
+    end
+
+    args_diff = parameters.size - args.size
+    # associate values with parameters (NOTE: excess args for captures rest are not included in merged)
+    merged = parameters.zip(args.fill(:missing, args.size, args_diff)) #args)
 
     # calculate missing arguments
-    args_diff = parameters.size - args.size
-    missing = parameters.slice(args.size, args_diff).select {|p| p.value.nil? }
-    unless missing.empty?
-      optional = parameters.count { |p| !p.value.nil? }
-      raise ArgumentError, "Too few arguments; #{args.size} for #{optional > 0 ? ' min ' : ''}#{parameters.size - optional}"
+    if args_diff > 0
+      missing = parameters.slice(args_size, args_diff).select {|p| p.value.nil? }
+      unless missing.empty?
+        optional = parameters.count { |p| !p.value.nil? || p.captures_rest }
+        raise ArgumentError, "Too few arguments; #{args_size} for #{optional > 0 ? ' min ' : ''}#{parameters_size - optional}"
+      end
     end
-    # associate values with parameters (pad missing with :missing)
-    merged = parameters.zip(args.fill(:missing, args.size, args_diff))
 
     evaluated = merged.collect do |m|
       # m can be one of
@@ -214,20 +222,56 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       # "given" may be nil or :undef which means that this is the value to use,
       # not a default expression.
       #
-      given_argument = m[1]
-      argument_name = m[0].name
-      default_expression = m[0].value
 
-      # Use default value if a value was not given (NOTE: An :undef overrides - just a nil overrides default in ruby).
-      value =
+      # "given" is always present. If a parameter was provided then
+      # the entry is that value, else the symbol :missing
+      given_argument = m[ 1 ]
+      argument_name = m[ 0 ].name
+      param_captures = m[ 0 ].captures_rest
+      default_expression = m[ 0 ].value
+
       if given_argument == :missing
-        # nothing was given, use default (it is guaranteed to exist)
-        evaluate(default_expression, scope)
+        # not given
+        if default_expression
+          # not given, has default
+          value = evaluate(default_expression, scope)
+          if param_captures && !value.is_a?(Array)
+            # correct non array default value
+            value = [ value ]
+          end
+        else
+          # not given, does not have default
+          if param_captures
+            # default for captures rest is an empty array
+            value = [ ]
+          else
+            # should have been caught earlier
+            raise ArgumentError, "InternalError: Should not happen! non optional parameter not caught earlier in evaluator call"
+          end
+        end
       else
-        # use the given value
-        given_argument
+        # given
+        if param_captures
+          # get excess arguments
+          value = args[(parameters_size-1)..-1]
+          # If the input was a single nil, or undef, and there is a default, use the default
+          if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
+            value = evaluate(default_expression, scope)
+            # and ensure it is an array
+            value = [value] unless value.is_a?(Array)
+          end
+        else
+          # DEBATEABLE, since undef/nil selects default elsewhere (if changing, tests also needs changing).
+          #          # Do not use given if there is a default and given is nil / undefined
+          #          # else, let the value through
+          #          if (given_argument.nil? || given_argument == :undef) && default_expression
+          #            value = evaluate(default_expression, scope)
+          #          else
+          value = given_argument
+          #          end
+        end
       end
-      [argument_name, value]
+      [ argument_name, value ]
     end
 
     # Store the evaluated name => value associations in a new inner/local/ephemeral scope

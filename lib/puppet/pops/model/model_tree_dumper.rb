@@ -256,9 +256,14 @@ class Puppet::Pops::Model::ModelTreeDumper < Puppet::Pops::Model::TreeDumper
 
   # Produces parameters as name, or (= name value)
   def dump_Parameter o
-    name_part = "#{o.name}"
-    if o.value
+    name_prefix = o.captures_rest ? '*' : ''
+    name_part = "#{name_prefix}#{o.name}"
+    if o.value && o.type_expr
+      ["=t", do_dump(o.type_expr), name_part, do_dump(o.value)]
+    elsif o.value
       ["=", name_part, do_dump(o.value)]
+    elsif o.type_expr
+      ["t", do_dump(o.type_expr), name_part]
     else
       name_part
     end
