@@ -482,4 +482,8 @@ module Puppet::Pops::Issues
   RESERVED_WORD = hard_issue :RESERWED_WORD, :word do
     "Use of reserved word: #{word}, must be quoted if intended to be a String value"
   end
+
+  UNMATCHED_SELECTOR = hard_issue :UNMATCHED_SELECTOR, :param_value do
+    "No matching entry for selector parameter with value '#{param_value}'"
+  end
 end
