@@ -350,7 +350,7 @@ class Puppet::Resource::Type
       unless t.is_a? Puppet::Pops::Types::PAbstractType
         raise Puppet::DevError, "Parameter '#{name}' is given a type that is not a Puppet Type, got #{t.class}"
       end
-      @argument_types[name] = resulting_type
+      @argument_types[name] = t
     end
   end
 
