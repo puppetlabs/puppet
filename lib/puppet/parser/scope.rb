@@ -30,6 +30,9 @@ class Puppet::Parser::Scope
   attr_accessor :parent
   attr_reader :namespaces
 
+  # Hash of hashes of default values per type name
+  attr_reader :defaults
+
   # Add some alias methods that forward to the compiler, since we reference
   # them frequently enough to justify the extra method call.
   def_delegators :compiler, :catalog, :environment
@@ -322,6 +325,17 @@ class Puppet::Parser::Scope
   # it collects all of the defaults, with defaults in closer scopes
   # overriding those in later scopes.
   def lookupdefaults(type)
+    if Puppet[:parser] == 'future'
+      lookupdefaults_4x(type)
+    else
+      lookupdefaults_3x(type)
+    end
+  end
+
+  # The implemetation for lookupdefaults for 3x where the order is:
+  # inherited, contained (recursive), self
+  #
+  def lookupdefaults_3x(type)
     values = {}
 
     # first collect the values from the parents
@@ -340,6 +354,35 @@ class Puppet::Parser::Scope
     end
 
     values
+  end
+
+  # The implementation for lookupdefaults for 4x where the order is:
+  # inherited-scope, closure-scope, self
+  #
+  def lookupdefaults_4x(type)
+    # This is an optimized version that avoids method calls and garbage creation
+    # Build array with scopes from most significant to least significant
+    influencing_scopes = [self]
+    is = inherited_scope
+    while is do
+      influencing_scopes << is
+      is = is.inherited_scope
+    end
+
+    es = enclosing_scope
+    while es do
+      influencing_scopes << es
+      es = es.enclosing_scope
+    end
+
+    # apply from least significant, to most significant
+    influencing_scopes.reverse.reduce({}) do | values, scope |
+      scope_defaults = scope.defaults
+      if scope_defaults.include?(type)
+        values.merge!(scope_defaults[type])
+      end
+      values
+    end
   end
 
   # Look up a defined type.
