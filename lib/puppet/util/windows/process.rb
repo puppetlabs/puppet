@@ -3,6 +3,7 @@ require 'win32/process'
 require 'ffi'
 
 module Puppet::Util::Windows::Process
+  extend Puppet::Util::Windows::String
   extend FFI::Library
 
   WAIT_TIMEOUT = 0x102
@@ -57,9 +58,9 @@ module Puppet::Util::Windows::Process
 
   def lookup_privilege_value(name, system_name = '')
     luid = FFI::MemoryPointer.new(LUID.size)
-    result = LookupPrivilegeValueA(
-      system_name,
-      name.to_s,
+    result = LookupPrivilegeValueW(
+      wide_string(system_name),
+      wide_string(name.to_s),
       luid
       )
 
@@ -221,8 +222,8 @@ module Puppet::Util::Windows::Process
   #   _Out_     PLUID lpLuid
   # );
   ffi_lib 'advapi32'
-  attach_function_private :LookupPrivilegeValueA,
-    [:lpcstr, :lpcstr, :pointer], :win32_bool
+  attach_function_private :LookupPrivilegeValueW,
+    [:lpcwstr, :lpcwstr, :pointer], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379626(v=vs.85).aspx
   TOKEN_INFORMATION_CLASS = enum(

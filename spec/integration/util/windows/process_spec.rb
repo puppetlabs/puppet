@@ -18,5 +18,16 @@ describe "Puppet::Util::Windows::Process", :if => Puppet.features.microsoft_wind
       Puppet::Util::Windows::User.should be_admin
       Puppet::Util::Windows::Process.process_privilege_symlink?.should be_false
     end
+
+    it "should be able to lookup a standard Windows process privilege" do
+      luid = Puppet::Util::Windows::Process.lookup_privilege_value('SeShutdownPrivilege')
+      luid.should_not be_nil
+      luid.should be_instance_of(Puppet::Util::Windows::Process::LUID)
+    end
+
+    it "should raise an error for an unknown privilege name" do
+      fail_msg = /LookupPrivilegeValue\(, foo, .*\):  A specified privilege does not exist/
+      expect { Puppet::Util::Windows::Process.lookup_privilege_value('foo') }.to raise_error(Puppet::Util::Windows::Error, fail_msg)
+    end
   end
 end
