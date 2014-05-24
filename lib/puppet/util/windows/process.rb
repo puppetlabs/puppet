@@ -49,7 +49,7 @@ module Puppet::Util::Windows::Process
     end
 
     begin
-      yield token_handle = token_handle_ptr.read_uint
+      yield token_handle = token_handle_ptr.read_handle
     ensure
       CloseHandle(token_handle)
     end
@@ -74,7 +74,7 @@ module Puppet::Util::Windows::Process
     # to determine buffer size
     return_length_ptr = FFI::MemoryPointer.new(:dword, 1)
     result = GetTokenInformation(token_handle, token_information, nil, 0, return_length_ptr)
-    return_length = return_length_ptr.read_uint
+    return_length = return_length_ptr.read_dword
 
     if return_length <= 0
       raise Puppet::Util::Windows::Error.new(
