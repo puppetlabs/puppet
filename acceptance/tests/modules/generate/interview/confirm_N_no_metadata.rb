@@ -1,4 +1,4 @@
-test_name "puppet module generate interview default answers"
+test_name "puppet module generate interview - confirm = N does not create metadata.json"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
@@ -15,7 +15,7 @@ answers = {
   :source        => '',
   :project       => '',
   :issues        => '',
-  :continue      => '',
+  :continue      => 'N',
 }
 
 agents.each do |agent|
@@ -37,11 +37,8 @@ agents.each do |agent|
     on(agent, puppet("module generate #{module_author}-#{module_name} < #{tmpfile}"))
   end
 
-  step "Validate metadata.json for #{module_author}-#{module_name}" do
-    on(agent, "test -f #{module_author}-#{module_name}/metadata.json")
-    on(agent, "cat #{module_author}-#{module_name}/metadata.json") do |res|
-      fail_test('not valid json') unless json_valid?(res.stdout)
-    end
+  step "Validate absence of metadata.json for #{module_author}-#{module_name}" do
+    on(agent, "test -f #{module_author}-#{module_name}/metadata.json", :acceptable_exit_codes => [1])
   end
 
 end

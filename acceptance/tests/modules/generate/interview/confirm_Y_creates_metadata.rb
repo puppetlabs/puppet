@@ -1,4 +1,4 @@
-test_name "puppet module generate interview default answers"
+test_name "puppet module generate interview - confirm = Y results in metadata.json"
 require 'puppet/acceptance/module_utils'
 extend Puppet::Acceptance::ModuleUtils
 
@@ -15,7 +15,7 @@ answers = {
   :source        => '',
   :project       => '',
   :issues        => '',
-  :continue      => '',
+  :continue      => 'Y',
 }
 
 agents.each do |agent|
