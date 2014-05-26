@@ -317,9 +317,25 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     record_type(record[:record_type]).text?
   end
 
+  # The mode for generated files if they are newly created.
+  # No mode will be set on existing files.
+  #
+  # @abstract Providers inheriting parsedfile can override this method
+  #   to provide a mode. The value should be suitable for File.chmod
+  def self.default_mode
+    nil
+  end
+
   # Initialize the object if necessary.
   def self.target_object(target)
-    @target_objects[target] ||= filetype.new(target)
+    # only send the default mode if the actual provider defined it,
+    # because certain filetypes (e.g. the crontab variants) do not
+    # expect it in their initialize method
+    if default_mode
+      @target_objects[target] ||= filetype.new(target, default_mode)
+    else
+      @target_objects[target] ||= filetype.new(target)
+    end
 
     @target_objects[target]
   end
