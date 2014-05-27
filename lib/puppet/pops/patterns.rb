@@ -5,9 +5,9 @@ module Puppet::Pops::Patterns
   # 0 = entire matched number, leading and trailing whitespace and sign included
   # 1 = sign, +, - or nothing
   # 2 = entire numeric part
-  # 3 = hexadecimal number (1)
-  # 4 = non hex integer portion, possibly with leading 0 (octal) (2)
-  # 5 = floating point part, starts with ".", decimals and optional exponent (3)
+  # 3 = hexadecimal number
+  # 4 = non hex integer portion, possibly with leading 0 (octal)
+  # 5 = floating point part, starts with ".", decimals and optional exponent
   #
   # Thus, a hex number has group 1 value, an octal value has group 2 (if it starts with 0), and no group 3
   # and a floating point value has group 2 and group 3.

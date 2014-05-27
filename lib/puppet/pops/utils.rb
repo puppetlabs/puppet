@@ -7,8 +7,8 @@ module Puppet::Pops::Utils
   # and check if value is nil.
   def self.is_numeric?(o)
     case o
-    when Numeric, Integer, Fixnum, Float
-      !!o
+    when Numeric
+      true
     else
       !!Puppet::Pops::Patterns::NUMERIC.match(relativize_name(o.to_s))
     end
@@ -44,7 +44,7 @@ module Puppet::Pops::Utils
           # We have the correct string here, match[2] is safe to parse without passing on radix
           match[1] == '-' ? [-Integer(match[2]), radix] : [Integer(match[2]), radix]
         end
-      when Numeric, Fixnum, Integer, Float
+      when Numeric
         # Impossible to calculate radix, assume decimal
         [o, 10]
       else
@@ -72,7 +72,7 @@ module Puppet::Pops::Utils
         else
           match[1] == '-' ? -Integer(match[2]) : Integer(match[2])
         end
-      when Numeric, Fixnum, Integer, Float
+      when Numeric
         o
       else
         nil
