@@ -178,6 +178,10 @@ describe "egrammar parsing containers" do
       dump(parse("node foo {}")).should == "(node (matches 'foo') ())"
     end
 
+    it "node foo, {} # trailing comma" do
+      dump(parse("node foo, {}")).should == "(node (matches 'foo') ())"
+    end
+
     it "node kermit.example.com {}" do
       dump(parse("node kermit.example.com {}")).should == "(node (matches 'kermit.example.com') ())"
     end

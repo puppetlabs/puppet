@@ -560,13 +560,13 @@ hostclass_expression
 # Produces Model::NodeDefinition
 #
 node_definition_expression
-  : NODE hostnames nodeparent LBRACE statements RBRACE {
-      result = add_definition(Factory.NODE(val[1], val[2], val[4]))
-      loc result, val[0], val[5]
+  : NODE hostnames endcomma nodeparent LBRACE statements RBRACE {
+      result = add_definition(Factory.NODE(val[1], val[3], val[5]))
+      loc result, val[0], val[6]
     }
-  | NODE hostnames nodeparent LBRACE RBRACE {
-      result = add_definition(Factory.NODE(val[1], val[2], nil))
-      loc result, val[0], val[4]
+  | NODE hostnames endcomma nodeparent LBRACE RBRACE {
+      result = add_definition(Factory.NODE(val[1], val[3], nil))
+      loc result, val[0], val[5]
     }
 
   # Hostnames is not a list of names, it is a list of name matchers (including a Regexp).
