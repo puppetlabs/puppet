@@ -19,9 +19,10 @@ where they are declared. For that, see the `contain` function. It also
 does not create a dependency relationship between the declared class and the
 surrounding class; for that, see the `require` function.
 
-When parser == 'future' the names will be made absolute before
-being used, and `Class[name]`, or `Resource['class', name]` may also be
-used as references.
+When the future parser is used, you must use the class's full name;
+relative names are no longer allowed. In addition to names in string form,
+you may also directly use Class and Resource Type values that are produced by
+the future parser's resource and relationship expressions.
 
 ") do |vals|
 
