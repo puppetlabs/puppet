@@ -639,8 +639,16 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Produces Array[PAnyType], an array of resource references
   #
   def eval_ResourceExpression(o, scope)
-    exported = o.exported
-    virtual = o.virtual
+    case o.form
+    when :exported
+      exported = true
+      virtual = true
+    when :virtual
+      exported = false
+      virtual = true
+    else
+      exported = virtual = false
+    end
     type_name = evaluate(o.type_name, scope)
     o.bodies.map do |body|
       titles = [evaluate(body.title, scope)].flatten
