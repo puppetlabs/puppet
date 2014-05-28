@@ -186,6 +186,9 @@ class Puppet::Resource
     @is_stage ||= @type.to_s.downcase == "stage"
   end
 
+  # Cache to reduce respond_to? lookups
+  @@nondeprecating_type = {}
+
   # Create our resource.
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
@@ -207,6 +210,14 @@ class Puppet::Resource
 
     if params = attributes[:parameters]
       extract_parameters(params)
+    end
+
+    if resource_type and ! @@nondeprecating_type[resource_type]
+      if resource_type.respond_to?(:deprecate_params)
+        resource_type.deprecate_params(title, attributes[:parameters])
+      else
+        @@nondeprecating_type[resource_type] = true
+      end
     end
 
     tag(self.type)
