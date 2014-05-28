@@ -27,7 +27,7 @@ class Puppet::Indirector::Hiera < Puppet::Indirector::Terminus
     hiera_config = Puppet.settings[:hiera_config]
     config = {}
 
-    if File.exist?(hiera_config)
+    if Puppet::FileSystem.exist?(hiera_config)
       config = Hiera::Config.load(hiera_config)
     else
       Puppet.warning "Config file #{hiera_config} not found, using Hiera defaults"
