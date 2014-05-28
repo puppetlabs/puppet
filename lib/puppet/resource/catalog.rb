@@ -549,6 +549,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def virtual_not_exported?(resource)
-    resource.respond_to?(:virtual?) and resource.virtual? and (resource.respond_to?(:exported?) and not resource.exported?)
+    resource.virtual && !resource.exported
   end
 end
