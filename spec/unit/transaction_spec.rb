@@ -288,6 +288,9 @@ describe Puppet::Transaction do
     before :each do
       catalog.add_resource generator
       generator.stubs(:generate).returns generated
+      # avoid crude failures because of nil resources that result
+      # from implicit containment and lacking containers
+      catalog.stubs(:container_of).returns generator
     end
 
     it "should call 'generate' on all created resources" do
@@ -310,6 +313,31 @@ describe Puppet::Transaction do
       generated.each do |res|
         res.must be_tagged(*generator.tags)
       end
+    end
+  end
+
+  describe "when performing pre-run checks" do
+    let(:resource) { Puppet::Type.type(:notify).new(:title => "spec") }
+    let(:transaction) { transaction_with_resource(resource) }
+    let(:spec_exception) { 'spec-exception' }
+
+    it "should invoke each resource's hook and apply the catalog after no failures" do
+      resource.expects(:pre_run_check)
+
+      transaction.evaluate
+    end
+
+    it "should abort the transaction on failure" do
+      resource.expects(:pre_run_check).raises(Puppet::Error, spec_exception)
+
+      expect { transaction.evaluate }.to raise_error(Puppet::Error, /Some pre-run checks failed/)
+    end
+
+    it "should log the resource-specific exception" do
+      resource.expects(:pre_run_check).raises(Puppet::Error, spec_exception)
+      resource.expects(:log_exception).with(responds_with(:message, spec_exception))
+
+      expect { transaction.evaluate }.to raise_error(Puppet::Error)
     end
   end
 

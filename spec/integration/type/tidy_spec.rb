@@ -23,6 +23,9 @@ describe Puppet::Type.type(:tidy) do
 
     catalog = Puppet::Resource::Catalog.new
     catalog.add_resource(tidy)
+    # avoid crude failures because of nil resources that result
+    # from implicit containment and lacking containers
+    catalog.stubs(:container_of).returns tidy
 
     catalog.apply
 
