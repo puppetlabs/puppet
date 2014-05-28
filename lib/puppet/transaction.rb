@@ -67,10 +67,10 @@ class Puppet::Transaction
     end
 
     unless prerun_errors.empty?
-      prerun_errors.each do |res,detail|
-        Puppet.err "#{res.ref} check error: #{detail}"
+      prerun_errors.each do |res, detail|
+        res.log_exception(detail)
       end
-      raise Puppet::Error, "some pre-run checks failed"
+      raise Puppet::Error, "Some pre-run checks failed"
     end
   end
 
