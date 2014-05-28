@@ -37,7 +37,8 @@ describe Puppet::Transaction do
   # This will basically only ever be used during testing.
   it "should automatically create resource statuses if asked for a non-existent status" do
     resource = Puppet::Type.type(:notify).new :title => "foobar"
-    @transaction.resource_status(resource).should be_instance_of(Puppet::Resource::Status)
+    transaction = transaction_with_resource(resource)
+    transaction.resource_status(resource).should be_instance_of(Puppet::Resource::Status)
   end
 
   it "should add provided resource statuses to its report" do
@@ -72,15 +73,15 @@ describe Puppet::Transaction do
 
   describe "when initializing" do
     it "should create an event manager" do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
-      @transaction.event_manager.should be_instance_of(Puppet::Transaction::EventManager)
-      @transaction.event_manager.transaction.should equal(@transaction)
+      transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
+      transaction.event_manager.should be_instance_of(Puppet::Transaction::EventManager)
+      transaction.event_manager.transaction.should equal(transaction)
     end
 
     it "should create a resource harness" do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
-      @transaction.resource_harness.should be_instance_of(Puppet::Transaction::ResourceHarness)
-      @transaction.resource_harness.transaction.should equal(@transaction)
+      transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
+      transaction.resource_harness.should be_instance_of(Puppet::Transaction::ResourceHarness)
+      transaction.resource_harness.transaction.should equal(transaction)
     end
 
     it "should set retrieval time on the report" do
@@ -95,29 +96,25 @@ describe Puppet::Transaction do
   end
 
   describe "when evaluating a resource" do
-    before do
-      @catalog = Puppet::Resource::Catalog.new
-      @resource = Puppet::Type.type(:file).new :path => @basepath
-      @catalog.add_resource(@resource)
-
-      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
-      @transaction.stubs(:skip?).returns false
-    end
+    let(:resource) { Puppet::Type.type(:file).new :path => @basepath }
 
     it "should process events" do
-      @transaction.event_manager.expects(:process_events).with(@resource)
+      transaction = transaction_with_resource(resource)
 
-      @transaction.evaluate
+      transaction.expects(:skip?).with(resource).returns false
+      transaction.event_manager.expects(:process_events).with(resource)
+
+      transaction.evaluate
     end
 
     describe "and the resource should be skipped" do
-      before do
-        @transaction.expects(:skip?).with(@resource).returns true
-      end
-
       it "should mark the resource's status as skipped" do
-        @transaction.evaluate
-        @transaction.resource_status(@resource).should be_skipped
+        transaction = transaction_with_resource(resource)
+
+        transaction.expects(:skip?).with(resource).returns true
+
+        transaction.evaluate
+        transaction.resource_status(resource).should be_skipped
       end
     end
   end
