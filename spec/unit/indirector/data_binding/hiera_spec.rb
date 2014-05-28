@@ -2,10 +2,6 @@ require 'spec_helper'
 require 'puppet/indirector/data_binding/hiera'
 
 describe Puppet::DataBinding::Hiera do
-  after do
-    Puppet::DataBinding::Hiera.instance_variable_set(:@hiera, nil)
-  end
-
   it "should have documentation" do
     Puppet::DataBinding::Hiera.doc.should_not be_nil
   end

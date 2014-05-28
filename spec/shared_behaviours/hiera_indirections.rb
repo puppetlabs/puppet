@@ -23,6 +23,10 @@ shared_examples_for "Hiera indirection" do |test_klass, fixture_dir|
     write_hiera_config(hiera_config_file, fixture_dir)
   end
 
+  after do
+    test_klass.instance_variable_set(:@hiera, nil)
+  end
+
   it "should be the default data_binding terminus" do
     Puppet.settings[:data_binding_terminus].should == :hiera
   end
