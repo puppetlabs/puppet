@@ -45,7 +45,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
         begin
           Puppet.info "Loading facts in #{fqfile}"
           Timeout::timeout(self.timeout) do
-            load file
+            load File.join('.', file)
           end
         rescue SystemExit,NoMemoryError
           raise
