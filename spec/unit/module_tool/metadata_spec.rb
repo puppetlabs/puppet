@@ -5,6 +5,19 @@ describe Puppet::ModuleTool::Metadata do
   let(:data) { {} }
   let(:metadata) { Puppet::ModuleTool::Metadata.new }
 
+  describe 'property lookups' do
+    subject { metadata }
+
+    %w[ name version author summary license source project_page issues_url
+    dependencies dashed_name release_name description ].each do |prop|
+      describe "##{prop}" do
+        it "responds to the property" do
+          subject.send(prop)
+        end
+      end
+    end
+  end
+
   describe "#update" do
     subject { metadata.update(data) }
 
