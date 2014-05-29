@@ -1,5 +1,7 @@
 test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 
+confine :except, :jvmpuppet => 'pending'
+
 agent_hostnames = agents.map {|a| a.to_s}
 
 with_puppet_running_on master, {'master' => {'allow_duplicate_certs' => true}} do
