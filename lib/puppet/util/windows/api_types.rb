@@ -16,9 +16,7 @@ module Puppet::Util::Windows::APITypes
 
   class ::FFI::Pointer
     NULL_HANDLE = 0
-  end
 
-  class ::FFI::MemoryPointer
     def self.from_string_to_wide_string(str)
       str = Puppet::Util::Windows::String.wide_string(str)
       ptr = FFI::MemoryPointer.new(:byte, str.bytesize)
@@ -75,6 +73,7 @@ module Puppet::Util::Windows::APITypes
 
   # pointer in FFI is platform specific
   # NOTE: for API calls with reserved lpvoid parameters, pass a FFI::Pointer::NULL
+  FFI.typedef :pointer, :lpcvoid
   FFI.typedef :pointer, :lpvoid
   FFI.typedef :pointer, :lpword
   FFI.typedef :pointer, :lpdword
