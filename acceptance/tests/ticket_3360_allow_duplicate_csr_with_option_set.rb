@@ -1,6 +1,6 @@
 test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 
-confine :except, :jvmpuppet => 'pending'
+skip_test "This test is pending additional CA work" if @options[:is_jvm_puppet]
 
 agent_hostnames = agents.map {|a| a.to_s}
 
