@@ -3,6 +3,8 @@ extend Puppet::Acceptance::CAUtils
 
 test_name "Puppet cert generate behavior (#6112)" do
 
+  confine :except, :jvmpuppet => 'pending'
+
   # This acceptance test documents the behavior of `puppet cert generate` calls
   # for three cases:
   #

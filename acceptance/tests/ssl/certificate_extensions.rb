@@ -6,6 +6,9 @@ extend Puppet::Acceptance::TempFileUtils
 initialize_temp_dirs
 
 test_name "certificate extensions available as trusted data" do
+
+  confine :except, :jvmpuppet => 'pending'
+
   teardown do
     reset_agent_ssl
   end
