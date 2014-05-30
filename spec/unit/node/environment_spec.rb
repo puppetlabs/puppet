@@ -43,6 +43,42 @@ describe Puppet::Node::Environment do
       Puppet::Node::Environment.new(one).should equal(one)
     end
 
+    describe "equality" do
+      it "works as a hash key" do
+        base = Puppet::Node::Environment.create(:first, ["modules"], "manifests")
+        same = Puppet::Node::Environment.create(:first, ["modules"], "manifests")
+        different = Puppet::Node::Environment.create(:first, ["different"], "manifests")
+        hash = {}
+
+        hash[base] = "base env"
+        hash[same] = "same env"
+        hash[different] = "different env"
+
+        expect(hash[base]).to eq("same env")
+        expect(hash[different]).to eq("different env")
+        expect(hash).to have(2).item
+      end
+
+      it "is equal when name, modules, and manifests are the same" do
+        base = Puppet::Node::Environment.create(:base, ["modules"], "manifests")
+        different_name = Puppet::Node::Environment.create(:different, base.full_modulepath, base.manifest)
+
+        expect(base).to_not eq("not an environment")
+
+        expect(base).to eq(base)
+        expect(base.hash).to eq(base.hash)
+
+        expect(base.override_with(:modulepath => ["different"])).to_not eq(base)
+        expect(base.override_with(:modulepath => ["different"]).hash).to_not eq(base.hash)
+
+        expect(base.override_with(:manifest => "different")).to_not eq(base)
+        expect(base.override_with(:manifest => "different").hash).to_not eq(base.hash)
+
+        expect(different_name).to_not eq(base)
+        expect(different_name.hash).to_not eq(base.hash)
+      end
+    end
+
     describe "overriding an existing environment" do
       let(:original_path) { [tmpdir('original')] }
       let(:new_path) { [tmpdir('new')] }

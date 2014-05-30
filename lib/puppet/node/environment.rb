@@ -479,6 +479,8 @@ class Puppet::Node::Environment
       self.manifest == other.manifest
   end
 
+  alias eql? ==
+
   def hash
     [self.class, name, full_modulepath, manifest].hash
   end
