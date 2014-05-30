@@ -34,6 +34,7 @@ describe "transformation to Puppet AST for function calls" do
         "realize bar"      => '(invoke realize bar)',
         "contain bar"      => '(invoke contain bar)',
         "include bar"      => '(invoke include bar)',
+        "tag bar"          => '(invoke tag bar)',
 
         "info bar"         => '(invoke info bar)',
         "notice bar"       => '(invoke notice bar)',
@@ -54,7 +55,6 @@ describe "transformation to Puppet AST for function calls" do
 
       {
         "foo bar"      => '(block foo bar)',
-        "tag bar"      => '(block tag bar)',
         "tag"          => 'tag',
       }.each do |source, result|
         it "should not transform #{source}, and instead produce #{result}" do
