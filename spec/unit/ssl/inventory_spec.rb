@@ -132,6 +132,12 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
 
         @inventory.serial("me").should == 15
       end
+
+      it "should return the last serial if there more than one for the cert name" do
+        File.expects(:readlines).with(cert_inventory).returns ["0x00e blah blah /CN=me\n", "0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n"]
+
+        @inventory.serial("me").should == 15
+      end
     end
   end
 end

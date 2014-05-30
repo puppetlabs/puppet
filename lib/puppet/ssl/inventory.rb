@@ -36,15 +36,17 @@ class Puppet::SSL::Inventory
   end
 
   # Find the serial number for a given certificate.
+  # In case there are multiple matches, return most recent
   def serial(name)
     return nil unless Puppet::FileSystem.exist?(@path)
 
+    ret = nil
     File.readlines(@path).each do |line|
       next unless line =~ /^(\S+).+\/CN=#{name}$/
 
-      return Integer($1)
+      ret = Integer($1)
     end
 
-    return nil
+    return ret
   end
 end
