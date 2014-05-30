@@ -127,5 +127,10 @@ describe Puppet::Util::Tagging do
       expect(tagger).to be_tagged("two")
       expect(tagger).to be_tagged("three")
     end
+
+    it "protects against empty tags" do
+      expect { tagger.tags = "one::::two::three"}.to raise_error(/Invalid tag ''/)
+      expect { tagger.tags = "one,,,two,,,three,,"}.to raise_error(/Invalid tag ''/)
+    end
   end
 end

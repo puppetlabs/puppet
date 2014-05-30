@@ -191,6 +191,17 @@ class Puppet::Parser::Resource < Puppet::Resource
     copy_as_resource.to_ral
   end
 
+  # Is the receiver tagged with the given tags?
+  # This match takes into account the tags that a resource will inherit from its container
+  # but have not been set yet.
+  # It does *not* take tags set via resource defaults as these will *never* be set on
+  # the resource itself since all resources always have tags that are automatically
+  # assigned.
+  #
+  def tagged?(*tags)
+    super || ((scope_resource = scope.resource) && scope_resource != self && scope_resource.tagged?(tags))
+  end
+
   private
 
   # Add default values from our definition.

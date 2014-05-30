@@ -3,25 +3,28 @@ require 'puppet/util/tag_set'
 module Puppet::Util::Tagging
   ValidTagRegex = /^\w[-\w:.]*$/
 
-  # Add a tag to our current list.  These tags will be added to all
-  # of the objects contained in this scope.
+  # Add a tag to the current tag set. 
+  # When a tag set is used for a scope, these tags will be added to all of
+  # the objects contained in this scope when the objects are finished.
+  #
   def tag(*ary)
     @tags ||= new_tags
 
-    ary.each do |tag|
+    ary.flatten.each do |tag|
       name = tag.to_s.downcase
       if name =~ ValidTagRegex
         @tags << name
         name.split("::").each do |section|
+          fail(Puppet::ParseError, "Invalid tag ''") if section.empty?
           @tags << section
         end
       else
-        fail(Puppet::ParseError, "Invalid tag #{name}")
+        fail(Puppet::ParseError, "Invalid tag '#{name}'")
       end
     end
   end
 
-  # Are we tagged with the provided tag?
+  # Is the receiver tagged with the given tags?
   def tagged?(*tags)
     not ( self.tags & tags.flatten.collect { |t| t.to_s } ).empty?
   end
@@ -39,7 +42,6 @@ module Puppet::Util::Tagging
     return if tags.nil? or tags == ""
 
     tags = tags.strip.split(/\s*,\s*/) if tags.is_a?(String)
-
     tags.each {|t| tag(t) }
   end
 
