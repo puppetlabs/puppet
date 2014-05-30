@@ -223,6 +223,41 @@ module Puppet
 
         return puppet_conf
       end
+
+      # Validate the checksums.json file managed by `puppet module build`
+      #
+      # One of the features of the `puppet module build` command is to
+      # generate a `checksums.json` file containins checksum values for
+      # all of the files in the files in the
+      # `pkg/<module_author>-<module_name>-<module_version>/` directory,
+      # with the exception of the `checksums.json` file itself.
+      #
+      # This helper verifies the following:
+      #     * The `checksums.json` file is valid JSON.
+      #     * All files in the directory tree have entries in the
+      #       `checksums.json` file.
+      #
+      # @param host [HOST] the host object to make the remote check on
+      #
+      # @param root_path [String] full path to the
+      # `pkg/<module_author>-<module_name>-<module_version>/` directory
+      # in which the `checksums.json` file and all of the files in the package
+      # are located on the host.
+      def verify_checksums_entries(host,root_path)
+        require 'rubygems'
+        require 'json'
+        on(host, "test -f #{root_path}/checksums.json")
+        res = on(host, "cat #{root_path}/checksums.json")
+
+        fail_test('not valid json') unless JSON.parse(res.stdout)
+
+        files = Dir[root_path]
+        files.map! { |f| File.file?(f) }
+        files.map! { |f| f.slice! "#{root_path}/" }
+        files.each do |f|
+          fail_test("no checksum entry for #{f}") unless res.stdout.include? "#{f}"
+        end
+      end
     end
   end
 end
