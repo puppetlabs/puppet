@@ -481,7 +481,7 @@ describe Puppet::Type.type(:user) do
 
     describe "generated keys" do
       subject do
-        res = described_class.new(:name => "test", :purge_ssh_keys => purge_param)
+        res = described_class.new(:name => "test_user_name", :purge_ssh_keys => purge_param)
         res.catalog = Puppet::Resource::Catalog.new
         res
       end
@@ -500,6 +500,13 @@ describe Puppet::Type.type(:user) do
         it "should not include keys in comment lines" do
           names = resources.collect { |res| res.name }
           names.should_not include("keyname3")
+        end
+        it "should each have a value for the user property" do
+          resources.map { |res|
+            res[:user]
+          }.reject { |user_name|
+            user_name == "test_user_name"
+          }.should be_empty
         end
       end
     end

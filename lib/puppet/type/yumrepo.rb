@@ -18,7 +18,7 @@ Puppet::Type.newtype(:yumrepo) do
   # Doc string for properties that can be made 'absent'
   ABSENT_DOC="Set this to `absent` to remove it from the file completely."
   # False can be false/0/no and True can be true/1/yes in yum.
-  YUM_BOOLEAN=/(True|False|0|1|No|Yes)/i
+  YUM_BOOLEAN=/^(True|False|0|1|No|Yes)$/i
   YUM_BOOLEAN_DOC="Valid values are: False/0/No or True/1/Yes."
 
   VALID_SCHEMES = %w[file http https ftp]
@@ -164,7 +164,7 @@ Puppet::Type.newtype(:yumrepo) do
     desc "The failover method for this repository; should be either
       `roundrobin` or `priority`. #{ABSENT_DOC}"
 
-    newvalues(/roundrobin|priority/, :absent)
+    newvalues(/^roundrobin|priority$/, :absent)
   end
 
   newproperty(:keepalive) do
@@ -178,21 +178,21 @@ Puppet::Type.newtype(:yumrepo) do
   newproperty(:http_caching) do
     desc "What to cache from this repository. #{ABSENT_DOC}"
 
-    newvalues(/(packages|all|none)/, :absent)
+    newvalues(/^(packages|all|none)$/, :absent)
   end
 
   newproperty(:timeout) do
     desc "Number of seconds to wait for a connection before timing
       out. #{ABSENT_DOC}"
 
-    newvalues(/[0-9]+/, :absent)
+    newvalues(/^\d+$/, :absent)
   end
 
   newproperty(:metadata_expire) do
     desc "Number of seconds after which the metadata will expire.
       #{ABSENT_DOC}"
 
-    newvalues(/[0-9]+/, :absent)
+    newvalues(/^\d+$/, :absent)
   end
 
   newproperty(:protect) do
@@ -221,7 +221,7 @@ Puppet::Type.newtype(:yumrepo) do
   newproperty(:cost) do
     desc "Cost of this repository. #{ABSENT_DOC}"
 
-    newvalues(/\d+/, :absent)
+    newvalues(/^\d+$/, :absent)
   end
 
   newproperty(:proxy) do

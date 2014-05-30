@@ -1,8 +1,6 @@
 #!/usr/bin/env ruby
 require 'spec_helper'
 
-require 'puppet/util/adsi'
-
 if Puppet.features.microsoft_windows?
   class WindowsSecurityTester
     require 'puppet/util/windows/security'
@@ -446,14 +444,14 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         describe "when the sid refers to a deleted trustee" do
           it "should retrieve the user sid" do
             sid = nil
-            user = Puppet::Util::ADSI::User.create("delete_me_user")
+            user = Puppet::Util::Windows::ADSI::User.create("delete_me_user")
             user.commit
             begin
               sid = Sys::Admin::get_user(user.name).sid
               winsec.set_owner(sid, path)
               winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
             ensure
-              Puppet::Util::ADSI::User.delete(user.name)
+              Puppet::Util::Windows::ADSI::User.delete(user.name)
             end
 
             winsec.get_owner(path).should == sid
@@ -462,14 +460,14 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
           it "should retrieve the group sid" do
             sid = nil
-            group = Puppet::Util::ADSI::Group.create("delete_me_group")
+            group = Puppet::Util::Windows::ADSI::Group.create("delete_me_group")
             group.commit
             begin
               sid = Sys::Admin::get_group(group.name).sid
               winsec.set_group(sid, path)
               winsec.set_mode(WindowsSecurityTester::S_IRWXG, path)
             ensure
-              Puppet::Util::ADSI::Group.delete(group.name)
+              Puppet::Util::Windows::ADSI::Group.delete(group.name)
             end
             winsec.get_group(path).should == sid
             winsec.get_mode(path).should == WindowsSecurityTester::S_IRWXG

@@ -1,0 +1,10 @@
+---
+integer: 3000
+string: 'apache'
+hash:
+  user:  'Hightower'
+  group: 'admin'
+  mode:  '0644'
+array:
+ - '0.ntp.puppetlabs.com'
+ - '1.ntp.puppetlabs.com'

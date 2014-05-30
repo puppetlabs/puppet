@@ -10,6 +10,37 @@ shared_examples_for "a yumrepo parameter that can be absent" do |param|
   end
 end
 
+shared_examples_for "a yumrepo parameter that expects a natural value" do |param|
+  it "accepts a valid positive integer" do
+    instance = described_class.new(:name => 'puppetlabs', param => '12')
+    expect(instance[param]).to eq '12'
+  end
+  it "rejects invalid negative integer" do
+    expect {
+      described_class.new(
+        :name => 'puppetlabs',
+        param => '-12'
+      )
+    }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
+  end
+  it "rejects invalid non-integer" do
+    expect {
+      described_class.new(
+        :name => 'puppetlabs',
+        param => 'I\'m a six'
+      )
+    }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
+  end
+  it "rejects invalid string with integers inside" do
+    expect {
+      described_class.new(
+        :name => 'puppetlabs',
+        param => 'I\'m a 6'
+      )
+    }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
+  end
+end
+
 shared_examples_for "a yumrepo parameter that expects a boolean parameter" do |param|
   valid_values = %w[True False 0 1 No Yes]
 
@@ -21,6 +52,14 @@ shared_examples_for "a yumrepo parameter that expects a boolean parameter" do |p
     it "accepts #{value} downcased to #{value.downcase}" do
       instance = described_class.new(:name => 'puppetlabs', param => value.downcase)
       expect(instance[param]).to eq value.downcase
+    end
+    it "fails on valid value #{value} contained in another value" do
+        expect {
+          described_class.new(
+            :name => 'puppetlabs',
+            param => "bla#{value}bla"
+          )
+        }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
     end
   end
 
@@ -154,6 +193,14 @@ describe Puppet::Type.type(:yumrepo) do
         it "accepts a value of #{value}" do
           described_class.new(:name => "puppetlabs", :failovermethod => value)
         end
+        it "fails on valid value #{value} contained in another value" do
+          expect {
+            described_class.new(
+              :name => 'puppetlabs',
+              :failovermethod => "bla#{value}bla"
+            )
+          }.to raise_error(Puppet::ResourceError, /Parameter failovermethod failed/)
+        end
       end
 
       it "raises an error if an invalid value is given" do
@@ -175,6 +222,14 @@ describe Puppet::Type.type(:yumrepo) do
         it "accepts a valid value of #{value}" do
           described_class.new(:name => 'puppetlabs', :http_caching => value)
         end
+        it "fails on valid value #{value} contained in another value" do
+          expect {
+            described_class.new(
+              :name => 'puppetlabs',
+              :http_caching => "bla#{value}bla"
+            )
+          }.to raise_error(Puppet::ResourceError, /Parameter http_caching failed/)
+        end
       end
 
       it "rejects invalid values" do
@@ -188,10 +243,12 @@ describe Puppet::Type.type(:yumrepo) do
 
     describe "timeout" do
       it_behaves_like "a yumrepo parameter that can be absent", :timeout
+      it_behaves_like "a yumrepo parameter that expects a natural value", :timeout
     end
 
     describe "metadata_expire" do
       it_behaves_like "a yumrepo parameter that can be absent", :metadata_expire
+      it_behaves_like "a yumrepo parameter that expects a natural value", :metadata_expire
     end
 
     describe "protect" do
@@ -246,6 +303,11 @@ describe Puppet::Type.type(:yumrepo) do
     describe "metalink" do
       it_behaves_like "a yumrepo parameter that can be absent", :metalink
       it_behaves_like "a yumrepo parameter that accepts a single URL", :metalink
+    end
+
+    describe "cost" do
+      it_behaves_like "a yumrepo parameter that can be absent", :cost
+      it_behaves_like "a yumrepo parameter that expects a natural value", :cost
     end
   end
 end

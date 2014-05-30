@@ -61,6 +61,38 @@ describe "Puppet::Parser::Compiler" do
       expect(catalog).to have_resource("Notify[check_me]").with_parameter(:message, "evoe")
     end
 
+    it 'does not apply defaults from dynamic scopes (PUP-867)' do
+      catalog = compile_to_catalog(<<-CODE)
+      class a {
+        Notify { message => "defaulted" }
+        include b
+        notify { bye: }
+      }
+      class b { notify { hi: } }
+
+      include a
+      CODE
+      expect(catalog).to have_resource("Notify[hi]").with_parameter(:message, nil)
+      expect(catalog).to have_resource("Notify[bye]").with_parameter(:message, "defaulted")
+    end
+
+    it 'gets default from inherited class (PUP-867)' do
+      catalog = compile_to_catalog(<<-CODE)
+      class a {
+        Notify { message => "defaulted" }
+        include c
+        notify { bye: }
+      }
+      class b { Notify { message => "inherited" } }
+      class c inherits b { notify { hi: } }
+
+      include a
+      CODE
+
+      expect(catalog).to have_resource("Notify[hi]").with_parameter(:message, "inherited")
+      expect(catalog).to have_resource("Notify[bye]").with_parameter(:message, "defaulted")
+    end
+
     describe "when resolving class references" do
       it "should favor local scope, even if there's an included class in topscope" do
         catalog = compile_to_catalog(<<-PP)

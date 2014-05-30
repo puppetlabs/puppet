@@ -967,6 +967,22 @@ class Type
     []
   end
 
+  # Lifecycle method for a resource. This is called during graph creation.
+  # It should perform any consistency checking of the catalog and raise a
+  # Puppet::Error if the transaction should be aborted.
+  #
+  # It differs from the validate method, since it is called later during
+  # initialization and can rely on self.catalog to have references to all
+  # resources that comprise the catalog.
+  #
+  # @see Puppet::Transaction#add_vertex
+  # @raises Puppet::Error
+  # @return void
+  # @abstract a resource type may implement this method to perform
+  #   validation checks that can query the complete catalog
+  def pre_run_check
+  end
+
   # Flushes the provider if supported by the provider, else no action.
   # This is called by the transaction.
   # @todo What does Flushing the provider mean? Why is it interesting to know that this is

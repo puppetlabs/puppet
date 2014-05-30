@@ -109,6 +109,14 @@ RSpec::Matchers.define :equal_attributes_of do |expected|
   end
 end
 
+RSpec::Matchers.define :equal_resource_attributes_of do |expected|
+  match do |actual|
+    actual.keys do |attr|
+      actual[attr] == expected[attr]
+    end
+  end
+end
+
 RSpec::Matchers.define :be_one_of do |*expected|
   match do |actual|
     expected.include? actual

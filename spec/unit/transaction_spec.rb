@@ -37,7 +37,8 @@ describe Puppet::Transaction do
   # This will basically only ever be used during testing.
   it "should automatically create resource statuses if asked for a non-existent status" do
     resource = Puppet::Type.type(:notify).new :title => "foobar"
-    @transaction.resource_status(resource).should be_instance_of(Puppet::Resource::Status)
+    transaction = transaction_with_resource(resource)
+    transaction.resource_status(resource).should be_instance_of(Puppet::Resource::Status)
   end
 
   it "should add provided resource statuses to its report" do
@@ -72,15 +73,15 @@ describe Puppet::Transaction do
 
   describe "when initializing" do
     it "should create an event manager" do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
-      @transaction.event_manager.should be_instance_of(Puppet::Transaction::EventManager)
-      @transaction.event_manager.transaction.should equal(@transaction)
+      transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
+      transaction.event_manager.should be_instance_of(Puppet::Transaction::EventManager)
+      transaction.event_manager.transaction.should equal(transaction)
     end
 
     it "should create a resource harness" do
-      @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
-      @transaction.resource_harness.should be_instance_of(Puppet::Transaction::ResourceHarness)
-      @transaction.resource_harness.transaction.should equal(@transaction)
+      transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, nil, nil)
+      transaction.resource_harness.should be_instance_of(Puppet::Transaction::ResourceHarness)
+      transaction.resource_harness.transaction.should equal(transaction)
     end
 
     it "should set retrieval time on the report" do
@@ -95,29 +96,25 @@ describe Puppet::Transaction do
   end
 
   describe "when evaluating a resource" do
-    before do
-      @catalog = Puppet::Resource::Catalog.new
-      @resource = Puppet::Type.type(:file).new :path => @basepath
-      @catalog.add_resource(@resource)
-
-      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
-      @transaction.stubs(:skip?).returns false
-    end
+    let(:resource) { Puppet::Type.type(:file).new :path => @basepath }
 
     it "should process events" do
-      @transaction.event_manager.expects(:process_events).with(@resource)
+      transaction = transaction_with_resource(resource)
 
-      @transaction.evaluate
+      transaction.expects(:skip?).with(resource).returns false
+      transaction.event_manager.expects(:process_events).with(resource)
+
+      transaction.evaluate
     end
 
     describe "and the resource should be skipped" do
-      before do
-        @transaction.expects(:skip?).with(@resource).returns true
-      end
-
       it "should mark the resource's status as skipped" do
-        @transaction.evaluate
-        @transaction.resource_status(@resource).should be_skipped
+        transaction = transaction_with_resource(resource)
+
+        transaction.expects(:skip?).with(resource).returns true
+
+        transaction.evaluate
+        transaction.resource_status(resource).should be_skipped
       end
     end
   end
@@ -288,6 +285,9 @@ describe Puppet::Transaction do
     before :each do
       catalog.add_resource generator
       generator.stubs(:generate).returns generated
+      # avoid crude failures because of nil resources that result
+      # from implicit containment and lacking containers
+      catalog.stubs(:container_of).returns generator
     end
 
     it "should call 'generate' on all created resources" do
@@ -310,6 +310,31 @@ describe Puppet::Transaction do
       generated.each do |res|
         res.must be_tagged(*generator.tags)
       end
+    end
+  end
+
+  describe "when performing pre-run checks" do
+    let(:resource) { Puppet::Type.type(:notify).new(:title => "spec") }
+    let(:transaction) { transaction_with_resource(resource) }
+    let(:spec_exception) { 'spec-exception' }
+
+    it "should invoke each resource's hook and apply the catalog after no failures" do
+      resource.expects(:pre_run_check)
+
+      transaction.evaluate
+    end
+
+    it "should abort the transaction on failure" do
+      resource.expects(:pre_run_check).raises(Puppet::Error, spec_exception)
+
+      expect { transaction.evaluate }.to raise_error(Puppet::Error, /Some pre-run checks failed/)
+    end
+
+    it "should log the resource-specific exception" do
+      resource.expects(:pre_run_check).raises(Puppet::Error, spec_exception)
+      resource.expects(:log_exception).with(responds_with(:message, spec_exception))
+
+      expect { transaction.evaluate }.to raise_error(Puppet::Error)
     end
   end
 
@@ -478,44 +503,70 @@ describe Puppet::Transaction do
   end
 
   describe "during teardown" do
+    let(:catalog) { Puppet::Resource::Catalog.new }
+    let(:transaction) do
+      Puppet::Transaction.new(catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+    end
+
+    let(:teardown_type) do
+      Puppet::Type.newtype(:teardown_test) do
+        newparam(:name) {}
+      end
+    end
+
     before :each do
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog, nil, Puppet::Graph::RandomPrioritizer.new)
+      teardown_type.provide(:teardown_provider) do
+        class << self
+          attr_reader :result
+
+          def post_resource_eval
+            @result = 'passed'
+          end
+        end
+      end
     end
 
     it "should call ::post_resource_eval on provider classes that support it" do
-      @resource = Puppet::Type.type(:notify).new :title => "foo"
-      @catalog.add_resource @resource
+      resource = teardown_type.new(:title => "foo", :provider => :teardown_provider)
 
-      # 'expects' will cause 'respond_to?(:post_resource_eval)' to return true
-      @resource.provider.class.expects(:post_resource_eval)
-      @transaction.evaluate
+      transaction = transaction_with_resource(resource)
+      transaction.evaluate
+
+      expect(resource.provider.class.result).to eq('passed')
     end
 
     it "should call ::post_resource_eval even if other providers' ::post_resource_eval fails" do
-      @resource3 = Puppet::Type.type(:user).new :title => "bloo"
-      @resource3.provider.class.stubs(:post_resource_eval).raises
-      @resource4 = Puppet::Type.type(:notify).new :title => "blob"
-      @resource4.provider.class.stubs(:post_resource_eval).raises
-      @catalog.add_resource @resource3
-      @catalog.add_resource @resource4
+      teardown_type.provide(:always_fails) do
+        class << self
+          attr_reader :result
 
-      # ruby's Set does not guarantee ordering, so both resource3 and resource4
-      # need to expect post_resource_eval, rather than just the 'first' one.
-      @resource3.provider.class.expects(:post_resource_eval)
-      @resource4.provider.class.expects(:post_resource_eval)
+          def post_resource_eval
+            @result = 'failed'
+            raise Puppet::Error, "This provider always fails"
+          end
+        end
+      end
 
-      @transaction.evaluate
+      good_resource = teardown_type.new(:title => "bloo", :provider => :teardown_provider)
+      bad_resource  = teardown_type.new(:title => "blob", :provider => :always_fails)
+
+      catalog.add_resource(bad_resource)
+      catalog.add_resource(good_resource)
+
+      transaction.evaluate
+
+      expect(good_resource.provider.class.result).to eq('passed')
+      expect(bad_resource.provider.class.result).to eq('failed')
     end
 
     it "should call ::post_resource_eval even if one of the resources fails" do
-      @resource3 = Puppet::Type.type(:notify).new :title => "bloo"
-      @resource3.stubs(:retrieve_resource).raises
-      @catalog.add_resource @resource3
+      resource = teardown_type.new(:title => "foo", :provider => :teardown_provider)
+      resource.stubs(:retrieve_resource).raises
+      catalog.add_resource resource
 
-      @resource3.provider.class.expects(:post_resource_eval)
+      resource.provider.class.expects(:post_resource_eval)
 
-      @transaction.evaluate
+      transaction.evaluate
     end
   end
 

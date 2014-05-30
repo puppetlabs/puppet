@@ -1,12 +1,50 @@
 require 'ffi'
+require 'puppet/util/windows/string'
 
 module Puppet::Util::Windows::APITypes
+  module ::FFI
+    WIN32_FALSE = 0
+  end
+
   module ::FFI::Library
     # Wrapper method for attach_function + private
     def attach_function_private(*args)
       attach_function(*args)
       private args[0]
     end
+  end
+
+  class ::FFI::Pointer
+    NULL_HANDLE = 0
+
+    def self.from_string_to_wide_string(str)
+      str = Puppet::Util::Windows::String.wide_string(str)
+      ptr = FFI::MemoryPointer.new(:byte, str.bytesize)
+      # uchar here is synonymous with byte
+      ptr.put_array_of_uchar(0, str.bytes.to_a)
+
+      ptr
+    end
+
+    def read_win32_bool
+      # BOOL is always a 32-bit integer in Win32
+      # some Win32 APIs return 1 for true, while others are non-0
+      read_int32 != FFI::WIN32_FALSE
+    end
+
+    alias_method :read_dword, :read_uint32
+
+    def read_handle
+      type_size == 4 ? read_uint32 : read_uint64
+    end
+
+    def read_wide_string(char_length)
+      # char_length is number of wide chars (typically excluding NULLs), *not* bytes
+      str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
+      str.encode(Encoding.default_external)
+    end
+
+    alias_method :write_dword, :write_uint32
   end
 
   # FFI Types
@@ -35,12 +73,14 @@ module Puppet::Util::Windows::APITypes
 
   # pointer in FFI is platform specific
   # NOTE: for API calls with reserved lpvoid parameters, pass a FFI::Pointer::NULL
+  FFI.typedef :pointer, :lpcvoid
   FFI.typedef :pointer, :lpvoid
   FFI.typedef :pointer, :lpword
   FFI.typedef :pointer, :lpdword
   FFI.typedef :pointer, :pdword
   FFI.typedef :pointer, :phandle
   FFI.typedef :pointer, :ulong_ptr
+  FFI.typedef :pointer, :pbool
 
   # any time LONG / ULONG is in a win32 API definition DO NOT USE platform specific width
   # which is what FFI uses by default
@@ -48,9 +88,14 @@ module Puppet::Util::Windows::APITypes
   # NOTE: not a good idea to redefine FFI :ulong since other typedefs may rely on it
   FFI.typedef :uint32, :win32_ulong
   FFI.typedef :int32, :win32_long
+  # FFI bool can be only 1 byte at times,
+  # Win32 BOOL is a signed int, and is always 4 bytes, even on x64
+  # http://blogs.msdn.com/b/oldnewthing/archive/2011/03/28/10146459.aspx
+  FFI.typedef :int32, :win32_bool
 
-  # NOTE: FFI already defines ushort as a 16-bit unsigned like this:
+  # NOTE: FFI already defines (u)short as a 16-bit (un)signed like this:
   # FFI.typedef :uint16, :ushort
+  # FFI.typedef :int16, :short
 
   # 8 bits per byte
   FFI.typedef :uchar, :byte
