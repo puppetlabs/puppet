@@ -9,6 +9,8 @@ end
 confine :to, :platform => 'el-6'
 confine :except, :type => 'pe'
 
+skip_test "Test not supported on jvm" if @options[:is_jvm_puppet]
+
 # Verify that a trivial manifest can be run to completion.
 # Supported Setup: Single, Root CA
 #  - Agent and Master SSL cert issued by the Root CA
