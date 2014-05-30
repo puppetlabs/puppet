@@ -17,8 +17,7 @@ module Puppet::Parser::Functions
   #
   # @api private
   def self.reset
-    @functions = Hash.new { |h,k| h[k] = {} }
-    @modules = Hash.new
+    @modules = {}
 
     # Runs a newfunction to create a function for each of the log levels
     Puppet::Util::Log.levels.each do |level|
@@ -44,7 +43,21 @@ module Puppet::Parser::Functions
   #
   # @api private
   def self.environment_module(env)
-    @modules[env.name] ||= Module.new
+    @modules[env.name] ||= Module.new do
+      @metadata = {}
+
+      def self.all_function_info
+        @metadata
+      end
+
+      def self.get_function_info(name)
+        @metadata[name]
+      end
+
+      def self.add_function_info(name, info)
+        @metadata[name] = info
+      end
+    end
   end
 
   # Create a new Puppet DSL function.
@@ -144,7 +157,9 @@ module Puppet::Parser::Functions
     environment_module(environment).send(:define_method, real_fname, &block)
 
     fname = "function_#{name}"
-    environment_module(environment).send(:define_method, fname) do |*args|
+    env_module = environment_module(environment)
+
+    env_module.send(:define_method, fname) do |*args|
       Puppet::Util::Profiler.profile("Called #{name}") do
         if args[0].is_a? Array
           if arity >= 0 and args[0].size != arity
@@ -162,7 +177,8 @@ module Puppet::Parser::Functions
     func = {:arity => arity, :type => ftype, :name => fname}
     func[:doc] = options[:doc] if options[:doc]
 
-    add_function(name, func, environment)
+    env_module.add_function_info(name, func)
+
     func
   end
 
@@ -239,17 +255,14 @@ module Puppet::Parser::Functions
     private
 
     def merged_functions(environment)
-      @functions[Puppet.lookup(:root_environment)].merge(@functions[environment])
+      root = environment_module(Puppet.lookup(:root_environment))
+      env = environment_module(environment)
+
+      root.all_function_info.merge(env.all_function_info)
     end
 
     def get_function(name, environment)
-      name = name.intern
-      merged_functions(environment)[name]
-    end
-
-    def add_function(name, func, environment)
-      name = name.intern
-      @functions[environment][name] = func
+      environment_module(environment).get_function_info(name.intern) || environment_module(Puppet.lookup(:root_environment)).get_function_info(name.intern)
     end
   end
 end
