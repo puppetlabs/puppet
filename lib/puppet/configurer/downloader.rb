@@ -51,7 +51,7 @@ class Puppet::Configurer::Downloader
       :path => path,
       :recurse => true,
       :source => source,
-      :source_permissions => :ignore,
+      :source_permissions => :use,
       :tag => name,
       :purge => true,
       :force => true,

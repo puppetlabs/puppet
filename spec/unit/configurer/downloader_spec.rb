@@ -51,8 +51,8 @@ describe Puppet::Configurer::Downloader do
       @dler.file
     end
 
-    it "should set source_permissions to ignore" do
-      Puppet::Type.type(:file).expects(:new).with { |opts| opts[:source_permissions] == :ignore }
+    it "should set source_permissions to use" do
+      Puppet::Type.type(:file).expects(:new).with { |opts| opts[:source_permissions] == :use }
       @dler.file
     end
 
