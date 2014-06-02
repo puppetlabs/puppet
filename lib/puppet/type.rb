@@ -348,7 +348,7 @@ class Type
     param
   end
 
-  # Returns the list of parameters that comprise the uniqueness key.
+  # Returns the list of parameters that comprise the composite key / "uniqueness key".
   # All parameters that return true from #isnamevar? or is named `:name` are included in the returned result.
   # @see uniqueness_key
   # @return [Array<Puppet::Parameter>] WARNING: this return type is uncertain
@@ -360,8 +360,9 @@ class Type
     )
   end
 
-  # Returns cached {key_attribute_parameters} names
-  # @todo what is a 'key_attribute' ? Proposal: A particle of a multipart namevar.
+  # Returns cached {key_attribute_parameters} names.
+  # Key attributes are properties and parameters that comprise a composite key
+  # or "uniqueness key".
   # @return [Array<String>] cached key_attribute names
   #
   def self.key_attributes
@@ -407,7 +408,7 @@ class Type
     end
   end
 
-  # Produces a resource's _uniqueness_key_
+  # Produces a resource's _uniqueness_key_ (or composite key).
   # This key is an array of all key attributes' values. Each distinct tuple must be unique for each resource type.
   # @see key_attributes
   # @return [Object] an object that is a _uniqueness_key_ for this object
