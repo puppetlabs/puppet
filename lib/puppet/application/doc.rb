@@ -64,7 +64,7 @@ WARNING: RDoc support is only available under Ruby 1.8.7 and earlier.
 
 USAGE
 -----
-puppet doc [-a|--all] [-h|--help] [-o|--outputdir <rdoc-outputdir>]
+puppet doc [-a|--all] [-h|--help] [-l|--list] [-o|--outputdir <rdoc-outputdir>]
   [-m|--mode text|pdf|rdoc] [-r|--reference <reference-name>]
   [--charset <charset>] [<manifest-file>]
 

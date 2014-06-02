@@ -94,7 +94,7 @@ USAGE
 puppet agent [--certname <name>] [-D|--daemonize|--no-daemonize]
   [-d|--debug] [--detailed-exitcodes] [--digest <digest>] [--disable [message]] [--enable]
   [--fingerprint] [-h|--help] [-l|--logdest syslog|<file>|console]
-  [--no-client] [--noop] [-o|--onetime] [-t|--test]
+  [--masterport <port>] [--no-client] [--noop] [-o|--onetime] [-t|--test]
   [-v|--verbose] [-V|--version] [-w|--waitforcert <seconds>]
 
 
