@@ -85,10 +85,7 @@ describe Puppet::Parser::Functions do
   end
 
   describe "when calling function to test arity" do
-    let(:function_module) { Module.new }
-    before do
-      Puppet::Parser::Functions.stubs(:environment_module).returns(function_module)
-    end
+    let(:function_module) { Puppet::Parser::Functions.environment_module(Puppet.lookup(:current_environment)) }
 
     it "should raise an error if the function is called with too many arguments" do
       Puppet::Parser::Functions.newfunction("name", :arity => 2) { |args| }

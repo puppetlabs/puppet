@@ -12,24 +12,24 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
     ensure => directory,
     owner => #{master['user']},
     group => #{master['group']},
-    mode => 0750,
+    mode => '750',
   }
 
   file { '#{testdir}': }
   file { '#{testdir}/busy': }
   file { '#{testdir}/busy/one.txt':
     ensure => file,
-    mode => 640,
+    mode => '640',
     content => "Something to read",
   }
   file { '#{testdir}/busy/two.txt':
     ensure => file,
-    mode => 640,
+    mode => '640',
     content => "Something else to read",
   }
   file { '#{testdir}/busy/three.txt':
     ensure => file,
-    mode => 640,
+    mode => '640',
     content => "Something more else to read",
   }
 
@@ -40,7 +40,7 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
       $foo = inline_template("
         <%- 1000.times do
              Dir.glob(\\'#{testdir}/busy/*.txt\\').each do |f|
-               File.new(f).read
+               File.read(f)
              end
            end
         %>
@@ -50,7 +50,7 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
         message => $foo,
       }
     ',
-    mode => 640,
+    mode => '640',
   }
 MANIFEST
 
