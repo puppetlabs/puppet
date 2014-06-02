@@ -7,6 +7,10 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   include Puppet::Network::HTTP::Handler
 
+  def self.mutex
+    @mutex ||= Mutex.new
+  end
+
   def initialize(server)
     raise ArgumentError, "server is required" unless server
     register([Puppet::Network::HTTP::API::V2.routes, Puppet::Network::HTTP::API::V1.routes])
@@ -26,9 +30,12 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     params.merge(client_information(request))
   end
 
-  # WEBrick uses a service method to respond to requests.  Simply delegate to the handler response method.
+  # WEBrick uses a service method to respond to requests.  Simply delegate to
+  # the handler response method.
   def service(request, response)
-    process(request, response)
+    self.class.mutex.synchronize do
+      process(request, response)
+    end
   end
 
   def headers(request)
