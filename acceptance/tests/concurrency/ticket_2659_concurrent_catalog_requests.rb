@@ -40,7 +40,7 @@ apply_manifest_on(master, <<-MANIFEST, :catch_failures => true)
       $foo = inline_template("
         <%- 1000.times do
              Dir.glob(\\'#{testdir}/busy/*.txt\\').each do |f|
-               File.new(f).read
+               File.read(f)
              end
            end
         %>
