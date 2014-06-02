@@ -14,6 +14,7 @@ require 'puppet/util'
 require "puppet/util/plugins"
 require "puppet/util/rubygems"
 require "puppet/util/limits"
+require 'puppet/util/colors'
 
 module Puppet
   module Util
@@ -160,13 +161,20 @@ module Puppet
 
       # @api private
       class NilSubcommand
+        include Puppet::Util::Colors
+
         def initialize(command_line)
           @command_line = command_line
         end
 
         def run
-          if @command_line.args.include? "--version" or @command_line.args.include? "-V"
+          args = @command_line.args
+          if args.include? "--version" or args.include? "-V"
             puts Puppet.version
+          elsif @command_line.subcommand_name.nil? && args.count > 0
+            # If the subcommand is truly nil and there is an arg, it's an option; print out the invalid option message
+            puts colorize(:hred, "Error: Could not parse application options: invalid option: #{args[0]}")
+            exit 1
           else
             puts "See 'puppet help' for help on available puppet subcommands"
           end
@@ -181,8 +189,9 @@ module Puppet
         end
 
         def run
-          puts "Error: Unknown Puppet subcommand '#{@subcommand_name}'"
+          puts colorize(:hred, "Error: Unknown Puppet subcommand '#{@subcommand_name}'")
           super
+          exit 1
         end
       end
     end
