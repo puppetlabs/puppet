@@ -40,9 +40,6 @@ module Puppet
   # the hash that determines how our system behaves
   @@settings = Puppet::Settings.new
 
-  # The services running in this process.
-  @services ||= []
-
   require 'puppet/util/logging'
 
   extend Puppet::Util::Logging
