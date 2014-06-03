@@ -2,6 +2,9 @@
 confine :except, :platform => 'windows'
 
 test_name "#7117 Broke the environment criteria in auth.conf"
+
+skip_test "This test is pending additional CA work -- support for dns_alt_names in PE-4372" if @options[:is_jvm_puppet]
+
 testdir = master.tmpdir('env_in_auth_conf')
 
 # add to auth.conf
