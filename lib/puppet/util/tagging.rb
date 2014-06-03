@@ -15,7 +15,6 @@ module Puppet::Util::Tagging
       if name =~ ValidTagRegex
         @tags << name
         name.split("::").each do |section|
-          fail(Puppet::ParseError, "Invalid tag ''") if section.empty?
           @tags << section
         end
       else
