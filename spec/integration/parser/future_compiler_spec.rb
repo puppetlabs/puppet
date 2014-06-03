@@ -402,6 +402,104 @@ describe "Puppet::Parser::Compiler" do
         end
       end
     end
+
+    context 'when using typed parameters in definition' do
+      it 'accepts type compliant arguments' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define foo(String $x) { }
+          foo { 'test': x =>'say friend' }
+        MANIFEST
+        expect(catalog).to have_resource("Foo[test]").with_parameter(:x, 'say friend')
+      end
+
+      it 'accepts anything when parameters are untyped' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+          define foo($a, $b, $c) { }
+          foo { 'test': a => String, b=>10, c=>undef }
+        MANIFEST
+        end.to_not raise_error()
+      end
+
+      it 'denies non type compliant arguments' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            define foo(Integer $x) { }
+            foo { 'test': x =>'say friend' }
+          MANIFEST
+        end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'denies non type compliant default argument' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            define foo(Integer $x = 'pow') { }
+            foo { 'test':  }
+          MANIFEST
+        end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'accepts a Resource as a Type' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          define foo(Type[Bar] $x) {
+            notify { 'test': message => $x[text] }
+          }
+          define bar($text) { }
+          bar { 'joke': text => 'knock knock' }
+          foo { 'test': x => Bar[joke] }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, 'knock knock')
+      end
+    end
+
+    context 'when using typed parameters in class' do
+      it 'accepts type compliant arguments' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          class foo(String $x) { }
+          class { 'foo': x =>'say friend' }
+        MANIFEST
+        expect(catalog).to have_resource("Class[Foo]").with_parameter(:x, 'say friend')
+      end
+
+      it 'accepts anything when parameters are untyped' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            class foo($a, $b, $c) { }
+            class { 'foo': a => String, b=>10, c=>undef }
+          MANIFEST
+        end.to_not raise_error()
+      end
+
+      it 'denies non type compliant arguments' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            class foo(Integer $x) { }
+            class { 'foo': x =>'say friend' }
+          MANIFEST
+        end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'denies non type compliant default argument' do
+        expect do
+          catalog = compile_to_catalog(<<-MANIFEST)
+            class foo(Integer $x = 'pow') { }
+            class { 'foo':  }
+          MANIFEST
+        end.to raise_error(/type Integer, got String/)
+      end
+
+      it 'accepts a Resource as a Type' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          class foo(Type[Bar] $x) {
+            notify { 'test': message => $x[text] }
+          }
+          define bar($text) { }
+          bar { 'joke': text => 'knock knock' }
+          class { 'foo': x => Bar[joke] }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, 'knock knock')
+      end
+    end
   end
 
   context 'when evaluating collection' do

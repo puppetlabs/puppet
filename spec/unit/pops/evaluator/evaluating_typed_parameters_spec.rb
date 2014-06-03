@@ -31,29 +31,13 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   types = Puppet::Pops::Types::TypeFactory
 
   context "captures-rest parameter" do
-    it 'is allowed in function when placed last' do
-      pending 'puppet functions not yet supported'
-      source = <<-CODE
-        function foo($a, *$b) { $a + $b[0] }
-      CODE
-      parser.parse_string(source, __FILE__)
-    end
-
-    it 'is not allowed in function except last' do
-      pending 'puppet functions not yet supported'
-      source = <<-CODE
-        function foo(*$a, $b) { $a + $b[0] }
-      CODE
-      expect do
-        parser.parse_string(source, __FILE__)
-      end.to raise_error(Puppet::ParseError, /Parameter \$a is not last, and has 'captures rest'/)
-    end
-
     it 'is allowed in lambda when placed last' do
       source = <<-CODE
         foo() |$a, *$b| { $a + $b[0] }
       CODE
-      parser.parse_string(source, __FILE__)
+      expect do
+        parser.parse_string(source, __FILE__)
+      end.to_not raise_error()
     end
 
     it 'is not allowed in lambda except last' do
@@ -85,13 +69,4 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
   end
 
-  context 'foo' do
-    {
-      "1"             => 1,
-    }.each do |source, result|
-        it "should parse and evaluate the expression '#{source}' to #{result}" do
-          parser.evaluate_string(scope, source, __FILE__).should == result
-        end
-      end
-  end
 end
