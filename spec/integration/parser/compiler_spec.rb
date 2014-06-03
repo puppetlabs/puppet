@@ -525,8 +525,8 @@ describe "Puppet::Parser::Compiler" do
 
         catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
 
-        expect(catalog.resource("Notify[nbr1]")['message']).to eql('overridden')
-        expect(catalog.resource("Notify[nbr2]")['message']).to eql('overridden')
+        expect(catalog).to have_resource("Notify[nbr1]").with_parameter(:message, 'overridden')
+        expect(catalog).to have_resource("Notify[nbr2]").with_parameter(:message, 'overridden')
       end
     end
   end

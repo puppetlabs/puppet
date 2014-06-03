@@ -3,7 +3,7 @@ require 'puppet/util/tag_set'
 module Puppet::Util::Tagging
   ValidTagRegex = /^\w[-\w:.]*$/
 
-  # Add a tag to the current tag set. 
+  # Add a tag to the current tag set.
   # When a tag set is used for a scope, these tags will be added to all of
   # the objects contained in this scope when the objects are finished.
   #
