@@ -787,7 +787,9 @@ class Puppet::Pops::Types::TypeCalculator
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
     t.title = (title == :undef ? '' : title)
-    t
+    type = Types::PType.new()
+    type.type = t
+    type
   end
 
   # @api private
