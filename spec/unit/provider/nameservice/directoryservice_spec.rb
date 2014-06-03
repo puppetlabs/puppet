@@ -45,6 +45,14 @@ describe 'DirectoryService.single_report' do
     }.to raise_error(RuntimeError, "Puppet does not support OS X versions < 10.5")
   end
 
+  it 'should succeed on OS X >= 10.10' do
+    Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.10")
+
+    expect {
+      Puppet::Provider::NameService::DirectoryService.single_report('resource_name')
+    }.to_not raise_error(RuntimeError)
+  end
+
   it 'should use plist data on >= 10.5' do
     Puppet::Provider::NameService::DirectoryService.stubs(:get_macosx_version_major).returns("10.5")
     Puppet::Provider::NameService::DirectoryService.stubs(:get_ds_path).returns('Users')
