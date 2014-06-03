@@ -20,6 +20,9 @@ master_opts = {
     'modulepath' => "#{testdir}/special"
   }
 }
+if master.is_pe?
+  master_opts['special']['modulepath'] << ":#{master['sitemoduledir']}"
+end
 
 on master, "mkdir -p #{testdir}/modules"
 # Create a plugin file on the master
