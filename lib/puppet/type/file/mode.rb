@@ -77,7 +77,7 @@ module Puppet
 
     def desired_mode_from_current(desired, current)
       current = current.to_i(8) if current.is_a? String
-      is_a_directory = @resource.stat and @resource.stat.directory?
+      is_a_directory = @resource.stat && @resource.stat.directory?
       symbolic_mode_to_int(desired, current, is_a_directory)
     end
 
