@@ -127,5 +127,36 @@ describe Puppet::Util::Tagging do
       expect(tagger).to be_tagged("two")
       expect(tagger).to be_tagged("three")
     end
+
+    it "protects against empty tags" do
+      expect { tagger.tags = "one,,two"}.to raise_error(/Invalid tag ''/)
+    end
+
+    it "takes an array of tags" do
+      tagger.tags = ["one", "two"]
+
+      expect(tagger).to be_tagged("one")
+      expect(tagger).to be_tagged("two")
+    end
+
+    it "removes any existing tags when reassigning" do
+      tagger.tags = "one, two"
+
+      tagger.tags = "three, four"
+
+      expect(tagger).to_not be_tagged("one")
+      expect(tagger).to_not be_tagged("two")
+      expect(tagger).to be_tagged("three")
+      expect(tagger).to be_tagged("four")
+    end
+
+    it "allows empty tags that are generated from :: separated tags" do
+      tagger.tags = "one::::two::three"
+
+      expect(tagger).to be_tagged("one")
+      expect(tagger).to be_tagged("")
+      expect(tagger).to be_tagged("two")
+      expect(tagger).to be_tagged("three")
+    end
   end
 end

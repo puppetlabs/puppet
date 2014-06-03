@@ -30,6 +30,9 @@ master_opts = {
     'manifest' => "#{testdir}/different.pp"
   }
 }
+if master.is_pe?
+  master_opts['special']['modulepath'] << ":#{master['sitemoduledir']}"
+end
 
 with_puppet_running_on master, master_opts, testdir do
   agents.each do |agent|
