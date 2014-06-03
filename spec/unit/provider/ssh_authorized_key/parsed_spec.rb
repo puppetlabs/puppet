@@ -99,6 +99,12 @@ describe provider_class, :unless => Puppet.features.microsoft_windows? do
     @provider_class.parse_options(optionstr).should == options
   end
 
+  it "should parse quoted options" do
+    line = 'command="/usr/local/bin/mybin \"$SSH_ORIGINAL_COMMAND\"" ssh-rsa xxx mykey'
+
+    @provider_class.parse(line)[0][:options][0].should == 'command="/usr/local/bin/mybin \"$SSH_ORIGINAL_COMMAND\""'
+  end
+
   it "should use '' as name for entries that lack a comment" do
     line = "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAut8aOSxenjOqF527dlsdHWV4MNoAsX14l9M297+SQXaQ5Z3BedIxZaoQthkDALlV/25A1COELrg9J2MqJNQc8Xe9XQOIkBQWWinUlD/BXwoOTWEy8C8zSZPHZ3getMMNhGTBO+q/O+qiJx3y5cA4MTbw2zSxukfWC87qWwcZ64UUlegIM056vPsdZWFclS9hsROVEa57YUMrehQ1EGxT4Z5j6zIopufGFiAPjZigq/vqgcAqhAKP6yu4/gwO6S9tatBeEjZ8fafvj1pmvvIplZeMr96gHE7xS3pEEQqnB3nd4RY7AF6j9kFixnsytAUO7STPh/M3pLiVQBN89TvWPQ=="
 

@@ -74,7 +74,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
     while !scanner.eos?
       scanner.skip(/[ \t]*/)
       # scan a long option
-      if out = scanner.scan(/[-a-z0-9A-Z_]+=\".*?\"/) or out = scanner.scan(/[-a-z0-9A-Z_]+/)
+      if out = scanner.scan(/[-a-z0-9A-Z_]+=\".*?[^\\]\"/) or out = scanner.scan(/[-a-z0-9A-Z_]+/)
         result << out
       else
         # found an unscannable token, let's abort
