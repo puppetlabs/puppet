@@ -486,13 +486,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Used to produce reference resource instances (used when 3x is operating on a resource).
   #
   def catalog_type_to_split_type_title(catalog_type)
-    case catalog_type
+    split_type = catalog_type.is_a?(Puppet::Pops::Types::PType) ? catalog_type.type : catalog_type
+    case split_type
     when Puppet::Pops::Types::PHostClassType
-      return ['Class', catalog_type.class_name]
+      return ['Class', split_type.class_name]
     when Puppet::Pops::Types::PResourceType
-      return [catalog_type.type_name, catalog_type.title]
+      return [split_type.type_name, split_type.title]
     else
-      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it is neither a PHostClassType, nor a PResourceClass."
+      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PHostClassType, nor a PResourceType."
     end
   end
 
