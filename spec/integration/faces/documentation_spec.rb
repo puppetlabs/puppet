@@ -16,10 +16,6 @@ describe "documentation of faces" do
   # bug in it, triggered in something the user might do.
 
   context "face help messages" do
-    # we need to set a bunk module path here, because without doing so,
-    #  the autoloader will try to use it before it is initialized.
-    Puppet[:modulepath] = "/dev/null"
-
     Puppet::Face.faces.sort.each do |face_name|
       # REVISIT: We should walk all versions of the face here...
       let :help do Puppet::Face[:help, :current] end
