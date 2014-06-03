@@ -2,9 +2,11 @@ require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'rubygems'
+require 'matchers/resource'
 
 describe 'methods' do
   include PuppetSpec::Compiler
+  include Matchers::Resource
 
   before :all do
     # enable switching back 
@@ -36,9 +38,9 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_1]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_2]").with_parameter(:ensure, 'absent')
+      expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
     end
 
     it 'slice with captures last' do
@@ -49,9 +51,9 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_1]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_2]").with_parameter(:ensure, 'absent')
+      expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
     end
 
     it 'slice with one parameter' do
@@ -62,9 +64,9 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_1]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_2]").with_parameter(:ensure, 'absent')
+      expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
     end
 
     it 'slice with shorter last slice' do
@@ -75,8 +77,8 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1.2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3.")['ensure'].should == 'absent'
+      expect(catalog).to have_resource("File[/file_1.2]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_3.]").with_parameter(:ensure, 'absent')
     end
   end
 
@@ -89,8 +91,8 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1.2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3.")['ensure'].should == 'absent'
+      expect(catalog).to have_resource("File[/file_1.2]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_3.]").with_parameter(:ensure, 'absent')
     end
   end
 
@@ -103,8 +105,8 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1.2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3.4")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_1.2]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_3.4]").with_parameter(:ensure, 'present')
     end
 
     it 'slice with integer' do
@@ -114,8 +116,8 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_0.1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2.3")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_0.1]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_2.3]").with_parameter(:ensure, 'present')
     end
 
     it 'slice with string' do
@@ -125,8 +127,8 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a.b")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_c.d")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_a.b]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_c.d]").with_parameter(:ensure, 'present')
     end
   end
 
@@ -139,10 +141,9 @@ describe 'methods' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
-
+      expect(catalog).to have_resource("File[/file_1]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_2]").with_parameter(:ensure, 'absent')
+      expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
     end
   end
 end

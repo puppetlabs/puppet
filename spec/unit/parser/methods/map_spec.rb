@@ -1,11 +1,13 @@
 require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'matchers/resource'
 
 require 'unit/parser/methods/shared'
 
 describe 'the map method' do
   include PuppetSpec::Compiler
+  include Matchers::Resource
 
   before :each do
     Puppet[:parser] = "future"
@@ -20,9 +22,9 @@ describe 'the map method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_4")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_2]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_4]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_6]").with_parameter(:ensure, 'present')
     end
 
     it 'map on an enumerable type (multiplying each value by 2)' do
@@ -33,9 +35,9 @@ describe 'the map method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_4")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_2]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_4]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_6]").with_parameter(:ensure, 'present')
     end
 
     it 'map on an integer (multiply each by 3)' do
@@ -45,9 +47,9 @@ describe 'the map method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_0")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_0]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_6]").with_parameter(:ensure, 'present')
     end
 
     it 'map on a string' do
@@ -58,8 +60,8 @@ describe 'the map method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_x")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_y")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_x]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_y]").with_parameter(:ensure, 'present')
     end
 
     it 'map on an array (multiplying value by 10 in even index position)' do
@@ -70,9 +72,9 @@ describe 'the map method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_20")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_1]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_20]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
     end
 
     it 'map on a hash selecting keys' do
@@ -83,9 +85,9 @@ describe 'the map method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_a]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_b]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_c]").with_parameter(:ensure, 'present')
     end
 
     it 'map on a hash selecting keys - using two block parameters' do
@@ -95,21 +97,20 @@ describe 'the map method' do
         }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_a]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_b]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_c]").with_parameter(:ensure, 'present')
     end
 
     it 'map on a hash using captures-last parameter' do
       catalog = compile_to_catalog(<<-MANIFEST)
       $a = {'a'=>present,'b'=>absent,'c'=>present}
-      $a.map |*$kv|{ file { "/file_${kv[0]}": ensure => $kv[1] }
-        }
+      $a.map |*$kv|{ file { "/file_${kv[0]}": ensure => $kv[1] } }
       MANIFEST
 
-      catalog.resource(:file, "/file_a")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_b")['ensure'].should == 'absent'
-      catalog.resource(:file, "/file_c")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_a]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_b]").with_parameter(:ensure, 'absent')
+      expect(catalog).to have_resource("File[/file_c]").with_parameter(:ensure, 'present')
     end
 
     it 'each on a hash selecting value' do
@@ -118,9 +119,9 @@ describe 'the map method' do
       $a.map |$x|{ $x[1]}.each |$k|{ file { "/file_$k": ensure => present } }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_1]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_2]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
     end
 
     it 'each on a hash selecting value - using two block parameters' do
@@ -129,9 +130,9 @@ describe 'the map method' do
       $a.map |$k,$v|{ file { "/file_$v": ensure => present } }
       MANIFEST
 
-      catalog.resource(:file, "/file_1")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_2")['ensure'].should == 'present'
-      catalog.resource(:file, "/file_3")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_1]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_2]").with_parameter(:ensure, 'present')
+      expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
     end
 
     context "handles data type corner cases" do
@@ -143,8 +144,8 @@ describe 'the map method' do
           }
         MANIFEST
 
-        catalog.resource(:file, "/file_0.false")['ensure'].should == 'present'
-        catalog.resource(:file, "/file_1.false")['ensure'].should == 'present'
+        expect(catalog).to have_resource("File[/file_0.false]").with_parameter(:ensure, 'present')
+        expect(catalog).to have_resource("File[/file_1.false]").with_parameter(:ensure, 'present')
       end
 
       it "map gets values that are nil" do
@@ -158,7 +159,7 @@ describe 'the map method' do
           }
         MANIFEST
 
-        catalog.resource(:file, "/file_0.")['ensure'].should == 'present'
+        expect(catalog).to have_resource("File[/file_0.]").with_parameter(:ensure, 'present')
       end
 
       it "map gets values that are undef" do

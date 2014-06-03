@@ -903,7 +903,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       the_func = fc.new({}, env_loader)
       env_loader.add_entry(:function, 'test', the_func, __FILE__)
 
-      #expect(parser.evaluate_string(scope, "test(undef) |$x=20| { $x == 20}")).to eql(true)
       expect(parser.evaluate_string(scope, "test(undef) |$x=20| { $x == undef}")).to eql(true)
     end
   end
