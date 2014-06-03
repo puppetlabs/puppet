@@ -475,13 +475,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Ensures that resources are *not* absolute.
   #
   def catalog_type_to_split_type_title(catalog_type)
-    case catalog_type
+    split_type = catalog_type.is_a?(Puppet::Pops::Types::PType) ? catalog_type.type : catalog_type
+    case split_type
     when Puppet::Pops::Types::PHostClassType
-      class_name = catalog_type.class_name
+      class_name = split_type.class_name
       ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
     when Puppet::Pops::Types::PResourceType
-      type_name = catalog_type.type_name
-      title = catalog_type.title
+      type_name = split_type.type_name
+      title = split_type.title
       if type_name =~ /^(::)?[Cc]lass/
         ['class', title.nil? ? nil : title.sub(/^::/, '')]
       else
@@ -490,7 +491,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
         [type_name.nil? ? nil : type_name.sub(/^::/, ''), title.nil? ? '' : title]
       end
     else
-      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it is neither a PHostClassType, nor a PResourceClass."
+      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PHostClassType, nor a PResourceType."
     end
   end
 
