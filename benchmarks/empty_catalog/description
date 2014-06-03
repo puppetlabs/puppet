@@ -1,0 +1,4 @@
+Benchmark scenario: an empty catalog (only one call to log a message) shows the setup time for env / compiler
+Benchmark target: catalog compilation overhead
+Parser: Future
+
