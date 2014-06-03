@@ -117,9 +117,9 @@ class Puppet::Parser::AST::PopsBridge
       # can thus reference all sorts of information. Here the value expression is wrapped in an AST Bridge to a Pops
       # expression since the Pops side can not control the evaluation
       if o.value
-        [ o.name, NilAsUndefExpression.new(:value => o.value) ]
+        [o.name, NilAsUndefExpression.new(:value => o.value)]
       else
-        [ o.name ]
+        [o.name]
       end
     end
 
@@ -138,9 +138,10 @@ class Puppet::Parser::AST::PopsBridge
       # reused and we may reenter without a scope (which is fine). A debug message is then output in case
       # there is the need to track down the odd corner case. See {#obtain_scope}.
       #
-      return result unless scope = obtain_scope
-      typed_parameters.each do |p|
-        result[ p.name ] =  @@evaluator.evaluate(scope, p.type_expr) if p.type_expr
+      if scope = obtain_scope
+        typed_parameters.each do |p|
+          result[p.name] =  @@evaluator.evaluate(scope, p.type_expr)
+        end
       end
       result
     end
@@ -152,7 +153,7 @@ class Puppet::Parser::AST::PopsBridge
         # when running tests that run a partial setup.
         # This is bad if the logic is trying to compile, but a warning can not be issues since it is a normal
         # use case that there is no scope when requesting the type in order to just get the parameters.
-        Puppet.debug("Instantiating Resource with type checked parameters - scope is missing, cannot perform type checking, please report use case")
+        Puppet.debug("Instantiating Resource with type checked parameters - scope is missing, skipping type checking.")
         nil
       end
       scope
