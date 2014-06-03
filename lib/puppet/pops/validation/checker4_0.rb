@@ -250,12 +250,6 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
-#  def check_FunctionDefinition(o)
-#    # super class check
-#    check_NamedDefinition(o)
-#    internal_check_capture_last(o)
-#  end
-
   def check_HostClassDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)

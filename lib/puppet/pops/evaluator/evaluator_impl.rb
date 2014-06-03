@@ -213,7 +213,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       end
     end
 
-    evaluated = merged.collect do |m|
+    evaluated = merged.collect do |arg_assoc|
       # m can be one of
       # m = [Parameter{name => "name", value => nil], "given"]
       #   | [Parameter{name => "name", value => Expression}, "given"]
@@ -225,10 +225,10 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
       # "given" is always present. If a parameter was provided then
       # the entry is that value, else the symbol :missing
-      given_argument = m[ 1 ]
-      argument_name = m[ 0 ].name
-      param_captures = m[ 0 ].captures_rest
-      default_expression = m[ 0 ].value
+      given_argument     = arg_assoc[1]
+      argument_name      = arg_assoc[0].name
+      param_captures     = arg_assoc[0].captures_rest
+      default_expression = arg_assoc[0].value
 
       if given_argument == :missing
         # not given
@@ -246,7 +246,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
             value = [ ]
           else
             # should have been caught earlier
-            raise ArgumentError, "InternalError: Should not happen! non optional parameter not caught earlier in evaluator call"
+            raise Puppet::DevError, "InternalError: Should not happen! non optional parameter not caught earlier in evaluator call"
           end
         end
       else
@@ -271,7 +271,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
           #          end
         end
       end
-      [ argument_name, value ]
+      [argument_name, value]
     end
 
     # Store the evaluated name => value associations in a new inner/local/ephemeral scope
