@@ -14,21 +14,15 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   include PuppetSpec::Pops
   include PuppetSpec::Scope
   before(:each) do
-    Puppet[:strict_variables] = true
 
     # These must be set since the is 3x logic that triggers on these even if the tests are explicit
     # about selection of parser and evaluator
     #
     Puppet[:parser] = 'future'
     Puppet[:evaluator] = 'future'
-    # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
-    require 'puppetx'
   end
 
   let(:parser) {  Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
-  let(:node) { 'node.example.com' }
-  let(:scope) { s = create_test_scope_for_node(node); s }
-  types = Puppet::Pops::Types::TypeFactory
 
   context "captures-rest parameter" do
     it 'is allowed in lambda when placed last' do
@@ -66,7 +60,5 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         parser.parse_string(source, __FILE__)
       end.to raise_error(Puppet::ParseError, /Parameter \$a has 'captures rest' - not supported in a Host Class Definition/)
     end
-
   end
-
 end
