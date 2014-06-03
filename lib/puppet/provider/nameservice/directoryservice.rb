@@ -2,6 +2,7 @@ require 'puppet'
 require 'puppet/provider/nameservice'
 require 'facter/util/plist'
 require 'fileutils'
+require 'rubygems'
 
 class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameService
   # JJM: Dive into the singleton_class
@@ -178,7 +179,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
   end
 
   def self.fail_if_wrong_version
-    fail("Puppet does not support OS X versions < 10.5") unless self.get_macosx_version_major >= "10.5"
+    fail("Puppet does not support OS X versions < 10.5") unless Gem::Version.new(self.get_macosx_version_major) >= Gem::Version.new('10.5')
   end
 
   def self.get_exec_preamble(ds_action, resource_name = nil)
