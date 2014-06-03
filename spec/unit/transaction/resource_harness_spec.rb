@@ -352,6 +352,70 @@ describe Puppet::Transaction::ResourceHarness do
         event.status.should != 'failure'
       end
     end
+
+    it "should not ignore microseconds when auditing a file's mtime" do
+      test_file = tmpfile('foo')
+      File.open(test_file, 'w').close
+      resource = Puppet::Type.type(:file).new :path => test_file, :audit => ['mtime'], :backup => false
+
+      # construct a property hash with nanosecond resolution as would be
+      # found on an ext4 file system
+      time_with_nsec_resolution = Time.at(1000, 123456.999)
+      current_from_filesystem    = {:mtime => time_with_nsec_resolution}
+
+      # construct a property hash with a 1 microsecond difference from above
+      time_with_usec_resolution = Time.at(1000, 123457.000)
+      historical_from_state_yaml = {:mtime => time_with_usec_resolution}
+
+      # set up the sequence of stubs; yeah, this is pretty
+      # brittle, so this might need to be adjusted if the
+      # resource_harness logic changes
+      resource.expects(:retrieve).returns(current_from_filesystem)
+      Puppet::Util::Storage.stubs(:cache).with(resource).
+        returns(historical_from_state_yaml).then.
+        returns(current_from_filesystem).then.
+        returns(current_from_filesystem)
+
+      # there should be an audit change recorded, since the two
+      # timestamps differ by at least 1 microsecond
+      status = @harness.evaluate(resource)
+      status.events.should_not be_empty
+      status.events.each do |event|
+        event.message.should =~ /audit change: previously recorded/
+      end
+    end
+
+    it "should ignore nanoseconds when auditing a file's mtime" do
+      test_file = tmpfile('foo')
+      File.open(test_file, 'w').close
+      resource = Puppet::Type.type(:file).new :path => test_file, :audit => ['mtime'], :backup => false
+
+      # construct a property hash with nanosecond resolution as would be
+      # found on an ext4 file system
+      time_with_nsec_resolution = Time.at(1000, 123456.789)
+      current_from_filesystem    = {:mtime => time_with_nsec_resolution}
+
+      # construct a property hash with the same timestamp as above,
+      # truncated to microseconds, as would be read back from state.yaml
+      time_with_usec_resolution = Time.at(1000, 123456.000)
+      historical_from_state_yaml = {:mtime => time_with_usec_resolution}
+
+      # set up the sequence of stubs; yeah, this is pretty
+      # brittle, so this might need to be adjusted if the
+      # resource_harness logic changes
+      resource.expects(:retrieve).returns(current_from_filesystem)
+      Puppet::Util::Storage.stubs(:cache).with(resource).
+        returns(historical_from_state_yaml).then.
+        returns(current_from_filesystem).then.
+        returns(current_from_filesystem)
+
+      # there should be no audit change recorded, despite the
+      # slight difference in the two timestamps
+      status = @harness.evaluate(resource)
+      status.events.each do |event|
+        event.message.should_not =~ /audit change: previously recorded/
+      end
+    end
   end
 
   describe "when applying changes" do
