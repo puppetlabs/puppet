@@ -56,7 +56,7 @@ class CollExpr < AST::Branch
     return match, code
   end
 
-  # Late binding evaluation of a collect expression (as done in 3x), but with proper Puppet Langauge
+  # Late binding evaluation of a collect expression (as done in 3x), but with proper Puppet Language
   # semantics for equals and include
   #
   def evaluate4x(scope)

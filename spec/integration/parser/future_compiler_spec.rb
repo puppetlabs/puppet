@@ -367,4 +367,33 @@ describe "Puppet::Parser::Compiler" do
       end
     end
   end
+
+  context 'when evaluating collection' do
+    it 'matches on container inherited tags' do
+      Puppet[:code] = <<-MANIFEST
+      class xport_test {
+        tag('foo_bar')
+        @notify { 'nbr1':
+          message => 'explicitly tagged',
+          tag => 'foo_bar'
+        }
+
+        @notify { 'nbr2':
+          message => 'implicitly tagged'
+        }
+
+        Notify <| tag == 'foo_bar' |> {
+          message => 'overridden'
+        }
+      }
+      include xport_test
+      MANIFEST
+
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
+
+      expect(catalog).to have_resource("Notify[nbr1]").with_parameter(:message, 'overridden')
+      expect(catalog).to have_resource("Notify[nbr2]").with_parameter(:message, 'overridden')
+    end
+  end
+
 end
