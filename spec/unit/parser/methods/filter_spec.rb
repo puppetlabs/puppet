@@ -1,11 +1,13 @@
 require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'matchers/resource'
 
 require 'unit/parser/methods/shared'
 
 describe 'the filter method' do
   include PuppetSpec::Compiler
+  include Matchers::Resource
 
   before :each do
     Puppet[:parser] = 'future'
@@ -19,8 +21,8 @@ describe 'the filter method' do
       }
     MANIFEST
 
-    catalog.resource(:file, "/file_strawberry")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_blueberry")['ensure'].should == 'present'
+    expect(catalog).to have_resource("File[/file_strawberry]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_blueberry]").with_parameter(:ensure, 'present')
   end
 
   it 'should filter on enumerable type (Integer)' do
@@ -31,9 +33,9 @@ describe 'the filter method' do
       }
     MANIFEST
 
-    catalog.resource(:file, "/file_3")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_6")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_9")['ensure'].should == 'present'
+    expect(catalog).to have_resource("File[/file_3]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_6]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_9]").with_parameter(:ensure, 'present')
   end
 
   it 'should filter on enumerable type (Integer) using two args index/value' do
@@ -44,9 +46,9 @@ describe 'the filter method' do
       }
     MANIFEST
 
-    catalog.resource(:file, "/file_10")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_13")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_16")['ensure'].should == 'present'
+    expect(catalog).to have_resource("File[/file_10]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_13]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_16]").with_parameter(:ensure, 'present')
   end
 
   it 'should produce an array when acting on an array' do
@@ -57,8 +59,8 @@ describe 'the filter method' do
       file { "/file_${b[1]}": ensure => present }
     MANIFEST
 
-    catalog.resource(:file, "/file_strawberry")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_blueberry")['ensure'].should == 'present'
+    expect(catalog).to have_resource("File[/file_strawberry]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_blueberry]").with_parameter(:ensure, 'present')
   end
 
   it 'can filter array using index and value' do
@@ -69,8 +71,20 @@ describe 'the filter method' do
       file { "/file_${b[1]}": ensure => present }
     MANIFEST
 
-    catalog.resource(:file, "/file_strawberry")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_orange")['ensure'].should == 'present'
+    expect(catalog).to have_resource("File[/file_strawberry]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_orange]").with_parameter(:ensure, 'present')
+  end
+
+  it 'can filter array using index and value (using captures-rest)' do
+    catalog = compile_to_catalog(<<-MANIFEST)
+      $a = ['strawberry','blueberry','orange']
+      $b = $a.filter |*$ix|{ $ix[0]  == 0 or $ix[0] ==2}
+      file { "/file_${b[0]}": ensure => present }
+      file { "/file_${b[1]}": ensure => present }
+    MANIFEST
+
+    expect(catalog).to have_resource("File[/file_strawberry]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_orange]").with_parameter(:ensure, 'present')
   end
 
   it 'filters on a hash (all berries) by key' do
@@ -81,8 +95,8 @@ describe 'the filter method' do
       }
     MANIFEST
 
-    catalog.resource(:file, "/file_strawberry")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_blueberry")['ensure'].should == 'present'
+    expect(catalog).to have_resource("File[/file_strawberry]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_blueberry]").with_parameter(:ensure, 'present')
   end
 
   it 'should produce a hash when acting on a hash' do
@@ -95,9 +109,9 @@ describe 'the filter method' do
 
     MANIFEST
 
-    catalog.resource(:file, "/file_red")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_blue")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_")['ensure'].should == 'present'
+    expect(catalog).to have_resource("File[/file_red]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_blue]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_]").with_parameter(:ensure, 'present')
   end
 
   it 'filters on a hash (all berries) by value' do
@@ -108,8 +122,8 @@ describe 'the filter method' do
       }
     MANIFEST
 
-    catalog.resource(:file, "/file_strawb")['ensure'].should == 'present'
-    catalog.resource(:file, "/file_blueb")['ensure'].should == 'present'
+    expect(catalog).to have_resource("File[/file_strawb]").with_parameter(:ensure, 'present')
+    expect(catalog).to have_resource("File[/file_blueb]").with_parameter(:ensure, 'present')
   end
 
   context 'filter checks arguments and' do

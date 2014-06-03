@@ -113,9 +113,9 @@ describe "A catalog" do
   end
 
   def master_and_agent_catalogs_for(manifest)
-    master_catalog = Puppet::Resource::Catalog::Compiler.new.filter(compile_to_catalog(manifest))
+    compiler = Puppet::Resource::Catalog::Compiler.new
+    master_catalog = compiler.filter(compile_to_catalog(manifest))
     agent_catalog = Puppet::Resource::Catalog.convert_from(:pson, master_catalog.render(:pson))
-
     [master_catalog, agent_catalog]
   end
 

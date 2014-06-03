@@ -782,12 +782,14 @@ class Puppet::Pops::Types::TypeCalculator
   #
   def infer_Resource(o)
     t = Types::PResourceType.new()
-    t.type_name = o.type.to_s
+    t.type_name = o.type.to_s.downcase
     # Only Puppet::Resource can have a title that is a symbol :undef, a PResource cannot.
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
     t.title = (title == :undef ? '' : title)
-    t
+    type = Types::PType.new()
+    type.type = t
+    type
   end
 
   # @api private

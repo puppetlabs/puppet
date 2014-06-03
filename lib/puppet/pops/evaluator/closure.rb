@@ -68,8 +68,8 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
   # @api public
   def last_captures_rest?
-    # TODO: No support for this yet
-    false
+    last = (@model.parameters || [])[-1]
+    last && last.captures_rest
   end
 
   # @api public

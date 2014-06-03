@@ -34,7 +34,8 @@ class Puppet::Pops::Evaluator::RelationshipOperator
     @type_calculator = Puppet::Pops::Types::TypeCalculator.new()
     @type_parser = Puppet::Pops::Types::TypeParser.new()
 
-    @catalog_type = Puppet::Pops::Types::TypeFactory.catalog_entry()
+    tf = Puppet::Pops::Types::TypeFactory
+    @catalog_type = tf.variant(tf.catalog_entry, tf.type_type(tf.catalog_entry))
   end
 
   def transform(o, scope)

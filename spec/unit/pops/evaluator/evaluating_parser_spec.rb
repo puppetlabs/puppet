@@ -683,8 +683,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         adapted_parser = Puppet::Parser::E4ParserAdapter.new
         adapted_parser.file = __FILE__
         ast = adapted_parser.parse(source)
-        scope.known_resource_types.import_ast(ast, '')
-        ast.code.safeevaluate(scope).should == 'chocolate'
+        Puppet.override({:global_scope => scope}, "test") do
+          scope.known_resource_types.import_ast(ast, '')
+          ast.code.safeevaluate(scope).should == 'chocolate'
+        end
       end
 
       # Resource default and override expressions and resource parameter access with []
@@ -899,6 +901,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end
       the_func = fc.new({}, env_loader)
       env_loader.add_entry(:function, 'test', the_func, __FILE__)
+
       expect(parser.evaluate_string(scope, "test(undef) |$x=20| { $x == undef}")).to eql(true)
     end
   end
