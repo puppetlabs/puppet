@@ -27,7 +27,10 @@ Puppet::Type.type(:service).provide :systemd, :parent => :base do
 
   def enabled?
     begin
-      systemctl("is-enabled", @resource[:name])
+      service_name = @resource[:name]
+      # on Suse, systemctl is-enabled <service> without the .service suffix, always returns an error.
+      service_name += ".service" if Facter.value(:osfamily) == 'Suse'
+      systemctl("is-enabled", service_name)
     rescue Puppet::ExecutionFailure
       return :false
     end
