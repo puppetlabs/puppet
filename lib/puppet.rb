@@ -106,13 +106,6 @@ module Puppet
   # Load all of the settings.
   require 'puppet/defaults'
 
-  def self.genmanifest
-    if Puppet[:genmanifest]
-      puts Puppet.settings.to_manifest
-      exit(0)
-    end
-  end
-
   # Parse the config file for this process.
   # @deprecated Use {initialize_settings}
   def self.parse_config()
