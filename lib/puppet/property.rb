@@ -33,9 +33,6 @@ require 'puppet/parameter'
 #   handling of measurements such as kb, mb, gb. If a type requires two different size measurements it requires
 #   one concrete class per such measure; e.g. MinSize (:parent => Size), and MaxSize (:parent => Size).
 #
-# @todo Describe meta-parameter shadowing. This concept can not be understood by just looking at the descriptions
-#   of the methods involved.
-#
 # @see Puppet::Type
 # @see Puppet::Parameter
 #
@@ -277,27 +274,6 @@ class Puppet::Property < Puppet::Parameter
     resource.event attrs
   end
 
-  # @todo What is this?
-  # What is this used for?
-  attr_reader :shadow
-
-  # Initializes a Property the same way as a Parameter and handles the special case when a property is shadowing a meta-parameter.
-  # @todo There is some special initialization when a property is not a metaparameter but
-  #   Puppet::Type.metaparamclass(for this class's name) is not nil - if that is the case a
-  #   setup_shadow is performed for that class.
-  #
-  # @param hash [Hash] options passed to the super initializer {Puppet::Parameter#initialize}
-  # @note New properties of a type should be created via the DSL method {Puppet::Type.newproperty}.
-  # @see Puppet::Parameter#initialize description of Parameter initialize options.
-  # @api private
-  def initialize(hash = {})
-    super
-
-    if ! self.metaparam? and klass = Puppet::Type.metaparamclass(self.class.name)
-      setup_shadow(klass)
-    end
-  end
-
   # Determines whether the property is in-sync or not in a way that is protected against missing value.
   # @note If the wanted value _(should)_ is not defined or is set to a non-true value then this is
   #   a state that can not be fixed and the property is reported to be in sync.
@@ -423,16 +399,6 @@ class Puppet::Property < Puppet::Parameter
     self.class.array_matching == :all
   end
 
-  # (see Puppet::Parameter#munge)
-  # If this property is a meta-parameter shadow, the shadow's munge is also called.
-  # @todo Incomprehensible ! The concept of "meta-parameter-shadowing" needs to be explained.
-  #
-  def munge(value)
-    self.shadow.munge(value) if self.shadow
-
-    super
-  end
-
   # @return [Symbol] the name of the property as stated when the property was created.
   # @note A property class (just like a parameter class) describes one specific property and
   #   can only be used once within one type's inheritance chain.
@@ -510,16 +476,6 @@ class Puppet::Property < Puppet::Parameter
       # do so in the block.
       devfail "Cannot use obsolete :call value '#{call}' for property '#{self.class.name}'"
     end
-  end
-
-  # Sets up a shadow property for a shadowing meta-parameter.
-  # This construct allows the creation of a property with the
-  # same name as a meta-parameter. The metaparam will only be stored as a shadow.
-  # @param klass [Class<inherits Puppet::Parameter>] the class of the shadowed meta-parameter
-  # @return [Puppet::Parameter] an instance of the given class (a parameter or property)
-  #
-  def setup_shadow(klass)
-    @shadow = klass.new(:resource => self.resource)
   end
 
   # Returns the wanted _(should)_ value of this property.
