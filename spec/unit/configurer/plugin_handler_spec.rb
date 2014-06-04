@@ -28,7 +28,7 @@ describe Puppet::Configurer::PluginHandler do
     Puppet[:pluginfactdest] = plugindest
 
     downloader = mock 'downloader'
-    Puppet::Configurer::Downloader.expects(:new).with("pluginfacts", plugindest, "psource", "pignore", environment).returns downloader
+    Puppet::Configurer::Downloader.expects(:new).with("pluginfacts", plugindest, "psource", "pignore", environment, :use).returns downloader
     Puppet::Configurer::Downloader.expects(:new).with("plugin", plugindest, "psource", "pignore", environment).returns downloader
 
     downloader.stubs(:evaluate).returns([])

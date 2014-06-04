@@ -17,7 +17,8 @@ module Puppet::Configurer::PluginHandler
           Puppet[:pluginfactdest],
           Puppet[:pluginfactsource],
           Puppet[:pluginsignore],
-          environment
+          environment,
+          :use
        )
        plugin_fact_downloader.evaluate
     end
