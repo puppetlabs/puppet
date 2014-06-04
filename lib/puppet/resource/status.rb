@@ -3,20 +3,103 @@ require 'puppet/network/format_support'
 
 module Puppet
   class Resource
+
+    # This class represents the result of evaluating a given resource. It
+    # contains file and line information about the source, events generated
+    # while evaluating the resource, timing information, and the status of the
+    # resource evaluation.
+    #
+    # @api private
     class Status
       include Puppet::Util::Tagging
       include Puppet::Util::Logging
       include Puppet::Network::FormatSupport
 
-      attr_accessor :resource, :node, :file, :line, :current_values, :status, :evaluation_time
+      # @!attribute [rw] node
+      #   Unused
+      attr_accessor :node
 
+      # @!attribute [rw] file
+      #   @return [String] The file where `@real_resource` was defined.
+      attr_accessor :file
+
+      # @!attribute [rw] line
+      #   @return [Integer] The line number in the file where `@real_resource` was defined.
+      attr_accessor :line
+
+      # @!attribute [rw] current_values
+      #   Unused
+      attr_accessor :current_values
+
+      # @!attribute [rw] status
+      #   Unused
+      attr_accessor :status
+
+      # @!attribute [rw] evaluation_time
+      #   @return [Float] The time elapsed in sections while evaluating `@real_resource`.
+      #     measured in seconds.
+      attr_accessor :evaluation_time
+
+      # Boolean status types set while evaluating `@real_resource`.
       STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled]
       attr_accessor *STATES
 
-      attr_reader :source_description, :containment_path,
-                  :default_log_level, :time, :resource, :change_count,
-                  :out_of_sync_count, :resource_type, :title
+      # @!attribute [r] source_description
+      #   @return [String] The textual description of the path to `@real_resource`
+      #     based on the containing structures. This is in contrast to
+      #     `@containment_path` which is a list of containment path components.
+      #   @example
+      #     status.source_description #=> "/Stage[main]/Myclass/Exec[date]"
+      attr_reader :source_description
 
+      # @!attribute [r] containment_path
+      #   @return [Array<String>] A list of resource references that contain
+      #     `@real_resource`.
+      #   @example A normal contained type
+      #     status.containment_path #=> ["Stage[main]", "Myclass", "Exec[date]"]
+      #   @example A whit associated with a class
+      #     status.containment_path #=> ["Whit[Admissible_class[Main]]"]
+      attr_reader :containment_path
+
+      # @!attribute [r] default_log_level
+      #   Unused
+      attr_reader :default_log_level
+
+      # @!attribute [r] time
+      #   @return [Time] The time that this status object was created
+      attr_reader :time
+
+      # @!attribute [r] resource
+      #   @return [String] The resource reference for `@real_resource`
+      attr_reader :resource
+
+      # @!attribute [r] change_count
+      #   @return [Integer] A count of the successful changes made while
+      #     evaluating `@real_resource`.
+      attr_reader :change_count
+
+      # @!attribute [r] out_of_sync_count
+      #   @return [Integer] A count of the audited changes made while
+      #     evaluating `@real_resource`.
+      attr_reader :out_of_sync_count
+
+      # @!attribute [r] resource_type
+      #   @example
+      #     status.resource_type #=> 'Notify'
+      #   @return [String] The class name of `@real_resource`
+      attr_reader :resource_type
+
+      # @!attribute [r] title
+      #   @return [String] The title of `@real_resource`
+      attr_reader :title
+
+      # @!attribute [r] events
+      #   @return [Array<Puppet::Transaction::Event>] A list of events generated
+      #     while evaluating `@real_resource`.
+      attr_reader :events
+
+      # A list of instance variables that should be serialized with this object
+      # when converted to YAML.
       YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count
                            @out_of_sync_count @tags @time @events @out_of_sync
                            @changed @resource_type @title @skipped @failed
@@ -59,10 +142,6 @@ module Puppet
           @out_of_sync_count += 1
           @out_of_sync = true
         end
-      end
-
-      def events
-        @events
       end
 
       def failed_because(detail)
