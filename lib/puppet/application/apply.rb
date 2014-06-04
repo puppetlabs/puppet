@@ -42,7 +42,7 @@ Applies a standalone Puppet manifest to the local system.
 USAGE
 -----
 puppet apply [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
-  [-e|--execute] [--detailed-exitcodes] [-l|--logdest <file>] [--noop]
+  [-e|--execute] [--detailed-exitcodes] [-L|--loadclasses] [-l|--logdest <file>] [--noop]
   [--catalog <catalog>] [--write-catalog-summary] <file>
 
 
