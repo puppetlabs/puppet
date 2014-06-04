@@ -247,10 +247,12 @@ class Puppet::SSL::CertificateAuthority
       serial = cert.content.serial
     elsif name =~ /^0x[0-9A-Fa-f]+$/
       serial = name.hex
-    elsif ! serial = inventory.serial(name)
+    elsif serial = inventory.serials(name) and serial.empty?
       raise ArgumentError, "Could not find a serial number for #{name}"
     end
-    crl.revoke(serial, host.key.content)
+    [serial].flatten.each do |s|
+      crl.revoke(s, host.key.content)
+    end
   end
 
   # This initializes our CA so it actually works.  This should be a private

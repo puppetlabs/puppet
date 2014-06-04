@@ -937,10 +937,34 @@ describe Puppet::SSL::CertificateAuthority do
         cert = stub 'cert', :content => real_cert
         Puppet::SSL::Certificate.indirection.expects(:find).with("host").returns nil
 
-        @ca.inventory.expects(:serial).with("host").returns 16
+        @ca.inventory.expects(:serials).with("host").returns [16]
 
         @ca.crl.expects(:revoke).with { |serial, key| serial == 16 }
         @ca.revoke('host')
+      end
+
+      it "should revoke all serials matching a name" do
+        real_cert = stub 'real_cert', :serial => 15
+        cert = stub 'cert', :content => real_cert
+        Puppet::SSL::Certificate.indirection.expects(:find).with("host").returns nil
+
+        @ca.inventory.expects(:serials).with("host").returns [16, 20, 25]
+
+        @ca.crl.expects(:revoke).with { |serial, key| serial == 16 }
+        @ca.crl.expects(:revoke).with { |serial, key| serial == 20 }
+        @ca.crl.expects(:revoke).with { |serial, key| serial == 25 }
+        @ca.revoke('host')
+      end
+
+      it "should raise an error if no certificate match" do
+        real_cert = stub 'real_cert', :serial => 15
+        cert = stub 'cert', :content => real_cert
+        Puppet::SSL::Certificate.indirection.expects(:find).with("host").returns nil
+
+        @ca.inventory.expects(:serials).with("host").returns []
+
+        @ca.crl.expects(:revoke).never
+        expect { @ca.revoke('host') }.to raise_error
       end
 
       context "revocation by serial number (#16798)" do
