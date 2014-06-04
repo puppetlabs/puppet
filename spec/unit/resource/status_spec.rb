@@ -18,7 +18,7 @@ describe Puppet::Resource::Status do
     @status.title.should == make_absolute("/my/file")
   end
 
-  [:node, :file, :line, :current_values, :status, :evaluation_time].each do |attr|
+  [:file, :line, :evaluation_time].each do |attr|
     it "should support #{attr}" do
       @status.send(attr.to_s + "=", "foo")
       @status.send(attr).should == "foo"

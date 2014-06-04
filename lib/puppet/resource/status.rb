@@ -14,10 +14,6 @@ module Puppet
       include Puppet::Util::Tagging
       include Puppet::Network::FormatSupport
 
-      # @!attribute [rw] node
-      #   Unused
-      attr_accessor :node
-
       # @!attribute [rw] file
       #   @return [String] The file where `@real_resource` was defined.
       attr_accessor :file
@@ -25,14 +21,6 @@ module Puppet
       # @!attribute [rw] line
       #   @return [Integer] The line number in the file where `@real_resource` was defined.
       attr_accessor :line
-
-      # @!attribute [rw] current_values
-      #   Unused
-      attr_accessor :current_values
-
-      # @!attribute [rw] status
-      #   Unused
-      attr_accessor :status
 
       # @!attribute [rw] evaluation_time
       #   @return [Float] The time elapsed in sections while evaluating `@real_resource`.
