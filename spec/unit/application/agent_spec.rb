@@ -558,7 +558,6 @@ describe Puppet::Application::Agent do
         Puppet[:onetime] = true
         @puppetd.options[:client] = :client
         @puppetd.options[:detailed_exitcodes] = false
-        Puppet.stubs(:newservice)
       end
 
       it "should exit if no defined --client" do
