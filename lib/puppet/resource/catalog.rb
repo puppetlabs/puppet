@@ -184,11 +184,14 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # The relationship_graph form of the catalog. This contains all of the
   # dependency edges that are used for determining order.
   #
+  # @param given_prioritizer [Puppet::Graph::Prioritizer] The prioritization
+  #   strategy to use when constructing the relationship graph. Defaults the
+  #   being determined by the `ordering` setting.
   # @return [Puppet::Graph::RelationshipGraph]
   # @api public
-  def relationship_graph
+  def relationship_graph(given_prioritizer = nil)
     if @relationship_graph.nil?
-      @relationship_graph = Puppet::Graph::RelationshipGraph.new(prioritizer)
+      @relationship_graph = Puppet::Graph::RelationshipGraph.new(given_prioritizer || prioritizer)
       @relationship_graph.populate_from(self)
     end
     @relationship_graph
