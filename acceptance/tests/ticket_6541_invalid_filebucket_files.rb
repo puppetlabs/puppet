@@ -3,7 +3,7 @@ test_name "#6541: file type truncates target when filebucket cannot retrieve has
 agents.each do |agent|
   target=agent.tmpfile('6541-target')
 
-  on agent, host_command('rm -rf #{host["puppetvardir"]}/*bucket')
+  on agent, host_command('rm -rf #{host.puppet["vardir"]}/*bucket')
 
   step "write zero length file"
   manifest = "file { '#{target}': content => '' }"
