@@ -321,14 +321,7 @@ module PSON
         module Float
           # Returns a PSON string representation for this Float number.
           def to_pson(state = nil, *)
-            case
-            when infinite?
-              if !state || state.allow_nan?
-                to_s
-              else
-                raise GeneratorError, "#{self} not allowed in PSON"
-              end
-            when nan?
+            if infinite? || nan?
               if !state || state.allow_nan?
                 to_s
               else
