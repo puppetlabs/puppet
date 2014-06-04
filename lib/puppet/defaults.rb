@@ -68,6 +68,20 @@ module Puppet
         * emerg
         * crit
         ",
+    },
+    :disable_warnings => {
+      :default => [],
+      :type    => :array,
+      :desc    => "A list of warning types to disable. Currently the only warning type that can be
+        disabled are deprecations, but more warning types may be added later.",
+      :hook      => proc do |value|
+        values = munge(value)
+        valid   = %w[deprecations]
+        invalid = values - (values & valid)
+        if not invalid.empty?
+          raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
+        end
+      end
     }
   )
 
