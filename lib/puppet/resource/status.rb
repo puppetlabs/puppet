@@ -12,7 +12,6 @@ module Puppet
     # @api private
     class Status
       include Puppet::Util::Tagging
-      include Puppet::Util::Logging
       include Puppet::Network::FormatSupport
 
       # @!attribute [rw] node
@@ -60,10 +59,6 @@ module Puppet
       #   @example A whit associated with a class
       #     status.containment_path #=> ["Whit[Admissible_class[Main]]"]
       attr_reader :containment_path
-
-      # @!attribute [r] default_log_level
-      #   Unused
-      attr_reader :default_log_level
 
       # @!attribute [r] time
       #   @return [Time] The time that this status object was created
@@ -222,12 +217,6 @@ module Puppet
 
       def to_yaml_properties
         YAML_ATTRIBUTES & super
-      end
-
-      private
-
-      def log_source
-        source_description
       end
     end
   end
