@@ -428,6 +428,7 @@ module Puppet
       Setting a global value for config_version in puppet.conf is deprecated. Please set a
       per-environment value in environment.conf instead. For more info, see
       http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      :deprecated => :allowed_on_commandline,
     },
     :zlib => {
         :default  => true,
@@ -911,7 +912,8 @@ EOT
       :type       => :directory,
       :desc       => "Used to build the default value of the `manifest` setting. Has no other purpose.
 
-        This setting is deprecated."
+        This setting is deprecated.",
+      :deprecated => :completely,
     },
     :manifest => {
       :default    => "$manifestdir/site.pp",
@@ -925,6 +927,7 @@ EOT
         environment's `manifests` directory as the main manifest, you can set
         `manifest` in environment.conf. For more info, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      :deprecated => :allowed_on_commandline,
     },
     :code => {
       :default    => "",
@@ -1012,6 +1015,7 @@ EOT
         default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
         you can set `modulepath` in environment.conf. For more info, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      :deprecated => :allowed_on_commandline,
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
@@ -1839,7 +1843,8 @@ EOT
         :desc     => "Where Puppet looks for template files.  Can be a list of colon-separated
           directories.
 
-          This setting is deprecated. Please put your templates in modules instead."
+          This setting is deprecated. Please put your templates in modules instead.",
+        :deprecated => :completely,
     },
 
     :allow_variables_with_dashes => {
