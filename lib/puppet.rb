@@ -34,7 +34,6 @@ module Puppet
   class << self
     include Puppet::Util
     attr_reader :features
-    attr_writer :name
   end
 
   # the hash that determines how our system behaves
