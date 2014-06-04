@@ -42,19 +42,25 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/.*/, :absent)
   end
 
-  newproperty(:mirrorlist) do
-    desc "The URL that holds the list of mirrors for this repository.
-      #{ABSENT_DOC}"
+  {:mirrorlist => "The URL that holds the list of mirrors for this repository.",
+   :include =>  "The URL of a remote file containing additional yum 
+   configuration settings. Puppet does not check for this file's existence or 
+   validity.",
+   :proxy => "URL to the proxy server for this repository.",
+   :metalink => "Metalink for mirrors.",}.each_pair do |key, value|
+   newproperty(key) do
+     desc value + " #{ABSENT_DOC}"
 
-    newvalues(/.*/, :absent)
-    validate do |value|
-      next if value.to_s == 'absent'
-      parsed = URI.parse(value)
+     newvalues(/.*/, :absent)
+     validate do |value|
+       next if value.to_s == 'absent'
+       parsed = URI.parse(value)
 
-      unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
-      end
-    end
+       unless VALID_SCHEMES.include?(parsed.scheme)
+         raise "Must be a valid URL"
+       end
+     end
+   end
   end
 
   newproperty(:baseurl) do
@@ -115,22 +121,6 @@ Puppet::Type.newtype(:yumrepo) do
         unless VALID_SCHEMES.include?(parsed.scheme)
           raise "Must be a valid URL"
         end
-      end
-    end
-  end
-
-  newproperty(:include) do
-    desc "The URL of a remote file containing additional yum configuration
-      settings. Puppet does not check for this file's existence or validity.
-      #{ABSENT_DOC}"
-
-    newvalues(/.*/, :absent)
-    validate do |value|
-      next if value.to_s == 'absent'
-      parsed = URI.parse(value)
-
-      unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
       end
     end
   end
@@ -224,20 +214,6 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(/^\d+$/, :absent)
   end
 
-  newproperty(:proxy) do
-    desc "URL to the proxy server for this repository. #{ABSENT_DOC}"
-
-    newvalues(/.*/, :absent)
-    validate do |value|
-      next if value.to_s == 'absent'
-      parsed = URI.parse(value)
-
-      unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
-      end
-    end
-  end
-
   newproperty(:proxy_username) do
     desc "Username for this proxy. #{ABSENT_DOC}"
 
@@ -286,20 +262,6 @@ Puppet::Type.newtype(:yumrepo) do
       to repos/remote sites. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
-  end
-
-  newproperty(:metalink) do
-    desc "Metalink for mirrors. #{ABSENT_DOC}"
-
-    newvalues(/.*/, :absent)
-    validate do |value|
-      next if value.to_s == 'absent'
-      parsed = URI.parse(value)
-
-      unless VALID_SCHEMES.include?(parsed.scheme)
-        raise "Must be a valid URL"
-      end
-    end
   end
 
   newproperty(:skip_if_unavailable) do
