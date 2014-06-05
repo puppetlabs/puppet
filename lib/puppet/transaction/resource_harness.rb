@@ -173,7 +173,7 @@ class Puppet::Transaction::ResourceHarness
   # portion of time.  This compare satisfies compatibility requirements for
   # Ruby 1.8.7, where to_r does not exist on the Time class.
   def are_audited_values_equal(a, b)
-    a == b || (a.is_a?(Time) && a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec) 
+    a == b || (a.is_a?(Time) && b.is_a?(Time) && a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec)
   end
   private :are_audited_values_equal
 
