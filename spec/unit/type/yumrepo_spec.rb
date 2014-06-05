@@ -115,6 +115,26 @@ shared_examples_for "a yumrepo parameter that accepts multiple URLs" do |param|
   end
 end
 
+shared_examples_for "a yumrepo parameter that accepts kMG units" do |param|
+  %w[k M G].each do |unit|
+    it "can accept an integer with #{unit} units" do
+      described_class.new(
+        :name => 'puppetlabs',
+        param => "123#{unit}"
+      )
+    end
+  end
+
+  it "fails if wrong unit passed" do
+    expect {
+      described_class.new(
+        :name => 'puppetlabs',
+        param => '123J'
+      )
+    }.to raise_error(Puppet::ResourceError, /Parameter #{param} failed/)
+  end
+end
+
 describe Puppet::Type.type(:yumrepo) do
   it "has :name as its namevar" do
     expect(described_class.key_attributes).to eq [:name]
@@ -249,6 +269,19 @@ describe Puppet::Type.type(:yumrepo) do
     describe "metadata_expire" do
       it_behaves_like "a yumrepo parameter that can be absent", :metadata_expire
       it_behaves_like "a yumrepo parameter that expects a natural value", :metadata_expire
+
+      it "accepts dhm units" do
+        %W[d h m].each do |unit|
+          described_class.new(
+            :name            => 'puppetlabs',
+            :metadata_expire => "123#{unit}"
+          )
+        end
+      end
+
+      it "accepts never as value" do
+        described_class.new(:name => 'puppetlabs', :metadata_expire => 'never')
+      end
     end
 
     describe "protect" do
@@ -305,9 +338,44 @@ describe Puppet::Type.type(:yumrepo) do
       it_behaves_like "a yumrepo parameter that accepts a single URL", :metalink
     end
 
+
     describe "cost" do
       it_behaves_like "a yumrepo parameter that can be absent", :cost
       it_behaves_like "a yumrepo parameter that expects a natural value", :cost
+    end
+
+    describe "throttle" do
+      it_behaves_like "a yumrepo parameter that can be absent", :throttle
+      it_behaves_like "a yumrepo parameter that expects a natural value", :throttle
+      it_behaves_like "a yumrepo parameter that accepts kMG units", :throttle
+
+      it "accepts percentage as unit" do
+        described_class.new(
+          :name     => 'puppetlabs',
+          :throttle => '123%'
+        )
+      end
+    end
+
+    describe "bandwidth" do
+      it_behaves_like "a yumrepo parameter that can be absent", :bandwidth
+      it_behaves_like "a yumrepo parameter that expects a natural value", :bandwidth
+      it_behaves_like "a yumrepo parameter that accepts kMG units", :bandwidth
+    end
+
+    describe "gpgcakey" do
+      it_behaves_like "a yumrepo parameter that can be absent", :gpgcakey
+      it_behaves_like "a yumrepo parameter that accepts a single URL", :gpgcakey
+    end
+
+    describe "retries" do
+      it_behaves_like "a yumrepo parameter that can be absent", :retries
+      it_behaves_like "a yumrepo parameter that expects a natural value", :retries
+    end
+
+    describe "mirrorlist_expire" do
+      it_behaves_like "a yumrepo parameter that can be absent", :mirrorlist_expire
+      it_behaves_like "a yumrepo parameter that expects a natural value", :mirrorlist_expire
     end
   end
 end

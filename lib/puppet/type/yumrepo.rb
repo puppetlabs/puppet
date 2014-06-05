@@ -119,6 +119,13 @@ Puppet::Type.newtype(:yumrepo) do
     end
   end
 
+  newproperty(:mirrorlist_expire) do
+    desc "Time (in seconds) after which the mirrorlist locally cached
+      will expire.\n#{ABSENT_DOC}"
+
+    newvalues(/^[0-9]+$/, :absent)
+  end
+
   newproperty(:include) do
     desc "The URL of a remote file containing additional yum configuration
       settings. Puppet does not check for this file's existence or validity.
@@ -141,6 +148,20 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
+  end
+
+  newproperty(:gpgcakey) do
+    desc "The URL for the GPG CA key for this repository. #{ABSENT_DOC}"
+
+    newvalues(/.*/, :absent)
+    validate do |value|
+      next if value.to_s == 'absent'
+      parsed = URI.parse(value)
+
+      unless VALID_SCHEMES.include?(parsed.scheme)
+        raise "Must be a valid URL"
+      end
+    end
   end
 
   newproperty(:includepkgs) do
@@ -175,6 +196,14 @@ Puppet::Type.newtype(:yumrepo) do
     newvalues(YUM_BOOLEAN, :absent)
   end
 
+  newproperty(:retries) do
+    desc "Set the number of times any attempt to retrieve a file should
+      retry before returning an error. Setting this to `0` makes yum
+     try forever.\n#{ABSENT_DOC}"
+
+    newvalues(/^[0-9]+$/, :absent)
+  end
+
   newproperty(:http_caching) do
     desc "What to cache from this repository. #{ABSENT_DOC}"
 
@@ -192,7 +221,7 @@ Puppet::Type.newtype(:yumrepo) do
     desc "Number of seconds after which the metadata will expire.
       #{ABSENT_DOC}"
 
-    newvalues(/^\d+$/, :absent)
+    newvalues(/^([0-9]+[dhm]?|never)$/, :absent)
   end
 
   newproperty(:protect) do
@@ -216,6 +245,25 @@ Puppet::Type.newtype(:yumrepo) do
         fail("Must be within range 1-99")
       end
     end
+  end
+
+  newproperty(:throttle) do
+    desc "Enable bandwidth throttling for downloads. This option
+      can be expressed as a absolute data rate in bytes/sec or a
+      percentage `60%`. An SI prefix (k, M or G) may be appended
+      to the data rate values.\n#{ABSENT_DOC}"
+
+    newvalues(/^\d+[kMG%]?$/, :absent)
+  end
+
+  newproperty(:bandwidth) do
+    desc "Use to specify the maximum available network bandwidth
+      in bytes/second. Used with the `throttle` option. If `throttle`
+      is a percentage and `bandwidth` is `0` then bandwidth throttling
+      will be disabled. If `throttle` is expressed as a data rate then
+      this option is ignored.\n#{ABSENT_DOC}"
+
+    newvalues(/^\d+[kMG]?$/, :absent)
   end
 
   newproperty(:cost) do
