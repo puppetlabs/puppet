@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet_spec/compiler'
 
-describe Puppet::Type.type(:user), '(integration)' do
+describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
   include PuppetSpec::Compiler
 
