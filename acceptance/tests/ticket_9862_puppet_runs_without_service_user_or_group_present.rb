@@ -23,7 +23,7 @@ teardown do
   agents.each do |agent|
     step "ensure puppet resets it's user/group settings"
     on agent, puppet('apply', '-e', '"notify { puppet_run: }"')
-    on agent, "find #{agent['puppetvardir']} -user existinguser" do
+    on agent, "find #{agent.puppet['vardir']} -user existinguser" do
       assert_equal('',stdout)
     end
     on agent, puppet('resource', 'user', 'existinguser', 'ensure=absent')

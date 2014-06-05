@@ -10,12 +10,14 @@ Puppet::Util::Reference.newreference :metaparameter, :doc => "All Puppet metapar
 
   str = %{
 
-# Metaparameters
+Metaparameters are attributes that work with any resource type, including custom
+types and defined types.
 
-Metaparameters are parameters that work with any resource type; they are part of the
-Puppet framework itself rather than being part of the implementation of any
-given instance.  Thus, any defined metaparameter can be used with any instance
-in your manifest, including defined components.
+In general, they affect _Puppet's_ behavior rather than the desired state of the
+resource. Metaparameters do things like add metadata to a resource (`alias`,
+`tag`), set limits on when the resource should be synced (`require`, `schedule`,
+etc.), prevent Puppet from making changes (`noop`), and change logging verbosity
+(`loglevel`).
 
 ## Available Metaparameters
 
