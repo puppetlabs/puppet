@@ -11,6 +11,7 @@ class Puppet::Settings
   require 'puppet/settings/base_setting'
   require 'puppet/settings/string_setting'
   require 'puppet/settings/enum_setting'
+  require 'puppet/settings/array_setting'
   require 'puppet/settings/file_setting'
   require 'puppet/settings/directory_setting'
   require 'puppet/settings/file_or_directory_setting'
@@ -93,6 +94,8 @@ class Puppet::Settings
     @used = []
 
     @hooks_to_call_on_application_initialization = []
+    @deprecated_setting_names = []
+    @deprecated_settings_that_have_been_configured = []
 
     @translate = Puppet::Settings::ValueTranslator.new
     @config_file_parser = Puppet::Settings::ConfigFile.new(@translate)
@@ -109,7 +112,9 @@ class Puppet::Settings
   # @return [Object] the value of the setting
   # @api private
   def [](param)
-    Puppet.deprecation_warning("Accessing '#{param}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations") if DEPRECATED_SETTINGS.include?(param)
+    if @deprecated_setting_names.include?(param)
+      issue_deprecation_warning(setting(param), "Accessing '#{param}' as a setting is deprecated.")
+    end
     value(param)
   end
 
@@ -118,7 +123,9 @@ class Puppet::Settings
   # @param value [Object] the new value of the setting
   # @api private
   def []=(param, value)
-    Puppet.deprecation_warning("Modifying '#{param}' as a setting is deprecated. See http://links.puppetlabs.com/env-settings-deprecations") if DEPRECATED_SETTINGS.include?(param)
+    if @deprecated_setting_names.include?(param)
+      issue_deprecation_warning(setting(param), "Modifying '#{param}' as a setting is deprecated.")
+    end
     @value_sets[:memory].set(param, value)
     unsafe_flush_cache
   end
@@ -315,6 +322,7 @@ class Puppet::Settings
     end
     apply_metadata
     call_hooks_deferred_to_application_initialization
+    issue_deprecations
 
     @app_defaults_initialized = true
   end
@@ -392,8 +400,8 @@ class Puppet::Settings
       end
     end
 
-    if FULLY_DEPRECATED_SETTINGS.include?(str)
-      Puppet.deprecation_warning("Setting #{str} is deprecated. See http://links.puppetlabs.com/env-settings-deprecations", "setting-#{str}")
+    if s = @config[str]
+      @deprecated_settings_that_have_been_configured << s if s.completely_deprecated?
     end
 
     @value_sets[:cli].set(str, value)
@@ -533,7 +541,7 @@ class Puppet::Settings
     # If we get here and don't have any data, we just return and don't muck with the current state of the world.
     return if data.nil?
 
-    issue_deprecations(data)
+    record_deprecations_from_puppet_conf(data)
 
     # If we get here then we have some data, so we need to clear out any previous settings that may have come from
     #  config files.
@@ -656,6 +664,7 @@ class Puppet::Settings
       :terminus   => TerminusSetting,
       :duration   => DurationSetting,
       :ttl        => TTLSetting,
+      :array      => ArraySetting,
       :enum       => EnumSetting,
       :priority   => PrioritySetting,
       :autosign   => AutosignSetting,
@@ -863,6 +872,8 @@ class Puppet::Settings
           @hooks_to_call_on_application_initialization << tryconfig
         end
       end
+
+      @deprecated_setting_names << name if tryconfig.deprecated?
     end
 
     call.each do |setting|
@@ -1053,24 +1064,50 @@ Generated on #{Time.now}.
 
   private
 
-  DEPRECATED_ENVIRONMENT_SETTINGS = [:manifest, :modulepath, :config_version].freeze
-  FULLY_DEPRECATED_SETTINGS = [:templatedir, :manifestdir].freeze
-  DEPRECATED_SETTINGS = (DEPRECATED_ENVIRONMENT_SETTINGS + FULLY_DEPRECATED_SETTINGS).freeze
+  DEPRECATION_REFS = {
+    [:manifest, :modulepath, :config_version, :templatedir, :manifestdir] =>
+      "See http://links.puppetlabs.com/env-settings-deprecations"
+  }.freeze
 
-  def issue_deprecations(data)
-    sections = data.sections.inject([]) do |accum,entry|
+  # Record that we want to issue a deprecation warning later in the application
+  # initialization cycle when we have settings bootstrapped to the point where
+  # we can read the Puppet[:disable_warnings] setting.
+  #
+  # We are only recording warnings applicable to settings set in puppet.conf
+  # itself.
+  def record_deprecations_from_puppet_conf(puppet_conf)
+    conf_sections = puppet_conf.sections.inject([]) do |accum,entry|
       accum << entry[1] if [:main, :master, :agent, :user].include?(entry[0])
       accum
     end
 
-    sections.each do |section|
-      DEPRECATED_ENVIRONMENT_SETTINGS.each do |s|
-        Puppet.deprecation_warning("Setting #{s} is deprecated in puppet.conf. See http://links.puppetlabs.com/env-settings-deprecations", "puppet-conf-setting-#{s}") if !section.setting(s).nil?
+    conf_sections.each do |section|
+      section.settings.each do |conf_setting|
+        if setting = self.setting(conf_setting.name)
+          @deprecated_settings_that_have_been_configured << setting if setting.deprecated?
+        end
       end
+    end
+  end
 
-      FULLY_DEPRECATED_SETTINGS.each do |s|
-        Puppet.deprecation_warning("Setting #{s} is deprecated. See http://links.puppetlabs.com/env-settings-deprecations", "setting-#{s}") if !section.setting(s).nil?
-      end
+  def issue_deprecations
+    @deprecated_settings_that_have_been_configured.each do |setting|
+      issue_deprecation_warning(setting)
+    end
+  end
+
+  def issue_deprecation_warning(setting, msg = nil)
+    name = setting.name
+    ref = DEPRECATION_REFS.find { |params,reference| params.include?(name) }
+    ref = ref[1] if ref
+    case
+    when msg
+      msg << " #{ref}" if ref
+      Puppet.deprecation_warning(msg)
+    when setting.completely_deprecated?
+      Puppet.deprecation_warning("Setting #{name} is deprecated. #{ref}", "setting-#{name}")
+    when setting.allowed_on_commandline?
+      Puppet.deprecation_warning("Setting #{name} is deprecated in puppet.conf. #{ref}", "puppet-conf-setting-#{name}")
     end
   end
 

@@ -65,6 +65,7 @@ module Puppet::Util::Logging
   # @param [String] key Optional key to mark the message as unique. If not
   #   passed in, the originating call line will be used instead.
   def deprecation_warning(message, key = nil)
+    return if Puppet[:disable_warnings].include?('deprecations')
     $deprecation_warnings ||= {}
     if $deprecation_warnings.length < 100 then
       key ||= (offender = get_deprecation_offender)

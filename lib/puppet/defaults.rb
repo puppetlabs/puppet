@@ -58,6 +58,20 @@ module Puppet
       :type       => :enum,
       :values     => ["debug","info","notice","warning","err","alert","emerg","crit"],
       :desc       => "Default logging level",
+    },
+    :disable_warnings => {
+      :default => [],
+      :type    => :array,
+      :desc    => "A list of warning types to disable. Currently the only warning type that can be
+        disabled are deprecations, but more warning types may be added later.",
+      :hook      => proc do |value|
+        values = munge(value)
+        valid   = %w[deprecations]
+        invalid = values - (values & valid)
+        if not invalid.empty?
+          raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
+        end
+      end
     }
   )
 
@@ -414,6 +428,7 @@ module Puppet
       Setting a global value for config_version in puppet.conf is deprecated. Please set a
       per-environment value in environment.conf instead. For more info, see
       http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      :deprecated => :allowed_on_commandline,
     },
     :zlib => {
         :default  => true,
@@ -897,7 +912,8 @@ EOT
       :type       => :directory,
       :desc       => "Used to build the default value of the `manifest` setting. Has no other purpose.
 
-        This setting is deprecated."
+        This setting is deprecated.",
+      :deprecated => :completely,
     },
     :manifest => {
       :default    => "$manifestdir/site.pp",
@@ -911,6 +927,7 @@ EOT
         environment's `manifests` directory as the main manifest, you can set
         `manifest` in environment.conf. For more info, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      :deprecated => :allowed_on_commandline,
     },
     :code => {
       :default    => "",
@@ -998,6 +1015,7 @@ EOT
         default modulepath of `<ACTIVE ENVIRONMENT'S MODULES DIR>:$basemodulepath`,
         you can set `modulepath` in environment.conf. For more info, see
         http://docs.puppetlabs.com/puppet/latest/reference/environments.html",
+      :deprecated => :allowed_on_commandline,
     },
     :ssl_client_header => {
       :default    => "HTTP_X_CLIENT_DN",
@@ -1825,7 +1843,8 @@ EOT
         :desc     => "Where Puppet looks for template files.  Can be a list of colon-separated
           directories.
 
-          This setting is deprecated. Please put your templates in modules instead."
+          This setting is deprecated. Please put your templates in modules instead.",
+        :deprecated => :completely,
     },
 
     :allow_variables_with_dashes => {
