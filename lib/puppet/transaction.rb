@@ -138,7 +138,7 @@ class Puppet::Transaction
   end
 
   def relationship_graph
-    catalog.relationship_graph
+    catalog.relationship_graph(@prioritizer)
   end
 
   def resource_status(resource)
