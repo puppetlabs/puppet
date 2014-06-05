@@ -572,7 +572,7 @@ module Puppet
       defaultto false
     end
 
-    def eval_generate
+    def generate
       return [] if self[:purge_ssh_keys].empty?
       find_unmanaged_keys
     end
@@ -639,7 +639,7 @@ module Puppet
     #
     # @return [Array<Puppet::Type::Ssh_authorized_key] a list of resources
     #   representing the found keys
-    # @see eval_generate
+    # @see generate
     # @api private
     def find_unmanaged_keys
       self[:purge_ssh_keys].
@@ -658,7 +658,7 @@ module Puppet
     # on the keys. These are considered names of possible ssh_authorized_keys
     # resources. Keys that are managed by the present catalog are ignored.
     #
-    # @see eval_generate
+    # @see generate
     # @api private
     # @return [Array<Puppet::Type::Ssh_authorized_key] a list of resources
     #   representing the found keys
