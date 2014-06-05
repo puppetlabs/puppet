@@ -25,8 +25,8 @@ class Puppet::Configurer::Downloader
     files
   end
 
-  def initialize(name, path, source, ignore = nil, environment = nil)
-    @name, @path, @source, @ignore, @environment = name, path, source, ignore, environment
+  def initialize(name, path, source, ignore = nil, environment = nil, source_permissions = :ignore)
+    @name, @path, @source, @ignore, @environment, @source_permissions = name, path, source, ignore, environment, source_permissions
   end
 
   def catalog
@@ -51,7 +51,7 @@ class Puppet::Configurer::Downloader
       :path => path,
       :recurse => true,
       :source => source,
-      :source_permissions => :ignore,
+      :source_permissions => @source_permissions,
       :tag => name,
       :purge => true,
       :force => true,
