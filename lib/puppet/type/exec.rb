@@ -185,8 +185,11 @@ module Puppet
 
       # Most validation is handled by the SUIDManager class.
       validate do |user|
-        self.fail "Only root can execute commands as other users" unless Puppet.features.root?
-        self.fail "Unable to execute commands as other users on Windows" if Puppet.features.microsoft_windows?
+        if Puppet.features.microsoft_windows?
+          self.fail "Unable to execute commands as other users on Windows"
+        else
+          self.fail "Only root can execute commands as other users" unless Puppet.features.root? or Etc.getpwuid(Process.uid).name == user
+        end
       end
     end
 
