@@ -98,12 +98,12 @@ module Puppet::Util::Windows
     # address of the binary SID structure). The returned value can be used in
     # Win32 APIs that expect a PSID, e.g. IsValidSid. The account for this
     # SID may or may not exist.
-    def string_to_sid_ptr(string, &block)
-      lpcwstr = FFI::MemoryPointer.from_string_to_wide_string(string)
+    def string_to_sid_ptr(string_sid, &block)
+      lpcwstr = FFI::MemoryPointer.from_string_to_wide_string(string_sid)
       sid_ptr_ptr = FFI::MemoryPointer.new(:pointer, 1)
 
       if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string}")
+        raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string_sid}")
       end
 
       begin
@@ -116,8 +116,8 @@ module Puppet::Util::Windows
     end
 
     # Return true if the string is a valid SID, e.g. "S-1-5-32-544", false otherwise.
-    def valid_sid?(string)
-      string_to_sid_ptr(string) { |ptr| true }
+    def valid_sid?(string_sid)
+      string_to_sid_ptr(string_sid) { |ptr| true }
     rescue Puppet::Util::Windows::Error => e
       if e.code == ERROR_INVALID_SID_STRUCTURE
         false
