@@ -2,14 +2,8 @@ require 'puppet/util/windows'
 
 module Puppet::Util::Windows
   module SID
-    require 'windows/security'
-    include ::Windows::Security
-
-    require 'windows/memory'
-    include ::Windows::Memory
-
-    require 'windows/msvcrt/string'
-    include ::Windows::MSVCRT::String
+    require 'ffi'
+    extend FFI::Library
 
     # missing from Windows::Error
     ERROR_NONE_MAPPED           = 1332
@@ -68,21 +62,35 @@ module Puppet::Util::Windows
       nil
     end
 
+    # http://stackoverflow.com/a/1792930 - 68 bytes, 184 characters in a string
+    MAXIMUM_SID_STRING_LENGTH = 184
+
     # Convert a SID pointer to a SID string, e.g. "S-1-5-32-544".
     def sid_ptr_to_string(psid)
-      sid_buf = 0.chr * 256
-      str_ptr = 0.chr * 4
+      if ! psid.instance_of?(FFI::Pointer) || IsValidSid(psid) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Invalid SID")
+      end
 
-      raise Puppet::Util::Windows::Error.new("Invalid SID") unless IsValidSid(psid)
-
-      raise Puppet::Util::Windows::Error.new("Failed to convert binary SID") unless ConvertSidToStringSid(psid, str_ptr)
+      buffer_ptr = FFI::MemoryPointer.new(:pointer, 1)
 
       begin
-        strncpy(sid_buf, str_ptr.unpack('L')[0], sid_buf.size - 1)
-        sid_buf[sid_buf.size - 1] = 0.chr
-        return sid_buf.strip
+        if ConvertSidToStringSidW(psid, buffer_ptr) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to convert binary SID")
+        end
+
+        wide_string_ptr = buffer_ptr.read_pointer
+
+        if wide_string_ptr.null?
+          raise Puppet::Error.new("ConvertSidToStringSidW failed to allocate buffer for sid")
+        end
+
+        return wide_string_ptr.read_arbitrary_wide_string_up_to(MAXIMUM_SID_STRING_LENGTH)
       ensure
-        LocalFree(str_ptr.unpack('L')[0])
+        if ! wide_string_ptr.nil? && ! wide_string_ptr.null?
+          if LocalFree(wide_string_ptr.address) != FFI::Pointer::NULL_HANDLE
+            Puppet.debug "LocalFree memory leak"
+          end
+        end
       end
     end
 
@@ -90,23 +98,26 @@ module Puppet::Util::Windows
     # address of the binary SID structure). The returned value can be used in
     # Win32 APIs that expect a PSID, e.g. IsValidSid. The account for this
     # SID may or may not exist.
-    def string_to_sid_ptr(string, &block)
-      sid_buf = 0.chr * 80
-      string_addr = [string].pack('p*').unpack('L')[0]
+    def string_to_sid_ptr(string_sid, &block)
+      lpcwstr = FFI::MemoryPointer.from_string_to_wide_string(string_sid)
+      sid_ptr_ptr = FFI::MemoryPointer.new(:pointer, 1)
 
-      raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string}") unless ConvertStringSidToSid(string_addr, sid_buf)
+      if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string_sid}")
+      end
 
-      sid_ptr = sid_buf.unpack('L')[0]
       begin
-        yield sid_ptr
+        yield sid_ptr = sid_ptr_ptr.read_pointer
       ensure
-        LocalFree(sid_ptr)
+        if LocalFree(sid_ptr.address) != FFI::Pointer::NULL_HANDLE
+          Puppet.debug "LocalFree memory leak"
+        end
       end
     end
 
     # Return true if the string is a valid SID, e.g. "S-1-5-32-544", false otherwise.
-    def valid_sid?(string)
-      string_to_sid_ptr(string) { |ptr| true }
+    def valid_sid?(string_sid)
+      string_to_sid_ptr(string_sid) { |ptr| true }
     rescue Puppet::Util::Windows::Error => e
       if e.code == ERROR_INVALID_SID_STRUCTURE
         false
@@ -114,5 +125,40 @@ module Puppet::Util::Windows
         raise
       end
     end
+
+    ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379151(v=vs.85).aspx
+    # BOOL WINAPI IsValidSid(
+    #   _In_  PSID pSid
+    # );
+    ffi_lib :advapi32
+    attach_function_private :IsValidSid,
+      [:pointer], :win32_bool
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376399(v=vs.85).aspx
+    # BOOL ConvertSidToStringSid(
+    #   _In_   PSID Sid,
+    #   _Out_  LPTSTR *StringSid
+    # );
+    ffi_lib :advapi32
+    attach_function_private :ConvertSidToStringSidW,
+      [:pointer, :pointer], :win32_bool
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa376402(v=vs.85).aspx
+    # BOOL WINAPI ConvertStringSidToSid(
+    #   _In_   LPCTSTR StringSid,
+    #   _Out_  PSID *Sid
+    # );
+    ffi_lib :advapi32
+    attach_function_private :ConvertStringSidToSidW,
+      [:lpcwstr, :pointer], :win32_bool
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa366730(v=vs.85).aspx
+    # HLOCAL WINAPI LocalFree(
+    #   _In_  HLOCAL hMem
+    # );
+    ffi_lib :kernel32
+    attach_function_private :LocalFree, [:handle], :handle
   end
 end

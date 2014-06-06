@@ -16,6 +16,7 @@ module Puppet::Util::Windows::APITypes
 
   class ::FFI::Pointer
     NULL_HANDLE = 0
+    NULL_TERMINATOR_WCHAR = 0
 
     def self.from_string_to_wide_string(str)
       str = Puppet::Util::Windows::String.wide_string(str)
@@ -38,10 +39,27 @@ module Puppet::Util::Windows::APITypes
       type_size == 4 ? read_uint32 : read_uint64
     end
 
+    alias_method :read_wchar, :read_uint16
+
     def read_wide_string(char_length)
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes
       str = get_bytes(0, char_length * 2).force_encoding('UTF-16LE')
       str.encode(Encoding.default_external)
+    end
+
+    def read_arbitrary_wide_string_up_to(max_char_length = 512)
+      # max_char_length is number of wide chars (typically excluding NULLs), *not* bytes
+      # use a pointer to read one UTF-16LE char (2 bytes) at a time
+      wchar_ptr = FFI::Pointer.new(:wchar, address)
+
+      # now iterate 2 bytes at a time until an offset lower than max_char_length is found
+      0.upto(max_char_length - 1) do |i|
+        if wchar_ptr[i].read_wchar == NULL_TERMINATOR_WCHAR
+          return read_wide_string(i)
+        end
+      end
+
+      read_wide_string(max_char_length)
     end
 
     alias_method :write_dword, :write_uint32
@@ -99,4 +117,5 @@ module Puppet::Util::Windows::APITypes
 
   # 8 bits per byte
   FFI.typedef :uchar, :byte
+  FFI.typedef :uint16, :wchar
 end
