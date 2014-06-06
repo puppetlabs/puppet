@@ -132,16 +132,8 @@ class Puppet::Pops::Evaluator::CompareOperator
     when Numeric
       # convert string to number, true if ==
       equals(a, b)
-    when Puppet::Pops::Types::PStringType
-      # is there a string in a string? (yes, each char is a string, and an empty string contains an empty string)
-      true
     else
-      if b == Puppet::Pops::Types::PDataType || b == Puppet::Pops::Types::PObjectType
-        # A String is Data and Object (but not of all subtypes of those types).
-        true
-      else
-        false
-      end
+      false
     end
   end
 
