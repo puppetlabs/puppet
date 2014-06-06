@@ -467,15 +467,15 @@ describe Puppet::Type.type(:user) do
         res.catalog = Puppet::Resource::Catalog.new
         res
       end
-      it "should not just return from eval_generate" do
+      it "should not just return from generate" do
         subject.expects :find_unmanaged_keys
-        subject.eval_generate
+        subject.generate
       end
       it "should check each keyfile for readability" do
         paths.each do |path|
           File.expects(:readable?).with(path)
         end
-        subject.eval_generate
+        subject.generate
       end
     end
 
@@ -487,11 +487,11 @@ describe Puppet::Type.type(:user) do
       end
       context "when purging is disabled" do
         let(:purge_param) { false }
-        its(:eval_generate) { should be_empty }
+        its(:generate) { should be_empty }
       end
       context "when purging is enabled" do
         let(:purge_param) { my_fixture('authorized_keys') }
-        let(:resources) { subject.eval_generate }
+        let(:resources) { subject.generate }
         it "should contain a resource for each key" do
           names = resources.collect { |res| res.name }
           names.should include("keyname1")
