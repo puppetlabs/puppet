@@ -1,7 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/windows'
-require 'puppet/util/windows/registry'
 
 describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows? do
   subject do
@@ -43,12 +42,14 @@ describe Puppet::Util::Windows::Registry, :if => Puppet::Util::Platform.windows?
       yielded.should == subkey
     end
 
-    [described_class::KEY64, described_class::KEY32].each do |access|
-      it "should open the key for read access 0x#{access.to_s(16)}" do
-        mode = described_class::KEY_READ | access
-        hkey.expects(:open).with(path, mode)
+    if Puppet::Util::Platform.windows?
+      [described_class::KEY64, described_class::KEY32].each do |access|
+        it "should open the key for read access 0x#{access.to_s(16)}" do
+          mode = described_class::KEY_READ | access
+          hkey.expects(:open).with(path, mode)
 
-        subject.open(name, path, mode) {|reg| }
+          subject.open(name, path, mode) {|reg| }
+        end
       end
     end
 

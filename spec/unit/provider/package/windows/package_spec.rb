@@ -32,7 +32,7 @@ describe Puppet::Provider::Package::Windows::Package do
     end
   end
 
-  context '::with_key' do
+  context '::with_key', :if => Puppet.features.microsoft_windows? do
     it 'should search HKLM (64 & 32) and HKCU (64 & 32)' do
       seq = sequence('reg')
 
@@ -44,7 +44,7 @@ describe Puppet::Provider::Package::Windows::Package do
       subject.with_key { |key, values| }
     end
 
-    it 'should ignore file not found exceptions', :if => Puppet.features.microsoft_windows? do
+    it 'should ignore file not found exceptions' do
       ex = Puppet::Util::Windows::Error.new('Failed to open registry key', Windows::Error::ERROR_FILE_NOT_FOUND)
 
       # make sure we don't stop after the first exception
@@ -55,7 +55,7 @@ describe Puppet::Provider::Package::Windows::Package do
       keys.should be_empty
     end
 
-    it 'should raise other types of exceptions', :if => Puppet.features.microsoft_windows? do
+    it 'should raise other types of exceptions' do
       ex = Puppet::Util::Windows::Error.new('Failed to open registry key', Windows::Error::ERROR_ACCESS_DENIED)
       subject.expects(:open).raises(ex)
 
