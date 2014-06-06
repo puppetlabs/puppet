@@ -19,7 +19,6 @@ Puppet.features.add(:microsoft_windows) do
     # ruby
     require 'Win32API'          # case matters in this require!
     require 'win32ole'
-    require 'win32/registry'
     # gems
     require 'sys/admin'
     require 'win32/process'
