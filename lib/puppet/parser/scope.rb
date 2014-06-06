@@ -849,14 +849,16 @@ class Puppet::Parser::Scope
         when String
           name.sub(/^([^:]{1,2})/, '::\1')
 
+        when Puppet::Resource
+          assert_class_and_title(name.type, name.title)
+          name.title.sub(/^([^:]{1,2})/, '::\1')
+
         when Puppet::Pops::Types::PHostClassType
           raise ArgumentError, "Cannot use an unspecific Class[] Type" unless name.class_name
           name.class_name.sub(/^([^:]{1,2})/, '::\1')
 
         when Puppet::Pops::Types::PResourceType
-          raise ArgumentError, "Cannot use an unspecific Resource[] where a Resource['class', name] is expected" if name.type_name.nil?
-          raise ArgumentError, "Cannot use a Resource[#{name.type_name}] where a Resource['class', name] is expected" unless name.type_name == "class"
-          raise ArgumentError, "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected" if name.title.nil?
+          assert_class_and_title(name.type_name, name.title)
           name.title.sub(/^([^:]{1,2})/, '::\1')
         end
       end
@@ -866,6 +868,18 @@ class Puppet::Parser::Scope
   end
 
   private
+
+  def assert_class_and_title(type_name, title)
+    if type_name.nil? || type_name == ''
+      raise ArgumentError, "Cannot use an unspecific Resource[] where a Resource['class', name] is expected"
+    end
+    unless type_name =~ /^[Cc]lass$/
+      raise ArgumentError, "Cannot use a Resource[#{type_name}] where a Resource['class', name] is expected"
+    end
+    if title.nil?
+      raise ArgumentError, "Cannot use an unspecific Resource['class'] where a Resource['class', name] is expected"
+    end
+  end
 
   def extend_with_functions_module
     root = Puppet.lookup(:root_environment)
