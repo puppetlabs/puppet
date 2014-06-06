@@ -169,7 +169,7 @@ module Puppet::Util::Windows::Process
   #   _In_  HANDLE hHandle,
   #   _In_  DWORD dwMilliseconds
   # );
-  ffi_lib 'kernel32'
+  ffi_lib :kernel32
   attach_function_private :WaitForSingleObject,
     [:handle, :dword], :dword
 
@@ -178,20 +178,20 @@ module Puppet::Util::Windows::Process
   #   _In_   HANDLE hProcess,
   #   _Out_  LPDWORD lpExitCode
   # );
-  ffi_lib 'kernel32'
+  ffi_lib :kernel32
   attach_function_private :GetExitCodeProcess,
     [:handle, :lpdword], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/ms683179(v=vs.85).aspx
   # HANDLE WINAPI GetCurrentProcess(void);
-  ffi_lib 'kernel32'
+  ffi_lib :kernel32
   attach_function_private :GetCurrentProcess, [], :handle
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
   # BOOL WINAPI CloseHandle(
   #   _In_  HANDLE hObject
   # );
-  ffi_lib 'kernel32'
+  ffi_lib :kernel32
   attach_function_private :CloseHandle, [:handle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
@@ -200,7 +200,7 @@ module Puppet::Util::Windows::Process
   #   _In_   DWORD DesiredAccess,
   #   _Out_  PHANDLE TokenHandle
   # );
-  ffi_lib 'advapi32'
+  ffi_lib :advapi32
   attach_function_private :OpenProcessToken,
     [:handle, :dword, :phandle], :win32_bool
 
@@ -221,7 +221,7 @@ module Puppet::Util::Windows::Process
   #   _In_      LPCTSTR lpName,
   #   _Out_     PLUID lpLuid
   # );
-  ffi_lib 'advapi32'
+  ffi_lib :advapi32
   attach_function_private :LookupPrivilegeValueW,
     [:lpcwstr, :lpcwstr, :pointer], :win32_bool
 
@@ -306,7 +306,7 @@ module Puppet::Util::Windows::Process
   #   _In_       DWORD TokenInformationLength,
   #   _Out_      PDWORD ReturnLength
   # );
-  ffi_lib 'advapi32'
+  ffi_lib :advapi32
   attach_function_private :GetTokenInformation,
     [:handle, TOKEN_INFORMATION_CLASS, :lpvoid, :dword, :pdword ], :win32_bool
 end
