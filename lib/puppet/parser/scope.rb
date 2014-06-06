@@ -839,7 +839,7 @@ class Puppet::Parser::Scope
   #
   # TODO: Change this for 4.0 to always make names absolute
   #
-  # @param names [Array<String>] names to (optinoally) make absolute
+  # @param names [Array<String>] names to (optionally) make absolute
   # @return [Array<String>] names after transformation
   #
   def transform_and_assert_classnames(names)
