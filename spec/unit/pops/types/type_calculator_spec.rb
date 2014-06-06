@@ -797,6 +797,32 @@ describe 'The type calculator' do
     end
 
     context 'when dealing with tuples' do
+      it 'matches empty tuples' do
+        tuple1 = tuple_t()
+        tuple2 = tuple_t()
+
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == true
+      end
+
+      it 'accepts an empty tuple as assignable to a tuple with a min size of 0' do
+        tuple1 = tuple_t(Object)
+        factory.constrain_size(tuple1, 0, :default)
+        tuple2 = tuple_t()
+
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == false
+      end
+
+      it 'accepts an empty tuple as assignable to a tuple with a min size of 0' do
+        tuple1 = tuple_t(Object)
+        factory.constrain_size(tuple1, 0, :default)
+        tuple2 = tuple_t()
+
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == false
+      end
+
       it 'should accept matching tuples' do
         tuple1 = tuple_t(1,2)
         tuple2 = tuple_t(Integer,Integer)
@@ -859,6 +885,17 @@ describe 'The type calculator' do
         factory.constrain_size(array, 2, 2)
         calculator.assignable?(tuple1, array).should == true
         calculator.assignable?(array, tuple1).should == true
+      end
+
+      it 'should accept empty array when tuple allows min of 0' do
+        tuple1 = tuple_t(Integer)
+        factory.constrain_size(tuple1, 0, 1)
+
+        array = array_t(Integer)
+        factory.constrain_size(array, 0, 0)
+
+        calculator.assignable?(tuple1, array).should == true
+        calculator.assignable?(array, tuple1).should == false
       end
     end
 
