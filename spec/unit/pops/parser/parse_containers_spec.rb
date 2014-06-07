@@ -100,6 +100,16 @@ describe "egrammar parsing containers" do
         }.to raise_error(/not a valid classname/)
       end
     end
+
+    context 'it should allow keywords as attribute names' do
+      ['and', 'case', 'class', 'default', 'define', 'else', 'elsif', 'if', 'in', 'inherits', 'node', 'or',
+        'undef', 'unless', 'type', 'attr', 'function', 'private'].each do |keyword|
+        it "such as #{keyword}" do
+          expect {parse("class x ($#{keyword}){} class { x: #{keyword} => 1 }")}.to_not raise_error
+        end
+      end
+    end
+
   end
 
   context "When the parser parses define" do
@@ -150,6 +160,15 @@ describe "egrammar parsing containers" do
         # The expression below is not allowed (which is good).
         #
         expect { dump(parse("define default {}")).should == "(define default ())"}.to raise_error(Puppet::ParseError)
+      end
+    end
+
+    context 'it should allow keywords as attribute names' do
+      ['and', 'case', 'class', 'default', 'define', 'else', 'elsif', 'if', 'in', 'inherits', 'node', 'or',
+        'undef', 'unless', 'type', 'attr', 'function', 'private'].each do |keyword|
+        it "such as #{keyword}" do
+          expect {parse("define x ($#{keyword}){} x { y: #{keyword} => 1 }")}.to_not raise_error
+        end
       end
     end
   end

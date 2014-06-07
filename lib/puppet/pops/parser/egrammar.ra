@@ -777,6 +777,10 @@ keyword
   | OR
   | UNDEF
   | UNLESS
+  | TYPE
+  | ATTR
+  | FUNCTION
+  | PRIVATE
 
 nil
   : { result = nil}
