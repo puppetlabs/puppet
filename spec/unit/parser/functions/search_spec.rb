@@ -20,4 +20,9 @@ describe "the 'search' function" do
     scope.expects(:add_namespace).with("who")
     scope.function_search(["where", "what", "who"])
   end
+
+  it "is deprecated" do
+    Puppet.expects(:deprecation_warning).with("The 'search' function is deprecated. See http://links.puppetlabs.com/search-function-deprecation")
+    scope.function_search(['wat'])
+  end
 end
