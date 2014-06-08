@@ -75,20 +75,22 @@ module Puppet::Util::Windows::User
 
   def load_profile(user, password)
     logon_user(user, password) do |token|
-      pi = PROFILEINFO.new
-      pi[:dwSize] = PROFILEINFO.size
-      pi[:dwFlags] = 1 # PI_NOUI - prevents display of profile error msgs
-      pi[:lpUserName] = FFI::MemoryPointer.from_string_to_wide_string(user)
+      FFI::MemoryPointer.from_string_to_wide_string(user) do |lpUserName|
+        pi = PROFILEINFO.new
+        pi[:dwSize] = PROFILEINFO.size
+        pi[:dwFlags] = 1 # PI_NOUI - prevents display of profile error msgs
+        pi[:lpUserName] = lpUserName
 
-      # Load the profile. Since it doesn't exist, it will be created
-      if LoadUserProfileW(token, pi.pointer) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to load user profile #{user.inspect}")
-      end
+        # Load the profile. Since it doesn't exist, it will be created
+        if LoadUserProfileW(token, pi.pointer) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to load user profile #{user.inspect}")
+        end
 
-      Puppet.debug("Loaded profile for #{user}")
+        Puppet.debug("Loaded profile for #{user}")
 
-      if UnloadUserProfile(token, pi[:hProfile]) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to unload user profile #{user.inspect}")
+        if UnloadUserProfile(token, pi[:hProfile]) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to unload user profile #{user.inspect}")
+        end
       end
     end
   end

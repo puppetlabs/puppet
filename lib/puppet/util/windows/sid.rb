@@ -93,15 +93,16 @@ module Puppet::Util::Windows
     # Win32 APIs that expect a PSID, e.g. IsValidSid. The account for this
     # SID may or may not exist.
     def string_to_sid_ptr(string_sid, &block)
-      lpcwstr = FFI::MemoryPointer.from_string_to_wide_string(string_sid)
-      sid_ptr_ptr = FFI::MemoryPointer.new(:pointer, 1)
+      FFI::MemoryPointer.from_string_to_wide_string(string_sid) do |lpcwstr|
+        sid_ptr_ptr = FFI::MemoryPointer.new(:pointer, 1)
 
-      if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string_sid}")
-      end
+        if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string_sid}")
+        end
 
-      sid_ptr_ptr.read_win32_local_pointer do |sid_ptr|
-        yield sid_ptr
+        sid_ptr_ptr.read_win32_local_pointer do |sid_ptr|
+          yield sid_ptr
+        end
       end
 
       # yielded sid_ptr has already had LocalFree called, nothing to return

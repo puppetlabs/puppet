@@ -18,13 +18,17 @@ module Puppet::Util::Windows::APITypes
     NULL_HANDLE = 0
     NULL_TERMINATOR_WCHAR = 0
 
-    def self.from_string_to_wide_string(str)
+    def self.from_string_to_wide_string(str, &block)
       str = Puppet::Util::Windows::String.wide_string(str)
-      ptr = FFI::MemoryPointer.new(:byte, str.bytesize)
-      # uchar here is synonymous with byte
-      ptr.put_array_of_uchar(0, str.bytes.to_a)
+      FFI::MemoryPointer.new(:byte, str.bytesize) do |ptr|
+        # uchar here is synonymous with byte
+        ptr.put_array_of_uchar(0, str.bytes.to_a)
 
-      ptr
+        yield ptr
+      end
+
+      # ptr has already had free called, so nothing to return
+      nil
     end
 
     def read_win32_bool

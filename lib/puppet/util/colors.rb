@@ -134,14 +134,25 @@ module Puppet::Util::Colors
           writeCoord[:Y] = col
 
           numberOfCharsWritten_ptr = FFI::MemoryPointer.new(:dword, 1)
-          WriteConsoleOutputCharacterW(@handle, FFI::MemoryPointer.from_string_to_wide_string(str),
-            str.length, writeCoord, numberOfCharsWritten_ptr)
-          numberOfCharsWritten_ptr.read_dword
+          chars_written = 0
+          FFI::MemoryPointer.from_string_to_wide_string(str) do |msg_ptr|
+            WriteConsoleOutputCharacterW(@handle, msg_ptr,
+              str.length, writeCoord, numberOfCharsWritten_ptr)
+            chars_written = numberOfCharsWritten_ptr.read_dword
+          end
+
+          chars_written
         end
 
         def Write(str)
-          WriteConsoleW(@handle, FFI::MemoryPointer.from_string_to_wide_string(str),
-            str.length, FFI::MemoryPointer.new(:dword, 1), FFI::MemoryPointer::NULL)
+          result = false
+          FFI::MemoryPointer.from_string_to_wide_string(str) do |msg_ptr|
+            result = WriteConsoleW(@handle, msg_ptr,
+              str.length, FFI::MemoryPointer.new(:dword, 1),
+              FFI::MemoryPointer::NULL) != FFI::WIN32_FALSE
+          end
+
+          result
         end
       end
 
