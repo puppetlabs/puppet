@@ -71,18 +71,19 @@ module Puppet::Util::Windows
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
 
-      buffer_ptr = FFI::MemoryPointer.new(:pointer, 1)
-      if ConvertSidToStringSidW(psid, buffer_ptr) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to convert binary SID")
-      end
-
       sid_string = nil
-      buffer_ptr.read_win32_local_pointer do |wide_string_ptr|
-        if wide_string_ptr.null?
-          raise Puppet::Error.new("ConvertSidToStringSidW failed to allocate buffer for sid")
+      FFI::MemoryPointer.new(:pointer, 1) do |buffer_ptr|
+        if ConvertSidToStringSidW(psid, buffer_ptr) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to convert binary SID")
         end
 
-        sid_string = wide_string_ptr.read_arbitrary_wide_string_up_to(MAXIMUM_SID_STRING_LENGTH)
+        buffer_ptr.read_win32_local_pointer do |wide_string_ptr|
+          if wide_string_ptr.null?
+            raise Puppet::Error.new("ConvertSidToStringSidW failed to allocate buffer for sid")
+          end
+
+          sid_string = wide_string_ptr.read_arbitrary_wide_string_up_to(MAXIMUM_SID_STRING_LENGTH)
+        end
       end
 
       sid_string
@@ -94,14 +95,15 @@ module Puppet::Util::Windows
     # SID may or may not exist.
     def string_to_sid_ptr(string_sid, &block)
       FFI::MemoryPointer.from_string_to_wide_string(string_sid) do |lpcwstr|
-        sid_ptr_ptr = FFI::MemoryPointer.new(:pointer, 1)
+        FFI::MemoryPointer.new(:pointer, 1) do |sid_ptr_ptr|
 
-        if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string_sid}")
-        end
+          if ConvertStringSidToSidW(lpcwstr, sid_ptr_ptr) == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string_sid}")
+          end
 
-        sid_ptr_ptr.read_win32_local_pointer do |sid_ptr|
-          yield sid_ptr
+          sid_ptr_ptr.read_win32_local_pointer do |sid_ptr|
+            yield sid_ptr
+          end
         end
       end
 

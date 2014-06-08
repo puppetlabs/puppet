@@ -30,22 +30,23 @@ class Puppet::Util::Windows::Error < Puppet::Error
     error_string = ''
 
     # this pointer actually points to a :lpwstr (pointer) since we're letting Windows allocate for us
-    buffer_ptr = FFI::MemoryPointer.new(:pointer, 1)
-    length = FormatMessageW(flags, FFI::Pointer::NULL, code, dwLanguageId,
-      buffer_ptr, 0, FFI::Pointer::NULL)
+    FFI::MemoryPointer.new(:pointer, 1) do |buffer_ptr|
+      length = FormatMessageW(flags, FFI::Pointer::NULL, code, dwLanguageId,
+        buffer_ptr, 0, FFI::Pointer::NULL)
 
-    if length == FFI::WIN32_FALSE
-      # can't raise same error type here or potentially recurse infinitely
-      raise Puppet::Error.new("FormatMessageW could not format code #{code}")
-    end
-
-    # returns an FFI::Pointer with autorelease set to false, which is what we want
-    buffer_ptr.read_win32_local_pointer do |wide_string_ptr|
-      if wide_string_ptr.null?
-        raise Puppet::Error.new("FormatMessageW failed to allocate buffer for code #{code}")
+      if length == FFI::WIN32_FALSE
+        # can't raise same error type here or potentially recurse infinitely
+        raise Puppet::Error.new("FormatMessageW could not format code #{code}")
       end
 
-      error_string = wide_string_ptr.read_wide_string(length)
+      # returns an FFI::Pointer with autorelease set to false, which is what we want
+      buffer_ptr.read_win32_local_pointer do |wide_string_ptr|
+        if wide_string_ptr.null?
+          raise Puppet::Error.new("FormatMessageW failed to allocate buffer for code #{code}")
+        end
+
+        error_string = wide_string_ptr.read_wide_string(length)
+      end
     end
 
     error_string

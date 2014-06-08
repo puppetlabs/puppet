@@ -34,14 +34,16 @@ module Puppet::Util::Windows::ADSI
     def computer_name
       unless @computer_name
         max_length = MAX_COMPUTERNAME_LENGTH + 1 # NULL terminated
-        buffer = FFI::MemoryPointer.new(max_length * 2) # wide string
-        buffer_size = FFI::MemoryPointer.new(:dword, 1)
-        buffer_size.write_dword(max_length) # length in TCHARs
+        FFI::MemoryPointer.new(max_length * 2) do |buffer| # wide string
+          FFI::MemoryPointer.new(:dword, 1) do |buffer_size|
+            buffer_size.write_dword(max_length) # length in TCHARs
 
-        if GetComputerNameW(buffer, buffer_size) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to get computer name")
+            if GetComputerNameW(buffer, buffer_size) == FFI::WIN32_FALSE
+              raise Puppet::Util::Windows::Error.new("Failed to get computer name")
+            end
+            @computer_name = buffer.read_wide_string(buffer_size.read_dword)
+          end
         end
-        @computer_name = buffer.read_wide_string(buffer_size.read_dword)
       end
       @computer_name
     end

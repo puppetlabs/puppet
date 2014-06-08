@@ -574,19 +574,20 @@ module Puppet::Util::Windows::Security
           owner = sid_ptr_to_string(FFI::Pointer.new(:pointer, owner_sid.unpack('L')[0]))
           group = sid_ptr_to_string(FFI::Pointer.new(:pointer, group_sid.unpack('L')[0]))
 
-          control = FFI::MemoryPointer.new(:word, 1)
-          revision = FFI::MemoryPointer.new(:dword, 1)
-          ffsd = FFI::Pointer.new(:pointer, ppsd.unpack('L')[0])
+          FFI::MemoryPointer.new(:word, 1) do |control|
+            FFI::MemoryPointer.new(:dword, 1) do |revision|
+              ffsd = FFI::Pointer.new(:pointer, ppsd.unpack('L')[0])
 
-          if GetSecurityDescriptorControl(ffsd, control, revision) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
-          end
+              if GetSecurityDescriptorControl(ffsd, control, revision) == FFI::WIN32_FALSE
+                raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
+              end
 
-          protect = (control.read_uint16 & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
-
-          dacl = parse_dacl(dacl.unpack('L')[0])
-          sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
-        ensure
+              protect = (control.read_uint16 & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
+              dacl = parse_dacl(dacl.unpack('L')[0])
+              sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
+            end
+         end
+       ensure
           LocalFree(ppsd.unpack('L')[0])
         end
       end

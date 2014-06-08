@@ -24,25 +24,31 @@ module Puppet::Util::Windows::User
   SECURITY_MAX_SID_SIZE = 68
 
   def check_token_membership
-    sid_pointer = FFI::MemoryPointer.new(:byte, SECURITY_MAX_SID_SIZE)
-    size_pointer = FFI::MemoryPointer.new(:dword, 1)
-    size_pointer.write_uint32(SECURITY_MAX_SID_SIZE)
+    is_admin = false
+    FFI::MemoryPointer.new(:byte, SECURITY_MAX_SID_SIZE) do |sid_pointer|
+      FFI::MemoryPointer.new(:dword, 1) do |size_pointer|
+        size_pointer.write_uint32(SECURITY_MAX_SID_SIZE)
 
-    if CreateWellKnownSid(:WinBuiltinAdministratorsSid, FFI::Pointer::NULL, sid_pointer, size_pointer) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Failed to create administrators SID")
+        if CreateWellKnownSid(:WinBuiltinAdministratorsSid, FFI::Pointer::NULL, sid_pointer, size_pointer) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to create administrators SID")
+        end
+      end
+
+      if IsValidSid(sid_pointer) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Invalid SID")
+      end
+
+      FFI::MemoryPointer.new(:win32_bool, 1) do |ismember_pointer|
+        if CheckTokenMembership(FFI::Pointer::NULL_HANDLE, sid_pointer, ismember_pointer) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to check membership")
+        end
+
+        # Is administrators SID enabled in calling thread's access token?
+        is_admin = ismember_pointer.read_win32_bool != FFI::WIN32_FALSE
+      end
     end
 
-    if IsValidSid(sid_pointer) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Invalid SID")
-    end
-
-    ismember_pointer = FFI::MemoryPointer.new(:win32_bool, 1)
-    if CheckTokenMembership(FFI::Pointer::NULL_HANDLE, sid_pointer, ismember_pointer) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Failed to check membership")
-    end
-
-    # Is administrators SID enabled in calling thread's access token?
-    ismember_pointer.read_win32_bool
+    is_admin
   end
   module_function :check_token_membership
 
@@ -57,19 +63,21 @@ module Puppet::Util::Windows::User
     fLOGON32_LOGON_NETWORK = 3
     fLOGON32_PROVIDER_DEFAULT = 0
 
-    token_pointer = FFI::MemoryPointer.new(:handle, 1)
-    if LogonUserW(wide_string(name), wide_string('.'), wide_string(password),
-        fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
-    end
-
-    token = token_pointer.read_handle
+    token = nil
     begin
-      yield token if block_given?
+      FFI::MemoryPointer.new(:handle, 1) do |token_pointer|
+        if LogonUserW(wide_string(name), wide_string('.'), wide_string(password),
+            fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
+        end
+
+        yield token = token_pointer.read_handle
+      end
     ensure
-      CloseHandle(token)
+      CloseHandle(token) if token
     end
 
+    # token has been closed by this point
     true
   end
   module_function :logon_user

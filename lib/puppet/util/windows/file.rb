@@ -84,20 +84,25 @@ module Puppet::Util::Windows::File
       raise Puppet::Util::Windows::Error.new("out_buffer is required")
     end
 
-    result = DeviceIoControl(
-      handle,
-      io_control_code,
-      in_buffer, in_buffer.nil? ? 0 : in_buffer.size,
-      out_buffer, out_buffer.size,
-      FFI::MemoryPointer.new(:dword, 1),
-      nil
-    )
+    FFI::MemoryPointer.new(:dword, 1) do |bytes_returned_ptr|
+      result = DeviceIoControl(
+        handle,
+        io_control_code,
+        in_buffer, in_buffer.nil? ? 0 : in_buffer.size,
+        out_buffer, out_buffer.size,
+        bytes_returned_ptr,
+        nil
+      )
 
-    return out_buffer if result != FFI::WIN32_FALSE
-    raise Puppet::Util::Windows::Error.new(
-      "DeviceIoControl(#{handle}, #{io_control_code}, " +
-      "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
-      "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}")
+      if result == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new(
+          "DeviceIoControl(#{handle}, #{io_control_code}, " +
+          "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
+          "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}")
+      end
+    end
+
+    out_buffer
   end
 
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
