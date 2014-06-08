@@ -72,26 +72,20 @@ module Puppet::Util::Windows
       end
 
       buffer_ptr = FFI::MemoryPointer.new(:pointer, 1)
+      if ConvertSidToStringSidW(psid, buffer_ptr) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Failed to convert binary SID")
+      end
 
-      begin
-        if ConvertSidToStringSidW(psid, buffer_ptr) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to convert binary SID")
-        end
-
-        wide_string_ptr = buffer_ptr.read_pointer
-
+      sid_string = nil
+      buffer_ptr.read_win32_local_pointer do |wide_string_ptr|
         if wide_string_ptr.null?
           raise Puppet::Error.new("ConvertSidToStringSidW failed to allocate buffer for sid")
         end
 
-        return wide_string_ptr.read_arbitrary_wide_string_up_to(MAXIMUM_SID_STRING_LENGTH)
-      ensure
-        if ! wide_string_ptr.nil? && ! wide_string_ptr.null?
-          if LocalFree(wide_string_ptr.address) != FFI::Pointer::NULL_HANDLE
-            Puppet.debug "LocalFree memory leak"
-          end
-        end
+        sid_string = wide_string_ptr.read_arbitrary_wide_string_up_to(MAXIMUM_SID_STRING_LENGTH)
       end
+
+      sid_string
     end
 
     # Convert a SID string, e.g. "S-1-5-32-544" to a pointer (containing the
@@ -106,24 +100,25 @@ module Puppet::Util::Windows
         raise Puppet::Util::Windows::Error.new("Failed to convert string SID: #{string_sid}")
       end
 
-      begin
-        yield sid_ptr = sid_ptr_ptr.read_pointer
-      ensure
-        if LocalFree(sid_ptr.address) != FFI::Pointer::NULL_HANDLE
-          Puppet.debug "LocalFree memory leak"
-        end
+      sid_ptr_ptr.read_win32_local_pointer do |sid_ptr|
+        yield sid_ptr
       end
+
+      # yielded sid_ptr has already had LocalFree called, nothing to return
+      nil
     end
 
     # Return true if the string is a valid SID, e.g. "S-1-5-32-544", false otherwise.
     def valid_sid?(string_sid)
-      string_to_sid_ptr(string_sid) { |ptr| true }
-    rescue Puppet::Util::Windows::Error => e
-      if e.code == ERROR_INVALID_SID_STRUCTURE
-        false
-      else
-        raise
+      valid = false
+
+      begin
+        string_to_sid_ptr(string_sid) { |ptr| valid = ! ptr.nil? && ! ptr.null? }
+      rescue Puppet::Util::Windows::Error => e
+        raise if e.code != ERROR_INVALID_SID_STRUCTURE
       end
+
+      valid
     end
 
     ffi_convention :stdcall
@@ -153,12 +148,5 @@ module Puppet::Util::Windows
     ffi_lib :advapi32
     attach_function_private :ConvertStringSidToSidW,
       [:lpcwstr, :pointer], :win32_bool
-
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa366730(v=vs.85).aspx
-    # HLOCAL WINAPI LocalFree(
-    #   _In_  HLOCAL hMem
-    # );
-    ffi_lib :kernel32
-    attach_function_private :LocalFree, [:handle], :handle
   end
 end
