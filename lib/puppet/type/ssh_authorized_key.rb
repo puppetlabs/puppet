@@ -143,5 +143,11 @@ module Puppet
       # If neither target nor user is defined, this is an error
       raise Puppet::Error, "Attribute 'user' or 'target' is mandatory"
     end
+
+    # regular expression suitable for use by a ParsedFile based provider
+    REGEX = /^(?:(.+) )?(ssh-dss|ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ([^ ]+) ?(.*)$/
+    def self.keyline_regex
+      REGEX
+    end
   end
 end
