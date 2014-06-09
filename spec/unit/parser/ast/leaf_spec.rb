@@ -422,6 +422,30 @@ describe Puppet::Parser::AST::Regex do
 
     val.match("value")
   end
+
+  context 'has deprecations for non string values' do
+    before :each do
+      node     = Puppet::Node.new('localhost')
+      compiler = Puppet::Parser::Compiler.new(node)
+      @scope = Puppet::Parser::Scope.new(compiler)
+      @regex = Puppet::Parser::AST::Regex.new :value => Regexp.new("2")
+    end
+
+    [2, 3.12, [1,2,3], {'2' => 2}].each do |val|
+      it "when matching lval #{val.to_s}" do
+        Puppet.expects(:deprecation_warning)
+        @regex.evaluate_match(val, @scope)
+      end
+    end
+
+    [3, 3.13, [1,3,4], {'3' => 3}].each do |val|
+      it "but not when not matching lval #{val.to_s}" do
+        Puppet.expects(:deprecation_warning).never
+        @regex.evaluate_match(val, @scope)
+      end
+    end
+  end
+
 end
 
 describe Puppet::Parser::AST::Variable do

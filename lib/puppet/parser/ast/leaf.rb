@@ -213,9 +213,21 @@ class Puppet::Parser::AST
     end
 
     def evaluate_match(value, scope, options = {})
+      orig_value = value
       value = value == :undef ? '' : value.to_s
 
       if matched = @value.match(value)
+        unless orig_value.is_a?(String)
+          msg = "Match against non String is deprecated. See http://links.puppetlabs.com/deprecate-match-nonstring.\n"+
+            "Got #{orig_value.class.name} "
+          loc = []
+          loc << "in file #{file}" if file
+          loc << "at line #{line}" if line
+          msg << loc.join(", ")
+
+          Puppet.deprecation_warning(msg, "match #{file}, #{line}")
+        end
+
         scope.ephemeral_from(matched, options[:file], options[:line])
       end
       matched
