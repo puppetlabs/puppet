@@ -37,7 +37,7 @@ if master.is_pe?
 
 else
 
-  testdir = master.puppet_tmpdir('report_submission')
+  testdir = create_tmpdir_for_user master, 'report_submission', 'puppet'
 
   teardown do
     on master, "rm -rf #{testdir}"
