@@ -110,7 +110,7 @@ module Puppet::Util::Windows::File
   def self.open_symlink(link_name)
     begin
       yield handle = create_file(
-      wide_string(link_name.to_s),
+      link_name,
       GENERIC_READ,
       FILE_SHARE_READ,
       nil, # security_attributes
