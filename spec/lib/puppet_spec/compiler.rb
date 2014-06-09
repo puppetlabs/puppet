@@ -19,13 +19,23 @@ module PuppetSpec::Compiler
   end
 
   def apply_compiled_manifest(manifest, prioritizer = Puppet::Graph::SequentialPrioritizer.new)
-    transaction = Puppet::Transaction.new(compile_to_ral(manifest),
+    catalog = compile_to_ral(manifest)
+    if block_given?
+      catalog.resources.each { |res| yield res }
+    end
+    transaction = Puppet::Transaction.new(catalog,
                                          Puppet::Transaction::Report.new("apply"),
                                          prioritizer)
     transaction.evaluate
     transaction.report.finalize_report
 
     transaction
+  end
+
+  def apply_with_error_check(manifest)
+    apply_compiled_manifest(manifest) do |res|
+      res.expects(:err).never
+    end
   end
 
   def order_resources_traversed_in(relationships)
