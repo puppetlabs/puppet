@@ -18,17 +18,19 @@ module Puppet::Util::Windows::Process
       sleep(1)
     end
 
-    exit_status = FFI::MemoryPointer.new(:dword, 1)
-    if GetExitCodeProcess(handle, exit_status) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Failed to get child process exit code")
-    end
-    exit_status = exit_status.read_dword
+    exit_status = -1
+    FFI::MemoryPointer.new(:dword, 1) do |exit_status_ptr|
+      if GetExitCodeProcess(handle, exit_status_ptr) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Failed to get child process exit code")
+      end
+      exit_status = exit_status_ptr.read_dword
 
-    # $CHILD_STATUS is not set when calling win32/process Process.create
-    # and since it's read-only, we can't set it. But we can execute a
-    # a shell that simply returns the desired exit status, which has the
-    # desired effect.
-    %x{#{ENV['COMSPEC']} /c exit #{exit_status}}
+      # $CHILD_STATUS is not set when calling win32/process Process.create
+      # and since it's read-only, we can't set it. But we can execute a
+      # a shell that simply returns the desired exit status, which has the
+      # desired effect.
+      %x{#{ENV['COMSPEC']} /c exit #{exit_status}}
+    end
 
     exit_status
   end
@@ -120,13 +122,16 @@ module Puppet::Util::Windows::Process
   TOKEN_ALL_ACCESS = 0xF01FF
   ERROR_NO_SUCH_PRIVILEGE = 1313
   def process_privilege_symlink?
+    privilege_symlink = false
     handle = get_current_process
     open_process_token(handle, TOKEN_ALL_ACCESS) do |token_handle|
       luid = lookup_privilege_value('SeCreateSymbolicLinkPrivilege')
       token_info = get_token_information(token_handle, :TokenPrivileges)
       token_privileges = parse_token_information_as_token_privileges(token_info)
-      token_privileges[:privileges].any? { |p| p[:Luid].values == luid.values }
+      privilege_symlink = token_privileges[:privileges].any? { |p| p[:Luid].values == luid.values }
     end
+
+    privilege_symlink
   rescue Puppet::Util::Windows::Error => e
     if e.code == ERROR_NO_SUCH_PRIVILEGE
       false # pre-Vista
@@ -143,19 +148,19 @@ module Puppet::Util::Windows::Process
   # Only supported on Windows Vista or later.
   #
   def elevated_security?
+    # default / pre-Vista
+    elevated = false
     handle = get_current_process
     open_process_token(handle, TOKEN_QUERY) do |token_handle|
       token_info = get_token_information(token_handle, :TokenElevation)
       token_elevation = parse_token_information_as_token_elevation(token_info)
       # TokenIsElevated member of the TOKEN_ELEVATION struct
-      token_elevation[:TokenIsElevated] != 0
+      elevated = token_elevation[:TokenIsElevated] != 0
     end
+
+    elevated
   rescue Puppet::Util::Windows::Error => e
-    if e.code == ERROR_NO_SUCH_PRIVILEGE
-      false # pre-Vista
-    else
-      raise e
-    end
+    raise e if e.code != ERROR_NO_SUCH_PRIVILEGE
   ensure
     CloseHandle(handle)
   end
