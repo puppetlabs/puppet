@@ -15,7 +15,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(
     :fields   => %w{options type key name},
     :optional => %w{options},
     :rts => /^\s+/,
-    :match    => /^(?:(.+) )?(ssh-dss|ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ([^ ]+) ?(.*)$/,
+    :match    => Puppet::Type.type(:ssh_authorized_key).keyline_regex,
     :post_parse => proc { |h|
       h[:name] = "" if h[:name] == :absent
       h[:options] ||= [:absent]
