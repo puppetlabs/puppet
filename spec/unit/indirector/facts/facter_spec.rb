@@ -140,8 +140,8 @@ describe Puppet::Node::Facts::Facter do
 
     Dir.expects(:glob).with("*.rb").returns %w{a.rb b.rb}
 
-    Puppet::Node::Facts::Facter.expects(:load).with("a.rb")
-    Puppet::Node::Facts::Facter.expects(:load).with("b.rb")
+    Puppet::Node::Facts::Facter.expects(:load).with File.join('.', 'a.rb')
+    Puppet::Node::Facts::Facter.expects(:load).with File.join('.', 'b.rb')
 
     Puppet::Node::Facts::Facter.load_facts_in_dir("mydir")
   end
