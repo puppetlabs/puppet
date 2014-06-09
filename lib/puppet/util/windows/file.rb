@@ -68,6 +68,17 @@ module Puppet::Util::Windows::File
         "#{flags_and_attributes.to_s(8)}, #{template_file_handle})")
   end
 
+  def self.get_reparse_point_data(handle, &block)
+    # must be multiple of 1024, min 10240
+    FFI::MemoryPointer.new(REPARSE_DATA_BUFFER.size) do |reparse_data_buffer_ptr|
+      device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, reparse_data_buffer_ptr)
+      yield REPARSE_DATA_BUFFER.new(reparse_data_buffer_ptr)
+    end
+
+    # underlying struct MemoryPointer has been cleaned up by this point, nothing to return
+    nil
+  end
+
   def self.device_io_control(handle, io_control_code, in_buffer = nil, out_buffer = nil)
     if out_buffer.nil?
       raise Puppet::Util::Windows::Error.new("out_buffer is required")
@@ -178,16 +189,16 @@ module Puppet::Util::Windows::File
   FSCTL_GET_REPARSE_POINT = 0x900a8
 
   def self.resolve_symlink(handle)
-    # must be multiple of 1024, min 10240
-    out_buffer = FFI::MemoryPointer.new(REPARSE_DATA_BUFFER.size)
-    device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, out_buffer)
+    path = nil
+    get_reparse_point_data(handle) do |reparse_data|
+      offset = reparse_data[:PrintNameOffset]
+      length = reparse_data[:PrintNameLength]
 
-    reparse_data = REPARSE_DATA_BUFFER.new(out_buffer)
-    offset = reparse_data[:PrintNameOffset]
-    length = reparse_data[:PrintNameLength]
+      path = reparse_data[:PathBuffer].to_a[offset, length].pack('C*')
+      path = path.force_encoding('UTF-16LE').encode(Encoding.default_external)
+    end
 
-    result = reparse_data[:PathBuffer].to_a[offset, length].pack('C*')
-    result.force_encoding('UTF-16LE').encode(Encoding.default_external)
+    path
   end
 
   ffi_convention :stdcall
