@@ -136,7 +136,9 @@ class Puppet::Util::FileType
       @@tabs.clear
     end
 
-    def initialize(path)
+    def initialize(path, default_mode = nil)
+      # default_mode is meaningless for this filetype,
+      # supported only for compatibility with :flat
       super
       @@tabs[@path] ||= ""
     end
