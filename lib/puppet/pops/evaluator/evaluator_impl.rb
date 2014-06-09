@@ -125,169 +125,28 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     @@string_visitor.visit_this_1(self, o, scope)
   end
 
-  # Call a closure matching arguments by name - Can only be called with a Closure (for now), may be refactored later
-  # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
-  # could create similar objects to Closure, wait until other types of defines are instantiated - they may behave
-  # as special cases of calls - i.e. 'new').
+  # Evaluate a BlockExpression in a new scope with variables bound to the
+  # given values.
   #
-  # Call by name supports a "spill_over" mode where extra arguments in the given args_hash are introduced
-  # as variables in the resulting scope.
-  #
-  # @raise ArgumentError, if there are to many or too few arguments
-  # @raise ArgumentError, if given closure is not a Puppet::Pops::Evaluator::Closure
-  #
-  def call_by_name(closure, args_hash, scope, spill_over = false)
-    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Closure)
-    pblock = closure.model
-    parameters = pblock.parameters || []
-
-    if !spill_over && args_hash.size > parameters.size
-      raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}" 
-    end
-
-    # associate values with parameters
-    scope_hash = {}
-    parameters.each do |p|
-      scope_hash[p.name] = args_hash[p.name] || evaluate(p.value, scope)
-    end
-    missing = scope_hash.reduce([]) {|memo, entry| memo << entry[0] if entry[1].nil?; memo }
-    unless missing.empty?
-      optional = parameters.count { |p| !p.value.nil? }
-      raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.join(" ,")}"
-    end
-    if spill_over
-      # all args from given hash should be used, nil entries replaced by default values should win
-      scope_hash = args_hash.merge(scope_hash)
-    end
-
-    # Store the evaluated name => value associations in a new inner/local/ephemeral scope
-    # (This is made complicated due to the fact that the implementation of scope is overloaded with
-    # functionality and an inner ephemeral scope must be used (as opposed to just pushing a local scope
-    # on a scope "stack").
-
-    # Ensure variable exists with nil value if error occurs.
-    # Some ruby implementations does not like creating variable on return
+  # @param scope [Puppet::Parser::Scope] the parent scope
+  # @param variable_bindings [Hash{String => Object}] the variable names and values to bind (names are keys, bound values are values)
+  # @param block [Puppet::Pops::Model::BlockExpression] the sequence of expressions to evaluate in the new scope
+  def evaluate_block_with_bindings(scope, variable_bindings, block_expr)
+    # Ensure variable exists with nil value if error occurs.  Some ruby
+    # implementations does not like creating variable on return
     result = nil
     begin
+      # Store the variable bindings in a new inner/local/ephemeral scope
+      # (This is made complicated due to the fact that the implementation
+      # of scope is overloaded with functionality and an inner ephemeral
+      # scope must be used (as opposed to just pushing a local scope on a
+      # scope "stack").
       scope_memo = get_scope_nesting_level(scope)
-      # change to create local scope_from - cannot give it file and line - that is the place of the call, not
-      # "here"
-      create_local_scope_from(scope_hash, scope)
-      result = evaluate(pblock.body, scope)
-    ensure
-      set_scope_nesting_level(scope, scope_memo)
-    end
-    result
-  end
 
-  # Call a closure - Can only be called with a Closure (for now), may be refactored later
-  # to also handle other types of calls (function calls are also handled by CallNamedFunction and CallMethod, they
-  # could create similar objects to Closure, wait until other types of defines are instantiated - they may behave
-  # as special cases of calls - i.e. 'new')
-  #
-  # @raise ArgumentError, if there are to many or too few arguments
-  # @raise ArgumentError, if given closure is not a Puppet::Pops::Evaluator::Closure
-  #
-  def call(closure, args, scope)
-    raise ArgumentError, "Can only call a Lambda" unless closure.is_a?(Puppet::Pops::Evaluator::Closure)
-    pblock = closure.model
-    parameters = pblock.parameters || []
-    parameters_size = parameters.size
-    last_captures_rest = parameters_size > 0 && parameters[-1].captures_rest
-    args_size = args.size
-
-    unless args_size <= parameters_size || last_captures_rest
-      raise ArgumentError, "Too many arguments: #{args_size} for #{parameters_size}"
-    end
-
-    args_diff = parameters.size - args.size
-    # associate values with parameters (NOTE: excess args for captures rest are not included in merged)
-    merged = parameters.zip(args.fill(:missing, args.size, args_diff)) #args)
-
-    # calculate missing arguments
-    if args_diff > 0
-      missing = parameters.slice(args_size, args_diff).select {|p| p.value.nil? }
-      unless missing.empty?
-        optional = parameters.count { |p| !p.value.nil? || p.captures_rest }
-        raise ArgumentError, "Too few arguments; #{args_size} for #{optional > 0 ? ' min ' : ''}#{parameters_size - optional}"
-      end
-    end
-
-    evaluated = merged.collect do |arg_assoc|
-      # m can be one of
-      # m = [Parameter{name => "name", value => nil], "given"]
-      #   | [Parameter{name => "name", value => Expression}, "given"]
-      #   | [Parameter{name => "name", value => Expression}, :missing]
-      #
-      # "given" may be nil or :undef which means that this is the value to use,
-      # not a default expression.
-      #
-
-      # "given" is always present. If a parameter was provided then
-      # the entry is that value, else the symbol :missing
-      given_argument     = arg_assoc[1]
-      argument_name      = arg_assoc[0].name
-      param_captures     = arg_assoc[0].captures_rest
-      default_expression = arg_assoc[0].value
-
-      if given_argument == :missing
-        # not given
-        if default_expression
-          # not given, has default
-          value = evaluate(default_expression, scope)
-          if param_captures && !value.is_a?(Array)
-            # correct non array default value
-            value = [ value ]
-          end
-        else
-          # not given, does not have default
-          if param_captures
-            # default for captures rest is an empty array
-            value = [ ]
-          else
-            # should have been caught earlier
-            raise Puppet::DevError, "InternalError: Should not happen! non optional parameter not caught earlier in evaluator call"
-          end
-        end
-      else
-        # given
-        if param_captures
-          # get excess arguments
-          value = args[(parameters_size-1)..-1]
-          # If the input was a single nil, or undef, and there is a default, use the default
-          if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
-            value = evaluate(default_expression, scope)
-            # and ensure it is an array
-            value = [value] unless value.is_a?(Array)
-          end
-        else
-          # DEBATEABLE, since undef/nil selects default elsewhere (if changing, tests also needs changing).
-          #          # Do not use given if there is a default and given is nil / undefined
-          #          # else, let the value through
-          #          if (given_argument.nil? || given_argument == :undef) && default_expression
-          #            value = evaluate(default_expression, scope)
-          #          else
-          value = given_argument
-          #          end
-        end
-      end
-      [argument_name, value]
-    end
-
-    # Store the evaluated name => value associations in a new inner/local/ephemeral scope
-    # (This is made complicated due to the fact that the implementation of scope is overloaded with
-    # functionality and an inner ephemeral scope must be used (as opposed to just pushing a local scope
-    # on a scope "stack").
-
-    # Ensure variable exists with nil value if error occurs. 
-    # Some ruby implementations does not like creating variable on return
-    result = nil
-    begin
-      scope_memo = get_scope_nesting_level(scope)
-      # change to create local scope_from - cannot give it file and line - that is the place of the call, not
-      # "here"
-      create_local_scope_from(Hash[evaluated], scope)
-      result = evaluate(pblock.body, scope)
+      # change to create local scope_from - cannot give it file and line -
+      # that is the place of the call, not "here"
+      create_local_scope_from(variable_bindings, scope)
+      result = evaluate(block_expr, scope)
     ensure
       set_scope_nesting_level(scope, scope_memo)
     end
