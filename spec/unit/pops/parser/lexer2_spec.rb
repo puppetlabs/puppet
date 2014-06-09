@@ -190,6 +190,16 @@ describe 'Lexer2' do
     end
   end
 
+  { "''"      => [2, ""],
+    "'a'"     => [3, "a"],
+    "'a\\'b'" => [6, "a'b"],
+    }.each do |source, expected|
+      it "should lex a single quoted STRING on the form #{source} as having length #{expected[0]}" do
+       length, value = expected
+       tokens_scanned_from(source).should match_tokens2([:STRING, value, {:line => 1, :pos=>1, :length=> length}])
+      end
+    end
+
   { '""'      => '',
     '"a"'     => 'a',
     '"a\'b"'  => "a'b",
