@@ -4,6 +4,9 @@ module Puppet::Util::Windows
     class UserProfile; end
     class Group; end
   end
+  module Registry
+  end
+
   if Puppet::Util::Platform.windows?
     # these reference platform specific gems
     require 'puppet/util/windows/api_types'
@@ -19,6 +22,6 @@ module Puppet::Util::Windows
     require 'puppet/util/windows/access_control_list'
     require 'puppet/util/windows/security_descriptor'
     require 'puppet/util/windows/adsi'
+    require 'puppet/util/windows/registry'
   end
-  require 'puppet/util/windows/registry'
 end

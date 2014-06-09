@@ -390,8 +390,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Is the value true?  This allows us to control the definition of truth
     # in one place.
     case o
-    when ''
-      false
     when :undef
       false
     else

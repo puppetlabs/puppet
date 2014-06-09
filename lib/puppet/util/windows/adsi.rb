@@ -28,17 +28,6 @@ module Puppet::Util::Windows::ADSI
       Puppet::Util::Windows::ADSI.connect(computer_uri).Delete(resource_type, name)
     end
 
-    ffi_convention :stdcall
-
-    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
-    # BOOL WINAPI GetComputerName(
-    #   _Out_    LPTSTR lpBuffer,
-    #   _Inout_  LPDWORD lpnSize
-    # );
-    ffi_lib :kernel32
-    attach_function_private :GetComputerNameW,
-      [:lpwstr, :lpdword], :win32_bool
-
     # taken from winbase.h
     MAX_COMPUTERNAME_LENGTH = 31
 
@@ -99,6 +88,17 @@ module Puppet::Util::Windows::ADSI
 
       Puppet::Util::Windows::Security.name_to_sid(name)
     end
+
+    ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724295(v=vs.85).aspx
+    # BOOL WINAPI GetComputerName(
+    #   _Out_    LPTSTR lpBuffer,
+    #   _Inout_  LPDWORD lpnSize
+    # );
+    ffi_lib :kernel32
+    attach_function_private :GetComputerNameW,
+      [:lpwstr, :lpdword], :win32_bool
   end
 
   class User
