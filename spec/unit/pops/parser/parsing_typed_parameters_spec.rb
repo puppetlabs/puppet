@@ -34,6 +34,15 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       end.to_not raise_error()
     end
 
+    it 'allows a type annotation' do
+      source = <<-CODE
+        foo() |$a, Integer *$b| { $a + $b[0] }
+      CODE
+      expect do
+        parser.parse_string(source, __FILE__)
+      end.to_not raise_error()
+    end
+
     it 'is not allowed in lambda except last' do
       source = <<-CODE
         foo() |*$a, $b| { $a + $b[0] }
