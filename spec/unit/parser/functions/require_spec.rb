@@ -62,11 +62,14 @@ describe "the require function" do
 
   describe "When the future parser is in use" do
     require 'puppet/pops'
+    require 'puppet_spec/compiler'
+    include PuppetSpec::Compiler
+
     before(:each) do
       Puppet[:parser] = 'future'
-      compiler  = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
     end
 
     it_should_behave_like 'all functions transforming relative to absolute names', :function_require
+    it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :require
   end
 end

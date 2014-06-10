@@ -456,33 +456,46 @@ module Puppet::Pops::Evaluator::Runtime3Support
     o
   end
 
-  def convert_PResourceType(o,scope, undef_value)
-    # Needs conversion by calling scope to resolve the name and possibly return a different name
-    # Resolution can only be called with an array, and returns an array. Here there is only one name
-    type, titles = scope.resolve_type_and_titles(o.type_name, [o.title])
-    # Note: a title of nil makes Resource class throw error with information that is wrong
-    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
-  end
+  def convert_PCatalogEntryType(o, scope, undef_value)
+    # Since 4x does not support dynamic scoping, all names are absolute and can be
+    # used as is (with some check/transformation/mangling between absolute/relative form
+    # due to Puppet::Resource's idiosyncratic behavior where some references must be
+    # absolute and others cannot be.
+    # Thus there is no need to call scope.resolve_type_and_titles to do dynamic lookup.
 
-  def convert_PHostClassType(o, scope, undef_value)
-    # Needs conversion by calling scope to resolve the name and possibly return a different name
-    # Resolution can only be called with an array, and returns an array. Here there is only one name
-    type, titles = scope.resolve_type_and_titles('class', [o.class_name])
-    # Note: a title of nil makes Resource class throw error with information that is wrong
-    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
+    Puppet::Resource.new(*catalog_type_to_split_type_title(o, :make_absolute))
   end
 
   private
 
   # Produces an array with [type, title] from a PCatalogEntryType
   # Used to produce reference resource instances (used when 3x is operating on a resource).
+  # Ensures that resources other than classes are *not* absolute, and makes classes absolute
+  # if the argument make_absolute is truthy (else, ensures that they are not absolute).
   #
-  def catalog_type_to_split_type_title(catalog_type)
+  def catalog_type_to_split_type_title(catalog_type, make_absolute = false)
     case catalog_type
     when Puppet::Pops::Types::PHostClassType
-      return ['Class', catalog_type.class_name]
+      class_name = catalog_type.class_name
+      if make_absolute
+        ['class', class_name.nil? ? nil : class_name.sub(/^([^:]{1,2})/, '::\1')]
+      else
+        ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
+      end
     when Puppet::Pops::Types::PResourceType
-      return [catalog_type.type_name, catalog_type.title]
+      type_name = catalog_type.type_name
+      title = catalog_type.title
+      if type_name =~ /^(::)?[Cc]lass/
+        if make_absolute
+          ['class', title.nil? ? nil : title.sub(/^([^:]{1,2})/, '::\1')]
+        else
+          ['class', title.nil? ? nil : title.sub(/^::/, '')]
+        end
+      else
+        # Ensure resource name is *not* absolute, and that title is '' if nil
+        # Resources with absolute name always results in error because tagging does not support leading ::
+        [type_name.nil? ? nil : type_name.sub(/^::/, ''), title.nil? ? '' : title]
+      end
     else
       raise ArgumentError, "Cannot split the type #{catalog_type.class}, it is neither a PHostClassType, nor a PResourceClass."
     end
@@ -504,7 +517,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     Puppet::Pops::Validation::DiagnosticProducer.new(
       ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
       SeverityProducer.new(), # All issues are errors
-#      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
       Puppet::Pops::Model::ModelLabelProvider.new())
   end
 

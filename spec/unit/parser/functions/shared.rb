@@ -1,4 +1,3 @@
-
 shared_examples_for 'all functions transforming relative to absolute names' do |func_method|
 
   it 'transforms relative names to absolute' do
@@ -39,5 +38,45 @@ shared_examples_for 'all functions transforming relative to absolute names' do |
       @scope.send(func_method, [Puppet::Pops::Types::TypeFactory.resource('class')])
     }.to raise_error(ArgumentError, /Cannot use an unspecific Resource\['class'\] where a Resource\['class', name\] is expected/)
   end
+
+end
+
+shared_examples_for 'an inclusion function, regardless of the type of class reference,' do |function|
+
+    it "and #{function} a class absolutely, even when a relative namespaced class of the same name is present" do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        class foo {
+          class bar { }
+          #{function} bar
+        }
+        class bar { }
+        include foo
+      MANIFEST
+      expect(catalog.classes).to include('foo','bar')
+    end
+
+    it "and #{function} a class absolutely by Class['type'] reference" do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        class foo {
+          class bar { }
+          #{function} Class['bar'] 
+        }
+        class bar { }
+        include foo
+      MANIFEST
+      expect(catalog.classes).to include('foo','bar')
+    end
+
+    it "and #{function} a class absolutely by Resource['type','title'] reference" do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        class foo {
+          class bar { }
+          #{function} Resource['class','bar'] 
+        }
+        class bar { }
+        include foo
+      MANIFEST
+      expect(catalog.classes).to include('foo','bar')
+    end
 
 end

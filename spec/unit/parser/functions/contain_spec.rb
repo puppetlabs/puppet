@@ -231,5 +231,6 @@ describe 'The "contain" function' do
     end
 
     it_should_behave_like 'all functions transforming relative to absolute names', :function_contain
+    it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :contain
   end
 end
