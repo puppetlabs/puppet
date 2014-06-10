@@ -650,7 +650,7 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with() |$y = first, $x, Array[String, 1] *$passed = bye| {}
           MANIFEST
-        end.to raise_error(/cannot have required argument after optional/)
+        end.to raise_error(/Parameter \$x is required/)
       end
 
       it 'raises an error when the minimum size of a slurped argument makes it required and it follows an optional argument' do
@@ -658,7 +658,7 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with() |$x = first, Array[String, 1] *$passed| {}
           MANIFEST
-        end.to raise_error(/cannot have required argument after optional/)
+        end.to raise_error(/Parameter \$passed is required/)
       end
 
       it 'allows slurped arguments with a minimum size of 0 after an optional argument' do

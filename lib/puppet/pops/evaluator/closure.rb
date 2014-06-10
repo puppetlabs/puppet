@@ -183,14 +183,13 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     [left[0] + right[0], left[1] + right[1]]
   end
 
-  def eval_type_expression(expression)
-    @evaluator.evaluate(expression, @enclosing_scope)
-  end
-
   def create_callable_type()
-    parameter_types = parameters.collect do |param|
+    types = []
+    range = [0, 0]
+    in_optional_parameters = false
+    parameters.each do |param|
       type = if param.type_expr
-               eval_type_expression(param.type_expr)
+               @evaluator.evaluate(param.type_expr, @enclosing_scope)
              else
                Puppet::Pops::Types::TypeFactory.optional_object()
              end
@@ -202,30 +201,32 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
         # will require the parameters to be arrays, which isn't what is
         # intended. The array type contains the intended information and needs
         # to be unpacked.
-        range = type.size_range
+        param_range = type.size_range
         type = type.element_type
       elsif param.captures_rest && !type.is_a?(Puppet::Pops::Types::PArrayType)
-        range = ANY_NUMBER_RANGE
-      elsif type.is_a?(Puppet::Pops::Types::PCollectionType)
-        range = type.size_range
+        param_range = ANY_NUMBER_RANGE
       elsif param.value
-        range = OPTIONAL_SINGLE_RANGE
+        param_range = OPTIONAL_SINGLE_RANGE
       else
-        range = REQUIRED_SINGLE_RANGE
+        param_range = REQUIRED_SINGLE_RANGE
       end
 
-      [type, range]
-    end
+      types << type
 
-    range = parameter_types.inject([0, 0]) do |sum, parameter|
-      unify_ranges(sum, parameter[1])
+      if param_range[0] == 0
+        in_optional_parameters = true
+      elsif param_range[0] != 0 && in_optional_parameters
+        @evaluator.fail(Puppet::Pops::Issues::REQUIRED_PARAMETER_AFTER_OPTIONAL, param, { :param_name => param.name })
+      end
+
+      range = [range[0] + param_range[0], range[1] + param_range[1]]
     end
 
     if range[1] == Puppet::Pops::Types::INFINITY
       range[1] = :default
     end
 
-    Puppet::Pops::Types::TypeFactory.callable(*(parameter_types.collect(&:first) + range))
+    Puppet::Pops::Types::TypeFactory.callable(*(types + range))
   end
 
   # Produces information about parameters compatible with a 4x Function (which can have multiple signatures)

@@ -426,6 +426,10 @@ module Puppet::Pops::Issues
     "Parameter $#{param_name} has 'captures rest' - not supported in #{label.a_an(container)}"
   end
 
+  REQUIRED_PARAMETER_AFTER_OPTIONAL = hard_issue :REQUIRED_PARAMETER_AFTER_OPTIONAL, :param_name do
+    "Parameter $#{param_name} is required but appears after optional parameters"
+  end
+
   NOT_NUMERIC = issue :NOT_NUMERIC, :value do
     "The value '#{value}' cannot be converted to Numeric."
   end
