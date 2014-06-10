@@ -13,7 +13,7 @@ module Puppet::Pops::Evaluator::CallableMismatchDescriber
       signature = supported_signatures[0]
       params_type  = signature.type.param_types
       block_type   = signature.type.block_type
-      params_names = signature.param_names
+      params_names = signature.parameter_names
       result << "expected:\n  #{name}(#{signature_string(signature)}) - #{arg_count_string(signature.type)}"
     else
       result << "expected one of:\n"
@@ -36,7 +36,7 @@ module Puppet::Pops::Evaluator::CallableMismatchDescriber
   def self.signature_string(signature)
     param_types  = signature.type.param_types
     block_type   = signature.type.block_type
-    param_names = signature.param_names
+    param_names = signature.parameter_names
 
     from, to = param_types.size_range
     if from == 0 && to == 0
