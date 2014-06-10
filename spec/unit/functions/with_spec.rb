@@ -30,6 +30,6 @@ describe 'the with function' do
   it 'errors when not given enough arguments for the lambda' do
     expect do
       compile_to_catalog('with(1) |$x, $y| { }')
-    end.to raise_error(/expected.*arg count \{2\}.*actual.*arg count \{1\}/m)
+    end.to raise_error(/Parameter \$y is required but no value was given/m)
   end
 end

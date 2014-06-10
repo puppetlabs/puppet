@@ -516,6 +516,14 @@ describe "Puppet::Parser::Compiler" do
         expect(catalog).to have_resource("Notify[value second]")
       end
 
+      it 'denies when missing required arguments' do
+        expect do
+          compile_to_catalog(<<-MANIFEST)
+            with(1) |$x, $y| { }
+          MANIFEST
+        end.to raise_error(/Parameter \$y is required but no value was given/m)
+      end
+
       it 'accepts anything when parameters are untyped' do
         catalog = compile_to_catalog(<<-MANIFEST)
           ['value', 1, true, undef].each |$x| { notify { "value: $x": } }
@@ -603,7 +611,7 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with() |Array[String, 2] *$defaulted = hi| { }
           MANIFEST
-        end.to raise_error(/expected.*arg count \{2,\}.*actual.*arg count \{0\}/m)
+        end.to raise_error(/expected.*arg count \{2,\}.*actual.*arg count \{1\}/m)
       end
 
       it 'raises an error when the number of passed values does not match the parameter\'s size specification' do

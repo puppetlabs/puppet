@@ -430,6 +430,10 @@ module Puppet::Pops::Issues
     "Parameter $#{param_name} is required but appears after optional parameters"
   end
 
+  MISSING_REQUIRED_PARAMETER = hard_issue :MISSING_REQUIRED_PARAMETER, :param_name do
+    "Parameter $#{param_name} is required but no value was given"
+  end
+
   NOT_NUMERIC = issue :NOT_NUMERIC, :value do
     "The value '#{value}' cannot be converted to Numeric."
   end
