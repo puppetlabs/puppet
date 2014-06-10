@@ -23,9 +23,13 @@ describe 'the with function' do
     expect(compile_to_catalog('with(1, 2) |*$x| { notify { "testing${x[0]}, ${x[1]}": } }')).to have_resource('Notify[testing1, 2]')
   end
 
+  it 'passes a type reference to a lambda' do
+    expect(compile_to_catalog('notify { test: message => "data" } with(Notify[test]) |$x| { notify { "${x[message]}": } }')).to have_resource('Notify[data]')
+  end
+
   it 'errors when not given enough arguments for the lambda' do
     expect do
       compile_to_catalog('with(1) |$x, $y| { }')
-    end.to raise_error(/Too few arguments/)
+    end.to raise_error(/expected.*arg count \{2\}.*actual.*arg count \{1\}/m)
   end
 end
