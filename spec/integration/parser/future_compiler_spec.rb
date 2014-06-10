@@ -509,6 +509,13 @@ describe "Puppet::Parser::Compiler" do
         expect(catalog).to have_resource("Notify[value]")
       end
 
+      it 'handles an array as a single argument' do
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with(['value', 'second']) |$x| { notify { "${x[0]} ${x[1]}": } }
+        MANIFEST
+        expect(catalog).to have_resource("Notify[value second]")
+      end
+
       it 'accepts anything when parameters are untyped' do
         catalog = compile_to_catalog(<<-MANIFEST)
           ['value', 1, true, undef].each |$x| { notify { "value: $x": } }
@@ -548,7 +555,7 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with(1) |$x, String $defaulted = 1| { notify { "${$x + $defaulted}": }}
           MANIFEST
-        end.to raise_error(/type String, got Integer/)
+        end.to raise_error(/expected.*Optional.*String.*actual.*Integer.*Integer/m)
       end
 
       it 'raises an error when a default argument value is an incorrect type and there are no arguments passed' do
@@ -556,7 +563,7 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with() |String $defaulted = 1| {}
           MANIFEST
-        end.to raise_error(/type String, got Integer/)
+        end.to raise_error(/expected.*String.*actual.*Integer/m)
       end
 
       it 'raises an error when the default argument for a slurped parameger is an incorrect type' do
@@ -564,7 +571,7 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with() |String *$defaulted = 1| {}
           MANIFEST
-        end.to raise_error(/type String, got Integer/)
+        end.to raise_error(/expected.*String.*actual.*Integer/m)
       end
 
       it 'allows using an array as the default slurped value' do
@@ -596,15 +603,15 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with() |Array[String, 2] *$defaulted = hi| { }
           MANIFEST
-        end.to raise_error(/wrong number got 1, expected at least 2/)
+        end.to raise_error(/expected.*arg count \{2,\}.*actual.*arg count \{0\}/m)
       end
 
       it 'raises an error when the number of passed values does not match the parameter\'s size specification' do
         expect do
-          evaluate(<<-MANIFEST)
+          compile_to_catalog(<<-MANIFEST)
             with(hi) |Array[String, 2] *$passed| { }
           MANIFEST
-        end.to raise_error(/wrong number got 1, expected at least 2/)
+        end.to raise_error(/expected.*arg count \{2,\}.*actual.*arg count \{1\}/m)
       end
 
       it 'matches when the number of arguments passed for a slurp parameter match the size specification' do
@@ -623,16 +630,19 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with(hi, bye) |Array[String, 1, 1] *$passed| { }
           MANIFEST
-        end.to raise_error(/wrong number got 2, expected at between 1 and 1/)
+        end.to raise_error(/expected.*arg count \{1\}.*actual.*arg count \{2\}/m)
       end
 
       it 'allows passing slurped arrays by specifying an array of arrays' do
-        catalog = compile_to_catalog(<<-MANIFEST).to
+        catalog = compile_to_catalog(<<-MANIFEST)
           with([hi], [bye]) |Array[Array[String, 1, 1]] *$passed| {
             notify { $passed[0][0]: }
             notify { $passed[1][0]: }
           }
         MANIFEST
+
+        expect(catalog).to have_resource('Notify[hi]')
+        expect(catalog).to have_resource('Notify[bye]')
       end
 
       it 'raises an error when a required argument follows an optional one' do
@@ -652,8 +662,8 @@ describe "Puppet::Parser::Compiler" do
       end
 
       it 'allows slurped arguments with a minimum size of 0 after an optional argument' do
-        catalog = compile_to_catalog(<<-MANIFEST).to
-          with() |$x = first, Array[String, 0] *$passed| { 
+        catalog = compile_to_catalog(<<-MANIFEST)
+          with() |$x = first, Array[String, 0] *$passed| {
             notify { $x: }
           }
         MANIFEST

@@ -33,28 +33,14 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     tc = Puppet::Pops::Types::TypeCalculator
     actual = tc.infer_set(args)
     if tc.callable?(type, actual)
-      parameters_size = parameters.size
-      last_captures_rest = parameters_size > 0 && parameters[-1].captures_rest
       args_size = args.size
-
-      unless args_size <= parameters_size || last_captures_rest
-        raise ArgumentError, "Too many arguments: #{args_size} for #{parameters_size}"
-      end
 
       args_diff = parameters.size - args.size
       # associate values with parameters (NOTE: excess args for captures rest are not included in merged)
-      merged = parameters.zip(args.fill(:missing, args.size, args_diff)) #args)
+      merged = parameters.zip(args.fill(:missing, args.size, args_diff))
 
-      # calculate missing arguments
-      if args_diff > 0
-        missing = parameters.slice(args_size, args_diff).select {|p| p.value.nil? }
-        unless missing.empty?
-          optional = parameters.count { |p| !p.value.nil? || p.captures_rest }
-          raise ArgumentError, "Too few arguments; #{args_size} for #{optional > 0 ? ' min ' : ''}#{parameters_size - optional}"
-        end
-      end
-
-      evaluated = merged.collect do |arg_assoc|
+      variable_bindings = {}
+      merged.each do |arg_assoc|
         # m can be one of
         # m = [Parameter{name => "name", value => nil], "given"]
         #   | [Parameter{name => "name", value => Expression}, "given"]
@@ -67,7 +53,6 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
         # "given" is always present. If a parameter was provided then
         # the entry is that value, else the symbol :missing
         given_argument     = arg_assoc[1]
-        argument_name      = arg_assoc[0].name
         param_captures     = arg_assoc[0].captures_rest
         default_expression = arg_assoc[0].value
 
@@ -94,7 +79,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
           # given
           if param_captures
             # get excess arguments
-            value = args[(parameters_size-1)..-1]
+            value = args[(parameter_count-1)..-1]
             # If the input was a single nil, or undef, and there is a default, use the default
             if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
               value = @evaluator.evaluate(default_expression, scope)
@@ -102,20 +87,26 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
               value = [value] unless value.is_a?(Array)
             end
           else
-            # DEBATEABLE, since undef/nil selects default elsewhere (if changing, tests also needs changing).
-            #          # Do not use given if there is a default and given is nil / undefined
-            #          # else, let the value through
-            #          if (given_argument.nil? || given_argument == :undef) && default_expression
-            #            value = evaluate(default_expression, scope)
-            #          else
             value = given_argument
-            #          end
           end
         end
-        [argument_name, value]
+
+        variable_bindings[arg_assoc[0].name] = value
       end
 
-      @evaluator.evaluate_block_with_bindings(@enclosing_scope, Hash[evaluated], @model.body)
+      final_args = tc.infer_set(parameters.inject([]) do |final_args, param|
+        if param.captures_rest
+          final_args.concat(variable_bindings[param.name])
+        else
+          final_args << variable_bindings[param.name]
+        end
+      end)
+
+      if !tc.callable?(type, final_args)
+        raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', final_args, [self])}"
+      end
+
+      @evaluator.evaluate_block_with_bindings(@enclosing_scope, variable_bindings, @model.body)
     else
       raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', actual, [self])}"
     end
@@ -147,7 +138,6 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     @evaluator.evaluate_block_with_bindings(@enclosing_scope, scope_hash, @model.body)
   end
 
-  # incompatible with 3x except that it is an array of the same size
   def parameters()
     @model.parameters || []
   end
@@ -162,7 +152,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   # Returns the number of optional parameters.
   # @return [Integer] the number of optional accepted parameters
   def optional_parameter_count
-    @model.parameters.count { |p| !p.value.nil? }
+    parameters.count { |p| !p.value.nil? || p.captures_rest }
   end
 
   # @api public
@@ -172,7 +162,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
   # @api public
   def type
-    @callable || create_callable_type
+    @callable ||= create_callable_type
   end
 
   # @api public
@@ -189,23 +179,61 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
   private
 
+  def unify_ranges(left, right)
+    [left[0] + right[0], left[1] + right[1]]
+  end
+
+  def eval_type_expression(expression)
+    @evaluator.evaluate(expression, @enclosing_scope)
+  end
+
   def create_callable_type()
-    callable_type = parameters.collect do |param|
-      if param.type_expr
-        @evaluator.evaluate(param.type_expr, @enclosing_scope)
+    parameter_types = parameters.collect do |param|
+      type = if param.type_expr
+               eval_type_expression(param.type_expr)
+             else
+               Puppet::Pops::Types::TypeFactory.optional_object()
+             end
+
+      if param.captures_rest && type.is_a?(Puppet::Pops::Types::PArrayType)
+        # An array on a slurp parameter is how a size range is defined for a
+        # slurp (Array[Integer, 1, 3] *$param). However, the callable that is
+        # created can't have the array in that position or else type checking
+        # will require the parameters to be arrays, which isn't what is
+        # intended. The array type contains the intended information and needs
+        # to be unpacked.
+        range = type.size_range
+        type = type.element_type
+      elsif param.captures_rest && !type.is_a?(Puppet::Pops::Types::PArrayType)
+        range = ANY_NUMBER_RANGE
+      elsif type.is_a?(Puppet::Pops::Types::PCollectionType)
+        range = type.size_range
+      elsif param.value
+        range = OPTIONAL_SINGLE_RANGE
       else
-        Puppet::Pops::Types::TypeFactory.optional_object()
+        range = REQUIRED_SINGLE_RANGE
       end
+
+      [type, range]
     end
 
-    callable_type << optional_parameter_count
-    callable_type << parameters.size
+    range = parameter_types.inject([0, 0]) do |sum, parameter|
+      unify_ranges(sum, parameter[1])
+    end
 
-    Puppet::Pops::Types::TypeFactory.callable(*callable_type)
+    if range[1] == Puppet::Pops::Types::INFINITY
+      range[1] = :default
+    end
+
+    Puppet::Pops::Types::TypeFactory.callable(*(parameter_types.collect(&:first) + range))
   end
 
   # Produces information about parameters compatible with a 4x Function (which can have multiple signatures)
   def signatures
     [ self ]
   end
+
+  ANY_NUMBER_RANGE = [0, Puppet::Pops::Types::INFINITY]
+  OPTIONAL_SINGLE_RANGE = [0, 1]
+  REQUIRED_SINGLE_RANGE = [1, 1]
 end
