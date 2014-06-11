@@ -38,7 +38,7 @@ describe Puppet::Parser::Functions do
 
     it "instruments the function to profile the execution" do
       messages = []
-      Puppet::Util::Profiler.current = Puppet::Util::Profiler::WallClock.new(proc { |msg| messages << msg }, "id")
+      Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::WallClock.new(proc { |msg| messages << msg }, "id"))
 
       Puppet::Parser::Functions.newfunction("name", :type => :rvalue) { |args| }
       callable_functions_from(function_module).function_name([])

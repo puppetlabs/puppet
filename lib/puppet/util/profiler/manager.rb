@@ -1,39 +1,39 @@
-require 'benchmark'
+require 'puppet/util/profiler'
 
-# A simple profiling callback system.
+# A class used to manage profiler instances
 #
-# @api public
-module Puppet::Util::Profiler
-  require 'puppet/util/profiler/wall_clock'
-  require 'puppet/util/profiler/object_counts'
-  require 'puppet/util/profiler/manager'
+# @api private
+class Puppet::Util::Profiler::Manager
 
-  @profiler_manager = Puppet::Util::Profiler::Manager.new
-  
+  def initialize
+    @profilers = []
+  end
+
   # Reset the profiling system to the original state
   #
   # @api private
-  def self.clear
-    @profiler_manager.clear
+  def clear
+    @profilers = []
   end
 
   # Retrieve the current list of profilers
   #
   # @api private
-  def self.current
-    @profiler_manager.current
+  def current
+    @profilers
   end
 
   # @param profiler [#profile] A profiler for the current thread
   # @api private
-  def self.add_profiler(profiler)
-    @profiler_manager.add_profiler(profiler)
+  def add_profiler(profiler)
+    @profilers << profiler
+    profiler
   end
 
   # @param profiler [#profile] A profiler to remove from the current thread
   # @api private
-  def self.remove_profiler(profiler)
-    @profiler_manager.remove_profiler(profiler)
+  def remove_profiler(profiler)
+    @profilers.delete(profiler)
   end
 
   # Profile a block of code and log the time it took to execute.
@@ -45,8 +45,22 @@ module Puppet::Util::Profiler
   #
   # @param message [String] A description of the profiled event
   # @param block [Block] The segment of code to profile
-  # @api public
-  def self.profile(message, &block)
-    @profiler_manager.profile(message, &block)
+  # @api private
+  def profile(message)
+    retval = nil
+    contexts = {}
+    @profilers.each do |profiler|
+      contexts[profiler] = profiler.start(message)
+    end
+
+    begin
+      retval = yield
+    ensure
+      @profilers.each do |profiler|
+        profiler.finish(contexts[profiler], message)
+      end
+    end
+
+    retval
   end
 end
