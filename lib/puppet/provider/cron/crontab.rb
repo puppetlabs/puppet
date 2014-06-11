@@ -256,5 +256,42 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
   def user
     @property_hash[:user] || @property_hash[:target]
   end
+
+  CRONTAB_DIR = case Facter.value("osfamily")
+  when "Debian", "HP-UX"
+    "/var/spool/cron/crontabs"
+  when /BSD/
+    "/var/cron/tabs"
+  when "Darwin"
+    "/usr/lib/cron/tabs/"
+  else
+    "/var/spool/cron"
+  end
+
+  # Yield the names of all crontab files stored on the local system.
+  #
+  # @note Ignores files that are not writable for the puppet process.
+  #
+  # @api private
+  def self.enumerate_crontabs
+    Puppet.debug "looking for crontabs in #{CRONTAB_DIR}"
+    return unless File.readable?(CRONTAB_DIR)
+    Dir.foreach(CRONTAB_DIR) do |file|
+      path = "#{CRONTAB_DIR}/#{file}"
+      yield(file) if File.file?(path) and File.writable?(path)
+    end
+  end
+
+
+  # Include all plausible crontab files on the system
+  # in the list of targets (#11383 / PUP-1381)
+  def self.targets(resources = nil)
+    targets = super(resources)
+    enumerate_crontabs do |target|
+      targets << target
+    end
+    targets.uniq
+  end
+
 end
 
