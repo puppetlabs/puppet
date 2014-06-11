@@ -61,6 +61,23 @@ class Puppet::FileSystem::MemoryImpl
     end
   end
 
+  # Minimal File::Stat implementation
+  # for some tests
+  class Stat
+    attr_reader :ctime
+    def initialize(ctime)
+      @ctime = ctime
+    end
+  end
+
+  def stat(path)
+    Stat.new(assert_path(path).ctime)
+  end
+
+  def touch(path)
+    assert_path(path).touch
+  end
+
   private
 
   def find(path)

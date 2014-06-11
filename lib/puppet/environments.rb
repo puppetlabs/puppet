@@ -48,6 +48,15 @@ module Puppet::Environments
   #     we are looking up
   #   @return [Puppet::Setting::EnvironmentConf, nil] the configuration for the
   #     requested environment, or nil if not found or no configuration is available
+  #
+  # @!macro [new] loader_get_environment_dir
+  #   Attempt to obtain the parent environment dir of a given environment.  Only the
+  #     directories environments can provide this value.
+  #
+  #   @param name [String,Symbol] The name of the environment whose configuration
+  #     we are looking up
+  #   @return [String, nil] the path to the environment directory for the
+  #     requested environment, or nil if not found or no directory is available
 
   # A source of pre-defined environments.
   #
@@ -87,6 +96,13 @@ module Puppet::Environments
       else
         nil
       end
+    end
+
+    # @note There's no environment dir per definition in static environments
+    #
+    # @!macro loader_get_environment_dir
+    def get_environment_dir(name)
+      nil
     end
   end
 
@@ -149,6 +165,13 @@ module Puppet::Environments
     #
     # @!macro loader_get_conf
     def get_conf(name)
+      nil
+    end
+
+    # @note There's no environment dir per definition in legacy environments
+    #
+    # @!macro loader_get_environment_dir
+    def get_environment_dir(name)
       nil
     end
   end
@@ -217,6 +240,17 @@ module Puppet::Environments
       nil
     end
 
+    # @!macro loader_get_environment_dir
+    def get_environment_dir(name)
+      valid_directories.each do |envdir|
+        envname = Puppet::FileSystem.basename_string(envdir)
+        if envname == name.to_s
+          return envdir
+        end
+      end
+      nil
+    end
+
     private
 
     def valid_directories
@@ -269,10 +303,21 @@ module Puppet::Environments
       nil
     end
 
+    # @!macro loader_get_environment_dir
+    def get_environment_dir(name)
+      @loaders.each do |loader|
+        if envdir = loader.get_environment_dir(name)
+          return envdir
+        end
+      end
+      nil
+    end
+
   end
 
   class Cached < Combined
     INFINITY = 1.0 / 0.0
+    MANUAL = -INFINITY
 
     def initialize(*loaders)
       super
@@ -290,13 +335,11 @@ module Puppet::Environments
     end
 
     # Clears the cache of the environment with the given name.
-    # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear(name)
       @cache.delete(name)
     end
 
     # Clears all cached environments.
-    # (The intention is that this could be used from a MANUAL cache eviction command (TBD)
     def clear_all()
       @cache = {}
     end
@@ -319,6 +362,9 @@ module Puppet::Environments
         NotCachedEntry.new(env)     # Entry that is always expired (avoids syscall to get time)
       when INFINITY
         Entry.new(env)              # Entry that never expires (avoids syscall to get time)
+      when MANUAL
+        # Entry that expires on demand (when the environment directory is touched)
+        ManualEntry.new(env, get_environment_dir(env.name))
       else
         TTLEntry.new(env, ttl)
       end
@@ -349,6 +395,48 @@ module Puppet::Environments
     class NotCachedEntry < Entry
       def expired?
         true
+      end
+    end
+
+    # File based eviction policy entry
+    # when the watched_file file mtime changes
+    # the entry is marked as expired
+    class ManualEntry < Entry
+
+      # how long (in seconds) to wait before
+      # being allowed to stat the watched_file
+      # again.
+      STAT_TIMEOUT = 1
+
+      def initialize(value, watched_file)
+        super value
+        unless Puppet::FileSystem.exist?(watched_file)
+          raise "Watched environment directory #{watched_file} doesn't exist"
+        end
+        @last_time = Time.now
+        @watched_file = watched_file
+        @watched_file_ctime = watched_file_ctime
+      end
+
+      def expired?
+        ctime = watched_file_ctime
+        result = @watched_file_ctime != ctime
+        @watched_file_ctime = ctime
+        result
+      end
+
+      private
+
+      # return the watched_file ctime, but limit the rate
+      # to 1/STAT_TIMEOUT calls to stat per seconds
+      def watched_file_ctime
+        now = Time.now
+        if @last_time + STAT_TIMEOUT <= now
+          @last_time = now
+          Puppet::FileSystem.stat(@watched_file).ctime
+        else
+          @watched_file_ctime
+        end
       end
     end
 

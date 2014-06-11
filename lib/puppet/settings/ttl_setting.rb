@@ -4,6 +4,7 @@
 #
 class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
   INFINITY = 1.0 / 0.0
+  MANUAL = -INFINITY
 
   # How we convert from various units to seconds.
   UNITMAP = {
@@ -30,8 +31,11 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
   # Convert the value to Numeric, parsing numeric string with units if necessary.
   def self.munge(value, param_name)
     case
+    when value == 'manual'
+      MANUAL
+
     when value.is_a?(Numeric)
-      if value < 0
+      if value < 0 && value != MANUAL
         raise Puppet::Settings::ValidationError, "Invalid negative 'time to live' #{value.inspect} - did you mean 'unlimited'?"
       end
       value
@@ -43,6 +47,35 @@ class Puppet::Settings::TTLSetting < Puppet::Settings::BaseSetting
       $1.to_i * UNITMAP[$2 || 's']
     else
       raise Puppet::Settings::ValidationError, "Invalid 'time to live' format '#{value.inspect}' for parameter: #{param_name}"
+    end
+  end
+
+  def self.unmunge(ttl, param_name = 'unknown')
+    case
+    when ttl == MANUAL
+      'manual'
+    when ttl == INFINITY
+      'unlimited'
+    when ttl.is_a?(Numeric)
+      multiples = [UNITMAP['y'], UNITMAP['d'], UNITMAP['h'], UNITMAP['m'], UNITMAP['s']]
+      digits = []
+      multiples.inject(ttl.to_f.round) do |total, multiple|
+        # Divide into largest unit
+        digits << total / multiple
+        total % multiple # The remainder will be divided as the next largest
+      end
+
+      # format
+      units = ['y','d','h','m','s']
+      digits.zip(units).map { |v,u|
+        if v > 0
+          "#{v}#{u}"
+        else
+          nil
+        end
+      }.reject(&:nil?).join(" ")
+    else
+      raise Puppet::Settings::ValidationError, "Invalid 'time to live' format '#{ttl}' for parameter: #{param_name}"
     end
   end
 end
