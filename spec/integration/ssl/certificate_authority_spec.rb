@@ -99,6 +99,32 @@ describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft
     end
   end
 
+  describe "when revoking certificate" do
+    it "should work for one certificate" do
+      certificate_request_for("luke.madstop.com")
+
+      ca.sign("luke.madstop.com")
+      ca.revoke("luke.madstop.com")
+
+      expect { ca.verify("luke.madstop.com") }.to raise_error(
+        Puppet::SSL::CertificateAuthority::CertificateVerificationError,
+        "certificate revoked"
+      )
+    end
+
+    it "should work for several certificates" do
+      3.times.each do |c|
+        certificate_request_for("luke.madstop.com")
+        ca.sign("luke.madstop.com")
+        ca.destroy("luke.madstop.com")
+      end
+      ca.revoke("luke.madstop.com")
+
+      ca.crl.content.revoked.map { |r| r.serial }.should == [2,3,4] # ca has serial 1
+    end
+
+  end
+
   it "allows autosigning certificates concurrently", :unless => Puppet::Util::Platform.windows? do
     Puppet[:autosign] = true
     hosts = (0..4).collect { |i| certificate_request_for("host#{i}") }

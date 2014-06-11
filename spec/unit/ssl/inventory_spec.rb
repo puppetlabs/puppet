@@ -133,5 +133,18 @@ describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? d
         @inventory.serial("me").should == 15
       end
     end
+
+    describe "and finding all serial numbers" do
+      it "should return nil if the inventory file is missing" do
+        Puppet::FileSystem.expects(:exist?).with(cert_inventory).returns false
+        @inventory.serials(:whatever).should be_empty
+      end
+
+      it "should return the all the serial numbers from the lines matching the provided name" do
+        File.expects(:readlines).with(cert_inventory).returns ["0x00f blah blah /CN=me\n", "0x001 blah blah /CN=you\n", "0x002 blah blah /CN=me\n"]
+
+        @inventory.serials("me").should == [15, 2]
+      end
+    end
   end
 end
