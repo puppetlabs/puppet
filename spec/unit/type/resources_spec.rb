@@ -54,6 +54,10 @@ describe resources do
   describe "#check_user purge behaviour" do
     describe "with unless_system_user => true" do
       before do
+        # Stub OS facts to an OS we know won't return a 1000 exclusive max system uid by default
+        Facter.stubs(:value).with(:kernel).returns('Darwin')
+        Facter.stubs(:value).with(:operatingsystem).returns('Darwin')
+        Facter.stubs(:value).with(:osfamily).returns('Darwin')
         @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
         @res.catalog = Puppet::Resource::Catalog.new
       end
@@ -72,19 +76,45 @@ describe resources do
       end
 
       it "should purge manual users if unless_system_user => true" do
-        user_hash = {:name => 'system_user', :uid => 525, :system => true}
+        user_hash = {:name => 'system_user', :uid => 500, :system => true}
         user = Puppet::Type.type(:user).new(user_hash)
         user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
         @res.user_check(user).should be_true
       end
 
-      it "should purge system users over 500 if unless_system_user => 600" do
+      it "should not purge system users under 600 if unless_system_user => 600" do
         res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => 600
         res.catalog = Puppet::Resource::Catalog.new
-        user_hash = {:name => 'system_user', :uid => 525, :system => true}
+        user_hash = {:name => 'system_user', :uid => 500, :system => true}
         user = Puppet::Type.type(:user).new(user_hash)
         user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
         res.user_check(user).should be_false
+      end
+
+      ['Debian', 'FreeBSD', 'OpenBSD'].each do |os|
+        describe "on #{os}" do
+          before :each do
+            Facter.stubs(:value).with(:kernel).returns(os)
+            Facter.stubs(:value).with(:operatingsystem).returns(os)
+            Facter.stubs(:value).with(:osfamily).returns(os)
+            @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
+            @res.catalog = Puppet::Resource::Catalog.new
+          end
+
+          it "should not purge system users under 1000" do
+            user_hash = {:name => 'system_user', :uid => 999}
+            user = Puppet::Type.type(:user).new(user_hash)
+            user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+            @res.user_check(user).should be_false
+          end
+
+          it "should purge users over 999" do
+            user_hash = {:name => 'system_user', :uid => 1000}
+            user = Puppet::Type.type(:user).new(user_hash)
+            user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+            @res.user_check(user).should be_true
+          end
+        end
       end
     end
 

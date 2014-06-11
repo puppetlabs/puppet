@@ -39,7 +39,7 @@ Puppet::Type.newtype(:resources) do
 
   newparam(:unless_system_user) do
     desc "This keeps system users from being purged.  By default, it
-      does not purge users whose UIDs are less than or equal to 500, but you can specify
+      does not purge users whose UIDs are less than 500 or 1000, depending on operating system, but you can specify
       a different UID as the inclusive limit."
 
     newvalues(:true, :false, /^\d+$/)
@@ -49,7 +49,7 @@ Puppet::Type.newtype(:resources) do
       when /^\d+/
         Integer(value)
       when :true, true
-        500
+        @resource.system_users_max_uid
       when :false, false
         false
       when Integer; value
@@ -60,7 +60,7 @@ Puppet::Type.newtype(:resources) do
 
     defaultto {
       if @resource[:name] == "user"
-        500
+        @resource.system_users_max_uid
       else
         nil
       end
@@ -158,5 +158,14 @@ Puppet::Type.newtype(:resources) do
 
   def system_users
     %w{root nobody bin noaccess daemon sys}
+  end
+
+  def system_users_max_uid
+    case Facter.value(:osfamily)
+    when 'Debian', 'OpenBSD', 'FreeBSD'
+      999
+    else
+      499
+    end
   end
 end
