@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'unit/parser/functions/shared'
 
 describe "the require function" do
   before :all do
@@ -26,13 +27,13 @@ describe "the require function" do
   end
 
   it "should delegate to the 'include' puppet function" do
-    @scope.expects(:function_include).with(["myclass"])
+    @scope.compiler.expects(:evaluate_classes).with(["myclass"], @scope, false)
 
     @scope.function_require(["myclass"])
   end
 
-  it "should set the 'require' prarameter on the resource to a resource reference" do
-    @scope.stubs(:function_include)
+  it "should set the 'require' parameter on the resource to a resource reference" do
+    @scope.compiler.stubs(:evaluate_classes)
     @scope.function_require(["myclass"])
 
     @resource["require"].should be_instance_of(Array)
@@ -40,7 +41,7 @@ describe "the require function" do
   end
 
   it "should lookup the absolute class path" do
-    @scope.stubs(:function_include)
+    @scope.compiler.stubs(:evaluate_classes)
 
     @scope.expects(:find_hostclass).with("myclass").returns(@klass)
     @klass.expects(:name).returns("myclass")
@@ -49,7 +50,7 @@ describe "the require function" do
   end
 
   it "should append the required class to the require parameter" do
-    @scope.stubs(:function_include)
+    @scope.compiler.stubs(:evaluate_classes)
 
     one = Puppet::Resource.new(:file, "/one")
     @resource[:require] = one
@@ -57,5 +58,18 @@ describe "the require function" do
 
     @resource[:require].should be_include(one)
     @resource[:require].detect { |r| r.to_s == "Class[Myclass]" }.should be_instance_of(Puppet::Resource)
+  end
+
+  describe "When the future parser is in use" do
+    require 'puppet/pops'
+    require 'puppet_spec/compiler'
+    include PuppetSpec::Compiler
+
+    before(:each) do
+      Puppet[:parser] = 'future'
+    end
+
+    it_should_behave_like 'all functions transforming relative to absolute names', :function_require
+    it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :require
   end
 end

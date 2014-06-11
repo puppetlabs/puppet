@@ -94,12 +94,13 @@ describe "Puppet::Parser::Compiler" do
     end
 
     describe "when resolving class references" do
-      it "should favor local scope, even if there's an included class in topscope" do
+      it "should not favor local scope (with class included in topscope)" do
         catalog = compile_to_catalog(<<-PP)
           class experiment {
             class baz {
             }
             notify {"x" : require => Class[Baz] }
+            notify {"y" : require => Class[Experiment::Baz] }
           }
           class baz {
           }
@@ -108,15 +109,17 @@ describe "Puppet::Parser::Compiler" do
           include experiment::baz
         PP
 
-        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
+        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
 
-      it "should favor local scope, even if there's an unincluded class in topscope" do
+      it "should not favor local scope, (with class not included in topscope)" do
         catalog = compile_to_catalog(<<-PP)
           class experiment {
             class baz {
             }
             notify {"x" : require => Class[Baz] }
+            notify {"y" : require => Class[Experiment::Baz] }
           }
           class baz {
           }
@@ -124,7 +127,8 @@ describe "Puppet::Parser::Compiler" do
           include experiment::baz
         PP
 
-        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
+        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
     end
 

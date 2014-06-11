@@ -11,14 +11,24 @@ comma-separated list of class names.
 
 A contained class will not be applied before the containing class is
 begun, and will be finished before the containing class is finished.
+
+When the future parser is used, you must use the class's full name;
+relative names are no longer allowed. In addition to names in string form,
+you may also directly use Class and Resource Type values that are produced by
+the future parser's resource and relationship expressions.
 "
 ) do |classes|
   scope = self
 
+  # Make call patterns uniform and protected against nested arrays, also make
+  # names absolute if so desired.
+  classes = transform_and_assert_classnames(classes.is_a?(Array) ? classes.flatten : [classes])
+
   containing_resource = scope.resource
 
-  included = scope.function_include(classes)
-  included.each do |resource|
+  # This is the same as calling the include function but faster and does not rely on the include
+  # function (which is a statement) to return something (it should not).
+  (compiler.evaluate_classes(classes, self, false) || []).each do |resource|
     if ! scope.catalog.edge?(containing_resource, resource)
       scope.catalog.add_edge(containing_resource, resource)
     end

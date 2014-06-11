@@ -5,6 +5,8 @@ require 'puppet/parser/functions'
 require 'matchers/containment_matchers'
 require 'matchers/resource'
 require 'matchers/include_in_order'
+require 'unit/parser/functions/shared'
+
 
 describe 'The "contain" function' do
   include PuppetSpec::Compiler
@@ -218,5 +220,17 @@ describe 'The "contain" function' do
         "Notify[first]", "Notify[contained]", "Notify[last]"
       )
     end
+  end
+
+  describe "When the future parser is in use" do
+    require 'puppet/pops'
+    before(:each) do
+      Puppet[:parser] = 'future'
+      compiler  = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
+      @scope = Puppet::Parser::Scope.new(compiler)
+    end
+
+    it_should_behave_like 'all functions transforming relative to absolute names', :function_contain
+    it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :contain
   end
 end
