@@ -98,49 +98,39 @@ module Puppet::Util::POSIX
     end
   end
 
-  # Get the GID of a given group, provided either a GID or a name
+  # Get the GID
   def gid(group)
-    begin
-      group = Integer(group)
-    rescue ArgumentError
-      # pass
-    end
-    if group.is_a?(Integer)
-      return nil unless name = get_posix_field(:group, :name, group)
-      gid = get_posix_field(:group, :gid, name)
-      check_value = gid
-    else
-      return nil unless gid = get_posix_field(:group, :gid, group)
-      name = get_posix_field(:group, :name, gid)
-      check_value = name
-    end
-    if check_value != group
-      return search_posix_field(:group, :gid, group)
-    else
-      return gid
-    end
+      get_posix_value(:group, :gid, group)
   end
 
-  # Get the UID of a given user, whether a UID or name is provided
+  # Get the UID
   def uid(user)
+      get_posix_value(:passwd, :uid, user)
+  end
+
+  private
+
+  # Get the specified id_field of a given field (user or group), 
+  # whether an ID name is provided
+  def get_posix_value(location, id_field, field)
     begin
-      user = Integer(user)
+      field = Integer(field)
     rescue ArgumentError
       # pass
     end
-    if user.is_a?(Integer)
-      return nil unless name = get_posix_field(:passwd, :name, user)
-      uid = get_posix_field(:passwd, :uid, name)
-      check_value = uid
+    if field.is_a?(Integer)
+      return nil unless name = get_posix_field(location, :name, field)
+      id = get_posix_field(location, id_field, name)
+      check_value = id
     else
-      return nil unless uid = get_posix_field(:passwd, :uid, user)
-      name = get_posix_field(:passwd, :name, uid)
+      return nil unless id = get_posix_field(location, id_field, field)
+      name = get_posix_field(location, :name, id)
       check_value = name
     end
-    if check_value != user
-      return search_posix_field(:passwd, :uid, user)
+    if check_value != field
+      return search_posix_field(location, id_field, field)
     else
-      return uid
+      return id
     end
   end
 end
