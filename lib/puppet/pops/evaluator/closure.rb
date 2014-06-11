@@ -31,66 +31,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   # @api public
   def call(scope, *args)
     tc = Puppet::Pops::Types::TypeCalculator
-    args_size = args.size
-
-    args_diff = parameters.size - args.size
-    # associate values with parameters (NOTE: excess args for captures rest are not included in merged)
-    merged = parameters.zip(args.fill(:missing, args.size, args_diff))
-
-    variable_bindings = {}
-    merged.each do |arg_assoc|
-      # m can be one of
-      # m = [Parameter{name => "name", value => nil], "given"]
-      #   | [Parameter{name => "name", value => Expression}, "given"]
-      #   | [Parameter{name => "name", value => Expression}, :missing]
-      #
-      # "given" may be nil or :undef which means that this is the value to use,
-      # not a default expression.
-      #
-
-      # "given" is always present. If a parameter was provided then
-      # the entry is that value, else the symbol :missing
-      given_argument     = arg_assoc[1]
-      param_captures     = arg_assoc[0].captures_rest
-      default_expression = arg_assoc[0].value
-
-      if given_argument == :missing
-        # not given
-        if default_expression
-          # not given, has default
-          value = @evaluator.evaluate(default_expression, scope)
-          if param_captures && !value.is_a?(Array)
-            # correct non array default value
-            value = [ value ]
-          end
-        else
-          # not given, does not have default
-          if param_captures
-            # default for captures rest is an empty array
-            value = [ ]
-          else
-            @evaluator.fail(Puppet::Pops::Issues::MISSING_REQUIRED_PARAMETER, arg_assoc[0], { :param_name => arg_assoc[0].name })
-            raise ArgumentError, ""
-          end
-        end
-      else
-        # given
-        if param_captures
-          # get excess arguments
-          value = args[(parameter_count-1)..-1]
-          # If the input was a single nil, or undef, and there is a default, use the default
-          if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
-            value = @evaluator.evaluate(default_expression, scope)
-            # and ensure it is an array
-            value = [value] unless value.is_a?(Array)
-          end
-        else
-          value = given_argument
-        end
-      end
-
-      variable_bindings[arg_assoc[0].name] = value
-    end
+    variable_bindings = combine_values_with_parameters(args)
 
     final_args = tc.infer_set(parameters.inject([]) do |final_args, param|
       if param.captures_rest
@@ -173,6 +114,52 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   end
 
   private
+
+  def combine_values_with_parameters(args)
+    variable_bindings = {}
+
+    parameters.each_with_index do |parameter, index|
+      param_captures     = parameter.captures_rest
+      default_expression = parameter.value
+
+      if index >= args.size
+        if default_expression
+          # not given, has default
+          value = @evaluator.evaluate(default_expression, @enclosing_scope)
+          if param_captures && !value.is_a?(Array)
+            # correct non array default value
+            value = [ value ]
+          end
+        else
+          # not given, does not have default
+          if param_captures
+            # default for captures rest is an empty array
+            value = [ ]
+          else
+            @evaluator.fail(Puppet::Pops::Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
+          end
+        end
+      else
+        given_argument = args[index]
+        if param_captures
+          # get excess arguments
+          value = args[(parameter_count-1)..-1]
+          # If the input was a single nil, or undef, and there is a default, use the default
+          if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
+            value = @evaluator.evaluate(default_expression, scope)
+            # and ensure it is an array
+            value = [value] unless value.is_a?(Array)
+          end
+        else
+          value = given_argument
+        end
+      end
+
+      variable_bindings[parameter.name] = value
+    end
+
+    variable_bindings
+  end
 
   def unify_ranges(left, right)
     [left[0] + right[0], left[1] + right[1]]
