@@ -77,8 +77,8 @@ describe "Puppet::Parser::Compiler" do
           include experiment::baz
         PP
 
-        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[::Baz]"))
-        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[::Experiment::Baz]"))
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
+        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
 
       it "should not favor local scope, (with class not included in topscope)" do
@@ -95,8 +95,8 @@ describe "Puppet::Parser::Compiler" do
           include experiment::baz
         PP
 
-        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[::Baz]"))
-        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[::Experiment::Baz]"))
+        expect(catalog).to have_resource("Notify[x]").with_parameter(:require, be_resource("Class[Baz]"))
+        expect(catalog).to have_resource("Notify[y]").with_parameter(:require, be_resource("Class[Experiment::Baz]"))
       end
     end
 

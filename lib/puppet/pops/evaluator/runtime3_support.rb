@@ -463,7 +463,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # absolute and others cannot be.
     # Thus there is no need to call scope.resolve_type_and_titles to do dynamic lookup.
 
-    Puppet::Resource.new(*catalog_type_to_split_type_title(o, :make_absolute))
+    Puppet::Resource.new(*catalog_type_to_split_type_title(o))
   end
 
   private
