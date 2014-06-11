@@ -263,7 +263,7 @@ describe Puppet::Type.type(:cron).provider(:crontab) do
         expect(parameters[1][:target]).to eq('foobar')
       end
 
-      it "should be able to parse puppet manged cronjobs" do
+      it "should be able to parse puppet managed cronjobs" do
         described_class.stubs(:target_object).returns File.new(my_fixture('managed'))
         described_class.instances.map do |p|
           h = {:name => p.get(:name)}
