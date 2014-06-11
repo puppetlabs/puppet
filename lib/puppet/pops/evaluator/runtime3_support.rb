@@ -185,11 +185,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # and convoluted path of evaluation.
     # In order to do this in a way that is similar to 3.x two resources are created to be used as keys.
     #
-    #
-    # TODO: logic that creates a PCatalogEntryType should resolve it to ensure it is loaded (to the best of known_resource_types knowledge).
-    # If this is not done, the order in which things are done may be different? OTOH, it probably works anyway :-)
-    # TODO: Not sure if references needs to be resolved via the scope?
-    #
     # And if that is not enough, a source/target may be a Collector (a baked query that will be evaluated by the
     # compiler - it is simply passed through here for processing by the compiler at the right time).
     #
@@ -469,30 +464,22 @@ module Puppet::Pops::Evaluator::Runtime3Support
   private
 
   # Produces an array with [type, title] from a PCatalogEntryType
-  # Used to produce reference resource instances (used when 3x is operating on a resource).
-  # Ensures that resources other than classes are *not* absolute, and makes classes absolute
-  # if the argument make_absolute is truthy (else, ensures that they are not absolute).
+  # This method is used to produce the arguments for creation of reference resource instances
+  # (used when 3x is operating on a resource).
+  # Ensures that resources are *not* absolute.
   #
-  def catalog_type_to_split_type_title(catalog_type, make_absolute = false)
+  def catalog_type_to_split_type_title(catalog_type)
     case catalog_type
     when Puppet::Pops::Types::PHostClassType
       class_name = catalog_type.class_name
-      if make_absolute
-        ['class', class_name.nil? ? nil : class_name.sub(/^([^:]{1,2})/, '::\1')]
-      else
-        ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
-      end
+      ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
     when Puppet::Pops::Types::PResourceType
       type_name = catalog_type.type_name
       title = catalog_type.title
       if type_name =~ /^(::)?[Cc]lass/
-        if make_absolute
-          ['class', title.nil? ? nil : title.sub(/^([^:]{1,2})/, '::\1')]
-        else
-          ['class', title.nil? ? nil : title.sub(/^::/, '')]
-        end
+        ['class', title.nil? ? nil : title.sub(/^::/, '')]
       else
-        # Ensure resource name is *not* absolute, and that title is '' if nil
+        # Ensure that title is '' if nil
         # Resources with absolute name always results in error because tagging does not support leading ::
         [type_name.nil? ? nil : type_name.sub(/^::/, ''), title.nil? ? '' : title]
       end
