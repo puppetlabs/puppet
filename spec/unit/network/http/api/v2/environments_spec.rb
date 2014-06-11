@@ -23,20 +23,41 @@ describe Puppet::Network::HTTP::API::V2::Environments do
         "production" => {
           "settings" => {
             "modulepath" => [File.expand_path("/first"), File.expand_path("/second")],
-            "manifest" => File.expand_path("/manifests")
+            "manifest" => File.expand_path("/manifests"),
+            "environment_timeout" => 0,
+            "config_version" => ""
           }
         }
       }
     })
   end
 
-  it "the response conforms to the environments schema" do
+  it "the response conforms to the environments schema for unlimited timeout" do
+    conf_stub = stub 'conf_stub'
+    conf_stub.expects(:environment_timeout).returns(1.0 / 0.0)
     environment = Puppet::Node::Environment.create(:production, [])
-    handler = Puppet::Network::HTTP::API::V2::Environments.new(Puppet::Environments::Static.new(environment))
+    env_loader = Puppet::Environments::Static.new(environment)
+    env_loader.expects(:get_conf).with(:production).returns(conf_stub)
+    handler = Puppet::Network::HTTP::API::V2::Environments.new(env_loader)
     response = Puppet::Network::HTTP::MemoryResponse.new
 
     handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
 
     expect(response.body).to validate_against('api/schemas/environments.json')
   end
+
+  it "the response conforms to the environments schema for integer timeout" do
+    conf_stub = stub 'conf_stub'
+    conf_stub.expects(:environment_timeout).returns(1)
+    environment = Puppet::Node::Environment.create(:production, [])
+    env_loader = Puppet::Environments::Static.new(environment)
+    env_loader.expects(:get_conf).with(:production).returns(conf_stub)
+    handler = Puppet::Network::HTTP::API::V2::Environments.new(env_loader)
+    response = Puppet::Network::HTTP::MemoryResponse.new
+
+    handler.call(Puppet::Network::HTTP::Request.from_hash(:headers => { 'accept' => 'application/json' }), response)
+
+    expect(response.body).to validate_against('api/schemas/environments.json')
+  end
+
 end

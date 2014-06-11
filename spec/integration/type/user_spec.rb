@@ -15,7 +15,7 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
     let(:manifest) { "user { 'root': purge_ssh_keys => '#{tempfile}' }" }
 
     it "should purge authorized ssh keys" do
-      apply_compiled_manifest(manifest, Puppet::Graph::RandomPrioritizer.new)
+      apply_compiled_manifest(manifest)
       File.read(tempfile).should_not =~ /key-name/
     end
 
@@ -23,7 +23,7 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
       let(:manifest) { "host { 'test': before => User[root] } user { 'root': purge_ssh_keys => '#{tempfile}' }" }
 
       it "should purge authorized ssh keys" do
-        apply_compiled_manifest(manifest, Puppet::Graph::RandomPrioritizer.new)
+        apply_compiled_manifest(manifest)
         File.read(tempfile).should_not =~ /key-name/
       end
     end
