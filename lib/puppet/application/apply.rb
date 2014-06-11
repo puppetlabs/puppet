@@ -1,5 +1,6 @@
 require 'puppet/application'
 require 'puppet/configurer'
+require 'puppet/util/profiler/aggregate'
 
 class Puppet::Application::Apply < Puppet::Application
 
@@ -239,6 +240,12 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         exit(1)
       end
     end
+
+  ensure
+    if @profiler
+      Puppet::Util::Profiler.remove_profiler(@profiler)
+      @profiler.shutdown
+    end
   end
 
   # Enable all of the most common test options.
@@ -266,7 +273,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     set_log_level
 
     if Puppet[:profile]
-      Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::WallClock.new(Puppet.method(:debug), "apply"))
+      @profiler = Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::Aggregate.new(Puppet.method(:debug), "apply"))
     end
   end
 

@@ -44,9 +44,10 @@ module Puppet::Util::Profiler
   # in the profiled hierachy.
   #
   # @param message [String] A description of the profiled event
+  # @param metric_id [Array] A list of strings making up the ID of a metric to profile
   # @param block [Block] The segment of code to profile
   # @api public
-  def self.profile(message, &block)
-    @profiler.profile(message, &block)
+  def self.profile(message, metric_id = nil, &block)
+    @profiler.profile(message, metric_id, &block)
   end
 end
