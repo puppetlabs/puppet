@@ -19,11 +19,11 @@ test -x $DAEMON || exit 0
 
 . /lib/lsb/init-functions
 
-if [ ! -d /var/run/puppet ]; then
-    mkdir -p /var/run/puppet
+if [ ! -d /var/lib/puppet/run ]; then
+    mkdir -p /var/lib/puppet/run
 fi
 
-chown puppet:puppet /var/run/puppet
+chown puppet:puppet /var/lib/puppet/run
 
 mongrel_warning="The mongrel servertype is no longer built-in to Puppet. It
 appears as though mongrel is being used, as the number of puppetmasters is
@@ -49,7 +49,7 @@ is_true() {
 
 start_puppet_master() {
     if is_true "$START" ; then
-        start-stop-daemon --start --quiet --pidfile /var/run/puppet/${NAME}.pid \
+        start-stop-daemon --start --quiet --pidfile /var/lib/puppet/run/${NAME}.pid \
             --startas $DAEMON -- $NAME $DAEMON_OPTS --masterport=$PORT
     else
         echo ""
@@ -58,7 +58,7 @@ start_puppet_master() {
 }
 
 stop_puppet_master() {
-    start-stop-daemon --stop --retry TERM/10/KILL/5 --quiet --oknodo --pidfile /var/run/puppet/${NAME}.pid
+    start-stop-daemon --stop --retry TERM/10/KILL/5 --quiet --oknodo --pidfile /var/lib/puppet/run/${NAME}.pid
 }
 
 status_puppet_master() {
@@ -96,11 +96,11 @@ status_puppet_master() {
     fi
 
     if is_true "$START" ; then
-        status_of_proc -p "/var/run/puppet/${NAME}.pid" "${DAEMON}" "${NAME}"
+        status_of_proc -p "/var/lib/puppet/run/${NAME}.pid" "${DAEMON}" "${NAME}"
     else
         echo ""
         echo "puppetmaster not configured to start"
-        status_of_proc -p "/var/run/puppet/${NAME}.pid" "${DAEMON}" "${NAME}"
+        status_of_proc -p "/var/lib/puppet/run/${NAME}.pid" "${DAEMON}" "${NAME}"
     fi
 }
 
