@@ -59,18 +59,19 @@ class Puppet::Pops::Evaluator::EppEvaluator
       raise ArgumentError, "#{func_name}(): The EPP template contains illegal expressions (definitions)"
     end
 
-    see_scope = body.body.see_scope
-    if see_scope && !template_args_set
-      # no epp params and no arguments were given => inline_epp logic sees all local variables, epp all global
+    parameters_specified = body.body.parameters_specified
+    if parameters_specified && !template_args_set
+      # no epp params and no arguments were given => inline_epp() logic
+      # sees all local variables, epp() all global
       closure_scope =  use_global_scope_only ? scope.find_global_scope : scope
-      spill_over = false
+      enforce_parameters = true
     else
-      # no epp params or user provided arguments in a hash, epp logic only sees global + what was given
+      # no epp params or user provided arguments in a hash, epp() logic
+      # only sees global + what was given
       closure_scope = scope.find_global_scope
-      # given spill over if there are no params (e.g. replace closure scope by a new scope with the given args)
-      spill_over = see_scope
+      enforce_parameters = !parameters_specified
     end
-    evaluated_result = parser.closure(body, closure_scope).call_by_name(scope, template_args, spill_over)
+    evaluated_result = parser.closure(body, closure_scope).call_by_name(scope, template_args, enforce_parameters)
     evaluated_result
   end
 

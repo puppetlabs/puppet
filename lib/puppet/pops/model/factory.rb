@@ -603,13 +603,13 @@ class Puppet::Pops::Model::Factory
   end
 
   def self.EPP(parameters, body)
-    see_scope = false
+    parameters_specified = false
     params = parameters
     if parameters.nil?
       params = []
-      see_scope = true
+      parameters_specified = true
     end
-    LAMBDA(params, new(Model::EppExpression, see_scope, body))
+    LAMBDA(params, new(Model::EppExpression, parameters_specified, body))
   end
 
   def self.RESERVED(name)
@@ -843,8 +843,8 @@ class Puppet::Pops::Model::Factory
     x
   end
 
-  def build_EppExpression(o, see_scope, body)
-    o.see_scope = see_scope
+  def build_EppExpression(o, parameters_specified, body)
+    o.parameters_specified = parameters_specified
     b = f_build_body(body)
     o.body = b.current if b
     o

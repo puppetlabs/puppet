@@ -49,34 +49,33 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   end
 
   # Call closure with argument assignment by name
-  def call_by_name(scope, args_hash, spill_over = false)
-    if !spill_over && args_hash.size > parameters.size
-      raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}"
-    end
+  def call_by_name(scope, args_hash, enforce_parameters)
+    if enforce_parameters
+      if args_hash.size > parameters.size
+        raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}"
+      end
 
-    # associate values with parameters
-    scope_hash = {}
-    parameters.each do |p|
-      scope_hash[p.name] = args_hash[p.name] || @evaluator.evaluate(p.value, @enclosing_scope)
-    end
+      # associate values with parameters
+      scope_hash = {}
+      parameters.each do |p|
+        scope_hash[p.name] = args_hash[p.name] || @evaluator.evaluate(p.value, @enclosing_scope)
+      end
 
-    missing = scope_hash.select { |name, value| value.nil? }
-    if missing.any?
-      raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.collect(&:first).join(" ,")}"
-    end
+      missing = scope_hash.select { |name, value| value.nil? }
+      if missing.any?
+        raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.collect(&:first).join(" ,")}"
+      end
 
-    if spill_over
-      # all args from given hash should be used, nil entries replaced by default values should win
-      scope_hash = args_hash.merge(scope_hash)
-    end
-
-    tc = Puppet::Pops::Types::TypeCalculator
-    final_args = tc.infer_set(parameter_names.collect { |param| scope_hash[param] })
-    if tc.callable?(type, final_args)
-      @evaluator.evaluate_block_with_bindings(@enclosing_scope, scope_hash, @model.body)
+      tc = Puppet::Pops::Types::TypeCalculator
+      final_args = tc.infer_set(parameter_names.collect { |param| scope_hash[param] })
+      if !tc.callable?(type, final_args)
+        raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', final_args, [self])}"
+      end
     else
-      raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', final_args, [self])}"
+      scope_hash = args_hash
     end
+
+    @evaluator.evaluate_block_with_bindings(@enclosing_scope, scope_hash, @model.body)
   end
 
   def parameters

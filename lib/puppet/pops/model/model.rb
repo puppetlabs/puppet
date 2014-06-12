@@ -508,7 +508,11 @@ module Puppet::Pops::Model
 
   # Epp start
   class EppExpression < Expression
-    has_attr 'see_scope', Boolean
+    # EPP can be specified without giving any parameter specification.
+    # However, the parameters of the lambda in that case are the empty
+    # array, which is the same as when the parameters are explicity
+    # specified as empty. This attribute tracks that difference.
+    has_attr 'parameters_specified', Boolean
     contains_one_uni 'body', Expression
   end
 
