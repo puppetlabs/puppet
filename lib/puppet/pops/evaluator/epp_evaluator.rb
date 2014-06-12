@@ -3,14 +3,14 @@
 class Puppet::Pops::Evaluator::EppEvaluator
 
   def self.inline_epp(scope, epp_source, template_args = nil)
-    unless epp_source.is_a? String
+    unless epp_source.is_a?(String)
       raise ArgumentError, "inline_epp(): the first argument must be a String with the epp source text, got a #{epp_source.class}"
     end
 
     # Parse and validate the source
     parser = Puppet::Pops::Parser::EvaluatingParser::EvaluatingEppParser.new
     begin
-    result = parser.parse_string(epp_source, 'inlined-epp-text')
+      result = parser.parse_string(epp_source, 'inlined-epp-text')
     rescue Puppet::ParseError => e
       raise ArgumentError, "inline_epp(): Invalid EPP: #{e.message}"
     end
@@ -20,7 +20,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
   end
 
   def self.epp(scope, file, env_name, template_args = nil)
-    unless file.is_a? String
+    unless file.is_a?(String)
       raise ArgumentError, "epp(): the first argument must be a String with the filename, got a #{file.class}"
     end
 
@@ -34,7 +34,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
     # Parse and validate the source
     parser = Puppet::Pops::Parser::EvaluatingParser::EvaluatingEppParser.new
     begin
-    result = parser.parse_file(template_file)
+      result = parser.parse_file(template_file)
     rescue Puppet::ParseError => e
       raise ArgumentError, "epp(): Invalid EPP: #{e.message}"
     end

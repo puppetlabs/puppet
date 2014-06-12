@@ -30,9 +30,9 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
   # compatible with 3x AST::Lambda
   # @api public
   def call(scope, *args)
-    tc = Puppet::Pops::Types::TypeCalculator
     variable_bindings = combine_values_with_parameters(args)
 
+    tc = Puppet::Pops::Types::TypeCalculator
     final_args = tc.infer_set(parameters.inject([]) do |final_args, param|
       if param.captures_rest
         final_args.concat(variable_bindings[param.name])
@@ -50,8 +50,6 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
   # Call closure with argument assignment by name
   def call_by_name(scope, args_hash, spill_over = false)
-    parameters = @model.parameters || []
-
     if !spill_over && args_hash.size > parameters.size
       raise ArgumentError, "Too many arguments: #{args_hash.size} for #{parameters.size}"
     end
@@ -59,19 +57,26 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     # associate values with parameters
     scope_hash = {}
     parameters.each do |p|
-      scope_hash[p.name] = args_hash[p.name] || @evaluator.evaluate(p.value, scope)
+      scope_hash[p.name] = args_hash[p.name] || @evaluator.evaluate(p.value, @enclosing_scope)
     end
-    missing = scope_hash.reduce([]) {|memo, entry| memo << entry[0] if entry[1].nil?; memo }
-    unless missing.empty?
-      optional = parameters.count { |p| !p.value.nil? }
-      raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.join(" ,")}"
+
+    missing = scope_hash.select { |name, value| value.nil? }
+    if missing.any?
+      raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.collect(&:first).join(" ,")}"
     end
+
     if spill_over
       # all args from given hash should be used, nil entries replaced by default values should win
       scope_hash = args_hash.merge(scope_hash)
     end
 
-    @evaluator.evaluate_block_with_bindings(@enclosing_scope, scope_hash, @model.body)
+    tc = Puppet::Pops::Types::TypeCalculator
+    final_args = tc.infer_set(parameter_names.collect { |param| scope_hash[param] })
+    if tc.callable?(type, final_args)
+      @evaluator.evaluate_block_with_bindings(@enclosing_scope, scope_hash, @model.body)
+    else
+      raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', final_args, [self])}"
+    end
   end
 
   def parameters
