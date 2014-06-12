@@ -814,15 +814,6 @@ describe 'The type calculator' do
         calculator.assignable?(tuple2, tuple1).should == false
       end
 
-      it 'accepts an empty tuple as assignable to a tuple with a min size of 0' do
-        tuple1 = tuple_t(Object)
-        factory.constrain_size(tuple1, 0, :default)
-        tuple2 = tuple_t()
-
-        calculator.assignable?(tuple1, tuple2).should == true
-        calculator.assignable?(tuple2, tuple1).should == false
-      end
-
       it 'should accept matching tuples' do
         tuple1 = tuple_t(1,2)
         tuple2 = tuple_t(Integer,Integer)
