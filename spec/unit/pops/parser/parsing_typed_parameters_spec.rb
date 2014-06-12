@@ -54,7 +54,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it 'is not allowed in define' do
       source = <<-CODE
-        define foo(*$a, $b) { }
+        define foo(*$a) { }
       CODE
       expect do
         parser.parse_string(source, __FILE__)
@@ -63,7 +63,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it 'is not allowed in class' do
       source = <<-CODE
-        class foo(*$a, $b) { }
+        class foo(*$a) { }
       CODE
       expect do
         parser.parse_string(source, __FILE__)
