@@ -73,6 +73,10 @@ Puppet::Parser::Functions::newfunction(:create_resources, :arity => -3, :doc => 
   begin
     resource.safeevaluate(self)
   rescue Puppet::ParseError => internal_error
-    raise internal_error.original
+    if internal_error.original.nil?
+      raise internal_error
+    else
+      raise internal_error.original
+    end
   end
 end
