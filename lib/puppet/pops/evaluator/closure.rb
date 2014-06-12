@@ -41,11 +41,11 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       end
     end)
 
-    if !tc.callable?(type, final_args)
+    if tc.callable?(type, final_args)
+      @evaluator.evaluate_block_with_bindings(@enclosing_scope, variable_bindings, @model.body)
+    else
       raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', final_args, [self])}"
     end
-
-    @evaluator.evaluate_block_with_bindings(@enclosing_scope, variable_bindings, @model.body)
   end
 
   # Call closure with argument assignment by name
@@ -74,26 +74,20 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     @evaluator.evaluate_block_with_bindings(@enclosing_scope, scope_hash, @model.body)
   end
 
-  def parameters()
-    @model.parameters || []
+  def parameters
+    @model.parameters
   end
 
   # Returns the number of parameters (required and optional)
   # @return [Integer] the total number of accepted parameters
   def parameter_count
     # yes, this is duplication of code, but it saves a method call
-    (@model.parameters || []).size
-  end
-
-  # Returns the number of optional parameters.
-  # @return [Integer] the number of optional accepted parameters
-  def optional_parameter_count
-    parameters.count { |p| !p.value.nil? || p.captures_rest }
+    @model.parameters.size
   end
 
   # @api public
   def parameter_names
-    @model.parameters.collect {|p| p.name }
+    @model.parameters.collect(&:name)
   end
 
   # @api public
@@ -103,7 +97,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
   # @api public
   def last_captures_rest?
-    last = (@model.parameters || [])[-1]
+    last = @model.parameters[-1]
     last && last.captures_rest
   end
 
@@ -128,13 +122,13 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
           value = @evaluator.evaluate(default_expression, @enclosing_scope)
           if param_captures && !value.is_a?(Array)
             # correct non array default value
-            value = [ value ]
+            value = [value]
           end
         else
           # not given, does not have default
           if param_captures
             # default for captures rest is an empty array
-            value = [ ]
+            value = []
           else
             @evaluator.fail(Puppet::Pops::Issues::MISSING_REQUIRED_PARAMETER, parameter, { :param_name => parameter.name })
           end
@@ -159,10 +153,6 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
     end
 
     variable_bindings
-  end
-
-  def unify_ranges(left, right)
-    [left[0] + right[0], left[1] + right[1]]
   end
 
   def create_callable_type()
@@ -201,7 +191,8 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
         @evaluator.fail(Puppet::Pops::Issues::REQUIRED_PARAMETER_AFTER_OPTIONAL, param, { :param_name => param.name })
       end
 
-      range = [range[0] + param_range[0], range[1] + param_range[1]]
+      range[0] += param_range[0]
+      range[1] += param_range[1]
     end
 
     if range[1] == Puppet::Pops::Types::INFINITY
