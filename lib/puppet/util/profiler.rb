@@ -6,34 +6,34 @@ require 'benchmark'
 module Puppet::Util::Profiler
   require 'puppet/util/profiler/wall_clock'
   require 'puppet/util/profiler/object_counts'
-  require 'puppet/util/profiler/manager'
+  require 'puppet/util/profiler/around_profiler'
 
-  @profiler_manager = Puppet::Util::Profiler::Manager.new
-  
+  @profiler = Puppet::Util::Profiler::AroundProfiler.new
+
   # Reset the profiling system to the original state
   #
   # @api private
   def self.clear
-    @profiler_manager.clear
+    @profiler.clear
   end
 
   # Retrieve the current list of profilers
   #
   # @api private
   def self.current
-    @profiler_manager.current
+    @profiler.current
   end
 
   # @param profiler [#profile] A profiler for the current thread
   # @api private
   def self.add_profiler(profiler)
-    @profiler_manager.add_profiler(profiler)
+    @profiler.add_profiler(profiler)
   end
 
   # @param profiler [#profile] A profiler to remove from the current thread
   # @api private
   def self.remove_profiler(profiler)
-    @profiler_manager.remove_profiler(profiler)
+    @profiler.remove_profiler(profiler)
   end
 
   # Profile a block of code and log the time it took to execute.
@@ -47,6 +47,6 @@ module Puppet::Util::Profiler
   # @param block [Block] The segment of code to profile
   # @api public
   def self.profile(message, &block)
-    @profiler_manager.profile(message, &block)
+    @profiler.profile(message, &block)
   end
 end

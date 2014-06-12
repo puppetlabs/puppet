@@ -1,50 +1,47 @@
 require 'spec_helper'
-require 'puppet/util/profiler/manager'
+require 'puppet/util/profiler'
 
-describe Puppet::Util::Profiler::Manager do
-  let(:profiler) { TestProfiler.new() }
+describe Puppet::Util::Profiler::AroundProfiler do
+  let(:child) { TestProfiler.new() }
+  let(:profiler) { Puppet::Util::Profiler::AroundProfiler.new }
 
   before :each do
-    subject.add_profiler(profiler)
-  end
-
-  after :each do
-    subject.remove_profiler(profiler)
+    profiler.add_profiler(child)
   end
 
   it "returns the value of the profiled segment" do
-    retval = subject.profile("Testing") { "the return value" }
+    retval = profiler.profile("Testing") { "the return value" }
 
     retval.should == "the return value"
   end
 
   it "propogates any errors raised in the profiled segment" do
     expect do
-      subject.profile("Testing") { raise "a problem" }
+      profiler.profile("Testing") { raise "a problem" }
     end.to raise_error("a problem")
   end
 
   it "makes the description and the context available to the `start` and `finish` methods" do
-    subject.profile("Testing") { }
+    profiler.profile("Testing") { }
 
-    profiler.context.should == "Testing"
-    profiler.description.should == "Testing"
+    child.context.should == "Testing"
+    child.description.should == "Testing"
   end
 
   it "calls finish even when an error is raised" do
     begin
-      subject.profile("Testing") { raise "a problem" }
+      profiler.profile("Testing") { raise "a problem" }
     rescue
-      profiler.context.should == "Testing"
+      child.context.should == "Testing"
     end
   end
 
   it "supports multiple profilers" do
     profiler2 = TestProfiler.new
-    subject.add_profiler(profiler2)
-    subject.profile("Testing") {}
+    profiler.add_profiler(profiler2)
+    profiler.profile("Testing") {}
 
-    profiler.context.should == "Testing"
+    child.context.should == "Testing"
     profiler2.context.should == "Testing"
   end
 

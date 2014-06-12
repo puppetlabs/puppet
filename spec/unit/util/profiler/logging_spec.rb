@@ -1,13 +1,12 @@
 require 'spec_helper'
 require 'puppet/util/profiler'
-require 'puppet/util/profiler/manager'
 
 describe Puppet::Util::Profiler::Logging do
   let(:logger) { SimpleLog.new }
   let(:identifier) { "Profiling ID" }
   let(:logging_profiler) { TestLoggingProfiler.new(logger, identifier) }
   let(:profiler) do
-    p = Puppet::Util::Profiler::Manager.new
+    p = Puppet::Util::Profiler::AroundProfiler.new
     p.add_profiler(logging_profiler)
     p
   end
