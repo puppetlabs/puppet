@@ -603,10 +603,11 @@ class Puppet::Pops::Model::Factory
   end
 
   def self.EPP(parameters, body)
-    parameters_specified = false
-    params = parameters
     if parameters.nil?
       params = []
+      parameters_specified = false
+    else
+      params = parameters
       parameters_specified = true
     end
     LAMBDA(params, new(Model::EppExpression, parameters_specified, body))

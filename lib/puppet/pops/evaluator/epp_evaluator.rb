@@ -60,16 +60,16 @@ class Puppet::Pops::Evaluator::EppEvaluator
     end
 
     parameters_specified = body.body.parameters_specified
-    if parameters_specified && !template_args_set
+    if parameters_specified || template_args_set
+      # no epp params or user provided arguments in a hash, epp() logic
+      # only sees global + what was given
+      closure_scope = scope.find_global_scope
+      enforce_parameters = parameters_specified
+    else
       # no epp params and no arguments were given => inline_epp() logic
       # sees all local variables, epp() all global
       closure_scope =  use_global_scope_only ? scope.find_global_scope : scope
       enforce_parameters = true
-    else
-      # no epp params or user provided arguments in a hash, epp() logic
-      # only sees global + what was given
-      closure_scope = scope.find_global_scope
-      enforce_parameters = !parameters_specified
     end
     evaluated_result = parser.closure(body, closure_scope).call_by_name(scope, template_args, enforce_parameters)
     evaluated_result
