@@ -201,6 +201,12 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  def check_EppExpression(o)
+    if o.eContainer.is_a?(Puppet::Pops::Model::LambdaExpression)
+      internal_check_no_capture(o.eContainer, o)
+    end
+  end
+
   def check_MethodCallExpression(o)
     unless o.functor_expr.is_a? Model::QualifiedName
       acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature => 'function name', :container => o)
@@ -269,10 +275,10 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
-  def internal_check_no_capture(o)
+  def internal_check_no_capture(o, container = o)
     o.parameters.each_with_index do |p, index|
       if p.captures_rest
-        acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, {:container => o, :param_name => p.name})
+        acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, {:container => container, :param_name => p.name})
       end
     end
   end

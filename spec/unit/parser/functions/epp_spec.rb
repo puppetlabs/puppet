@@ -70,6 +70,12 @@ describe "the epp function" do
       expect(eval_template_with_args("<%-|String $x|-%><%= $x == correct %>", 'x' => 'correct')).to eq("true")
     end
 
+    it "does not allow slurped parameters" do
+      expect do
+        eval_template_with_args("<%-|*$x|-%><%= $x %>", 'x' => 'incorrect')
+      end.to raise_error(/'captures rest' - not supported in an Epp Template/)
+    end
+
     it "raises an error when the passed value does not match the parameter's type" do
       expect do
         eval_template_with_args("<%-|Integer $x|-%><%= $x %>", 'x' => 'incorrect')
