@@ -1,3 +1,6 @@
+require 'rubygems'
+require 'json'
+
 module Puppet
   module Acceptance
     module ModuleUtils
@@ -227,8 +230,6 @@ module Puppet
       # Validate that a given string is valid JSON
       #
       # @param str [String] JSON string to validate
-      require 'rubygems'
-      require 'json'
       def json_valid?(str)
         JSON.parse(str)
           return true
