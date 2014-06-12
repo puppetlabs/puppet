@@ -24,7 +24,7 @@ shared_examples_for 'all iterative functions argument checks' do |func|
       compile_to_catalog(<<-MANIFEST)
         [1].#{func}(1) |$v| {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /Wrong number of arguments/)
+  end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*arg count \{2\}.*actual.*arg count \{3\}/m)
   end
 
   it 'raises an error when called without a block' do
@@ -32,14 +32,14 @@ shared_examples_for 'all iterative functions argument checks' do |func|
       compile_to_catalog(<<-MANIFEST)
         [1].#{func}()
       MANIFEST
-    end.to raise_error(Puppet::Error, /Wrong number of arguments/)
+    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*arg count \{2\}.*actual.*arg count \{1\}/m)
   end
 
-  it 'raises an error when called without a block' do
+  it 'raises an error when called with something that is not a block' do
     expect do
       compile_to_catalog(<<-MANIFEST)
         [1].#{func}(1)
       MANIFEST
-    end.to raise_error(Puppet::Error, /must be a parameterized block/)
+    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*Callable.*actual(?!Callable\)).*/m)
   end
 end

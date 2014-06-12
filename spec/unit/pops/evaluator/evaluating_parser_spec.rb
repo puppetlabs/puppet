@@ -17,19 +17,34 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   before(:each) do
     Puppet[:strict_variables] = true
 
-    # These must be set since the is 3x logic that triggers on these even if the tests are explicit
-    # about selection of parser and evaluator
+    # These must be set since the 3x logic switches some behaviors on these even if the tests explicitly
+    # use the 4x parser and evaluator.
     #
     Puppet[:parser] = 'future'
     Puppet[:evaluator] = 'future'
+
     # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
     require 'puppetx'
+
+    # Tests needs a known configuration of node/scope/compiler since it parses and evaluates
+    # snippets as the compiler will evaluate them, butwithout the overhead of compiling a complete
+    # catalog for each tested expression.
+    #
+    @parser  = Puppet::Pops::Parser::EvaluatingParser::Transitional.new
+    @node = Puppet::Node.new('node.example.com')
+    @node.environment = Puppet::Node::Environment.create(:testing, [])
+    @compiler = Puppet::Parser::Compiler.new(@node)
+    @scope = Puppet::Parser::Scope.new(@compiler)
+    @scope.source = Puppet::Resource::Type.new(:node, 'node.example.com')
+    @scope.parent = @compiler.topscope
   end
 
-  let(:parser) {  Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
-  let(:node) { 'node.example.com' }
-  let(:scope) { s = create_test_scope_for_node(node); s }
+  let(:parser) {  @parser }
+  let(:scope) { @scope }
   types = Puppet::Pops::Types::TypeFactory
+
+  def create_test_scope_for_node(node_name)
+  end
 
   context "When evaluator evaluates literals" do
     {
@@ -836,11 +851,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   end
 
   context "When evaluator performs calls" do
-    around(:each) do |example|
-      Puppet.override(:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))) do
-        example.run
-      end
-    end
 
     let(:populate) do
       parser.evaluate_string(scope, "$a = 10 $b = [1,2,3]")
@@ -873,7 +883,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'defaults can be given in a lambda and used only when arg is missing' do
-      env_loader = Puppet.lookup(:loaders).public_environment_loader
+      env_loader = @compiler.loaders.public_environment_loader
       fc = Puppet::Functions.create_function(:test) do
         dispatch :test do
           param 'Integer', 'count'
@@ -890,7 +900,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     it 'a given undef does not select the default value' do
-      env_loader = Puppet.lookup(:loaders).public_environment_loader
+      env_loader = @compiler.loaders.public_environment_loader
       fc = Puppet::Functions.create_function(:test) do
         dispatch :test do
           param 'Object', 'lambda_arg'
@@ -1117,12 +1127,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
   end
   context "Handles Deprecations and Discontinuations" do
-    around(:each) do |example|
-      Puppet.override({:loaders => Puppet::Pops::Loaders.new(Puppet::Node::Environment.create(:testing, []))}, 'test') do
-        example.run
-      end
-    end
-
     it 'of import statements' do
       source = "\nimport foo"
       # Error references position 5 at the opening '{'
