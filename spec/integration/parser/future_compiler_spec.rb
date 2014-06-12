@@ -574,7 +574,7 @@ describe "Puppet::Parser::Compiler" do
         end.to raise_error(/expected.*String.*actual.*Integer/m)
       end
 
-      it 'raises an error when the default argument for a slurped parameger is an incorrect type' do
+      it 'raises an error when the default argument for a slurped parameter is an incorrect type' do
         expect do
           compile_to_catalog(<<-MANIFEST)
             with() |String *$defaulted = 1| {}
@@ -598,7 +598,7 @@ describe "Puppet::Parser::Compiler" do
         expect(catalog).to have_resource('Notify[hi]')
       end
 
-      it 'allows specify the type of a slurped parameter as an array' do
+      it 'allows specifying the type of a slurped parameter as an array' do
         catalog = compile_to_catalog(<<-MANIFEST)
           with() |Array[String] *$defaulted = hi| { notify { $defaulted[0]: } }
         MANIFEST

@@ -449,7 +449,7 @@ class Puppet::Resource
     end
 
     # Perform optional type checking
-    if Puppet[:parser] == 'future'# && resource_type.respond_to?(:argument_types)
+    if Puppet[:parser] == 'future'
       # Perform type checking
       arg_types = resource_type.argument_types
       # Parameters is a map from name, to parameter, and the parameter again has name and value
