@@ -6,11 +6,11 @@ require 'puppet/util/profiler/logging'
 #
 # @api private
 class Puppet::Util::Profiler::WallClock < Puppet::Util::Profiler::Logging
-  def start
+  def do_start
     Timer.new
   end
 
-  def finish(context)
+  def do_finish(context)
     context.stop
     "took #{context} seconds"
   end

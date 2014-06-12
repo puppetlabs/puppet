@@ -116,18 +116,26 @@ describe Puppet::Network::HTTP::Handler do
       request = a_request
       request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase] = "true"
 
-      handler.process(request, response)
+      p = TestProfiler.new
 
-      Puppet::Util::Profiler.current.should be_kind_of(Puppet::Util::Profiler::WallClock)
+      Puppet::Util::Profiler.expects(:add_profiler).with { |profiler|
+        profiler.is_a? Puppet::Util::Profiler::WallClock
+      }.returns(p)
+
+      Puppet::Util::Profiler.expects(:remove_profiler).with { |profiler|
+        profiler == p
+      }
+
+      handler.process(request, response)
     end
 
     it "should not setup profiler when the profile parameter is missing" do
       request = a_request
       request[:params] = { }
 
-      handler.process(request, response)
+      Puppet::Util::Profiler.expects(:add_profiler).never
 
-      Puppet::Util::Profiler.current.should == Puppet::Util::Profiler::NONE
+      handler.process(request, response)
     end
 
     it "should raise an error if the request is formatted in an unknown format" do
@@ -217,6 +225,19 @@ describe Puppet::Network::HTTP::Handler do
 
     def headers(request)
       request[:headers] || {}
+    end
+  end
+
+  class TestProfiler
+    attr_accessor :context, :description
+
+    def start(description)
+      description
+    end
+
+    def finish(context, description)
+      @context = context
+      @description = description
     end
   end
 end

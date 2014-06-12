@@ -4,32 +4,18 @@ require 'puppet/util/profiler'
 describe Puppet::Util::Profiler::Logging do
   let(:logger) { SimpleLog.new }
   let(:identifier) { "Profiling ID" }
-  let(:profiler) { TestLoggingProfiler.new(logger, identifier) }
-
-  it "returns the value of the profiled segment" do
-    retval = profiler.profile("Testing") { "the return value" }
-
-    retval.should == "the return value"
+  let(:logging_profiler) { TestLoggingProfiler.new(logger, identifier) }
+  let(:profiler) do
+    p = Puppet::Util::Profiler::AroundProfiler.new
+    p.add_profiler(logging_profiler)
+    p
   end
 
-  it "propogates any errors raised in the profiled segment" do
-    expect do
-      profiler.profile("Testing") { raise "a problem" }
-    end.to raise_error("a problem")
-  end
 
   it "logs the explanation of the profile results" do
     profiler.profile("Testing") { }
 
     logger.messages.first.should =~ /the explanation/
-  end
-
-  it "logs results even when an error is raised" do
-    begin
-      profiler.profile("Testing") { raise "a problem" }
-    rescue
-      logger.messages.first.should =~ /the explanation/
-    end
   end
 
   it "describes the profiled segment" do
@@ -57,11 +43,11 @@ describe Puppet::Util::Profiler::Logging do
   end
 
   class TestLoggingProfiler < Puppet::Util::Profiler::Logging
-    def start
+    def do_start
       "the start"
     end
 
-    def finish(context)
+    def do_finish(context)
       "the explanation of #{context}"
     end
   end
