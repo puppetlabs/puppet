@@ -44,7 +44,12 @@ agents.each do |agent|
     on(agent, "test -f #{module_author}-#{module_name}/metadata.json")
     on(agent, "cat #{module_author}-#{module_name}/metadata.json") do |res|
       fail_test('not valid json') unless json_valid?(res.stdout)
-      fail_test('proper value not found in metadata.json') unless res.stdout.match /"issues_url": "#{answer_issues_url}"/
+      result = /("issues_url":.*)\n/.match(res.stdout)[1]
+      result = result.chomp
+      result = result.chomp(',')
+      answer_issues_url.gsub!('"', '\"')
+      expected = "\"issues_url\": \"#{answer_issues_url}\""
+      assert_equal(expected,result,'issues_url did not match expected')
     end
   end
 
