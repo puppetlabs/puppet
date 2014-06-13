@@ -394,6 +394,17 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
         resource.write(source)
       end
 
+      it 'should percent encode reserved characters' do
+        response.stubs(:code).returns('200')
+        Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
+        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
+
+        conn.unstub(:request_get)
+        conn.expects(:request_get).with('/none/file_content/test/foo%20bar', anything).yields(response)
+
+        resource.write(source)
+      end
+
       describe 'when handling file_content responses' do
         before(:each) do
           Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
