@@ -87,7 +87,10 @@ default_expectations = lambda do |env|
     },
     :puppet_apply => {
       :exit_code => 1,
-      :matches => [%r{Error:.*Could not find class testing_mod}],
+      :matches => [ENV['PARSER'] == 'future' ?
+                   %r{Error:.*Could not find class ::testing_mod} :
+                   %r{Error:.*Could not find class testing_mod}
+                  ],
     },
     :puppet_agent => {
       :exit_code => 0,
