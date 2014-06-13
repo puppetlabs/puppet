@@ -62,6 +62,16 @@ describe Puppet::Daemon, :unless => Puppet.features.microsoft_windows? do
     end
   end
 
+  describe "when daemonizing" do
+    it "should fail if it cannot lock" do
+      pidfile.expects(:lock).returns(false)
+      daemon.agent = agent
+
+      expect { daemon.daemonize }.to raise_error(RuntimeError, "Could not create PID file: #{pidfile.file_path}")
+    end
+
+  end
+
   describe "when starting" do
     before do
       daemon.stubs(:set_signal_traps)

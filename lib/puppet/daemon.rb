@@ -34,12 +34,13 @@ class Puppet::Daemon
 
   # Put the daemon into the background.
   def daemonize
+    # Create pidfile before forking so exceptions give user correct exit codes
+    create_pidfile
+
     if pid = fork
       Process.detach(pid)
       exit(0)
     end
-
-    create_pidfile
 
     # Get rid of console logging
     Puppet::Util::Log.close(:console)
