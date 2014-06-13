@@ -295,6 +295,12 @@ describe Puppet::Type.type(:yumrepo) do
 
     describe "proxy" do
       it_behaves_like "a yumrepo parameter that can be absent", :proxy
+      it "accepts _none_" do
+        described_class.new(
+          :name  => 'puppetlabs',
+          :proxy => "_none_"
+        )
+      end
       it_behaves_like "a yumrepo parameter that accepts a single URL", :proxy
     end
 
