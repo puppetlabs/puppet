@@ -893,7 +893,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       env_loader = Puppet.lookup(:loaders).public_environment_loader
       fc = Puppet::Functions.create_function(:test) do
         dispatch :test do
-          param 'Optional[Object]', 'lambda_arg'
+          param 'Object', 'lambda_arg'
           required_block_param
         end
         def test(lambda_arg, block)

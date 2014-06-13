@@ -78,8 +78,8 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.struct(type_hash)
   end
 
-  def optional_object_t
-    Puppet::Pops::Types::TypeFactory.optional_object()
+  def object_t
+    Puppet::Pops::Types::TypeFactory.object()
   end
 
   def types
@@ -1148,10 +1148,8 @@ describe 'The type calculator' do
         the_block = factory.LAMBDA(params,factory.literal(42))
         the_closure = Puppet::Pops::Evaluator::Closure.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_true
-        # TODO: lambdas are currently unttypes, anything can be given if arg count is correct
-        expect(calculator.instance?(callable_t(optional_object_t), the_closure)).to be_true
-        # Arg count is wrong
-        expect(calculator.instance?(callable_t(optional_object_t, optional_object_t), the_closure)).to be_false
+        expect(calculator.instance?(callable_t(object_t), the_closure)).to be_true
+        expect(calculator.instance?(callable_t(object_t, object_t), the_closure)).to be_false
       end
 
       it 'a Function instance should be considered a Callable' do

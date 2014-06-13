@@ -70,11 +70,6 @@ module Puppet::Pops::Types::TypeFactory
     t
   end
 
-  # Convenience method to produce an Optional[Object] type
-  def self.optional_object()
-    optional(object())
-  end
-
   # Produces the Enum type, optionally with specific string values
   # @api public
   #
@@ -203,7 +198,7 @@ module Puppet::Pops::Types::TypeFactory
   # A min < params.size means that the difference are optional.
   # If max > params.size means that the last type repeats.
   # if max is :default, the max value is unbound (infinity).
-  # 
+  #
   # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
