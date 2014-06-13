@@ -1196,6 +1196,39 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
   end
 
+  context 'does not leak variables' do
+    it 'local variables are gone when lambda ends' do
+      source = <<-SOURCE
+      [1,2,3].each |$x| { $y = $x}
+      $a = $y
+      SOURCE
+      expect do
+        parser.evaluate_string(scope, source)
+      end.to raise_error(/Unknown variable: 'y'/)
+    end
+
+    it 'lambda parameters are gone when lambda ends' do
+      source = <<-SOURCE
+      [1,2,3].each |$x| { $y = $x}
+      $a = $x
+      SOURCE
+      expect do
+        parser.evaluate_string(scope, source)
+      end.to raise_error(/Unknown variable: 'x'/)
+    end
+
+    it 'does not leak match variables' do
+      source = <<-SOURCE
+      if 'xyz' =~ /(x)(y)(z)/ { notice $2 }
+      case 'abc' {
+        /(a)(b)(c)/ : { $x = $2 }
+      }
+      "-$x-$2-"
+      SOURCE
+      expect(parser.evaluate_string(scope, source)).to eq('-b--')
+    end
+  end
+
   matcher :have_relationship do |expected|
     calc = Puppet::Pops::Types::TypeCalculator.new
 
