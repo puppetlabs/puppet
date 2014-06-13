@@ -14,6 +14,10 @@ describe 'function for dynamically creating resources' do
     Puppet::Parser::Functions.function(:create_resources)
   end
 
+  after do
+    Puppet.settings.clear
+  end
+
   it "should exist" do
     Puppet::Parser::Functions.function(:create_resources).should == "function_create_resources"
   end
@@ -201,6 +205,13 @@ describe 'function for dynamically creating resources' do
 
       catalog.resource(:notify, "test")['message'].should == 'two'
       catalog.resource(:class, "bar").should_not be_nil
+    end
+
+    it 'should fail with a correct error message if the syntax of an imported file is incorrect' do
+      expect{
+        Puppet[:modulepath] = my_fixture_dir
+        compile_to_catalog('include foo')
+      }.to raise_error(Puppet::Error, /Syntax error at.*/)
     end
   end
 end
