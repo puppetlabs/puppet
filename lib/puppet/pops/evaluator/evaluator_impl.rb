@@ -132,25 +132,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @param variable_bindings [Hash{String => Object}] the variable names and values to bind (names are keys, bound values are values)
   # @param block [Puppet::Pops::Model::BlockExpression] the sequence of expressions to evaluate in the new scope
   def evaluate_block_with_bindings(scope, variable_bindings, block_expr)
-    # Ensure variable exists with nil value if error occurs.  Some ruby
-    # implementations does not like creating variable on return
-    result = nil
-    begin
-      # Store the variable bindings in a new inner/local/ephemeral scope
-      # (This is made complicated due to the fact that the implementation
-      # of scope is overloaded with functionality and an inner ephemeral
-      # scope must be used (as opposed to just pushing a local scope on a
-      # scope "stack").
-      scope_memo = get_scope_nesting_level(scope)
-
+    with_guarded_scope(scope) do
       # change to create local scope_from - cannot give it file and line -
       # that is the place of the call, not "here"
       create_local_scope_from(variable_bindings, scope)
-      result = evaluate(block_expr, scope)
-    ensure
-      set_scope_nesting_level(scope, scope_memo)
+      evaluate(block_expr, scope)
     end
-    result
   end
 
   protected
