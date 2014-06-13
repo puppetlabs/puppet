@@ -1,9 +1,11 @@
 require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
+require 'matchers/resource'
 
 describe 'the reduce method' do
   include PuppetSpec::Compiler
+  include Matchers::Resource
 
   before :all do
     # enable switching back 
@@ -32,7 +34,17 @@ describe 'the reduce method' do
         file { "/file_$b": ensure => present }
       MANIFEST
 
-      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_6]").with_parameter(:ensure, 'present')
+    end
+
+    it 'reduce on an array with captures rest in lambda' do
+      catalog = compile_to_catalog(<<-MANIFEST)
+        $a = [1,2,3]
+        $b = $a.reduce |*$mx| { $mx[0] + $mx[1] }
+        file { "/file_$b": ensure => present }
+      MANIFEST
+
+      expect(catalog).to have_resource("File[/file_6]").with_parameter(:ensure, 'present')
     end
 
     it 'reduce on enumerable type' do
@@ -42,7 +54,7 @@ describe 'the reduce method' do
         file { "/file_$b": ensure => present }
       MANIFEST
 
-      catalog.resource(:file, "/file_6")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_6]").with_parameter(:ensure, 'present')
     end
 
     it 'reduce on an array with start value' do
@@ -52,8 +64,9 @@ describe 'the reduce method' do
         file { "/file_$b": ensure => present }
       MANIFEST
 
-      catalog.resource(:file, "/file_10")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_10]").with_parameter(:ensure, 'present')
     end
+
     it 'reduce on a hash' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {a=>1, b=>2, c=>3}
@@ -62,8 +75,9 @@ describe 'the reduce method' do
         file { "/file_${$b[0]}_${$b[1]}": ensure => present }
       MANIFEST
 
-      catalog.resource(:file, "/file_sum_6")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_sum_6]").with_parameter(:ensure, 'present')
     end
+
     it 'reduce on a hash with start value' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = {a=>1, b=>2, c=>3}
@@ -72,7 +86,7 @@ describe 'the reduce method' do
         file { "/file_${$b[0]}_${$b[1]}": ensure => present }
       MANIFEST
 
-      catalog.resource(:file, "/file_sum_10")['ensure'].should == 'present'
+      expect(catalog).to have_resource("File[/file_sum_10]").with_parameter(:ensure, 'present')
     end
   end
 end

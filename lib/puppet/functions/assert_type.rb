@@ -17,18 +17,18 @@
 Puppet::Functions.create_function(:assert_type) do
   dispatch :assert_type do
     param 'Type', 'type'
-    param 'Optional[Object]', 'value'
-    optional_block_param 'Callable[Optional[Object],Optional[Object]]', 'block'
+    param 'Object', 'value'
+    optional_block_param 'Callable[Object, Object]', 'block'
   end
 
   dispatch :assert_type_s do
     param 'String', 'type_string'
-    param 'Optional[Object]', 'value'
-    optional_block_param 'Callable[Optional[Object], Optional[Object]]', 'block'
+    param 'Object', 'value'
+    optional_block_param 'Callable[Object, Object]', 'block'
   end
 
   # @param type [Type] the type the value must be an instance of
-  # @param value [Optional[Object]] the value to assert
+  # @param value [Object] the value to assert
   #
   def assert_type(type, value, block=nil)
     unless Puppet::Pops::Types::TypeCalculator.instance?(type,value)
@@ -47,7 +47,7 @@ Puppet::Functions.create_function(:assert_type) do
   end
 
   # @param type_string [String] the type the value must be an instance of given in String form
-  # @param value [Optional[Object]] the value to assert
+  # @param value [Object] the value to assert
   #
   def assert_type_s(type_string, value)
     t = Puppet::Pops::Types::TypeParser.new.parse(type_string)

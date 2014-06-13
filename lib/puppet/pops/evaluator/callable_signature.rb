@@ -97,5 +97,4 @@ class Puppet::Pops::Evaluator::CallableSignature
   def infinity?(x)
     x == Puppet::Pops::Types::INFINITY
   end
-
 end

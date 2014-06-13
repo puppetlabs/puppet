@@ -208,7 +208,7 @@ module Puppet::Functions
   end
 
   # Construct a signature consisting of Object type, with min, and max, and given names.
-  # (there is only one type entry). Note that this signature is Object, not Optional[Object].
+  # (there is only one type entry).
   #
   # @api private
   def self.object_signature(from, to, names)

@@ -223,6 +223,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     n
   end
 
+  # Horrible cheat while waiting for iterative functions to be 4x
+  FUNCTIONS_4x = { 'map' => true, 'each'=>true, 'filter' => true, 'reduce' => true, 'slice' => true }
   def call_function(name, args, o, scope)
     # Call via 4x API if it is available, and the function exists
     #
@@ -239,8 +241,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
     # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
+
+    # Do not map the iterative functions, they are capable of dealing with 4x API, and they do
+    # call out to lambdas, and thus, given arguments needs to be preserved (instead of transforming to
+    # '' when undefined). TODO: The iterative functions should be refactored to use the new function API
+    # directly, when this has been done, this special filtering out can be removed
+
     # NOTE: Passing an empty string last converts :undef to empty string
-    mapped_args = args.map {|a| convert(a, scope, '') }
+    mapped_args = FUNCTIONS_4x[name] ? args : args.map {|a| convert(a, scope, '') }
     result = scope.send("function_#{name}", mapped_args)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
@@ -467,13 +475,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Ensures that resources are *not* absolute.
   #
   def catalog_type_to_split_type_title(catalog_type)
-    case catalog_type
+    split_type = catalog_type.is_a?(Puppet::Pops::Types::PType) ? catalog_type.type : catalog_type
+    case split_type
     when Puppet::Pops::Types::PHostClassType
-      class_name = catalog_type.class_name
+      class_name = split_type.class_name
       ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
     when Puppet::Pops::Types::PResourceType
-      type_name = catalog_type.type_name
-      title = catalog_type.title
+      type_name = split_type.type_name
+      title = split_type.title
       if type_name =~ /^(::)?[Cc]lass/
         ['class', title.nil? ? nil : title.sub(/^::/, '')]
       else
@@ -482,7 +491,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
         [type_name.nil? ? nil : type_name.sub(/^::/, ''), title.nil? ? '' : title]
       end
     else
-      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it is neither a PHostClassType, nor a PResourceClass."
+      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PHostClassType, nor a PResourceType."
     end
   end
 

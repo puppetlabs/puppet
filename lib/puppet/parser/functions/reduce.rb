@@ -86,7 +86,9 @@ Puppet::Parser::Functions::newfunction(
     raise ArgumentError, ("reduce(): wrong argument type (#{receiver.class}; must be something enumerable.")
   end
 
-  serving_size = pblock.parameter_count
+  # if captures rest, use a serving size of 2
+  serving_size = pblock.last_captures_rest? ? 2 : pblock.parameter_count
+
   if serving_size != 2
     raise ArgumentError, "reduce(): block must define 2 parameters; memo, value. Block has #{serving_size}; "+
     pblock.parameter_names.join(', ')

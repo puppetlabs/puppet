@@ -259,7 +259,6 @@ module Puppet::Pops::Types
 
     module ClassModule
       # Returns an array with from (min) size to (max) size
-      # A negative range value in from is 
       def size_range
         return [0, INFINITY] if size_type.nil?
         f = size_type.from || 0

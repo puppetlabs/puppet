@@ -3,14 +3,14 @@
 class Puppet::Pops::Evaluator::EppEvaluator
 
   def self.inline_epp(scope, epp_source, template_args = nil)
-    unless epp_source.is_a? String
+    unless epp_source.is_a?(String)
       raise ArgumentError, "inline_epp(): the first argument must be a String with the epp source text, got a #{epp_source.class}"
     end
 
     # Parse and validate the source
     parser = Puppet::Pops::Parser::EvaluatingParser::EvaluatingEppParser.new
     begin
-    result = parser.parse_string(epp_source, 'inlined-epp-text')
+      result = parser.parse_string(epp_source, 'inlined-epp-text')
     rescue Puppet::ParseError => e
       raise ArgumentError, "inline_epp(): Invalid EPP: #{e.message}"
     end
@@ -20,7 +20,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
   end
 
   def self.epp(scope, file, env_name, template_args = nil)
-    unless file.is_a? String
+    unless file.is_a?(String)
       raise ArgumentError, "epp(): the first argument must be a String with the filename, got a #{file.class}"
     end
 
@@ -34,7 +34,7 @@ class Puppet::Pops::Evaluator::EppEvaluator
     # Parse and validate the source
     parser = Puppet::Pops::Parser::EvaluatingParser::EvaluatingEppParser.new
     begin
-    result = parser.parse_file(template_file)
+      result = parser.parse_file(template_file)
     rescue Puppet::ParseError => e
       raise ArgumentError, "epp(): Invalid EPP: #{e.message}"
     end
@@ -59,18 +59,19 @@ class Puppet::Pops::Evaluator::EppEvaluator
       raise ArgumentError, "#{func_name}(): The EPP template contains illegal expressions (definitions)"
     end
 
-    see_scope = body.body.see_scope
-    if see_scope && !template_args_set
-      # no epp params and no arguments were given => inline_epp logic sees all local variables, epp all global
-      closure_scope =  use_global_scope_only ? scope.find_global_scope : scope
-      spill_over = false
-    else
-      # no epp params or user provided arguments in a hash, epp logic only sees global + what was given
+    parameters_specified = body.body.parameters_specified
+    if parameters_specified || template_args_set
+      # no epp params or user provided arguments in a hash, epp() logic
+      # only sees global + what was given
       closure_scope = scope.find_global_scope
-      # given spill over if there are no params (e.g. replace closure scope by a new scope with the given args)
-      spill_over = see_scope
+      enforce_parameters = parameters_specified
+    else
+      # no epp params and no arguments were given => inline_epp() logic
+      # sees all local variables, epp() all global
+      closure_scope =  use_global_scope_only ? scope.find_global_scope : scope
+      enforce_parameters = true
     end
-    evaluated_result = parser.closure(body, closure_scope).call_by_name(scope, template_args, spill_over)
+    evaluated_result = parser.closure(body, closure_scope).call_by_name(scope, template_args, enforce_parameters)
     evaluated_result
   end
 

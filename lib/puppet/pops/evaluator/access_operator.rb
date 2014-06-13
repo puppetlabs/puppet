@@ -429,6 +429,17 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
+  # A Puppet::Resource represents either just a type (no title), or is a fully qualified type/title.
+  #
+  def access_Resource(o, scope, keys)
+    # To access a Puppet::Resource as if it was a PResourceType, simply infer it, and take the type of
+    # the parameterized meta type (i.e. Type[Resource[the_resource_type, the_resource_title]])
+    t = Puppet::Pops::Types::TypeCalculator.infer(o).type
+    # must map "undefined title" from resource to nil
+    t.title = nil if t.title == ''
+    access(t, scope, *keys)
+  end
+
   # A Resource can create a new more specific Resource type, and/or an array of resource types
   # If the given type has title set, it can not be specified further.
   # @example

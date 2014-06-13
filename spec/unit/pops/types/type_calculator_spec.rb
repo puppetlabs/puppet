@@ -78,8 +78,8 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.struct(type_hash)
   end
 
-  def optional_object_t
-    Puppet::Pops::Types::TypeFactory.optional_object()
+  def object_t
+    Puppet::Pops::Types::TypeFactory.object()
   end
 
   def types
@@ -797,6 +797,23 @@ describe 'The type calculator' do
     end
 
     context 'when dealing with tuples' do
+      it 'matches empty tuples' do
+        tuple1 = tuple_t()
+        tuple2 = tuple_t()
+
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == true
+      end
+
+      it 'accepts an empty tuple as assignable to a tuple with a min size of 0' do
+        tuple1 = tuple_t(Object)
+        factory.constrain_size(tuple1, 0, :default)
+        tuple2 = tuple_t()
+
+        calculator.assignable?(tuple1, tuple2).should == true
+        calculator.assignable?(tuple2, tuple1).should == false
+      end
+
       it 'should accept matching tuples' do
         tuple1 = tuple_t(1,2)
         tuple2 = tuple_t(Integer,Integer)
@@ -859,6 +876,17 @@ describe 'The type calculator' do
         factory.constrain_size(array, 2, 2)
         calculator.assignable?(tuple1, array).should == true
         calculator.assignable?(array, tuple1).should == true
+      end
+
+      it 'should accept empty array when tuple allows min of 0' do
+        tuple1 = tuple_t(Integer)
+        factory.constrain_size(tuple1, 0, 1)
+
+        array = array_t(Integer)
+        factory.constrain_size(array, 0, 0)
+
+        calculator.assignable?(tuple1, array).should == true
+        calculator.assignable?(array, tuple1).should == false
       end
     end
 
@@ -1120,10 +1148,8 @@ describe 'The type calculator' do
         the_block = factory.LAMBDA(params,factory.literal(42))
         the_closure = Puppet::Pops::Evaluator::Closure.new(:fake_evaluator, the_block, :fake_scope)
         expect(calculator.instance?(all_callables_t, the_closure)).to be_true
-        # TODO: lambdas are currently unttypes, anything can be given if arg count is correct
-        expect(calculator.instance?(callable_t(optional_object_t), the_closure)).to be_true
-        # Arg count is wrong
-        expect(calculator.instance?(callable_t(optional_object_t, optional_object_t), the_closure)).to be_false
+        expect(calculator.instance?(callable_t(object_t), the_closure)).to be_true
+        expect(calculator.instance?(callable_t(object_t, object_t), the_closure)).to be_false
       end
 
       it 'a Function instance should be considered a Callable' do

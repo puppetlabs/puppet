@@ -36,6 +36,15 @@ describe "the epp function" do
       eval_template_with_args("<%= $phantom == dragos %>", 'phantom' => 'dragos').should == "true"
     end
 
+    it "can use values from the enclosing scope for defaults" do
+      scope['phantom'] = 'of the opera'
+      eval_template("<%- |$phantom = $phantom| -%><%= $phantom %>").should == "of the opera"
+    end
+
+    it "uses the default value if the given value is undef/nil" do
+      eval_template_with_args("<%- |$phantom = 'inside your mind'| -%><%= $phantom %>", 'phantom' => nil).should == "inside your mind"
+    end
+
     it "gets shadowed variable if args are given and parameters are specified" do
       scope['x'] = 'wrong one'
       eval_template_with_args("<%- |$x| -%><%= $x == correct %>", 'x' => 'correct').should == "true"
@@ -43,18 +52,47 @@ describe "the epp function" do
 
     it "raises an error if required variable is not given" do
       scope['x'] = 'wrong one'
-      expect {
+      expect do
         eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'y' => 'correct')
-      }.to raise_error(/no value given for required parameters x/)
+      end.to raise_error(/no value given for required parameters x/)
     end
 
     it "raises an error if too many arguments are given" do
       scope['x'] = 'wrong one'
-      expect {
+      expect do
         eval_template_with_args("<%-| $x |-%><%= $x == correct %>", 'x' => 'correct', 'y' => 'surplus')
-      }.to raise_error(/Too many arguments: 2 for 1/)
+      end.to raise_error(/Too many arguments: 2 for 1/)
     end
   end
+
+  context "when using typed parameters" do
+    it "allows a passed value that matches the parameter's type" do
+      expect(eval_template_with_args("<%-|String $x|-%><%= $x == correct %>", 'x' => 'correct')).to eq("true")
+    end
+
+    it "does not allow slurped parameters" do
+      expect do
+        eval_template_with_args("<%-|*$x|-%><%= $x %>", 'x' => 'incorrect')
+      end.to raise_error(/'captures rest' - not supported in an Epp Template/)
+    end
+
+    it "raises an error when the passed value does not match the parameter's type" do
+      expect do
+        eval_template_with_args("<%-|Integer $x|-%><%= $x %>", 'x' => 'incorrect')
+      end.to raise_error(/expected.*Integer.*actual.*String/m)
+    end
+
+    it "raises an error when the default value does not match the parameter's type" do
+      expect do
+        eval_template("<%-|Integer $x = 'nope'|-%><%= $x %>")
+      end.to raise_error(/expected.*Integer.*actual.*String/m)
+    end
+
+    it "allows an parameter to default to undef" do
+      expect(eval_template("<%-|Optional[Integer] $x = undef|-%><%= $x == undef %>")).to eq("true")
+    end
+  end
+
 
   # although never a problem with epp
   it "is not interfered with by having a variable named 'string' (#14093)" do

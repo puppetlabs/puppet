@@ -418,8 +418,20 @@ module Puppet::Pops::Issues
     "Unacceptable name. The name '#{name}' is unacceptable as the name of #{label.a_an(semantic)}"
   end
 
-  NON_NAMESPACED_FUNCTION = hard_issue :NON_NAMESPACED_FUNCTION, :name do
-    "A Puppet Function must be defined within a module name-space. The name '#{name}' is unacceptable."
+  CAPTURES_REST_NOT_LAST = hard_issue :CAPTURES_REST_NOT_LAST, :param_name do
+    "Parameter $#{param_name} is not last, and has 'captures rest'"
+  end
+
+  CAPTURES_REST_NOT_SUPPORTED = hard_issue :CAPTURES_REST_NOT_SUPPORTED, :container, :param_name do
+    "Parameter $#{param_name} has 'captures rest' - not supported in #{label.a_an(container)}"
+  end
+
+  REQUIRED_PARAMETER_AFTER_OPTIONAL = hard_issue :REQUIRED_PARAMETER_AFTER_OPTIONAL, :param_name do
+    "Parameter $#{param_name} is required but appears after optional parameters"
+  end
+
+  MISSING_REQUIRED_PARAMETER = hard_issue :MISSING_REQUIRED_PARAMETER, :param_name do
+    "Parameter $#{param_name} is required but no value was given"
   end
 
   NOT_NUMERIC = issue :NOT_NUMERIC, :value do

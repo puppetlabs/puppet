@@ -117,16 +117,53 @@ class Puppet::Parser::AST::PopsBridge
       # can thus reference all sorts of information. Here the value expression is wrapped in an AST Bridge to a Pops
       # expression since the Pops side can not control the evaluation
       if o.value
-        [ o.name, NilAsUndefExpression.new(:value => o.value) ]
+        [o.name, NilAsUndefExpression.new(:value => o.value)]
       else
-        [ o.name ]
+        [o.name]
       end
+    end
+
+    def create_type_map(definition)
+      result = {}
+      # No need to do anything if there are no parameters
+      return result unless definition.parameters.size > 0
+
+      # No need to do anything if there are no typed parameters
+      typed_parameters = definition.parameters.select {|p| p.type_expr }
+      return result if typed_parameters.empty?
+
+      # If there are typed parameters, they need to be evaluated to produce the corresponding type
+      # instances. This evaluation requires a scope. A scope is not available when doing deserialization
+      # (there is also no initialized evaluator). When running apply and test however, the environment is
+      # reused and we may reenter without a scope (which is fine). A debug message is then output in case
+      # there is the need to track down the odd corner case. See {#obtain_scope}.
+      #
+      if scope = obtain_scope
+        typed_parameters.each do |p|
+          result[p.name] =  @@evaluator.evaluate(scope, p.type_expr)
+        end
+      end
+      result
+    end
+
+    # Obtains the scope or issues a warning if :global_scope is not bound
+    def obtain_scope
+      scope = Puppet.lookup(:global_scope) do
+        # This occurs when testing and when applying a catalog (there is no scope available then), and
+        # when running tests that run a partial setup.
+        # This is bad if the logic is trying to compile, but a warning can not be issues since it is a normal
+        # use case that there is no scope when requesting the type in order to just get the parameters.
+        Puppet.debug("Instantiating Resource with type checked parameters - scope is missing, skipping type checking.")
+        nil
+      end
+      scope
     end
 
     # Produces a hash with data for Definition and HostClass
     def args_from_definition(o, modname)
       args = {
        :arguments => o.parameters.collect {|p| instantiate_Parameter(p) },
+       :argument_types => create_type_map(o),
        :module_name => modname
       }
       unless is_nop?(o.body)
