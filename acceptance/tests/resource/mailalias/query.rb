@@ -1,7 +1,8 @@
 test_name "should be able to find an exisitng email alias"
 
-name = "pl#{rand(999999).to_i}"
+confine :except, :platform => 'windows'
 
+name = "pl#{rand(999999).to_i}"
 agents.each do |agent|
   teardown do
     #(teardown) restore the alias file
@@ -25,5 +26,4 @@ agents.each do |agent|
   on(agent, puppet_resource('mailalias', name)) do
     fail_test "didn't find the scheduled_task #{name}" unless stdout.include? 'present'
   end
-
 end
