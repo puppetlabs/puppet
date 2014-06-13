@@ -104,7 +104,7 @@ Puppet::Functions.create_function(:slice) do
 
   def asserted_slice_serving_size(pblock, slice_size)
     if pblock
-      serving_size = pblock.captures_rest? ? slice_size : pblock.parameter_count
+      serving_size = pblock.last_captures_rest? ? slice_size : pblock.parameter_count
     else
       serving_size = 1
     end

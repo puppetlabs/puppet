@@ -94,7 +94,7 @@ Puppet::Functions.create_function(:reduce) do
   #
   def assert_serving_size(pblock)
     serving_size = pblock.parameter_count
-    if serving_size != 2
+    unless serving_size == 2 || pblock.last_captures_rest? && serving_size <= 2
       raise ArgumentError, "reduce(): block must define 2 parameters; memo, value. Block has #{serving_size}; "+
       pblock.parameter_names.join(', ')
     end
