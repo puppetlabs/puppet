@@ -4,17 +4,14 @@ confine :except, :platform => ['windows']
 
 fstab = '/etc/fstab'
 name = "pl#{rand(999999).to_i}"
+mount = "/tmp/#{name}"
 
 agents.each do |agent|
   teardown do
     #(teardown) restore the fstab file
     on(agent, "mv /tmp/fstab #{fstab}", :acceptable_exit_codes => [0,1])
-    #(teardown) umount disk image
-    on(agent, "umount /#{name}", :acceptable_exit_codes => [0,1])
-    #(teardown) delete disk image
-    on(agent, "rm /tmp/#{name}", :acceptable_exit_codes => [0,1])
     #(teardown) delete mount point
-    on(agent, "rm -fr /#{name}", :acceptable_exit_codes => [0,1])
+    on(agent, "rm -fr /tmp/#{name}", :acceptable_exit_codes => [0,1])
   end
 
   #------- SETUP -------#
@@ -26,7 +23,7 @@ agents.each do |agent|
   args = ['ensure=defined',
           "device='/tmp/#{name}'"
          ]
-  on(agent, puppet_resource('mount', "/#{name}", args))
+  on(agent, puppet_resource('mount', "/tmp/#{name}", args))
 
   step "verify entry in filesystem table"
   on(agent, "cat #{fstab}")  do |res|
