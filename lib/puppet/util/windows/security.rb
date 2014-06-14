@@ -582,7 +582,7 @@ module Puppet::Util::Windows::Security
                 raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
               end
 
-              protect = (control.read_uint16 & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
+              protect = (control.read_word & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
               dacl = parse_dacl(dacl.unpack('L')[0])
               sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
             end

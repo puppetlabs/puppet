@@ -44,6 +44,7 @@ module Puppet::Util::Windows::APITypes
     end
 
     alias_method :read_wchar, :read_uint16
+    alias_method :read_word,  :read_uint16
 
     def read_wide_string(char_length)
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes
