@@ -30,9 +30,6 @@ gem "rake", "10.1.1", :require => false
 gem "rgen", "0.6.5", :require => false
 
 group(:development, :test) do
-
-  # Jenkins workers may be using RSpec 2.9, so RSpec 2.11 syntax
-  # (like `expect(value).to eq matcher`) should be avoided.
   gem "rspec", "~> 2.11.0", :require => false
 
   # Mocha is not compatible across minor version changes; because of this only
