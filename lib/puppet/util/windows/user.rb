@@ -48,7 +48,6 @@ module Puppet::Util::Windows::User
 
   def password_is?(name, password)
     logon_user(name, password)
-    true
   rescue Puppet::Util::Windows::Error
     false
   end
@@ -70,6 +69,8 @@ module Puppet::Util::Windows::User
     ensure
       CloseHandle(token)
     end
+
+    true
   end
   module_function :logon_user
 
