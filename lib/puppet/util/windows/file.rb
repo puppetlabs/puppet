@@ -136,12 +136,18 @@ module Puppet::Util::Windows::File
     ensure
       CloseHandle(handle) if handle
     end
+
+    # handle has had CloseHandle called against it, so nothing to return
+    nil
   end
 
   def readlink(link_name)
+    link = nil
     open_symlink(link_name) do |handle|
-      resolve_symlink(handle)
+      link = resolve_symlink(handle)
     end
+
+    link
   end
   module_function :readlink
 

@@ -59,6 +59,9 @@ module Puppet::Util::Windows::Process
     ensure
       CloseHandle(token_handle) if token_handle
     end
+
+    # token_handle has had CloseHandle called against it, so nothing to return
+    nil
   end
   module_function :open_process_token
 
