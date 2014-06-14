@@ -57,7 +57,7 @@ module Puppet::Util::Windows::Process
 
       token_handle
     ensure
-      CloseHandle(token_handle) if token_handle
+      FFI::WIN32.CloseHandle(token_handle) if token_handle
     end
 
     # token_handle has had CloseHandle called against it, so nothing to return
@@ -187,7 +187,7 @@ module Puppet::Util::Windows::Process
     rescue Puppet::Util::Windows::Error => e
       raise e if e.code != ERROR_NO_SUCH_PRIVILEGE
     ensure
-      CloseHandle(handle) if handle
+      FFI::WIN32.CloseHandle(handle) if handle
     end
   end
   module_function :elevated_security?
@@ -217,13 +217,6 @@ module Puppet::Util::Windows::Process
   # HANDLE WINAPI GetCurrentProcess(void);
   ffi_lib :kernel32
   attach_function_private :GetCurrentProcess, [], :handle
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
-  # BOOL WINAPI CloseHandle(
-  #   _In_  HANDLE hObject
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CloseHandle, [:handle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
   # BOOL WINAPI OpenProcessToken(

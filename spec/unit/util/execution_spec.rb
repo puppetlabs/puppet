@@ -28,8 +28,8 @@ describe Puppet::Util::Execution do
     def stub_process_wait(exitstatus)
       if Puppet.features.microsoft_windows?
         Puppet::Util::Windows::Process.stubs(:wait_process).with(process_handle).returns(exitstatus)
-        Process.stubs(:CloseHandle).with(process_handle)
-        Process.stubs(:CloseHandle).with(thread_handle)
+        FFI::WIN32.stubs(:CloseHandle).with(process_handle)
+        FFI::WIN32.stubs(:CloseHandle).with(thread_handle)
       else
         Process.stubs(:waitpid2).with(pid).returns([pid, stub('child_status', :exitstatus => exitstatus)])
       end
@@ -306,8 +306,8 @@ describe Puppet::Util::Execution do
           Puppet::Util::Execution.stubs(:execute_windows).returns(proc_info_stub)
 
           Puppet::Util::Windows::Process.expects(:wait_process).with(process_handle).raises('whatever')
-          Puppet::Util::Windows::Process.expects(:CloseHandle).with(thread_handle)
-          Puppet::Util::Windows::Process.expects(:CloseHandle).with(process_handle)
+          FFI::WIN32.expects(:CloseHandle).with(thread_handle)
+          FFI::WIN32.expects(:CloseHandle).with(process_handle)
 
           expect { Puppet::Util::Execution.execute('test command') }.to raise_error(RuntimeError)
         end

@@ -151,5 +151,12 @@ module Puppet::Util::Windows::APITypes
     # );
     ffi_lib :kernel32
     attach_function :LocalFree, [:handle], :handle
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
+    # BOOL WINAPI CloseHandle(
+    #   _In_  HANDLE hObject
+    # );
+    ffi_lib :kernel32
+    attach_function_private :CloseHandle, [:handle], :win32_bool
   end
 end

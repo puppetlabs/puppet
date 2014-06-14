@@ -74,7 +74,7 @@ module Puppet::Util::Windows::User
         yield token = token_pointer.read_handle
       end
     ensure
-      CloseHandle(token) if token
+      FFI::WIN32.CloseHandle(token) if token
     end
 
     # token has been closed by this point
@@ -119,13 +119,6 @@ module Puppet::Util::Windows::User
   ffi_lib :advapi32
   attach_function_private :LogonUserW,
     [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :win32_bool
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
-  # BOOL WINAPI CloseHandle(
-  #   _In_  HANDLE hObject
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CloseHandle, [:handle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/bb773378(v=vs.85).aspx
   # typedef struct _PROFILEINFO {

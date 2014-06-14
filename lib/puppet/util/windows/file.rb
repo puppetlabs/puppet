@@ -134,7 +134,7 @@ module Puppet::Util::Windows::File
       FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
       0) # template_file
     ensure
-      CloseHandle(handle) if handle
+      FFI::WIN32.CloseHandle(handle) if handle
     end
 
     # handle has had CloseHandle called against it, so nothing to return
@@ -306,11 +306,4 @@ module Puppet::Util::Windows::File
            # technically a WCHAR buffer, but we care about size in bytes here
            :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
   end
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
-  # BOOL WINAPI CloseHandle(
-  #   _In_  HANDLE hObject
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CloseHandle, [:handle], :win32_bool
 end
