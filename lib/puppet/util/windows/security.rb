@@ -69,7 +69,6 @@ require 'win32/security'
 
 require 'windows/file'
 require 'windows/security'
-require 'windows/process'
 require 'windows/memory'
 require 'windows/msvcrt/buffer'
 require 'windows/volume'
@@ -77,7 +76,6 @@ require 'windows/volume'
 module Puppet::Util::Windows::Security
   include ::Windows::File
   include ::Windows::Security
-  include ::Windows::Process
   include ::Windows::Memory
   include ::Windows::MSVCRT::Buffer
   include ::Windows::Volume
@@ -519,7 +517,7 @@ module Puppet::Util::Windows::Security
   def set_privilege(privilege, enable)
     return unless Puppet.features.root?
 
-    with_process_token(TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY) do |token|
+    Puppet::Util::Windows::Process.with_process_token(TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY) do |token|
       tmpLuid = 0.chr * 8
 
       # Get the LUID for specified privilege.
@@ -536,20 +534,13 @@ module Puppet::Util::Windows::Security
     end
   end
 
-  # Execute a block with the current process token
-  def with_process_token(access)
-    token = 0.chr * 4
-
-    unless OpenProcessToken(GetCurrentProcess(), access, token)
-      raise Puppet::Util::Windows::Error.new("Failed to open process token")
-    end
-    begin
-      token = token.unpack('L')[0]
-
+  def with_process_token(access, &block)
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.with_process_token is deprecated; please use Puppet::Util::Windows::Process.get_process_token')
+    Puppet::Util::Windows::Process.with_process_token(access) do |token|
       yield token
-    ensure
-      CloseHandle(token)
     end
+
+    nil
   end
 
   def get_security_descriptor(path)

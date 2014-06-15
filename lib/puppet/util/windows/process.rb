@@ -65,6 +65,18 @@ module Puppet::Util::Windows::Process
   end
   module_function :open_process_token
 
+  # Execute a block with the current process token
+  def with_process_token(access, &block)
+    handle = get_current_process
+    open_process_token(handle, access) do |token_handle|
+      yield token_handle
+    end
+
+    # all handles have been closed, so nothing to safely return
+    nil
+  end
+  module_function :with_process_token
+
   def lookup_privilege_value(name, system_name = '', &block)
     FFI::MemoryPointer.new(LUID.size) do |luid_ptr|
       result = LookupPrivilegeValueW(
