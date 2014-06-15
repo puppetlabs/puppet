@@ -486,7 +486,7 @@ module Puppet::Util::Windows::Security
 
   # Open an existing file with the specified access mode, and execute a
   # block with the opened file HANDLE.
-  def open_file(path, access)
+  def open_file(path, access, &block)
     handle = CreateFile(
              path,
              access,
@@ -504,7 +504,7 @@ module Puppet::Util::Windows::Security
   end
 
   # Execute a block with the specified privilege enabled
-  def with_privilege(privilege)
+  def with_privilege(privilege, &block)
     set_privilege(privilege, true)
     yield
   ensure
