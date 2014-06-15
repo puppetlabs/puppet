@@ -68,7 +68,6 @@ require 'ffi'
 require 'win32/security'
 
 require 'windows/file'
-require 'windows/handle'
 require 'windows/security'
 require 'windows/process'
 require 'windows/memory'
@@ -77,7 +76,6 @@ require 'windows/volume'
 
 module Puppet::Util::Windows::Security
   include ::Windows::File
-  include ::Windows::Handle
   include ::Windows::Security
   include ::Windows::Process
   include ::Windows::Memory
@@ -484,6 +482,8 @@ module Puppet::Util::Windows::Security
     dacl
   end
 
+  INVALID_HANDLE_VALUE = FFI::Pointer.new(-1).address
+
   # Open an existing file with the specified access mode, and execute a
   # block with the opened file HANDLE.
   def open_file(path, access, &block)
@@ -499,8 +499,11 @@ module Puppet::Util::Windows::Security
     begin
       yield handle
     ensure
-      CloseHandle(handle)
+      FFI::WIN32.CloseHandle(handle) if handle
     end
+
+    # handle has already had CloseHandle called against it, nothing to return
+    nil
   end
 
   # Execute a block with the specified privilege enabled
