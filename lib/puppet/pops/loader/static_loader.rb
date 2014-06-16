@@ -49,7 +49,7 @@ class Puppet::Pops::Loader::StaticLoader < Puppet::Pops::Loader::Loader
 
         # Logs per the specified level, outputs formatted information for arrays, hashes etc.
         # Overrides the implementation in Function that uses dispatching. This is not needed here
-        # since it accepts 0-n Optional[Object]
+        # since it accepts 0-n Object.
         #
         define_method(:call) do |scope, *vals|
           # NOTE: 3x, does this: vals.join(" ")

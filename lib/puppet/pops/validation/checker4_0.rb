@@ -201,6 +201,12 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  def check_EppExpression(o)
+    if o.eContainer.is_a?(Puppet::Pops::Model::LambdaExpression)
+      internal_check_no_capture(o.eContainer, o)
+    end
+  end
+
   def check_MethodCallExpression(o)
     unless o.functor_expr.is_a? Model::QualifiedName
       acceptor.accept(Issues::ILLEGAL_EXPRESSION, o.functor_expr, :feature => 'function name', :container => o)
@@ -250,6 +256,33 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  def check_HostClassDefinition(o)
+    check_NamedDefinition(o)
+    internal_check_no_capture(o)
+  end
+
+  def check_ResourceTypeDefinition(o)
+    check_NamedDefinition(o)
+    internal_check_no_capture(o)
+  end
+
+  def internal_check_capture_last(o)
+    accepted_index = o.parameters.size() -1
+    o.parameters.each_with_index do |p, index|
+      if p.captures_rest && index != accepted_index
+        acceptor.accept(Issues::CAPTURES_REST_NOT_LAST, p, {:param_name => p.name})
+      end
+    end
+  end
+
+  def internal_check_no_capture(o, container = o)
+    o.parameters.each_with_index do |p, index|
+      if p.captures_rest
+        acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, {:container => container, :param_name => p.name})
+      end
+    end
+  end
+
   def check_IfExpression(o)
     rvalue(o.test)
   end
@@ -262,6 +295,7 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def check_LambdaExpression(o)
+    internal_check_capture_last(o)
   end
 
   def check_LiteralList(o)

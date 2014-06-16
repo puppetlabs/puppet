@@ -447,6 +447,21 @@ class Puppet::Resource
       param = param.to_sym
       fail Puppet::ParseError, "Must pass #{param} to #{self}" unless parameters.include?(param)
     end
+
+    # Perform optional type checking
+    if Puppet[:parser] == 'future'
+      # Perform type checking
+      arg_types = resource_type.argument_types
+      # Parameters is a map from name, to parameter, and the parameter again has name and value
+      parameters.each do |name, value|
+        next unless t = arg_types[name.to_s]  # untyped, and parameters are symbols here (aargh, strings in the type)
+        unless Puppet::Pops::Types::TypeCalculator.instance?(t, value.value)
+          inferred_type = Puppet::Pops::Types::TypeCalculator.infer(value.value)
+          actual = Puppet::Pops::Types::TypeCalculator.generalize!(inferred_type)
+          fail Puppet::ParseError, "Expected parameter '#{name}' of '#{self}' to have type #{t.to_s}, got #{actual.to_s}"
+        end
+      end
+    end
   end
 
   def validate_parameter(name)

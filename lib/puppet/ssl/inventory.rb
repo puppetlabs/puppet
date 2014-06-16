@@ -37,14 +37,19 @@ class Puppet::SSL::Inventory
 
   # Find the serial number for a given certificate.
   def serial(name)
+    Puppet.deprecation_warning 'Inventory#serial is deprecated, use Inventory#serials instead.'
     return nil unless Puppet::FileSystem.exist?(@path)
-
-    File.readlines(@path).each do |line|
-      next unless line =~ /^(\S+).+\/CN=#{name}$/
-
-      return Integer($1)
-    end
-
-    return nil
+    serials(name).first
   end
+
+  # Find all serial numbers for a given certificate. If none can be found, returns
+  # an empty array.
+  def serials(name)
+    return [] unless Puppet::FileSystem.exist?(@path)
+
+    File.readlines(@path).collect do |line|
+      /^(\S+).+\/CN=#{name}$/.match(line)
+    end.compact.map { |m| Integer(m[1]) }
+  end
+
 end

@@ -782,12 +782,14 @@ class Puppet::Pops::Types::TypeCalculator
   #
   def infer_Resource(o)
     t = Types::PResourceType.new()
-    t.type_name = o.type.to_s
+    t.type_name = o.type.to_s.downcase
     # Only Puppet::Resource can have a title that is a symbol :undef, a PResource cannot.
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
     t.title = (title == :undef ? '' : title)
-    t
+    type = Types::PType.new()
+    type.type = t
+    type
   end
 
   # @api private
@@ -1004,12 +1006,14 @@ class Puppet::Pops::Types::TypeCalculator
       size_t2 = t2.size_type || Puppet::Pops::Types::TypeFactory.range(*t2.size_range)
 
       # not assignable if the number of types in t2 is outside number of types in t1
-      return false unless assignable?(size_t, size_t2)
-      max(t.types.size, t2.types.size).times do |index|
-        return false unless assignable?((t.types[index] || t.types[-1]), (t2.types[index] || t2.types[-1]))
+      if assignable?(size_t, size_t2)
+        t2.types.size.times do |index|
+          return false unless assignable?((t.types[index] || t.types[-1]), t2.types[index])
+        end
+        return true
+      else
+        return false
       end
-      true
-
     elsif t2.is_a?(Types::PArrayType)
       t2_entry = t2.element_type
 

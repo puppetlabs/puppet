@@ -185,11 +185,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # and convoluted path of evaluation.
     # In order to do this in a way that is similar to 3.x two resources are created to be used as keys.
     #
-    #
-    # TODO: logic that creates a PCatalogEntryType should resolve it to ensure it is loaded (to the best of known_resource_types knowledge).
-    # If this is not done, the order in which things are done may be different? OTOH, it probably works anyway :-)
-    # TODO: Not sure if references needs to be resolved via the scope?
-    #
     # And if that is not enough, a source/target may be a Collector (a baked query that will be evaluated by the
     # compiler - it is simply passed through here for processing by the compiler at the right time).
     #
@@ -228,6 +223,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     n
   end
 
+  # Horrible cheat while waiting for iterative functions to be 4x
+  FUNCTIONS_4x = { 'map' => true, 'each'=>true, 'filter' => true, 'reduce' => true, 'slice' => true }
   def call_function(name, args, o, scope)
     # Call via 4x API if it is available, and the function exists
     #
@@ -244,8 +241,14 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
     # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
+
+    # Do not map the iterative functions, they are capable of dealing with 4x API, and they do
+    # call out to lambdas, and thus, given arguments needs to be preserved (instead of transforming to
+    # '' when undefined). TODO: The iterative functions should be refactored to use the new function API
+    # directly, when this has been done, this special filtering out can be removed
+
     # NOTE: Passing an empty string last converts :undef to empty string
-    mapped_args = args.map {|a| convert(a, scope, '') }
+    mapped_args = FUNCTIONS_4x[name] ? args : args.map {|a| convert(a, scope, '') }
     result = scope.send("function_#{name}", mapped_args)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil
@@ -454,35 +457,41 @@ module Puppet::Pops::Evaluator::Runtime3Support
     o
   end
 
-  def convert_PResourceType(o,scope, undef_value)
-    # Needs conversion by calling scope to resolve the name and possibly return a different name
-    # Resolution can only be called with an array, and returns an array. Here there is only one name
-    type, titles = scope.resolve_type_and_titles(o.type_name, [o.title])
-    # Note: a title of nil makes Resource class throw error with information that is wrong
-    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
-  end
+  def convert_PCatalogEntryType(o, scope, undef_value)
+    # Since 4x does not support dynamic scoping, all names are absolute and can be
+    # used as is (with some check/transformation/mangling between absolute/relative form
+    # due to Puppet::Resource's idiosyncratic behavior where some references must be
+    # absolute and others cannot be.
+    # Thus there is no need to call scope.resolve_type_and_titles to do dynamic lookup.
 
-  def convert_PHostClassType(o, scope, undef_value)
-    # Needs conversion by calling scope to resolve the name and possibly return a different name
-    # Resolution can only be called with an array, and returns an array. Here there is only one name
-    type, titles = scope.resolve_type_and_titles('class', [o.class_name])
-    # Note: a title of nil makes Resource class throw error with information that is wrong
-    Puppet::Resource.new(type, titles[0].nil? ? '' : titles[0] )
+    Puppet::Resource.new(*catalog_type_to_split_type_title(o))
   end
 
   private
 
   # Produces an array with [type, title] from a PCatalogEntryType
-  # Used to produce reference resource instances (used when 3x is operating on a resource).
+  # This method is used to produce the arguments for creation of reference resource instances
+  # (used when 3x is operating on a resource).
+  # Ensures that resources are *not* absolute.
   #
   def catalog_type_to_split_type_title(catalog_type)
-    case catalog_type
+    split_type = catalog_type.is_a?(Puppet::Pops::Types::PType) ? catalog_type.type : catalog_type
+    case split_type
     when Puppet::Pops::Types::PHostClassType
-      return ['Class', catalog_type.class_name]
+      class_name = split_type.class_name
+      ['class', class_name.nil? ? nil : class_name.sub(/^::/, '')]
     when Puppet::Pops::Types::PResourceType
-      return [catalog_type.type_name, catalog_type.title]
+      type_name = split_type.type_name
+      title = split_type.title
+      if type_name =~ /^(::)?[Cc]lass/
+        ['class', title.nil? ? nil : title.sub(/^::/, '')]
+      else
+        # Ensure that title is '' if nil
+        # Resources with absolute name always results in error because tagging does not support leading ::
+        [type_name.nil? ? nil : type_name.sub(/^::/, ''), title.nil? ? '' : title]
+      end
     else
-      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it is neither a PHostClassType, nor a PResourceClass."
+      raise ArgumentError, "Cannot split the type #{catalog_type.class}, it represents neither a PHostClassType, nor a PResourceType."
     end
   end
 
@@ -502,7 +511,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     Puppet::Pops::Validation::DiagnosticProducer.new(
       ExceptionRaisingAcceptor.new(),                   # Raises exception on all issues
       SeverityProducer.new(), # All issues are errors
-#      Puppet::Pops::Validation::SeverityProducer.new(), # All issues are errors
       Puppet::Pops::Model::ModelLabelProvider.new())
   end
 

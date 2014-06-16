@@ -43,7 +43,11 @@ Puppet::Parser::Functions::newfunction(
   require 'puppet/parser/scope'
 
   def each_Common(o, slice_size, filler, scope, pblock)
-    serving_size = pblock ? pblock.parameter_count : 1
+    if pblock
+      serving_size = pblock.last_captures_rest? ? slice_size : pblock.parameter_count
+    else
+      serving_size = 1
+    end
     if serving_size == 0
       raise ArgumentError, "slice(): block must define at least one parameter. Block has 0."
     end

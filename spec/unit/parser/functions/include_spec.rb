@@ -1,5 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
+require 'unit/parser/functions/shared'
 
 describe "the 'include' function" do
   before :all do
@@ -46,6 +47,19 @@ describe "the 'include' function" do
 
   it "should raise if the class is not found" do
     @scope.stubs(:source).returns(true)
-    expect { @scope.function_include(["nosuchclass"]) }.to raise_error Puppet::Error
+    expect { @scope.function_include(["nosuchclass"]) }.to raise_error(Puppet::Error)
+  end
+
+  describe "When the future parser is in use" do
+    require 'puppet/pops'
+    require 'puppet_spec/compiler'
+    include PuppetSpec::Compiler
+
+    before(:each) do
+      Puppet[:parser] = 'future'
+    end
+
+    it_should_behave_like 'all functions transforming relative to absolute names', :function_include
+    it_should_behave_like 'an inclusion function, regardless of the type of class reference,', :include
   end
 end

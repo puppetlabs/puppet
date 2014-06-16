@@ -548,7 +548,6 @@ class Puppet::Pops::Model::Factory
 
   def self.HASH(entries);                new(Model::LiteralHash, *entries);                      end
 
-  # TODO_HEREDOC
   def self.HEREDOC(name, expr);          new(Model::HeredocExpression, name, expr);              end
 
   def self.SUBLOCATE(token, expr)        new(Model::SubLocatedExpression, token, expr);          end
@@ -558,6 +557,19 @@ class Puppet::Pops::Model::Factory
   def self.PARAM(name, expr=nil);        new(Model::Parameter, name, expr);                      end
 
   def self.NODE(hosts, parent, body);    new(Model::NodeDefinition, hosts, parent, body);        end
+
+
+  # Parameters
+
+  # Mark parameter as capturing the rest of arguments
+  def captures_rest()
+    current.captures_rest = true
+  end
+
+  # Set Expression that should evaluate to the parameter's type
+  def type_expr(o)
+    current.type_expr = to_ops(o)
+  end
 
   # Creates a QualifiedName representation of o, unless o already represents a QualifiedName in which
   # case it is returned.
@@ -591,13 +603,14 @@ class Puppet::Pops::Model::Factory
   end
 
   def self.EPP(parameters, body)
-    see_scope = false
-    params = parameters
     if parameters.nil?
       params = []
-      see_scope = true
+      parameters_specified = false
+    else
+      params = parameters
+      parameters_specified = true
     end
-    LAMBDA(params, new(Model::EppExpression, see_scope, body))
+    LAMBDA(params, new(Model::EppExpression, parameters_specified, body))
   end
 
   def self.RESERVED(name)
@@ -831,8 +844,8 @@ class Puppet::Pops::Model::Factory
     x
   end
 
-  def build_EppExpression(o, see_scope, body)
-    o.see_scope = see_scope
+  def build_EppExpression(o, parameters_specified, body)
+    o.parameters_specified = parameters_specified
     b = f_build_body(body)
     o.body = b.current if b
     o

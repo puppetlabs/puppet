@@ -55,7 +55,7 @@ module Puppet::Network::HTTP::Handler
 
     response[Puppet::Network::HTTP::HEADER_PUPPET_VERSION] = Puppet.version
 
-    configure_profiler(request_headers, request_params)
+    profiler = configure_profiler(request_headers, request_params)
     warn_if_near_expiration(new_request.client_cert)
 
     Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
@@ -74,6 +74,9 @@ module Puppet::Network::HTTP::Handler
     Puppet.err(http_e.message)
     new_response.respond_with(http_e.status, "application/json", http_e.to_json)
   ensure
+    if profiler
+      remove_profiler(profiler)
+    end
     cleanup(request)
   end
 
@@ -172,9 +175,11 @@ module Puppet::Network::HTTP::Handler
 
   def configure_profiler(request_headers, request_params)
     if (request_headers.has_key?(Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase) or Puppet[:profile])
-      Puppet::Util::Profiler.current = Puppet::Util::Profiler::WallClock.new(Puppet.method(:debug), request_params.object_id)
-    else
-      Puppet::Util::Profiler.current = Puppet::Util::Profiler::NONE
+      Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::WallClock.new(Puppet.method(:debug), request_params.object_id))
     end
+  end
+
+  def remove_profiler(profiler)
+    Puppet::Util::Profiler.remove_profiler(profiler)
   end
 end
