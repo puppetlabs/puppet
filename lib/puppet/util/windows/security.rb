@@ -71,16 +71,15 @@ require 'windows/file'
 require 'windows/security'
 require 'windows/memory'
 require 'windows/msvcrt/buffer'
-require 'windows/volume'
 
 module Puppet::Util::Windows::Security
   include ::Windows::File
   include ::Windows::Security
   include ::Windows::Memory
   include ::Windows::MSVCRT::Buffer
-  include ::Windows::Volume
 
   include Puppet::Util::Windows::SID
+  include Puppet::Util::Windows::String
 
   extend Puppet::Util::Windows::Security
   extend FFI::Library
@@ -158,17 +157,24 @@ module Puppet::Util::Windows::Security
     get_security_descriptor(path).group
   end
 
-  def supports_acl?(path)
-    flags = 0.chr * 4
+  FILE_PERSISTENT_ACLS           = 0x00000008
 
+  def supports_acl?(path)
+    supported = false
     root = Pathname.new(path).enum_for(:ascend).to_a.last.to_s
     # 'A trailing backslash is required'
     root = "#{root}\\" unless root =~ /[\/\\]$/
-    unless GetVolumeInformation(root, nil, 0, nil, nil, flags, nil, 0)
-      raise Puppet::Util::Windows::Error.new("Failed to get volume information")
+
+    FFI::MemoryPointer.new(:pointer, 1) do |flags_ptr|
+      if GetVolumeInformationW(wide_string(root), FFI::Pointer::NULL, 0,
+          FFI::Pointer::NULL, FFI::Pointer::NULL,
+          flags_ptr, FFI::Pointer::NULL, 0) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Failed to get volume information")
+      end
+      supported = flags_ptr.read_dword & FILE_PERSISTENT_ACLS == FILE_PERSISTENT_ACLS
     end
 
-    (flags.unpack('L')[0] & Windows::File::FILE_PERSISTENT_ACLS) != 0
+    supported
   end
 
   def get_attributes(path)
@@ -640,6 +646,21 @@ module Puppet::Util::Windows::Security
   end
 
   ffi_convention :stdcall
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx
+  # BOOL WINAPI GetVolumeInformation(
+  #   _In_opt_   LPCTSTR lpRootPathName,
+  #   _Out_opt_  LPTSTR lpVolumeNameBuffer,
+  #   _In_       DWORD nVolumeNameSize,
+  #   _Out_opt_  LPDWORD lpVolumeSerialNumber,
+  #   _Out_opt_  LPDWORD lpMaximumComponentLength,
+  #   _Out_opt_  LPDWORD lpFileSystemFlags,
+  #   _Out_opt_  LPTSTR lpFileSystemNameBuffer,
+  #   _In_       DWORD nFileSystemNameSize
+  # );
+  ffi_lib :kernel32
+  attach_function_private :GetVolumeInformationW,
+    [:lpcwstr, :lpwstr, :dword, :lpdword, :lpdword, :lpdword, :lpwstr, :dword], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/hardware/ff556610(v=vs.85).aspx
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379561(v=vs.85).aspx
