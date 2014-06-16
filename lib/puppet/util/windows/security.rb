@@ -429,7 +429,9 @@ module Puppet::Util::Windows::Security
 
   def parse_dacl(dacl_ptr)
     # REMIND: need to handle NULL DACL
-    raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(dacl_ptr)
+    if IsValidAcl(FFI::Pointer.new(dacl_ptr)) == FFI::WIN32_FALSE
+      raise Puppet::Util::Windows::Error.new("Invalid DACL")
+    end
 
     # ACL structure, size and count are the important parts. The
     # size includes both the ACL structure and all the ACEs.
@@ -631,7 +633,9 @@ module Puppet::Util::Windows::Security
         raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
       end
 
-      raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(acl_ptr.address)
+      if IsValidAcl(acl_ptr) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Invalid DACL")
+      end
 
       with_privilege(SE_BACKUP_NAME) do
         with_privilege(SE_RESTORE_NAME) do
@@ -752,4 +756,12 @@ module Puppet::Util::Windows::Security
   ffi_lib :advapi32
   attach_function_private :GetSecurityDescriptorControl,
     [:pointer, :lpword, :lpdword], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379142(v=vs.85).aspx
+  # BOOL WINAPI IsValidAcl(
+  #   _In_  PACL pAcl
+  # );
+  ffi_lib :advapi32
+  attach_function_private :IsValidAcl,
+    [:pointer], :win32_bool
 end
