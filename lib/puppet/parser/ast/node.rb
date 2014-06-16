@@ -7,8 +7,7 @@ class Puppet::Parser::AST::Node < Puppet::Parser::AST::TopLevelConstruct
     raise ArgumentError, "names should be an array" unless names.is_a? Array
     if context[:parent]
       msg = "Deprecation notice: Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
-      # Cannot use Puppet.deprecation_warning here since it prints gobbledygook stack trace
-      Puppet.warning(msg)
+      Puppet.puppet_deprecation_warning(msg, :key => "node-inheritance-#{names.join}", :file => context[:file], :line => context[:line])
     end
 
     @names = names
