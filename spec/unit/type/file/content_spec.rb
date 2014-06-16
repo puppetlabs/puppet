@@ -332,7 +332,7 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
     end
 
     describe "from local source" do
-      let(:source_content) { "source file content\r\n"*10000 }
+      let(:source_content) { "source file content\r\n"*10 }
       before(:each) do
         sourcename = tmpfile('source')
         resource[:backup] = false
@@ -362,104 +362,87 @@ describe Puppet::Type.type(:file).attrclass(:content), :uses_checksums => true d
       end
     end
 
-    describe "from an explicit fileserver" do
-      let(:source_content) { "source file content\n"*10000 }
-      let(:response) { stub_everything 'response' }
+    describe 'from remote source' do
+      let(:source_content) { "source file content\n"*10 }
       let(:source) { resource.newattr(:source) }
+      let(:response) { stub_everything('response') }
+      let(:conn) { mock('connection') }
 
       before(:each) do
         resource[:backup] = false
-        response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
-
-        conn = mock('connection')
-        conn.stubs(:request_get).yields response
-
-        Puppet::Network::HttpPool.expects(:http_instance).with('somehostname',any_parameters).returns(conn).at_least_once
-
         # This needs to be invoked to properly initialize the content property,
         # or attempting to write a file will fail.
         resource.newattr(:content)
 
-        source.stubs(:metadata).returns stub_everything('metadata', :source => "puppet://somehostname/test/foo", :ftype => 'file')
+        response.stubs(:read_body).multiple_yields(*source_content.lines)
+        conn.stubs(:request_get).yields(response)
       end
 
-      describe "and the request was successful" do
-        before { response.stubs(:code).returns '200' }
+      it 'should use an explicit fileserver if source starts with puppet://' do
+        response.stubs(:code).returns('200')
+        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet://somehostname/test/foo', :ftype => 'file')
+        Puppet::Network::HttpPool.expects(:http_instance).with('somehostname', anything).returns(conn)
 
-        it "should write the contents to the file" do
-          resource.write(source)
-          Puppet::FileSystem.binread(filename).should == source_content
+        resource.write(source)
+      end
+
+      it 'should use the default fileserver if source starts with puppet:///' do
+        response.stubs(:code).returns('200')
+        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo', :ftype => 'file')
+        Puppet::Network::HttpPool.expects(:http_instance).with(Puppet.settings[:server], anything).returns(conn)
+
+        resource.write(source)
+      end
+
+      it 'should percent encode reserved characters' do
+        response.stubs(:code).returns('200')
+        Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
+        source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo bar', :ftype => 'file')
+
+        conn.unstub(:request_get)
+        conn.expects(:request_get).with('/none/file_content/test/foo%20bar', anything).yields(response)
+
+        resource.write(source)
+      end
+
+      describe 'when handling file_content responses' do
+        before(:each) do
+          Puppet::Network::HttpPool.stubs(:http_instance).returns(conn)
+          source.stubs(:metadata).returns stub_everything('metadata', :source => 'puppet:///test/foo', :ftype => 'file')
         end
 
-        with_digest_algorithms do
-          it "should return the checksum computed" do
-            File.open(filename, 'w') do |file|
-              resource[:checksum] = digest_algorithm
-              content.write(file).should == "{#{digest_algorithm}}#{digest(source_content)}"
+        it 'should not write anything if source is not found' do
+          response.stubs(:code).returns('404')
+
+          expect { resource.write(source) }.to raise_error(Net::HTTPError, /404/)
+          expect(File.read(filename)).to eq('initial file content')
+        end
+
+        it 'should raise an HTTP error in case of server error' do
+          response.stubs(:code).returns('500')
+
+          expect { resource.write(source) }.to raise_error(Net::HTTPError, /500/)
+        end
+
+        context 'and the request was successful' do
+          before(:each) { response.stubs(:code).returns '200' }
+
+          it 'should write the contents to the file' do
+            resource.write(source)
+            expect(Puppet::FileSystem.binread(filename)).to eq(source_content)
+          end
+
+          with_digest_algorithms do
+            it 'should return the checksum computed' do
+              File.open(filename, 'w') do |file|
+                resource[:checksum] = digest_algorithm
+                expect(content.write(file)).to eq("{#{digest_algorithm}}#{digest(source_content)}")
+              end
             end
           end
-        end
-      end
 
-      it "should not write anything if source is not found" do
-        response.stubs(:code).returns("404")
-        expect { resource.write(source) }.to raise_error(Net::HTTPError, /404/)
-        File.read(filename).should == "initial file content"
-      end
-
-      it "should raise an HTTP error in case of server error" do
-        response.stubs(:code).returns("500")
-        expect { content.write(fh) }.to raise_error(Net::HTTPError, /500/)
-      end
-
-    end
-
-    describe "from remote source" do
-      let(:source_content) { "source file content\n"*10000 }
-      let(:response) { stub_everything 'response' }
-      let(:source) { resource.newattr(:source) }
-
-      before(:each) do
-        resource[:backup] = false
-        response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
-
-        conn = stub_everything 'connection'
-        conn.stubs(:request_get).yields response
-        Puppet::Network::HttpPool.stubs(:http_instance).returns conn
-
-        # This needs to be invoked to properly initialize the content property,
-        # or attempting to write a file will fail.
-        resource.newattr(:content)
-        source.stubs(:metadata).returns stub_everything('metadata', :source => "puppet://somehostname/test/foo", :ftype => 'file')
-      end
-
-      describe "and the request was successful" do
-        before { response.stubs(:code).returns '200' }
-
-        it "should write the contents to the file" do
-          resource.write(source)
-          Puppet::FileSystem.binread(filename).should == source_content
         end
 
-        with_digest_algorithms do
-          it "should return the checksum computed" do
-            File.open(filename, 'w') do |file|
-              resource[:checksum] = digest_algorithm
-              content.write(file).should == "{#{digest_algorithm}}#{digest(source_content)}"
-            end
-          end
-        end
-      end
-
-      it "should not write anything if source is not found" do
-        response.stubs(:code).returns("404")
-        expect {resource.write(source)}.to raise_error(Net::HTTPError, /404/)
-        File.read(filename).should == "initial file content"
-      end
-
-      it "should raise an HTTP error in case of server error" do
-        response.stubs(:code).returns("500")
-        expect { content.write(fh) }.to raise_error(Net::HTTPError, /500/)
       end
     end
 
