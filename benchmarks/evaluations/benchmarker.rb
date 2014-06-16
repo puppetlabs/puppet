@@ -37,9 +37,12 @@ class Benchmarker
     @compiler.send(:evaluate_main)
   end
 
-  def run
+  def run(args = {:detail=>'all'})
+    details = args[:detail]
     measurements = []
     @micro_benchmarks.each do |name, source|
+      # skip if all but the wanted if a single benchmark is wanted
+      next unless details == 'all' || details == name
       measurements << Benchmark.measure("#{name} parse") do
         1..@parsecount.times { @parser.parse_string(source, name) }
       end

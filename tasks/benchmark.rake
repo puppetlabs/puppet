@@ -79,11 +79,16 @@ namespace :benchmark do
       end
 
       desc "Profile a single run of the #{name} scenario."
-      task :profile => :generate do
+      task :profile, [:warm_up_runs, :detail] => :generate do |_, args|
+        warm_up_runs = (args[:warm_up_runs] || '0').to_i
+        warm_up_runs.times do
+          @benchmark.run(args)
+        end
+
         require 'ruby-prof'
 
         result = RubyProf.profile do
-          @benchmark.run
+          @benchmark.run(args)
         end
 
         printer = RubyProf::CallTreePrinter.new(result)
