@@ -1,17 +1,25 @@
 class Puppet::Pops::IssueReporter
 
   # @param acceptor [Puppet::Pops::Validation::Acceptor] the acceptor containing reported issues
-  # @option options [String] :message (nil) A message text to use as prefix in a single Error message
-  # @option options [Boolean] :emit_warnings (false) A message text to use as prefix in a single Error message
-  # @option options [Boolean] :emit_errors (true) whether errors should be emitted or only given message
+  # @option options [String] :message (nil) A message text to use as prefix in
+  #   a single Error message
+  # @option options [Boolean] :emit_warnings (false) whether warnings should be emitted
+  # @option options [Boolean] :emit_errors (true) whether errors should be
+  #   emitted or only the given message
   # @option options [Exception] :exception_class (Puppet::ParseError) The exception to raise
   #
   def self.assert_and_report(acceptor, options)
     return unless acceptor
 
     max_errors = Puppet[:max_errors]
-    max_warnings = Puppet[:max_warnings] + 1
-    max_deprecations = Puppet[:max_deprecations] + 1
+    max_warnings = Puppet[:max_warnings]
+    max_deprecations =
+    if Puppet[:disable_warnings].include?('deprecations')
+      0
+    else
+      Puppet[:max_deprecations]
+    end
+
     emit_warnings = options[:emit_warnings] || false
     emit_errors = options[:emit_errors].nil? ? true : !!options[:emit_errors]
     emit_message = options[:message]
@@ -35,7 +43,7 @@ class Puppet::Pops::IssueReporter
           Puppet.warning(formatter.format(w)) if emitted_w < max_warnings
           emitted_w += 1
         end
-        break if emitted_w > max_warnings && emitted_dw > max_deprecations # but only then
+        break if emitted_w >= max_warnings && emitted_dw >= max_deprecations # but only then
       end
     end
 
