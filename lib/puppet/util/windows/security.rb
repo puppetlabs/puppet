@@ -627,9 +627,8 @@ module Puppet::Util::Windows::Security
   # setting DACL requires both READ_CONTROL and WRITE_DACL access rights,
   # and their respective privileges, SE_BACKUP_NAME and SE_RESTORE_NAME.
   def set_security_descriptor(path, sd)
-    # This can be increased later as neede
     FFI::MemoryPointer.new(:byte, 1024) do |acl_ptr|
-      unless InitializeAcl(acl_ptr.address, acl_ptr.size, ACL_REVISION)
+      if InitializeAcl(acl_ptr, acl_ptr.size, ACL_REVISION) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
       end
 
@@ -756,6 +755,16 @@ module Puppet::Util::Windows::Security
   ffi_lib :advapi32
   attach_function_private :GetSecurityDescriptorControl,
     [:pointer, :lpword, :lpdword], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
+  # BOOL WINAPI InitializeAcl(
+  #   _Out_  PACL pAcl,
+  #   _In_   DWORD nAclLength,
+  #   _In_   DWORD dwAclRevision
+  # );
+  ffi_lib :advapi32
+  attach_function_private :InitializeAcl,
+    [:pointer, :dword, :dword], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379142(v=vs.85).aspx
   # BOOL WINAPI IsValidAcl(
