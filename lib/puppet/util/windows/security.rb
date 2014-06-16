@@ -391,6 +391,8 @@ module Puppet::Util::Windows::Security
     nil
   end
 
+  ACL_REVISION                   = 2
+
   def add_access_allowed_ace(acl, mask, sid, inherit = nil)
     inherit ||= NO_INHERITANCE
 
@@ -399,10 +401,13 @@ module Puppet::Util::Windows::Security
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
 
-      unless AddAccessAllowedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr.address)
+      if AddAccessAllowedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
       end
     end
+
+    # ensure this method is void if it doesn't raise
+    nil
   end
 
   def add_access_denied_ace(acl, mask, sid, inherit = nil)
@@ -413,10 +418,13 @@ module Puppet::Util::Windows::Security
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
 
-      unless AddAccessDeniedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr.address)
+      if AddAccessDeniedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
       end
     end
+
+    # ensure this method is void if it doesn't raise
+    nil
   end
 
   def parse_dacl(dacl_ptr)
@@ -617,45 +625,46 @@ module Puppet::Util::Windows::Security
   # setting DACL requires both READ_CONTROL and WRITE_DACL access rights,
   # and their respective privileges, SE_BACKUP_NAME and SE_RESTORE_NAME.
   def set_security_descriptor(path, sd)
-    # REMIND: FFI
-    acl = 0.chr * 1024 # This can be increased later as neede
-    unless InitializeAcl(acl, acl.size, ACL_REVISION)
-      raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
-    end
+    # This can be increased later as neede
+    FFI::MemoryPointer.new(:byte, 1024) do |acl_ptr|
+      unless InitializeAcl(acl_ptr.address, acl_ptr.size, ACL_REVISION)
+        raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
+      end
 
-    raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(acl)
+      raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(acl_ptr.address)
 
-    with_privilege(SE_BACKUP_NAME) do
-      with_privilege(SE_RESTORE_NAME) do
-        open_file(path, READ_CONTROL | WRITE_DAC | WRITE_OWNER) do |handle|
-          string_to_sid_ptr(sd.owner) do |ownersid|
-            string_to_sid_ptr(sd.group) do |groupsid|
-              sd.dacl.each do |ace|
-                case ace.type
-                when ACCESS_ALLOWED_ACE_TYPE
-                  #puts "ace: allow, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
-                  add_access_allowed_ace(acl, ace.mask, ace.sid, ace.flags)
-                when ACCESS_DENIED_ACE_TYPE
-                  #puts "ace: deny, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
-                  add_access_denied_ace(acl, ace.mask, ace.sid, ace.flags)
-                else
-                  raise "We should never get here"
-                  # TODO: this should have been a warning in an earlier commit
+      with_privilege(SE_BACKUP_NAME) do
+        with_privilege(SE_RESTORE_NAME) do
+          open_file(path, READ_CONTROL | WRITE_DAC | WRITE_OWNER) do |handle|
+            string_to_sid_ptr(sd.owner) do |ownersid|
+              string_to_sid_ptr(sd.group) do |groupsid|
+                sd.dacl.each do |ace|
+                  case ace.type
+                  when ACCESS_ALLOWED_ACE_TYPE
+                    #puts "ace: allow, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
+                    add_access_allowed_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
+                  when ACCESS_DENIED_ACE_TYPE
+                    #puts "ace: deny, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
+                    add_access_denied_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
+                  else
+                    raise "We should never get here"
+                    # TODO: this should have been a warning in an earlier commit
+                  end
                 end
+
+                # protected means the object does not inherit aces from its parent
+                flags = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION
+                flags |= sd.protect ? PROTECTED_DACL_SECURITY_INFORMATION : UNPROTECTED_DACL_SECURITY_INFORMATION
+
+                rv = SetSecurityInfo(handle,
+                                     SE_FILE_OBJECT,
+                                     flags,
+                                     ownersid.address,
+                                     groupsid.address,
+                                     acl_ptr.address,
+                                     nil)
+                raise Puppet::Util::Windows::Error.new("Failed to set security information") unless rv == FFI::ERROR_SUCCESS
               end
-
-              # protected means the object does not inherit aces from its parent
-              flags = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION
-              flags |= sd.protect ? PROTECTED_DACL_SECURITY_INFORMATION : UNPROTECTED_DACL_SECURITY_INFORMATION
-
-              rv = SetSecurityInfo(handle,
-                                   SE_FILE_OBJECT,
-                                   flags,
-                                   ownersid.address,
-                                   groupsid.address,
-                                   acl,
-                                   nil)
-              raise Puppet::Util::Windows::Error.new("Failed to set security information") unless rv == FFI::ERROR_SUCCESS
             end
           end
         end
@@ -693,6 +702,30 @@ module Puppet::Util::Windows::Security
   ffi_lib :kernel32
   attach_function_private :GetVolumeInformationW,
     [:lpcwstr, :lpwstr, :dword, :lpdword, :lpdword, :lpdword, :lpwstr, :dword], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374951(v=vs.85).aspx
+  # BOOL WINAPI AddAccessAllowedAceEx(
+  #   _Inout_  PACL pAcl,
+  #   _In_     DWORD dwAceRevision,
+  #   _In_     DWORD AceFlags,
+  #   _In_     DWORD AccessMask,
+  #   _In_     PSID pSid
+  # );
+  ffi_lib :advapi32
+  attach_function_private :AddAccessAllowedAceEx,
+    [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374964(v=vs.85).aspx
+  # BOOL WINAPI AddAccessDeniedAceEx(
+  #   _Inout_  PACL pAcl,
+  #   _In_     DWORD dwAceRevision,
+  #   _In_     DWORD AceFlags,
+  #   _In_     DWORD AccessMask,
+  #   _In_     PSID pSid
+  # );
+  ffi_lib :advapi32
+  attach_function_private :AddAccessDeniedAceEx,
+    [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa375202(v=vs.85).aspx
   # BOOL WINAPI AdjustTokenPrivileges(
