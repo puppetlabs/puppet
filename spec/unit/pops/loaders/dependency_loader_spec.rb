@@ -36,6 +36,23 @@ describe 'dependency loader' do
       expect(function.class.name).to eq('testmodule::foo')
       expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
     end
+
+    it 'can load something in a qualified name space more than once' do
+      module_dir = dir_containing('testmodule', {
+      'lib' => { 'puppet' => { 'functions' => { 'testmodule' => {
+        'foo.rb' => 'Puppet::Functions.create_function("testmodule::foo") { def foo; end; }'
+      }}}}})
+      module_loader = Puppet::Pops::Loader::ModuleLoaders::FileBased.new(static_loader, loaders, 'testmodule', module_dir, 'test1')
+      dep_loader = Puppet::Pops::Loader::DependencyLoader.new(static_loader, 'test-dep', [module_loader])
+
+      function = dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
+      expect(function.class.name).to eq('testmodule::foo')
+      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
+
+      function = dep_loader.load_typed(typed_name(:function, 'testmodule::foo')).value
+      expect(function.class.name).to eq('testmodule::foo')
+      expect(function.is_a?(Puppet::Functions::Function)).to eq(true)
+    end
   end
 
   def typed_name(type, name)

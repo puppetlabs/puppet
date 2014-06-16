@@ -127,7 +127,7 @@ class Puppet::Pops::Loader::Loader
     attr_reader :origin
 
     def initialize(typed_name, value, origin)
-      @name = typed_name
+      @typed_name = typed_name
       @value = value
       @origin = origin
       freeze()
