@@ -107,6 +107,9 @@ module Puppet::Util::Windows::Security
 
   FILE = Puppet::Util::Windows::File
 
+  SE_BACKUP_NAME              = 'SeBackupPrivilege'
+  SE_RESTORE_NAME             = 'SeRestorePrivilege'
+
   # Set the owner of the object referenced by +path+ to the specified
   # +owner_sid+.  The owner sid should be of the form "S-1-5-32-544"
   # and can either be a user or group.  Only a user with the
@@ -518,26 +521,41 @@ module Puppet::Util::Windows::Security
     set_privilege(privilege, false)
   end
 
+  SE_PRIVILEGE_ENABLED    = 0x00000002
+  TOKEN_ADJUST_PRIVILEGES = 0x0020
+
   # Enable or disable a privilege. Note this doesn't add any privileges the
   # user doesn't already has, it just enables privileges that are disabled.
   def set_privilege(privilege, enable)
     return unless Puppet.features.root?
 
-    Puppet::Util::Windows::Process.with_process_token(TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY) do |token|
-      tmpLuid = 0.chr * 8
+    Puppet::Util::Windows::Process.with_process_token(TOKEN_ADJUST_PRIVILEGES) do |token|
+      Puppet::Util::Windows::Process.lookup_privilege_value(privilege) do |luid|
+        FFI::MemoryPointer.new(Puppet::Util::Windows::Process::LUID_AND_ATTRIBUTES.size) do |luid_and_attributes_ptr|
+          # allocate unmanaged memory for structs that we clean up afterwards
+          luid_and_attributes = Puppet::Util::Windows::Process::LUID_AND_ATTRIBUTES.new(luid_and_attributes_ptr)
+          luid_and_attributes[:Luid] = luid
+          luid_and_attributes[:Attributes] = enable ? SE_PRIVILEGE_ENABLED : 0
 
-      # Get the LUID for specified privilege.
-      unless LookupPrivilegeValue("", privilege, tmpLuid)
-        raise Puppet::Util::Windows::Error.new("Failed to lookup privilege")
-      end
+          FFI::MemoryPointer.new(Puppet::Util::Windows::Process::TOKEN_PRIVILEGES.size) do |token_privileges_ptr|
+            token_privileges = Puppet::Util::Windows::Process::TOKEN_PRIVILEGES.new(token_privileges_ptr)
+            token_privileges[:PrivilegeCount] = 1
+            token_privileges[:Privileges][0] = luid_and_attributes
 
-      # DWORD + [LUID + DWORD]
-      tkp = [1].pack('L') + tmpLuid + [enable ? SE_PRIVILEGE_ENABLED : 0].pack('L')
-
-      unless AdjustTokenPrivileges(token, 0, tkp, tkp.length , nil, nil)
-        raise Puppet::Util::Windows::Error.new("Failed to adjust process privileges")
+            # size is correct given we only have 1 LUID, otherwise would be:
+            # [:PrivilegeCount].size + [:PrivilegeCount] * LUID_AND_ATTRIBUTES.size
+            if AdjustTokenPrivileges(token, FFI::WIN32_FALSE,
+                token_privileges, token_privileges.size,
+                FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
+              raise Puppet::Util::Windows::Error.new("Failed to adjust process privileges")
+            end
+          end
+        end
       end
     end
+
+    # token / luid structs freed by this point, so return true as nothing raised
+    true
   end
 
   def with_process_token(access, &block)
@@ -675,6 +693,19 @@ module Puppet::Util::Windows::Security
   ffi_lib :kernel32
   attach_function_private :GetVolumeInformationW,
     [:lpcwstr, :lpwstr, :dword, :lpdword, :lpdword, :lpdword, :lpwstr, :dword], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa375202(v=vs.85).aspx
+  # BOOL WINAPI AdjustTokenPrivileges(
+  #   _In_       HANDLE TokenHandle,
+  #   _In_       BOOL DisableAllPrivileges,
+  #   _In_opt_   PTOKEN_PRIVILEGES NewState,
+  #   _In_       DWORD BufferLength,
+  #   _Out_opt_  PTOKEN_PRIVILEGES PreviousState,
+  #   _Out_opt_  PDWORD ReturnLength
+  # );
+  ffi_lib :advapi32
+  attach_function_private :AdjustTokenPrivileges,
+    [:handle, :win32_bool, :pointer, :dword, :pointer, :pdword], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/hardware/ff556610(v=vs.85).aspx
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379561(v=vs.85).aspx
