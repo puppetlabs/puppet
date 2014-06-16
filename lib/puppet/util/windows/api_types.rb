@@ -4,6 +4,9 @@ require 'puppet/util/windows/string'
 module Puppet::Util::Windows::APITypes
   module ::FFI
     WIN32_FALSE = 0
+
+    # standard Win32 error codes
+    ERROR_SUCCESS = 0
   end
 
   module ::FFI::Library

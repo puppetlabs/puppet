@@ -5,6 +5,49 @@ module Puppet::Util::Windows::File
   extend FFI::Library
   extend Puppet::Util::Windows::String
 
+  FILE_ATTRIBUTE_READONLY      = 0x00000001
+
+  SYNCHRONIZE                 = 0x100000
+  STANDARD_RIGHTS_REQUIRED    = 0xf0000
+  STANDARD_RIGHTS_READ        = 0x20000
+  STANDARD_RIGHTS_WRITE       = 0x20000
+  STANDARD_RIGHTS_EXECUTE     = 0x20000
+  STANDARD_RIGHTS_ALL         = 0x1F0000
+  SPECIFIC_RIGHTS_ALL         = 0xFFFF
+
+  FILE_READ_DATA               = 1
+  FILE_WRITE_DATA              = 2
+  FILE_APPEND_DATA             = 4
+  FILE_READ_EA                 = 8
+  FILE_WRITE_EA                = 16
+  FILE_EXECUTE                 = 32
+  FILE_DELETE_CHILD            = 64
+  FILE_READ_ATTRIBUTES         = 128
+  FILE_WRITE_ATTRIBUTES        = 256
+
+  FILE_ALL_ACCESS = STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1FF
+
+  FILE_GENERIC_READ =
+     STANDARD_RIGHTS_READ |
+     FILE_READ_DATA |
+     FILE_READ_ATTRIBUTES |
+     FILE_READ_EA |
+     SYNCHRONIZE
+
+  FILE_GENERIC_WRITE =
+     STANDARD_RIGHTS_WRITE |
+     FILE_WRITE_DATA |
+     FILE_WRITE_ATTRIBUTES |
+     FILE_WRITE_EA |
+     FILE_APPEND_DATA |
+     SYNCHRONIZE
+
+  FILE_GENERIC_EXECUTE =
+     STANDARD_RIGHTS_EXECUTE |
+     FILE_READ_ATTRIBUTES |
+     FILE_EXECUTE |
+     SYNCHRONIZE
+
   def replace_file(target, source)
     target_encoded = wide_string(target.to_s)
     source_encoded = wide_string(source.to_s)
@@ -46,12 +89,46 @@ module Puppet::Util::Windows::File
   end
   module_function :symlink
 
-  INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
-  def self.get_file_attributes(file_name)
+  INVALID_FILE_ATTRIBUTES = FFI::Pointer.new(-1).address #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
+
+  def get_file_attributes(file_name)
+    Puppet.deprecation_warning('Puppet::Util::Windows::File.get_file_attributes is deprecated; please use Puppet::Util::Windows::File.get_attributes')
+    get_attributes(file_name)
+  end
+  module_function :get_file_attributes
+
+  def get_attributes(file_name)
     result = GetFileAttributesW(wide_string(file_name.to_s))
     return result unless result == INVALID_FILE_ATTRIBUTES
     raise Puppet::Util::Windows::Error.new("GetFileAttributes(#{file_name})")
   end
+  module_function :get_attributes
+
+  def add_attributes(path, flags)
+    oldattrs = get_attributes(path)
+
+    if (oldattrs | flags) != oldattrs
+      set_attributes(path, oldattrs | flags)
+    end
+  end
+  module_function :add_attributes
+
+  def remove_attributes(path, flags)
+    oldattrs = get_attributes(path)
+
+    if (oldattrs & ~flags) != oldattrs
+      set_attributes(path, oldattrs & ~flags)
+    end
+  end
+  module_function :remove_attributes
+
+  def set_attributes(path, flags)
+    success = SetFileAttributesW(wide_string(path), flags) != FFI::WIN32_FALSE
+    raise Puppet::Util::Windows::Error.new("Failed to set file attributes") if !success
+
+    success
+  end
+  module_function :set_attributes
 
   INVALID_HANDLE_VALUE = -1 #define INVALID_HANDLE_VALUE ((HANDLE)(LONG_PTR)-1)
   def self.create_file(file_name, desired_access, share_mode, security_attributes,
@@ -108,7 +185,7 @@ module Puppet::Util::Windows::File
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
   def symlink?(file_name)
     begin
-      attributes = get_file_attributes(file_name)
+      attributes = get_attributes(file_name)
       (attributes & FILE_ATTRIBUTE_REPARSE_POINT) == FILE_ATTRIBUTE_REPARSE_POINT
     rescue
       # raised INVALID_FILE_ATTRIBUTES is equivalent to file not found
@@ -119,6 +196,7 @@ module Puppet::Util::Windows::File
 
   GENERIC_READ                  = 0x80000000
   FILE_SHARE_READ               = 1
+  FILE_SHARE_WRITE              = 2
   OPEN_EXISTING                 = 3
   FILE_FLAG_OPEN_REPARSE_POINT  = 0x00200000
   FILE_FLAG_BACKUP_SEMANTICS    = 0x02000000
@@ -252,12 +330,22 @@ module Puppet::Util::Windows::File
   rescue LoadError
   end
 
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa364944(v=vs.85).aspx
   # DWORD WINAPI GetFileAttributes(
   #   _In_  LPCTSTR lpFileName
   # );
   ffi_lib :kernel32
   attach_function_private :GetFileAttributesW,
     [:lpcwstr], :dword
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa365535(v=vs.85).aspx
+  # BOOL WINAPI SetFileAttributes(
+  #   _In_  LPCTSTR lpFileName,
+  #   _In_  DWORD dwFileAttributes
+  # );
+  ffi_lib :kernel32
+  attach_function_private :SetFileAttributesW,
+    [:lpcwstr, :dword], :win32_bool
 
   # HANDLE WINAPI CreateFile(
   #   _In_      LPCTSTR lpFileName,

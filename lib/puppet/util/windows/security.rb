@@ -67,13 +67,11 @@ require 'ffi'
 
 require 'win32/security'
 
-require 'windows/file'
 require 'windows/security'
 require 'windows/memory'
 require 'windows/msvcrt/buffer'
 
 module Puppet::Util::Windows::Security
-  include ::Windows::File
   include ::Windows::Security
   include ::Windows::Memory
   include ::Windows::MSVCRT::Buffer
@@ -106,6 +104,8 @@ module Puppet::Util::Windows::Security
   UNPROTECTED_DACL_SECURITY_INFORMATION = 0x20000000
   NO_INHERITANCE = 0x0
   SE_DACL_PROTECTED = 0x1000
+
+  FILE = Puppet::Util::Windows::File
 
   # Set the owner of the object referenced by +path+ to the specified
   # +owner_sid+.  The owner sid should be of the form "S-1-5-32-544"
@@ -178,37 +178,29 @@ module Puppet::Util::Windows::Security
   end
 
   def get_attributes(path)
-    attributes = GetFileAttributes(path)
-
-    raise Puppet::Util::Windows::Error.new("Failed to get file attributes") if attributes == INVALID_FILE_ATTRIBUTES
-
-    attributes
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.get_attributes is deprecated; please use Puppet::Util::Windows::File.get_attributes')
+    FILE.get_attributes(file_name)
   end
 
   def add_attributes(path, flags)
-    oldattrs = get_attributes(path)
-
-    if (oldattrs | flags) != oldattrs
-      set_attributes(path, oldattrs | flags)
-    end
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.add_attributes is deprecated; please use Puppet::Util::Windows::File.add_attributes')
+    FILE.add_attributes(path, flags)
   end
 
   def remove_attributes(path, flags)
-    oldattrs = get_attributes(path)
-
-    if (oldattrs & ~flags) != oldattrs
-      set_attributes(path, oldattrs & ~flags)
-    end
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.remove_attributes is deprecated; please use Puppet::Util::Windows::File.remove_attributes')
+    FILE.remove_attributes(path, flags)
   end
 
   def set_attributes(path, flags)
-    raise Puppet::Util::Windows::Error.new("Failed to set file attributes") unless SetFileAttributes(path, flags)
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.set_attributes is deprecated; please use Puppet::Util::Windows::File.set_attributes')
+    FILE.set_attributes(path, flags)
   end
 
   MASK_TO_MODE = {
-    FILE_GENERIC_READ => S_IROTH,
-    FILE_GENERIC_WRITE => S_IWOTH,
-    (FILE_GENERIC_EXECUTE & ~FILE_READ_ATTRIBUTES) => S_IXOTH
+    FILE::FILE_GENERIC_READ => S_IROTH,
+    FILE::FILE_GENERIC_WRITE => S_IWOTH,
+    (FILE::FILE_GENERIC_EXECUTE & ~FILE::FILE_READ_ATTRIBUTES) => S_IXOTH
   }
 
   def get_aces_for_path_by_sid(path, sid)
@@ -253,11 +245,12 @@ module Puppet::Util::Windows::Security
             mode |= (v << 6) | (v << 3) | v
           end
         end
-        if File.directory?(path) && (ace.mask & (FILE_WRITE_DATA | FILE_EXECUTE | FILE_DELETE_CHILD)) == (FILE_WRITE_DATA | FILE_EXECUTE)
+        if File.directory?(path) &&
+          (ace.mask & (FILE::FILE_WRITE_DATA | FILE::FILE_EXECUTE | FILE::FILE_DELETE_CHILD)) == (FILE::FILE_WRITE_DATA | FILE::FILE_EXECUTE)
           mode |= S_ISVTX;
         end
       when well_known_nobody_sid
-        if (ace.mask & FILE_APPEND_DATA).nonzero?
+        if (ace.mask & FILE::FILE_APPEND_DATA).nonzero?
           mode |= S_ISVTX
         end
       when well_known_system_sid
@@ -282,9 +275,9 @@ module Puppet::Util::Windows::Security
   end
 
   MODE_TO_MASK = {
-    S_IROTH => FILE_GENERIC_READ,
-    S_IWOTH => FILE_GENERIC_WRITE,
-    S_IXOTH => (FILE_GENERIC_EXECUTE & ~FILE_READ_ATTRIBUTES),
+    S_IROTH => FILE::FILE_GENERIC_READ,
+    S_IWOTH => FILE::FILE_GENERIC_WRITE,
+    S_IXOTH => (FILE::FILE_GENERIC_EXECUTE & ~FILE::FILE_READ_ATTRIBUTES),
   }
 
   # Set the mode of the object referenced by +path+ to the specified
@@ -306,9 +299,15 @@ module Puppet::Util::Windows::Security
     well_known_nobody_sid = Win32::Security::SID::Nobody
     well_known_system_sid = Win32::Security::SID::LocalSystem
 
-    owner_allow = STANDARD_RIGHTS_ALL  | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES
-    group_allow = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | SYNCHRONIZE
-    other_allow = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | SYNCHRONIZE
+    owner_allow = FILE::STANDARD_RIGHTS_ALL  |
+      FILE::FILE_READ_ATTRIBUTES |
+      FILE::FILE_WRITE_ATTRIBUTES
+    group_allow = FILE::STANDARD_RIGHTS_READ |
+      FILE::FILE_READ_ATTRIBUTES |
+      FILE::SYNCHRONIZE
+    other_allow = FILE::STANDARD_RIGHTS_READ |
+      FILE::FILE_READ_ATTRIBUTES |
+      FILE::SYNCHRONIZE
     nobody_allow = 0
     system_allow = 0
 
@@ -325,27 +324,27 @@ module Puppet::Util::Windows::Security
     end
 
     if (mode & S_ISVTX).nonzero?
-      nobody_allow |= FILE_APPEND_DATA;
+      nobody_allow |= FILE::FILE_APPEND_DATA;
     end
 
     # caller is NOT managing SYSTEM by using group or owner, so set to FULL
     if ! [sd.owner, sd.group].include? well_known_system_sid
       # we don't check S_ISYSTEM_MISSING bit, but automatically carry over existing SYSTEM perms
       # by default set SYSTEM perms to full
-      system_allow = FILE_ALL_ACCESS
+      system_allow = FILE::FILE_ALL_ACCESS
     end
 
     isdir = File.directory?(path)
 
     if isdir
       if (mode & (S_IWUSR | S_IXUSR)) == (S_IWUSR | S_IXUSR)
-        owner_allow |= FILE_DELETE_CHILD
+        owner_allow |= FILE::FILE_DELETE_CHILD
       end
       if (mode & (S_IWGRP | S_IXGRP)) == (S_IWGRP | S_IXGRP) && (mode & S_ISVTX) == 0
-        group_allow |= FILE_DELETE_CHILD
+        group_allow |= FILE::FILE_DELETE_CHILD
       end
       if (mode & (S_IWOTH | S_IXOTH)) == (S_IWOTH | S_IXOTH) && (mode & S_ISVTX) == 0
-        other_allow |= FILE_DELETE_CHILD
+        other_allow |= FILE::FILE_DELETE_CHILD
       end
     end
 
@@ -357,8 +356,8 @@ module Puppet::Util::Windows::Security
 
     # if any ACE allows write, then clear readonly bit, but do this before we overwrite
     # the DACl and lose our ability to set the attribute
-    if ((owner_allow | group_allow | other_allow ) & FILE_WRITE_DATA) == FILE_WRITE_DATA
-      remove_attributes(path, FILE_ATTRIBUTE_READONLY)
+    if ((owner_allow | group_allow | other_allow ) & FILE::FILE_WRITE_DATA) == FILE::FILE_WRITE_DATA
+      FILE.remove_attributes(path, FILE::FILE_ATTRIBUTE_READONLY)
     end
 
     dacl = Puppet::Util::Windows::AccessControlList.new
@@ -379,8 +378,8 @@ module Puppet::Util::Windows::Security
       dacl.allow(Win32::Security::SID::CreatorGroup, group_allow, inherit)
 
       inherit = INHERIT_ONLY_ACE |  OBJECT_INHERIT_ACE
-      dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow & ~FILE_EXECUTE, inherit)
-      dacl.allow(Win32::Security::SID::CreatorGroup, group_allow & ~FILE_EXECUTE, inherit)
+      dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow & ~FILE::FILE_EXECUTE, inherit)
+      dacl.allow(Win32::Security::SID::CreatorGroup, group_allow & ~FILE::FILE_EXECUTE, inherit)
     end
 
     new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, dacl, protected)
@@ -491,14 +490,15 @@ module Puppet::Util::Windows::Security
   # Open an existing file with the specified access mode, and execute a
   # block with the opened file HANDLE.
   def open_file(path, access, &block)
-    handle = CreateFile(
-             path,
+    handle = CreateFileW(
+             wide_string(path),
              access,
-             FILE_SHARE_READ | FILE_SHARE_WRITE,
-             0, # security_attributes
-             OPEN_EXISTING,
-             FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-             0) # template
+             FILE::FILE_SHARE_READ | FILE::FILE_SHARE_WRITE,
+             FFI::Pointer::NULL, # security_attributes
+             FILE::OPEN_EXISTING,
+             FILE::FILE_FLAG_OPEN_REPARSE_POINT | FILE::FILE_FLAG_BACKUP_SEMANTICS,
+             FFI::Pointer::NULL_HANDLE) # template
+
     raise Puppet::Util::Windows::Error.new("Failed to open '#{path}'") if handle == INVALID_HANDLE_VALUE
     begin
       yield handle
@@ -568,7 +568,7 @@ module Puppet::Util::Windows::Security
           dacl,
           nil, #sacl
           ppsd) #sec desc
-        raise Puppet::Util::Windows::Error.new("Failed to get security information") unless rv == ERROR_SUCCESS
+        raise Puppet::Util::Windows::Error.new("Failed to get security information") unless rv == FFI::ERROR_SUCCESS
 
         begin
           owner = sid_ptr_to_string(FFI::Pointer.new(:pointer, owner_sid.unpack('L')[0]))
@@ -637,7 +637,7 @@ module Puppet::Util::Windows::Security
                                    groupsid.address,
                                    acl,
                                    nil)
-              raise Puppet::Util::Windows::Error.new("Failed to set security information") unless rv == ERROR_SUCCESS
+              raise Puppet::Util::Windows::Error.new("Failed to set security information") unless rv == FFI::ERROR_SUCCESS
             end
           end
         end
@@ -646,6 +646,20 @@ module Puppet::Util::Windows::Security
   end
 
   ffi_convention :stdcall
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx
+  # HANDLE WINAPI CreateFile(
+  #   _In_      LPCTSTR lpFileName,
+  #   _In_      DWORD dwDesiredAccess,
+  #   _In_      DWORD dwShareMode,
+  #   _In_opt_  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+  #   _In_      DWORD dwCreationDisposition,
+  #   _In_      DWORD dwFlagsAndAttributes,
+  #   _In_opt_  HANDLE hTemplateFile
+  # );
+  ffi_lib :kernel32
+  attach_function_private :CreateFileW,
+    [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx
   # BOOL WINAPI GetVolumeInformation(
