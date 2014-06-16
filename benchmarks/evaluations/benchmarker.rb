@@ -35,6 +35,9 @@ class Benchmarker
     # Perform a portion of what a compile does (just enough to evaluate the site.pp logic)
     @compiler.catalog.environment_instance = @compiler.environment
     @compiler.send(:evaluate_main)
+
+    # Then pretend we are running as part of a compilation
+    Puppet.push_context(@compiler.context_overrides, "Benchmark masquerading as compiler configured context")
   end
 
   def run(args = {:detail=>'all'})
@@ -77,6 +80,48 @@ class Benchmarker
     render(File.join(templates, 'puppet.conf.erb'),
            File.join(@target, 'puppet.conf'),
            :location => @target)
+
+    # Generate one module with a 3x function and a 4x function (namespaces)
+    module_name = "module1"
+    module_base = File.join(environment, 'modules', module_name)
+    manifests = File.join(module_base, 'manifests')
+    mkdir_p(manifests)
+    functions_3x = File.join(module_base, 'lib', 'puppet', 'parser', 'functions')
+    functions_4x = File.join(module_base, 'lib', 'puppet', 'functions')
+    mkdir_p(functions_3x)
+    mkdir_p(functions_4x)
+
+    File.open(File.join(module_base, 'metadata.json'), 'w') do |f|
+      JSON.dump({
+        "types" => [],
+        "source" => "",
+        "author" => "Evaluations Benchmark",
+        "license" => "Apache 2.0",
+        "version" => "1.0.0",
+        "description" => "Evaluations Benchmark module 1",
+        "summary" => "Module with supporting logic for evaluations benchmark",
+        "dependencies" => [],
+      }, f)
+    end
+
+    render(File.join(templates, 'module', 'init.pp.erb'),
+           File.join(manifests, 'init.pp'),
+           :name => module_name)
+
+    render(File.join(templates, 'module', 'func3.rb.erb'),
+           File.join(functions_3x, 'func3.rb'),
+           :name => module_name)
+
+    # namespaced function
+    mkdir_p(File.join(functions_4x, module_name))
+    render(File.join(templates, 'module', 'module1_func4.rb.erb'),
+           File.join(functions_4x, module_name, 'func4.rb'),
+           :name => module_name)
+
+    # non namespaced
+    render(File.join(templates, 'module', 'func4.rb.erb'),
+           File.join(functions_4x, 'func4.rb'),
+           :name => module_name)
   end
 
   def render(erb_file, output_file, bindings)

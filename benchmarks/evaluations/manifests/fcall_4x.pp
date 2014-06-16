@@ -1,6 +1,6 @@
 $tmp = [
-assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1),
-assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1),
-assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1),
-assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1), assert_type(Integer,1),
+func4(x,y), func4(x,y), func4(x,y), func4(x,y), func4(x,y),
+func4(x,y), func4(x,y), func4(x,y), func4(x,y), func4(x,y),
+func4(x,y), func4(x,y), func4(x,y), func4(x,y), func4(x,y),
+func4(x,y), func4(x,y), func4(x,y), func4(x,y), func4(x,y),
 ]

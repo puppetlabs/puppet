@@ -1,6 +1,6 @@
 $tmp = [
-sprintf('%s',a), sprintf('%s',a), sprintf('%s',a), sprintf('%s',a), sprintf('%s',a),
-sprintf('%s',a), sprintf('%s',a), sprintf('%s',a), sprintf('%s',a), sprintf('%s',a),
-sprintf('%s',a), sprintf('%s',a), sprintf('%s',a), sprintf('%s',a), sprintf('%s',a),
-sprintf('%s',a), sprintf('%s',a), sprintf('%s',a), sprintf('%s',a), sprintf('%s',a),
+func3(x,y), func3(x,y), func3(x,y), func3(x,y), func3(x,y),
+func3(x,y), func3(x,y), func3(x,y), func3(x,y), func3(x,y),
+func3(x,y), func3(x,y), func3(x,y), func3(x,y), func3(x,y),
+func3(x,y), func3(x,y), func3(x,y), func3(x,y), func3(x,y),
 ]
