@@ -43,9 +43,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
   let(:scope) { @scope }
   types = Puppet::Pops::Types::TypeFactory
 
-  def create_test_scope_for_node(node_name)
-  end
-
   context "When evaluator evaluates literals" do
     {
       "1"             => 1,
