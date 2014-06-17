@@ -603,10 +603,19 @@ module Puppet::Util::Windows::Security
     sd
   end
 
+  def get_max_generic_acl_size(ace_count)
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
+    # To calculate the initial size of an ACL, add the following together, and then align the result to the nearest DWORD:
+    # * Size of the ACL structure.
+    # * Size of each ACE structure that the ACL is to contain minus the SidStart member (DWORD) of the ACE.
+    # * Length of the SID that each ACE is to contain.
+    ACL.size + ace_count * MAXIMUM_GENERIC_ACE_SIZE
+  end
+
   # setting DACL requires both READ_CONTROL and WRITE_DACL access rights,
   # and their respective privileges, SE_BACKUP_NAME and SE_RESTORE_NAME.
   def set_security_descriptor(path, sd)
-    FFI::MemoryPointer.new(:byte, 1024) do |acl_ptr|
+    FFI::MemoryPointer.new(:byte, get_max_generic_acl_size(sd.dacl.count)) do |acl_ptr|
       if InitializeAcl(acl_ptr, acl_ptr.size, ACL_REVISION) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
       end
@@ -618,8 +627,8 @@ module Puppet::Util::Windows::Security
       with_privilege(SE_BACKUP_NAME) do
         with_privilege(SE_RESTORE_NAME) do
           open_file(path, READ_CONTROL | WRITE_DAC | WRITE_OWNER) do |handle|
-            string_to_sid_ptr(sd.owner) do |ownersid|
-              string_to_sid_ptr(sd.group) do |groupsid|
+            string_to_sid_ptr(sd.owner) do |owner_sid_ptr|
+              string_to_sid_ptr(sd.group) do |group_sid_ptr|
                 sd.dacl.each do |ace|
                   case ace.type
                   when Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE
@@ -639,13 +648,16 @@ module Puppet::Util::Windows::Security
                 flags |= sd.protect ? PROTECTED_DACL_SECURITY_INFORMATION : UNPROTECTED_DACL_SECURITY_INFORMATION
 
                 rv = SetSecurityInfo(handle,
-                                     SE_FILE_OBJECT,
+                                     :SE_FILE_OBJECT,
                                      flags,
-                                     ownersid.address,
-                                     groupsid.address,
-                                     acl_ptr.address,
-                                     nil)
-                raise Puppet::Util::Windows::Error.new("Failed to set security information") unless rv == FFI::ERROR_SUCCESS
+                                     owner_sid_ptr,
+                                     group_sid_ptr,
+                                     acl_ptr,
+                                     FFI::MemoryPointer::NULL)
+
+                if rv != FFI::ERROR_SUCCESS
+                  raise Puppet::Util::Windows::Error.new("Failed to set security information")
+                end
               end
             end
           end
@@ -764,6 +776,11 @@ module Puppet::Util::Windows::Security
            :SidStart, :dword
   end
 
+  # http://stackoverflow.com/a/1792930
+  MAXIMUM_SID_BYTES_LENGTH = 68
+  MAXIMUM_GENERIC_ACE_SIZE = GENERIC_ACCESS_ACE.offset_of(:SidStart) +
+    MAXIMUM_SID_BYTES_LENGTH
+
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446634(v=vs.85).aspx
   # BOOL WINAPI GetAce(
   #   _In_   PACL pAcl,
@@ -817,4 +834,36 @@ module Puppet::Util::Windows::Security
   ffi_lib :advapi32
   attach_function_private :IsValidAcl,
     [:pointer], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379593(v=vs.85).aspx
+  SE_OBJECT_TYPE = enum(
+    :SE_UNKNOWN_OBJECT_TYPE, 0,
+    :SE_FILE_OBJECT,
+    :SE_SERVICE,
+    :SE_PRINTER,
+    :SE_REGISTRY_KEY,
+    :SE_LMSHARE,
+    :SE_KERNEL_OBJECT,
+    :SE_WINDOW_OBJECT,
+    :SE_DS_OBJECT,
+    :SE_DS_OBJECT_ALL,
+    :SE_PROVIDER_DEFINED_OBJECT,
+    :SE_WMIGUID_OBJECT,
+    :SE_REGISTRY_WOW64_32KEY
+  )
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379588(v=vs.85).aspx
+  # DWORD WINAPI SetSecurityInfo(
+  #   _In_      HANDLE handle,
+  #   _In_      SE_OBJECT_TYPE ObjectType,
+  #   _In_      SECURITY_INFORMATION SecurityInfo,
+  #   _In_opt_  PSID psidOwner,
+  #   _In_opt_  PSID psidGroup,
+  #   _In_opt_  PACL pDacl,
+  #   _In_opt_  PACL pSacl
+  # );
+  ffi_lib :advapi32
+  # TODO: SECURITY_INFORMATION is actually a bitmask the size of a DWORD
+  attach_function_private :SetSecurityInfo,
+    [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer], :dword
 end
