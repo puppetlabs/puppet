@@ -68,11 +68,9 @@ require 'ffi'
 require 'win32/security'
 
 require 'windows/security'
-require 'windows/msvcrt/buffer'
 
 module Puppet::Util::Windows::Security
   include ::Windows::Security
-  include ::Windows::MSVCRT::Buffer
 
   include Puppet::Util::Windows::SID
   include Puppet::Util::Windows::String
@@ -427,21 +425,12 @@ module Puppet::Util::Windows::Security
 
   def parse_dacl(dacl_ptr)
     # REMIND: need to handle NULL DACL
-    if IsValidAcl(FFI::Pointer.new(dacl_ptr)) == FFI::WIN32_FALSE
+    if IsValidAcl(dacl_ptr) == FFI::WIN32_FALSE
       raise Puppet::Util::Windows::Error.new("Invalid DACL")
     end
 
-    # ACL structure, size and count are the important parts. The
-    # size includes both the ACL structure and all the ACEs.
-    #
-    # BYTE AclRevision
-    # BYTE Padding1
-    # WORD AclSize
-    # WORD AceCount
-    # WORD Padding2
-    acl_buf = 0.chr * 8
-    memcpy(acl_buf, dacl_ptr, acl_buf.size)
-    ace_count = acl_buf.unpack('CCSSS')[3]
+    dacl_struct = ACL.new(dacl_ptr)
+    ace_count = dacl_struct[:AceCount]
 
     dacl = Puppet::Util::Windows::AccessControlList.new
 
@@ -449,47 +438,31 @@ module Puppet::Util::Windows::Security
     return dacl if ace_count == 0
 
     0.upto(ace_count - 1) do |i|
-      ace_ptr = [0].pack('L')
+      FFI::MemoryPointer.new(:pointer, 1) do |ace_ptr|
 
-      next unless GetAce(dacl_ptr, i, ace_ptr)
+        next if GetAce(dacl_ptr, i, ace_ptr) == FFI::WIN32_FALSE
 
-      # ACE structures vary depending on the type. All structures
-      # begin with an ACE header, which specifies the type, flags
-      # and size of what follows. We are only concerned with
-      # ACCESS_ALLOWED_ACE and ACCESS_DENIED_ACEs, which have the
-      # same structure:
-      #
-      # BYTE  C AceType
-      # BYTE  C AceFlags
-      # WORD  S AceSize
-      # DWORD L ACCESS_MASK
-      # DWORD L Sid
-      # ..      ...
-      # DWORD L Sid
+        # ACE structures vary depending on the type. We are only concerned with
+        # ACCESS_ALLOWED_ACE and ACCESS_DENIED_ACEs, which have the same layout
+        ace = GENERIC_ACCESS_ACE.new(ace_ptr.get_pointer(0)) #deref LPVOID *
 
-      ace_buf = 0.chr * 8
-      memcpy(ace_buf, ace_ptr.unpack('L')[0], ace_buf.size)
-
-      ace_type, ace_flags, size, mask = ace_buf.unpack('CCSL')
-
-      case ace_type
-      when ACCESS_ALLOWED_ACE_TYPE
-
-        sid_ptr = FFI::Pointer.new(:pointer, ace_ptr.unpack('L')[0] + 8) # address of ace_ptr->SidStart
-        if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID")
+        ace_type = ace[:Header][:AceType]
+        if ace_type != ACCESS_ALLOWED_ACE_TYPE && ace_type != ACCESS_DENIED_ACE_TYPE
+          Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
+          next
         end
-        sid = sid_ptr_to_string(sid_ptr)
-        dacl.allow(sid, mask, ace_flags)
-      when ACCESS_DENIED_ACE_TYPE
-        sid_ptr = FFI::Pointer.new(:pointer, ace_ptr.unpack('L')[0] + 8) # address of ace_ptr->SidStart
-        if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID")
+
+        # using pointer addition gives the FFI::Pointer a size, but that's OK here
+        sid = sid_ptr_to_string(ace.pointer + GENERIC_ACCESS_ACE.offset_of(:SidStart))
+        mask = ace[:Mask]
+        ace_flags = ace[:Header][:AceFlags]
+
+        case ace_type
+        when ACCESS_ALLOWED_ACE_TYPE
+          dacl.allow(sid, mask, ace_flags)
+        when ACCESS_DENIED_ACE_TYPE
+          dacl.deny(sid, mask, ace_flags)
         end
-        sid = sid_ptr_to_string(sid_ptr)
-        dacl.deny(sid, mask, ace_flags)
-      else
-        Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
       end
     end
 
@@ -609,7 +582,7 @@ module Puppet::Util::Windows::Security
 
             ffsd.read_win32_local_pointer do |ffsd_ptr|
               protect = (control.read_word & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
-              dacl = parse_dacl(dacl.unpack('L')[0])
+              dacl = parse_dacl(FFI::Pointer.new(dacl.unpack('L')[0]))
               sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
             end
           end
@@ -725,6 +698,71 @@ module Puppet::Util::Windows::Security
   ffi_lib :advapi32
   attach_function_private :AddAccessDeniedAceEx,
     [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374931(v=vs.85).aspx
+  # typedef struct _ACL {
+  #   BYTE AclRevision;
+  #   BYTE Sbz1;
+  #   WORD AclSize;
+  #   WORD AceCount;
+  #   WORD Sbz2;
+  # } ACL, *PACL;
+  class ACL < FFI::Struct
+    layout :AclRevision, :byte,
+           :Sbz1, :byte,
+           :AclSize, :word,
+           :AceCount, :word,
+           :Sbz2, :word
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374912(v=vs.85).aspx
+  # ACE types
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374919(v=vs.85).aspx
+  # typedef struct _ACE_HEADER {
+  #   BYTE AceType;
+  #   BYTE AceFlags;
+  #   WORD AceSize;
+  # } ACE_HEADER, *PACE_HEADER;
+  class ACE_HEADER < FFI::Struct
+    layout :AceType, :byte,
+           :AceFlags, :byte,
+           :AceSize,  :word
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374892(v=vs.85).aspx
+  # ACCESS_MASK
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374847(v=vs.85).aspx
+  # typedef struct _ACCESS_ALLOWED_ACE {
+  #   ACE_HEADER  Header;
+  #   ACCESS_MASK Mask;
+  #   DWORD       SidStart;
+  # } ACCESS_ALLOWED_ACE, *PACCESS_ALLOWED_ACE;
+  #
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374879(v=vs.85).aspx
+  # typedef struct _ACCESS_DENIED_ACE {
+  #   ACE_HEADER  Header;
+  #   ACCESS_MASK Mask;
+  #   DWORD       SidStart;
+  # } ACCESS_DENIED_ACE, *PACCESS_DENIED_ACE;
+  class GENERIC_ACCESS_ACE < FFI::Struct
+    # ACE structures must be aligned on DWORD boundaries. All Windows
+    # memory-management functions return DWORD-aligned handles to memory
+    pack 4
+    layout :Header, ACE_HEADER,
+           :Mask, :dword,
+           :SidStart, :dword
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446634(v=vs.85).aspx
+  # BOOL WINAPI GetAce(
+  #   _In_   PACL pAcl,
+  #   _In_   DWORD dwAceIndex,
+  #   _Out_  LPVOID *pAce
+  # );
+  ffi_lib :advapi32
+  attach_function_private :GetAce,
+    [:pointer, :dword, :pointer], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa375202(v=vs.85).aspx
   # BOOL WINAPI AdjustTokenPrivileges(
