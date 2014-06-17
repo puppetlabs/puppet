@@ -1,7 +1,6 @@
 require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
-require 'rubygems'
 require 'matchers/resource'
 
 describe 'methods' do
