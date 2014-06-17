@@ -7,7 +7,7 @@ class Puppet::Pops::SemanticError < RuntimeError
 
   # @param issue [Puppet::Pops::Issues::Issue] the issue describing the severity and message
   # @param semantic [Puppet::Pops::Model::Locatable, nil] the expression causing the failure, or nil if unknown
-  # @param options [Hash] an options hash with Symbol to valu mapping - these are the arguments to the issue
+  # @param options [Hash] an options hash with Symbol to value mapping - these are the arguments to the issue
   #
   def initialize(issue, semantic=nil, options = {})
     @issue = issue

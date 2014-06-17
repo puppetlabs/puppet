@@ -1959,24 +1959,24 @@ EOT
      :default => 10,
      :desc => <<-'EOT'
        Sets the max number of logged/displayed parser validation errors in case
-       multiple errors have been detected. A value of 0 is the same as value 1.
-       The count is per manifest.
+       multiple errors have been detected. A value of 0 is the same as a value of 1; a
+       minimum of one error is always raised.  The count is per manifest.
      EOT
    },
    :max_warnings => {
      :default => 10,
      :desc => <<-'EOT'
        Sets the max number of logged/displayed parser validation warnings in
-       case multiple errors have been detected. A value of 0 is the same as
-       value 1. The count is per manifest.
+       case multiple warnings have been detected. A value of 0 blocks logging of
+       warnings.  The count is per manifest.
      EOT
      },
   :max_deprecations => {
     :default => 10,
     :desc => <<-'EOT'
       Sets the max number of logged/displayed parser validation deprecation
-      warnings in case multiple errors have been detected. A value of 0 is the
-      same as value 1. The count is per manifest.
+      warnings in case multiple deprecation warnings have been detected. A value of 0
+      blocks the logging of deprecation warnings.  The count is per manifest.
     EOT
     },
   :strict_variables => {

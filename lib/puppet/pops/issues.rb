@@ -491,11 +491,15 @@ module Puppet::Pops::Issues
     "This #{label.label(semantic)} is not productive. #{label.a_an_uc(container)} can not end with a non productive construct"
   end
 
-  RESERVED_WORD = hard_issue :RESERWED_WORD, :word do
+  RESERVED_WORD = hard_issue :RESERVED_WORD, :word do
     "Use of reserved word: #{word}, must be quoted if intended to be a String value"
   end
 
   UNMATCHED_SELECTOR = hard_issue :UNMATCHED_SELECTOR, :param_value do
     "No matching entry for selector parameter with value '#{param_value}'"
+  end
+
+  ILLEGAL_NODE_INHERITANCE = issue :ILLEGAL_NODE_INHERITANCE do
+    "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
   end
 end
