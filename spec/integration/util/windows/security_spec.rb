@@ -53,7 +53,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   def grant_everyone_full_access(path)
     sd = winsec.get_security_descriptor(path)
     everyone = 'S-1-1-0'
-    inherit = WindowsSecurityTester::OBJECT_INHERIT_ACE | WindowsSecurityTester::CONTAINER_INHERIT_ACE
+    inherit = Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE | Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
     sd.dacl.allow(everyone, FILE::FILE_ALL_ACCESS, inherit)
     winsec.set_security_descriptor(path, sd)
   end
@@ -306,7 +306,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
             guest_aces = winsec.get_aces_for_path_by_sid(path, sids[:guest])
             guest_aces.find do |ace|
-              ace.type == WindowsSecurityTester::ACCESS_DENIED_ACE_TYPE
+              ace.type == Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
             end.should_not be_nil
           end
 
@@ -319,7 +319,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             dacl.allow(
               sids[:everyone],
               FILE::FILE_GENERIC_READ,
-              WindowsSecurityTester::INHERIT_ONLY_ACE | WindowsSecurityTester::OBJECT_INHERIT_ACE
+              Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE | Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE
             )
             winsec.set_security_descriptor(path, sd)
 
@@ -345,7 +345,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           it "should be present when the access control list is unprotected" do
             # add a bunch of aces to the parent with permission to add children
             allow = FILE::STANDARD_RIGHTS_ALL | FILE::SPECIFIC_RIGHTS_ALL
-            inherit = WindowsSecurityTester::OBJECT_INHERIT_ACE | WindowsSecurityTester::CONTAINER_INHERIT_ACE
+            inherit = Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE | Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
 
             sd = winsec.get_security_descriptor(parent)
             sd.dacl.allow(

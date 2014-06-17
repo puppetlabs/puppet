@@ -371,12 +371,13 @@ module Puppet::Util::Windows::Security
     dacl.allow(well_known_system_sid, system_allow)
 
     # add inherit-only aces for child dirs and files that are created within the dir
+    inherit_only = Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE
     if isdir
-      inherit = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE
+      inherit = inherit_only | Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
       dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow, inherit)
       dacl.allow(Win32::Security::SID::CreatorGroup, group_allow, inherit)
 
-      inherit = INHERIT_ONLY_ACE |  OBJECT_INHERIT_ACE
+      inherit = inherit_only | Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE
       dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow & ~FILE::FILE_EXECUTE, inherit)
       dacl.allow(Win32::Security::SID::CreatorGroup, group_allow & ~FILE::FILE_EXECUTE, inherit)
     end
@@ -447,7 +448,8 @@ module Puppet::Util::Windows::Security
         ace = GENERIC_ACCESS_ACE.new(ace_ptr.get_pointer(0)) #deref LPVOID *
 
         ace_type = ace[:Header][:AceType]
-        if ace_type != ACCESS_ALLOWED_ACE_TYPE && ace_type != ACCESS_DENIED_ACE_TYPE
+        if ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE &&
+          ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
           Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
           next
         end
@@ -458,9 +460,9 @@ module Puppet::Util::Windows::Security
         ace_flags = ace[:Header][:AceFlags]
 
         case ace_type
-        when ACCESS_ALLOWED_ACE_TYPE
+        when Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE
           dacl.allow(sid, mask, ace_flags)
-        when ACCESS_DENIED_ACE_TYPE
+        when Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
           dacl.deny(sid, mask, ace_flags)
         end
       end
@@ -612,10 +614,10 @@ module Puppet::Util::Windows::Security
               string_to_sid_ptr(sd.group) do |groupsid|
                 sd.dacl.each do |ace|
                   case ace.type
-                  when ACCESS_ALLOWED_ACE_TYPE
+                  when Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE
                     #puts "ace: allow, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
                     add_access_allowed_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
-                  when ACCESS_DENIED_ACE_TYPE
+                  when Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
                     #puts "ace: deny, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
                     add_access_denied_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
                   else
