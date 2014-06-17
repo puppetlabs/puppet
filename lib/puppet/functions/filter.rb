@@ -67,14 +67,22 @@ Puppet::Functions.create_function(:filter) do
 
     if asserted_serving_size(pblock, 'index') == 1
       begin
-        loop { pblock.call(nil, it = enum.next) == true ? result << it : nil }
+        loop do
+          it = enum.next
+          if pblock.call(nil, it) == true
+            result << it
+          end
+        end
       rescue StopIteration
       end
     else
       begin
         loop do
-          pblock.call(nil, index, it = enum.next) == true ? result << it : nil
-          index = index +1
+          it = enum.next
+          if pblock.call(nil, index, it) == true
+            result << it
+          end
+          index += 1
         end
       rescue StopIteration
       end
