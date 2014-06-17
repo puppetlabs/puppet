@@ -67,11 +67,7 @@ require 'ffi'
 
 require 'win32/security'
 
-require 'windows/security'
-
 module Puppet::Util::Windows::Security
-  include ::Windows::Security
-
   include Puppet::Util::Windows::SID
   include Puppet::Util::Windows::String
 
