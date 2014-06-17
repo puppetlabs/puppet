@@ -1,5 +1,6 @@
 Puppet::Parser::Functions::newfunction(
   :assert_type,
+  :type => :rvalue,
   :arity => -3,
   :doc => "Returns the given value if it is an instance of the given type, and raises an error otherwise.
 Optionally, if a block is given (accepting two parameters), it will be called instead of raising

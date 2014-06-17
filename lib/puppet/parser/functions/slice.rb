@@ -1,5 +1,6 @@
 Puppet::Parser::Functions::newfunction(
   :slice,
+  :type => :rvalue,
   :arity => -3,
   :doc => <<-DOC
 Applies a parameterized block to each _slice_ of elements in a sequence of selected entries from the first

@@ -18,7 +18,7 @@
 # If no 'start memo' is given, the first invocation of the parameterized block will be given the first and second
 # elements of the enumeration, and if the enumerable has fewer than 2 elements, the first
 # element is produced as the result of the reduction without invocation of the block.
-# 
+#
 # On each subsequent invocation, the produced value of the invoked parameterized block is given as the memo in the
 # next invocation.
 #
@@ -28,12 +28,12 @@
 #       $a = [1,2,3]
 #       $a.reduce |$memo, $entry| { $memo + $entry }
 #       #=> 6
-# 
+#
 #       # Reduce hash values
 #       $a = {a => 1, b => 2, c => 3}
 #       $a.reduce |$memo, $entry| { [sum, $memo[1]+$entry[1]] }
 #       #=> [sum, 6]
-# 
+#
 #       # reverse a string
 #       "abc".reduce |$memo, $char| { "$char$memo" }
 #       #=>"cbe"

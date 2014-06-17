@@ -1,5 +1,6 @@
 Puppet::Parser::Functions::newfunction(
   :map,
+  :type => :rvalue,
   :arity => -3,
   :doc => <<-DOC
 Applies a parameterized block to each element in a sequence of entries from the first

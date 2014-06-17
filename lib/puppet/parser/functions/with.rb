@@ -1,5 +1,6 @@
 Puppet::Parser::Functions::newfunction(
   :with,
+  :type => :rvalue,
   :arity => -1,
   :doc => <<-DOC
 Call a lambda code block with the given arguments. Since the parameters of the lambda
