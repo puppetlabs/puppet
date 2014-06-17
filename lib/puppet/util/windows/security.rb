@@ -563,37 +563,41 @@ module Puppet::Util::Windows::Security
 
     with_privilege(SE_BACKUP_NAME) do
       open_file(path, READ_CONTROL) do |handle|
-        owner_sid = [0].pack('L')
-        group_sid = [0].pack('L')
-        dacl = [0].pack('L')
-        ppsd = [0].pack('L')
+        FFI::MemoryPointer.new(:pointer, 1) do |owner_sid_ptr_ptr|
+          FFI::MemoryPointer.new(:pointer, 1) do |group_sid_ptr_ptr|
+            FFI::MemoryPointer.new(:pointer, 1) do |dacl_ptr_ptr|
+              FFI::MemoryPointer.new(:pointer, 1) do |sd_ptr_ptr|
 
-        rv = GetSecurityInfo(
-          handle,
-          SE_FILE_OBJECT,
-          OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-          owner_sid,
-          group_sid,
-          dacl,
-          nil, #sacl
-          ppsd) #sec desc
-        raise Puppet::Util::Windows::Error.new("Failed to get security information") unless rv == FFI::ERROR_SUCCESS
+                rv = GetSecurityInfo(
+                  handle,
+                  :SE_FILE_OBJECT,
+                  OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                  owner_sid_ptr_ptr,
+                  group_sid_ptr_ptr,
+                  dacl_ptr_ptr,
+                  FFI::Pointer::NULL, #sacl
+                  sd_ptr_ptr) #sec desc
+                raise Puppet::Util::Windows::Error.new("Failed to get security information") if rv != FFI::ERROR_SUCCESS
 
-        owner = sid_ptr_to_string(FFI::Pointer.new(:pointer, owner_sid.unpack('L')[0]))
-        group = sid_ptr_to_string(FFI::Pointer.new(:pointer, group_sid.unpack('L')[0]))
+                # these 2 convenience params are not freed since they point inside sd_ptr
+                owner = sid_ptr_to_string(owner_sid_ptr_ptr.get_pointer(0))
+                group = sid_ptr_to_string(group_sid_ptr_ptr.get_pointer(0))
 
-        ffsd = FFI::Pointer.new(:pointer, ppsd.unpack('L')[0])
-        FFI::MemoryPointer.new(:word, 1) do |control|
-          FFI::MemoryPointer.new(:dword, 1) do |revision|
+                FFI::MemoryPointer.new(:word, 1) do |control|
+                  FFI::MemoryPointer.new(:dword, 1) do |revision|
+                    sd_ptr_ptr.read_win32_local_pointer do |sd_ptr|
 
-            if GetSecurityDescriptorControl(ffsd, control, revision) == FFI::WIN32_FALSE
-              raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
-            end
+                      if GetSecurityDescriptorControl(sd_ptr, control, revision) == FFI::WIN32_FALSE
+                        raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
+                      end
 
-            ffsd.read_win32_local_pointer do |ffsd_ptr|
-              protect = (control.read_word & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
-              dacl = parse_dacl(FFI::Pointer.new(dacl.unpack('L')[0]))
-              sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
+                      protect = (control.read_word & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
+                      dacl = parse_dacl(dacl_ptr_ptr.get_pointer(0))
+                      sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
+                    end
+                  end
+                end
+              end
             end
           end
         end
@@ -851,6 +855,21 @@ module Puppet::Util::Windows::Security
     :SE_WMIGUID_OBJECT,
     :SE_REGISTRY_WOW64_32KEY
   )
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446654(v=vs.85).aspx
+  # DWORD WINAPI GetSecurityInfo(
+  #   _In_       HANDLE handle,
+  #   _In_       SE_OBJECT_TYPE ObjectType,
+  #   _In_       SECURITY_INFORMATION SecurityInfo,
+  #   _Out_opt_  PSID *ppsidOwner,
+  #   _Out_opt_  PSID *ppsidGroup,
+  #   _Out_opt_  PACL *ppDacl,
+  #   _Out_opt_  PACL *ppSacl,
+  #   _Out_opt_  PSECURITY_DESCRIPTOR *ppSecurityDescriptor
+  # );
+  ffi_lib :advapi32
+  attach_function_private :GetSecurityInfo,
+    [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer, :pointer], :dword
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379588(v=vs.85).aspx
   # DWORD WINAPI SetSecurityInfo(
