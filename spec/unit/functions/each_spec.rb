@@ -1,7 +1,8 @@
 require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
-require 'rubygems'
+
+require 'unit/functions/shared'
 
 describe 'the each method' do
   include PuppetSpec::Compiler
@@ -103,4 +104,7 @@ describe 'the each method' do
     end
 
   end
+  it_should_behave_like 'all iterative functions argument checks', 'each'
+  it_should_behave_like 'all iterative functions hash handling', 'each'
+
 end

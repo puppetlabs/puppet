@@ -55,25 +55,40 @@ module Puppet::Util::Logging
 
   class DeprecationWarning < Exception; end
 
-  # Logs a warning indicating that the code path is deprecated.  Note that this
-  # method keeps track of the offending lines of code that triggered the
+  # Logs a warning indicating that the Ruby code path is deprecated.  Note that
+  # this method keeps track of the offending lines of code that triggered the
   # deprecation warning, and will only log a warning once per offending line of
   # code.  It will also stop logging deprecation warnings altogether after 100
-  # unique deprecation warnings have been logged.
+  # unique deprecation warnings have been logged.  Finally, if
+  # Puppet[:disable_warnings] includes 'deprecations', it will squelch all
+  # warning calls made via this method.
   #
-  # @param [String] message The message to log (logs via )
-  # @param [String] key Optional key to mark the message as unique. If not
+  # @param message [String] The message to log (logs via warning)
+  # @param key [String] Optional key to mark the message as unique. If not
   #   passed in, the originating call line will be used instead.
   def deprecation_warning(message, key = nil)
-    return if Puppet[:disable_warnings].include?('deprecations')
-    $deprecation_warnings ||= {}
-    if $deprecation_warnings.length < 100 then
-      key ||= (offender = get_deprecation_offender)
-      if (! $deprecation_warnings.has_key?(key)) then
-        $deprecation_warnings[key] = message
-        warning("#{message}\n   (at #{(offender || get_deprecation_offender).join('; ')})")
-      end
-    end
+    issue_deprecation_warning(message, key, nil, nil, true)
+  end
+
+  # Logs a warning whose origin comes from Puppet source rather than somewhere
+  # internal within Puppet.  Otherwise the same as deprecation_warning()
+  #
+  # @param message [String] The message to log (logs via warning)
+  # @param options [Hash]
+  # @option options [String] :file File we are warning from
+  # @option options [Integer] :line Line number we are warning from
+  # @option options [String] :key (:file + :line) Alternative key used to mark
+  #   warning as unique
+  #
+  # Either :file and :line and/or :key must be passed.
+  def puppet_deprecation_warning(message, options = {})
+    key = options[:key]
+    file = options[:file]
+    line = options[:line]
+    raise(Puppet::DevError, "Need either :file and :line, or :key") if (key.nil?) && (file.nil? || line.nil?)
+
+    key ||= "#{file}:#{line}"
+    issue_deprecation_warning(message, key, file, line, false)
   end
 
   def get_deprecation_offender()
@@ -127,6 +142,21 @@ module Puppet::Util::Logging
   end
 
   private
+
+  def issue_deprecation_warning(message, key, file, line, use_caller)
+    return if Puppet[:disable_warnings].include?('deprecations')
+    $deprecation_warnings ||= {}
+    if $deprecation_warnings.length < 100 then
+      key ||= (offender = get_deprecation_offender)
+      if (! $deprecation_warnings.has_key?(key)) then
+        $deprecation_warnings[key] = message
+        call_trace = use_caller ?
+          (offender || get_deprecation_offender).join('; ') :
+          "#{file || 'unknown'}:#{line || 'unknown'}"
+        warning("#{message}\n   (at #{call_trace})")
+      end
+    end
+  end
 
   def is_resource?
     defined?(Puppet::Type) && is_a?(Puppet::Type)

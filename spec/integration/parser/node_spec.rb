@@ -6,24 +6,6 @@ describe 'node statements' do
   include PuppetSpec::Compiler
   include Matchers::Resource
 
-  it 'is unable to parse a name that is an invalid number' do
-    Puppet[:parser] = 'future'
-
-    expect do
-      compile_to_catalog('node 5name {} ')
-    end.to raise_error(Puppet::Error, /Illegal number/)
-  end
-
-  it 'parses a node name that is dotted numbers' do
-    Puppet[:parser] = 'future'
-
-    catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("1.2.3.4"))
-    node 1.2.3.4 { notify { matched: } }
-    MANIFEST
-
-    expect(catalog).to have_resource('Notify[matched]')
-  end
-
   shared_examples_for 'nodes' do
     it 'selects a node where the name is just a number' do
       # Future parser doesn't allow a number in this position
@@ -155,13 +137,50 @@ describe 'node statements' do
     before :each do
       Puppet[:parser] = 'current'
     end
+
     it_behaves_like 'nodes'
+
+    it 'raises deprecation warning for node inheritance for 3x parser' do
+      Puppet.expects(:warning).at_least_once
+      Puppet.expects(:warning).with(regexp_matches(/Deprecation notice\: Node inheritance is not supported in Puppet >= 4\.0\.0/))
+
+      catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("1.2.3.4"))
+        node default {}
+        node '1.2.3.4' inherits default {  }
+      MANIFEST
+    end
+
   end
 
   describe 'using future parser' do
     before :each do
       Puppet[:parser] = 'future'
     end
+
     it_behaves_like 'nodes'
+
+    it 'is unable to parse a name that is an invalid number' do
+      expect do
+        compile_to_catalog('node 5name {} ')
+      end.to raise_error(Puppet::Error, /Illegal number/)
+    end
+
+    it 'parses a node name that is dotted numbers' do
+      catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("1.2.3.4"))
+        node 1.2.3.4 { notify { matched: } }
+      MANIFEST
+
+      expect(catalog).to have_resource('Notify[matched]')
+    end
+
+    it 'raises deprecation warning for node inheritance' do
+      Puppet.expects(:warning).at_least_once
+      Puppet.expects(:warning).with(regexp_matches(/Deprecation notice: Node inheritance is not supported in Puppet >= 4\.0\.0/))
+      catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodename"))
+      node default {}
+        node nodename inherits default {  }
+      MANIFEST
+    end
+
   end
 end

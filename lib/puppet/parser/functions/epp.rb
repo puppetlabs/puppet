@@ -9,7 +9,7 @@ EPP support the following tags:
 * `<%%` or `%%>` - Renders a literal `<%` or `%>` respectively.
 * `<%-` - Same as `<%` but suppresses any leading whitespace.
 * `-%>` - Same as `%>` but suppresses any trailing whitespace on the same line (including line break).
-* `<%-( parameters )-%>` - When placed as the first tag declares the template's parameters.
+* `<%- |parameters| -%>` - When placed as the first tag declares the template's parameters.
 
 File based EPP supports the following visibilities of variables in scope:
 
@@ -18,7 +18,7 @@ File based EPP supports the following visibilities of variables in scope:
 * Global + declared parameters - if the EPP declares parameters, given argument names must match
 
 EPP supports parameters by placing an optional parameter list as the very first element in the EPP. As an example,
-`<%- ($x, $y, $z='unicorn') -%>` when placed first in the EPP text declares that the parameters `x` and `y` must be
+`<%- |$x, $y, $z = 'unicorn'| -%>` when placed first in the EPP text declares that the parameters `x` and `y` must be
 given as template arguments when calling `inline_epp`, and that `z` if not given as a template argument
 defaults to `'unicorn'`. Template parameters are available as variables, e.g.arguments `$x`, `$y` and `$z` in the example.
 Note that `<%-` must be used or any leading whitespace will be interpreted as text

@@ -139,6 +139,44 @@ describe Puppet::Util::Logging do
     end
   end
 
+  describe "when sending a puppet_deprecation_warning" do
+    it "requires file and line or key options" do
+      expect do
+        @logger.puppet_deprecation_warning("foo")
+      end.to raise_error(Puppet::DevError, /Need either :file and :line, or :key/)
+      expect do
+        @logger.puppet_deprecation_warning("foo", :file => 'bar')
+      end.to raise_error(Puppet::DevError, /Need either :file and :line, or :key/)
+      expect do
+        @logger.puppet_deprecation_warning("foo", :key => 'akey')
+        @logger.puppet_deprecation_warning("foo", :file => 'afile', :line => 1)
+      end.to_not raise_error
+    end
+
+    it "warns with file and line" do
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*afile:5/m))
+      @logger.puppet_deprecation_warning("deprecated foo", :file => 'afile', :line => 5)
+    end
+
+    it "warns keyed from file and line" do
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*afile:5/m)).once
+      5.times do
+        @logger.puppet_deprecation_warning("deprecated foo", :file => 'afile', :line => 5)
+      end
+    end
+
+    it "warns with separate key only once regardless of file and line" do
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*afile:5/m)).once
+      @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key', :file => 'afile', :line => 5)
+      @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key', :file => 'bfile', :line => 3)
+    end
+
+    it "warns with key but no file and line" do
+      @logger.expects(:warning).with(regexp_matches(/deprecated foo.*unknown:unknown/m))
+      @logger.puppet_deprecation_warning("deprecated foo", :key => 'some_key')
+    end
+  end
+
   describe "when formatting exceptions" do
     it "should be able to format a chain of exceptions" do
       exc3 = Puppet::Error.new("original")

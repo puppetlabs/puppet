@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'matchers/resource'
 
-require 'unit/parser/methods/shared'
+require 'unit/functions/shared'
 
 describe 'the map method' do
   include PuppetSpec::Compiler

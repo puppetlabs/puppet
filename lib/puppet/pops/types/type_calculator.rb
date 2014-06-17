@@ -850,7 +850,7 @@ class Puppet::Pops::Types::TypeCalculator
     type = Types::PHashType.new()
     if o.empty?
       ktype = Types::PNilType.new()
-      etype = Types::PNilType.new()
+      vtype = Types::PNilType.new()
     else
       ktype = Types::PVariantType.new()
       ktype.types = o.keys.map() {|k| infer_set(k) }
@@ -858,7 +858,7 @@ class Puppet::Pops::Types::TypeCalculator
       etype.types = o.values.map() {|e| infer_set(e) }
     end
     type.key_type = unwrap_single_variant(ktype)
-    type.element_type = unwrap_single_variant(vtype)
+    type.element_type = unwrap_single_variant(etype)
     type.size_type = size_as_type(o)
     type
   end

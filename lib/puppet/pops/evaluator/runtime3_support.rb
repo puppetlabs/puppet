@@ -223,20 +223,17 @@ module Puppet::Pops::Evaluator::Runtime3Support
     n
   end
 
-  # Horrible cheat while waiting for iterative functions to be 4x
-  FUNCTIONS_4x = { 'map' => true, 'each'=>true, 'filter' => true, 'reduce' => true, 'slice' => true }
   def call_function(name, args, o, scope)
-    # Call via 4x API if it is available, and the function exists
-    #
-    if loaders = Puppet.lookup(:loaders) {nil}
-      # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
-      adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
-      loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
-      if loader && func = loader.load(:function, name)
-        return func.call(scope, *args)
-      end
+    # Call via 4x API if the function exists there
+    loaders = scope.compiler.loaders
+    # find the loader that loaded the code, or use the private_environment_loader (sees env + all modules)
+    adapter = Puppet::Pops::Utils.find_adapter(o, Puppet::Pops::Adapters::LoaderAdapter)
+    loader = adapter.nil? ? loaders.private_environment_loader : adapter.loader
+    if loader && func = loader.load(:function, name)
+      return func.call(scope, *args)
     end
 
+    # Call via 3x API if function exists there
     fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
 
     # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
@@ -248,7 +245,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # directly, when this has been done, this special filtering out can be removed
 
     # NOTE: Passing an empty string last converts :undef to empty string
-    mapped_args = FUNCTIONS_4x[name] ? args : args.map {|a| convert(a, scope, '') }
+    mapped_args = args.map {|a| convert(a, scope, '') }
     result = scope.send("function_#{name}", mapped_args)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
     Puppet::Parser::Functions.rvalue?(name) ? result : nil

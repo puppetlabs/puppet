@@ -310,6 +310,9 @@ class Puppet::Pops::Validation::Checker4_0
     if violator = ends_with_idem(o.body)
       acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o})
     end
+    unless o.parent.nil?
+      acceptor.accept(Issues::ILLEGAL_NODE_INHERITANCE, o.parent)
+    end
   end
 
   # No checking takes place - all expressions using a QualifiedName need to check. This because the
