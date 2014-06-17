@@ -106,6 +106,14 @@ module Puppet::Util::Windows::Security
   SE_BACKUP_NAME              = 'SeBackupPrivilege'
   SE_RESTORE_NAME             = 'SeRestorePrivilege'
 
+  READ_CONTROL                = 0x20000
+  WRITE_DAC                   = 0x40000
+  WRITE_OWNER                 = 0x80000
+
+  OWNER_SECURITY_INFORMATION  = 1
+  GROUP_SECURITY_INFORMATION  = 2
+  DACL_SECURITY_INFORMATION   = 4
+
   # Set the owner of the object referenced by +path+ to the specified
   # +owner_sid+.  The owner sid should be of the form "S-1-5-32-544"
   # and can either be a user or group.  Only a user with the
