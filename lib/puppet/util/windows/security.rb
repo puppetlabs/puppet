@@ -68,12 +68,10 @@ require 'ffi'
 require 'win32/security'
 
 require 'windows/security'
-require 'windows/memory'
 require 'windows/msvcrt/buffer'
 
 module Puppet::Util::Windows::Security
   include ::Windows::Security
-  include ::Windows::Memory
   include ::Windows::MSVCRT::Buffer
 
   include Puppet::Util::Windows::SID
@@ -598,25 +596,23 @@ module Puppet::Util::Windows::Security
           ppsd) #sec desc
         raise Puppet::Util::Windows::Error.new("Failed to get security information") unless rv == FFI::ERROR_SUCCESS
 
-        begin
-          owner = sid_ptr_to_string(FFI::Pointer.new(:pointer, owner_sid.unpack('L')[0]))
-          group = sid_ptr_to_string(FFI::Pointer.new(:pointer, group_sid.unpack('L')[0]))
+        owner = sid_ptr_to_string(FFI::Pointer.new(:pointer, owner_sid.unpack('L')[0]))
+        group = sid_ptr_to_string(FFI::Pointer.new(:pointer, group_sid.unpack('L')[0]))
 
-          FFI::MemoryPointer.new(:word, 1) do |control|
-            FFI::MemoryPointer.new(:dword, 1) do |revision|
-              ffsd = FFI::Pointer.new(:pointer, ppsd.unpack('L')[0])
+        ffsd = FFI::Pointer.new(:pointer, ppsd.unpack('L')[0])
+        FFI::MemoryPointer.new(:word, 1) do |control|
+          FFI::MemoryPointer.new(:dword, 1) do |revision|
 
-              if GetSecurityDescriptorControl(ffsd, control, revision) == FFI::WIN32_FALSE
-                raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
-              end
+            if GetSecurityDescriptorControl(ffsd, control, revision) == FFI::WIN32_FALSE
+              raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
+            end
 
+            ffsd.read_win32_local_pointer do |ffsd_ptr|
               protect = (control.read_word & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
               dacl = parse_dacl(dacl.unpack('L')[0])
               sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
             end
-         end
-       ensure
-          LocalFree(ppsd.unpack('L')[0])
+          end
         end
       end
     end
