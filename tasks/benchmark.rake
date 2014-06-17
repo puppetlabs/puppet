@@ -6,6 +6,14 @@ namespace :benchmark do
   def generate_scenario_tasks(location, name)
     desc File.read(File.join(location, 'description'))
     task name => "#{name}:run"
+    # Load a BenchmarkerTask to handle config of the benchmark
+    task_handler_file = File.expand_path(File.join(location, 'benchmarker_task.rb'))
+    if File.exist?(task_handler_file)
+      require task_handler_file
+      run_args = BenchmarkerTask.run_args
+    else
+      run_args = []
+    end
 
     namespace name do
       task :setup do
@@ -27,13 +35,12 @@ namespace :benchmark do
       end
 
       desc "Run the #{name} scenario."
-      task :run => :generate do
+      task :run, [*run_args] =>  :generate do |_, args|
         format = if RUBY_VERSION =~ /^1\.8/
                    Benchmark::FMTSTR
                  else
                    Benchmark::FORMAT
                  end
-
         report = []
         details = []
         Benchmark.benchmark(Benchmark::CAPTION, 10, format, "> total:", "> avg:") do |b|
@@ -41,7 +48,7 @@ namespace :benchmark do
           ENV['ITERATIONS'].to_i.times do |i|
             start_time = Time.now.to_i
             times << b.report("Run #{i + 1}") do
-              details << @benchmark.run
+              details << @benchmark.run(args)
             end
             report << [to_millis(start_time), to_millis(times.last.real), 200, true, name]
           end
@@ -79,7 +86,7 @@ namespace :benchmark do
       end
 
       desc "Profile a single run of the #{name} scenario."
-      task :profile, [:warm_up_runs, :detail] => :generate do |_, args|
+      task :profile, [:warm_up_runs, *run_args] => :generate do |_, args|
         warm_up_runs = (args[:warm_up_runs] || '0').to_i
         warm_up_runs.times do
           @benchmark.run(args)

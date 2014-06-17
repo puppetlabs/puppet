@@ -40,26 +40,32 @@ class Benchmarker
     Puppet.push_context(@compiler.context_overrides, "Benchmark masquerading as compiler configured context")
   end
 
-  def run(args = {:detail=>'all'})
-    details = args[:detail]
+  def run(args = {})
+    details = args[:detail] || 'all'
     measurements = []
     @micro_benchmarks.each do |name, source|
       # skip if all but the wanted if a single benchmark is wanted
-      next unless details == 'all' || details == name
-      measurements << Benchmark.measure("#{name} parse") do
-        1..@parsecount.times { @parser.parse_string(source, name) }
+      next unless details == 'all' || match = details.match(/#{name}(?:[\._\s](parse|eval))?$/)
+      # if name ends with .parse or .eval only do that part, else do both parts
+      ending = match ? match[1] : nil # parse, eval or nil ending
+      unless ending == 'eval'
+        measurements << Benchmark.measure("#{name} parse") do
+          1..@parsecount.times { @parser.parse_string(source, name) }
+        end
       end
-      model = @parser.parse_string(source, name)
-      measurements << Benchmark.measure("#{name} eval") do
-        1..@evalcount.times do
-          begin
-            # Run each in a local scope
-            scope_memo = @scope.ephemeral_level
-            @scope.new_ephemeral(true)
-            @parser.evaluate(@scope, model)
-          ensure
-            # Toss the created local scope
-            @scope.unset_ephemeral_var(scope_memo)
+      unless ending == 'parse'
+        model = @parser.parse_string(source, name)
+        measurements << Benchmark.measure("#{name} eval") do
+          1..@evalcount.times do
+            begin
+              # Run each in a local scope
+              scope_memo = @scope.ephemeral_level
+              @scope.new_ephemeral(true)
+              @parser.evaluate(@scope, model)
+            ensure
+              # Toss the created local scope
+              @scope.unset_ephemeral_var(scope_memo)
+            end
           end
         end
       end
