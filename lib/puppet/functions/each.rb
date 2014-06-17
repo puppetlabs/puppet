@@ -55,11 +55,11 @@ Puppet::Functions.create_function(:each) do
   def foreach_Hash(hash, pblock)
     enumerator = hash.each_pair
     if asserted_serving_size(pblock, 'key') == 1
-      (hash.size).times do
+      hash.size.times do
         pblock.call(nil, enumerator.next)
       end
     else
-      (hash.size).times do
+      hash.size.times do
         pblock.call(nil, *enumerator.next)
       end
     end
@@ -79,7 +79,7 @@ Puppet::Functions.create_function(:each) do
       begin
         loop do
           pblock.call(nil, index, enum.next)
-          index = index +1
+          index += 1
         end
       rescue StopIteration
       end
