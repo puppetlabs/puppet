@@ -68,7 +68,6 @@ require 'ffi'
 require 'win32/security'
 
 module Puppet::Util::Windows::Security
-  include Puppet::Util::Windows::SID
   include Puppet::Util::Windows::String
 
   extend Puppet::Util::Windows::Security
@@ -397,7 +396,7 @@ module Puppet::Util::Windows::Security
   def add_access_allowed_ace(acl, mask, sid, inherit = nil)
     inherit ||= NO_INHERITANCE
 
-    string_to_sid_ptr(sid) do |sid_ptr|
+    Puppet::Util::Windows::SID.string_to_sid_ptr(sid) do |sid_ptr|
       if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
@@ -414,7 +413,7 @@ module Puppet::Util::Windows::Security
   def add_access_denied_ace(acl, mask, sid, inherit = nil)
     inherit ||= NO_INHERITANCE
 
-    string_to_sid_ptr(sid) do |sid_ptr|
+    Puppet::Util::Windows::SID.string_to_sid_ptr(sid) do |sid_ptr|
       if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
@@ -459,7 +458,7 @@ module Puppet::Util::Windows::Security
         end
 
         # using pointer addition gives the FFI::Pointer a size, but that's OK here
-        sid = sid_ptr_to_string(ace.pointer + GENERIC_ACCESS_ACE.offset_of(:SidStart))
+        sid = Puppet::Util::Windows::SID.sid_ptr_to_string(ace.pointer + GENERIC_ACCESS_ACE.offset_of(:SidStart))
         mask = ace[:Mask]
         ace_flags = ace[:Header][:AceFlags]
 
@@ -576,8 +575,8 @@ module Puppet::Util::Windows::Security
                 raise Puppet::Util::Windows::Error.new("Failed to get security information") if rv != FFI::ERROR_SUCCESS
 
                 # these 2 convenience params are not freed since they point inside sd_ptr
-                owner = sid_ptr_to_string(owner_sid_ptr_ptr.get_pointer(0))
-                group = sid_ptr_to_string(group_sid_ptr_ptr.get_pointer(0))
+                owner = Puppet::Util::Windows::SID.sid_ptr_to_string(owner_sid_ptr_ptr.get_pointer(0))
+                group = Puppet::Util::Windows::SID.sid_ptr_to_string(group_sid_ptr_ptr.get_pointer(0))
 
                 FFI::MemoryPointer.new(:word, 1) do |control|
                   FFI::MemoryPointer.new(:dword, 1) do |revision|
@@ -627,15 +626,15 @@ module Puppet::Util::Windows::Security
       with_privilege(SE_BACKUP_NAME) do
         with_privilege(SE_RESTORE_NAME) do
           open_file(path, READ_CONTROL | WRITE_DAC | WRITE_OWNER) do |handle|
-            string_to_sid_ptr(sd.owner) do |owner_sid_ptr|
-              string_to_sid_ptr(sd.group) do |group_sid_ptr|
+            Puppet::Util::Windows::SID.string_to_sid_ptr(sd.owner) do |owner_sid_ptr|
+              Puppet::Util::Windows::SID.string_to_sid_ptr(sd.group) do |group_sid_ptr|
                 sd.dacl.each do |ace|
                   case ace.type
                   when Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE
-                    #puts "ace: allow, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
+                    #puts "ace: allow, sid #{Puppet::Util::Windows::SID.sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
                     add_access_allowed_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
                   when Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
-                    #puts "ace: deny, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
+                    #puts "ace: deny, sid #{Puppet::Util::Windows::SID.sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
                     add_access_denied_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
                   else
                     raise "We should never get here"

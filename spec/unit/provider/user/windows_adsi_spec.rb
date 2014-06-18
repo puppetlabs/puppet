@@ -140,7 +140,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
     resource[:managehome] = true
 
     sid = 'S-A-B-C'
-    Puppet::Util::Windows::Security.expects(:name_to_sid).with('testuser').returns(sid)
+    Puppet::Util::Windows::SID.expects(:name_to_sid).with('testuser').returns(sid)
     Puppet::Util::Windows::ADSI::UserProfile.expects(:delete).with(sid)
     connection.expects(:Delete).with('user', 'testuser')
 
@@ -154,7 +154,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi), :if => Puppet.feature
   end
 
   it "should return the user's SID as uid" do
-    Puppet::Util::Windows::Security.expects(:name_to_sid).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
+    Puppet::Util::Windows::SID.expects(:name_to_sid).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
 
     provider.uid.should == 'S-1-5-21-1362942247-2130103807-3279964888-1111'
   end
