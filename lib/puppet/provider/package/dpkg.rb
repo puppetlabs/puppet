@@ -1,5 +1,4 @@
 require 'puppet/provider/package'
-require 'pry'
 
 Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package do
   desc "Package management via `dpkg`.  Because this only uses `dpkg`
