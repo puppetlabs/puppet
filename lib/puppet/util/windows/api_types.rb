@@ -18,13 +18,17 @@ module Puppet::Util::Windows::APITypes
     NULL_HANDLE = 0
     NULL_TERMINATOR_WCHAR = 0
 
-    def self.from_string_to_wide_string(str)
+    def self.from_string_to_wide_string(str, &block)
       str = Puppet::Util::Windows::String.wide_string(str)
-      ptr = FFI::MemoryPointer.new(:byte, str.bytesize)
-      # uchar here is synonymous with byte
-      ptr.put_array_of_uchar(0, str.bytes.to_a)
+      FFI::MemoryPointer.new(:byte, str.bytesize) do |ptr|
+        # uchar here is synonymous with byte
+        ptr.put_array_of_uchar(0, str.bytes.to_a)
 
-      ptr
+        yield ptr
+      end
+
+      # ptr has already had free called, so nothing to return
+      nil
     end
 
     def read_win32_bool
@@ -60,6 +64,23 @@ module Puppet::Util::Windows::APITypes
       end
 
       read_wide_string(max_char_length)
+    end
+
+    def read_win32_local_pointer(&block)
+      ptr = nil
+      begin
+        ptr = read_pointer
+        yield ptr
+      ensure
+        if ptr && ! ptr.null?
+          if FFI::WIN32::LocalFree(ptr.address) != FFI::Pointer::NULL_HANDLE
+            Puppet.debug "LocalFree memory leak"
+          end
+        end
+      end
+
+      # ptr has already had LocalFree called, so nothing to return
+      nil
     end
 
     alias_method :write_dword, :write_uint32
@@ -118,4 +139,24 @@ module Puppet::Util::Windows::APITypes
   # 8 bits per byte
   FFI.typedef :uchar, :byte
   FFI.typedef :uint16, :wchar
+
+  module ::FFI::WIN32
+    extend ::FFI::Library
+
+    ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa366730(v=vs.85).aspx
+    # HLOCAL WINAPI LocalFree(
+    #   _In_  HLOCAL hMem
+    # );
+    ffi_lib :kernel32
+    attach_function :LocalFree, [:handle], :handle
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
+    # BOOL WINAPI CloseHandle(
+    #   _In_  HANDLE hObject
+    # );
+    ffi_lib :kernel32
+    attach_function_private :CloseHandle, [:handle], :win32_bool
+  end
 end

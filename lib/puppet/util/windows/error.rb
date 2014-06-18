@@ -27,10 +27,10 @@ class Puppet::Util::Windows::Error < Puppet::Error
             FORMAT_MESSAGE_ARGUMENT_ARRAY |
             FORMAT_MESSAGE_IGNORE_INSERTS |
             FORMAT_MESSAGE_MAX_WIDTH_MASK
-    # this pointer actually points to a :lpwstr (pointer) since we're letting Windows allocate for us
-    buffer_ptr = FFI::MemoryPointer.new(:pointer, 1)
+    error_string = ''
 
-    begin
+    # this pointer actually points to a :lpwstr (pointer) since we're letting Windows allocate for us
+    FFI::MemoryPointer.new(:pointer, 1) do |buffer_ptr|
       length = FormatMessageW(flags, FFI::Pointer::NULL, code, dwLanguageId,
         buffer_ptr, 0, FFI::Pointer::NULL)
 
@@ -40,20 +40,16 @@ class Puppet::Util::Windows::Error < Puppet::Error
       end
 
       # returns an FFI::Pointer with autorelease set to false, which is what we want
-      wide_string_ptr = buffer_ptr.read_pointer
-
-      if wide_string_ptr.null?
-        raise Puppet::Error.new("FormatMessageW failed to allocate buffer for code #{code}")
-      end
-
-      return wide_string_ptr.read_wide_string(length)
-    ensure
-      if ! wide_string_ptr.nil? && ! wide_string_ptr.null?
-        if LocalFree(wide_string_ptr.address) != FFI::Pointer::NULL_HANDLE
-          Puppet.debug "LocalFree memory leak"
+      buffer_ptr.read_win32_local_pointer do |wide_string_ptr|
+        if wide_string_ptr.null?
+          raise Puppet::Error.new("FormatMessageW failed to allocate buffer for code #{code}")
         end
+
+        error_string = wide_string_ptr.read_wide_string(length)
       end
     end
+
+    error_string
   end
 
   FORMAT_MESSAGE_ALLOCATE_BUFFER   = 0x00000100
@@ -88,11 +84,4 @@ class Puppet::Util::Windows::Error < Puppet::Error
   ffi_lib :kernel32
   attach_function_private :FormatMessageW,
     [:dword, :lpcvoid, :dword, :dword, :pointer, :dword, :pointer], :dword
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa366730(v=vs.85).aspx
-  # HLOCAL WINAPI LocalFree(
-  #   _In_  HLOCAL hMem
-  # );
-  ffi_lib :kernel32
-  attach_function_private :LocalFree, [:handle], :handle
 end

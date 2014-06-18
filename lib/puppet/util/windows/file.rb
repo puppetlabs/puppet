@@ -68,25 +68,41 @@ module Puppet::Util::Windows::File
         "#{flags_and_attributes.to_s(8)}, #{template_file_handle})")
   end
 
+  def self.get_reparse_point_data(handle, &block)
+    # must be multiple of 1024, min 10240
+    FFI::MemoryPointer.new(REPARSE_DATA_BUFFER.size) do |reparse_data_buffer_ptr|
+      device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, reparse_data_buffer_ptr)
+      yield REPARSE_DATA_BUFFER.new(reparse_data_buffer_ptr)
+    end
+
+    # underlying struct MemoryPointer has been cleaned up by this point, nothing to return
+    nil
+  end
+
   def self.device_io_control(handle, io_control_code, in_buffer = nil, out_buffer = nil)
     if out_buffer.nil?
       raise Puppet::Util::Windows::Error.new("out_buffer is required")
     end
 
-    result = DeviceIoControl(
-      handle,
-      io_control_code,
-      in_buffer, in_buffer.nil? ? 0 : in_buffer.size,
-      out_buffer, out_buffer.size,
-      FFI::MemoryPointer.new(:dword, 1),
-      nil
-    )
+    FFI::MemoryPointer.new(:dword, 1) do |bytes_returned_ptr|
+      result = DeviceIoControl(
+        handle,
+        io_control_code,
+        in_buffer, in_buffer.nil? ? 0 : in_buffer.size,
+        out_buffer, out_buffer.size,
+        bytes_returned_ptr,
+        nil
+      )
 
-    return out_buffer if result != FFI::WIN32_FALSE
-    raise Puppet::Util::Windows::Error.new(
-      "DeviceIoControl(#{handle}, #{io_control_code}, " +
-      "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
-      "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}")
+      if result == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new(
+          "DeviceIoControl(#{handle}, #{io_control_code}, " +
+          "#{in_buffer}, #{in_buffer ? in_buffer.size : ''}, " +
+          "#{out_buffer}, #{out_buffer ? out_buffer.size : ''}")
+      end
+    end
+
+    out_buffer
   end
 
   FILE_ATTRIBUTE_REPARSE_POINT = 0x400
@@ -110,7 +126,7 @@ module Puppet::Util::Windows::File
   def self.open_symlink(link_name)
     begin
       yield handle = create_file(
-      wide_string(link_name.to_s),
+      link_name,
       GENERIC_READ,
       FILE_SHARE_READ,
       nil, # security_attributes
@@ -118,14 +134,20 @@ module Puppet::Util::Windows::File
       FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
       0) # template_file
     ensure
-      CloseHandle(handle) if handle
+      FFI::WIN32.CloseHandle(handle) if handle
     end
+
+    # handle has had CloseHandle called against it, so nothing to return
+    nil
   end
 
   def readlink(link_name)
+    link = nil
     open_symlink(link_name) do |handle|
-      resolve_symlink(handle)
+      link = resolve_symlink(handle)
     end
+
+    link
   end
   module_function :readlink
 
@@ -178,16 +200,16 @@ module Puppet::Util::Windows::File
   FSCTL_GET_REPARSE_POINT = 0x900a8
 
   def self.resolve_symlink(handle)
-    # must be multiple of 1024, min 10240
-    out_buffer = FFI::MemoryPointer.new(REPARSE_DATA_BUFFER.size)
-    device_io_control(handle, FSCTL_GET_REPARSE_POINT, nil, out_buffer)
+    path = nil
+    get_reparse_point_data(handle) do |reparse_data|
+      offset = reparse_data[:PrintNameOffset]
+      length = reparse_data[:PrintNameLength]
 
-    reparse_data = REPARSE_DATA_BUFFER.new(out_buffer)
-    offset = reparse_data[:PrintNameOffset]
-    length = reparse_data[:PrintNameLength]
+      ptr = reparse_data.pointer + reparse_data.offset_of(:PathBuffer) + offset
+      path = ptr.read_wide_string(length / 2) # length is bytes, need UTF-16 wchars
+    end
 
-    result = reparse_data[:PathBuffer].to_a[offset, length].pack('C*')
-    result.force_encoding('UTF-16LE').encode(Encoding.default_external)
+    path
   end
 
   ffi_convention :stdcall
@@ -284,11 +306,4 @@ module Puppet::Util::Windows::File
            # technically a WCHAR buffer, but we care about size in bytes here
            :PathBuffer, [:byte, MAXIMUM_REPARSE_DATA_BUFFER_SIZE - 20]
   end
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
-  # BOOL WINAPI CloseHandle(
-  #   _In_  HANDLE hObject
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CloseHandle, [:handle], :win32_bool
 end
