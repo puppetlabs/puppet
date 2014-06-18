@@ -277,7 +277,7 @@ Puppet::Type.newtype(:yumrepo) do
 
     newvalues(/.*/, :absent)
     validate do |value|
-      next if value.to_s == 'absent'
+      next if value.to_s =~ /^(absent|_none_)$/
       parsed = URI.parse(value)
 
       unless VALID_SCHEMES.include?(parsed.scheme)
