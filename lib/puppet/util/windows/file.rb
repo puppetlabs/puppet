@@ -205,8 +205,8 @@ module Puppet::Util::Windows::File
       offset = reparse_data[:PrintNameOffset]
       length = reparse_data[:PrintNameLength]
 
-      path = reparse_data[:PathBuffer].to_a[offset, length].pack('C*')
-      path = path.force_encoding('UTF-16LE').encode(Encoding.default_external)
+      ptr = reparse_data.pointer + reparse_data.offset_of(:PathBuffer) + offset
+      path = ptr.read_wide_string(length / 2) # length is bytes, need UTF-16 wchars
     end
 
     path
