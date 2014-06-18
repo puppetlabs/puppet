@@ -1,0 +1,13 @@
+Benchmark scenario: evaluates a select set of time critical expressions
+Benchmark target: measuring individual use cases of evaluation
+Parser: Future
+
+Evaluations:
+* fcall_3x - calls sprintf 20x times
+* fcall_4x - calls assert_type 20x times (is heavier than sprintf, have no similar simple 4x function)
+* interpolation - does 20x interpolations of variying length
+* var_absolute - references a top scope variable 20x times with absolute reference
+* var_relative - references a top scope variable 20x times with non absolute reference
+* var_class_absolute - references a class variable 20x times with absolute reference
+* var_class_relative - references a class variable 20x times with non absolute reference
+

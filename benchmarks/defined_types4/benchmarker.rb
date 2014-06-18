@@ -25,7 +25,7 @@ class Benchmarker
 
   def generate
     environment = File.join(@target, 'environments', 'benchmarking')
-    templates = File.join('benchmarks', 'many_modules')
+    templates = File.join('benchmarks', 'defined_types4')
 
     mkdir_p(File.join(environment, 'modules'))
     mkdir_p(File.join(environment, 'manifests'))
@@ -45,21 +45,17 @@ class Benchmarker
         JSON.dump({
           "types" => [],
           "source" => "",
-          "author" => "ManyModules Benchmark",
+          "author" => "Defined Types Benchmark Future Parser",
           "license" => "Apache 2.0",
           "version" => "1.0.0",
-          "description" => "Many Modules benchmark module #{i}",
+          "description" => "Defined Types benchmark module #{i}",
           "summary" => "Just this benchmark module, you know?",
           "dependencies" => [],
         }, f)
       end
 
-      render(File.join(templates, 'module', 'init.pp.erb'),
-             File.join(manifests, 'init.pp'),
-             :name => module_name)
-
-      render(File.join(templates, 'module', 'internal.pp.erb'),
-             File.join(manifests, 'internal.pp'),
+      render(File.join(templates, 'module', 'testing.pp.erb'),
+             File.join(manifests, 'testing.pp'),
              :name => module_name)
     end
 
