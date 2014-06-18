@@ -138,7 +138,7 @@ If you want to make lookup return undef when no value was found instead of raisi
 ENDHEREDOC
 
   unless Puppet[:binder] || Puppet[:parser] == 'future'
-    raise Puppet::ParseError, "The lookup function is only available with settings --binder true, or --parser future" 
+    raise Puppet::ParseError, "The lookup function is only available with settings --binder true, or --parser future"
   end
   Puppet::Pops::Binder::Lookup.lookup(self, args)
 end
