@@ -663,6 +663,41 @@ module Puppet::Util::Windows::Security
         end
       end
     end
+
+    def name_to_sid(name)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.name_to_sid is deprecated; please use Puppet::Util::Windows::SID.name_to_sid')
+      Puppet::Util::Windows::SID.name_to_sid(name)
+    end
+
+    def name_to_sid_object(name)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.name_to_sid_object is deprecated; please use Puppet::Util::Windows::SID.name_to_sid_object')
+      Puppet::Util::Windows::SID.name_to_sid_object(name)
+    end
+
+    def octet_string_to_sid_object(bytes)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.octet_string_to_sid_object is deprecated; please use Puppet::Util::Windows::SID.octet_string_to_sid_object')
+      Puppet::Util::Windows::SID.octet_string_to_sid_object(bytes)
+    end
+
+    def sid_to_name(value)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.sid_to_name is deprecated; please use Puppet::Util::Windows::SID.sid_to_name')
+      Puppet::Util::Windows::SID.sid_to_name(value)
+    end
+
+    def sid_ptr_to_string(psid)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.sid_ptr_to_string is deprecated; please use Puppet::Util::Windows::SID.sid_ptr_to_string')
+      Puppet::Util::Windows::SID.sid_ptr_to_string(psid)
+    end
+
+    def string_to_sid_ptr(string_sid, &block)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.string_to_sid_ptr is deprecated; please use Puppet::Util::Windows::SID.string_to_sid_ptr')
+      Puppet::Util::Windows::SID.string_to_sid_ptr(string_sid, &block)
+    end
+
+    def valid_sid?(string_sid)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.valid_sid? is deprecated; please use Puppet::Util::Windows::SID.valid_sid?')
+      Puppet::Util::Windows::SID.valid_sid?(string_sid)
+    end
   end
 
   ffi_convention :stdcall
