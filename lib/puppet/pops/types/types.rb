@@ -45,7 +45,7 @@ module Puppet::Pops::Types
 
   # Base type for all types except {Puppet::Pops::Types::PType PType}, the type of types.
   # @api public
-  class PObjectType < PAbstractType
+  class PAnyType < PAbstractType
 
     module ClassModule
     end
@@ -54,7 +54,7 @@ module Puppet::Pops::Types
 
   # The type of types.
   # @api public
-  class PType < PObjectType
+  class PType < PAnyType
     contains_one_uni 'type', PAbstractType
     module ClassModule
       def hash
@@ -68,13 +68,13 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PNilType < PObjectType
+  class PNilType < PAnyType
   end
 
   # A flexible data type, being assignable to its subtypes as well as PArrayType and PHashType with element type assignable to PDataType.
   #
   # @api public
-  class PDataType < PObjectType
+  class PDataType < PAnyType
     module ClassModule
       def ==(o)
         self.class == o.class ||
@@ -85,7 +85,7 @@ module Puppet::Pops::Types
 
   # A flexible type describing an any? of other types
   # @api public
-  class PVariantType < PObjectType
+  class PVariantType < PAnyType
     contains_many_uni 'types', PAbstractType, :lowerBound => 1
 
     module ClassModule
@@ -103,7 +103,7 @@ module Puppet::Pops::Types
 
   # Type that is PDataType compatible, but is not a PCollectionType.
   # @api public
-  class PScalarType < PObjectType
+  class PScalarType < PAnyType
   end
 
   # A string type describing the set of strings having one of the given values
@@ -253,7 +253,7 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PCollectionType < PObjectType
+  class PCollectionType < PAnyType
     contains_one_uni 'element_type', PAbstractType
     contains_one_uni 'size_type', PIntegerType
 
@@ -296,7 +296,7 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PStructType < PObjectType
+  class PStructType < PAnyType
     contains_many_uni 'elements', PStructElement, :lowerBound => 1
     has_attr 'hashed_elements', Object, :derived => true
 
@@ -321,7 +321,7 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PTupleType < PObjectType
+  class PTupleType < PAnyType
     contains_many_uni 'types', PAbstractType, :lowerBound => 1
     # If set, describes min and max required of the given types - if max > size of
     # types, the last type entry repeats
@@ -360,7 +360,7 @@ module Puppet::Pops::Types
     end
   end
 
-  class PCallableType < PObjectType
+  class PCallableType < PAnyType
     # Types of parameters and required/optional count
     contains_one_uni 'param_types', PTupleType, :lowerBound => 1
 
@@ -435,7 +435,7 @@ module Puppet::Pops::Types
   end
 
   # @api public
-  class PRubyType < PObjectType
+  class PRubyType < PAnyType
     has_attr 'ruby_class', String
     module ClassModule
       def hash
@@ -451,7 +451,7 @@ module Puppet::Pops::Types
   # Abstract representation of a type that can be placed in a Catalog.
   # @api public
   #
-  class PCatalogEntryType < PObjectType
+  class PCatalogEntryType < PAnyType
   end
 
   # Represents a (host-) class in the Puppet Language.

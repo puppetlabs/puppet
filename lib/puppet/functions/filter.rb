@@ -37,12 +37,12 @@
 #
 Puppet::Functions.create_function(:filter) do
   dispatch :filter_Hash do
-    param 'Hash[Object, Object]', :hash
+    param 'Hash[Any, Any]', :hash
     required_block_param
   end
 
   dispatch :filter_Enumerable do
-    param 'Object', :enumerable
+    param 'Any', :enumerable
     required_block_param
   end
 

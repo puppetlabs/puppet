@@ -35,12 +35,12 @@
 #
 Puppet::Functions.create_function(:map) do
   dispatch :map_Hash do
-    param 'Hash[Object, Object]', :hash
+    param 'Hash[Any, Any]', :hash
     required_block_param
   end
 
   dispatch :map_Enumerable do
-    param 'Object', :enumerable
+    param 'Any', :enumerable
     required_block_param
   end
 

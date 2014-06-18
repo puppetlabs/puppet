@@ -64,13 +64,13 @@
 Puppet::Functions.create_function(:reduce) do
 
   dispatch :reduce_without_memo do
-    param 'Object', :enumerable
+    param 'Any', :enumerable
     required_block_param
   end
 
   dispatch :reduce_with_memo do
-    param 'Object', :enumerable
-    param 'Object', :memo
+    param 'Any', :enumerable
+    param 'Any', :memo
     required_block_param
   end
 

@@ -563,7 +563,7 @@ describe "Puppet::Parser::Compiler" do
           compile_to_catalog(<<-MANIFEST)
             with(1) |$x, String $defaulted = 1| { notify { "${$x + $defaulted}": }}
           MANIFEST
-        end.to raise_error(/expected.*Object.*String.*actual.*Integer.*Integer/m)
+        end.to raise_error(/expected.*Any.*String.*actual.*Integer.*Integer/m)
       end
 
       it 'raises an error when a default argument value is an incorrect type and there are no arguments passed' do

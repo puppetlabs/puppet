@@ -178,7 +178,7 @@ class Puppet::Pops::Types::TypeCalculator
     @data_t = Types::PDataType.new()
     @scalar_t = Types::PScalarType.new()
     @numeric_t = Types::PNumericType.new()
-    @t = Types::PObjectType.new()
+    @t = Types::PAnyType.new()
 
     # Data accepts a Tuple that has 0-infinity Data compatible entries (e.g. a Tuple equivalent to Array).
     data_tuple = Types::PTupleType.new()
@@ -391,8 +391,8 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of_Object(t, o)
-    # Undef is Undef and Object, but nothing else when checking instance?
-    return false if (o.nil? || o == :undef) && t.class != Types::PObjectType
+    # Undef is Undef and Any, but nothing else when checking instance?
+    return false if (o.nil? || o == :undef) && t.class != Types::PAnyType
     assignable?(t, infer(o))
   end
 
@@ -639,7 +639,7 @@ class Puppet::Pops::Types::TypeCalculator
     # If both are RubyObjects
 
     if common_pobject?(t1, t2)
-      return Types::PObjectType.new()
+      return Types::PAnyType.new()
     end
   end
 
@@ -870,6 +870,7 @@ class Puppet::Pops::Types::TypeCalculator
       possible_variant
     end
   end
+
   # False in general type calculator
   # @api private
   def assignable_Object(t, t2)
@@ -877,8 +878,8 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def assignable_PObjectType(t, t2)
-    t2.is_a?(Types::PObjectType)
+  def assignable_PAnyType(t, t2)
+    t2.is_a?(Types::PAnyType)
   end
 
   # @api private
@@ -1347,7 +1348,7 @@ class Puppet::Pops::Types::TypeCalculator
   def string_String(t)       ; t         ; end
 
   # @api private
-  def string_PObjectType(t)  ; "Object"  ; end
+  def string_PAnyType(t)  ; "Any"  ; end
 
   # @api private
   def string_PNilType(t)     ; 'Undef'   ; end

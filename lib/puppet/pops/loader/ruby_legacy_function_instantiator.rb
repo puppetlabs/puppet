@@ -98,7 +98,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       # Define a dispatch that performs argument type/count checking
       #
       dispatch :__relay__call__ do
-        param 'Object', 'args'
+        param 'Any', 'args'
         # Specify arg count (transformed from 3x function arity specification).
         arg_count(min_arg_count, max_arg_count)
       end

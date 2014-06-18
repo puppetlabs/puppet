@@ -636,7 +636,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     evaluate(o.body, scope)
   end
 
-  # Produces Array[PObjectType], an array of resource references
+  # Produces Array[PAnyType], an array of resource references
   #
   def eval_ResourceExpression(o, scope)
     exported = o.exported
