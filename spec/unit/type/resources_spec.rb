@@ -54,10 +54,6 @@ describe resources do
   describe "#check_user purge behaviour" do
     describe "with unless_system_user => true" do
       before do
-        # Stub OS facts to an OS we know won't return a 1000 exclusive max system uid by default
-        Facter.stubs(:value).with(:kernel).returns('Darwin')
-        Facter.stubs(:value).with(:operatingsystem).returns('Darwin')
-        Facter.stubs(:value).with(:osfamily).returns('Darwin')
         @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
         @res.catalog = Puppet::Resource::Catalog.new
       end
@@ -77,6 +73,8 @@ describe resources do
 
       it "should purge manual users if unless_system_user => true" do
         user_hash = {:name => 'system_user', :uid => 500, :system => true}
+        os = Facter.value(:osfamily)
+        user_hash[:uid] = 1000 if os == 'Debian' || os =='OpenBSD' || os == 'FreeBSD'
         user = Puppet::Type.type(:user).new(user_hash)
         user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
         @res.user_check(user).should be_true
@@ -210,7 +208,7 @@ describe resources do
           @res.user_check(user).should be_true
         end
       end
-      
+
     end
   end
 
