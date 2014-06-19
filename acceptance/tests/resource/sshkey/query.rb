@@ -8,12 +8,12 @@ name = "pl#{rand(999999).to_i}"
 agents.each do |agent|
   teardown do
     #(teardown) restore the #{host_keys} file
-    on(agent, "mv /tmp/host_keys #{host_keys}", :acceptable_exit_codes => [0,1])
+    on(agent, "test -a /tmp/host_keys && mv /tmp/host_keys #{host_keys}", :acceptable_exit_codes => [0,1])
   end
 
   #------- SETUP -------#
   step "(setup) backup #{host_keys} file"
-  on(agent, "cp #{host_keys} /tmp/host_keys", :acceptable_exit_codes => [0,1])
+  on(agent, "test -a #{host_keys} && cp #{host_keys} /tmp/host_keys", :acceptable_exit_codes => [0,1])
 
   step "(setup) create a host key in the #{host_keys} file"
   on(agent, "echo '#{name} ssh-rsa mykey' >> #{host_keys}")
