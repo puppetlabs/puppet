@@ -54,7 +54,7 @@ Puppet::Face.define(:module, '1.0.0') do
         "dependencies": [
           {
             "name": "puppetlabs-stdlib",
-            "version_range": ">= 1.0.0"
+            "version_requirement": ">= 1.0.0"
           }
         ]
       }
@@ -114,7 +114,7 @@ Puppet::Face.define(:module, '1.0.0') do
           'name' => name,
           'version' => '0.1.0',
           'dependencies' => [
-            { :name => 'puppetlabs-stdlib', :version_range => '>= 1.0.0' }
+            { :name => 'puppetlabs-stdlib', :version_requirement => '>= 1.0.0' }
           ]
         )
       rescue ArgumentError
