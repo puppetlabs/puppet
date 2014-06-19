@@ -13,7 +13,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
   before :all do
     @sids = {
-      :current_user => Puppet::Util::Windows::SID.name_to_sid(Sys::Admin.get_login),
+      :current_user => Puppet::Util::Windows::SID.name_to_sid(Puppet::Util::Windows::ADSI::User.current_user_name),
       :system => Win32::Security::SID::LocalSystem,
       :admin => Puppet::Util::Windows::SID.name_to_sid("Administrator"),
       :administrators => Win32::Security::SID::BuiltinAdministrators,
@@ -448,7 +448,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             user = Puppet::Util::Windows::ADSI::User.create("delete_me_user")
             user.commit
             begin
-              sid = Sys::Admin::get_user(user.name).sid
+              sid = Puppet::Util::Windows::ADSI::User.new(user.name).sid.to_s
               winsec.set_owner(sid, path)
               winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
             ensure
@@ -464,7 +464,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             group = Puppet::Util::Windows::ADSI::Group.create("delete_me_group")
             group.commit
             begin
-              sid = Sys::Admin::get_group(group.name).sid
+              sid = Puppet::Util::Windows::ADSI::Group.new(group.name).sid.to_s
               winsec.set_group(sid, path)
               winsec.set_mode(WindowsSecurityTester::S_IRWXG, path)
             ensure

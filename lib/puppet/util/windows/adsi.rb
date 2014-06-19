@@ -105,6 +105,7 @@ module Puppet::Util::Windows::ADSI
 
   class User
     extend Enumerable
+    extend FFI::Library
 
     attr_accessor :native_user
     attr_reader :name, :sid
@@ -229,6 +230,26 @@ module Puppet::Util::Windows::ADSI
       new(name, Puppet::Util::Windows::ADSI.create(name, 'user'))
     end
 
+    # UNLEN from lmcons.h - http://stackoverflow.com/a/2155176
+    MAX_USERNAME_LENGTH = 256
+    def self.current_user_name
+      user_name = ''
+      max_length = MAX_USERNAME_LENGTH + 1 # NULL terminated
+      FFI::MemoryPointer.new(max_length * 2) do |buffer| # wide string
+        FFI::MemoryPointer.new(:dword, 1) do |buffer_size|
+          buffer_size.write_dword(max_length) # length in TCHARs
+
+          if GetUserNameW(buffer, buffer_size) == FFI::WIN32_FALSE
+            raise Puppet::Util::Windows::Error.new("Failed to get user name")
+          end
+          # buffer_size includes trailing NULL
+          user_name = buffer.read_wide_string(buffer_size.read_dword - 1)
+        end
+      end
+
+      user_name
+    end
+
     def self.exists?(name)
       Puppet::Util::Windows::ADSI::connectable?(User.uri(*User.parse_name(name)))
     end
@@ -247,6 +268,17 @@ module Puppet::Util::Windows::ADSI
 
       users.each(&block)
     end
+
+    ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724432(v=vs.85).aspx
+    # BOOL WINAPI GetUserName(
+    #   _Out_    LPTSTR lpBuffer,
+    #   _Inout_  LPDWORD lpnSize
+    # );
+    ffi_lib :advapi32
+    attach_function_private :GetUserNameW,
+      [:lpwstr, :lpdword], :win32_bool
   end
 
   class UserProfile
@@ -269,7 +301,7 @@ module Puppet::Util::Windows::ADSI
     extend Enumerable
 
     attr_accessor :native_group
-    attr_reader :name
+    attr_reader :name, :sid
     def initialize(name, native_group = nil)
       @name = name
       @native_group = native_group
@@ -287,6 +319,10 @@ module Puppet::Util::Windows::ADSI
 
     def native_group
       @native_group ||= Puppet::Util::Windows::ADSI.connect(uri)
+    end
+
+    def sid
+      @sid ||= Puppet::Util::Windows::SID.octet_string_to_sid_object(native_group.objectSID)
     end
 
     def commit
