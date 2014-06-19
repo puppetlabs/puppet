@@ -18,7 +18,7 @@ describe provider_class do
   let(:resource) do
     Puppet::Type.type(:package).new(
       :name     => resource_name,
-      :provider => 'dpkg',
+      :provider => 'dpkg'
     )
   end
   let(:provider) { provider_class.new(resource) }
