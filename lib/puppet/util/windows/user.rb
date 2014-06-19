@@ -53,7 +53,7 @@ module Puppet::Util::Windows::User
   module_function :check_token_membership
 
   def password_is?(name, password)
-    logon_user(name, password)
+    logon_user(name, password) { |token| }
   rescue Puppet::Util::Windows::Error
     false
   end
