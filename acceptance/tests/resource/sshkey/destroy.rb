@@ -27,7 +27,7 @@ agents.each do |agent|
   on(agent, puppet_resource('sshkey', "#{name}", args))
 
   step "verify entry deleted from #{host_keys}"
-  on(agent, "test -a #{host_keys} && cat #{host_keys}")  do |res|
+  on(agent, "test -a #{host_keys} && cat #{host_keys}") do |res|
     fail_test "found the sshkey for #{name}" if stdout.include? "#{name}"
   end
 

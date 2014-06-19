@@ -27,7 +27,7 @@ agents.each do |agent|
   on(agent, puppet_resource('sshkey', "#{name}", args))
 
   step "verify entry updated in #{host_keys}"
-  on(agent, "test -a ${host_keys} && cat #{host_keys}")  do |res|
+  on(agent, "test -a #{host_keys} && cat #{host_keys}") do |res|
     fail_test "didn't find the updated key for #{name}" unless stdout.include? "#{name} ssh-rsa mynewshinykey"
   end
 
