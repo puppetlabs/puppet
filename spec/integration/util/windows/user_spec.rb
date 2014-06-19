@@ -66,6 +66,7 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
       it "should raise an error when provided with an incorrect username and password" do
         lambda { Puppet::Util::Windows::User.load_profile(username, bad_password) }.should raise_error(Puppet::Util::Windows::Error, logon_fail_msg)
       end
+
       it "should raise an error when provided with an incorrect username and nil password" do
         lambda { Puppet::Util::Windows::User.load_profile(username, nil) }.should raise_error(Puppet::Util::Windows::Error, logon_fail_msg)
       end
@@ -75,6 +76,7 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
       it "should raise an error when provided with an incorrect username and password" do
         lambda { Puppet::Util::Windows::User.logon_user(username, bad_password) }.should raise_error(Puppet::Util::Windows::Error, logon_fail_msg)
       end
+
       it "should raise an error when provided with an incorrect username and nil password" do
         lambda { Puppet::Util::Windows::User.logon_user(username, nil) }.should raise_error(Puppet::Util::Windows::Error, logon_fail_msg)
       end
@@ -84,8 +86,13 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
       it "should return false given an incorrect username and password" do
         Puppet::Util::Windows::User.password_is?(username, bad_password).should be_false
       end
+
       it "should return false given an incorrect username and nil password" do
         Puppet::Util::Windows::User.password_is?(username, nil).should be_false
+      end
+
+      it "should return false given a nil username and an incorrect password" do
+        Puppet::Util::Windows::User.password_is?(nil, bad_password).should be_false
       end
     end
 
