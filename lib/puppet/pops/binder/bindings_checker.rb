@@ -38,7 +38,7 @@ class Puppet::Pops::Binder::BindingsChecker
   # @api private
   def check_Binding(b)
     # Must have a type
-    acceptor.accept(Issues::MISSING_TYPE, b) unless b.type.is_a?(Types::PObjectType)
+    acceptor.accept(Issues::MISSING_TYPE, b) unless b.type.is_a?(Types::PAnyType)
 
     # Must have a producer
     acceptor.accept(Issues::MISSING_PRODUCER, b) unless b.producer.is_a?(Bindings::ProducerDescriptor)
@@ -167,7 +167,7 @@ class Puppet::Pops::Binder::BindingsChecker
   end
 
   # @api private
-  def check_PObjectType(t)
+  def check_PAnyType(t)
     # Do nothing
   end
 

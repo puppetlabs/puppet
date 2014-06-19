@@ -48,7 +48,7 @@ class Puppet::Pops::Binder::KeyFactory
 
   # @api public
   def is_data?(key)
-    return false unless key.is_a?(Array) && key[0].is_a?(Puppet::Pops::Types::PObjectType)
+    return false unless key.is_a?(Array) && key[0].is_a?(Puppet::Pops::Types::PAnyType)
     type_calculator.assignable?(type_calculator.data(), key[0])
   end
 

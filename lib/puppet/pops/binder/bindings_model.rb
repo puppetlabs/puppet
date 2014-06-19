@@ -81,7 +81,7 @@ module Puppet::Pops::Binder::Bindings
   # @api public
   #
   class LookupProducerDescriptor < ProducerDescriptor
-    contains_one_uni 'type', Puppet::Pops::Types::PObjectType
+    contains_one_uni 'type', Puppet::Pops::Types::PAnyType
     has_attr 'name', String
   end
 
@@ -134,7 +134,7 @@ module Puppet::Pops::Binder::Bindings
   #
   # @api public
   class Binding < AbstractBinding
-    contains_one_uni 'type', Puppet::Pops::Types::PObjectType
+    contains_one_uni 'type', Puppet::Pops::Types::PAnyType
     has_attr 'name', String
     has_attr 'override', Boolean
     has_attr 'abstract', Boolean

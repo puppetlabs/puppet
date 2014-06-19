@@ -19,12 +19,12 @@
 Puppet::Functions.create_function(:match) do
   dispatch :match do
     param 'String', 'string'
-    param 'Variant[Object, Type]', 'pattern'
+    param 'Variant[Any, Type]', 'pattern'
   end
 
   dispatch :enumerable_match do
     param 'Array[String]', 'string'
-    param 'Variant[Object, Type]', 'pattern'
+    param 'Variant[Any, Type]', 'pattern'
   end
 
   def initialize(closure_scope, loader)

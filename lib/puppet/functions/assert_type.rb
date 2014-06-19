@@ -17,14 +17,14 @@
 Puppet::Functions.create_function(:assert_type) do
   dispatch :assert_type do
     param 'Type', 'type'
-    param 'Object', 'value'
-    optional_block_param 'Callable[Object, Object]', 'block'
+    param 'Any', 'value'
+    optional_block_param 'Callable[Any, Any]', 'block'
   end
 
   dispatch :assert_type_s do
     param 'String', 'type_string'
-    param 'Object', 'value'
-    optional_block_param 'Callable[Object, Object]', 'block'
+    param 'Any', 'value'
+    optional_block_param 'Callable[Any, Any]', 'block'
   end
 
   # @param type [Type] the type the value must be an instance of

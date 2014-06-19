@@ -292,7 +292,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     {
-      'Object'  => ['Data', 'Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Collection',
+      'Any'  => ['Data', 'Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Collection',
                     'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File', 'NotYetKnownResourceType'],
 
       # Note, Data > Collection is false (so not included)
@@ -900,7 +900,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
       env_loader = @compiler.loaders.public_environment_loader
       fc = Puppet::Functions.create_function(:test) do
         dispatch :test do
-          param 'Object', 'lambda_arg'
+          param 'Any', 'lambda_arg'
           required_block_param
         end
         def test(lambda_arg, block)

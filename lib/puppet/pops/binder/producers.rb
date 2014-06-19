@@ -323,7 +323,7 @@ module Puppet::Pops::Binder::Producers
     # @param binder [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
+    # @option options [Puppet::Pops::Types::PAnyType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
     # @api public
     #
@@ -352,9 +352,9 @@ module Puppet::Pops::Binder::Producers
     # @param binder [Puppet::Pops::Binder::Bindings::Binding, nil] The binding using this producer
     # @param scope [Puppet::Parser::Scope] The scope to use for evaluation
     # @option options [Puppet::Pops::Model::LambdaExpression] :transformer (nil) a transformer of produced value
-    # @option options [Puppet::Pops::Types::PObjectType] :type The type to lookup
+    # @option options [Puppet::Pops::Types::PAnyType] :type The type to lookup
     # @option options [String] :name ('') The name to lookup
-    # @option options [Puppet::Pops::Types::PObjectType] :key The key to lookup in the hash
+    # @option options [Puppet::Pops::Types::PAnyType] :key The key to lookup in the hash
     # @api public
     #
     def initialize(injector, binder, scope, options)
@@ -527,8 +527,8 @@ module Puppet::Pops::Binder::Producers
       @contributions_key = injector.key_factory.multibind_contributions(binding.id)
     end
 
-    # @param expected [Array<Puppet::Pops::Types::PObjectType>, Puppet::Pops::Types::PObjectType] expected type or types
-    # @param actual [Object, Puppet::Pops::Types::PObjectType> the actual value (or its type)
+    # @param expected [Array<Puppet::Pops::Types::PAnyType>, Puppet::Pops::Types::PAnyType] expected type or types
+    # @param actual [Object, Puppet::Pops::Types::PAnyType> the actual value (or its type)
     # @return [String] a formatted string for inclusion as detail in an error message
     # @api private
     #
