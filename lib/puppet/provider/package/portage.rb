@@ -146,7 +146,8 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
   end
 
   def latest
-    "#{self.query[:version_available]}:#{self.query[:slot_available]}"
+    version_slot_query = self.query
+    "#{version_slot_query[:version_available]}:#{version_slot_query[:slot_available]}"
   end
 
   private
