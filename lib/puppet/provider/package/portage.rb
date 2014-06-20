@@ -4,8 +4,8 @@ require 'fileutils'
 Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Package do
   desc "Provides packaging support for Gentoo's portage system."
 
-  VERSION_PATTERN  = '(?:(?:cvs\.)?(?:\d+)(?:(?:\.\d+)*)(?:[a-z]?)(?:(?:_(?:pre|p|beta|alpha|rc)\d*)*)(?:-r(?:\d+))?)'
-  SLOT_PATTERN     = '(?:[\w+./*=-]+)'
+  VERSION_PATTERN  = "(?:(?:cvs\.)?(?:\d+)(?:(?:\.\d+)*)(?:[a-z]?)(?:(?:_(?:pre|p|beta|alpha|rc)\d*)*)(?:-r(?:\d+))?)"
+  SLOT_PATTERN     = "(?:[\w+./*=-]+)"
   VERSION_SLOT_PATTERN = Regexp.new "^(?:(#{VERSION_PATTERN})|:(#{SLOT_PATTERN})|(#{VERSION_PATTERN}):(#{SLOT_PATTERN}))$"
 
   has_feature :versionable
@@ -65,20 +65,20 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     should = @resource.should(:ensure)
     name = package_name
     unless should == :present or should == :latest
-      # We must install a specific version
+      # We must install a specific -version:slot
       match_group = VERSION_SLOT_PATTERN.match(should)
-      if match_group == nil
-        raise Puppet::Error.new("Invalid version or slot token: [#{should}]")
-      else
-        if match_group[3] != nil and match_group[4] != nil
-          name = "=#{name}-#{match_group[3]}:#{match_group[4]}" # version:slot
-        elsif match_group[1] != nil and match_group[2] == nil
-          name = "=#{name}-#{match_group[1]}" # version
-        elsif match_group[1] == nil and match_group[2] != nil
-          name = "#{name}:#{match_group[2]}"  # slot
+      if match_group
+        if match_group[3] and match_group[4]
+          name = "=#{name}-#{match_group[3]}:#{match_group[4]}"
+        elsif match_group[1] and match_group[2].nil?
+          name = "=#{name}-#{match_group[1]}"
+        elsif match_group[1].nil? and match_group[2]
+          name = "#{name}:#{match_group[2]}"
         else
           raise Puppet::Error.new("Invalid version or slot token: [#{should}]")
         end
+      else
+        raise Puppet::Error.new("Invalid version or slot token: [#{should}]")
       end
     end
     emerge name

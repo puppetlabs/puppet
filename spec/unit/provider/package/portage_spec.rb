@@ -7,7 +7,7 @@ provider = Puppet::Type.type(:package).provider(:portage)
 describe provider do
   before do
     packagename="sl"
-    @resource = stub('resource', :[] => packagename,:should => true)
+    @resource = stub('resource', :[] => packagename, :should => :present)
     @provider = provider.new(@resource)
     
     portage   = stub(:executable => "foo",:execute => true)
