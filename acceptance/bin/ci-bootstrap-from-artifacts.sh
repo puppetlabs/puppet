@@ -42,7 +42,6 @@ cat > local_options.rb <<-EOF
   :ssh => {
     :keys => ["${HOME}/.ssh/id_rsa-old.private"],
   },
-  :forge_host => 'forge-aio01-petest.puppetlabs.com',
 ${repo_proxy}
 }
 EOF
