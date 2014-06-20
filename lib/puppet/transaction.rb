@@ -53,8 +53,8 @@ class Puppet::Transaction
   #
   # @see Puppet::Transaction#evaluate
   # @see Puppet::Type#pre_run_check
-  # @raises Puppet::Error
-  # @return void
+  # @raise [Puppet::Error] If any pre-run checks failed.
+  # @return [void]
   def perform_pre_run_checks
     prerun_errors = {}
 

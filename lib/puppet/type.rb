@@ -973,8 +973,8 @@ class Type
   # resources that comprise the catalog.
   #
   # @see Puppet::Transaction#add_vertex
-  # @raises Puppet::Error
-  # @return void
+  # @raise [Puppet::Error] If the pre-run check failed.
+  # @return [void]
   # @abstract a resource type may implement this method to perform
   #   validation checks that can query the complete catalog
   def pre_run_check
