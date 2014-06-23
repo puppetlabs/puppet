@@ -738,6 +738,7 @@ class Puppet::Pops::Model::Factory
     'realize' => true,
     'include' => true,
     'contain' => true,
+    'tag'     => true,
 
     'debug'   => true,
     'info'    => true,
