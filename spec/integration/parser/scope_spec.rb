@@ -606,7 +606,16 @@ describe "Two step scoping for variables" do
     describe "using plussignment to change in a new scope" do
 
       it "does not change an array in the parent scope" do
-        expect_the_message_to_be('top_msg') do <<-MANIFEST
+        # Under the future parser single element arrays are no longer converted
+        # into the first element of the array. This causes the message to be
+        # different in the two versions.
+        if Puppet[:parser] == 'future'
+          expected = ['top_msg']
+        else
+          expected = 'top_msg'
+        end
+
+        expect_the_message_to_be(expected) do <<-MANIFEST
             $var = ["top_msg"]
             class override {
               $var += ["override"]

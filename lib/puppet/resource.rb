@@ -418,15 +418,23 @@ class Puppet::Resource
         end
       end
 
-      # If the value is an array with only one value, then
-      # convert it to a single value.  This is largely so that
-      # the database interaction doesn't have to worry about
-      # whether it returns an array or a string.
-      result[p] = if v.is_a?(Array) and v.length == 1
-                    v[0]
-                  else
-                    v
-                  end
+      if Puppet[:parser] == 'current'
+        # If the value is an array with only one value, then
+        # convert it to a single value.  This is largely so that
+        # the database interaction doesn't have to worry about
+        # whether it returns an array or a string.
+        #
+        # This behavior is not done in the future parser, but we can't issue a
+        # deprecation warning either since there isn't anything that a user can
+        # do about it.
+        result[p] = if v.is_a?(Array) and v.length == 1
+                      v[0]
+                    else
+                      v
+                    end
+      else
+        result[p] = v
+      end
     end
 
     result
