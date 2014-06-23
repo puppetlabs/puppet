@@ -529,9 +529,16 @@ class Puppet::Node::Environment
       if file == NO_MANIFEST
         Puppet::Parser::AST::Hostclass.new('')
       elsif File.directory?(file)
-        parse_results = Dir.entries(file).find_all { |f| f =~ /\.pp$/ }.sort.map do |pp_file|
-          parser.file = File.join(file, pp_file)
+        parse_results = Dir.glob(File.join(file, '**/**.pp')).sort.map do | file_to_parse |
+#        parse_results = Dir.entries(file).find_all { |f| f =~ /\.pp$/ }.sort.map do |pp_file|
+#         parser.file = File.join(file, pp_file)
+          begin
+          parser.file = file_to_parse
           parser.parse
+          rescue Puppet::Error => e
+            require 'debugger'; debugger
+            puts file_to_parse
+          end
         end
         # Use a parser type specific merger to concatenate the results
         Puppet::Parser::AST::Hostclass.new('', :code => Puppet::Parser::ParserFactory.code_merger.concatenate(parse_results))
