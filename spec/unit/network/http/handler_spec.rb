@@ -116,7 +116,7 @@ describe Puppet::Network::HTTP::Handler do
       request = a_request
       request[:headers][Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase] = "true"
 
-      p = TestProfiler.new
+      p = HandlerTestProfiler.new
 
       Puppet::Util::Profiler.expects(:add_profiler).with { |profiler|
         profiler.is_a? Puppet::Util::Profiler::WallClock
@@ -228,16 +228,14 @@ describe Puppet::Network::HTTP::Handler do
     end
   end
 
-  class TestProfiler
-    attr_accessor :context, :description
-
-    def start(description)
-      description
+  class HandlerTestProfiler
+    def start(metric, description)
     end
 
-    def finish(context, description)
-      @context = context
-      @description = description
+    def finish(context, metric, description)
+    end
+
+    def shutdown()
     end
   end
 end

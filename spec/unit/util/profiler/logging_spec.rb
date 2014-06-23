@@ -11,30 +11,33 @@ describe Puppet::Util::Profiler::Logging do
     p
   end
 
-
   it "logs the explanation of the profile results" do
-    profiler.profile("Testing") { }
+    profiler.profile("Testing", ["test"]) { }
 
     logger.messages.first.should =~ /the explanation/
   end
 
   it "describes the profiled segment" do
-    profiler.profile("Tested measurement") { }
+    profiler.profile("Tested measurement", ["test"]) { }
 
     logger.messages.first.should =~ /PROFILE \[#{identifier}\] \d Tested measurement/
   end
 
   it "indicates the order in which segments are profiled" do
-    profiler.profile("Measurement") { }
-    profiler.profile("Another measurement") { }
+    profiler.profile("Measurement", ["measurement"]) { }
+    profiler.profile("Another measurement", ["measurement"]) { }
 
     logger.messages[0].should =~ /1 Measurement/
     logger.messages[1].should =~ /2 Another measurement/
   end
 
   it "indicates the nesting of profiled segments" do
-    profiler.profile("Measurement") { profiler.profile("Nested measurement") { } }
-    profiler.profile("Another measurement") { profiler.profile("Another nested measurement") { } }
+    profiler.profile("Measurement", ["measurement1"]) do
+      profiler.profile("Nested measurement", ["measurement2"]) { }
+    end
+    profiler.profile("Another measurement", ["measurement1"]) do
+      profiler.profile("Another nested measurement", ["measurement2"]) { }
+    end
 
     logger.messages[0].should =~ /1.1 Nested measurement/
     logger.messages[1].should =~ /1 Measurement/
@@ -43,12 +46,12 @@ describe Puppet::Util::Profiler::Logging do
   end
 
   class TestLoggingProfiler < Puppet::Util::Profiler::Logging
-    def do_start
+    def do_start(metric, description)
       "the start"
     end
 
-    def do_finish(context)
-      "the explanation of #{context}"
+    def do_finish(context, metric, description)
+      {:msg => "the explanation of #{context}"}
     end
   end
 

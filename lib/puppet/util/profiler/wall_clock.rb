@@ -6,13 +6,13 @@ require 'puppet/util/profiler/logging'
 #
 # @api private
 class Puppet::Util::Profiler::WallClock < Puppet::Util::Profiler::Logging
-  def do_start
+  def do_start(description, metric_id)
     Timer.new
   end
 
-  def do_finish(context)
-    context.stop
-    "took #{context} seconds"
+  def do_finish(context, description, metric_id)
+    {:time => context.stop,
+     :msg => "took #{context} seconds"}
   end
 
   class Timer
@@ -23,11 +23,12 @@ class Puppet::Util::Profiler::WallClock < Puppet::Util::Profiler::Logging
     end
 
     def stop
-      @finish = Time.now
+      @time = Time.now - @start
+      @time
     end
 
     def to_s
-      format(FOUR_DECIMAL_DIGITS, @finish - @start)
+      format(FOUR_DECIMAL_DIGITS, @time)
     end
   end
 end
