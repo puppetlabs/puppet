@@ -545,7 +545,7 @@ module Puppet::Util::Windows::Security
   end
 
   def with_process_token(access, &block)
-    Puppet.deprecation_warning('Puppet::Util::Windows::Security.with_process_token is deprecated; please use Puppet::Util::Windows::Process.get_process_token')
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.with_process_token is deprecated; please use Puppet::Util::Windows::Process.with_process_token')
     Puppet::Util::Windows::Process.with_process_token(access) do |token|
       yield token
     end
