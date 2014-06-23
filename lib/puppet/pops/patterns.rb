@@ -9,10 +9,10 @@ module Puppet::Pops::Patterns
   # 4 = non hex integer portion, possibly with leading 0 (octal)
   # 5 = floating point part, starts with ".", decimals and optional exponent
   #
-  # Thus, a hex number has group 1 value, an octal value has group 2 (if it starts with 0), and no group 3
-  # and a floating point value has group 2 and group 3.
+  # Thus, a hex number has group 3 value, an octal value has group 4 (if it starts with 0), and no group 3
+  # and a floating point value has group 4 and group 5.
   #
-  NUMERIC = %r{^\s*([-+]?)\s*((0[xX][0-9A-Fa-f]+)|(0?\d+)((?:\.\d+)?(?:[eE]-?\d+)?))\s*$}
+  NUMERIC = %r{\A[[:blank:]]*([-+]?)[[:blank:]]*((0[xX][0-9A-Fa-f]+)|(0?\d+)((?:\.\d+)?(?:[eE]-?\d+)?))[[:blank:]]*\z}
 
   # ILLEGAL_P3_1_HOSTNAME matches if a hostname contains illegal characters.
   # This check does not prevent pathological names like 'a....b', '.....', "---". etc.

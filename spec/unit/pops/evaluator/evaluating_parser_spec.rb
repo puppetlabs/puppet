@@ -367,6 +367,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         "'2' + '2'"       => 4,
         "'-2' + '2'"      => 0,
         "'- 2' + '2'"     => 0,
+        '"-\t 2" + "2"'   => 0,
         "'+2' + '2'"      => 4,
         "'+ 2' + '2'"     => 4,
         "'2.2' + '2.2'"   => 4.4,
@@ -390,6 +391,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         "'0xWTF' + '010'"  => :error,
         "'0x12.3' + '010'" => :error,
         "'0x12.3' + '010'" => :error,
+        '"-\n 2" + "2"'    => :error,
+        '"-\v 2" + "2"'    => :error,
+        '"-2\n" + "2"'     => :error,
+        '"-2\n " + "2"'    => :error,
       }.each do |source, result|
           it "should parse and raise error for '#{source}'" do
             expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(Puppet::ParseError)
