@@ -18,6 +18,7 @@ module Puppet::Util::Windows
 
       sid ? sid.to_s : nil
     end
+    module_function :name_to_sid
 
     # Convert an account name, e.g. 'Administrators' into a SID object,
     # e.g. 'S-1-5-32-544'. The name can be specified as 'Administrators',
@@ -34,6 +35,7 @@ module Puppet::Util::Windows
     rescue
       nil
     end
+    module_function :name_to_sid_object
 
     # Converts an octet string array of bytes to a SID object,
     # e.g. [1, 1, 0, 0, 0, 0, 0, 5, 18, 0, 0, 0] is the representation for
@@ -46,6 +48,7 @@ module Puppet::Util::Windows
 
       Win32::Security::SID.new(bytes.pack('C*'))
     end
+    module_function :octet_string_to_sid_object
 
     # Convert a SID string, e.g. "S-1-5-32-544" to a name,
     # e.g. 'BUILTIN\Administrators'. Returns nil if an account
@@ -61,6 +64,7 @@ module Puppet::Util::Windows
     rescue
       nil
     end
+    module_function :sid_to_name
 
     # http://stackoverflow.com/a/1792930 - 68 bytes, 184 characters in a string
     MAXIMUM_SID_STRING_LENGTH = 184
@@ -88,6 +92,7 @@ module Puppet::Util::Windows
 
       sid_string
     end
+    module_function :sid_ptr_to_string
 
     # Convert a SID string, e.g. "S-1-5-32-544" to a pointer (containing the
     # address of the binary SID structure). The returned value can be used in
@@ -110,6 +115,7 @@ module Puppet::Util::Windows
       # yielded sid_ptr has already had LocalFree called, nothing to return
       nil
     end
+    module_function :string_to_sid_ptr
 
     # Return true if the string is a valid SID, e.g. "S-1-5-32-544", false otherwise.
     def valid_sid?(string_sid)
@@ -123,6 +129,7 @@ module Puppet::Util::Windows
 
       valid
     end
+    module_function :valid_sid?
 
     ffi_convention :stdcall
 

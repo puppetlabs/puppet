@@ -36,8 +36,8 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
     let(:user2) { stub(:account => 'user2', :domain => '.', :to_s => 'user2sid') }
 
     before :each do
-      Puppet::Util::Windows::Security.stubs(:name_to_sid_object).with('user1').returns(user1)
-      Puppet::Util::Windows::Security.stubs(:name_to_sid_object).with('user2').returns(user2)
+      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user1').returns(user1)
+      Puppet::Util::Windows::SID.stubs(:name_to_sid_object).with('user2').returns(user2)
     end
 
     describe "#members_insync?" do
@@ -100,8 +100,8 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
 
       provider.group.stubs(:member_sids).returns(member_sids[0..1])
 
-      Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('user2').returns(member_sids[1])
-      Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('user3').returns(member_sids[2])
+      Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('user2').returns(member_sids[1])
+      Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('user3').returns(member_sids[2])
 
       provider.group.expects(:remove_member_sids).with(member_sids[0])
       provider.group.expects(:add_member_sids).with(member_sids[2])
@@ -153,7 +153,7 @@ describe Puppet::Type.type(:group).provider(:windows_adsi), :if => Puppet.featur
   end
 
   it "should report the group's SID as gid" do
-    Puppet::Util::Windows::Security.expects(:name_to_sid).with('testers').returns('S-1-5-32-547')
+    Puppet::Util::Windows::SID.expects(:name_to_sid).with('testers').returns('S-1-5-32-547')
     provider.gid.should == 'S-1-5-32-547'
   end
 

@@ -28,7 +28,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   def members_to_s(users)
     return '' if users.nil? or !users.kind_of?(Array)
     users = users.map do |user_name|
-      sid = Puppet::Util::Windows::Security.name_to_sid_object(user_name)
+      sid = Puppet::Util::Windows::SID.name_to_sid_object(user_name)
       if sid.account =~ /\\/
         account, _ = Puppet::Util::Windows::ADSI::User.parse_name(sid.account)
       else
@@ -73,7 +73,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def gid
-    Puppet::Util::Windows::Security.name_to_sid(@resource[:name])
+    Puppet::Util::Windows::SID.name_to_sid(@resource[:name])
   end
 
   def gid=(value)

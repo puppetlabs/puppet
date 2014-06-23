@@ -4,6 +4,9 @@ require 'puppet/util/windows/string'
 module Puppet::Util::Windows::APITypes
   module ::FFI
     WIN32_FALSE = 0
+
+    # standard Win32 error codes
+    ERROR_SUCCESS = 0
   end
 
   module ::FFI::Library
@@ -44,6 +47,7 @@ module Puppet::Util::Windows::APITypes
     end
 
     alias_method :read_wchar, :read_uint16
+    alias_method :read_word,  :read_uint16
 
     def read_wide_string(char_length)
       # char_length is number of wide chars (typically excluding NULLs), *not* bytes

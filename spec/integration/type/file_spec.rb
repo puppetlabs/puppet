@@ -1045,10 +1045,10 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       describe "when processing SYSTEM ACEs" do
         before do
           @sids = {
-            :current_user => Puppet::Util::Windows::Security.name_to_sid(Sys::Admin.get_login),
+            :current_user => Puppet::Util::Windows::SID.name_to_sid(Sys::Admin.get_login),
             :system => Win32::Security::SID::LocalSystem,
-            :admin => Puppet::Util::Windows::Security.name_to_sid("Administrator"),
-            :guest => Puppet::Util::Windows::Security.name_to_sid("Guest"),
+            :admin => Puppet::Util::Windows::SID.name_to_sid("Administrator"),
+            :guest => Puppet::Util::Windows::SID.name_to_sid("Guest"),
             :users => Win32::Security::SID::BuiltinUsers,
             :power_users => Win32::Security::SID::PowerUsers,
             :none => Win32::Security::SID::Nobody

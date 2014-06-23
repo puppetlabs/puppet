@@ -6,6 +6,8 @@ if Puppet.features.microsoft_windows?
     require 'puppet/util/windows/security'
     include Puppet::Util::Windows::Security
   end
+
+  FILE = Puppet::Util::Windows::File
 end
 
 describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_windows? do
@@ -13,11 +15,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
   before :all do
     @sids = {
-      :current_user => Puppet::Util::Windows::Security.name_to_sid(Sys::Admin.get_login),
+      :current_user => Puppet::Util::Windows::SID.name_to_sid(Sys::Admin.get_login),
       :system => Win32::Security::SID::LocalSystem,
-      :admin => Puppet::Util::Windows::Security.name_to_sid("Administrator"),
+      :admin => Puppet::Util::Windows::SID.name_to_sid("Administrator"),
       :administrators => Win32::Security::SID::BuiltinAdministrators,
-      :guest => Puppet::Util::Windows::Security.name_to_sid("Guest"),
+      :guest => Puppet::Util::Windows::SID.name_to_sid("Guest"),
       :users => Win32::Security::SID::BuiltinUsers,
       :power_users => Win32::Security::SID::PowerUsers,
       :none => Win32::Security::SID::Nobody,
@@ -51,8 +53,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   def grant_everyone_full_access(path)
     sd = winsec.get_security_descriptor(path)
     everyone = 'S-1-1-0'
-    inherit = WindowsSecurityTester::OBJECT_INHERIT_ACE | WindowsSecurityTester::CONTAINER_INHERIT_ACE
-    sd.dacl.allow(everyone, Windows::File::FILE_ALL_ACCESS, inherit)
+    inherit = Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE | Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
+    sd.dacl.allow(everyone, FILE::FILE_ALL_ACCESS, inherit)
     winsec.set_security_descriptor(path, sd)
   end
 
@@ -176,7 +178,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           # when running under SYSTEM account, multiple ACEs come back
           # so we only care that we have at least one of these
           system_aces.any? do |ace|
-            ace.mask == Windows::File::FILE_ALL_ACCESS
+            ace.mask == FILE::FILE_ALL_ACCESS
           end.should be_true
 
           # changing the owner/group will no longer make the SD protected
@@ -184,7 +186,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           winsec.set_owner(sids[:administrators], path)
 
           system_aces.find do |ace|
-            ace.mask == Windows::File::FILE_ALL_ACCESS && ace.inherited?
+            ace.mask == FILE::FILE_ALL_ACCESS && ace.inherited?
           end.should_not be_nil
         end
 
@@ -225,7 +227,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             # when running under SYSTEM account, multiple ACEs come back
             # so we only care that we have at least one of these
             system_aces.any? do |ace|
-              ace.mask == WindowsSecurityTester::FILE_ALL_ACCESS
+              ace.mask == FILE::FILE_ALL_ACCESS
             end.should be_true
 
             # changing the mode will make the SD protected
@@ -235,7 +237,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             # and should have a non-inherited SYSTEM ACE(s)
             system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
             system_aces.each do |ace|
-              ace.mask.should == Windows::File::FILE_ALL_ACCESS && ! ace.inherited?
+              ace.mask.should == FILE::FILE_ALL_ACCESS && ! ace.inherited?
             end
           end
 
@@ -257,25 +259,25 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             before :each do
               winsec.set_group(sids[:none], path)
               winsec.set_mode(0600, path)
-              winsec.add_attributes(path, WindowsSecurityTester::FILE_ATTRIBUTE_READONLY)
-              (winsec.get_attributes(path) & WindowsSecurityTester::FILE_ATTRIBUTE_READONLY).should be_nonzero
+              FILE.add_attributes(path, FILE::FILE_ATTRIBUTE_READONLY)
+              (FILE.get_attributes(path) & FILE::FILE_ATTRIBUTE_READONLY).should be_nonzero
             end
 
             it "should make them writable if any sid has write permission" do
               winsec.set_mode(WindowsSecurityTester::S_IWUSR, path)
-              (winsec.get_attributes(path) & WindowsSecurityTester::FILE_ATTRIBUTE_READONLY).should == 0
+              (FILE.get_attributes(path) & FILE::FILE_ATTRIBUTE_READONLY).should == 0
             end
 
             it "should leave them read-only if no sid has write permission and should allow full access for SYSTEM" do
               winsec.set_mode(WindowsSecurityTester::S_IRUSR | WindowsSecurityTester::S_IXGRP, path)
-              (winsec.get_attributes(path) & WindowsSecurityTester::FILE_ATTRIBUTE_READONLY).should be_nonzero
+              (FILE.get_attributes(path) & FILE::FILE_ATTRIBUTE_READONLY).should be_nonzero
 
               system_aces = winsec.get_aces_for_path_by_sid(path, sids[:system])
 
               # when running under SYSTEM account, and set_group / set_owner hasn't been called
               # SYSTEM full access will be restored
               system_aces.any? do |ace|
-                ace.mask == Windows::File::FILE_ALL_ACCESS
+                ace.mask == FILE::FILE_ALL_ACCESS
               end.should be_true
             end
           end
@@ -289,7 +291,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           it "should report when extra aces are encounted" do
             sd = winsec.get_security_descriptor(path)
             (544..547).each do |rid|
-              sd.dacl.allow("S-1-5-32-#{rid}", WindowsSecurityTester::STANDARD_RIGHTS_ALL)
+              sd.dacl.allow("S-1-5-32-#{rid}", FILE::STANDARD_RIGHTS_ALL)
             end
             winsec.set_security_descriptor(path, sd)
 
@@ -299,12 +301,12 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
           it "should return deny aces" do
             sd = winsec.get_security_descriptor(path)
-            sd.dacl.deny(sids[:guest], WindowsSecurityTester::FILE_GENERIC_WRITE)
+            sd.dacl.deny(sids[:guest], FILE::FILE_GENERIC_WRITE)
             winsec.set_security_descriptor(path, sd)
 
             guest_aces = winsec.get_aces_for_path_by_sid(path, sids[:guest])
             guest_aces.find do |ace|
-              ace.type == WindowsSecurityTester::ACCESS_DENIED_ACE_TYPE
+              ace.type == Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
             end.should_not be_nil
           end
 
@@ -312,12 +314,12 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             sd = winsec.get_security_descriptor(path)
             dacl = Puppet::Util::Windows::AccessControlList.new
             dacl.allow(
-              sids[:current_user], WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL
+              sids[:current_user], FILE::STANDARD_RIGHTS_ALL | FILE::SPECIFIC_RIGHTS_ALL
             )
             dacl.allow(
               sids[:everyone],
-              WindowsSecurityTester::FILE_GENERIC_READ,
-              WindowsSecurityTester::INHERIT_ONLY_ACE | WindowsSecurityTester::OBJECT_INHERIT_ACE
+              FILE::FILE_GENERIC_READ,
+              Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE | Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE
             )
             winsec.set_security_descriptor(path, sd)
 
@@ -342,8 +344,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
           it "should be present when the access control list is unprotected" do
             # add a bunch of aces to the parent with permission to add children
-            allow = WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL
-            inherit = WindowsSecurityTester::OBJECT_INHERIT_ACE | WindowsSecurityTester::CONTAINER_INHERIT_ACE
+            allow = FILE::STANDARD_RIGHTS_ALL | FILE::SPECIFIC_RIGHTS_ALL
+            inherit = Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE | Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
 
             sd = winsec.get_security_descriptor(parent)
             sd.dacl.allow(
@@ -354,7 +356,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
             (544..547).each do |rid|
               sd.dacl.allow(
                 "S-1-5-32-#{rid}",
-                WindowsSecurityTester::STANDARD_RIGHTS_ALL,
+                FILE::STANDARD_RIGHTS_ALL,
                 inherit
               )
             end
@@ -811,7 +813,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
 
       sd = winsec.get_security_descriptor(dir)
-      sd.dacl.allow(sd.owner, Windows::File::FILE_ALL_ACCESS, inherit_flags)
+      sd.dacl.allow(sd.owner, FILE::FILE_ALL_ACCESS, inherit_flags)
       winsec.set_security_descriptor(dir, sd)
 
       sd = winsec.get_security_descriptor(dir)
@@ -832,7 +834,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
 
       sd = winsec.get_security_descriptor(dir)
-      sd.dacl.deny(sids[:guest], Windows::File::FILE_ALL_ACCESS, inherit_flags)
+      sd.dacl.deny(sids[:guest], FILE::FILE_ALL_ACCESS, inherit_flags)
       winsec.set_security_descriptor(dir, sd)
 
       sd = winsec.get_security_descriptor(dir)
