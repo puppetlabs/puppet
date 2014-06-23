@@ -9,7 +9,7 @@
 # @example using custom error message
 #   $a = assert_type(String[1], $b) |$expected, $actual| { fail("The name cannot be empty") }
 #
-# @example, using a warning and a default
+# @example using a warning and a default
 #   $a = assert_type(String[1], $b) |$expected, $actual| { warning("Name is empty, using default") 'anonymous' }
 #
 # See the documentation for "The Puppet Type System" for more information about types.
