@@ -22,7 +22,7 @@ module HarnessOptions
       :keys => ["id_rsa-acceptance"],
     },
     :xml => true,
-    :timesync => true,
+    :timesync => false,
     :repo_proxy => true,
     :add_el_extras => false,
     :preserve_hosts => 'onfail'
