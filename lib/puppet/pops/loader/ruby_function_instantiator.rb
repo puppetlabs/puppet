@@ -16,7 +16,7 @@ class Puppet::Pops::Loader::RubyFunctionInstantiator
     unless ruby_code_string.is_a?(String) && ruby_code_string =~ /Puppet\:\:Functions\.create_function/
       raise ArgumentError, "The code loaded from #{source_ref} does not seem to be a Puppet 4x API function - no create_function call."
     end
-    created = eval(ruby_code_string)
+    created = eval(ruby_code_string, nil, source_ref, 1)
     unless created.is_a?(Class)
       raise ArgumentError, "The code loaded from #{source_ref} did not produce a Function class when evaluated. Got '#{created.class}'"
     end
