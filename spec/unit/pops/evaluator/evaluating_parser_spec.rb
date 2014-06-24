@@ -378,11 +378,21 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     context "on strings requiring boxing to Numeric" do
       {
         "'2' + '2'"       => 4,
+        "'-2' + '2'"      => 0,
+        "'- 2' + '2'"     => 0,
+        '"-\t 2" + "2"'   => 0,
+        "'+2' + '2'"      => 4,
+        "'+ 2' + '2'"     => 4,
         "'2.2' + '2.2'"   => 4.4,
+        "'-2.2' + '2.2'"  => 0.0,
         "'0xF7' + '010'"  => 0xFF,
         "'0xF7' + '0x8'"  => 0xFF,
         "'0367' + '010'"  => 0xFF,
         "'012.3' + '010'" => 20.3,
+        "'-0x2' + '0x4'"  => 2,
+        "'+0x2' + '0x4'"  => 6,
+        "'-02' + '04'"    => 2,
+        "'+02' + '04'"    => 6,
       }.each do |source, result|
           it "should parse and evaluate the expression '#{source}' to #{result}" do
             parser.evaluate_string(scope, source, __FILE__).should == result
@@ -394,6 +404,10 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
         "'0xWTF' + '010'"  => :error,
         "'0x12.3' + '010'" => :error,
         "'0x12.3' + '010'" => :error,
+        '"-\n 2" + "2"'    => :error,
+        '"-\v 2" + "2"'    => :error,
+        '"-2\n" + "2"'     => :error,
+        '"-2\n " + "2"'    => :error,
       }.each do |source, result|
           it "should parse and raise error for '#{source}'" do
             expect { parser.evaluate_string(scope, source, __FILE__) }.to raise_error(Puppet::ParseError)
