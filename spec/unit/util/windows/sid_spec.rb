@@ -47,7 +47,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
       expect {
         invalid_octet = [1]
         subject.octet_string_to_sid_object(invalid_octet)
-      }.to raise_error(Win32::Security::SID::Error, /No mapping between account names and security IDs was done./)
+      }.to raise_error(SystemCallError, /No mapping between account names and security IDs was done./)
     end
   end
 

@@ -63,8 +63,8 @@ module Puppet::Util::Windows::ADSI
       begin
         sid = Win32::Security::SID.new(Win32::Security::SID.string_to_sid(sid))
         sid_uri(sid)
-      rescue Win32::Security::SID::Error
-        return nil
+      rescue SystemCallError
+        nil
       end
     end
 
