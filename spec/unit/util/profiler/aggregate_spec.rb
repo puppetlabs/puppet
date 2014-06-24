@@ -13,9 +13,9 @@ describe Puppet::Util::Profiler::Aggregate do
   end
 
   it "tracks the aggregate counts and time for the hierarchy of metrics" do
-    profiler_mgr.profile("Looking up hiera data in production environment", ["function", "hiera_lookup", "production"]) {}
+    profiler_mgr.profile("Looking up hiera data in production environment", ["function", "hiera_lookup", "production"]) { sleep 0.01 }
     profiler_mgr.profile("Looking up hiera data in test environment", ["function", "hiera_lookup", "test"]) {}
-    profiler_mgr.profile("looking up stuff for compilation", ["compiler", "lookup"]) {}
+    profiler_mgr.profile("looking up stuff for compilation", ["compiler", "lookup"]) { sleep 0.01 }
     profiler_mgr.profile("COMPILING ALL OF THE THINGS!", ["compiler", "compiling"]) {}
 
     profiler.values["function"].count.should == 2
@@ -23,7 +23,7 @@ describe Puppet::Util::Profiler::Aggregate do
     profiler.values["function"]["hiera_lookup"].count.should == 2
     profiler.values["function"]["hiera_lookup"]["production"].count.should == 1
     profiler.values["function"]["hiera_lookup"]["test"].count.should == 1
-    profiler.values["function"].time.should be >= profiler.values["function"]["hiera_lookup"].time
+    profiler.values["function"].time.should be >= profiler.values["function"]["hiera_lookup"]["test"].time
 
     profiler.values["compiler"].count.should == 2
     profiler.values["compiler"].time.should be > 0
