@@ -42,7 +42,7 @@ hosts.each do |host|
     step "#{host} Selected architecture #{arch}"
 
     step "#{host} Loading git commit-ish to use for Windows Ruby"
-    version_defs_file = '../../../../ext/windows/versions.yaml'
+    version_defs_file = File.join(File.dirname(__FILE__), '../../../../ext/windows/versions.yaml')
     raise "Unable to find yaml config at #{version_defs_file}:" if ! File.exist?(version_defs_file)
 
     begin
