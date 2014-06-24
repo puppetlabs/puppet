@@ -101,8 +101,6 @@ describe 'Injector' do
 
   let(:bindings)  { factory.named_bindings('test') }
   let(:scope)     { null_scope()}
-#  let(:duck_type) { type_factory.ruby(InjectorSpecModule::TestDuck) }
-
   let(:binder)    { Puppet::Pops::Binder::Binder }
 
   let(:lbinder)   do
@@ -110,6 +108,7 @@ describe 'Injector' do
   end
 
   def duck_type
+    # create distinct instances
     type_factory.ruby(InjectorSpecModule::TestDuck)
   end
 
