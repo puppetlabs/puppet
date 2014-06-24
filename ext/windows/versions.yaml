@@ -1,0 +1,7 @@
+# pin to specific versions of puppet-win32-ruby repository
+# these vendored bits are used by packaging and acceptance tests
+git_dependencies:
+  x86:
+    puppet_win32_ruby_sha: '1.9.3-x86'
+  x64:
+    puppet_win32_ruby_sha: '2.0.0-x64'
