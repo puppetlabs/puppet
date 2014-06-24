@@ -25,7 +25,8 @@ module HarnessOptions
     :timesync => false,
     :repo_proxy => true,
     :add_el_extras => false,
-    :preserve_hosts => 'onfail'
+    :preserve_hosts => 'onfail',
+    :forge_host => 'forge-aio01-petest.puppetlabs.com'
   }
 
   class Aggregator
