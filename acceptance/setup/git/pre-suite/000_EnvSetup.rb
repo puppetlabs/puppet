@@ -42,7 +42,8 @@ hosts.each do |host|
     # TODO remove this step once we are installing puppet from msi packages
     install_from_git(host, "/opt/puppet-git-repos",
                      :name => 'puppet-win32-ruby',
-                     :path => build_giturl('puppet-win32-ruby'))
+                     :path => build_giturl('puppet-win32-ruby'),
+                     :rev => lookup_in_env('WIN32_RUBY_SHA', 'puppet-win32-ruby', ''))
     on host, 'cd /opt/puppet-git-repos/puppet-win32-ruby; cp -r ruby/* /'
     on host, 'cd /lib; icacls ruby /grant "Everyone:(OI)(CI)(RX)"'
     on host, 'cd /lib; icacls ruby /reset /T'
