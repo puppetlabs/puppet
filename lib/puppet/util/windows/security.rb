@@ -474,8 +474,6 @@ module Puppet::Util::Windows::Security
     dacl
   end
 
-  INVALID_HANDLE_VALUE = FFI::Pointer.new(-1).address
-
   # Open an existing file with the specified access mode, and execute a
   # block with the opened file HANDLE.
   def open_file(path, access, &block)
@@ -488,7 +486,10 @@ module Puppet::Util::Windows::Security
              FILE::FILE_FLAG_OPEN_REPARSE_POINT | FILE::FILE_FLAG_BACKUP_SEMANTICS,
              FFI::Pointer::NULL_HANDLE) # template
 
-    raise Puppet::Util::Windows::Error.new("Failed to open '#{path}'") if handle == INVALID_HANDLE_VALUE
+    if handle == Puppet::Util::Windows::File::INVALID_HANDLE_VALUE
+      raise Puppet::Util::Windows::Error.new("Failed to open '#{path}'")
+    end
+
     begin
       yield handle
     ensure
