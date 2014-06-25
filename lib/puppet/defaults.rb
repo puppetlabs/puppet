@@ -72,8 +72,16 @@ module Puppet
     :disable_warnings => {
       :default => [],
       :type    => :array,
-      :desc    => "A list of warning types to disable. Currently the only warning type that can be
-        disabled are deprecations, but more warning types may be added later.",
+      :desc    => "A comma-separated list of warning types to suppress. If large numbers
+        of warnings are making Puppet's logs too large or difficult to use, you
+        can temporarily silence them with this setting.
+
+        If you are preparing to upgrade Puppet to a new major version, you
+        should re-enable all warnings for a while.
+
+        Valid values for this setting are:
+
+        * `deprecations` --- disables deprecation warnings.",
       :hook      => proc do |value|
         values = munge(value)
         valid   = %w[deprecations]
