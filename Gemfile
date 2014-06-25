@@ -46,11 +46,13 @@ group(:development, :test) do
 end
 
 group(:development) do
-  case RUBY_VERSION
-  when /^1.8/
-    gem 'ruby-prof', "~> 0.13.1", :require => false
-  else
-    gem 'ruby-prof', :require => false
+  if RUBY_PLATFORM != 'java'
+    case RUBY_VERSION
+    when /^1.8/
+      gem 'ruby-prof', "~> 0.13.1", :require => false
+    else
+      gem 'ruby-prof', :require => false
+    end
   end
 end
 
