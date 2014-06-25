@@ -305,7 +305,7 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def internal_check_no_capture(o, container = o)
-    o.parameters.each_with_index do |p, index|
+    o.parameters.each do |p|
       if p.captures_rest
         acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, {:container => container, :param_name => p.name})
       end
