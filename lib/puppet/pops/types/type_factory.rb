@@ -348,9 +348,7 @@ module Puppet::Pops::Types::TypeFactory
     elsif o.is_a?(Types::PAbstractType)
       o
     elsif o.is_a?(String)
-      type = Types::PRubyType.new()
-      type.ruby_class = o
-      type
+      Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => o)
     else
       @type_calculator.infer_generic(o)
     end
@@ -371,9 +369,7 @@ module Puppet::Pops::Types::TypeFactory
     if o.is_a?(Class)
       @type_calculator.type(o)
     else
-      type = Types::PRubyType.new()
-      type.ruby_class = o.class.name
-      type
+      Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => o.class.name)
     end
   end
 
@@ -381,9 +377,15 @@ module Puppet::Pops::Types::TypeFactory
   # Also see ruby(o) which performs inference, or mapps a Ruby Class to its name.
   #
   def self.ruby_type(class_name = nil)
-    type = Types::PRubyType.new()
-    type.ruby_class = class_name
-    type
+    Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => class_name)
+  end
+
+  # Generic creator of a RuntimeType - allows creating the type with nil or String runtime_type_name.
+  # Also see ruby_type(o) and ruby(o).
+  #
+  def self.runtime(runtime=nil, runtime_type_name = nil)
+    runtime = runtime.to_sym if runtime.is_a?(String)
+    Types::PRuntimeType.new(:runtime => runtime, :runtime_type_name => runtime_type_name)
   end
 
   # Sets the accepted size range of a collection if something other than the default 0 to Infinity

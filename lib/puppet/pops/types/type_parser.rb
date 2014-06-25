@@ -173,8 +173,8 @@ class Puppet::Pops::Types::TypeParser
     when "optional"
       TYPES.optional()
 
-    when "ruby"
-      TYPES.ruby_type()
+    when "runtime"
+      TYPES.runtime()
 
     when "type"
       TYPES.type_type()
@@ -414,9 +414,9 @@ class Puppet::Pops::Types::TypeParser
       assert_type(parameters[0])
       TYPES.type_type(parameters[0])
 
-    when "ruby"
-      raise_invalid_parameters_error("Ruby", "1", parameters.size) unless parameters.size == 1
-      TYPES.ruby_type(parameters[0])
+    when "runtime"
+      raise_invalid_parameters_error("Runtime", "2", parameters.size) unless parameters.size == 2
+      TYPES.runtime(*parameters)
 
     else
       # It is a resource such a File['/tmp/foo']

@@ -54,7 +54,7 @@ class Puppet::Pops::Binder::KeyFactory
 
   # @api public
   def is_ruby?(key)
-    return key.is_a?(Array) && key[0].is_a?(Puppet::Pops::Types::PRubyType)
+    key.is_a?(Array) && key[0].is_a?(Puppet::Pops::Types::PRuntimeType) && key[0].runtime == :ruby
   end
 
   # Returns the type of the key
