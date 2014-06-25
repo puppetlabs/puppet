@@ -102,7 +102,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PCollectionType,
         Puppet::Pops::Types::PArrayType,
         Puppet::Pops::Types::PHashType,
-        Puppet::Pops::Types::PRubyType,
+        Puppet::Pops::Types::PRuntimeType,
         Puppet::Pops::Types::PHostClassType,
         Puppet::Pops::Types::PResourceType,
         Puppet::Pops::Types::PPatternType,
@@ -220,13 +220,14 @@ describe 'The type calculator' do
       calculator.infer(:undef).class.should == Puppet::Pops::Types::PNilType
     end
 
-    it 'an instance of class Foo translates to PRubyType[Foo]' do
+    it 'an instance of class Foo translates to PRuntimeType[ruby, Foo]' do
       class Foo
       end
 
       t = calculator.infer(Foo.new)
-      t.class.should == Puppet::Pops::Types::PRubyType
-      t.ruby_class.should == 'Foo'
+      t.class.should == Puppet::Pops::Types::PRuntimeType
+      t.runtime.should == :ruby
+      t.runtime_type_name.should == 'Foo'
     end
 
     context 'array' do
@@ -329,17 +330,18 @@ describe 'The type calculator' do
         calculator.infer({:first => 1, :second => 2}).class.should == Puppet::Pops::Types::PHashType
       end
 
-      it 'with symbolic keys translates to PHashType[PRubyType[Symbol],value]' do
+      it 'with symbolic keys translates to PHashType[PRuntimeType[ruby, Symbol], value]' do
         k = calculator.infer({:first => 1, :second => 2}).key_type
-        k.class.should == Puppet::Pops::Types::PRubyType
-        k.ruby_class.should == 'Symbol'
+        k.class.should == Puppet::Pops::Types::PRuntimeType
+        k.runtime.should == :ruby
+        k.runtime_type_name.should == 'Symbol'
       end
 
-      it 'with string keys translates to PHashType[PStringType,value]' do
+      it 'with string keys translates to PHashType[PStringType, value]' do
         calculator.infer({'first' => 1, 'second' => 2}).key_type.class.should == Puppet::Pops::Types::PStringType
       end
 
-      it 'with fixnum values translates to PHashType[key,PIntegerType]' do
+      it 'with fixnum values translates to PHashType[key, PIntegerType]' do
         calculator.infer({:first => 1, :second => 2}).element_type.class.should == Puppet::Pops::Types::PIntegerType
       end
     end
@@ -1455,7 +1457,7 @@ describe 'The type calculator' do
       calculator.infer(Puppet::Pops::Types::PCollectionType.new()).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PArrayType.new()     ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PHashType.new()      ).is_a?(ptype).should() == true
-      calculator.infer(Puppet::Pops::Types::PRubyType.new()      ).is_a?(ptype).should() == true
+      calculator.infer(Puppet::Pops::Types::PRuntimeType.new()   ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PHostClassType.new() ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PResourceType.new()  ).is_a?(ptype).should() == true
       calculator.infer(Puppet::Pops::Types::PEnumType.new()      ).is_a?(ptype).should() == true
@@ -1480,7 +1482,7 @@ describe 'The type calculator' do
       calculator.string(calculator.infer(Puppet::Pops::Types::PCollectionType.new())).should == "Type[Collection]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PArrayType.new()     )).should == "Type[Array[?]]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PHashType.new()      )).should == "Type[Hash[?, ?]]"
-      calculator.string(calculator.infer(Puppet::Pops::Types::PRubyType.new()      )).should == "Type[Ruby[?]]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PRuntimeType.new()   )).should == "Type[Runtime[?, ?]]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PHostClassType.new() )).should == "Type[Class]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PResourceType.new()  )).should == "Type[Resource]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PEnumType.new()      )).should == "Type[Enum]"
