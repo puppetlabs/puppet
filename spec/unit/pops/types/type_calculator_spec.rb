@@ -1489,6 +1489,10 @@ describe 'The type calculator' do
       calculator.string(calculator.infer(Puppet::Pops::Types::PTupleType.new()     )).should == "Type[Tuple]"
       calculator.string(calculator.infer(Puppet::Pops::Types::POptionalType.new()  )).should == "Type[Optional]"
       calculator.string(calculator.infer(Puppet::Pops::Types::PCallableType.new()  )).should == "Type[Callable]"
+
+      calculator.infer(Puppet::Pops::Types::PResourceType.new(:type_name => 'foo::fee::fum')).to_s.should == "Type[Foo::Fee::Fum]"
+      calculator.string(calculator.infer(Puppet::Pops::Types::PResourceType.new(:type_name => 'foo::fee::fum'))).should == "Type[Foo::Fee::Fum]"
+      calculator.infer(Puppet::Pops::Types::PResourceType.new(:type_name => 'Foo::Fee::Fum')).to_s.should == "Type[Foo::Fee::Fum]"
     end
 
     it "computes the common type of PType's type parameter" do
