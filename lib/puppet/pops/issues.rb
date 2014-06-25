@@ -510,4 +510,9 @@ module Puppet::Pops::Issues
   ILLEGAL_OVERRIDEN_TYPE = issue :ILLEGAL_OVERRIDEN_TYPE, :actual do
     "Resource Override can only operate on resources, got: #{label.label(actual)}"
   end
+
+  RESERVED_PARAMETER = hard_issue :RESERVED_PARAMETER, :container, :param_name do
+    "The parameter $#{param_name} redefines a built in parameter in #{label.the(container)}"
+  end
+
 end
