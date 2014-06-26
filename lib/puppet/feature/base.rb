@@ -24,7 +24,6 @@ Puppet.features.add(:microsoft_windows) do
     require 'win32/process'
     require 'win32/dir'
     require 'win32/service'
-    require 'win32/api'
     require 'win32/taskscheduler'
     true
   rescue LoadError => err
