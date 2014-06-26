@@ -992,13 +992,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
     describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
       def expects_sid_granted_full_access_explicitly(path, sid)
-        inherited_ace = Windows::Security::INHERITED_ACE
+        inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE
 
         aces = get_aces_for_path_by_sid(path, sid)
         aces.should_not be_empty
 
         aces.each do |ace|
-          ace.mask.should == Windows::File::FILE_ALL_ACCESS
+          ace.mask.should == Puppet::Util::Windows::File::FILE_ALL_ACCESS
           (ace.flags & inherited_ace).should_not == inherited_ace
         end
       end
@@ -1008,13 +1008,13 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
       end
 
       def expects_at_least_one_inherited_ace_grants_full_access(path, sid)
-        inherited_ace = Windows::Security::INHERITED_ACE
+        inherited_ace = Puppet::Util::Windows::AccessControlEntry::INHERITED_ACE
 
         aces = get_aces_for_path_by_sid(path, sid)
         aces.should_not be_empty
 
         aces.any? do |ace|
-          ace.mask == Windows::File::FILE_ALL_ACCESS &&
+          ace.mask == Puppet::Util::Windows::File::FILE_ALL_ACCESS &&
             (ace.flags & inherited_ace) == inherited_ace
         end.should be_true
       end
@@ -1132,7 +1132,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
               system_aces.should_not be_empty
 
               system_aces.each do |ace|
-                ace.mask.should == Windows::File::FILE_GENERIC_READ
+                ace.mask.should == Puppet::Util::Windows::File::FILE_GENERIC_READ
               end
             end
 
@@ -1173,8 +1173,9 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
             sd = Puppet::Util::Windows::Security.get_security_descriptor(path)
             sd.dacl.allow(
               'S-1-1-0', #everyone
-              Windows::File::FILE_ALL_ACCESS,
-              Windows::File::OBJECT_INHERIT_ACE | Windows::File::CONTAINER_INHERIT_ACE)
+              Puppet::Util::Windows::File::FILE_ALL_ACCESS,
+              Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE |
+              Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE)
             Puppet::Util::Windows::Security.set_security_descriptor(path, sd)
           end
 
@@ -1252,7 +1253,7 @@ describe Puppet::Type.type(:file), :uses_checksums => true do
 
                 system_aces.each do |ace|
                   # unlike files, Puppet sets execute bit on directories that are readable
-                  ace.mask.should == Windows::File::FILE_GENERIC_READ | Windows::File::FILE_GENERIC_EXECUTE
+                  ace.mask.should == Puppet::Util::Windows::File::FILE_GENERIC_READ | Puppet::Util::Windows::File::FILE_GENERIC_EXECUTE
                 end
               end
 
