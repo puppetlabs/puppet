@@ -6,13 +6,8 @@ require 'win32/dir'
 require 'win32/process'
 require 'win32/eventlog'
 
-require 'windows/synchronize'
-require 'windows/handle'
-
 class WindowsDaemon < Win32::Daemon
-  include Windows::Synchronize
-  include Windows::Handle
-  include Windows::Process
+  CREATE_NEW_CONSOLE          = 0x00000010
 
   @LOG_TO_FILE = false
   LOG_FILE =  File.expand_path(File.join(Dir::COMMON_APPDATA, 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
@@ -77,7 +72,7 @@ class WindowsDaemon < Win32::Daemon
 
       if state == RUNNING or state == IDLE
         log_notice("Executing agent with arguments: #{args}")
-        pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => Process::CREATE_NEW_CONSOLE).process_id
+        pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => CREATE_NEW_CONSOLE).process_id
         log_debug("Process created: #{pid}")
       else
         log_debug("Service is paused.  Not invoking Puppet agent")

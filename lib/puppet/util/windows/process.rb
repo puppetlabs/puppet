@@ -18,17 +18,19 @@ module Puppet::Util::Windows::Process
       sleep(1)
     end
 
-    exit_status = FFI::MemoryPointer.new(:dword, 1)
-    if GetExitCodeProcess(handle, exit_status) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Failed to get child process exit code")
-    end
-    exit_status = exit_status.read_dword
+    exit_status = -1
+    FFI::MemoryPointer.new(:dword, 1) do |exit_status_ptr|
+      if GetExitCodeProcess(handle, exit_status_ptr) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Failed to get child process exit code")
+      end
+      exit_status = exit_status_ptr.read_dword
 
-    # $CHILD_STATUS is not set when calling win32/process Process.create
-    # and since it's read-only, we can't set it. But we can execute a
-    # a shell that simply returns the desired exit status, which has the
-    # desired effect.
-    %x{#{ENV['COMSPEC']} /c exit #{exit_status}}
+      # $CHILD_STATUS is not set when calling win32/process Process.create
+      # and since it's read-only, we can't set it. But we can execute a
+      # a shell that simply returns the desired exit status, which has the
+      # desired effect.
+      %x{#{ENV['COMSPEC']} /c exit #{exit_status}}
+    end
 
     exit_status
   end
@@ -40,59 +42,90 @@ module Puppet::Util::Windows::Process
   end
   module_function :get_current_process
 
-  def open_process_token(handle, desired_access)
-    token_handle_ptr = FFI::MemoryPointer.new(:handle, 1)
-    result = OpenProcessToken(handle, desired_access, token_handle_ptr)
-    if result == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new(
-        "OpenProcessToken(#{handle}, #{desired_access.to_s(8)}, #{token_handle_ptr})")
+  def open_process_token(handle, desired_access, &block)
+    token_handle = nil
+    begin
+      FFI::MemoryPointer.new(:handle, 1) do |token_handle_ptr|
+        result = OpenProcessToken(handle, desired_access, token_handle_ptr)
+        if result == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new(
+            "OpenProcessToken(#{handle}, #{desired_access.to_s(8)}, #{token_handle_ptr})")
+        end
+
+        yield token_handle = token_handle_ptr.read_handle
+      end
+
+      token_handle
+    ensure
+      FFI::WIN32.CloseHandle(token_handle) if token_handle
     end
 
-    begin
-      yield token_handle = token_handle_ptr.read_handle
-    ensure
-      CloseHandle(token_handle)
-    end
+    # token_handle has had CloseHandle called against it, so nothing to return
+    nil
   end
   module_function :open_process_token
 
-  def lookup_privilege_value(name, system_name = '')
-    luid = FFI::MemoryPointer.new(LUID.size)
-    result = LookupPrivilegeValueW(
-      wide_string(system_name),
-      wide_string(name.to_s),
-      luid
-      )
+  # Execute a block with the current process token
+  def with_process_token(access, &block)
+    handle = get_current_process
+    open_process_token(handle, access) do |token_handle|
+      yield token_handle
+    end
 
-    return LUID.new(luid) if result != FFI::WIN32_FALSE
-    raise Puppet::Util::Windows::Error.new(
-      "LookupPrivilegeValue(#{system_name}, #{name}, #{luid})")
+    # all handles have been closed, so nothing to safely return
+    nil
+  end
+  module_function :with_process_token
+
+  def lookup_privilege_value(name, system_name = '', &block)
+    FFI::MemoryPointer.new(LUID.size) do |luid_ptr|
+      result = LookupPrivilegeValueW(
+        wide_string(system_name),
+        wide_string(name.to_s),
+        luid_ptr
+        )
+
+      if result == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new(
+          "LookupPrivilegeValue(#{system_name}, #{name}, #{luid_ptr})")
+      end
+
+      yield LUID.new(luid_ptr)
+    end
+
+    # the underlying MemoryPointer for LUID is cleaned up by this point
+    nil
   end
   module_function :lookup_privilege_value
 
-  def get_token_information(token_handle, token_information)
+  def get_token_information(token_handle, token_information, &block)
     # to determine buffer size
-    return_length_ptr = FFI::MemoryPointer.new(:dword, 1)
-    result = GetTokenInformation(token_handle, token_information, nil, 0, return_length_ptr)
-    return_length = return_length_ptr.read_dword
+    FFI::MemoryPointer.new(:dword, 1) do |return_length_ptr|
+      result = GetTokenInformation(token_handle, token_information, nil, 0, return_length_ptr)
+      return_length = return_length_ptr.read_dword
 
-    if return_length <= 0
-      raise Puppet::Util::Windows::Error.new(
-        "GetTokenInformation(#{token_handle}, #{token_information}, nil, 0, #{return_length_ptr})")
+      if return_length <= 0
+        raise Puppet::Util::Windows::Error.new(
+          "GetTokenInformation(#{token_handle}, #{token_information}, nil, 0, #{return_length_ptr})")
+      end
+
+      # re-call API with properly sized buffer for all results
+      FFI::MemoryPointer.new(return_length) do |token_information_buf|
+        result = GetTokenInformation(token_handle, token_information,
+          token_information_buf, return_length, return_length_ptr)
+
+        if result == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new(
+            "GetTokenInformation(#{token_handle}, #{token_information}, #{token_information_buf}, " +
+              "#{return_length}, #{return_length_ptr})")
+        end
+
+        yield token_information_buf
+      end
     end
 
-    # re-call API with properly sized buffer for all results
-    token_information_buf = FFI::MemoryPointer.new(return_length)
-    result = GetTokenInformation(token_handle, token_information,
-      token_information_buf, return_length, return_length_ptr)
-
-    if result == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new(
-        "GetTokenInformation(#{token_handle}, #{token_information}, #{token_information_buf}, " +
-          "#{return_length}, #{return_length_ptr})")
-    end
-
-    token_information_buf
+    # GetTokenInformation buffer has been cleaned up by this point, nothing to return
+    nil
   end
   module_function :get_token_information
 
@@ -120,13 +153,18 @@ module Puppet::Util::Windows::Process
   TOKEN_ALL_ACCESS = 0xF01FF
   ERROR_NO_SUCH_PRIVILEGE = 1313
   def process_privilege_symlink?
+    privilege_symlink = false
     handle = get_current_process
     open_process_token(handle, TOKEN_ALL_ACCESS) do |token_handle|
-      luid = lookup_privilege_value('SeCreateSymbolicLinkPrivilege')
-      token_info = get_token_information(token_handle, :TokenPrivileges)
-      token_privileges = parse_token_information_as_token_privileges(token_info)
-      token_privileges[:privileges].any? { |p| p[:Luid].values == luid.values }
+      lookup_privilege_value('SeCreateSymbolicLinkPrivilege') do |luid|
+        get_token_information(token_handle, :TokenPrivileges) do |token_info|
+          token_privileges = parse_token_information_as_token_privileges(token_info)
+          privilege_symlink = token_privileges[:privileges].any? { |p| p[:Luid].values == luid.values }
+        end
+      end
     end
+
+    privilege_symlink
   rescue Puppet::Util::Windows::Error => e
     if e.code == ERROR_NO_SUCH_PRIVILEGE
       false # pre-Vista
@@ -143,24 +181,35 @@ module Puppet::Util::Windows::Process
   # Only supported on Windows Vista or later.
   #
   def elevated_security?
-    handle = get_current_process
-    open_process_token(handle, TOKEN_QUERY) do |token_handle|
-      token_info = get_token_information(token_handle, :TokenElevation)
-      token_elevation = parse_token_information_as_token_elevation(token_info)
-      # TokenIsElevated member of the TOKEN_ELEVATION struct
-      token_elevation[:TokenIsElevated] != 0
+    # default / pre-Vista
+    elevated = false
+    handle = nil
+
+    begin
+      handle = get_current_process
+      open_process_token(handle, TOKEN_QUERY) do |token_handle|
+        get_token_information(token_handle, :TokenElevation) do |token_info|
+          token_elevation = parse_token_information_as_token_elevation(token_info)
+          # TokenIsElevated member of the TOKEN_ELEVATION struct
+          elevated = token_elevation[:TokenIsElevated] != 0
+        end
+      end
+
+      elevated
+    rescue Puppet::Util::Windows::Error => e
+      raise e if e.code != ERROR_NO_SUCH_PRIVILEGE
+    ensure
+      FFI::WIN32.CloseHandle(handle) if handle
     end
-  rescue Puppet::Util::Windows::Error => e
-    if e.code == ERROR_NO_SUCH_PRIVILEGE
-      false # pre-Vista
-    else
-      raise e
-    end
-  ensure
-    CloseHandle(handle)
   end
   module_function :elevated_security?
 
+  ABOVE_NORMAL_PRIORITY_CLASS = 0x0008000
+  BELOW_NORMAL_PRIORITY_CLASS = 0x0004000
+  HIGH_PRIORITY_CLASS         = 0x0000080
+  IDLE_PRIORITY_CLASS         = 0x0000040
+  NORMAL_PRIORITY_CLASS       = 0x0000020
+  REALTIME_PRIORITY_CLASS     = 0x0000010
 
   ffi_convention :stdcall
 
@@ -186,13 +235,6 @@ module Puppet::Util::Windows::Process
   # HANDLE WINAPI GetCurrentProcess(void);
   ffi_lib :kernel32
   attach_function_private :GetCurrentProcess, [], :handle
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
-  # BOOL WINAPI CloseHandle(
-  #   _In_  HANDLE hObject
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CloseHandle, [:handle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379295(v=vs.85).aspx
   # BOOL WINAPI OpenProcessToken(

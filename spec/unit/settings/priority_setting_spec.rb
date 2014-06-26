@@ -53,10 +53,10 @@ describe Puppet::Settings::PrioritySetting do
     describe "on a Windows-like platform it", :if => Puppet::Util::Platform.windows? do
       it "parses high, normal, low, and idle priorities" do
         {
-          'high'   => Process::HIGH_PRIORITY_CLASS,
-          'normal' => Process::NORMAL_PRIORITY_CLASS,
-          'low'    => Process::BELOW_NORMAL_PRIORITY_CLASS,
-          'idle'   => Process::IDLE_PRIORITY_CLASS
+          'high'   => Puppet::Util::Windows::Process::HIGH_PRIORITY_CLASS,
+          'normal' => Puppet::Util::Windows::Process::NORMAL_PRIORITY_CLASS,
+          'low'    => Puppet::Util::Windows::Process::BELOW_NORMAL_PRIORITY_CLASS,
+          'idle'   => Puppet::Util::Windows::Process::IDLE_PRIORITY_CLASS
         }.each do |value, converted_value|
           setting.munge(value).should == converted_value
         end

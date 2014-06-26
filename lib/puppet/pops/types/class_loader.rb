@@ -9,8 +9,8 @@ class Puppet::Pops::Types::ClassLoader
 
   # Returns a Class given a fully qualified class name.
   # Lookup of class is never relative to the calling namespace.
-  # @param name [String, Array<String>, Array<Symbol>, Puppet::Pops::Types::PObjectType] A fully qualified
-  #   class name String (e.g. '::Foo::Bar', 'Foo::Bar'), a PObjectType, or a fully qualified name in Array form where each part
+  # @param name [String, Array<String>, Array<Symbol>, Puppet::Pops::Types::PAnyType] A fully qualified
+  #   class name String (e.g. '::Foo::Bar', 'Foo::Bar'), a PAnyType, or a fully qualified name in Array form where each part
   #   is either a String or a Symbol, e.g. `%w{Puppetx Puppetlabs SomeExtension}`.
   # @return [Class, nil] the looked up class or nil if no such class is loaded
   # @raise ArgumentError If the given argument has the wrong type
@@ -24,7 +24,7 @@ class Puppet::Pops::Types::ClassLoader
     when Array
       provide_from_name_path(name.join('::'), name)
 
-    when Puppet::Pops::Types::PObjectType, Puppet::Pops::Types::PType
+    when Puppet::Pops::Types::PAnyType, Puppet::Pops::Types::PType
       provide_from_type(name)
 
     else
@@ -44,7 +44,7 @@ class Puppet::Pops::Types::ClassLoader
       RGen::MetamodelBuilder::MMBase::Boolean
 
     when Puppet::Pops::Types::PType
-      # TODO: PType should have a type argument (a PObjectType)
+      # TODO: PType should have a type argument (a PAnyType)
       Class
 
     # Although not expected to be the first choice for getting a concrete class for these
@@ -52,7 +52,7 @@ class Puppet::Pops::Types::ClassLoader
     #
     when Puppet::Pops::Types::PArrayType   ; Array
     when Puppet::Pops::Types::PHashType    ; Hash
-    when Puppet::Pops::Types::PRegexpType ; Regexp
+    when Puppet::Pops::Types::PRegexpType  ; Regexp
     when Puppet::Pops::Types::PIntegerType ; Integer
     when Puppet::Pops::Types::PStringType  ; String
     when Puppet::Pops::Types::PFloatType   ; Float

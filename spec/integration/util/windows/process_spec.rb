@@ -20,9 +20,10 @@ describe "Puppet::Util::Windows::Process", :if => Puppet.features.microsoft_wind
     end
 
     it "should be able to lookup a standard Windows process privilege" do
-      luid = Puppet::Util::Windows::Process.lookup_privilege_value('SeShutdownPrivilege')
-      luid.should_not be_nil
-      luid.should be_instance_of(Puppet::Util::Windows::Process::LUID)
+      Puppet::Util::Windows::Process.lookup_privilege_value('SeShutdownPrivilege') do |luid|
+        luid.should_not be_nil
+        luid.should be_instance_of(Puppet::Util::Windows::Process::LUID)
+      end
     end
 
     it "should raise an error for an unknown privilege name" do

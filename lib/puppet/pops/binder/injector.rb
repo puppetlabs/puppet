@@ -205,7 +205,7 @@ class Puppet::Pops::Binder::Injector
   # @overload lookup(scope, type, name = '')
   #   (see #lookup_type)
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
-  #   @param type [Puppet::Pops::Types::PObjectType] the type of what to lookup
+  #   @param type [Puppet::Pops::Types::PAnyType] the type of what to lookup
   #   @param name [String] the name to use, defaults to empty string (for unnamed)
   #
   # @overload lookup(scope, name)
@@ -231,7 +231,7 @@ class Puppet::Pops::Binder::Injector
   # Creates a key for the type/name combination using a KeyFactory. Specialization of the Data type are transformed
   # to a Data key, and the result is type checked to conform with the given key.
   #
-  # @param type [Puppet::Pops::Types::PObjectType] the type to lookup as defined by Puppet::Pops::Types::TypeFactory
+  # @param type [Puppet::Pops::Types::PAnyType] the type to lookup as defined by Puppet::Pops::Types::TypeFactory
   # @param name [String] the (optional for non `Data` types) name of the entry to lookup.
   #   The name may be an empty String (the default), but not nil. The name is required for lookup for subtypes of
   #   `Data`.
@@ -275,7 +275,7 @@ class Puppet::Pops::Binder::Injector
   # @overload lookup_producer(scope, type, name = '')
   #   (see #lookup_type)
   #   @param scope [Puppet::Parser::Scope] the scope to use for evaluation
-  #   @param type [Puppet::Pops::Types::PObjectType], the type of what to lookup
+  #   @param type [Puppet::Pops::Types::PAnyType], the type of what to lookup
   #   @param name [String], the name to use, defaults to empty string (for unnamed)
   #
   # @overload lookup_producer(scope, name)
@@ -441,7 +441,7 @@ module Private
 
       val = case args[ 0 ]
 
-      when Puppet::Pops::Types::PObjectType
+      when Puppet::Pops::Types::PAnyType
         lookup_type(scope, *args)
 
       when String
@@ -570,7 +570,7 @@ module Private
       raise ArgumentError, "lookup_producer should be called with two or three arguments, got: #{args.size()+1}" unless args.size <= 2
 
       p = case args[ 0 ]
-      when Puppet::Pops::Types::PObjectType
+      when Puppet::Pops::Types::PAnyType
         lookup_producer_type(scope, *args)
 
       when String

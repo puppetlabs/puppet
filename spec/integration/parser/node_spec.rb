@@ -35,17 +35,6 @@ describe 'node statements' do
       expect(catalog).to have_resource('Notify[matched]')
     end
 
-    it 'includes the inherited nodes of the matching node' do
-      catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodename"))
-      node notmatched1 { notify { inherited: } }
-      node nodename inherits notmatched1 { notify { matched: } }
-      node notmatched2 { notify { ignored: } }
-      MANIFEST
-
-      expect(catalog).to have_resource('Notify[matched]')
-      expect(catalog).to have_resource('Notify[inherited]')
-    end
-
     it 'selects a node where one of the names matches' do
       catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodename"))
       node different, nodename, other { notify { matched: } }
@@ -140,6 +129,17 @@ describe 'node statements' do
 
     it_behaves_like 'nodes'
 
+    it 'includes the inherited nodes of the matching node' do
+      catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodename"))
+      node notmatched1 { notify { inherited: } }
+      node nodename inherits notmatched1 { notify { matched: } }
+      node notmatched2 { notify { ignored: } }
+      MANIFEST
+
+      expect(catalog).to have_resource('Notify[matched]')
+      expect(catalog).to have_resource('Notify[inherited]')
+    end
+
     it 'raises deprecation warning for node inheritance for 3x parser' do
       Puppet.expects(:warning).at_least_once
       Puppet.expects(:warning).with(regexp_matches(/Deprecation notice\: Node inheritance is not supported in Puppet >= 4\.0\.0/))
@@ -149,7 +149,6 @@ describe 'node statements' do
         node '1.2.3.4' inherits default {  }
       MANIFEST
     end
-
   end
 
   describe 'using future parser' do
@@ -173,13 +172,13 @@ describe 'node statements' do
       expect(catalog).to have_resource('Notify[matched]')
     end
 
-    it 'raises deprecation warning for node inheritance' do
-      Puppet.expects(:warning).at_least_once
-      Puppet.expects(:warning).with(regexp_matches(/Deprecation notice: Node inheritance is not supported in Puppet >= 4\.0\.0/))
-      catalog = compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodename"))
-      node default {}
-        node nodename inherits default {  }
-      MANIFEST
+    it 'raises error for node inheritance' do
+      expect do
+        compile_to_catalog(<<-MANIFEST, Puppet::Node.new("nodename"))
+        node default {}
+          node nodename inherits default {  }
+        MANIFEST
+      end.to raise_error(/Node inheritance is not supported in Puppet >= 4\.0\.0/)
     end
 
   end

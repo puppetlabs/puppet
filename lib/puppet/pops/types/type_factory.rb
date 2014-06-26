@@ -119,11 +119,11 @@ module Puppet::Pops::Types::TypeFactory
     Types::PBooleanType.new()
   end
 
-  # Produces the Object type
+  # Produces the Any type
   # @api public
   #
-  def self.object()
-    Types::PObjectType.new()
+  def self.any()
+    Types::PAnyType.new()
   end
 
   # Produces the Regexp type

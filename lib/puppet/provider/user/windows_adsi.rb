@@ -79,7 +79,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   end
 
   def uid
-    Puppet::Util::Windows::Security.name_to_sid(@resource[:name])
+    Puppet::Util::Windows::SID.name_to_sid(@resource[:name])
   end
 
   def uid=(value)

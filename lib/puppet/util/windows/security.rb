@@ -67,24 +67,8 @@ require 'ffi'
 
 require 'win32/security'
 
-require 'windows/file'
-require 'windows/handle'
-require 'windows/security'
-require 'windows/process'
-require 'windows/memory'
-require 'windows/msvcrt/buffer'
-require 'windows/volume'
-
 module Puppet::Util::Windows::Security
-  include ::Windows::File
-  include ::Windows::Handle
-  include ::Windows::Security
-  include ::Windows::Process
-  include ::Windows::Memory
-  include ::Windows::MSVCRT::Buffer
-  include ::Windows::Volume
-
-  include Puppet::Util::Windows::SID
+  include Puppet::Util::Windows::String
 
   extend Puppet::Util::Windows::Security
   extend FFI::Library
@@ -111,6 +95,19 @@ module Puppet::Util::Windows::Security
   UNPROTECTED_DACL_SECURITY_INFORMATION = 0x20000000
   NO_INHERITANCE = 0x0
   SE_DACL_PROTECTED = 0x1000
+
+  FILE = Puppet::Util::Windows::File
+
+  SE_BACKUP_NAME              = 'SeBackupPrivilege'
+  SE_RESTORE_NAME             = 'SeRestorePrivilege'
+
+  READ_CONTROL                = 0x20000
+  WRITE_DAC                   = 0x40000
+  WRITE_OWNER                 = 0x80000
+
+  OWNER_SECURITY_INFORMATION  = 1
+  GROUP_SECURITY_INFORMATION  = 2
+  DACL_SECURITY_INFORMATION   = 4
 
   # Set the owner of the object referenced by +path+ to the specified
   # +owner_sid+.  The owner sid should be of the form "S-1-5-32-544"
@@ -162,51 +159,50 @@ module Puppet::Util::Windows::Security
     get_security_descriptor(path).group
   end
 
-  def supports_acl?(path)
-    flags = 0.chr * 4
+  FILE_PERSISTENT_ACLS           = 0x00000008
 
+  def supports_acl?(path)
+    supported = false
     root = Pathname.new(path).enum_for(:ascend).to_a.last.to_s
     # 'A trailing backslash is required'
     root = "#{root}\\" unless root =~ /[\/\\]$/
-    unless GetVolumeInformation(root, nil, 0, nil, nil, flags, nil, 0)
-      raise Puppet::Util::Windows::Error.new("Failed to get volume information")
+
+    FFI::MemoryPointer.new(:pointer, 1) do |flags_ptr|
+      if GetVolumeInformationW(wide_string(root), FFI::Pointer::NULL, 0,
+          FFI::Pointer::NULL, FFI::Pointer::NULL,
+          flags_ptr, FFI::Pointer::NULL, 0) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Failed to get volume information")
+      end
+      supported = flags_ptr.read_dword & FILE_PERSISTENT_ACLS == FILE_PERSISTENT_ACLS
     end
 
-    (flags.unpack('L')[0] & Windows::File::FILE_PERSISTENT_ACLS) != 0
+    supported
   end
 
   def get_attributes(path)
-    attributes = GetFileAttributes(path)
-
-    raise Puppet::Util::Windows::Error.new("Failed to get file attributes") if attributes == INVALID_FILE_ATTRIBUTES
-
-    attributes
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.get_attributes is deprecated; please use Puppet::Util::Windows::File.get_attributes')
+    FILE.get_attributes(file_name)
   end
 
   def add_attributes(path, flags)
-    oldattrs = get_attributes(path)
-
-    if (oldattrs | flags) != oldattrs
-      set_attributes(path, oldattrs | flags)
-    end
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.add_attributes is deprecated; please use Puppet::Util::Windows::File.add_attributes')
+    FILE.add_attributes(path, flags)
   end
 
   def remove_attributes(path, flags)
-    oldattrs = get_attributes(path)
-
-    if (oldattrs & ~flags) != oldattrs
-      set_attributes(path, oldattrs & ~flags)
-    end
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.remove_attributes is deprecated; please use Puppet::Util::Windows::File.remove_attributes')
+    FILE.remove_attributes(path, flags)
   end
 
   def set_attributes(path, flags)
-    raise Puppet::Util::Windows::Error.new("Failed to set file attributes") unless SetFileAttributes(path, flags)
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.set_attributes is deprecated; please use Puppet::Util::Windows::File.set_attributes')
+    FILE.set_attributes(path, flags)
   end
 
   MASK_TO_MODE = {
-    FILE_GENERIC_READ => S_IROTH,
-    FILE_GENERIC_WRITE => S_IWOTH,
-    (FILE_GENERIC_EXECUTE & ~FILE_READ_ATTRIBUTES) => S_IXOTH
+    FILE::FILE_GENERIC_READ => S_IROTH,
+    FILE::FILE_GENERIC_WRITE => S_IWOTH,
+    (FILE::FILE_GENERIC_EXECUTE & ~FILE::FILE_READ_ATTRIBUTES) => S_IXOTH
   }
 
   def get_aces_for_path_by_sid(path, sid)
@@ -251,11 +247,12 @@ module Puppet::Util::Windows::Security
             mode |= (v << 6) | (v << 3) | v
           end
         end
-        if File.directory?(path) && (ace.mask & (FILE_WRITE_DATA | FILE_EXECUTE | FILE_DELETE_CHILD)) == (FILE_WRITE_DATA | FILE_EXECUTE)
+        if File.directory?(path) &&
+          (ace.mask & (FILE::FILE_WRITE_DATA | FILE::FILE_EXECUTE | FILE::FILE_DELETE_CHILD)) == (FILE::FILE_WRITE_DATA | FILE::FILE_EXECUTE)
           mode |= S_ISVTX;
         end
       when well_known_nobody_sid
-        if (ace.mask & FILE_APPEND_DATA).nonzero?
+        if (ace.mask & FILE::FILE_APPEND_DATA).nonzero?
           mode |= S_ISVTX
         end
       when well_known_system_sid
@@ -280,9 +277,9 @@ module Puppet::Util::Windows::Security
   end
 
   MODE_TO_MASK = {
-    S_IROTH => FILE_GENERIC_READ,
-    S_IWOTH => FILE_GENERIC_WRITE,
-    S_IXOTH => (FILE_GENERIC_EXECUTE & ~FILE_READ_ATTRIBUTES),
+    S_IROTH => FILE::FILE_GENERIC_READ,
+    S_IWOTH => FILE::FILE_GENERIC_WRITE,
+    S_IXOTH => (FILE::FILE_GENERIC_EXECUTE & ~FILE::FILE_READ_ATTRIBUTES),
   }
 
   # Set the mode of the object referenced by +path+ to the specified
@@ -304,9 +301,15 @@ module Puppet::Util::Windows::Security
     well_known_nobody_sid = Win32::Security::SID::Nobody
     well_known_system_sid = Win32::Security::SID::LocalSystem
 
-    owner_allow = STANDARD_RIGHTS_ALL  | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES
-    group_allow = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | SYNCHRONIZE
-    other_allow = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | SYNCHRONIZE
+    owner_allow = FILE::STANDARD_RIGHTS_ALL  |
+      FILE::FILE_READ_ATTRIBUTES |
+      FILE::FILE_WRITE_ATTRIBUTES
+    group_allow = FILE::STANDARD_RIGHTS_READ |
+      FILE::FILE_READ_ATTRIBUTES |
+      FILE::SYNCHRONIZE
+    other_allow = FILE::STANDARD_RIGHTS_READ |
+      FILE::FILE_READ_ATTRIBUTES |
+      FILE::SYNCHRONIZE
     nobody_allow = 0
     system_allow = 0
 
@@ -323,27 +326,27 @@ module Puppet::Util::Windows::Security
     end
 
     if (mode & S_ISVTX).nonzero?
-      nobody_allow |= FILE_APPEND_DATA;
+      nobody_allow |= FILE::FILE_APPEND_DATA;
     end
 
     # caller is NOT managing SYSTEM by using group or owner, so set to FULL
     if ! [sd.owner, sd.group].include? well_known_system_sid
       # we don't check S_ISYSTEM_MISSING bit, but automatically carry over existing SYSTEM perms
       # by default set SYSTEM perms to full
-      system_allow = FILE_ALL_ACCESS
+      system_allow = FILE::FILE_ALL_ACCESS
     end
 
     isdir = File.directory?(path)
 
     if isdir
       if (mode & (S_IWUSR | S_IXUSR)) == (S_IWUSR | S_IXUSR)
-        owner_allow |= FILE_DELETE_CHILD
+        owner_allow |= FILE::FILE_DELETE_CHILD
       end
       if (mode & (S_IWGRP | S_IXGRP)) == (S_IWGRP | S_IXGRP) && (mode & S_ISVTX) == 0
-        group_allow |= FILE_DELETE_CHILD
+        group_allow |= FILE::FILE_DELETE_CHILD
       end
       if (mode & (S_IWOTH | S_IXOTH)) == (S_IWOTH | S_IXOTH) && (mode & S_ISVTX) == 0
-        other_allow |= FILE_DELETE_CHILD
+        other_allow |= FILE::FILE_DELETE_CHILD
       end
     end
 
@@ -355,8 +358,8 @@ module Puppet::Util::Windows::Security
 
     # if any ACE allows write, then clear readonly bit, but do this before we overwrite
     # the DACl and lose our ability to set the attribute
-    if ((owner_allow | group_allow | other_allow ) & FILE_WRITE_DATA) == FILE_WRITE_DATA
-      remove_attributes(path, FILE_ATTRIBUTE_READONLY)
+    if ((owner_allow | group_allow | other_allow ) & FILE::FILE_WRITE_DATA) == FILE::FILE_WRITE_DATA
+      FILE.remove_attributes(path, FILE::FILE_ATTRIBUTE_READONLY)
     end
 
     dacl = Puppet::Util::Windows::AccessControlList.new
@@ -371,14 +374,15 @@ module Puppet::Util::Windows::Security
     dacl.allow(well_known_system_sid, system_allow)
 
     # add inherit-only aces for child dirs and files that are created within the dir
+    inherit_only = Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE
     if isdir
-      inherit = INHERIT_ONLY_ACE | CONTAINER_INHERIT_ACE
+      inherit = inherit_only | Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE
       dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow, inherit)
       dacl.allow(Win32::Security::SID::CreatorGroup, group_allow, inherit)
 
-      inherit = INHERIT_ONLY_ACE |  OBJECT_INHERIT_ACE
-      dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow & ~FILE_EXECUTE, inherit)
-      dacl.allow(Win32::Security::SID::CreatorGroup, group_allow & ~FILE_EXECUTE, inherit)
+      inherit = inherit_only | Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE
+      dacl.allow(Win32::Security::SID::CreatorOwner, owner_allow & ~FILE::FILE_EXECUTE, inherit)
+      dacl.allow(Win32::Security::SID::CreatorGroup, group_allow & ~FILE::FILE_EXECUTE, inherit)
     end
 
     new_sd = Puppet::Util::Windows::SecurityDescriptor.new(sd.owner, sd.group, dacl, protected)
@@ -387,49 +391,50 @@ module Puppet::Util::Windows::Security
     nil
   end
 
+  ACL_REVISION                   = 2
+
   def add_access_allowed_ace(acl, mask, sid, inherit = nil)
     inherit ||= NO_INHERITANCE
 
-    string_to_sid_ptr(sid) do |sid_ptr|
+    Puppet::Util::Windows::SID.string_to_sid_ptr(sid) do |sid_ptr|
       if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
 
-      unless AddAccessAllowedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr.address)
+      if AddAccessAllowedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
       end
     end
+
+    # ensure this method is void if it doesn't raise
+    nil
   end
 
   def add_access_denied_ace(acl, mask, sid, inherit = nil)
     inherit ||= NO_INHERITANCE
 
-    string_to_sid_ptr(sid) do |sid_ptr|
+    Puppet::Util::Windows::SID.string_to_sid_ptr(sid) do |sid_ptr|
       if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Invalid SID")
       end
 
-      unless AddAccessDeniedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr.address)
+      if AddAccessDeniedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr) == FFI::WIN32_FALSE
         raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
       end
     end
+
+    # ensure this method is void if it doesn't raise
+    nil
   end
 
   def parse_dacl(dacl_ptr)
     # REMIND: need to handle NULL DACL
-    raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(dacl_ptr)
+    if IsValidAcl(dacl_ptr) == FFI::WIN32_FALSE
+      raise Puppet::Util::Windows::Error.new("Invalid DACL")
+    end
 
-    # ACL structure, size and count are the important parts. The
-    # size includes both the ACL structure and all the ACEs.
-    #
-    # BYTE AclRevision
-    # BYTE Padding1
-    # WORD AclSize
-    # WORD AceCount
-    # WORD Padding2
-    acl_buf = 0.chr * 8
-    memcpy(acl_buf, dacl_ptr, acl_buf.size)
-    ace_count = acl_buf.unpack('CCSSS')[3]
+    dacl_struct = ACL.new(dacl_ptr)
+    ace_count = dacl_struct[:AceCount]
 
     dacl = Puppet::Util::Windows::AccessControlList.new
 
@@ -437,47 +442,32 @@ module Puppet::Util::Windows::Security
     return dacl if ace_count == 0
 
     0.upto(ace_count - 1) do |i|
-      ace_ptr = [0].pack('L')
+      FFI::MemoryPointer.new(:pointer, 1) do |ace_ptr|
 
-      next unless GetAce(dacl_ptr, i, ace_ptr)
+        next if GetAce(dacl_ptr, i, ace_ptr) == FFI::WIN32_FALSE
 
-      # ACE structures vary depending on the type. All structures
-      # begin with an ACE header, which specifies the type, flags
-      # and size of what follows. We are only concerned with
-      # ACCESS_ALLOWED_ACE and ACCESS_DENIED_ACEs, which have the
-      # same structure:
-      #
-      # BYTE  C AceType
-      # BYTE  C AceFlags
-      # WORD  S AceSize
-      # DWORD L ACCESS_MASK
-      # DWORD L Sid
-      # ..      ...
-      # DWORD L Sid
+        # ACE structures vary depending on the type. We are only concerned with
+        # ACCESS_ALLOWED_ACE and ACCESS_DENIED_ACEs, which have the same layout
+        ace = GENERIC_ACCESS_ACE.new(ace_ptr.get_pointer(0)) #deref LPVOID *
 
-      ace_buf = 0.chr * 8
-      memcpy(ace_buf, ace_ptr.unpack('L')[0], ace_buf.size)
-
-      ace_type, ace_flags, size, mask = ace_buf.unpack('CCSL')
-
-      case ace_type
-      when ACCESS_ALLOWED_ACE_TYPE
-
-        sid_ptr = FFI::Pointer.new(:pointer, ace_ptr.unpack('L')[0] + 8) # address of ace_ptr->SidStart
-        if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID")
+        ace_type = ace[:Header][:AceType]
+        if ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE &&
+          ace_type != Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
+          Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
+          next
         end
-        sid = sid_ptr_to_string(sid_ptr)
-        dacl.allow(sid, mask, ace_flags)
-      when ACCESS_DENIED_ACE_TYPE
-        sid_ptr = FFI::Pointer.new(:pointer, ace_ptr.unpack('L')[0] + 8) # address of ace_ptr->SidStart
-        if Puppet::Util::Windows::SID.IsValidSid(sid_ptr) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to read DACL, invalid SID")
+
+        # using pointer addition gives the FFI::Pointer a size, but that's OK here
+        sid = Puppet::Util::Windows::SID.sid_ptr_to_string(ace.pointer + GENERIC_ACCESS_ACE.offset_of(:SidStart))
+        mask = ace[:Mask]
+        ace_flags = ace[:Header][:AceFlags]
+
+        case ace_type
+        when Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE
+          dacl.allow(sid, mask, ace_flags)
+        when Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
+          dacl.deny(sid, mask, ace_flags)
         end
-        sid = sid_ptr_to_string(sid_ptr)
-        dacl.deny(sid, mask, ace_flags)
-      else
-        Puppet.warning "Unsupported access control entry type: 0x#{ace_type.to_s(16)}"
       end
     end
 
@@ -486,67 +476,82 @@ module Puppet::Util::Windows::Security
 
   # Open an existing file with the specified access mode, and execute a
   # block with the opened file HANDLE.
-  def open_file(path, access)
-    handle = CreateFile(
-             path,
+  def open_file(path, access, &block)
+    handle = CreateFileW(
+             wide_string(path),
              access,
-             FILE_SHARE_READ | FILE_SHARE_WRITE,
-             0, # security_attributes
-             OPEN_EXISTING,
-             FILE_FLAG_OPEN_REPARSE_POINT | FILE_FLAG_BACKUP_SEMANTICS,
-             0) # template
-    raise Puppet::Util::Windows::Error.new("Failed to open '#{path}'") if handle == INVALID_HANDLE_VALUE
+             FILE::FILE_SHARE_READ | FILE::FILE_SHARE_WRITE,
+             FFI::Pointer::NULL, # security_attributes
+             FILE::OPEN_EXISTING,
+             FILE::FILE_FLAG_OPEN_REPARSE_POINT | FILE::FILE_FLAG_BACKUP_SEMANTICS,
+             FFI::Pointer::NULL_HANDLE) # template
+
+    if handle == Puppet::Util::Windows::File::INVALID_HANDLE_VALUE
+      raise Puppet::Util::Windows::Error.new("Failed to open '#{path}'")
+    end
+
     begin
       yield handle
     ensure
-      CloseHandle(handle)
+      FFI::WIN32.CloseHandle(handle) if handle
     end
+
+    # handle has already had CloseHandle called against it, nothing to return
+    nil
   end
 
   # Execute a block with the specified privilege enabled
-  def with_privilege(privilege)
+  def with_privilege(privilege, &block)
     set_privilege(privilege, true)
     yield
   ensure
     set_privilege(privilege, false)
   end
 
+  SE_PRIVILEGE_ENABLED    = 0x00000002
+  TOKEN_ADJUST_PRIVILEGES = 0x0020
+
   # Enable or disable a privilege. Note this doesn't add any privileges the
   # user doesn't already has, it just enables privileges that are disabled.
   def set_privilege(privilege, enable)
     return unless Puppet.features.root?
 
-    with_process_token(TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY) do |token|
-      tmpLuid = 0.chr * 8
+    Puppet::Util::Windows::Process.with_process_token(TOKEN_ADJUST_PRIVILEGES) do |token|
+      Puppet::Util::Windows::Process.lookup_privilege_value(privilege) do |luid|
+        FFI::MemoryPointer.new(Puppet::Util::Windows::Process::LUID_AND_ATTRIBUTES.size) do |luid_and_attributes_ptr|
+          # allocate unmanaged memory for structs that we clean up afterwards
+          luid_and_attributes = Puppet::Util::Windows::Process::LUID_AND_ATTRIBUTES.new(luid_and_attributes_ptr)
+          luid_and_attributes[:Luid] = luid
+          luid_and_attributes[:Attributes] = enable ? SE_PRIVILEGE_ENABLED : 0
 
-      # Get the LUID for specified privilege.
-      unless LookupPrivilegeValue("", privilege, tmpLuid)
-        raise Puppet::Util::Windows::Error.new("Failed to lookup privilege")
-      end
+          FFI::MemoryPointer.new(Puppet::Util::Windows::Process::TOKEN_PRIVILEGES.size) do |token_privileges_ptr|
+            token_privileges = Puppet::Util::Windows::Process::TOKEN_PRIVILEGES.new(token_privileges_ptr)
+            token_privileges[:PrivilegeCount] = 1
+            token_privileges[:Privileges][0] = luid_and_attributes
 
-      # DWORD + [LUID + DWORD]
-      tkp = [1].pack('L') + tmpLuid + [enable ? SE_PRIVILEGE_ENABLED : 0].pack('L')
-
-      unless AdjustTokenPrivileges(token, 0, tkp, tkp.length , nil, nil)
-        raise Puppet::Util::Windows::Error.new("Failed to adjust process privileges")
+            # size is correct given we only have 1 LUID, otherwise would be:
+            # [:PrivilegeCount].size + [:PrivilegeCount] * LUID_AND_ATTRIBUTES.size
+            if AdjustTokenPrivileges(token, FFI::WIN32_FALSE,
+                token_privileges, token_privileges.size,
+                FFI::MemoryPointer::NULL, FFI::MemoryPointer::NULL) == FFI::WIN32_FALSE
+              raise Puppet::Util::Windows::Error.new("Failed to adjust process privileges")
+            end
+          end
+        end
       end
     end
+
+    # token / luid structs freed by this point, so return true as nothing raised
+    true
   end
 
-  # Execute a block with the current process token
-  def with_process_token(access)
-    token = 0.chr * 4
-
-    unless OpenProcessToken(GetCurrentProcess(), access, token)
-      raise Puppet::Util::Windows::Error.new("Failed to open process token")
-    end
-    begin
-      token = token.unpack('L')[0]
-
+  def with_process_token(access, &block)
+    Puppet.deprecation_warning('Puppet::Util::Windows::Security.with_process_token is deprecated; please use Puppet::Util::Windows::Process.with_process_token')
+    Puppet::Util::Windows::Process.with_process_token(access) do |token|
       yield token
-    ensure
-      CloseHandle(token)
     end
+
+    nil
   end
 
   def get_security_descriptor(path)
@@ -554,40 +559,43 @@ module Puppet::Util::Windows::Security
 
     with_privilege(SE_BACKUP_NAME) do
       open_file(path, READ_CONTROL) do |handle|
-        owner_sid = [0].pack('L')
-        group_sid = [0].pack('L')
-        dacl = [0].pack('L')
-        ppsd = [0].pack('L')
+        FFI::MemoryPointer.new(:pointer, 1) do |owner_sid_ptr_ptr|
+          FFI::MemoryPointer.new(:pointer, 1) do |group_sid_ptr_ptr|
+            FFI::MemoryPointer.new(:pointer, 1) do |dacl_ptr_ptr|
+              FFI::MemoryPointer.new(:pointer, 1) do |sd_ptr_ptr|
 
-        rv = GetSecurityInfo(
-          handle,
-          SE_FILE_OBJECT,
-          OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-          owner_sid,
-          group_sid,
-          dacl,
-          nil, #sacl
-          ppsd) #sec desc
-        raise Puppet::Util::Windows::Error.new("Failed to get security information") unless rv == ERROR_SUCCESS
+                rv = GetSecurityInfo(
+                  handle,
+                  :SE_FILE_OBJECT,
+                  OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                  owner_sid_ptr_ptr,
+                  group_sid_ptr_ptr,
+                  dacl_ptr_ptr,
+                  FFI::Pointer::NULL, #sacl
+                  sd_ptr_ptr) #sec desc
+                raise Puppet::Util::Windows::Error.new("Failed to get security information") if rv != FFI::ERROR_SUCCESS
 
-        begin
-          owner = sid_ptr_to_string(FFI::Pointer.new(:pointer, owner_sid.unpack('L')[0]))
-          group = sid_ptr_to_string(FFI::Pointer.new(:pointer, group_sid.unpack('L')[0]))
+                # these 2 convenience params are not freed since they point inside sd_ptr
+                owner = Puppet::Util::Windows::SID.sid_ptr_to_string(owner_sid_ptr_ptr.get_pointer(0))
+                group = Puppet::Util::Windows::SID.sid_ptr_to_string(group_sid_ptr_ptr.get_pointer(0))
 
-          control = FFI::MemoryPointer.new(:word, 1)
-          revision = FFI::MemoryPointer.new(:dword, 1)
-          ffsd = FFI::Pointer.new(:pointer, ppsd.unpack('L')[0])
+                FFI::MemoryPointer.new(:word, 1) do |control|
+                  FFI::MemoryPointer.new(:dword, 1) do |revision|
+                    sd_ptr_ptr.read_win32_local_pointer do |sd_ptr|
 
-          if GetSecurityDescriptorControl(ffsd, control, revision) == FFI::WIN32_FALSE
-            raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
+                      if GetSecurityDescriptorControl(sd_ptr, control, revision) == FFI::WIN32_FALSE
+                        raise Puppet::Util::Windows::Error.new("Failed to get security descriptor control")
+                      end
+
+                      protect = (control.read_word & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
+                      dacl = parse_dacl(dacl_ptr_ptr.get_pointer(0))
+                      sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
+                    end
+                  end
+                end
+              end
+            end
           end
-
-          protect = (control.read_uint16 & SE_DACL_PROTECTED) == SE_DACL_PROTECTED
-
-          dacl = parse_dacl(dacl.unpack('L')[0])
-          sd = Puppet::Util::Windows::SecurityDescriptor.new(owner, group, dacl, protect)
-        ensure
-          LocalFree(ppsd.unpack('L')[0])
         end
       end
     end
@@ -595,56 +603,241 @@ module Puppet::Util::Windows::Security
     sd
   end
 
+  def get_max_generic_acl_size(ace_count)
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
+    # To calculate the initial size of an ACL, add the following together, and then align the result to the nearest DWORD:
+    # * Size of the ACL structure.
+    # * Size of each ACE structure that the ACL is to contain minus the SidStart member (DWORD) of the ACE.
+    # * Length of the SID that each ACE is to contain.
+    ACL.size + ace_count * MAXIMUM_GENERIC_ACE_SIZE
+  end
+
   # setting DACL requires both READ_CONTROL and WRITE_DACL access rights,
   # and their respective privileges, SE_BACKUP_NAME and SE_RESTORE_NAME.
   def set_security_descriptor(path, sd)
-    # REMIND: FFI
-    acl = 0.chr * 1024 # This can be increased later as neede
-    unless InitializeAcl(acl, acl.size, ACL_REVISION)
-      raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
-    end
+    FFI::MemoryPointer.new(:byte, get_max_generic_acl_size(sd.dacl.count)) do |acl_ptr|
+      if InitializeAcl(acl_ptr, acl_ptr.size, ACL_REVISION) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
+      end
 
-    raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(acl)
+      if IsValidAcl(acl_ptr) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Invalid DACL")
+      end
 
-    with_privilege(SE_BACKUP_NAME) do
-      with_privilege(SE_RESTORE_NAME) do
-        open_file(path, READ_CONTROL | WRITE_DAC | WRITE_OWNER) do |handle|
-          string_to_sid_ptr(sd.owner) do |ownersid|
-            string_to_sid_ptr(sd.group) do |groupsid|
-              sd.dacl.each do |ace|
-                case ace.type
-                when ACCESS_ALLOWED_ACE_TYPE
-                  #puts "ace: allow, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
-                  add_access_allowed_ace(acl, ace.mask, ace.sid, ace.flags)
-                when ACCESS_DENIED_ACE_TYPE
-                  #puts "ace: deny, sid #{sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
-                  add_access_denied_ace(acl, ace.mask, ace.sid, ace.flags)
-                else
-                  raise "We should never get here"
-                  # TODO: this should have been a warning in an earlier commit
+      with_privilege(SE_BACKUP_NAME) do
+        with_privilege(SE_RESTORE_NAME) do
+          open_file(path, READ_CONTROL | WRITE_DAC | WRITE_OWNER) do |handle|
+            Puppet::Util::Windows::SID.string_to_sid_ptr(sd.owner) do |owner_sid_ptr|
+              Puppet::Util::Windows::SID.string_to_sid_ptr(sd.group) do |group_sid_ptr|
+                sd.dacl.each do |ace|
+                  case ace.type
+                  when Puppet::Util::Windows::AccessControlEntry::ACCESS_ALLOWED_ACE_TYPE
+                    #puts "ace: allow, sid #{Puppet::Util::Windows::SID.sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
+                    add_access_allowed_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
+                  when Puppet::Util::Windows::AccessControlEntry::ACCESS_DENIED_ACE_TYPE
+                    #puts "ace: deny, sid #{Puppet::Util::Windows::SID.sid_to_name(ace.sid)}, mask 0x#{ace.mask.to_s(16)}"
+                    add_access_denied_ace(acl_ptr, ace.mask, ace.sid, ace.flags)
+                  else
+                    raise "We should never get here"
+                    # TODO: this should have been a warning in an earlier commit
+                  end
+                end
+
+                # protected means the object does not inherit aces from its parent
+                flags = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION
+                flags |= sd.protect ? PROTECTED_DACL_SECURITY_INFORMATION : UNPROTECTED_DACL_SECURITY_INFORMATION
+
+                rv = SetSecurityInfo(handle,
+                                     :SE_FILE_OBJECT,
+                                     flags,
+                                     owner_sid_ptr,
+                                     group_sid_ptr,
+                                     acl_ptr,
+                                     FFI::MemoryPointer::NULL)
+
+                if rv != FFI::ERROR_SUCCESS
+                  raise Puppet::Util::Windows::Error.new("Failed to set security information")
                 end
               end
-
-              # protected means the object does not inherit aces from its parent
-              flags = OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION
-              flags |= sd.protect ? PROTECTED_DACL_SECURITY_INFORMATION : UNPROTECTED_DACL_SECURITY_INFORMATION
-
-              rv = SetSecurityInfo(handle,
-                                   SE_FILE_OBJECT,
-                                   flags,
-                                   ownersid.address,
-                                   groupsid.address,
-                                   acl,
-                                   nil)
-              raise Puppet::Util::Windows::Error.new("Failed to set security information") unless rv == ERROR_SUCCESS
             end
           end
         end
       end
     end
+
+    def name_to_sid(name)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.name_to_sid is deprecated; please use Puppet::Util::Windows::SID.name_to_sid')
+      Puppet::Util::Windows::SID.name_to_sid(name)
+    end
+
+    def name_to_sid_object(name)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.name_to_sid_object is deprecated; please use Puppet::Util::Windows::SID.name_to_sid_object')
+      Puppet::Util::Windows::SID.name_to_sid_object(name)
+    end
+
+    def octet_string_to_sid_object(bytes)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.octet_string_to_sid_object is deprecated; please use Puppet::Util::Windows::SID.octet_string_to_sid_object')
+      Puppet::Util::Windows::SID.octet_string_to_sid_object(bytes)
+    end
+
+    def sid_to_name(value)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.sid_to_name is deprecated; please use Puppet::Util::Windows::SID.sid_to_name')
+      Puppet::Util::Windows::SID.sid_to_name(value)
+    end
+
+    def sid_ptr_to_string(psid)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.sid_ptr_to_string is deprecated; please use Puppet::Util::Windows::SID.sid_ptr_to_string')
+      Puppet::Util::Windows::SID.sid_ptr_to_string(psid)
+    end
+
+    def string_to_sid_ptr(string_sid, &block)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.string_to_sid_ptr is deprecated; please use Puppet::Util::Windows::SID.string_to_sid_ptr')
+      Puppet::Util::Windows::SID.string_to_sid_ptr(string_sid, &block)
+    end
+
+    def valid_sid?(string_sid)
+      Puppet.deprecation_warning('Puppet::Util::Windows::Security.valid_sid? is deprecated; please use Puppet::Util::Windows::SID.valid_sid?')
+      Puppet::Util::Windows::SID.valid_sid?(string_sid)
+    end
   end
 
   ffi_convention :stdcall
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa363858(v=vs.85).aspx
+  # HANDLE WINAPI CreateFile(
+  #   _In_      LPCTSTR lpFileName,
+  #   _In_      DWORD dwDesiredAccess,
+  #   _In_      DWORD dwShareMode,
+  #   _In_opt_  LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+  #   _In_      DWORD dwCreationDisposition,
+  #   _In_      DWORD dwFlagsAndAttributes,
+  #   _In_opt_  HANDLE hTemplateFile
+  # );
+  ffi_lib :kernel32
+  attach_function_private :CreateFileW,
+    [:lpcwstr, :dword, :dword, :pointer, :dword, :dword, :handle], :handle
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa364993(v=vs.85).aspx
+  # BOOL WINAPI GetVolumeInformation(
+  #   _In_opt_   LPCTSTR lpRootPathName,
+  #   _Out_opt_  LPTSTR lpVolumeNameBuffer,
+  #   _In_       DWORD nVolumeNameSize,
+  #   _Out_opt_  LPDWORD lpVolumeSerialNumber,
+  #   _Out_opt_  LPDWORD lpMaximumComponentLength,
+  #   _Out_opt_  LPDWORD lpFileSystemFlags,
+  #   _Out_opt_  LPTSTR lpFileSystemNameBuffer,
+  #   _In_       DWORD nFileSystemNameSize
+  # );
+  ffi_lib :kernel32
+  attach_function_private :GetVolumeInformationW,
+    [:lpcwstr, :lpwstr, :dword, :lpdword, :lpdword, :lpdword, :lpwstr, :dword], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374951(v=vs.85).aspx
+  # BOOL WINAPI AddAccessAllowedAceEx(
+  #   _Inout_  PACL pAcl,
+  #   _In_     DWORD dwAceRevision,
+  #   _In_     DWORD AceFlags,
+  #   _In_     DWORD AccessMask,
+  #   _In_     PSID pSid
+  # );
+  ffi_lib :advapi32
+  attach_function_private :AddAccessAllowedAceEx,
+    [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374964(v=vs.85).aspx
+  # BOOL WINAPI AddAccessDeniedAceEx(
+  #   _Inout_  PACL pAcl,
+  #   _In_     DWORD dwAceRevision,
+  #   _In_     DWORD AceFlags,
+  #   _In_     DWORD AccessMask,
+  #   _In_     PSID pSid
+  # );
+  ffi_lib :advapi32
+  attach_function_private :AddAccessDeniedAceEx,
+    [:pointer, :dword, :dword, :dword, :pointer], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374931(v=vs.85).aspx
+  # typedef struct _ACL {
+  #   BYTE AclRevision;
+  #   BYTE Sbz1;
+  #   WORD AclSize;
+  #   WORD AceCount;
+  #   WORD Sbz2;
+  # } ACL, *PACL;
+  class ACL < FFI::Struct
+    layout :AclRevision, :byte,
+           :Sbz1, :byte,
+           :AclSize, :word,
+           :AceCount, :word,
+           :Sbz2, :word
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374912(v=vs.85).aspx
+  # ACE types
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374919(v=vs.85).aspx
+  # typedef struct _ACE_HEADER {
+  #   BYTE AceType;
+  #   BYTE AceFlags;
+  #   WORD AceSize;
+  # } ACE_HEADER, *PACE_HEADER;
+  class ACE_HEADER < FFI::Struct
+    layout :AceType, :byte,
+           :AceFlags, :byte,
+           :AceSize,  :word
+  end
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374892(v=vs.85).aspx
+  # ACCESS_MASK
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374847(v=vs.85).aspx
+  # typedef struct _ACCESS_ALLOWED_ACE {
+  #   ACE_HEADER  Header;
+  #   ACCESS_MASK Mask;
+  #   DWORD       SidStart;
+  # } ACCESS_ALLOWED_ACE, *PACCESS_ALLOWED_ACE;
+  #
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa374879(v=vs.85).aspx
+  # typedef struct _ACCESS_DENIED_ACE {
+  #   ACE_HEADER  Header;
+  #   ACCESS_MASK Mask;
+  #   DWORD       SidStart;
+  # } ACCESS_DENIED_ACE, *PACCESS_DENIED_ACE;
+  class GENERIC_ACCESS_ACE < FFI::Struct
+    # ACE structures must be aligned on DWORD boundaries. All Windows
+    # memory-management functions return DWORD-aligned handles to memory
+    pack 4
+    layout :Header, ACE_HEADER,
+           :Mask, :dword,
+           :SidStart, :dword
+  end
+
+  # http://stackoverflow.com/a/1792930
+  MAXIMUM_SID_BYTES_LENGTH = 68
+  MAXIMUM_GENERIC_ACE_SIZE = GENERIC_ACCESS_ACE.offset_of(:SidStart) +
+    MAXIMUM_SID_BYTES_LENGTH
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446634(v=vs.85).aspx
+  # BOOL WINAPI GetAce(
+  #   _In_   PACL pAcl,
+  #   _In_   DWORD dwAceIndex,
+  #   _Out_  LPVOID *pAce
+  # );
+  ffi_lib :advapi32
+  attach_function_private :GetAce,
+    [:pointer, :dword, :pointer], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa375202(v=vs.85).aspx
+  # BOOL WINAPI AdjustTokenPrivileges(
+  #   _In_       HANDLE TokenHandle,
+  #   _In_       BOOL DisableAllPrivileges,
+  #   _In_opt_   PTOKEN_PRIVILEGES NewState,
+  #   _In_       DWORD BufferLength,
+  #   _Out_opt_  PTOKEN_PRIVILEGES PreviousState,
+  #   _Out_opt_  PDWORD ReturnLength
+  # );
+  ffi_lib :advapi32
+  attach_function_private :AdjustTokenPrivileges,
+    [:handle, :win32_bool, :pointer, :dword, :pointer, :pdword], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/hardware/ff556610(v=vs.85).aspx
   # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379561(v=vs.85).aspx
@@ -658,4 +851,69 @@ module Puppet::Util::Windows::Security
   ffi_lib :advapi32
   attach_function_private :GetSecurityDescriptorControl,
     [:pointer, :lpword, :lpdword], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa378853(v=vs.85).aspx
+  # BOOL WINAPI InitializeAcl(
+  #   _Out_  PACL pAcl,
+  #   _In_   DWORD nAclLength,
+  #   _In_   DWORD dwAclRevision
+  # );
+  ffi_lib :advapi32
+  attach_function_private :InitializeAcl,
+    [:pointer, :dword, :dword], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379142(v=vs.85).aspx
+  # BOOL WINAPI IsValidAcl(
+  #   _In_  PACL pAcl
+  # );
+  ffi_lib :advapi32
+  attach_function_private :IsValidAcl,
+    [:pointer], :win32_bool
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379593(v=vs.85).aspx
+  SE_OBJECT_TYPE = enum(
+    :SE_UNKNOWN_OBJECT_TYPE, 0,
+    :SE_FILE_OBJECT,
+    :SE_SERVICE,
+    :SE_PRINTER,
+    :SE_REGISTRY_KEY,
+    :SE_LMSHARE,
+    :SE_KERNEL_OBJECT,
+    :SE_WINDOW_OBJECT,
+    :SE_DS_OBJECT,
+    :SE_DS_OBJECT_ALL,
+    :SE_PROVIDER_DEFINED_OBJECT,
+    :SE_WMIGUID_OBJECT,
+    :SE_REGISTRY_WOW64_32KEY
+  )
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446654(v=vs.85).aspx
+  # DWORD WINAPI GetSecurityInfo(
+  #   _In_       HANDLE handle,
+  #   _In_       SE_OBJECT_TYPE ObjectType,
+  #   _In_       SECURITY_INFORMATION SecurityInfo,
+  #   _Out_opt_  PSID *ppsidOwner,
+  #   _Out_opt_  PSID *ppsidGroup,
+  #   _Out_opt_  PACL *ppDacl,
+  #   _Out_opt_  PACL *ppSacl,
+  #   _Out_opt_  PSECURITY_DESCRIPTOR *ppSecurityDescriptor
+  # );
+  ffi_lib :advapi32
+  attach_function_private :GetSecurityInfo,
+    [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer, :pointer], :dword
+
+  # http://msdn.microsoft.com/en-us/library/windows/desktop/aa379588(v=vs.85).aspx
+  # DWORD WINAPI SetSecurityInfo(
+  #   _In_      HANDLE handle,
+  #   _In_      SE_OBJECT_TYPE ObjectType,
+  #   _In_      SECURITY_INFORMATION SecurityInfo,
+  #   _In_opt_  PSID psidOwner,
+  #   _In_opt_  PSID psidGroup,
+  #   _In_opt_  PACL pDacl,
+  #   _In_opt_  PACL pSacl
+  # );
+  ffi_lib :advapi32
+  # TODO: SECURITY_INFORMATION is actually a bitmask the size of a DWORD
+  attach_function_private :SetSecurityInfo,
+    [:handle, SE_OBJECT_TYPE, :dword, :pointer, :pointer, :pointer, :pointer], :dword
 end

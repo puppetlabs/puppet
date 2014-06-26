@@ -37,8 +37,8 @@ describe 'the assert_type function' do
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
 "function 'assert_type' called with mis-matched arguments
 expected one of:
-  assert_type(Type type, Object value, Callable[Object, Object] block {0,1}) - arg count {2,3}
-  assert_type(String type_string, Object value, Callable[Object, Object] block {0,1}) - arg count {2,3}
+  assert_type(Type type, Any value, Callable[Any, Any] block {0,1}) - arg count {2,3}
+  assert_type(String type_string, Any value, Callable[Any, Any] block {0,1}) - arg count {2,3}
 actual:
   assert_type(Integer, Integer) - arg count {2}")))
   end

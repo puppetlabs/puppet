@@ -68,9 +68,9 @@ class Puppet::Util::Windows::AccessControlList
           # granted or denied the old_sid. We mask off all
           # flags except those affecting inheritance of the
           # ACE we're creating.
-          inherit_mask = Windows::Security::CONTAINER_INHERIT_ACE |
-            Windows::Security::OBJECT_INHERIT_ACE |
-            Windows::Security::INHERIT_ONLY_ACE
+          inherit_mask = Puppet::Util::Windows::AccessControlEntry::CONTAINER_INHERIT_ACE |
+            Puppet::Util::Windows::AccessControlEntry::OBJECT_INHERIT_ACE |
+            Puppet::Util::Windows::AccessControlEntry::INHERIT_ONLY_ACE
           explicit_ace = Puppet::Util::Windows::AccessControlEntry.new(new_sid, ace.mask, ace.flags & inherit_mask, ace.type)
           aces_to_prepend << explicit_ace
         else
@@ -85,7 +85,7 @@ class Puppet::Util::Windows::AccessControlList
     @aces = []
 
     if prepend_needed
-      mask = Windows::Security::STANDARD_RIGHTS_ALL | Windows::Security::SPECIFIC_RIGHTS_ALL
+      mask = Puppet::Util::Windows::File::STANDARD_RIGHTS_ALL | Puppet::Util::Windows::File::SPECIFIC_RIGHTS_ALL
       ace = Puppet::Util::Windows::AccessControlEntry.new(
               Win32::Security::SID::LocalSystem,
               mask)

@@ -80,7 +80,7 @@
 #
 # If nothing is specified, the number of arguments given to the function must
 # be the same as the number of parameters, and all of the parameters are of
-# type 'Object'.
+# type 'Any'.
 #
 # To express that the last parameter captures the rest, the method
 # `last_captures_rest` can be called. This indicates that the last parameter is
@@ -179,7 +179,7 @@ module Puppet::Functions
     unless the_class.method_defined?(func_name)
       raise ArgumentError, "Function Creation Error, cannot create a default dispatcher for function '#{func_name}', no method with this name found"
     end
-    object_signature(*min_max_param(the_class.instance_method(func_name)))
+    any_signature(*min_max_param(the_class.instance_method(func_name)))
   end
 
   # @api private
@@ -211,11 +211,11 @@ module Puppet::Functions
   # (there is only one type entry).
   #
   # @api private
-  def self.object_signature(from, to, names)
+  def self.any_signature(from, to, names)
     # Construct the type for the signature
     # Tuple[Object, from, to]
     factory = Puppet::Pops::Types::TypeFactory
-    [factory.callable(factory.object, from, to), names]
+    [factory.callable(factory.any, from, to), names]
   end
 
   # Function

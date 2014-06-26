@@ -44,20 +44,21 @@ class Puppet::Util::Profiler::AroundProfiler
   # in the profiled hierachy.
   #
   # @param message [String] A description of the profiled event
+  # @param metric_id [Array] A list of strings making up the ID of a metric to profile
   # @param block [Block] The segment of code to profile
   # @api private
-  def profile(message)
+  def profile(message, metric_id = nil)
     retval = nil
     contexts = {}
     @profilers.each do |profiler|
-      contexts[profiler] = profiler.start(message)
+      contexts[profiler] = profiler.start(message, metric_id)
     end
 
     begin
       retval = yield
     ensure
       @profilers.each do |profiler|
-        profiler.finish(contexts[profiler], message)
+        profiler.finish(contexts[profiler], message, metric_id)
       end
     end
 

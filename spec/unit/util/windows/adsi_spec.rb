@@ -34,19 +34,19 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
 
   describe ".sid_for_account" do
     it "should return nil if the account does not exist" do
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('foobar').returns nil
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('foobar').returns nil
 
       Puppet::Util::Windows::ADSI.sid_for_account('foobar').should be_nil
     end
 
     it "should return a SID for a passed user or group name" do
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('testers').returns 'S-1-5-32-547'
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('testers').returns 'S-1-5-32-547'
 
       Puppet::Util::Windows::ADSI.sid_for_account('testers').should == 'S-1-5-32-547'
     end
 
     it "should return a SID for a passed fully-qualified user or group name" do
-      Puppet::Util::Windows::Security.expects(:name_to_sid).with('MACHINE\testers').returns 'S-1-5-32-547'
+      Puppet::Util::Windows::SID.expects(:name_to_sid).with('MACHINE\testers').returns 'S-1-5-32-547'
 
       Puppet::Util::Windows::ADSI.sid_for_account('MACHINE\testers').should == 'S-1-5-32-547'
     end
@@ -204,7 +204,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       end
 
       it "should generate the correct URI" do
-        Puppet::Util::Windows::Security.stubs(:octet_string_to_sid_object).returns(sid)
+        Puppet::Util::Windows::SID.stubs(:octet_string_to_sid_object).returns(sid)
         user.uri.should == "WinNT://testcomputername/#{username},user"
       end
 
@@ -212,7 +212,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         let(:groups_to_set) { 'group1,group2' }
 
         before(:each) do
-          Puppet::Util::Windows::Security.stubs(:octet_string_to_sid_object).returns(sid)
+          Puppet::Util::Windows::SID.stubs(:octet_string_to_sid_object).returns(sid)
           user.expects(:groups).returns ['group2', 'group3']
         end
 
@@ -258,7 +258,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       it "should be able to add a member (deprecated)" do
         Puppet.expects(:deprecation_warning).with('Puppet::Util::Windows::ADSI::Group#add_members is deprecated; please use Puppet::Util::Windows::ADSI::Group#add_member_sids')
 
-        Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('someone').returns(someone_sid)
+        Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('someone').returns(someone_sid)
         Puppet::Util::Windows::ADSI.expects(:sid_uri).with(someone_sid).returns("WinNT://testcomputername/someone,user")
 
         adsi_group.expects(:Add).with("WinNT://testcomputername/someone,user")
@@ -275,7 +275,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       it "should be able to remove a member (deprecated)" do
         Puppet.expects(:deprecation_warning).with('Puppet::Util::Windows::ADSI::Group#remove_members is deprecated; please use Puppet::Util::Windows::ADSI::Group#remove_member_sids')
 
-        Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('someone').returns(someone_sid)
+        Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('someone').returns(someone_sid)
         Puppet::Util::Windows::ADSI.expects(:sid_uri).with(someone_sid).returns("WinNT://testcomputername/someone,user")
 
         adsi_group.expects(:Remove).with("WinNT://testcomputername/someone,user")
@@ -290,7 +290,7 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
       end
 
       describe "should be able to use SID objects" do
-        let(:system)     { Puppet::Util::Windows::Security.name_to_sid_object('SYSTEM') }
+        let(:system)     { Puppet::Util::Windows::SID.name_to_sid_object('SYSTEM') }
 
         it "to add a member" do
           adsi_group.expects(:Add).with("WinNT://S-1-5-18")
@@ -324,11 +324,11 @@ describe Puppet::Util::Windows::ADSI, :if => Puppet.features.microsoft_windows? 
         ]
 
         # use stubbed objectSid on member to return stubbed SID
-        Puppet::Util::Windows::Security.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
-        Puppet::Util::Windows::Security.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
+        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([0]).returns(sids[0])
+        Puppet::Util::Windows::SID.expects(:octet_string_to_sid_object).with([1]).returns(sids[1])
 
-        Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('user2').returns(sids[1])
-        Puppet::Util::Windows::Security.expects(:name_to_sid_object).with('DOMAIN2\user3').returns(sids[2])
+        Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('user2').returns(sids[1])
+        Puppet::Util::Windows::SID.expects(:name_to_sid_object).with('DOMAIN2\user3').returns(sids[2])
 
         Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[0]).returns("WinNT://DOMAIN/user1,user")
         Puppet::Util::Windows::ADSI.expects(:sid_uri).with(sids[2]).returns("WinNT://DOMAIN2/user3,user")

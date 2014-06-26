@@ -37,7 +37,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
 
     # The evaluation of the 3x function creation source should result in a call to the legacy_newfunction
     #
-    created = eval(ruby_code_string)
+    created = eval(ruby_code_string, nil, source_ref, 1)
     unless created.is_a?(Class)
       raise ArgumentError, "The code loaded from #{source_ref} did not produce a Function class when evaluated. Got '#{created.class}'"
     end
@@ -98,7 +98,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       # Define a dispatch that performs argument type/count checking
       #
       dispatch :__relay__call__ do
-        param 'Object', 'args'
+        param 'Any', 'args'
         # Specify arg count (transformed from 3x function arity specification).
         arg_count(min_arg_count, max_arg_count)
       end

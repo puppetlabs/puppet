@@ -39,9 +39,10 @@ describe provider_class do
 
   describe 'provider features' do
     it { should be_installable }
-    it { should be_uninstallable }
     it { should be_install_options }
+    it { should be_uninstallable }
     it { should be_uninstall_options }
+    it { should be_upgradeable }
     it { should be_versionable }
   end
 
@@ -77,7 +78,7 @@ describe provider_class do
       instances = provider_class.instances.map {|p| {:name => p.get(:name),
         :ensure => p.get(:ensure), :flavor => p.get(:flavor)}}
       instances.size.should == 2
-      instances[0].should == {:name => 'bash', :ensure => '3.1.17',  :flavor => 'static'}
+      instances[0].should == {:name => 'bash', :ensure => '3.1.17', :flavor => 'static'}
       instances[1].should == {:name => 'vim',  :ensure => '7.0.42', :flavor => 'no_x11'}
     end
   end
@@ -108,7 +109,7 @@ describe provider_class do
     end
 
     it "should install correctly when given a directory-unlike source" do
-      source = '/whatever.pkg'
+      source = '/whatever.tgz'
       provider.resource[:source] = source
       expect_pkgadd_with_source(source)
 

@@ -34,14 +34,16 @@ module Puppet::Util::Windows::ADSI
     def computer_name
       unless @computer_name
         max_length = MAX_COMPUTERNAME_LENGTH + 1 # NULL terminated
-        buffer = FFI::MemoryPointer.new(max_length * 2) # wide string
-        buffer_size = FFI::MemoryPointer.new(:dword, 1)
-        buffer_size.write_dword(max_length) # length in TCHARs
+        FFI::MemoryPointer.new(max_length * 2) do |buffer| # wide string
+          FFI::MemoryPointer.new(:dword, 1) do |buffer_size|
+            buffer_size.write_dword(max_length) # length in TCHARs
 
-        if GetComputerNameW(buffer, buffer_size) == FFI::WIN32_FALSE
-          raise Puppet::Util::Windows::Error.new("Failed to get computer name")
+            if GetComputerNameW(buffer, buffer_size) == FFI::WIN32_FALSE
+              raise Puppet::Util::Windows::Error.new("Failed to get computer name")
+            end
+            @computer_name = buffer.read_wide_string(buffer_size.read_dword)
+          end
         end
-        @computer_name = buffer.read_wide_string(buffer_size.read_dword)
       end
       @computer_name
     end
@@ -61,8 +63,8 @@ module Puppet::Util::Windows::ADSI
       begin
         sid = Win32::Security::SID.new(Win32::Security::SID.string_to_sid(sid))
         sid_uri(sid)
-      rescue Win32::Security::SID::Error
-        return nil
+      rescue SystemCallError
+        nil
       end
     end
 
@@ -86,7 +88,7 @@ module Puppet::Util::Windows::ADSI
     def sid_for_account(name)
       Puppet.deprecation_warning "Puppet::Util::Windows::ADSI.sid_for_account is deprecated and will be removed in 3.0, use Puppet::Util::Windows::SID.name_to_sid instead."
 
-      Puppet::Util::Windows::Security.name_to_sid(name)
+      Puppet::Util::Windows::SID.name_to_sid(name)
     end
 
     ffi_convention :stdcall
@@ -128,7 +130,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def sid
-      @sid ||= Puppet::Util::Windows::Security.octet_string_to_sid_object(native_user.objectSID)
+      @sid ||= Puppet::Util::Windows::SID.octet_string_to_sid_object(native_user.objectSID)
     end
 
     def self.uri(name, host = '.')
@@ -300,7 +302,7 @@ module Puppet::Util::Windows::ADSI
       return [] if names.nil? or names.empty?
 
       sids = names.map do |name|
-        sid = Puppet::Util::Windows::Security.name_to_sid_object(name)
+        sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
         raise Puppet::Error.new( "Could not resolve username: #{name}" ) if !sid
         [sid.to_s, sid]
       end
@@ -344,7 +346,7 @@ module Puppet::Util::Windows::ADSI
     def member_sids
       sids = []
       native_group.Members.each do |m|
-        sids << Puppet::Util::Windows::Security.octet_string_to_sid_object(m.objectSID)
+        sids << Puppet::Util::Windows::SID.octet_string_to_sid_object(m.objectSID)
       end
       sids
     end

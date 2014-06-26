@@ -6,6 +6,7 @@ require 'puppet/network/http/api/v1'
 require 'puppet/network/authentication'
 require 'puppet/network/rights'
 require 'puppet/util/profiler'
+require 'puppet/util/profiler/aggregate'
 require 'resolv'
 
 module Puppet::Network::HTTP::Handler
@@ -58,7 +59,7 @@ module Puppet::Network::HTTP::Handler
     profiler = configure_profiler(request_headers, request_params)
     warn_if_near_expiration(new_request.client_cert)
 
-    Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}") do
+    Puppet::Util::Profiler.profile("Processed request #{request_method} #{request_path}", [:http, request_method, request_path]) do
       if route = @routes.find { |route| route.matches?(new_request) }
         route.process(new_request, new_response)
       else
@@ -175,11 +176,12 @@ module Puppet::Network::HTTP::Handler
 
   def configure_profiler(request_headers, request_params)
     if (request_headers.has_key?(Puppet::Network::HTTP::HEADER_ENABLE_PROFILING.downcase) or Puppet[:profile])
-      Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::WallClock.new(Puppet.method(:debug), request_params.object_id))
+      Puppet::Util::Profiler.add_profiler(Puppet::Util::Profiler::Aggregate.new(Puppet.method(:debug), request_params.object_id))
     end
   end
 
   def remove_profiler(profiler)
+    profiler.shutdown
     Puppet::Util::Profiler.remove_profiler(profiler)
   end
 end

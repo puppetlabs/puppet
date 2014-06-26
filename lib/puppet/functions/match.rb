@@ -19,12 +19,12 @@
 Puppet::Functions.create_function(:match) do
   dispatch :match do
     param 'String', 'string'
-    param 'Variant[Object, Type]', 'pattern'
+    param 'Variant[Any, Type]', 'pattern'
   end
 
   dispatch :enumerable_match do
     param 'Array[String]', 'string'
-    param 'Variant[Object, Type]', 'pattern'
+    param 'Variant[Any, Type]', 'pattern'
   end
 
   def initialize(closure_scope, loader)
@@ -48,7 +48,8 @@ Puppet::Functions.create_function(:match) do
   end
 
   # Matches given Array[String] against given pattern and returns an Array with mapped match results.
-  # @param string [Array<String>] the array of strings to match
+  #
+  # @param array [Array<String>] the array of strings to match
   # @param pattern [String, Regexp, Puppet::Pops::Types::PPatternType, Puppet::Pops::PRegexpType, Array] the pattern
   # @return [Array<Array<String, nil>>] Array with matches (see {#match}), non matching entries produce a nil entry
   #

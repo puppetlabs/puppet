@@ -56,6 +56,14 @@ module Puppet::ModuleTool
       return self
     end
 
+    # Provides an accessor for the now defunct 'description' property.  This
+    # addresses a regression in Puppet 3.6.x where previously valid templates
+    # refering to the 'description' property were broken.
+    # @deprecated
+    def description
+      @data['description']
+    end
+
     # Returns a hash of the module's metadata.  Used by Puppet's automated
     # serialization routines.
     #

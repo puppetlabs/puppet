@@ -24,31 +24,36 @@ module Puppet::Util::Windows::User
   SECURITY_MAX_SID_SIZE = 68
 
   def check_token_membership
-    sid_pointer = FFI::MemoryPointer.new(:byte, SECURITY_MAX_SID_SIZE)
-    size_pointer = FFI::MemoryPointer.new(:dword, 1)
-    size_pointer.write_uint32(SECURITY_MAX_SID_SIZE)
+    is_admin = false
+    FFI::MemoryPointer.new(:byte, SECURITY_MAX_SID_SIZE) do |sid_pointer|
+      FFI::MemoryPointer.new(:dword, 1) do |size_pointer|
+        size_pointer.write_uint32(SECURITY_MAX_SID_SIZE)
 
-    if CreateWellKnownSid(:WinBuiltinAdministratorsSid, FFI::Pointer::NULL, sid_pointer, size_pointer) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Failed to create administrators SID")
+        if CreateWellKnownSid(:WinBuiltinAdministratorsSid, FFI::Pointer::NULL, sid_pointer, size_pointer) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to create administrators SID")
+        end
+      end
+
+      if IsValidSid(sid_pointer) == FFI::WIN32_FALSE
+        raise Puppet::Util::Windows::Error.new("Invalid SID")
+      end
+
+      FFI::MemoryPointer.new(:win32_bool, 1) do |ismember_pointer|
+        if CheckTokenMembership(FFI::Pointer::NULL_HANDLE, sid_pointer, ismember_pointer) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to check membership")
+        end
+
+        # Is administrators SID enabled in calling thread's access token?
+        is_admin = ismember_pointer.read_win32_bool != FFI::WIN32_FALSE
+      end
     end
 
-    if IsValidSid(sid_pointer) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Invalid SID")
-    end
-
-    ismember_pointer = FFI::MemoryPointer.new(:win32_bool, 1)
-    if CheckTokenMembership(FFI::Pointer::NULL_HANDLE, sid_pointer, ismember_pointer) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Failed to check membership")
-    end
-
-    # Is administrators SID enabled in calling thread's access token?
-    ismember_pointer.read_win32_bool
+    is_admin
   end
   module_function :check_token_membership
 
   def password_is?(name, password)
-    logon_user(name, password)
-    true
+    logon_user(name, password) { |token| }
   rescue Puppet::Util::Windows::Error
     false
   end
@@ -58,37 +63,43 @@ module Puppet::Util::Windows::User
     fLOGON32_LOGON_NETWORK = 3
     fLOGON32_PROVIDER_DEFAULT = 0
 
-    token_pointer = FFI::MemoryPointer.new(:handle, 1)
-    if LogonUserW(wide_string(name), wide_string('.'), wide_string(password),
-        fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
-      raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
+    token = nil
+    begin
+      FFI::MemoryPointer.new(:handle, 1) do |token_pointer|
+        if LogonUserW(wide_string(name), wide_string('.'), wide_string(password),
+            fLOGON32_LOGON_NETWORK, fLOGON32_PROVIDER_DEFAULT, token_pointer) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to logon user #{name.inspect}")
+        end
+
+        yield token = token_pointer.read_handle
+      end
+    ensure
+      FFI::WIN32.CloseHandle(token) if token
     end
 
-    token = token_pointer.read_handle
-    begin
-      yield token if block_given?
-    ensure
-      CloseHandle(token)
-    end
+    # token has been closed by this point
+    true
   end
   module_function :logon_user
 
   def load_profile(user, password)
     logon_user(user, password) do |token|
-      pi = PROFILEINFO.new
-      pi[:dwSize] = PROFILEINFO.size
-      pi[:dwFlags] = 1 # PI_NOUI - prevents display of profile error msgs
-      pi[:lpUserName] = FFI::MemoryPointer.from_string_to_wide_string(user)
+      FFI::MemoryPointer.from_string_to_wide_string(user) do |lpUserName|
+        pi = PROFILEINFO.new
+        pi[:dwSize] = PROFILEINFO.size
+        pi[:dwFlags] = 1 # PI_NOUI - prevents display of profile error msgs
+        pi[:lpUserName] = lpUserName
 
-      # Load the profile. Since it doesn't exist, it will be created
-      if LoadUserProfileW(token, pi.pointer) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to load user profile #{user.inspect}")
-      end
+        # Load the profile. Since it doesn't exist, it will be created
+        if LoadUserProfileW(token, pi.pointer) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to load user profile #{user.inspect}")
+        end
 
-      Puppet.debug("Loaded profile for #{user}")
+        Puppet.debug("Loaded profile for #{user}")
 
-      if UnloadUserProfile(token, pi[:hProfile]) == FFI::WIN32_FALSE
-        raise Puppet::Util::Windows::Error.new("Failed to unload user profile #{user.inspect}")
+        if UnloadUserProfile(token, pi[:hProfile]) == FFI::WIN32_FALSE
+          raise Puppet::Util::Windows::Error.new("Failed to unload user profile #{user.inspect}")
+        end
       end
     end
   end
@@ -108,13 +119,6 @@ module Puppet::Util::Windows::User
   ffi_lib :advapi32
   attach_function_private :LogonUserW,
     [:lpwstr, :lpwstr, :lpwstr, :dword, :dword, :phandle], :win32_bool
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724211(v=vs.85).aspx
-  # BOOL WINAPI CloseHandle(
-  #   _In_  HANDLE hObject
-  # );
-  ffi_lib :kernel32
-  attach_function_private :CloseHandle, [:handle], :win32_bool
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/bb773378(v=vs.85).aspx
   # typedef struct _PROFILEINFO {

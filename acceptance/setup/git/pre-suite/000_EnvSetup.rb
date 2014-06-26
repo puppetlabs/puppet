@@ -38,11 +38,21 @@ install_packages_on(hosts, PACKAGES, :check_if_exists => true)
 hosts.each do |host|
   case host['platform']
   when /windows/
-    step "#{host} Install ruby from git"
+    arch = lookup_in_env('WIN32_RUBY_ARCH', 'puppet-win32-ruby', 'x86')
+    step "#{host} Selected architecture #{arch}"
+
+    revision = if arch == 'x64'
+                 '2.0.0-x64'
+               else
+                 '1.9.3-x86'
+               end
+
+    step "#{host} Install ruby from git using revision #{revision}"
     # TODO remove this step once we are installing puppet from msi packages
     install_from_git(host, "/opt/puppet-git-repos",
                      :name => 'puppet-win32-ruby',
-                     :path => build_giturl('puppet-win32-ruby'))
+                     :path => build_giturl('puppet-win32-ruby'),
+                     :rev  => revision)
     on host, 'cd /opt/puppet-git-repos/puppet-win32-ruby; cp -r ruby/* /'
     on host, 'cd /lib; icacls ruby /grant "Everyone:(OI)(CI)(RX)"'
     on host, 'cd /lib; icacls ruby /reset /T'

@@ -5,7 +5,7 @@ require 'puppet/util/windows'
 describe "Puppet::Util::Windows::AccessControlEntry", :if => Puppet.features.microsoft_windows? do
   let(:klass) { Puppet::Util::Windows::AccessControlEntry }
   let(:sid) { 'S-1-5-18' }
-  let(:mask) { Windows::File::FILE_ALL_ACCESS }
+  let(:mask) { Puppet::Util::Windows::File::FILE_ALL_ACCESS }
 
   it "creates an access allowed ace" do
     ace = klass.new(sid, mask)

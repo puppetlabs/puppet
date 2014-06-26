@@ -31,7 +31,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   [
-    'Object', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric',
+    'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric',
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}>" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
@@ -39,7 +39,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it "parses a simple, unparameterized type into the type object" do
-    expect(the_type_parsed_from(types.object)).to be_the_type(types.object)
+    expect(the_type_parsed_from(types.any)).to be_the_type(types.any)
     expect(the_type_parsed_from(types.integer)).to be_the_type(types.integer)
     expect(the_type_parsed_from(types.float)).to be_the_type(types.float)
     expect(the_type_parsed_from(types.string)).to be_the_type(types.string)

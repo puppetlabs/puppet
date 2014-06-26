@@ -167,7 +167,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       type = if param.type_expr
                @evaluator.evaluate(param.type_expr, @enclosing_scope)
              else
-               Puppet::Pops::Types::TypeFactory.object()
+               Puppet::Pops::Types::TypeFactory.any()
              end
 
       if param.captures_rest && type.is_a?(Puppet::Pops::Types::PArrayType)

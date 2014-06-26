@@ -180,8 +180,8 @@ module Puppet::Util::Execution
       begin
         exit_status = Puppet::Util::Windows::Process.wait_process(process_info.process_handle)
       ensure
-        Puppet::Util::Windows::Process.CloseHandle(process_info.process_handle)
-        Puppet::Util::Windows::Process.CloseHandle(process_info.thread_handle)
+        FFI::WIN32.CloseHandle(process_info.process_handle)
+        FFI::WIN32.CloseHandle(process_info.thread_handle)
       end
     end
 
