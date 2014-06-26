@@ -5,12 +5,12 @@ require 'puppet/settings/base_setting'
 class Puppet::Settings::PrioritySetting < Puppet::Settings::BaseSetting
   PRIORITY_MAP =
     if Puppet::Util::Platform.windows?
-      require 'win32/process'
+      require 'puppet/util/windows/process'
       {
-        :high    => Process::HIGH_PRIORITY_CLASS,
-        :normal  => Process::NORMAL_PRIORITY_CLASS,
-        :low     => Process::BELOW_NORMAL_PRIORITY_CLASS,
-        :idle    => Process::IDLE_PRIORITY_CLASS
+        :high    => Puppet::Util::Windows::Process::HIGH_PRIORITY_CLASS,
+        :normal  => Puppet::Util::Windows::Process::NORMAL_PRIORITY_CLASS,
+        :low     => Puppet::Util::Windows::Process::BELOW_NORMAL_PRIORITY_CLASS,
+        :idle    => Puppet::Util::Windows::Process::IDLE_PRIORITY_CLASS
       }
     else
       {

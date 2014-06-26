@@ -45,7 +45,7 @@ describe Puppet::Provider::Package::Windows::Package do
     end
 
     it 'should ignore file not found exceptions' do
-      ex = Puppet::Util::Windows::Error.new('Failed to open registry key', Windows::Error::ERROR_FILE_NOT_FOUND)
+      ex = Puppet::Util::Windows::Error.new('Failed to open registry key', Puppet::Util::Windows::Error::ERROR_FILE_NOT_FOUND)
 
       # make sure we don't stop after the first exception
       subject.expects(:open).times(4).raises(ex)
@@ -56,7 +56,7 @@ describe Puppet::Provider::Package::Windows::Package do
     end
 
     it 'should raise other types of exceptions' do
-      ex = Puppet::Util::Windows::Error.new('Failed to open registry key', Windows::Error::ERROR_ACCESS_DENIED)
+      ex = Puppet::Util::Windows::Error.new('Failed to open registry key', Puppet::Util::Windows::Error::ERROR_ACCESS_DENIED)
       subject.expects(:open).raises(ex)
 
       expect {

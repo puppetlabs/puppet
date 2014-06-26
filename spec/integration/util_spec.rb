@@ -36,7 +36,7 @@ describe Puppet::Util do
 
       admins = 'S-1-5-32-544'
       dacl = Puppet::Util::Windows::AccessControlList.new
-      dacl.allow(admins, Windows::File::FILE_ALL_ACCESS)
+      dacl.allow(admins, Puppet::Util::Windows::File::FILE_ALL_ACCESS)
       protect = true
       expected_sd = Puppet::Util::Windows::SecurityDescriptor.new(admins, admins, dacl, protect)
       Puppet::Util::Windows::Security.set_security_descriptor(file, expected_sd)
@@ -45,7 +45,7 @@ describe Puppet::Util do
       Puppet::Util.replace_file(file, ignored_mode) do |temp_file|
         ignored_sd = Puppet::Util::Windows::Security.get_security_descriptor(temp_file.path)
         users = 'S-1-5-11'
-        ignored_sd.dacl.allow(users, Windows::File::FILE_GENERIC_READ)
+        ignored_sd.dacl.allow(users, Puppet::Util::Windows::File::FILE_GENERIC_READ)
         Puppet::Util::Windows::Security.set_security_descriptor(temp_file.path, ignored_sd)
       end
 

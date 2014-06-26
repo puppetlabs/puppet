@@ -204,6 +204,12 @@ module Puppet::Util::Windows::Process
   end
   module_function :elevated_security?
 
+  ABOVE_NORMAL_PRIORITY_CLASS = 0x0008000
+  BELOW_NORMAL_PRIORITY_CLASS = 0x0004000
+  HIGH_PRIORITY_CLASS         = 0x0000080
+  IDLE_PRIORITY_CLASS         = 0x0000040
+  NORMAL_PRIORITY_CLASS       = 0x0000020
+  REALTIME_PRIORITY_CLASS     = 0x0000010
 
   ffi_convention :stdcall
 

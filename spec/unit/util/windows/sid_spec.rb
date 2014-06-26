@@ -156,7 +156,7 @@ describe "Puppet::Util::Windows::SID", :if => Puppet.features.microsoft_windows?
 
     it "should raise if the conversion fails" do
       subject.expects(:string_to_sid_ptr).with(sid).
-        raises(Puppet::Util::Windows::Error.new("Failed to convert string SID: #{sid}", Windows::Error::ERROR_ACCESS_DENIED))
+        raises(Puppet::Util::Windows::Error.new("Failed to convert string SID: #{sid}", Puppet::Util::Windows::Error::ERROR_ACCESS_DENIED))
 
       expect {
         subject.string_to_sid_ptr(sid) {|ptr| }
