@@ -16,6 +16,21 @@ module Puppet
   AS_DURATION = %q{This setting can be a time interval in seconds (30 or 30s), minutes (30m), hours (6h), days (2d), or years (5y).}
   STORECONFIGS_ONLY = %q{This setting is only used by the ActiveRecord storeconfigs and inventory backends, which are deprecated.}
 
+  # This is defined first so that the facter implementation is replaced before other setting defaults are evaluated.
+  define_settings(:main,
+    :cfacter => {
+        :default => false,
+        :type    => :boolean,
+        :desc    => 'Whether or not to use the native facter (cfacter) implementation instead of the Ruby one (facter). Defaults to false.',
+        :hook    => proc do |value|
+          return unless value
+          raise ArgumentError, 'facter has already evaluated facts.' if Facter.instance_variable_get(:@collection)
+          require 'puppet/facts'
+          raise ArgumentError, 'cfacter version 0.2.0 or later is not installed.' unless Puppet::Facts.replace_facter
+        end
+    }
+  )
+
   define_settings(:main,
     :confdir  => {
         :default  => nil,
@@ -246,7 +261,7 @@ module Puppet
       :type    => :path,
     },
     :diff_args => {
-        :default  => default_diffargs,
+        :default  => lambda { default_diffargs },
         :desc     => "Which arguments to pass to the diff command when printing differences between
           files. The command to use can be chosen with the `diff` setting.",
     },
@@ -512,7 +527,8 @@ module Puppet
     # We have to downcase the fqdn, because the current ssl stuff (as oppsed to in master) doesn't have good facilities for
     # manipulating naming.
     :certname => {
-      :default => Puppet::Settings.default_certname.downcase, :desc => "The name to use when handling certificates. When a node
+      :default => lambda { Puppet::Settings.default_certname.downcase },
+      :desc => "The name to use when handling certificates. When a node
         requests a certificate from the CA puppet master, it uses the value of the
         `certname` setting as its requested Subject CN.
 
@@ -535,7 +551,6 @@ module Puppet
           for a normal node.
 
         Defaults to the node's fully qualified domain name.",
-      :call_hook => :on_define_and_write, # Call our hook with the default value, so we're always downcased
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
     :certdnsnames => {
       :default => '',
@@ -1259,7 +1274,7 @@ EOT
       :desc       => "Whether the server will search for SRV records in DNS for the current domain.",
     },
     :srv_domain => {
-      :default    => "#{Puppet::Settings.domain_fact}",
+      :default    => lambda { Puppet::Settings.domain_fact },
       :desc       => "The domain which will be queried to find the SRV records of servers to use.",
     },
     :ignoreschedules => {
@@ -1634,7 +1649,7 @@ EOT
     },
 
     :reportfrom => {
-        :default  => "report@" + [Facter["hostname"].value,Facter["domain"].value].join("."),
+        :default  => lambda { "report@#{Puppet::Settings.default_certname.downcase}" },
         :desc     => "The 'from' email address for the reports.",
     },
 
@@ -1647,7 +1662,7 @@ EOT
         :desc     => "The TCP port through which to send email reports.",
     },
     :smtphelo => {
-        :default  => Facter["fqdn"].value,
+        :default  => lambda { Facter.value 'fqdn' },
         :desc     => "The name by which we identify ourselves in SMTP HELO for reports.
           If you send to a smtpserver which does strict HELO checking (as with Postfix's
           `smtpd_helo_restrictions` access controls), you may need to ensure this resolves.",
