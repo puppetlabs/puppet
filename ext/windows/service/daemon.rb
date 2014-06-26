@@ -6,13 +6,7 @@ require 'win32/dir'
 require 'win32/process'
 require 'win32/eventlog'
 
-require 'windows/synchronize'
-require 'windows/handle'
-
 class WindowsDaemon < Win32::Daemon
-  include Windows::Synchronize
-  include Windows::Handle
-
   CREATE_NEW_CONSOLE          = 0x00000010
 
   @LOG_TO_FILE = false
