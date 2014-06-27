@@ -1574,13 +1574,15 @@ class Puppet::Pops::Types::TypeCalculator
 
   private
 
+  NAME_SEGMENT_SEPARATOR = '::'.freeze
+
   def capitalize_segments(s)
-    s.split(/::/).map(&:capitalize).join('::')
+    s.split(NAME_SEGMENT_SEPARATOR).map(&:capitalize).join(NAME_SEGMENT_SEPARATOR)
   end
 
   def class_from_string(str)
     begin
-      str.split('::').inject(Object) do |memo, name_segment|
+      str.split(NAME_SEGMENT_SEPARATOR).inject(Object) do |memo, name_segment|
         memo.const_get(name_segment)
       end
     rescue NameError
