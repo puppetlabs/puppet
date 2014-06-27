@@ -213,9 +213,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def self.get_macosx_version_major
     return @macosx_version_major if @macosx_version_major
     begin
-      # Make sure we've loaded all of the facts
-      Facter.loadfacts
-
       product_version_major = Facter.value(:macosx_productversion_major)
 
       fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3 10.4}.include?(product_version_major)

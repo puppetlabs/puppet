@@ -28,6 +28,7 @@ Puppet.features.add(:microsoft_windows) do
     true
   rescue LoadError => err
     warn "Cannot run on Microsoft Windows without the sys-admin, win32-process, win32-dir, win32-service and win32-taskscheduler gems: #{err}" unless Puppet.features.posix?
+    false
   end
 end
 

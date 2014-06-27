@@ -13,7 +13,7 @@ describe Puppet::Node::Facts::Facter do
       end
     end
 
-    Facter.stubs(:clear)
+    Facter.stubs(:reset)
 
     cat = compile_to_catalog('notify { $downcase_test: }',
                              Puppet::Node.indirection.find('foo'))

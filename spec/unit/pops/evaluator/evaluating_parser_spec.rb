@@ -292,6 +292,19 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     end
 
     {
+      "if /(ana)/ in bananas {$1}" => 'ana',
+      "if /(xyz)/ in bananas {$1} else {$1}" => nil,
+      "$a = bananas =~ /(ana)/; $b = /(xyz)/ in bananas; $1" => 'ana',
+      "$a = xyz =~ /(xyz)/; $b = /(ana)/ in bananas; $1" => 'ana',
+      "if /p/ in [pineapple, bananas] {$0}" => 'p',
+      "if /b/ in [pineapple, bananas] {$0}" => 'b',
+    }.each do |source, result|
+      it "sets match variables for a regexp search using in such that '#{source}' produces '#{result}'" do
+          parser.evaluate_string(scope, source, __FILE__).should == result
+      end
+    end
+
+    {
       'Any'  => ['Data', 'Scalar', 'Numeric', 'Integer', 'Float', 'Boolean', 'String', 'Pattern', 'Collection',
                     'Array', 'Hash', 'CatalogEntry', 'Resource', 'Class', 'Undef', 'File', 'NotYetKnownResourceType'],
 

@@ -6,7 +6,6 @@ class Puppet::Application::Resource < Puppet::Application
 
   def preinit
     @extra_params = []
-    Facter.loadfacts
   end
 
   option("--debug","-d")
