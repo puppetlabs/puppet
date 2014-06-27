@@ -939,6 +939,35 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
       expect(parser.evaluate_string(scope, "test(undef) |$x=20| { $x == undef}")).to eql(true)
     end
+
+    it 'a given undef is given as nil' do
+      env_loader = @compiler.loaders.public_environment_loader
+      fc = Puppet::Functions.create_function(:die_undef_die) do
+        dispatch :die_undef_die do
+          param 'Any', 'x'
+        end
+
+        def die_undef_die(x)
+          case x
+          when Array
+            return unless x.include?(:undef)
+          when Hash
+            return unless x.keys.include?(:undef) || x.values.include?(:undef)
+          else
+            return unless x == :undef
+          end
+          raise "die undef die"
+        end
+      end
+
+      the_func = fc.new({}, env_loader)
+      env_loader.add_entry(:function, 'die_undef_die', the_func, __FILE__)
+
+      expect{parser.evaluate_string(scope, "die_undef_die(undef)")}.to_not raise_error()
+      expect{parser.evaluate_string(scope, "die_undef_die([undef])")}.to_not raise_error()
+      expect{parser.evaluate_string(scope, "die_undef_die({undef => 1})")}.to_not raise_error()
+      expect{parser.evaluate_string(scope, "die_undef_die({1 => undef})")}.to_not raise_error()
+    end
   end
 
   context "When evaluator performs string interpolation" do

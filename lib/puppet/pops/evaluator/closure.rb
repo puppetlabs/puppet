@@ -58,12 +58,21 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       # associate values with parameters
       scope_hash = {}
       parameters.each do |p|
-        scope_hash[p.name] = args_hash[p.name] || @evaluator.evaluate(p.value, @enclosing_scope)
+        name = p.name
+        if (arg_value = args_hash[name]).nil?
+          # only set result of default expr if it is defined (it is otherwise not possible to differentiate
+          # between explicit undef and no default expression
+          unless p.value.nil?
+            scope_hash[name] = @evaluator.evaluate(p.value, @enclosing_scope)
+          end
+        else
+          scope_hash[name] = arg_value
+        end
       end
 
-      missing = scope_hash.select { |name, value| value.nil? }
+      missing = parameters.select { |p| !scope_hash.include?(p.name) }
       if missing.any?
-        raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.collect(&:first).join(" ,")}"
+        raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.collect(&:name).join(" ,")}"
       end
 
       tc = Puppet::Pops::Types::TypeCalculator

@@ -238,7 +238,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
     # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-    # NOTE: Passing an empty string last converts :undef to empty string
+    # NOTE: Passing an empty string last converts nil/:undef to empty string
     mapped_args = args.map {|a| convert(a, scope, '') }
     result = scope.send("function_#{name}", mapped_args)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)

@@ -222,7 +222,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   def eval_LiteralUndef(o, scope)
-    :undef # TODO: or just use nil for this?
+    nil
   end
 
   # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType

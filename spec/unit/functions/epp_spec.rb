@@ -27,7 +27,7 @@ describe "the epp function" do
     end
 
     it "get nil accessing a variable that is undef" do
-      scope['undef_var'] = :undef
+      scope['undef_var'] = nil
       eval_template("<%= $undef_var == undef %>").should == "true"
     end
 
