@@ -9,6 +9,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
   commands :zypper => "/usr/bin/zypper"
 
+  defaultfor :operatingsystem => [:suse, :sles, :sled, :opensuse]
   confine    :operatingsystem => [:suse, :sles, :sled, :opensuse]
 
   #on zypper versions <1.0, the version option returns 1
