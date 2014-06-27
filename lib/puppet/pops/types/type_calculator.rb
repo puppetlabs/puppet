@@ -1096,6 +1096,8 @@ class Puppet::Pops::Types::TypeCalculator
       t2.values.all? { |s| t.values.any? { |e| e == s }}
     when Types::PVariantType
       t2.types.all? {|variant_t| assignable_PEnumType(t, variant_t) }
+    when Types::PEnumType
+      t2.values.all? { |s| t.values.any? {|e| e == s }}
     else
       false
     end
