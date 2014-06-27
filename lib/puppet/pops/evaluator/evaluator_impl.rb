@@ -500,7 +500,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     end
 
     matched = pattern.match(left) # nil, or MatchData
-    set_match_data(matched, o, scope) # creates ephemeral
+    set_match_data(matched,scope) # creates ephemeral
 
     # convert match result to Boolean true, or false
     o.operator == :'=~' ? !!matched : !matched
@@ -510,7 +510,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   def eval_InExpression o, scope
     left, right = eval_BinaryExpression o, scope
-    @@compare_operator.include?(right, left)
+    @@compare_operator.include?(right, left, scope)
   end
 
   # @example
@@ -983,7 +983,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     if right.is_a?(Regexp)
       return false unless left.is_a? String
       matched = right.match(left)
-      set_match_data(matched, o, scope) # creates or clears ephemeral
+      set_match_data(matched, scope) # creates or clears ephemeral
       !!matched # convert to boolean
     elsif right.is_a?(Puppet::Pops::Types::PAbstractType)
       # right is a type and left is not - check if left is an instance of the given type

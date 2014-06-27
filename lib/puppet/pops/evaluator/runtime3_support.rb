@@ -95,7 +95,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     scope.exist?(name.to_s)
   end
 
-  def set_match_data(match_data, o, scope)
+  def set_match_data(match_data, scope)
     # See set_variable for rationale for not passing file and line to ephemeral_from.
     # NOTE: The 3x scope adds one ephemeral(match) to its internal stack per match that succeeds ! It never
     # clears anything. Thus a context that performs many matches will get very deep (there simply is no way to
