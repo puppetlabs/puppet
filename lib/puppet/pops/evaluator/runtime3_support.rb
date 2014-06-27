@@ -238,12 +238,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
     # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-
-    # Do not map the iterative functions, they are capable of dealing with 4x API, and they do
-    # call out to lambdas, and thus, given arguments needs to be preserved (instead of transforming to
-    # '' when undefined). TODO: The iterative functions should be refactored to use the new function API
-    # directly, when this has been done, this special filtering out can be removed
-
     # NOTE: Passing an empty string last converts :undef to empty string
     mapped_args = args.map {|a| convert(a, scope, '') }
     result = scope.send("function_#{name}", mapped_args)
