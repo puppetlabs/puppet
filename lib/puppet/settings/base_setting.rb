@@ -122,6 +122,9 @@ class Puppet::Settings::BaseSetting
   end
 
   def default(check_application_defaults_first = false)
+    if @default.is_a? Proc
+      @default = @default.call
+    end
     return @default unless check_application_defaults_first
     return @settings.value(name, :application_defaults, true) || @default
   end
