@@ -28,7 +28,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
   private
 
- def self.setup_search_paths(request)
+  def self.setup_search_paths(request)
     # Add any per-module fact directories to facter's search path
     dirs = request.environment.modulepath.collect do |dir|
       ['lib', 'plugins'].map do |subdirectory|
@@ -38,7 +38,16 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
 
     dirs = dirs.select do |dir|
       next false unless FileTest.directory?(dir)
-      Puppet.info "Loading facts from #{dir}"
+
+      # Even through we no longer directly load facts in the terminus,
+      # print out each .rb in the facts directory as module
+      # developers may find that information useful for debugging purposes
+      if Puppet::Util::Log.sendlevel?(:info)
+        Dir.glob("#{dir}/*.rb").each do |file|
+          Puppet.info "Loading facts from #{file}"
+        end
+      end
+
       true
     end
 
