@@ -66,4 +66,16 @@ describe Puppet::Util::Colors do
       end
     end
   end
+
+  context "on Windows in Ruby 1.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^1./ do
+    it "should load win32console" do
+      Gem.loaded_specs["win32console"].should_not be_nil
+    end
+  end
+
+  context "on Windows in Ruby 2.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^2./ do
+    it "should not load win32console" do
+      Gem.loaded_specs["win32console"].should be_nil
+    end
+  end
 end
