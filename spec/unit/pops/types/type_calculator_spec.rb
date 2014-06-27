@@ -794,6 +794,10 @@ describe 'The type calculator' do
         calculator.assignable?(pattern, enum).should  == true
       end
 
+      it 'should accept a variant where all variants are acceptable' do
+        pattern = pattern_t(/^\w+$/)
+        calculator.assignable?(pattern, variant_t(string_t('a'), string_t('b'))).should == true
+      end
     end
 
     context 'when dealing with tuples' do

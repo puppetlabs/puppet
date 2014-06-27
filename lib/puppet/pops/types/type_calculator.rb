@@ -1145,7 +1145,14 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PPatternType(t, t2)
     return true if t == t2
-    return false unless t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)
+    case t2
+    when Types::PStringType, Types::PEnumType
+      values = t2.values
+    when Types::PVariantType
+      return t2.types.all? {|variant_t| assignable_PPatternType(t, variant_t) }
+    else
+      return false
+    end
 
     if t2.values.empty?
       # Strings / Enums (unknown which ones) cannot all match a pattern, but if there is no pattern it is ok
