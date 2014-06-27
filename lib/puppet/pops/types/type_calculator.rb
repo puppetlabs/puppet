@@ -1090,9 +1090,12 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PEnumType(t, t2)
     return true if t == t2 || (t.values.empty? && (t2.is_a?(Types::PStringType) || t2.is_a?(Types::PEnumType)))
-    if t2.is_a?(Types::PStringType)
+    case t2
+    when Types::PStringType
       # if the set of strings are all found in the set of enums
       t2.values.all? { |s| t.values.any? { |e| e == s }}
+    when Types::PVariantType
+      t2.types.all? {|variant_t| assignable_PEnumType(t, variant_t) }
     else
       false
     end
