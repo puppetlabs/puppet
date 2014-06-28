@@ -397,7 +397,7 @@ class Puppet::Pops::Types::TypeCalculator
 
   def instance_of_Object(t, o)
     # Undef is Undef and Any, but nothing else when checking instance?
-    return false if (o.nil? || o == :undef) && t.class != Types::PAnyType
+    return false if (o.nil?) && t.class != Types::PAnyType
     assignable?(t, infer(o))
   end
 
@@ -451,11 +451,11 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   def instance_of_PNilType(t, o)
-    return o.nil? || o == :undef
+    return o.nil?
   end
 
   def instance_of_POptionalType(t, o)
-    return true if (o.nil? || o == :undef)
+    return true if (o.nil?)
     instance_of(t.optional_type, o)
   end
 
@@ -778,10 +778,16 @@ class Puppet::Pops::Types::TypeCalculator
     Types::PNilType.new()
   end
 
-  # Inference of :undef as PNilType, all other are Ruby[Symbol]
+  # Inference of :default as PDefaultType, and all other are Ruby[Symbol]
   # @api private
   def infer_Symbol(o)
-    o == :undef ? infer_NilClass(o) : infer_Object(o)
+    case o
+    when :default
+      Types::PDefaultType.new()
+
+    else
+      infer_Object(o)
+    end
   end
 
   # @api private
@@ -909,6 +915,12 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def assignable_PUnitType(t, t2)
     true
+  end
+
+  # @api private
+  def assignable_PDefaultType(t, t2)
+    # Only default is assignable to default type
+    t2.is_a?(Types::PDefaultType)
   end
 
   # @api private
@@ -1418,17 +1430,19 @@ class Puppet::Pops::Types::TypeCalculator
   # @api private
   def string_Symbol(t)       ; t.to_s    ; end
 
-  # @api private
-  def string_PAnyType(t)  ; "Any"  ; end
+  def string_PAnyType(t)     ; "Any"     ; end
 
   # @api private
   def string_PNilType(t)     ; 'Undef'   ; end
 
   # @api private
+  def string_PDefaultType(t) ; 'Default' ; end
+
+  # @api private
   def string_PBooleanType(t) ; "Boolean" ; end
 
   # @api private
-  def string_PScalarType(t) ; "Scalar" ; end
+  def string_PScalarType(t)  ; "Scalar"  ; end
 
   # @api private
   def string_PDataType(t)    ; "Data"    ; end

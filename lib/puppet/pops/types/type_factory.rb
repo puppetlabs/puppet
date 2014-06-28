@@ -265,6 +265,12 @@ module Puppet::Pops::Types::TypeFactory
     Types::PNilType.new()
   end
 
+  # Creates an instance of the Default type
+  # @api public
+  def self.default()
+    Types::PDefaultType.new()
+  end
+
   # Produces an instance of the abstract type PCatalogEntryType
   def self.catalog_entry()
     Types::PCatalogEntryType.new()

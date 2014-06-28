@@ -71,9 +71,14 @@ module Puppet::Pops::Types
   class PNilType < PAnyType
   end
 
+
   # A type private to the type system that describes "ignored type" - i.e. "I am what you are"
   # @api private
   class  PUnitType < PAnyType
+  end
+
+  # @api public
+  class PDefaultType < PAnyType
   end
 
   # A flexible data type, being assignable to its subtypes as well as PArrayType and PHashType with element type assignable to PDataType.

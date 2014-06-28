@@ -31,7 +31,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   [
-    'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric',
+    'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric', 'Default'
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}>" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
@@ -51,6 +51,7 @@ describe Puppet::Pops::Types::TypeParser do
     expect(the_type_parsed_from(types.tuple)).to be_the_type(types.tuple)
     expect(the_type_parsed_from(types.struct)).to be_the_type(types.struct)
     expect(the_type_parsed_from(types.optional)).to be_the_type(types.optional)
+    expect(the_type_parsed_from(types.default)).to be_the_type(types.default)
   end
 
   it "interprets an unparameterized Array as an Array of Data" do

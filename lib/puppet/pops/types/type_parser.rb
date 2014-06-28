@@ -161,8 +161,10 @@ class Puppet::Pops::Types::TypeParser
       TYPES.catalog_entry()
 
     when "undef"
-      # Should not be interpreted as Resource type
       TYPES.undef()
+
+    when "default"
+      TYPES.default()
 
     when "any"
       TYPES.any()
@@ -404,7 +406,7 @@ class Puppet::Pops::Types::TypeParser
       assert_type(parameters[0])
       TYPES.optional(parameters[0])
 
-    when "any", "data", "catalogentry", "boolean", "scalar", "undef", "numeric"
+    when "any", "data", "catalogentry", "boolean", "scalar", "undef", "numeric", "default"
       raise_unparameterized_type_error(parameterized_ast.left_expr)
 
     when "type"
