@@ -1937,17 +1937,21 @@ EOT
     :evaluator => {
       :default => "future",
       :hook => proc do |value|
-        if !['future', 'current'].include?(value)
-          raise "evaluator can only be set to 'future' or 'current', got '#{value}'"
+        case value
+        when 'future'
+        when 'current'
+          Puppet.deprecation_warning "The evaluator setting 'current' is deprecated, 'future' is always used."
+        else
+          raise "evaluator can only be set to 'future', got '#{value}'"
         end
       end,
       :desc => <<-'EOT'
         Which evaluator to use when compiling Puppet manifests. Valid values
-        are `current` and `future` (the default).
+        are `future` (the default).
 
         **Note:** This setting is only used when `parser = future`. It allows
-        testers to turn off the `future` evaluator when doing detailed tests and
-        comparisons of the new compilation system.
+        testers to use a different evaluator when doing detailed tests and
+        comparisons. Currently there is only version available called 'future'.
 
         Evaluation is the second stage of catalog compilation. After the parser
         converts a manifest to a model of expressions, the evaluator processes
@@ -1958,7 +1962,8 @@ EOT
         4. Their purpose is to add new features and improve consistency
         and reliability.
 
-        Available Since Puppet 3.5.
+        Available Since Puppet 3.5. Restricted to 'future' in 3.7. This setting may
+        be removed in Puppet 4.0.
       EOT
     },
    :biff => {
@@ -1974,8 +1979,8 @@ EOT
      end,
      :desc => <<-EOT
        Turns on Biff the catalog builder, future parser, and future evaluator.
-       This is an experimental feature - and this setting may go away before
-       release of Pupet 3.6.
+       This is a highly experimental feature - and this setting may go away before
+       release of Pupet 3.7.
      EOT
    },
    :max_errors => {
