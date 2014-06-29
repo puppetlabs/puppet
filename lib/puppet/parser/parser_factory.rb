@@ -9,13 +9,8 @@ module Puppet::Parser
   class ParserFactory
     # Produces a parser instance for the given environment
     def self.parser(environment)
-      case Puppet[:parser]
-      when 'future'
-        if Puppet[:evaluator] == 'future'
-          evaluating_parser(environment)
-        else
-          eparser(environment)
-        end
+      if Puppet[:parser] == 'future'
+        evaluating_parser(environment)
       else
         classic_parser(environment)
       end
@@ -24,36 +19,32 @@ module Puppet::Parser
     # Creates an instance of the classic parser.
     #
     def self.classic_parser(environment)
-      require 'puppet/parser'
-
+      # avoid expensive require if already loaded
+      require 'puppet/parser' unless defined? Puppet::Parser::Parser
       Puppet::Parser::Parser.new(environment)
     end
 
-    # Returns an instance of an EvaluatingParser
+    # Creates an instance of an E4ParserAdapter that adapts an
+    # EvaluatingParser to the 3x way of parsing.
+    #
     def self.evaluating_parser(file_watcher)
       # Since RGen is optional, test that it is installed
       @@asserted ||= false
-      assert_rgen_installed() unless @@asserted
+      unless @@asserted
+        # avoid this expensive check if already done
+        assert_rgen_installed()
+        # avoid expensive requires
+        require 'puppet/parser/e4_parser_adapter'
+        require 'puppet/pops/parser/code_merger'
+      end
       @@asserted = true
-      require 'puppet/parser/e4_parser_adapter'
-      require 'puppet/pops/parser/code_merger'
+
       E4ParserAdapter.new(file_watcher)
     end
 
-    # Creates an instance of the expression based parser 'eparser'
+    # Asserts that RGen >= 0.6.1 is installed by checking that certain behavior is available.
+    # Note that this assert is expensive as it also requires puppet/pops (if not already loaded).
     #
-    def self.eparser(environment)
-      # Since RGen is optional, test that it is installed
-      @@asserted ||= false
-      assert_rgen_installed() unless @@asserted
-      @@asserted = true
-      require 'puppet/parser'
-      require 'puppet/parser/e_parser_adapter'
-      EParserAdapter.new(Puppet::Parser::Parser.new(environment))
-    end
-
-    private
-
     def self.assert_rgen_installed
       begin
         require 'rgen/metamodel_builder'
@@ -76,13 +67,11 @@ module Puppet::Parser
     end
 
     def self.code_merger
-      if Puppet[:parser] == 'future' && Puppet[:evaluator] == 'future'
+      if Puppet[:parser] == 'future'
         Puppet::Pops::Parser::CodeMerger.new
       else
         Puppet::Parser::CodeMerger.new
       end
     end
-
   end
-
 end
