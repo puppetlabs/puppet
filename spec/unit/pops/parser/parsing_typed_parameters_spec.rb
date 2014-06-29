@@ -19,7 +19,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     # about selection of parser and evaluator
     #
     Puppet[:parser] = 'future'
-    Puppet[:evaluator] = 'future'
   end
 
   let(:parser) {  Puppet::Pops::Parser::EvaluatingParser::Transitional.new }

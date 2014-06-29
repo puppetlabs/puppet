@@ -21,7 +21,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     # use the 4x parser and evaluator.
     #
     Puppet[:parser] = 'future'
-    Puppet[:evaluator] = 'future'
 
     # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
     require 'puppetx'

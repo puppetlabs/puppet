@@ -439,7 +439,6 @@ actual:
         # about selection of parser and evaluator
         #
         Puppet[:parser] = 'future'
-        Puppet[:evaluator] = 'future'
         # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
         require 'puppetx'
       end
