@@ -20,7 +20,7 @@ class Puppet::Parser::E4ParserAdapter
     @file = ''
     @string = ''
     @use = :unspecified
-    @@evaluating_parser ||= Puppet::Pops::Parser::EvaluatingParser::Transitional.new()
+    @@evaluating_parser ||= Puppet::Pops::Parser::EvaluatingParser.new()
   end
 
   def file=(file)

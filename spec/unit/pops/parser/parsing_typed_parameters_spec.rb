@@ -21,7 +21,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     Puppet[:parser] = 'future'
   end
 
-  let(:parser) {  Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
+  let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
 
   context "captures-rest parameter" do
     it 'is allowed in lambda when placed last' do

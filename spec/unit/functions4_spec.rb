@@ -443,7 +443,7 @@ actual:
         require 'puppetx'
       end
 
-      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
+      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
       let(:node) { 'node.example.com' }
       let(:scope) { s = create_test_scope_for_node(node); s }
 
