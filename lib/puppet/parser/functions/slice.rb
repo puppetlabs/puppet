@@ -17,7 +17,7 @@ in each slice. The optional third argument should be a a parameterized block as 
 The parameterized block should have either one parameter (receiving an array with the slice), or the same number
 of parameters as specified by the slice size (each parameter receiving its part of the slice).
 In case there are fewer remaining elements than the slice size for the last slice it will contain the remaining
-elements. When the block has multiple parameters, excess parameters are set to :undef for an array or
+elements. When the block has multiple parameters, excess parameters are set to undef for an array or
 enumerable type, and to empty arrays for a Hash.
 
     $a.slice(2) |$first, $second| { ... }
