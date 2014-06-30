@@ -670,9 +670,9 @@ module Puppet
     def unknown_keys_in_file(keyfile)
       names = []
       File.new(keyfile).each do |line|
-        next if line.strip.empty?
-        next if line =~ /^\s*#/
-        names << line.strip.split.last
+        next unless line =~ Puppet::Type.type(:ssh_authorized_key).keyline_regex
+        # the name is stored in the 4th capture of the regex
+        names << $4
       end
 
       names.map { |keyname|

@@ -494,7 +494,7 @@ describe Puppet::Type.type(:user) do
         let(:resources) { subject.generate }
         it "should contain a resource for each key" do
           names = resources.collect { |res| res.name }
-          names.should include("keyname1")
+          names.should include("key1 name")
           names.should include("keyname2")
         end
         it "should not include keys in comment lines" do
