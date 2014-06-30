@@ -44,8 +44,6 @@ class Puppet::Configurer::Downloader
 
   private
 
-  require 'sys/admin' if Puppet.features.microsoft_windows?
-
   def default_arguments
     defargs = {
       :path => path,

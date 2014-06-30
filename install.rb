@@ -250,7 +250,7 @@ def prepare_installation
     begin
       require 'win32/dir'
     rescue LoadError => e
-      puts "Cannot run on Microsoft Windows without the sys-admin, win32-process, win32-dir & win32-service gems: #{e}"
+      puts "Cannot run on Microsoft Windows without the win32-process, win32-dir & win32-service gems: #{e}"
       exit -1
     end
     configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
