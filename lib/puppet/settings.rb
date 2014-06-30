@@ -825,9 +825,9 @@ class Puppet::Settings
   # @param [Hash[Hash]] defs the settings to be defined.  This argument is a hash of hashes; each key should be a symbol,
   #   which is basically the name of the setting that you are defining.  The value should be another hash that specifies
   #   the parameters for the particular setting.  Legal values include:
-  #    [:default] => required; this is a string value that will be used as a default value for a setting if no other
-  #       value is specified (via cli, config file, etc.)  This string may include "variables", demarcated with $ or ${},
-  #       which will be interpolated with values of other settings.
+  #    [:default] => not required; this is the value for the setting if no other value is specified (via cli, config file, etc.)
+  #       For string settings this may include "variables", demarcated with $ or ${} which will be interpolated with values of other settings.
+  #       The default value may also be a Proc that will be called only once to evaluate the default when the setting's value is retrieved.
   #    [:desc] => required; a description of the setting, used in documentation / help generation
   #    [:type] => not required, but highly encouraged!  This specifies the data type that the setting represents.  If
   #       you do not specify it, it will default to "string".  Legal values include:
