@@ -458,14 +458,14 @@ describe 'The type calculator' do
         expect(common_t.block_type).to be_nil
       end
 
-      it 'compatible instances => the least specific' do
+      it 'compatible instances => the most specific' do
         t1 = callable_t(String)
         scalar_t = Puppet::Pops::Types::PScalarType.new
         t2 = callable_t(scalar_t)
         common_t = calculator.common_type(t1, t2)
         expect(common_t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(common_t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
-        expect(common_t.param_types.types).to eql([scalar_t])
+        expect(common_t.param_types.types).to eql([string_t])
         expect(common_t.block_type).to be_nil
       end
 
@@ -1612,6 +1612,87 @@ describe 'The type calculator' do
       element_types = inferred_type.types
       element_types[0].class.should == Puppet::Pops::Types::PStringType
       element_types[1].class.should == Puppet::Pops::Types::PNilType
+    end
+  end
+
+  context 'when determening callability' do
+    context 'and given is exact' do
+      it 'with callable' do
+        required = callable_t(string_t)
+        given = callable_t(string_t)
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple' do
+        required = callable_t(string_t)
+        given = tuple_t(string_t)
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple having a block' do
+        required = callable_t(string_t, callable_t(string_t))
+        given = tuple_t(string_t, callable_t(string_t))
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args array' do
+        required = callable_t(string_t)
+        given = array_t(string_t)
+        factory.constrain_size(given, 1, 1)
+        calculator.callable?(required, given).should == true
+      end
+    end
+
+    context 'and given is more generic' do
+      it 'with callable' do
+        required = callable_t(string_t)
+        given = callable_t(object_t)
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple' do
+        required = callable_t(string_t)
+        given = tuple_t(object_t)
+        calculator.callable?(required, given).should == false
+      end
+
+      it 'with args tuple having a block' do
+        required = callable_t(string_t, callable_t(string_t))
+        given = tuple_t(string_t, callable_t(object_t))
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple having a block with captures rest' do
+        required = callable_t(string_t, callable_t(string_t))
+        given = tuple_t(string_t, callable_t(object_t, 0, :default))
+        calculator.callable?(required, given).should == true
+      end
+    end
+
+    context 'and given is more specific' do
+      it 'with callable' do
+        required = callable_t(object_t)
+        given = callable_t(string_t)
+        calculator.callable?(required, given).should == false
+      end
+
+      it 'with args tuple' do
+        required = callable_t(object_t)
+        given = tuple_t(string_t)
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple having a block' do
+        required = callable_t(string_t, callable_t(object_t))
+        given = tuple_t(string_t, callable_t(string_t))
+        calculator.callable?(required, given).should == false
+      end
+
+      it 'with args tuple having a block with captures rest' do
+        required = callable_t(string_t, callable_t(object_t))
+        given = tuple_t(string_t, callable_t(string_t, 0, :default))
+        calculator.callable?(required, given).should == false
+      end
     end
   end
 

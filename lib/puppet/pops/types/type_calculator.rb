@@ -981,14 +981,24 @@ class Puppet::Pops::Types::TypeCalculator
     end
     # unless argument types match parameter types
     return false unless assignable?(callable_t.param_types, args_tuple)
-    # unless given block (or no block) matches expected block (or no block)
+    # can the given block be *called* with a signature requirement specified by callable_t?
     assignable?(callable_t.block_type || @nil_t, block_t)
   end
 
   def callable_PArrayType(args_array, callable_t)
     return false unless assignable?(callable_t.param_types, args_array)
-    # does not support calling with a block, but have to check that callable expects it
+    # does not support calling with a block, but have to check that callable is ok with missing block
     assignable?(callable_t.block_type || @nil_t, @nil_t)
+  end
+
+  def callable_PNilType(nil_t, callable_t)
+    # if callable_t is Optional (or indeed PNilType), this means that 'missing callable' is accepted
+    assignable?(callable_t, nil_t)
+  end
+
+  def callable_PCallableType(given_callable_t, required_callable_t)
+    # If the required callable is euqal or more specific than the given, the given is callable
+    assignable?(required_callable_t, given_callable_t)
   end
 
   def max(a,b)
@@ -1181,12 +1191,22 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless t2.is_a?(Types::PCallableType)
     # nil param_types means, any other Callable is assignable
     return true if t.param_types.nil?
-    return false unless assignable?(t.param_types, t2.param_types)
+
+    # NOTE: these tests are made in reverse as it is calling the callable that is constrained
+    # (it's lower bound), not its upper bound
+    return false unless assignable?(t2.param_types, t.param_types)
     # names are ignored, they are just information
     # Blocks must be compatible
     this_block_t = t.block_type || @nil_t
     that_block_t = t2.block_type || @nil_t
-    assignable?(this_block_t, that_block_t)
+    assignable?(that_block_t, this_block_t)
+
+#    return false unless assignable?(t.param_types, t2.param_types)
+#    # names are ignored, they are just information
+#    # Blocks must be compatible
+#    this_block_t = t.block_type || @nil_t
+#    that_block_t = t2.block_type || @nil_t
+#    assignable?(this_block_t, that_block_t)
   end
 
   # @api private
