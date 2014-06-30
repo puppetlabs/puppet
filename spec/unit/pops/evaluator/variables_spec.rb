@@ -56,7 +56,7 @@ describe 'Puppet::Pops::Impl::EvaluatorImpl' do
         it 'deleting from non existing value produces :undef, nil -= ?' do
           top_scope_block = var('b').set([1,2,3])
           local_scope_block = block(var('a').minus_set([4]), fqn('a').var)
-          evaluate_l(top_scope_block, local_scope_block).should == :undef
+          expect(evaluate_l(top_scope_block, local_scope_block)).to be_nil
         end
 
         it 'deletes from a list' do
