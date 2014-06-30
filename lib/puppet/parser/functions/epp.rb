@@ -31,11 +31,7 @@ scope where the `epp` function is called from.
 
 - See function inline_epp for examples of EPP
 - Since 3.5
-- Requires Future Parser") do |arguments|
-  # Requires future parser
-  unless Puppet[:parser] == "future"
-    raise ArgumentError, "epp(): function is only available when --parser future is in effect"
-  end
-  Puppet::Pops::Evaluator::EppEvaluator.epp(self, arguments[0], self.compiler.environment, arguments[1])
+- Requires Future Parser") do |args|
 
+  function_fail(["epp() is only available when parser/evaluator future is in effect"])
 end
