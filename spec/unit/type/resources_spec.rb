@@ -5,6 +5,11 @@ resources = Puppet::Type.type(:resources)
 
 # There are still plenty of tests to port over from test/.
 describe resources do
+
+  before :each do
+    described_class.reset_system_users_max_uid!
+  end
+
   describe "when initializing" do
     it "should fail if the specified resource type does not exist" do
       Puppet::Type.stubs(:type).with { |x| x.to_s.downcase == "resources"}.returns resources
@@ -56,6 +61,7 @@ describe resources do
       before do
         @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
         @res.catalog = Puppet::Resource::Catalog.new
+        Puppet::FileSystem.stubs(:exist?).with('/etc/login.defs').returns false
       end
 
       it "should never purge hardcoded system users" do
@@ -71,10 +77,8 @@ describe resources do
         @res.user_check(user).should be_false
       end
 
-      it "should purge manual users if unless_system_user => true" do
-        user_hash = {:name => 'system_user', :uid => 500, :system => true}
-        os = Facter.value(:osfamily)
-        user_hash[:uid] = 1000 if os == 'Debian' || os =='OpenBSD' || os == 'FreeBSD'
+      it "should purge non-system users if unless_system_user => true" do
+        user_hash = {:name => 'system_user', :uid => described_class.system_users_max_uid + 1, :system => true}
         user = Puppet::Type.type(:user).new(user_hash)
         user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
         @res.user_check(user).should be_true
@@ -88,31 +92,55 @@ describe resources do
         user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
         res.user_check(user).should be_false
       end
+    end
 
-      ['Debian', 'FreeBSD', 'OpenBSD'].each do |os|
-        describe "on #{os}" do
-          before :each do
-            Facter.stubs(:value).with(:kernel).returns(os)
-            Facter.stubs(:value).with(:operatingsystem).returns(os)
-            Facter.stubs(:value).with(:osfamily).returns(os)
-            @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
-            @res.catalog = Puppet::Resource::Catalog.new
-          end
-
-          it "should not purge system users under 1000" do
-            user_hash = {:name => 'system_user', :uid => 999}
-            user = Puppet::Type.type(:user).new(user_hash)
-            user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
-            @res.user_check(user).should be_false
-          end
-
-          it "should purge users over 999" do
-            user_hash = {:name => 'system_user', :uid => 1000}
-            user = Puppet::Type.type(:user).new(user_hash)
-            user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
-            @res.user_check(user).should be_true
-          end
+    %w(FreeBSD OpenBSD).each do |os|
+      describe "on #{os}" do
+        before :each do
+          Facter.stubs(:value).with(:kernel).returns(os)
+          Facter.stubs(:value).with(:operatingsystem).returns(os)
+          Facter.stubs(:value).with(:osfamily).returns(os)
+          Puppet::FileSystem.stubs(:exist?).with('/etc/login.defs').returns false
+          @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
+          @res.catalog = Puppet::Resource::Catalog.new
         end
+
+        it "should not purge system users under 1000" do
+          user_hash = {:name => 'system_user', :uid => 999}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_false
+        end
+
+        it "should purge users over 999" do
+          user_hash = {:name => 'system_user', :uid => 1000}
+          user = Puppet::Type.type(:user).new(user_hash)
+          user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+          @res.user_check(user).should be_true
+        end
+      end
+    end
+
+    describe 'with login.defs present' do
+      before :each do
+        Puppet::FileSystem.expects(:exist?).with('/etc/login.defs').returns true
+        Puppet::FileSystem.expects(:each_line).with('/etc/login.defs').yields(' UID_MIN         1234 # UID_MIN comment ')
+        @res = Puppet::Type.type(:resources).new :name => :user, :purge => true, :unless_system_user => true
+        @res.catalog = Puppet::Resource::Catalog.new
+      end
+
+      it 'should not purge a system user' do
+        user_hash = {:name => 'system_user', :uid => 1233}
+        user = Puppet::Type.type(:user).new(user_hash)
+        user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+        @res.user_check(user).should be_false
+      end
+
+      it 'should purge a non-system user' do
+        user_hash = {:name => 'system_user', :uid => 1234}
+        user = Puppet::Type.type(:user).new(user_hash)
+        user.stubs(:retrieve_resource).returns Puppet::Resource.new("user", user_hash[:name], :parameters => user_hash)
+        @res.user_check(user).should be_true
       end
     end
 
