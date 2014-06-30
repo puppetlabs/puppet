@@ -8,7 +8,7 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
   include PuppetSpec::Compiler
 
   context "when set to purge ssh keys from a file" do
-    let(:tempfile) { file_containing('user_spec', "# comment\nssh-rsa KEY-DATA key-name") }
+    let(:tempfile) { file_containing('user_spec', "# comment\nssh-rsa KEY-DATA key-name\nssh-rsa KEY-DATA key name\n") }
     # must use an existing user, or the generated key resource
     # will fail on account of an invalid user for the key
     # - root should be a safe default
@@ -17,6 +17,11 @@ describe Puppet::Type.type(:user), '(integration)', :unless => Puppet.features.m
     it "should purge authorized ssh keys" do
       apply_compiled_manifest(manifest)
       File.read(tempfile).should_not =~ /key-name/
+    end
+
+    it "should purge keys with spaces in the comment string" do
+      apply_compiled_manifest(manifest)
+      File.read(tempfile).should_not =~ /key name/
     end
 
     context "with other prefetching resources evaluated first" do
