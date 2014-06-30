@@ -99,6 +99,10 @@ describe Puppet::Configurer::Downloader do
     end
 
     describe "on Windows", :as_platform => :windows do
+      before :each do
+        Puppet::Util.expects(:absolute_expanded_path?).with('C:/path').returns(true)
+      end
+
       it "should omit the owner" do
         file = generate_file_resource(:path => 'C:/path')
 

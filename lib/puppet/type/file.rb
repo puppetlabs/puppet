@@ -51,7 +51,7 @@ Puppet::Type.newtype(:file) do
     isnamevar
 
     validate do |value|
-      unless Puppet::Util.absolute_path?(value)
+      unless Puppet::Util.absolute_expanded_path?(value)
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end
