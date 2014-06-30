@@ -942,12 +942,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
 
     it 'a given undef is given as nil' do
       env_loader = @compiler.loaders.public_environment_loader
-      fc = Puppet::Functions.create_function(:die_undef_die) do
-        dispatch :die_undef_die do
+      fc = Puppet::Functions.create_function(:assert_no_undef) do
+        dispatch :assert_no_undef do
           param 'Any', 'x'
         end
 
-        def die_undef_die(x)
+        def assert_no_undef(x)
           case x
           when Array
             return unless x.include?(:undef)
@@ -956,17 +956,17 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
           else
             return unless x == :undef
           end
-          raise "die undef die"
+          raise "contains :undef"
         end
       end
 
       the_func = fc.new({}, env_loader)
-      env_loader.add_entry(:function, 'die_undef_die', the_func, __FILE__)
+      env_loader.add_entry(:function, 'assert_no_undef', the_func, __FILE__)
 
-      expect{parser.evaluate_string(scope, "die_undef_die(undef)")}.to_not raise_error()
-      expect{parser.evaluate_string(scope, "die_undef_die([undef])")}.to_not raise_error()
-      expect{parser.evaluate_string(scope, "die_undef_die({undef => 1})")}.to_not raise_error()
-      expect{parser.evaluate_string(scope, "die_undef_die({1 => undef})")}.to_not raise_error()
+      expect{parser.evaluate_string(scope, "assert_no_undef(undef)")}.to_not raise_error()
+      expect{parser.evaluate_string(scope, "assert_no_undef([undef])")}.to_not raise_error()
+      expect{parser.evaluate_string(scope, "assert_no_undef({undef => 1})")}.to_not raise_error()
+      expect{parser.evaluate_string(scope, "assert_no_undef({1 => undef})")}.to_not raise_error()
     end
   end
 
