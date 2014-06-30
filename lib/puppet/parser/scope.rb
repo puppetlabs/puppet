@@ -111,7 +111,7 @@ class Puppet::Parser::Scope
     def add_entries_to(target = {})
       super
       @symbols.each do |k, v|
-        if v == :undef
+        if v == :undef || v.nil?
           target.delete(k)
         else
           target[ k ] = v
