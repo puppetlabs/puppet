@@ -199,8 +199,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   # Evaluates Nop to nil.
-  # TODO: or is this the same as :undef
-  # TODO: is this even needed as a separate instruction when there is a literal undef?
   def eval_Nop(o, scope)
     nil
   end
