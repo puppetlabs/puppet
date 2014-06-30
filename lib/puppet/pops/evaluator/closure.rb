@@ -152,6 +152,8 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
           # get excess arguments
           value = args[(parameter_count-1)..-1]
           # If the input was a single nil, or undef, and there is a default, use the default
+          # This supports :undef in case it was used in a 3x data structure and it is passed as an arg
+          #
           if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
             value = @evaluator.evaluate(default_expression, scope)
             # and ensure it is an array
