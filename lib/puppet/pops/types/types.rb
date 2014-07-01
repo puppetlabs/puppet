@@ -369,7 +369,8 @@ module Puppet::Pops::Types
     # Types of parameters as a Tuple with required/optional count, or an Integer with min (required), max count
     contains_one_uni 'param_types', PAnyType, :lowerBound => 1
 
-    # Although being an abstract type reference, only Callable, and Optional[Callable] are supported
+    # Although being an abstract type reference, only Callable, or all Callables wrapped in
+    # Optional or Variant are supported
     # If not set, the meaning is that block is not supported.
     #
     contains_one_uni 'block_type', PAbstractType, :lowerBound => 0

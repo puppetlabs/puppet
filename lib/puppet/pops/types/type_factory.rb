@@ -202,11 +202,8 @@ module Puppet::Pops::Types::TypeFactory
   # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
-    case params.last
-    when Types::PCallableType
+    if Puppet::Pops::Types::TypeCalculator.is_kind_of_callable?(params.last)
       last_callable = true
-    when Types::POptionalType
-      last_callable = true if params.last.optional_type.is_a?(Types::PCallableType)
     end
     block_t = last_callable ? params.pop : nil
 

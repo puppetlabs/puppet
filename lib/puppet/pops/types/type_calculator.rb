@@ -279,7 +279,7 @@ class Puppet::Pops::Types::TypeCalculator
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
   #
   def callable?(callable, args)
-    return false if !callable.is_a?(Types::PCallableType)
+    return false if !self.class.is_kind_of_callable?(callable)
     # Note that polymorphism is for the args type, the callable is always a callable
     @@callable_visitor.visit_this_1(self, args, callable)
   end
@@ -991,7 +991,7 @@ class Puppet::Pops::Types::TypeCalculator
     end
     # Assume no block was given - i.e. it is nil, and its type is PNilType
     block_t = @nil_t
-    if args_tuple.types.last.is_a?(Types::PCallableType)
+    if self.class.is_kind_of_callable?(args_tuple.types.last)
       # a split is needed to make it possible to use required, optional, and varargs semantics
       # of the tuple type.
       #
@@ -1006,6 +1006,21 @@ class Puppet::Pops::Types::TypeCalculator
     # can the given block be *called* with a signature requirement specified by callable_t?
     assignable?(callable_t.block_type || @nil_t, block_t)
   end
+
+  # @api private
+  def self.is_kind_of_callable?(t, optional = true)
+    case t
+    when Types::PCallableType
+      true
+    when Types::POptionalType
+      optional && is_kind_of_callable?(t.optional_type, optional)
+    when Types::PVariantType
+      t.types.all? {|t2| is_kind_of_callable?(t2, optional) }
+    else
+      false
+    end
+  end
+
 
   def callable_PArrayType(args_array, callable_t)
     return false unless assignable?(callable_t.param_types, args_array)
@@ -1223,12 +1238,6 @@ class Puppet::Pops::Types::TypeCalculator
     that_block_t = t2.block_type || @nil_t
     assignable?(that_block_t, this_block_t)
 
-#    return false unless assignable?(t.param_types, t2.param_types)
-#    # names are ignored, they are just information
-#    # Blocks must be compatible
-#    this_block_t = t.block_type || @nil_t
-#    that_block_t = t2.block_type || @nil_t
-#    assignable?(this_block_t, that_block_t)
   end
 
   # @api private
