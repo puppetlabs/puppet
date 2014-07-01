@@ -58,12 +58,21 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
       # associate values with parameters
       scope_hash = {}
       parameters.each do |p|
-        scope_hash[p.name] = args_hash[p.name] || @evaluator.evaluate(p.value, @enclosing_scope)
+        name = p.name
+        if (arg_value = args_hash[name]).nil?
+          # only set result of default expr if it is defined (it is otherwise not possible to differentiate
+          # between explicit undef and no default expression
+          unless p.value.nil?
+            scope_hash[name] = @evaluator.evaluate(p.value, @enclosing_scope)
+          end
+        else
+          scope_hash[name] = arg_value
+        end
       end
 
-      missing = scope_hash.select { |name, value| value.nil? }
+      missing = parameters.select { |p| !scope_hash.include?(p.name) }
       if missing.any?
-        raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.collect(&:first).join(" ,")}"
+        raise ArgumentError, "Too few arguments; no value given for required parameters #{missing.collect(&:name).join(" ,")}"
       end
 
       tc = Puppet::Pops::Types::TypeCalculator
@@ -143,6 +152,8 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
           # get excess arguments
           value = args[(parameter_count-1)..-1]
           # If the input was a single nil, or undef, and there is a default, use the default
+          # This supports :undef in case it was used in a 3x data structure and it is passed as an arg
+          #
           if value.size == 1 && (given_argument.nil? || given_argument == :undef) && default_expression
             value = @evaluator.evaluate(default_expression, scope)
             # and ensure it is an array

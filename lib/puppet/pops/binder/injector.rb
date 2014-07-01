@@ -363,9 +363,9 @@ module Private
       if block
         case block.arity
         when 1
-          block.call(:undef)
+          block.call(nil)
         when 2
-          block.call(scope, :undef)
+          block.call(scope, nil)
         else
           raise ArgumentError, "The block should have arity 1 or 2"
         end

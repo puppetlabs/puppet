@@ -91,7 +91,7 @@ class Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
       #
       define_method(:__relay__call__) do |*args|
         # dup the args since the function may destroy them
-        # TODO: Should convert arguments to 3x, now :undef is send to the function
+        # TODO: Should convert arguments to 3x, now nil values are sent to the function
         send(__name__, args.dup)
       end
 

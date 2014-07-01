@@ -115,10 +115,12 @@ class Puppet::Pops::Evaluator::CompareOperator
   end
 
   def equals_NilClass(a, b)
+    # :undef supported in case it is passed from a 3x data structure
     b.nil? || b == :undef
   end
 
   def equals_Symbol(a, b)
+    # :undef supported in case it is passed from a 3x data structure
     a == b || a == :undef && b.nil?
   end
 

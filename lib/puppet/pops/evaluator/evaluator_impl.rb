@@ -199,8 +199,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   # Evaluates Nop to nil.
-  # TODO: or is this the same as :undef
-  # TODO: is this even needed as a separate instruction when there is a literal undef?
   def eval_Nop(o, scope)
     nil
   end
@@ -222,7 +220,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   def eval_LiteralUndef(o, scope)
-    :undef # TODO: or just use nil for this?
+    nil
   end
 
   # A QualifiedReference (i.e. a  capitalized qualified name such as Foo, or Foo::Bar) evaluates to a PType
@@ -279,6 +277,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       # if value does not exist and strict is on, looking it up fails, else it is nil or :undef
       existing_value = get_variable_value(name, o, scope)
       begin
+        # Supports :undef as it may come from a 3x structure.
         if existing_value.nil? || existing_value == :undef
           assign(name, value, o, scope)
         else
@@ -297,8 +296,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       # if value does not exist and strict is on, looking it up fails, else it is nil or :undef
       existing_value = get_variable_value(name, o, scope)
       begin
+      # Supports :undef as it may come from a 3x structure.
       if existing_value.nil? || existing_value == :undef
-        assign(name, :undef, o, scope)
+        assign(name, nil, o, scope)
       else
         # Delegate to delete function to deal with check of LHS, and perform deletion
         assign(name, delete(get_variable_value(name, o, scope), value), o, scope)
@@ -837,6 +837,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
   def string_Symbol(o, scope)
     case o
+    # Support :undef since it may come from a 3x structure
     when :undef
       ''
     else

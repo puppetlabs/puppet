@@ -111,7 +111,6 @@ module Puppet::Pops::Binder::Producers
     #
     def do_transformation(scope, produced_value)
       return produced_value unless transformer
-      produced_value = :undef if produced_value.nil?
       transformer.call(scope, produced_value)
     end
   end

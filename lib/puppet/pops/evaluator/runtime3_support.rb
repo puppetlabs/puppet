@@ -238,7 +238,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
     # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
-    # NOTE: Passing an empty string last converts :undef to empty string
+    # NOTE: Passing an empty string last converts nil/:undef to empty string
     mapped_args = args.map {|a| convert(a, scope, '') }
     result = scope.send("function_#{name}", mapped_args)
     # Prevent non r-value functions from leaking their result (they are not written to care about this)
@@ -250,6 +250,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     file, line = extract_file_line(o)
     Puppet::Parser::Resource::Param.new(
       :name   => name,
+      # Here we must convert nil values to :undef for the 3x logic to work
       :value  => convert(value, scope, :undef), # converted to 3x since 4x supports additional objects / types
       :source => scope.source, :line => line, :file => file,
       :add    => operator == :'+>'
@@ -384,6 +385,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Is the value true?  This allows us to control the definition of truth
     # in one place.
     case o
+    # Support :undef since it may come from a 3x structure
     when :undef
       false
     else
@@ -437,8 +439,9 @@ module Puppet::Pops::Evaluator::Runtime3Support
 
   def convert_Symbol(o, scope, undef_value)
     case o
+    # Support :undef since it may come from a 3x structure
     when :undef
-      undef_value  # 3x wants :undef as empty string in function
+      undef_value  # 3x wants undef as either empty string or :undef
     else
       o   # :default, and all others are verbatim since they are new in future evaluator
     end
