@@ -185,24 +185,6 @@ describe 'the map method' do
       end
     end
 
-  context 'map checks arguments and' do
-    it 'raises an error when block has more than 2 argument' do
-      expect do
-        compile_to_catalog(<<-MANIFEST)
-          [1].map |$index, $x, $yikes|{  }
-        MANIFEST
-      end.to raise_error(Puppet::Error, /block must define at most two parameters/)
-    end
-
-    it 'raises an error when block has fewer than 1 argument' do
-      expect do
-        compile_to_catalog(<<-MANIFEST)
-          [1].map || {  }
-        MANIFEST
-      end.to raise_error(Puppet::Error, /block must define at least one parameter/)
-    end
-  end
-
   it_should_behave_like 'all iterative functions argument checks', 'map'
   it_should_behave_like 'all iterative functions hash handling', 'map'
   end

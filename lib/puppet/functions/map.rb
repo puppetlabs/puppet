@@ -34,45 +34,64 @@
 # @note requires `parser = future`
 #
 Puppet::Functions.create_function(:map) do
-  dispatch :map_Hash do
+  dispatch :map_Hash_2 do
     param 'Hash[Any, Any]', :hash
-    required_block_param
+    required_block_param 'Callable[2,2]', :block
   end
 
-  dispatch :map_Enumerable do
+  dispatch :map_Hash_1 do
+    param 'Hash[Any, Any]', :hash
+    required_block_param 'Callable[1,1]', :block
+  end
+
+  dispatch :map_Enumerable_2 do
     param 'Any', :enumerable
-    required_block_param
+    required_block_param 'Callable[2,2]', :block
   end
 
-  require 'puppet/util/functions/iterative_support'
-  include Puppet::Util::Functions::IterativeSupport
+  dispatch :map_Enumerable_1 do
+    param 'Any', :enumerable
+    required_block_param 'Callable[1,1]', :block
+  end
 
-  def map_Hash(hash, pblock)
-    if asserted_serving_size(pblock, 'key') == 1
-      hash.map {|x, y| pblock.call(nil, [x, y]) }
-    else
+  def map_Hash_1(hash, pblock)
+    hash.map {|x, y| pblock.call(nil, [x, y]) }
+  end
+
+  def map_Hash_2(hash, pblock)
       hash.map {|x, y| pblock.call(nil, x, y) }
-    end
   end
 
-  def map_Enumerable(enumerable, pblock)
+  def map_Enumerable_1(enumerable, pblock)
     result = []
     index = 0
     enum = asserted_enumerable(enumerable)
-    if asserted_serving_size(pblock, 'index') == 1
-      begin
-        loop { result << pblock.call(nil, enum.next) }
-      rescue StopIteration
-      end
-    else
-      begin
-        loop do
-          result << pblock.call(nil, index, enum.next)
-          index = index +1
-        end
-      rescue StopIteration
-      end
+    begin
+      loop { result << pblock.call(nil, enum.next) }
+    rescue StopIteration
     end
     result
   end
+
+  def map_Enumerable_2(enumerable, pblock)
+    result = []
+    index = 0
+    enum = asserted_enumerable(enumerable)
+    begin
+      loop do
+        result << pblock.call(nil, index, enum.next)
+        index = index +1
+      end
+    rescue StopIteration
+    end
+    result
+  end
+
+  def asserted_enumerable(obj)
+    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
+      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
+    end
+    enum
+  end
+
 end
