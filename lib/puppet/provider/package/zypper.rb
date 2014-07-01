@@ -67,7 +67,7 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
     end
   end
 
-  def version=
+  def version=(version)
     self.install
   end
 
