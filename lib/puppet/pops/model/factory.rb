@@ -859,6 +859,7 @@ class Puppet::Pops::Model::Factory
 
   # Creates a String literal, unless the symbol is one of the special :undef, or :default
   # which instead creates a LiterlUndef, or a LiteralDefault.
+  # Supports :undef because nil creates a no-op instruction.
   def build_Symbol(o)
     case o
     when :undef

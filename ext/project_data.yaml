@@ -29,8 +29,7 @@ gem_platform_dependencies:
   x86-mingw32:
     gem_runtime_dependencies:
       # Pinning versions that require native extensions
-      ffi: '1.9.0'
-      sys-admin: '1.5.6'
+      ffi: '1.9.3'
       win32-api: '1.4.8'
       win32-dir: '~> 0.4.3'
       win32-eventlog: '~> 0.5.3'
@@ -42,5 +41,16 @@ gem_platform_dependencies:
       windows-api: '~> 0.4.2'
       windows-pr: '~> 1.2.2'
       minitar: '~> 0.5.4'
+  x64-mingw32:
+    gem_runtime_dependencies:
+      ffi: '1.9.3'
+      win32-dir: '~> 0.4.8'
+      win32-eventlog: '~> 0.6.1'
+      win32-process: '~> 0.7.4'
+      win32-security: '~> 0.2.5'
+      win32-service: '0.8.4'
+      win32-taskscheduler: '~> 0.3.0'
+      minitar: '~> 0.5.4'
 bundle_platforms:
   x86-mingw32: mingw
+  x64-mingw32: x64_mingw

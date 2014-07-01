@@ -27,7 +27,7 @@ describe "the epp function" do
     end
 
     it "get nil accessing a variable that is undef" do
-      scope['undef_var'] = :undef
+      scope['undef_var'] = nil
       eval_template("<%= $undef_var == undef %>").should == "true"
     end
 
@@ -116,7 +116,7 @@ describe "the epp function" do
         }})
       Puppet.override({:current_environment => (env = Puppet::Node::Environment.create(:testload, [ modules_dir ]))}, "test") do
         node.environment = env
-        expect(scope.function_epp([ 'testmodule/the_x.epp', { 'x' => '3'} ])).to eql("The x is 3")
+        expect(epp_function.call(scope, 'testmodule/the_x.epp', { 'x' => '3'} )).to eql("The x is 3")
       end
     end
   end
@@ -127,7 +127,7 @@ describe "the epp function" do
     File.open(filename, "w+") { |f| f.write(content) }
 
     Puppet::Parser::Files.stubs(:find_template).returns(filename)
-    scope.function_epp(['template', args_hash])
+    epp_function.call(scope, 'template', args_hash)
   end
 
   def eval_template(content)
@@ -136,6 +136,10 @@ describe "the epp function" do
     File.open(filename, "w+") { |f| f.write(content) }
 
     Puppet::Parser::Files.stubs(:find_template).returns(filename)
-    scope.function_epp(['template'])
+    epp_function.call(scope, 'template')
+  end
+
+  def epp_function()
+    epp_func = scope.compiler.loaders.public_environment_loader.load(:function, 'epp')
   end
 end

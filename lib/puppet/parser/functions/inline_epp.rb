@@ -71,9 +71,6 @@ is subject to expression interpolation before the string is parsed as an EPP tem
 
 - Since 3.5
 - Requires Future Parser") do |arguments|
-  # Requires future parser
-  unless Puppet[:parser] == "future"
-    raise ArgumentError, "inline_epp(): function is only available when --parser future is in effect"
-  end
-  Puppet::Pops::Evaluator::EppEvaluator.inline_epp(self, arguments[0], arguments[1])
+
+  function_fail(["inline_epp() is only available when parser/evaluator future is in effect"])
 end

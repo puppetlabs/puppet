@@ -794,6 +794,30 @@ describe 'The type calculator' do
         calculator.assignable?(pattern, enum).should  == true
       end
 
+      it 'pattern should accept a variant where all variants are acceptable' do
+        pattern = pattern_t(/^\w+$/)
+        calculator.assignable?(pattern, variant_t(string_t('a'), string_t('b'))).should == true
+      end
+
+    end
+
+    context 'when dealing with enums' do
+      it 'should accept a string with matching content' do
+        calculator.assignable?(enum_t('a', 'b'), string_t('a')).should == true
+        calculator.assignable?(enum_t('a', 'b'), string_t('b')).should == true
+        calculator.assignable?(enum_t('a', 'b'), string_t('c')).should == false
+      end
+
+      it 'should accept an enum with matching enum' do
+        calculator.assignable?(enum_t('a', 'b'), enum_t('a', 'b')).should == true
+        calculator.assignable?(enum_t('a', 'b'), enum_t('a')).should == true
+        calculator.assignable?(enum_t('a', 'b'), enum_t('c')).should == false
+      end
+
+      it 'enum should accept a variant where all variants are acceptable' do
+        enum = enum_t('a', 'b')
+        calculator.assignable?(enum, variant_t(string_t('a'), string_t('b'))).should == true
+      end
     end
 
     context 'when dealing with tuples' do

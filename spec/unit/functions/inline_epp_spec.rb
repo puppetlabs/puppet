@@ -73,10 +73,15 @@ describe "the inline_epp function" do
 
 
   def eval_template_with_args(content, args_hash)
-    scope.function_inline_epp([content, args_hash])
+    epp_function.call(scope, content, args_hash)
   end
 
   def eval_template(content)
-    scope.function_inline_epp([content])
+    epp_function.call(scope, content)
   end
+
+  def epp_function()
+    epp_func = scope.compiler.loaders.public_environment_loader.load(:function, 'inline_epp')
+  end
+
 end

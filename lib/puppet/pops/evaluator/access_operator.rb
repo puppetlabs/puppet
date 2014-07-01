@@ -124,21 +124,10 @@ class Puppet::Pops::Evaluator::AccessOperator
   #   Does not flatten its keys to enable looking up with a structure
   #
   def access_Hash(o, scope, keys)
-    # Look up key in hash, if key is nil or :undef, try alternate form before giving up.
-    # This makes :undef and nil "be the same key". (The alternative is to always only write one or the other
-    # in all hashes - that is much harder to guarantee since the Hash is a regular Ruby hash.
-    #
+    # Look up key in hash, if key is nil, try alternate form (:undef) before giving up.
+    # This is done because the hash may have been produced by 3x logic and may thus contain :undef.
     result = keys.collect do |k|
-      o.fetch(k) do |key|
-        case key
-        when nil
-          o[:undef]
-        when :undef
-          o[:nil]
-        else
-          nil
-        end
-      end
+      o.fetch(k) { |key| key.nil? ? o[:undef] : nil }
     end
     case result.size
     when 0
@@ -237,7 +226,7 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def bad_key_type_name(actual)
     case actual
-    when nil, :undef
+    when nil
       'Undef'
     when :default
       'Default'
@@ -514,7 +503,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     result = keys.each_with_index.map do |t, i|
       unless t.is_a?(String) || t == :no_title
         type_to_report = case t
-        when nil, :undef
+        when nil
           'Undef'
         when :default
           'Default'

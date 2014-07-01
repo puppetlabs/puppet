@@ -329,7 +329,7 @@ module Puppet::Functions
 
     # Specifies the min and max occurance of arguments (of the specified types)
     # if something other than the exact count from the number of specified
-    # types). The max value may be specified as -1 if an infinite number of
+    # types). The max value may be specified as :default if an infinite number of
     # arguments are supported. When max is > than the number of specified
     # types, the last specified type repeats.
     #
@@ -527,6 +527,11 @@ module Puppet::Functions
   #
   # @api private
   class InternalDispatchBuilder < DispatcherBuilder
+    def scope_param()
+      @injections << [:scope, 'scope', '', :dispatcher_internal]
+      # mark what should be picked for this position when dispatching
+      @weaving << [@injections.size()-1]
+    end
     # TODO: is param name really needed? Perhaps for error messages? (it is unused now)
     #
     # @api private
