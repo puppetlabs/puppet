@@ -121,8 +121,4 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   def install_options
     join_options(@resource[:install_options])
   end
-
-  def flush
-    super
-  end
 end
