@@ -77,7 +77,7 @@ end
 require 'yaml'
 data = YAML.load_file(File.join(File.dirname(__FILE__), 'ext', 'project_data.yaml'))
 bundle_platforms = data['bundle_platforms']
-x64_platform = Bundler::Dsl::VALID_PLATFORMS.include?(:x64_mingw)
+x64_platform = Gem::Platform.local.cpu == 'x64'
 data['gem_platform_dependencies'].each_pair do |gem_platform, info|
   next if gem_platform == 'x86-mingw32' && x64_platform
   next if gem_platform == 'x64-mingw32' && !x64_platform
