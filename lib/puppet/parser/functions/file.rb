@@ -8,7 +8,7 @@ Puppet::Parser::Functions::newfunction(
     ret = nil
     vals.each do |file|
       path = Puppet::Parser::Files.find_file(file, compiler.environment)
-      if not path.nil? and Puppet::FileSystem.exist?(path)
+      if !path.nil? && Puppet::FileSystem.exist?(path)
         ret = File.read(path)
         break
       end
