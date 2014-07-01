@@ -126,24 +126,6 @@ describe 'the filter method' do
     expect(catalog).to have_resource("File[/file_blueb]").with_parameter(:ensure, 'present')
   end
 
-  context 'filter checks arguments and' do
-    it 'raises an error when block has more than 2 argument' do
-      expect do
-        compile_to_catalog(<<-MANIFEST)
-          [1].filter |$indexm, $x, $yikes|{  }
-        MANIFEST
-      end.to raise_error(Puppet::Error, /block must define at most two parameters/)
-    end
-
-    it 'raises an error when block has fewer than 1 argument' do
-      expect do
-        compile_to_catalog(<<-MANIFEST)
-          [1].filter || {  }
-        MANIFEST
-      end.to raise_error(Puppet::Error, /block must define at least one parameter/)
-    end
-  end
-
   it_should_behave_like 'all iterative functions argument checks', 'filter'
   it_should_behave_like 'all iterative functions hash handling', 'filter'
 end
