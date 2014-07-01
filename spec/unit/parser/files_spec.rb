@@ -18,7 +18,7 @@ describe Puppet::Parser::Files do
       Puppet::Parser::Files.find_file(@basepath + "/my/file", environment).should == @basepath + "/my/file"
     end
 
-    it "should return the file from the first found module" do
+    it "should return the first found file" do
       mod = mock 'module'
       mod.expects(:file).returns("/one/mymod/files/myfile")
       environment.expects(:module).with("mymod").returns mod
@@ -26,7 +26,7 @@ describe Puppet::Parser::Files do
       Puppet::Parser::Files.find_file("mymod/myfile", environment).should == "/one/mymod/files/myfile"
     end
 
-    it "should return nil if no template can be found" do
+    it "should return nil if template is not found" do
       Puppet::Parser::Files.find_file("foomod/myfile", environment).should be_nil
     end
   end
