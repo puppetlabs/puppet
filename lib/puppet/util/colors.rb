@@ -79,8 +79,9 @@ module Puppet::Util::Colors
   # We define console_has_color? at load time since it's checking the
   # underlying platform which will not change, and we don't want to perform
   # the check every time we use logging
-  if Puppet::Util::Platform.windows?
-    # We're on windows, need win32console for color to work
+  if Puppet::Util::Platform.windows? && RUBY_VERSION =~ /^1\./
+    # We're on windows and using ruby less than v2
+    # so we need win32console for color to work
     begin
       require 'ffi'
       require 'win32console'
