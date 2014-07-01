@@ -265,6 +265,8 @@ class Puppet::Pops::Types::TypeCalculator
     if t2.is_a?(Class)
       t2 = type(t2)
     end
+    # Unit can be assigned to anything
+    return true if t2.class == Types::PUnitType
 
     @@assignable_visitor.visit_this_1(self, t, t2)
  end
@@ -396,6 +398,12 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(t, infer(o))
   end
 
+  # Anything is an instance of Unit
+  # @api private
+  def instance_of_PUnitType(t, o)
+    true
+  end
+
   def instance_of_PArrayType(t, o)
     return false unless o.is_a?(Array)
     return false unless o.all? {|element| instance_of(t.element_type, element) }
@@ -490,10 +498,18 @@ class Puppet::Pops::Types::TypeCalculator
   def common_type(t1, t2)
     raise ArgumentError, 'two types expected' unless (is_ptype?(t1) || is_pnil?(t1)) && (is_ptype?(t2) || is_pnil?(t2))
 
+    # TODO: This is not right since Scalar U Undef is Any
     # if either is nil, the common type is the other
     if is_pnil?(t1)
       return t2
     elsif is_pnil?(t2)
+      return t1
+    end
+
+    # If either side is Unit, it is the other type
+    if t1.is_a?(Types::PUnitType)
+      return t2
+    elsif t2.is_a?(Types::PUnitType)
       return t1
     end
 
@@ -886,6 +902,12 @@ class Puppet::Pops::Types::TypeCalculator
   def assignable_PNilType(t, t2)
     # Only undef/nil is assignable to nil type
     t2.is_a?(Types::PNilType)
+  end
+
+  # Anything is assignable to a Unit type
+  # @api private
+  def assignable_PUnitType(t, t2)
+    true
   end
 
   # @api private
@@ -1469,7 +1491,8 @@ class Puppet::Pops::Types::TypeCalculator
     else
       range = range_array_part(t.param_types.size_type)
     end
-    types = t.param_types.types.map {|t2| string(t2) }
+    # translate to string, and skip Unit types
+    types = t.param_types.types.map {|t2| string(t2) unless t2.class == Types::PUnitType }.compact
 
     params_part= types.join(', ')
 
@@ -1512,6 +1535,11 @@ class Puppet::Pops::Types::TypeCalculator
     else
       "Collection"
     end
+  end
+
+  # @api private
+  def string_PUnitType(t)
+    "Unit"
   end
 
   # @api private

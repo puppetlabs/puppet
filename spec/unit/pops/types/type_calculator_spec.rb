@@ -82,12 +82,18 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.any()
   end
 
+  def unit_t
+    # Cannot be created via factory, the type is private to the type system
+    Puppet::Pops::Types::PUnitType.new
+  end
+
   def types
     Puppet::Pops::Types
   end
 
   shared_context "types_setup" do
 
+    # Do not include the special type Unit in this list
     def all_types
       [ Puppet::Pops::Types::PAnyType,
         Puppet::Pops::Types::PNilType,
@@ -492,13 +498,31 @@ describe 'The type calculator' do
   context 'computes assignability' do
     include_context "types_setup"
 
-    context "for Object, such that" do
-      it 'all types are assignable to Object' do
+    context 'for Unit, such that' do
+      it 'all types are assignable to Unit' do
+        t = Puppet::Pops::Types::PUnitType.new()
+        all_types.each { |t2| t2.new.should be_assignable_to(t) }
+      end
+
+      it 'Unit is assignable to all other types' do
+        t = Puppet::Pops::Types::PUnitType.new()
+        all_types.each { |t2| t.should be_assignable_to(t2.new) }
+      end
+
+      it 'Unit is assignable to Unit' do
+        t = Puppet::Pops::Types::PUnitType.new()
+        t2 = Puppet::Pops::Types::PUnitType.new()
+        t.should be_assignable_to(t2)
+      end
+    end
+
+    context "for Any, such that" do
+      it 'all types are assignable to Any' do
         t = Puppet::Pops::Types::PAnyType.new()
         all_types.each { |t2| t2.new.should be_assignable_to(t) }
       end
 
-      it 'Object is not assignable to anything but Object' do
+      it 'Any is not assignable to anything but Any' do
         tested_types = all_types() - [Puppet::Pops::Types::PAnyType]
         t = Puppet::Pops::Types::PAnyType.new()
         tested_types.each { |t2| t.should_not be_assignable_to(t2.new) }
@@ -1424,12 +1448,18 @@ describe 'The type calculator' do
       expect(calculator.string(callable_t(String, Integer))).to eql("Callable[String, Integer]")
     end
 
-    it "should yield 'Callable[t,min.max]' for callable with size constraint (infinite max)" do
+    it "should yield 'Callable[t,min,max]' for callable with size constraint (infinite max)" do
       expect(calculator.string(callable_t(String, 0))).to eql("Callable[String, 0, default]")
     end
 
-    it "should yield 'Callable[t,min.max]' for callable with size constraint (capped max)" do
+    it "should yield 'Callable[t,min,max]' for callable with size constraint (capped max)" do
       expect(calculator.string(callable_t(String, 0, 3))).to eql("Callable[String, 0, 3]")
+    end
+
+    it "should yield 'Callable[min,max]' callable with size > 0" do
+      expect(calculator.string(callable_t(0, 0))).to eql("Callable[0, 0]")
+      expect(calculator.string(callable_t(0, 1))).to eql("Callable[0, 1]")
+      expect(calculator.string(callable_t(0, :default))).to eql("Callable[0, default]")
     end
 
     it "should yield 'Callable[Callable]' for callable with block" do
@@ -1438,6 +1468,9 @@ describe 'The type calculator' do
       expect(calculator.string(callable_t(string_t, 1,1, all_callables_t))).to eql("Callable[String, 1, 1, Callable]")
     end
 
+    it "should yield Unit for a Unit type" do
+      expect(calculator.string(unit_t)).to eql('Unit')
+    end
   end
 
   context 'when processing meta type' do
