@@ -219,7 +219,7 @@ module Puppet::Pops::Types::TypeFactory
     types = params.map {|p| type_of(p) }
 
     # If the specification requires types, and none were given, a Unit type is used
-    if types.empty? && !size_type.nil? && size_type.size > 0
+    if types.empty? && !size_type.nil? && size_type.range[1] > 0
       types << Types::PUnitType.new
     end
     # create a signature
