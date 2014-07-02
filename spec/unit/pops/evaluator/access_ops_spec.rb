@@ -415,12 +415,12 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
     # Ruby Type
     #
     it 'creates a Ruby Type instance when applied to a Ruby Type' do
-      type_expr = fqr('Ruby')['String']
+      type_expr = fqr('Runtime')['ruby','String']
       tf = Puppet::Pops::Types::TypeFactory
       expect(evaluate(type_expr)).to eql(tf.ruby_type('String'))
 
       # arguments are flattened
-      type_expr = fqr('Ruby')[['String']]
+      type_expr = fqr('Runtime')[['ruby', 'String']]
       expect(evaluate(type_expr)).to eql(tf.ruby_type('String'))
     end
 

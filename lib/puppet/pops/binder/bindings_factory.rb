@@ -318,7 +318,7 @@ module Puppet::Pops::Binder::BindingsFactory
     # @overload instance_of(c)
     #   @param c [Class] the Class to base the type on.
     #   Sets the type based on the given ruby class. The result is one of the specific puppet types
-    #   if the class can be represented by a specific type, or the open ended PRubyType otherwise.
+    #   if the class can be represented by a specific type, or the open ended PRuntimeType otherwise.
     # @overload instance_of(s)
     #   The same as using a class, but instead of giving a class instance, the class is expressed using its fully
     #   qualified name. This method of specifying the type allows late binding (the class does not have to be loaded

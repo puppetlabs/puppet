@@ -434,16 +434,20 @@ module Puppet::Pops::Types
     end
   end
 
+  RuntimeEnum = RGen::MetamodelBuilder::DataTypes::Enum.new([:'ruby', ])
+
   # @api public
-  class PRubyType < PAnyType
-    has_attr 'ruby_class', String
+  class PRuntimeType < PAnyType
+    has_attr 'runtime', RuntimeEnum, :lowerBound => 1
+    has_attr 'runtime_type_name', String
+
     module ClassModule
       def hash
-        [self.class, ruby_class].hash
+        [self.class, runtime, runtime_type_name].hash
       end
 
       def ==(o)
-        self.class == o.class && ruby_class == o.ruby_class
+        self.class == o.class && runtime == o.runtime && runtime_type_name == o.runtime_type_name 
       end
     end
   end

@@ -172,7 +172,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it 'parses a ruby type' do
-    expect(parser.parse("Ruby['Integer']")).to be_the_type(types.ruby_type('Integer'))
+    expect(parser.parse("Runtime[ruby, 'Integer']")).to be_the_type(types.ruby_type('Integer'))
   end
 
   it 'parses a callable type' do
