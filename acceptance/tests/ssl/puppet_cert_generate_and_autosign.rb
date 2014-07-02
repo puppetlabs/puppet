@@ -134,9 +134,9 @@ test_name "Puppet cert generate behavior (#6112)" do
   step "puppet cert generate with autosign true and dns_alt_names"
   hosts.each do |host|
     if host_is_master?(host)
-      generate_and_clean_cert_with_dns_alt_names(host, test_cn, true)
+      generate_and_clean_cert_with_dns_alt_names(host, test_cn, false)
     else
-      fail_to_generate_cert_on_agent_that_is_not_ca(host, test_cn, true)
+      fail_to_generate_cert_on_agent_that_is_not_ca(host, test_cn, false)
     end
   end
 
