@@ -88,6 +88,10 @@ class Puppet::Transaction::Event
     message
   end
 
+  def inspect
+    %Q(#<#{self.class.name} @name="#{@name.inspect}" @message="#{@message.inspect}">)
+  end
+
   def to_yaml_properties
     YAML_ATTRIBUTES & super
   end
