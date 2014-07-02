@@ -90,4 +90,6 @@ describe 'the reduce method' do
     end
   end
 
+  it_should_behave_like 'all iterative functions argument checks', 'reduce'
+
 end
