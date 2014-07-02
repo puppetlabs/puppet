@@ -56,7 +56,7 @@ shared_examples_for 'all iterative functions argument checks' do |func|
       compile_to_catalog(<<-MANIFEST)
         [1].#{func}() | | {  }
       MANIFEST
-    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*arg count \{2\}.*actual.*Callable\[\]/m)
+    end.to raise_error(Puppet::Error, /mis-matched arguments.*expected.*arg count \{2\}.*actual.*Callable\[0, 0\]/m)
   end
 
   it 'does not raise an error when called with a block with too many but optional arguments' do
