@@ -89,4 +89,5 @@ describe 'the reduce method' do
       expect(catalog).to have_resource("File[/file_sum_10]").with_parameter(:ensure, 'present')
     end
   end
+
 end

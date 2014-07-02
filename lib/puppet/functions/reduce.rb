@@ -65,38 +65,30 @@ Puppet::Functions.create_function(:reduce) do
 
   dispatch :reduce_without_memo do
     param 'Any', :enumerable
-    required_block_param
+    required_block_param 'Callable[2,2]', :block
   end
 
   dispatch :reduce_with_memo do
     param 'Any', :enumerable
     param 'Any', :memo
-    required_block_param
+    required_block_param 'Callable[2,2]', :block
   end
 
-  require 'puppet/util/functions/iterative_support'
-  include Puppet::Util::Functions::IterativeSupport
-
   def reduce_without_memo(enumerable, pblock)
-    assert_serving_size(pblock)
     enum = asserted_enumerable(enumerable)
     enum.reduce {|memo, x| pblock.call(nil, memo, x) }
   end
 
   def reduce_with_memo(enumerable, given_memo, pblock)
-    assert_serving_size(pblock)
     enum = asserted_enumerable(enumerable)
     enum.reduce(given_memo) {|memo, x| pblock.call(nil, memo, x) }
   end
 
-  # Asserts number of lambda parameters with more specific error message than the generic
-  # mis-matched arguments message that is produced by the dispatcher's type checking.
-  #
-  def assert_serving_size(pblock)
-    serving_size = pblock.parameter_count
-    unless serving_size == 2 || pblock.last_captures_rest? && serving_size <= 2
-      raise ArgumentError, "reduce(): block must define 2 parameters; memo, value. Block has #{serving_size}; "+
-      pblock.parameter_names.join(', ')
+  def asserted_enumerable(obj)
+    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
+      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
     end
+    enum
   end
+
 end
