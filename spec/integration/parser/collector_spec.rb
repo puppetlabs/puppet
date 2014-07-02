@@ -133,8 +133,28 @@ describe Puppet::Parser::Collector do
       MANIFEST
     end
 
-    context "issue #10963" do
-      it "collects with override when inside a class" do
+    context "overrides" do
+      it "modifies an existing array" do
+        expect_the_message_to_be([["original message", "extra message"]], <<-MANIFEST)
+          @notify { "testing": message => ["original message"] }
+
+          Notify <| |> {
+            message +> "extra message"
+          }
+        MANIFEST
+      end
+
+      it "converts a scalar to an array" do
+        expect_the_message_to_be([["original message", "extra message"]], <<-MANIFEST)
+          @notify { "testing": message => "original message" }
+
+          Notify <| |> {
+            message +> "extra message"
+          }
+        MANIFEST
+      end
+
+      it "collects with override when inside a class (#10963)" do
         expect_the_message_to_be(["overridden message"], <<-MANIFEST)
           @notify { "testing": message => "original message" }
 
@@ -147,7 +167,7 @@ describe Puppet::Parser::Collector do
         MANIFEST
       end
 
-      it "collects with override when inside a define" do
+      it "collects with override when inside a define (#10963)" do
         expect_the_message_to_be(["overridden message"], <<-MANIFEST)
           @notify { "testing": message => "original message" }
 
