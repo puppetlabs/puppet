@@ -2,6 +2,7 @@ require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'matchers/resource'
+require 'shared_behaviours/iterative_functions'
 
 describe 'the reduce method' do
   include PuppetSpec::Compiler

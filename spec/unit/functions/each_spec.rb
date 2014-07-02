@@ -2,7 +2,7 @@ require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
-require 'unit/functions/shared'
+require 'shared_behaviours/iterative_functions'
 
 describe 'the each method' do
   include PuppetSpec::Compiler

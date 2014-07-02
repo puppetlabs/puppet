@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'matchers/resource'
 
-require 'unit/functions/shared'
+require 'shared_behaviours/iterative_functions'
 
 describe 'the filter method' do
   include PuppetSpec::Compiler
