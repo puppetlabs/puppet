@@ -207,7 +207,7 @@ describe Puppet::ModuleTool::Metadata do
       }
 
       it "raises an exception" do
-        expect { subject }.to raise_error(ArgumentError)
+        expect { subject }.to raise_error(Puppet::ModuleTool::Errors::DuplicateDependencyError, /puppetlabs-dupmodule/)
       end
     end
 
@@ -216,7 +216,7 @@ describe Puppet::ModuleTool::Metadata do
 
       it "with a different version raises an exception" do
         metadata.add_dependency('puppetlabs-origmodule', '>= 0.0.1')
-        expect { subject }.to raise_error(ArgumentError)
+        expect { subject }.to raise_error(Puppet::ModuleTool::Errors::DuplicateDependencyError, /puppetlabs-origmodule/)
       end
 
       it "with the same version does not add another dependency" do
