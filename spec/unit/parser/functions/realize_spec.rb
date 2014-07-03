@@ -1,53 +1,61 @@
-#! /usr/bin/env ruby
 require 'spec_helper'
+require 'matchers/resource'
+require 'puppet_spec/compiler'
 
 describe "the realize function" do
-  before :all do
-    Puppet::Parser::Functions.autoloader.loadall
+  include Matchers::Resource
+  include PuppetSpec::Compiler
+
+  it "realizes a single, referenced resource" do
+    catalog = compile_to_catalog(<<-EOM)
+      @notify { testing: }
+      realize(Notify[testing])
+    EOM
+
+    expect(catalog).to have_resource("Notify[testing]")
   end
 
-  before :each do
-    @collector = stub_everything 'collector'
-    node      = Puppet::Node.new('localhost')
-    @compiler = Puppet::Parser::Compiler.new(node)
-    @scope    = Puppet::Parser::Scope.new(@compiler)
-    @compiler.stubs(:add_collection).with(@collector)
+  it "realizes multiple resources" do
+    catalog = compile_to_catalog(<<-EOM)
+      @notify { testing: }
+      @notify { other: }
+      realize(Notify[testing], Notify[other])
+    EOM
+
+    expect(catalog).to have_resource("Notify[testing]")
+    expect(catalog).to have_resource("Notify[other]")
   end
 
-  it "should exist" do
-    Puppet::Parser::Functions.function("realize").should == "function_realize"
+  it "realizes resources provided in arrays" do
+    catalog = compile_to_catalog(<<-EOM)
+      @notify { testing: }
+      @notify { other: }
+      realize([Notify[testing], [Notify[other]]])
+    EOM
+
+    expect(catalog).to have_resource("Notify[testing]")
+    expect(catalog).to have_resource("Notify[other]")
   end
 
-  it "should create a Collector when called" do
-
-    Puppet::Parser::Collector.expects(:new).returns(@collector)
-
-    @scope.function_realize(["test"])
+  it "fails when the resource does not exist" do
+    expect do
+      compile_to_catalog(<<-EOM)
+        realize(Notify[missing])
+      EOM
+    end.to raise_error(Puppet::Error, /Failed to realize/)
   end
 
-  it "should assign the passed-in resources to the collector" do
-    Puppet::Parser::Collector.stubs(:new).returns(@collector)
-
-    @collector.expects(:resources=).with(["test"])
-
-    @scope.function_realize(["test"])
+  it "fails when no parameters given" do
+    expect do
+      compile_to_catalog(<<-EOM)
+        realize()
+      EOM
+    end.to raise_error(Puppet::Error, /Wrong number of arguments/)
   end
 
-  it "should flatten the resources assigned to the collector" do
-    Puppet::Parser::Collector.stubs(:new).returns(@collector)
-
-    @collector.expects(:resources=).with(["test"])
-
-    @scope.function_realize([["test"]])
+  it "silently does nothing when an empty array of resources is given" do
+    compile_to_catalog(<<-EOM)
+      realize([])
+    EOM
   end
-
-  it "should let the compiler know this collector" do
-    Puppet::Parser::Collector.stubs(:new).returns(@collector)
-    @collector.stubs(:resources=).with(["test"])
-
-    @compiler.expects(:add_collection).with(@collector)
-
-    @scope.function_realize(["test"])
-  end
-
 end

@@ -7,7 +7,10 @@ class Puppet::Util::Windows::Error < Puppet::Error
 
   attr_reader :code
 
-  def initialize(message, code = @@GetLastError.call(), original = nil)
+  # NOTE: FFI.errno only works properly when prior Win32 calls have been made
+  # through FFI bindings.  Calls made through Win32API do not have their error
+  # codes captured by FFI.errno
+  def initialize(message, code = FFI.errno, original = nil)
     super(message + ":  #{self.class.format_error_code(code)}", original)
 
     @code = code
@@ -62,16 +65,6 @@ class Puppet::Util::Windows::Error < Puppet::Error
   FORMAT_MESSAGE_MAX_WIDTH_MASK    = 0x000000FF
 
   ffi_convention :stdcall
-
-  # NOTE: It seems like FFI.errno is already implemented as GetLastError... or is it?
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms679360(v=vs.85).aspx
-  # DWORD WINAPI GetLastError(void);
-  # HACK: unfortunately using FFI.errno or attach_function to hook GetLastError in
-  # FFI like the following will not work.  Something internal to FFI appears to
-  # be stomping out the value of GetLastError when calling via FFI.
-  # attach_function_private :GetLastError, [], :dword
-  require 'Win32API'
-  @@GetLastError = Win32API.new('kernel32', 'GetLastError', [], 'L')
 
   # http://msdn.microsoft.com/en-us/library/windows/desktop/ms679351(v=vs.85).aspx
   # DWORD WINAPI FormatMessage(
