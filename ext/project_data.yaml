@@ -35,7 +35,7 @@ gem_platform_dependencies:
       win32-eventlog: '~> 0.5.3'
       win32-process: '~> 0.6.5'
       win32-security: '~> 0.2.5'
-      win32-service: '0.7.2'
+      win32-service: '~> 0.8.4'
       win32-taskscheduler: '~> 0.2.2'
       win32console:  '1.3.2'
       windows-api: '~> 0.4.2'
@@ -48,7 +48,7 @@ gem_platform_dependencies:
       win32-eventlog: '~> 0.6.1'
       win32-process: '~> 0.7.4'
       win32-security: '~> 0.2.5'
-      win32-service: '0.8.4'
+      win32-service: '~> 0.8.4'
       win32-taskscheduler: '~> 0.3.0'
       minitar: '~> 0.5.4'
 bundle_platforms:
