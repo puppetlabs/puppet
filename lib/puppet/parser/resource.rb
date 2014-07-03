@@ -238,7 +238,6 @@ class Puppet::Parser::Resource < Puppet::Resource
         msg += " at #{fields.join(":")}"
       end
       msg += "; cannot redefine"
-      Puppet.log_exception(ArgumentError.new(), msg)
       raise Puppet::ParseError.new(msg, param.line, param.file)
     end
 
