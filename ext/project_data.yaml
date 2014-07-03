@@ -31,9 +31,9 @@ gem_platform_dependencies:
       # Pinning versions that require native extensions
       ffi: '1.9.3'
       win32-api: '1.4.8'
-      win32-dir: '~> 0.4.3'
-      win32-eventlog: '~> 0.5.3'
-      win32-process: '~> 0.6.5'
+      win32-dir: '~> 0.4.9'
+      win32-eventlog: '~> 0.6.1'
+      win32-process: '~> 0.7.4'
       win32-security: '~> 0.2.5'
       win32-service: '~> 0.8.4'
       win32-taskscheduler: '~> 0.2.2'
@@ -44,7 +44,7 @@ gem_platform_dependencies:
   x64-mingw32:
     gem_runtime_dependencies:
       ffi: '1.9.3'
-      win32-dir: '~> 0.4.8'
+      win32-dir: '~> 0.4.9'
       win32-eventlog: '~> 0.6.1'
       win32-process: '~> 0.7.4'
       win32-security: '~> 0.2.5'
