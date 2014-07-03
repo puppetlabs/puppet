@@ -78,9 +78,10 @@ class Puppet::Util::FileType
     @bucket ||= Puppet::Type.type(:filebucket).mkdefaultbucket.bucket
   end
 
-  def initialize(path)
+  def initialize(path, default_mode = nil)
     raise ArgumentError.new("Path is nil") if path.nil?
     @path = path
+    @default_mode = default_mode
   end
 
   # Arguments that will be passed to the execute method. Will set the uid
@@ -119,6 +120,7 @@ class Puppet::Util::FileType
     def write(text)
       tf = Tempfile.new("puppet")
       tf.print text; tf.flush
+      File.chmod(@default_mode, tf.path) if @default_mode
       FileUtils.cp(tf.path, @path)
       tf.close
       # If SELinux is present, we need to ensure the file has its expected context
@@ -134,7 +136,9 @@ class Puppet::Util::FileType
       @@tabs.clear
     end
 
-    def initialize(path)
+    def initialize(path, default_mode = nil)
+      # default_mode is meaningless for this filetype,
+      # supported only for compatibility with :flat
       super
       @@tabs[@path] ||= ""
     end

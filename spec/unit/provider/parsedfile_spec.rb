@@ -108,7 +108,7 @@ describe Puppet::Provider::ParsedFile do
       provider.prefetch
 
       @filetype = Puppet::Util::FileType.filetype(:flat).new("/my/file")
-      Puppet::Util::FileType.filetype(:flat).stubs(:new).with("/my/file").returns @filetype
+      Puppet::Util::FileType.filetype(:flat).stubs(:new).with("/my/file",nil).returns @filetype
 
       @filetype.stubs(:write)
     end
