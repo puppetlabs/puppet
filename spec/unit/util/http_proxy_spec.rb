@@ -4,7 +4,7 @@ require 'puppet/util/http_proxy'
 
 describe Puppet::Util::HttpProxy do
 
-  host, port = 'some.host', 1234
+  host, port, user, password = 'some.host', 1234, 'user1', 'pAssw0rd'
 
   describe ".http_proxy_env" do
     it "should return nil if no environment variables" do
@@ -80,4 +80,46 @@ describe Puppet::Util::HttpProxy do
 
   end
 
+  describe ".http_proxy_user" do
+    it "should return a proxy user if set in environment" do
+      Puppet::Util.withenv('HTTP_PROXY' => "http://#{user}:#{password}@#{host}:#{port}") do
+        subject.http_proxy_user.should == user
+      end
+    end
+
+    it "should return a proxy user if set in config" do
+      Puppet.settings[:http_proxy_user] = user
+      subject.http_proxy_user.should == user
+    end
+
+    it "should use environment variable before puppet settings" do
+      Puppet::Util.withenv('HTTP_PROXY' => "http://#{user}:#{password}@#{host}:#{port}") do
+        Puppet.settings[:http_proxy_user] = 'clownpants'
+        subject.http_proxy_user.should == user
+      end
+    end
+
+  end
+
+  describe ".http_proxy_password" do
+    it "should return a proxy password if set in environment" do
+      Puppet::Util.withenv('HTTP_PROXY' => "http://#{user}:#{password}@#{host}:#{port}") do
+        subject.http_proxy_password.should == password
+      end
+    end
+
+    it "should return a proxy password if set in config" do
+      Puppet.settings[:http_proxy_user] = user
+      Puppet.settings[:http_proxy_password] = password
+      subject.http_proxy_password.should == password
+    end
+
+    it "should use environment variable before puppet settings" do
+      Puppet::Util.withenv('HTTP_PROXY' => "http://#{user}:#{password}@#{host}:#{port}") do
+        Puppet.settings[:http_proxy_password] = 'clownpants'
+        subject.http_proxy_password.should == password
+      end
+    end
+
+  end
 end

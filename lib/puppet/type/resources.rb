@@ -39,7 +39,7 @@ Puppet::Type.newtype(:resources) do
 
   newparam(:unless_system_user) do
     desc "This keeps system users from being purged.  By default, it
-      does not purge users whose UIDs are less than 500 or 1000, depending on operating system, but you can specify
+      does not purge users whose UIDs are less than the minimum UID for the system (typically 500 or 1000), but you can specify
       a different UID as the inclusive limit."
 
     newvalues(:true, :false, /^\d+$/)
@@ -49,7 +49,7 @@ Puppet::Type.newtype(:resources) do
       when /^\d+/
         Integer(value)
       when :true, true
-        @resource.system_users_max_uid
+        @resource.class.system_users_max_uid
       when :false, false
         false
       when Integer; value
@@ -60,7 +60,7 @@ Puppet::Type.newtype(:resources) do
 
     defaultto {
       if @resource[:name] == "user"
-        @resource.system_users_max_uid
+        @resource.class.system_users_max_uid
       else
         nil
       end
@@ -160,12 +160,28 @@ Puppet::Type.newtype(:resources) do
     %w{root nobody bin noaccess daemon sys}
   end
 
-  def system_users_max_uid
-    case Facter.value(:osfamily)
-    when 'Debian', 'OpenBSD', 'FreeBSD'
-      999
-    else
-      499
+  def self.system_users_max_uid
+    return @system_users_max_uid if @system_users_max_uid
+
+    # First try to read the minimum user id from login.defs
+    if Puppet::FileSystem.exist?('/etc/login.defs')
+      @system_users_max_uid = Puppet::FileSystem.each_line '/etc/login.defs' do |line|
+        break $1.to_i - 1 if line =~ /^\s*UID_MIN\s+(\d+)(\s*#.*)?$/
+      end
     end
+
+    # Otherwise, use a sensible default based on the OS family
+    @system_users_max_uid ||= case Facter.value(:osfamily)
+      when 'OpenBSD', 'FreeBSD'
+        999
+      else
+        499
+    end
+
+    @system_users_max_uid
+  end
+
+  def self.reset_system_users_max_uid!
+    @system_users_max_uid = nil
   end
 end

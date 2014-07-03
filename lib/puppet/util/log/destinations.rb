@@ -200,11 +200,11 @@ Puppet::Util::Log.newdesttype :eventlog do
   def to_native(level)
     case level
     when :debug,:info,:notice
-      [Win32::EventLog::INFO, 0x01]
+      [Win32::EventLog::INFO_TYPE, 0x01]
     when :warning
-      [Win32::EventLog::WARN, 0x02]
+      [Win32::EventLog::WARN_TYPE, 0x02]
     when :err,:alert,:emerg,:crit
-      [Win32::EventLog::ERROR, 0x03]
+      [Win32::EventLog::ERROR_TYPE, 0x03]
     end
   end
 

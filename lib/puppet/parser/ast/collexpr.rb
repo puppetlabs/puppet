@@ -85,7 +85,7 @@ class CollExpr < AST::Branch
           resource.tagged?(match2)
         else
           if resource[match1].is_a?(Array)
-            @@compare_operator.include?(resource[match1], match2)
+            @@compare_operator.include?(resource[match1], match2, scope)
           else
             @@compare_operator.equals(resource[match1], match2)
           end

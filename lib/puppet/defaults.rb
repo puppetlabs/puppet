@@ -389,11 +389,26 @@ module Puppet
     :http_proxy_host => {
       :default    => "none",
       :desc       => "The HTTP proxy host to use for outgoing connections.  Note: You
-      may need to use a FQDN for the server hostname when using a proxy.",
+      may need to use a FQDN for the server hostname when using a proxy. Environment variable
+      http_proxy or HTTP_PROXY will override this value",
     },
     :http_proxy_port => {
       :default    => 3128,
       :desc       => "The HTTP proxy port to use for outgoing connections",
+    },
+    :http_proxy_user => {
+      :default    => "none",
+      :desc       => "The user name for an authenticated HTTP proxy. Requires http_proxy_host.",
+    },
+    :http_proxy_password =>{
+      :default    => "none",
+      :hook       => proc do |value|
+        if Puppet.settings[:http_proxy_password] =~ /[@!# \/]/
+          raise "Special characters in passwords must be URL compliant, we received #{value}"
+        end
+      end,
+      :desc       => "The password for the user of an authenticated HTTP proxy. Requires http_proxy_user.
+      NOTE: Special characters must be escaped or encoded for URL compliance",
     },
     :filetimeout => {
       :default    => "15s",
