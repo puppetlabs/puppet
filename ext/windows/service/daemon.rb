@@ -126,15 +126,15 @@ class WindowsDaemon < Win32::Daemon
 
       case level
         when :debug
-          report_windows_event(Win32::EventLog::INFO_TYPE,0x01,msg.to_s)
+          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
         when :info
-          report_windows_event(Win32::EventLog::INFO_TYPE,0x01,msg.to_s)
+          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
         when :notice
-          report_windows_event(Win32::EventLog::INFO_TYPE,0x01,msg.to_s)
+          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
         when :err
-          report_windows_event(Win32::EventLog::ERROR_TYPE,0x03,msg.to_s)
+          report_windows_event(Win32::EventLog::ERR,0x03,msg.to_s)
         else
-          report_windows_event(Win32::EventLog::WARN_TYPE,0x02,msg.to_s)
+          report_windows_event(Win32::EventLog::WARN,0x02,msg.to_s)
       end
     end
   end
@@ -145,7 +145,7 @@ class WindowsDaemon < Win32::Daemon
       eventlog = Win32::EventLog.open("Application")
       eventlog.report_event(
         :source      => "Puppet",
-        :event_type  => type,   # Win32::EventLog::INFO_TYPE, WARN_TYPE or ERROR_TYPE
+        :event_type  => type,   # Win32::EventLog::INFO or WARN, ERROR
         :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
         :data        => message # "the message"
       )
