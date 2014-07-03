@@ -68,30 +68,22 @@ describe Puppet::Util::Colors do
   end
 
   context "on Windows in Ruby 1.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^1./ do
-    it "should load win32console" do
-      Gem.loaded_specs["win32console"].must_not be_nil
+    it "should define WideConsole" do
+      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_true
     end
 
-    it "should wrap $stdout with Puppet::Util::Colors::WideIO" do
-      $stdout.must be_an_instance_of Puppet::Util::Colors::WideIO
-    end
-
-    it "should wrap $stderr with Puppet::Util::Colors::WideIO" do
-      $stderr.must be_an_instance_of Puppet::Util::Colors::WideIO
+    it "should define WideIO" do
+      expect(defined?(Puppet::Util::Colors::WideIO)).to be_true
     end
   end
 
   context "on Windows in Ruby 2.x", :if => Puppet.features.microsoft_windows? && RUBY_VERSION =~ /^2./ do
-    it "should not have attempted to extend IO with Puppet::Util::Colors::WideIO" do
-      defined?(Puppet::Util::Colors::WideIO).must be_false
+    it "should not define WideConsole" do
+      expect(defined?(Puppet::Util::Colors::WideConsole)).to be_false
     end
 
-    it "should not attempt to wrap $stdout" do
-      $stdout.must be_an_instance_of IO
-    end
-
-    it "should not attempt to wrap $stderr" do
-      $stderr.must be_an_instance_of IO
+    it "should not define WideIO" do
+      expect(defined?(Puppet::Util::Colors::WideIO)).to be_false
     end
   end
 end
