@@ -370,10 +370,12 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
       describe "for an administrator", :if => Puppet.features.root? do
         before :each do
+          is_dir = Puppet::FileSystem.directory?(path)
           winsec.set_mode(WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG, path)
           set_group_depending_on_current_user(path)
           winsec.set_owner(sids[:guest], path)
-          lambda { File.open(path, 'r') }.should raise_error(Errno::EACCES)
+          expected_error = RUBY_VERSION =~ /^2\./ && is_dir ? Errno::EISDIR : Errno::EACCES
+          lambda { File.open(path, 'r') }.should raise_error(expected_error)
         end
 
         after :each do
