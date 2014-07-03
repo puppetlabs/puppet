@@ -6,9 +6,11 @@ require 'puppet/file_bucket/dipper'
 describe "Nagios file creation" do
   include PuppetSpec::Files
 
+  let(:initial_mode) { 0600 }
+
   before :each do
     FileUtils.touch(target_file)
-    File.chmod(0600, target_file)
+    Puppet::FileSystem.chmod(initial_mode, target_file)
     Puppet::FileBucket::Dipper.any_instance.stubs(:backup) # Don't backup to filebucket
   end
 
@@ -44,7 +46,6 @@ describe "Nagios file creation" do
           :mode   => '0640'
         )
         run_in_catalog(resource)
-        # sticky bit only applies to directories in Windows
         expect_file_mode(target_file, "640")
       end
     end
@@ -63,10 +64,8 @@ describe "Nagios file creation" do
           :mode   => '0640'
         )
         run_in_catalog(file_res, nag_res)
-        expect_file_mode(target_file, "600")
+        expect_file_mode(target_file, initial_mode.to_s(8))
       end
     end
-
   end
-
 end
