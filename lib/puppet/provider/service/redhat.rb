@@ -39,7 +39,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
   # Don't support them specifying runlevels; always use the runlevels
   # in the init scripts.
   def enable
-      chkconfig(@resource[:name], :on)
+      chkconfig(@resource[:name], :resetpriorities)
   rescue Puppet::ExecutionFailure => detail
     raise Puppet::Error, "Could not enable #{self.name}: #{detail}", detail.backtrace
   end
