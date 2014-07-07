@@ -214,8 +214,6 @@ module Puppet
         newvalue(%r{(0|1)})
       end
 
-      newvalue(%r{(0|1)})
-
       defaultto {
         0 if @resource.managed?
       }
