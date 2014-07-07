@@ -10,6 +10,9 @@ module Win32
     include Windows::MSVCRT::Buffer
     include Puppet::Util::Windows::String
 
+    require 'ffi'
+    extend FFI::Library
+
     # The version of the win32-taskscheduler library
     VERSION = '0.2.3-beta'
 
