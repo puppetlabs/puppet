@@ -1,12 +1,10 @@
 require 'puppet/util/windows'
-require 'windows/com'
 require 'windows/msvcrt/buffer'
 
 # The Win32 module serves as a namespace only
 module Win32
   # The TaskScheduler class encapsulates taskscheduler settings and behavior
   class TaskScheduler
-    include Windows::COM
     include Windows::MSVCRT::Buffer
     include Puppet::Util::Windows::String
 
@@ -82,8 +80,8 @@ module Win32
 
     CLSCTX_INPROC_SERVER  = 0x1
     CLSID_CTask = [0x148BD520,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8')
-    CLSID_CTaskScheduler = [0x148BD52A,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8')
-    IID_ITaskScheduler = [0x148BD527,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8')
+    CLSID_CTaskScheduler = FFI::MemoryPointer.from_string([0x148BD52A,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8'))
+    IID_ITaskScheduler = FFI::MemoryPointer.from_string([0x148BD527,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8'))
     IID_ITask = [0x148BD524,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8')
     IID_IPersistFile = [0x0000010b,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46].pack('LSSC8')
 
@@ -166,14 +164,16 @@ module Win32
       @pITS   = nil
       @pITask = nil
 
-      hr = CoInitialize(0)
+      hr = CoInitialize(FFI::Pointer::NULL)
 
-      if SUCCEEDED(hr)
-        ptr = 0.chr * 4
+      if FAILED(hr)
+        raise Error.new("Failed to call CoInitialize with HRESULT #{hr}", hr)
+      end
 
+      FFI::MemoryPointer.new(:pointer) do |ptr|
         hr = CoCreateInstance(
           CLSID_CTaskScheduler,
-          nil,
+          FFI::Pointer::NULL,
           CLSCTX_INPROC_SERVER,
           IID_ITaskScheduler,
           ptr
@@ -183,9 +183,7 @@ module Win32
           raise Error.new("Failed to create TaskScheduler instance with HRESULT #{hr}", hr)
         end
 
-        @pITS = ptr.unpack('L').first
-      else
-        raise Error.new("Failed to call CoInitialize with HRESULT #{hr}", hr)
+        @pITS = ptr.read_pointer.address
       end
 
       if work_item
@@ -240,10 +238,10 @@ module Win32
         for i in 0 ... tasks
           str_ptr = FFI::Pointer.new(names[i*4, 4].unpack('L').first)
           array.push(str_ptr.read_arbitrary_wide_string_up_to(256))
-          CoTaskMemFree(str_ptr.address)
+          CoTaskMemFree(str_ptr)
         end
 
-        CoTaskMemFree(pnames.unpack('L').first)
+        CoTaskMemFree(FFI::Pointer.new(pnames.unpack('L').first))
       end
 
       release.call(pIEnum)
@@ -377,14 +375,16 @@ module Win32
       release.call(pIPersistFile)
 
       CoUninitialize()
-      hr = CoInitialize(nil)
+      hr = CoInitialize(FFI::Pointer::NULL)
 
-      if hr >= 0
-        ptr = 0.chr * 4
+      if FAILED(hr)
+        raise Error.new("Failed to call CoInitialize with HRESULT #{hr}", hr)
+      end
 
+      FFI::MemoryPointer.new(:pointer) do |ptr|
         hr = CoCreateInstance(
           CLSID_CTaskScheduler,
-          nil,
+          FFI::Pointer::NULL,
           CLSCTX_INPROC_SERVER,
           IID_ITaskScheduler,
           ptr
@@ -395,9 +395,7 @@ module Win32
           raise Error.new("Failed to create TaskScheduler instance with HRESULT #{hr}", hr)
         end
 
-        @pITS = ptr.unpack('L').first
-      else
-        raise Error.new("Failed to call CoInitialize with HRESULT #{hr}", hr)
+        @pITS = ptr.read_pointer.address
       end
 
       release.call(@pITask)
@@ -519,9 +517,9 @@ module Win32
       elsif hr >= 0 && hr != 0x80041312 # SCHED_E_NO_SECURITY_SERVICES
         str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
         user = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-        CoTaskMemFree(str_ptr.address)
+        CoTaskMemFree(str_ptr)
       else
-        CoTaskMemFree(p.unpack('L').first)
+        CoTaskMemFree(FFI::Pointer.new(p.unpack('L').first))
         raise Error.new("Failed to call ITask::GetAccountInformation with HRESULT #{hr}", hr)
       end
 
@@ -549,7 +547,7 @@ module Win32
       if hr >= S_OK
         str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
         app = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-        CoTaskMemFree(str_ptr.address)
+        CoTaskMemFree(str_ptr)
       else
         raise Error.new("Failed to call ITask::GetApplicationName with HRESULT #{hr}", hr)
       end
@@ -602,7 +600,7 @@ module Win32
       if hr >= S_OK
         str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
         param = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-        CoTaskMemFree(str_ptr.address)
+        CoTaskMemFree(str_ptr)
       else
         raise Error.new("Failed to call ITask::GetParameters with HRESULT #{hr}", hr)
       end
@@ -659,7 +657,7 @@ module Win32
       if hr >= S_OK
         str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
         dir = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-        CoTaskMemFree(str_ptr.address)
+        CoTaskMemFree(str_ptr)
       else
         raise Error.new("Failed to call ITask::GetWorkingDirectory with HRESULT #{hr}", hr)
       end
@@ -956,7 +954,7 @@ module Win32
       if hr == S_OK
         str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
         trigger = str_ptr.read_arbitrary_wide_string_up_to(256)
-        CoTaskMemFree(str_ptr.address)
+        CoTaskMemFree(str_ptr)
       else
         raise Error.new("Failed to call ITask::GetTriggerString with HRESULT #{hr}", hr)
       end
@@ -1402,7 +1400,7 @@ module Win32
 
       str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
       comment = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-      CoTaskMemFree(str_ptr.address)
+      CoTaskMemFree(str_ptr)
       comment
     end
 
@@ -1452,7 +1450,7 @@ module Win32
 
       str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
       creator = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-      CoTaskMemFree(str_ptr.address)
+      CoTaskMemFree(str_ptr)
       creator
     end
 
@@ -1669,5 +1667,37 @@ module Win32
       status >= 0
     end
 
+    ffi_convention :stdcall
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms678543(v=vs.85).aspx
+    # HRESULT CoInitialize(
+    #   _In_opt_  LPVOID pvReserved
+    # );
+    ffi_lib :ole32
+    attach_function_private :CoInitialize, [:lpvoid], :hresult
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms688715(v=vs.85).aspx
+    # void CoUninitialize(void);
+    ffi_lib :ole32
+    attach_function_private :CoUninitialize, [], :void
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms686615(v=vs.85).aspx
+    # HRESULT CoCreateInstance(
+    #   _In_   REFCLSID rclsid,
+    #   _In_   LPUNKNOWN pUnkOuter,
+    #   _In_   DWORD dwClsContext,
+    #   _In_   REFIID riid,
+    #   _Out_  LPVOID *ppv
+    # );
+    ffi_lib :ole32
+    attach_function_private :CoCreateInstance,
+      [:pointer, :lpunknown, :dword, :pointer, :lpvoid], :hresult
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
+    # void CoTaskMemFree(
+    #   _In_opt_  LPVOID pv
+    # );
+    ffi_lib :ole32
+    attach_function_private :CoTaskMemFree, [:lpvoid], :void
   end
 end

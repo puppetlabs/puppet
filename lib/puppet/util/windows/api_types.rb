@@ -124,6 +124,7 @@ module Puppet::Util::Windows::APITypes
   FFI.typedef :pointer, :phandle
   FFI.typedef :pointer, :ulong_ptr
   FFI.typedef :pointer, :pbool
+  FFI.typedef :pointer, :lpunknown
 
   # any time LONG / ULONG is in a win32 API definition DO NOT USE platform specific width
   # which is what FFI uses by default
@@ -135,6 +136,9 @@ module Puppet::Util::Windows::APITypes
   # Win32 BOOL is a signed int, and is always 4 bytes, even on x64
   # http://blogs.msdn.com/b/oldnewthing/archive/2011/03/28/10146459.aspx
   FFI.typedef :int32, :win32_bool
+
+  # Same as a LONG, a 32-bit signed integer
+  FFI.typedef :int32, :hresult
 
   # NOTE: FFI already defines (u)short as a 16-bit (un)signed like this:
   # FFI.typedef :uint16, :ushort
