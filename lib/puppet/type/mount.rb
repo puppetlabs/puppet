@@ -206,7 +206,7 @@ module Puppet
 
     newproperty(:dump) do
       desc "Whether to dump the mount.  Not all platform support this.
-        Valid values are `1` or `0`. or `2` on FreeBSD, Default is `0`."
+        Valid values are `1` or `0` (or `2` on FreeBSD). Default is `0`."
 
       if Facter.value(:operatingsystem) == "FreeBSD"
         newvalue(%r{(0|1|2)})
