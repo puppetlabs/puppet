@@ -1,16 +1,11 @@
 require 'puppet/parameter'
 
 if Puppet.features.microsoft_windows?
-  require 'win32/taskscheduler'
+  require 'puppet/util/windows/taskscheduler'
 end
 
 Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
-  desc %q{This provider uses the win32-taskscheduler gem to manage scheduled
-    tasks on Windows.
-
-    Puppet requires version 0.2.1 or later of the win32-taskscheduler gem;
-    previous versions can cause "Could not evaluate: The operation completed
-    successfully" errors.}
+  desc %q{This provider manages scheduled tasks on Windows.}
 
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows
