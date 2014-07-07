@@ -202,11 +202,8 @@ module Puppet::Pops::Types::TypeFactory
   # Params are given as a sequence of arguments to {#type_of}.
   #
   def self.callable(*params)
-    case params.last
-    when Types::PCallableType
+    if Puppet::Pops::Types::TypeCalculator.is_kind_of_callable?(params.last)
       last_callable = true
-    when Types::POptionalType
-      last_callable = true if params.last.optional_type.is_a?(Types::PCallableType)
     end
     block_t = last_callable ? params.pop : nil
 
@@ -221,6 +218,10 @@ module Puppet::Pops::Types::TypeFactory
 
     types = params.map {|p| type_of(p) }
 
+    # If the specification requires types, and none were given, a Unit type is used
+    if types.empty? && !size_type.nil? && size_type.range[1] > 0
+      types << Types::PUnitType.new
+    end
     # create a signature
     callable_t = Types::PCallableType.new()
     tuple_t = tuple(*types)

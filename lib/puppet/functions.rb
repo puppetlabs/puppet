@@ -300,12 +300,12 @@ module Puppet::Functions
         raise ArgumentError, "block_param accepts max 2 arguments (type, name), got #{type_and_name.size}."
       end
 
-      unless type.is_a?(Puppet::Pops::Types::PCallableType)
-        raise ArgumentError, "Expected PCallableType, got #{type.class}"
+      unless Puppet::Pops::Types::TypeCalculator.is_kind_of_callable?(type, false)
+        raise ArgumentError, "Expected PCallableType or PVariantType thereof, got #{type.class}"
       end
 
-      unless name.is_a?(String)
-        raise ArgumentError, "Expected block_param name to be a String, got #{name.class}"
+      unless name.is_a?(String) || name.is_a?(Symbol)
+        raise ArgumentError, "Expected block_param name to be a String or Symbol, got #{name.class}"
       end
 
       if @block_type.nil?

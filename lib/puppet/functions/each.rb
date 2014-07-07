@@ -39,52 +39,73 @@
 # @note requires `parser = future`
 #
 Puppet::Functions.create_function(:each) do
-  dispatch :foreach_Hash do
+  dispatch :foreach_Hash_2 do
     param 'Hash[Any, Any]', :hash
-    required_block_param
+    required_block_param 'Callable[2,2]', :block
   end
 
-  dispatch :foreach_Enumerable do
+  dispatch :foreach_Hash_1 do
+    param 'Hash[Any, Any]', :hash
+    required_block_param 'Callable[1,1]', :block
+  end
+
+  dispatch :foreach_Enumerable_2 do
     param 'Any', :enumerable
-    required_block_param
+    required_block_param 'Callable[2,2]', :block
   end
 
-  require 'puppet/util/functions/iterative_support'
-  include Puppet::Util::Functions::IterativeSupport
+  dispatch :foreach_Enumerable_1 do
+    param 'Any', :enumerable
+    required_block_param 'Callable[1,1]', :block
+  end
 
-  def foreach_Hash(hash, pblock)
+  def foreach_Hash_1(hash, pblock)
     enumerator = hash.each_pair
-    if asserted_serving_size(pblock, 'key') == 1
-      hash.size.times do
-        pblock.call(nil, enumerator.next)
-      end
-    else
-      hash.size.times do
-        pblock.call(nil, *enumerator.next)
-      end
+    hash.size.times do
+      pblock.call(nil, enumerator.next)
     end
     # produces the receiver
     hash
   end
 
-  def foreach_Enumerable(enumerable, pblock)
+  def foreach_Hash_2(hash, pblock)
+    enumerator = hash.each_pair
+    hash.size.times do
+      pblock.call(nil, *enumerator.next)
+    end
+    # produces the receiver
+    hash
+  end
+
+  def foreach_Enumerable_1(enumerable, pblock)
     enum = asserted_enumerable(enumerable)
-    index = 0
-    if asserted_serving_size(pblock, 'index') == 1
       begin
         loop { pblock.call(nil, enum.next) }
       rescue StopIteration
       end
-    else
-      begin
-        loop do
-          pblock.call(nil, index, enum.next)
-          index += 1
-        end
-      rescue StopIteration
+    # produces the receiver
+    enumerable
+  end
+
+  def foreach_Enumerable_2(enumerable, pblock)
+    enum = asserted_enumerable(enumerable)
+    index = 0
+    begin
+      loop do
+        pblock.call(nil, index, enum.next)
+        index += 1
       end
+    rescue StopIteration
     end
     # produces the receiver
     enumerable
   end
+
+  def asserted_enumerable(obj)
+    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
+      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
+    end
+    enum
+  end
+
 end

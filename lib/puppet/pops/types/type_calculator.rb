@@ -265,6 +265,8 @@ class Puppet::Pops::Types::TypeCalculator
     if t2.is_a?(Class)
       t2 = type(t2)
     end
+    # Unit can be assigned to anything
+    return true if t2.class == Types::PUnitType
 
     @@assignable_visitor.visit_this_1(self, t, t2)
  end
@@ -277,7 +279,7 @@ class Puppet::Pops::Types::TypeCalculator
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
   #
   def callable?(callable, args)
-    return false if !callable.is_a?(Types::PCallableType)
+    return false if !self.class.is_kind_of_callable?(callable)
     # Note that polymorphism is for the args type, the callable is always a callable
     @@callable_visitor.visit_this_1(self, args, callable)
   end
@@ -396,6 +398,12 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(t, infer(o))
   end
 
+  # Anything is an instance of Unit
+  # @api private
+  def instance_of_PUnitType(t, o)
+    true
+  end
+
   def instance_of_PArrayType(t, o)
     return false unless o.is_a?(Array)
     return false unless o.all? {|element| instance_of(t.element_type, element) }
@@ -490,10 +498,18 @@ class Puppet::Pops::Types::TypeCalculator
   def common_type(t1, t2)
     raise ArgumentError, 'two types expected' unless (is_ptype?(t1) || is_pnil?(t1)) && (is_ptype?(t2) || is_pnil?(t2))
 
+    # TODO: This is not right since Scalar U Undef is Any
     # if either is nil, the common type is the other
     if is_pnil?(t1)
       return t2
     elsif is_pnil?(t2)
+      return t1
+    end
+
+    # If either side is Unit, it is the other type
+    if t1.is_a?(Types::PUnitType)
+      return t2
+    elsif t2.is_a?(Types::PUnitType)
       return t1
     end
 
@@ -888,6 +904,12 @@ class Puppet::Pops::Types::TypeCalculator
     t2.is_a?(Types::PNilType)
   end
 
+  # Anything is assignable to a Unit type
+  # @api private
+  def assignable_PUnitType(t, t2)
+    true
+  end
+
   # @api private
   def assignable_PScalarType(t, t2)
     t2.is_a?(Types::PScalarType)
@@ -969,7 +991,7 @@ class Puppet::Pops::Types::TypeCalculator
     end
     # Assume no block was given - i.e. it is nil, and its type is PNilType
     block_t = @nil_t
-    if args_tuple.types.last.is_a?(Types::PCallableType)
+    if self.class.is_kind_of_callable?(args_tuple.types.last)
       # a split is needed to make it possible to use required, optional, and varargs semantics
       # of the tuple type.
       #
@@ -981,14 +1003,39 @@ class Puppet::Pops::Types::TypeCalculator
     end
     # unless argument types match parameter types
     return false unless assignable?(callable_t.param_types, args_tuple)
-    # unless given block (or no block) matches expected block (or no block)
+    # can the given block be *called* with a signature requirement specified by callable_t?
     assignable?(callable_t.block_type || @nil_t, block_t)
   end
 
+  # @api private
+  def self.is_kind_of_callable?(t, optional = true)
+    case t
+    when Types::PCallableType
+      true
+    when Types::POptionalType
+      optional && is_kind_of_callable?(t.optional_type, optional)
+    when Types::PVariantType
+      t.types.all? {|t2| is_kind_of_callable?(t2, optional) }
+    else
+      false
+    end
+  end
+
+
   def callable_PArrayType(args_array, callable_t)
     return false unless assignable?(callable_t.param_types, args_array)
-    # does not support calling with a block, but have to check that callable expects it
+    # does not support calling with a block, but have to check that callable is ok with missing block
     assignable?(callable_t.block_type || @nil_t, @nil_t)
+  end
+
+  def callable_PNilType(nil_t, callable_t)
+    # if callable_t is Optional (or indeed PNilType), this means that 'missing callable' is accepted
+    assignable?(callable_t, nil_t)
+  end
+
+  def callable_PCallableType(given_callable_t, required_callable_t)
+    # If the required callable is euqal or more specific than the given, the given is callable
+    assignable?(required_callable_t, given_callable_t)
   end
 
   def max(a,b)
@@ -1193,12 +1240,16 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless t2.is_a?(Types::PCallableType)
     # nil param_types means, any other Callable is assignable
     return true if t.param_types.nil?
-    return false unless assignable?(t.param_types, t2.param_types)
+
+    # NOTE: these tests are made in reverse as it is calling the callable that is constrained
+    # (it's lower bound), not its upper bound
+    return false unless assignable?(t2.param_types, t.param_types)
     # names are ignored, they are just information
     # Blocks must be compatible
     this_block_t = t.block_type || @nil_t
     that_block_t = t2.block_type || @nil_t
-    assignable?(this_block_t, that_block_t)
+    assignable?(that_block_t, this_block_t)
+
   end
 
   # @api private
@@ -1461,7 +1512,8 @@ class Puppet::Pops::Types::TypeCalculator
     else
       range = range_array_part(t.param_types.size_type)
     end
-    types = t.param_types.types.map {|t2| string(t2) }
+    # translate to string, and skip Unit types
+    types = t.param_types.types.map {|t2| string(t2) unless t2.class == Types::PUnitType }.compact
 
     params_part= types.join(', ')
 
@@ -1504,6 +1556,11 @@ class Puppet::Pops::Types::TypeCalculator
     else
       "Collection"
     end
+  end
+
+  # @api private
+  def string_PUnitType(t)
+    "Unit"
   end
 
   # @api private

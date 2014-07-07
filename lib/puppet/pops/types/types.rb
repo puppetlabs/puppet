@@ -71,6 +71,11 @@ module Puppet::Pops::Types
   class PNilType < PAnyType
   end
 
+  # A type private to the type system that describes "ignored type" - i.e. "I am what you are"
+  # @api private
+  class  PUnitType < PAnyType
+  end
+
   # A flexible data type, being assignable to its subtypes as well as PArrayType and PHashType with element type assignable to PDataType.
   #
   # @api public
@@ -361,10 +366,11 @@ module Puppet::Pops::Types
   end
 
   class PCallableType < PAnyType
-    # Types of parameters and required/optional count
-    contains_one_uni 'param_types', PTupleType, :lowerBound => 1
+    # Types of parameters as a Tuple with required/optional count, or an Integer with min (required), max count
+    contains_one_uni 'param_types', PAnyType, :lowerBound => 1
 
-    # Although being an abstract type reference, only PAbstractCallable, and Optional[Callable] are supported
+    # Although being an abstract type reference, only Callable, or all Callables wrapped in
+    # Optional or Variant are supported
     # If not set, the meaning is that block is not supported.
     #
     contains_one_uni 'block_type', PAbstractType, :lowerBound => 0

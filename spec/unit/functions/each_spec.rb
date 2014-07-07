@@ -2,7 +2,7 @@ require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
 
-require 'unit/functions/shared'
+require 'shared_behaviours/iterative_functions'
 
 describe 'the each method' do
   include PuppetSpec::Compiler
@@ -24,6 +24,7 @@ describe 'the each method' do
       catalog.resource(:file, "/file_2")['ensure'].should == 'present'
       catalog.resource(:file, "/file_3")['ensure'].should == 'present'
     end
+
     it 'each on an array selecting each value - function call style' do
       catalog = compile_to_catalog(<<-MANIFEST)
         $a = [1,2,3]

@@ -82,12 +82,18 @@ describe 'The type calculator' do
     Puppet::Pops::Types::TypeFactory.any()
   end
 
+  def unit_t
+    # Cannot be created via factory, the type is private to the type system
+    Puppet::Pops::Types::PUnitType.new
+  end
+
   def types
     Puppet::Pops::Types
   end
 
   shared_context "types_setup" do
 
+    # Do not include the special type Unit in this list
     def all_types
       [ Puppet::Pops::Types::PAnyType,
         Puppet::Pops::Types::PNilType,
@@ -458,14 +464,14 @@ describe 'The type calculator' do
         expect(common_t.block_type).to be_nil
       end
 
-      it 'compatible instances => the least specific' do
+      it 'compatible instances => the most specific' do
         t1 = callable_t(String)
         scalar_t = Puppet::Pops::Types::PScalarType.new
         t2 = callable_t(scalar_t)
         common_t = calculator.common_type(t1, t2)
         expect(common_t.class).to be(Puppet::Pops::Types::PCallableType)
         expect(common_t.param_types.class).to be(Puppet::Pops::Types::PTupleType)
-        expect(common_t.param_types.types).to eql([scalar_t])
+        expect(common_t.param_types.types).to eql([string_t])
         expect(common_t.block_type).to be_nil
       end
 
@@ -492,13 +498,31 @@ describe 'The type calculator' do
   context 'computes assignability' do
     include_context "types_setup"
 
-    context "for Object, such that" do
-      it 'all types are assignable to Object' do
+    context 'for Unit, such that' do
+      it 'all types are assignable to Unit' do
+        t = Puppet::Pops::Types::PUnitType.new()
+        all_types.each { |t2| t2.new.should be_assignable_to(t) }
+      end
+
+      it 'Unit is assignable to all other types' do
+        t = Puppet::Pops::Types::PUnitType.new()
+        all_types.each { |t2| t.should be_assignable_to(t2.new) }
+      end
+
+      it 'Unit is assignable to Unit' do
+        t = Puppet::Pops::Types::PUnitType.new()
+        t2 = Puppet::Pops::Types::PUnitType.new()
+        t.should be_assignable_to(t2)
+      end
+    end
+
+    context "for Any, such that" do
+      it 'all types are assignable to Any' do
         t = Puppet::Pops::Types::PAnyType.new()
         all_types.each { |t2| t2.new.should be_assignable_to(t) }
       end
 
-      it 'Object is not assignable to anything but Object' do
+      it 'Any is not assignable to anything but Any' do
         tested_types = all_types() - [Puppet::Pops::Types::PAnyType]
         t = Puppet::Pops::Types::PAnyType.new()
         tested_types.each { |t2| t.should_not be_assignable_to(t2.new) }
@@ -1448,12 +1472,18 @@ describe 'The type calculator' do
       expect(calculator.string(callable_t(String, Integer))).to eql("Callable[String, Integer]")
     end
 
-    it "should yield 'Callable[t,min.max]' for callable with size constraint (infinite max)" do
+    it "should yield 'Callable[t,min,max]' for callable with size constraint (infinite max)" do
       expect(calculator.string(callable_t(String, 0))).to eql("Callable[String, 0, default]")
     end
 
-    it "should yield 'Callable[t,min.max]' for callable with size constraint (capped max)" do
+    it "should yield 'Callable[t,min,max]' for callable with size constraint (capped max)" do
       expect(calculator.string(callable_t(String, 0, 3))).to eql("Callable[String, 0, 3]")
+    end
+
+    it "should yield 'Callable[min,max]' callable with size > 0" do
+      expect(calculator.string(callable_t(0, 0))).to eql("Callable[0, 0]")
+      expect(calculator.string(callable_t(0, 1))).to eql("Callable[0, 1]")
+      expect(calculator.string(callable_t(0, :default))).to eql("Callable[0, default]")
     end
 
     it "should yield 'Callable[Callable]' for callable with block" do
@@ -1462,6 +1492,9 @@ describe 'The type calculator' do
       expect(calculator.string(callable_t(string_t, 1,1, all_callables_t))).to eql("Callable[String, 1, 1, Callable]")
     end
 
+    it "should yield Unit for a Unit type" do
+      expect(calculator.string(unit_t)).to eql('Unit')
+    end
   end
 
   context 'when processing meta type' do
@@ -1636,6 +1669,87 @@ describe 'The type calculator' do
       element_types = inferred_type.types
       element_types[0].class.should == Puppet::Pops::Types::PStringType
       element_types[1].class.should == Puppet::Pops::Types::PNilType
+    end
+  end
+
+  context 'when determening callability' do
+    context 'and given is exact' do
+      it 'with callable' do
+        required = callable_t(string_t)
+        given = callable_t(string_t)
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple' do
+        required = callable_t(string_t)
+        given = tuple_t(string_t)
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple having a block' do
+        required = callable_t(string_t, callable_t(string_t))
+        given = tuple_t(string_t, callable_t(string_t))
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args array' do
+        required = callable_t(string_t)
+        given = array_t(string_t)
+        factory.constrain_size(given, 1, 1)
+        calculator.callable?(required, given).should == true
+      end
+    end
+
+    context 'and given is more generic' do
+      it 'with callable' do
+        required = callable_t(string_t)
+        given = callable_t(object_t)
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple' do
+        required = callable_t(string_t)
+        given = tuple_t(object_t)
+        calculator.callable?(required, given).should == false
+      end
+
+      it 'with args tuple having a block' do
+        required = callable_t(string_t, callable_t(string_t))
+        given = tuple_t(string_t, callable_t(object_t))
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple having a block with captures rest' do
+        required = callable_t(string_t, callable_t(string_t))
+        given = tuple_t(string_t, callable_t(object_t, 0, :default))
+        calculator.callable?(required, given).should == true
+      end
+    end
+
+    context 'and given is more specific' do
+      it 'with callable' do
+        required = callable_t(object_t)
+        given = callable_t(string_t)
+        calculator.callable?(required, given).should == false
+      end
+
+      it 'with args tuple' do
+        required = callable_t(object_t)
+        given = tuple_t(string_t)
+        calculator.callable?(required, given).should == true
+      end
+
+      it 'with args tuple having a block' do
+        required = callable_t(string_t, callable_t(object_t))
+        given = tuple_t(string_t, callable_t(string_t))
+        calculator.callable?(required, given).should == false
+      end
+
+      it 'with args tuple having a block with captures rest' do
+        required = callable_t(string_t, callable_t(object_t))
+        given = tuple_t(string_t, callable_t(string_t, 0, :default))
+        calculator.callable?(required, given).should == false
+      end
     end
   end
 

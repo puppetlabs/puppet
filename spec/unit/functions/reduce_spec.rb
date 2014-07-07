@@ -2,6 +2,7 @@ require 'puppet'
 require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'matchers/resource'
+require 'shared_behaviours/iterative_functions'
 
 describe 'the reduce method' do
   include PuppetSpec::Compiler
@@ -89,4 +90,7 @@ describe 'the reduce method' do
       expect(catalog).to have_resource("File[/file_sum_10]").with_parameter(:ensure, 'present')
     end
   end
+
+  it_should_behave_like 'all iterative functions argument checks', 'reduce'
+
 end
