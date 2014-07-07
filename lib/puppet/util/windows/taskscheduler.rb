@@ -1,5 +1,5 @@
+require 'puppet/util/windows'
 require 'windows/com'
-require 'windows/unicode'
 require 'windows/msvcrt/buffer'
 
 # The Win32 module serves as a namespace only
@@ -7,8 +7,8 @@ module Win32
   # The TaskScheduler class encapsulates taskscheduler settings and behavior
   class TaskScheduler
     include Windows::COM
-    include Windows::Unicode
     include Windows::MSVCRT::Buffer
+    include Puppet::Util::Windows::String
 
     # The version of the win32-taskscheduler library
     VERSION = '0.2.3-beta'
@@ -235,10 +235,9 @@ module Win32
         memcpy(names, pnames.unpack('L').first, 4 * tasks)
 
         for i in 0 ... tasks
-          str = 0.chr * 256
-          wcscpy(str, names[i*4, 4].unpack('L').first)
-          array.push(wide_to_multi(str))
-          CoTaskMemFree(names[i*4, 4].unpack('L').first)
+          str_ptr = FFI::Pointer.new(names[i*4, 4].unpack('L').first)
+          array.push(str_ptr.read_arbitrary_wide_string_up_to(256))
+          CoTaskMemFree(str_ptr.address)
         end
 
         CoTaskMemFree(pnames.unpack('L').first)
@@ -257,7 +256,7 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless task.is_a?(String)
 
-      task = multi_to_wide(task)
+      task = wide_string(task)
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 28
@@ -284,7 +283,7 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless task.is_a?(String)
 
-      task = multi_to_wide(task)
+      task = wide_string(task)
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 32
@@ -334,7 +333,7 @@ module Win32
     #
     def save(file = nil)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
-      file = multi_to_wide(file) if file
+      file = wide_string(file) if file
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 12
@@ -428,7 +427,7 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless host.is_a?(String)
 
-      host_w = multi_to_wide(host)
+      host_w = wide_string(host)
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 16
@@ -471,10 +470,10 @@ module Win32
       setAccountInformation = Win32::API::Function.new(table[30],'PPP','L')
 
       if (user.nil? || user=="") && (password.nil? || password=="")
-        hr = setAccountInformation.call(@pITask, multi_to_wide(""), nil)
+        hr = setAccountInformation.call(@pITask, wide_string(""), nil)
       else
-        user = multi_to_wide(user)
-        password = multi_to_wide(password)
+        user = wide_string(user)
+        password = wide_string(password)
         hr = setAccountInformation.call(@pITask, user, password)
       end
 
@@ -515,10 +514,9 @@ module Win32
       if hr == 0x8004130F # SCHED_E_ACCOUNT_INFORMATION_NOT_SET
         user = nil
       elsif hr >= 0 && hr != 0x80041312 # SCHED_E_NO_SECURITY_SERVICES
-        str = 0.chr * 256
-        wcscpy(str, ptr.unpack('L').first)
-        CoTaskMemFree(ptr.unpack('L').first)
-        user = wide_to_multi(str)
+        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
+        user = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        CoTaskMemFree(str_ptr.address)
       else
         CoTaskMemFree(p.unpack('L').first)
         raise Error.new("Failed to call ITask::GetAccountInformation with HRESULT #{hr}", hr)
@@ -546,10 +544,9 @@ module Win32
       hr  = getApplicationName.call(@pITask, ptr)
 
       if hr >= S_OK
-        str = 0.chr * 256
-        wcscpy(str, ptr.unpack('L').first)
-        app = wide_to_multi(str)
-        CoTaskMemFree(ptr.unpack('L').first)
+        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
+        app = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        CoTaskMemFree(str_ptr.address)
       else
         raise Error.new("Failed to call ITask::GetApplicationName with HRESULT #{hr}", hr)
       end
@@ -564,7 +561,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless app.is_a?(String)
 
-      app_w = multi_to_wide(app)
+      app_w = wide_string(app)
 
       lpVtbl = 0.chr * 4
       table = 0.chr * 132
@@ -600,10 +597,9 @@ module Win32
       hr = getParameters.call(@pITask, ptr)
 
       if hr >= S_OK
-        str = 0.chr * 256
-        wcscpy(str, ptr.unpack('L').first)
-        param = wide_to_multi(str)
-        CoTaskMemFree(ptr.unpack('L').first)
+        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
+        param = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        CoTaskMemFree(str_ptr.address)
       else
         raise Error.new("Failed to call ITask::GetParameters with HRESULT #{hr}", hr)
       end
@@ -620,7 +616,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless param.is_a?(String)
 
-      param_w = multi_to_wide(param)
+      param_w = wide_string(param)
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 140
@@ -658,10 +654,9 @@ module Win32
       hr  = getWorkingDirectory.call(@pITask, ptr)
 
       if hr >= S_OK
-        str = 0.chr * 256
-        wcscpy(str, ptr.unpack('L').first)
-        dir = wide_to_multi(str)
-        CoTaskMemFree(ptr.unpack('L').first)
+        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
+        dir = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        CoTaskMemFree(str_ptr.address)
       else
         raise Error.new("Failed to call ITask::GetWorkingDirectory with HRESULT #{hr}", hr)
       end
@@ -676,7 +671,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless dir.is_a?(String)
 
-      dir_w = multi_to_wide(dir)
+      dir_w = wide_string(dir)
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 148
@@ -795,7 +790,7 @@ module Win32
         @pITask = nil
       end
 
-      task = multi_to_wide(task)
+      task = wide_string(task)
       lpVtbl = 0.chr * 4
       table  = 0.chr * 36
 
@@ -956,10 +951,9 @@ module Win32
       hr  = getTriggerString.call(@pITask, index, ptr)
 
       if hr == S_OK
-        str = 0.chr * 256
-        wcscpy(str, ptr.unpack('L').first)
-        trigger = wide_to_multi(str)
-        CoTaskMemFree(ptr.unpack('L').first)
+        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
+        trigger = str_ptr.read_arbitrary_wide_string_up_to(256)
+        CoTaskMemFree(str_ptr.address)
       else
         raise Error.new("Failed to call ITask::GetTriggerString with HRESULT #{hr}", hr)
       end
@@ -1403,10 +1397,10 @@ module Win32
         raise Error.new("Failed to call ITask::GetComment with HRESULT #{hr}", hr)
       end
 
-      str = 0.chr * 256
-      wcscpy(str, ptr.unpack('L').first)
-      CoTaskMemFree(ptr.unpack('L').first)
-      wide_to_multi(str)
+      str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
+      comment = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+      CoTaskMemFree(str_ptr.address)
+      comment
     end
 
     # Sets the comment for the task.
@@ -1423,7 +1417,7 @@ module Win32
       table = table.unpack('L*')
 
       setComment = Win32::API::Function.new(table[18], 'PP', 'L')
-      comment_w = multi_to_wide(comment)
+      comment_w = wide_string(comment)
       hr = setComment.call(@pITask, comment_w)
 
       if hr != S_OK
@@ -1453,10 +1447,10 @@ module Win32
         raise Error.new("Failed to call ITask::GetCreator with HRESULT #{hr}", hr)
       end
 
-      str = 0.chr * 256
-      wcscpy(str, ptr.unpack('L').first)
-      CoTaskMemFree(ptr.unpack('L').first)
-      wide_to_multi(str)
+      str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
+      creator = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+      CoTaskMemFree(str_ptr.address)
+      creator
     end
 
     # Sets the creator for the task.
@@ -1473,7 +1467,7 @@ module Win32
       table = table.unpack('L*')
 
       setCreator = Win32::API::Function.new(table[20], 'PP', 'L')
-      creator_w = multi_to_wide(creator)
+      creator_w = wide_string(creator)
       hr = setCreator.call(@pITask, creator_w)
 
       if hr != S_OK
