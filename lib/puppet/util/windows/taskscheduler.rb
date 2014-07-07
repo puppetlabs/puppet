@@ -15,7 +15,7 @@ module Win32
     include Windows::MSVCRT::Buffer
 
     # The version of the win32-taskscheduler library
-    VERSION = '0.2.2'
+    VERSION = '0.2.3-beta'
 
     # The error class raised if any task scheduler specific calls fail.
     class Error < StandardError; end
