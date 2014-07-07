@@ -37,6 +37,13 @@ module Puppet::Util::RDoc
       options << "--force-update"
     end
     options += [ "--charset", charset] if charset
+    # Rdoc root default is Dir.pwd, but the win32-dir gem monkey patchs Dir.pwd
+    # replacing Ruby's normal / with \.  When RDoc generates relative paths it
+    # uses relative_path_from that will generate errors when the slashes don't
+    # properly match.  This is a workaround for that issue.
+    if Puppet.features.microsoft_windows? && RDoc::VERSION !~ /^[0-3]\./
+      options += [ "--root", Dir.pwd.gsub(/\\/, '/')]
+    end
     options += files
 
     # launch the documentation process

@@ -15,6 +15,24 @@ describe Puppet::Parser::Collector do
   end
 
   shared_examples_for "virtual resource collection" do
+    it "matches everything when no query given" do
+      expect_the_message_to_be(["the other message", "the message"], <<-MANIFEST)
+        @notify { "testing": message => "the message" }
+        @notify { "other": message => "the other message" }
+
+        Notify <| |>
+      MANIFEST
+    end
+
+    it "matches on tags" do
+      expect_the_message_to_be(["wanted"], <<-MANIFEST)
+        @notify { "testing": tag => ["one"], message => "wanted" }
+        @notify { "other": tag => ["two"], message => "unwanted" }
+
+        Notify <| tag == one |>
+      MANIFEST
+    end
+
     it "matches on title" do
       expect_the_message_to_be(["the message"], <<-MANIFEST)
         @notify { "testing": message => "the message" }
@@ -97,8 +115,46 @@ describe Puppet::Parser::Collector do
       MANIFEST
     end
 
-    context "issue #10963" do
-      it "collects with override when inside a class" do
+    it "does not exclude resources with unequal arrays" do
+      expect_the_message_to_be(["message", ["not this message", "or this one"]], <<-MANIFEST)
+        @notify { "testing": message => "message" }
+        @notify { "the wrong one": message => ["not this message", "or this one"] }
+
+        Notify <| message != "not this message" |>
+      MANIFEST
+    end
+
+    it "does not exclude tags with inequalities" do
+      expect_the_message_to_be(["wanted message", "the way it works"], <<-MANIFEST)
+        @notify { "testing": tag => ["wanted"], message => "wanted message" }
+        @notify { "other": tag => ["why"], message => "the way it works" }
+
+        Notify <| tag != "why" |>
+      MANIFEST
+    end
+
+    context "overrides" do
+      it "modifies an existing array" do
+        expect_the_message_to_be([["original message", "extra message"]], <<-MANIFEST)
+          @notify { "testing": message => ["original message"] }
+
+          Notify <| |> {
+            message +> "extra message"
+          }
+        MANIFEST
+      end
+
+      it "converts a scalar to an array" do
+        expect_the_message_to_be([["original message", "extra message"]], <<-MANIFEST)
+          @notify { "testing": message => "original message" }
+
+          Notify <| |> {
+            message +> "extra message"
+          }
+        MANIFEST
+      end
+
+      it "collects with override when inside a class (#10963)" do
         expect_the_message_to_be(["overridden message"], <<-MANIFEST)
           @notify { "testing": message => "original message" }
 
@@ -111,7 +167,7 @@ describe Puppet::Parser::Collector do
         MANIFEST
       end
 
-      it "collects with override when inside a define" do
+      it "collects with override when inside a define (#10963)" do
         expect_the_message_to_be(["overridden message"], <<-MANIFEST)
           @notify { "testing": message => "original message" }
 

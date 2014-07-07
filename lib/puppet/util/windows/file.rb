@@ -89,7 +89,7 @@ module Puppet::Util::Windows::File
   end
   module_function :symlink
 
-  INVALID_FILE_ATTRIBUTES = FFI::Pointer.new(-1).address #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
+  INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF #define INVALID_FILE_ATTRIBUTES (DWORD (-1))
 
   def get_file_attributes(file_name)
     Puppet.deprecation_warning('Puppet::Util::Windows::File.get_file_attributes is deprecated; please use Puppet::Util::Windows::File.get_attributes')

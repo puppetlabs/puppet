@@ -355,7 +355,11 @@ module Puppet::Pops::Evaluator::Runtime3Support
   def get_resource_parameter_value(scope, resource, parameter_name)
     # This gets the parameter value, or nil (for both valid parameters and parameters that do not exist).
     val = resource[parameter_name]
-    if val.nil? && defaults = scope.lookupdefaults(resource.type)
+
+    # The defaults must be looked up in the scope where the resource was created (not in the given
+    # scope where the lookup takes place.
+    resource_scope = resource.scope
+    if val.nil? && resource_scope && defaults = resource_scope.lookupdefaults(resource.type)
       # NOTE: 3x resource keeps defaults as hash using symbol for name as key to Parameter which (again) holds
       # name and value.
       # NOTE: meta parameters that are unset ends up here, and there are no defaults for those encoded
