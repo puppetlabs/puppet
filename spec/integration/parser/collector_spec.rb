@@ -25,11 +25,11 @@ describe Puppet::Parser::Collector do
     end
 
     it "matches regular resources " do
-      expect_the_message_to_be(["the other message", "the message"], <<-MANIFEST)
+      expect_the_message_to_be(["changed", "changed"], <<-MANIFEST)
         notify { "testing": message => "the message" }
         notify { "other": message => "the other message" }
 
-        Notify <| |>
+        Notify <| |> { message => "changed" }
       MANIFEST
     end
 
