@@ -93,6 +93,25 @@ describe "Puppet::Parser::Compiler" do
       expect(catalog).to have_resource("Notify[bye]").with_parameter(:message, "defaulted")
     end
 
+    it 'looks up default parameter values from inherited class (PUP-2532)' do
+      catalog = compile_to_catalog(<<-CODE)
+      class a {
+        Notify { message => "defaulted" }
+        include c
+        notify { bye: }
+      }
+      class b { Notify { message => "inherited" } }
+      class c inherits b { notify { hi: } }
+
+      include a
+      notify {hi_test: message => Notify[hi][message] }
+      notify {bye_test: message => Notify[bye][message] }
+      CODE
+
+      expect(catalog).to have_resource("Notify[hi_test]").with_parameter(:message, "inherited")
+      expect(catalog).to have_resource("Notify[bye_test]").with_parameter(:message, "defaulted")
+    end
+
     describe "when resolving class references" do
       it "should not favor local scope (with class included in topscope)" do
         catalog = compile_to_catalog(<<-PP)
