@@ -167,6 +167,7 @@ describe Puppet::Util::Log do
     end
 
     it "should handle each puppet log level" do
+      pending('porting to windows ruby2') if Puppet::Util::Platform.windows? && RUBY_VERSION =~ /^2\./
       log = Puppet::Util::Log::DestEventlog.new
 
       Puppet::Util::Log.eachlevel do |level|
