@@ -67,16 +67,20 @@
 # type by looking at the Ruby class of the types this is considered an implementation detail, and such checks should in general
 # be performed by the type_calculator which implements the type system semantics.
 #
-# The PRubyType
+# The PRuntimeType
 # -------------
-# The PRubyType corresponds to a Ruby Class, except for the puppet types that are specialized (i.e. PRubyType should not be
-# used for Integer, String, etc. since there are specialized types for those).
-# When the type calculator deals with PRubyTypes and checks for assignability, it determines the "common ancestor class" of two classes.
-# This check is made based on the superclasses of the two classes being compared. In order to perform this, the classes must be present
-# (i.e. they are resolved from the string form in the PRubyType to a loaded, instantiated Ruby Class). In general this is not a problem,
-# since the question to produce the common super type for two objects means that the classes must be present or there would have been
-# no instances present in the first place. If however the classes are not present, the type calculator will fall back and state that
-# the two types at least have Object in common.
+# The PRuntimeType corresponds to a type in the runtime system (currently only supported runtime is 'ruby'). The
+# type has a runtime_type_name that corresponds to a Ruby Class name.
+# A Runtime[ruby] type can be used to describe any ruby class except for the puppet types that are specialized
+# (i.e. PRuntimeType should not be used for Integer, String, etc. since there are specialized types for those).
+# When the type calculator deals with PRuntimeTypes and checks for assignability, it determines the
+# "common ancestor class" of two classes.
+# This check is made based on the superclasses of the two classes being compared. In order to perform this, the
+# classes must be present (i.e. they are resolved from the string form in the PRuntimeType to a
+# loaded, instantiated Ruby Class). In general this is not a problem, since the question to produce the common
+# super type for two objects means that the classes must be present or there would have been
+# no instances present in the first place. If however the classes are not present, the type
+# calculator will fall back and state that the two types at least have Any in common.
 #
 # @see Puppet::Pops::Types::TypeFactory TypeFactory for how to create instances of types
 # @see Puppet::Pops::Types::TypeParser TypeParser how to construct a type instance from a String
@@ -86,7 +90,7 @@
 # -----
 # The type calculator can be directly used via its class methods. If doing time critical work and doing many
 # calls to the type calculator, it is more performant to create an instance and invoke the corresponding
-# instance methods. Note that inference is an expensive operation, rather than infering the same thing
+# instance methods. Note that inference is an expensive operation, rather than inferring the same thing
 # several times, it is in general better to infer once and then copy the result if mutation to a more generic form is
 # required.
 #
@@ -233,18 +237,18 @@ class Puppet::Pops::Types::TypeCalculator
   # A class is injectable if it has a special *assisted inject* class method called `inject` taking
   # an injector and a scope as argument, or if it has a zero args `initialize` method.
   #
-  # @param klazz [Class, PRubyType] the class/type to check if it is injectable
+  # @param klazz [Class, PRuntimeType] the class/type to check if it is injectable
   # @return [Class, nil] the injectable Class, or nil if not injectable
   # @api public
   #
   def injectable_class(klazz)
     # Handle case when we get a PType instead of a class
-    if klazz.is_a?(Types::PRubyType)
+    if klazz.is_a?(Types::PRuntimeType)
       klazz = Puppet::Pops::Types::ClassLoader.provide(klazz)
     end
 
-    # data types can not be injected (check again, it is not safe to assume that given RubyType klazz arg was ok)
-    return false unless type(klazz).is_a?(Types::PRubyType)
+    # data types can not be injected (check again, it is not safe to assume that given RubyRuntime klazz arg was ok)
+    return false unless type(klazz).is_a?(Types::PRuntimeType)
     if (klazz.respond_to?(:inject) && klazz.method(:inject).arity() == -4) || klazz.instance_method(:initialize).arity() == 0
       klazz
     else
@@ -328,8 +332,7 @@ class Puppet::Pops::Types::TypeCalculator
       type.key_type = Types::PScalarType.new()
       type.element_type = Types::PDataType.new()
     else
-      type = Types::PRubyType.new()
-      type.ruby_class = c.name
+      type = Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => c.name)
     end
     type
   end
@@ -632,11 +635,13 @@ class Puppet::Pops::Types::TypeCalculator
       return type
     end
 
-    if t1.is_a?(Types::PRubyType) && t2.is_a?(Types::PRubyType)
-      if t1.ruby_class == t2.ruby_class
+    # If both are Runtime types
+    if t1.is_a?(Types::PRuntimeType) && t2.is_a?(Types::PRuntimeType)
+      if t1.runtime == t2.runtime && t1.runtime_type_name == t2.runtime_type_name
         return t1
       end
       # finding the common super class requires that names are resolved to class
+      # NOTE: This only supports runtime type of :ruby
       c1 = Types::ClassLoader.provide_from_type(t1)
       c2 = Types::ClassLoader.provide_from_type(t2)
       if c1 && c2
@@ -644,17 +649,15 @@ class Puppet::Pops::Types::TypeCalculator
         superclasses(c1).each do|c1_super|
           c2_superclasses.each do |c2_super|
             if c1_super == c2_super
-              result = Types::PRubyType.new()
-              result.ruby_class = c1_super.name
-              return result
+              return Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => c1_super.name)
             end
           end
         end
       end
     end
-    # If both are RubyObjects
 
-    if common_pobject?(t1, t2)
+    # They better both be Any type, or the wrong thing was asked and nil is returned
+    if t1.is_a?(Types::PAnyType) && t2.is_a?(Types::PAnyType)
       return Types::PAnyType.new()
     end
   end
@@ -717,9 +720,7 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def infer_Object(o)
-    type = Types::PRubyType.new()
-    type.ruby_class = o.class.name
-    type
+    Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => o.class.name)
   end
 
   # The type of all types is PType
@@ -1378,14 +1379,18 @@ class Puppet::Pops::Types::TypeCalculator
     t2.is_a?(Types::PDataType) || assignable?(@data_variant_t, t2)
   end
 
-  # Assignable if t2's ruby class is same or subclass of t1's ruby class
+  # Assignable if t2's has the same runtime and the runtime name resolves to
+  # a class that is the same or subclass of t1's resolved runtime type name
   # @api private
-  def assignable_PRubyType(t1, t2)
-    return false unless t2.is_a?(Types::PRubyType)
-    return true if t1.ruby_class.nil?   # t1 is wider
-    return false if t2.ruby_class.nil?  # t1 not nil, so t2 can not be wider
-    c1 = class_from_string(t1.ruby_class)
-    c2 = class_from_string(t2.ruby_class)
+  def assignable_PRuntimeType(t1, t2)
+    return false unless t2.is_a?(Types::PRuntimeType)
+    return false unless t1.runtime == t2.runtime
+    return true if t1.runtime_type_name.nil?   # t1 is wider
+    return false if t2.runtime_type_name.nil?  # t1 not nil, so t2 can not be wider
+
+    # NOTE: This only supports Ruby, must change when/if the set of runtimes is expanded
+    c1 = class_from_string(t1.runtime_type_name)
+    c2 = class_from_string(t2.runtime_type_name)
     return false unless c1.is_a?(Class) && c2.is_a?(Class)
     !!(c2 <= c1)
   end
@@ -1409,6 +1414,9 @@ class Puppet::Pops::Types::TypeCalculator
 
   # @api private
   def string_String(t)       ; t         ; end
+
+  # @api private
+  def string_Symbol(t)       ; t.to_s    ; end
 
   # @api private
   def string_PAnyType(t)  ; "Any"  ; end
@@ -1564,7 +1572,7 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # @api private
-  def string_PRubyType(t)   ; "Ruby[#{string(t.ruby_class)}]"  ; end
+  def string_PRuntimeType(t)   ; "Runtime[#{string(t.runtime)}, #{string(t.runtime_type_name)}]"  ; end
 
   # @api private
   def string_PArrayType(t)
@@ -1671,7 +1679,4 @@ class Puppet::Pops::Types::TypeCalculator
     assignable?(@numeric_t, t1) && assignable?(@numeric_t, t2)
   end
 
-  def common_pobject?(t1, t2)
-    assignable?(@t, t1) && assignable?(@t, t2)
-  end
 end

@@ -278,11 +278,11 @@ class Puppet::Pops::Evaluator::AccessOperator
     end
   end
 
-  def access_PRubyType(o, scope, keys)
+  def access_PRuntimeType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, 1, String)
-    # create ruby type based on name of class, not inference of key's type
-    Puppet::Pops::Types::TypeFactory.ruby_type(keys[0])
+    assert_keys(keys, o, 2, 2, String, String)
+    # create runtime type based on runtime and name of class, (not inference of key's type)
+    Puppet::Pops::Types::TypeFactory.runtime(*keys)
   end
 
   def access_PIntegerType(o, scope, keys)
