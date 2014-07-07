@@ -151,7 +151,7 @@ describe Puppet::Parser::Collector do
           }
           Class <|  |>
         MANIFEST
-      end.to raise_error()
+      end.to raise_error(/Classes cannot be collected/)
     end
 
     context "overrides" do
