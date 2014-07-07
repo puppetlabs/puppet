@@ -118,6 +118,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PTupleType,
         Puppet::Pops::Types::PCallableType,
         Puppet::Pops::Types::PType,
+        Puppet::Pops::Types::POptionalType,
       ]
     end
 
@@ -1037,16 +1038,25 @@ describe 'The type calculator' do
   context 'when testing if x is instance of type t' do
     include_context "types_setup"
 
-    it 'should consider undef to be instance of Object and NilType' do
+    it 'should consider undef to be instance of Any, NilType, and optional' do
       calculator.instance?(Puppet::Pops::Types::PNilType.new(), nil).should    == true
       calculator.instance?(Puppet::Pops::Types::PAnyType.new(), nil).should == true
+      calculator.instance?(Puppet::Pops::Types::POptionalType.new(), nil).should == true
+    end
+
+    it 'all types should be (ruby) instance of PAnyType' do
+      all_types.each do |t|
+        t.new.is_a?(Puppet::Pops::Types::PAnyType).should == true
+      end
     end
 
     it 'should not consider undef to be an instance of any other type than Object and NilType and Data' do
       types_to_test = all_types - [ 
         Puppet::Pops::Types::PAnyType,
         Puppet::Pops::Types::PNilType,
-        Puppet::Pops::Types::PDataType]
+        Puppet::Pops::Types::PDataType,
+        Puppet::Pops::Types::POptionalType,
+        ]
 
       types_to_test.each {|t| calculator.instance?(t.new, nil).should == false }
       types_to_test.each {|t| calculator.instance?(t.new, :undef).should == false }

@@ -55,7 +55,7 @@ module Puppet::Pops::Types
   # The type of types.
   # @api public
   class PType < PAnyType
-    contains_one_uni 'type', PAbstractType
+    contains_one_uni 'type', PAnyType
     module ClassModule
       def hash
         [self.class, type].hash
@@ -91,7 +91,7 @@ module Puppet::Pops::Types
   # A flexible type describing an any? of other types
   # @api public
   class PVariantType < PAnyType
-    contains_many_uni 'types', PAbstractType, :lowerBound => 1
+    contains_many_uni 'types', PAnyType, :lowerBound => 1
 
     module ClassModule
 
@@ -259,7 +259,7 @@ module Puppet::Pops::Types
 
   # @api public
   class PCollectionType < PAnyType
-    contains_one_uni 'element_type', PAbstractType
+    contains_one_uni 'element_type', PAnyType
     contains_one_uni 'size_type', PIntegerType
 
     module ClassModule
@@ -287,7 +287,7 @@ module Puppet::Pops::Types
 
   class PStructElement < Puppet::Pops::Model::PopsObject
     has_attr 'name', String, :lowerBound => 1
-    contains_one_uni 'type', PAbstractType
+    contains_one_uni 'type', PAnyType
 
     module ClassModule
       def hash
@@ -327,7 +327,7 @@ module Puppet::Pops::Types
 
   # @api public
   class PTupleType < PAnyType
-    contains_many_uni 'types', PAbstractType, :lowerBound => 1
+    contains_many_uni 'types', PAnyType, :lowerBound => 1
     # If set, describes min and max required of the given types - if max > size of
     # types, the last type entry repeats
     #
@@ -373,7 +373,7 @@ module Puppet::Pops::Types
     # Optional or Variant are supported
     # If not set, the meaning is that block is not supported.
     #
-    contains_one_uni 'block_type', PAbstractType, :lowerBound => 0
+    contains_one_uni 'block_type', PAnyType, :lowerBound => 0
 
     module ClassModule
       # Returns the number of accepted arguments [min, max]
@@ -425,7 +425,7 @@ module Puppet::Pops::Types
 
   # @api public
   class PHashType < PCollectionType
-    contains_one_uni 'key_type', PAbstractType
+    contains_one_uni 'key_type', PAnyType
     module ClassModule
       def hash
         [self.class, key_type, self.element_type, self.size_type].hash
@@ -495,7 +495,7 @@ module Puppet::Pops::Types
   # Represents a type that accept PNilType instead of the type parameter
   # required_type - is a short hand for Variant[T, Undef]
   #
-  class POptionalType < PAbstractType
+  class POptionalType < PAnyType
     contains_one_uni 'optional_type', PAbstractType
     module ClassModule
       def hash
