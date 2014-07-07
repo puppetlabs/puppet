@@ -502,4 +502,8 @@ module Puppet::Pops::Issues
   ILLEGAL_NODE_INHERITANCE = issue :ILLEGAL_NODE_INHERITANCE do
     "Node inheritance is not supported in Puppet >= 4.0.0. See http://links.puppetlabs.com/puppet-node-inheritance-deprecation"
   end
+
+  ILLEGAL_OVERRIDEN_TYPE = issue :ILLEGAL_OVERRIDEN_TYPE, :actual do
+    "Resource Override can only operate on resources, got: #{label.label(actual)}"
+  end
 end
