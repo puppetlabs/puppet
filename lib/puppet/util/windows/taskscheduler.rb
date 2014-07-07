@@ -1,7 +1,6 @@
 require 'windows/com'
 require 'windows/unicode'
 require 'windows/error'
-require 'windows/process'
 require 'windows/msvcrt/buffer'
 
 # The Win32 module serves as a namespace only
@@ -10,7 +9,6 @@ module Win32
   class TaskScheduler
     include Windows::COM
     include Windows::Unicode
-    include Windows::Process
     include Windows::Error
     include Windows::MSVCRT::Buffer
 
@@ -92,13 +90,12 @@ module Win32
     # :startdoc:
 
     # Shorthand constants
-
-    IDLE = IDLE_PRIORITY_CLASS
-    NORMAL = NORMAL_PRIORITY_CLASS
-    HIGH = HIGH_PRIORITY_CLASS
-    REALTIME = REALTIME_PRIORITY_CLASS
-    BELOW_NORMAL = BELOW_NORMAL_PRIORITY_CLASS
-    ABOVE_NORMAL = ABOVE_NORMAL_PRIORITY_CLASS
+    IDLE = Puppet::Util::Windows::Process::IDLE_PRIORITY_CLASS
+    NORMAL = Puppet::Util::Windows::Process::NORMAL_PRIORITY_CLASS
+    HIGH = Puppet::Util::Windows::Process::HIGH_PRIORITY_CLASS
+    REALTIME = Puppet::Util::Windows::Process::REALTIME_PRIORITY_CLASS
+    BELOW_NORMAL = Puppet::Util::Windows::Process::BELOW_NORMAL_PRIORITY_CLASS
+    ABOVE_NORMAL = Puppet::Util::Windows::Process::ABOVE_NORMAL_PRIORITY_CLASS
 
     ONCE = TASK_TIME_TRIGGER_ONCE
     DAILY = TASK_TIME_TRIGGER_DAILY
@@ -731,17 +728,17 @@ module Win32
 
       if hr >= S_OK
         pri = ptr.unpack('L').first
-        if (pri & IDLE_PRIORITY_CLASS) != 0
+        if (pri & IDLE) != 0
           priority = 'idle'
-        elsif (pri & NORMAL_PRIORITY_CLASS) != 0
+        elsif (pri & NORMAL) != 0
           priority = 'normal'
-        elsif (pri & HIGH_PRIORITY_CLASS) != 0
+        elsif (pri & HIGH) != 0
           priority = 'high'
-        elsif (pri & REALTIME_PRIORITY_CLASS) != 0
+        elsif (pri & REALTIME) != 0
           priority = 'realtime'
-        elsif (pri & BELOW_NORMAL_PRIORITY_CLASS) != 0
+        elsif (pri & BELOW_NORMAL) != 0
           priority = 'below_normal'
-        elsif (pri & ABOVE_NORMAL_PRIORITY_CLASS) != 0
+        elsif (pri & ABOVE_NORMAL) != 0
           priority = 'above_normal'
         else
           priority = 'unknown'
