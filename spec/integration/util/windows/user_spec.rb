@@ -62,23 +62,42 @@ describe "Puppet::Util::Windows::User", :if => Puppet.features.microsoft_windows
     let(:bad_password) { 'goldilocks' }
     let(:logon_fail_msg) { /Failed to logon user "fabio":  Logon failure: unknown user name or bad password./ }
 
+    def expect_logon_failure_error(&block)
+      expect {
+        yield
+      }.to raise_error { |error|
+        expect(error).to be_a(Puppet::Util::Windows::Error)
+        # http://msdn.microsoft.com/en-us/library/windows/desktop/ms681385(v=vs.85).aspx
+        # ERROR_LOGON_FAILURE 1326
+        expect(error.code).to eq(1326)
+      }
+    end
+
     describe "load_profile" do
       it "should raise an error when provided with an incorrect username and password" do
-        lambda { Puppet::Util::Windows::User.load_profile(username, bad_password) }.should raise_error(Puppet::Util::Windows::Error, logon_fail_msg)
+        expect_logon_failure_error {
+          Puppet::Util::Windows::User.load_profile(username, bad_password)
+        }
       end
 
       it "should raise an error when provided with an incorrect username and nil password" do
-        lambda { Puppet::Util::Windows::User.load_profile(username, nil) }.should raise_error(Puppet::Util::Windows::Error, logon_fail_msg)
+        expect_logon_failure_error {
+          Puppet::Util::Windows::User.load_profile(username, nil)
+        }
       end
     end
 
     describe "logon_user" do
       it "should raise an error when provided with an incorrect username and password" do
-        lambda { Puppet::Util::Windows::User.logon_user(username, bad_password) }.should raise_error(Puppet::Util::Windows::Error, logon_fail_msg)
+        expect_logon_failure_error {
+          Puppet::Util::Windows::User.logon_user(username, bad_password)
+        }
       end
 
       it "should raise an error when provided with an incorrect username and nil password" do
-        lambda { Puppet::Util::Windows::User.logon_user(username, nil) }.should raise_error(Puppet::Util::Windows::Error, logon_fail_msg)
+        expect_logon_failure_error {
+          Puppet::Util::Windows::User.logon_user(username, nil)
+        }
       end
     end
 
