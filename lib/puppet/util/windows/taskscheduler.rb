@@ -1,6 +1,5 @@
 require 'windows/com'
 require 'windows/unicode'
-require 'windows/error'
 require 'windows/msvcrt/buffer'
 
 # The Win32 module serves as a namespace only
@@ -9,18 +8,18 @@ module Win32
   class TaskScheduler
     include Windows::COM
     include Windows::Unicode
-    include Windows::Error
     include Windows::MSVCRT::Buffer
 
     # The version of the win32-taskscheduler library
     VERSION = '0.2.3-beta'
 
     # The error class raised if any task scheduler specific calls fail.
-    class Error < StandardError; end
+    class Error < Puppet::Util::Windows::Error; end
 
     private
 
     # :stopdoc:
+    S_OK = 0
 
     TASK_TIME_TRIGGER_ONCE            = 0
     TASK_TIME_TRIGGER_DAILY           = 1
@@ -178,12 +177,12 @@ module Win32
         )
 
         if FAILED(hr)
-          raise Error, get_last_error
+          raise Error.new("Failed to create TaskScheduler instance with HRESULT #{hr}", hr)
         end
 
         @pITS = ptr.unpack('L').first
       else
-        raise Error, get_last_error
+        raise Error.new("Failed to call CoInitialize with HRESULT #{hr}", hr)
       end
 
       if work_item
@@ -197,7 +196,7 @@ module Win32
     # Returns an array of scheduled task names.
     #
     def enum
-      raise Error, 'null pointer' if @pITS.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 24
@@ -211,7 +210,7 @@ module Win32
       ptr = 0.chr * 4
       hr  = enum.call(@pITS, ptr)
 
-      raise Error, get_last_error if hr != S_OK
+      raise Error.new("Failed to call ITaskScheduler::Enum with HRESULT #{hr}", hr) if hr != S_OK
 
       pIEnum = ptr.unpack('L').first
       lpVtbl = 0.chr * 4
@@ -255,7 +254,7 @@ module Win32
     # Activate the specified task.
     #
     def activate(task)
-      raise Error, 'null pointer' if @pITS.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless task.is_a?(String)
 
       task = multi_to_wide(task)
@@ -273,7 +272,7 @@ module Win32
       hr  = activate.call(@pITS, task, IID_ITask, ptr)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITaskScheduler::Activate with HRESULT #{hr}", hr)
       end
 
       @pITask = ptr.unpack('L').first
@@ -282,7 +281,7 @@ module Win32
     # Delete the specified task name.
     #
     def delete(task)
-      raise Error, 'null pointer' if @pITS.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless task.is_a?(String)
 
       task = multi_to_wide(task)
@@ -299,14 +298,14 @@ module Win32
       hr = delete.call(@pITS,task)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITaskScheduler::Delete with HRESULT #{hr}", hr)
       end
     end
 
     # Execute the current task.
     #
     def run
-      raise Error, 'null pointer' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 52
@@ -320,7 +319,7 @@ module Win32
       hr = run.call(@pITask)
 
       if hr != S_OK
-        raise Error,get_last_error
+        raise Error.new("Failed to call ITask::Run with HRESULT #{hr}", hr)
       end
     end
 
@@ -334,7 +333,7 @@ module Win32
     # so that there is no currently active task.
     #
     def save(file = nil)
-      raise Error, 'null pointer' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       file = multi_to_wide(file) if file
 
       lpVtbl = 0.chr * 4
@@ -352,7 +351,7 @@ module Win32
       hr = queryinterface.call(@pITask, IID_IPersistFile, ptr)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call IPersistFile::QueryInterface with HRESULT #{hr}", hr)
       end
 
       pIPersistFile = ptr.unpack('L').first
@@ -370,7 +369,7 @@ module Win32
       hr = save.call(pIPersistFile,file,1)
 
       if hr != S_OK
-        raise Error,get_last_error
+        raise Error.new("Failed to call IPersistFile::Save with HRESULT #{hr}", hr)
       end
 
       release.call(pIPersistFile)
@@ -391,12 +390,12 @@ module Win32
 
         if hr != S_OK
           CoUninitialize()
-          raise Error, get_last_error
+          raise Error.new("Failed to create TaskScheduler instance with HRESULT #{hr}", hr)
         end
 
         @pITS = ptr.unpack('L').first
       else
-        raise Error,get_last_error
+        raise Error.new("Failed to call CoInitialize with HRESULT #{hr}", hr)
       end
 
       release.call(@pITask)
@@ -406,7 +405,7 @@ module Win32
     # Terminate the current task.
     #
     def terminate
-      raise Error, 'null pointer' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 56
@@ -419,14 +418,14 @@ module Win32
       hr = teriminate.call(@pITask)
 
       if hr != S_OK
-        raise Error,get_last_error
+        raise Error.new("Failed to call ITask::Terminate with HRESULT #{hr}", hr)
       end
     end
 
     # Set the host on which the various TaskScheduler methods will execute.
     #
     def machine=(host)
-      raise Error, 'null pointer' if @pITS.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless host.is_a?(String)
 
       host_w = multi_to_wide(host)
@@ -443,7 +442,7 @@ module Win32
       hr = setTargetComputer.call(@pITS, host_w)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITaskScheduler::SetTargetComputer with HRESULT #{hr}", hr)
       end
 
       host
@@ -459,8 +458,8 @@ module Win32
     # false is returned.
     #
     def set_account_information(user, password)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 124
@@ -484,21 +483,11 @@ module Win32
       case hr
         when S_OK
           return true
-        when 0x80070005 # E_ACCESSDENIED
-          raise Error, 'access denied'
-        when 0x80070057 # E_INVALIDARG
-          raise Error, 'invalid argument'
-        when 0x8007000E # E_OUTOFMEMORY
-          raise Error, 'out of memory'
-        when 0x80041312 # SCHED_E_NO_SECURITY_SERVICES
-          raise Error, 'no security services on this platform'
-        when 0x80041314 # SCHED_E_UNSUPPORTED_ACCOUNT_OPTION
-          raise Error, 'unsupported account option'
         when 0x8004130F # SCHED_E_ACCOUNT_INFORMATION_NOT_SET
           warn 'job created, but password was invalid'
           bool = false
         else
-          raise Error, 'unknown error'
+          raise Error.new("Failed to call ITask::SetAccountInformation with HRESULT #{hr}", hr)
       end
 
       bool
@@ -508,8 +497,8 @@ module Win32
     # been associated with the task.
     #
     def account_information
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 128
@@ -532,7 +521,7 @@ module Win32
         user = wide_to_multi(str)
       else
         CoTaskMemFree(p.unpack('L').first)
-        raise Error,get_last_error(hr)
+        raise Error.new("Failed to call ITask::GetAccountInformation with HRESULT #{hr}", hr)
       end
 
       user
@@ -541,8 +530,8 @@ module Win32
     # Returns the name of the application associated with the task.
     #
     def application_name
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 136
@@ -562,7 +551,7 @@ module Win32
         app = wide_to_multi(str)
         CoTaskMemFree(ptr.unpack('L').first)
       else
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetApplicationName with HRESULT #{hr}", hr)
       end
 
       app
@@ -571,8 +560,8 @@ module Win32
     # Sets the application name associated with the task.
     #
     def application_name=(app)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless app.is_a?(String)
 
       app_w = multi_to_wide(app)
@@ -587,7 +576,7 @@ module Win32
       hr = setApplicationName.call(@pITask,app_w)
 
       if hr != S_OK
-        raise Error,get_last_error(hr)
+        raise Error.new("Failed to call ITask::SetApplicationName with HRESULT #{hr}", hr)
       end
 
       app
@@ -596,8 +585,8 @@ module Win32
     # Returns the command line parameters for the task.
     #
     def parameters
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 144
@@ -616,7 +605,7 @@ module Win32
         param = wide_to_multi(str)
         CoTaskMemFree(ptr.unpack('L').first)
       else
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetParameters with HRESULT #{hr}", hr)
       end
 
       param
@@ -627,8 +616,8 @@ module Win32
     # line parameters set it to an empty string.
     #
     def parameters=(param)
-      raise Error, 'null pointer(ts_set_parameters)' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless param.is_a?(String)
 
       param_w = multi_to_wide(param)
@@ -644,7 +633,7 @@ module Win32
       hr = setParameters.call(@pITask,param_w)
 
       if hr != S_OK
-        raise Error, get_last_error(hr)
+        raise Error.new("Failed to call ITask::SetParameters with HRESULT #{hr}", hr)
       end
 
       param
@@ -653,8 +642,8 @@ module Win32
     # Returns the working directory for the task.
     #
     def working_directory
-      raise Error,"fatal error: null pointer(ts_get_parameters)" if @pITS.nil?
-      raise Error,"No currently active task" if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 152
@@ -674,7 +663,7 @@ module Win32
         dir = wide_to_multi(str)
         CoTaskMemFree(ptr.unpack('L').first)
       else
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetWorkingDirectory with HRESULT #{hr}", hr)
       end
 
       dir
@@ -683,8 +672,8 @@ module Win32
     # Sets the working directory for the task.
     #
     def working_directory=(dir)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless dir.is_a?(String)
 
       dir_w = multi_to_wide(dir)
@@ -700,7 +689,7 @@ module Win32
       hr = setWorkingDirectory.call(@pITask, dir_w)
 
       if hr != S_OK
-        raise Error, get_last_error(hr)
+        raise Error.new("Failed to call ITask::SetWorkingDirectory with HRESULT #{hr}", hr)
       end
 
       dir
@@ -711,8 +700,8 @@ module Win32
     # and 'unknown'.
     #
     def priority
-      raise Error, 'null pointer(ts_get_priority)' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 160
@@ -744,7 +733,7 @@ module Win32
           priority = 'unknown'
         end
       else
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetPriority with HRESULT #{hr}", hr)
       end
 
       priority
@@ -754,8 +743,8 @@ module Win32
     # priority constant value.
     #
     def priority=(priority)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless priority.is_a?(Numeric)
 
       lpVtbl = 0.chr * 4
@@ -769,7 +758,7 @@ module Win32
       hr = setPriority.call(@pITask, priority)
 
       if hr != S_OK
-        raise Error, get_last_error(hr)
+        raise Error.new("Failed to call ITask::SetPriority with HRESULT #{hr}", hr)
       end
 
       priority
@@ -781,12 +770,12 @@ module Win32
     #
     def new_work_item(task, trigger)
       raise TypeError unless trigger.is_a?(Hash)
-      raise Error, 'null pointer' if @pITS.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
 
       # I'm working around github issue #1 here.
       enum.each{ |name|
         if name.downcase == task.downcase + '.job'
-          raise Error, "task '#{task}' already exists"
+          raise Error.new("task '#{task}' already exists")
         end
       }
 
@@ -821,7 +810,7 @@ module Win32
       hr = newWorkItem.call(@pITS, task, CLSID_CTask, IID_ITask, ptr)
 
       if FAILED(hr)
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITaskScheduler::NewWorkItem with HRESULT #{hr}", hr)
       end
 
       @pITask = ptr.unpack('L').first
@@ -843,7 +832,7 @@ module Win32
       hr = createTrigger.call(@pITask, p1, p2)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::CreateTrigger with HRESULT #{hr}", hr)
       end
 
       pITaskTrigger = p2.unpack('L').first
@@ -884,7 +873,7 @@ module Win32
         when TASK_TIME_TRIGGER_ONCE
           # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
         else
-          raise Error, 'Unknown trigger type'
+          raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
       end
 
       pTrigger = [
@@ -911,7 +900,7 @@ module Win32
       hr = setTrigger.call(pITaskTrigger, pTrigger)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITaskTrigger::SetTrigger with HRESULT #{hr}", hr)
       end
 
       release.call(pITaskTrigger)
@@ -922,8 +911,8 @@ module Win32
     # Returns the number of triggers associated with the active task.
     #
     def trigger_count
-      raise Error, "null pointer" if @pITS.nil?
-      raise Error, "No currently active task" if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 24
@@ -939,7 +928,7 @@ module Win32
       if hr >= S_OK
         count = ptr.unpack('L').first
       else
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetTriggerCount with HRESULT #{hr}", hr)
       end
 
       count
@@ -951,8 +940,8 @@ module Win32
     # Example: "At 7:14 AM every day, starting 4/11/2009"
     #
     def trigger_string(index)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless index.is_a?(Numeric)
 
       lpVtbl = 0.chr * 4
@@ -972,7 +961,7 @@ module Win32
         trigger = wide_to_multi(str)
         CoTaskMemFree(ptr.unpack('L').first)
       else
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetTriggerString with HRESULT #{hr}", hr)
       end
 
       trigger
@@ -981,8 +970,8 @@ module Win32
     # Deletes the trigger at the specified index.
     #
     def delete_trigger(index)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 20
@@ -995,7 +984,7 @@ module Win32
       hr = deleteTrigger.call(@pITask,index)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::DeleteTrigger with HRESULT #{hr}", hr)
       end
 
       index
@@ -1005,8 +994,8 @@ module Win32
     # current task.
     #
     def trigger(index)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 28
@@ -1020,7 +1009,7 @@ module Win32
       hr = getTrigger.call(@pITask, index, ptr)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetTrigger with HRESULT #{hr}", hr)
       end
 
       pITaskTrigger = ptr.unpack('L').first
@@ -1040,7 +1029,7 @@ module Win32
       if hr != S_OK
         error = get_last_error
         release.call(pITaskTrigger)
-        raise Error, error
+        raise Error.new("Failed to call ITaskTrigger::GetTrigger with HRESULT #{hr}", hr)
       end
 
       tr = pTrigger.unpack('S10L4LLSS')
@@ -1084,7 +1073,7 @@ module Win32
           tmp['once'] = nil
           trigger['type'] = tmp
         else
-          raise Error, 'Unknown trigger type'
+          raise Error.new("Unknown trigger type #{tr[13]}")
       end
 
       release.call(pITaskTrigger)
@@ -1095,8 +1084,8 @@ module Win32
     # Sets the trigger for the currently active task.
     #
     def trigger=(trigger)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless trigger.is_a?(Hash)
 
       trigger = transform_and_validate(trigger)
@@ -1116,7 +1105,7 @@ module Win32
       hr = createTrigger.call(@pITask, p1, p2)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::CreateTrigger with HRESULT #{hr}", hr)
       end
 
       pITaskTrigger = p2.unpack('L').first
@@ -1157,7 +1146,7 @@ module Win32
         when TASK_TIME_TRIGGER_ONCE
           # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
         else
-          raise Error, 'Unknown trigger type'
+          raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
       end
 
       pTrigger = [
@@ -1184,7 +1173,7 @@ module Win32
       hr = setTrigger.call(pITaskTrigger, pTrigger)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITaskTrigger::SetTrigger with HRESULT #{hr}", hr)
       end
 
       release.call(pITaskTrigger)
@@ -1195,8 +1184,8 @@ module Win32
     # Adds a trigger at the specified index.
     #
     def add_trigger(index, trigger)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless trigger.is_a?(Hash)
 
       trigger = transform_and_validate(trigger)
@@ -1213,7 +1202,7 @@ module Win32
       hr = getTrigger.call(@pITask, index, ptr)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetTrigger with HRESULT #{hr}", hr)
       end
 
       pITaskTrigger = ptr.unpack('L').first
@@ -1254,7 +1243,7 @@ module Win32
         when TASK_TIME_TRIGGER_ONCE
           # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
         else
-          raise Error, 'Unknown trigger type'
+          raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
       end
 
       pTrigger = [
@@ -1281,7 +1270,7 @@ module Win32
       hr = setTrigger.call(pITaskTrigger, pTrigger)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITaskTrigger::SetTrigger with HRESULT #{hr}", hr)
       end
 
       release.call(pITaskTrigger)
@@ -1291,7 +1280,7 @@ module Win32
     # must OR the return value to determine the flags yourself.
     #
     def flags
-      raise Error, 'null pointer' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 120
@@ -1305,7 +1294,7 @@ module Win32
       hr = getFlags.call(@pITask, ptr)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetFlags with HRESULT #{hr}", hr)
       end
 
       flags = ptr.unpack('L').first
@@ -1314,8 +1303,8 @@ module Win32
     # Sets an OR'd value of flags that modify the behavior of the work item.
     #
     def flags=(flags)
-      raise Error, 'null pointer' if @pITS.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 116
@@ -1328,7 +1317,7 @@ module Win32
       hr = setFlags.call(@pITask, flags)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::SetFlags with HRESULT #{hr}", hr)
       end
 
       flags
@@ -1338,8 +1327,7 @@ module Win32
     # 'ready', 'running', 'not scheduled' or 'unknown'.
     #
     def status
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 68
@@ -1353,7 +1341,7 @@ module Win32
       hr = getStatus.call(@pITask, ptr)
 
       if hr != S_OK
-        raise Error,get_last_error
+        raise Error.new("Failed to call ITask::GetStatus with HRESULT #{hr}", hr)
       end
 
       st = ptr.unpack('L').first
@@ -1375,8 +1363,7 @@ module Win32
     # Returns the exit code from the last scheduled run.
     #
     def exit_code
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table = 0.chr * 72
@@ -1390,7 +1377,7 @@ module Win32
       hr = getExitCode.call(@pITask, ptr)
 
       if hr > 0x80000000
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetExitCode with HRESULT #{hr}", hr)
       end
 
       ptr.unpack('L').first
@@ -1399,8 +1386,7 @@ module Win32
     # Returns the comment associated with the task, if any.
     #
     def comment
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 80
@@ -1414,7 +1400,7 @@ module Win32
       hr = getComment.call(@pITask, ptr)
 
       if hr != S_OK
-        raise Error,get_last_error
+        raise Error.new("Failed to call ITask::GetComment with HRESULT #{hr}", hr)
       end
 
       str = 0.chr * 256
@@ -1426,8 +1412,7 @@ module Win32
     # Sets the comment for the task.
     #
     def comment=(comment)
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless comment.is_a?(String)
 
       lpVtbl = 0.chr * 4
@@ -1442,7 +1427,7 @@ module Win32
       hr = setComment.call(@pITask, comment_w)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::SetComment with HRESULT #{hr}", hr)
       end
 
       comment
@@ -1451,8 +1436,7 @@ module Win32
     # Returns the name of the user who created the task.
     #
     def creator
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 88
@@ -1466,7 +1450,7 @@ module Win32
       hr = getCreator.call(@pITask, ptr)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetCreator with HRESULT #{hr}", hr)
       end
 
       str = 0.chr * 256
@@ -1478,8 +1462,7 @@ module Win32
     # Sets the creator for the task.
     #
     def creator=(creator)
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless creator.is_a?(String)
 
       lpVtbl = 0.chr * 4
@@ -1494,7 +1477,7 @@ module Win32
       hr = setCreator.call(@pITask, creator_w)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::SetCreator with HRESULT #{hr}", hr)
       end
 
       creator
@@ -1503,8 +1486,7 @@ module Win32
     # Returns a Time object that indicates the next time the task will run.
     #
     def next_run_time
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 40
@@ -1518,7 +1500,7 @@ module Win32
       hr = getNextRunTime.call(@pITask, st)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetNextRunTime with HRESULT #{hr}", hr)
       end
 
       a1,a2,_,a3,a4,a5,a6,a7 = st.unpack('S*')
@@ -1531,8 +1513,7 @@ module Win32
     # nil if the task has never run.
     #
     def most_recent_run_time
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 64
@@ -1552,7 +1533,7 @@ module Win32
         a7 *= 1000
         time = Time.local(a1, a2, a3, a4, a5, a6, a7)
       else
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetMostRecentRunTime with HRESULT #{hr}", hr)
       end
 
       time
@@ -1562,8 +1543,7 @@ module Win32
     # will run before terminating.
     #
     def max_run_time
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
       lpVtbl = 0.chr * 4
       table  = 0.chr * 176
@@ -1578,7 +1558,7 @@ module Win32
       hr = getMaxRunTime.call(@pITask, ptr)
 
       if hr != S_OK
-        raise Error, get_last_error
+        raise Error.new("Failed to call ITask::GetMaxRunTime with HRESULT #{hr}", hr)
       end
 
       max_run_time = ptr.unpack('L').first
@@ -1588,8 +1568,7 @@ module Win32
     # before terminating. Returns the value you specified if successful.
     #
     def max_run_time=(max_run_time)
-      raise Error, 'null pointer' if @pITask.nil?
-      raise Error, 'No currently active task' if @pITask.nil?
+      raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless max_run_time.is_a?(Numeric)
 
       lpVtbl = 0.chr * 4
@@ -1603,7 +1582,7 @@ module Win32
       hr = setMaxRunTime.call(@pITask, max_run_time)
 
       if hr != S_OK
-        raise Error,get_last_error
+        raise Error.new("Failed to call ITask::SetMaxRunTime with HRESULT #{hr}", hr)
       end
 
       max_run_time
@@ -1683,5 +1662,15 @@ module Win32
 
       new_hash
     end
+
+    # Win32 COM macros
+    def FAILED(status)
+      status < 0
+    end
+
+    def SUCCEEDED(status)
+      status >= 0
+    end
+
   end
 end
