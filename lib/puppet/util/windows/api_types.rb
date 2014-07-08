@@ -151,6 +151,37 @@ module Puppet::Util::Windows::APITypes
   module ::FFI::WIN32
     extend ::FFI::Library
 
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/aa373931(v=vs.85).aspx
+    # typedef struct _GUID {
+    #   DWORD Data1;
+    #   WORD  Data2;
+    #   WORD  Data3;
+    #   BYTE  Data4[8];
+    # } GUID;
+    class GUID < FFI::Struct
+      layout :Data1, :dword,
+             :Data2, :word,
+             :Data3, :word,
+             :Data4, [:byte, 8]
+
+      def self.[](s)
+        raise 'Bad GUID format.' unless s =~ /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/i
+
+        new.tap do |guid|
+          guid[:Data1] = s[0, 8].to_i(16)
+          guid[:Data2] = s[9, 4].to_i(16)
+          guid[:Data3] = s[14, 4].to_i(16)
+          guid[:Data4][0] = s[19, 2].to_i(16)
+          guid[:Data4][1] = s[21, 2].to_i(16)
+          s[24, 12].split('').each_slice(2).with_index do |a, i|
+            guid[:Data4][i + 2] = a.join('').to_i(16)
+          end
+        end
+      end
+
+      def ==(other) Windows.memcmp(other, self, size) == 0 end
+    end
+
     ffi_convention :stdcall
 
     # http://msdn.microsoft.com/en-us/library/windows/desktop/aa366730(v=vs.85).aspx
