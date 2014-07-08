@@ -25,15 +25,17 @@ allowed_servers = Array.new
 runner = false;
 File.open(Puppet[:authconfig]).each do |line|
   case line
-  when /^\s*#/: next # skip comments
-  when /^\s*$/: next # skip blank lines
-  when /\[puppetrunner\]/: # puppetrunner section
+  when /^\s*#/
+    next # skip comments
+  when /^\s*$/
+    next # skip blank lines
+  when /\[puppetrunner\]/ # puppetrunner section
     runner=true
-  when /^\s*(\w+)\s+(.+)$/:
+  when /^\s*(\w+)\s+(.+)$/
     var = $1
     value = $2
     case var
-    when "allow":
+    when "allow"
       value.split(/\s*,\s*/).each { |val|
       allowed_servers << val
       puts "allowing #{val} access"
