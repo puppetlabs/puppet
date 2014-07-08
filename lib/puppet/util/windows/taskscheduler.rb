@@ -78,10 +78,8 @@ module Win32
 
     # COM
 
-    CLSID_CTask = [0x148BD520,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8')
-    CLSID_CTaskScheduler = FFI::MemoryPointer.from_string([0x148BD52A,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8'))
-    IID_ITaskScheduler = FFI::MemoryPointer.from_string([0x148BD527,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8'))
-    IID_ITask = [0x148BD524,0xA2AB,0x11CE,0xB1,0x1F,0x00,0xAA,0x00,0x53,0x05,0x03].pack('LSSC8')
+    CLSID_CTask = FFI::WIN32::GUID['148BD520-A2AB-11CE-B11F-00AA00530503']
+    IID_ITask = FFI::WIN32::GUID['148BD524-A2AB-11CE-B11F-00AA00530503']
     IID_IPersistFile = [0x0000010b,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46].pack('LSSC8')
 
     public
@@ -165,21 +163,7 @@ module Win32
 
       Puppet::Util::Windows::COM.InitializeCom()
 
-      FFI::MemoryPointer.new(:pointer) do |ptr|
-        hr = Puppet::Util::Windows::COM.CoCreateInstance(
-          CLSID_CTaskScheduler,
-          FFI::Pointer::NULL,
-          Puppet::Util::Windows::COM::CLSCTX_INPROC_SERVER,
-          IID_ITaskScheduler,
-          ptr
-        )
-
-        if Puppet::Util::Windows::COM.FAILED(hr)
-          raise Error.new("Failed to create TaskScheduler instance with HRESULT #{hr}", hr)
-        end
-
-        @pITS = ptr.read_pointer.address
-      end
+      @pITS = COM::TaskScheduler.new
 
       if work_item
         if trigger
@@ -193,53 +177,44 @@ module Win32
     #
     def enum
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
-
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 24
-
-      memcpy(lpVtbl, @pITS, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 24)
-      table = table.unpack('L*')
-
-      enum = Win32::API::Function.new(table[5], 'PP', 'L')
-
-      ptr = 0.chr * 4
-      hr  = enum.call(@pITS, ptr)
-
-      raise Error.new("Failed to call ITaskScheduler::Enum with HRESULT #{hr}", hr) if hr != S_OK
-
-      pIEnum = ptr.unpack('L').first
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 16
-
-      memcpy(lpVtbl, pIEnum, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 16)
-      table = table.unpack('L*')
-
-      _next   = Win32::API::Function.new(table[3], 'PLPP', 'L')
-      release = Win32::API::Function.new(table[2], 'P', 'L')
-
       array = []
-      fetched_tasks = 0.chr * 4
-      pnames = 0.chr * 4
 
-      while (_next.call(pIEnum, TASKS_TO_RETRIEVE, pnames, fetched_tasks) >= S_OK) &&
-        (fetched_tasks.unpack('L').first != 0)
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITS.Enum(ptr)
 
-        tasks = fetched_tasks.unpack('L').first
-        names = 0.chr * 4 * tasks
-        memcpy(names, pnames.unpack('L').first, 4 * tasks)
+        # IEnumWorkItems *
+        pIEnum = ptr.read_pointer.address
+        lpVtbl = 0.chr * 4
+        table  = 0.chr * 16
 
-        for i in 0 ... tasks
-          str_ptr = FFI::Pointer.new(names[i*4, 4].unpack('L').first)
-          array.push(str_ptr.read_arbitrary_wide_string_up_to(256))
-          Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
+        memcpy(lpVtbl, pIEnum, 4)
+        memcpy(table, lpVtbl.unpack('L').first, 16)
+        table = table.unpack('L*')
+
+        _next   = Win32::API::Function.new(table[3], 'PLPP', 'L')
+        release = Win32::API::Function.new(table[2], 'P', 'L')
+
+        fetched_tasks = 0.chr * 4
+        pnames = 0.chr * 4
+
+        while (_next.call(pIEnum, TASKS_TO_RETRIEVE, pnames, fetched_tasks) >= S_OK) &&
+          (fetched_tasks.unpack('L').first != 0)
+
+          tasks = fetched_tasks.unpack('L').first
+          names = 0.chr * 4 * tasks
+          memcpy(names, pnames.unpack('L').first, 4 * tasks)
+
+          for i in 0 ... tasks
+            str_ptr = FFI::Pointer.new(names[i*4, 4].unpack('L').first)
+            array.push(str_ptr.read_arbitrary_wide_string_up_to(256))
+            Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
+          end
+
+          Puppet::Util::Windows::COM.CoTaskMemFree(FFI::Pointer.new(pnames.unpack('L').first))
         end
 
-        Puppet::Util::Windows::COM.CoTaskMemFree(FFI::Pointer.new(pnames.unpack('L').first))
+        release.call(pIEnum)
       end
-
-      release.call(pIEnum)
 
       array
     end
@@ -252,25 +227,12 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless task.is_a?(String)
 
-      task = wide_string(task)
-
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 28
-
-      memcpy(lpVtbl, @pITS, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 28)
-      table = table.unpack('L*')
-
-      activate = Win32::API::Function.new(table[6], 'PPPP', 'L')
-
-      ptr = 0.chr * 4
-      hr  = activate.call(@pITS, task, IID_ITask, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITaskScheduler::Activate with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITS.Activate(wide_string(task), IID_ITask, ptr)
+        @pITask = ptr.read_pointer.address
       end
 
-      @pITask = ptr.unpack('L').first
+      @pITask
     end
 
     # Delete the specified task name.
@@ -279,22 +241,9 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless task.is_a?(String)
 
-      task = wide_string(task)
+      @pITS.Delete(wide_string(task))
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 32
-
-      memcpy(lpVtbl, @pITS, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 32)
-      table = table.unpack('L*')
-
-      delete = Win32::API::Function.new(table[7], 'PP', 'L')
-
-      hr = delete.call(@pITS,task)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITaskScheduler::Delete with HRESULT #{hr}", hr)
-      end
+      true
     end
 
     # Execute the current task.
@@ -372,21 +321,7 @@ module Win32
       Puppet::Util::Windows::COM.CoUninitialize()
       Puppet::Util::Windows::COM.InitializeCom()
 
-      FFI::MemoryPointer.new(:pointer) do |ptr|
-        hr = Puppet::Util::Windows::COM::CoCreateInstance(
-          CLSID_CTaskScheduler,
-          FFI::Pointer::NULL,
-          Puppet::Util::Windows::COM::CLSCTX_INPROC_SERVER,
-          IID_ITaskScheduler,
-          ptr
-        )
-
-        if hr != S_OK
-          raise Error.new("Failed to create TaskScheduler instance with HRESULT #{hr}", hr)
-        end
-
-        @pITS = ptr.read_pointer.address
-      end
+      @pITS = COM::TaskScheduler.new
 
       release.call(@pITask)
       @pITask = nil
@@ -418,22 +353,7 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise TypeError unless host.is_a?(String)
 
-      host_w = wide_string(host)
-
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 16
-
-      memcpy(lpVtbl, @pITS, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 16)
-      table = table.unpack('L*')
-
-      setTargetComputer = Win32::API::Function.new(table[3], 'PP', 'L')
-
-      hr = setTargetComputer.call(@pITS, host_w)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITaskScheduler::SetTargetComputer with HRESULT #{hr}", hr)
-      end
+      @pITS.SetTargetComputer(wide_string(host))
 
       host
     end
@@ -781,115 +701,104 @@ module Win32
         @pITask = nil
       end
 
-      task = wide_string(task)
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 36
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITS.NewWorkItem(wide_string(task), CLSID_CTask, IID_ITask, ptr)
 
-      memcpy(lpVtbl, @pITS, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 36)
-      table = table.unpack('L*')
+        # IUnknown * (really a ITask *)
+        @pITask = ptr.read_pointer.address
+        lpVtbl = 0.chr * 4
+        table  = 0.chr * 16
 
-      newWorkItem = Win32::API::Function.new(table[8], 'PPPPP', 'L')
+        # Without the 'enum.include?' check above the code segfaults here if the
+        # task already exists. This should probably be handled properly instead
+        # of simply avoiding the issue.
 
-      ptr = 0.chr * 4
+        memcpy(lpVtbl, @pITask, 4)
+        memcpy(table, lpVtbl.unpack('L').first, 16)
+        table = table.unpack('L*')
 
-      hr = newWorkItem.call(@pITS, task, CLSID_CTask, IID_ITask, ptr)
+        createTrigger = Win32::API::Function.new(table[3], 'PPP', 'L')
+        p1 = 0.chr * 4
+        p2 = 0.chr * 4
 
-      if Puppet::Util::Windows::COM.FAILED(hr)
-        raise Error.new("Failed to call ITaskScheduler::NewWorkItem with HRESULT #{hr}", hr)
+        hr = createTrigger.call(@pITask, p1, p2)
+
+        if hr != S_OK
+          raise Error.new("Failed to call ITask::CreateTrigger with HRESULT #{hr}", hr)
+        end
+
+        pITaskTrigger = p2.unpack('L').first
+        lpVtbl = 0.chr * 4
+        table  = 0.chr * 16
+
+        memcpy(lpVtbl, pITaskTrigger, 4)
+        memcpy(table, lpVtbl.unpack('L').first, 16)
+        table = table.unpack('L*')
+
+        release = Win32::API::Function.new(table[2], 'P', 'L')
+        setTrigger = Win32::API::Function.new(table[3], 'PP', 'L')
+
+        type1 = 0
+        type2 = 0
+        tmp = trigger['type']
+        tmp = nil unless tmp.is_a?(Hash)
+
+        case trigger['trigger_type']
+          when TASK_TIME_TRIGGER_DAILY
+            if tmp && tmp['days_interval']
+              type1 = [tmp['days_interval'],0].pack('SS').unpack('L').first
+            end
+          when TASK_TIME_TRIGGER_WEEKLY
+            if tmp && tmp['weeks_interval'] && tmp['days_of_week']
+              type1 = [tmp['weeks_interval'],tmp['days_of_week']].pack('SS').unpack('L').first
+            end
+          when TASK_TIME_TRIGGER_MONTHLYDATE
+            if tmp && tmp['months'] && tmp['days']
+              type2 = [tmp['months'],0].pack('SS').unpack('L').first
+              type1 = tmp['days']
+            end
+          when TASK_TIME_TRIGGER_MONTHLYDOW
+            if tmp && tmp['weeks'] && tmp['days_of_week'] && tmp['months']
+              type1 = [tmp['weeks'],tmp['days_of_week']].pack('SS').unpack('L').first
+              type2 = [tmp['months'],0].pack('SS').unpack('L').first
+            end
+          when TASK_TIME_TRIGGER_ONCE
+            # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
+          else
+            raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
+        end
+
+        pTrigger = [
+          48,
+          0,
+          trigger['start_year'] || 0,
+          trigger['start_month'] || 0,
+          trigger['start_day'] || 0,
+          trigger['end_year'] || 0,
+          trigger['end_month'] || 0,
+          trigger['end_day'] || 0,
+          trigger['start_hour'] || 0,
+          trigger['start_minute'] || 0,
+          trigger['minutes_duration'] || 0,
+          trigger['minutes_interval'] || 0,
+          trigger['flags'] || 0,
+          trigger['trigger_type'] || 0,
+          type1,
+          type2,
+          0,
+          trigger['random_minutes_interval'] || 0
+        ].pack('S10L4LLSS')
+
+        hr = setTrigger.call(pITaskTrigger, pTrigger)
+
+        if hr != S_OK
+          raise Error.new("Failed to call ITaskTrigger::SetTrigger with HRESULT #{hr}", hr)
+        end
+
+        release.call(pITaskTrigger)
       end
 
-      @pITask = ptr.unpack('L').first
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 16
-
-      # Without the 'enum.include?' check above the code segfaults here if the
-      # task already exists. This should probably be handled properly instead
-      # of simply avoiding the issue.
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 16)
-      table = table.unpack('L*')
-
-      createTrigger = Win32::API::Function.new(table[3], 'PPP', 'L')
-      p1 = 0.chr * 4
-      p2 = 0.chr * 4
-
-      hr = createTrigger.call(@pITask, p1, p2)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::CreateTrigger with HRESULT #{hr}", hr)
-      end
-
-      pITaskTrigger = p2.unpack('L').first
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 16
-
-      memcpy(lpVtbl, pITaskTrigger, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 16)
-      table = table.unpack('L*')
-
-      release = Win32::API::Function.new(table[2], 'P', 'L')
-      setTrigger = Win32::API::Function.new(table[3], 'PP', 'L')
-
-      type1 = 0
-      type2 = 0
-      tmp = trigger['type']
-      tmp = nil unless tmp.is_a?(Hash)
-
-      case trigger['trigger_type']
-        when TASK_TIME_TRIGGER_DAILY
-          if tmp && tmp['days_interval']
-            type1 = [tmp['days_interval'],0].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_WEEKLY
-          if tmp && tmp['weeks_interval'] && tmp['days_of_week']
-            type1 = [tmp['weeks_interval'],tmp['days_of_week']].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_MONTHLYDATE
-          if tmp && tmp['months'] && tmp['days']
-            type2 = [tmp['months'],0].pack('SS').unpack('L').first
-            type1 = tmp['days']
-          end
-        when TASK_TIME_TRIGGER_MONTHLYDOW
-          if tmp && tmp['weeks'] && tmp['days_of_week'] && tmp['months']
-            type1 = [tmp['weeks'],tmp['days_of_week']].pack('SS').unpack('L').first
-            type2 = [tmp['months'],0].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_ONCE
-          # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
-        else
-          raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
-      end
-
-      pTrigger = [
-        48,
-        0,
-        trigger['start_year'] || 0,
-        trigger['start_month'] || 0,
-        trigger['start_day'] || 0,
-        trigger['end_year'] || 0,
-        trigger['end_month'] || 0,
-        trigger['end_day'] || 0,
-        trigger['start_hour'] || 0,
-        trigger['start_minute'] || 0,
-        trigger['minutes_duration'] || 0,
-        trigger['minutes_interval'] || 0,
-        trigger['flags'] || 0,
-        trigger['trigger_type'] || 0,
-        type1,
-        type2,
-        0,
-        trigger['random_minutes_interval'] || 0
-      ].pack('S10L4LLSS')
-
-      hr = setTrigger.call(pITaskTrigger, pTrigger)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITaskTrigger::SetTrigger with HRESULT #{hr}", hr)
-      end
-
-      release.call(pITaskTrigger)
+      @pITask
     end
 
     alias :new_task :new_work_item
@@ -1646,6 +1555,37 @@ module Win32
       }
 
       new_hash
+    end
+
+    module COM
+      private
+
+      com = Puppet::Util::Windows::COM
+
+      public
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381811(v=vs.85).aspx
+      ITaskScheduler = com::Interface[com::IUnknown,
+        FFI::WIN32::GUID['148BD527-A2AB-11CE-B11F-00AA00530503'],
+
+        SetTargetComputer: [[:lpcwstr], :hresult],
+        # LPWSTR *
+        GetTargetComputer: [[:pointer], :hresult],
+        # IEnumWorkItems **
+        Enum: [[:pointer], :hresult],
+        # LPCWSTR, REFIID, IUnknown **
+        Activate: [[:lpcwstr, :pointer, :pointer], :hresult],
+        Delete: [[:lpcwstr], :hresult],
+        # LPCWSTR, REFCLSID, REFIID, IUnknown **
+        NewWorkItem: [[:lpcwstr, :pointer, :pointer, :pointer], :hresult],
+        # LPCWSTR, IScheduledWorkItem *
+        AddWorkItem: [[:lpcwstr, :pointer], :hresult],
+        # LPCWSTR, REFIID
+        IsOfType: [[:lpcwstr, :pointer], :hresult]
+      ]
+
+      TaskScheduler = com::Factory[ITaskScheduler,
+        FFI::WIN32::GUID['148BD52A-A2AB-11CE-B11F-00AA00530503']]
     end
   end
 end

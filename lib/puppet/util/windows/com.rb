@@ -58,7 +58,7 @@ module Puppet::Util::Windows::COM
   #   _Out_  LPVOID *ppv
   # );
   ffi_lib :ole32
-  attach_function :CoCreateInstance,
+  attach_function_private :CoCreateInstance,
     [:pointer, :lpunknown, :dword, :pointer, :lpvoid], :hresult
 
   # code modified from Unknownr project https://github.com/rpeev/Unknownr
