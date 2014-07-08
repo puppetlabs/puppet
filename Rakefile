@@ -66,3 +66,11 @@ end
 task :spec do
   sh %{rspec #{ENV['TEST'] || ENV['TESTS'] || 'spec'}}
 end
+
+desc 'run static analysis with rubocop'
+task(:rubocop) do
+  require 'rubocop'
+  cli = RuboCop::CLI.new
+  cli.run(%w(-D))
+end
+
