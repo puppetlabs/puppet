@@ -119,6 +119,7 @@ describe 'The type calculator' do
         Puppet::Pops::Types::PCallableType,
         Puppet::Pops::Types::PType,
         Puppet::Pops::Types::POptionalType,
+        Puppet::Pops::Types::PDefaultType,
       ]
     end
 
@@ -223,8 +224,8 @@ describe 'The type calculator' do
       calculator.infer(nil).class.should == Puppet::Pops::Types::PNilType
     end
 
-    it ':undef translates to PNilType' do
-      calculator.infer(:undef).class.should == Puppet::Pops::Types::PNilType
+    it ':undef translates to PRuntimeType' do
+      calculator.infer(:undef).class.should == Puppet::Pops::Types::PRuntimeType
     end
 
     it 'an instance of class Foo translates to PRuntimeType[ruby, Foo]' do
@@ -1052,8 +1053,12 @@ describe 'The type calculator' do
       end
     end
 
-    it 'should not consider undef to be an instance of any other type than Object and NilType and Data' do
-      types_to_test = all_types - [ 
+    it "should consider :undef to be instance of Runtime['ruby', 'Symbol]" do
+      calculator.instance?(Puppet::Pops::Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => 'Symbol'), :undef).should == true
+    end
+
+    it 'should not consider undef to be an instance of any other type than Any, NilType and Data' do
+      types_to_test = all_types - [
         Puppet::Pops::Types::PAnyType,
         Puppet::Pops::Types::PNilType,
         Puppet::Pops::Types::PDataType,
@@ -1062,6 +1067,20 @@ describe 'The type calculator' do
 
       types_to_test.each {|t| calculator.instance?(t.new, nil).should == false }
       types_to_test.each {|t| calculator.instance?(t.new, :undef).should == false }
+    end
+
+    it 'should consider default to be instance of Default and Any' do
+      calculator.instance?(Puppet::Pops::Types::PDefaultType.new(), :default).should == true
+      calculator.instance?(Puppet::Pops::Types::PAnyType.new(), :default).should == true
+    end
+
+    it 'should not consider "default" to be an instance of anything but Default, and Any' do
+      types_to_test = all_types - [
+        Puppet::Pops::Types::PAnyType,
+        Puppet::Pops::Types::PDefaultType,
+        ]
+
+      types_to_test.each {|t| calculator.instance?(t.new, :default).should == false }
     end
 
     it 'should consider fixnum instanceof PIntegerType' do
@@ -1164,7 +1183,7 @@ describe 'The type calculator' do
 
     context 'and t is Data' do
       it 'undef should be considered instance of Data' do
-        calculator.instance?(data_t, :undef).should == true
+        calculator.instance?(data_t, nil).should == true
       end
 
       it 'other symbols should not be considered instance of Data' do
@@ -1181,21 +1200,18 @@ describe 'The type calculator' do
 
       it 'a hash with nil/undef data should be considered instance of Data' do
         calculator.instance?(data_t, {'a' => nil}).should == true
-        calculator.instance?(data_t, {'a' => :undef}).should == true
       end
 
-      it 'a hash with nil/undef key should not considered instance of Data' do
+      it 'a hash with nil/default key should not considered instance of Data' do
         calculator.instance?(data_t, {nil => 10}).should == false
-        calculator.instance?(data_t, {:undef => 10}).should == false
+        calculator.instance?(data_t, {:default => 10}).should == false
       end
 
-      it 'an array with undef entries should be considered instance of Data' do
-        calculator.instance?(data_t, [:undef]).should == true
+      it 'an array with nil entries should be considered instance of Data' do
         calculator.instance?(data_t, [nil]).should == true
       end
 
-      it 'an array with undef / data entries should be considered instance of Data' do
-        calculator.instance?(data_t, [1, :undef, 'a']).should == true
+      it 'an array with nil + data entries should be considered instance of Data' do
         calculator.instance?(data_t, [1, nil, 'a']).should == true
       end
     end
