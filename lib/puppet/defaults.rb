@@ -1934,38 +1934,6 @@ EOT
         Available Since Puppet 3.2.
       EOT
     },
-    :evaluator => {
-      :default => "future",
-      :hook => proc do |value|
-        case value
-        when 'future'
-        when 'current'
-          Puppet.deprecation_warning "The evaluator setting 'current' is deprecated, 'future' is always used."
-        else
-          raise "evaluator can only be set to 'future', got '#{value}'"
-        end
-      end,
-      :desc => <<-'EOT'
-        Which evaluator to use when compiling Puppet manifests. Valid values
-        are `future` (the default).
-
-        **Note:** This setting is only used when `parser = future`. It allows
-        testers to use a different evaluator when doing detailed tests and
-        comparisons. Currently there is only version available called 'future'.
-
-        Evaluation is the second stage of catalog compilation. After the parser
-        converts a manifest to a model of expressions, the evaluator processes
-        each expression. (For example, a resource declaration signals the
-        evaluator to add a resource to the catalog).
-
-        The `future` parser and evaluator are slated to become default in Puppet
-        4. Their purpose is to add new features and improve consistency
-        and reliability.
-
-        Available Since Puppet 3.5. Restricted to 'future' in 3.7. This setting may
-        be removed in Puppet 4.0.
-      EOT
-    },
    :biff => {
      :default => false,
      :type => :boolean,
