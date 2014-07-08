@@ -23,19 +23,13 @@ module Puppet::ModuleTool
     # We override Object's ==, eql, and hash so we can more easily find identical
     # dependencies.
     def ==(o)
-      @full_module_name == o.full_module_name &&
-        @username == o.username &&
-        @name == o.name &&
-        @version_requirement == o.version_requirement &&
-        @repository == o.repository
+      self.hash == o.hash
     end
 
-    def eql?(o)
-      self == o
-    end
+    alias :eql? :==
 
     def hash
-      [@full_module_name, @username, @name, @version_requirement, @repository].hash
+      [@full_module_name, @version_requirement, @repository].hash
     end
 
     def to_data_hash

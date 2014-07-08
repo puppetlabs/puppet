@@ -52,7 +52,7 @@ module Puppet::ModuleTool
       process_name(data) if data['name']
       process_version(data) if data['version']
       process_source(data) if data['source']
-      process_dependencies(data) if data['dependencies']
+      merge_dependencies(data) if data['dependencies']
 
       @data.merge!(data)
       return self
@@ -64,14 +64,11 @@ module Puppet::ModuleTool
     def add_dependency(name, version_requirement=nil, repository=nil)
       validate_name(name)
       validate_version_range(version_requirement) if version_requirement
-      duplicates = @data['dependencies'].select { |d| d.full_module_name == name }
-      unless duplicates.empty?
-        duplicates.each do |dup|
-          if dup.version_requirement != version_requirement
-            raise ArgumentError, "Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json or the Modulefile."
-          end
-        end
+
+      if dup = @data['dependencies'].find { |d| d.full_module_name == name && d.version_requirement != version_requirement }
+        raise ArgumentError, "Dependency conflict for #{full_module_name}: Dependency #{name} was given conflicting version requirements #{version_requirement} and #{dup.version_requirement}. Verify that there are no duplicates in the metadata.json or the Modulefile."
       end
+
       dep = Dependency.new(name, version_requirement, repository)
       @data['dependencies'].add(dep)
 
@@ -100,6 +97,8 @@ module Puppet::ModuleTool
     alias :to_data_hash :to_hash
 
     def to_json
+      data = @data.dup.merge('dependencies' => dependencies)
+
       # This is used to simulate an ordered hash.  In particular, some keys
       # are promoted to the top of the serialized hash (while others are
       # demoted) for human-friendliness.
@@ -107,16 +106,12 @@ module Puppet::ModuleTool
       # This particularly works around the lack of ordered hashes in 1.8.7.
       promoted_keys = %w[ name version author summary license source ]
       demoted_keys = %w[ dependencies ]
-      keys = @data.keys
+      keys = data.keys
       keys -= promoted_keys
       keys -= demoted_keys
 
       contents = (promoted_keys + keys + demoted_keys).map do |k|
-        if k == 'dependencies'
-          value = @data[k].to_a.to_json
-        else
-          value = (JSON.pretty_generate(@data[k]) rescue @data[k].to_json)
-        end
+        value = (JSON.pretty_generate(data[k]) rescue data[k].to_json)
         "#{k.to_json}: #{value}"
       end
 
@@ -166,7 +161,7 @@ module Puppet::ModuleTool
     end
 
     # Validates and parses the dependencies.
-    def process_dependencies(data)
+    def merge_dependencies(data)
       data['dependencies'].each do |dep|
         add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
       end

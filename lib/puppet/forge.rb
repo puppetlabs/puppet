@@ -125,9 +125,17 @@ class Puppet::Forge < Semantic::Dependency::Source
       version = Semantic::Version.parse(meta['version'])
       release = "#{name}@#{version}"
 
-      dependencies = (meta['dependencies'] || [])
-      dependencies.map! do |dep|
-        Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
+      if meta['dependencies']
+        dependencies = meta['dependencies'].collect do |dep|
+          begin
+            Puppet::ModuleTool::Metadata.new.add_dependency(dep['name'], dep['version_requirement'], dep['repository'])
+            Puppet::ModuleTool.parse_module_dependency(release, dep)[0..1]
+          rescue ArgumentError => e
+            Puppet.debug "Malformed dependency: #{dep['name']}. Exception was: #{e}"
+          end
+        end
+      else
+        dependencies = []
       end
 
       super(source, name, version, Hash[dependencies])
