@@ -11,18 +11,11 @@ module Puppet::Pops::Loader::LoaderPaths
   # and existence checks). The smart paths in the array appear in precedence order. The returned array may be
   # mutated.
   #
-  def self.relative_paths_for_type(type, loader) #, start_index_in_name)
+  def self.relative_paths_for_type(type, loader)
     result =
-    case type # typed_name.type
+    case type
     when :function
-      if Puppet[:biff] == true
-        [FunctionPath4x.new(loader), FunctionPath3x.new(loader)]
-      else
         [FunctionPath4x.new(loader)]
-      end
-
-    # when :xxx # TODO: Add all other types
-
     else
       # unknown types, simply produce an empty result; no paths to check, nothing to find... move along...
       []
@@ -90,18 +83,6 @@ module Puppet::Pops::Loader::LoaderPaths
 
     def instantiator()
       Puppet::Pops::Loader::RubyFunctionInstantiator
-    end
-  end
-
-  class FunctionPath3x < RubySmartPath
-    FUNCTION_PATH_3X = File.join('lib', 'puppet', 'parser', 'functions')
-
-    def relative_path
-      FUNCTION_PATH_3X
-    end
-
-    def instantiator()
-      Puppet::Pops::Loader::RubyLegacyFunctionInstantiator
     end
   end
 

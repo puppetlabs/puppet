@@ -236,7 +236,6 @@ module Puppet::Pops::Evaluator::Runtime3Support
     # Call via 3x API if function exists there
     fail(Puppet::Pops::Issues::UNKNOWN_FUNCTION, o, {:name => name}) unless Puppet::Parser::Functions.function(name)
 
-    # TODO: if Puppet[:biff] == true, then 3x functions should be called via loaders above
     # Arguments must be mapped since functions are unaware of the new and magical creatures in 4x.
     # NOTE: Passing an empty string last converts nil/:undef to empty string
     mapped_args = args.map {|a| convert(a, scope, '') }
