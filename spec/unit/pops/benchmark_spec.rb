@@ -118,7 +118,7 @@ $a = "interpolate ${foo} and stuff"
   end
 
   context "Measure Evaluator" do
-    let(:parser) { Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
+    let(:parser) { Puppet::Pops::Parser::EvaluatingParser.new }
     let(:node) { 'node.example.com' }
     let(:scope) { s = create_test_scope_for_node(node); s }
     it "evaluator", :profile => true do

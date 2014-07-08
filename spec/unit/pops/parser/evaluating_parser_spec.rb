@@ -9,7 +9,6 @@ describe 'The Evaluating Parser' do
   include PuppetSpec::Scope
 
   let(:acceptor) {  Puppet::Pops::Validation::Acceptor.new() }
-  let(:diag) { Puppet::Pops::Binder::Hiera2::DiagnosticProducer.new(acceptor) }
   let(:scope) { s = create_test_scope_for_node(node); s }
   let(:node) { 'node.example.com' }
 

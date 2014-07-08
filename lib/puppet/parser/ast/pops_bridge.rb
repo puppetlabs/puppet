@@ -16,7 +16,7 @@ class Puppet::Parser::AST::PopsBridge
 
     def initialize args
       super
-      @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser::Transitional.new()
+      @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser.new()
     end
 
     def to_s
@@ -75,7 +75,7 @@ class Puppet::Parser::AST::PopsBridge
       @program_model = program_model
       @context = context
       @ast_transformer ||= Puppet::Pops::Model::AstTransformer.new(@context[:file])
-      @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser::Transitional.new()
+      @@evaluator ||= Puppet::Pops::Parser::EvaluatingParser.new()
     end
 
     # This is the 3x API, the 3x AST searches through all code to find the instructions that can be instantiated.

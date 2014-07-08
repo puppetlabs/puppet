@@ -434,7 +434,7 @@ class Puppet::Parser::Scope
 
   def variable_not_found(name, reason=nil)
     if Puppet[:strict_variables]
-      if Puppet[:evaluator] == 'future' && Puppet[:parser] == 'future'
+      if Puppet[:parser] == 'future'
         throw :undefined_variable
       else
         reason_msg = reason.nil? ? '' : "; #{reason}"
@@ -444,6 +444,7 @@ class Puppet::Parser::Scope
       nil
     end
   end
+
   # Retrieves the variable value assigned to the name given as an argument. The name must be a String,
   # and namespace can be qualified with '::'. The value is looked up in this scope, its parent scopes,
   # or in a specific visible named scope.

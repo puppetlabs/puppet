@@ -62,8 +62,7 @@ module Puppet::Pops::Binder::Producers
         else
           raise ArgumentError, "Transformer must be a LambdaExpression" unless transformer_lambda.is_a?(Puppet::Pops::Model::LambdaExpression)
           raise ArgumentError, "Transformer lambda must take one argument; value." unless transformer_lambda.parameters.size() == 1
-          # NOTE: This depends on Puppet 3 AST Lambda
-          @transformer = Puppet::Pops::Model::AstTransformer.new().transform(transformer_lambda)
+          @transformer = Puppet::Pops::Parser::EvaluatingParser.new.closure(transformer_lambda, scope)
         end
       end
     end
@@ -298,14 +297,13 @@ module Puppet::Pops::Binder::Producers
     #
     def initialize(injector, binding, scope, options)
       super
-      expr = options[:expression]
-      raise ArgumentError, "Option 'expression' must be given to an EvaluatingProducer." unless expr
-      @expression = Puppet::Pops::Model::AstTransformer.new().transform(expr)
+      @expression = options[:expression]
+      raise ArgumentError, "Option 'expression' must be given to an EvaluatingProducer." unless @expression
     end
 
     # @api private
     def internal_produce(scope)
-      expression.evaluate(scope)
+      Puppet::Pops::Parser::EvaluatingParser.new.evaluate(scope, expression)
     end
   end
 

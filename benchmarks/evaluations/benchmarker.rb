@@ -28,7 +28,7 @@ class Benchmarker
     # Run / Evaluate the common puppet logic
     @env = Puppet.lookup(:environments).get('benchmarking')
     @node = Puppet::Node.new("testing", :environment => @env)
-    @parser  = Puppet::Pops::Parser::EvaluatingParser::Transitional.new
+    @parser  = Puppet::Pops::Parser::EvaluatingParser.new
     @compiler = Puppet::Parser::Compiler.new(@node)
     @scope = @compiler.topscope
 
