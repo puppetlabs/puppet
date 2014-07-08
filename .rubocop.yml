@@ -504,3 +504,6 @@ Lint/Debugger:
 
 Style/IfWithSemicolon:
   Enabled: false
+
+Style/Encoding:
+  Enabled: false
