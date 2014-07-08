@@ -260,7 +260,7 @@ Puppet::Type.newtype(:tidy) do
     # so that a directory is emptied before we try to remove it.
     files_by_name = result.inject({}) { |hash, file| hash[file[:path]] = file; hash }
 
-    files_by_name.keys.sort { |a,b| b <=> b }.each do |path|
+    files_by_name.keys.sort { |a,b| a <=> b }.each do |path|
       dir = ::File.dirname(path)
       next unless resource = files_by_name[dir]
       if resource[:require]
