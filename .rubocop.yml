@@ -37,10 +37,9 @@ Lint/LiteralInCondition:
 Lint/ShadowingOuterLocalVariable:
   Enabled: false
 
-# DISABLED - TODO
 # Can catch complicated strings.
 Lint/LiteralInInterpolation:
-  Enabled: false
+  Enabled: true
 
 
 # DISABLED really useless. Detects return as last statement.
