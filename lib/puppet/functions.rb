@@ -288,10 +288,12 @@ module Puppet::Functions
     def required_block_param(*type_and_name)
       case type_and_name.size
       when 0
-        type = @all_callables
+        # the type must be an independent instance since it will be contained in another type
+        type = @all_callables.copy
         name = 'block'
       when 1
-        type = @all_callables
+        # the type must be an independent instance since it will be contained in another type
+        type = @all_callables.copy
         name = type_and_name[0]
       when 2
         type_string, name = type_and_name
