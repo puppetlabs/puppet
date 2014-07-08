@@ -84,9 +84,10 @@ Puppet::Face.define(:module, '1.0.0') do
     arguments "<name>"
 
     option "--force", "-f" do
-      summary "Force overwrite of existing module, if any."
+      summary "Force overwrite of existing module, if any. (Implies --ignore-dependencies.)"
       description <<-EOT
         Force overwrite of existing module, if any.
+        Implies --ignore-dependencies.
       EOT
     end
 
@@ -104,9 +105,9 @@ Puppet::Face.define(:module, '1.0.0') do
     end
 
     option "--ignore-dependencies" do
-      summary "Do not attempt to install dependencies"
+      summary "Do not attempt to install dependencies. (Implied by --force.)"
       description <<-EOT
-        Do not attempt to install dependencies.  (Implied by --force.)
+        Do not attempt to install dependencies. Implied by --force.
       EOT
     end
 
