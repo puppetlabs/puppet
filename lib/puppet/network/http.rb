@@ -11,5 +11,6 @@ module Puppet::Network::HTTP
   require 'puppet/network/http/handler'
   require 'puppet/network/http/response'
   require 'puppet/network/http/request'
+  require 'puppet/network/http/site'
   require 'puppet/network/http/memory_response'
 end
