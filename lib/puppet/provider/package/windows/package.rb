@@ -42,7 +42,7 @@ class Puppet::Provider::Package::Windows
               end
             end
           rescue Puppet::Util::Windows::Error => e
-            raise e unless e.code == Windows::Error::ERROR_FILE_NOT_FOUND
+            raise e unless e.code == Puppet::Util::Windows::Error::ERROR_FILE_NOT_FOUND
           end
         end
       end

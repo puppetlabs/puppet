@@ -79,14 +79,17 @@ module Puppet::Util::Execution
       end
     end
 
-    if failonfail
-      unless $CHILD_STATUS == 0
-        raise Puppet::ExecutionFailure, output
-      end
+    if failonfail && exitstatus != 0
+      raise Puppet::ExecutionFailure, output
     end
 
     output
   end
+
+  def self.exitstatus
+    $CHILD_STATUS.exitstatus
+  end
+  private_class_method :exitstatus
 
   # Wraps execution of {execute} with mapping of exception to given exception (and output as argument).
   # @raise [exception] under same conditions as {execute}, but raises the given `exception` with the output as argument

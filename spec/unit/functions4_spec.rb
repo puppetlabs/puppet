@@ -439,12 +439,11 @@ actual:
         # about selection of parser and evaluator
         #
         Puppet[:parser] = 'future'
-        Puppet[:evaluator] = 'future'
         # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
         require 'puppetx'
       end
 
-      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser::Transitional.new }
+      let(:parser) {  Puppet::Pops::Parser::EvaluatingParser.new }
       let(:node) { 'node.example.com' }
       let(:scope) { s = create_test_scope_for_node(node); s }
 

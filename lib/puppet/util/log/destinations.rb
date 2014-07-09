@@ -189,6 +189,10 @@ Puppet::Util::Log.newdesttype :array do
 end
 
 Puppet::Util::Log.newdesttype :eventlog do
+  Puppet::Util::Log::DestEventlog::EVENTLOG_ERROR_TYPE       = 0x0001
+  Puppet::Util::Log::DestEventlog::EVENTLOG_WARNING_TYPE     = 0x0002
+  Puppet::Util::Log::DestEventlog::EVENTLOG_INFORMATION_TYPE = 0x0004
+
   def self.suitable?(obj)
     Puppet.features.eventlog?
   end
@@ -200,11 +204,11 @@ Puppet::Util::Log.newdesttype :eventlog do
   def to_native(level)
     case level
     when :debug,:info,:notice
-      [Win32::EventLog::INFO, 0x01]
+      [self.class::EVENTLOG_INFORMATION_TYPE, 0x01]
     when :warning
-      [Win32::EventLog::WARN, 0x02]
+      [self.class::EVENTLOG_WARNING_TYPE, 0x02]
     when :err,:alert,:emerg,:crit
-      [Win32::EventLog::ERROR, 0x03]
+      [self.class::EVENTLOG_ERROR_TYPE, 0x03]
     end
   end
 

@@ -67,6 +67,10 @@ describe 'The type factory' do
       Puppet::Pops::Types::TypeFactory.undef().class().should == Puppet::Pops::Types::PNilType
     end
 
+    it 'default() returns PDefaultType' do
+      Puppet::Pops::Types::TypeFactory.default().class().should == Puppet::Pops::Types::PDefaultType
+    end
+
     it 'range(to, from) returns PIntegerType' do
       t = Puppet::Pops::Types::TypeFactory.range(1,2)
       t.class().should == Puppet::Pops::Types::PIntegerType
@@ -150,10 +154,11 @@ describe 'The type factory' do
       ht.element_type.class.should == Puppet::Pops::Types::PDataType
     end
 
-    it 'ruby(1) returns PRubyType[\'Fixnum\']' do
+    it 'ruby(1) returns PRuntimeType[ruby, \'Fixnum\']' do
       ht = Puppet::Pops::Types::TypeFactory.ruby(1)
-      ht.class().should == Puppet::Pops::Types::PRubyType
-      ht.ruby_class.should == 'Fixnum'
+      ht.class().should == Puppet::Pops::Types::PRuntimeType
+      ht.runtime.should == :ruby
+      ht.runtime_type_name.should == 'Fixnum'
     end
 
     it 'a size constrained collection can be created from array' do

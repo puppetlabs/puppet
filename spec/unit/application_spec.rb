@@ -177,6 +177,7 @@ describe Puppet::Application do
   end
 
   it "should initialize the Puppet Instrumentation layer early in the life cycle" do
+    pending('porting to windows ruby2') if Puppet::Util::Platform.windows? && RUBY_VERSION =~ /^2\./
     # Not proud of this, but the fact that we are stubbing init_app_defaults
     #  below means that we will get errors if anyone tries to access any
     #  settings that depend on app_defaults.  In general this whole test

@@ -116,27 +116,10 @@ describe Puppet::Node::Environment do
   describe 'using future parser' do
     it_behaves_like "the environment's initial import",
       :parser    => 'future',
-      :evaluator => 'future',
       # Turned off because currently future parser turns on the binder which
       # causes lookup of facts that are uninitialized and it will fail with
       # errors for 'osfamily' etc.  This can be turned back on when the binder
       # is taken out of the equation.
       :strict_variables => false
-
-    it_behaves_like "the environment's initial import in the future",
-      :parser    => 'future',
-      :evaluator => 'future',
-      # Turned off because currently future parser turns on the binder which
-      # causes lookup of facts that are uninitialized and it will fail with
-      # errors for 'osfamily' etc.  This can be turned back on when the binder
-      # is taken out of the equation.
-      :strict_variables => false
-
-    context 'and evaluator current' do
-      it_behaves_like "the environment's initial import",
-        :parser           => 'future',
-        :evaluator        => 'current',
-        :strict_variables => false
-    end
   end
 end

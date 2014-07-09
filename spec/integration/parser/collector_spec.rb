@@ -24,6 +24,15 @@ describe Puppet::Parser::Collector do
       MANIFEST
     end
 
+    it "matches regular resources " do
+      expect_the_message_to_be(["changed", "changed"], <<-MANIFEST)
+        notify { "testing": message => "the message" }
+        notify { "other": message => "the other message" }
+
+        Notify <| |> { message => "changed" }
+      MANIFEST
+    end
+
     it "matches on tags" do
       expect_the_message_to_be(["wanted"], <<-MANIFEST)
         @notify { "testing": tag => ["one"], message => "wanted" }
@@ -133,6 +142,18 @@ describe Puppet::Parser::Collector do
       MANIFEST
     end
 
+    it "does not collect classes" do
+      node = Puppet::Node.new('the node')
+      expect do
+        catalog = compile_to_catalog(<<-MANIFEST, node)
+          class theclass {
+            @notify { "testing": message => "good message" }
+          }
+          Class <|  |>
+        MANIFEST
+      end.to raise_error(/Classes cannot be collected/)
+    end
+
     context "overrides" do
       it "modifies an existing array" do
         expect_the_message_to_be([["original message", "extra message"]], <<-MANIFEST)
@@ -179,6 +200,61 @@ describe Puppet::Parser::Collector do
           }
         MANIFEST
       end
+
+      # Catches regression in implemented behavior, this is not to be taken as this is the wanted behavior
+      # but it has been this way for a long time.
+      it "collects and overrides user defined resources immediately (before queue is evaluated)" do
+        expect_the_message_to_be(["overridden"], <<-MANIFEST)
+          define foo($message) {
+            notify { "testing": message => $message }
+          }
+          foo { test: message => 'given' }
+          Foo <|  |> { message => 'overridden' }
+        MANIFEST
+      end
+
+      # Catches regression in implemented behavior, this is not to be taken as this is the wanted behavior
+      # but it has been this way for a long time.
+      it "collects and overrides user defined resources immediately (virtual resources not queued)" do
+        expect_the_message_to_be(["overridden"], <<-MANIFEST)
+          define foo($message) {
+            @notify { "testing": message => $message }
+          }
+          foo { test: message => 'given' }
+          Notify <| |> # must be collected or the assertion does not find it
+          Foo <|  |> { message => 'overridden' }
+        MANIFEST
+      end
+
+      # Catches regression in implemented behavior, this is not to be taken as this is the wanted behavior
+      # but it has been this way for a long time.
+      # Note difference from none +> case where the override takes effect
+      it "collects and overrides user defined resources with +>" do
+        expect_the_message_to_be([["given", "overridden"]], <<-MANIFEST)
+          define foo($message) {
+            notify { "$name": message => $message }
+          }
+          foo { test: message => ['given'] }
+          Notify <|  |> { message +> ['overridden'] }
+        MANIFEST
+      end
+
+      it "collects and overrides virtual resources multiple times using multiple collects" do
+        expect_the_message_to_be(["overridden2"], <<-MANIFEST)
+          @notify { "testing": message => "original" }
+          Notify <|  |> { message => 'overridden1' }
+          Notify <|  |> { message => 'overridden2' }
+        MANIFEST
+      end
+
+      it "collects and overrides non virtual resources multiple times using multiple collects" do
+        expect_the_message_to_be(["overridden2"], <<-MANIFEST)
+          notify { "testing": message => "original" }
+          Notify <|  |> { message => 'overridden1' }
+          Notify <|  |> { message => 'overridden2' }
+        MANIFEST
+      end
+
     end
   end
 

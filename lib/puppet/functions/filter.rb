@@ -36,57 +36,78 @@
 # @note requires `parser = future`
 #
 Puppet::Functions.create_function(:filter) do
-  dispatch :filter_Hash do
+  dispatch :filter_Hash_2 do
     param 'Hash[Any, Any]', :hash
-    required_block_param
+    required_block_param 'Callable[2,2]', :block
   end
 
-  dispatch :filter_Enumerable do
+  dispatch :filter_Hash_1 do
+    param 'Hash[Any, Any]', :hash
+    required_block_param 'Callable[1,1]', :block
+  end
+
+  dispatch :filter_Enumerable_2 do
     param 'Any', :enumerable
-    required_block_param
+    required_block_param 'Callable[2,2]', :block
   end
 
-  require 'puppet/util/functions/iterative_support'
-  include Puppet::Util::Functions::IterativeSupport
+  dispatch :filter_Enumerable_1 do
+    param 'Any', :enumerable
+    required_block_param 'Callable[1,1]', :block
+  end
 
-  def filter_Hash(hash, pblock)
-    if asserted_serving_size(pblock, 'key') == 1
-      result = hash.select {|x, y| pblock.call(self, [x, y]) }
-    else
-      result = hash.select {|x, y| pblock.call(self, x, y) }
-    end
+  def filter_Hash_1(hash, pblock)
+    result = hash.select {|x, y| pblock.call(self, [x, y]) }
     # Ruby 1.8.7 returns Array
     result = Hash[result] unless result.is_a? Hash
     result
   end
 
-  def filter_Enumerable(enumerable, pblock)
+  def filter_Hash_2(hash, pblock)
+    result = hash.select {|x, y| pblock.call(self, x, y) }
+    # Ruby 1.8.7 returns Array
+    result = Hash[result] unless result.is_a? Hash
+    result
+  end
+
+  def filter_Enumerable_1(enumerable, pblock)
     result = []
     index = 0
     enum = asserted_enumerable(enumerable)
-
-    if asserted_serving_size(pblock, 'index') == 1
-      begin
-        loop do
-          it = enum.next
-          if pblock.call(nil, it) == true
-            result << it
-          end
+    begin
+      loop do
+        it = enum.next
+        if pblock.call(nil, it) == true
+          result << it
         end
-      rescue StopIteration
       end
-    else
-      begin
-        loop do
-          it = enum.next
-          if pblock.call(nil, index, it) == true
-            result << it
-          end
-          index += 1
-        end
-      rescue StopIteration
-      end
+    rescue StopIteration
     end
     result
   end
+
+  def filter_Enumerable_2(enumerable, pblock)
+    result = []
+    index = 0
+    enum = asserted_enumerable(enumerable)
+    begin
+      loop do
+        it = enum.next
+        if pblock.call(nil, index, it) == true
+          result << it
+        end
+        index += 1
+      end
+    rescue StopIteration
+    end
+    result
+  end
+
+  def asserted_enumerable(obj)
+    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
+      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
+    end
+    enum
+  end
+
 end

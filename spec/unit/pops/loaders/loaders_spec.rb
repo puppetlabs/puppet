@@ -48,32 +48,6 @@ describe 'loaders' do
     expect(loaders.private_environment_loader().to_s).to eql("(DependencyLoader 'environment' [])")
   end
 
-  it 'can load 3x system functions' do
-    Puppet[:biff] = true
-    loaders = Puppet::Pops::Loaders.new(empty_test_env)
-    puppet_loader = loaders.puppet_system_loader()
-
-    function = puppet_loader.load_typed(typed_name(:function, 'sprintf')).value
-
-    expect(function.class.name).to eq('sprintf')
-    expect(function).to be_a(Puppet::Functions::Function)
-  end
-
-  it 'can load 3x system functions more than once' do
-    Puppet[:biff] = true
-    loaders = Puppet::Pops::Loaders.new(empty_test_env)
-    puppet_loader = loaders.puppet_system_loader()
-
-    function = puppet_loader.load_typed(typed_name(:function, 'sprintf')).value
-
-    expect(function.class.name).to eq('sprintf')
-    expect(function).to be_a(Puppet::Functions::Function)
-
-    function = puppet_loader.load_typed(typed_name(:function, 'sprintf')).value
-    expect(function.class.name).to eq('sprintf')
-    expect(function).to be_a(Puppet::Functions::Function)
-  end
-
   it 'can load a function using a qualified or unqualified name from a module with metadata' do
     loaders = Puppet::Pops::Loaders.new(environment_for(module_with_metadata))
     modulea_loader = loaders.public_loader_for_module('modulea')

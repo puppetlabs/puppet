@@ -31,7 +31,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   [
-    'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric',
+    'Any', 'Data', 'CatalogEntry', 'Boolean', 'Scalar', 'Undef', 'Numeric', 'Default'
   ].each do |name|
     it "does not support parameterizing unparameterized type <#{name}>" do
       expect { parser.parse("#{name}[Integer]") }.to raise_unparameterized_error_for(name)
@@ -51,6 +51,7 @@ describe Puppet::Pops::Types::TypeParser do
     expect(the_type_parsed_from(types.tuple)).to be_the_type(types.tuple)
     expect(the_type_parsed_from(types.struct)).to be_the_type(types.struct)
     expect(the_type_parsed_from(types.optional)).to be_the_type(types.optional)
+    expect(the_type_parsed_from(types.default)).to be_the_type(types.default)
   end
 
   it "interprets an unparameterized Array as an Array of Data" do
@@ -172,7 +173,7 @@ describe Puppet::Pops::Types::TypeParser do
   end
 
   it 'parses a ruby type' do
-    expect(parser.parse("Ruby['Integer']")).to be_the_type(types.ruby_type('Integer'))
+    expect(parser.parse("Runtime[ruby, 'Integer']")).to be_the_type(types.ruby_type('Integer'))
   end
 
   it 'parses a callable type' do
@@ -191,10 +192,17 @@ describe Puppet::Pops::Types::TypeParser do
     expect(parser.parse("Callable[String, Callable[Boolean]]")).to be_the_type(types.callable(String, types.callable(true)))
   end
 
-  it 'parses a parameterized callable type with only min/max' do
+  it 'parses a parameterized callable type with 0 min/max' do
     t = parser.parse("Callable[0,0]")
     expect(t).to be_the_type(types.callable())
     expect(t.param_types.types).to be_empty
+  end
+
+  it 'parses a parameterized callable type with >0 min/max' do
+    t = parser.parse("Callable[0,1]")
+    expect(t).to be_the_type(types.callable(0,1))
+    # Contains a Unit type to indicate "called with what you accept"
+    expect(t.param_types.types[0]).to be_the_type(Puppet::Pops::Types::PUnitType.new())
   end
 
   matcher :be_the_type do |type|

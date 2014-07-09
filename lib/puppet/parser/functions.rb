@@ -133,12 +133,6 @@ module Puppet::Parser::Functions
   #
   # @api public
   def self.newfunction(name, options = {}, &block)
-    # Short circuit this call when 4x "biff" is in effect to allow the new loader system to load
-    # and define the function a different way.
-    #
-    if Puppet[:biff]
-      return Puppet::Pops::Loader::RubyLegacyFunctionInstantiator.legacy_newfunction(name, options, &block)
-    end
     name = name.intern
     environment = options[:environment] || Puppet.lookup(:current_environment)
 

@@ -562,7 +562,7 @@ module Private
     #
     def assistable_injected_class(key)
       kt = key_factory.get_type(key)
-      return nil unless kt.is_a?(Puppet::Pops::Types::PRubyType) && !key_factory.is_named?(key)
+      return nil unless kt.is_a?(Puppet::Pops::Types::PRuntimeType) && kt.runtime == :ruby && !key_factory.is_named?(key)
       type_calculator.injectable_class(kt)
     end
 

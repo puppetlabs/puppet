@@ -51,9 +51,6 @@ Puppet::Functions.create_function(:slice) do
     optional_block_param
   end
 
-  require 'puppet/util/functions/iterative_support'
-  include Puppet::Util::Functions::IterativeSupport
-
   def slice_Hash(hash, slice_size, pblock = nil)
     result = slice_Common(hash, slice_size, [], pblock)
     pblock ? hash : result
@@ -118,4 +115,12 @@ Puppet::Functions.create_function(:slice) do
     end
     serving_size
   end
+
+  def asserted_enumerable(obj)
+    unless enum = Puppet::Pops::Types::Enumeration.enumerator(obj)
+      raise ArgumentError, ("#{self.class.name}(): wrong argument type (#{obj.class}; must be something enumerable.")
+    end
+    enum
+  end
+
 end

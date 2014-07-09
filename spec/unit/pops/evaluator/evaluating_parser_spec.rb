@@ -21,7 +21,6 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     # use the 4x parser and evaluator.
     #
     Puppet[:parser] = 'future'
-    Puppet[:evaluator] = 'future'
 
     # Puppetx cannot be loaded until the correct parser has been set (injector is turned off otherwise)
     require 'puppetx'
@@ -30,7 +29,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl' do
     # snippets as the compiler will evaluate them, butwithout the overhead of compiling a complete
     # catalog for each tested expression.
     #
-    @parser  = Puppet::Pops::Parser::EvaluatingParser::Transitional.new
+    @parser  = Puppet::Pops::Parser::EvaluatingParser.new
     @node = Puppet::Node.new('node.example.com')
     @node.environment = Puppet::Node::Environment.create(:testing, [])
     @compiler = Puppet::Parser::Compiler.new(@node)

@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet_spec/compiler'
 require 'matchers/resource'
 
-require 'unit/functions/shared'
+require 'shared_behaviours/iterative_functions'
 
 describe 'the map method' do
   include PuppetSpec::Compiler
@@ -161,47 +161,7 @@ describe 'the map method' do
 
         expect(catalog).to have_resource("File[/file_0.]").with_parameter(:ensure, 'present')
       end
-
-      it "map gets values that are undef" do
-        pending "Test is flawed, but has good intentions - should be rewritten when map has moved to new func API"
-        # The test is broken because:
-        # - a bug caused the given value to always be overridden by a given lambda default
-        # - non existing variable results in nil / undef, which is transformed to empty string in the 3x func API
-        # - when lambda is called, it gets an empty string, and it is then expected to use the default value
-        #
-        # This is not the semantics we want (only missing argument should trigger the default value).
-        # Finally, it is not possible to test missing arguments with the map function since the call adapts itself
-        # to the number of lambda parameters. (There is testing of this elsewhere).
-        #
-        # TODO: Rewrite map function, then test that undef / nil values are passed correctly to the lambda
-        #
-        catalog = compile_to_catalog(<<-MANIFEST)
-          $a = [$does_not_exist]
-          $a.map |$x = "something"| { $x }.each |$i, $v| {
-            file { "/file_$i.$v": ensure => present }
-          }
-        MANIFEST
-        catalog.resource(:file, "/file_0.something")['ensure'].should == 'present'
-      end
     end
-
-  context 'map checks arguments and' do
-    it 'raises an error when block has more than 2 argument' do
-      expect do
-        compile_to_catalog(<<-MANIFEST)
-          [1].map |$index, $x, $yikes|{  }
-        MANIFEST
-      end.to raise_error(Puppet::Error, /block must define at most two parameters/)
-    end
-
-    it 'raises an error when block has fewer than 1 argument' do
-      expect do
-        compile_to_catalog(<<-MANIFEST)
-          [1].map || {  }
-        MANIFEST
-      end.to raise_error(Puppet::Error, /block must define at least one parameter/)
-    end
-  end
 
   it_should_behave_like 'all iterative functions argument checks', 'map'
   it_should_behave_like 'all iterative functions hash handling', 'map'

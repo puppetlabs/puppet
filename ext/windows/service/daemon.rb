@@ -8,6 +8,9 @@ require 'win32/eventlog'
 
 class WindowsDaemon < Win32::Daemon
   CREATE_NEW_CONSOLE          = 0x00000010
+  EVENTLOG_ERROR_TYPE         = 0x0001
+  EVENTLOG_WARNING_TYPE       = 0x0002
+  EVENTLOG_INFORMATION_TYPE   = 0x0004
 
   @LOG_TO_FILE = false
   LOG_FILE =  File.expand_path(File.join(Dir::COMMON_APPDATA, 'PuppetLabs', 'puppet', 'var', 'log', 'windows.log'))
@@ -125,16 +128,12 @@ class WindowsDaemon < Win32::Daemon
       end
 
       case level
-        when :debug
-          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
-        when :info
-          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
-        when :notice
-          report_windows_event(Win32::EventLog::INFO,0x01,msg.to_s)
+        when :debug, :info, :notice
+          report_windows_event(EVENTLOG_INFORMATION_TYPE,0x01,msg.to_s)
         when :err
-          report_windows_event(Win32::EventLog::ERR,0x03,msg.to_s)
+          report_windows_event(EVENTLOG_ERROR_TYPE,0x03,msg.to_s)
         else
-          report_windows_event(Win32::EventLog::WARN,0x02,msg.to_s)
+          report_windows_event(EVENTLOG_WARNING_TYPE,0x02,msg.to_s)
       end
     end
   end
@@ -145,7 +144,7 @@ class WindowsDaemon < Win32::Daemon
       eventlog = Win32::EventLog.open("Application")
       eventlog.report_event(
         :source      => "Puppet",
-        :event_type  => type,   # Win32::EventLog::INFO or WARN, ERROR
+        :event_type  => type,   # EVENTLOG_ERROR_TYPE, etc
         :event_id    => id,     # 0x01 or 0x02, 0x03 etc.
         :data        => message # "the message"
       )

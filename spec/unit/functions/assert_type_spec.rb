@@ -37,8 +37,8 @@ describe 'the assert_type function' do
     end.to raise_error(ArgumentError, Regexp.new(Regexp.escape(
 "function 'assert_type' called with mis-matched arguments
 expected one of:
-  assert_type(Type type, Any value, Callable[Any, Any] block {0,1}) - arg count {2,3}
-  assert_type(String type_string, Any value, Callable[Any, Any] block {0,1}) - arg count {2,3}
+  assert_type(Type type, Any value, Callable[Type, Type] block {0,1}) - arg count {2,3}
+  assert_type(String type_string, Any value, Callable[Type, Type] block {0,1}) - arg count {2,3}
 actual:
   assert_type(Integer, Integer) - arg count {2}")))
   end
@@ -49,10 +49,10 @@ actual:
     end.to_not raise_error(ArgumentError)
   end
 
-  it 'can be called with a callable' do
+  it 'can be called with a callable that receives a specific type' do
     expected, actual = func.call({}, optional(String), 1, create_callable_2_args_unit)
     expect(expected.to_s).to eql('Optional[String]')
-    expect(actual.to_s).to eql('Integer')
+    expect(actual.to_s).to eql('Integer[1, 1]')
   end
 
   def optional(type_ref)
