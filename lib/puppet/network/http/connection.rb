@@ -29,8 +29,6 @@ module Puppet::Network::HTTP
       :redirect_limit => 10,
     }
 
-    @@openssl_initialized = false
-
     # Creates a new HTTP client connection to `host`:`port`.
     # @param host [String] the host to which this client will connect to
     # @param port [Fixnum] the port to which this client will connect to
@@ -60,6 +58,7 @@ module Puppet::Network::HTTP
       @use_ssl = options[:use_ssl]
       @verify = options[:verify]
       @redirect_limit = options[:redirect_limit]
+      @factory = Puppet::Network::HTTP::Factory.new(@verify)
     end
 
     # @!macro [new] common_options
@@ -211,44 +210,8 @@ module Puppet::Network::HTTP
     end
 
     def initialize_connection(host, port, use_ssl)
-      args = [host, port]
-      if Puppet[:http_proxy_host] == "none"
-        args << nil << nil
-      else
-        args << Puppet[:http_proxy_host] << Puppet[:http_proxy_port]
-      end
-
-      @connection = create_connection(*args)
-
-      # Pop open the http client a little; older versions of Net::HTTP(s) didn't
-      # give us a reader for ca_file... Grr...
-      class << @connection; attr_accessor :ca_file; end
-
-      @connection.use_ssl = use_ssl
-      # Use configured timeout (#1176)
-      @connection.read_timeout = Puppet[:configtimeout]
-      @connection.open_timeout = Puppet[:configtimeout]
-
-      cert_setup
-
-      @connection
-    end
-
-    # Use cert information from a Puppet client to set up the http object.
-    def cert_setup
-      # PUP-1411, make sure that openssl is initialized before we try to connect
-      if ! @@openssl_initialized
-        OpenSSL::SSL::SSLContext.new
-        @@openssl_initialized = true
-      end
-
-      @verify.setup_connection(@connection)
-    end
-
-    # This method largely exists for testing purposes, so that we can
-    # mock the actual HTTP connection.
-    def create_connection(*args)
-      Net::HTTP.new(*args)
+      site = Puppet::Network::HTTP::Site.new(use_ssl ? 'https' : 'http', host, port)
+      @factory.create_connection(site)
     end
   end
 end
