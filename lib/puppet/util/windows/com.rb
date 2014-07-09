@@ -221,11 +221,4 @@ module Puppet::Util::Windows::COM
   end
 
   module_function :InitializeCom
-
-  # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
-  # void CoTaskMemFree(
-  #   _In_opt_  LPVOID pv
-  # );
-  ffi_lib :ole32
-  attach_function :CoTaskMemFree, [:lpvoid], :void
 end
