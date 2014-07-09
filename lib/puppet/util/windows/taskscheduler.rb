@@ -182,38 +182,31 @@ module Win32
       FFI::MemoryPointer.new(:pointer) do |ptr|
         @pITS.Enum(ptr)
 
-        # IEnumWorkItems *
-        pIEnum = ptr.read_pointer.address
-        lpVtbl = 0.chr * 4
-        table  = 0.chr * 16
+        begin
+          pIEnum = COM::EnumWorkItems.new(ptr.read_pointer)
 
-        memcpy(lpVtbl, pIEnum, 4)
-        memcpy(table, lpVtbl.unpack('L').first, 16)
-        table = table.unpack('L*')
+          FFI::MemoryPointer.new(:pointer) do |names_array_ptr_ptr|
+            FFI::MemoryPointer.new(:win32_ulong) do |fetched_count_ptr|
+              # awkward usage, if number requested is available, returns S_OK (0), or if less were returned returns S_FALSE (1)
+              while (pIEnum.Next(TASKS_TO_RETRIEVE, names_array_ptr_ptr, fetched_count_ptr) >= S_OK)
+                count = fetched_count_ptr.read_win32_ulong
+                break if count == 0
 
-        _next   = Win32::API::Function.new(table[3], 'PLPP', 'L')
-        release = Win32::API::Function.new(table[2], 'P', 'L')
-
-        fetched_tasks = 0.chr * 4
-        pnames = 0.chr * 4
-
-        while (_next.call(pIEnum, TASKS_TO_RETRIEVE, pnames, fetched_tasks) >= S_OK) &&
-          (fetched_tasks.unpack('L').first != 0)
-
-          tasks = fetched_tasks.unpack('L').first
-          names = 0.chr * 4 * tasks
-          memcpy(names, pnames.unpack('L').first, 4 * tasks)
-
-          for i in 0 ... tasks
-            str_ptr = FFI::Pointer.new(names[i*4, 4].unpack('L').first)
-            array.push(str_ptr.read_arbitrary_wide_string_up_to(256))
-            Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
+                names_array_ptr_ptr.read_com_memory_pointer do |names_array_ptr|
+                  # iterate over the array of pointers
+                  name_ptr_ptr = FFI::Pointer.new(:pointer, names_array_ptr)
+                  for i in 0 ... count
+                    name_ptr_ptr[i].read_com_memory_pointer do |name_ptr|
+                      array << name_ptr.read_arbitrary_wide_string_up_to(256)
+                    end
+                  end
+                end
+              end
+            end
           end
-
-          Puppet::Util::Windows::COM.CoTaskMemFree(FFI::Pointer.new(pnames.unpack('L').first))
+        ensure
+          pIEnum.Release if pIEnum && ! pIEnum.null?
         end
-
-        release.call(pIEnum)
       end
 
       array
@@ -1586,6 +1579,20 @@ module Win32
 
       TaskScheduler = com::Factory[ITaskScheduler,
         FFI::WIN32::GUID['148BD52A-A2AB-11CE-B11F-00AA00530503']]
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa380706(v=vs.85).aspx
+      IEnumWorkItems = com::Interface[com::IUnknown,
+        FFI::WIN32::GUID['148BD528-A2AB-11CE-B11F-00AA00530503'],
+
+        # ULONG, LPWSTR **, ULONG *
+        Next: [[:win32_ulong, :pointer, :pointer], :hresult],
+        Skip: [[:win32_ulong], :hresult],
+        Reset: [[], :hresult],
+        # IEnumWorkItems ** ppEnumWorkItems
+        Clone: [[:pointer], :hresult]
+      ]
+
+      EnumWorkItems = com::Instance[IEnumWorkItems]
     end
   end
 end

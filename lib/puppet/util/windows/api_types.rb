@@ -41,6 +41,7 @@ module Puppet::Util::Windows::APITypes
     end
 
     alias_method :read_dword, :read_uint32
+    alias_method :read_win32_ulong, :read_uint32
 
     def read_handle
       type_size == 4 ? read_uint32 : read_uint64
@@ -86,6 +87,20 @@ module Puppet::Util::Windows::APITypes
       # ptr has already had LocalFree called, so nothing to return
       nil
     end
+
+    def read_com_memory_pointer(&block)
+      ptr = nil
+      begin
+        ptr = read_pointer
+        yield ptr
+      ensure
+        FFI::WIN32::CoTaskMemFree(ptr) if ptr && ! ptr.null?
+      end
+
+      # ptr has already had CoTaskMemFree called, so nothing to return
+      nil
+    end
+
 
     alias_method :write_dword, :write_uint32
   end
@@ -197,5 +212,12 @@ module Puppet::Util::Windows::APITypes
     # );
     ffi_lib :kernel32
     attach_function_private :CloseHandle, [:handle], :win32_bool
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms680722(v=vs.85).aspx
+    # void CoTaskMemFree(
+    #   _In_opt_  LPVOID pv
+    # );
+    ffi_lib :ole32
+    attach_function :CoTaskMemFree, [:lpvoid], :void
   end
 end
