@@ -11,7 +11,7 @@ class Puppet::Configurer::Downloader
     files = []
     begin
       catalog.apply do |trans|
-        trans.changed?.find_all do |resource|
+        trans.changed?.each do |resource|
           yield resource if block_given?
           files << resource[:path]
         end
