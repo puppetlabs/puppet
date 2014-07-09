@@ -22,14 +22,14 @@ module Win32
     # :stopdoc:
     S_OK = 0
 
-    TASK_TIME_TRIGGER_ONCE            = 0
-    TASK_TIME_TRIGGER_DAILY           = 1
-    TASK_TIME_TRIGGER_WEEKLY          = 2
-    TASK_TIME_TRIGGER_MONTHLYDATE     = 3
-    TASK_TIME_TRIGGER_MONTHLYDOW      = 4
-    TASK_EVENT_TRIGGER_ON_IDLE        = 5
-    TASK_EVENT_TRIGGER_AT_SYSTEMSTART = 6
-    TASK_EVENT_TRIGGER_AT_LOGON       = 7
+    TASK_TIME_TRIGGER_ONCE            = :TASK_TIME_TRIGGER_ONCE
+    TASK_TIME_TRIGGER_DAILY           = :TASK_TIME_TRIGGER_DAILY
+    TASK_TIME_TRIGGER_WEEKLY          = :TASK_TIME_TRIGGER_WEEKLY
+    TASK_TIME_TRIGGER_MONTHLYDATE     = :TASK_TIME_TRIGGER_MONTHLYDATE
+    TASK_TIME_TRIGGER_MONTHLYDOW      = :TASK_TIME_TRIGGER_MONTHLYDOW
+    TASK_EVENT_TRIGGER_ON_IDLE        = :TASK_EVENT_TRIGGER_ON_IDLE
+    TASK_EVENT_TRIGGER_AT_SYSTEMSTART = :TASK_EVENT_TRIGGER_AT_SYSTEMSTART
+    TASK_EVENT_TRIGGER_AT_LOGON       = :TASK_EVENT_TRIGGER_AT_LOGON
 
     TASK_SUNDAY       = 0x1
     TASK_MONDAY       = 0x2
@@ -524,8 +524,6 @@ module Win32
         end
       }
 
-      trigger = transform_and_validate(trigger)
-
       if @pITask
         @pITask.Release
         @pITask = nil
@@ -539,84 +537,19 @@ module Win32
 
         FFI::MemoryPointer.new(:word, 1) do |trigger_index_ptr|
           FFI::MemoryPointer.new(:pointer) do |trigger_ptr_ptr|
-
             # Without the 'enum.include?' check above the code segfaults here if the
             # task already exists. This should probably be handled properly instead
             # of simply avoiding the issue.
 
             @pITask.CreateTrigger(trigger_index_ptr, trigger_ptr_ptr)
-            pITaskTrigger = trigger_ptr_ptr.read_pointer.address
+            begin
+              pITaskTrigger = COM::TaskTrigger.new(trigger_ptr_ptr.read_pointer)
+              populate_trigger(pITaskTrigger, trigger)
+            ensure
+              pITaskTrigger.Release if pITaskTrigger && ! pITaskTrigger.null?
+            end
           end
         end
-
-        lpVtbl = 0.chr * 4
-        table  = 0.chr * 16
-
-        memcpy(lpVtbl, pITaskTrigger, 4)
-        memcpy(table, lpVtbl.unpack('L').first, 16)
-        table = table.unpack('L*')
-
-        release = Win32::API::Function.new(table[2], 'P', 'L')
-        setTrigger = Win32::API::Function.new(table[3], 'PP', 'L')
-
-        type1 = 0
-        type2 = 0
-        tmp = trigger['type']
-        tmp = nil unless tmp.is_a?(Hash)
-
-        case trigger['trigger_type']
-          when TASK_TIME_TRIGGER_DAILY
-            if tmp && tmp['days_interval']
-              type1 = [tmp['days_interval'],0].pack('SS').unpack('L').first
-            end
-          when TASK_TIME_TRIGGER_WEEKLY
-            if tmp && tmp['weeks_interval'] && tmp['days_of_week']
-              type1 = [tmp['weeks_interval'],tmp['days_of_week']].pack('SS').unpack('L').first
-            end
-          when TASK_TIME_TRIGGER_MONTHLYDATE
-            if tmp && tmp['months'] && tmp['days']
-              type2 = [tmp['months'],0].pack('SS').unpack('L').first
-              type1 = tmp['days']
-            end
-          when TASK_TIME_TRIGGER_MONTHLYDOW
-            if tmp && tmp['weeks'] && tmp['days_of_week'] && tmp['months']
-              type1 = [tmp['weeks'],tmp['days_of_week']].pack('SS').unpack('L').first
-              type2 = [tmp['months'],0].pack('SS').unpack('L').first
-            end
-          when TASK_TIME_TRIGGER_ONCE
-            # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
-          else
-            raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
-        end
-
-        pTrigger = [
-          48,
-          0,
-          trigger['start_year'] || 0,
-          trigger['start_month'] || 0,
-          trigger['start_day'] || 0,
-          trigger['end_year'] || 0,
-          trigger['end_month'] || 0,
-          trigger['end_day'] || 0,
-          trigger['start_hour'] || 0,
-          trigger['start_minute'] || 0,
-          trigger['minutes_duration'] || 0,
-          trigger['minutes_interval'] || 0,
-          trigger['flags'] || 0,
-          trigger['trigger_type'] || 0,
-          type1,
-          type2,
-          0,
-          trigger['random_minutes_interval'] || 0
-        ].pack('S10L4LLSS')
-
-        hr = setTrigger.call(pITaskTrigger, pTrigger)
-
-        if hr != S_OK
-          raise Error.new("Failed to call ITaskTrigger::SetTrigger with HRESULT #{hr}", hr)
-        end
-
-        release.call(pITaskTrigger)
       end
 
       @pITask
@@ -678,77 +611,20 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      pITaskTrigger = nil
+      trigger = {}
 
       FFI::MemoryPointer.new(:pointer) do |ptr|
         @pITask.GetTrigger(index, ptr)
-        pITaskTrigger = ptr.read_pointer.address
+        begin
+          pITaskTrigger = COM::TaskTrigger.new(ptr.read_pointer)
+          FFI::MemoryPointer.new(COM::TASK_TRIGGER.size) do |task_trigger_ptr|
+            pITaskTrigger.GetTrigger(task_trigger_ptr)
+            trigger = populate_hash_from_trigger(COM::TASK_TRIGGER.new(task_trigger_ptr))
+          end
+        ensure
+          pITaskTrigger.Release if pITaskTrigger && ! pITaskTrigger.null?
+        end
       end
-
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 20
-
-      memcpy(lpVtbl, pITaskTrigger, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 20)
-      table = table.unpack('L*')
-
-      release = Win32::API::Function.new(table[2], 'P', 'L')
-      getTrigger = Win32::API::Function.new(table[4], 'PP', 'L')
-
-      pTrigger = [48].pack('S') + 0.chr * 46
-      hr = getTrigger.call(pITaskTrigger, pTrigger)
-
-      if hr != S_OK
-        error = get_last_error
-        release.call(pITaskTrigger)
-        raise Error.new("Failed to call ITaskTrigger::GetTrigger with HRESULT #{hr}", hr)
-      end
-
-      tr = pTrigger.unpack('S10L4LLSS')
-
-      trigger = {}
-      trigger['start_year'] = tr[2]
-      trigger['start_month'] = tr[3]
-      trigger['start_day'] = tr[4]
-      trigger['end_year'] = tr[5]
-      trigger['end_month'] = tr[6]
-      trigger['end_day'] = tr[7]
-      trigger['start_hour'] = tr[8]
-      trigger['start_minute'] = tr[9]
-      trigger['minutes_duration'] = tr[10]
-      trigger['minutes_interval'] = tr[11]
-      trigger['flags'] = tr[12]
-      trigger['trigger_type'] = tr[13]
-      trigger['random_minutes_interval'] = tr[17]
-
-      case tr[13]
-        when TASK_TIME_TRIGGER_DAILY
-          tmp = {}
-          tmp['days_interval'] = [tr[14]].pack('L').unpack('SS').first
-          trigger['type'] = tmp
-        when TASK_TIME_TRIGGER_WEEKLY
-          tmp = {}
-          tmp['weeks_interval'],tmp['days_of_week'] = [tr[14]].pack('L').unpack('SS')
-          trigger['type'] = tmp
-        when TASK_TIME_TRIGGER_MONTHLYDATE
-          tmp = {}
-          tmp['days'] = tr[14]
-          tmp['months'] = [tr[15]].pack('L').unpack('SS').first
-          trigger['type'] = tmp
-        when TASK_TIME_TRIGGER_MONTHLYDOW
-          tmp = {}
-          tmp['weeks'],tmp['days_of_week'] = [tr[14]].pack('L').unpack('SS')
-          tmp['months'] = [tr[15]].pack('L').unpack('SS').first
-          trigger['type'] = tmp
-        when TASK_TIME_TRIGGER_ONCE
-          tmp = {}
-          tmp['once'] = nil
-          trigger['type'] = tmp
-        else
-          raise Error.new("Unknown trigger type #{tr[13]}")
-      end
-
-      release.call(pITaskTrigger)
 
       trigger
     end
@@ -760,84 +636,21 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless trigger.is_a?(Hash)
 
-      trigger = transform_and_validate(trigger)
-      pITaskTrigger = nil
-
       FFI::MemoryPointer.new(:word, 1) do |trigger_index_ptr|
         FFI::MemoryPointer.new(:pointer) do |trigger_ptr_ptr|
+          # Without the 'enum.include?' check above the code segfaults here if the
+          # task already exists. This should probably be handled properly instead
+          # of simply avoiding the issue.
+
           @pITask.CreateTrigger(trigger_index_ptr, trigger_ptr_ptr)
-          pITaskTrigger = trigger_ptr_ptr.read_pointer.address
+          begin
+            pITaskTrigger = COM::TaskTrigger.new(trigger_ptr_ptr.read_pointer)
+            populate_trigger(pITaskTrigger, trigger)
+          ensure
+            pITaskTrigger.Release if pITaskTrigger && ! pITaskTrigger.null?
+          end
         end
       end
-
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 16
-
-      memcpy(lpVtbl, pITaskTrigger, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 16)
-      table = table.unpack('L*')
-
-      release = Win32::API::Function.new(table[2], 'P', 'L')
-      setTrigger = Win32::API::Function.new(table[3], 'PP', 'L')
-
-      type1 = 0
-      type2 = 0
-      tmp = trigger['type']
-      tmp = nil unless tmp.is_a?(Hash)
-
-      case trigger['trigger_type']
-        when TASK_TIME_TRIGGER_DAILY
-          if tmp && tmp['days_interval']
-            type1 = [tmp['days_interval'],0].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_WEEKLY
-          if tmp && tmp['weeks_interval'] && tmp['days_of_week']
-            type1 = [tmp['weeks_interval'],tmp['days_of_week']].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_MONTHLYDATE
-          if tmp && tmp['months'] && tmp['days']
-            type2 = [tmp['months'],0].pack('SS').unpack('L').first
-            type1 = tmp['days']
-          end
-        when TASK_TIME_TRIGGER_MONTHLYDOW
-          if tmp && tmp['weeks'] && tmp['days_of_week'] && tmp['months']
-            type1 = [tmp['weeks'],tmp['days_of_week']].pack('SS').unpack('L').first
-            type2 = [tmp['months'],0].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_ONCE
-          # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
-        else
-          raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
-      end
-
-      pTrigger = [
-        48,
-        0,
-        trigger['start_year'] || 0,
-        trigger['start_month'] || 0,
-        trigger['start_day'] || 0,
-        trigger['end_year'] || 0,
-        trigger['end_month'] || 0,
-        trigger['end_day'] || 0,
-        trigger['start_hour'] || 0,
-        trigger['start_minute'] || 0,
-        trigger['minutes_duration'] || 0,
-        trigger['minutes_interval'] || 0,
-        trigger['flags'] || 0,
-        trigger['trigger_type'] || 0,
-        type1,
-        type2,
-        0,
-        trigger['random_minutes_interval'] || 0
-      ].pack('S10L4LLSS')
-
-      hr = setTrigger.call(pITaskTrigger, pTrigger)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITaskTrigger::SetTrigger with HRESULT #{hr}", hr)
-      end
-
-      release.call(pITaskTrigger)
 
       trigger
     end
@@ -849,82 +662,15 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless trigger.is_a?(Hash)
 
-      trigger = transform_and_validate(trigger)
-      pITaskTrigger = nil
-
       FFI::MemoryPointer.new(:pointer) do |ptr|
         @pITask.GetTrigger(index, ptr)
-        pITaskTrigger = ptr.read_pointer.address
+        begin
+          pITaskTrigger = COM::TaskTrigger.new(ptr.read_pointer)
+          populate_trigger(pITaskTrigger, trigger)
+        ensure
+          pITaskTrigger.Release if pITaskTrigger && ! pITaskTrigger.null?
+        end
       end
-
-      lpVtbl = 0.chr * 4
-      table = 0.chr * 16
-
-      memcpy(lpVtbl, pITaskTrigger,4)
-      memcpy(table, lpVtbl.unpack('L').first,16)
-      table = table.unpack('L*')
-
-      release = Win32::API::Function.new(table[2], 'P', 'L')
-      setTrigger = Win32::API::Function.new(table[3], 'PP', 'L')
-
-      type1 = 0
-      type2 = 0
-      tmp = trigger['type']
-      tmp = nil unless tmp.is_a?(Hash)
-
-      case trigger['trigger_type']
-        when TASK_TIME_TRIGGER_DAILY
-          if tmp && tmp['days_interval']
-            type1 = [tmp['days_interval'],0].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_WEEKLY
-          if tmp && tmp['weeks_interval'] && tmp['days_of_week']
-            type1 = [tmp['weeks_interval'],tmp['days_of_week']].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_MONTHLYDATE
-          if tmp && tmp['months'] && tmp['days']
-            type2 = [tmp['months'],0].pack('SS').unpack('L').first
-            type1 = tmp['days']
-          end
-        when TASK_TIME_TRIGGER_MONTHLYDOW
-          if tmp && tmp['weeks'] && tmp['days_of_week'] && tmp['months']
-            type1 = [tmp['weeks'],tmp['days_of_week']].pack('SS').unpack('L').first
-            type2 = [tmp['months'],0].pack('SS').unpack('L').first
-          end
-        when TASK_TIME_TRIGGER_ONCE
-          # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
-        else
-          raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
-      end
-
-      pTrigger = [
-        48,
-        0,
-        trigger['start_year'] || 0,
-        trigger['start_month'] || 0,
-        trigger['start_day'] || 0,
-        trigger['end_year'] || 0,
-        trigger['end_month'] || 0,
-        trigger['end_day'] || 0,
-        trigger['start_hour'] || 0,
-        trigger['start_minute'] || 0,
-        trigger['minutes_duration'] || 0,
-        trigger['minutes_interval'] || 0,
-        trigger['flags'] || 0,
-        trigger['trigger_type'] || 0,
-        type1,
-        type2,
-        0,
-        trigger['random_minutes_interval'] || 0
-      ].pack('S10L4LLSS')
-
-      hr = setTrigger.call(pITaskTrigger, pTrigger)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITaskTrigger::SetTrigger with HRESULT #{hr}", hr)
-      end
-
-      release.call(pITaskTrigger)
     end
 
     # Returns the flags (integer) that modify the behavior of the work item. You
@@ -1192,7 +938,115 @@ module Win32
       new_hash
     end
 
+    private
+
+    def populate_trigger(task_trigger, trigger)
+      raise TypeError unless task_trigger.is_a?(COM::TaskTrigger)
+      trigger = transform_and_validate(trigger)
+
+      FFI::MemoryPointer.new(COM::TASK_TRIGGER.size) do |trigger_ptr|
+        FFI::MemoryPointer.new(COM::TRIGGER_TYPE_UNION.size) do |trigger_type_union_ptr|
+          trigger_type_union = COM::TRIGGER_TYPE_UNION.new(trigger_type_union_ptr)
+
+          tmp = trigger['type'].is_a?(Hash) ? trigger['type'] : nil
+          case trigger['trigger_type']
+            when :TASK_TIME_TRIGGER_DAILY
+              if tmp && tmp['days_interval']
+                trigger_type_union[:Daily][:DaysInterval] = tmp['days_interval']
+              end
+            when :TASK_TIME_TRIGGER_WEEKLY
+              if tmp && tmp['weeks_interval'] && tmp['days_of_week']
+                trigger_type_union[:Weekly][:WeeksInterval] = tmp['weeks_interval']
+                trigger_type_union[:Weekly][:rgfDaysOfTheWeek] = tmp['days_of_week']
+              end
+            when :TASK_TIME_TRIGGER_MONTHLYDATE
+              if tmp && tmp['months'] && tmp['days']
+                trigger_type_union[:MonthlyDate][:rgfDays] = tmp['days']
+                trigger_type_union[:MonthlyDate][:rgfMonths] = tmp['months']
+              end
+            when :TASK_TIME_TRIGGER_MONTHLYDOW
+              if tmp && tmp['weeks'] && tmp['days_of_week'] && tmp['months']
+                trigger_type_union[:MonthlyDOW][:wWhichWeek] = tmp['weeks']
+                trigger_type_union[:MonthlyDOW][:rgfDaysOfTheWeek] = tmp['days_of_week']
+                trigger_type_union[:MonthlyDOW][:rgfMonths] = tmp['months']
+              end
+            when :TASK_TIME_TRIGGER_ONCE
+              # Do nothing. The Type member of the TASK_TRIGGER struct is ignored.
+            else
+              raise Error.new("Unknown trigger type #{trigger['trigger_type']}")
+          end
+
+          trigger_struct = COM::TASK_TRIGGER.new(trigger_ptr)
+          trigger_struct[:cbTriggerSize] = COM::TASK_TRIGGER.size
+          trigger_struct[:wBeginYear] = trigger['start_year'] || 0
+          trigger_struct[:wBeginMonth] = trigger['start_month'] || 0
+          trigger_struct[:wBeginDay] = trigger['start_day'] || 0
+          trigger_struct[:wEndYear] = trigger['end_year'] || 0
+          trigger_struct[:wEndMonth] = trigger['end_month'] || 0
+          trigger_struct[:wEndDay] = trigger['end_day'] || 0
+          trigger_struct[:wStartHour] = trigger['start_hour'] || 0
+          trigger_struct[:wStartMinute] = trigger['start_minute'] || 0
+          trigger_struct[:MinutesDuration] = trigger['minutes_duration'] || 0
+          trigger_struct[:MinutesInterval] = trigger['minutes_interval'] || 0
+          trigger_struct[:rgFlags] = trigger['flags'] || 0
+          trigger_struct[:TriggerType] = trigger['trigger_type'] || :TASK_TIME_TRIGGER_ONCE
+          trigger_struct[:Type] = trigger_type_union
+          trigger_struct[:wRandomMinutesInterval] = trigger['random_minutes_interval']
+
+          task_trigger.SetTrigger(trigger_struct)
+        end
+      end
+    end
+
+    def populate_hash_from_trigger(task_trigger)
+      raise TypeError unless task_trigger.is_a?(COM::TASK_TRIGGER)
+
+      trigger = {
+        'start_year' => task_trigger[:wBeginYear],
+        'start_month' => task_trigger[:wBeginMonth],
+        'start_day' => task_trigger[:wBeginDay],
+        'end_year' => task_trigger[:wEndYear],
+        'end_month' => task_trigger[:wEndMonth],
+        'end_day' => task_trigger[:wEndDay],
+        'start_hour' => task_trigger[:wStartHour],
+        'start_minute' => task_trigger[:wStartMinute],
+        'minutes_duration' => task_trigger[:MinutesDuration],
+        'minutes_interval' => task_trigger[:MinutesInterval],
+        'flags' => task_trigger[:rgFlags],
+        'trigger_type' => task_trigger[:TriggerType],
+        'random_minutes_interval' => task_trigger[:wRandomMinutesInterval]
+      }
+
+      case task_trigger[:TriggerType]
+        when :TASK_TIME_TRIGGER_DAILY
+          trigger['type'] = { 'days_interval' => task_trigger[:Type][:Daily][:DaysInterval] }
+        when :TASK_TIME_TRIGGER_WEEKLY
+          trigger['type'] = {
+            'weeks_interval' => task_trigger[:Type][:Weekly][:WeeksInterval],
+            'days_of_week' => task_trigger[:Type][:Weekly][:rgfDaysOfTheWeek]
+          }
+        when :TASK_TIME_TRIGGER_MONTHLYDATE
+          trigger['type'] = {
+            'days' => task_trigger[:Type][:MonthlyDate][:rgfDays],
+            'months' => task_trigger[:Type][:MonthlyDate][:rgfMonths]
+          }
+        when :TASK_TIME_TRIGGER_MONTHLYDOW
+          trigger['type'] = {
+            'weeks' => task_trigger[:Type][:MonthlyDOW][:wWhichWeek],
+            'days_of_week' => task_trigger[:Type][:MonthlyDOW][:rgfDaysOfTheWeek],
+            'months' => task_trigger[:Type][:MonthlyDOW][:rgfMonths]
+          }
+        when :TASK_TIME_TRIGGER_ONCE
+          trigger['type'] = { 'once' => nil }
+        else
+          raise Error.new("Unknown trigger type #{task_trigger[:TriggerType]}")
+      end
+
+      trigger
+    end
+
     module COM
+      extend FFI::Library
       private
 
       com = Puppet::Util::Windows::COM
@@ -1334,6 +1188,84 @@ module Win32
       ]
 
       PersistFile = com::Instance[IPersistFile]
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381864(v=vs.85).aspx
+      ITaskTrigger = com::Interface[com::IUnknown,
+        FFI::WIN32::GUID['148BD52B-A2AB-11CE-B11F-00AA00530503'],
+
+        SetTrigger: [[:pointer], :hresult],
+        GetTrigger: [[:pointer], :hresult],
+        GetTriggerString: [[:pointer], :hresult]
+      ]
+
+      TaskTrigger = com::Instance[ITaskTrigger]
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa383620(v=vs.85).aspx
+      # The TASK_TRIGGER_TYPE field of the TASK_TRIGGER structure determines
+      # which member of the TRIGGER_TYPE_UNION field to use.
+      TASK_TRIGGER_TYPE = enum(
+        :TASK_TIME_TRIGGER_ONCE, 0,             # Ignore the Type field
+        :TASK_TIME_TRIGGER_DAILY, 1,
+        :TASK_TIME_TRIGGER_WEEKLY, 2,
+        :TASK_TIME_TRIGGER_MONTHLYDATE, 3,
+        :TASK_TIME_TRIGGER_MONTHLYDOW,  4,
+        :TASK_EVENT_TRIGGER_ON_IDLE, 5,         # Ignore the Type field
+        :TASK_EVENT_TRIGGER_AT_SYSTEMSTART, 6,  # Ignore the Type field
+        :TASK_EVENT_TRIGGER_AT_LOGON, 7         # Ignore the Type field
+      )
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa446857(v=vs.85).aspx
+      class DAILY < FFI::Struct
+        layout :DaysInterval, :word
+      end
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa384014(v=vs.85).aspx
+      class WEEKLY < FFI::Struct
+        layout :WeeksInterval, :word,
+               :rgfDaysOfTheWeek, :word
+      end
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381918(v=vs.85).aspx
+      class MONTHLYDATE < FFI::Struct
+        layout :rgfDays, :dword,
+               :rgfMonths, :word
+      end
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381918(v=vs.85).aspx
+      class MONTHLYDOW < FFI::Struct
+        layout :wWhichWeek, :word,
+               :rgfDaysOfTheWeek, :word,
+               :rgfMonths, :word
+      end
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa384002(v=vs.85).aspx
+      class TRIGGER_TYPE_UNION < FFI::Union
+        layout :Daily, DAILY,
+               :Weekly, WEEKLY,
+               :MonthlyDate, MONTHLYDATE,
+               :MonthlyDOW, MONTHLYDOW
+      end
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa383618(v=vs.85).aspx
+      class TASK_TRIGGER < FFI::Struct
+        layout :cbTriggerSize, :word,            # Structure size.
+               :Reserved1, :word,                # Reserved. Must be zero.
+               :wBeginYear, :word,               # Trigger beginning date year.
+               :wBeginMonth, :word,              # Trigger beginning date month.
+               :wBeginDay, :word,                # Trigger beginning date day.
+               :wEndYear, :word,                 # Optional trigger ending date year.
+               :wEndMonth, :word,                # Optional trigger ending date month.
+               :wEndDay, :word,                  # Optional trigger ending date day.
+               :wStartHour, :word,               # Run bracket start time hour.
+               :wStartMinute, :word,             # Run bracket start time minute.
+               :MinutesDuration, :dword,         # Duration of run bracket.
+               :MinutesInterval, :dword,         # Run bracket repetition interval.
+               :rgFlags, :dword,                 # Trigger flags.
+               :TriggerType, TASK_TRIGGER_TYPE,  # Trigger type.
+               :Type, TRIGGER_TYPE_UNION,        # Trigger data.
+               :Reserved2, :word,                # Reserved. Must be zero.
+               :wRandomMinutesInterval, :word    # Maximum number of random minutes after start time
+      end
     end
   end
 end
