@@ -40,6 +40,10 @@ module Puppet::ModuleTool
           raise ArgumentError, "Could not determine module path"
         end
 
+        if require_metadata && !Puppet::ModuleTool.is_module_root?(@path)
+          raise ArgumentError, "Unable to find metadata.json or Modulefile in module root at #{@path} See http://links.puppetlabs.com/modulefile for required file format."
+        end
+
         modulefile_path = File.join(@path, 'Modulefile')
         metadata_path   = File.join(@path, 'metadata.json')
 
@@ -61,11 +65,6 @@ module Puppet::ModuleTool
           end
 
           Puppet::ModuleTool::ModulefileReader.evaluate(@metadata, modulefile_path)
-        end
-
-        has_metadata = File.file?(modulefile_path) || File.file?(metadata_path)
-        if !has_metadata && require_metadata
-          raise ArgumentError, "No metadata found for module #{@path}"
         end
 
         return @metadata
