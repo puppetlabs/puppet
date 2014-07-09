@@ -16,7 +16,7 @@ platforms :ruby do
   gem 'yard', :group => :development
   gem 'redcarpet', '~> 2.0', :group => :development
   gem "racc", "1.4.9", :group => :development
-  gem "rubocop", :group => :development
+  gem "rubocop", :group => :development unless RUBY_VERSION =~ /^1.8/
 
   # To enable the augeas feature, use this gem.
   # Note that it is a native gem, so the augeas headers/libs
