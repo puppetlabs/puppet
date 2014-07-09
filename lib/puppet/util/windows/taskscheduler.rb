@@ -82,6 +82,13 @@ module Win32
     IID_ITask = FFI::WIN32::GUID['148BD524-A2AB-11CE-B11F-00AA00530503']
     IID_IPersistFile = [0x0000010b,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46].pack('LSSC8')
 
+    SCHED_S_TASK_READY                    = 0x00041300
+    SCHED_S_TASK_RUNNING                  = 0x00041301
+    SCHED_S_TASK_HAS_NOT_RUN              = 0x00041303
+    SCHED_S_TASK_NOT_SCHEDULED            = 0x00041305
+    SCHED_E_ACCOUNT_INFORMATION_NOT_SET   = 0x8004130F
+    SCHED_E_NO_SECURITY_SERVICES          = 0x80041312
+
     public
 
     # :startdoc:
@@ -386,7 +393,7 @@ module Win32
       case hr
         when S_OK
           return true
-        when 0x8004130F # SCHED_E_ACCOUNT_INFORMATION_NOT_SET
+        when SCHED_E_ACCOUNT_INFORMATION_NOT_SET
           warn 'job created, but password was invalid'
           bool = false
         else
@@ -415,9 +422,9 @@ module Win32
       ptr = 0.chr * 4
       hr = getAccountInformation.call(@pITask, ptr)
 
-      if hr == 0x8004130F # SCHED_E_ACCOUNT_INFORMATION_NOT_SET
+      if hr == SCHED_E_ACCOUNT_INFORMATION_NOT_SET
         user = nil
-      elsif hr >= 0 && hr != 0x80041312 # SCHED_E_NO_SECURITY_SERVICES
+      elsif hr >= 0 && hr != SCHED_E_NO_SECURITY_SERVICES
         str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
         user = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
         Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
@@ -1234,11 +1241,11 @@ module Win32
       st = ptr.unpack('L').first
 
       case st
-        when 0x00041300 # SCHED_S_TASK_READY
+        when SCHED_S_TASK_READY
            status = 'ready'
-        when 0x00041301 # SCHED_S_TASK_RUNNING
+        when SCHED_S_TASK_RUNNING
            status = 'running'
-        when 0x00041305 # SCHED_S_TASK_NOT_SCHEDULED
+        when SCHED_S_TASK_NOT_SCHEDULED
            status = 'not scheduled'
         else
            status = 'unknown'
@@ -1413,7 +1420,7 @@ module Win32
       st = 0.chr * 16
       hr = getMostRecentRunTime.call(@pITask, st)
 
-      if hr == 0x00041303 # SCHED_S_TASK_HAS_NOT_RUN
+      if hr == SCHED_S_TASK_HAS_NOT_RUN
         time = nil
       elsif hr == S_OK
         a1, a2, _, a3, a4, a5, a6, a7 = st.unpack('S*')
