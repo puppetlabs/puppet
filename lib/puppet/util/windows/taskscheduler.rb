@@ -267,40 +267,27 @@ module Win32
     #
     def save(file = nil)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
-      file = wide_string(file) if file
 
       pIPersistFile = nil
 
-      FFI::MemoryPointer.new(:pointer) do |ptr|
-        @pITask.QueryInterface(IID_IPersistFile, ptr)
-        pIPersistFile = ptr.read_pointer.address
+      begin
+        FFI::MemoryPointer.new(:pointer) do |ptr|
+          @pITask.QueryInterface(IID_IPersistFile, ptr)
+          pIPersistFile = COM::PersistFile.new(ptr.read_pointer)
+        end
+
+        pIPersistFile.Save(wide_string(file), 1)
+      ensure
+        pIPersistFile.Release if pIPersistFile && !pIPersistFile.null?
+
+        Puppet::Util::Windows::COM.CoUninitialize()
+        Puppet::Util::Windows::COM.InitializeCom()
+
+        @pITS = COM::TaskScheduler.new
+
+        @pITask.Release
+        @pITask = nil
       end
-
-      lpVtbl = 0.chr * 4
-      table = 0.chr * 28
-
-      memcpy(lpVtbl, pIPersistFile,4)
-      memcpy(table, lpVtbl.unpack('L').first, 28)
-      table = table.unpack('L*')
-
-      save = Win32::API::Function.new(table[6],'PPL','L')
-      release = Win32::API::Function.new(table[2],'P','L')
-
-      hr = save.call(pIPersistFile,file,1)
-
-      if hr != S_OK
-        raise Error.new("Failed to call IPersistFile::Save with HRESULT #{hr}", hr)
-      end
-
-      release.call(pIPersistFile)
-
-      Puppet::Util::Windows::COM.CoUninitialize()
-      Puppet::Util::Windows::COM.InitializeCom()
-
-      @pITS = COM::TaskScheduler.new
-
-      @pITask.Release
-      @pITask = nil
     end
 
     # Terminate the current task.
@@ -1326,6 +1313,27 @@ module Win32
       ]
 
       Task = com::Instance[ITask]
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/ms688695(v=vs.85).aspx
+      IPersist = com::Interface[com::IUnknown,
+        FFI::WIN32::GUID['0000010c-0000-0000-c000-000000000046'],
+        # CLSID *
+        GetClassID: [[:pointer], :hresult]
+      ]
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/ms687223(v=vs.85).aspx
+      IPersistFile = com::Interface[IPersist,
+        FFI::WIN32::GUID['0000010b-0000-0000-C000-000000000046'],
+
+        IsDirty: [[], :hresult],
+        Load: [[:lpcolestr, :dword], :hresult],
+        Save: [[:lpcolestr, :win32_bool], :hresult],
+        SaveCompleted: [[:lpcolestr], :hresult],
+        # LPOLESTR *
+        GetCurFile: [[:pointer], :hresult]
+      ]
+
+      PersistFile = com::Instance[IPersistFile]
     end
   end
 end

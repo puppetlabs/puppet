@@ -128,6 +128,7 @@ module Puppet::Util::Windows::APITypes
   FFI.typedef :buffer_inout, :lpwstr
   # buffer_in is similar to pointer (platform specific), but optimized for CONST read only buffers
   FFI.typedef :buffer_in, :lpcwstr
+  FFI.typedef :buffer_in, :lpcolestr
 
   # string is also similar to pointer, but should be used for const char *
   # NOTE that this is not wide, useful only for A suffixed functions
