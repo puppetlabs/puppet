@@ -114,38 +114,46 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
       expect { @master.setup }.to raise_error(Puppet::Error, /Puppet master is not supported on Microsoft Windows/)
     end
 
-    it "should set log level to debug if --debug was passed" do
-      @master.options.stubs(:[]).with(:debug).returns(true)
-      @master.setup
-      Puppet::Log.level.should == :debug
-    end
+    describe "setting up logging" do
+      it "sets the log level" do
+        @master.expects(:set_log_level)
+        @master.setup
+      end
 
-    it "should set log level to info if --verbose was passed" do
-      @master.options.stubs(:[]).with(:verbose).returns(true)
-      @master.setup
-      Puppet::Log.level.should == :info
-    end
+      describe "when the log destination is not explicitly configured" do
+        before do
+          @master.options.stubs(:[]).with(:setdest).returns false
+        end
 
-    it "should set console as the log destination if no --logdest and --daemonize" do
-      @master.stubs(:[]).with(:daemonize).returns(:false)
+        it "logs to the console when --compile is given" do
+          @master.options.stubs(:[]).with(:node).returns "default"
+          Puppet::Util::Log.expects(:newdestination).with(:console)
+          @master.setup
+        end
 
-      Puppet::Log.expects(:newdestination).with(:syslog)
+        it "logs to the console when the master is not daemonized or run with rack" do
+          Puppet::Util::Log.expects(:newdestination).with(:console)
+          Puppet[:daemonize] = false
+          @master.options.stubs(:[]).with(:rack).returns(false)
+          @master.setup
+        end
 
-      @master.setup
-    end
+        it "logs to syslog when the master is daemonized" do
+          Puppet::Util::Log.expects(:newdestination).with(:console).never
+          Puppet::Util::Log.expects(:newdestination).with(:syslog)
+          Puppet[:daemonize] = true
+          @master.options.stubs(:[]).with(:rack).returns(false)
+          @master.setup
+        end
 
-    it "should set syslog as the log destination if no --logdest and not --daemonize" do
-      Puppet::Log.expects(:newdestination).with(:syslog)
-
-      @master.setup
-    end
-
-    it "should set syslog as the log destination if --rack" do
-      @master.options.stubs(:[]).with(:rack).returns(:true)
-
-      Puppet::Log.expects(:newdestination).with(:syslog)
-
-      @master.setup
+        it "logs to syslog when the master is run with rack" do
+          Puppet::Util::Log.expects(:newdestination).with(:console).never
+          Puppet::Util::Log.expects(:newdestination).with(:syslog)
+          Puppet[:daemonize] = false
+          @master.options.stubs(:[]).with(:rack).returns(true)
+          @master.setup
+        end
+      end
     end
 
     it "should print puppet config if asked to in Puppet config" do
