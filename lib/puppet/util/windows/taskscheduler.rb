@@ -1,11 +1,9 @@
 require 'puppet/util/windows'
-require 'windows/msvcrt/buffer'
 
 # The Win32 module serves as a namespace only
 module Win32
   # The TaskScheduler class encapsulates taskscheduler settings and behavior
   class TaskScheduler
-    include Windows::MSVCRT::Buffer
     include Puppet::Util::Windows::String
 
     require 'ffi'
