@@ -54,6 +54,9 @@ class Puppet::Forge < Semantic::Dependency::Source
   def search(term)
     matches = []
     uri = "/v3/modules?query=#{URI.escape(term)}"
+    if Puppet[:module_groups]
+      uri += "&module_groups=#{Puppet[:module_groups]}"
+    end
 
     while uri
       response = make_http_request(uri)
@@ -86,6 +89,9 @@ class Puppet::Forge < Semantic::Dependency::Source
   def fetch(input)
     name = input.tr('/', '-')
     uri = "/v3/releases?module=#{name}"
+    if Puppet[:module_groups]
+      uri += "&module_groups=#{Puppet[:module_groups]}"
+    end
     releases = []
 
     while uri
