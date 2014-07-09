@@ -80,7 +80,7 @@ module Win32
 
     CLSID_CTask = FFI::WIN32::GUID['148BD520-A2AB-11CE-B11F-00AA00530503']
     IID_ITask = FFI::WIN32::GUID['148BD524-A2AB-11CE-B11F-00AA00530503']
-    IID_IPersistFile = [0x0000010b,0x0000,0x0000,0xC0,0x00,0x00,0x00,0x00,0x00,0x00,0x46].pack('LSSC8')
+    IID_IPersistFile = FFI::WIN32::GUID['0000010b-0000-0000-C000-000000000046']
 
     SCHED_S_TASK_READY                    = 0x00041300
     SCHED_S_TASK_RUNNING                  = 0x00041301
@@ -88,6 +88,8 @@ module Win32
     SCHED_S_TASK_NOT_SCHEDULED            = 0x00041305
     SCHED_E_ACCOUNT_INFORMATION_NOT_SET   = 0x8004130F
     SCHED_E_NO_SECURITY_SERVICES          = 0x80041312
+    # No mapping between account names and security IDs was done.
+    ERROR_NONE_MAPPED                     = -2147023564 # 0x80070534  WIN32 Error CODE 1332 (0x534)
 
     public
 
@@ -229,7 +231,7 @@ module Win32
 
       FFI::MemoryPointer.new(:pointer) do |ptr|
         @pITS.Activate(wide_string(task), IID_ITask, ptr)
-        @pITask = ptr.read_pointer.address
+        @pITask = COM::Task.new(ptr.read_pointer)
       end
 
       @pITask
@@ -251,20 +253,7 @@ module Win32
     def run
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 52
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 52)
-      table = table.unpack('L*')
-
-      run = Win32::API::Function.new(table[12], 'P', 'L')
-
-      hr = run.call(@pITask)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::Run with HRESULT #{hr}", hr)
-      end
+      @pITask.Run
     end
 
     # Saves the current task. Tasks must be saved before they can be activated.
@@ -280,25 +269,12 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       file = wide_string(file) if file
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 12
+      pIPersistFile = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 12)
-      table = table.unpack('L*')
-
-      queryinterface = Win32::API::Function.new(table[0],'PPP','L')
-      release = Win32::API::Function.new(table[2],'P','L')
-
-      ptr = 0.chr * 4
-
-      hr = queryinterface.call(@pITask, IID_IPersistFile, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call IPersistFile::QueryInterface with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.QueryInterface(IID_IPersistFile, ptr)
+        pIPersistFile = ptr.read_pointer.address
       end
-
-      pIPersistFile = ptr.unpack('L').first
 
       lpVtbl = 0.chr * 4
       table = 0.chr * 28
@@ -323,7 +299,7 @@ module Win32
 
       @pITS = COM::TaskScheduler.new
 
-      release.call(@pITask)
+      @pITask.Release
       @pITask = nil
     end
 
@@ -332,19 +308,7 @@ module Win32
     def terminate
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 56
-
-      memcpy(lpVtbl,@pITask,4)
-      memcpy(table,lpVtbl.unpack('L').first,56)
-      table = table.unpack('L*')
-
-      teriminate = Win32::API::Function.new(table[13],'P','L')
-      hr = teriminate.call(@pITask)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::Terminate with HRESULT #{hr}", hr)
-      end
+      @pITask.Terminate
     end
 
     # Set the host on which the various TaskScheduler methods will execute.
@@ -371,33 +335,22 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 124
+      bool = false
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 124)
-      table = table.unpack('L*')
-
-      setAccountInformation = Win32::API::Function.new(table[30],'PPP','L')
-
-      if (user.nil? || user=="") && (password.nil? || password=="")
-        hr = setAccountInformation.call(@pITask, wide_string(""), nil)
-      else
-        user = wide_string(user)
-        password = wide_string(password)
-        hr = setAccountInformation.call(@pITask, user, password)
-      end
-
-      bool = true
-
-      case hr
-        when S_OK
-          return true
-        when SCHED_E_ACCOUNT_INFORMATION_NOT_SET
-          warn 'job created, but password was invalid'
-          bool = false
+      begin
+        if (user.nil? || user=="") && (password.nil? || password=="")
+          @pITask.SetAccountInformation(wide_string(""), FFI::Pointer::NULL)
         else
-          raise Error.new("Failed to call ITask::SetAccountInformation with HRESULT #{hr}", hr)
+          user = wide_string(user)
+          password = wide_string(password)
+          @pITask.SetAccountInformation(user, password)
+        end
+
+        bool = true
+      rescue Puppet::Util::Windows::Error => e
+        raise e unless e.code == SCHED_E_ACCOUNT_INFORMATION_NOT_SET
+
+        warn 'job created, but password was invalid'
       end
 
       bool
@@ -410,27 +363,20 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 128
+      # default under certain failures
+      user = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table,lpVtbl.unpack('L').first, 128)
-      table = table.unpack('L*')
-
-      getAccountInformation = Win32::API::Function.new(table[31], 'PP', 'L')
-
-      ptr = 0.chr * 4
-      hr = getAccountInformation.call(@pITask, ptr)
-
-      if hr == SCHED_E_ACCOUNT_INFORMATION_NOT_SET
-        user = nil
-      elsif hr >= 0 && hr != SCHED_E_NO_SECURITY_SERVICES
-        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
-        user = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-        Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
-      else
-        Puppet::Util::Windows::COM.CoTaskMemFree(FFI::Pointer.new(p.unpack('L').first))
-        raise Error.new("Failed to call ITask::GetAccountInformation with HRESULT #{hr}", hr)
+      begin
+        FFI::MemoryPointer.new(:pointer) do |ptr|
+          @pITask.GetAccountInformation(ptr)
+          ptr.read_com_memory_pointer do |str_ptr|
+            user = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          end
+        end
+      rescue Puppet::Util::Windows::Error => e
+        raise e unless e.code == SCHED_E_ACCOUNT_INFORMATION_NOT_SET ||
+                       e.code == SCHED_E_NO_SECURITY_SERVICES ||
+                       e.code == ERROR_NONE_MAPPED
       end
 
       user
@@ -442,24 +388,14 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 136
+      app = nil
 
-      memcpy(lpVtbl, @pITask,4)
-      memcpy(table, lpVtbl.unpack('L').first, 136)
-      table = table.unpack('L*')
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.GetApplicationName(ptr)
 
-      getApplicationName = Win32::API::Function.new(table[33],'PP','L')
-
-      ptr = 0.chr * 4
-      hr  = getApplicationName.call(@pITask, ptr)
-
-      if hr >= S_OK
-        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
-        app = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-        Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
-      else
-        raise Error.new("Failed to call ITask::GetApplicationName with HRESULT #{hr}", hr)
+        ptr.read_com_memory_pointer do |str_ptr|
+          app = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        end
       end
 
       app
@@ -472,20 +408,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless app.is_a?(String)
 
-      app_w = wide_string(app)
-
-      lpVtbl = 0.chr * 4
-      table = 0.chr * 132
-      memcpy(lpVtbl,@pITask,4)
-      memcpy(table,lpVtbl.unpack('L').first,132)
-      table = table.unpack('L*')
-      setApplicationName = Win32::API::Function.new(table[32],'PP','L')
-
-      hr = setApplicationName.call(@pITask,app_w)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::SetApplicationName with HRESULT #{hr}", hr)
-      end
+      @pITask.SetApplicationName(wide_string(app))
 
       app
     end
@@ -496,23 +419,14 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 144
+      param = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 144)
-      table = table.unpack('L*')
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.GetParameters(ptr)
 
-      getParameters = Win32::API::Function.new(table[35], 'PP', 'L')
-      ptr = 0.chr * 4
-      hr = getParameters.call(@pITask, ptr)
-
-      if hr >= S_OK
-        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
-        param = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-        Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
-      else
-        raise Error.new("Failed to call ITask::GetParameters with HRESULT #{hr}", hr)
+        ptr.read_com_memory_pointer do |str_ptr|
+          param = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        end
       end
 
       param
@@ -527,21 +441,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless param.is_a?(String)
 
-      param_w = wide_string(param)
-
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 140
-
-      memcpy(lpVtbl,@pITask,4)
-      memcpy(table,lpVtbl.unpack('L').first,140)
-      table = table.unpack('L*')
-
-      setParameters = Win32::API::Function.new(table[34],'PP','L')
-      hr = setParameters.call(@pITask,param_w)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::SetParameters with HRESULT #{hr}", hr)
-      end
+      @pITask.SetParameters(wide_string(param))
 
       param
     end
@@ -552,24 +452,14 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 152
+      dir = nil
 
-      memcpy(lpVtbl, @pITask,4)
-      memcpy(table, lpVtbl.unpack('L').first,152)
-      table = table.unpack('L*')
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.GetWorkingDirectory(ptr)
 
-      getWorkingDirectory = Win32::API::Function.new(table[37],'PP','L')
-
-      ptr = 0.chr * 4
-      hr  = getWorkingDirectory.call(@pITask, ptr)
-
-      if hr >= S_OK
-        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
-        dir = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-        Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
-      else
-        raise Error.new("Failed to call ITask::GetWorkingDirectory with HRESULT #{hr}", hr)
+        ptr.read_com_memory_pointer do |str_ptr|
+          dir = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        end
       end
 
       dir
@@ -582,21 +472,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless dir.is_a?(String)
 
-      dir_w = wide_string(dir)
-
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 148
-
-      memcpy(lpVtbl, @pITask,4)
-      memcpy(table, lpVtbl.unpack('L').first, 148)
-      table = table.unpack('L*')
-
-      setWorkingDirectory = Win32::API::Function.new(table[36], 'PP', 'L')
-      hr = setWorkingDirectory.call(@pITask, dir_w)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::SetWorkingDirectory with HRESULT #{hr}", hr)
-      end
+      @pITask.SetWorkingDirectory(wide_string(dir))
 
       dir
     end
@@ -609,20 +485,10 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 160
+      FFI::MemoryPointer.new(:dword, 1) do |ptr|
+        @pITask.GetPriority(ptr)
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 160)
-      table = table.unpack('L*')
-
-      getPriority = Win32::API::Function.new(table[39], 'PP', 'L')
-
-      ptr = 0.chr * 4
-      hr  = getPriority.call(@pITask, ptr)
-
-      if hr >= S_OK
-        pri = ptr.unpack('L').first
+        pri = ptr.read_dword
         if (pri & IDLE) != 0
           priority = 'idle'
         elsif (pri & NORMAL) != 0
@@ -638,8 +504,6 @@ module Win32
         else
           priority = 'unknown'
         end
-      else
-        raise Error.new("Failed to call ITask::GetPriority with HRESULT #{hr}", hr)
       end
 
       priority
@@ -653,19 +517,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless priority.is_a?(Numeric)
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 156
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 156)
-      table = table.unpack('L*')
-
-      setPriority = Win32::API::Function.new(table[38], 'PL', 'L')
-      hr = setPriority.call(@pITask, priority)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::SetPriority with HRESULT #{hr}", hr)
-      end
+      @pITask.SetPriority(priority)
 
       priority
     end
@@ -688,46 +540,28 @@ module Win32
       trigger = transform_and_validate(trigger)
 
       if @pITask
-        lpVtbl = 0.chr * 4
-        table  = 0.chr * 12
-
-        memcpy(lpVtbl, @pITask, 4)
-        memcpy(table, lpVtbl.unpack('L').first, 12)
-        table = table.unpack('L*')
-
-        release = Win32::API::Function.new(table[2], 'P', 'L')
-        release.call(@pITask)
-
+        @pITask.Release
         @pITask = nil
       end
 
       FFI::MemoryPointer.new(:pointer) do |ptr|
         @pITS.NewWorkItem(wide_string(task), CLSID_CTask, IID_ITask, ptr)
 
-        # IUnknown * (really a ITask *)
-        @pITask = ptr.read_pointer.address
-        lpVtbl = 0.chr * 4
-        table  = 0.chr * 16
+        @pITask = COM::Task.new(ptr.read_pointer)
+        pITaskTrigger = nil
 
-        # Without the 'enum.include?' check above the code segfaults here if the
-        # task already exists. This should probably be handled properly instead
-        # of simply avoiding the issue.
+        FFI::MemoryPointer.new(:word, 1) do |trigger_index_ptr|
+          FFI::MemoryPointer.new(:pointer) do |trigger_ptr_ptr|
 
-        memcpy(lpVtbl, @pITask, 4)
-        memcpy(table, lpVtbl.unpack('L').first, 16)
-        table = table.unpack('L*')
+            # Without the 'enum.include?' check above the code segfaults here if the
+            # task already exists. This should probably be handled properly instead
+            # of simply avoiding the issue.
 
-        createTrigger = Win32::API::Function.new(table[3], 'PPP', 'L')
-        p1 = 0.chr * 4
-        p2 = 0.chr * 4
-
-        hr = createTrigger.call(@pITask, p1, p2)
-
-        if hr != S_OK
-          raise Error.new("Failed to call ITask::CreateTrigger with HRESULT #{hr}", hr)
+            @pITask.CreateTrigger(trigger_index_ptr, trigger_ptr_ptr)
+            pITaskTrigger = trigger_ptr_ptr.read_pointer.address
+          end
         end
 
-        pITaskTrigger = p2.unpack('L').first
         lpVtbl = 0.chr * 4
         table  = 0.chr * 16
 
@@ -809,21 +643,11 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 24
+      count = 0
 
-      memcpy(lpVtbl, @pITask,4)
-      memcpy(table, lpVtbl.unpack('L').first, 24)
-      table = table.unpack('L*')
-
-      getTriggerCount = Win32::API::Function.new(table[5], 'PP', 'L')
-      ptr = 0.chr * 4
-      hr  = getTriggerCount.call(@pITask, ptr)
-
-      if hr >= S_OK
-        count = ptr.unpack('L').first
-      else
-        raise Error.new("Failed to call ITask::GetTriggerCount with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:word, 1) do |ptr|
+        @pITask.GetTriggerCount(ptr)
+        count = ptr.read_word
       end
 
       count
@@ -839,23 +663,12 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless index.is_a?(Numeric)
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 32
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.GetTriggerString(index, ptr)
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 32)
-      table = table.unpack('L*')
-
-      getTriggerString = Win32::API::Function.new(table[7], 'PLP', 'L')
-      ptr = 0.chr * 4
-      hr  = getTriggerString.call(@pITask, index, ptr)
-
-      if hr == S_OK
-        str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
-        trigger = str_ptr.read_arbitrary_wide_string_up_to(256)
-        Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
-      else
-        raise Error.new("Failed to call ITask::GetTriggerString with HRESULT #{hr}", hr)
+        ptr.read_com_memory_pointer do |str_ptr|
+          trigger = str_ptr.read_arbitrary_wide_string_up_to(256)
+        end
       end
 
       trigger
@@ -867,20 +680,7 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 20
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 20)
-      table = table.unpack('L*')
-
-      deleteTrigger = Win32::API::Function.new(table[4], 'PL', 'L')
-      hr = deleteTrigger.call(@pITask,index)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::DeleteTrigger with HRESULT #{hr}", hr)
-      end
-
+      @pITask.DeleteTrigger(index)
       index
     end
 
@@ -891,22 +691,13 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 28
+      pITaskTrigger = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 28)
-      table = table.unpack('L*')
-
-      getTrigger = Win32::API::Function.new(table[6], 'PLP', 'L')
-      ptr = 0.chr * 4
-      hr = getTrigger.call(@pITask, index, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::GetTrigger with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.GetTrigger(index, ptr)
+        pITaskTrigger = ptr.read_pointer.address
       end
 
-      pITaskTrigger = ptr.unpack('L').first
       lpVtbl = 0.chr * 4
       table  = 0.chr * 20
 
@@ -983,26 +774,15 @@ module Win32
       raise TypeError unless trigger.is_a?(Hash)
 
       trigger = transform_and_validate(trigger)
+      pITaskTrigger = nil
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 16
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 16)
-      table = table.unpack('L*')
-
-      createTrigger = Win32::API::Function.new(table[3], 'PPP', 'L')
-
-      p1 = 0.chr * 4
-      p2 = 0.chr * 4
-
-      hr = createTrigger.call(@pITask, p1, p2)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::CreateTrigger with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:word, 1) do |trigger_index_ptr|
+        FFI::MemoryPointer.new(:pointer) do |trigger_ptr_ptr|
+          @pITask.CreateTrigger(trigger_index_ptr, trigger_ptr_ptr)
+          pITaskTrigger = trigger_ptr_ptr.read_pointer.address
+        end
       end
 
-      pITaskTrigger = p2.unpack('L').first
       lpVtbl = 0.chr * 4
       table  = 0.chr * 16
 
@@ -1083,23 +863,13 @@ module Win32
       raise TypeError unless trigger.is_a?(Hash)
 
       trigger = transform_and_validate(trigger)
+      pITaskTrigger = nil
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 28
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 28)
-      table = table.unpack('L*')
-
-      getTrigger = Win32::API::Function.new(table[6], 'PLP', 'L')
-      ptr = 0.chr * 4
-      hr = getTrigger.call(@pITask, index, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::GetTrigger with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.GetTrigger(index, ptr)
+        pITaskTrigger = ptr.read_pointer.address
       end
 
-      pITaskTrigger = ptr.unpack('L').first
       lpVtbl = 0.chr * 4
       table = 0.chr * 16
 
@@ -1176,22 +946,14 @@ module Win32
     def flags
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 120
+      flags = 0
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 120)
-      table = table.unpack('L*')
-
-      getFlags = Win32::API::Function.new(table[29], 'PP', 'L')
-      ptr = 0.chr * 4
-      hr = getFlags.call(@pITask, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::GetFlags with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:dword, 1) do |ptr|
+        @pITask.GetFlags(ptr)
+        flags = ptr.read_dword
       end
 
-      flags = ptr.unpack('L').first
+      flags
     end
 
     # Sets an OR'd value of flags that modify the behavior of the work item.
@@ -1200,20 +962,7 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 116
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 116)
-      table = table.unpack('L*')
-
-      setFlags = Win32::API::Function.new(table[28], 'PL', 'L')
-      hr = setFlags.call(@pITask, flags)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::SetFlags with HRESULT #{hr}", hr)
-      end
-
+      @pITask.SetFlags(flags)
       flags
     end
 
@@ -1223,22 +972,12 @@ module Win32
     def status
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 68
+      st = nil
 
-      memcpy(lpVtbl,@pITask,4)
-      memcpy(table,lpVtbl.unpack('L').first,68)
-      table = table.unpack('L*')
-
-      getStatus = Win32::API::Function.new(table[16], 'PP', 'L')
-      ptr = 0.chr * 4
-      hr = getStatus.call(@pITask, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::GetStatus with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:hresult, 1) do |ptr|
+        @pITask.GetStatus(ptr)
+        st = ptr.read_hresult
       end
-
-      st = ptr.unpack('L').first
 
       case st
         when SCHED_S_TASK_READY
@@ -1259,22 +998,18 @@ module Win32
     def exit_code
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table = 0.chr * 72
+      status = 0
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 72)
-      table = table.unpack('L*')
-
-      getExitCode = Win32::API::Function.new(table[17], 'PP', 'L')
-      ptr = 0.chr * 4
-      hr = getExitCode.call(@pITask, ptr)
-
-      if hr > 0x80000000
-        raise Error.new("Failed to call ITask::GetExitCode with HRESULT #{hr}", hr)
+      begin
+        FFI::MemoryPointer.new(:dword, 1) do |ptr|
+          @pITask.GetExitCode(ptr)
+          status = ptr.read_dword
+        end
+      rescue Puppet::Util::Windows::Error => e
+        raise e unless e.code == SCHED_S_TASK_HAS_NOT_RUN
       end
 
-      ptr.unpack('L').first
+      status
     end
 
     # Returns the comment associated with the task, if any.
@@ -1282,24 +1017,16 @@ module Win32
     def comment
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 80
+      comment = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 80)
-      table = table.unpack('L*')
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.GetComment(ptr)
 
-      getComment = Win32::API::Function.new(table[19], 'PP', 'L')
-      ptr = 0.chr * 4
-      hr = getComment.call(@pITask, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::GetComment with HRESULT #{hr}", hr)
+        ptr.read_com_memory_pointer do |str_ptr|
+          comment = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        end
       end
 
-      str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
-      comment = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-      Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
       comment
     end
 
@@ -1309,21 +1036,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless comment.is_a?(String)
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 76
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 76)
-      table = table.unpack('L*')
-
-      setComment = Win32::API::Function.new(table[18], 'PP', 'L')
-      comment_w = wide_string(comment)
-      hr = setComment.call(@pITask, comment_w)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::SetComment with HRESULT #{hr}", hr)
-      end
-
+      @pITask.SetComment(wide_string(comment))
       comment
     end
 
@@ -1332,24 +1045,16 @@ module Win32
     def creator
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 88
+      creator = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 88)
-      table = table.unpack('L*')
+      FFI::MemoryPointer.new(:pointer) do |ptr|
+        @pITask.GetCreator(ptr)
 
-      getCreator = Win32::API::Function.new(table[21], 'PP', 'L')
-      ptr = 0.chr * 4
-      hr = getCreator.call(@pITask, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::GetCreator with HRESULT #{hr}", hr)
+        ptr.read_com_memory_pointer do |str_ptr|
+          creator = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+        end
       end
 
-      str_ptr = FFI::Pointer.new(ptr.unpack('L').first)
-      creator = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
-      Puppet::Util::Windows::COM.CoTaskMemFree(str_ptr)
       creator
     end
 
@@ -1359,21 +1064,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless creator.is_a?(String)
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 84
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 84)
-      table = table.unpack('L*')
-
-      setCreator = Win32::API::Function.new(table[20], 'PP', 'L')
-      creator_w = wide_string(creator)
-      hr = setCreator.call(@pITask, creator_w)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::SetCreator with HRESULT #{hr}", hr)
-      end
-
+      @pITask.SetCreator(wide_string(creator))
       creator
     end
 
@@ -1382,25 +1073,14 @@ module Win32
     def next_run_time
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 40
+      time = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 40)
-      table = table.unpack('L*')
-
-      getNextRunTime = Win32::API::Function.new(table[9], 'PP', 'L')
-      st = 0.chr * 16
-      hr = getNextRunTime.call(@pITask, st)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::GetNextRunTime with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(WIN32::SYSTEMTIME.size) do |ptr|
+        @pITask.GetNextRunTime(ptr)
+        time = WIN32::SYSTEMTIME.new(ptr).to_local_time
       end
 
-      a1,a2,_,a3,a4,a5,a6,a7 = st.unpack('S*')
-      a7 *= 1000
-
-      Time.local(a1,a2,a3,a4,a5,a6,a7)
+      time
     end
 
     # Returns a Time object indicating the most recent time the task ran or
@@ -1409,25 +1089,15 @@ module Win32
     def most_recent_run_time
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 64
+      time = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 64)
-      table = table.unpack('L*')
-
-      getMostRecentRunTime = Win32::API::Function.new(table[15], 'PP', 'L')
-      st = 0.chr * 16
-      hr = getMostRecentRunTime.call(@pITask, st)
-
-      if hr == SCHED_S_TASK_HAS_NOT_RUN
-        time = nil
-      elsif hr == S_OK
-        a1, a2, _, a3, a4, a5, a6, a7 = st.unpack('S*')
-        a7 *= 1000
-        time = Time.local(a1, a2, a3, a4, a5, a6, a7)
-      else
-        raise Error.new("Failed to call ITask::GetMostRecentRunTime with HRESULT #{hr}", hr)
+      begin
+        FFI::MemoryPointer.new(WIN32::SYSTEMTIME.size) do |ptr|
+          @pITask.GetMostRecentRunTime(ptr)
+          time = WIN32::SYSTEMTIME.new(ptr).to_local_time
+        end
+      rescue Puppet::Util::Windows::Error => e
+        raise e unless e.code == SCHED_S_TASK_HAS_NOT_RUN
       end
 
       time
@@ -1439,23 +1109,14 @@ module Win32
     def max_run_time
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 176
+      max_run_time = nil
 
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 176)
-      table = table.unpack('L*')
-
-      getMaxRunTime = Win32::API::Function.new(table[43], 'PP', 'L')
-
-      ptr = 0.chr * 4
-      hr = getMaxRunTime.call(@pITask, ptr)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::GetMaxRunTime with HRESULT #{hr}", hr)
+      FFI::MemoryPointer.new(:dword, 1) do |ptr|
+        @pITask.GetMaxRunTime(ptr)
+        max_run_time = ptr.read_dword
       end
 
-      max_run_time = ptr.unpack('L').first
+      max_run_time
     end
 
     # Sets the maximum length of time, in milliseconds, that the task can run
@@ -1465,20 +1126,7 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless max_run_time.is_a?(Numeric)
 
-      lpVtbl = 0.chr * 4
-      table  = 0.chr * 172
-
-      memcpy(lpVtbl, @pITask, 4)
-      memcpy(table, lpVtbl.unpack('L').first, 172)
-      table = table.unpack('L*')
-
-      setMaxRunTime = Win32::API::Function.new(table[42], 'PL', 'L')
-      hr = setMaxRunTime.call(@pITask, max_run_time)
-
-      if hr != S_OK
-        raise Error.new("Failed to call ITask::SetMaxRunTime with HRESULT #{hr}", hr)
-      end
-
+      @pITask.SetMaxRunTime(max_run_time)
       max_run_time
     end
 
@@ -1600,6 +1248,84 @@ module Win32
       ]
 
       EnumWorkItems = com::Instance[IEnumWorkItems]
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381216(v=vs.85).aspx
+      IScheduledWorkItem = com::Interface[com::IUnknown,
+        FFI::WIN32::GUID['a6b952f0-a4b1-11d0-997d-00aa006887ec'],
+
+        # WORD *, ITaskTrigger **
+        CreateTrigger: [[:pointer, :pointer], :hresult],
+        DeleteTrigger: [[:word], :hresult],
+        # WORD *
+        GetTriggerCount: [[:pointer], :hresult],
+        # WORD, ITaskTrigger **
+        GetTrigger: [[:word, :pointer], :hresult],
+        # WORD, LPWSTR *
+        GetTriggerString: [[:word, :pointer], :hresult],
+        # LPSYSTEMTIME, LPSYSTEMTIME, WORD *, LPSYSTEMTIME *
+        GetRunTimes: [[:pointer, :pointer, :pointer, :pointer], :hresult],
+        # SYSTEMTIME *
+        GetNextRunTime: [[:pointer], :hresult],
+        SetIdleWait: [[:word, :word], :hresult],
+        # WORD *, WORD *
+        GetIdleWait: [[:pointer, :pointer], :hresult],
+        Run: [[], :hresult],
+        Terminate: [[], :hresult],
+        EditWorkItem: [[:hwnd, :dword], :hresult],
+        # SYSTEMTIME *
+        GetMostRecentRunTime: [[:pointer], :hresult],
+        # HRESULT *
+        GetStatus: [[:pointer], :hresult],
+        GetExitCode: [[:pdword], :hresult],
+        SetComment: [[:lpcwstr], :hresult],
+        # LPWSTR *
+        GetComment: [[:pointer], :hresult],
+        SetCreator: [[:lpcwstr], :hresult],
+        # LPWSTR *
+        GetCreator: [[:pointer], :hresult],
+        # WORD, BYTE[]
+        SetWorkItemData: [[:word, :buffer_in], :hresult],
+        # WORD *, BYTE **
+        GetWorkItemData: [[:pointer, :pointer], :hresult],
+        SetErrorRetryCount: [[:word], :hresult],
+        # WORD *
+        GetErrorRetryCount: [[:pointer], :hresult],
+        SetErrorRetryInterval: [[:word], :hresult],
+        # WORD *
+        GetErrorRetryInterval: [[:pointer], :hresult],
+        SetFlags: [[:dword], :hresult],
+        # WORD *
+        GetFlags: [[:pointer], :hresult],
+        SetAccountInformation: [[:lpcwstr, :lpcwstr], :hresult],
+        # LPWSTR *
+        GetAccountInformation: [[:pointer], :hresult]
+      ]
+
+      # http://msdn.microsoft.com/en-us/library/windows/desktop/aa381311(v=vs.85).aspx
+      ITask = com::Interface[IScheduledWorkItem,
+        FFI::WIN32::GUID['148BD524-A2AB-11CE-B11F-00AA00530503'],
+
+        SetApplicationName: [[:lpcwstr], :hresult],
+        # LPWSTR *
+        GetApplicationName: [[:pointer], :hresult],
+        SetParameters: [[:lpcwstr], :hresult],
+        # LPWSTR *
+        GetParameters: [[:pointer], :hresult],
+        SetWorkingDirectory: [[:lpcwstr], :hresult],
+        # LPWSTR *
+        GetWorkingDirectory: [[:pointer], :hresult],
+        SetPriority: [[:dword], :hresult],
+        # DWORD *
+        GetPriority: [[:pointer], :hresult],
+        SetTaskFlags: [[:dword], :hresult],
+        # DWORD *
+        GetTaskFlags: [[:pointer], :hresult],
+        SetMaxRunTime: [[:dword], :hresult],
+        # DWORD *
+        GetMaxRunTime: [[:pointer], :hresult]
+      ]
+
+      Task = com::Instance[ITask]
     end
   end
 end

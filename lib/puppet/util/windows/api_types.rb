@@ -43,6 +43,8 @@ module Puppet::Util::Windows::APITypes
     alias_method :read_dword, :read_uint32
     alias_method :read_win32_ulong, :read_uint32
 
+    alias_method :read_hresult, :read_int32
+
     def read_handle
       type_size == 4 ? read_uint32 : read_uint64
     end
@@ -103,6 +105,7 @@ module Puppet::Util::Windows::APITypes
 
 
     alias_method :write_dword, :write_uint32
+    alias_method :write_word, :write_uint16
   end
 
   # FFI Types
@@ -119,6 +122,7 @@ module Puppet::Util::Windows::APITypes
   # uintptr_t is defined in an FFI conf as platform specific, either
   # ulong_long on x64 or just ulong on x86
   FFI.typedef :uintptr_t, :handle
+  FFI.typedef :uintptr_t, :hwnd
 
   # buffer_inout is similar to pointer (platform specific), but optimized for buffers
   FFI.typedef :buffer_inout, :lpwstr
@@ -195,6 +199,33 @@ module Puppet::Util::Windows::APITypes
       end
 
       def ==(other) Windows.memcmp(other, self, size) == 0 end
+    end
+
+    # http://msdn.microsoft.com/en-us/library/windows/desktop/ms724950(v=vs.85).aspx
+    # typedef struct _SYSTEMTIME {
+    #   WORD wYear;
+    #   WORD wMonth;
+    #   WORD wDayOfWeek;
+    #   WORD wDay;
+    #   WORD wHour;
+    #   WORD wMinute;
+    #   WORD wSecond;
+    #   WORD wMilliseconds;
+    # } SYSTEMTIME, *PSYSTEMTIME;
+    class SYSTEMTIME < FFI::Struct
+      layout :wYear, :word,
+             :wMonth, :word,
+             :wDayOfWeek, :word,
+             :wDay, :word,
+             :wHour, :word,
+             :wMinute, :word,
+             :wSecond, :word,
+             :wMilliseconds, :word
+
+      def to_local_time
+        Time.local(self[:wYear], self[:wMonth], self[:wDay],
+          self[:wHour], self[:wMinute], self[:wSecond], self[:wMilliseconds] * 1000)
+      end
     end
 
     ffi_convention :stdcall
