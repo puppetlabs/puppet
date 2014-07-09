@@ -12,12 +12,15 @@ class Benchmarker
   end
 
   def setup
-    require 'puppet'
-    config = File.join(@target, 'puppet.conf')
-    Puppet.initialize_settings(['--config', config])
   end
 
   def run(args=nil)
+    unless @initialized
+      require 'puppet'
+      config = File.join(@target, 'puppet.conf')
+      Puppet.initialize_settings(['--config', config])
+      @initialized = true
+    end
     env = Puppet.lookup(:environments).get('benchmarking')
     node = Puppet::Node.new("testing", :environment => env)
     Puppet::Resource::Catalog.indirection.find("testing", :use_node => node)
