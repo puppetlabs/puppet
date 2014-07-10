@@ -56,40 +56,42 @@ module Puppet::Parser::Files
   #
   # @api private
   def find_template(template, environment)
-    if template == File.expand_path(template)
-      return template
-    end
-
-    if template_paths = templatepath(environment)
-      # If we can find the template in :templatedir, we return that.
-      template_paths.collect { |path|
-        File::join(path, template)
-      }.each do |f|
-        return f if Puppet::FileSystem.exist?(f)
+    if Puppet::Util.absolute_path?(template)
+      template
+    else
+      in_templatepath = find_template_in_templatepath(template, environment)
+      if in_templatepath
+        in_templatepath
+      else
+        find_template_in_module(template, environment)
       end
     end
+  end
 
-    # check in the default template dir, if there is one
-    if td_file = find_template_in_module(template, environment)
-      return td_file
+  def find_template_in_templatepath(template, environment)
+    # templatepaths are deprecated functionality
+    template_paths = templatepath(environment)
+    if template_paths
+      template_paths.collect do |path|
+        File::join(path, template)
+      end.find do |f|
+        Puppet::FileSystem.exist?(f)
+      end
+    else
+      nil
     end
-
-    nil
   end
 
   # @api private
   def find_template_in_module(template, environment)
     path, file = split_file_path(template)
+    mod = environment.module(path)
 
-    # Because templates don't have an assumed template name, like manifests do,
-    # we treat templates with no name as being templates in the main template
-    # directory.
-    return nil unless file
-
-    if mod = environment.module(path) and t = mod.template(file)
-      return t
+    if file && mod
+      mod.template(file)
+    else
+      nil
     end
-    nil
   end
 
   # Return an array of paths by splitting the +templatedir+ config
