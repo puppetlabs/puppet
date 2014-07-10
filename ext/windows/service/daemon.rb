@@ -97,10 +97,7 @@ class WindowsDaemon < Win32::Daemon
   end
 
   def service_pause
-    # The service will not stay in a paused stated, instead it will go back into a running state after a short period of time.  This is an issue in the Win32-Service ruby code
-    # Raised bug https://github.com/djberg96/win32-service/issues/11 and is fixed in version 0.8.3.
-    # Because the Pause feature is so rarely used, there is no point in creating a workaround until puppet uses 0.8.3.
-    log_notice('Service pausing. The service will not stay paused. See Puppet Issue PUP-1471 for more information')
+    log_notice('Service pausing')
   end
 
   def service_resume
