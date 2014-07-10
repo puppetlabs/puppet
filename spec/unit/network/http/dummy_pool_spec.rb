@@ -19,7 +19,10 @@ describe Puppet::Network::HTTP::DummyPool do
     connection = stub('connection')
     factory = stub('factory', :create_connection => connection)
 
-    expect(pool.take_connection(site, factory)).to eq(connection)
+    conn = nil
+    pool.with_connection(site, factory) { |c| conn = c }
+
+    expect(conn).to eq(connection)
   end
 
   it 'has a close method' do

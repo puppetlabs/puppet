@@ -1,6 +1,7 @@
 class Puppet::Network::HTTP::DummyPool
-  def take_connection(site, factory)
-    factory.create_connection(site)
+  def with_connection(site, factory, &block)
+    connection = factory.create_connection(site)
+    yield connection
   end
 
   def close
