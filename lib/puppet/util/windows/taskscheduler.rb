@@ -17,6 +17,10 @@ module Win32
 
     private
 
+    class << self
+      attr_accessor :com_initialized
+    end
+
     # :stopdoc:
     TASK_TIME_TRIGGER_ONCE            = :TASK_TIME_TRIGGER_ONCE
     TASK_TIME_TRIGGER_DAILY           = :TASK_TIME_TRIGGER_DAILY
@@ -166,7 +170,10 @@ module Win32
       @pITS   = nil
       @pITask = nil
 
-      Puppet::Util::Windows::COM.InitializeCom()
+      if ! self.class.com_initialized
+        Puppet::Util::Windows::COM.InitializeCom()
+        self.class.com_initialized = true
+      end
 
       @pITS = COM::TaskScheduler.new
 
@@ -275,9 +282,6 @@ module Win32
         pIPersistFile.Save(wide_string(file), 1)
       ensure
         pIPersistFile.Release if pIPersistFile && !pIPersistFile.null?
-
-        Puppet::Util::Windows::COM.CoUninitialize()
-        Puppet::Util::Windows::COM.InitializeCom()
 
         @pITS = COM::TaskScheduler.new
 

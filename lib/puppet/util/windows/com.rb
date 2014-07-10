@@ -212,7 +212,7 @@ module Puppet::Util::Windows::COM
   # http://msdn.microsoft.com/en-us/library/windows/desktop/ms688715(v=vs.85).aspx
   # void CoUninitialize(void);
   ffi_lib :ole32
-  attach_function :CoUninitialize, [], :void
+  attach_function_private :CoUninitialize, [], :void
 
   def InitializeCom
     raise_if_hresult_failed(:CoInitialize, FFI::Pointer::NULL)
