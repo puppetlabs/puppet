@@ -9,9 +9,6 @@ module Win32
     require 'ffi'
     extend FFI::Library
 
-    # The version of the win32-taskscheduler library
-    VERSION = '0.2.3-beta'
-
     # The error class raised if any task scheduler specific calls fail.
     class Error < Puppet::Util::Windows::Error; end
 
