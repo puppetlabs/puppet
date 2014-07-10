@@ -25,11 +25,12 @@ def curl_master_from(agent, path, headers = '', &block)
   on agent, "#{curl_base} '#{url}'", &block
 end
 
-environments_dir = master.tmpdir("environments")
+master_user = on(master, "puppet master --configprint user").stdout.strip
+environments_dir = create_tmpdir_for_user master, "environments"
 apply_manifest_on(master, <<-MANIFEST)
 File {
   ensure => directory,
-  owner => #{master['user']},
+  owner => #{master_user},
   group => #{master['group']},
   mode => 0770,
 }

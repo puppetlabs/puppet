@@ -1,6 +1,6 @@
 test_name "Agent should use agent environment if there is no enc-specified environment"
 
-testdir = master.tmpdir('use_agent_env')
+testdir = create_tmpdir_for_user master, 'use_agent_env'
 
 create_remote_file(master, "#{testdir}/different.pp", 'notify { "production environment": }')
 create_remote_file(master, "#{testdir}/more_different.pp", 'notify { "more_different_string": }')
