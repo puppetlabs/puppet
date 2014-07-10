@@ -268,18 +268,12 @@ module Win32
     def save(file = nil)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
-      pIPersistFile = nil
 
       begin
-        FFI::MemoryPointer.new(:pointer) do |ptr|
-          @pITask.QueryInterface(IID_IPersistFile, ptr)
-          pIPersistFile = COM::PersistFile.new(ptr.read_pointer)
+        @pITask.QueryInstance(COM::PersistFile) do |pIPersistFile|
+          pIPersistFile.Save(wide_string(file), 1)
         end
-
-        pIPersistFile.Save(wide_string(file), 1)
       ensure
-        pIPersistFile.Release if pIPersistFile && !pIPersistFile.null?
-
         @pITS = COM::TaskScheduler.new
 
         @pITask.Release
