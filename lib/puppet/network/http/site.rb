@@ -22,6 +22,10 @@ class Puppet::Network::HTTP::Site
     [@scheme, @host, @port].hash
   end
 
+  def use_ssl?
+    @scheme == 'https'
+  end
+
   def move_to(uri)
     self.class.new(uri.scheme, uri.host, uri.port)
   end

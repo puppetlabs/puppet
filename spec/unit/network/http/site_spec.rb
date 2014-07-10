@@ -65,6 +65,18 @@ describe Puppet::Network::HTTP::Site do
     expect(site.hash).to eq(same_site.hash)
   end
 
+  it 'uses ssl with https' do
+    site = create_site('https', host, port)
+
+    expect(site).to be_use_ssl
+  end
+
+  it 'does not use ssl with http' do
+    site = create_site('http', host, port)
+
+    expect(site).to_not be_use_ssl
+  end
+
   it 'moves to a new URI location' do
     site = create_site('http', 'host1', 80)
 
