@@ -3,6 +3,7 @@ require 'puppet/ssl/host'
 require 'puppet/ssl/configuration'
 require 'puppet/ssl/validator'
 require 'puppet/network/authentication'
+require 'puppet/network/http'
 require 'uri'
 
 module Puppet::Network::HTTP
@@ -58,7 +59,9 @@ module Puppet::Network::HTTP
       @use_ssl = options[:use_ssl]
       @verify = options[:verify]
       @redirect_limit = options[:redirect_limit]
+      @site = Puppet::Network::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)
       @factory = Puppet::Network::HTTP::Factory.new(@verify)
+      @pool = Puppet.lookup(:http_pool)
     end
 
     # @!macro [new] common_options
@@ -124,53 +127,79 @@ module Puppet::Network::HTTP
     # future we may want to refactor these so that they are funneled through
     # that method and do inherit the error handling.
     def request_get(*args, &block)
-      connection.request_get(*args, &block)
+      with_connection(@site) do |connection|
+        connection.request_get(*args, &block)
+      end
     end
 
     def request_head(*args, &block)
-      connection.request_head(*args, &block)
+      with_connection(@site) do |connection|
+        connection.request_head(*args, &block)
+      end
     end
 
     def request_post(*args, &block)
-      connection.request_post(*args, &block)
+      with_connection(@site) do |connection|
+        connection.request_post(*args, &block)
+      end
     end
     # end of Net::HTTP#request_* proxies
 
     def address
-      connection.address
+      @site.host
     end
 
     def port
-      connection.port
+      @site.port
     end
 
     def use_ssl?
-      connection.use_ssl?
+      @site.use_ssl?
     end
 
     private
 
     def request_with_redirects(request, options)
       current_request = request
+      current_site = @site
+      response = nil
+
       @redirect_limit.times do |redirection|
-        apply_options_to(current_request, options)
+        return response if response
 
-        response = execute_request(current_request)
-        return response unless [301, 302, 307].include?(response.code.to_i)
+        with_connection(current_site) do |connection|
+          apply_options_to(current_request, options)
 
-        # handle the redirection
-        location = URI.parse(response['location'])
-        @connection = initialize_connection(location.host, location.port, location.scheme == 'https')
+          current_response = execute_request(connection, current_request)
 
-        # update to the current request path
-        current_request = current_request.class.new(location.path)
-        current_request.body = request.body
-        request.each do |header, value|
-          current_request[header] = value
+          if [301, 302, 307].include?(current_response.code.to_i)
+
+            # handle the redirection
+            location = URI.parse(current_response['location'])
+            current_site = current_site.move_to(location)
+
+            # update to the current request path
+            current_request = current_request.class.new(location.path)
+            current_request.body = request.body
+            request.each do |header, value|
+              current_request[header] = value
+            end
+          else
+            response = current_response
+
+            # We used to overwrite the @connection variable during
+            # each redirect related request. This has the side effect
+            # of changing the host & port for this connection. That
+            # makes sense for 301 Moved Permanently, but not 302 Temporary
+            # or 307 Temporary Redirect, as we should preserve our
+            # original site for future requests...
+            @site = current_site
+          end
         end
 
         # and try again...
       end
+
       raise RedirectionLimitExceededException, "Too many HTTP redirections for #{@host}:#{@port}"
     end
 
@@ -181,10 +210,10 @@ module Puppet::Network::HTTP
     end
 
     def connection
-      @connection || initialize_connection(@host, @port, @use_ssl)
+      @factory.create_connection(@site)
     end
 
-    def execute_request(request)
+    def execute_request(connection, request)
       response = connection.request(request)
 
       # Check the peer certs and warn if they're nearing expiration.
@@ -209,9 +238,12 @@ module Puppet::Network::HTTP
       end
     end
 
-    def initialize_connection(host, port, use_ssl)
-      site = Puppet::Network::HTTP::Site.new(use_ssl ? 'https' : 'http', host, port)
-      @factory.create_connection(site)
+    def with_connection(site, &block)
+      response = nil
+      @pool.with_connection(site, @factory) do |conn|
+        response = yield conn
+      end
+      response
     end
   end
 end
