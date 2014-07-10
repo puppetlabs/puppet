@@ -25,11 +25,19 @@ module Puppet::Parser::Files
     [nil, []]
   end
 
-  # Find the concrete file denoted by +file+. If +file+ is absolute,
-  # return it directly. If that fails try to find it as a file in a
-  # module.
-  # In either case, an absolute path is returned, which does not
-  # necessarily refer to an existing file
+  # Find the path to the given file selector. Files can be selected in
+  # one of two ways:
+  #   * absolute path: the path is simply returned
+  #   * modulename/filename selector: a file is found in the file directory
+  #     of the named module.
+  #
+  # In the second case a nil is returned if there isn't a file found. In the
+  # first case (absolute path), there is no existence check done and so the
+  # path will be returned even if there isn't a file available.
+  #
+  # @param template [String] the file selector
+  # @param environment [Puppet::Node::Environment] the environment in which to search
+  # @return [String, nil] the absolute path to the file or nil if there is no file found
   #
   # @api private
   def find_file(file, environment)
@@ -47,12 +55,21 @@ module Puppet::Parser::Files
     end
   end
 
-  # Find the concrete file denoted by +file+. If +file+ is absolute,
-  # return it directly. Otherwise try to find relative to the +templatedir+
-  # config param.  If that fails try to find it as a template in a
-  # module.
-  # In all cases, an absolute path is returned, which does not
-  # necessarily refer to an existing file
+  # Find the path to the given template selector. Templates can be selected in
+  # a number of ways:
+  #   * absolute path: the path is simply returned
+  #   * path relative to the templatepath setting: a file is found and the path
+  #     is returned
+  #   * modulename/filename selector: a file is found in the template directory
+  #     of the named module.
+  #
+  # In the last two cases a nil is returned if there isn't a file found. In the
+  # first case (absolute path), there is no existence check done and so the
+  # path will be returned even if there isn't a file available.
+  #
+  # @param template [String] the template selector
+  # @param environment [Puppet::Node::Environment] the environment in which to search
+  # @return [String, nil] the absolute path to the template file or nil if there is no file found
   #
   # @api private
   def find_template(template, environment)
@@ -68,8 +85,11 @@ module Puppet::Parser::Files
     end
   end
 
+  # Templatepaths are deprecated functionality, this will be going away in
+  # Puppet 4.
+  #
+  # @api private
   def find_template_in_templatepath(template, environment)
-    # templatepaths are deprecated functionality
     template_paths = templatepath(environment)
     if template_paths
       template_paths.collect do |path|
@@ -108,7 +128,7 @@ module Puppet::Parser::Files
   # nil if the path is empty or absolute (starts with a /).
   # @api private
   def split_file_path(path)
-    if path == "" or Puppet::Util.absolute_path?(path)
+    if path == "" || Puppet::Util.absolute_path?(path)
       nil
     else
       path.split(File::SEPARATOR, 2)
