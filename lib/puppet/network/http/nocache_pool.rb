@@ -1,4 +1,4 @@
-class Puppet::Network::HTTP::DummyPool
+class Puppet::Network::HTTP::NoCachePool
   def with_connection(site, factory, &block)
     connection = factory.create_connection(site)
     yield connection

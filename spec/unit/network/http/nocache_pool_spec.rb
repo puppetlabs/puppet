@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/network/http'
 
-describe Puppet::Network::HTTP::DummyPool do
+describe Puppet::Network::HTTP::NoCachePool do
   before :each do
     Puppet::SSL::Key.indirection.terminus_class = :memory
     Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
@@ -14,7 +14,7 @@ describe Puppet::Network::HTTP::DummyPool do
   end
 
   it 'returns a new connection' do
-    pool = Puppet::Network::HTTP::DummyPool.new
+    pool = Puppet::Network::HTTP::NoCachePool.new
 
     connection = stub('connection')
     factory = stub('factory', :create_connection => connection)
@@ -26,6 +26,6 @@ describe Puppet::Network::HTTP::DummyPool do
   end
 
   it 'has a close method' do
-    Puppet::Network::HTTP::DummyPool.new.close
+    Puppet::Network::HTTP::NoCachePool.new.close
   end
 end
