@@ -173,6 +173,13 @@ module Win32
       end
 
       @pITS = COM::TaskScheduler.new
+      at_exit do
+        begin
+          @pITS.Release if @pITS && !@pITS.null?
+          @pITS = nil
+        rescue
+        end
+      end
 
       if work_item
         if trigger
@@ -264,9 +271,6 @@ module Win32
     # If +file+ (an absolute path) is specified then the job is saved to that
     # file instead. A '.job' extension is recommended but not enforced.
     #
-    # Note that calling TaskScheduler#save also resets the TaskScheduler object
-    # so that there is no currently active task.
-    #
     def save(file = nil)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
@@ -279,11 +283,7 @@ module Win32
       rescue
         reset = false
       ensure
-        if reset
-          @pITS = COM::TaskScheduler.new
-
-          reset_current_task
-        end
+        reset_current_task if reset
       end
     end
 
