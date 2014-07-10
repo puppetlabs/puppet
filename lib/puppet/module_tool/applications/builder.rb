@@ -1,13 +1,16 @@
 require 'fileutils'
+require 'find'
 require 'json'
+require 'pathname'
 
 module Puppet::ModuleTool
   module Applications
     class Builder < Application
 
       def initialize(path, options = {})
-        @path = File.expand_path(path)
+        @path = Pathname.new(File.expand_path(path))
         @pkg_path = File.join(@path, 'pkg')
+        @ignore_path = File.join(@path, '.pmtignore')
         super(options)
       end
 
@@ -56,12 +59,32 @@ module Puppet::ModuleTool
       end
 
       def copy_contents
-        Dir[File.join(@path, '*')].each do |path|
-          case File.basename(path)
-          when *Puppet::ModuleTool::ARTIFACTS
-            next
+        ignore_globs = []
+
+        if File.file? @ignore_path
+          File.open(@ignore_path).each do |f|
+            f.strip!
+
+            if f.empty? || f =~ /^#/
+              next
+            end
+
+            ignore_globs << f
+          end
+        end
+
+        @path.find do |descendant|
+          next if @path == descendant
+          rel = descendant.relative_path_from(@path)
+          if Puppet::ModuleTool.artifact?(descendant) || ignore_globs.collect { |glob| File.fnmatch?(glob, rel) }.any?
+            Find.prune
           else
-            FileUtils.cp_r path, build_path, :preserve => true
+            dest = File.join(build_path, rel)
+            if File.file?(descendant)
+              FileUtils.copy(descendant, dest, :preserve => true)
+            else
+              FileUtils.mkdir(dest, :mode => File.stat(descendant).mode)
+            end
           end
         end
       end
