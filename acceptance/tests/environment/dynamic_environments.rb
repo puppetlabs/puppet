@@ -1,6 +1,6 @@
 test_name "Dynamic Environments"
 
-testdir = master.tmpdir('dynamic-environment')
+testdir = create_tmpdir_for_user master, 'dynamic-environment'
 environmentsdir = "#{testdir}/environments"
 
 step "Prepare manifests and modules"
