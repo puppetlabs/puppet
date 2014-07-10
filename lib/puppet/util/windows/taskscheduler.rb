@@ -195,33 +195,25 @@ module Win32
       raise Error.new('No current task scheduler. ITaskScheduler is NULL.') if @pITS.nil?
       array = []
 
-      FFI::MemoryPointer.new(:pointer) do |ptr|
-        @pITS.Enum(ptr)
+      @pITS.UseInstance(COM::EnumWorkItems, :Enum) do |pIEnum|
+        FFI::MemoryPointer.new(:pointer) do |names_array_ptr_ptr|
+          FFI::MemoryPointer.new(:win32_ulong) do |fetched_count_ptr|
+            # awkward usage, if number requested is available, returns S_OK (0), or if less were returned returns S_FALSE (1)
+            while (pIEnum.Next(TASKS_TO_RETRIEVE, names_array_ptr_ptr, fetched_count_ptr) >= Puppet::Util::Windows::COM::S_OK)
+              count = fetched_count_ptr.read_win32_ulong
+              break if count == 0
 
-        begin
-          pIEnum = COM::EnumWorkItems.new(ptr.read_pointer)
-
-          FFI::MemoryPointer.new(:pointer) do |names_array_ptr_ptr|
-            FFI::MemoryPointer.new(:win32_ulong) do |fetched_count_ptr|
-              # awkward usage, if number requested is available, returns S_OK (0), or if less were returned returns S_FALSE (1)
-              while (pIEnum.Next(TASKS_TO_RETRIEVE, names_array_ptr_ptr, fetched_count_ptr) >= Puppet::Util::Windows::COM::S_OK)
-                count = fetched_count_ptr.read_win32_ulong
-                break if count == 0
-
-                names_array_ptr_ptr.read_com_memory_pointer do |names_array_ptr|
-                  # iterate over the array of pointers
-                  name_ptr_ptr = FFI::Pointer.new(:pointer, names_array_ptr)
-                  for i in 0 ... count
-                    name_ptr_ptr[i].read_com_memory_pointer do |name_ptr|
-                      array << name_ptr.read_arbitrary_wide_string_up_to(256)
-                    end
+              names_array_ptr_ptr.read_com_memory_pointer do |names_array_ptr|
+                # iterate over the array of pointers
+                name_ptr_ptr = FFI::Pointer.new(:pointer, names_array_ptr)
+                for i in 0 ... count
+                  name_ptr_ptr[i].read_com_memory_pointer do |name_ptr|
+                    array << name_ptr.read_arbitrary_wide_string_up_to(256)
                   end
                 end
               end
             end
           end
-        ensure
-          pIEnum.Release if pIEnum && ! pIEnum.null?
         end
       end
 
@@ -526,21 +518,14 @@ module Win32
 
         reset_current_task
         @pITask = COM::Task.new(ptr.read_pointer)
-        pITaskTrigger = nil
 
         FFI::MemoryPointer.new(:word, 1) do |trigger_index_ptr|
-          FFI::MemoryPointer.new(:pointer) do |trigger_ptr_ptr|
-            # Without the 'enum.include?' check above the code segfaults here if the
-            # task already exists. This should probably be handled properly instead
-            # of simply avoiding the issue.
+          # Without the 'enum.include?' check above the code segfaults here if the
+          # task already exists. This should probably be handled properly instead
+          # of simply avoiding the issue.
 
-            @pITask.CreateTrigger(trigger_index_ptr, trigger_ptr_ptr)
-            begin
-              pITaskTrigger = COM::TaskTrigger.new(trigger_ptr_ptr.read_pointer)
-              populate_trigger(pITaskTrigger, trigger)
-            ensure
-              pITaskTrigger.Release if pITaskTrigger && ! pITaskTrigger.null?
-            end
+          @pITask.UseInstance(COM::TaskTrigger, :CreateTrigger, trigger_index_ptr) do |pITaskTrigger|
+            populate_trigger(pITaskTrigger, trigger)
           end
         end
       end
@@ -606,16 +591,10 @@ module Win32
 
       trigger = {}
 
-      FFI::MemoryPointer.new(:pointer) do |ptr|
-        @pITask.GetTrigger(index, ptr)
-        begin
-          pITaskTrigger = COM::TaskTrigger.new(ptr.read_pointer)
-          FFI::MemoryPointer.new(COM::TASK_TRIGGER.size) do |task_trigger_ptr|
-            pITaskTrigger.GetTrigger(task_trigger_ptr)
-            trigger = populate_hash_from_trigger(COM::TASK_TRIGGER.new(task_trigger_ptr))
-          end
-        ensure
-          pITaskTrigger.Release if pITaskTrigger && ! pITaskTrigger.null?
+      @pITask.UseInstance(COM::TaskTrigger, :GetTrigger, index) do |pITaskTrigger|
+        FFI::MemoryPointer.new(COM::TASK_TRIGGER.size) do |task_trigger_ptr|
+          pITaskTrigger.GetTrigger(task_trigger_ptr)
+          trigger = populate_hash_from_trigger(COM::TASK_TRIGGER.new(task_trigger_ptr))
         end
       end
 
@@ -630,18 +609,12 @@ module Win32
       raise TypeError unless trigger.is_a?(Hash)
 
       FFI::MemoryPointer.new(:word, 1) do |trigger_index_ptr|
-        FFI::MemoryPointer.new(:pointer) do |trigger_ptr_ptr|
-          # Without the 'enum.include?' check above the code segfaults here if the
-          # task already exists. This should probably be handled properly instead
-          # of simply avoiding the issue.
+        # Without the 'enum.include?' check above the code segfaults here if the
+        # task already exists. This should probably be handled properly instead
+        # of simply avoiding the issue.
 
-          @pITask.CreateTrigger(trigger_index_ptr, trigger_ptr_ptr)
-          begin
-            pITaskTrigger = COM::TaskTrigger.new(trigger_ptr_ptr.read_pointer)
-            populate_trigger(pITaskTrigger, trigger)
-          ensure
-            pITaskTrigger.Release if pITaskTrigger && ! pITaskTrigger.null?
-          end
+        @pITask.UseInstance(COM::TaskTrigger, :CreateTrigger, trigger_index_ptr) do |pITaskTrigger|
+          populate_trigger(pITaskTrigger, trigger)
         end
       end
 
@@ -655,14 +628,8 @@ module Win32
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
       raise TypeError unless trigger.is_a?(Hash)
 
-      FFI::MemoryPointer.new(:pointer) do |ptr|
-        @pITask.GetTrigger(index, ptr)
-        begin
-          pITaskTrigger = COM::TaskTrigger.new(ptr.read_pointer)
-          populate_trigger(pITaskTrigger, trigger)
-        ensure
-          pITaskTrigger.Release if pITaskTrigger && ! pITaskTrigger.null?
-        end
+      @pITask.UseInstance(COM::TaskTrigger, :GetTrigger, index) do |pITaskTrigger|
+        populate_trigger(pITaskTrigger, trigger)
       end
     end
 
