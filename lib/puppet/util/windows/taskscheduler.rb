@@ -18,8 +18,6 @@ module Win32
     private
 
     # :stopdoc:
-    S_OK = 0
-
     TASK_TIME_TRIGGER_ONCE            = :TASK_TIME_TRIGGER_ONCE
     TASK_TIME_TRIGGER_DAILY           = :TASK_TIME_TRIGGER_DAILY
     TASK_TIME_TRIGGER_WEEKLY          = :TASK_TIME_TRIGGER_WEEKLY
@@ -195,7 +193,7 @@ module Win32
           FFI::MemoryPointer.new(:pointer) do |names_array_ptr_ptr|
             FFI::MemoryPointer.new(:win32_ulong) do |fetched_count_ptr|
               # awkward usage, if number requested is available, returns S_OK (0), or if less were returned returns S_FALSE (1)
-              while (pIEnum.Next(TASKS_TO_RETRIEVE, names_array_ptr_ptr, fetched_count_ptr) >= S_OK)
+              while (pIEnum.Next(TASKS_TO_RETRIEVE, names_array_ptr_ptr, fetched_count_ptr) >= Puppet::Util::Windows::COM::S_OK)
                 count = fetched_count_ptr.read_win32_ulong
                 break if count == 0
 
