@@ -12,6 +12,44 @@ describe Puppet::ModuleTool::Applications::Builder do
   let(:tarball)      { File.join(path, 'pkg', release_name) + ".tar.gz" }
   let(:builder)      { Puppet::ModuleTool::Applications::Builder.new(path) }
 
+  shared_examples "a packagable module" do
+    def target_exists?(file)
+      File.exist?(File.join(path, "pkg", "#{module_name}-#{version}", file))
+    end
+
+    it "packages the module in a tarball named after the module" do
+      tarrer = mock('tarrer')
+      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
+      Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
+      tarrer.expects(:pack).with(release_name, tarball)
+
+      builder.run
+    end
+
+    it "ignores the file patterns found in .pmtignore" do
+      open(File.join(path, '.pmtignore'), 'w') do |f|
+        f.write <<-IGNOREFILE
+junk*
+other/junk*
+IGNOREFILE
+      end
+      FileUtils.touch File.join(path, 'junk.txt')
+      FileUtils.mkdir File.join(path, 'other')
+      FileUtils.touch File.join(path, 'other/junk.log')
+
+      tarrer = mock('tarrer')
+      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
+      Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
+      tarrer.expects(:pack).with(release_name, tarball)
+
+      builder.run
+
+      target_exists?("junk.txt").should be_false
+      target_exists?("other/junk.log").should be_false
+      target_exists?("other").should be_true
+    end
+  end
+
   context 'with metadata.json' do
     before :each do
       File.open(File.join(path, 'metadata.json'), 'w') do |f|
@@ -28,14 +66,7 @@ describe Puppet::ModuleTool::Applications::Builder do
       end
     end
 
-    it "packages the module in a tarball named after the module" do
-      tarrer = mock('tarrer')
-      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
-      Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
-      tarrer.expects(:pack).with(release_name, tarball)
-
-      builder.run
-    end
+    it_behaves_like "a packagable module"
   end
 
   context 'with Modulefile' do
@@ -54,13 +85,6 @@ MODULEFILE
       end
     end
 
-    it "packages the module in a tarball named after the module" do
-      tarrer = mock('tarrer')
-      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
-      Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
-      tarrer.expects(:pack).with(release_name, tarball)
-
-      builder.run
-    end
+    it_behaves_like "a packagable module"
   end
 end
