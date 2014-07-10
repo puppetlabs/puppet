@@ -29,14 +29,15 @@ module Puppet
 
     require 'puppet/pops/model/model'
 
-    module Types
+    # module Types
+    # (this module must initialize itself)
       require 'puppet/pops/types/types'
       require 'puppet/pops/types/type_calculator'
       require 'puppet/pops/types/type_factory'
       require 'puppet/pops/types/type_parser'
       require 'puppet/pops/types/class_loader'
       require 'puppet/pops/types/enumeration'
-    end
+   # end
 
     module Model
       require 'puppet/pops/model/tree_dumper'
