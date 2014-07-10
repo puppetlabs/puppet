@@ -112,14 +112,14 @@ module Puppet::Util::Windows::COM
       instance = nil
 
       FFI::MemoryPointer.new(:pointer) do |ppv|
-        send(name, *args, klass::IID, ppv)
+        send(name, *args, ppv)
 
         yield instance = klass.new(ppv.read_pointer)
       end
 
       self
     ensure
-      instance.Release if instance
+      instance.Release if instance && ! instance.null?
     end
   end
 
