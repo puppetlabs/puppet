@@ -60,9 +60,10 @@ group(:extra) do
   gem "rack", "~> 1.4", :require => false
   gem "activerecord", '~> 3.2', :require => false
   gem "couchrest", '~> 1.0', :require => false
-  gem "rest-client", '1.6.7', :require => false
   gem "net-ssh", '~> 2.1', :require => false
   gem "puppetlabs_spec_helper", :require => false
+  # rest-client is used only by couchrest, so when
+  # that dependency goes away, this one can also
   gem "rest-client", '1.6.7', :require => false
   gem "stomp", :require => false
   gem "tzinfo", :require => false
