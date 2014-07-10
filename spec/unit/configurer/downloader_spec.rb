@@ -174,25 +174,6 @@ describe Puppet::Configurer::Downloader do
 
     it "should log that it is downloading" do
       Puppet.expects(:info)
-      Timeout.stubs(:timeout)
-
-      @dler.evaluate
-    end
-
-    it "should set a timeout for the download using the `configtimeout` setting" do
-      Puppet[:configtimeout] = 50
-      Timeout.expects(:timeout).with(50)
-
-      @dler.evaluate
-    end
-
-    it "should apply the catalog within the timeout block" do
-      catalog = mock 'catalog'
-      @dler.expects(:catalog).returns(catalog)
-
-      Timeout.expects(:timeout).yields
-
-      catalog.expects(:apply)
 
       @dler.evaluate
     end
@@ -203,8 +184,6 @@ describe Puppet::Configurer::Downloader do
       catalog = mock 'catalog'
       @dler.expects(:catalog).returns(catalog)
       catalog.expects(:apply).yields(trans)
-
-      Timeout.expects(:timeout).yields
 
       resource = mock 'resource'
       resource.expects(:[]).with(:path).returns "/changed/file"
@@ -221,8 +200,6 @@ describe Puppet::Configurer::Downloader do
       @dler.expects(:catalog).returns(catalog)
       catalog.expects(:apply).yields(trans)
 
-      Timeout.expects(:timeout).yields
-
       resource = mock 'resource'
       resource.expects(:[]).with(:path).returns "/changed/file"
 
@@ -235,7 +212,9 @@ describe Puppet::Configurer::Downloader do
 
     it "should catch and log exceptions" do
       Puppet.expects(:err)
-      Timeout.stubs(:timeout).raises(Puppet::Error, "testing")
+      # The downloader creates a new catalog for each apply, and really the only object
+      # that it is possible to stub for the purpose of generating a puppet error
+      Puppet::Resource::Catalog.any_instance.stubs(:apply).raises(Puppet::Error, "testing")
 
       lambda { @dler.evaluate }.should_not raise_error
     end
