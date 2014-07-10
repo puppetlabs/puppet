@@ -64,4 +64,15 @@ describe Puppet::Network::HTTP::Site do
 
     expect(site.hash).to eq(same_site.hash)
   end
+
+  it 'moves to a new URI location' do
+    site = create_site('http', 'host1', 80)
+
+    uri = URI.parse('https://host2:443/some/where/else')
+    new_site = site.move_to(uri)
+
+    expect(new_site.scheme).to eq('https')
+    expect(new_site.host).to eq('host2')
+    expect(new_site.port).to eq(443)
+  end
 end

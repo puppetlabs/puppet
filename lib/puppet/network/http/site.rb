@@ -21,4 +21,8 @@ class Puppet::Network::HTTP::Site
   def hash
     [@scheme, @host, @port].hash
   end
+
+  def move_to(uri)
+    self.class.new(uri.scheme, uri.host, uri.port)
+  end
 end
