@@ -231,6 +231,8 @@ module Win32
 
       FFI::MemoryPointer.new(:pointer) do |ptr|
         @pITS.Activate(wide_string(task), IID_ITask, ptr)
+
+        reset_current_task
         @pITask = COM::Task.new(ptr.read_pointer)
       end
 
@@ -268,16 +270,20 @@ module Win32
     def save(file = nil)
       raise Error.new('No currently active task. ITask is NULL.') if @pITask.nil?
 
+      reset = true
 
       begin
         @pITask.QueryInstance(COM::PersistFile) do |pIPersistFile|
           pIPersistFile.Save(wide_string(file), 1)
         end
+      rescue
+        reset = false
       ensure
-        @pITS = COM::TaskScheduler.new
+        if reset
+          @pITS = COM::TaskScheduler.new
 
-        @pITask.Release
-        @pITask = nil
+          reset_current_task
+        end
       end
     end
 
@@ -515,14 +521,10 @@ module Win32
         end
       }
 
-      if @pITask
-        @pITask.Release
-        @pITask = nil
-      end
-
       FFI::MemoryPointer.new(:pointer) do |ptr|
         @pITS.NewWorkItem(wide_string(task), CLSID_CTask, IID_ITask, ptr)
 
+        reset_current_task
         @pITask = COM::Task.new(ptr.read_pointer)
         pITaskTrigger = nil
 
@@ -930,6 +932,12 @@ module Win32
     end
 
     private
+
+    def reset_current_task
+      # Ensure that COM reference is decremented properly
+      @pITask.Release if @pITask && ! @pITask.null?
+      @pITask = nil
+    end
 
     def populate_trigger(task_trigger, trigger)
       raise TypeError unless task_trigger.is_a?(COM::TaskTrigger)
