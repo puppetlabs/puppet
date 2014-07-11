@@ -13,10 +13,6 @@ describe "the 'file' function" do
   let :compiler do Puppet::Parser::Compiler.new(node) end
   let :scope    do Puppet::Parser::Scope.new(compiler) end
 
-  it "should exist" do
-    Puppet::Parser::Functions.function("file").should == "function_file"
-  end
-
   def with_file_content(content)
     path = tmpfile('file-function')
     file = File.new(path, 'w')
