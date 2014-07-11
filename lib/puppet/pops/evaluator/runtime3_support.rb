@@ -5,6 +5,8 @@
 # @api private
 module Puppet::Pops::Evaluator::Runtime3Support
 
+  NAME_SPACE_SEPARATOR = '::'.freeze
+
   # Fails the evaluation of _semantic_ with a given issue.
   #
   # @param issue [Puppet::Pops::Issue] the issue to report
@@ -256,6 +258,8 @@ module Puppet::Pops::Evaluator::Runtime3Support
     )
   end
 
+  CLASS_STRING = 'class'.freeze
+
   def create_resources(o, scope, virtual, exported, type_name, resource_titles, evaluated_parameters)
 
     # TODO: Unknown resource causes creation of Resource to fail with ArgumentError, should give
@@ -290,7 +294,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
           resource.resource_type.instantiate_resource(scope, resource)
         end
         scope.compiler.add_resource(scope, resource)
-        scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == 'class'
+        scope.compiler.evaluate_classes([resource_title], scope, false, true) if fully_qualified_type == CLASS_STRING
         # Turn the resource into a PType (a reference to a resource type)
         # weed out nil's
         resource_to_ptype(resource)
@@ -311,7 +315,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
   # Capitalizes each segment of a qualified name
   #
   def capitalize_qualified_name(name)
-    name.split(/::/).map(&:capitalize).join('::')
+    name.split(/::/).map(&:capitalize).join(NAME_SPACE_SEPARATOR)
   end
 
   # Creates resource overrides for all resource type objects in evaluated_resources. The same set of

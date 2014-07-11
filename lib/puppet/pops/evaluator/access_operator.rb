@@ -9,6 +9,7 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   Issues = Puppet::Pops::Issues
   TYPEFACTORY = Puppet::Pops::Types::TypeFactory
+  EMPTY_STRING = ''.freeze
 
   attr_reader :semantic
 
@@ -44,7 +45,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
       # if k1 is outside, a length of 1 always produces an empty string
       if k1 < 0
-        ''
+        EMPTY_STRING
       else
         o[ k1, k2 ]
       end
@@ -65,7 +66,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
     # Specified as: an index outside of range, or empty result == empty string
-    (result.nil? || result.empty?) ? '' : result
+    (result.nil? || result.empty?) ? EMPTY_STRING : result
   end
 
   # Parameterizes a PRegexp Type with a pattern string or r ruby egexp
@@ -425,7 +426,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     # the parameterized meta type (i.e. Type[Resource[the_resource_type, the_resource_title]])
     t = Puppet::Pops::Types::TypeCalculator.infer(o).type
     # must map "undefined title" from resource to nil
-    t.title = nil if t.title == ''
+    t.title = nil if t.title == EMPTY_STRING
     access(t, scope, *keys)
   end
 
@@ -569,7 +570,7 @@ class Puppet::Pops::Evaluator::AccessOperator
         if name =~ Puppet::Pops::Patterns::NAME
           ctype = Puppet::Pops::Types::PHostClassType.new()
           # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-          ctype.class_name = name.sub(/^::/, '')
+          ctype.class_name = name.sub(/^::/, EMPTY_STRING)
           ctype
         else
           fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})
