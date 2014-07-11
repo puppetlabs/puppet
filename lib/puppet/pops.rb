@@ -85,7 +85,6 @@ module Puppet
       require 'puppet/pops/parser/parser_support'
       require 'puppet/pops/parser/locator'
       require 'puppet/pops/parser/locatable'
-      require 'puppet/pops/parser/lexer'
       require 'puppet/pops/parser/lexer2'
       require 'puppet/pops/parser/evaluating_parser'
       require 'puppet/pops/parser/epp_parser'
