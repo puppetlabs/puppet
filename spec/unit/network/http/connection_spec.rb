@@ -11,10 +11,6 @@ describe Puppet::Network::HTTP::Connection do
   let (:httpok) { Net::HTTPOK.new('1.1', 200, '') }
 
   context "when providing HTTP connections" do
-    after do
-      Puppet::Network::HTTP::Connection.instance_variable_set("@ssl_host", nil)
-    end
-
     context "when initializing http instances" do
       before :each do
         # All of the cert stuff is tested elsewhere
