@@ -13,10 +13,6 @@ describe "the 'file' function" do
   let :compiler do Puppet::Parser::Compiler.new(node) end
   let :scope    do Puppet::Parser::Scope.new(compiler) end
 
-  it "should exist" do
-    Puppet::Parser::Functions.function("file").should == "function_file"
-  end
-
   def with_file_content(content)
     path = tmpfile('file-function')
     file = File.new(path, 'w')
@@ -31,10 +27,57 @@ describe "the 'file' function" do
     end
   end
 
-  it "should return the first file if given two files" do
+  it "should read a file from a module path" do
+    with_file_content('file content') do |name|
+      mod = mock 'module'
+      mod.stubs(:file).with('myfile').returns(name)
+      compiler.environment.stubs(:module).with('mymod').returns(mod)
+
+      scope.function_file(['mymod/myfile']).should == 'file content'
+    end
+  end
+
+  it "should return the first file if given two files with absolute paths" do
     with_file_content('one') do |one|
       with_file_content('two') do |two|
         scope.function_file([one, two]).should == "one"
+      end
+    end
+  end
+
+  it "should return the first file if given two files with module paths" do
+    with_file_content('one') do |one|
+      with_file_content('two') do |two|
+        mod = mock 'module'
+        compiler.environment.expects(:module).with('mymod').returns(mod)
+        mod.expects(:file).with('one').returns(one)
+        mod.stubs(:file).with('two').returns(two)
+
+        scope.function_file(['mymod/one','mymod/two']).should == 'one'
+      end
+    end
+  end
+
+  it "should return the first file if given two files with mixed paths, absolute first" do
+    with_file_content('one') do |one|
+      with_file_content('two') do |two|
+        mod = mock 'module'
+        compiler.environment.stubs(:module).with('mymod').returns(mod)
+        mod.stubs(:file).with('two').returns(two)
+
+        scope.function_file([one,'mymod/two']).should == 'one'
+      end
+    end
+  end
+
+  it "should return the first file if given two files with mixed paths, module first" do
+    with_file_content('one') do |one|
+      with_file_content('two') do |two|
+        mod = mock 'module'
+        compiler.environment.expects(:module).with('mymod').returns(mod)
+        mod.stubs(:file).with('two').returns(two)
+
+        scope.function_file(['mymod/two',one]).should == 'two'
       end
     end
   end
