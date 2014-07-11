@@ -20,12 +20,10 @@ agents.each do |agent|
 
   step "  install module '#{module_author}-#{module_name}'"
 
-  command = agent['platform'] =~ /windows/ ?
-    Command.new("cmd.exe /c 'puppet module install --version \"<#{module_version}\" #{module_author}-#{module_name}'") :
-    puppet("module install --version \"<#{module_version}\" #{module_author}-#{module_name}")
+  puppet("module install --version \"#{module_version}\" #{module_author}-#{module_name}")
 
   on(agent, command) do
-    assert_module_installed_ui(stdout, module_author, module_name, module_version, '<')
+    assert_module_installed_ui(stdout, module_author, module_name, module_version)
   end
   assert_module_installed_on_disk(agent, distmoduledir, module_name)
 end
