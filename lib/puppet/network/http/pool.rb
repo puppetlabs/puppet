@@ -54,9 +54,10 @@ class Puppet::Network::HTTP::Pool
       Puppet.debug("Using cached connection for #{site}")
       session.connection
     else
-      Puppet.debug("Starting connection for #{site}")
       http = @factory.create_connection(site)
       conn.initialize_ssl(http)
+
+      Puppet.debug("Starting connection for #{site}")
       http.start
       http
     end
