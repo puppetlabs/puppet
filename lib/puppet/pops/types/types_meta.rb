@@ -21,14 +21,10 @@ module Puppet::Pops::Types
     abstract
   end
 
-  class PAbstractType < TypeModelObject
-    abstract
-  end
-
   # Base type for all types except {Puppet::Pops::Types::PType PType}, the type of types.
   # @api public
   #
-  class PAnyType < PAbstractType
+  class PAnyType < TypeModelObject
   end
 
   # The type of types.

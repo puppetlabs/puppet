@@ -34,7 +34,7 @@ class Puppet::Resource::Type
   attr_reader :namespace, :arguments, :behaves_like, :module_name
 
   # Map from argument (aka parameter) names to Puppet Type
-  # @return [Hash<Symbol, Puppet::Pops::Types::PAbstractType] map from name to type
+  # @return [Hash<Symbol, Puppet::Pops::Types::PAnyType] map from name to type
   #
   attr_reader :argument_types
 
@@ -347,7 +347,7 @@ class Puppet::Resource::Type
       unless @arguments.include?(name)
         raise Puppet::DevError, "Parameter '#{name}' is given a type, but is not a valid parameter."
       end
-      unless t.is_a? Puppet::Pops::Types::PAbstractType
+      unless t.is_a? Puppet::Pops::Types::PAnyType
         raise Puppet::DevError, "Parameter '#{name}' is given a type that is not a Puppet Type, got #{t.class}"
       end
       @argument_types[name] = t

@@ -457,7 +457,7 @@ module Puppet::Pops::Evaluator::Runtime3Support
     end
   end
 
-  def convert_PAbstractType(o, scope, undef_value)
+  def convert_PAnyType(o, scope, undef_value)
     o
   end
 

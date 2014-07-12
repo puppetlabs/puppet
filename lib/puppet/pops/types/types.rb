@@ -38,7 +38,7 @@ module Puppet::Pops
       include Puppet::Pops::Containment
     end
 
-    class PAbstractType < TypeModelObject
+    class PAnyType < TypeModelObject
       module ClassModule
         # Produce a deep copy of the type
         def copy
@@ -58,11 +58,6 @@ module Puppet::Pops
         def to_s
           Puppet::Pops::Types::TypeCalculator.string(self)
         end
-      end
-    end
-
-    class PAnyType < PAbstractType
-      module ClassModule
       end
     end
 

@@ -354,13 +354,13 @@ module Puppet::Pops::Types::TypeFactory
   end
 
   # Produce a type corresponding to the class of given unless given is a
-  # String, Class or a PAbstractType.  When a String is given this is taken as
+  # String, Class or a PAnyType.  When a String is given this is taken as
   # a classname.
   #
   def self.type_of(o)
     if o.is_a?(Class)
       @type_calculator.type(o)
-    elsif o.is_a?(Types::PAbstractType)
+    elsif o.is_a?(Types::PAnyType)
       o
     elsif o.is_a?(String)
       Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => o)

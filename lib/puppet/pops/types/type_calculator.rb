@@ -117,7 +117,7 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # Produces a String representation of the given type.
-  # @param t [Puppet::Pops::Types::PAbstractType] the type to produce a string form
+  # @param t [Puppet::Pops::Types::PAnyType] the type to produce a string form
   # @return [String] the type in string form
   #
   # @api public
@@ -290,7 +290,7 @@ class Puppet::Pops::Types::TypeCalculator
 
   # Answers if the two given types describe the same type
   def equals(left, right)
-    return false unless left.is_a?(Types::PAbstractType) && right.is_a?(Types::PAbstractType)
+    return false unless left.is_a?(Types::PAnyType) && right.is_a?(Types::PAnyType)
     # Types compare per class only - an extra test must be made if the are mutually assignable
     # to find all types that represent the same type of instance
     #
@@ -484,7 +484,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def is_ptype?(t)
-    return t.is_a?(Types::PAbstractType)
+    return t.is_a?(Types::PAnyType)
   end
 
   # Answers if t represents the puppet type PNilType
@@ -728,7 +728,7 @@ class Puppet::Pops::Types::TypeCalculator
   # The type of all types is PType
   # @api private
   #
-  def infer_PAbstractType(o)
+  def infer_PAnyType(o)
     type = Types::PType.new()
     type.type = o.copy
     type

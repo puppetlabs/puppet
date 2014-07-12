@@ -414,7 +414,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
     begin
     # Left is a type
-    if left.is_a?(Puppet::Pops::Types::PAbstractType)
+    if left.is_a?(Puppet::Pops::Types::PAnyType)
       case o.operator
       when :'=='
         @@type_calculator.equals(left,right)
@@ -487,7 +487,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     pattern = evaluate(o.right_expr, scope)
 
     # matches RHS types as instance of for all types except a parameterized Regexp[R]
-    if pattern.is_a?(Puppet::Pops::Types::PAbstractType)
+    if pattern.is_a?(Puppet::Pops::Types::PAnyType)
       # evaluate as instance? of type check
       matched = @@type_calculator.instance?(pattern, left)
       # convert match result to Boolean true, or false
@@ -867,7 +867,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     "/#{o.source}/"
   end
 
-  def string_PAbstractType(o, scope)
+  def string_PAnyType(o, scope)
     @@type_calculator.string(o)
   end
 
@@ -996,7 +996,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       matched = right.match(left)
       set_match_data(matched, scope) # creates or clears ephemeral
       !!matched # convert to boolean
-    elsif right.is_a?(Puppet::Pops::Types::PAbstractType)
+    elsif right.is_a?(Puppet::Pops::Types::PAnyType)
       # right is a type and left is not - check if left is an instance of the given type
       # (The reverse is not terribly meaningful - computing which of the case options that first produces
       # an instance of a given type).
