@@ -65,6 +65,16 @@ describe "the epp function" do
     end
   end
 
+  context "when given an empty template" do
+     it "allows the template file to be empty" do
+       expect(eval_template("")).to eq("")
+     end
+
+    it "allows the template to have empty body after parameters" do
+      expect(eval_template_with_args("<%-|$x|%>", 'x'=>1)).to eq("")
+    end
+  end
+
   context "when using typed parameters" do
     it "allows a passed value that matches the parameter's type" do
       expect(eval_template_with_args("<%-|String $x|-%><%= $x == correct %>", 'x' => 'correct')).to eq("true")
