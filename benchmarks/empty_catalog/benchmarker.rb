@@ -23,6 +23,8 @@ class Benchmarker
     end
     env = Puppet.lookup(:environments).get('benchmarking')
     node = Puppet::Node.new("testing", :environment => env)
+    # Mimic what apply does (or the benchmark will in part run for the *root* environment)
+    Puppet.push_context({:current_environment => env},'current env for benchmark')
     Puppet::Resource::Catalog.indirection.find("testing", :use_node => node)
   end
 
