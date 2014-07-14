@@ -233,6 +233,53 @@ describe Puppet::Network::HTTP::Connection do
     end
   end
 
+  context "when response is a 503 or an exception is raised" do
+    let (:subject) { Puppet::Network::HTTP::Connection.new("my_server", 8140, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator) }
+    let (:httpretry) { Net::HTTPServiceUnavailable.new('1.1', 503, 'Service Temporarily Unavailable') }
+    let (:httpretry_body) { 'This page is temporarily unavailable' }
+    before :each do
+      httpretry.stubs(:read_body).returns(:httpretry_body)
+
+      socket = stub_everything("socket")
+      TCPSocket.stubs(:open).returns(socket)
+
+      Net::HTTP::Get.any_instance.stubs(:exec).returns("")
+      Net::HTTP::Put.any_instance.stubs(:exec).returns("")
+    end
+
+    it "should retry idempotent requests" do
+      httpok.stubs(:read_body).returns(:body)
+      Net::HTTPResponse.stubs(:read_new).returns(httpretry).then.returns(httpok)
+
+      subject.expects(:sleep).once
+      subject.get("/foo").body.should == :body
+    end
+
+    it "should not retry non-idempotent requests" do
+      httpok.stubs(:read_body).returns(:body)
+
+      subject.expects(:sleep).never
+      subject.expects(:execute_request).once.returns(httpretry)
+      subject.put("/foo", "").body.should == :httpretry_body
+    end
+
+    it "should return retry response after too many retries" do
+      Net::HTTPResponse.stubs(:read_new).returns(httpretry)
+
+      subject.expects(:sleep).twice
+      subject.get("/foo").body.should == :httpretry_body
+    end
+
+    it "should raise retry exception after too many exceptions" do
+      Net::HTTPResponse.stubs(:read_new).raises(Net::HTTPBadResponse)
+
+      subject.expects(:sleep).twice
+      expect {
+        subject.get("/foo")
+      }.to raise_error(Puppet::Network::HTTP::RetryLimitExceededException)
+    end
+  end
+
   it "allows setting basic auth on get requests" do
     expect_request_with_basic_auth
 
