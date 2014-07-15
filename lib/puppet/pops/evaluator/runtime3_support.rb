@@ -326,6 +326,9 @@ module Puppet::Pops::Evaluator::Runtime3Support
     file, line = extract_file_line(o)
 
     evaluated_resources.each do |r|
+      unless r.is_a?(Puppet::Pops::Types::PResourceType) && r.type_name != 'class'
+        fail(Puppet::Pops::Issues::ILLEGAL_OVERRIDEN_TYPE, o, {:actual => r} )
+      end
       resource = Puppet::Parser::Resource.new(
       r.type_name, r.title,
         :parameters => evaluated_parameters,
