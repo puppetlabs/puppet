@@ -23,12 +23,6 @@ class Puppet::Network::HTTP::Factory
     end
 
     http = Net::HTTP.new(*args)
-
-    # REMIND: this probably isn't needed anymore
-    # Pop open the http client a little; older versions of Net::HTTP(s) didn't
-    # give us a reader for ca_file... Grr...
-    class << http; attr_accessor :ca_file; end
-
     http.use_ssl = site.use_ssl?
     # Use configured timeout (#1176)
     http.read_timeout = Puppet[:configtimeout]
