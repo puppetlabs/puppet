@@ -278,8 +278,8 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     trigger = dummy_time_trigger
 
     if user_provided_input
-      self.fail "'enabled' is read-only on triggers" if puppet_trigger.has_key?('enabled')
-      self.fail "'index' is read-only on triggers"   if puppet_trigger.has_key?('index')
+      self.fail "'enabled' is read-only on scheduled_task triggers and should be removed ('enabled' is usually provided in puppet resource scheduled_task)." if puppet_trigger.has_key?('enabled')
+      self.fail "'index' is read-only on scheduled_task triggers and should be removed ('index' is usually provided in puppet resource scheduled_task)."   if puppet_trigger.has_key?('index')
     end
     puppet_trigger.delete('index')
 
