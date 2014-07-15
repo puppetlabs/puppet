@@ -16,7 +16,7 @@ Recommends: lsb-release, debconf-utils
 Suggests: ruby-selinux | libselinux-ruby1.8, librrd-ruby1.9.1 | librrd-ruby1.8
 Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
 Provides: hiera-puppet
-Conflicts: hiera-puppet
+Conflicts: hiera-puppet, puppet (<< 3.3.0-1puppetlabs1)
 Replaces: hiera-puppet
 Description: Centralized configuration management
  Puppet lets you centrally manage every important aspect of your system
@@ -39,6 +39,7 @@ Architecture: all
 Depends: ${misc:Depends},  puppet-common (= ${binary:Version}), ruby | ruby-interpreter
 Recommends: rdoc
 Suggests: puppet-el, vim-puppet
+Conflicts: puppet-common (<< 3.3.0-1puppetlabs1)
 Description: Centralized configuration management - agent startup and compatibility scripts
  This package contains the startup script and compatbility scripts for the
  puppet agent, which is the process responsible for configuring the local node.
