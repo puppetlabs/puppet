@@ -112,6 +112,14 @@ describe "Puppet::Parser::Compiler" do
       expect(catalog).to have_resource("Notify[bye_test]").with_parameter(:message, "defaulted")
     end
 
+    it 'does not allow override of class parameters using a resource override expression' do
+      expect do
+        compile_to_catalog(<<-CODE)
+          Class[a] { x => 2}
+        CODE
+      end.to raise_error(/Resource Override can only.*got: Class\[a\].*/)
+    end
+
     describe "when resolving class references" do
       it "should not favor local scope (with class included in topscope)" do
         catalog = compile_to_catalog(<<-PP)

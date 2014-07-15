@@ -722,7 +722,11 @@ sublocated_text
   | SUBLOCATE dq_string { result = Factory.SUBLOCATE(val[0], val[1]); loc result, val[0] }
 
 epp_expression
-  : EPP_START epp_parameters_list statements { result = Factory.EPP(val[1], val[2]); loc result, val[0] }
+  : EPP_START epp_parameters_list optional_statements { result = Factory.EPP(val[1], val[2]); loc result, val[0] }
+
+optional_statements
+  :
+  | statements
 
 epp_parameters_list
   :                                  =LOW{ result = nil }

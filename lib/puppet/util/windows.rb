@@ -12,6 +12,7 @@ module Puppet::Util::Windows
     require 'puppet/util/windows/api_types'
     require 'puppet/util/windows/string'
     require 'puppet/util/windows/error'
+    require 'puppet/util/windows/com'
     require 'puppet/util/windows/sid'
     require 'puppet/util/windows/file'
     require 'puppet/util/windows/security'

@@ -51,7 +51,7 @@ Running Tests on the vcloud
 ---------------------------
 
 In order to use the Puppet Labs vcloud, you'll need to be a Puppet Labs employee.
-Community members should see the [guide to running the tests on vagrant boxen](#running-tests-on-local-vagrant-boxen).
+Community members should see the [guide to running the tests on vagrant boxen](#running-tests-on-vagrant-boxen).
 
 ### Authentication
 
@@ -59,18 +59,19 @@ Normally the ci tasks are called from a prepared Jenkins job.
 
 If you are running this on your laptop, you will need this ssh private key in order for beaker to be able to log into the vms created from the hosts file:
 
-https://github.com/puppetlabs/puppetlabs-modules/blob/qa/secure/jenkins/id_rsa-acceptance
-https://github.com/puppetlabs/puppetlabs-modules/blob/qa/secure/jenkins/id_rsa-acceptance.pub
+https://github.com/puppetlabs/puppetlabs-modules/blob/production/secure/jenkins/id_rsa-acceptance
+https://github.com/puppetlabs/puppetlabs-modules/blob/production/secure/jenkins/id_rsa-acceptance.pub
 
-TODO fetch these files directly from github, but am running into rate limits and then would also have to cross the issue of authentication.
+Please note in acceptance/Rakefile where the ssh key is defaulted to. It may be looking in ~/.ssh/id_rsa-acceptance, but it may want to look in the working directory (e.g. puppet/acceptance).
 
-You will also need QA credentials to vsphere in a ~/.fog file.  These credentials can be found on any of the Jenkins coordinator hosts.
+You will also need QA credentials to vsphere in a ~/.fog file.  These credentials can be found on any of the Jenkins coordinator hosts. You may want to check periodically to ensure that the credentials you have are still valid as they may change periodically.
 
 ### Packages
 
 In order to run the tests on hosts provisioned from packages produced by Delivery, you will need to reference a Puppet commit sha that has been packaged using Delivery's pl:jenkins:uber_build task.  This is the snippet used by 'Puppet Packaging' Jenkins jobs:
 
 ```sh
+# EXAMPLE - DO NOT RUN THIS
 rake --trace package:implode
 rake --trace package:bootstrap
 rake --trace pl:jenkins:uber_build

@@ -201,21 +201,24 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup_logs
-    # Handle the logging settings.
-    if options[:debug] or options[:verbose]
-      if options[:debug]
-        Puppet::Util::Log.level = :debug
-      else
-        Puppet::Util::Log.level = :info
-      end
+    set_log_level
 
-      unless Puppet[:daemonize] or options[:rack]
+    if !options[:setdest]
+      if options[:node]
+        # We are compiling a catalog for a single node with '--compile' and logging
+        # has not already been configured via '--logdest' so log to the console.
         Puppet::Util::Log.newdestination(:console)
-        options[:setdest] = true
+      elsif !(Puppet[:daemonize] or options[:rack])
+        # We are running a webrick master which has been explicitly foregrounded
+        # and '--logdest' has not been passed, assume users want to see logging
+        # and log to the console.
+        Puppet::Util::Log.newdestination(:console)
+      else
+        # No explicit log destination has been given with '--logdest' and we're
+        # either a daemonized webrick master or running under rack, log to syslog.
+        Puppet::Util::Log.newdestination(:syslog)
       end
     end
-
-    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
   end
 
   def setup_terminuses

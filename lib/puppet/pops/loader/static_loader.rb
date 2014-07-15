@@ -56,7 +56,17 @@ class Puppet::Pops::Loader::StaticLoader < Puppet::Pops::Loader::Loader
           # New implementation uses the evaluator to get proper formatting per type
           # TODO: uses a fake scope (nil) - fix when :scopes are available via settings
           mapped = vals.map {|v| Puppet::Pops::Evaluator::EvaluatorImpl.new.string(v, nil) }
-          Puppet.send(level, mapped.join(" "))
+
+          # Bypass Puppet.<level> call since it picks up source from "self" which is not applicable in the 4x
+          # Function API.
+          # TODO: When a function can obtain the file, line, pos of the call merge those in (3x supports
+          #       options :file, :line. (These were never output when calling the 3x logging functions since
+          #       3x scope does not know about the calling location at that detailed level, nor do they
+          #       appear in a report to stdout/error when included). Now, the output simply uses scope (like 3x)
+          #       as this is good enough, but does not reflect the true call-stack, but is a rough estimate
+          #       of where the logging call originates from).
+          #
+          Puppet::Util::Log.create({:level => level, :source => scope, :message => mapped.join(" ")})
         end
       end
 
