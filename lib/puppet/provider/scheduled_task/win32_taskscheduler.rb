@@ -1,16 +1,11 @@
 require 'puppet/parameter'
 
 if Puppet.features.microsoft_windows?
-  require 'win32/taskscheduler'
+  require 'puppet/util/windows/taskscheduler'
 end
 
 Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
-  desc %q{This provider uses the win32-taskscheduler gem to manage scheduled
-    tasks on Windows.
-
-    Puppet requires version 0.2.1 or later of the win32-taskscheduler gem;
-    previous versions can cause "Could not evaluate: The operation completed
-    successfully" errors.}
+  desc %q{This provider manages scheduled tasks on Windows.}
 
   defaultfor :operatingsystem => :windows
   confine    :operatingsystem => :windows
@@ -283,8 +278,8 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     trigger = dummy_time_trigger
 
     if user_provided_input
-      self.fail "'enabled' is read-only on triggers" if puppet_trigger.has_key?('enabled')
-      self.fail "'index' is read-only on triggers"   if puppet_trigger.has_key?('index')
+      self.fail "'enabled' is read-only on scheduled_task triggers and should be removed ('enabled' is usually provided in puppet resource scheduled_task)." if puppet_trigger.has_key?('enabled')
+      self.fail "'index' is read-only on scheduled_task triggers and should be removed ('index' is usually provided in puppet resource scheduled_task)."   if puppet_trigger.has_key?('index')
     end
     puppet_trigger.delete('index')
 

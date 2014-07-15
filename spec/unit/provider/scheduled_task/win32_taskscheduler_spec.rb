@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-require 'win32/taskscheduler' if Puppet.features.microsoft_windows?
+require 'puppet/util/windows/taskscheduler' if Puppet.features.microsoft_windows?
 
 shared_examples_for "a trigger that handles start_date and start_time" do
   let(:trigger) do
