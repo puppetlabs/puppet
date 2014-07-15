@@ -196,8 +196,7 @@ module Puppet::Network::HTTP
           break if ![500, 502, 503, 504].include?(response.code.to_i)
         rescue SystemCallError, Net::HTTPBadResponse, Timeout::Error, SocketError => e
         end
-        break if i >= (@retry_limit - 1)
-        sleep 3
+        sleep 3 unless i == (@retry_limit - 1)
         # and try again...
       end
       # We reached the max retries.  We should either return the last response
