@@ -30,7 +30,7 @@ gem "rake", "10.1.1", :require => false
 gem "rgen", "0.7.0", :require => false
 
 group(:development, :test) do
-  gem "rspec", "~> 2.11.0", :require => false
+  gem "rspec", "~> 2.14.0", :require => false
 
   # Mocha is not compatible across minor version changes; because of this only
   # versions matching ~> 0.10.5 are supported. All other versions are unsupported
