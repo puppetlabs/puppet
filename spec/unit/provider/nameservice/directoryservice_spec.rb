@@ -50,7 +50,7 @@ describe 'DirectoryService.single_report' do
 
     expect {
       Puppet::Provider::NameService::DirectoryService.single_report('resource_name')
-    }.to_not raise_error(RuntimeError)
+    }.to_not raise_error
   end
 
   it 'should use plist data on >= 10.5' do

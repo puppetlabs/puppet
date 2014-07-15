@@ -64,6 +64,6 @@ shared_examples_for 'all iterative functions argument checks' do |func|
       compile_to_catalog(<<-MANIFEST)
         [1].#{func}() |$v1, $v2, $v3=extra| {  }
       MANIFEST
-    end.to_not raise_error(Puppet::Error)
+    end.to_not raise_error
   end
 end

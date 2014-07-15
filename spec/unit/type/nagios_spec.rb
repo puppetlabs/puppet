@@ -125,7 +125,7 @@ EOL
       parser =  Nagios::Parser.new
       expect {
         results = parser.parse(ESCAPED_SEMICOLON)
-      }.to_not raise_error Nagios::Parser::SyntaxError
+      }.to_not raise_error
     end
 
     it "should ignore it if it is a comment" do
@@ -147,7 +147,7 @@ EOL
       parser =  Nagios::Parser.new
       expect {
         results = parser.parse(POUND_SIGN_HASH_SYMBOL_NOT_IN_FIRST_COLUMN)
-      }.to_not raise_error Nagios::Parser::SyntaxError
+      }.to_not raise_error
     end
 
 
@@ -170,7 +170,7 @@ EOL
       parser =  Nagios::Parser.new
       expect {
         results = parser.parse(ANOTHER_ESCAPED_SEMICOLON)
-      }.to_not raise_error Nagios::Parser::SyntaxError
+      }.to_not raise_error
     end
 
     it "should parse correctly" do
