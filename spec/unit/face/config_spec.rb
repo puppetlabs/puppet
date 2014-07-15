@@ -126,7 +126,7 @@ basemodulepath = #{File.expand_path("/some/base")}
         CONF
       end
 
-      it_behaves_like :config_printing_a_section
+      it_behaves_like :config_printing_a_section, nil
     end
 
     context "from master section" do
