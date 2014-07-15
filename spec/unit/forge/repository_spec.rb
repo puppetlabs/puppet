@@ -80,6 +80,20 @@ describe Puppet::Forge::Repository do
       request['User-Agent'].should =~ /\bRuby\b/
     end
 
+    it "Does not set Authorization header by default" do
+      Puppet.features.stubs(:pe_license?).returns(false)
+      Puppet[:forge_authorization] = nil
+      request = repository.get_request_object("the_path")
+      request['Authorization'].should == nil
+    end
+
+    it "Sets Authorization header from config" do
+      token = 'bearer some token'
+      Puppet[:forge_authorization] = token
+      request = repository.get_request_object("the_path")
+      request['Authorization'].should == token
+    end
+
     it "escapes the received URI" do
       unescaped_uri = "héllo world !! ç à"
       performs_an_http_request do |http|

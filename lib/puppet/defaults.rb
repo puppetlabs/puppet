@@ -533,6 +533,14 @@ module Puppet
     :module_skeleton_dir => {
         :default  => '$module_working_dir/skeleton',
         :desc     => "The directory which the skeleton for module tool generate is stored.",
+    },
+    :forge_authorization => {
+        :default  => nil,
+        :desc     => "The authorization key to connect to the Puppet Forge. Leave blank for unauthorized or license based connections",
+    },
+    :module_groups => {
+        :default  => nil,
+        :desc     => "Extra module groups to request from the Puppet Forge",
     }
   )
 

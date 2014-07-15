@@ -110,6 +110,27 @@ describe Puppet::Forge do
     forge.search('bacula').should == search_results
   end
 
+  context "when module_groups are defined" do
+    let(:release_response) do
+      releases = JSON.parse(http_response)
+      releases['results'] = []
+      JSON.dump(releases)
+    end
+
+    before :each do
+      repository_responds_with(stub(:body => release_response, :code => '200')).with {|uri| uri =~ /module_groups=foo/}
+      Puppet[:module_groups] = "foo"
+    end
+
+    it "passes module_groups with search" do
+      forge.search('bacula')
+    end
+
+    it "passes module_groups with fetch" do
+      forge.fetch('puppetlabs-bacula')
+    end
+  end
+
   context "when the connection to the forge fails" do
     before :each do
       repository_responds_with(stub(:body => '{}', :code => '404', :message => "not found"))
