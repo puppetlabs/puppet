@@ -202,7 +202,7 @@ module Puppet
   # initialization where the {base_context} bindings are put in place
   # @api private
   def self.bootstrap_context
-    root_environment = Puppet::Node::Environment.create(:'*root*', [], '')
+    root_environment = Puppet::Node::Environment.create(:'*root*', [], Puppet::Node::Environment::NO_MANIFEST)
     {
       :current_environment => root_environment,
       :root_environment => root_environment
