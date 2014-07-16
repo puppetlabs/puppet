@@ -76,9 +76,9 @@ class Puppet::Transaction::ResourceHarness
       cache(resource, param, context.current_values[param])
     end
 
-    ensure_param = resource.parameter(:ensure)
-    if ensure_param && ensure_param.should
-      ensure_event = sync_if_needed(ensure_param, context)
+    ensure_prop = resource.property(:ensure)
+    if ensure_prop && ensure_prop.should
+      ensure_event = sync_if_needed(ensure_prop, context)
     else
       ensure_event = NO_ACTION
     end

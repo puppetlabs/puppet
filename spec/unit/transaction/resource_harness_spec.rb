@@ -159,6 +159,73 @@ describe Puppet::Transaction::ResourceHarness do
     stubProvider
   end
 
+  describe "when ensure is a parameter" do
+    before :each do
+      stub_type = Class.new(Puppet::Type)
+      stub_type.instance_eval do
+        initvars
+
+        newparam(:name) do
+          desc "Name"
+          isnamevar
+        end
+
+        newparam(:ensure) do
+          desc "ensure parameter"
+          newvalues :present, :absent
+          defaultto :present
+        end
+      end
+
+      @resource = stub_type.new(:name => "test")
+    end
+
+    it "does not try to call ensure#should" do
+      @resource.parameter(:ensure).expects(:should).never
+      @harness.evaluate(@resource)
+    end
+
+    it "does not try to call ensure#retrieve" do
+      @resource.parameter(:ensure).expects(:retrieve).never
+      @harness.evaluate(@resource)
+    end
+  end
+
+  describe "when ensure is a property" do
+    before :each do
+      stub_type = Class.new(Puppet::Type)
+      stub_type.instance_eval do
+        initvars
+
+        newparam(:name) do
+          desc "Name"
+          isnamevar
+        end
+
+        newproperty(:ensure) do
+          desc "ensure property"
+          newvalues :present, :absent
+          defaultto :present
+
+          def retrieve
+            :absent
+          end
+        end
+      end
+
+      @resource = stub_type.new(:name => "test")
+    end
+
+    it "calls ensure#should" do
+      @resource.property(:ensure).expects(:should).once
+      @harness.evaluate(@resource)
+    end
+
+    it "calls ensure#retrieve" do
+      @resource.property(:ensure).expects(:retrieve).once
+      @harness.evaluate(@resource)
+    end
+  end
 
   context "interaction of ensure with other properties" do
     def an_ensurable_resource_reacting_as(behaviors)
