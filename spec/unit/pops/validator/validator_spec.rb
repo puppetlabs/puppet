@@ -152,6 +152,20 @@ describe "validating 4x" do
         expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_TYPE_NAME)
       end
     end
+  end
+
+  context 'for reserved parameter names' do
+    ['name', 'title'].each do |word|
+      it "produces an error when $#{word} is used as a parameter in a class" do
+        source = "class x ($#{word}) {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_PARAMETER)
+      end
+
+      it "produces an error when $#{word} is used as a parameter in a define" do
+        source = "define x ($#{word}) {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_PARAMETER)
+      end
+    end
 
   end
 

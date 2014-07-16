@@ -286,11 +286,13 @@ class Puppet::Pops::Validation::Checker4_0
   def check_HostClassDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)
+    internal_check_reserved_params(o)
   end
 
   def check_ResourceTypeDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)
+    internal_check_reserved_params(o)
   end
 
   def internal_check_capture_last(o)
@@ -303,9 +305,22 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def internal_check_no_capture(o, container = o)
-    o.parameters.each_with_index do |p, index|
+    o.parameters.each do |p|
       if p.captures_rest
         acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, {:container => container, :param_name => p.name})
+      end
+    end
+  end
+
+  RESERVED_PARAMETERS = {
+    'name' => true,
+    'title' => true,
+  }
+
+  def internal_check_reserved_params(o)
+    o.parameters.each do |p|
+      if RESERVED_PARAMETERS[p.name]
+        acceptor.accept(Issues::RESERVED_PARAMETER, p, {:container => o, :param_name => p.name})
       end
     end
   end
