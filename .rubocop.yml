@@ -8,6 +8,9 @@ AllCops:
     - 'autotest/**/*'
     - 'spec/**/*'
     - 'tasks/**/*'
+    - 'lib/puppet/parser/parser.rb'
+    - 'lib/puppet/pops/parser/eparser.rb'
+    - 'lib/puppet/external/nagios/parser.rb'
 
 Lint/ConditionPosition:
   Enabled: true
