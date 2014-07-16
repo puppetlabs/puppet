@@ -77,7 +77,7 @@ module Puppet::ModuleTool
         end
 
         File.open(File.join(build_path, 'checksums.json'), 'w') do |f|
-          f.write(PSON.pretty_generate(Checksums.new(@path)))
+          f.write(PSON.pretty_generate(Checksums.new(build_path)))
         end
       end
 
