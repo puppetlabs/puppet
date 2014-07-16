@@ -65,7 +65,7 @@ Style/SpaceBeforeComment:
 
 # DISABLED - not useful
 Style/HashSyntax:
-  EnforcedStyle: hash_rockets
+  Enabled: false
 
 # USES: as shortcut for non nil&valid checking a = x() and a.empty?
 # DISABLED - not useful
