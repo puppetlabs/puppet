@@ -2,8 +2,8 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:exec).provider(:shell), :unless => Puppet.features.microsoft_windows? do
-  let :resource do Puppet::Resource.new(:exec, 'foo') end
-  let :provider do described_class.new(resource) end
+  let(:resource) { Puppet::Type.type(:exec).new(:title => 'foo', :provider => 'shell') }
+  let(:provider) { described_class.new(resource) }
 
   describe "#run" do
     it "should be able to run builtin shell commands" do
