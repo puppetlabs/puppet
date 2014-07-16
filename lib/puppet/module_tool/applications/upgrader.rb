@@ -18,6 +18,7 @@ module Puppet::ModuleTool
         @action              = :upgrade
         @environment         = options[:environment_instance]
         @name                = name
+        @ignore_changes      = forced? || options[:ignore_changes]
         @ignore_dependencies = forced? || options[:ignore_dependencies]
 
         Semantic::Dependency.add_source(installed_modules_source)
@@ -70,7 +71,7 @@ module Puppet::ModuleTool
 
           vstring = mod.version ? "v#{mod.version}" : '???'
           Puppet.notice "Found '#{name}' (#{colorize(:cyan, vstring)}) in #{dir} ..."
-          unless forced?
+          unless @ignore_changes
             changes = Checksummer.run(mod.path) rescue []
             if mod.has_metadata? && !changes.empty?
               raise LocalChangesError,
