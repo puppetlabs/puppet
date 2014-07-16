@@ -164,7 +164,7 @@ module Puppet::ModuleTool::Errors
       message = []
       message << "Could not #{@action} module '#{@module_name}' (#{vstring})"
       message << "  Installed module has had changes made locally"
-      message << "    Use `puppet module #{@action} --force` to #{@action} this module anyway"
+      message << "    Use `puppet module #{@action} --ignore-changes` to #{@action} this module anyway"
       message.join("\n")
     end
   end

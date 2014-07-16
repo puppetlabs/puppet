@@ -87,7 +87,7 @@ module Puppet::ModuleTool
       def validate_module
         mod = @installed.first
 
-        if !@options[:force] && mod.has_metadata?
+        if !@options[:force] && !@options[:ignore_changes] && mod.has_metadata?
           changes = begin
             Puppet::ModuleTool::Applications::Checksummer.run(mod.path)
           rescue ArgumentError
