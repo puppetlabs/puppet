@@ -191,10 +191,26 @@ class Puppet::Pops::Parser::Parser
     Factory.transform_resource_wo_title(left, resource)
   end
 
-  # If there are definitions that require initialization a Program is produced, else the body
+  # Creates a program with the given body.
+  #
   def create_program(body)
     locator = @lexer.locator
     Factory.PROGRAM(body, definitions, locator)
+  end
+
+  # Creates an empty program with a single No-op at the input's EOF offset with 0 length.
+  #
+  def create_empty_program()
+    locator = @lexer.locator
+    no_op = Factory.literal(nil)
+    # Create a synthetic NOOP token at EOF offset with 0 size. The lexer does not produce an EOF token that is
+    # visible to the grammar rules. Creating this token is mainly to reuse the positioning logic as it
+    # expects a token decorated with location information.
+    token_sym, token = @lexer.emit_completed([:NOOP,'',0], locator.string.bytesize)
+    loc(no_op, token)
+    # Program with a Noop
+    program = Factory.PROGRAM(no_op, [], locator)
+    program
   end
 
   # Performs the parsing and returns the resulting model.

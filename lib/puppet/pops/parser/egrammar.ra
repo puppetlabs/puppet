@@ -64,11 +64,11 @@ prechigh
 preclow
 
 rule
-# Produces [Model::BlockExpression, Model::Expression, nil] depending on multiple statements, single statement or empty
+# Produces [Model::Program] with a body containing what was parsed
 program
-  : statements { result = create_program(Factory.block_or_expression(*val[0])) }
+  : statements     { result = create_program(Factory.block_or_expression(*val[0])) }
   | epp_expression { result = create_program(Factory.block_or_expression(*val[0])) }
-  | nil
+  |                { result = create_empty_program() }
 
 # Produces a semantic model (non validated, but semantically adjusted).
 statements
