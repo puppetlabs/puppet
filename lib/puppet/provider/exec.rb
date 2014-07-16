@@ -50,7 +50,7 @@ class Puppet::Provider::Exec < Puppet::Provider
         if Puppet.features.microsoft_windows?
           exec_user = resource[:user]
         # Etc.getpwuid() returns nil on Windows
-        elsif Etc.getpwuid(Process.uid).name == resource[:user]
+        elsif resource.current_username == resource[:user]
           exec_user = nil
         else
           exec_user = resource[:user]

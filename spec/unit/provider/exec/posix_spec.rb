@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:posix) do
+describe Puppet::Type.type(:exec).provider(:posix), :as_platform => :posix do
   include PuppetSpec::Files
 
   def make_exe
@@ -89,6 +89,16 @@ describe Puppet::Type.type(:exec).provider(:posix) do
     it "should not be able to execute shell builtins" do
       provider.resource[:path] = ['/bogus/bin']
       expect { provider.run("cd ..") }.to raise_error(ArgumentError, "Could not find command 'cd'")
+    end
+
+    it "does not override the user when it is already the requested user" do
+      Etc.stubs(:getpwuid).returns(Etc::Passwd.new('testing'))
+      provider.resource[:user] = 'testing'
+      command = make_exe
+
+      Puppet::Util::Execution.expects(:execute).with(anything(), has_entry(:uid, nil)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
+      provider.run(command)
     end
 
     it "should execute the command if the command given includes arguments or subcommands" do
