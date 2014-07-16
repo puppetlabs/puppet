@@ -212,6 +212,30 @@ describe Puppet::ModuleTool::Metadata do
     end
   end
 
+  describe "#delete" do
+    subject { metadata.update(data) }
+
+    context "with default keys" do
+      let(:data) { { 'name' => 'billgates-mymodule' } }
+
+      it "deletes the name from metadata" do
+        subject.delete('name')
+        subject.to_hash['name'].should be_nil
+        subject.to_hash['author'].should == 'billgates'
+      end
+    end
+
+    context "with a custom key" do
+      let(:data) { { 'name' => 'billgates-mymodule', 'test' => 'the best' } }
+
+      it "deletes the extra fields from metadata" do
+        subject.delete('test')
+        subject.to_hash['test'].should be_nil
+        subject.to_hash['author'].should == 'billgates'
+      end
+    end
+  end
+
   describe "#to_hash" do
     subject { metadata.to_hash }
 
