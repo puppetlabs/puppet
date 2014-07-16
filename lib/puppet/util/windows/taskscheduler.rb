@@ -83,8 +83,12 @@ module Win32
     SCHED_S_TASK_RUNNING                  = 0x00041301
     SCHED_S_TASK_HAS_NOT_RUN              = 0x00041303
     SCHED_S_TASK_NOT_SCHEDULED            = 0x00041305
-    SCHED_E_ACCOUNT_INFORMATION_NOT_SET   = 0x8004130F
-    SCHED_E_NO_SECURITY_SERVICES          = 0x80041312
+    # HRESULT error codes
+    # http://blogs.msdn.com/b/eldar/archive/2007/04/03/a-lot-of-hresult-codes.aspx
+    # in Ruby, an 0x8XXXXXXX style HRESULT can be resolved to 2s complement
+    # by using "0x8XXXXXXX".to_i(16) - - 0x100000000
+    SCHED_E_ACCOUNT_INFORMATION_NOT_SET   = -2147216625 # 0x8004130F
+    SCHED_E_NO_SECURITY_SERVICES          = -2147216622 # 0x80041312
     # No mapping between account names and security IDs was done.
     ERROR_NONE_MAPPED                     = -2147023564 # 0x80070534  WIN32 Error CODE 1332 (0x534)
 
