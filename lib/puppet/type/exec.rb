@@ -183,12 +183,11 @@ module Puppet
         Please note that the $HOME environment variable is not automatically set
         when using this attribute."
 
-      # Most validation is handled by the SUIDManager class.
       validate do |user|
         if Puppet.features.microsoft_windows?
           self.fail "Unable to execute commands as other users on Windows"
-        else
-          self.fail "Only root can execute commands as other users" unless Puppet.features.root? or Etc.getpwuid(Process.uid).name == user
+        elsif !Puppet.features.root? && resource.current_username() != user
+          self.fail "Only root can execute commands as other users"
         end
       end
     end
@@ -566,6 +565,10 @@ module Puppet
           self.property(:returns).sync
         end
       end
+    end
+
+    def current_username
+      Etc.getpwuid(Process.uid).name
     end
   end
 end
