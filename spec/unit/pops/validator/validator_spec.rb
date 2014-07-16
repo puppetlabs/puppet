@@ -120,6 +120,55 @@ describe "validating 4x" do
     end
   end
 
+  context 'for reserved type names' do
+    [# type/Type, is a reserved name but results in syntax error because it is a keyword in lower case form
+    'any',
+    'unit',
+    'scalar',
+    'boolean',
+    'numeric',
+    'integer',
+    'float',
+    'collection',
+    'array',
+    'hash',
+    'tuple',
+    'struct',
+    'variant',
+    'optional',
+    'enum',
+    'regexp',
+    'pattern',
+    'runtime',
+    ].each do |name|
+
+      it "produces an error for 'class #{name}'" do
+        source = "class #{name} {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_TYPE_NAME)
+      end
+
+      it "produces an error for 'define #{name}'" do
+        source = "define #{name} {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_TYPE_NAME)
+      end
+    end
+  end
+
+  context 'for reserved parameter names' do
+    ['name', 'title'].each do |word|
+      it "produces an error when $#{word} is used as a parameter in a class" do
+        source = "class x ($#{word}) {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_PARAMETER)
+      end
+
+      it "produces an error when $#{word} is used as a parameter in a define" do
+        source = "define x ($#{word}) {}"
+        expect(validate(parse(source))).to have_issue(Puppet::Pops::Issues::RESERVED_PARAMETER)
+      end
+    end
+
+  end
+
   def parse(source)
     Puppet::Pops::Parser::Parser.new().parse_string(source)
   end

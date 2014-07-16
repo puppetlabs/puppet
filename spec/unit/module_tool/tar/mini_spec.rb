@@ -54,6 +54,7 @@ describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Pup
     reader = mock('GzipReader')
 
     Zlib::GzipReader.expects(:open).with(sourcefile).yields(reader)
-    Archive::Tar::Minitar.expects(:unpack).with(reader, destdir).yields(type, name, nil)
+    minitar.expects(:find_valid_files).with(reader).returns([name])
+    Archive::Tar::Minitar.expects(:unpack).with(reader, destdir, [name]).yields(type, name, nil)
   end
 end

@@ -168,6 +168,13 @@ class Puppet::Configurer
         end
       end
 
+      current_environment = Puppet.lookup(:current_environment)
+      Puppet.push_context(:current_environment =>
+                          Puppet::Node::Environment.create(@environment,
+                                                           current_environment.modulepath,
+                                                           current_environment.manifest,
+                                                           current_environment.config_version))
+
       query_options = get_facts(options) unless query_options
 
       # get_facts returns nil during puppet apply
@@ -211,6 +218,7 @@ class Puppet::Configurer
 
     Puppet::Util::Log.close(report)
     send_report(report)
+    Puppet.pop_context
   end
 
   def send_report(report)

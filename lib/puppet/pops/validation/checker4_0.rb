@@ -245,12 +245,39 @@ class Puppet::Pops::Validation::Checker4_0
     end
   end
 
+  RESERVED_TYPE_NAMES = {
+    'type' => true,
+    'any' => true,
+    'unit' => true,
+    'scalar' => true,
+    'boolean' => true,
+    'numeric' => true,
+    'integer' => true,
+    'float' => true,
+    'collection' => true,
+    'array' => true,
+    'hash' => true,
+    'tuple' => true,
+    'struct' => true,
+    'variant' => true,
+    'optional' => true,
+    'enum' => true,
+    'regexp' => true,
+    'pattern' => true,
+    'runtime' => true,
+  }
+
   # for 'class', 'define', and function
   def check_NamedDefinition(o)
     top(o.eContainer, o)
     if o.name !~ Puppet::Pops::Patterns::CLASSREF
       acceptor.accept(Issues::ILLEGAL_DEFINITION_NAME, o, {:name=>o.name})
     end
+
+    if RESERVED_TYPE_NAMES[o.name()]
+      acceptor.accept(Issues::RESERVED_TYPE_NAME, o, {:name => o.name})
+    end
+
     if violator = ends_with_idem(o.body)
       acceptor.accept(Issues::IDEM_NOT_ALLOWED_LAST, violator, {:container => o})
     end
@@ -259,11 +286,13 @@ class Puppet::Pops::Validation::Checker4_0
   def check_HostClassDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)
+    internal_check_reserved_params(o)
   end
 
   def check_ResourceTypeDefinition(o)
     check_NamedDefinition(o)
     internal_check_no_capture(o)
+    internal_check_reserved_params(o)
   end
 
   def internal_check_capture_last(o)
@@ -276,9 +305,22 @@ class Puppet::Pops::Validation::Checker4_0
   end
 
   def internal_check_no_capture(o, container = o)
-    o.parameters.each_with_index do |p, index|
+    o.parameters.each do |p|
       if p.captures_rest
         acceptor.accept(Issues::CAPTURES_REST_NOT_SUPPORTED, p, {:container => container, :param_name => p.name})
+      end
+    end
+  end
+
+  RESERVED_PARAMETERS = {
+    'name' => true,
+    'title' => true,
+  }
+
+  def internal_check_reserved_params(o)
+    o.parameters.each do |p|
+      if RESERVED_PARAMETERS[p.name]
+        acceptor.accept(Issues::RESERVED_PARAMETER, p, {:container => o, :param_name => p.name})
       end
     end
   end

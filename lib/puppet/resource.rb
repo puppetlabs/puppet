@@ -265,7 +265,7 @@ class Puppet::Resource
     @environment ||= if catalog
                        catalog.environment_instance
                      else
-                       Puppet::Node::Environment::NONE
+                       Puppet.lookup(:current_environment) { Puppet::Node::Environment::NONE }
                      end
   end
 

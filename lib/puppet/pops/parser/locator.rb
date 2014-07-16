@@ -61,7 +61,7 @@ class Puppet::Pops::Parser::Locator
   def char_offset(byte_offset)
   end
 
-  # Returns the length measured in number of characters from the given start and end reported offseta
+  # Returns the length measured in number of characters from the given start and end reported offset
   def char_length(offset, end_offset)
   end
 
