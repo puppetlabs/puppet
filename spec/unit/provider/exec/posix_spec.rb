@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:posix) do
+describe Puppet::Type.type(:exec).provider(:posix), :as_platform => :posix do
   include PuppetSpec::Files
 
   def make_exe
@@ -64,7 +64,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
         provider.resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
-        Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == filename) && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+        Puppet::Util::Execution.expects(:execute).with(filename, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
 
         provider.run(filename)
       end
@@ -91,11 +91,22 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       expect { provider.run("cd ..") }.to raise_error(ArgumentError, "Could not find command 'cd'")
     end
 
+    it "does not override the user when it is already the requested user" do
+      Etc.stubs(:getpwuid).returns(Etc::Passwd.new('testing'))
+      provider.resource[:user] = 'testing'
+      command = make_exe
+
+      Puppet::Util::Execution.expects(:execute).with(anything(), has_entry(:uid, nil)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
+      provider.run(command)
+    end
+
     it "should execute the command if the command given includes arguments or subcommands" do
       provider.resource[:path] = ['/bogus/bin']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == "#{command} bar --sillyarg=true --blah") && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      Puppet::Util::Execution.expects(:execute).with("#{command} bar --sillyarg=true --blah", instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
       provider.run("#{command} bar --sillyarg=true --blah")
     end
 
@@ -110,8 +121,10 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
       command = make_exe
 
-      Puppet::Util::Execution.expects(:execute).with { |cmdline, arguments| (cmdline == command) && (arguments.is_a? Hash) }.returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+      Puppet::Util::Execution.expects(:execute).with(command, instance_of(Hash)).returns(Puppet::Util::Execution::ProcessOutput.new('', 0))
+
       provider.run(command)
+
       @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end
 
@@ -202,10 +215,6 @@ describe Puppet::Type.type(:exec).provider(:posix) do
           output.strip.should == sentinel_value
         end
       end
-
-
     end
-
-
   end
 end
