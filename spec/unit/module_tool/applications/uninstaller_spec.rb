@@ -113,6 +113,28 @@ describe Puppet::ModuleTool::Applications::Uninstaller do
       end
     end
 
+    context 'with --ignore-changes' do
+      def options
+        super.merge(:ignore_changes => true)
+      end
+
+      context 'with local changes' do
+        before do
+          mark_changed(File.join(primary_dir, 'stdlib'))
+        end
+
+        it 'overwrites the installed module with the greatest version matching that range' do
+          subject.should include :result => :success
+        end
+      end
+
+      context 'without local changes' do
+        it 'overwrites the installed module with the greatest version matching that range' do
+          subject.should include :result => :success
+        end
+      end
+    end
+
     context "when using the --force flag" do
 
       def options
