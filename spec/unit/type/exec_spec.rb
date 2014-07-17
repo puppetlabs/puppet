@@ -206,7 +206,7 @@ describe Puppet::Type.type(:exec) do
 
       it "accepts the current user" do
         Puppet.features.stubs(:root?).returns(false)
-        Etc.stubs(:getpwuid).returns(Etc::Passwd.new('input'))
+        Etc.stubs(:getpwuid).returns(Struct::Passwd.new('input'))
 
         type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input')
 
