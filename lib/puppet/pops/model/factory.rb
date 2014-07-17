@@ -1002,4 +1002,8 @@ class Puppet::Pops::Model::Factory
       end
     end.join(''))
   end
+
+  def to_s
+    Puppet::Pops::Model::ModelTreeDumper.new.dump(self)
+  end
 end
