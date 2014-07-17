@@ -98,7 +98,7 @@ Puppet::Type.type(:package).provide(:windows, :parent => Puppet::Provider::Packa
     end
   end
 
-  # This only get's called if there is a value to validate, but not if it's absent
+  # This only gets called if there is a value to validate, but not if it's absent
   def validate_source(value)
     fail("The source parameter cannot be empty when using the Windows provider.") if value.empty?
   end
