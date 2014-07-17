@@ -3,6 +3,7 @@
 require 'spec_helper'
 
 require 'puppet/file_bucket/file'
+require 'tempfile'
 
 describe Puppet::FileBucket::File do
   describe "#indirection" do
@@ -39,6 +40,29 @@ describe Puppet::FileBucket::File do
           described_class.indirection.find(key)
         end
       end
+    end
+  end
+
+  describe "#verify_identical_file!" do
+    subject { Puppet::FileBucketFile::File.new }
+    let(:binary) { "\xD1\xF2\r\n\x81NuSc\x00".force_encoding(Encoding::ASCII_8BIT) }
+
+    let(:contents_file) do
+      tf = Tempfile.new("hello")
+      tf.write(binary)
+      tf.close
+      tf.path
+    end
+
+    let(:bucket_file) do
+      stub(
+        :stream   => StringIO.new(binary),
+        :contents => binary,
+        :checksum => nil)
+    end
+
+    it "must be identical for binary files" do
+      subject.send :verify_identical_file!, contents_file, bucket_file
     end
   end
 end
