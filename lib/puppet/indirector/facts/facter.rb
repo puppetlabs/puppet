@@ -43,8 +43,9 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       # print out each .rb in the facts directory as module
       # developers may find that information useful for debugging purposes
       if Puppet::Util::Log.sendlevel?(:info)
+        Puppet.info "Loading facts"
         Dir.glob("#{dir}/*.rb").each do |file|
-          Puppet.info "Loading facts from #{file}"
+          Puppet.debug "Loading facts from #{file}"
         end
       end
 
@@ -60,7 +61,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     request.environment.modules.each do |m|
       if m.has_external_facts?
         dir = m.plugin_fact_directory
-        Puppet.info "Loading external facts from #{dir}"
+        Puppet.debug "Loading external facts from #{dir}"
         dirs << dir
       end
     end
@@ -68,7 +69,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     # Add system external fact directory if it exists
     if FileTest.directory?(Puppet[:pluginfactdest])
       dir = Puppet[:pluginfactdest]
-      Puppet.info "Loading external facts from #{dir}"
+      Puppet.debug "Loading external facts from #{dir}"
       dirs << dir
     end
 
