@@ -1,19 +1,18 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
-describe Puppet::Type.type(:exec).provider(:posix), :as_platform => :posix do
+describe Puppet::Type.type(:exec).provider(:posix), :if => Puppet.features.posix? do
   include PuppetSpec::Files
 
   def make_exe
     cmdpath = tmpdir('cmdpath')
     exepath = tmpfile('my_command', cmdpath)
-    exepath = exepath + ".exe" if Puppet.features.microsoft_windows?
     FileUtils.touch(exepath)
     File.chmod(0755, exepath)
     exepath
   end
 
-  let(:resource) { Puppet::Type.type(:exec).new(:title => File.expand_path('/foo'), :provider => :posix) }
+  let(:resource) { Puppet::Type.type(:exec).new(:title => '/foo', :provider => :posix) }
   let(:provider) { described_class.new(resource) }
 
   describe "#validatecmd" do
@@ -31,7 +30,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :as_platform => :posix do
 
     it "should pass if command is fully qualifed" do
       provider.resource[:path] = ['/bogus/bin']
-      provider.validatecmd(File.expand_path("/bin/blah/foo"))
+      provider.validatecmd("/bin/blah/foo")
     end
   end
 
@@ -112,7 +111,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :as_platform => :posix do
 
     it "should fail if quoted command doesn't exist" do
       provider.resource[:path] = ['/bogus/bin']
-      command = "#{File.expand_path('/foo')} bar --sillyarg=true --blah"
+      command = "/foo bar --sillyarg=true --blah"
 
       expect { provider.run(%Q["#{command}"]) }.to raise_error(ArgumentError, "Could not find command '#{command}'")
     end
@@ -134,7 +133,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :as_platform => :posix do
       provider.run(provider.resource[:command])
     end
 
-    describe "posix locale settings", :unless => Puppet.features.microsoft_windows? do
+    describe "posix locale settings" do
       # a sentinel value that we can use to emulate what locale environment variables might be set to on an international
       # system.
       lang_sentinel_value = "en_US.UTF-8"
@@ -173,7 +172,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :as_platform => :posix do
       end
     end
 
-    describe "posix user-related environment vars", :unless => Puppet.features.microsoft_windows? do
+    describe "posix user-related environment vars" do
       # a temporary hash that contains sentinel values for each of the user-related environment variables that we
       # are expected to unset during an "exec"
       user_sentinel_env = {}
