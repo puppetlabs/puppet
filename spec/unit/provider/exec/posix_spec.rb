@@ -92,7 +92,7 @@ describe Puppet::Type.type(:exec).provider(:posix), :as_platform => :posix do
     end
 
     it "does not override the user when it is already the requested user" do
-      Etc.stubs(:getpwuid).returns(Etc::Passwd.new('testing'))
+      Etc.stubs(:getpwuid).returns(Struct::Passwd.new('testing'))
       provider.resource[:user] = 'testing'
       command = make_exe
 
