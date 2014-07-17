@@ -452,7 +452,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
     describe "special" do
       %w(reboot yearly annually monthly weekly daily midnight hourly).each do |value|
         it "should support the value '#{value}'" do
-          expect { described_class.new(:name => 'foo', :special => value ) }.to_not raise_error(Puppet::Error, /cannot specify both a special schedule and a value/)
+          expect { described_class.new(:name => 'foo', :special => value ) }.to_not raise_error
         end
       end
 
@@ -462,7 +462,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
             it "should accept the value '#{value}' for special" do
               expect {
                 described_class.new(:name => 'foo', :minute => :absent, :special => value )
-              }.to_not raise_error(Puppet::Error, /cannot specify both a special schedule and a value/)
+              }.to_not raise_error
             end
           }
         end
@@ -477,7 +477,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
           it "should accept the 'absent' value for special" do
             expect {
               described_class.new(:name => 'foo', :minute => "1", :special => :absent )
-            }.to_not raise_error(Puppet::Error, /cannot specify both a special schedule and a value/)
+            }.to_not raise_error
           end
         end
       end

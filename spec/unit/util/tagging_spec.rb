@@ -41,7 +41,7 @@ describe Puppet::Util::Tagging do
   end
 
   it "should allow tags containing '.' characters" do
-    expect { tagger.tag("good.tag") }.to_not raise_error(Puppet::ParseError)
+    expect { tagger.tag("good.tag") }.to_not raise_error
   end
 
   it "should add qualified classes as tags" do

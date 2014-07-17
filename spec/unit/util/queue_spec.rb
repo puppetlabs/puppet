@@ -1,7 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/util/queue'
-require 'spec/mocks'
 
 def make_test_client_class(n)
   c = Class.new do

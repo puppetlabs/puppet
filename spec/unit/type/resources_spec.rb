@@ -52,7 +52,7 @@ describe resources do
     it "can be set to true for a resource type that has instances and can accept ensure" do
       instance.resource_type.stubs(:respond_to?).returns true
       instance.resource_type.stubs(:validproperty?).returns true
-      expect { instance[:purge] = 'yes' }.not_to raise_error Puppet::Error
+      expect { instance[:purge] = 'yes' }.to_not raise_error
     end
   end
 
