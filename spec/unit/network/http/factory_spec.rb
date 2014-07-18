@@ -28,4 +28,10 @@ describe Puppet::Network::HTTP::Factory do
 
     expect(conn).to_not be_started
   end
+
+  it 'creates a connection supporting at least HTTP 1.1' do
+    conn = create_connection(site)
+
+    expect(any_of(conn.class.version_1_1?, conn.class.version_1_1?)).to be_true
+  end
 end
