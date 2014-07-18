@@ -20,6 +20,10 @@ module Puppet::Pops::Binder::Config::Issues
     "The configuration file '#{semantic}' has no 'layers' entry in the top level hash"
   end
 
+  CONFIG_CATEGORIES_MISSING = issue :CONFIG_CATEGORIES_MISSING do
+    "The configuration file '#{semantic}' has no 'categories' entry in the top level hash"
+  end
+
   CONFIG_VERSION_MISSING = issue :CONFIG_VERSION_MISSING do
     "The configuration file '#{semantic}' has no 'version' entry in the top level hash"
   end
