@@ -125,7 +125,7 @@ class Puppet::Configurer
   # This just passes any options on to the catalog,
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
-    pool = Puppet::Network::HTTP::Pool.new
+    pool = Puppet::Network::HTTP::Pool.new(Puppet[:http_keepalive_timeout])
     begin
       Puppet.override(:http_pool => pool) do
         run_internal(options)

@@ -410,6 +410,12 @@ module Puppet
       :desc       => "The password for the user of an authenticated HTTP proxy. Requires http_proxy_user.
       NOTE: Special characters must be escaped or encoded for URL compliance",
     },
+    :http_keepalive_timeout => {
+      :default    => "4s",
+      :type       => :duration,
+      :desc       => "The maximum amount of time a persistent HTTP connection can remain idle in the connection pool, before it is closed.  This timeout should be shorter than the keepalive timeout used on the HTTP server, e.g. Apache KeepAliveTimeout directive.
+      #{AS_DURATION}"
+    },
     :filetimeout => {
       :default    => "15s",
       :type       => :duration,
