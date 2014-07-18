@@ -416,6 +416,11 @@ module Puppet
       :desc       => "The maximum amount of time a persistent HTTP connection can remain idle in the connection pool, before it is closed.  This timeout should be shorter than the keepalive timeout used on the HTTP server, e.g. Apache KeepAliveTimeout directive.
       #{AS_DURATION}"
     },
+    :http_debug => {
+      :default    => false,
+      :type       => :boolean,
+      :desc       => "Whether to write HTTP request and responses to stderr. This should never be used in a production environment."
+    },
     :filetimeout => {
       :default    => "15s",
       :type       => :duration,

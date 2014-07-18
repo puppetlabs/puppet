@@ -28,6 +28,10 @@ class Puppet::Network::HTTP::Factory
     http.read_timeout = Puppet[:configtimeout]
     http.open_timeout = Puppet[:configtimeout]
 
+    if Puppet[:http_debug]
+      http.set_debug_output($stderr)
+    end
+
     http
   end
 end
