@@ -11,12 +11,12 @@ describe Puppet::Interface::FaceCollection do
   # the 'subject' of the specs will differ.
   before :all do
     # Save FaceCollection's global state
-    faces = subject.instance_variable_get(:@faces)
+    faces = described_class.instance_variable_get(:@faces)
     @faces = faces.dup
     faces.each do |k, v|
       @faces[k] = v.dup
     end
-    @faces_loaded = subject.instance_variable_get(:@loaded)
+    @faces_loaded = described_class.instance_variable_get(:@loaded)
 
     # Save the already required face files
     @required = []

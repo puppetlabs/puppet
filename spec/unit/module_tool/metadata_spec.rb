@@ -215,8 +215,8 @@ describe Puppet::ModuleTool::Metadata do
   describe "#to_hash" do
     subject { metadata.to_hash }
 
-    its(:keys) do
-      subject.sort.should == %w[ name version author summary license source issues_url project_page dependencies ].sort
+    it "contains the default set of keys" do
+      subject.keys.sort.should == %w[ name version author summary license source issues_url project_page dependencies ].sort
     end
 
     describe "['license']" do

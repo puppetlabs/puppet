@@ -46,7 +46,7 @@ actual:
   it 'allows the second arg to be undef/nil)' do
     expect do
       func.call({}, optional(String), nil)
-    end.to_not raise_error(ArgumentError)
+    end.to_not raise_error
   end
 
   it 'can be called with a callable that receives a specific type' do

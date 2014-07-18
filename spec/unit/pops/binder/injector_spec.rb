@@ -530,7 +530,7 @@ describe 'Injector' do
 
         expect {
           the_ducks = injector(lbinder).lookup(scope, hash_of_duck, "donalds_nephews")
-        }.to_not raise_error(/Duplicate key/)
+        }.to_not raise_error
       end
 
       it "should produce detailed type error message" do
