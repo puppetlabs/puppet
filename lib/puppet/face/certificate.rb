@@ -70,7 +70,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
       # jeffweiss 17 april 2012
 
       global_setting_from_cli = Puppet.settings.set_by_cli?(:dns_alt_names) == true
-      raise ArgumentError, "Can't specify both --dns_alt_names and --dns-alt-names" if options[:dns_alt_names] and global_setting_from_cli
+      raise ArgumentError, "Can't specify both --dns_alt_names and --dns-alt-names" if options[:dns_alt_names] && global_setting_from_cli
       options[:dns_alt_names] = Puppet[:dns_alt_names] if global_setting_from_cli
 
       # If dns_alt_names are specified via the command line, we will always add

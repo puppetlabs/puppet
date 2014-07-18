@@ -30,7 +30,7 @@ class Puppet::Util::NetworkDevice::Config
   def read(force = false)
     return unless exists?
 
-    parse if force or @file.changed?
+    parse if force || @file.changed?
   end
 
   private

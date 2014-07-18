@@ -208,7 +208,7 @@ module Puppet::Util::Windows::ADSI
     alias remove_from_group remove_from_groups
 
     def set_groups(desired_groups, minimum = true)
-      return if desired_groups.nil? or desired_groups.empty?
+      return if desired_groups.nil? || desired_groups.empty?
 
       desired_groups = desired_groups.split(',').map(&:strip)
 
@@ -335,7 +335,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def self.name_sid_hash(names)
-      return [] if names.nil? or names.empty?
+      return [] if names.nil? || names.empty?
 
       sids = names.map do |name|
         sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
@@ -388,7 +388,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def set_members(desired_members)
-      return if desired_members.nil? or desired_members.empty?
+      return if desired_members.nil? || desired_members.empty?
 
       current_hash = Hash[ self.member_sids.map { |sid| [sid.to_s, sid] } ]
       desired_hash = self.class.name_sid_hash(desired_members)

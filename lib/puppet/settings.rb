@@ -222,7 +222,7 @@ class Puppet::Settings
     # but we don't really know if, say, the vardir is changed and the modulepath
     # is defined relative to it. We need the defined?(stuff) because of loading
     # order issues.
-    Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
+    Puppet::Node::Environment.clear if defined?(Puppet::Node) && defined?(Puppet::Node::Environment)
   end
   private :unsafe_flush_cache
 

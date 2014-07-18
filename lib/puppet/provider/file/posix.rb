@@ -10,7 +10,7 @@ Puppet::Type.type(:file).provide :posix do
   require 'etc'
 
   def uid2name(id)
-    return id.to_s if id.is_a?(Symbol) or id.is_a?(String)
+    return id.to_s if id.is_a?(Symbol) || id.is_a?(String)
     return nil if id > Puppet[:maximum_uid].to_i
 
     begin
@@ -32,7 +32,7 @@ Puppet::Type.type(:file).provide :posix do
   end
 
   def gid2name(id)
-    return id.to_s if id.is_a?(Symbol) or id.is_a?(String)
+    return id.to_s if id.is_a?(Symbol) || id.is_a?(String)
     return nil if id > Puppet[:maximum_uid].to_i
 
     begin

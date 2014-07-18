@@ -157,7 +157,7 @@ class Puppet::Property < Puppet::Parameter
   def self.newvalue(name, options = {}, &block)
     value = value_collection.newvalue(name, options, &block)
 
-    define_method(value.method, &value.block) if value.method and value.block
+    define_method(value.method, &value.block) if value.method && value.block
     value
   end
 

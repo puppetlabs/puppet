@@ -78,7 +78,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
     modes = {}
     [is, should].flatten.uniq.each do |group|
       # Skip it when they're in both
-      next if is.include?(group) and should.include?(group)
+      next if is.include?(group) && should.include?(group)
 
       # We're adding a group.
       modes[group] = :add and next unless is.include?(group)

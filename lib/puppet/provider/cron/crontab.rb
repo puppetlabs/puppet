@@ -145,7 +145,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
   def self.match(record, resources)
     # if the record is named, do not even bother (#19876)
     # except the resource name was implicitly generated (#3220)
-    return false if record[:name] and !record[:unmanaged]
+    return false if record[:name] && !record[:unmanaged]
     resources.each do |name, resource|
       # Match the command first, since it's the most important one.
       next unless record[:target] == resource[:target]
@@ -278,7 +278,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     return unless File.readable?(CRONTAB_DIR)
     Dir.foreach(CRONTAB_DIR) do |file|
       path = "#{CRONTAB_DIR}/#{file}"
-      yield(file) if File.file?(path) and File.writable?(path)
+      yield(file) if File.file?(path) && File.writable?(path)
     end
   end
 

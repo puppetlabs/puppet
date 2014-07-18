@@ -230,7 +230,7 @@ module RDoc::PuppetParserCore
     container, name = get_class_or_module(container, name)
 
     superclass = klass.parent
-    superclass = "" if superclass.nil? or superclass.empty?
+    superclass = "" if superclass.nil? || superclass.empty?
 
     comment = klass.doc
     look_for_directives_in(container, comment) unless comment.empty?
@@ -259,7 +259,7 @@ module RDoc::PuppetParserCore
   def document_node(name, node, container)
     Puppet.debug "rdoc: found new node #{name}"
     superclass = node.parent
-    superclass = "" if superclass.nil? or superclass.empty?
+    superclass = "" if superclass.nil? || superclass.empty?
 
     comment = node.doc
     look_for_directives_in(container, comment) unless comment.empty?

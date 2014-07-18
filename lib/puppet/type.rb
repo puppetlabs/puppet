@@ -987,7 +987,7 @@ class Type
   #
   # @return [???, nil] WHAT DOES IT RETURN? GUESS IS VOID
   def flush
-    self.provider.flush if self.provider and self.provider.respond_to?(:flush)
+    self.provider.flush if self.provider && self.provider.respond_to?(:flush)
   end
 
   # Returns true if all contained objects are in sync.

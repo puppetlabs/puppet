@@ -143,7 +143,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # stored in the user record. It is stored at a path that involves the
     # UUID of the user record for non-Mobile local acccounts.
     # Mobile Accounts are out of scope for this provider for now
-    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) && Puppet.features.root?
     attribute_hash
   end
 
@@ -579,7 +579,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       type_properties << :guid  # append GeneratedUID so we just get the report here
       @property_value_cache_hash = self.class.single_report(@resource[:name], *type_properties)
       [:uid, :gid].each do |param|
-        @property_value_cache_hash[param] = @property_value_cache_hash[param].to_i if @property_value_cache_hash and @property_value_cache_hash.include?(param)
+        @property_value_cache_hash[param] = @property_value_cache_hash[param].to_i if @property_value_cache_hash && @property_value_cache_hash.include?(param)
       end
     end
     @property_value_cache_hash

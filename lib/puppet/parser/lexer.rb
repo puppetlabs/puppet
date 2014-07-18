@@ -468,7 +468,7 @@ class Puppet::Parser::Lexer
       newline = matched_token.name == :RETURN
 
       # this matches a blank line; eat the previously accumulated comments
-      getcomment if lexing_context[:start_of_line] and newline
+      getcomment if lexing_context[:start_of_line] && newline
       lexing_context[:start_of_line] = newline
 
       final_token, token_value = munge_token(matched_token, value)

@@ -24,7 +24,7 @@ module Puppet
       end
 
       validate do |value|
-        return true if valid_v4?(value) or valid_v6?(value)
+        return true if valid_v4?(value) || valid_v6?(value)
         raise Puppet::Error, "Invalid IP address #{value.inspect}"
       end
     end

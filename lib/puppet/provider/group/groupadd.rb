@@ -78,7 +78,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
       end
     end
     cmd += check_allow_dup
-    cmd << "-r" if @resource.system? and self.class.system_groups?
+    cmd << "-r" if @resource.system? && self.class.system_groups?
     cmd << @resource[:name]
     cmd
   end

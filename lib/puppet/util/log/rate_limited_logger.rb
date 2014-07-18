@@ -23,7 +23,7 @@ class Puppet::Util::Log::RateLimitedLogger
     last_log = record[message]
 
     # Skip logging if the time interval since the last logging hasn't elapsed yet
-    return false if last_log and within_interval?(last_log)
+    return false if last_log && within_interval?(last_log)
 
     # Purge stale entries; do this after the interval check to reduce passes through the cache
     record.delete_if { |key, time| !within_interval?(time) }

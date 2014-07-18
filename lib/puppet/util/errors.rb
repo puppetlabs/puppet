@@ -24,7 +24,7 @@ module Puppet::Util::Errors
     error.file ||= self.file if error.respond_to?(:file=) and self.respond_to?(:file) and self.file
     error.original ||= other if error.respond_to?(:original=)
 
-    error.set_backtrace(other.backtrace) if other and other.respond_to?(:backtrace)
+    error.set_backtrace(other.backtrace) if other && other.respond_to?(:backtrace)
 
     error
   end

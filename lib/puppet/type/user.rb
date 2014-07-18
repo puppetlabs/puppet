@@ -201,7 +201,7 @@ module Puppet
         quotes (') to avoid accidental variable interpolation.}
 
       validate do |value|
-        raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) and value.include?(":")
+        raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) && value.include?(":")
       end
 
       def change_to_s(currentvalue, newvalue)

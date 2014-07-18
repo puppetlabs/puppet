@@ -354,7 +354,7 @@ module Generators
       res = []
       list.each do |i|
         ref = AllReferences[i.name] || @context.find_symbol(i.name)
-        ref = ref.viewer if ref and ref.respond_to?(:viewer)
+        ref = ref.viewer if ref && ref.respond_to?(:viewer)
         name = i.respond_to?(:full_name) ? i.full_name : i.name
         h_name = CGI.escapeHTML(name)
         if ref && ref.document_self
@@ -609,7 +609,7 @@ module Generators
         end
         lookup = "NODE(#{lookup})"
         parent_url = AllReferences[lookup] || AllReferences[parent_class]
-        @values["par_url"] = aref_to(parent_url.path) if parent_url and parent_url.document_self
+        @values["par_url"] = aref_to(parent_url.path) if parent_url && parent_url.document_self
       end
 
       files = []

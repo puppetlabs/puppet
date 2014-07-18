@@ -301,7 +301,7 @@ class Puppet::Resource::Type
     if caller_name = scope.parent_module_name and !set.include?(:caller_module_name)
       scope["caller_module_name"] = caller_name
     end
-    scope.class_set(self.name,scope) if hostclass? or node?
+    scope.class_set(self.name,scope) if hostclass? || node?
 
     # Evaluate the default parameters, now that all other variables are set
     default_params = resource.set_default_parameters(scope)
