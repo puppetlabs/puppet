@@ -85,7 +85,7 @@ module Puppet::Pops::Binder::Config
 
       unless diagnostics.errors?
         @layering_config   = data['layers'] || default_layers
-        @scheme_extensions = (data['extensions'] and data['extensions']['scheme_handlers'] or default_scheme_extensions)
+        @scheme_extensions = (data['extensions'] && data['extensions']['scheme_handlers'] || default_scheme_extensions)
       else
         @layering_config = []
         @scheme_extensions = {}

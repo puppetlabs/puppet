@@ -54,7 +54,7 @@ class Puppet::Pops::Parser::Lexer
 
     # @return [String] human readable token reference; the String if literal, else the token name
     def to_s
-      string or @name.to_s
+      string || @name.to_s
     end
 
     # @return [Boolean] if the token is acceptable in the given context or not.
@@ -380,7 +380,7 @@ class Puppet::Pops::Parser::Lexer
   def expected
     return nil if @expected.empty?
     name = @expected[-1]
-    TOKENS.lookup(name) or lex_error "Internal Lexer Error: Could not find expected token #{name}"
+    TOKENS.lookup(name) || lex_error("Internal Lexer Error: Could not find expected token #{name}")
   end
 
   # scan the whole file
@@ -430,7 +430,7 @@ class Puppet::Pops::Parser::Lexer
     _lxc = @lexing_context
     _scn = @scanner
     TOKENS.regex_tokens.each do |token|
-      if length = _scn.match?(token.regex) and token.acceptable?(_lxc)
+      if (length = _scn.match?(token.regex)) && token.acceptable?(_lxc)
         # We've found a longer match
         if length > best_length
           best_length = length
@@ -550,7 +550,7 @@ class Puppet::Pops::Parser::Lexer
     _scn.skip(SKIPPATTERN)
     _lbrace = '{'.freeze  # faster to compare against a frozen string in
 
-    until token_queue.empty? and _scn.eos? do
+    until token_queue.empty? && _scn.eos? do
       offset = _scn.pos
       matched_token, value = find_token
       end_offset = _scn.pos
@@ -584,9 +584,9 @@ class Puppet::Pops::Parser::Lexer
       value = token_value[:value]
 
       _expected = @expected
-      if match = @@pairs[value] and final_token.name != :DQUOTE and final_token.name != :SQUOTE
+      if (match = @@pairs[value]) && (final_token.name != :DQUOTE) && (final_token.name != :SQUOTE)
         _expected << match
-      elsif exp = _expected[-1] and exp == value and final_token.name != :DQUOTE and final_token.name != :SQUOTE
+      elsif (exp = _expected[-1]) && (exp == value) && (final_token.name != :DQUOTE) && (final_token.name != :SQUOTE)
         _expected.pop
       end
 
@@ -594,7 +594,7 @@ class Puppet::Pops::Parser::Lexer
 
       _prv = @previous_token
       if _prv
-        namestack(value) if _prv.name == :CLASS and value != LBRACE_CHAR
+        namestack(value) if (_prv.name == :CLASS) && (value != LBRACE_CHAR)
 
         # TODO: Lexer has no business dealing with this - it is semantic
         if _prv.name == :DEFINE
@@ -696,7 +696,7 @@ class Puppet::Pops::Parser::Lexer
     else
       TOKENS[:VARIABLE].regex
     end
-    if terminator != '$' or braced
+    if (terminator != '$') || braced
       return token_queue.shift
     end
 
