@@ -63,7 +63,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       signed  = options[:signed].nil?  ? options[:all] : options[:signed]
 
       # By default we list pending, so if nothing at all was requested...
-      unless pending or signed then pending = true end
+      unless pending || signed then pending = true end
 
       hosts = []
 

@@ -61,7 +61,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
     EOT
 
     when_invoked do |options|
-      catalog = Puppet::Face[:catalog, "0.0.1"].find(Puppet[:certname]) or raise "Could not find catalog for #{Puppet[:certname]}"
+      (catalog = Puppet::Face[:catalog, "0.0.1"].find(Puppet[:certname])) || (raise "Could not find catalog for #{Puppet[:certname]}")
       catalog = catalog.to_ral
 
       report = Puppet::Transaction::Report.new("apply")

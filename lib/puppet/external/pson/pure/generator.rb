@@ -127,8 +127,8 @@ module PSON
         def check_max_nesting(depth) # :nodoc:
           return if @max_nesting.zero?
           current_nesting = depth + 1
-          current_nesting > @max_nesting and
-            raise NestingError, "nesting of #{current_nesting} is too deep"
+          (current_nesting > @max_nesting) &&
+            (raise NestingError, "nesting of #{current_nesting} is too deep")
         end
 
         # Returns true, if circular data structures should be checked,

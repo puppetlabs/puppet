@@ -203,7 +203,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
     stage_class      = Puppet::Type.type(:stage)
     whit_class       = Puppet::Type.type(:whit)
     component_class  = Puppet::Type.type(:component)
-    containers = catalog.resources.find_all { |v| (v.is_a?(component_class) or v.is_a?(stage_class)) and vertex?(v) }
+    containers = catalog.resources.find_all { |v| (v.is_a?(component_class) || v.is_a?(stage_class)) && vertex?(v) }
     #
     # These two hashes comprise the aforementioned attention to the possible
     #   case of containers that contain / depend on other containers; they map

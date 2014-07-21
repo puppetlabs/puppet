@@ -30,7 +30,7 @@ Puppet::Face.define(:help, '0.0.1') do
       # yet.  REVISIT: when we do option defaults, and positional options, we
       # should rewrite this to use those. --daniel 2011-04-04
       options = args.pop
-      if options.nil? or args.length > 2 then
+      if options.nil? || (args.length > 2) then
         if args.select { |x| x == 'help' }.length > 2 then
           c = "\n %'(),-./=ADEFHILORSTUXY\\_`gnv|".split('')
           i = <<-'EOT'.gsub(/\s*/, '').to_i(36)
