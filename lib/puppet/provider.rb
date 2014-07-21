@@ -308,7 +308,7 @@ class Puppet::Provider
     values = [values] unless values.is_a? Array
     values.map! { |v| v.to_s.downcase.intern }
 
-    if fval = Facter.value(fact).to_s and fval != ""
+    if (fval = Facter.value(fact).to_s) && (fval != "")
       fval = fval.to_s.downcase.intern
 
       values.include?(fval)

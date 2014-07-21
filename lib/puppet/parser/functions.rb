@@ -156,7 +156,7 @@ module Puppet::Parser::Functions
     env_module.send(:define_method, fname) do |*args|
       Puppet::Util::Profiler.profile("Called #{name}", [:functions, name]) do
         if args[0].is_a? Array
-          if arity >= 0 and args[0].size != arity
+          if (arity >= 0) && (args[0].size != arity)
             raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})"
           elsif arity < 0 and args[0].size < (arity+1).abs
             raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})"

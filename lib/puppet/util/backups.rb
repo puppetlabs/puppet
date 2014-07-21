@@ -51,7 +51,7 @@ module Puppet::Util::Backups
   end
 
   def remove_backup(newfile)
-    if self.class.name == :file and self[:links] != :follow
+    if (self.class.name == :file) && (self[:links] != :follow)
       method = :lstat
     else
       method = :stat

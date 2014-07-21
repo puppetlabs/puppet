@@ -157,7 +157,7 @@ Puppet::Type.newtype(:cron) do
     munge do |value|
       # Support 'absent' as a value, so that they can remove
       # a value
-      if value == "absent" or value == :absent
+      if (value == "absent") || (value == :absent)
         return :absent
       end
 
@@ -259,7 +259,7 @@ Puppet::Type.newtype(:cron) do
     def munge(value)
       # Support value absent so that a schedule can be
       # forced to change to numeric.
-      if value == "absent" or value == :absent
+      if (value == "absent") || (value == :absent)
         return :absent
       end
       value

@@ -693,7 +693,7 @@ Puppet::Type.newtype(:file) do
       backup_existing
     end
 
-    if wanted_type != "link" and current_type == wanted_type
+    if (wanted_type != "link") && (current_type == wanted_type)
       return false
     end
 
@@ -737,7 +737,7 @@ Puppet::Type.newtype(:file) do
     return true if self[:ensure] == :file
 
     # I.e., it's set to something like "directory"
-    return false if e = self[:ensure] and e != :present
+    return false if (e = self[:ensure]) && (e != :present)
 
     # The user doesn't really care, apparently
     if self[:ensure] == :present

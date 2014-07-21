@@ -374,7 +374,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # We're just looking for an unused id in our sorted array.
     ids.each_index do |i|
       next_id = ids[i] + 1
-      return next_id if ids[i+1] != next_id and next_id >= min_id
+      return next_id if (ids[i+1] != next_id) && (next_id >= min_id)
     end
   end
 
@@ -473,7 +473,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       fail("Could not set GeneratedUID for #{@resource.class.name} #{@resource.name}: #{detail}")
     end
 
-    if value = @resource.should(:password) and value != ""
+    if (value = @resource.should(:password)) && (value != "")
       self.class.set_password(@resource[:name], guid, value)
     end
 

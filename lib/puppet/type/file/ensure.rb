@@ -110,7 +110,7 @@ module Puppet
     munge do |value|
       value = super(value)
       value,resource[:target] = :link,value unless value.is_a? Symbol
-      resource[:links] = :manage if value == :link and resource[:links] != :follow
+      resource[:links] = :manage if (value == :link) && (resource[:links] != :follow)
       value
     end
 

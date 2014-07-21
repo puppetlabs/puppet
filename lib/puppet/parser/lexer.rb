@@ -491,7 +491,7 @@ class Puppet::Parser::Lexer
         @expected.pop
       end
 
-      if final_token_name == :LBRACE or final_token_name == :LPAREN
+      if (final_token_name == :LBRACE) || (final_token_name == :LPAREN)
         commentpush
       end
       if final_token_name == :RPAREN
@@ -501,7 +501,7 @@ class Puppet::Parser::Lexer
       yield [final_token_name, token_value]
 
       if @previous_token
-        namestack(value) if @previous_token.name == :CLASS and value != '{'
+        namestack(value) if (@previous_token.name == :CLASS) && (value != '{')
 
         if @previous_token.name == :DEFINE
           if indefine?

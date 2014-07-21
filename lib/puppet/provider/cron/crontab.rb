@@ -166,10 +166,10 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
           break
         end
 
-        if record_value = record[field] and resource_value = resource.value(field)
+        if (record_value = record[field]) && (resource_value = resource.value(field))
           # The record translates '*' into absent in the post_parse hook and
           # the resource type does exactly the opposite (alias :absent to *)
-          next if resource_value == '*' and record_value == :absent
+          next if (resource_value == '*') && (record_value == :absent)
           next if resource_value == record_value
         end
         matched =false

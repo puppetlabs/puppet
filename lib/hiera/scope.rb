@@ -27,7 +27,7 @@ class Hiera
     end
 
     def include?(key)
-      if key == CALLING_CLASS or key == CALLING_MODULE
+      if (key == CALLING_CLASS) || (key == CALLING_MODULE)
         true
       else
         @real.lookupvar(key) != ""

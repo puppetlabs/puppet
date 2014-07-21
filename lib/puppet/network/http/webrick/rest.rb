@@ -73,7 +73,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
   def set_response(response, result, status = 200)
     response.status = status
-    if status >= 200 and status != 304
+    if (status >= 200) && (status != 304)
       response.body = result
       response["content-length"] = result.stat.size if result.is_a?(File)
     end
@@ -82,7 +82,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
   # Retrieve node/cert/ip information from the request object.
   def client_information(request)
     result = {}
-    if peer = request.peeraddr and ip = peer[3]
+    if (peer = request.peeraddr) && (ip = peer[3])
       result[:ip] = ip
     end
 
@@ -90,7 +90,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
     # then we get the hostname from the cert, instead of via IP
     # info
     result[:authenticated] = false
-    if cert = request.client_cert and cn = Puppet::Util::SSL.cn_from_subject(cert.subject)
+    if (cert = request.client_cert) && (cn = Puppet::Util::SSL.cn_from_subject(cert.subject))
       result[:node] = cn
       result[:authenticated] = true
     else

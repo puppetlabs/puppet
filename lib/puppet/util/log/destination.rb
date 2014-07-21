@@ -23,7 +23,7 @@ class Puppet::Util::Log::Destination
 
     @matches.each do |thing|
       # Search for direct matches or class matches
-      return true if thing === obj or thing == obj.class.to_s
+      return true if (thing === obj) || (thing == obj.class.to_s)
     end
     false
   end

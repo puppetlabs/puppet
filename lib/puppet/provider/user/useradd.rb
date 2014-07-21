@@ -161,7 +161,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       next if property == :expiry and @resource.forcelocal?
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
-      if value = @resource.should(property) and value != ""
+      if (value = @resource.should(property)) && (value != "")
         cmd << flag(property) << munge(property, value)
       end
     end

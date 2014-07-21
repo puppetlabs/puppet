@@ -114,7 +114,7 @@ module Puppet
 
           # Make sure the hours are valid
           [range[0][0], range[1][0]].each do |n|
-            raise ArgumentError, "Invalid hour '#{n}'" if n < 0 or n > 23
+            raise ArgumentError, "Invalid hour '#{n}'" if (n < 0) || (n > 23)
           end
 
           [range[0][1], range[1][1]].each do |n|
@@ -326,7 +326,7 @@ module Puppet
         # is, if there's no value, we assume it's a valid value.
         return unless @resource[:periodmatch]
 
-        if value != 1 and @resource[:periodmatch] != :distance
+        if (value != 1) && (@resource[:periodmatch] != :distance)
           raise Puppet::Error,
             "Repeat must be 1 unless periodmatch is 'distance', not '#{@resource[:periodmatch]}'"
         end

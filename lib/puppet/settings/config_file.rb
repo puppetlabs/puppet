@@ -124,7 +124,7 @@ private
           result[param] = value
           raise ArgumentError, "Invalid file option '#{param}'" unless [:owner, :mode, :group].include?(param)
 
-          if param == :mode and value !~ /^\d+$/
+          if (param == :mode) && (value !~ /^\d+$/)
             raise ArgumentError, "File modes must be numbers"
           end
         else

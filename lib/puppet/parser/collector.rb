@@ -12,7 +12,7 @@ class Puppet::Parser::Collector
   def evaluate
     # Shortcut if we're not using storeconfigs and they're trying to collect
     # exported resources.
-    if form == :exported and Puppet[:storeconfigs] != true
+    if (form == :exported) && (Puppet[:storeconfigs] != true)
       Puppet.warning "Not collecting exported resources without storeconfigs"
       return false
     end

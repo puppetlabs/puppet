@@ -54,7 +54,7 @@ class Puppet::FileServing::Configuration
     raise(ArgumentError, "Cannot find file: Invalid relative path '#{path}'") if path && path.split('/').include?('..')
 
     return nil unless mount = find_mount(mount_name, request.environment)
-    if mount.name == "modules" and mount_name != "modules"
+    if (mount.name == "modules") && (mount_name != "modules")
       # yay backward-compatibility
       path = "#{mount_name}/#{path}"
     end

@@ -71,7 +71,7 @@ class Puppet::Resource
       param, value = ary
 
       # Don't duplicate the title as the namevar
-      next hash if param == namevar and value == title
+      next hash if (param == namevar) && (value == title)
 
       hash[param] = Puppet::Resource.value_to_pson_data(value)
       hash

@@ -9,7 +9,7 @@ module Puppet::Util::Diff
     return '' unless diff_cmd = Puppet[:diff] and diff_cmd != ""
 
     command = [diff_cmd]
-    if args = Puppet[:diff_args] and args != ""
+    if (args = Puppet[:diff_args]) && (args != "")
       args.split(' ').each do|arg|
         command << arg
       end

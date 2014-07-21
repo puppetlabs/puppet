@@ -88,7 +88,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
       # If we're already at the latest version/revision, then just return the version
       # so the current and desired values match. Otherwise return version and revision
       # to trigger an upgrade to the latest revision.
-      if newest[:version] == current[:ensure] and newest[:revision] == current[:revision]
+      if (newest[:version] == current[:ensure]) && (newest[:revision] == current[:revision])
         return current[:ensure]
       else
         return "#{newest[:version]}_#{newest[:revision]}"

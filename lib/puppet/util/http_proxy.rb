@@ -56,7 +56,7 @@ module Puppet::Util::HttpProxy
       return env.password
     end
 
-    if Puppet.settings[:http_proxy_user] == 'none' or Puppet.settings[:http_proxy_password] == 'none'
+    if (Puppet.settings[:http_proxy_user] == 'none') || (Puppet.settings[:http_proxy_password] == 'none')
       return nil
     end
 

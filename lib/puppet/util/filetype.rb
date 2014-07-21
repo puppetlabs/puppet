@@ -88,7 +88,7 @@ class Puppet::Util::FileType
   # to the target user if the target user and the current user are not
   # the same
   def cronargs
-    if uid = Puppet::Util.uid(@path) and uid == Puppet::Util::SUIDManager.uid
+    if (uid = Puppet::Util.uid(@path)) && (uid == Puppet::Util::SUIDManager.uid)
       {:failonfail => true, :combine => true}
     else
       {:failonfail => true, :combine => true, :uid => @path}

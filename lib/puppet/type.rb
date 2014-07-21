@@ -264,7 +264,7 @@ class Type
     if options[:boolean]
       define_method(name.to_s + "?") do
         val = self[name]
-        if val == :true or val == true
+        if (val == :true) || (val == true)
           return true
         end
       end
