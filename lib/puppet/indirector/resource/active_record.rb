@@ -17,7 +17,7 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
     host   = request.options[:host]
     filter = request.options[:filter]
 
-    if filter and filter[1] =~ /^(and|or)$/i then
+    if filter && (filter[1] =~ /^(and|or)$/i)
       raise Puppet::Error, "Complex search on StoreConfigs resources is not supported"
     end
 
@@ -27,8 +27,8 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
 
   private
   def request_to_type_name(request)
-    request.key.split('/', 2)[0] or
-      raise "No key found in the request, failing: #{request.inspect}"
+    request.key.split('/', 2)[0] ||
+      (raise "No key found in the request, failing: #{request.inspect}")
   end
 
   def filter_to_active_record(filter)

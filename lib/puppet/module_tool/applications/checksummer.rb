@@ -43,8 +43,8 @@ module Puppet::ModuleTool
           JSON.parse(checksums_file.read)
         elsif metadata_file.exist?
           # Check metadata.json too; legacy modules store their checksums there.
-          JSON.parse(metadata_file.read)['checksums'] or
-          raise ArgumentError, "No file containing checksums found."
+          JSON.parse(metadata_file.read)['checksums'] ||
+          (raise ArgumentError, "No file containing checksums found.")
         else
           raise ArgumentError, "No file containing checksums found."
         end

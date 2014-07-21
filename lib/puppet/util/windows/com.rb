@@ -14,7 +14,7 @@ module Puppet::Util::Windows::COM
   module_function :SUCCEEDED, :FAILED
 
   def raise_if_hresult_failed(name, *args)
-    failed = FAILED(result = send(name, *args)) and raise "#{name} failed (hresult #{format('%#08x', result)})."
+    (failed = FAILED(result = send(name, *args))) && (raise "#{name} failed (hresult #{format('%#08x', result)}).")
 
     result
   ensure

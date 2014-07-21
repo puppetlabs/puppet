@@ -151,7 +151,7 @@ module Util
 
     raise Puppet::DevError, "Failed to provide level to :benchmark" unless level
 
-    unless level == :none or object.respond_to? level
+    unless (level == :none) || object.respond_to?(level)
       raise Puppet::DevError, "Benchmarked object does not respond to #{level}"
     end
 
@@ -177,7 +177,7 @@ module Util
   # @return [String] the absolute path to the found executable.
   def which(bin)
     if absolute_path?(bin)
-      return bin if FileTest.file? bin and FileTest.executable? bin
+      return bin if FileTest.file?(bin) && FileTest.executable?(bin)
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
         begin
@@ -186,7 +186,7 @@ module Util
           # if the user's PATH contains a literal tilde (~) character and HOME is not set, we may get
           # an ArgumentError here.  Let's check to see if that is the case; if not, re-raise whatever error
           # was thrown.
-          if e.to_s =~ /HOME/ and (ENV['HOME'].nil? || ENV['HOME'] == "")
+          if (e.to_s =~ /HOME/) && (ENV['HOME'].nil? || ENV['HOME'] == "")
             # if we get here they have a tilde in their PATH.  We'll issue a single warning about this and then
             # ignore this path element and carry on with our lives.
             Puppet::Util::Warnings.warnonce("PATH contains a ~ character, and HOME is not set; ignoring PATH element '#{dir}'.")
@@ -202,10 +202,10 @@ module Util
             exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
             exts.each do |ext|
               destext = File.expand_path(dest + ext)
-              return destext if FileTest.file? destext and FileTest.executable? destext
+              return destext if FileTest.file?(destext) && FileTest.executable?(destext)
             end
           end
-          return dest if FileTest.file? dest and FileTest.executable? dest
+          return dest if FileTest.file?(dest) && FileTest.executable?(dest)
         end
       end
     end

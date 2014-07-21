@@ -175,7 +175,7 @@ module Puppet::Util::Logging
 
   def log_source
     # We need to guard the existence of the constants, since this module is used by the base Puppet module.
-    (is_resource? || is_resource_parameter?) && respond_to?(:path) and return path.to_s
+    (is_resource? || is_resource_parameter?) && respond_to?(:path) && (return path.to_s)
     to_s
   end
 end

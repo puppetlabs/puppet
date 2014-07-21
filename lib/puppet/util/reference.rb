@@ -31,7 +31,7 @@ class Puppet::Util::Reference
     depth = 4
     # Use the minimum depth
     sections.each do |name|
-      section = reference(name) or raise "Could not find section #{name}"
+      (section = reference(name)) || (raise "Could not find section #{name}")
       depth = section.depth if section.depth < depth
     end
   end

@@ -47,7 +47,7 @@ module Puppet::Util::Tagging
   private
 
   def valid_tag?(tag)
-    tag.is_a?(String) and tag =~ ValidTagRegex
+    tag.is_a?(String) && (tag =~ ValidTagRegex)
   end
 
   def new_tags

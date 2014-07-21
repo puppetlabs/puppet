@@ -269,7 +269,7 @@ class Puppet::Util::Ldap::Manager
   # Convert a hash of attributes to ldap-like forms.  This mostly means
   # getting rid of :ensure and making sure everything's an array of strings.
   def ldap_convert(attributes)
-    attributes.reject { |param, value| value == :absent or param == :ensure }.inject({}) do |result, ary|
+    attributes.reject { |param, value| (value == :absent) || (param == :ensure) }.inject({}) do |result, ary|
       value = (ary[1].is_a?(Array) ? ary[1] : [ary[1]]).collect { |v| v.to_s }
       result[ldap_name(ary[0])] = value
       result

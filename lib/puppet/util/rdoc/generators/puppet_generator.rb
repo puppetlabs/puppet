@@ -163,7 +163,7 @@ module Generators
       # scan all classes to create the childs references
       @allclasses.values.each do |klass|
         if superklass = klass.context.superclass
-          if superklass = AllReferences[superklass] and (superklass.is_a?(HTMLPuppetClass) or superklass.is_a?(HTMLPuppetNode))
+          if (superklass = AllReferences[superklass]) && (superklass.is_a?(HTMLPuppetClass) || superklass.is_a?(HTMLPuppetNode))
             superklass.context.add_child(klass.context)
           end
         end
@@ -591,7 +591,7 @@ module Generators
       @values["title"]     = CGI.escapeHTML("#{@values['classmod']}: #{h_name}")
 
       c = @context
-      c = c.parent while c and !c.diagram
+      c = c.parent while c && !c.diagram
 
       @values["diagram"] = diagram_reference(c.diagram) if c && c.diagram
 

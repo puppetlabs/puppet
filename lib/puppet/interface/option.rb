@@ -16,8 +16,8 @@ class Puppet::Interface::Option
     # Collect and sort the arguments in the declaration.
     dups = {}
     declaration.each do |item|
-      if item.is_a? String and item.to_s =~ /^-/ then
-        unless item =~ /^-[a-z]\b/ or item =~ /^--[^-]/ then
+      if item.is_a?(String) && (item.to_s =~ /^-/) then
+        unless (item =~ /^-[a-z]\b/) || (item =~ /^--[^-]/) then
           raise ArgumentError, "#{item.inspect}: long options need two dashes (--)"
         end
         @optparse << item
@@ -58,7 +58,7 @@ class Puppet::Interface::Option
     # incoherence here makes our life super-difficult, and we can more easily
     # relax this rule later if we find a valid use case for it. --daniel 2011-03-30
     @argument = @optparse.any? { |o| o =~ /[ =]/ }
-    if @argument and not @optparse.all? { |o| o =~ /[ =]/ } then
+    if @argument && (!@optparse.all? { |o| o =~ /[ =]/ }) then
       raise ArgumentError, "Option #{@name} is inconsistent about taking an argument"
     end
 
@@ -66,7 +66,7 @@ class Puppet::Interface::Option
     # just like they do to taking arguments at all. --daniel 2011-03-30
     @optional_argument = @optparse.any? { |o| o=~/[ =]\[/ }
     @optional_argument && (raise ArgumentError, "Options with optional arguments are not supported")
-    if @optional_argument and not @optparse.all? { |o| o=~/[ =]\[/ } then
+    if @optional_argument && (!@optparse.all? { |o| o=~/[ =]\[/ }) then
       raise ArgumentError, "Option #{@name} is inconsistent about the argument being optional"
     end
   end
@@ -111,7 +111,7 @@ class Puppet::Interface::Option
 
   def default=(proc)
     required && (raise ArgumentError, "#{self} can't be optional and have a default value")
-    proc.is_a? Proc or raise ArgumentError, "default value for #{self} is a #{proc.class.name.inspect}, not a proc"
+    proc.is_a?(Proc) || (raise ArgumentError, "default value for #{self} is a #{proc.class.name.inspect}, not a proc")
     @default = proc
   end
 
@@ -128,14 +128,14 @@ class Puppet::Interface::Option
 
   attr_accessor :before_action
   def before_action=(proc)
-    proc.is_a? Proc or raise ArgumentError, "before action hook for #{self} is a #{proc.class.name.inspect}, not a proc"
+    proc.is_a?(Proc) || (raise ArgumentError, "before action hook for #{self} is a #{proc.class.name.inspect}, not a proc")
     @before_action =
       @parent.__send__(:__add_method, __decoration_name(:before), proc)
   end
 
   attr_accessor :after_action
   def after_action=(proc)
-    proc.is_a? Proc or raise ArgumentError, "after action hook for #{self} is a #{proc.class.name.inspect}, not a proc"
+    proc.is_a?(Proc) || (raise ArgumentError, "after action hook for #{self} is a #{proc.class.name.inspect}, not a proc")
     @after_action =
       @parent.__send__(:__add_method, __decoration_name(:after), proc)
   end

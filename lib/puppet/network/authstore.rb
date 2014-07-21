@@ -211,7 +211,7 @@ module Puppet
       # -1 if the first is true, and 1 if the second is true.  Used
       # in the <=> operator.
       def compare(me, them)
-        (me and them) ? nil : me ? -1 : them ? 1 : nil
+        (me && them) ? nil : me ? -1 : them ? 1 : nil
       end
 
       # Does the name match our pattern?

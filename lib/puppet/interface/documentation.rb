@@ -55,8 +55,8 @@ class Puppet::Interface
     # @api public
     # @dsl Faces
     attr_doc :summary do |value|
-      value =~ /\n/ and
-        raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
+      value =~ /\n/ &&
+        (raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead.")
       value
     end
 
@@ -242,7 +242,7 @@ class Puppet::Interface
     # @api public
     # @dsl Faces
     def copyright(owner = nil, years = nil)
-      if years.nil? and not owner.nil? then
+      if years.nil? && !owner.nil?
         raise ArgumentError, 'copyright takes the owners names, then the years covered'
       end
       self.copyright_owner = owner unless owner.nil?
@@ -313,7 +313,7 @@ class Puppet::Interface
           if part =~ /^\d+$/ then
             part.to_i
           elsif found = part.split(/-/) then
-            unless found.length == 2 and found.all? {|x| x.strip =~ /^\d+$/ }
+            unless (found.length == 2) && (found.all? {|x| x.strip =~ /^\d+$/ })
               raise ArgumentError, "#{part.inspect} is not a good copyright year or range"
             end
             Range.new(found[0].to_i, found[1].to_i)
