@@ -33,7 +33,7 @@ class Puppet::Relationship
   end
 
   def event=(event)
-    raise ArgumentError, "You must pass a callback for non-NONE events" if event != :NONE and ! callback
+    raise ArgumentError, "You must pass a callback for non-NONE events" if event != :NONE and !callback
     @event = event
   end
 

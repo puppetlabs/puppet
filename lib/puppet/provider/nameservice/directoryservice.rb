@@ -527,7 +527,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def add_members(current_members, new_members)
     new_members.flatten.each do |new_member|
-      if current_members.nil? or not current_members.include?(new_member)
+      if current_members.nil? || !current_members.include?(new_member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
         begin
           execute(cmd)
@@ -551,7 +551,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #      This method returns and sets @infohash
     # I'm not re-factoring the name "getinfo" because this method will be
     # most likely called by nameservice.rb, which I didn't write.
-    if refresh or (! defined?(@property_value_cache_hash) || ! @property_value_cache_hash)
+    if refresh or (!defined?(@property_value_cache_hash) || ! @property_value_cache_hash)
       # JJM 2007-07-24: OK, there's a bit of magic that's about to
       # happen... Let's see how strong my grip has become... =)
       #

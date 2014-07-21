@@ -191,7 +191,7 @@ module Puppet::Util::FileParsing
         end
       end
 
-      if record.rollup and ! line_fields.empty?
+      if record.rollup and !line_fields.empty?
         last_field = record.fields[-1]
         val = ([ret[last_field]] + line_fields).join(record.joiner)
         ret[last_field] = val

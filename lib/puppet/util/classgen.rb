@@ -212,7 +212,7 @@ module Puppet::Util::ClassGen
   # @api private
   def storeclass(klass, klassname, options)
     if hash = options[:hash]
-      if hash.include? klassname and ! options[:overwrite]
+      if hash.include? klassname and !options[:overwrite]
         raise Puppet::SubclassAlreadyDefined,
           "Already a generated class named #{klassname}"
       end

@@ -296,9 +296,9 @@ class Puppet::Resource::Type
       scope["title"] = resource.title               unless set.include? :title
       scope["name"] =  resource.name                unless set.include? :name
     end
-    scope["module_name"] = module_name if module_name and ! set.include? :module_name
+    scope["module_name"] = module_name if module_name and !set.include? :module_name
 
-    if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
+    if caller_name = scope.parent_module_name and !set.include?(:caller_module_name)
       scope["caller_module_name"] = caller_name
     end
     scope.class_set(self.name,scope) if hostclass? or node?
