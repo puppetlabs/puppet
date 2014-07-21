@@ -147,7 +147,7 @@ class Puppet::Resource
   end
 
   def ==(other)
-    return false unless other.respond_to?(:title) and self.type == other.type and self.title == other.title
+    return false unless other.respond_to?(:title) && (self.type == other.type) && (self.title == other.title)
 
     return false unless to_hash == other.to_hash
     true
@@ -506,7 +506,7 @@ class Puppet::Resource
   # The namevar for our resource type. If the type doesn't exist,
   # always use :name.
   def namevar
-    if builtin_type? && t = resource_type and t.key_attributes.length == 1
+    if builtin_type? && (t = resource_type) && (t.key_attributes.length == 1)
       t.key_attributes.first
     else
       :name
@@ -533,7 +533,7 @@ class Puppet::Resource
 
   def munge_type_name(value)
     return :main if value == :main
-    return "Class" if value == "" or value.nil? or value.to_s.downcase == "component"
+    return "Class" if (value == "") || value.nil? || (value.to_s.downcase == "component")
 
     value.to_s.split("::").collect { |s| s.capitalize }.join("::")
   end

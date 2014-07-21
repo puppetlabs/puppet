@@ -113,7 +113,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   end
 
   def munge(value)
-    if value.is_a?(String) and value != ':memory:' # for sqlite3 in-memory tests
+    if value.is_a?(String) && (value != ':memory:') # for sqlite3 in-memory tests
       value = File.expand_path(value)
     end
     value
@@ -134,7 +134,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     # Make sure the paths are fully qualified.
     path = File.expand_path(path)
 
-    return nil unless type == :directory or create_files? or Puppet::FileSystem.exist?(path)
+    return nil unless (type == :directory) || create_files? || Puppet::FileSystem.exist?(path)
     return nil if (path =~ /^\/dev/) || (path =~ /^[A-Z]:\/dev/i)
 
     resource = Puppet::Resource.new(:file, path)

@@ -45,7 +45,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def add(instance)
-    if (instance.type == :hostclass) && (other = @hostclasses[instance.name]) and other.type == :hostclass
+    if (instance.type == :hostclass) && (other = @hostclasses[instance.name]) && (other.type == :hostclass)
       other.merge(instance)
       return other
     end
