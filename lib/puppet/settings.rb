@@ -1048,7 +1048,7 @@ Generated on #{Time.now}.
   # @todo this code duplicates {Puppet::Util::RunMode#which_dir} as described
   #   in {http://projects.puppetlabs.com/issues/16637 #16637}
   def which_configuration_file
-    if explicit_config_file? or Puppet.features.root? then
+    if explicit_config_file? || Puppet.features.root? then
       return main_config_file
     else
       return user_config_file

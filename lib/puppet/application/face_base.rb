@@ -77,7 +77,7 @@ class Puppet::Application::FaceBase < Puppet::Application
           # care about optional vs mandatory in that case because we do a real
           # parse later, and that will totally take care of raising the error
           # when we get there. --daniel 2011-04-04
-          if option.takes_argument? and !item.index('=') then
+          if option.takes_argument? && !item.index('=') then
             index += 1 unless
               (option.optional_argument? and command_line.args[index + 1] =~ /^-/)
           end

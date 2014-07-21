@@ -81,7 +81,7 @@ module Puppet::Interface::OptionManager
     @options_hash ||= {}
 
     result = @options_hash[name.to_sym]
-    if result.nil? and with_inherited_options then
+    if result.nil? && with_inherited_options then
       if self.is_a?(Class) && superclass.respond_to?(:get_option)
         result = superclass.get_option(name)
       elsif self.class.respond_to?(:get_option)
