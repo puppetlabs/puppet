@@ -62,7 +62,7 @@ module PSON
         modul = generator_methods.const_get(const)
         klass.class_eval do
           instance_methods(false).each do |m|
-            m.to_s == 'to_pson' and remove_method m
+            (m.to_s == 'to_pson') && (remove_method m)
           end
           include modul
         end

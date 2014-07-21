@@ -622,14 +622,14 @@ module Puppet
 
         return [] if value == :false
         home = resource[:home]
-        if value == :true and not home
+        if (value == :true) && (not home)
           raise ArgumentError, "purge_ssh_keys can only be true for users with a defined home directory"
         end
 
         return [ "#{home}/.ssh/authorized_keys" ] if value == :true
         # value is an array - munge each value
         [ value ].flatten.map do |entry|
-          if entry =~ /^~|^%h/ and not home
+          if (entry =~ /^~|^%h/) && (not home)
             raise ArgumentError, "purge_ssh_keys value '#{value}' meta character ~ or %h only allowed for users with a defined home directory"
           end
           entry.gsub!(/^~\//, "#{home}/")

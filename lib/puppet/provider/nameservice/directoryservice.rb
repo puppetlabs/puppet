@@ -487,7 +487,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       if (property == :uid) && value.nil?
         value = self.class.next_system_id(id_type='uid')
       end
-      if value != "" and not value.nil?
+      if (value != "") && (not value.nil?)
         if property == :members
           add_members(nil, value)
         else

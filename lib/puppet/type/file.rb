@@ -831,7 +831,7 @@ Puppet::Type.newtype(:file) do
 
   # @return [Boolean] If the current file can be backed up and needs to be backed up.
   def can_backup?(type)
-    if type == "directory" and not force?
+    if (type == "directory") && (not force?)
       # (#18110) Directories cannot be removed without :force, so it doesn't
       # make sense to back them up.
       false

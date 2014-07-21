@@ -111,7 +111,7 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
   end
 
   def process_ssh
-    while @buf == "" and not eof?
+    while (@buf == "") && (not eof?)
       begin
         @channel.connection.process(0.1)
       rescue IOError

@@ -69,7 +69,7 @@ Puppet::Face.define(:man, '0.0.1') do
 
       ronn  = Puppet::Util.which('ronn')
       pager = [ENV['MANPAGER'], ENV['PAGER'], 'less', 'most', 'more'].
-        detect {|x| x and x.length > 0 and Puppet::Util.which(x) }
+        detect {|x| x && (x.length > 0) && Puppet::Util.which(x) }
 
       if ronn then
         # ronn is a stupid about pager selection, we can be smarter. :)
