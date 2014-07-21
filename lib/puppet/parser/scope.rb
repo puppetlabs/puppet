@@ -59,7 +59,7 @@ class Puppet::Parser::Scope
     end
 
     def include?(name)
-      (@parent and @parent.include?(name))
+      (@parent && @parent.include?(name))
     end
 
     def bound?(name)
@@ -143,7 +143,7 @@ class Puppet::Parser::Scope
     end
 
     def include?(name)
-      bound?(name) or super
+      bound?(name) || super
     end
 
     def bound?(name)

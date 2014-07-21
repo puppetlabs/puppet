@@ -570,7 +570,7 @@ class Type
   # @return [Boolean] Returns true if the given name is the name of an existing parameter
   def self.validparameter?(name)
     raise Puppet::DevError, "Class #{self} has not defined parameters" unless defined?(@parameters)
-    !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
+    !!(@paramhash.include?(name) || @@metaparamhash.include?(name))
   end
 
   # (see validattr?)
@@ -1309,7 +1309,7 @@ class Type
 
     def all_properties
       resource.class.properties.find_all do |property|
-        resource.provider.nil? or resource.provider.class.supports_parameter?(property)
+        resource.provider.nil? || resource.provider.class.supports_parameter?(property)
       end.collect do |property|
         property.name
       end

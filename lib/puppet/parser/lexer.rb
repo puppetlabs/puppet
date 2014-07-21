@@ -202,7 +202,7 @@ class Puppet::Parser::Lexer
     end
 
     VARIABLE_AND_DASHES_ALLOWED = Proc.new do |context|
-      Contextual::DASHED_VARIABLES_ALLOWED.call(context) and TOKENS[:VARIABLE].acceptable?(context)
+      Contextual::DASHED_VARIABLES_ALLOWED.call(context) && TOKENS[:VARIABLE].acceptable?(context)
     end
   end
 

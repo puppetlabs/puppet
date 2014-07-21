@@ -84,7 +84,7 @@ class Puppet::Network::Format
   end
 
   def supported?(klass)
-    suitable? and required_methods_present?(klass)
+    suitable? && required_methods_present?(klass)
   end
 
   def to_s

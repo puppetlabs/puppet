@@ -169,7 +169,7 @@ class Puppet::Settings
   # Is our setting a boolean setting?
   def boolean?(param)
     param = param.to_sym
-    @config.include?(param) and @config[param].kind_of?(BooleanSetting)
+    @config.include?(param) && @config[param].kind_of?(BooleanSetting)
   end
 
   # Remove all set values, potentially skipping cli values.
