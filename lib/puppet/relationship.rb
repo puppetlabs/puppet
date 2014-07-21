@@ -33,7 +33,7 @@ class Puppet::Relationship
   end
 
   def event=(event)
-    raise ArgumentError, "You must pass a callback for non-NONE events" if event != :NONE and !callback
+    raise ArgumentError, "You must pass a callback for non-NONE events" if (event != :NONE) && !callback
     @event = event
   end
 
@@ -51,9 +51,9 @@ class Puppet::Relationship
   # Does the passed event match our event?  This is where the meaning
   # of :NONE comes from.
   def match?(event)
-    if self.event.nil? or event == :NONE or self.event == :NONE
+    if self.event.nil? || (event == :NONE) || (self.event == :NONE)
       return false
-    elsif self.event == :ALL_EVENTS or event == self.event
+    elsif (self.event == :ALL_EVENTS) || (event == self.event)
       return true
     else
       return false

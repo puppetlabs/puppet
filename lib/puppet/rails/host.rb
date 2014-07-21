@@ -55,7 +55,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     deletions = []
     self.fact_values.find(:all, :include => :fact_name).each do |value|
-      deletions << value['id'] and next unless facts.include?(value['name'])
+      (deletions << value['id']) && next unless facts.include?(value['name'])
       # Now store them for later testing.
       db_facts[value['name']] ||= []
       db_facts[value['name']] << value

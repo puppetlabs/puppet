@@ -105,7 +105,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   private :add_resource_to_graph
 
   def create_resource_aliases(resource)
-    if resource.respond_to?(:isomorphic?) and resource.isomorphic? and resource.name != resource.title
+    if resource.respond_to?(:isomorphic?) && resource.isomorphic? && (resource.name != resource.title)
       self.alias(resource, resource.uniqueness_key)
     end
   end
@@ -501,7 +501,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     map = {}
     resources.each do |resource|
       next if virtual_not_exported?(resource)
-      next if block_given? and yield resource
+      next if block_given? && (yield resource)
 
       newres = resource.copy_as_resource
       newres.catalog = result
@@ -522,10 +522,10 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
     edges.each do |edge|
       # Skip edges between virtual resources.
       next if virtual_not_exported?(edge.source)
-      next if block_given? and yield edge.source
+      next if block_given? && (yield edge.source)
 
       next if virtual_not_exported?(edge.target)
-      next if block_given? and yield edge.target
+      next if block_given? && (yield edge.target)
 
       unless source = map[edge.source.ref]
         raise Puppet::DevError, "Could not find resource #{edge.source.ref} when converting #{message} resources"
@@ -547,6 +547,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def virtual_not_exported?(resource)
-    resource.respond_to?(:virtual?) and resource.virtual? and (resource.respond_to?(:exported?) and not resource.exported?)
+    resource.respond_to?(:virtual?) && resource.virtual? && (resource.respond_to?(:exported?) && !resource.exported?)
   end
 end
