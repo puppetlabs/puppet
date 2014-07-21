@@ -90,7 +90,7 @@ class Puppet::Application::FaceBase < Puppet::Application
             index += 1 unless item =~ /^--#{option.name}=/
           end
         elsif option = find_application_argument(item) then
-          index += 1 if (option[:argument] and not option[:optional])
+          index += 1 if (option[:argument] && !option[:optional])
         else
           raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
         end

@@ -157,7 +157,7 @@ class Rights
         return :dunno
       elsif @environment.size > 0 and not @environment.include?(args[:environment])
         return :dunno
-      elsif (@authentication and not args[:authenticated])
+      elsif (@authentication && !args[:authenticated])
         return :dunno
       end
 

@@ -429,7 +429,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # If we are meant to be authoritative for the group membership
       # then remove all existing members who haven't been specified
       # in the manifest.
-      remove_unwanted_members(current_members, value) if @resource[:auth_membership] and not current_members.nil?
+      remove_unwanted_members(current_members, value) if @resource[:auth_membership] && !current_members.nil?
 
       # if they're not a member, make them one.
       add_members(current_members, value)

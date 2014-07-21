@@ -322,7 +322,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
         trigger['trigger_type'] = Win32::TaskScheduler::MONTHLYDATE
         trigger['type']['days'] = bitfield_from_days(puppet_trigger['on'])
-      elsif puppet_trigger.keys.include?('which_occurrence') or puppet_trigger.keys.include?('day_of_week')
+      elsif puppet_trigger.keys.include?('which_occurrence') || puppet_trigger.keys.include?('day_of_week')
         self.fail 'which_occurrence cannot be specified as an array' if puppet_trigger['which_occurrence'].is_a?(Array)
         %w{day_of_week which_occurrence}.each do |field|
           self.fail "#{field} must be specified when creating a monthly day-of-week based trigger" unless puppet_trigger.has_key?(field)

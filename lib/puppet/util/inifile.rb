@@ -252,7 +252,7 @@ module Puppet::Util::IniConfig
     def section_exists?(name)
       if self.get_section(name)
         true
-      elsif @file_collection and @file_collection.get_section(name)
+      elsif @file_collection && @file_collection.get_section(name)
         true
       else
         false
