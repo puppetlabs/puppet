@@ -577,7 +577,7 @@ Puppet::Type.newtype(:file) do
     # REVISIT: is this Windows safe?  AltSeparator?
     mypath = self[:path].split(::File::Separator)
     other_paths = catalog.vertices.
-      select  { |r| r.is_a?(self.class) and r[:path] != self[:path] }.
+      select  { |r| r.is_a?(self.class) && (r[:path] != self[:path]) }.
       collect { |r| r[:path].split(::File::Separator) }.
       select  { |p| p[0,mypath.length]  == mypath }
 
@@ -631,9 +631,9 @@ Puppet::Type.newtype(:file) do
 
     total = self[:source].collect do |source|
       next unless result = perform_recursion(source)
-      return if top = result.find { |r| r.relative_path == "." } and top.ftype != "directory"
+      return if (top = result.find { |r| r.relative_path == "." }) && (top.ftype != "directory")
       result.each { |data| data.source = "#{source}/#{data.relative_path}" }
-      break result if result and !result.empty? and sourceselect == :first
+      break result if result && !result.empty? && (sourceselect == :first)
       result
     end.flatten.compact
 
@@ -900,7 +900,7 @@ Puppet::Type.newtype(:file) do
   def write_temporary_file?
     # unfortunately we don't know the source file size before fetching it
     # so let's assume the file won't be empty
-    (c = property(:content) and c.length) || @parameters[:source]
+    ((c = property(:content)) && c.length) || @parameters[:source]
   end
 
   # There are some cases where all of the work does not get done on

@@ -36,8 +36,8 @@ class CollExpr < AST::Branch
     # case statements as doing an eval here.
     code = proc do |resource|
       case @oper
-      when "and"; code1.call(resource) and code2.call(resource)
-      when "or"; code1.call(resource) or code2.call(resource)
+      when "and"; code1.call(resource) && code2.call(resource)
+      when "or"; code1.call(resource) || code2.call(resource)
       when "=="
         if match1 == "tag"
           resource.tagged?(match2)
@@ -78,8 +78,8 @@ class CollExpr < AST::Branch
     # case statements as doing an eval here.
     code = proc do |resource|
       case @oper
-      when "and"; code1.call(resource) and code2.call(resource)
-      when "or"; code1.call(resource) or code2.call(resource)
+      when "and"; code1.call(resource) && code2.call(resource)
+      when "or"; code1.call(resource) || code2.call(resource)
       when "=="
         if match1 == "tag"
           resource.tagged?(match2)

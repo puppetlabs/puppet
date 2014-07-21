@@ -10,7 +10,7 @@ module Puppet
 
       def valid_v4?(addr)
         if /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/ =~ addr
-          return $~.captures.all? {|i| i = i.to_i; i >= 0 and i <= 255 }
+          return $~.captures.all? {|i| i = i.to_i; (i >= 0) && (i <= 255) }
         end
         return false
       end

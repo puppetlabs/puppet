@@ -18,7 +18,7 @@ class Puppet::Parser::Collector
     end
 
     if self.resources
-      unless objects = collect_resources and !objects.empty?
+      unless (objects = collect_resources) && !objects.empty?
         return false
       end
     else
@@ -161,7 +161,7 @@ class Puppet::Parser::Collector
   # Collect just virtual objects, from our local compiler.
   def collect_virtual(exported = false)
     scope.compiler.resources.find_all do |resource|
-      resource.type == @type and (exported ? resource.exported? : true) and match?(resource)
+      (resource.type == @type) && (exported ? resource.exported? : true) && match?(resource)
     end
   end
 

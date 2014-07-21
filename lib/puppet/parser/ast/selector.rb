@@ -18,7 +18,7 @@ class Puppet::Parser::AST
 
       default = nil
 
-      @values = [@values] unless @values.instance_of? AST::ASTArray or @values.instance_of? Array
+      @values = [@values] unless @values.instance_of?(AST::ASTArray) || @values.instance_of?(Array)
 
       # Then look for a match in the options.
       @values.each do |obj|
