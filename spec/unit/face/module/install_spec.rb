@@ -6,20 +6,21 @@ describe "puppet module install" do
   include PuppetSpec::Files
 
   describe "action" do
-    let(:name)        { stub(:name) }
-    let(:target_dir)  { stub(:target_dir) }
-    let(:target_path) { stub(:target_path) }
-    let(:install_dir) { stub(:install_dir) }
+    let(:name)        { "ownername/modulenname" }
+    let(:target_dir)  { make_absolute("/my/target/dir") }
+    let(:target_path) { make_absolute("/my/target/path") }
+    let(:install_dir) { make_absolute("/my/install_dir") }
     let(:options)     { { :target_dir => target_dir } }
 
     it 'should invoke the Installer app' do
-      args = [ name, install_dir, options ]
-
       Puppet::ModuleTool.expects(:set_option_defaults).with(options)
 
-      Pathname.expects(:new).with(target_dir).returns(target_path)
-      Puppet::ModuleTool::InstallDirectory.expects(:new).with(target_path).returns(install_dir)
-      Puppet::ModuleTool::Applications::Installer.expects(:run).with(*args)
+      Puppet::ModuleTool::Applications::Installer.expects(:run).with do |*args|
+        expect(args[0]).to eq(name)
+        expect(args[1]).to be_a_kind_of Puppet::ModuleTool::InstallDirectory
+        expect(args[1].target).to eq(Pathname.new(target_dir))
+        expect(args[2]).to eq(options)
+      end
 
       Puppet::Face[:module, :current].install(name, options)
     end
