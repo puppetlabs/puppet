@@ -17,7 +17,7 @@ module Puppet
     end
 
     newproperty(:key) do
-      desc "The key itself; generally a long string of hex digits."
+      desc "The key itself; generally a long string of uuencoded characters."
     end
 
     # FIXME This should automagically check for aliases to the hosts, just
