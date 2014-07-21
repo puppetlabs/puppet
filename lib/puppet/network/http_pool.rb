@@ -5,8 +5,9 @@ module Puppet::Network; end
 # This module contains the factory methods that should be used for getting a
 # {Puppet::Network::HTTP::Connection} instance.
 #
-# @note The name "HttpPool" is a misnomer, and a leftover of history, but we would
-#   like to make this cache connections in the future.
+# @note The name "HttpPool" is a misnomer, and a leftover of history. The
+# connection may establish a persistent HTTP connection, depending on the
+# http_client_class.
 #
 # @api public
 #
