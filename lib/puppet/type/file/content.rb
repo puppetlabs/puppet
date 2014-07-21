@@ -109,7 +109,7 @@ module Puppet
 
       result = super
 
-      if ! result and Puppet[:show_diff] and resource.show_diff?
+      if !result && Puppet[:show_diff] && resource.show_diff?
         write_temporarily do |path|
           send @resource[:loglevel], "\n" + diff(@resource[:path], path)
         end

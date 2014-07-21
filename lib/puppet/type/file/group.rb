@@ -15,7 +15,7 @@ module Puppet
     EOT
 
     validate do |group|
-      raise(Puppet::Error, "Invalid group name '#{group.inspect}'") unless group and group != ""
+      raise(Puppet::Error, "Invalid group name '#{group.inspect}'") unless group && (group != "")
     end
 
     def insync?(current)

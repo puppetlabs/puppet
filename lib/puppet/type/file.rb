@@ -231,7 +231,7 @@ Puppet::Type.newtype(:file) do
       e.g., `*/*`."
 
     validate do |value|
-      unless value.is_a?(Array) or value.is_a?(String) or value == false
+      unless value.is_a?(Array) || value.is_a?(String) || (value == false)
         self.devfail "Ignore must be a string or an Array"
       end
     end
@@ -417,11 +417,11 @@ Puppet::Type.newtype(:file) do
     return nil unless backup
     return nil if backup =~ /^\./
 
-    unless catalog or backup == "puppet"
+    unless catalog || (backup == "puppet")
       fail "Can not find filebucket for backups without a catalog"
     end
 
-    unless catalog and filebucket = catalog.resource(:filebucket, backup) or backup == "puppet"
+    unless catalog && (filebucket = catalog.resource(:filebucket, backup)) || (backup == "puppet")
       fail "Could not find filebucket #{backup} specified in backup"
     end
 

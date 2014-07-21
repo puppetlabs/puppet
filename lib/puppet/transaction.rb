@@ -221,7 +221,7 @@ class Puppet::Transaction
   end
 
   def failed?(resource)
-    s = resource_status(resource) and s.failed?
+    (s = resource_status(resource)) && s.failed?
   end
 
   # Does this resource have any failed dependencies?
