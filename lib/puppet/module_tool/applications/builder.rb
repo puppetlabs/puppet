@@ -69,6 +69,10 @@ module Puppet::ModuleTool
       def write_json
         metadata_path = File.join(build_path, 'metadata.json')
 
+        # Delete checksum values from metadata because it is deprecated and
+        # confusing to everyone/everycomputer involved.
+        metadata.delete("checksums")
+
         # TODO: This may necessarily change the order in which the metadata.json
         # file is packaged from what was written by the user.  This is a
         # regretable, but required for now.
@@ -77,7 +81,7 @@ module Puppet::ModuleTool
         end
 
         File.open(File.join(build_path, 'checksums.json'), 'w') do |f|
-          f.write(PSON.pretty_generate(Checksums.new(@path)))
+          f.write(PSON.pretty_generate(Checksums.new(build_path)))
         end
       end
 

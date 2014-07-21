@@ -56,6 +56,11 @@ module Puppet::ModuleTool
       return self
     end
 
+    # Delete a KV pair from the metadata entirely.
+    def delete(field)
+      @data.delete(field)
+    end
+
     # Provides an accessor for the now defunct 'description' property.  This
     # addresses a regression in Puppet 3.6.x where previously valid templates
     # refering to the 'description' property were broken.
