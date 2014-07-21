@@ -206,14 +206,14 @@ class Puppet::Configurer
         tries += 1
       end
 
-      execute_prerun_command or return nil
+      execute_prerun_command || (return nil)
       apply_catalog(catalog, options)
       report.exit_status
     rescue => detail
       Puppet.log_exception(detail, "Failed to apply catalog: #{detail}")
       return nil
     ensure
-      execute_postrun_command or return nil
+      execute_postrun_command || (return nil)
     end
   ensure
     # Between Puppet runs we need to forget the cached values.  This lets us
