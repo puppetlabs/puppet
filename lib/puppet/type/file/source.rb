@@ -189,7 +189,7 @@ module Puppet
     end
 
     def local?
-      found? and scheme == "file"
+      found? && scheme == "file"
     end
 
     def full_path
@@ -197,15 +197,15 @@ module Puppet
     end
 
     def server?
-       uri and uri.host
+       uri && uri.host
     end
 
     def server
-      (uri and uri.host) or Puppet.settings[:server]
+      (uri && uri.host) || Puppet.settings[:server]
     end
 
     def port
-      (uri and uri.port) or Puppet.settings[:masterport]
+      (uri && uri.port) || Puppet.settings[:masterport]
     end
 
     def uri
@@ -215,11 +215,11 @@ module Puppet
     private
 
     def scheme
-      (uri and uri.scheme)
+      (uri && uri.scheme)
     end
 
     def found?
-      ! (metadata.nil? or metadata.ftype.nil?)
+      ! (metadata.nil? || metadata.ftype.nil?)
     end
 
     def copy_source_value(metadata_method)

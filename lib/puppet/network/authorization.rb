@@ -8,7 +8,7 @@ module Puppet::Network
     # we install our defaults
     def self.authconfig
       @auth_config_file ||= Puppet::Util::WatchedFile.new(Puppet[:rest_authconfig])
-      if (not @auth_config) or @auth_config_file.changed?
+      if (not @auth_config) || @auth_config_file.changed?
         begin
           @auth_config = Puppet::Network::AuthConfigParser.new_from_file(Puppet[:rest_authconfig]).parse
         rescue Errno::ENOENT, Errno::ENOTDIR

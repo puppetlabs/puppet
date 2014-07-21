@@ -61,7 +61,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       modified(record[:target] || default_target)
     end
 
-    return unless defined?(@modified) and ! @modified.empty?
+    return unless defined?(@modified) && ! @modified.empty?
 
     flushed = []
     begin
@@ -408,7 +408,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   end
 
   def exists?
-    !(@property_hash[:ensure] == :absent or @property_hash[:ensure].nil?)
+    !(@property_hash[:ensure] == :absent || @property_hash[:ensure].nil?)
   end
 
   # Write our data to disk.
@@ -451,7 +451,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Mark both the resource and provider target as modified.
   def mark_target_modified
-    if defined?(@resource) and restarget = @resource.should(:target) and restarget != @property_hash[:target]
+    if defined?(@resource) && restarget = @resource.should(:target) and restarget != @property_hash[:target]
       self.class.modified(restarget)
     end
     self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent and @property_hash[:target]

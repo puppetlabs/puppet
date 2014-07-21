@@ -31,7 +31,7 @@ module Puppet::Util::IniConfig
     #   section has been modified so the associated file can be rewritten
     #   without this section.
     def dirty?
-      @dirty or @destroy
+      @dirty || @destroy
     end
 
     def mark_dirty
@@ -222,7 +222,7 @@ module Puppet::Util::IniConfig
     end
 
     def store
-      if @destroy_empty and (sections.empty? or sections.all?(&:destroy?))
+      if @destroy_empty && (sections.empty? || sections.all?(&:destroy?))
         ::File.unlink(@file)
       elsif sections.any?(&:dirty?)
         text = self.format

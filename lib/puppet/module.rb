@@ -303,7 +303,7 @@ class Puppet::Module
   end
 
   def validate_puppet_version
-    return unless puppetversion and puppetversion != Puppet.version
+    return unless puppetversion && puppetversion != Puppet.version
     raise IncompatibleModule, "Module #{self.name} is only compatible with Puppet version #{puppetversion}, not #{Puppet.version}"
   end
 

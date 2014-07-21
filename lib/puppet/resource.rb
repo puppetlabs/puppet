@@ -212,7 +212,7 @@ class Puppet::Resource
       extract_parameters(params)
     end
 
-    if resource_type and ! @@nondeprecating_type[resource_type]
+    if resource_type && ! @@nondeprecating_type[resource_type]
       if resource_type.respond_to?(:deprecate_params)
         resource_type.deprecate_params(title, attributes[:parameters])
       else
@@ -224,7 +224,7 @@ class Puppet::Resource
     tag(self.title) if valid_tag?(self.title)
 
     @reference = self # for serialization compatibility with 0.25.x
-    if strict? and ! resource_type
+    if strict? && ! resource_type
       if self.class?
         raise ArgumentError, "Could not find declared class #{title}"
       else
@@ -506,7 +506,7 @@ class Puppet::Resource
   # The namevar for our resource type. If the type doesn't exist,
   # always use :name.
   def namevar
-    if builtin_type? and t = resource_type and t.key_attributes.length == 1
+    if builtin_type? && t = resource_type and t.key_attributes.length == 1
       t.key_attributes.first
     else
       :name

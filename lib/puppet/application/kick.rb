@@ -312,7 +312,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet::Util::Log.level = :info
     end
 
-    if Puppet[:node_terminus] == :ldap and (options[:all] or @classes)
+    if Puppet[:node_terminus] == :ldap && (options[:all] || @classes)
       if options[:all]
         @hosts = Puppet::Node.indirection.search("whatever", :fqdn => options[:fqdn]).collect { |node| node.name }
         puts "all: #{@hosts.join(", ")}"

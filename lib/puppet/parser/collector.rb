@@ -141,7 +141,7 @@ class Puppet::Parser::Collector
   # Collect resources directly; this is the result of using 'realize',
   # which specifies resources, rather than using a normal collection.
   def collect_virtual_resources
-    return [] unless defined?(@resources) and ! @resources.empty?
+    return [] unless defined?(@resources) && ! @resources.empty?
     result = @resources.dup.collect do |ref|
       if res = @scope.findresource(ref.to_s)
         @resources.delete(ref)

@@ -49,7 +49,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
   private
     def safe_to_use_settings_value?
-      @settings[:mkusers] or @settings.send(@available_method)
+      @settings[:mkusers] || @settings.send(@available_method)
     end
   end
 

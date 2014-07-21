@@ -279,7 +279,7 @@ module Puppet::Util::FileParsing
 
   # Are there any record types defined?
   def records?
-    defined?(@record_types) and ! @record_types.empty?
+    defined?(@record_types) && ! @record_types.empty?
   end
 
   # Define a new type of text record.

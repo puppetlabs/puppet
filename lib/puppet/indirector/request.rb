@@ -143,7 +143,7 @@ class Puppet::Indirector::Request
       end
     end
 
-    @key = @instance.name if ! @key and @instance
+    @key = @instance.name if ! @key && @instance
   end
 
   # Look up the indirection based on the name provided.
@@ -265,7 +265,7 @@ class Puppet::Indirector::Request
   end
 
   def remote?
-    self.node or self.ip
+    self.node || self.ip
   end
 
   private

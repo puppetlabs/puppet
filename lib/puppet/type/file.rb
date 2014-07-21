@@ -396,7 +396,7 @@ Puppet::Type.newtype(:file) do
 
   # Determine the user to write files as.
   def asuser
-    if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
+    if self.should(:owner) && ! self.should(:owner).is_a?(Symbol)
       writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
         FileTest.writable?(::File.dirname(self[:path]))
       }
@@ -591,7 +591,7 @@ Puppet::Type.newtype(:file) do
 
   # A simple method for determining whether we should be recursing.
   def recurse?
-    self[:recurse] == true or self[:recurse] == :remote
+    self[:recurse] == true || self[:recurse] == :remote
   end
 
   # Recurse the target of the link.
@@ -765,7 +765,7 @@ Puppet::Type.newtype(:file) do
     method = :stat
 
     # Files are the only types that support links
-    if (self.class.name == :file and self[:links] != :follow) or self.class.name == :tidy
+    if (self.class.name == :file && self[:links] != :follow) || self.class.name == :tidy
       method = :lstat
     end
 

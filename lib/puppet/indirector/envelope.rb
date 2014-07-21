@@ -6,6 +6,6 @@ module Puppet::Indirector::Envelope
   attr_accessor :expiration
 
   def expired?
-    expiration and expiration < Time.now
+    expiration && expiration < Time.now
   end
 end

@@ -24,7 +24,7 @@ module Util
   extend Puppet::Util::SymbolicFileMode
 
   def self.activerecord_version
-    if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
+    if (defined?(::ActiveRecord) && defined?(::ActiveRecord::VERSION) && defined?(::ActiveRecord::VERSION::MAJOR) && defined?(::ActiveRecord::VERSION::MINOR))
       ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
     else
       0
