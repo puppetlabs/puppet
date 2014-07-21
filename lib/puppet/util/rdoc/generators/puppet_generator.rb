@@ -394,7 +394,7 @@ module Generators
       resources = @resources.sort
       resources.each do |r|
         row = {}
-        if r.section == section and r.document_self
+        if (r.section == section) && r.document_self
           row["name"]        = CGI.escapeHTML(r.name)
           desc = r.description.strip
           row["m_desc"]      = desc unless desc.empty?

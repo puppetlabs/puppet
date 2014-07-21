@@ -156,7 +156,7 @@ module Util
     end
 
     # Only benchmark if our log level is high enough
-    if level != :none and Puppet::Util::Log.sendlevel?(level)
+    if (level != :none) && Puppet::Util::Log.sendlevel?(level)
       seconds = Benchmark.realtime {
         yield
       }
@@ -274,7 +274,7 @@ module Util
 
     path = URI.unescape(uri.path)
 
-    if Puppet.features.microsoft_windows? and uri.scheme == 'file'
+    if Puppet.features.microsoft_windows? && (uri.scheme == 'file')
       if uri.host
         path = "//#{uri.host}" + path # UNC
       else

@@ -95,7 +95,7 @@ module Puppet
       # insync: mounted   -> present
       #         unmounted -> present
       def insync?(is)
-        if should == :defined and [:mounted,:unmounted].include?(is)
+        if (should == :defined) && [:mounted,:unmounted].include?(is)
           true
         else
           super
@@ -263,7 +263,7 @@ module Puppet
 
     def refresh
       # Only remount if we're supposed to be mounted.
-      provider.remount if self.should(:fstype) != "swap" and provider.mounted?
+      provider.remount if (self.should(:fstype) != "swap") && provider.mounted?
     end
 
     def value(name)

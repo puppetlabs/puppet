@@ -268,7 +268,7 @@ class Puppet::Property < Puppet::Parameter
   # @see Puppet::Type#event
   def event
     attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }
-    if should and value = self.class.value_collection.match?(should)
+    if should && (value = self.class.value_collection.match?(should))
       attrs[:invalidate_refreshes] = true if value.invalidate_refreshes
     end
     resource.event attrs

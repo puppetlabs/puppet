@@ -172,7 +172,7 @@ DOC
     # If this CSR is for the current machine...
     if name == Puppet[:certname].downcase
       # ...add our configured dns_alt_names
-      if Puppet[:dns_alt_names] and Puppet[:dns_alt_names] != ''
+      if Puppet[:dns_alt_names] && (Puppet[:dns_alt_names] != '')
         options[:dns_alt_names] ||= Puppet[:dns_alt_names]
       elsif Puppet::SSL::CertificateAuthority.ca? && fqdn = Facter.value(:fqdn) and domain = Facter.value(:domain)
         options[:dns_alt_names] = "puppet, #{fqdn}, puppet.#{domain}"

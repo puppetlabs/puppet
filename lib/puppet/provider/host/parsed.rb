@@ -23,7 +23,7 @@ Puppet::Type.type(:host).provide(:parsed,:parent => Puppet::Provider::ParsedFile
     :match    => /^(\S+)\s+(\S+)\s*(.*?)?(?:\s*#\s*(.*))?$/,
     :post_parse => proc { |hash|
       # An absent comment should match "comment => ''"
-      hash[:comment] = '' if hash[:comment].nil? or hash[:comment] == :absent
+      hash[:comment] = '' if hash[:comment].nil? || (hash[:comment] == :absent)
       unless hash[:host_aliases].nil? or hash[:host_aliases] == :absent
         hash[:host_aliases].gsub!(/\s+/,' ') # Change delimiter
       end

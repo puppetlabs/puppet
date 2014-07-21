@@ -52,7 +52,7 @@ module Puppet::Util::Diff
       # Hunks may overlap, which is why we need to be careful when our
       # diff includes lines of context. Otherwise, we might print
       # redundant lines.
-      if (context_lines > 0) and hunk.overlaps?(oldhunk)
+      if ((context_lines > 0)) && hunk.overlaps?(oldhunk)
         hunk.unshift(oldhunk)
       else
         output << oldhunk.diff(format)

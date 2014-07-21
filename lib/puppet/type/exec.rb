@@ -535,7 +535,7 @@ module Puppet
     # within refresh
     def check_all_attributes(refreshing = false)
       self.class.checks.each { |check|
-        next if refreshing and check == :refreshonly
+        next if refreshing && (check == :refreshonly)
         if @parameters.include?(check)
           val = @parameters[check].value
           val = [val] unless val.is_a? Array

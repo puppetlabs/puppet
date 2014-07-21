@@ -73,7 +73,7 @@ class Puppet::Network::HTTP::API::V1
 
     params.delete(:bucket_path)
 
-    raise ArgumentError, "No request key specified in #{uri}" if key == "" or key.nil?
+    raise ArgumentError, "No request key specified in #{uri}" if (key == "") || key.nil?
 
     key = URI.unescape(key)
 

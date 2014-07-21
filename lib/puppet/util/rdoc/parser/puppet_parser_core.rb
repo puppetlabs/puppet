@@ -169,7 +169,7 @@ module RDoc::PuppetParserCore
     code.each do |stmt|
       scan_for_realize(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
-      if stmt.is_a?(Puppet::Parser::AST::Function) and stmt.name == 'realize'
+      if stmt.is_a?(Puppet::Parser::AST::Function) && (stmt.name == 'realize')
         stmt.arguments.each do |realized|
           Puppet.debug "found #{stmt.name}: #{realized}"
           container.add_realize( RDoc::Include.new(realized.to_s, stmt.doc))

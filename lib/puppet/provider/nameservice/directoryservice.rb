@@ -481,10 +481,10 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     Puppet::Type.type(@resource.class.name).validproperties.each do |property|
       next if property == :ensure
       value = @resource.should(property)
-      if property == :gid and value.nil?
+      if (property == :gid) && value.nil?
         value = self.class.next_system_id(id_type='gid')
       end
-      if property == :uid and value.nil?
+      if (property == :uid) && value.nil?
         value = self.class.next_system_id(id_type='uid')
       end
       if value != "" and not value.nil?

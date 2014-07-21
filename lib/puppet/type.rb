@@ -1006,7 +1006,7 @@ class Type
           "The is value is not in the is array for '#{property.name}'"
       end
       ensureis = is[property]
-      if property.safe_insync?(ensureis) and property.should == :absent
+      if property.safe_insync?(ensureis) && (property.should == :absent)
         return true
       end
     end
@@ -1869,7 +1869,7 @@ class Type
   # Removes the implementation class of a given provider.
   # @return [Object] returns what {Puppet::Util::ClassGen#rmclass} returns
   def self.unprovide(name)
-    if @defaultprovider and @defaultprovider.name == name
+    if @defaultprovider && (@defaultprovider.name == name)
       @defaultprovider = nil
     end
 
@@ -2418,7 +2418,7 @@ class Type
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice
-      next if param.class.isnamevar? and param.value == self.title
+      next if param.class.isnamevar? && (param.value == self.title)
 
       # We've already got property values
       next if param.is_a?(Puppet::Property)

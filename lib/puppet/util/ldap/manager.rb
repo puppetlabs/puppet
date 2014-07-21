@@ -219,7 +219,7 @@ class Puppet::Util::Ldap::Manager
     end
 
     # We're creating a new entry
-    if is.empty? or is[:ensure] == :absent
+    if is.empty? || (is[:ensure] == :absent)
       Puppet.info "Creating #{dn(name)} in ldap"
       # Remove any :absent params and :ensure, then convert the names to ldap names.
       attrs = ldap_convert(should)
@@ -241,13 +241,13 @@ class Puppet::Util::Ldap::Manager
       prop_name = ldap_name(property).to_s
 
       # We're creating it.
-      if is[property] == :absent or is[property].nil?
+      if (is[property] == :absent) || is[property].nil?
         mods << LDAP::Mod.new(LDAP::LDAP_MOD_ADD, prop_name, attributes[prop_name])
         next
       end
 
       # We're deleting it
-      if should[property] == :absent or should[property].nil?
+      if (should[property] == :absent) || should[property].nil?
         mods << LDAP::Mod.new(LDAP::LDAP_MOD_DELETE, prop_name, [])
         next
       end

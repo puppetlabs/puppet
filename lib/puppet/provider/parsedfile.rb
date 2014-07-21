@@ -293,7 +293,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.retrieve(path)
     # XXX We need to be doing something special here in case of failure.
     text = target_object(path).read
-    if text.nil? or text == ""
+    if text.nil? || (text == "")
       # there is no file
       return []
     else
@@ -379,7 +379,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # @api private
   def self.to_file(records)
     text = super
-    if native_header_regex and (match = text.match(native_header_regex))
+    if native_header_regex && ((match = text.match(native_header_regex)))
       if drop_native_header
         # concatenate the text in front of and after the native header
         text = match.pre_match + match.post_match
@@ -454,6 +454,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     if defined?(@resource) && restarget = @resource.should(:target) and restarget != @property_hash[:target]
       self.class.modified(restarget)
     end
-    self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent and @property_hash[:target]
+    self.class.modified(@property_hash[:target]) if (@property_hash[:target] != :absent) && @property_hash[:target]
   end
 end

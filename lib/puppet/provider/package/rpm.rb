@@ -123,7 +123,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     end
 
     flag = ["-i"]
-    flag = ["-U", "--oldpackage"] if @property_hash[:ensure] and @property_hash[:ensure] != :absent
+    flag = ["-U", "--oldpackage"] if @property_hash[:ensure] && (@property_hash[:ensure] != :absent)
     flag += install_options if resource[:install_options]
     rpm flag, source
   end

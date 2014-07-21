@@ -106,7 +106,7 @@ Using a lambda to process the looked up result - asserting that it starts with a
 
     # only with parser future
     lookup('the_size', Integer[1,100]) |$result| {
-      if $large_value_allowed and $result > 10
+      if $large_value_allowed && ($result > 10)
         { error 'Values larger than 10 are not allowed'}
       $result
     }
@@ -115,7 +115,7 @@ Including the name in the error
 
     # only with parser future
     lookup('the_size', Integer[1,100]) |$name, $result| {
-      if $large_value_allowed and $result > 10
+      if $large_value_allowed && ($result > 10)
         { error 'The bound value for '${name}' can not be larger than 10 in this configuration'}
       $result
     }

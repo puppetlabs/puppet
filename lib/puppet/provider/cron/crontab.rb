@@ -54,12 +54,12 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
     end
 
     def pre_gen(record)
-      if record[:special] and record[:special] != :absent
+      if record[:special] && (record[:special] != :absent)
         record[:special] = "@#{record[:special]}"
       end
 
       Puppet::Type::Cron::ProviderCrontab::TIME_FIELDS.each do |field|
-        if vals = record[field] and vals.is_a?(Array)
+        if (vals = record[field]) && vals.is_a?(Array)
           record[field] = vals.join(",")
         end
       end
@@ -70,16 +70,16 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
       str = ""
       record[:name] = nil if record[:unmanaged]
       str = "# Puppet Name: #{record[:name]}\n" if record[:name]
-      if record[:environment] and record[:environment] != :absent
+      if record[:environment] && (record[:environment] != :absent)
         str += record[:environment].map {|line| "#{line}\n"}.join('')
       end
-      if record[:special] and record[:special] != :absent
+      if record[:special] && (record[:special] != :absent)
         fields = [:special, :command]
       else
         fields = Puppet::Type::Cron::ProviderCrontab::TIME_FIELDS + [:command]
       end
       str += record.values_at(*fields).map do |field|
-        if field.nil? or field == :absent
+        if field.nil? || (field == :absent)
           self.absent
         else
           field

@@ -51,7 +51,7 @@ class Puppet::Settings
   def self.default_certname()
     hostname = hostname_fact
     domain = domain_fact
-    if domain and domain != ""
+    if domain && (domain != "")
       fqdn = [hostname, domain].join(".")
     else
       fqdn = hostname
@@ -294,7 +294,7 @@ class Puppet::Settings
   # @param [String, TrueClass, FalseClass] val the value for the setting (as determined by the OptionParser)
   def self.clean_opt(opt, val)
     # rewrite --[no-]option to --no-option if that's what was given
-    if opt =~ /\[no-\]/ and !val
+    if (opt =~ /\[no-\]/) && !val
       opt = opt.gsub(/\[no-\]/,'no-')
     end
     # otherwise remove the [no-] prefix to not confuse everybody
@@ -395,7 +395,7 @@ class Puppet::Settings
     str = str.intern
 
     if @config[str].is_a?(Puppet::Settings::BooleanSetting)
-      if value == "" or value.nil?
+      if (value == "") || value.nil?
         value = bool
       end
     end
@@ -474,7 +474,7 @@ class Puppet::Settings
 
   # Return a given object's file metadata.
   def metadata(param)
-    if obj = @config[param.to_sym] and obj.is_a?(FileSetting)
+    if (obj = @config[param.to_sym]) && obj.is_a?(FileSetting)
       {
         :owner => obj.owner,
         :group => obj.group,

@@ -184,7 +184,7 @@ module Puppet::Util::FileParsing
       line_fields = line.split(sep)
       record.fields.each do |param|
         value = line_fields.shift
-        if value and value != record.absent
+        if value && (value != record.absent)
           ret[param] = value
         else
           ret[param] = :absent
@@ -342,7 +342,7 @@ module Puppet::Util::FileParsing
 
   def valid_attr?(type, attr)
     type = type.intern
-    if record = record_type(type) and record.fields.include?(attr.intern)
+    if (record = record_type(type)) && record.fields.include?(attr.intern)
       return true
     else
       if attr.intern == :ensure

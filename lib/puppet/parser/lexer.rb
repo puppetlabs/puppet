@@ -372,7 +372,7 @@ class Puppet::Parser::Lexer
     # I tried optimizing based on the first char, but it had
     # a slightly negative affect and was a good bit more complicated.
     TOKENS.regex_tokens.each do |token|
-      if length = @scanner.match?(token.regex) and token.acceptable?(lexing_context)
+      if (length = @scanner.match?(token.regex)) && token.acceptable?(lexing_context)
         # We've found a longer match
         if length > best_length
           best_length = length
@@ -565,7 +565,7 @@ class Puppet::Parser::Lexer
                      else
                        TOKENS[:VARIABLE].regex
                      end
-    if terminator != '$' or @scanner.scan(/\{/)
+    if (terminator != '$') || @scanner.scan(/\{/)
       token_queue.shift
     elsif var_name = @scanner.scan(variable_regex)
       warn_if_variable_has_hyphen(var_name)
@@ -588,7 +588,7 @@ class Puppet::Parser::Lexer
 
   def getcomment(line = nil)
     comment = @commentstack.last
-    if line.nil? or comment[1] <= line
+    if line.nil? || (comment[1] <= line)
       @commentstack.pop
       @commentstack.push(['', @line])
       return comment[0]

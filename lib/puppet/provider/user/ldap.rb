@@ -119,7 +119,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
   end
 
   def group_properties(values)
-    if values.empty? or values == :absent
+    if values.empty? || (values == :absent)
       {:ensure => :present}
     else
       {:ensure => :present, :members => values}

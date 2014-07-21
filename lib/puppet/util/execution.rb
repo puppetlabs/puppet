@@ -196,7 +196,7 @@ module Puppet::Util::Execution
       Puppet.warning "Could not get output" unless output
     end
 
-    if options[:failonfail] and exit_status != 0
+    if options[:failonfail] && (exit_status != 0)
       raise Puppet::ExecutionFailure, "Execution of '#{str}' returned #{exit_status}: #{output.strip}"
     end
 

@@ -38,7 +38,7 @@ module Puppet::Util::Tagging
   def tags=(tags)
     @tags = new_tags
 
-    return if tags.nil? or tags == ""
+    return if tags.nil? || (tags == "")
 
     tags = tags.strip.split(/\s*,\s*/) if tags.is_a?(String)
     tags.each {|t| tag(t) }

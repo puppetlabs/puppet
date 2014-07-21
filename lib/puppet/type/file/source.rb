@@ -118,8 +118,8 @@ module Puppet
       # Take each of the stats and set them as states on the local file
       # if a value has not already been provided.
       [:owner, :mode, :group].each do |metadata_method|
-        next if metadata_method == :owner and !Puppet.features.root?
-        next if metadata_method == :group and !Puppet.features.root?
+        next if (metadata_method == :owner) && !Puppet.features.root?
+        next if (metadata_method == :group) && !Puppet.features.root?
 
         if Puppet.features.microsoft_windows?
           # Warn on Windows if source permissions are being used and the file resource
@@ -224,7 +224,7 @@ module Puppet
 
     def copy_source_value(metadata_method)
       param_name = (metadata_method == :checksum) ? :content : metadata_method
-      if resource[param_name].nil? or resource[param_name] == :absent
+      if resource[param_name].nil? || (resource[param_name] == :absent)
         resource[param_name] = metadata.send(metadata_method)
       end
     end

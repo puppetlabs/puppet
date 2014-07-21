@@ -132,7 +132,7 @@ module Puppet
         meaningful for domain accounts, which Puppet does not currently manage.)"
 
       munge do |value|
-        if value.is_a?(String) and value =~ /^[-0-9]+$/
+        if value.is_a?(String) && (value =~ /^[-0-9]+$/)
           Integer(value)
         else
           value

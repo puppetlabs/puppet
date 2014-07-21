@@ -57,7 +57,7 @@ Puppet::Type.newtype(:file) do
     end
 
     munge do |value|
-      if value.start_with?('//') and ::File.basename(value) == "/"
+      if value.start_with?('//') && (::File.basename(value) == "/")
         # This is a UNC path pointing to a share, so don't add a trailing slash
         ::File.expand_path(value)
       else
@@ -352,7 +352,7 @@ Puppet::Type.newtype(:file) do
         # The user/group property automatically converts to IDs
         next unless should = @parameters[property].shouldorig
         val = should[0]
-        if val.is_a?(Integer) or val =~ /^\d+$/
+        if val.is_a?(Integer) || (val =~ /^\d+$/)
           nil
         else
           val
@@ -372,7 +372,7 @@ Puppet::Type.newtype(:file) do
     creator_count += 1 if @parameters.include?(:source)
     self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
-    self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
+    self.fail "You cannot specify a remote recursion without a source" if !self[:source] && (self[:recurse] == :remote)
 
     self.fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
 
@@ -747,7 +747,7 @@ Puppet::Type.newtype(:file) do
 
     # If we've gotten here, then :ensure isn't set
     return true if self[:content]
-    return true if stat and stat.ftype == "file"
+    return true if stat && (stat.ftype == "file")
     false
   end
 

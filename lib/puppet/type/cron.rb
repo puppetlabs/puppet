@@ -137,7 +137,7 @@ Puppet::Type.newtype(:cron) do
     end
 
     def should
-      if @should and @should[0] == :absent
+      if @should && (@should[0] == :absent)
         :absent
       else
         @should

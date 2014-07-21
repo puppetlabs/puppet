@@ -12,7 +12,7 @@ module Puppet::Provider::Mount
     # that MacOS always needs the mount options to be explicitly passed to
     # the mount command
     if Facter.value(:kernel) == 'Darwin'
-      args << "-o" << self.options if self.options and self.options != :absent
+      args << "-o" << self.options if self.options && (self.options != :absent)
     end
     args << resource[:name]
 

@@ -391,7 +391,7 @@ class Puppet::Parser::Scope
   end
 
   def undef_as(x,v)
-    if v.nil? or v == :undef
+    if v.nil? || (v == :undef)
       x
     else
       v

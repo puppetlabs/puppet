@@ -48,7 +48,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
   def self.def_multiprop(var, &conf)
     define_method(var.to_s) do |v|
       o = properties[var]
-      return '' if o.nil? or o == :absent
+      return '' if o.nil? || (o == :absent)
       o.join(' ')
     end
     define_method('%s=' % var.to_s) do |v|

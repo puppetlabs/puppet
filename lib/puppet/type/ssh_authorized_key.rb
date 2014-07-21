@@ -83,7 +83,7 @@ module Puppet
       defaultto :absent
 
       def should
-        return super if defined?(@should) and @should[0] != :absent
+        return super if defined?(@should) && (@should[0] != :absent)
 
         return nil unless user = resource[:user]
 
@@ -107,7 +107,7 @@ module Puppet
       defaultto do :absent end
 
       def is_to_s(value)
-        if value == :absent or value.include?(:absent)
+        if (value == :absent) || value.include?(:absent)
           super
         else
           value.join(",")
@@ -115,7 +115,7 @@ module Puppet
       end
 
       def should_to_s(value)
-        if value == :absent or value.include?(:absent)
+        if (value == :absent) || value.include?(:absent)
           super
         else
           value.join(",")

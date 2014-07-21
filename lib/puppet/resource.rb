@@ -427,7 +427,7 @@ class Puppet::Resource
         # This behavior is not done in the future parser, but we can't issue a
         # deprecation warning either since there isn't anything that a user can
         # do about it.
-        result[p] = if v.is_a?(Array) and v.length == 1
+        result[p] = if v.is_a?(Array) && (v.length == 1)
                       v[0]
                     else
                       v
@@ -497,7 +497,7 @@ class Puppet::Resource
   # Produce a canonical method name.
   def parameter_name(param)
     param = param.to_s.downcase.to_sym
-    if param == :name and namevar
+    if (param == :name) && namevar
       param = namevar
     end
     param
