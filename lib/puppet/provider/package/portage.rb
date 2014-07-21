@@ -41,7 +41,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
         if match
           package = {}
           result_fields.zip(match.captures) do |field, value|
-            package[field] = value unless !value or value.empty?
+            package[field] = value unless !value || value.empty?
           end
           package[:provider] = :portage
           packages << new(package)
@@ -101,7 +101,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
         if match
           package = {}
           result_fields.zip(match.captures) do |field, value|
-            package[field] = value unless !value or value.empty?
+            package[field] = value unless !value || value.empty?
           end
           package[:ensure] = package[:ensure] ? package[:ensure] : :absent
           packages << package

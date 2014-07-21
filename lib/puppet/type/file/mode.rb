@@ -60,7 +60,7 @@ module Puppet
     EOT
 
     validate do |value|
-      unless value.nil? or valid_symbolic_mode?(value)
+      unless value.nil? || valid_symbolic_mode?(value)
         raise Puppet::Error, "The file mode specification is invalid: #{value.inspect}"
       end
     end

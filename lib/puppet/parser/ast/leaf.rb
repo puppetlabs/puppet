@@ -154,7 +154,7 @@ class Puppet::Parser::AST
     def evaluate(scope)
       object = evaluate_container(scope)
       accesskey = evaluate_key(scope)
-      raise Puppet::ParseError, "#{variable} is not a hash or array when accessing it with #{accesskey}" unless object.is_a?(Hash) or object.is_a?(Array)
+      raise Puppet::ParseError, "#{variable} is not a hash or array when accessing it with #{accesskey}" unless object.is_a?(Hash) || object.is_a?(Array)
 
       result = object[array_index_or_key(object, accesskey)]
       result.nil? ? :undef : result

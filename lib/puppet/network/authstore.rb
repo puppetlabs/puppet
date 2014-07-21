@@ -19,7 +19,7 @@ module Puppet
         # This is probably unnecessary, and can cause some weirdnesses in
         # cases where we're operating over localhost but don't have a real
         # IP defined.
-        raise Puppet::DevError, "Name and IP must be passed to 'allowed?'" unless name and ip
+        raise Puppet::DevError, "Name and IP must be passed to 'allowed?'" unless name && ip
         # else, we're networked and such
       else
         # we're local

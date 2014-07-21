@@ -373,7 +373,7 @@ class Puppet::Resource
   private :lookup_with_databinding
 
   def set_default_parameters(scope)
-    return [] unless resource_type and resource_type.respond_to?(:arguments)
+    return [] unless resource_type && resource_type.respond_to?(:arguments)
 
     unless is_a?(Puppet::Parser::Resource)
       fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
@@ -449,7 +449,7 @@ class Puppet::Resource
   # Must be called after 'set_default_parameters'.  We can't join the methods
   # because Type#set_parameters needs specifically ordered behavior.
   def validate_complete
-    return unless resource_type and resource_type.respond_to?(:arguments)
+    return unless resource_type && resource_type.respond_to?(:arguments)
 
     resource_type.arguments.each do |param, default|
       param = param.to_sym

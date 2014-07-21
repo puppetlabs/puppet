@@ -75,7 +75,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
                   # blowing up.
                   nil
                 end
-      next unless trigger and scheduler_trigger_types.include?(trigger['trigger_type'])
+      next unless trigger && scheduler_trigger_types.include?(trigger['trigger_type'])
 
       puppet_trigger = {}
       case trigger['trigger_type']

@@ -79,7 +79,7 @@ class Puppet::Agent
   end
 
   def run_in_fork(forking = true)
-    return yield unless forking or Puppet.features.windows?
+    return yield unless forking || Puppet.features.windows?
 
     child_pid = Kernel.fork do
       $0 = "puppet agent: applying configuration"

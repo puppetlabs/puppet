@@ -183,7 +183,7 @@ class Puppet::Transaction
 
   def prefetch_if_necessary(resource)
     provider_class = resource.provider.class
-    return unless provider_class.respond_to?(:prefetch) and !prefetched_providers[resource.type][provider_class.name]
+    return unless provider_class.respond_to?(:prefetch) && !prefetched_providers[resource.type][provider_class.name]
 
     resources = resources_by_provider(resource.type, provider_class.name)
 

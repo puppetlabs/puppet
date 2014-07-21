@@ -301,7 +301,7 @@ module PSON
             raise ParserError, "expected next name, value pair in object at '#{peek(20)}'!" if delim
             if @create_id && (klassname = result[@create_id])
               klass = PSON.deep_const_get klassname
-              break unless klass and klass.pson_creatable?
+              break unless klass && klass.pson_creatable?
               result = klass.pson_create(result)
             end
             break

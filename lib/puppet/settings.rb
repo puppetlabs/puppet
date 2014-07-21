@@ -889,7 +889,7 @@ class Puppet::Settings
 
     @config.keys.find_all { |key| @config[key].is_a?(FileSetting) }.each do |key|
       file = @config[key]
-      next unless (sections.nil? or sections.include?(file.section))
+      next unless (sections.nil? || sections.include?(file.section))
       next unless resource = file.to_resource
       next if catalog.resource(resource.ref)
 
@@ -1144,7 +1144,7 @@ Generated on #{Time.now}.
 
     @config.each do |name, setting|
       next unless setting.respond_to?(:owner)
-      next unless sections.nil? or sections.include?(setting.section)
+      next unless sections.nil? || sections.include?(setting.section)
 
       if user = setting.owner and user != "root" and catalog.resource(:user, user).nil?
         resource = Puppet::Resource.new(:user, user, :parameters => {:ensure => :present})
