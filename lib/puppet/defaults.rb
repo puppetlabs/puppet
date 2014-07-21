@@ -578,7 +578,7 @@ module Puppet
     :certdnsnames => {
       :default => '',
       :hook    => proc do |value|
-        unless value.nil? or value == '' then
+        unless value.nil? || (value == '') then
           Puppet.warning <<WARN
 The `certdnsnames` setting is no longer functional,
 after CVE-2011-3872. We ignore the value completely.

@@ -57,7 +57,7 @@ class Puppet::Configurer
   def retrieve_catalog(query_options)
     query_options ||= {}
     # First try it with no cache, then with the cache.
-    unless (Puppet[:use_cached_catalog] and result = retrieve_catalog_from_cache(query_options)) or result = retrieve_new_catalog(query_options)
+    unless (Puppet[:use_cached_catalog] && (result = retrieve_catalog_from_cache(query_options))) || (result = retrieve_new_catalog(query_options))
       if ! Puppet[:usecacheonfailure]
         Puppet.warning "Not using cache on failed catalog"
         return nil
@@ -195,7 +195,7 @@ class Puppet::Configurer
       # facts may be used to determine which catalog we get, we need to
       # rerun the process if the environment is changed.
       tries = 0
-      while catalog.environment and not catalog.environment.empty? and catalog.environment != @environment
+      while catalog.environment && !catalog.environment.empty? && (catalog.environment != @environment)
         if tries > 3
           raise Puppet::Error, "Catalog environment didn't stabilize after #{tries} fetches, aborting run"
         end

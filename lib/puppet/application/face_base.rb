@@ -65,7 +65,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     # non-option word to use as the action.
     action_name = nil
     index       = -1
-    until action_name or (index += 1) >= command_line.args.length do
+    until action_name || ((index += 1) >= command_line.args.length) do
       item = command_line.args[index]
       if item =~ /^-/ then
         option = @face.options.find do |name|
@@ -136,7 +136,7 @@ class Puppet::Application::FaceBase < Puppet::Application
         next unless arg =~ /^-/
         # sadly, we have to emulate some of optparse here...
         pattern = /^#{arg.sub('[no-]', '').sub(/[ =].*$/, '')}(?:[ =].*)?$/
-        pattern.match item and return object
+        (pattern.match item) && (return object)
       end
     end
     return nil                  # nothing found.

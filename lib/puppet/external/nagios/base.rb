@@ -77,7 +77,7 @@ class Nagios::Base
     else
       if parameter?(:name)
         return :name
-      elsif tmp = (self.name.to_s + "_name").intern and parameter?(tmp)
+      elsif (tmp = (self.name.to_s + "_name").intern) && parameter?(tmp)
         @namevar = tmp
         return @namevar
       else

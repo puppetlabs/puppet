@@ -140,7 +140,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
           audited_attributes.each do |name|
             next if audited_resource[name].nil?
             # Skip :absent properties of :absent resources. Really, it would be nicer if the RAL returned nil for those, but it doesn't. ~JW
-            if name == :ensure or audited_resource[:ensure] != :absent or audited_resource[name] != :absent
+            if (name == :ensure) || ((audited_resource[:ensure] != :absent) || (audited_resource[name] != :absent))
               event = ral_resource.event(
                                          :previous_value => audited_resource[name],
                                          :property       => name,
@@ -152,7 +152,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
             end
           end
         end
-        if Puppet[:archive_files] and ral_resource.type == :file and audited_attributes.include?(:content)
+        if Puppet[:archive_files] && (ral_resource.type == :file) && audited_attributes.include?(:content)
           path = ral_resource[:path]
           if ::File.readable?(path)
             begin
