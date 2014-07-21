@@ -91,7 +91,7 @@ module Puppet
       validate do |values|
         values = [values] unless values.is_a?(Array)
         values.each { |value|
-          unless  value.is_a?(String) and
+          unless  value.is_a?(String) &&
               value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
             self.fail "Invalid range value '#{value}'"
           end
@@ -369,7 +369,7 @@ module Puppet
       validate do |values|
         values = [values] unless values.is_a?(Array)
         values.each { |value|
-          unless value.is_a?(String) and
+          unless value.is_a?(String) &&
               ((value =~ /^[0-6]$/) || (value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i))
             raise ArgumentError, "%s is not a valid day of the week" % value
           end
@@ -455,7 +455,7 @@ module Puppet
 
       # Pull them in order
       self.class.allattrs.each { |param|
-        if @parameters.include?(param) and
+        if @parameters.include?(param) &&
           @parameters[param].respond_to?(:match?)
           return false unless @parameters[param].match?(previous, now)
         end

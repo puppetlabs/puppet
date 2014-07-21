@@ -87,7 +87,7 @@ class Puppet::Util::Autoload
     def get_file(name, env)
       name = name + '.rb' unless name =~ /\.rb$/
       path = search_directories(env).find { |dir| Puppet::FileSystem.exist?(File.join(dir, name)) }
-      path and File.join(path, name)
+      path && File.join(path, name)
     end
 
     def files_to_load(path)

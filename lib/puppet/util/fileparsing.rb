@@ -82,7 +82,7 @@ module Puppet::Util::FileParsing
 
       fields.collect { |field|
         # If the field is marked absent, use the appropriate replacement
-        if details[field] == :absent or details[field] == [:absent] or details[field].nil?
+        if (details[field] == :absent) || (details[field] == [:absent]) || details[field].nil?
           if self.optional.include?(field)
             self.absent
           else

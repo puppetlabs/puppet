@@ -354,7 +354,7 @@ module Puppet
         groups.each { |group|
           case group
           when Integer
-            if resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) and r.should(:gid) == group }
+            if resource = catalog.resources.find { |r| r.is_a?(Puppet::Type.type(:group)) && (r.should(:gid) == group) }
               autos << resource
             end
           else
@@ -557,7 +557,7 @@ module Puppet
             is used in OS X. This field is required for managing passwords on OS X >= 10.8."
 
       munge do |value|
-        if value.is_a?(String) and value =~/^[-0-9]+$/
+        if value.is_a?(String) && (value =~/^[-0-9]+$/)
           Integer(value)
         else
           value

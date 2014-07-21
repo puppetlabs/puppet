@@ -123,7 +123,7 @@ module Puppet
       end
 
       validate do |value|
-        unless value == :absent or value =~ /^[-a-z0-9A-Z_]+(?:=\".*?\")?$/
+        unless (value == :absent) || (value =~ /^[-a-z0-9A-Z_]+(?:=\".*?\")?$/)
           raise Puppet::Error, "Option #{value} is not valid. A single option must either be of the form 'option' or 'option=\"value\". Multiple options must be provided as an array"
         end
       end

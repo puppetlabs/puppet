@@ -361,7 +361,7 @@ end
   def retrieve
     provider.flush
     hash = provider.properties
-    return setstatus(hash) unless hash.nil? or hash[:ensure] == :absent
+    return setstatus(hash) unless hash.nil? || (hash[:ensure] == :absent)
     # Return all properties as absent.
     return Hash[properties.map{|p| [p, :absent]} ]
   end

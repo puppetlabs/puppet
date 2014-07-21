@@ -355,7 +355,7 @@ class Type
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
       @parameters.find_all { |param|
-        param.isnamevar? or param.name == :name
+        param.isnamevar? || (param.name == :name)
       }
     )
   end
@@ -545,7 +545,7 @@ class Type
     @validattrs ||= {}
 
     unless @validattrs.include?(name)
-      @validattrs[name] = !!(self.validproperty?(name) or self.validparameter?(name) or self.metaparam?(name))
+      (@validattrs[name] = !!(self.validproperty?(name)) || self.validparameter?(name) || self.metaparam?(name))
     end
 
     @validattrs[name]
@@ -583,7 +583,7 @@ class Type
 
   # @return [Boolean] Returns true if the wanted state of the resoure is that it should be absent (i.e. to be deleted).
   def deleting?
-    obj = @parameters[:ensure] and obj.should == :absent
+    (obj = @parameters[:ensure]) && (obj.should == :absent)
   end
 
   # Creates a new property value holder for the resource if it is valid and does not already exist
@@ -719,7 +719,7 @@ class Type
   #   given attribute name is not a property (i.e. if it is a parameter, meta-parameter, or does not exist).
   def should(name)
     name = name.intern
-    (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
+    ((prop = @parameters[name]) && prop.is_a?(Puppet::Property)) ? prop.should : nil
   end
 
   # Registers an attribute to this resource type insance.
@@ -792,7 +792,7 @@ class Type
   #   this one should probably go away at some point. - Does this mean it should be deprecated ?
   # @return [Puppet::Property] the property with the given name, or nil if not a property or does not exist.
   def property(name)
-    (obj = @parameters[name.intern] and obj.is_a?(Puppet::Property)) ? obj : nil
+    ((obj = @parameters[name.intern]) && obj.is_a?(Puppet::Property)) ? obj : nil
   end
 
   # @todo comment says "For any parameters or properties that have defaults and have not yet been
@@ -852,7 +852,7 @@ class Type
   def value(name)
     name = name.intern
 
-    (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
+    ((obj = @parameters[name]) && obj.respond_to?(:value)) ? obj.value : nil
   end
 
   # @todo What is this used for? Needs a better explanation.
@@ -1044,7 +1044,7 @@ class Type
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
 
-    if ensure_prop = property(:ensure) or (self.class.validattr?(:ensure) && ensure_prop = newattr(:ensure))
+    if (ensure_prop = property(:ensure)) || (self.class.validattr?(:ensure) && ensure_prop = newattr(:ensure))
       result[:ensure] = ensure_state = ensure_prop.retrieve
     else
       ensure_state = nil

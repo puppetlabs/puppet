@@ -204,7 +204,7 @@ module Puppet::Util::IniConfig
     # @return [Puppet::Util::IniConfig::Section, nil] The section with the
     #   given name if it exists, else nil.
     def get_section(name)
-      @contents.find { |entry| entry.is_a? Section and entry.name == name }
+      @contents.find { |entry| entry.is_a?(Section) && (entry.name == name) }
     end
 
     def format
