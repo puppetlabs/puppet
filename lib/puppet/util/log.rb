@@ -140,7 +140,7 @@ class Puppet::Util::Log
       Puppet.log_exception(detail)
 
       # If this was our only destination, then add the console back in.
-      newdestination(:console) if @destinations.empty? and (dest != :console and dest != "console")
+      newdestination(:console) if @destinations.empty? && (dest != :console and dest != "console")
     end
   end
 

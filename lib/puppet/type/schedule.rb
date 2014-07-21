@@ -118,7 +118,7 @@ module Puppet
           end
 
           [range[0][1], range[1][1]].each do |n|
-            raise ArgumentError, "Invalid minute '#{n}'" if n and (n < 0 or n > 59)
+            raise ArgumentError, "Invalid minute '#{n}'" if n && ((n < 0) || (n > 59))
           end
           ret << range
         }
@@ -281,7 +281,7 @@ module Puppet
         :weekly => proc do |prev, now|
           # Run the resource if the previous day was after this weekday (e.g., prev is wed, current is tue)
           # or if it's been more than a week since we ran
-          prev.wday > now.wday or (now - prev) > (24 * 3600 * 7)
+          (prev.wday > now.wday) || (now - prev) > (24 * 3600 * 7)
         end
       }
 
@@ -317,7 +317,7 @@ module Puppet
       defaultto 1
 
       validate do |value|
-        unless value.is_a?(Integer) or value =~ /^\d+$/
+        unless value.is_a?(Integer) || (value =~ /^\d+$/)
           raise Puppet::Error,
             "Repeat must be a number"
         end
@@ -370,7 +370,7 @@ module Puppet
         values = [values] unless values.is_a?(Array)
         values.each { |value|
           unless value.is_a?(String) and
-              (value =~ /^[0-6]$/ or value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i)
+              ((value =~ /^[0-6]$/) || (value =~ /^(Mon|Tues?|Wed(?:nes)?|Thu(?:rs)?|Fri|Sat(?:ur)?|Sun)(day)?$/i))
             raise ArgumentError, "%s is not a valid day of the week" % value
           end
         }
