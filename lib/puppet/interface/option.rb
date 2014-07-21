@@ -65,7 +65,7 @@ class Puppet::Interface::Option
     # Is our argument optional?  The rules about consistency apply here, also,
     # just like they do to taking arguments at all. --daniel 2011-03-30
     @optional_argument = @optparse.any? { |o| o=~/[ =]\[/ }
-    @optional_argument and raise ArgumentError, "Options with optional arguments are not supported"
+    @optional_argument && (raise ArgumentError, "Options with optional arguments are not supported")
     if @optional_argument and not @optparse.all? { |o| o=~/[ =]\[/ } then
       raise ArgumentError, "Option #{@name} is inconsistent about the argument being optional"
     end
@@ -110,7 +110,7 @@ class Puppet::Interface::Option
   end
 
   def default=(proc)
-    required and raise ArgumentError, "#{self} can't be optional and have a default value"
+    required && (raise ArgumentError, "#{self} can't be optional and have a default value")
     proc.is_a? Proc or raise ArgumentError, "default value for #{self} is a #{proc.class.name.inspect}, not a proc"
     @default = proc
   end
@@ -122,7 +122,7 @@ class Puppet::Interface::Option
   attr_reader   :parent, :name, :aliases, :optparse
   attr_accessor :required
   def required=(value)
-    has_default? and raise ArgumentError, "#{self} can't be optional and have a default value"
+    has_default? && (raise ArgumentError, "#{self} can't be optional and have a default value")
     @required = value
   end
 

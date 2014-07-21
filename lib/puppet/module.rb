@@ -197,11 +197,11 @@ class Puppet::Module
 
   def dependencies_as_modules
     dependent_modules = []
-    dependencies and dependencies.each do |dep|
+    dependencies && (dependencies.each do |dep|
       author, dep_name = dep["name"].split('/')
       found_module = environment.module(dep_name)
       dependent_modules << found_module if found_module
-    end
+    end)
 
     dependent_modules
   end

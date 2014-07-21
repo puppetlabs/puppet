@@ -111,7 +111,7 @@ class Puppet::Interface::ActionBuilder
   # Sets the default rendering format
   # @api private
   def render_as(value = nil)
-    value.nil? and raise ArgumentError, "You must give a rendering format to render_as"
+    value.nil? && (raise ArgumentError, "You must give a rendering format to render_as")
 
     formats = Puppet::Network::FormatHandler.formats
     unless formats.include? value

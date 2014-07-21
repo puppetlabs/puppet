@@ -6,7 +6,7 @@ module PSON
   # This module holds all the modules/classes that implement PSON's
   # functionality in pure ruby.
   module Pure
-    $DEBUG and warn "Using pure library for PSON."
+    $DEBUG && (warn "Using pure library for PSON.")
     PSON.parser = Parser
     PSON.generator = Generator
   end

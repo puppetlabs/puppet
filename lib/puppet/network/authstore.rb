@@ -219,7 +219,7 @@ module Puppet
         case @name
           when :domain, :dynamic, :opaque
             name = munge_name(name)
-            (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
+            (pattern == name) || (!exact? && pattern.zip(name).all? { |p,n| p == n })
           when :regex
             Regexp.new(pattern.slice(1..-2)).match(name)
         end

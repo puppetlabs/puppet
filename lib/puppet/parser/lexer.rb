@@ -328,7 +328,7 @@ class Puppet::Parser::Lexer
   def expected
     return nil if @expected.empty?
     name = @expected[-1]
-    TOKENS.lookup(name) or lex_error "Could not find expected token #{name}"
+    TOKENS.lookup(name) || (lex_error "Could not find expected token #{name}")
   end
 
   # scan the whole file
