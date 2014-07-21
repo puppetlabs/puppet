@@ -92,7 +92,7 @@ class Puppet::FileServing::Configuration
 
     @parser ||= Puppet::FileServing::Configuration::Parser.new(config)
 
-    return if check and !@parser.changed?
+    return if check && !@parser.changed?
 
     # Don't assign the mounts hash until we're sure the parsing succeeded.
     begin

@@ -150,7 +150,7 @@ class Puppet::Parameter::ValueCollection
       value.call = options[:call] || :none
     end
 
-    value.method ||= "set_#{value.name}" if block_given? and !value.regex?
+    value.method ||= "set_#{value.name}" if block_given? && !value.regex?
 
     value
   end
