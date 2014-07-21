@@ -143,7 +143,7 @@ module Puppet
         if Facter.value(:osfamily) == "Solaris"
           if (device = resource[:device]) && (device =~ %r{/dsk/})
             device.sub(%r{/dsk/}, "/rdsk/")
-          elsif fstype = resource[:fstype] and fstype == 'nfs'
+          elsif (fstype = resource[:fstype]) && (fstype == 'nfs')
             '-'
           else
             nil

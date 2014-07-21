@@ -158,7 +158,7 @@ module Puppet::Parser::Functions
         if args[0].is_a? Array
           if (arity >= 0) && (args[0].size != arity)
             raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for #{arity})"
-          elsif arity < 0 and args[0].size < (arity+1).abs
+          elsif (arity < 0) && (args[0].size < (arity+1).abs)
             raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})"
           end
           self.send(real_fname, args[0])

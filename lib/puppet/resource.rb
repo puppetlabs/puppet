@@ -482,7 +482,7 @@ class Puppet::Resource
     dup.collect do |attribute, value|
       if value.to_s.empty? || Array(value).empty?
         delete(attribute)
-      elsif value.to_s == "absent" and attribute.to_s != "ensure"
+      elsif (value.to_s == "absent") && (attribute.to_s != "ensure")
         delete(attribute)
       end
 

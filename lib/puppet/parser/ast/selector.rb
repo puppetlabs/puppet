@@ -38,7 +38,7 @@ class Puppet::Parser::AST
     end
 
     def to_s
-      if @values.instance_of? AST::ASTArray or @values.instance_of? Array
+      if @values.instance_of?(AST::ASTArray) || @values.instance_of?(Array)
         v = @values
       else
         v = [@values]

@@ -485,9 +485,9 @@ class Puppet::Parser::Lexer
 
       value = token_value[:value]
 
-      if match = @@pairs[value] and final_token_name != :DQUOTE and final_token_name != :SQUOTE
+      if (match = @@pairs[value]) && (final_token_name != :DQUOTE) && (final_token_name != :SQUOTE)
         @expected << match
-      elsif exp = @expected[-1] and exp == value and final_token_name != :DQUOTE and final_token_name != :SQUOTE
+      elsif (exp = @expected[-1]) && (exp == value) && (final_token_name != :DQUOTE) && (final_token_name != :SQUOTE)
         @expected.pop
       end
 

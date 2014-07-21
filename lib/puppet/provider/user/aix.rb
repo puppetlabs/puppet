@@ -167,7 +167,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # Check that a group exists and is valid
   def verify_group(value)
-    if value.is_a? Integer or value.is_a? Fixnum
+    if value.is_a?(Integer) || value.is_a?(Fixnum)
       groupname = groupname_by_id(value)
       raise ArgumentError, "AIX group must be a valid existing group" unless groupname
     else

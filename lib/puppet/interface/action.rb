@@ -99,7 +99,7 @@ class Puppet::Interface::Action
       raise ArgumentError, msg
     end
 
-    if proc.arity != 1 and proc.arity != (@positional_arg_count + 1)
+    if (proc.arity != 1) && (proc.arity != (@positional_arg_count) + 1)
       msg =  "the when_rendering method for the #{@face.name} face #{name} action "
       msg += "takes either just one argument, the result of when_invoked, "
       msg += "or the result plus the #{@positional_arg_count} arguments passed "
