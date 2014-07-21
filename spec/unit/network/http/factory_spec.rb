@@ -34,4 +34,49 @@ describe Puppet::Network::HTTP::Factory do
 
     expect(any_of(conn.class.version_1_1?, conn.class.version_1_1?)).to be_true
   end
+
+  context "proxy settings" do
+    let(:proxy_host) { 'myhost' }
+    let(:proxy_port) { 432 }
+
+    it "should not set a proxy if the value is 'none'" do
+      Puppet[:http_proxy_host] = 'none'
+      conn = create_connection(site)
+
+      expect(conn.proxy_address).to be_nil
+    end
+
+    it 'sets proxy_address' do
+      Puppet[:http_proxy_host] = proxy_host
+      conn = create_connection(site)
+
+      expect(conn.proxy_address).to eq(proxy_host)
+    end
+
+    it 'sets proxy address and port' do
+      Puppet[:http_proxy_host] = proxy_host
+      Puppet[:http_proxy_port] = proxy_port
+      conn = create_connection(site)
+
+      expect(conn.proxy_port).to eq(proxy_port)
+    end
+
+    context 'socket timeouts' do
+      let(:timeout) { 5 }
+
+      it 'sets open timeout' do
+        Puppet[:configtimeout] = timeout
+        conn = create_connection(site)
+
+        expect(conn.open_timeout).to eq(timeout)
+      end
+
+      it 'sets read timeout' do
+        Puppet[:configtimeout] = timeout
+        conn = create_connection(site)
+
+        expect(conn.read_timeout).to eq(timeout)
+      end
+    end
+  end
 end

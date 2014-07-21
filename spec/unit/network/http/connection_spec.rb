@@ -12,45 +12,29 @@ describe Puppet::Network::HTTP::Connection do
 
   context "when providing HTTP connections" do
     context "when initializing http instances" do
-      before :each do
-        # All of the cert stuff is tested elsewhere
-        Puppet::Network::HTTP::Connection.stubs(:initialize_ssl)
-      end
-
       it "should return an http instance created with the passed host and port" do
-        http = subject.send(:connection)
-        http.should be_an_instance_of Net::HTTP
-        http.address.should == host
-        http.port.should    == port
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn.address).to eq(host)
+        expect(conn.port).to eq(port)
       end
 
       it "should enable ssl on the http instance by default" do
-        http = subject.send(:connection)
-        http.should be_use_ssl
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn).to be_use_ssl
       end
 
-      it "can set ssl using an option" do
-        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator).send(:connection).should_not be_use_ssl
-        Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verify => Puppet::SSL::Validator.no_validator).send(:connection).should be_use_ssl
+      it "can disable ssl using an option" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => false, :verify => Puppet::SSL::Validator.no_validator)
+
+        expect(conn).to_not be_use_ssl
       end
 
-      context "proxy and timeout settings should propagate" do
-        subject { Puppet::Network::HTTP::Connection.new(host, port, :verify => Puppet::SSL::Validator.no_validator).send(:connection) }
-        before :each do
-          Puppet[:http_proxy_host] = "myhost"
-          Puppet[:http_proxy_port] = 432
-          Puppet[:configtimeout]   = 120
-        end
+      it "can enable ssl using an option" do
+        conn = Puppet::Network::HTTP::Connection.new(host, port, :use_ssl => true, :verify => Puppet::SSL::Validator.no_validator)
 
-        its(:open_timeout)  { should == Puppet[:configtimeout] }
-        its(:read_timeout)  { should == Puppet[:configtimeout] }
-        its(:proxy_address) { should == Puppet[:http_proxy_host] }
-        its(:proxy_port)    { should == Puppet[:http_proxy_port] }
-      end
-
-      it "should not set a proxy if the value is 'none'" do
-        Puppet[:http_proxy_host] = 'none'
-        subject.send(:connection).proxy_address.should be_nil
+        expect(conn).to be_use_ssl
       end
 
       it "should raise Puppet::Error when invalid options are specified" do

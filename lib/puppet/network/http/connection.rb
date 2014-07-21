@@ -217,11 +217,6 @@ module Puppet::Network::HTTP
       end
     end
 
-    def connection
-      factory = Puppet::Network::HTTP::Factory.new
-      factory.create_connection(@site)
-    end
-
     def execute_request(connection, request)
       response = connection.request(request)
 
