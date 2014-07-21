@@ -98,7 +98,7 @@ class X509Collector
         public_key, priority, name = public_key_info
         pem = public_key.to_s
         existing_priority, existing_name, existing_public_key = key_data[pem]
-        next if existing_priority and existing_priority < priority
+        next if existing_priority && (existing_priority < priority)
         key_data[pem] = priority, name, public_key
       rescue
         puts "exception!"
