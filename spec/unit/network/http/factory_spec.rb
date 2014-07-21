@@ -1,7 +1,6 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 require 'puppet/network/http'
-require 'puppet/ssl'
 
 describe Puppet::Network::HTTP::Factory do
   before :each do
@@ -10,15 +9,13 @@ describe Puppet::Network::HTTP::Factory do
   end
 
   let(:site) { Puppet::Network::HTTP::Site.new('https', 'www.example.com', 443) }
-
   def create_connection(site)
-    verifier = Puppet::SSL::Validator::DefaultValidator.new
-    factory = Puppet::Network::HTTP::Factory.new(verifier)
+    factory = Puppet::Network::HTTP::Factory.new
 
     factory.create_connection(site)
   end
 
-  it 'creates connections for our site' do
+  it 'creates a connection for the site' do
     conn = create_connection(site)
 
     expect(conn.use_ssl?).to be_true
@@ -26,7 +23,7 @@ describe Puppet::Network::HTTP::Factory do
     expect(conn.port).to eq(site.port)
   end
 
-  it 'creates connections that have not yet started' do
+  it 'creates a connection that has not yet been started' do
     conn = create_connection(site)
 
     expect(conn).to_not be_started

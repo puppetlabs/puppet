@@ -18,6 +18,14 @@ describe Puppet::Network::HTTP::Pool do
     Puppet::Network::HTTP::Site.new('https', 'github.com', 443)
   end
 
+  let(:verify) do
+    stub('verify', :setup_connection => nil)
+  end
+
+  let(:puppet_conn) do
+    Puppet::Network::HTTP::Connection.new(site.host, site.port, :use_ssl => site.use_ssl?, :verify => verify)
+  end
+
   def create_pool
     Puppet::Network::HTTP::Pool.new
   end
@@ -48,10 +56,9 @@ describe Puppet::Network::HTTP::Pool do
     it 'yields a connection' do
       conn = create_connection(site)
       pool = create_pool_with_connections(site, conn)
-      factory = mock('factory')
 
       yielded_conn = nil
-      pool.with_connection(site, factory) { |c| yielded_conn = c }
+      pool.with_connection(puppet_conn) { |c| yielded_conn = c }
 
       expect(yielded_conn).to eq(conn)
     end
@@ -61,8 +68,7 @@ describe Puppet::Network::HTTP::Pool do
       pool = create_pool
       pool.release(site, conn)
 
-      factory = mock('factory')
-      pool.with_connection(site, factory) do |c|
+      pool.with_connection(puppet_conn) do |c|
         expect(pool.pool[site]).to eq([])
       end
 
@@ -74,9 +80,8 @@ describe Puppet::Network::HTTP::Pool do
       pool = create_pool
       pool.release(site, conn)
 
-      factory = mock('factory')
       expect {
-        pool.with_connection(site, factory) do |c|
+        pool.with_connection(puppet_conn) do |c|
           raise IOError, 'connection reset'
         end
       }.to raise_error(IOError, 'connection reset')
@@ -85,15 +90,13 @@ describe Puppet::Network::HTTP::Pool do
     it 'closes the yielded connection when an error occurs' do
       # we're not distinguishing between network errors that would
       # suggest we close the socket, and other errors
-
       conn = create_connection(site)
       pool = create_pool
       pool.release(site, conn)
 
       pool.expects(:release).with(site, conn).never
 
-      factory = mock('factory')
-      pool.with_connection(site, factory) do |c|
+      pool.with_connection(puppet_conn) do |c|
         raise IOError, 'connection reset'
       end rescue nil
 
@@ -104,21 +107,19 @@ describe Puppet::Network::HTTP::Pool do
   context 'when borrowing' do
     it 'returns a new connection if the pool is empty' do
       conn = create_connection(site)
-      factory = mock('factory')
-      factory.expects(:create_connection).with(site).returns(conn)
-
       pool = create_pool
-      expect(pool.borrow(site, factory)).to eq(conn)
+      pool.factory.expects(:create_connection).with(site).returns(conn)
+
+      expect(pool.borrow(puppet_conn)).to eq(conn)
     end
 
     it 'returns a matching connection' do
       conn = create_connection(site)
       pool = create_pool_with_connections(site, conn)
 
-      factory = mock('factory')
-      factory.expects(:create_connection).never
+      pool.factory.expects(:create_connection).never
 
-      expect(pool.borrow(site, factory)).to eq(conn)
+      expect(pool.borrow(puppet_conn)).to eq(conn)
     end
 
     it 'returns a new connection if there are no matching sites' do
@@ -126,20 +127,19 @@ describe Puppet::Network::HTTP::Pool do
       pool = create_pool_with_connections(different_site, different_conn)
 
       conn = create_connection(site)
-      factory = mock('factory')
-      factory.expects(:create_connection).with(site).returns(conn)
+      pool.factory.expects(:create_connection).with(site).returns(conn)
 
-      expect(pool.borrow(site, factory)).to eq(conn)
+      expect(pool.borrow(puppet_conn)).to eq(conn)
     end
 
     it 'returns started connections' do
       conn = create_connection(site)
       conn.expects(:start)
 
-      factory = stub('factory', :create_connection => conn)
-
       pool = create_pool
-      expect(pool.borrow(site, factory)).to eq(conn)
+      pool.factory.expects(:create_connection).with(site).returns(conn)
+
+      expect(pool.borrow(puppet_conn)).to eq(conn)
     end
 
     it "doesn't start a cached connection" do
@@ -147,7 +147,7 @@ describe Puppet::Network::HTTP::Pool do
       conn.expects(:start).never
 
       pool = create_pool_with_connections(site, conn)
-      pool.borrow(site, stub('factory'))
+      pool.borrow(puppet_conn)
     end
 
     it 'returns the most recently used connection from the pool' do
@@ -155,7 +155,7 @@ describe Puppet::Network::HTTP::Pool do
       most_recently_used = create_connection(site)
 
       pool = create_pool_with_connections(site, least_recently_used, most_recently_used)
-      expect(pool.borrow(site, stub('factory'))).to eq(most_recently_used)
+      expect(pool.borrow(puppet_conn)).to eq(most_recently_used)
     end
 
     it 'finishes expired connections' do
@@ -163,7 +163,9 @@ describe Puppet::Network::HTTP::Pool do
       conn.expects(:finish)
 
       pool = create_pool_with_expired_connections(site, conn)
-      pool.borrow(site, stub('factory', :create_connection => stub('conn', :start => nil)))
+      pool.factory.expects(:create_connection => stub('conn', :start => nil))
+
+      pool.borrow(puppet_conn)
     end
 
     it 'logs an exception if it fails to close an expired connection' do
@@ -173,7 +175,9 @@ describe Puppet::Network::HTTP::Pool do
       conn.expects(:finish).raises(IOError, 'read timeout')
 
       pool = create_pool_with_expired_connections(site, conn)
-      pool.borrow(site, stub('factory', :create_connection => stub('open_conn', :start => nil)))
+      pool.factory.expects(:create_connection => stub('open_conn', :start => nil))
+
+      pool.borrow(puppet_conn)
     end
   end
 
@@ -221,11 +225,7 @@ describe Puppet::Network::HTTP::Pool do
       conn = create_connection(site)
       conn.expects(:finish)
 
-      factory = stub('factory', :create_connection => conn)
-
       pool = create_pool_with_connections(site, conn)
-      pool.with_connection(site, factory) { |c| }
-
       pool.close
     end
   end

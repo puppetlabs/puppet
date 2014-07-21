@@ -1,23 +1,26 @@
 class Puppet::Network::HTTP::Pool
   FIFTEEN_SECONDS = 15
 
+  attr_reader :factory
+
   def initialize(keepalive_timeout = FIFTEEN_SECONDS)
     @pool = {}
+    @factory = Puppet::Network::HTTP::Factory.new
     @keepalive_timeout = keepalive_timeout
   end
 
-  def with_connection(site, factory, &block)
+  def with_connection(conn, &block)
     reuse = true
 
-    connection = borrow(site, factory)
+    http = borrow(conn)
     begin
-      yield connection
+      yield http
     rescue => detail
       reuse = false
-      close_connection(site, connection)
+      close_connection(conn.site, http)
       raise detail
     ensure
-      release(site, connection) if reuse
+      release(conn.site, http) if reuse
     end
   end
 
@@ -43,7 +46,8 @@ class Puppet::Network::HTTP::Pool
     Puppet.log_exception(detail, "Failed to close connection for #{site}: #{detail}")
   end
 
-  def borrow(site, factory)
+  def borrow(conn)
+    site = conn.site
     @pool[site] = active_sessions(site)
     session = @pool[site].shift
     if session
@@ -51,9 +55,10 @@ class Puppet::Network::HTTP::Pool
       session.connection
     else
       Puppet.debug("Starting connection for #{site}")
-      connection = factory.create_connection(site)
-      connection.start
-      connection
+      http = @factory.create_connection(site)
+      conn.initialize_ssl(http)
+      http.start
+      http
     end
   end
 

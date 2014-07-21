@@ -18,7 +18,7 @@ describe Puppet::Network::HTTP::Connection do
     context "when initializing http instances" do
       before :each do
         # All of the cert stuff is tested elsewhere
-        Puppet::Network::HTTP::Connection.stubs(:cert_setup)
+        Puppet::Network::HTTP::Connection.stubs(:initialize_ssl)
       end
 
       it "should return an http instance created with the passed host and port" do

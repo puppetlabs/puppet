@@ -4,9 +4,7 @@ require 'net/http'
 class Puppet::Network::HTTP::Factory
   @@openssl_initialized = false
 
-  def initialize(verify)
-    @verify = verify
-
+  def initialize
     # PUP-1411, make sure that openssl is initialized before we try to connect
     if ! @@openssl_initialized
       OpenSSL::SSL::SSLContext.new
@@ -35,8 +33,6 @@ class Puppet::Network::HTTP::Factory
     # Use configured timeout (#1176)
     http.read_timeout = Puppet[:configtimeout]
     http.open_timeout = Puppet[:configtimeout]
-
-    @verify.setup_connection(http)
 
     http
   end

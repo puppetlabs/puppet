@@ -2,27 +2,23 @@
 require 'spec_helper'
 
 require 'puppet/network/http'
+require 'puppet/network/http/connection'
 
 describe Puppet::Network::HTTP::NoCachePool do
-  before :each do
-    Puppet::SSL::Key.indirection.terminus_class = :memory
-    Puppet::SSL::CertificateRequest.indirection.terminus_class = :memory
-  end
-
-  let(:site) do
-    Puppet::Network::HTTP::Site.new('https', 'rubygems.org', 443)
-  end
-
   it 'returns a new connection' do
+    http = stub('http')
+    verify = stub('verify', :setup_connection => nil)
+
+    site = Puppet::Network::HTTP::Site.new('https', 'rubygems.org', 443)
     pool = Puppet::Network::HTTP::NoCachePool.new
+    pool.factory.expects(:create_connection).with(site).returns(http)
 
-    connection = stub('connection')
-    factory = stub('factory', :create_connection => connection)
+    conn = Puppet::Network::HTTP::Connection.new(site.host, site.port, :use_ssl => site.use_ssl?, :verify => verify)
 
-    conn = nil
-    pool.with_connection(site, factory) { |c| conn = c }
+    yielded_http = nil
+    pool.with_connection(conn) { |h| yielded_http = h }
 
-    expect(conn).to eq(connection)
+    expect(yielded_http).to eq(http)
   end
 
   it 'has a close method' do

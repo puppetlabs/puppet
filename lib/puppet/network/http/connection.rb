@@ -60,7 +60,6 @@ module Puppet::Network::HTTP
       @verify = options[:verify]
       @redirect_limit = options[:redirect_limit]
       @site = Puppet::Network::HTTP::Site.new(@use_ssl ? 'https' : 'http', host, port)
-      @factory = Puppet::Network::HTTP::Factory.new(@verify)
       @pool = Puppet.lookup(:http_pool)
     end
 
@@ -157,6 +156,14 @@ module Puppet::Network::HTTP
       @site.use_ssl?
     end
 
+    def site
+      @site
+    end
+
+    def initialize_ssl(http)
+      @verify.setup_connection(http)
+    end
+
     private
 
     def request_with_redirects(request, options)
@@ -210,7 +217,8 @@ module Puppet::Network::HTTP
     end
 
     def connection
-      @factory.create_connection(@site)
+      factory = Puppet::Network::HTTP::Factory.new
+      factory.create_connection(@site)
     end
 
     def execute_request(connection, request)
@@ -240,7 +248,7 @@ module Puppet::Network::HTTP
 
     def with_connection(site, &block)
       response = nil
-      @pool.with_connection(site, @factory) do |conn|
+      @pool.with_connection(self) do |conn|
         response = yield conn
       end
       response
