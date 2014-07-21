@@ -745,7 +745,7 @@ class Type
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
     end
 
-    if provider and !provider.class.supports_parameter?(klass)
+    if provider && !provider.class.supports_parameter?(klass)
       missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
       debug "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
       return nil
@@ -906,7 +906,7 @@ class Type
       @managed = false
       properties.each { |property|
         s = property.should
-        if s and !property.class.unmanaged
+        if s && !property.class.unmanaged
           @managed = true
           break
         end

@@ -84,7 +84,7 @@ class Puppet::FileBucket::Dipper
       if newcontents = getfile(sum)
         newsum = @digest.call(newcontents)
         changed = nil
-        if Puppet::FileSystem.exist?(file_handle) and !Puppet::FileSystem.writable?(file_handle)
+        if Puppet::FileSystem.exist?(file_handle) && !Puppet::FileSystem.writable?(file_handle)
           changed = Puppet::FileSystem.stat(file_handle).mode
           ::File.chmod(changed | 0200, file)
         end
