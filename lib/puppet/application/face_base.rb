@@ -24,7 +24,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     else
       @render_as = Puppet::Network::FormatHandler.format(format)
     end
-    @render_as or raise ArgumentError, "I don't know how to render '#{format}'"
+    @render_as || (raise ArgumentError, "I don't know how to render '#{format}'")
   end
 
   def render(result, args_and_options)

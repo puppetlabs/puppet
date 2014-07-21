@@ -106,7 +106,7 @@ module PSON
             raise ParserError, "source '#{peek(20)}' not in PSON!"
           end
         end
-        obj or raise ParserError, "source did not contain any PSON!"
+        obj || (raise ParserError, "source did not contain any PSON!")
         obj
       end
 
