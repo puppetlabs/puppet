@@ -127,7 +127,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd = []
     if @resource.managehome? && !@resource.forcelocal?
       cmd << "-m"
-    elsif not @resource.managehome? and Facter.value(:osfamily) == 'RedHat'
+    elsif !@resource.managehome? && (Facter.value(:osfamily) == 'RedHat')
       cmd << "-M"
     end
     cmd

@@ -166,7 +166,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # If it's not a valid field for this record type (which can happen
         # when different platforms support different fields), then just
         # return the should value, so the resource shuts up.
-        if @property_hash[attr] or self.class.valid_attr?(self.class.name, attr)
+        if @property_hash[attr] || self.class.valid_attr?(self.class.name, attr)
           @property_hash[attr] || :absent
         else
           if defined?(@resource)
@@ -451,7 +451,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Mark both the resource and provider target as modified.
   def mark_target_modified
-    if defined?(@resource) && restarget = @resource.should(:target) and restarget != @property_hash[:target]
+    if defined?(@resource) && (restarget = @resource.should(:target)) && (restarget != @property_hash[:target])
       self.class.modified(restarget)
     end
     self.class.modified(@property_hash[:target]) if (@property_hash[:target] != :absent) && @property_hash[:target]

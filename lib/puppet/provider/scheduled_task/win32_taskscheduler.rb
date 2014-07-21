@@ -376,7 +376,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     months = [months] unless months.is_a?(Array)
     months.each do |month|
       integer_month = Integer(month) rescue nil
-      self.fail 'Month must be specified as an integer in the range 1-12' unless integer_month == month.to_f and integer_month.between?(1,12)
+      self.fail 'Month must be specified as an integer in the range 1-12' unless (integer_month == month.to_f) && integer_month.between?(1,12)
 
       bitfield |= scheduler_months[integer_month - 1]
     end
@@ -395,7 +395,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       day = 32 if day == 'last'
 
       integer_day = Integer(day)
-      self.fail "Day must be specified as an integer in the range 1-31, or as 'last'" unless integer_day = day.to_f and integer_day.between?(1,32)
+      self.fail "Day must be specified as an integer in the range 1-31, or as 'last'" unless (integer_day = day.to_f) && integer_day.between?(1,32)
 
       bitfield |= 1 << integer_day - 1
     end

@@ -81,10 +81,10 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
       next if is.include?(group) && should.include?(group)
 
       # We're adding a group.
-      modes[group] = :add and next unless is.include?(group)
+      (modes[group] = :add) && next unless is.include?(group)
 
       # We're removing a group.
-      modes[group] = :remove and next unless should.include?(group)
+      (modes[group] = :remove) && next unless should.include?(group)
     end
 
     modes.each do |group, form|

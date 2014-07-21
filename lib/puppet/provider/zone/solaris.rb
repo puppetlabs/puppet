@@ -154,7 +154,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
     command = "#{command(:cfg)} -z #{@resource[:name]} -f -"
     r = exec_cmd(:cmd => command, :input => str)
-    if r[:exit] != 0 or r[:out] =~ /not allowed/
+    if (r[:exit] != 0) || (r[:out] =~ /not allowed/)
       raise ArgumentError, "Failed to apply configuration"
     end
   end
