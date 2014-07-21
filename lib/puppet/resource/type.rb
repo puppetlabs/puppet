@@ -298,7 +298,7 @@ class Puppet::Resource::Type
     end
     scope["module_name"] = module_name if module_name and !set.include? :module_name
 
-    if caller_name = scope.parent_module_name and !set.include?(:caller_module_name)
+    if (caller_name = scope.parent_module_name) && !set.include?(:caller_module_name)
       scope["caller_module_name"] = caller_name
     end
     scope.class_set(self.name,scope) if hostclass? || node?

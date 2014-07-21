@@ -1351,7 +1351,7 @@ module_eval(<<'.,.,', 'grammar.ra', 177)
   def _reduce_73(val, _values, result)
       type = val[0]
 
-  if (type == :exported and !Puppet[:storeconfigs])
+  if ((type == :exported) && !Puppet[:storeconfigs])
     Puppet.warning addcontext("You cannot collect without storeconfigs being set")
   end
 
@@ -1395,7 +1395,7 @@ module_eval(<<'.,.,', 'grammar.ra', 199)
   else
     args[:form] = val[1]
   end
-  if args[:form] == :exported and !Puppet[:storeconfigs]
+  if (args[:form] == :exported) && !Puppet[:storeconfigs]
     Puppet.warning addcontext("You cannot collect exported resources without storeconfigs being set; the collection will be ignored")
   end
   args[:override] = val[3]
@@ -1417,7 +1417,7 @@ module_eval(<<'.,.,', 'grammar.ra', 217)
   else
     args[:form] = val[1]
   end
-  if args[:form] == :exported and !Puppet[:storeconfigs]
+  if (args[:form] == :exported) && !Puppet[:storeconfigs]
     Puppet.warning addcontext("You cannot collect exported resources without storeconfigs being set; the collection will be ignored")
   end
   result = ast AST::Collection, args

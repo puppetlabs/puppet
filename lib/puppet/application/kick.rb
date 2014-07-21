@@ -201,7 +201,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     while go
       # If we don't have enough children in process and we still have hosts left to
       # do, then do the next host.
-      if @children.length < options[:parallel] and !todo.empty?
+      if (@children.length < options[:parallel]) && !todo.empty?
         host = todo.shift
         pid = safe_posix_fork do
           run_for_host(host)

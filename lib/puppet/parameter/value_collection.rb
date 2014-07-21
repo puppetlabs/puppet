@@ -35,7 +35,7 @@ class Puppet::Parameter::ValueCollection
       unless values.empty?
         @doc << "Valid values are "
         @doc << @strings.collect do |value|
-          if aliases = value.aliases and !aliases.empty?
+          if (aliases = value.aliases) && !aliases.empty?
             "`#{value.name}` (also called `#{aliases.join(", ")}`)"
           else
             "`#{value.name}`"

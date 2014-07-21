@@ -66,7 +66,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
   # The parent attribute, if we have one.
   def parent_attribute
-    if pattr = Puppet[:ldapparentattr] and !pattr.empty?
+    if (pattr = Puppet[:ldapparentattr]) && !pattr.empty?
       pattr
     else
       nil

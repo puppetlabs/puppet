@@ -810,7 +810,7 @@ class Type
 
     return unless parameter = newattr(klass.name)
 
-    if value = parameter.default and !value.nil?
+    if (value = parameter.default) && !value.nil?
       parameter.value = value
     else
       @parameters.delete(parameter.name)

@@ -292,7 +292,7 @@ Puppet::Type.newtype(:tidy) do
   def tidy?(path)
     return false unless stat = self.stat(path)
 
-    return false if stat.ftype == "directory" and !rmdirs?
+    return false if (stat.ftype == "directory") && !rmdirs?
 
     # The 'matches' parameter isn't OR'ed with the other tests --
     # it's just used to reduce the list of files we can match.
