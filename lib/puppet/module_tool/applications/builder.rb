@@ -69,6 +69,10 @@ module Puppet::ModuleTool
       def write_json
         metadata_path = File.join(build_path, 'metadata.json')
 
+        if metadata.to_hash.include? 'checksums'
+          Puppet.warning "A 'checksums' field was found in metadata.json. This field will be ignored and can safely be removed."
+        end
+
         # TODO: This may necessarily change the order in which the metadata.json
         # file is packaged from what was written by the user.  This is a
         # regretable, but required for now.
