@@ -11,6 +11,7 @@ module Puppet::ModuleTool
         @installed   = []
         @suggestions = []
         @environment = options[:environment_instance]
+        @ignore_changes = options[:force] || options[:ignore_changes]
       end
 
       def run
@@ -87,14 +88,14 @@ module Puppet::ModuleTool
       def validate_module
         mod = @installed.first
 
-        if !@options[:force] && !@options[:ignore_changes] && mod.has_metadata?
+        unless @ignore_changes
           changes = begin
             Puppet::ModuleTool::Applications::Checksummer.run(mod.path)
           rescue ArgumentError
             []
           end
 
-          if !changes.empty?
+          if mod.has_metadata? && !changes.empty?
             raise LocalChangesError,
               :action            => :uninstall,
               :module_name       => (mod.forge_name || mod.name).gsub('/', '-'),
