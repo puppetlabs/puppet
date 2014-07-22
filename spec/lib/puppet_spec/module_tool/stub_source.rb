@@ -100,6 +100,9 @@ module PuppetSpec
             "0.0.2" => { "pmtacceptance/stdlib" => ">= 2.2.0", "pmtacceptance/mysql" => ">= 0.0.1" },
             "0.0.1" => { "pmtacceptance/stdlib" => ">= 2.2.0" },
           },
+          'puppetlabs-oneversion' => {
+            "0.0.1" => {}
+          }
         }
 
         @available_releases.each do |name, versions|

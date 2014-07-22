@@ -52,6 +52,16 @@ describe Puppet::ModuleTool::Applications::Upgrader do
     end
 
     context 'for an installed module' do
+      context 'with only one version' do
+        before { preinstall('puppetlabs-oneversion', '0.0.1') }
+        let(:module) { 'puppetlabs-oneversion' }
+
+        it 'declines to upgrade' do
+          subject.should include :result => :noop
+          subject[:error][:multiline].should =~ /already the latest version/
+        end
+      end
+
       context 'without dependencies' do
         before { preinstall('pmtacceptance-stdlib', '1.0.0') }
 
@@ -90,6 +100,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
               context 'without options' do
                 it 'declines to upgrade' do
                   subject.should include :result => :noop
+                  subject[:error][:multiline].should =~ /already the latest version/
                 end
               end
 
