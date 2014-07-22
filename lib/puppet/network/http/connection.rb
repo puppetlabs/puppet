@@ -28,7 +28,7 @@ module Puppet::Network::HTTP
       :use_ssl => true,
       :verify => nil,
       :redirect_limit => 10,
-      :retry_limit => 3,
+      :retry_limit => 2,
     }
 
     @@openssl_initialized = false
@@ -188,7 +188,7 @@ module Puppet::Network::HTTP
     def request_with_retries(request)
       e = nil
       response = nil
-      @retry_limit.times do |i|
+      (@retry_limit + 1).times do |i|
         e = nil
         response = nil
         begin
@@ -196,7 +196,7 @@ module Puppet::Network::HTTP
           break if ![500, 502, 503, 504].include?(response.code.to_i)
         rescue SystemCallError, Net::HTTPBadResponse, Timeout::Error, SocketError => e
         end
-        sleep 3 unless i == (@retry_limit - 1)
+        sleep 3 unless i == (@retry_limit)
         # and try again...
       end
       # We reached the max retries.  We should either return the last response
