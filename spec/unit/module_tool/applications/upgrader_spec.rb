@@ -165,6 +165,17 @@ describe Puppet::ModuleTool::Applications::Upgrader do
           subject.should include :result => :failure
           subject[:error].should include :oneline => "Could not upgrade '#{self.module}'; module has had changes made locally"
         end
+
+        context 'with --ignore-changes' do
+          def options
+            super.merge(:ignore_changes => true)
+          end
+
+          it 'overwrites the installed module with the greatest version matching that range' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('4.1.0')
+          end
+        end
       end
 
       context 'with dependencies' do
