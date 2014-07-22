@@ -1,11 +1,7 @@
 test_name "ENC node information is used when store configs enabled (#16698)"
 
-confine :except, :platform => 'solaris'
-confine :except, :platform => 'windows'
-confine :except, :platform => 'el-6'
-confine :except, :platform => 'el-7'
+confine :to, :platform => ['debian', 'ubuntu']
 confine :except, :platform => 'lucid'
-confine :except, :platform => 'sles-11'
 
 testdir = master.tmpdir('use_enc')
 
