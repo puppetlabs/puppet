@@ -118,7 +118,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     # RPM gets pissy if you try to install an already
     # installed package
     if @resource.should(:ensure) == @property_hash[:ensure] ||
-      @resource.should(:ensure) == :latest && @property_hash[:ensure] == latest
+      (@resource.should(:ensure) == :latest && @property_hash[:ensure] == latest)
       return
     end
 

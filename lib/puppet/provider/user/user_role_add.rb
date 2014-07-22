@@ -57,12 +57,12 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def command(cmd)
-    cmd = ("role_#{cmd}").intern if is_role? || (!exists? && @resource[:ensure] == :role)
+    cmd = ("role_#{cmd}").intern if is_role? || (!exists? && (@resource[:ensure] == :role))
     super(cmd)
   end
 
   def is_role?
-    user_attributes && user_attributes[:type] == "role"
+    user_attributes && (user_attributes[:type] == "role")
   end
 
   def run(cmd, msg)

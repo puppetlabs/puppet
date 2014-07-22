@@ -440,7 +440,7 @@ class Puppet::SSL::CertificateAuthority
   #
   # @param cert [Puppet::SSL::Certificate] the certificate to check validity of
   #
-  # @return [Boolean] true if signed, false if unsigned || revoked
+  # @return [Boolean] true if signed, false if unsigned or revoked
   def certificate_is_alive?(cert)
     x509_store(:cache => true).verify(cert.content)
   end

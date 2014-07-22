@@ -73,7 +73,7 @@ class WindowsDaemon < Win32::Daemon
         runinterval = 1800
       end
 
-      if state == RUNNING || state == IDLE
+      if (state == RUNNING) || (state == IDLE)
         log_notice("Executing agent with arguments: #{args}")
         pid = Process.create(:command_line => "\"#{puppet}\" agent --onetime #{args}", :creation_flags => CREATE_NEW_CONSOLE).process_id
         log_debug("Process created: #{pid}")

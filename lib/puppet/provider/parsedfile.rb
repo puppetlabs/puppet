@@ -379,7 +379,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   # @api private
   def self.to_file(records)
     text = super
-    if native_header_regex && ((match = text.match(native_header_regex)))
+    if native_header_regex && (match = text.match(native_header_regex))
       if drop_native_header
         # concatenate the text in front of and after the native header
         text = match.pre_match + match.post_match
@@ -408,7 +408,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   end
 
   def exists?
-    !(@property_hash[:ensure] == :absent || @property_hash[:ensure].nil?)
+    !((@property_hash[:ensure] == :absent) || @property_hash[:ensure].nil?)
   end
 
   # Write our data to disk.

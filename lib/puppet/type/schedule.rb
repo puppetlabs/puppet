@@ -92,7 +92,7 @@ module Puppet
         values = [values] unless values.is_a?(Array)
         values.each { |value|
           unless  value.is_a?(String) &&
-              value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
+              (value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/)
             self.fail "Invalid range value '#{value}'"
           end
         }

@@ -317,7 +317,7 @@ class String
           (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
         # simple string literal, safe to emit unquoted.
         z.emit(self)
-      when (self =~ /\n/ && self !~ /\A\s/ && self !~ /\s\z/)
+      when ((self =~ /\n/) && (self !~ /\A\s/) && (self !~ /\s\z/))
         # embedded newline, split line-wise in quoted string block form.
         if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
         z.nested { split("\n",-1).each { |line| z.nl; z.emit(line) } }

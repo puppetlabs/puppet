@@ -13,7 +13,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   confine :any => [
     Facter.value(:operatingsystem) == 'Ubuntu',
-    (Facter.value(:osfamily) == 'RedHat' && Facter.value(:operatingsystemrelease) =~ /^6\./),
+    ((Facter.value(:osfamily) == 'RedHat') && (Facter.value(:operatingsystemrelease) =~ /^6\./)),
   ]
 
   defaultfor :operatingsystem => :ubuntu

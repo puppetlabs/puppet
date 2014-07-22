@@ -189,7 +189,7 @@ module Puppet
     end
 
     def local?
-      found? && scheme == "file"
+      found? && (scheme == "file")
     end
 
     def full_path
