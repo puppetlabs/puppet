@@ -63,9 +63,7 @@ describe Puppet::Network::HTTP::Pool do
       pool = create_pool
       pool.release(site, conn)
 
-      pool.with_connection(site, verify) do |c|
-        expect(pool.pool[site]).to eq([])
-      end
+      pool.with_connection(site, verify) { |c| }
 
       expect(pool.pool[site].first.connection).to eq(conn)
     end
@@ -82,7 +80,7 @@ describe Puppet::Network::HTTP::Pool do
       }.to raise_error(IOError, 'connection reset')
     end
 
-    it 'closes the yielded connection when an error occurs' do
+    it 'does not re-cache connections when an error occurs' do
       # we're not distinguishing between network errors that would
       # suggest we close the socket, and other errors
       conn = create_connection(site)
@@ -94,8 +92,6 @@ describe Puppet::Network::HTTP::Pool do
       pool.with_connection(site, verify) do |c|
         raise IOError, 'connection reset'
       end rescue nil
-
-      expect(pool.pool[site]).to eq([])
     end
   end
 
