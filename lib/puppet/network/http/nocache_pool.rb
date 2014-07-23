@@ -1,13 +1,11 @@
 class Puppet::Network::HTTP::NoCachePool
-  attr_reader :factory
-
-  def initialize
-    @factory = Puppet::Network::HTTP::Factory.new
+  def initialize(factory = Puppet::Network::HTTP::Factory.new)
+    @factory = factory
   end
 
-  def with_connection(conn, &block)
-    http = @factory.create_connection(conn.site)
-    conn.initialize_ssl(http)
+  def with_connection(site, verify, &block)
+    http = @factory.create_connection(site)
+    verify.setup_connection(http)
     yield http
   end
 

@@ -5,20 +5,36 @@ require 'puppet/network/http'
 require 'puppet/network/http/connection'
 
 describe Puppet::Network::HTTP::NoCachePool do
-  it 'returns a new connection' do
-    http = stub('http')
-    verify = stub('verify', :setup_connection => nil)
+  let(:site) { Puppet::Network::HTTP::Site.new('https', 'rubygems.org', 443) }
+  let(:verify) { stub('verify', :setup_connection => nil) }
 
-    site = Puppet::Network::HTTP::Site.new('https', 'rubygems.org', 443)
-    pool = Puppet::Network::HTTP::NoCachePool.new
-    pool.factory.expects(:create_connection).with(site).returns(http)
+  it 'yields a connection' do
+    http  = stub('http')
 
-    conn = Puppet::Network::HTTP::Connection.new(site.host, site.port, :use_ssl => site.use_ssl?, :verify => verify)
+    factory = Puppet::Network::HTTP::Factory.new
+    factory.stubs(:create_connection).returns(http)
+    pool = Puppet::Network::HTTP::NoCachePool.new(factory)
 
-    yielded_http = nil
-    pool.with_connection(conn) { |h| yielded_http = h }
+    expect { |b|
+      pool.with_connection(site, verify, &b)
+    }.to yield_with_args(http)
+  end
 
-    expect(yielded_http).to eq(http)
+  it 'yields a new connection each time' do
+    http1  = stub('http1')
+    http2  = stub('http2')
+
+    factory = Puppet::Network::HTTP::Factory.new
+    factory.stubs(:create_connection).returns(http1).then.returns(http2)
+    pool = Puppet::Network::HTTP::NoCachePool.new(factory)
+
+    expect { |b|
+      pool.with_connection(site, verify, &b)
+    }.to yield_with_args(http1)
+
+    expect { |b|
+      pool.with_connection(site, verify, &b)
+    }.to yield_with_args(http2)
   end
 
   it 'has a close method' do

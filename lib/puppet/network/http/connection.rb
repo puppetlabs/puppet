@@ -157,14 +157,6 @@ module Puppet::Network::HTTP
       @site.use_ssl?
     end
 
-    def site
-      @site
-    end
-
-    def initialize_ssl(http)
-      @verify.setup_connection(http)
-    end
-
     private
 
     def request_with_redirects(request, options)
@@ -194,14 +186,6 @@ module Puppet::Network::HTTP
             end
           else
             response = current_response
-
-            # We used to overwrite the @connection variable during
-            # each redirect related request. This has the side effect
-            # of changing the host & port for this connection. That
-            # makes sense for 301 Moved Permanently, but not 302 Temporary
-            # or 307 Temporary Redirect, as we should preserve our
-            # original site for future requests...
-            @site = current_site
           end
         end
 
@@ -244,7 +228,7 @@ module Puppet::Network::HTTP
 
     def with_connection(site, &block)
       response = nil
-      @pool.with_connection(self) do |conn|
+      @pool.with_connection(site, @verify) do |conn|
         response = yield conn
       end
       response

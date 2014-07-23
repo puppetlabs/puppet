@@ -9,18 +9,18 @@ class Puppet::Network::HTTP::Pool
     @keepalive_timeout = keepalive_timeout
   end
 
-  def with_connection(conn, &block)
+  def with_connection(site, verify, &block)
     reuse = true
 
-    http = borrow(conn)
+    http = borrow(site, verify)
     begin
       yield http
     rescue => detail
       reuse = false
-      close_connection(conn.site, http)
+      close_connection(site, http)
       raise detail
     ensure
-      release(conn.site, http) if reuse
+      release(site, http) if reuse
     end
   end
 
@@ -39,15 +39,14 @@ class Puppet::Network::HTTP::Pool
     @pool
   end
 
-  def close_connection(site, connection)
+  def close_connection(site, http)
     Puppet.debug("Closing connection for #{site}")
-    connection.finish
+    http.finish
   rescue => detail
     Puppet.log_exception(detail, "Failed to close connection for #{site}: #{detail}")
   end
 
-  def borrow(conn)
-    site = conn.site
+  def borrow(site, verify)
     @pool[site] = active_sessions(site)
     session = @pool[site].shift
     if session
@@ -55,7 +54,7 @@ class Puppet::Network::HTTP::Pool
       session.connection
     else
       http = @factory.create_connection(site)
-      conn.initialize_ssl(http)
+      verify.setup_connection(http)
 
       Puppet.debug("Starting connection for #{site}")
       http.start
@@ -63,9 +62,9 @@ class Puppet::Network::HTTP::Pool
     end
   end
 
-  def release(site, connection)
+  def release(site, http)
     expiration = Time.now + @keepalive_timeout
-    session = Puppet::Network::HTTP::Session.new(connection, expiration)
+    session = Puppet::Network::HTTP::Session.new(http, expiration)
     Puppet.debug("Caching connection for #{site}")
 
     sessions = @pool[site]
