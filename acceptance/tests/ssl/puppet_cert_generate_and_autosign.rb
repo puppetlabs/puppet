@@ -134,9 +134,14 @@ test_name "Puppet cert generate behavior (#6112)" do
   step "puppet cert generate with autosign true and dns_alt_names"
   hosts.each do |host|
     if host_is_master?(host)
-      generate_and_clean_cert_with_dns_alt_names(host, test_cn, false)
+      on(host, puppet('cert', 'generate', test_cn, '--autosign', 'true', '--dns_alt_names', 'foo,bar'), :acceptable_exit_codes => [24])
+      assert_match(/Error: CSR '#{test_cn}' contains subject alternative names.*Use.*--allow-dns-alt-names/, stderr, "Should not be able to generate a certificate, with autosign true and dns_alt_names without specifying allow_dns_alt_names flag.")
+      # And now sign with allow_dns_alt_names set
+      on(host, puppet('cert', '--allow-dns-alt-names', 'sign', test_cn))
+      assert_match(/Signed certificate request for #{test_cn}/, stdout, "Signed certificate once --allow-dns-alt-names specified")
+      clean_cert(host, test_cn)
     else
-      fail_to_generate_cert_on_agent_that_is_not_ca(host, test_cn, false)
+      fail_to_generate_cert_on_agent_that_is_not_ca(host, test_cn, true)
     end
   end
 
