@@ -202,10 +202,6 @@ describe Puppet::Network::HTTP::Pool do
       expect(pool.pool[site].count).to eq(1)
       expect(pool.pool[different_site].count).to eq(1)
     end
-
-    it 'should ignore expired connections' do
-      pending("No way to know if client is releasing an expired connection")
-    end
   end
 
   context 'when closing' do
