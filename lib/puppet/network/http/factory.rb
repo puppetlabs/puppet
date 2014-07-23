@@ -1,6 +1,13 @@
 require 'openssl'
 require 'net/http'
 
+# Factory for <tt>Net::HTTP</tt> objects.
+#
+# Encapsulates the logic for creating a <tt>Net::HTTP</tt> object based on the
+# specified {Puppet::Network::HTTP::Site Site} and puppet settings.
+#
+# @api private
+#
 class Puppet::Network::HTTP::Factory
   @@openssl_initialized = false
 

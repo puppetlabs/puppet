@@ -145,14 +145,17 @@ module Puppet::Network::HTTP
     end
     # end of Net::HTTP#request_* proxies
 
+    # The address to connect to.
     def address
       @site.host
     end
 
+    # The port to connect to.
     def port
       @site.port
     end
 
+    # Whether to use ssl
     def use_ssl?
       @site.use_ssl?
     end

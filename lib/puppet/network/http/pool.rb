@@ -1,3 +1,13 @@
+# A pool for persistent <tt>Net::HTTP</tt> connections. Connections are
+# stored in the pool indexed by their {Puppet::Network::HTTP::Site Site}.
+# Connections are borrowed from the pool, yielded to the caller, and
+# released back into the pool. If a connection is expired, it will be
+# closed either when a connection to that site is requested, or when
+# the pool is closed. The pool can store multiple connections to the
+# same site, and will be reused in MRU order.
+#
+# @api private
+#
 class Puppet::Network::HTTP::Pool
   FIFTEEN_SECONDS = 15
 
@@ -33,12 +43,14 @@ class Puppet::Network::HTTP::Pool
     @pool.clear
   end
 
-  # api private
-
+  # @api private
   def pool
     @pool
   end
 
+  # Safely close a persistent connection.
+  #
+  # @api private
   def close_connection(site, http)
     Puppet.debug("Closing connection for #{site}")
     http.finish
@@ -46,6 +58,10 @@ class Puppet::Network::HTTP::Pool
     Puppet.log_exception(detail, "Failed to close connection for #{site}: #{detail}")
   end
 
+  # Borrow and take ownership of a persistent connection. If a new
+  # connection is created, it will be started prior to being returned.
+  #
+  # @api private
   def borrow(site, verify)
     @pool[site] = active_sessions(site)
     session = @pool[site].shift
@@ -62,6 +78,9 @@ class Puppet::Network::HTTP::Pool
     end
   end
 
+  # Release a connection back into the pool.
+  #
+  # @api private
   def release(site, http)
     expiration = Time.now + @keepalive_timeout
     session = Puppet::Network::HTTP::Session.new(http, expiration)
@@ -75,6 +94,9 @@ class Puppet::Network::HTTP::Pool
     end
   end
 
+  # Returns an Array of sessions whose connections are not expired.
+  #
+  # @api private
   def active_sessions(site)
     now = Time.now
 

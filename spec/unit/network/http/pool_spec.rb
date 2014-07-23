@@ -68,6 +68,20 @@ describe Puppet::Network::HTTP::Pool do
       expect(pool.pool[site].first.connection).to eq(conn)
     end
 
+    it 'can yield multiple connections to the same site' do
+      lru_conn = create_connection(site)
+      mru_conn = create_connection(site)
+      pool = create_pool_with_connections(site, lru_conn, mru_conn)
+
+      pool.with_connection(site, verify) do |a|
+        expect(a).to eq(mru_conn)
+
+        pool.with_connection(site, verify) do |b|
+          expect(b).to eq(lru_conn)
+        end
+      end
+    end
+
     it 'propagates exceptions' do
       conn = create_connection(site)
       pool = create_pool
