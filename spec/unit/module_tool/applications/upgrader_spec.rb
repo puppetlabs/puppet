@@ -52,6 +52,16 @@ describe Puppet::ModuleTool::Applications::Upgrader do
     end
 
     context 'for an installed module' do
+      context 'with only one version' do
+        before { preinstall('puppetlabs-oneversion', '0.0.1') }
+        let(:module) { 'puppetlabs-oneversion' }
+
+        it 'declines to upgrade' do
+          subject.should include :result => :noop
+          subject[:error][:multiline].should =~ /already the latest version/
+        end
+      end
+
       context 'without dependencies' do
         before { preinstall('pmtacceptance-stdlib', '1.0.0') }
 
@@ -90,6 +100,7 @@ describe Puppet::ModuleTool::Applications::Upgrader do
               context 'without options' do
                 it 'declines to upgrade' do
                   subject.should include :result => :noop
+                  subject[:error][:multiline].should =~ /already the latest version/
                 end
               end
 
@@ -164,6 +175,17 @@ describe Puppet::ModuleTool::Applications::Upgrader do
         it 'fails to upgrade' do
           subject.should include :result => :failure
           subject[:error].should include :oneline => "Could not upgrade '#{self.module}'; module has had changes made locally"
+        end
+
+        context 'with --ignore-changes' do
+          def options
+            super.merge(:ignore_changes => true)
+          end
+
+          it 'overwrites the installed module with the greatest version matching that range' do
+            subject.should include :result => :success
+            graph_should_include 'pmtacceptance-stdlib', v('1.0.0') => v('4.1.0')
+          end
         end
       end
 

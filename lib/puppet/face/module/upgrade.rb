@@ -47,6 +47,13 @@ Puppet::Face.define(:module, '1.0.0') do
       EOT
     end
 
+    option "--ignore-changes", "-c" do
+      summary "Ignore and overwrite any local changes made. (Implied by --force.)"
+      description <<-EOT
+        Upgrade an installed module even if there are local changes to it.  (Implied by --force.)
+      EOT
+    end
+
     option "--version=" do
       summary "The version of the module to upgrade to."
       description <<-EOT

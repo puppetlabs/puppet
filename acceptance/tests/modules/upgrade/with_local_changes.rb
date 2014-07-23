@@ -32,7 +32,7 @@ on master, puppet("module upgrade pmtacceptance-java"), :acceptable_exit_codes =
     %Q{.*Notice: Found 'pmtacceptance-java' \\(.*v1.6.0.*\\) in #{master['distmoduledir']} ....*},
     %Q{.*Error: Could not upgrade module 'pmtacceptance-java' \\(v1.6.0 -> latest\\)},
     %Q{  Installed module has had changes made locally},
-    %Q{    Use `puppet module upgrade --force` to upgrade this module anyway.*},
+    %Q{    Use `puppet module upgrade --ignore-changes` to upgrade this module anyway.*},
   ].join("\n"), Regexp::MULTILINE)
   assert_match(pattern, result.output)
 end
