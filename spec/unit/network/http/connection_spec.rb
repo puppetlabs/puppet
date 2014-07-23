@@ -223,11 +223,29 @@ describe Puppet::Network::HTTP::Connection do
       }.to raise_error(Puppet::Network::HTTP::RedirectionLimitExceededException)
     end
 
+    it "should not redirect when the limit is 0" do
+      conn = create_connection(site, :verify => verify, :redirect_limit => 0)
+
+      pool = expects_redirection(conn)
+      pool.expects(:with_connection).with(other_site, anything).never
+
+      expects_limit_exceeded(conn)
+    end
+
+    it "should redirect only once" do
+      conn = create_connection(site, :verify => verify, :redirect_limit => 1)
+
+      pool = expects_redirection(conn)
+      pool.expects(:with_connection).with(other_site, anything).once
+
+      expects_limit_exceeded(conn)
+    end
+
     it "should raise an exception when the redirect limit is exceeded" do
       conn = create_connection(site, :verify => verify, :redirect_limit => 3)
 
       pool = expects_redirection(conn)
-      pool.expects(:with_connection).with(other_site, anything).times(2)
+      pool.expects(:with_connection).with(other_site, anything).times(3)
 
       expects_limit_exceeded(conn)
     end

@@ -164,7 +164,7 @@ module Puppet::Network::HTTP
       current_site = @site
       response = nil
 
-      @redirect_limit.times do |redirection|
+      0.upto(@redirect_limit) do |redirection|
         return response if response
 
         with_connection(current_site) do |connection|
