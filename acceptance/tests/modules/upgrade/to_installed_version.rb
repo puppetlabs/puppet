@@ -30,7 +30,7 @@ on master, puppet("module upgrade pmtacceptance-java --version 1.6.x --force") d
   assert_match(/#{master['distmoduledir']}/, stdout,
     'Error that distmoduledir was not displayed')
 
-  assert_match(/pmtacceptance-java \(.*v1\.6\.0.*\)/, stdout,
+  assert_match(/\'pmtacceptance-java\' \(.*v1\.6\.0.*\)/, stdout,
     'Error that package name and version were not displayed')
 end
 
