@@ -24,13 +24,20 @@ class Puppet::Network::HTTP::Pool
 
     http = borrow(site, verify)
     begin
+      if http.use_ssl? && http.verify_mode != OpenSSL::SSL::VERIFY_PEER
+        reuse = false
+      end
+
       yield http
     rescue => detail
       reuse = false
-      close_connection(site, http)
       raise detail
     ensure
-      release(site, http) if reuse
+      if reuse
+        release(site, http)
+      else
+        close_connection(site, http)
+      end
     end
   end
 

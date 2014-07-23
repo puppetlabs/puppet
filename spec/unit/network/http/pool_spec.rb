@@ -1,6 +1,7 @@
 #! /usr/bin/env ruby
 require 'spec_helper'
 
+require 'openssl'
 require 'puppet/network/http'
 require 'puppet/network/http_pool'
 
@@ -45,7 +46,7 @@ describe Puppet::Network::HTTP::Pool do
   end
 
   def create_connection(site)
-    stub(site.addr, :started? => false, :start => nil, :finish => nil)
+    stub(site.addr, :started? => false, :start => nil, :finish => nil, :use_ssl? => true, :verify_mode => OpenSSL::SSL::VERIFY_PEER)
   end
 
   context 'when yielding a connection' do
@@ -106,6 +107,41 @@ describe Puppet::Network::HTTP::Pool do
       pool.with_connection(site, verify) do |c|
         raise IOError, 'connection reset'
       end rescue nil
+    end
+
+    context 'when releasing connections' do
+      it 'releases HTTP connections' do
+        conn = create_connection(site)
+        conn.expects(:use_ssl?).returns(false)
+
+        pool = create_pool_with_connections(site, conn)
+        pool.expects(:release).with(site, conn)
+
+        pool.with_connection(site, verify) {|c| }
+      end
+
+      it 'releases secure HTTPS connections' do
+        conn = create_connection(site)
+        conn.expects(:use_ssl?).returns(true)
+        conn.expects(:verify_mode).returns(OpenSSL::SSL::VERIFY_PEER)
+
+        pool = create_pool_with_connections(site, conn)
+        pool.expects(:release).with(site, conn)
+
+        pool.with_connection(site, verify) {|c| }
+      end
+
+      it 'closes insecure HTTPS connections' do
+        conn = create_connection(site)
+        conn.expects(:use_ssl?).returns(true)
+        conn.expects(:verify_mode).returns(OpenSSL::SSL::VERIFY_NONE)
+
+        pool = create_pool_with_connections(site, conn)
+
+        pool.expects(:release).with(site, conn).never
+
+        pool.with_connection(site, verify) {|c| }
+      end
     end
   end
 
