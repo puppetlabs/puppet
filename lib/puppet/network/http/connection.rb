@@ -120,7 +120,8 @@ module Puppet::Network::HTTP
 
     # TODO: These are proxies for the Net::HTTP#request_* methods, which are
     # almost the same as the "get", "post", etc. methods that we've ported above,
-    # but they are able to accept a code block and will yield to it.  For now
+    # but they are able to accept a code block and will yield to it, which is
+    # necessary to stream responses, e.g. file content.  For now
     # we're not funneling these proxy implementations through our #request
     # method above, so they will not inherit the same error handling.  In the
     # future we may want to refactor these so that they are funneled through
