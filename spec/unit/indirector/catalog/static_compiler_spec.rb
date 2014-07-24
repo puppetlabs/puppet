@@ -11,6 +11,7 @@ describe Puppet::Resource::Catalog::StaticCompiler do
   end
 
   before :each do
+    Facter.stubs(:loadfacts)
     Facter.stubs(:to_hash).returns({})
     Facter.stubs(:value)
   end
