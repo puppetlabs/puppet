@@ -1020,8 +1020,9 @@ EOT
       :owner => "service",
       :group => "service",
       :mode => 0660,
-      :desc => "Where puppet master logs.  This is generally not used,
-        since syslog is the default log destination."
+      :desc => "This file is literally never used, although Puppet may create it
+        as an empty file. For more context, see the `puppetdlog` setting and
+        puppet master's `--logdest` command line option."
     },
     :masterhttplog => {
       :default => "$logdir/masterhttp.log",
@@ -1030,7 +1031,10 @@ EOT
       :group => "service",
       :mode => 0660,
       :create => true,
-      :desc => "Where the puppet master web server logs."
+      :desc => "Where the puppet master web server saves its access log. This is
+        only used when running a WEBrick puppet master. When puppet master is
+        running under a Rack server like Passenger, that web server will have
+        its own logging behavior."
     },
     :masterport => {
       :default    => 8140,
@@ -1285,7 +1289,18 @@ EOT
       :type => :file,
       :owner => "root",
       :mode => 0640,
-      :desc => "The log file for puppet agent.  This is generally not used."
+      :desc => "The fallback log file. This is only used when the `--logdest` option
+        is not specified AND Puppet is running on an operating system where both
+        the POSIX syslog service and the Windows Event Log are unavailable. (Currently,
+        no supported operating systems match that description.)
+
+        Despite the name, both puppet agent and puppet master will use this file
+        as the fallback logging destination.
+
+        For control over logging destinations, see the `--logdest` command line
+        option in the manual pages for puppet master, puppet agent, and puppet
+        apply. You can see man pages by running `puppet <SUBCOMMAND> --help`,
+        or read them online at http://docs.puppetlabs.com/references/latest/man/."
     },
     :server => {
       :default => "puppet",
@@ -1947,7 +1962,7 @@ EOT
         language/'.pp' files). Available choices are `current` (the default)
         and `future`.
 
-        The `curent` parser means that the released version of the parser should
+        The `current` parser means that the released version of the parser should
         be used.
 
         The `future` parser is a "time travel to the future" allowing early

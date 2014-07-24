@@ -12,6 +12,21 @@ describe Puppet::ModuleTool::Applications::Builder do
   let(:tarball)      { File.join(path, 'pkg', release_name) + ".tar.gz" }
   let(:builder)      { Puppet::ModuleTool::Applications::Builder.new(path) }
 
+  shared_examples "a packagable module" do
+    def target_exists?(file)
+      File.exist?(File.join(path, "pkg", "#{module_name}-#{version}", file))
+    end
+
+    it "packages the module in a tarball named after the module" do
+      tarrer = mock('tarrer')
+      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
+      Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
+      tarrer.expects(:pack).with(release_name, tarball)
+
+      builder.run
+    end
+  end
+
   context 'with metadata.json' do
     before :each do
       File.open(File.join(path, 'metadata.json'), 'w') do |f|
@@ -28,15 +43,29 @@ describe Puppet::ModuleTool::Applications::Builder do
       end
     end
 
-    it "packages the module in a tarball named after the module" do
-      tarrer = mock('tarrer')
-      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
-      Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
-      tarrer.expects(:pack).with(release_name, tarball)
-
-      builder.run
-    end
+    it_behaves_like "a packagable module"
   end
+
+  context 'with metadata.json containing checksums' do
+    before :each do
+      File.open(File.join(path, 'metadata.json'), 'w') do |f|
+        f.puts({
+          "name" => "#{module_name}",
+          "version" => "#{version}",
+          "source" => "http://github.com/testing/#{module_name}",
+          "author" => "testing",
+          "license" => "Apache License Version 2.0",
+          "summary" => "Puppet testing module",
+          "description" => "This module can be used for basic testing",
+          "project_page" => "http://github.com/testing/#{module_name}",
+          "checksums" => {"README.md" => "deadbeef"}
+        }.to_json)
+      end
+    end
+
+    it_behaves_like "a packagable module"
+  end
+
 
   context 'with Modulefile' do
     before :each do
@@ -54,13 +83,6 @@ MODULEFILE
       end
     end
 
-    it "packages the module in a tarball named after the module" do
-      tarrer = mock('tarrer')
-      Puppet::ModuleTool::Tar.expects(:instance).returns(tarrer)
-      Dir.expects(:chdir).with(File.join(path, 'pkg')).yields
-      tarrer.expects(:pack).with(release_name, tarball)
-
-      builder.run
-    end
+    it_behaves_like "a packagable module"
   end
 end
