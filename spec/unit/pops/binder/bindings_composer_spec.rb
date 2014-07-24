@@ -34,28 +34,30 @@ describe 'BinderComposer' do
     it 'should load everything without errors' do
       Puppet.settings[:confdir] = config_directory
       Puppet.settings[:libdir] = File.join(config_directory, 'lib')
-      Puppet.settings[:modulepath] = File.join(config_directory, 'modules')
-      # this ensure the binder is active at the right time
-      # (issues with getting a /dev/null path for "confdir" / "libdir")
-      raise "Binder not active" unless scope.compiler.is_binder_active?
 
-      diagnostics = diag
-      composer = Puppet::Pops::Binder::BindingsComposer.new()
-      the_scope = scope
-      the_scope['fqdn'] = 'localhost'
-      the_scope['environment'] = 'production'
-      layered_bindings = composer.compose(scope)
-      # puts Puppet::Pops::Binder::BindingsModelDumper.new().dump(layered_bindings)
-      binder = Puppet::Pops::Binder::Binder.new(layered_bindings)
-      injector = Puppet::Pops::Binder::Injector.new(binder)
-      expect(injector.lookup(scope, 'awesome_x')).to be == 'golden'
-      expect(injector.lookup(scope, 'good_x')).to be == 'golden'
-      expect(injector.lookup(scope, 'rotten_x')).to be == nil
-      expect(injector.lookup(scope, 'the_meaning_of_life')).to be == 42
-      expect(injector.lookup(scope, 'has_funny_hat')).to be == 'the pope'
-      expect(injector.lookup(scope, 'all your base')).to be == 'are belong to us'
-      expect(injector.lookup(scope, 'env_meaning_of_life')).to be == 'production thinks it is 42'
-      expect(injector.lookup(scope, '::quick::brown::fox')).to be == 'echo: quick brown fox'
+      Puppet.override(:environments => Puppet::Environments::Static.new(Puppet::Node::Environment.create(:production, [File.join(config_directory, 'modules')]))) do
+        # this ensure the binder is active at the right time
+        # (issues with getting a /dev/null path for "confdir" / "libdir")
+        raise "Binder not active" unless scope.compiler.is_binder_active?
+
+        diagnostics = diag
+        composer = Puppet::Pops::Binder::BindingsComposer.new()
+        the_scope = scope
+        the_scope['fqdn'] = 'localhost'
+        the_scope['environment'] = 'production'
+        layered_bindings = composer.compose(scope)
+        # puts Puppet::Pops::Binder::BindingsModelDumper.new().dump(layered_bindings)
+        binder = Puppet::Pops::Binder::Binder.new(layered_bindings)
+        injector = Puppet::Pops::Binder::Injector.new(binder)
+        expect(injector.lookup(scope, 'awesome_x')).to be == 'golden'
+        expect(injector.lookup(scope, 'good_x')).to be == 'golden'
+        expect(injector.lookup(scope, 'rotten_x')).to be == nil
+        expect(injector.lookup(scope, 'the_meaning_of_life')).to be == 42
+        expect(injector.lookup(scope, 'has_funny_hat')).to be == 'the pope'
+        expect(injector.lookup(scope, 'all your base')).to be == 'are belong to us'
+        expect(injector.lookup(scope, 'env_meaning_of_life')).to be == 'production thinks it is 42'
+        expect(injector.lookup(scope, '::quick::brown::fox')).to be == 'echo: quick brown fox'
+      end
     end
   end
 
