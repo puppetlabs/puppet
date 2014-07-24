@@ -40,4 +40,24 @@ module Puppet::ModuleTool::Errors
       message.join("\n")
     end
   end
+
+  class DowngradingUnsupportedError < UpgradeError
+    def initialize(options)
+      @module_name    = options[:module_name]
+      @requested_version = options[:requested_version]
+      @installed_version = options[:installed_version]
+      @conditions        = options[:conditions]
+      @action            = options[:action]
+
+      super "Could not #{@action} '#{@module_name}' (#{vstring}); downgrades are not allowed"
+    end
+
+    def multiline
+      message = []
+      message << "Could not #{@action} module '#{@module_name}' (#{vstring})"
+      message << "  Downgrading is not allowed."
+
+      message.join("\n")
+    end
+  end
 end

@@ -46,7 +46,7 @@ module Puppet::ModuleTool
             raise MultipleInstalledError, results.merge(:module_name => name, :installed_modules => matching_modules)
           end
 
-          mod = installed_modules[name]
+          installed_release = installed_modules[name]
 
           # `priority` is an attribute of a `Semantic::Dependency::Source`,
           # which is delegated through `ModuleRelease` instances for the sake of
@@ -61,11 +61,11 @@ module Puppet::ModuleTool
           # of behavior to be reasonably common in Semantic, we should probably
           # see about implementing a `ModuleRelease#override_priority` method
           # (or something similar).
-          def mod.priority
+          def installed_release.priority
             0
           end
 
-          mod = mod.mod
+          mod = installed_release.mod
           results[:installed_version] = Semantic::Version.parse(mod.version)
           dir = Pathname.new(mod.modulepath)
 
@@ -83,6 +83,13 @@ module Puppet::ModuleTool
           end
 
           Puppet::Forge::Cache.clean
+
+          # Ensure that there is at least one candidate release available
+          # for the target package.
+          available_versions = module_repository.fetch(name)
+          if available_versions.empty?
+            raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
+          end
 
           Puppet.notice "Downloading from #{module_repository.host} ..."
           if @ignore_dependencies
@@ -123,16 +130,6 @@ module Puppet::ModuleTool
             end
           end
 
-          # Ensure that there is at least one candidate release available
-          # for the target package.
-          if graph.dependencies[name].empty?
-            if results[:requested_version] == :latest || !Semantic::VersionRange.parse(results[:requested_version]).include?(results[:installed_version])
-              raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
-            end
-          elsif graph.dependencies[name] == SortedSet.new([installed_modules[name]])
-            raise VersionAlreadyInstalledError, results.merge(:module_name => name, :newer_versions => [])
-          end
-
           begin
             Puppet.info "Resolving dependencies ..."
             releases = Semantic::Dependency.resolve(graph)
@@ -163,7 +160,7 @@ module Puppet::ModuleTool
           child = releases.find { |x| x.name == name }
 
           unless forced?
-            if child.version <= results[:installed_version]
+            if child.version == results[:installed_version]
               versions = graph.dependencies[name].map { |r| r.version }
               newer_versions = versions.select { |v| v > results[:installed_version] }
 
@@ -173,6 +170,11 @@ module Puppet::ModuleTool
                 :installed_version => results[:installed_version],
                 :newer_versions    => newer_versions,
                 :possible_culprits => installed_modules_source.fetched.reject { |x| x == name }
+            elsif child.version < results[:installed_version]
+              raise DowngradingUnsupportedError,
+                :module_name       => name,
+                :requested_version => results[:requested_version],
+                :installed_version => results[:installed_version]
             end
           end
 
