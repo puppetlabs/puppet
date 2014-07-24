@@ -24,7 +24,7 @@ module HarnessOptions
     :xml => true,
     :timesync => false,
     :repo_proxy => true,
-    :add_el_extras => false,
+    :add_el_extras => true,
     :preserve_hosts => 'onfail',
     :forge_host => 'forge-aio01-petest.puppetlabs.com'
   }
