@@ -20,8 +20,6 @@ describe Puppet::SSL::CertificateRevocationList do
   after {
     Puppet::SSL::Host.ca_location = :none
 
-    Puppet.settings.clear
-
     # This is necessary so the terminus instances don't lie around.
     Puppet::SSL::Host.indirection.termini.clear
   }

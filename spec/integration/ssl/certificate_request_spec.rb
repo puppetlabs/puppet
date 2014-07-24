@@ -10,8 +10,6 @@ describe Puppet::SSL::CertificateRequest do
     # Get a safe temporary file
     dir = tmpdir("csr_integration_testing")
 
-    Puppet.settings.clear
-
     Puppet.settings[:confdir] = dir
     Puppet.settings[:vardir] = dir
     Puppet.settings[:group] = Process.gid
@@ -24,10 +22,6 @@ describe Puppet::SSL::CertificateRequest do
 
     # This is necessary so the terminus instances don't lie around.
     Puppet::SSL::CertificateRequest.indirection.termini.clear
-  end
-
-  after do
-    Puppet.settings.clear
   end
 
   it "should be able to generate CSRs" do
