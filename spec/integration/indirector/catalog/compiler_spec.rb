@@ -13,8 +13,6 @@ describe Puppet::Resource::Catalog::Compiler do
     @catalog.add_resource(@two = Puppet::Resource.new(:file, "/two"))
   end
 
-  after { Puppet.settings.clear }
-
   it "should remove virtual resources when filtering" do
     @one.virtual = true
     Puppet::Resource::Catalog.indirection.terminus.filter(@catalog).resource_refs.should == [ @two.ref ]

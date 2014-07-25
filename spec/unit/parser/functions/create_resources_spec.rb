@@ -14,10 +14,6 @@ describe 'function for dynamically creating resources' do
     Puppet::Parser::Functions.function(:create_resources)
   end
 
-  after do
-    Puppet.settings.clear
-  end
-
   it "should exist" do
     Puppet::Parser::Functions.function(:create_resources).should == "function_create_resources"
   end
