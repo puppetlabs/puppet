@@ -1,6 +1,7 @@
 language: ruby
 bundler_args: --without development
-script: "bundle exec rake \"parallel:spec[2]\""
+script:
+  - "bundle exec rake $CHECK"
 notifications:
   email: false
 rvm:
@@ -8,3 +9,16 @@ rvm:
   - 2.0.0
   - 1.9.3
   - 1.8.7-p374
+
+env:
+  - "CHECK=parallel:spec\\[2\\]"
+  - "CHECK=rubocop"
+
+matrix:
+  exclude:
+    - rvm: 2.0.0
+      env: "CHECK=rubocop"
+    - rvm: 1.9.3
+      env: "CHECK=rubocop"
+    - rvm: 1.8.7-p374
+      env: "CHECK=rubocop"

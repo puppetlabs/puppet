@@ -16,7 +16,6 @@ platforms :ruby do
   gem 'yard', :group => :development
   gem 'redcarpet', '~> 2.0', :group => :development
   gem "racc", "1.4.9", :group => :development
-  gem "rubocop", :group => :development unless RUBY_VERSION =~ /^1.8/
 
   # To enable the augeas feature, use this gem.
   # Note that it is a native gem, so the augeas headers/libs
@@ -44,6 +43,8 @@ group(:development, :test) do
   # json-schema uses multi_json, but chokes with multi_json 1.7.9, so prefer 1.7.7
   gem "multi_json", "1.7.7", :require => false, :platforms => [:ruby, :jruby]
   gem "json-schema", "2.1.1", :require => false, :platforms => [:ruby, :jruby]
+
+  gem "rubocop" unless RUBY_VERSION =~ /^1.8/
 end
 
 group(:development) do
