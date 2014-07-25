@@ -169,11 +169,16 @@ class Puppet::Configurer
       end
 
       current_environment = Puppet.lookup(:current_environment)
-      Puppet.push_context(:current_environment =>
-                          Puppet::Node::Environment.create(@environment,
-                                                           current_environment.modulepath,
-                                                           current_environment.manifest,
-                                                           current_environment.config_version))
+      local_node_environment =
+      if current_environment.name == @environment.intern
+        current_environment
+      else
+        Puppet::Node::Environment.create(@environment,
+                                         current_environment.modulepath,
+                                         current_environment.manifest,
+                                         current_environment.config_version)
+      end
+      Puppet.push_context({:current_environment => local_node_environment}, "Local node environment for configurer transaction")
 
       query_options = get_facts(options) unless query_options
 
