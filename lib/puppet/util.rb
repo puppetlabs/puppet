@@ -407,7 +407,7 @@ module Util
     # and specifically handle the platform, which has all sorts of magic.
     # So, unlike Unix, we don't pre-prep security; we use the default "quite
     # secure" tempfile permissions instead.  Magic happens later.
-    if !Puppet.features.microsoft_windows?
+    unless Puppet.features.microsoft_windows?
       # Grab the current file mode, and fall back to the defaults.
       effective_mode =
       if Puppet::FileSystem.exist?(file)
@@ -446,7 +446,7 @@ module Util
 
     if Puppet.features.microsoft_windows?
       # Windows ReplaceFile needs a file to exist, so touch handles this
-      if !Puppet::FileSystem.exist?(file)
+      unless Puppet::FileSystem.exist?(file)
         Puppet::FileSystem.touch(file)
         if mode
           Puppet::Util::Windows::Security.set_mode(mode, Puppet::FileSystem.path_string(file))

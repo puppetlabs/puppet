@@ -105,7 +105,7 @@ module Puppet
         return true
       end
 
-      return true if ! @resource.replace?
+      return true unless @resource.replace?
 
       result = super
 

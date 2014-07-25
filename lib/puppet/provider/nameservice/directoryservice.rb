@@ -296,7 +296,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       password_hash = nil
       password_hash_file = "#{password_hash_dir}/#{guid}"
       if Puppet::FileSystem.exist?(password_hash_file) and File.file?(password_hash_file)
-        fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
+        fail("Could not read password hash file at #{password_hash_file}") unless File.readable?(password_hash_file)
         f = File.new(password_hash_file)
         password_hash = f.read
         f.close
@@ -507,7 +507,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
   def remove_unwanted_members(current_members, new_members)
     current_members.each do |member|
-      if not new_members.flatten.include?(member)
+      unless new_members.flatten.include?(member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
         begin
           execute(cmd)

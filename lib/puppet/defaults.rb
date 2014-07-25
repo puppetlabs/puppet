@@ -101,7 +101,7 @@ module Puppet
         values = munge(value)
         valid   = %w[deprecations]
         invalid = values - (values & valid)
-        if not invalid.empty?
+        unless invalid.empty?
           raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
         end
       end
@@ -1911,7 +1911,7 @@ EOT
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          if not Puppet.settings[:async_storeconfigs]
+          unless Puppet.settings[:async_storeconfigs]
             Puppet::Resource::Catalog.indirection.cache_class = :store_configs
             Puppet.settings.override_default(:catalog_cache_terminus, :store_configs)
           end

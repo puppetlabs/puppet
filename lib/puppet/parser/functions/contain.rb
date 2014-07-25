@@ -29,7 +29,7 @@ the future parser's resource and relationship expressions.
   # This is the same as calling the include function but faster and does not rely on the include
   # function (which is a statement) to return something (it should not).
   (compiler.evaluate_classes(classes, self, false) || []).each do |resource|
-    if ! scope.catalog.edge?(containing_resource, resource)
+    unless scope.catalog.edge?(containing_resource, resource)
       scope.catalog.add_edge(containing_resource, resource)
     end
   end

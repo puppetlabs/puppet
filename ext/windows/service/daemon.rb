@@ -148,7 +148,7 @@ class WindowsDaemon < Win32::Daemon
     rescue Exception => e
       # Ignore all errors
     ensure
-      if (!eventlog.nil?)
+      unless (eventlog.nil?)
         eventlog.close
       end
     end

@@ -390,7 +390,7 @@ module Puppet::Functions
         @type_parser.parse(t)
       end
 
-      if !(from.nil? && to.nil?)
+      unless (from.nil? && to.nil?)
         mapped_types << from
         mapped_types << to
       end

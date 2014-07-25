@@ -94,7 +94,7 @@ module RDoc
       cls = @nodes[name]
       unless cls
         cls = PuppetNode.new(name, superclass)
-        @nodes[name] = cls if !@done_documenting
+        @nodes[name] = cls unless @done_documenting
         cls.parent = self
         cls.section = @current_section
       end
@@ -109,7 +109,7 @@ module RDoc
       end
       @node_container ||= add_module(NormalModule, "__nodes__")
       cls = @node_container.add_class(PuppetNode, name, superclass)
-      @nodes[name] = cls if !@done_documenting
+      @nodes[name] = cls unless @done_documenting
       cls
     end
 
@@ -204,7 +204,7 @@ module RDoc
           end
         end
         if result && method
-          if !result.respond_to?(:find_local_symbol)
+          unless result.respond_to?(:find_local_symbol)
             p result.name
             p method
             fail

@@ -1249,7 +1249,7 @@ Generated on #{Time.now}.
       end
       if set
         value = set.lookup(name)
-        if !value.nil?
+        unless value.nil?
           return value
         end
       end
@@ -1322,7 +1322,7 @@ Generated on #{Time.now}.
     end
 
     def set(name, value)
-      if !@defaults[name]
+      unless @defaults[name]
         raise ArgumentError,
           "Attempt to assign a value to unknown setting #{name.inspect}"
       end

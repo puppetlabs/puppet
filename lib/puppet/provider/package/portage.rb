@@ -27,7 +27,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     version_format = self.eix_version_format
     begin
       eix_file = File.directory?("/var/cache/eix") ? "/var/cache/eix/portage.eix" : "/var/cache/eix"
-      update_eix if !FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
+      update_eix unless FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
 
       search_output = nil
       Puppet::Util.withenv :LASTVERSION => version_format do
@@ -87,7 +87,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
     begin
       eix_file = File.directory?("/var/cache/eix") ? "/var/cache/eix/portage.eix" : "/var/cache/eix"
-      update_eix if !FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
+      update_eix unless FileUtils.uptodate?(eix_file, %w{/usr/bin/eix /usr/portage/metadata/timestamp})
 
       search_output = nil
       Puppet::Util.withenv :LASTVERSION => version_format do

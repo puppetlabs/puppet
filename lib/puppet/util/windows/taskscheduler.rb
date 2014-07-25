@@ -171,7 +171,7 @@ module Win32
       @pITS   = nil
       @pITask = nil
 
-      if ! self.class.com_initialized
+      unless self.class.com_initialized
         Puppet::Util::Windows::COM.InitializeCom()
         self.class.com_initialized = true
       end
@@ -350,7 +350,7 @@ module Win32
         FFI::MemoryPointer.new(:pointer) do |ptr|
           @pITask.GetAccountInformation(ptr)
           ptr.read_com_memory_pointer do |str_ptr|
-            user = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+            user = str_ptr.read_arbitrary_wide_string_up_to(256) unless str_ptr.null?
           end
         end
       rescue Puppet::Util::Windows::Error => e
@@ -374,7 +374,7 @@ module Win32
         @pITask.GetApplicationName(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          app = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          app = str_ptr.read_arbitrary_wide_string_up_to(256) unless str_ptr.null?
         end
       end
 
@@ -405,7 +405,7 @@ module Win32
         @pITask.GetParameters(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          param = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          param = str_ptr.read_arbitrary_wide_string_up_to(256) unless str_ptr.null?
         end
       end
 
@@ -438,7 +438,7 @@ module Win32
         @pITask.GetWorkingDirectory(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          dir = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          dir = str_ptr.read_arbitrary_wide_string_up_to(256) unless str_ptr.null?
         end
       end
 
@@ -720,7 +720,7 @@ module Win32
         @pITask.GetComment(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          comment = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          comment = str_ptr.read_arbitrary_wide_string_up_to(256) unless str_ptr.null?
         end
       end
 
@@ -748,7 +748,7 @@ module Win32
         @pITask.GetCreator(ptr)
 
         ptr.read_com_memory_pointer do |str_ptr|
-          creator = str_ptr.read_arbitrary_wide_string_up_to(256) if ! str_ptr.null?
+          creator = str_ptr.read_arbitrary_wide_string_up_to(256) unless str_ptr.null?
         end
       end
 

@@ -154,7 +154,7 @@ test_name "Puppet cert generate behavior (#6112)" do
   # Windows.
 
   step "Case 3: A host with no ssl infrastructure makes a `puppet cert generate` call" do
-    if !master.is_pe?
+    unless master.is_pe?
       confine_block :except, :platform => 'windows' do
 
         clear_agent_ssl

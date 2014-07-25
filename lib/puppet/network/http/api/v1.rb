@@ -38,7 +38,7 @@ class Puppet::Network::HTTP::API::V1
     indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
     raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection
 
-    if !indirection.allow_remote_requests?
+    unless indirection.allow_remote_requests?
       # TODO: should we tell the user we found an indirection but it doesn't
       # allow remote requests, or just pretend there's no handler at all? what
       # are the security implications for the former?

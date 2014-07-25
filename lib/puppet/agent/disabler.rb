@@ -24,7 +24,7 @@ module Puppet::Agent::Disabler
   def disable(msg=nil)
     data = {}
     Puppet.notice "Disabling Puppet."
-    if (! msg.nil?)
+    unless (msg.nil?)
       data[DISABLED_MESSAGE_JSON_KEY] = msg
     end
     disable_lockfile.lock(data)
