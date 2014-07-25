@@ -68,7 +68,7 @@ File {
   ensure => directory,
   owner => #{master['user']},
   group => #{master['group']},
-  mode => 0750,
+  mode => 0770,
 }
 
 file {
