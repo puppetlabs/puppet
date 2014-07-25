@@ -707,7 +707,7 @@ class Puppet::Pops::Validation::Checker4_0
 
   # Case expression is idem, if test, and all options are idem
   def idem_CaseExpression(o)
-    return false if !idem(o.test)
+    return false unless idem(o.test)
     ! o.options.any? {|opt| !idem(opt) }
   end
 

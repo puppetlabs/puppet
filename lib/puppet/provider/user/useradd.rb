@@ -105,7 +105,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     # to ensure consistent behaviour of the useradd provider when
     # using both useradd and luseradd
     if not @resource.allowdupe? and @resource.forcelocal?
-       if @resource.should(:uid) and finduser('uid', @resource.should(:uid).to_s)
+       if @resource.should(:uid) && finduser('uid', @resource.should(:uid).to_s)
            raise(Puppet::Error, "UID #{@resource.should(:uid).to_s} already exists, use allowdupe to force user creation")
        end
     elsif @resource.allowdupe? and not @resource.forcelocal?
@@ -143,7 +143,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def check_system_users
-    if self.class.system_users? and resource.system?
+    if self.class.system_users? && resource.system?
       ["-r"]
     else
       []
@@ -217,10 +217,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
       check_valid_shell
     end
      super
-     if @resource.forcelocal? and self.groups?
+     if @resource.forcelocal? && self.groups?
        set(:groups, @resource[:groups])
      end
-     if @resource.forcelocal? and @resource[:expiry]
+     if @resource.forcelocal? && @resource[:expiry]
        set(:expiry, @resource[:expiry])
      end
   end

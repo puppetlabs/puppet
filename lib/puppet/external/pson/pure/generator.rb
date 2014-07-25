@@ -363,7 +363,7 @@ module PSON
           def to_pson_raw_object
             {
               PSON.create_id  => self.class.name,
-              'raw'           => self.unpack('C*'),
+              'raw'           => unpack('C*'),
             }
           end
 

@@ -29,7 +29,7 @@ describe Puppet::Interface::OptionBuilder do
     it "should support #{doc} declarations" do
       text = "this is the #{doc}"
       option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
-        self.send doc, text
+        send doc, text
       end
       option.should be_an_instance_of Puppet::Interface::Option
       option.send(doc).should == text

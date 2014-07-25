@@ -196,7 +196,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
   end
 
   def user=(value)
-    self.fail("Invalid user: #{value}") unless Puppet::Util::Windows::SID.name_to_sid(value)
+    fail("Invalid user: #{value}") unless Puppet::Util::Windows::SID.name_to_sid(value)
 
     if value.to_s.downcase != 'system'
       task.set_account_information(value, resource[:password])
@@ -224,7 +224,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
   def flush
     unless resource[:ensure] == :absent
-      self.fail('Parameter command is required.') unless resource[:command]
+      fail('Parameter command is required.') unless resource[:command]
       task.save
       @task = nil
     end
@@ -278,8 +278,8 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     trigger = dummy_time_trigger
 
     if user_provided_input
-      self.fail "'enabled' is read-only on scheduled_task triggers and should be removed ('enabled' is usually provided in puppet resource scheduled_task)." if puppet_trigger.has_key?('enabled')
-      self.fail "'index' is read-only on scheduled_task triggers and should be removed ('index' is usually provided in puppet resource scheduled_task)."   if puppet_trigger.has_key?('index')
+      fail "'enabled' is read-only on scheduled_task triggers and should be removed ('enabled' is usually provided in puppet resource scheduled_task)." if puppet_trigger.has_key?('enabled')
+      fail "'index' is read-only on scheduled_task triggers and should be removed ('index' is usually provided in puppet resource scheduled_task)."   if puppet_trigger.has_key?('index')
     end
     puppet_trigger.delete('index')
 
@@ -290,8 +290,8 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     end
 
     extra_keys = puppet_trigger.keys.sort - ['schedule', 'start_date', 'start_time', 'every', 'months', 'on', 'which_occurrence', 'day_of_week']
-    self.fail "Unknown trigger option(s): #{Puppet::Parameter.format_value_for_display(extra_keys)}" unless extra_keys.empty?
-    self.fail "Must specify 'start_time' when defining a trigger" unless puppet_trigger['start_time']
+    fail "Unknown trigger option(s): #{Puppet::Parameter.format_value_for_display(extra_keys)}" unless extra_keys.empty?
+    fail "Must specify 'start_time' when defining a trigger" unless puppet_trigger['start_time']
 
     case puppet_trigger['schedule']
     when 'daily'
@@ -317,34 +317,34 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
 
       if puppet_trigger.keys.include?('on')
         if puppet_trigger.has_key?('day_of_week') or puppet_trigger.has_key?('which_occurrence')
-          self.fail "Neither 'day_of_week' nor 'which_occurrence' can be specified when creating a monthly date-based trigger"
+          fail "Neither 'day_of_week' nor 'which_occurrence' can be specified when creating a monthly date-based trigger"
         end
 
         trigger['trigger_type'] = Win32::TaskScheduler::MONTHLYDATE
         trigger['type']['days'] = bitfield_from_days(puppet_trigger['on'])
       elsif puppet_trigger.keys.include?('which_occurrence') or puppet_trigger.keys.include?('day_of_week')
-        self.fail 'which_occurrence cannot be specified as an array' if puppet_trigger['which_occurrence'].is_a?(Array)
+        fail 'which_occurrence cannot be specified as an array' if puppet_trigger['which_occurrence'].is_a?(Array)
         %w{day_of_week which_occurrence}.each do |field|
-          self.fail "#{field} must be specified when creating a monthly day-of-week based trigger" unless puppet_trigger.has_key?(field)
+          fail "#{field} must be specified when creating a monthly day-of-week based trigger" unless puppet_trigger.has_key?(field)
         end
 
         trigger['trigger_type']         = Win32::TaskScheduler::MONTHLYDOW
         trigger['type']['weeks']        = occurrence_name_to_constant(puppet_trigger['which_occurrence'])
         trigger['type']['days_of_week'] = bitfield_from_days_of_week(puppet_trigger['day_of_week'])
       else
-        self.fail "Don't know how to create a 'monthly' schedule with the options: #{puppet_trigger.keys.sort.join(', ')}"
+        fail "Don't know how to create a 'monthly' schedule with the options: #{puppet_trigger.keys.sort.join(', ')}"
       end
     when 'once'
-      self.fail "Must specify 'start_date' when defining a one-time trigger" unless puppet_trigger['start_date']
+      fail "Must specify 'start_date' when defining a one-time trigger" unless puppet_trigger['start_date']
 
       trigger['trigger_type'] = Win32::TaskScheduler::ONCE
     else
-      self.fail "Unknown schedule type: #{puppet_trigger["schedule"].inspect}"
+      fail "Unknown schedule type: #{puppet_trigger["schedule"].inspect}"
     end
 
     if start_date = puppet_trigger['start_date']
       start_date = Date.parse(start_date)
-      self.fail "start_date must be on or after 1753-01-01" unless start_date >= Date.new(1753, 1, 1)
+      fail "start_date must be on or after 1753-01-01" unless start_date >= Date.new(1753, 1, 1)
 
       trigger['start_year']  = start_date.year
       trigger['start_month'] = start_date.month
@@ -376,7 +376,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
     months = [months] unless months.is_a?(Array)
     months.each do |month|
       integer_month = Integer(month) rescue nil
-      self.fail 'Month must be specified as an integer in the range 1-12' unless integer_month == month.to_f and integer_month.between?(1,12)
+      fail 'Month must be specified as an integer in the range 1-12' unless integer_month == month.to_f and integer_month.between?(1,12)
 
       bitfield |= scheduler_months[integer_month - 1]
     end
@@ -395,7 +395,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       day = 32 if day == 'last'
 
       integer_day = Integer(day)
-      self.fail "Day must be specified as an integer in the range 1-31, or as 'last'" unless integer_day = day.to_f and integer_day.between?(1,32)
+      fail "Day must be specified as an integer in the range 1-31, or as 'last'" unless integer_day = day.to_f and integer_day.between?(1,32)
 
       bitfield |= 1 << integer_day - 1
     end

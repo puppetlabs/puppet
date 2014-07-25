@@ -86,7 +86,7 @@ apply_manifest_on(master, manifest, :catch_failures => true)
 
 def test_on_agents(environment, default_env = false)
   agents.each do |agent|
-    environment_switch = "--environment #{environment}" if !default_env
+    environment_switch = "--environment #{environment}" unless default_env
     on(agent, puppet("agent -t --server #{master}", environment_switch), :acceptable_exit_codes => [2] ) do
       assert_match(/#{environment}-site.pp/, stdout)
       assert_match(/foo-#{environment}/, stdout)

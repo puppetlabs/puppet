@@ -283,7 +283,7 @@ class Puppet::Pops::Types::TypeCalculator
   # Answers, does the given callable accept the arguments given in args (an array or a tuple)
   #
   def callable?(callable, args)
-    return false if !self.class.is_kind_of_callable?(callable)
+    return false unless self.class.is_kind_of_callable?(callable)
     # Note that polymorphism is for the args type, the callable is always a callable
     @@callable_visitor.visit_this_1(self, args, callable)
   end

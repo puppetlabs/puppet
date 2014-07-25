@@ -98,14 +98,14 @@ class Puppet::Transaction::Report
   attr_reader :report_format
 
   def self.from_data_hash(data)
-    obj = self.allocate
+    obj = allocate
     obj.initialize_from_hash(data)
     obj
   end
 
   def self.from_pson(data)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
+    from_data_hash(data)
   end
 
   def as_logging_destination(&block)

@@ -16,7 +16,7 @@ module Matchers; module Resource
       @params.each do |name, value|
         case value
         when RSpec::Matchers::DSL::Matcher
-          if !value.matches?(actual_resource[name])
+          unless value.matches?(actual_resource[name])
             matched = false
             failures << "expected #{name} to match '#{value.description}' but was '#{actual_resource[name]}'"
           end

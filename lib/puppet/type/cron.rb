@@ -66,7 +66,7 @@ Puppet::Type.newtype(:cron) do
     # We have to override the parent method, because we consume the entire
     # "should" array
     def insync?(is)
-      self.is_to_s(is) == self.should_to_s
+      is_to_s(is) == should_to_s
     end
 
     # A method used to do parameter input handling.  Converts integers
@@ -112,7 +112,7 @@ Puppet::Type.newtype(:cron) do
     def should_to_s(newvalue = @should)
       if newvalue
         newvalue = [newvalue] unless newvalue.is_a?(Array)
-        if self.name == :command or newvalue[0].is_a? Symbol
+        if name == :command or newvalue[0].is_a? Symbol
           newvalue[0]
         else
           newvalue.join(",")
@@ -126,7 +126,7 @@ Puppet::Type.newtype(:cron) do
       if currentvalue
         return currentvalue unless currentvalue.is_a?(Array)
 
-        if self.name == :command or currentvalue[0].is_a? Symbol
+        if name == :command or currentvalue[0].is_a? Symbol
           currentvalue[0]
         else
           currentvalue.join(",")
@@ -137,7 +137,7 @@ Puppet::Type.newtype(:cron) do
     end
 
     def should
-      if @should and @should[0] == :absent
+      if @should && @should[0] == :absent
         :absent
       else
         @should
@@ -195,7 +195,7 @@ Puppet::Type.newtype(:cron) do
       if retval
         return retval.to_s
       else
-        self.fail "#{value} is not a valid #{self.class.name}"
+        fail "#{value} is not a valid #{self.class.name}"
       end
     end
   end
@@ -382,7 +382,7 @@ Puppet::Type.newtype(:cron) do
       the user account specified by this property."
 
     defaultto {
-      if not provider.is_a?(@resource.class.provider(:crontab))
+      unless provider.is_a?(@resource.class.provider(:crontab))
         struct = Etc.getpwuid(Process.uid)
         struct.respond_to?(:name) && struct.name or 'root'
       end
@@ -429,7 +429,7 @@ Puppet::Type.newtype(:cron) do
     [ :minute, :hour, :weekday, :monthday, :month ].each do |field|
       next unless self[field]
       next if self[field] == :absent
-      raise ArgumentError, "#{self.ref} cannot specify both a special schedule and a value for #{field}"
+      raise ArgumentError, "#{ref} cannot specify both a special schedule and a value for #{field}"
     end
   end
 

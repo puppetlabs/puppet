@@ -51,7 +51,7 @@ class Puppet::Resource
 
   def self.from_pson(pson)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(pson)
+    from_data_hash(pson)
   end
 
   def inspect
@@ -60,14 +60,14 @@ class Puppet::Resource
 
   def to_data_hash
     data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
-      next hash unless value = self.send(param)
+      next hash unless value = send(param)
       hash[param.to_s] = value
       hash
     end
 
     data["exported"] ||= false
 
-    params = self.to_hash.inject({}) do |hash, ary|
+    params = to_hash.inject({}) do |hash, ary|
       param, value = ary
 
       # Don't duplicate the title as the namevar
@@ -147,7 +147,7 @@ class Puppet::Resource
   end
 
   def ==(other)
-    return false unless other.respond_to?(:title) and self.type == other.type and self.title == other.title
+    return false unless other.respond_to?(:title) and type == other.type and title == other.title
 
     return false unless to_hash == other.to_hash
     true
@@ -174,7 +174,7 @@ class Puppet::Resource
 
   %w{exported virtual strict}.each do |m|
     define_method(m+"?") do
-      self.send(m)
+      send(m)
     end
   end
 
@@ -212,7 +212,7 @@ class Puppet::Resource
       extract_parameters(params)
     end
 
-    if resource_type and ! @@nondeprecating_type[resource_type]
+    if resource_type && ! @@nondeprecating_type[resource_type]
       if resource_type.respond_to?(:deprecate_params)
         resource_type.deprecate_params(title, attributes[:parameters])
       else
@@ -224,7 +224,7 @@ class Puppet::Resource
     tag(self.title) if valid_tag?(self.title)
 
     @reference = self # for serialization compatibility with 0.25.x
-    if strict? and ! resource_type
+    if strict? && ! resource_type
       if self.class?
         raise ArgumentError, "Could not find declared class #{title}"
       else
@@ -284,7 +284,7 @@ class Puppet::Resource
 
   def uniqueness_key
     # Temporary kludge to deal with inconsistant use patters
-    h = self.to_hash
+    h = to_hash
     h[namevar] ||= h[:name]
     h[:name]   ||= h[namevar]
     h.values_at(*key_attributes.sort_by { |k| k.to_s })
@@ -311,7 +311,7 @@ class Puppet::Resource
       "  %-#{attr_max}s => %s,\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
 
-    "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes]
+    "%s { '%s':\n%s}" % [type.to_s.downcase, title, attributes]
   end
 
   def to_ref
@@ -321,7 +321,7 @@ class Puppet::Resource
   # Convert our resource to a RAL resource instance.  Creates component
   # instances for resource types that don't exist.
   def to_ral
-    typeklass = Puppet::Type.type(self.type) || Puppet::Type.type(:component)
+    typeklass = Puppet::Type.type(type) || Puppet::Type.type(:component)
     typeklass.new(self)
   end
 
@@ -373,7 +373,7 @@ class Puppet::Resource
   private :lookup_with_databinding
 
   def set_default_parameters(scope)
-    return [] unless resource_type and resource_type.respond_to?(:arguments)
+    return [] unless resource_type && resource_type.respond_to?(:arguments)
 
     unless is_a?(Puppet::Parser::Resource)
       fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
@@ -398,11 +398,11 @@ class Puppet::Resource
   def copy_as_resource
     result = Puppet::Resource.new(type, title)
 
-    result.file = self.file
-    result.line = self.line
-    result.exported = self.exported
-    result.virtual = self.virtual
-    result.tag(*self.tags)
+    result.file = file
+    result.line = line
+    result.exported = exported
+    result.virtual = virtual
+    result.tag(*tags)
     result.environment = environment
     result.instance_variable_set(:@rstype, resource_type)
 
@@ -449,7 +449,7 @@ class Puppet::Resource
   # Must be called after 'set_default_parameters'.  We can't join the methods
   # because Type#set_parameters needs specifically ordered behavior.
   def validate_complete
-    return unless resource_type and resource_type.respond_to?(:arguments)
+    return unless resource_type && resource_type.respond_to?(:arguments)
 
     resource_type.arguments.each do |param, default|
       param = param.to_sym
@@ -506,7 +506,7 @@ class Puppet::Resource
   # The namevar for our resource type. If the type doesn't exist,
   # always use :name.
   def namevar
-    if builtin_type? and t = resource_type and t.key_attributes.length == 1
+    if builtin_type? && t = resource_type and t.key_attributes.length == 1
       t.key_attributes.first
     else
       :name

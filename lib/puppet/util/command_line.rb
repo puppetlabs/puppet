@@ -2,7 +2,7 @@
 # load gems. If Bundler is loaded, let it determine what can be
 # loaded. If it's not loaded, then use rubygems. But do this before
 # loading any puppet code, so that our gem loading system is sane.
-if not defined? ::Bundler
+unless defined? ::Bundler
   begin
     require 'rubygems'
   rescue LoadError
@@ -132,7 +132,7 @@ module Puppet
           # If we cannot find the configured environment, which may not exist,
           # we do not attempt to add plugin directories to the load path.
           #
-          if @subcommand_name != 'master' and @subcommand_name != 'agent'
+          if @subcommand_name != 'master' && @subcommand_name != 'agent'
             if configured_environment = Puppet.lookup(:environments).get(Puppet[:environment])
               configured_environment.each_plugin_directory do |dir|
                 $LOAD_PATH << dir unless $LOAD_PATH.include?(dir)

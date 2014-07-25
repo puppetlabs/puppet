@@ -23,7 +23,7 @@ module Puppet
 
     # Anything else, basically
     newvalue(/./) do
-      @resource[:ensure] = :link if ! @resource.should(:ensure)
+      @resource[:ensure] = :link unless @resource.should(:ensure)
 
       # Only call mklink if ensure didn't call us in the first place.
       currentensure  = @resource.property(:ensure).retrieve
@@ -32,9 +32,9 @@ module Puppet
 
     # Create our link.
     def mklink
-      raise Puppet::Error, "Cannot symlink on this platform version" if !provider.feature?(:manages_symlinks)
+      raise Puppet::Error, "Cannot symlink on this platform version" unless provider.feature?(:manages_symlinks)
 
-      target = self.should
+      target = should
 
       # Clean up any existing objects.  The argument is just for logging,
       # it doesn't determine what's removed.
@@ -61,9 +61,9 @@ module Puppet
     end
 
     def insync?(currentvalue)
-      if [:nochange, :notlink].include?(self.should) or @resource.recurse?
+      if [:nochange, :notlink].include?(should) || @resource.recurse?
         return true
-      elsif ! @resource.replace? and Puppet::FileSystem.exist?(@resource[:path])
+      elsif ! @resource.replace? && Puppet::FileSystem.exist?(@resource[:path])
         return true
       else
         return super(currentvalue)

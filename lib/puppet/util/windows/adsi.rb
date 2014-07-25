@@ -69,7 +69,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def sid_uri(sid)
-      raise Puppet::Error.new( "Must use a valid SID object" ) if !sid.kind_of?(Win32::Security::SID)
+      raise Puppet::Error.new( "Must use a valid SID object" ) unless sid.kind_of?(Win32::Security::SID)
       "WinNT://#{sid.to_s}"
     end
 
@@ -212,7 +212,7 @@ module Puppet::Util::Windows::ADSI
 
       desired_groups = desired_groups.split(',').map(&:strip)
 
-      current_groups = self.groups
+      current_groups = groups
 
       # First we add the user to all the groups it should be in but isn't
       groups_to_add = desired_groups - current_groups
@@ -339,7 +339,7 @@ module Puppet::Util::Windows::ADSI
 
       sids = names.map do |name|
         sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
-        raise Puppet::Error.new( "Could not resolve username: #{name}" ) if !sid
+        raise Puppet::Error.new( "Could not resolve username: #{name}" ) unless sid
         [sid.to_s, sid]
       end
 
@@ -390,7 +390,7 @@ module Puppet::Util::Windows::ADSI
     def set_members(desired_members)
       return if desired_members.nil? or desired_members.empty?
 
-      current_hash = Hash[ self.member_sids.map { |sid| [sid.to_s, sid] } ]
+      current_hash = Hash[ member_sids.map { |sid| [sid.to_s, sid] } ]
       desired_hash = self.class.name_sid_hash(desired_members)
 
       # First we add all missing members

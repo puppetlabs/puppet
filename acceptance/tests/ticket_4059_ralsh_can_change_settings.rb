@@ -9,7 +9,7 @@ agents.each do |agent|
 
   step "run the resource agent"
   on(agent, puppet_resource(content)) do
-    stdout.index('Host[example.com]/ensure: created') or
+    stdout.index('Host[example.com]/ensure: created') ||
       fail_test("missing notice about host record creation")
   end
   on(agent, "cat #{target}") do

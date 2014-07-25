@@ -69,7 +69,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
 
   def status
     begin
-      output = sv "status", self.daemon
+      output = sv "status", daemon
       return :running if output =~ /^run: /
     rescue Puppet::ExecutionFailure => detail
       unless detail.message =~ /(warning: |runsv not running$)/
@@ -80,7 +80,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   end
 
   def stop
-    sv "stop", self.service
+    sv "stop", service
   end
 
   def start
@@ -89,14 +89,14 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
         # Work around issue #4480
         # runsvdir takes up to 5 seconds to recognize
         # the symlink created by this call to enable
-        Puppet.info "Waiting 5 seconds for runsvdir to discover service #{self.service}"
+        Puppet.info "Waiting 5 seconds for runsvdir to discover service #{service}"
         sleep 5
     end
-    sv "start", self.service
+    sv "start", service
   end
 
   def restart
-    sv "restart", self.service
+    sv "restart", service
   end
 
   # disable by removing the symlink so that runit
@@ -105,7 +105,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
   # before a disable
   def disable
     # unlink the daemon symlink to disable it
-    Puppet::FileSystem.unlink(self.service) if Puppet::FileSystem.symlink?(self.service)
+    Puppet::FileSystem.unlink(service) if Puppet::FileSystem.symlink?(service)
   end
 end
 

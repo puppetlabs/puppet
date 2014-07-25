@@ -16,7 +16,7 @@ class Puppet::Provider::Exec < Puppet::Provider
         if check
           dir = nil
         else
-          self.fail "Working directory '#{dir}' does not exist"
+          fail "Working directory '#{dir}' does not exist"
         end
       end
     end
@@ -72,7 +72,7 @@ class Puppet::Provider::Exec < Puppet::Provider
 
       end
     rescue Errno::ENOENT => detail
-      self.fail Puppet::Error, detail.to_s, detail
+      fail Puppet::Error, detail.to_s, detail
     end
 
     # Return output twice as processstatus was returned before, but only exitstatus was ever called.
@@ -95,6 +95,6 @@ class Puppet::Provider::Exec < Puppet::Provider
   def validatecmd(command)
     exe = extractexe(command)
     # if we're not fully qualified, require a path
-    self.fail "'#{command}' is not qualified and no path was specified. Please qualify the command or specify a path." if !absolute_path?(exe) and resource[:path].nil?
+    fail "'#{command}' is not qualified and no path was specified. Please qualify the command or specify a path." if !absolute_path?(exe) and resource[:path].nil?
   end
 end

@@ -17,7 +17,7 @@ class Puppet::Parser::AST
   attr_accessor :parent, :scope, :file, :line, :pos
 
   def inspect
-    "( #{self.class} #{self.to_s} #{@children.inspect} )"
+    "( #{self.class} #{to_s} #{@children.inspect} )"
   end
 
   # don't fetch lexer comment by default
@@ -40,7 +40,7 @@ class Puppet::Parser::AST
 
   # Throw a parse error.
   def parsefail(message)
-    self.fail(Puppet::ParseError, message)
+    fail(Puppet::ParseError, message)
   end
 
   # Wrap a statemp in a reusable way so we always throw a parse error.
@@ -58,7 +58,7 @@ class Puppet::Parser::AST
     # We duplicate code here, rather than using exceptwrap, because this
     # is called so many times during parsing.
     begin
-      return self.evaluate(*options)
+      return evaluate(*options)
     rescue Puppet::Error => detail
       raise adderrorcontext(detail)
     rescue => detail
@@ -79,7 +79,7 @@ class Puppet::Parser::AST
 
   # evaluate ourselves, and match
   def evaluate_match(value, scope)
-    obj = self.safeevaluate(scope)
+    obj = safeevaluate(scope)
 
     obj   = obj.downcase   if obj.respond_to?(:downcase)
     value = value.downcase if value.respond_to?(:downcase)

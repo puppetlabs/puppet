@@ -74,7 +74,7 @@ class Puppet::Node::Facts
   end
 
   def ==(other)
-    return false unless self.name == other.name
+    return false unless name == other.name
     strip_internal == other.send(:strip_internal)
   end
 
@@ -86,7 +86,7 @@ class Puppet::Node::Facts
 
   def self.from_pson(data)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
+    from_data_hash(data)
   end
 
   def to_data_hash
@@ -120,11 +120,11 @@ class Puppet::Node::Facts
   end
 
   def timestamp=(time)
-    self.values['_timestamp'] = time
+    values['_timestamp'] = time
   end
 
   def timestamp
-    self.values['_timestamp']
+    values['_timestamp']
   end
 
   # Strip out that internal data.

@@ -138,7 +138,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def version
-    if !defined?(@version)
+    unless defined?(@version)
       if environment.config_version.nil? || environment.config_version == ""
         @version = Time.now.to_i
       else

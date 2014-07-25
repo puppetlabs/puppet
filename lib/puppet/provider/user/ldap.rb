@@ -88,7 +88,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
     end
 
     modes.each do |group, form|
-      self.fail "Could not find ldap group #{group}" unless ldap_group = group_manager.find(group)
+      fail "Could not find ldap group #{group}" unless ldap_group = group_manager.find(group)
 
       current = ldap_group[:members]
 

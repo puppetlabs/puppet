@@ -15,8 +15,8 @@ class Puppet::Parser::AST
       return Puppet::Parser::Resource::Param.new(
         :name   => @param,
         :value  => value.nil? ? :undef : value,
-        :source => scope.source, :line => self.line, :file => self.file,
-        :add    => self.add
+        :source => scope.source, :line => line, :file => file,
+        :add    => add
       )
     end
 

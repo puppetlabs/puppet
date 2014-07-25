@@ -11,9 +11,9 @@ module Puppet
       def sync
         case @resource["withpath"]
         when :true
-          send(@resource[:loglevel], self.should)
+          send(@resource[:loglevel], should)
         else
-          Puppet.send(@resource[:loglevel], self.should)
+          Puppet.send(@resource[:loglevel], should)
         end
         return
       end

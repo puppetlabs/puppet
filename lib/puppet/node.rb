@@ -30,7 +30,7 @@ class Puppet::Node
 
   def self.from_pson(pson)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(pson)
+    from_data_hash(pson)
   end
 
   def to_data_hash
@@ -127,7 +127,7 @@ class Puppet::Node
       @parameters[name] = value unless @parameters.include?(name)
     end
 
-    @parameters["environment"] ||= self.environment.name.to_s
+    @parameters["environment"] ||= environment.name.to_s
   end
 
   # Calculate the list of names we might use for looking
@@ -141,7 +141,7 @@ class Puppet::Node
 
     # First, get the fqdn
     unless fqdn = parameters["fqdn"]
-      if parameters["hostname"] and parameters["domain"]
+      if parameters["hostname"] && parameters["domain"]
         fqdn = parameters["hostname"] + "." + parameters["domain"]
       else
         Puppet.warning "Host is missing hostname and/or domain: #{name}"

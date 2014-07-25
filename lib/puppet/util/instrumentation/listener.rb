@@ -62,11 +62,11 @@ class Puppet::Util::Instrumentation::Listener
 
   def self.from_data_hash(data)
     result = Puppet::Util::Instrumentation[data["name"]]
-    self.new(result.listener, result.pattern, data["enabled"])
+    new(result.listener, result.pattern, data["enabled"])
   end
 
   def self.from_pson(data)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
+    from_data_hash(data)
   end
 end

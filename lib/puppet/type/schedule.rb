@@ -93,7 +93,7 @@ module Puppet
         values.each { |value|
           unless  value.is_a?(String) and
               value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
-            self.fail "Invalid range value '#{value}'"
+            fail "Invalid range value '#{value}'"
           end
         }
       end
@@ -110,7 +110,7 @@ module Puppet
             range << val.split(":").collect { |n| n.to_i }
           }
 
-          self.fail "Invalid range #{value}" if range.length != 2
+          fail "Invalid range #{value}" if range.length != 2
 
           # Make sure the hours are valid
           [range[0][0], range[1][0]].each do |n|
@@ -151,7 +151,7 @@ module Puppet
             time = Time.local(*ary)
 
             unless time.hour == range[0]
-              self.devfail(
+              devfail(
                 "Incorrectly converted time: #{time}: #{time.hour} vs #{range[0]}"
               )
             end
@@ -160,7 +160,7 @@ module Puppet
           end
 
           unless limits[0] < limits[1]
-            self.info(
+            info(
             "Assuming upper limit should be that time the next day"
             )
 
@@ -426,7 +426,7 @@ module Puppet
 
       Puppet.debug "Creating default schedules"
 
-            result << self.new(
+            result << new(
 
         :name => "puppet",
         :period => :hourly,
@@ -437,7 +437,7 @@ module Puppet
       # And then one for every period
       @parameters.find { |p| p.name == :period }.value_collection.values.each { |value|
 
-              result << self.new(
+              result << new(
           :name => value.to_s,
           :period => value
         )

@@ -7,7 +7,7 @@ require 'puppet/util'
 # implementations, since it is ~ 30 times faster
 class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
   def initialize(*args)
-    if ! Puppet.features.msgpack?
+    unless Puppet.features.msgpack?
       raise "MessagePack terminus not supported without msgpack library"
     end
     super
@@ -23,14 +23,14 @@ class Puppet::Indirector::Msgpack < Puppet::Indirector::Terminus
 
     Puppet::Util.replace_file(filename, 0660) {|f| f.print to_msgpack(request.instance) }
   rescue TypeError => detail
-    Puppet.log_exception "Could not save #{self.name} #{request.key}: #{detail}"
+    Puppet.log_exception "Could not save #{name} #{request.key}: #{detail}"
   end
 
   def destroy(request)
     Puppet::FileSystem.unlink(path(request.key))
   rescue => detail
     unless detail.is_a? Errno::ENOENT
-      raise Puppet::Error, "Could not destroy #{self.name} #{request.key}: #{detail}", detail.backtrace
+      raise Puppet::Error, "Could not destroy #{name} #{request.key}: #{detail}", detail.backtrace
     end
     1                           # emulate success...
   end

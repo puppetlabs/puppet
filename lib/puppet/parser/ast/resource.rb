@@ -17,7 +17,7 @@ class Resource < AST::Branch
     # because sometimes the :virtual attribute is set *after*
     # :exported, in which case it clobbers :exported if :exported
     # is true.  Argh, this was a very tough one to track down.
-    virt = self.virtual || self.exported
+    virt = virtual || exported
 
     # First level of implicit iteration: build a resource for each
     # instance.  This handles things like:
@@ -44,9 +44,9 @@ class Resource < AST::Branch
           resource = Puppet::Parser::Resource.new(
             fully_qualified_type, resource_title,
             :parameters => paramobjects,
-            :file => self.file,
-            :line => self.line,
-            :exported => self.exported,
+            :file => file,
+            :line => line,
+            :exported => exported,
             :virtual => virt,
             :source => scope.source,
             :scope => scope,

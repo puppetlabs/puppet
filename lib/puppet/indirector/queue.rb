@@ -71,7 +71,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
   def self.subscribe
     client.subscribe(queue) do |msg|
       begin
-        yield(self.intern(msg))
+        yield(intern(msg))
       rescue => detail
         Puppet.log_exception(detail, "Error occurred with subscription to queue #{queue} for indirection #{indirection_name}: #{detail}")
       end

@@ -22,7 +22,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
   # Install a package using 'apt-get'.  This function needs to support
   # installing a specific version.
   def install
-    self.run_preseed if @resource[:responsefile]
+    run_preseed if @resource[:responsefile]
     should = @resource.should(:ensure)
 
     str = @resource[:name]
@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     if output =~ /Candidate:\s+(\S+)\s/
       return $1
     else
-      self.err "Could not find latest version"
+      err "Could not find latest version"
       return nil
     end
   end
@@ -57,16 +57,16 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
   #
   def run_preseed
     if response = @resource[:responsefile] and Puppet::FileSystem.exist?(response)
-      self.info("Preseeding #{response} to debconf-set-selections")
+      info("Preseeding #{response} to debconf-set-selections")
 
       preseed response
     else
-      self.info "No responsefile specified or non existant, not preseeding anything"
+      info "No responsefile specified or non existant, not preseeding anything"
     end
   end
 
   def update
-    self.install
+    install
   end
 
   def uninstall

@@ -101,7 +101,7 @@ module Puppet::Pops::Types
     module ClassModule
 
       def hash
-        [self.class, Set.new(self.types)].hash
+        [self.class, Set.new(types)].hash
       end
 
       def ==(o)
@@ -123,7 +123,7 @@ module Puppet::Pops::Types
 
     module ClassModule
       def hash
-        [self.class, Set.new(self.values)].hash
+        [self.class, Set.new(values)].hash
       end
 
       def ==(o)
@@ -166,7 +166,7 @@ module Puppet::Pops::Types
       # Returns Enumerator if no block is given
       # Returns self if size is infinity (does not yield)
       def each
-        return self.to_enum unless block_given?
+        return to_enum unless block_given?
         return nil if from.nil? || to.nil?
         if to < from
           from.downto(to) {|x| yield x }
@@ -209,11 +209,11 @@ module Puppet::Pops::Types
     module ClassModule
 
       def hash
-        [self.class, self.size_type, Set.new(self.values)].hash
+        [self.class, size_type, Set.new(values)].hash
       end
 
       def ==(o)
-        self.class == o.class && self.size_type == o.size_type && Set.new(values) == Set.new(o.values)
+        self.class == o.class && size_type == o.size_type && Set.new(values) == Set.new(o.values)
       end
     end
   end
@@ -419,11 +419,11 @@ module Puppet::Pops::Types
   class PArrayType < PCollectionType
     module ClassModule
       def hash
-        [self.class, self.element_type, self.size_type].hash
+        [self.class, element_type, size_type].hash
       end
 
       def ==(o)
-        self.class == o.class && self.element_type == o.element_type && self.size_type == o.size_type
+        self.class == o.class && element_type == o.element_type && size_type == o.size_type
       end
     end
   end
@@ -433,14 +433,14 @@ module Puppet::Pops::Types
     contains_one_uni 'key_type', PAnyType
     module ClassModule
       def hash
-        [self.class, key_type, self.element_type, self.size_type].hash
+        [self.class, key_type, element_type, size_type].hash
       end
 
       def ==(o)
         self.class        == o.class         &&
         key_type          == o.key_type      &&
-        self.element_type == o.element_type  &&
-        self.size_type    == o.size_type
+        element_type == o.element_type  &&
+        size_type    == o.size_type
       end
     end
   end

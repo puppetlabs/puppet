@@ -116,7 +116,7 @@ class Puppet::Interface::Option
   end
 
   def default
-    @default and @default.call
+    @default && @default.call
   end
 
   attr_reader   :parent, :name, :aliases, :optparse

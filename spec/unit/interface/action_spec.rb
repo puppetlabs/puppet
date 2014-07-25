@@ -249,7 +249,7 @@ describe Puppet::Interface::Action do
         face = Puppet::Interface.new(:with_options, '0.0.1') do
           action(:foo) do
             when_invoked do |options| true end
-            self.instance_eval &block
+            instance_eval &block
           end
         end
         face.get_action(:foo)

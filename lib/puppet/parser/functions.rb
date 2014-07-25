@@ -161,7 +161,7 @@ module Puppet::Parser::Functions
           elsif arity < 0 and args[0].size < (arity+1).abs
             raise ArgumentError, "#{name}(): Wrong number of arguments given (#{args[0].size} for minimum #{(arity+1).abs})"
           end
-          self.send(real_fname, args[0])
+          send(real_fname, args[0])
         else
           raise ArgumentError, "custom functions must be called with a single array that contains the arguments. For example, function_example([1]) instead of function_example(1)"
         end

@@ -2,7 +2,7 @@
 module Puppet::Util::MethodHelper
   def requiredopts(*names)
     names.each do |name|
-      devfail("#{name} is a required option for #{self.class}") if self.send(name).nil?
+      devfail("#{name} is a required option for #{self.class}") if send(name).nil?
     end
   end
 
@@ -11,7 +11,7 @@ module Puppet::Util::MethodHelper
     options.each do |param,value|
       method = param.to_s + "="
       if respond_to? method
-        self.send(method, value)
+        send(method, value)
       else
         raise ArgumentError, "Invalid parameter #{param} to object class #{self.class}"
       end

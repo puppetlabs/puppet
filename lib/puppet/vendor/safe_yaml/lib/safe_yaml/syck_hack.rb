@@ -31,6 +31,6 @@ end
 # So we need to be sure that we reference Syck at the toplevel too so that
 # we can always load these kind of gemspecs.
 #
-if !defined?(Syck)
+unless defined?(Syck)
   Syck = YAML::Syck
 end

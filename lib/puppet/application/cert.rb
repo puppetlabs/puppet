@@ -255,8 +255,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def parse_options
     # handle the bareword subcommand pattern.
     result = super
-    unless self.subcommand then
-      if sub = self.command_line.args.shift then
+    unless subcommand then
+      if sub = command_line.args.shift then
         self.subcommand = sub
       else
         puts help

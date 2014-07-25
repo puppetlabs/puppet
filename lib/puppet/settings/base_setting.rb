@@ -101,10 +101,10 @@ class Puppet::Settings::BaseSetting
       method = param.to_s + "="
       raise ArgumentError, "#{self.class} (setting '#{args[:name]}') does not accept #{param}" unless self.respond_to? method
 
-      self.send(method, value)
+      send(method, value)
     end
 
-    raise ArgumentError, "You must provide a description for the #{self.name} config option" unless self.desc
+    raise ArgumentError, "You must provide a description for the #{name} config option" unless desc
   end
 
   def iscreated
@@ -141,7 +141,7 @@ class Puppet::Settings::BaseSetting
     # If the value has not been overridden, then print it out commented
     # and unconverted, so it's clear that that's the default and how it
     # works.
-    value = @settings.value(self.name)
+    value = @settings.value(name)
 
     if value != @default
       line = "#{@name} = #{value}"
@@ -157,7 +157,7 @@ class Puppet::Settings::BaseSetting
 
   # Retrieves the value, or if it's not set, retrieves the default.
   def value
-    @settings.value(self.name)
+    @settings.value(name)
   end
 
   # Modify the value when it is first evaluated

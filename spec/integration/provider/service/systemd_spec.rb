@@ -14,7 +14,7 @@ describe Puppet::Type.type(:service).provider(:systemd), '(integration)' do
   end
 
   it "should not be cosidered suitable if systemctl is absent",
-    :unless => (File.executable?('/bin/systemctl') or File.executable?('/usr/bin/systemctl')) do
+    :unless => (File.executable?('/bin/systemctl') || File.executable?('/usr/bin/systemctl')) do
     described_class.should_not be_suitable
   end
 end

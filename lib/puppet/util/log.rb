@@ -60,7 +60,7 @@ class Puppet::Util::Log
     destinations.keys.each { |dest|
       close(dest)
     }
-    raise Puppet::DevError.new("Log.close_all failed to close #{@destinations.keys.inspect}") if !@destinations.empty?
+    raise Puppet::DevError.new("Log.close_all failed to close #{@destinations.keys.inspect}") unless @destinations.empty?
   end
 
   # Flush any log destinations that support such operations.
@@ -191,7 +191,7 @@ class Puppet::Util::Log
   #  error scenario.
   # @return nil
   def Log.force_flushqueue()
-    if (@destinations.empty? and !(@queued.empty?))
+    if (@destinations.empty? && !(@queued.empty?))
       newdestination(:console)
     end
     flushqueue
@@ -241,7 +241,7 @@ class Puppet::Util::Log
 
   def self.from_pson(data)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
+    from_data_hash(data)
   end
 
   attr_accessor :time, :remote, :file, :line, :source
@@ -255,7 +255,7 @@ class Puppet::Util::Log
     @time = Time.now
 
     if tags = args[:tags]
-      tags.each { |t| self.tag(t) }
+      tags.each { |t| tag(t) }
     end
 
     [:file, :line].each do |attr|
@@ -280,7 +280,7 @@ class Puppet::Util::Log
   end
 
   def to_hash
-    self.to_data_hash
+    to_data_hash
   end
 
   def to_data_hash

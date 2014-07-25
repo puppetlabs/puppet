@@ -89,8 +89,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # containing the name, provider, path, and status of each service on the
   # system.
   def self.instances
-    jobs = self.jobsearch
-    @job_list ||= self.job_list
+    jobs = jobsearch
+    @job_list ||= job_list
     jobs.keys.collect do |job|
       job_status = @job_list.has_key?(job) ? :running : :stopped
       new(:name => job, :provider => :launchd, :path => jobs[job], :status => job_status)
@@ -219,7 +219,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       @macosx_version_major = product_version_major
       return @macosx_version_major
     rescue Puppet::ExecutionFailure => detail
-      self.fail Puppet::Error, "Could not determine OS X version: #{detail}", detail
+      fail Puppet::Error, "Could not determine OS X version: #{detail}", detail
     end
   end
 
@@ -246,7 +246,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     did_enable_job = false
     cmds = []
     cmds << :launchctl << :load
-    if self.enabled? == :false  || self.status == :stopped # launchctl won't load disabled jobs
+    if self.enabled? == :false  || status == :stopped # launchctl won't load disabled jobs
       cmds << "-w"
       did_enable_job = true
     end
@@ -257,7 +257,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}", $!)
     end
     # As load -w clears the Disabled flag, we need to add it in after
-    self.disable if did_enable_job and resource[:enable] == :false
+    disable if did_enable_job and resource[:enable] == :false
   end
 
 
@@ -278,15 +278,15 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}", $!)
     end
     # As unload -w sets the Disabled flag, we need to add it in after
-    self.enable if did_disable_job and resource[:enable] == :true
+    enable if did_disable_job and resource[:enable] == :true
   end
 
   def restart
     Puppet.debug("A restart has been triggered for the #{resource[:name]} service")
     Puppet.debug("Stopping the #{resource[:name]} service")
-    self.stop
+    stop
     Puppet.debug("Starting the #{resource[:name]} service")
-    self.start
+    start
   end
 
   # launchd jobs are enabled by default. They are only disabled if the key
@@ -303,7 +303,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
     if has_macosx_plist_overrides?
-      if FileTest.file?(self.class.launchd_overrides) and overrides = self.class.read_plist(self.class.launchd_overrides)
+      if FileTest.file?(self.class.launchd_overrides) && overrides = self.class.read_plist(self.class.launchd_overrides)
         if overrides.has_key?(resource[:name])
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
         end

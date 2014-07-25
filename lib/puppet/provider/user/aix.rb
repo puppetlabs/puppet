@@ -91,12 +91,12 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   # List groups and Ids
   def lsgroupscmd(value=@resource[:name])
     [command(:lsgroup)] +
-      self.get_ia_module_args +
+      get_ia_module_args +
       ["-a", "id", value]
   end
 
   def lscmd(value=@resource[:name])
-    [self.class.command(:list), "-c"] + self.get_ia_module_args + [ value]
+    [self.class.command(:list), "-c"] + get_ia_module_args + [ value]
   end
 
   def lsallcmd()
@@ -108,23 +108,23 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     # Puppet does not call to self.<parameter>= method if it does not exists.
     #
     # It gets an extra list of arguments to add to the user.
-    [self.class.command(:add)] + self.get_ia_module_args +
-      self.hash2args(@resource.to_hash) +
+    [self.class.command(:add)] + get_ia_module_args +
+      hash2args(@resource.to_hash) +
       extra_attrs + [@resource[:name]]
   end
 
   # Get modify command. Set translate=false if no mapping must be used.
   # Needed for special properties like "attributes"
   def modifycmd(hash = property_hash)
-    args = self.hash2args(hash)
+    args = hash2args(hash)
     return nil if args.empty?
 
-    [self.class.command(:modify)] + self.get_ia_module_args +
+    [self.class.command(:modify)] + get_ia_module_args +
       args + [@resource[:name]]
   end
 
   def deletecmd
-    [self.class.command(:delete)] + self.get_ia_module_args + [@resource[:name]]
+    [self.class.command(:delete)] + get_ia_module_args + [@resource[:name]]
   end
 
   #--------------
@@ -151,7 +151,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def groupname_by_id(gid)
     groupname=nil
     execute(lsgroupscmd("ALL")).each_line { |entry|
-      attrs = self.parse_attr_list(entry, nil)
+      attrs = parse_attr_list(entry, nil)
       if attrs and attrs.include? :id and gid == attrs[:id].to_i
         groupname = entry.split(" ")[0]
       end
@@ -161,7 +161,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # Get the groupname from its id
   def groupid_by_name(groupname)
-    attrs = self.parse_attr_list(execute(lsgroupscmd(groupname)).split("\n")[0], nil)
+    attrs = parse_attr_list(execute(lsgroupscmd(groupname)).split("\n")[0], nil)
     attrs ? attrs[:id].to_i : nil
   end
 
@@ -237,7 +237,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     f = open_security_passwd
     # Skip to the user
     f.each_line { |l| break if l  =~ /^#{user}:\s*$/ }
-    if ! f.eof?
+    unless f.eof?
       f.each_line { |l|
         # If there is a new user stanza, stop
         break if l  =~ /^\S*:\s*$/

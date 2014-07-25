@@ -17,7 +17,7 @@ module Puppet::Util::NagiosMaker
       #
       # @see Puppet::Type::File and its properties owner, group and mode.
       def generate
-        return nil unless self[:owner] or self[:group] or self[:mode]
+        return nil unless self[:owner] || self[:group] || self[:mode]
         props = { :name => self[:target] }
         [ :owner, :group, :mode ].each do |prop|
           props[prop] = self[prop] if self[prop]

@@ -1,9 +1,9 @@
 # encoding: UTF-8
 shared_examples_for "documentation on faces" do
-  defined?(Attrs) or
+  defined?(Attrs) ||
     Attrs = [:summary, :description, :examples, :short_description, :notes, :author]
 
-  defined?(SingleLineAttrs) or
+  defined?(SingleLineAttrs) ||
     SingleLineAttrs = [:summary, :author]
 
   # Simple, procedural tests that apply to a bunch of methods.

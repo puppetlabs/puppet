@@ -8,7 +8,7 @@ module Puppet::Util::Errors
   # @param msg [String] message used in raised error
   # @raise [Puppet::DevError] always raised with the supplied message
   def devfail(msg)
-    self.fail(Puppet::DevError, msg)
+    fail(Puppet::DevError, msg)
   end
 
   # Add line and file info to the supplied exception if info is available from
@@ -20,8 +20,8 @@ module Puppet::Util::Errors
   # @param other [Exception] original exception, source of backtrace info
   # @return [Exception] error parameter
   def adderrorcontext(error, other = nil)
-    error.line ||= self.line if error.respond_to?(:line=) and self.respond_to?(:line) and self.line
-    error.file ||= self.file if error.respond_to?(:file=) and self.respond_to?(:file) and self.file
+    error.line ||= line if error.respond_to?(:line=) and self.respond_to?(:line) and line
+    error.file ||= file if error.respond_to?(:file=) and self.respond_to?(:file) and file
     error.original ||= other if error.respond_to?(:original=)
 
     error.set_backtrace(other.backtrace) if other and other.respond_to?(:backtrace)
@@ -34,7 +34,7 @@ module Puppet::Util::Errors
   #
   # @return [String] description of file and line
   def error_context
-    if file and line
+    if file && line
       " at #{file}:#{line}"
     elsif line
       " at line #{line}"

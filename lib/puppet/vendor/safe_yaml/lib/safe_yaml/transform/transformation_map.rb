@@ -39,7 +39,7 @@ module SafeYAML
             expanded_map.merge!(predefined_values)
           end
 
-          self.const_set(:PREDEFINED_VALUES, expanded_map.freeze)
+          const_set(:PREDEFINED_VALUES, expanded_map.freeze)
         end
       end
     end

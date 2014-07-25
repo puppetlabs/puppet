@@ -62,7 +62,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         # populate the actual :name field from the :portorigin
         # Set :provider to this object name
         hash[:name] = hash[:portorigin]
-        hash[:provider] = self.name
+        hash[:provider] = name
 
         # Add to the full packages listing
         packages << new(hash)
@@ -182,7 +182,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
     if output =~ /^(\S+)-([^-\s]+)/
       # Fill in the details
       hash = Hash.new
-      hash[:portorigin] = self.name
+      hash[:portorigin] = name
       hash[:portname]   = $1
       hash[:ensure]     = $2
 

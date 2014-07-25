@@ -173,7 +173,7 @@ class Puppet::Property < Puppet::Parameter
   def call_provider(value)
       method = self.class.name.to_s + "="
       unless provider.respond_to? method
-        self.fail "The #{provider.class.name} provider can not handle attribute #{self.class.name}"
+        fail "The #{provider.class.name} provider can not handle attribute #{self.class.name}"
       end
       provider.send(method, value)
   end
@@ -194,7 +194,7 @@ class Puppet::Property < Puppet::Parameter
   def call_valuemethod(name, value)
     if method = self.class.value_option(name, :method) and self.respond_to?(method)
       begin
-        self.send(method)
+        send(method)
       rescue Puppet::Error
         raise
       rescue => detail
@@ -206,7 +206,7 @@ class Puppet::Property < Puppet::Parameter
     elsif block = self.class.value_option(name, :block)
       # FIXME It'd be better here to define a method, so that
       # the blocks could return values.
-      self.instance_eval(&block)
+      instance_eval(&block)
     else
       devfail "Could not find method for value '#{name}'"
     end
@@ -242,7 +242,7 @@ class Puppet::Property < Puppet::Parameter
   # @return [String] the name of the event that describes the change
   #
   def event_name
-    value = self.should
+    value = should
 
     event_name = self.class.value_option(value, :event) and return event_name
 
@@ -271,7 +271,7 @@ class Puppet::Property < Puppet::Parameter
   # @see Puppet::Type#event
   def event
     attrs = { :name => event_name, :desired_value => should, :property => self, :source_description => path }
-    if should and value = self.class.value_collection.match?(should)
+    if should && value = self.class.value_collection.match?(should)
       attrs[:invalidate_refreshes] = true if value.invalidate_refreshes
     end
     resource.event attrs
@@ -293,7 +293,7 @@ class Puppet::Property < Puppet::Parameter
   def initialize(hash = {})
     super
 
-    if ! self.metaparam? and klass = Puppet::Type.metaparamclass(self.class.name)
+    if ! self.metaparam? && klass = Puppet::Type.metaparamclass(self.class.name)
       setup_shadow(klass)
     end
   end
@@ -343,7 +343,7 @@ class Puppet::Property < Puppet::Parameter
   # @api public
   #
   def insync?(is)
-    self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
+    devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
     # an empty array is analogous to no should values
     return true if @should.empty?
@@ -428,7 +428,7 @@ class Puppet::Property < Puppet::Parameter
   # @todo Incomprehensible ! The concept of "meta-parameter-shadowing" needs to be explained.
   #
   def munge(value)
-    self.shadow.munge(value) if self.shadow
+    shadow.munge(value) if shadow
 
     super
   end
@@ -499,7 +499,7 @@ class Puppet::Property < Puppet::Parameter
     elsif call == :none
       # They haven't provided a block, and our parent does not have
       # a provider, so we have no idea how to handle this.
-      self.fail "#{self.class.name} cannot handle values of type #{value.inspect}" unless @resource.provider
+      fail "#{self.class.name} cannot handle values of type #{value.inspect}" unless @resource.provider
       call_provider(value)
     else
       # LAK:NOTE 20081031 This is a change in behaviour -- you could
@@ -519,7 +519,7 @@ class Puppet::Property < Puppet::Parameter
   # @return [Puppet::Parameter] an instance of the given class (a parameter or property)
   #
   def setup_shadow(klass)
-    @shadow = klass.new(:resource => self.resource)
+    @shadow = klass.new(:resource => resource)
   end
 
   # Returns the wanted _(should)_ value of this property.
@@ -538,12 +538,12 @@ class Puppet::Property < Puppet::Parameter
   def should
     return nil unless defined?(@should)
 
-    self.devfail "should for #{self.class.name} on #{resource.name} is not an array" unless @should.is_a?(Array)
+    devfail "should for #{self.class.name} on #{resource.name} is not an array" unless @should.is_a?(Array)
 
     if match_all?
-      return @should.collect { |val| self.unmunge(val) }
+      return @should.collect { |val| unmunge(val) }
     else
-      return self.unmunge(@should[0])
+      return unmunge(@should[0])
     end
   end
 
@@ -561,7 +561,7 @@ class Puppet::Property < Puppet::Parameter
     @shouldorig = values
 
     values.each { |val| validate(val) }
-    @should = values.collect { |val| self.munge(val) }
+    @should = values.collect { |val| munge(val) }
   end
 
   # Formats the given newvalue (following _should_ type conventions) for inclusion in a string describing a change.
@@ -607,7 +607,7 @@ class Puppet::Property < Puppet::Parameter
 
   # @return [Object, nil] Returns the wanted _(should)_ value of this property.
   def value
-    self.should
+    should
   end
 
   # (see #should=)

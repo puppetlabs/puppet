@@ -53,7 +53,7 @@ describe Puppet::Util::SELinux do
 
   describe "filesystem detection" do
     before :each do
-      self.stubs(:read_mounts).returns({
+      stubs(:read_mounts).returns({
         '/'        => 'ext3',
         '/sys'     => 'sysfs',
         '/mnt/nfs' => 'nfs',
@@ -80,7 +80,7 @@ describe Puppet::Util::SELinux do
     it "(#8714) don't follow symlinks when determining file systems", :unless => Puppet.features.microsoft_windows? do
       scratch = Pathname(PuppetSpec::Files.tmpdir('selinux'))
 
-      self.stubs(:read_mounts).returns({
+      stubs(:read_mounts).returns({
           '/'             => 'ext3',
           scratch + 'nfs' => 'nfs',
         })
@@ -97,18 +97,18 @@ describe Puppet::Util::SELinux do
 
   describe "get_selinux_current_context" do
     it "should return nil if no SELinux support" do
-      self.expects(:selinux_support?).returns false
+      expects(:selinux_support?).returns false
       get_selinux_current_context("/foo").should be_nil
     end
 
     it "should return a context" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "user_u:role_r:type_t:s0"]
       get_selinux_current_context("/foo").should == "user_u:role_r:type_t:s0"
     end
 
     it "should return nil if lgetfilecon fails" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns -1
       get_selinux_current_context("/foo").should be_nil
     end
@@ -116,51 +116,51 @@ describe Puppet::Util::SELinux do
 
   describe "get_selinux_default_context" do
     it "should return nil if no SELinux support" do
-      self.expects(:selinux_support?).returns false
+      expects(:selinux_support?).returns false
       get_selinux_default_context("/foo").should be_nil
     end
 
     it "should return a context if a default context exists" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       fstat = stub 'File::Stat', :mode => 0
       Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
-      self.expects(:find_fs).with("/foo").returns "ext3"
+      expects(:find_fs).with("/foo").returns "ext3"
       Selinux.expects(:matchpathcon).with("/foo", 0).returns [0, "user_u:role_r:type_t:s0"]
 
       get_selinux_default_context("/foo").should == "user_u:role_r:type_t:s0"
     end
 
     it "handles permission denied errors by issuing a warning" do
-      self.stubs(:selinux_support?).returns true
-      self.stubs(:selinux_label_support?).returns true
+      stubs(:selinux_support?).returns true
+      stubs(:selinux_label_support?).returns true
       Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
-      self.stubs(:file_lstat).with("/root/chuj").raises(Errno::EACCES, "/root/chuj")
+      stubs(:file_lstat).with("/root/chuj").raises(Errno::EACCES, "/root/chuj")
 
       get_selinux_default_context("/root/chuj").should be_nil
     end
 
     it "handles no such file or directory errors by issuing a warning" do
-      self.stubs(:selinux_support?).returns true
-      self.stubs(:selinux_label_support?).returns true
+      stubs(:selinux_support?).returns true
+      stubs(:selinux_label_support?).returns true
       Selinux.stubs(:matchpathcon).with("/root/chuj", 0).returns(-1)
-      self.stubs(:file_lstat).with("/root/chuj").raises(Errno::ENOENT, "/root/chuj")
+      stubs(:file_lstat).with("/root/chuj").raises(Errno::ENOENT, "/root/chuj")
 
       get_selinux_default_context("/root/chuj").should be_nil
     end
 
     it "should return nil if matchpathcon returns failure" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       fstat = stub 'File::Stat', :mode => 0
       Puppet::FileSystem.expects(:lstat).with('/foo').returns(fstat)
-      self.expects(:find_fs).with("/foo").returns "ext3"
+      expects(:find_fs).with("/foo").returns "ext3"
       Selinux.expects(:matchpathcon).with("/foo", 0).returns -1
 
       get_selinux_default_context("/foo").should be_nil
     end
 
     it "should return nil if selinux_label_support returns false" do
-      self.expects(:selinux_support?).returns true
-      self.expects(:find_fs).with("/foo").returns "nfs"
+      expects(:selinux_support?).returns true
+      expects(:find_fs).with("/foo").returns "nfs"
       get_selinux_default_context("/foo").should be_nil
     end
 
@@ -216,45 +216,45 @@ describe Puppet::Util::SELinux do
     end
 
     it "should return nil if there is no SELinux support" do
-      self.expects(:selinux_support?).returns false
+      expects(:selinux_support?).returns false
       set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_nil
     end
 
     it "should return nil if selinux_label_support returns false" do
-      self.expects(:selinux_support?).returns true
-      self.expects(:selinux_label_support?).with("/foo").returns false
+      expects(:selinux_support?).returns true
+      expects(:selinux_label_support?).with("/foo").returns false
       set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_nil
     end
 
     it "should use lsetfilecon to set a context" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0
       set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_true
     end
 
     it "should use lsetfilecon to set user_u user context" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "foo:role_r:type_t:s0"]
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0
       set_selinux_context("/foo", "user_u", :seluser).should be_true
     end
 
     it "should use lsetfilecon to set role_r role context" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "user_u:foo:type_t:s0"]
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0
       set_selinux_context("/foo", "role_r", :selrole).should be_true
     end
 
     it "should use lsetfilecon to set type_t type context" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "user_u:role_r:foo:s0"]
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0").returns 0
       set_selinux_context("/foo", "type_t", :seltype).should be_true
     end
 
     it "should use lsetfilecon to set s0:c3,c5 range context" do
-      self.expects(:selinux_support?).returns true
+      expects(:selinux_support?).returns true
       Selinux.expects(:lgetfilecon).with("/foo").returns [0, "user_u:role_r:type_t:s0"]
       Selinux.expects(:lsetfilecon).with("/foo", "user_u:role_r:type_t:s0:c3,c5").returns 0
       set_selinux_context("/foo", "s0:c3,c5", :selrange).should be_true
@@ -263,25 +263,25 @@ describe Puppet::Util::SELinux do
 
   describe "set_selinux_default_context" do
     it "should return nil if there is no SELinux support" do
-      self.expects(:selinux_support?).returns false
+      expects(:selinux_support?).returns false
       set_selinux_default_context("/foo").should be_nil
     end
 
     it "should return nil if no default context exists" do
-      self.expects(:get_selinux_default_context).with("/foo").returns nil
+      expects(:get_selinux_default_context).with("/foo").returns nil
       set_selinux_default_context("/foo").should be_nil
     end
 
     it "should do nothing and return nil if the current context matches the default context" do
-      self.expects(:get_selinux_default_context).with("/foo").returns "user_u:role_r:type_t"
-      self.expects(:get_selinux_current_context).with("/foo").returns "user_u:role_r:type_t"
+      expects(:get_selinux_default_context).with("/foo").returns "user_u:role_r:type_t"
+      expects(:get_selinux_current_context).with("/foo").returns "user_u:role_r:type_t"
       set_selinux_default_context("/foo").should be_nil
     end
 
     it "should set and return the default context if current and default do not match" do
-      self.expects(:get_selinux_default_context).with("/foo").returns "user_u:role_r:type_t"
-      self.expects(:get_selinux_current_context).with("/foo").returns "olduser_u:role_r:type_t"
-      self.expects(:set_selinux_context).with("/foo", "user_u:role_r:type_t").returns true
+      expects(:get_selinux_default_context).with("/foo").returns "user_u:role_r:type_t"
+      expects(:get_selinux_current_context).with("/foo").returns "olduser_u:role_r:type_t"
+      expects(:set_selinux_context).with("/foo", "user_u:role_r:type_t").returns true
       set_selinux_default_context("/foo").should == "user_u:role_r:type_t"
     end
   end

@@ -63,7 +63,7 @@ class Puppet::Node::Environment
 
     return seen[symbol] if seen[symbol]
 
-    obj = self.create(symbol,
+    obj = create(symbol,
              split_path(Puppet.settings.value(:modulepath, symbol)),
              Puppet.settings.value(:manifest, symbol),
              Puppet.settings.value(:config_version, symbol))
@@ -82,7 +82,7 @@ class Puppet::Node::Environment
   #
   # @api public
   def self.create(name, modulepath, manifest = NO_MANIFEST, config_version = nil)
-    obj = self.allocate
+    obj = allocate
     obj.send(:initialize,
              name,
              expand_dirs(extralibs() + modulepath),
@@ -176,7 +176,7 @@ class Puppet::Node::Environment
 
     overrides.empty? ?
       self :
-      self.override_with(overrides)
+      override_with(overrides)
   end
 
   # Retrieve the environment for the current process.
@@ -244,7 +244,7 @@ class Puppet::Node::Environment
   # @param param [String, Symbol] The environment setting to look up
   # @return [Object] The resolved setting value
   def [](param)
-    Puppet.settings.value(param, self.name)
+    Puppet.settings.value(param, name)
   end
 
   # @api public
@@ -313,7 +313,7 @@ class Puppet::Node::Environment
       Dir.entries(path).each do |name|
         warn_about_mistaken_path(path, name)
         next if module_references.include?(name)
-        if not seen_modules[name]
+        unless seen_modules[name]
           module_references << {:name => name, :path => File.join(path, name)}
           seen_modules[name] = true
         end
@@ -463,7 +463,7 @@ class Puppet::Node::Environment
   #
   # @api public
   def to_zaml(z)
-    self.to_s.to_zaml(z)
+    to_s.to_zaml(z)
   end
 
   def self.split_path(path_string)
@@ -472,9 +472,9 @@ class Puppet::Node::Environment
 
   def ==(other)
     return true if other.kind_of?(Puppet::Node::Environment) &&
-      self.name == other.name &&
-      self.full_modulepath == other.full_modulepath &&
-      self.manifest == other.manifest
+      name == other.name &&
+      full_modulepath == other.full_modulepath &&
+      manifest == other.manifest
   end
 
   alias eql? ==
@@ -523,7 +523,7 @@ class Puppet::Node::Environment
       parser.string = @parsed_code
       parser.parse
     else
-      file = self.manifest
+      file = manifest
       # if the manifest file is a reference to a directory, parse and combine all .pp files in that
       # directory
       if file == NO_MANIFEST

@@ -481,7 +481,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       return result_type_array ? [] : nil
     end
 
-    if !o.title.nil?
+    unless o.title.nil?
       # lookup resource and return one or more parameter values
       resource = find_resource(scope, o.type_name, o.title)
       unless resource

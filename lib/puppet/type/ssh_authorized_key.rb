@@ -83,7 +83,7 @@ module Puppet
       defaultto :absent
 
       def should
-        return super if defined?(@should) and @should[0] != :absent
+        return super if defined?(@should) && @should[0] != :absent
 
         return nil unless user = resource[:user]
 

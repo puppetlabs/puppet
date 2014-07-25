@@ -25,7 +25,7 @@ class Puppet::Parser::AST
     def initialize(hash)
       super
 
-      unless @value == true or @value == false
+      unless @value == true || @value == false
         raise Puppet::DevError, "'#{@value}' is not a boolean"
       end
       @value

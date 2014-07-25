@@ -12,9 +12,9 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
   def install
     up2date "-u", @resource[:name]
 
-    unless self.query
+    unless query
       raise Puppet::ExecutionFailure.new(
-        "Could not find package #{self.name}"
+        "Could not find package #{name}"
       )
     end
   end
@@ -35,6 +35,6 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
 
   def update
     # Install in up2date can be used for update, too
-    self.install
+    install
   end
 end

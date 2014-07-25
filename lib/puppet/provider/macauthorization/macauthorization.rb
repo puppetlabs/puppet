@@ -49,25 +49,25 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     attr_accessor :comments  # Not implemented yet.
 
     def prefetch(resources)
-      self.populate_rules_rights
+      populate_rules_rights
     end
 
     def instances
-      if self.parsed_auth_db == {}
-        self.prefetch(nil)
+      if parsed_auth_db == {}
+        prefetch(nil)
       end
-      self.parsed_auth_db.collect do |k,v|
+      parsed_auth_db.collect do |k,v|
         new(:name => k)
       end
     end
 
     def populate_rules_rights
       auth_plist = Plist::parse_xml(AuthDB)
-      raise Puppet::Error.new("Cannot parse: #{AuthDB}") if not auth_plist
+      raise Puppet::Error.new("Cannot parse: #{AuthDB}") unless auth_plist
       self.rights = auth_plist["rights"].dup
       self.rules = auth_plist["rules"].dup
-      self.parsed_auth_db = self.rights.dup
-      self.parsed_auth_db.merge!(self.rules.dup)
+      self.parsed_auth_db = rights.dup
+      parsed_auth_db.merge!(rules.dup)
     end
 
   end
@@ -240,7 +240,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
   def retrieve_value(resource_name, attribute)
     # We set boolean values to symbols when retrieving values
-    raise Puppet::Error.new("Cannot find #{resource_name} in auth db") if not self.class.parsed_auth_db.has_key?(resource_name)
+    raise Puppet::Error.new("Cannot find #{resource_name} in auth db") unless self.class.parsed_auth_db.has_key?(resource_name)
 
     if PuppetToNativeAttributeMap.has_key?(attribute)
       native_attribute = PuppetToNativeAttributeMap[attribute]

@@ -69,7 +69,7 @@ module InjectorSpecModule
     # Note that when injected (via instance producer, or implict assisted inject, the inject method
     # always wins.
     def self.inject(injector, scope, binding, *args)
-      self.new(args[0].nil? ? 1 : args[0])
+      new(args[0].nil? ? 1 : args[0])
     end
 
     def initialize(fortune)

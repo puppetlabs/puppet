@@ -43,7 +43,7 @@ module Puppet
 
         members = @should
         #inclusive means we are managing everything so if it isn't in should, its gone
-        members = add_should_with_current(members, retrieve) if ! inclusive?
+        members = add_should_with_current(members, retrieve) unless inclusive?
 
         dearrayify(members)
       end
@@ -54,7 +54,7 @@ module Puppet
 
       def retrieve
         #ok, some 'convention' if the list property is named groups, provider should implement a groups method
-        if provider and tmp = provider.send(name) and tmp != :absent
+        if provider && tmp = provider.send(name) and tmp != :absent
           return tmp.split(delimiter)
         else
           return :absent
@@ -71,7 +71,7 @@ module Puppet
       def insync?(is)
         return true unless is
 
-        (prepare_is_for_comparison(is) == self.should)
+        (prepare_is_for_comparison(is) == should)
       end
     end
   end

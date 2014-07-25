@@ -55,7 +55,7 @@ class Puppet::Parser::Lexer
     end
 
     def to_s
-      string or @name.to_s
+      string || @name.to_s
     end
 
     def acceptable?(context={})
@@ -336,7 +336,7 @@ class Puppet::Parser::Lexer
   def fullscan
     array = []
 
-    self.scan { |token, str|
+    scan { |token, str|
       # Ignore any definition nesting problems
       @indefine = false
       array.push([token,str])
@@ -459,7 +459,7 @@ class Puppet::Parser::Lexer
     # Skip any initial whitespace.
     skip
 
-    until token_queue.empty? and @scanner.eos? do
+    until token_queue.empty? && @scanner.eos? do
       matched_token, value = find_token
 
       # error out if we didn't match anything at all

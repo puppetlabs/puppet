@@ -117,13 +117,13 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     end
     # RPM gets pissy if you try to install an already
     # installed package
-    if @resource.should(:ensure) == @property_hash[:ensure] or
+    if @resource.should(:ensure) == @property_hash[:ensure] ||
       @resource.should(:ensure) == :latest && @property_hash[:ensure] == latest
       return
     end
 
     flag = ["-i"]
-    flag = ["-U", "--oldpackage"] if @property_hash[:ensure] and @property_hash[:ensure] != :absent
+    flag = ["-U", "--oldpackage"] if @property_hash[:ensure] && @property_hash[:ensure] != :absent
     flag += install_options if resource[:install_options]
     rpm flag, source
   end
@@ -154,7 +154,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   end
 
   def update
-    self.install
+    install
   end
 
   def install_options
@@ -176,7 +176,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     if match = self::NEVRA_REGEX.match(line)
       self::NEVRA_FIELDS.zip(match.captures) { |f, v| hash[f] = v }
-      hash[:provider] = self.name
+      hash[:provider] = name
       hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
     else
       Puppet.debug("Failed to match rpm line #{line}")

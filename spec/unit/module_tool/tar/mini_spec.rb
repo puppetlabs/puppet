@@ -1,7 +1,7 @@
 require 'spec_helper'
 require 'puppet/module_tool'
 
-describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? and Puppet.features.zlib?) do
+describe Puppet::ModuleTool::Tar::Mini, :if => (Puppet.features.minitar? && Puppet.features.zlib?) do
   let(:sourcefile) { '/the/module.tar.gz' }
   let(:destdir)    { File.expand_path '/the/dest/dir' }
   let(:sourcedir)  { '/the/src/dir' }

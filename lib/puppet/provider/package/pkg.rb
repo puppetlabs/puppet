@@ -43,7 +43,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       when '-'
         {:status => 'known'}
       else
-        raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[0..0]]
+        raise ArgumentError, 'Unknown format %s: %s[%s]' % [name, flags, flags[0..0]]
       end
     ).merge(
       case flags[1..1]
@@ -52,7 +52,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       when '-'
         {}
       else
-        raise ArgumentError, 'Unknown format %s: %s[%s]' % [self.name, flags, flags[1..1]]
+        raise ArgumentError, 'Unknown format %s: %s[%s]' % [name, flags, flags[1..1]]
       end
     )
   end
@@ -82,7 +82,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     when /known/
       {:status => 'known'}
     else
-      raise ArgumentError, 'Unknown format %s: %s' % [self.name, state]
+      raise ArgumentError, 'Unknown format %s: %s' % [name, state]
     end
   end
 
@@ -109,8 +109,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       {:name => $1, :publisher => $2, :ensure => $3}.merge pkg_state($4).merge(ufoxi_flag($5))
 
     else
-      raise ArgumentError, 'Unknown line format %s: %s' % [self.name, line]
-    end).merge({:provider => self.name})
+      raise ArgumentError, 'Unknown line format %s: %s' % [name, line]
+    end).merge({:provider => name})
   end
 
   def hold
@@ -143,12 +143,12 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
     name = @resource[:name]
     should = @resource[:ensure]
     # always unhold if explicitly told to install/update
-    self.unhold
+    unhold
     unless should.is_a? Symbol
       name += "@#{should}"
-      is = self.query
+      is = query
       unless is[:ensure].to_sym == :absent
-        self.uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+        uninstall if Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
       end
     end
     r = exec_cmd(command(:pkg), 'install', '--accept', name)

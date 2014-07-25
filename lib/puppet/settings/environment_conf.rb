@@ -94,7 +94,7 @@ class Puppet::Settings::EnvironmentConf
     end
 
     extraneous_settings = main.settings.map(&:name) - VALID_SETTINGS
-    if !extraneous_settings.empty?
+    unless extraneous_settings.empty?
       Puppet.warning("Invalid settings in environment.conf at '#{path_to_conf_file}'. The following unknown setting(s) are being ignored: #{extraneous_settings.join(', ')}")
       valid = false
     end

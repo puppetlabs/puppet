@@ -121,7 +121,7 @@ class Puppet::Parameter
           @doc << "\n\n#{vals}"
         end
 
-        if f = self.required_features
+        if f = required_features
           @doc << "\n\nRequires features #{f.flatten.collect { |f| f.to_s }.join(" ")}."
         end
         @addeddocvals = true
@@ -384,7 +384,7 @@ class Puppet::Parameter
   #
   def noop
     @noop ||= false
-    tmp = @noop || self.resource.noop || Puppet[:noop] || false
+    tmp = @noop || resource.noop || Puppet[:noop] || false
     #debug "noop is #{tmp}"
     tmp
   end
@@ -396,9 +396,9 @@ class Puppet::Parameter
   # @api private
   def pathbuilder
     if @resource
-      return [@resource.pathbuilder, self.name]
+      return [@resource.pathbuilder, name]
     else
-      return [self.name]
+      return [name]
     end
   end
 
@@ -434,7 +434,7 @@ class Puppet::Parameter
       Puppet.debug "Reraising #{detail}"
       raise
     rescue => detail
-      raise Puppet::DevError, "Munging failed for value #{value.inspect} in class #{self.name}: #{detail}", detail.backtrace
+      raise Puppet::DevError, "Munging failed for value #{value.inspect} in class #{name}: #{detail}", detail.backtrace
     end
     ret
   end
@@ -464,11 +464,11 @@ class Puppet::Parameter
     begin
       unsafe_validate(value)
     rescue ArgumentError => detail
-      self.fail Puppet::Error, detail.to_s, detail
+      fail Puppet::Error, detail.to_s, detail
     rescue Puppet::Error, TypeError
       raise
     rescue => detail
-      raise Puppet::DevError, "Validate method failed for class #{self.name}: #{detail}", detail.backtrace
+      raise Puppet::DevError, "Validate method failed for class #{name}: #{detail}", detail.backtrace
     end
   end
 
@@ -525,7 +525,7 @@ class Puppet::Parameter
       @tags = []
       # This might not be true in testing
       @tags = @resource.tags if @resource.respond_to? :tags
-      @tags << self.name.to_s
+      @tags << name.to_s
     end
     @tags
   end

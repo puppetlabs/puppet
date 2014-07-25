@@ -24,7 +24,7 @@ module RelationshipGraphMatchers
     end
 
     def forward_failure_message
-      if !@forward_edge
+      unless @forward_edge
         "did not contain an edge from #{@before} to #{@after}"
       end
     end

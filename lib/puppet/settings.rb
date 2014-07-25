@@ -148,7 +148,7 @@ class Puppet::Settings
   # understand, and add them to the passed option list.
   def addargs(options)
     # Add all of the settings as valid options.
-    self.each { |name, setting|
+    each { |name, setting|
       setting.getopt_args.each { |args| options << args }
     }
 
@@ -159,7 +159,7 @@ class Puppet::Settings
   # understand, and add them to the passed option list.
   def optparse_addargs(options)
     # Add all of the settings as valid options.
-    self.each { |name, setting|
+    each { |name, setting|
       options << setting.optparse_args
     }
 
@@ -222,7 +222,7 @@ class Puppet::Settings
     # but we don't really know if, say, the vardir is changed and the modulepath
     # is defined relative to it. We need the defined?(stuff) because of loading
     # order issues.
-    Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
+    Puppet::Node::Environment.clear if defined?(Puppet::Node) && defined?(Puppet::Node::Environment)
   end
   private :unsafe_flush_cache
 
@@ -261,7 +261,7 @@ class Puppet::Settings
     option_parser.ignore_invalid_options = true
 
     # Add all global options to it.
-    self.optparse_addargs([]).each do |option|
+    optparse_addargs([]).each do |option|
       option_parser.on(*option) do |arg|
         opt, val = Puppet::Settings.clean_opt(option[0], arg)
         handlearg(opt, val)
@@ -330,7 +330,7 @@ class Puppet::Settings
   def call_hooks_deferred_to_application_initialization(options = {})
     @hooks_to_call_on_application_initialization.each do |setting|
       begin
-        setting.handle(self.value(setting.name))
+        setting.handle(value(setting.name))
       rescue InterpolationError => err
         raise InterpolationError, err, err.backtrace unless options[:ignore_interpolation_dependency_errors]
         #swallow. We're not concerned if we can't call hooks because dependencies don't exist yet
@@ -552,14 +552,14 @@ class Puppet::Settings
 
     # Determine our environment, if we have one.
     if @config[:environment]
-      env = self.value(:environment).to_sym
+      env = value(:environment).to_sym
     else
       env = "none"
     end
 
     # Call any hooks we should be calling.
     @config.values.select(&:has_hook?).each do |setting|
-      value_sets_for(env, self.preferred_run_mode).each do |source|
+      value_sets_for(env, preferred_run_mode).each do |source|
         if source.include?(setting.name)
           # We still have to use value to retrieve the value, since
           # we want the fully interpolated value, not $vardir/lib or whatever.
@@ -569,7 +569,7 @@ class Puppet::Settings
           if setting.call_hook_on_initialize?
             @hooks_to_call_on_application_initialization << setting
           else
-            setting.handle(self.value(setting.name, env))
+            setting.handle(value(setting.name, env))
           end
           break
         end
@@ -702,7 +702,7 @@ class Puppet::Settings
   # Iterate across all of the objects in a given section.
   def persection(section)
     section = section.to_sym
-    self.each { |name, obj|
+    each { |name, obj|
       if obj.section == section
         yield obj
       end
@@ -747,7 +747,7 @@ class Puppet::Settings
     return unless defined?(@used)
     new = @used
     @used = []
-    self.use(*new)
+    use(*new)
   end
 
   # The order in which to search for values.
@@ -758,7 +758,7 @@ class Puppet::Settings
   # Get a list of objects per section
   def sectionlist
     sectionlist = []
-    self.each { |name, obj|
+    each { |name, obj|
       section = obj.section || "puppet"
       sections[section] ||= []
       sectionlist << section unless sectionlist.include?(section)
@@ -877,7 +877,7 @@ class Puppet::Settings
     end
 
     call.each do |setting|
-      setting.handle(self.value(setting.name))
+      setting.handle(value(setting.name))
     end
   end
 
@@ -983,7 +983,7 @@ Generated on #{Time.now}.
     param = param.to_sym
     environment &&= environment.to_sym
 
-    values(environment, self.preferred_run_mode).lookup(param)
+    values(environment, preferred_run_mode).lookup(param)
   end
 
   # Retrieve an object that can be used for looking up values of configuration
@@ -1025,9 +1025,9 @@ Generated on #{Time.now}.
     if @cache[environment||"none"].has_key?(param)
       return @cache[environment||"none"][param]
     elsif bypass_interpolation
-      val = values(environment, self.preferred_run_mode).lookup(param)
+      val = values(environment, preferred_run_mode).lookup(param)
     else
-      val = values(environment, self.preferred_run_mode).interpolate(param)
+      val = values(environment, preferred_run_mode).interpolate(param)
     end
 
     @cache[environment||"none"][param] = val
@@ -1048,7 +1048,7 @@ Generated on #{Time.now}.
   # @todo this code duplicates {Puppet::Util::RunMode#which_dir} as described
   #   in {http://projects.puppetlabs.com/issues/16637 #16637}
   def which_configuration_file
-    if explicit_config_file? or Puppet.features.root? then
+    if explicit_config_file? || Puppet.features.root? then
       return main_config_file
     else
       return user_config_file
@@ -1249,7 +1249,7 @@ Generated on #{Time.now}.
       end
       if set
         value = set.lookup(name)
-        if !value.nil?
+        unless value.nil?
           return value
         end
       end
@@ -1322,7 +1322,7 @@ Generated on #{Time.now}.
     end
 
     def set(name, value)
-      if !@defaults[name]
+      unless @defaults[name]
         raise ArgumentError,
           "Attempt to assign a value to unknown setting #{name.inspect}"
       end

@@ -266,7 +266,7 @@ class Puppet::Provider
     end
 
     def command
-      if not @optional
+      unless @optional
         @confiner.confine :exists => @path, :for_binary => true
       end
 
@@ -388,7 +388,7 @@ class Puppet::Provider
   # @raise [Puppet::DevError] Error indicating that the method should have been implemented by subclass.
   # @see prefetch
   def self.instances
-    raise Puppet::DevError, "Provider #{self.name} has not defined the 'instances' class method"
+    raise Puppet::DevError, "Provider #{name} has not defined the 'instances' class method"
   end
 
   # Creates the methods for a given command.
@@ -447,7 +447,7 @@ class Puppet::Provider
     end
   end
 
-  self.initvars
+  initvars
 
   # This method is used to generate a method for a command.
   # @return [void]
@@ -469,7 +469,7 @@ class Puppet::Provider
   # @return [String] Returns the data source, which is the provider name if no other source has been set.
   # @todo Unclear what "the source" is used for?
   def self.source
-    @source ||= self.name
+    @source ||= name
   end
 
   # Returns true if the given attribute/parameter is supported by the provider.
@@ -580,7 +580,7 @@ class Puppet::Provider
   def name
     if n = @property_hash[:name]
       return n
-    elsif self.resource
+    elsif resource
       resource.name
     else
       raise Puppet::DevError, "No resource and no name in property hash in #{self.class.name} instance"

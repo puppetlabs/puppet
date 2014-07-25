@@ -84,7 +84,7 @@ describe Puppet::Interface do
     }.each do |attr, value|
       it "should support #{attr} in the builder" do
         face = subject.new(:builder, '1.0.0') do
-          self.send(attr, value)
+          send(attr, value)
         end
         face.send(attr).should == value
       end

@@ -13,7 +13,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   confine :any => [
     Facter.value(:operatingsystem) == 'Ubuntu',
-    (Facter.value(:osfamily) == 'RedHat' and Facter.value(:operatingsystemrelease) =~ /^6\./),
+    (Facter.value(:osfamily) == 'RedHat' && Facter.value(:operatingsystemrelease) =~ /^6\./),
   ]
 
   defaultfor :operatingsystem => :ubuntu
@@ -29,7 +29,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   has_feature :enableable
 
   def self.instances
-    self.get_services(self.excludes) # Take exclude list from init provider
+    get_services(excludes) # Take exclude list from init provider
   end
 
   def self.excludes
@@ -90,7 +90,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
           return fqname
         end
 
-        self.debug("Could not find #{name}#{suffix} in #{path}")
+        debug("Could not find #{name}#{suffix} in #{path}")
       end
     end
 
@@ -98,7 +98,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def enabled?
-    return super if not is_upstart?
+    return super unless is_upstart?
 
     script_contents = read_script_from(initscript)
     if version_is_pre_0_6_7
@@ -111,7 +111,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def enable
-    return super if not is_upstart?
+    return super unless is_upstart?
 
     script_text = read_script_from(initscript)
     if version_is_pre_0_9_0
@@ -122,7 +122,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def disable
-    return super if not is_upstart?
+    return super unless is_upstart?
 
     script_text = read_script_from(initscript)
     if version_is_pre_0_6_7
@@ -151,7 +151,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   end
 
   def status
-    return super if not is_upstart?
+    return super unless is_upstart?
 
     output = status_exec(@resource[:name].split)
     if output =~ /start\//

@@ -53,10 +53,10 @@ module Puppet
       end
 
       def sync
-        if self.should == :absent
+        if should == :absent
           raise Puppet::DevError, "GID cannot be deleted"
         else
-          provider.gid = self.should
+          provider.gid = should
         end
       end
 
@@ -66,11 +66,11 @@ module Puppet
           if gid =~ /^[-0-9]+$/
             gid = Integer(gid)
           else
-            self.fail "Invalid GID #{gid}"
+            fail "Invalid GID #{gid}"
           end
         when Symbol
           unless gid == :absent
-            self.devfail "Invalid GID #{gid}"
+            devfail "Invalid GID #{gid}"
           end
         end
 

@@ -4,7 +4,7 @@ module Puppet::Network
 class AuthConfigParser
 
   def self.new_from_file(file)
-    self.new(File.read(file))
+    new(File.read(file))
   end
 
   def initialize(string)

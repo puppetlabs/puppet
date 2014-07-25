@@ -57,7 +57,7 @@ Puppet::Type.type(:zpool).provide(:zpool) do
   end
 
   def current_pool
-    @current_pool = process_zpool_data(get_pool_data) unless (defined?(@current_pool) and @current_pool)
+    @current_pool = process_zpool_data(get_pool_data) unless (defined?(@current_pool) && @current_pool)
     @current_pool
   end
 
@@ -112,7 +112,7 @@ Puppet::Type.type(:zpool).provide(:zpool) do
     end
 
     define_method(field.to_s + "=") do |should|
-      self.fail "zpool #{field} can't be changed. should be #{should}, currently is #{current_pool[field]}"
+      fail "zpool #{field} can't be changed. should be #{should}, currently is #{current_pool[field]}"
     end
   end
 

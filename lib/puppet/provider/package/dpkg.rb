@@ -60,7 +60,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         hash[field] = value
       end
 
-      hash[:provider] = self.name
+      hash[:provider] = name
 
       if hash[:status] == 'not-installed'
         hash[:ensure] = :purged
@@ -85,7 +85,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     args = []
 
     # We always unhold when installing to remove any prior hold.
-    self.unhold
+    unhold
 
     if @resource[:configfiles] == :keep
       args << '--force-confold'
@@ -98,7 +98,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def update
-    self.install
+    install
   end
 
   # Return the version from the package.
@@ -146,7 +146,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
   end
 
   def hold
-    self.install
+    install
     Tempfile.open('puppet_dpkg_set_selection') do |tmpfile|
       tmpfile.write("#{@resource[:name]} hold\n")
       tmpfile.flush

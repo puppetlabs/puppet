@@ -21,8 +21,8 @@ class CollExpr < AST::Branch
     # Make sure our contained expressions have all the info they need.
     [@test1, @test2].each do |t|
       if t.is_a?(self.class)
-        t.form ||= self.form
-        t.type ||= self.type
+        t.form ||= form
+        t.type ||= type
       end
     end
 
@@ -63,8 +63,8 @@ class CollExpr < AST::Branch
     # Make sure our contained expressions have all the info they need.
     [@test1, @test2].each do |t|
       if t.is_a?(self.class)
-        t.form ||= self.form
-        t.type ||= self.type
+        t.form ||= form
+        t.type ||= type
       end
     end
 

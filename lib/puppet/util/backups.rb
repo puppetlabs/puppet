@@ -12,7 +12,7 @@ module Puppet::Util::Backups
     file ||= self[:path]
     return true unless Puppet::FileSystem.exist?(file)
 
-    return(self.bucket ? perform_backup_with_bucket(file) : perform_backup_with_backuplocal(file, self[:backup]))
+    return(bucket ? perform_backup_with_bucket(file) : perform_backup_with_backuplocal(file, self[:backup]))
   end
 
   private
@@ -46,12 +46,12 @@ module Puppet::Util::Backups
     rescue => detail
       # since they said they want a backup, let's error out
       # if we couldn't make one
-      self.fail Puppet::Error, "Could not back #{file} up: #{detail.message}", detail
+      fail Puppet::Error, "Could not back #{file} up: #{detail.message}", detail
     end
   end
 
   def remove_backup(newfile)
-    if self.class.name == :file and self[:links] != :follow
+    if self.class.name == :file && self[:links] != :follow
       method = :lstat
     else
       method = :stat
@@ -73,14 +73,14 @@ module Puppet::Util::Backups
       Puppet::FileSystem.unlink(newfile)
     rescue => detail
       message = "Could not remove old backup: #{detail}"
-      self.log_exception(detail, message)
-      self.fail Puppet::Error, message, detail
+      log_exception(detail, message)
+      fail Puppet::Error, message, detail
     end
   end
 
   def backup_file_with_filebucket(f)
-    sum = self.bucket.backup(f)
-    self.info "Filebucketed #{f} to #{self.bucket.name} with sum #{sum}"
+    sum = bucket.backup(f)
+    info "Filebucketed #{f} to #{bucket.name} with sum #{sum}"
     return sum
     end
 end

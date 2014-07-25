@@ -34,7 +34,7 @@ module SafeYAML
         decoded = decoded.force_encoding(value.encoding) if decoded.respond_to?(:force_encoding)
         decoded
       else
-        self.to_guessed_type(value, quoted, options)
+        to_guessed_type(value, quoted, options)
       end
     end
   end

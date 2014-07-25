@@ -95,7 +95,7 @@ class Puppet::Pops::Parser::Locator
     attr_reader :leading_line_offset
 
     def self.sub_locator(string, file, leading_line_count, leading_offset, leading_line_offset)
-      self.new(Puppet::Pops::Parser::Locator.locator(string, file),
+      new(Puppet::Pops::Parser::Locator.locator(string, file),
         leading_line_count,
         leading_offset,
         leading_line_offset)
@@ -162,7 +162,7 @@ class Puppet::Pops::Parser::Locator
       @prev_offset = nil
       @prev_line = nil
       @line_index = index
-      compute_line_index unless !index.nil?
+      compute_line_index if index.nil?
     end
 
     # Returns the position on line (first position on a line is 1)
@@ -214,7 +214,7 @@ class Puppet::Pops::Parser::Locator
       end
 
       return nil if low == ary.length
-      return nil if !satisfied
+      return nil unless satisfied
       return low
     end
 

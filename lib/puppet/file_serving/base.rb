@@ -21,7 +21,7 @@ class Puppet::FileServing::Base
 
   # Return the full path to our file.  Fails if there's no path set.
   def full_path(dummy_argument=:work_arround_for_ruby_GC_bug)
-    if relative_path.nil? or relative_path == "" or relative_path == "."
+    if relative_path.nil? || relative_path == "" || relative_path == "."
        full_path = path
      else
        full_path = File.join(path, relative_path)
@@ -67,7 +67,7 @@ class Puppet::FileServing::Base
 
   # Stat our file, using the appropriate link-sensitive method.
   def stat
-    @stat_method ||= self.links == :manage ? :lstat : :stat
+    @stat_method ||= links == :manage ? :lstat : :stat
     Puppet::FileSystem.send(@stat_method, full_path)
   end
 

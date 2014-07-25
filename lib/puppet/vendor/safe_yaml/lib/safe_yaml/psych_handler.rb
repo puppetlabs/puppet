@@ -69,24 +69,24 @@ module SafeYAML
 
     def start_mapping(anchor, tag, implicit, style)
       map = @initializers.include?(tag) ? @initializers[tag].call : {}
-      self.add_to_current_structure(map, anchor)
+      add_to_current_structure(map, anchor)
       @current_structure = map
       @stack.push(map)
     end
 
     def end_mapping
-      self.end_current_structure()
+      end_current_structure()
     end
 
     def start_sequence(anchor, tag, implicit, style)
       seq = @initializers.include?(tag) ? @initializers[tag].call : []
-      self.add_to_current_structure(seq, anchor)
+      add_to_current_structure(seq, anchor)
       @current_structure = seq
       @stack.push(seq)
     end
 
     def end_sequence
-      self.end_current_structure()
+      end_current_structure()
     end
   end
 end

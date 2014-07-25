@@ -63,7 +63,7 @@ describe Puppet::Util::RunMode do
 
   describe Puppet::Util::WindowsRunMode, :if => Puppet.features.microsoft_windows? do
     before do
-      if not Dir.const_defined? :COMMON_APPDATA
+      unless Dir.const_defined? :COMMON_APPDATA
         Dir.const_set :COMMON_APPDATA, "/CommonFakeBase"
         @remove_const = true
       end

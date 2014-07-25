@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
       begin
         uri = URI.parse(source)
       rescue => detail
-        self.fail Puppet::Error, "Invalid source '#{uri}': #{detail}", detail
+        fail Puppet::Error, "Invalid source '#{uri}': #{detail}", detail
       end
 
       case uri.scheme
@@ -105,7 +105,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     output = execute(command)
     # Apparently some stupid gem versions don't exit non-0 on failure
-    self.fail "Could not install: #{output.chomp}" if output.include?("ERROR")
+    fail "Could not install: #{output.chomp}" if output.include?("ERROR")
   end
 
   def latest
@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
   end
 
   def update
-    self.install(false)
+    install(false)
   end
 
   def install_options

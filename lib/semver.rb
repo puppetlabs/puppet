@@ -80,15 +80,15 @@ class SemVer < Numeric
 
   def <=>(other)
     other = SemVer.new("#{other}") unless other.is_a? SemVer
-    return self.major <=> other.major unless self.major == other.major
-    return self.minor <=> other.minor unless self.minor == other.minor
-    return self.tiny  <=> other.tiny  unless self.tiny  == other.tiny
+    return major <=> other.major unless major == other.major
+    return minor <=> other.minor unless minor == other.minor
+    return tiny  <=> other.tiny  unless tiny  == other.tiny
 
-    return 0  if self.special  == other.special
-    return 1  if self.special  == ''
+    return 0  if special  == other.special
+    return 1  if special  == ''
     return -1 if other.special == ''
 
-    return self.special <=> other.special
+    return special <=> other.special
   end
 
   def matched_by?(pattern)

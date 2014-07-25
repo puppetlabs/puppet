@@ -75,22 +75,22 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
         do_refresh = case method
           when "-K" then :true
           when "-S" then :false
-          else self.fail("Unknown service communication method #{method}")
+          else fail("Unknown service communication method #{method}")
         end
 
         begin
           if do_refresh == :true
             execute([command(:refresh), "-s", @resource[:name]])
           else
-            self.stop
-            self.start
+            stop
+            start
           end
           return :true
         rescue Puppet::ExecutionFailure => detail
           raise Puppet::Error.new("Unable to restart service #{@resource[:name]}, error was: #{detail}", detail )
         end
       end
-      self.fail("No such service found")
+      fail("No such service found")
   rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
   end
@@ -111,7 +111,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
         Puppet.debug("Service #{@resource[:name]} is #{args[-1]}")
         return state
       end
-      self.fail("No such service found")
+      fail("No such service found")
   rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}", detail )
   end

@@ -43,7 +43,7 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
   end
 
   def to_label
-    "#{self.param_name.name}"
+    "#{param_name.name}"
   end
 
   # returns an array of hash containing all the parameters of a given resource
@@ -69,6 +69,6 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
   end
 
   def to_s
-    "#{self.name} => #{self.value}"
+    "#{name} => #{value}"
   end
 end

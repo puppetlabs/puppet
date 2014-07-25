@@ -106,7 +106,7 @@ class Puppet::Util::Windows::AccessControlList
 
   def ==(other)
     self.class == other.class &&
-      self.to_a == other.to_a
+      to_a == other.to_a
   end
 
   alias eql? ==

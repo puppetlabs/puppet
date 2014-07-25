@@ -101,7 +101,7 @@ module Puppet
         values = munge(value)
         valid   = %w[deprecations]
         invalid = values - (values & valid)
-        if not invalid.empty?
+        unless invalid.empty?
           raise ArgumentError, "Cannot disable unrecognized warning types #{invalid.inspect}. Valid values are #{valid.inspect}."
         end
       end
@@ -230,7 +230,7 @@ module Puppet
           is in Ruby's search path\n",
       :call_hook => :on_initialize_and_write,
       :hook             => proc do |value|
-        $LOAD_PATH.delete(@oldlibdir) if defined?(@oldlibdir) and $LOAD_PATH.include?(@oldlibdir)
+        $LOAD_PATH.delete(@oldlibdir) if defined?(@oldlibdir) && $LOAD_PATH.include?(@oldlibdir)
         @oldlibdir = value
         $LOAD_PATH << value
       end
@@ -1911,7 +1911,7 @@ EOT
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          if not Puppet.settings[:async_storeconfigs]
+          unless Puppet.settings[:async_storeconfigs]
             Puppet::Resource::Catalog.indirection.cache_class = :store_configs
             Puppet.settings.override_default(:catalog_cache_terminus, :store_configs)
           end

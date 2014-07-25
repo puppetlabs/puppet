@@ -76,7 +76,7 @@ module Puppet
       def rm_installed_modules_from_hosts (beginning_hash, ending_hash)
         ending_hash.each do |host, mod_array|
           mod_array.each do |mod|
-            if ! beginning_hash[host].include? mod
+            unless beginning_hash[host].include? mod
               on host, "rm -rf #{mod}"
             end
           end

@@ -228,7 +228,7 @@ class Puppet::Pops::Model::AstTreeDumper < Puppet::Pops::Model::TreeDumper
 
     result = ["node"]
     result << ["matches"] + o.names.collect {|m| do_dump(m) }
-    result << ["parent", do_dump(parent)] if !is_nop?(parent)
+    result << ["parent", do_dump(parent)] unless is_nop?(parent)
     if is_nop?(code)
       result << []
     else

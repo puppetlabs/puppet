@@ -14,7 +14,7 @@ class Puppet::Network::Format
     else
       value = default
     end
-    self.send(name.to_s + "=", value)
+    send(name.to_s + "=", value)
   end
 
   def initialize(name, options = {}, &block)

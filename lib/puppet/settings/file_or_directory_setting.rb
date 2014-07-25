@@ -5,7 +5,7 @@ class Puppet::Settings::FileOrDirectorySetting < Puppet::Settings::FileSetting
   end
 
   def type
-    if Puppet::FileSystem.directory?(self.value) || @path_ends_with_slash
+    if Puppet::FileSystem.directory?(value) || @path_ends_with_slash
       :directory
     else
       :file
