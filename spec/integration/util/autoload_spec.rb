@@ -95,12 +95,12 @@ describe Puppet::Util::Autoload do
 
     file = File.join(libdir, "plugin.rb")
 
-    Puppet[:modulepath] = modulepath
-
-    with_loader("foo", "foo") do |dir, loader|
-      with_file(:plugin, file.split("/")) do
-        loader.load(:plugin)
-        loader.class.should be_loaded("foo/plugin.rb")
+    Puppet.override(:environments => Puppet::Environments::Static.new(Puppet::Node::Environment.create(:production, [modulepath]))) do
+      with_loader("foo", "foo") do |dir, loader|
+        with_file(:plugin, file.split("/")) do
+          loader.load(:plugin)
+          loader.class.should be_loaded("foo/plugin.rb")
+        end
       end
     end
   end
