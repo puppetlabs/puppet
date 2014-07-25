@@ -22,8 +22,6 @@ describe Puppet::SSL::Host do
 
   after {
     Puppet::SSL::Host.ca_location = :none
-
-    Puppet.settings.clear
   }
 
   it "should be considered a CA host if its name is equal to 'ca'" do

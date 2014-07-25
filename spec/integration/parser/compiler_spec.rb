@@ -15,10 +15,6 @@ describe "Puppet::Parser::Compiler" do
     @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
   end
 
-  after do
-    Puppet.settings.clear
-  end
-
   it "should be able to determine the configuration version from a local version control repository" do
     pending("Bug #14071 about semantics of Puppet::Util::Execute on Windows", :if => Puppet.features.microsoft_windows?) do
       # This should always work, because we should always be

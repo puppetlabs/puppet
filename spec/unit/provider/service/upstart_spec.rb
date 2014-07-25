@@ -22,6 +22,11 @@ describe Puppet::Type.type(:service).provider(:upstart) do
     provider_class.stubs(:which).with("/sbin/initctl").returns("/sbin/initctl")
   end
 
+  it "should be the default provider on Ubuntu" do
+    Facter.expects(:value).with(:operatingsystem).returns("Ubuntu")
+    described_class.default?.should be_true
+  end
+
   describe "excluding services" do
     it "ignores tty and serial on Redhat systems" do
       Facter.stubs(:value).with(:osfamily).returns('RedHat')

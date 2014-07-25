@@ -16,6 +16,10 @@ This file is then used by binary_search_specs.rb so that:
 
 will begin bisecting runs before and after this spec until it narrows down to a candidate which seems to be effecting foo_spec.rb and causing it to fail.
 
+### with parallel-spec
+
+To get the groups that the parallel task is running, run: be util/rspec_grouper 1000. Then run each spit out file with "be util/rspec_runner <groupfile>". If it fails, rename it to spec_order.txt and run the binary script.
+
 dev-puppet-master
 -----------------
 

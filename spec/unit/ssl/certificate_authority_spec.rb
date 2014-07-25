@@ -7,7 +7,6 @@ require 'puppet/ssl/certificate_authority'
 describe Puppet::SSL::CertificateAuthority do
   after do
     Puppet::SSL::CertificateAuthority.instance_variable_set(:@singleton_instance, nil)
-    Puppet.settings.clearused
   end
 
   def stub_ca_host
