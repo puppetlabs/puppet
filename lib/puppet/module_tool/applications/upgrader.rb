@@ -89,6 +89,11 @@ module Puppet::ModuleTool
           available_versions = module_repository.fetch(name)
           if available_versions.empty?
             raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
+          elsif results[:requested_version] != :latest
+            requested = Semantic::VersionRange.parse(results[:requested_version])
+            unless available_versions.any? {|m| requested.include? m.version}
+              raise NoCandidateReleasesError, results.merge(:module_name => name, :source => module_repository.host)
+            end
           end
 
           Puppet.notice "Downloading from #{module_repository.host} ..."
