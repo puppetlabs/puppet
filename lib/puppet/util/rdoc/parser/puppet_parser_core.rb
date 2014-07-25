@@ -153,7 +153,7 @@ module RDoc::PuppetParserCore
     code.each do |stmt|
       scan_for_include_or_require(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
-      if stmt.is_a?(Puppet::Parser::AST::Function) and ['include','require'].include?(stmt.name)
+      if stmt.is_a?(Puppet::Parser::AST::Function) && ['include','require'].include?(stmt.name)
         stmt.arguments.each do |included|
           Puppet.debug "found #{stmt.name}: #{included}"
           container.send("add_#{stmt.name}", RDoc::Include.new(included.to_s, stmt.doc))
@@ -199,7 +199,7 @@ module RDoc::PuppetParserCore
     code.each do |stmt|
       scan_for_resource(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::BlockExpression)
 
-      if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
+      if stmt.is_a?(Puppet::Parser::AST::Resource) && !stmt.type.nil?
         begin
           type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
           stmt.instances.each do |inst|

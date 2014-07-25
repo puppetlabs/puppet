@@ -1902,7 +1902,7 @@ class Type
     return true if provider && provider.class.suitable?
 
     # We're using the default provider and there is one.
-    if !provider and self.class.defaultprovider
+    if !provider && self.class.defaultprovider
       self.provider = self.class.defaultprovider.name
       return true
     end

@@ -165,7 +165,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
       if i.include? "=" # Ignore if it does not include '='
         (key_str, val) = i.split('=')
         # Check the key
-        if key_str.nil? or key_str.empty?
+        if key_str.nil? || key_str.empty?
           info "Empty key in string 'i'?"
           continue
         end

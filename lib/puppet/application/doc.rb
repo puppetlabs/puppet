@@ -31,7 +31,7 @@ class Puppet::Application::Doc < Puppet::Application
 
   option("--mode MODE", "-m") do |arg|
     require 'puppet/util/reference'
-    if Puppet::Util::Reference.modes.include?(arg) or arg.intern==:rdoc
+    if Puppet::Util::Reference.modes.include?(arg) || arg.intern==:rdoc
       options[:mode] = arg.intern
     else
       raise "Invalid output mode #{arg}"

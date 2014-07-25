@@ -231,7 +231,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     unless param.source.child_of?(current.source)
       msg = "Parameter '#{param.name}' is already set on #{self}"
       msg += " by #{current.source}" if current.source.to_s != ""
-      if current.file or current.line
+      if current.file || current.line
         fields = []
         fields << current.file if current.file
         fields << current.line.to_s if current.line

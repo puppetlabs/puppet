@@ -12,7 +12,7 @@ class Puppet::Property::Ensure < Puppet::Property
 
   def self.defaultvalues
     newvalue(:present) do
-      if @resource.provider and @resource.provider.respond_to?(:create)
+      if @resource.provider && @resource.provider.respond_to?(:create)
         @resource.provider.create
       else
         @resource.create
@@ -21,7 +21,7 @@ class Puppet::Property::Ensure < Puppet::Property
     end
 
     newvalue(:absent) do
-      if @resource.provider and @resource.provider.respond_to?(:destroy)
+      if @resource.provider && @resource.provider.respond_to?(:destroy)
         @resource.provider.destroy
       else
         @resource.destroy

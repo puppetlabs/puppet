@@ -299,7 +299,7 @@ WRAPPER
 
   def get_option(name, with_inherited_options = true)
     option = @options_hash[name.to_sym]
-    if option.nil? and with_inherited_options
+    if option.nil? && with_inherited_options
       option = @face.get_option(name)
     end
     option

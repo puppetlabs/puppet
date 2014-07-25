@@ -165,7 +165,7 @@ class Puppet::Parser::AST
       object = evaluate_container(scope)
       accesskey = evaluate_key(scope)
 
-      if object.is_a?(Hash) and object.include?(accesskey)
+      if object.is_a?(Hash) && object.include?(accesskey)
         raise Puppet::ParseError, "Assigning to the hash '#{variable}' with an existing key '#{accesskey}' is forbidden"
       end
 

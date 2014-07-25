@@ -84,7 +84,7 @@ module Puppet
 
       def retrieve
         if provider.exists?
-          if provider.respond_to?(:is_role?) and provider.is_role?
+          if provider.respond_to?(:is_role?) && provider.is_role?
             return :role
           else
             return :present

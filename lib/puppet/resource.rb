@@ -480,7 +480,7 @@ class Puppet::Resource
     properties = resource_type.properties.map(&:name)
 
     dup.collect do |attribute, value|
-      if value.to_s.empty? or Array(value).empty?
+      if value.to_s.empty? || Array(value).empty?
         delete(attribute)
       elsif value.to_s == "absent" and attribute.to_s != "ensure"
         delete(attribute)

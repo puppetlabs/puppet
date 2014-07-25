@@ -34,7 +34,7 @@ module Puppet::Util::Errors
   #
   # @return [String] description of file and line
   def error_context
-    if file and line
+    if file && line
       " at #{file}:#{line}"
     elsif line
       " at line #{line}"

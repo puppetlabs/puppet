@@ -96,7 +96,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def create_role
-    if exists? and !is_role?
+    if exists? && !is_role?
       run(transition("role"), "transition user to")
     else
       run(addcmd, "create role")

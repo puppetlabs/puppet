@@ -175,7 +175,7 @@ module Generators
     # produce a class/module list of HTMLPuppetModule/HTMLPuppetClass
     # based on the code object traversal.
     def generate_class_list(classes, modules, from, html_file, class_dir)
-      if from.is_module? and !@modules.has_key?(from.name)
+      if from.is_module? && !@modules.has_key?(from.name)
         k = HTMLPuppetModule.new(from, html_file, class_dir, @options)
         classes << k
         @modules[from.name] = k
@@ -321,7 +321,7 @@ module Generators
 
       unless ref
         for file in @files
-          if file.document_self and file.context.global
+          if file.document_self && file.context.global
             ref = CGI.escapeHTML("#{CLASS_DIR}/#{file.context.module_name}.html")
             break
           end
@@ -330,7 +330,7 @@ module Generators
 
       unless ref
         for file in @files
-          if file.document_self and !file.context.global
+          if file.document_self && !file.context.global
             ref = CGI.escapeHTML("#{CLASS_DIR}/#{file.context.module_name}.html")
             break
           end
@@ -357,7 +357,7 @@ module Generators
         ref = ref.viewer if ref and ref.respond_to?(:viewer)
         name = i.respond_to?(:full_name) ? i.full_name : i.name
         h_name = CGI.escapeHTML(name)
-        if ref and ref.document_self
+        if ref && ref.document_self
           path = url(ref.path)
           res << { "name" => h_name, "aref" => path }
         else

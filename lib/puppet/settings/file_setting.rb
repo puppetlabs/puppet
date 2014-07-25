@@ -156,7 +156,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
       end
 
       # REMIND fails on Windows because chown/chgrp functionality not supported yet
-      if Puppet.features.root? and !Puppet.features.microsoft_windows?
+      if Puppet.features.root? && !Puppet.features.microsoft_windows?
         resource[:owner] = self.owner if self.owner
         resource[:group] = self.group if self.group
       end

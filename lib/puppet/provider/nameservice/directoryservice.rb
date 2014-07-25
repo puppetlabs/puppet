@@ -295,7 +295,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.7') == -1)
       password_hash = nil
       password_hash_file = "#{password_hash_dir}/#{guid}"
-      if Puppet::FileSystem.exist?(password_hash_file) and File.file?(password_hash_file)
+      if Puppet::FileSystem.exist?(password_hash_file) && File.file?(password_hash_file)
         fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
         f = File.new(password_hash_file)
         password_hash = f.read

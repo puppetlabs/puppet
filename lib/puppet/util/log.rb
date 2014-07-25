@@ -191,7 +191,7 @@ class Puppet::Util::Log
   #  error scenario.
   # @return nil
   def Log.force_flushqueue()
-    if (@destinations.empty? and !(@queued.empty?))
+    if (@destinations.empty? && !(@queued.empty?))
       newdestination(:console)
     end
     flushqueue

@@ -122,7 +122,7 @@ class Puppet::Graph::RelationshipGraph < Puppet::Graph::SimpleGraph
         deferred_resources << resource
       end
 
-      if @ready.empty? and deferred_resources.any?
+      if @ready.empty? && deferred_resources.any?
         if made_progress
           enqueue(*deferred_resources)
         else

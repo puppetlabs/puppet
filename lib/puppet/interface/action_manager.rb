@@ -48,7 +48,7 @@ module Puppet::Interface::ActionManager
     @actions ||= {}
     result = @actions.keys
 
-    if self.is_a?(Class) and superclass.respond_to?(:actions)
+    if self.is_a?(Class) && superclass.respond_to?(:actions)
       result += superclass.actions
     elsif self.class.respond_to?(:actions)
       result += self.class.actions
@@ -67,7 +67,7 @@ module Puppet::Interface::ActionManager
     @actions ||= {}
     result = @actions[name.to_sym]
     if result.nil?
-      if self.is_a?(Class) and superclass.respond_to?(:get_action)
+      if self.is_a?(Class) && superclass.respond_to?(:get_action)
         found = superclass.get_action(name)
       elsif self.class.respond_to?(:get_action)
         found = self.class.get_action(name)

@@ -289,7 +289,7 @@ module Puppet
           currently cannot daemonize).",
         :short    => "D",
         :hook     => proc do |value|
-          if value and Puppet.features.microsoft_windows?
+          if value && Puppet.features.microsoft_windows?
             raise "Cannot daemonize on Windows"
           end
       end

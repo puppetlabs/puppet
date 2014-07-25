@@ -54,7 +54,7 @@ class Puppet::Parser::TypeLoader
   end
 
   def environment=(env)
-    if env.is_a?(String) or env.is_a?(Symbol)
+    if env.is_a?(String) || env.is_a?(Symbol)
       @environment = Puppet.lookup(:environments).get(env)
     else
       @environment = env

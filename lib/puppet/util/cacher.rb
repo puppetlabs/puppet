@@ -51,7 +51,7 @@ module Puppet::Util::Cacher
     private
 
     def cached_value(name)
-      if value_cache[name].nil? or expired_by_ttl?(name)
+      if value_cache[name].nil? || expired_by_ttl?(name)
         value_cache[name] = send("init_#{name}")
         set_expiration(name)
       end

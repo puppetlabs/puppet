@@ -316,7 +316,7 @@ Puppet::Type.type(:scheduled_task).provide(:win32_taskscheduler) do
       }
 
       if puppet_trigger.keys.include?('on')
-        if puppet_trigger.has_key?('day_of_week') or puppet_trigger.has_key?('which_occurrence')
+        if puppet_trigger.has_key?('day_of_week') || puppet_trigger.has_key?('which_occurrence')
           self.fail "Neither 'day_of_week' nor 'which_occurrence' can be specified when creating a monthly date-based trigger"
         end
 

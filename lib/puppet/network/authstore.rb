@@ -15,7 +15,7 @@ module Puppet
     # is non-nil, then both inputs must be provided.  If neither input
     # is provided, then the authstore is considered local and defaults to "true".
     def allowed?(name, ip)
-      if name or ip
+      if name || ip
         # This is probably unnecessary, and can cause some weirdnesses in
         # cases where we're operating over localhost but don't have a real
         # IP defined.

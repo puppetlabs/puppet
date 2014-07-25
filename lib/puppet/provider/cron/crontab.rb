@@ -215,7 +215,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
           record[:name] = "unmanaged:#{cmd_string}-#{ index.to_s }"
           record[:unmanaged] = true
         end
-        if envs.nil? or envs.empty?
+        if envs.nil? || envs.empty?
           record[:environment] = :absent
         else
           # Collect all of the environment lines, and mark the records to be skipped,

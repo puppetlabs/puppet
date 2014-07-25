@@ -153,7 +153,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
       # pkg_add(8) can handle the flavors. However, if we're actually
       # installing with 'latest', we do need to handle the flavors.
       # So we always need to handle flavors ourselves as to not break installs.
-      if latest and resource[:flavor]
+      if latest && resource[:flavor]
         full_name = "#{resource[:name]}--#{resource[:flavor]}"
       elsif latest
         # Don't depend on get_version for updates.
