@@ -70,7 +70,7 @@ Style/HashSyntax:
 # USES: as shortcut for non nil&valid checking a = x() and a.empty?
 # DISABLED - not useful
 Style/AndOr:
-  Enabled: false
+  Enabled: true
 
 # DISABLED - not useful
 Style/RedundantSelf:
