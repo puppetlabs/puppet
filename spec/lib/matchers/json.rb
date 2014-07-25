@@ -126,7 +126,7 @@ module JSONMatchers
     end
   end
 
-  if !Puppet.features.microsoft_windows?
+  unless Puppet.features.microsoft_windows?
     require 'json'
     require 'json-schema'
 

@@ -52,10 +52,10 @@ RSpec::Matchers.define :match_tokens2 do | *expected |
 
   def compare(e, a)
     # if expected ends before actual
-    return true if !e
+    return true unless e
 
     # If actual ends before expected
-    return false if !a
+    return false unless a
 
     # Simple - only expect token to match
     return true if a[0] == e

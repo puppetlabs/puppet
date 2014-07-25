@@ -266,7 +266,7 @@ class Puppet::Provider
     end
 
     def command
-      if not @optional
+      unless @optional
         @confiner.confine :exists => @path, :for_binary => true
       end
 

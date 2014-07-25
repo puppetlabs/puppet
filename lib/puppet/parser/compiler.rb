@@ -211,14 +211,14 @@ class Puppet::Parser::Compiler
 
     if class_parameters
       resources = ensure_classes_with_parameters(scope, hostclasses, class_parameters)
-      if !lazy_evaluate
+      unless lazy_evaluate
         resources.each(&:evaluate)
       end
 
       resources
     else
       already_included, newly_included = ensure_classes_without_parameters(scope, hostclasses)
-      if !lazy_evaluate
+      unless lazy_evaluate
         newly_included.each(&:evaluate)
       end
 
@@ -426,7 +426,7 @@ class Puppet::Parser::Compiler
   def fail_on_unevaluated_overrides
     remaining = @resource_overrides.values.flatten.collect(&:ref)
 
-    if !remaining.empty?
+    unless remaining.empty?
       fail Puppet::ParseError,
         "Could not find resource(s) #{remaining.join(', ')} for overriding"
     end
@@ -438,7 +438,7 @@ class Puppet::Parser::Compiler
   def fail_on_unevaluated_resource_collections
     remaining = @collections.collect(&:resources).flatten.compact
 
-    if !remaining.empty?
+    unless remaining.empty?
       raise Puppet::ParseError, "Failed to realize virtual resources #{remaining.join(', ')}"
     end
   end

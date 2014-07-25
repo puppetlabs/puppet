@@ -98,7 +98,7 @@ Detail: "#{detail.message}"
     end
     if actionname
       action = face.get_action(actionname.to_sym)
-      if not action
+      unless action
         fail ArgumentError, "Unable to load action #{actionname} from #{face}"
       end
     end

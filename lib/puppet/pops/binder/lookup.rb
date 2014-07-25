@@ -73,7 +73,7 @@ class Puppet::Pops::Binder::Lookup
     end
 
     t = type_calculator.infer(options[:name])
-    if ! type_calculator.assignable?(name_type, t)
+    unless type_calculator.assignable?(name_type, t)
       fail("given 'name' argument, #{type_mismatch(type_calculator, options[:name], t)}")
     end
 
@@ -85,7 +85,7 @@ class Puppet::Pops::Binder::Lookup
     # default value must comply with the given type
     if options[:default]
       t = type_calculator.infer(options[:default])
-      if ! type_calculator.assignable?(options[:type], t)
+      unless type_calculator.assignable?(options[:type], t)
         fail("'default' value #{type_mismatch(type_calculator, options[:type], t)}")
       end
     end
@@ -147,7 +147,7 @@ class Puppet::Pops::Binder::Lookup
     type = options[:type]
 
     result_with_name = names.reduce([]) do |memo, name|
-      break memo if !memo[1].nil?
+      break memo unless memo[1].nil?
       [name, search_for(scope, type, name, options)]
     end
 
@@ -174,9 +174,9 @@ class Puppet::Pops::Binder::Lookup
       end
 
       # if the given result was returned, there is no need to type-check it again
-      if !result2.equal?(result)
+      unless result2.equal?(result)
         t = type_calculator.infer(undef_as_nil(result2))
-        if !type_calculator.assignable?(type, t)
+        unless type_calculator.assignable?(type, t)
           fail "the value produced by the given code block #{type_mismatch(type_calculator, type, t)}"
         end
       end

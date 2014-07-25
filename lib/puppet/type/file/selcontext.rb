@@ -42,7 +42,7 @@ module Puppet
       end
 
       property_default = self.parse_selinux_context(property, context)
-      self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" if not property_default.nil?
+      self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" unless property_default.nil?
       property_default
     end
 

@@ -69,7 +69,7 @@ class Puppet::Transaction::ResourceHarness
   def perform_changes(resource, context)
     cache(resource, :checked, Time.now)
 
-    return [] if ! allow_changes?(resource)
+    return [] unless allow_changes?(resource)
 
     # Record the current state in state.yml.
     context.audited_params.each do |param|
@@ -180,7 +180,7 @@ class Puppet::Transaction::ResourceHarness
   def audit_event(event, property)
     event.audited = true
     event.status = "audit"
-    if !are_audited_values_equal(event.historical_value, event.previous_value)
+    unless are_audited_values_equal(event.historical_value, event.previous_value)
       event.message = "audit change: previously recorded value #{property.is_to_s(event.historical_value)} has been changed to #{property.is_to_s(event.previous_value)}"
     end
 

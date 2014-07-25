@@ -203,7 +203,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def setup_logs
     set_log_level
 
-    if !options[:setdest]
+    unless options[:setdest]
       if options[:node]
         # We are compiling a catalog for a single node with '--compile' and logging
         # has not already been configured via '--logdest' so log to the console.

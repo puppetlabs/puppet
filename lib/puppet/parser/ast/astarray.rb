@@ -21,9 +21,9 @@ class Puppet::Parser::AST
         # Skip things that respond to :instantiate (classes, nodes,
         # and definitions), because they have already been
         # instantiated.
-        if !child.respond_to?(:instantiate)
+        unless child.respond_to?(:instantiate)
           item = child.safeevaluate(scope)
-          if !item.nil?
+          unless item.nil?
             # nil values are implicitly removed.
             result.push(item)
           end

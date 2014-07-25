@@ -447,7 +447,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           when "set"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.set(cmd_array[0], cmd_array[1])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") unless (rv)
           when "setm"
             if aug.respond_to?(command)
               debug("sending command '#{command}' with params #{cmd_array.inspect}")
@@ -463,13 +463,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           when "clear"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.clear(cmd_array[0])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") unless (rv)
           when "clearm"
             # Check command exists ... doesn't currently in ruby-augeas 0.4.1
             if aug.respond_to?(command)
               debug("sending command '#{command}' with params #{cmd_array.inspect}")
               rv = aug.clearm(cmd_array[0], cmd_array[1])
-              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+              fail("Error sending command '#{command}' with params #{cmd_array.inspect}") unless (rv)
             else
               fail("command '#{command}' not supported in installed version of ruby-augeas")
             end
@@ -488,11 +488,11 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           when "defvar"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.defvar(cmd_array[0], cmd_array[1])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") unless (rv)
           when "defnode"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.defnode(cmd_array[0], cmd_array[1], cmd_array[2])
-            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") unless (rv)
           when "mv", "move"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.mv(cmd_array[0], cmd_array[1])

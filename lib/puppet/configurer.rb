@@ -58,7 +58,7 @@ class Puppet::Configurer
     query_options ||= {}
     # First try it with no cache, then with the cache.
     unless (Puppet[:use_cached_catalog] and result = retrieve_catalog_from_cache(query_options)) or result = retrieve_new_catalog(query_options)
-      if ! Puppet[:usecacheonfailure]
+      unless Puppet[:usecacheonfailure]
         Puppet.warning "Not using cache on failed catalog"
         return nil
       end

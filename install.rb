@@ -387,7 +387,7 @@ def install_binfile(from, op_file, target)
       installed_wrapper = true
     end
 
-    if not installed_wrapper
+    unless installed_wrapper
       tmp_file2 = Tempfile.new('puppet-wrapper')
       cwv = <<-EOS
 @echo off

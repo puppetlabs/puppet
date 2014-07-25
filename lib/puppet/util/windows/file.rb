@@ -124,7 +124,7 @@ module Puppet::Util::Windows::File
 
   def set_attributes(path, flags)
     success = SetFileAttributesW(wide_string(path), flags) != FFI::WIN32_FALSE
-    raise Puppet::Util::Windows::Error.new("Failed to set file attributes") if !success
+    raise Puppet::Util::Windows::Error.new("Failed to set file attributes") unless success
 
     success
   end

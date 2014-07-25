@@ -243,7 +243,7 @@ class Puppet::Indirector::Request
     # We were given a specific server to use, so just use that one.
     # This happens if someone does something like specifying a file
     # source using a puppet:// URI with a specific server.
-    return yield(self) if !self.server.nil?
+    return yield(self) unless self.server.nil?
 
     if Puppet.settings[:use_srv_records]
       Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|

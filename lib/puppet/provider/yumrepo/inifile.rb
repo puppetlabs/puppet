@@ -261,7 +261,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
 
   # Map the yumrepo 'descr' type property to the 'name' INI property.
   def descr
-    if ! @property_hash.has_key?(:descr)
+    unless @property_hash.has_key?(:descr)
       @property_hash[:descr] = current_section['name']
     end
     value = @property_hash[:descr]
@@ -277,7 +277,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   private
 
   def get_property(property)
-    if ! @property_hash.has_key?(property)
+    unless @property_hash.has_key?(property)
       @property_hash[property] = current_section[property.to_s]
     end
     value = @property_hash[property]

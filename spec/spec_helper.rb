@@ -70,7 +70,7 @@ RSpec.configure do |config|
     config.error_stream = $stderr
 
     config.formatters.each do |f|
-      if not f.instance_variable_get(:@output).kind_of?(::File)
+      unless f.instance_variable_get(:@output).kind_of?(::File)
         f.instance_variable_set(:@output, $stdout)
       end
     end

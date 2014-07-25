@@ -69,7 +69,7 @@ module Puppet::Util::Windows::ADSI
     end
 
     def sid_uri(sid)
-      raise Puppet::Error.new( "Must use a valid SID object" ) if !sid.kind_of?(Win32::Security::SID)
+      raise Puppet::Error.new( "Must use a valid SID object" ) unless sid.kind_of?(Win32::Security::SID)
       "WinNT://#{sid.to_s}"
     end
 
@@ -339,7 +339,7 @@ module Puppet::Util::Windows::ADSI
 
       sids = names.map do |name|
         sid = Puppet::Util::Windows::SID.name_to_sid_object(name)
-        raise Puppet::Error.new( "Could not resolve username: #{name}" ) if !sid
+        raise Puppet::Error.new( "Could not resolve username: #{name}" ) unless sid
         [sid.to_s, sid]
       end
 

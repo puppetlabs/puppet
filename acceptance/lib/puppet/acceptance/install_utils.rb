@@ -146,10 +146,10 @@ module Puppet
             )
 
             link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s%s/products/%s/" % [sha, variant, fedora_prefix, version, arch]
-            if not link_exists?(link)
+            unless link_exists?(link)
               link = "http://builds.puppetlabs.lan/puppet/%s/repos/%s/%s%s/devel/%s/" % [sha, variant, fedora_prefix, version, arch]
             end
-            if not link_exists?(link)
+            unless link_exists?(link)
               raise "Unable to reach a repo directory at #{link}"
             end
             repo_dir = fetch_remote_dir(link, platform_configs_dir)

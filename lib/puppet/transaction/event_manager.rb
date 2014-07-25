@@ -100,7 +100,7 @@ class Puppet::Transaction::EventManager
     process_noop_events(resource, callback, events) and return false unless events.detect { |e| e.status != "noop" }
     resource.send(callback)
 
-    if not resource.is_a?(Puppet::Type.type(:whit))
+    unless resource.is_a?(Puppet::Type.type(:whit))
       resource.notice "Triggered '#{callback}' from #{events.length} events"
     end
     return true

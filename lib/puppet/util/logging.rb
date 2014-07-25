@@ -128,7 +128,7 @@ module Puppet::Util::Logging
     File.open(deprecations_file, "a") do |f|
       if ($deprecation_warnings) then
         $deprecation_warnings.each do |offender, message|
-          if (! $logged_deprecation_warnings.has_key?(offender)) then
+          unless ($logged_deprecation_warnings.has_key?(offender)) then
             $logged_deprecation_warnings[offender] = true
             if ((pattern.nil?) || (message =~ pattern)) then
               f.puts(message)
@@ -148,7 +148,7 @@ module Puppet::Util::Logging
     $deprecation_warnings ||= {}
     if $deprecation_warnings.length < 100 then
       key ||= (offender = get_deprecation_offender)
-      if (! $deprecation_warnings.has_key?(key)) then
+      unless ($deprecation_warnings.has_key?(key)) then
         $deprecation_warnings[key] = message
         call_trace = use_caller ?
           (offender || get_deprecation_offender).join('; ') :

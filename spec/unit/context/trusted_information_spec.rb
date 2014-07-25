@@ -105,7 +105,7 @@ describe Puppet::Context::TrustedInformation do
       unfrozen = []
       stack = [actual]
       while item = stack.pop
-        if !item.frozen?
+        unless item.frozen?
           unfrozen.push(item)
         end
 

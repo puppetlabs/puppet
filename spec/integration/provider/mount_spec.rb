@@ -47,7 +47,7 @@ describe "mount provider (integration)", :unless => Puppet.features.microsoft_wi
           end
           @current_options = tmp_options.join(",")
 
-          if !update
+          unless update
             @mounted.should == false # verify that we don't try to call "mount" redundantly
           end
           command[3].should == '/Volumes/foo_disk'

@@ -35,7 +35,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
   # Mapping from Puppet property to AIX attribute.
   def self.attribute_mapping_to
-    if ! @attribute_mapping_to
+    unless @attribute_mapping_to
       @attribute_mapping_to = {}
       attribute_mapping.each { |elem|
         attribute_mapping_to[elem[:puppet_prop]] = {
@@ -49,7 +49,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
   # Mapping from AIX attribute to Puppet property.
   def self.attribute_mapping_from
-    if ! @attribute_mapping_from
+    unless @attribute_mapping_from
       @attribute_mapping_from = {}
       attribute_mapping.each { |elem|
         attribute_mapping_from[elem[:aix_attr]] = {
@@ -258,7 +258,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
       output.each do |line|
         name = line.split(/[ :]/)[0]
-        names << name if not name.empty?
+        names << name unless name.empty?
       end
     rescue Puppet::ExecutionFailure => detail
       # Print error if needed

@@ -77,7 +77,7 @@ class Puppet::Pops::Evaluator::Closure < Puppet::Pops::Evaluator::CallableSignat
 
       tc = Puppet::Pops::Types::TypeCalculator
       final_args = tc.infer_set(parameter_names.collect { |param| scope_hash[param] })
-      if !tc.callable?(type, final_args)
+      unless tc.callable?(type, final_args)
         raise ArgumentError, "lambda called with mis-matched arguments\n#{Puppet::Pops::Evaluator::CallableMismatchDescriber.diff_string('lambda', final_args, [self])}"
       end
     else

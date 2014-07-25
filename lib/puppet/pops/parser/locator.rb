@@ -162,7 +162,7 @@ class Puppet::Pops::Parser::Locator
       @prev_offset = nil
       @prev_line = nil
       @line_index = index
-      compute_line_index unless !index.nil?
+      compute_line_index if index.nil?
     end
 
     # Returns the position on line (first position on a line is 1)
@@ -214,7 +214,7 @@ class Puppet::Pops::Parser::Locator
       end
 
       return nil if low == ary.length
-      return nil if !satisfied
+      return nil unless satisfied
       return low
     end
 

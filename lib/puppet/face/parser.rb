@@ -51,10 +51,10 @@ Puppet::Face.define(:parser, '0.0.1') do
       end
       missing_files = []
       files.each do |file|
-        missing_files << file if ! Puppet::FileSystem.exist?(file)
+        missing_files << file unless Puppet::FileSystem.exist?(file)
         validate_manifest(file)
       end
-      raise Puppet::Error, "One or more file(s) specified did not exist:\n#{missing_files.collect {|f| " " * 3 + f + "\n"}}" if ! missing_files.empty?
+      raise Puppet::Error, "One or more file(s) specified did not exist:\n#{missing_files.collect {|f| " " * 3 + f + "\n"}}" unless missing_files.empty?
       nil
     end
   end

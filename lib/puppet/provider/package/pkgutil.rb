@@ -25,7 +25,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         conf.each_line {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
       end
     end
-    if ! correct_wgetopts
+    unless correct_wgetopts
       Puppet.notice "It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf."
     end
   end

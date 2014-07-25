@@ -237,7 +237,7 @@ module Puppet::Network::HTTP
     # Use cert information from a Puppet client to set up the http object.
     def cert_setup
       # PUP-1411, make sure that openssl is initialized before we try to connect
-      if ! @@openssl_initialized
+      unless @@openssl_initialized
         OpenSSL::SSL::SSLContext.new
         @@openssl_initialized = true
       end
