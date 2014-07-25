@@ -24,7 +24,7 @@ require "puppet/util/zaml.rb"
 
 class Symbol
   def <=> (other)
-    self.to_s <=> other.to_s
+    to_s <=> other.to_s
   end unless method_defined? '<=>'
 
   def intern
@@ -152,15 +152,15 @@ end
 class Range
   def intersection(other)
     raise ArgumentError, 'value must be a Range' unless other.kind_of?(Range)
-    return unless other === self.first || self === other.first
+    return unless other === first || self === other.first
 
-    start = [self.first, other.first].max
-    if self.exclude_end? && self.last <= other.last
-      start ... self.last
-    elsif other.exclude_end? && self.last >= other.last
+    start = [first, other.first].max
+    if self.exclude_end? && last <= other.last
+      start ... last
+    elsif other.exclude_end? && last >= other.last
       start ... other.last
     else
-      start .. [ self.last, other.last ].min
+      start .. [ last, other.last ].min
     end
   end unless method_defined? :intersection
 
@@ -217,7 +217,7 @@ end
 module SecureRandom
   def self.uuid
     # Copied from the 1.9.1 stdlib implementation of uuid
-    ary = self.random_bytes(16).unpack("NnnnnN")
+    ary = random_bytes(16).unpack("NnnnnN")
     ary[2] = (ary[2] & 0x0fff) | 0x4000
     ary[3] = (ary[3] & 0x3fff) | 0x8000
     "%08x-%04x-%04x-%04x-%04x%08x" % ary

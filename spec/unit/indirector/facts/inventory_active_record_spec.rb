@@ -16,7 +16,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_da
     Puppet::Rails.teardown
   end
 
-  context "under Ruby 1.x", :if => (RUBY_VERSION[0] == '1' and can_use_scratch_database?) do
+  context "under Ruby 1.x", :if => (RUBY_VERSION[0] == '1' && can_use_scratch_database?) do
     describe "#initialize" do
       it "should issue a deprecation warning" do
         Puppet.expects(:deprecation_warning).with() { |msg| msg =~ /ActiveRecord-based storeconfigs and inventory are deprecated/ }
@@ -165,7 +165,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => can_use_scratch_da
     end
   end
 
-  context "under Ruby 2.x", :if => (RUBY_VERSION[0] == '2' and can_use_scratch_database?) do
+  context "under Ruby 2.x", :if => (RUBY_VERSION[0] == '2' && can_use_scratch_database?) do
     describe "#initialize" do
       it "should raise error under Ruby 2" do
         lambda { terminus }.should raise_error(Puppet::Error, /Ruby 2/)

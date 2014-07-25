@@ -63,7 +63,7 @@ Puppet::Type.type(:file).provide :posix do
     # large UIDs instead of negative ones.  This isn't a Ruby bug,
     # it's an OS X bug, since it shows up in perl, too.
     if currentvalue > Puppet[:maximum_uid].to_i
-      self.warning "Apparently using negative UID (#{currentvalue}) on a platform that does not consistently handle them"
+      warning "Apparently using negative UID (#{currentvalue}) on a platform that does not consistently handle them"
       currentvalue = :silly
     end
 
@@ -94,7 +94,7 @@ Puppet::Type.type(:file).provide :posix do
     # large GIDs instead of negative ones.  This isn't a Ruby bug,
     # it's an OS X bug, since it shows up in perl, too.
     if currentvalue > Puppet[:maximum_uid].to_i
-      self.warning "Apparently using negative GID (#{currentvalue}) on a platform that does not consistently handle them"
+      warning "Apparently using negative GID (#{currentvalue}) on a platform that does not consistently handle them"
       currentvalue = :silly
     end
 

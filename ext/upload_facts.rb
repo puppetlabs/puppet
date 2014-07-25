@@ -73,7 +73,7 @@ HELP
 
   def setup
     # Handle the logging settings.
-    if options[:debug] or options[:verbose]
+    if options[:debug] || options[:verbose]
       if options[:debug]
         Puppet::Util::Log.level = :debug
       else

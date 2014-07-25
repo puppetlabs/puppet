@@ -12,7 +12,7 @@ module Puppet::Provider::Mount
     # that MacOS always needs the mount options to be explicitly passed to
     # the mount command
     if Facter.value(:kernel) == 'Darwin'
-      args << "-o" << self.options if self.options and self.options != :absent
+      args << "-o" << options if options && options != :absent
     end
     args << resource[:name]
 
@@ -28,7 +28,7 @@ module Puppet::Provider::Mount
     if resource[:remounts] == :true
       mountcmd "-o", "remount", resource[:name]
     elsif ["FreeBSD", "DragonFly", "OpenBSD"].include?(Facter.value(:operatingsystem))
-      if self.options && !self.options.empty?
+      if options && !options.empty?
         options = self.options + ",update"
       else
         options = "update"

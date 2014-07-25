@@ -118,13 +118,13 @@ class Puppet::Indirector::Indirection
 
   # Set up our request object.
   def request(*args)
-    Puppet::Indirector::Request.new(self.name, *args)
+    Puppet::Indirector::Request.new(name, *args)
   end
 
   # Return the singleton terminus for this indirection.
   def terminus(terminus_name = nil)
     # Get the name of the terminus.
-    raise Puppet::DevError, "No terminus specified for #{self.name}; cannot redirect" unless terminus_name ||= terminus_class
+    raise Puppet::DevError, "No terminus specified for #{name}; cannot redirect" unless terminus_name ||= terminus_class
 
     termini[terminus_name] ||= make_terminus(terminus_name)
   end
@@ -135,10 +135,10 @@ class Puppet::Indirector::Indirection
   # Determine the terminus class.
   def terminus_class
     unless @terminus_class
-      if setting = self.terminus_setting
+      if setting = terminus_setting
         self.terminus_class = Puppet.settings[setting]
       else
-        raise Puppet::DevError, "No terminus class nor terminus setting was provided for indirection #{self.name}"
+        raise Puppet::DevError, "No terminus class nor terminus setting was provided for indirection #{name}"
       end
     end
     @terminus_class
@@ -157,8 +157,8 @@ class Puppet::Indirector::Indirection
   # This is used by terminus_class= and cache=.
   def validate_terminus_class(terminus_class)
     raise ArgumentError, "Invalid terminus name #{terminus_class.inspect}" unless terminus_class and terminus_class.to_s != ""
-    unless Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
-      raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{self.name}"
+    unless Puppet::Indirector::Terminus.terminus_class(name, terminus_class)
+      raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{name}"
     end
   end
 
@@ -172,7 +172,7 @@ class Puppet::Indirector::Indirection
 
     return nil unless instance = cache.find(request(:find, key, nil, options))
 
-    Puppet.info "Expiring the #{self.name} cache of #{instance.name}"
+    Puppet.info "Expiring the #{name} cache of #{instance.name}"
 
     # Set an expiration date in the past
     instance.expiration = Time.now - 60
@@ -200,15 +200,15 @@ class Puppet::Indirector::Indirection
       # appropriate.
       result = terminus.find(request)
       unless result.nil?
-        result.expiration ||= self.expiration if result.respond_to?(:expiration)
+        result.expiration ||= expiration if result.respond_to?(:expiration)
         if cache?
-          Puppet.info "Caching #{self.name} for #{request.key}"
+          Puppet.info "Caching #{name} for #{request.key}"
           cache.save request(:save, key, result, options)
         end
 
         filtered = result
         if terminus.respond_to?(:filter)
-          Puppet::Util::Profiler.profile("Filtered result for #{self.name} #{request.key}", [:indirector, :filter, self.name, request.key]) do
+          Puppet::Util::Profiler.profile("Filtered result for #{name} #{request.key}", [:indirector, :filter, name, request.key]) do
             filtered = terminus.filter(result)
           end
         end
@@ -233,14 +233,14 @@ class Puppet::Indirector::Indirection
     # See if our instance is in the cache and up to date.
     return nil unless cache? and ! request.ignore_cache? and cached = cache.find(request)
     if cached.expired?
-      Puppet.info "Not using expired #{self.name} for #{request.key} from cache; expired at #{cached.expiration}"
+      Puppet.info "Not using expired #{name} for #{request.key} from cache; expired at #{cached.expiration}"
       return nil
     end
 
-    Puppet.debug "Using cached #{self.name} for #{request.key}"
+    Puppet.debug "Using cached #{name} for #{request.key}"
     cached
   rescue => detail
-    Puppet.log_exception(detail, "Cached #{self.name} for #{request.key} failed: #{detail}")
+    Puppet.log_exception(detail, "Cached #{name} for #{request.key} failed: #{detail}")
     nil
   end
 
@@ -268,7 +268,7 @@ class Puppet::Indirector::Indirection
       raise Puppet::DevError, "Search results from terminus #{terminus.name} are not an array" unless result.is_a?(Array)
       result.each do |instance|
         next unless instance.respond_to? :expiration
-        instance.expiration ||= self.expiration
+        instance.expiration ||= expiration
       end
       return result
     end
@@ -328,8 +328,8 @@ class Puppet::Indirector::Indirection
   # Create a new terminus instance.
   def make_terminus(terminus_class)
     # Load our terminus class.
-    unless klass = Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
-      raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{self.name}"
+    unless klass = Puppet::Indirector::Terminus.terminus_class(name, terminus_class)
+      raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{name}"
     end
     klass.new
   end

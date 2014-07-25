@@ -34,7 +34,7 @@ module Semantic
         prerelease = parse_prerelease(prerelease) if prerelease
         build = parse_build_metadata(build) if build
 
-        self.new(major.to_i, minor.to_i, patch.to_i, prerelease, build)
+        new(major.to_i, minor.to_i, patch.to_i, prerelease, build)
       end
 
       private
@@ -106,9 +106,9 @@ module Semantic
     end
 
     def <=>(other)
-      return self.major <=> other.major unless self.major == other.major
-      return self.minor <=> other.minor unless self.minor == other.minor
-      return self.patch <=> other.patch unless self.patch == other.patch
+      return major <=> other.major unless major == other.major
+      return minor <=> other.minor unless minor == other.minor
+      return patch <=> other.patch unless patch == other.patch
       return compare_prerelease(other)
     end
 
@@ -119,7 +119,7 @@ module Semantic
     end
 
     def hash
-      self.to_s.hash
+      to_s.hash
     end
 
     private

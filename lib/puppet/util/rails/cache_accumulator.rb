@@ -54,7 +54,7 @@ module Puppet::Util::CacheAccumulator
     end
 
     def install_accumulator(attribute)
-      self.accumulators[attribute] = Base.new(self, attribute)
+      accumulators[attribute] = Base.new(self, attribute)
       module_eval %{
         def self.accumulate_by_#{attribute.to_s}(*keys)
           accumulators[:#{attribute.to_s}].find(*keys)

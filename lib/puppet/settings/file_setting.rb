@@ -49,7 +49,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
 
   private
     def safe_to_use_settings_value?
-      @settings[:mkusers] or @settings.send(@available_method)
+      @settings[:mkusers] || @settings.send(@available_method)
     end
   end
 
@@ -127,7 +127,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
   def to_resource
     return nil unless type = self.type
 
-    path = self.value
+    path = value
 
     return nil unless path.is_a?(String)
 
@@ -140,7 +140,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     resource = Puppet::Resource.new(:file, path)
 
     if Puppet[:manage_internal_file_permissions]
-      if self.mode
+      if mode
         # This ends up mimicking the munge method of the mode
         # parameter to make sure that we're always passing the string
         # version of the octal number.  If we were setting the
@@ -156,9 +156,9 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
       end
 
       # REMIND fails on Windows because chown/chgrp functionality not supported yet
-      if Puppet.features.root? and !Puppet.features.microsoft_windows?
-        resource[:owner] = self.owner if self.owner
-        resource[:group] = self.group if self.group
+      if Puppet.features.root? && !Puppet.features.microsoft_windows?
+        resource[:owner] = owner if owner
+        resource[:group] = group if group
       end
     end
 
@@ -167,7 +167,7 @@ class Puppet::Settings::FileSetting < Puppet::Settings::StringSetting
     resource[:links] = :follow
     resource[:backup] = false
 
-    resource.tag(self.section, self.name, "settings")
+    resource.tag(section, name, "settings")
 
     resource
   end

@@ -5,14 +5,14 @@ module Puppet::Network # :nodoc:
     attr_accessor :name, :ip, :authenticated, :handler, :method
 
     def authenticated?
-      self.authenticated
+      authenticated
     end
 
     # A common way of talking about the full call.  Individual servers
     # are responsible for setting the values correctly, but this common
     # format makes it possible to check rights.
     def call
-      raise ArgumentError, "Request is not set up; cannot build call" unless handler and method
+      raise ArgumentError, "Request is not set up; cannot build call" unless handler && method
 
       [handler, method].join(".")
     end
@@ -22,7 +22,7 @@ module Puppet::Network # :nodoc:
     end
 
     def to_s
-      "#{self.name}(#{self.ip})"
+      "#{name}(#{ip})"
     end
   end
 end

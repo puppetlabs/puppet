@@ -58,7 +58,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
 
   def lscmd(value=@resource[:name])
     [self.class.command(:list)] +
-      self.get_ia_module_args +
+      get_ia_module_args +
       [ value]
   end
 
@@ -72,23 +72,23 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
     #
     # It gets an extra list of arguments to add to the user.
     [self.class.command(:add) ] +
-      self.get_ia_module_args +
-      self.hash2args(@resource.to_hash) +
+      get_ia_module_args +
+      hash2args(@resource.to_hash) +
       extra_attrs + [@resource[:name]]
   end
 
   def modifycmd(hash = property_hash)
-    args = self.hash2args(hash)
+    args = hash2args(hash)
     return nil if args.empty?
 
     [self.class.command(:modify)] +
-      self.get_ia_module_args +
+      get_ia_module_args +
       args + [@resource[:name]]
   end
 
   def deletecmd
     [self.class.command(:delete)] +
-      self.get_ia_module_args +
+      get_ia_module_args +
       [@resource[:name]]
   end
 

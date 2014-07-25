@@ -208,7 +208,7 @@ Copyright (c) 2012 Puppet Labs, LLC Licensed under the Apache 2.0 License
         # We are compiling a catalog for a single node with '--compile' and logging
         # has not already been configured via '--logdest' so log to the console.
         Puppet::Util::Log.newdestination(:console)
-      elsif !(Puppet[:daemonize] or options[:rack])
+      elsif !(Puppet[:daemonize] || options[:rack])
         # We are running a webrick master which has been explicitly foregrounded
         # and '--logdest' has not been passed, assume users want to see logging
         # and log to the console.

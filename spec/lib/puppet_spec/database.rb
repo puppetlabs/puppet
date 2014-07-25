@@ -14,7 +14,7 @@ def sqlite?
 end
 
 def can_use_scratch_database?
-  sqlite? and Puppet.features.rails?
+  sqlite? && Puppet.features.rails?
 end
 
 

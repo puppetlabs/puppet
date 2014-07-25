@@ -370,7 +370,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
   def self.from_pson(data)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
+    from_data_hash(data)
   end
 
   def to_data_hash
@@ -494,9 +494,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   # This pretty much just converts all of the resources from one class to another, using
   # a conversion method.
   def to_catalog(convert)
-    result = self.class.new(self.name, self.environment_instance)
+    result = self.class.new(name, environment_instance)
 
-    result.version = self.version
+    result.version = version
 
     map = {}
     resources.each do |resource|
@@ -540,8 +540,8 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
 
     map.clear
 
-    result.add_class(*self.classes)
-    result.tag(*self.tags)
+    result.add_class(*classes)
+    result.tag(*tags)
 
     result
   end

@@ -29,7 +29,7 @@ Puppet.features.add(:microsoft_windows) do
   end
 end
 
-raise Puppet::Error,"Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.microsoft_windows?
+raise Puppet::Error,"Cannot determine basic system flavour" unless Puppet.features.posix? || Puppet.features.microsoft_windows?
 
 # We've got LDAP available.
 Puppet.features.add(:ldap, :libs => ["ldap"])

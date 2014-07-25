@@ -212,7 +212,7 @@ module Puppet::Util::Windows::ADSI
 
       desired_groups = desired_groups.split(',').map(&:strip)
 
-      current_groups = self.groups
+      current_groups = groups
 
       # First we add the user to all the groups it should be in but isn't
       groups_to_add = desired_groups - current_groups
@@ -390,7 +390,7 @@ module Puppet::Util::Windows::ADSI
     def set_members(desired_members)
       return if desired_members.nil? or desired_members.empty?
 
-      current_hash = Hash[ self.member_sids.map { |sid| [sid.to_s, sid] } ]
+      current_hash = Hash[ member_sids.map { |sid| [sid.to_s, sid] } ]
       desired_hash = self.class.name_sid_hash(desired_members)
 
       # First we add all missing members

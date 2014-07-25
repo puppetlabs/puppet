@@ -115,7 +115,7 @@ Puppet::Type.newtype(:tidy) do
       if num = AgeConvertors[unit]
         return num * multi
       else
-        self.fail "Invalid age unit '#{unit}'"
+        fail "Invalid age unit '#{unit}'"
       end
     end
 
@@ -134,7 +134,7 @@ Puppet::Type.newtype(:tidy) do
         multi = Integer($1)
         unit = :d
       else
-        self.fail "Invalid tidy age #{age}"
+        fail "Invalid tidy age #{age}"
       end
 
       convert(unit, multi)
@@ -155,7 +155,7 @@ Puppet::Type.newtype(:tidy) do
         num.times do result *= 1024 end
         return result
       else
-        self.fail "Invalid size unit '#{unit}'"
+        fail "Invalid size unit '#{unit}'"
       end
     end
 
@@ -172,7 +172,7 @@ Puppet::Type.newtype(:tidy) do
         multi = Integer($1)
         unit = :k
       else
-        self.fail "Invalid tidy size #{age}"
+        fail "Invalid tidy size #{age}"
       end
 
       convert(unit, multi)

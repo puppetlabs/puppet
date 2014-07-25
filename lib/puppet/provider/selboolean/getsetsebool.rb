@@ -5,7 +5,7 @@ Puppet::Type.type(:selboolean).provide(:getsetsebool) do
   commands :setsebool => "/usr/sbin/setsebool"
 
   def value
-    self.debug "Retrieving value of selboolean #{@resource[:name]}"
+    debug "Retrieving value of selboolean #{@resource[:name]}"
 
     status = getsebool(@resource[:name])
 
@@ -22,7 +22,7 @@ Puppet::Type.type(:selboolean).provide(:getsetsebool) do
   def value=(new)
     persist = ""
     if @resource[:persistent] == :true
-      self.debug "Enabling persistence"
+      debug "Enabling persistence"
       persist = "-P"
     end
     execoutput("#{command(:setsebool)} #{persist} #{@resource[:name]} #{new}")

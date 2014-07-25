@@ -142,9 +142,9 @@ class Puppet::Transaction
       if resource.is_a?(Puppet::Type::Component)
         Puppet.warning "Somehow left a component in the relationship graph"
       else
-        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
+        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] && @catalog.host_config?
         seconds = thinmark { block.call(resource) }
-        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
+        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] && @catalog.host_config?
       end
     end
 
@@ -316,7 +316,7 @@ class Puppet::Transaction
 
   # Is the resource currently scheduled?
   def scheduled?(resource)
-    self.ignoreschedules or resource_harness.scheduled?(resource)
+    ignoreschedules or resource_harness.scheduled?(resource)
   end
 
   # Should this resource be skipped?

@@ -21,7 +21,7 @@ Puppet::Reports.register_report(:rrdgraph) do
     which defaults to the `runinterval`."
 
   def hostdir
-    @hostdir ||= File.join(Puppet[:rrddir], self.host)
+    @hostdir ||= File.join(Puppet[:rrddir], host)
   end
 
   def htmlfile(type, graphs, field)
@@ -93,7 +93,7 @@ Puppet::Reports.register_report(:rrdgraph) do
   def process(time = nil)
     time ||= Time.now.to_i
 
-    unless File.directory?(hostdir) and FileTest.writable?(hostdir)
+    unless File.directory?(hostdir) && FileTest.writable?(hostdir)
       # Some hackishness to create the dir with all of the right modes and ownership
       config = Puppet::Settings.new
       config.define_settings(:reports, :hostdir => {:type => :directory, :default => hostdir, :owner => 'service', :mode => 0755, :group => 'service', :desc => "eh"})
@@ -102,7 +102,7 @@ Puppet::Reports.register_report(:rrdgraph) do
       config.use(:reports)
     end
 
-    self.metrics.each do |name, metric|
+    metrics.each do |name, metric|
       metric.basedir = hostdir
 
       if name == "time"

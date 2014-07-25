@@ -41,7 +41,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
       str % v
     end
     define_method('%s=' % var.to_s) do |v|
-      setconfig self.send( ('%s_conf'% var).intern, v)
+      setconfig send( ('%s_conf'% var).intern, v)
     end
   end
 
@@ -52,7 +52,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
       o.join(' ')
     end
     define_method('%s=' % var.to_s) do |v|
-      setconfig self.send( ('%s_conf'% var).intern, v)
+      setconfig send( ('%s_conf'% var).intern, v)
     end
     define_method('%s_conf' % var.to_s) do |v|
       multi_conf(var, v, &conf)
@@ -83,7 +83,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
       else
         raise ArgumentError, "can not remove network based on default router"
       end
-    else self.fail action
+    else fail action
     end
   end
 
@@ -91,7 +91,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     case action
     when :add; ['add dataset',"set name=#{str}",'end'].join("\n")
     when :rm; "remove dataset name=#{str}"
-    else self.fail action
+    else fail action
     end
   end
 
@@ -99,7 +99,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     case action
     when :add; ['add inherit-pkg-dir', "set dir=#{str}",'end'].join("\n")
     when :rm; "remove inherit-pkg-dir dir=#{str}"
-    else self.fail action
+    else fail action
     end
   end
 
@@ -109,15 +109,15 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
   # Perform all of our configuration steps.
   def configure
-    self.fail "Path is required" unless @resource[:path]
+    fail "Path is required" unless @resource[:path]
     arr = ["create -b #{@resource[:create_args]}"]
 
     # Then perform all of our configuration steps.  It's annoying
     # that we need this much internal info on the resource.
-    self.resource.properties.each do |property|
+    resource.properties.each do |property|
       next unless my_properties.include? property.name
       method = (property.name.to_s + '_conf').intern
-      arr << self.send(method ,@resource[property.name]) unless property.safe_insync?(properties[property.name])
+      arr << send(method ,@resource[property.name]) unless property.safe_insync?(properties[property.name])
     end
     setconfig(arr.join("\n"))
   end
@@ -253,7 +253,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
   def start
     # Check the sysidcfg stuff
     if cfg = @resource[:sysidcfg]
-      self.fail "Path is required" unless @resource[:path]
+      fail "Path is required" unless @resource[:path]
       zoneetc = File.join(@resource[:path], "root", "etc")
       sysidcfg = File.join(zoneetc, "sysidcfg")
 
@@ -345,16 +345,16 @@ Puppet::Type.type(:zone).provide(:solaris) do
   def zoneadm(*cmd)
     adm("-z", @resource[:name], *cmd)
   rescue Puppet::ExecutionFailure => detail
-    self.fail Puppet::Error, "Could not #{cmd[0]} zone: #{detail}", detail
+    fail Puppet::Error, "Could not #{cmd[0]} zone: #{detail}", detail
   end
 
   def zonecfg(*cmd)
     # You apparently can't get the configuration of the global zone (strictly in solaris11)
-    return "" if self.name == "global"
+    return "" if name == "global"
     begin
-      cfg("-z", self.name, *cmd)
+      cfg("-z", name, *cmd)
     rescue Puppet::ExecutionFailure => detail
-      self.fail Puppet::Error, "Could not #{cmd[0]} zone: #{detail}", detail
+      fail Puppet::Error, "Could not #{cmd[0]} zone: #{detail}", detail
     end
   end
 end

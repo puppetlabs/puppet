@@ -70,7 +70,7 @@ end
 
     def self.seqvalue(name, hash)
       fsm.insert_state(name, hash)
-      self.newvalue name
+      newvalue name
     end
 
     # This is seq value because the order of declaration is important.
@@ -113,18 +113,18 @@ end
 
       # We need to get the state we're currently in and just call
       # everything between it and us.
-      self.class.state_sequence(self.retrieve, self.should).each do |state|
+      self.class.state_sequence(retrieve, should).each do |state|
         method = state[direction]
         raise Puppet::DevError, "Cannot move #{direction} from #{st[:name]}" unless method
         provider_sync_send(method)
       end
 
-      ("zone_#{self.should}").intern
+      ("zone_#{should}").intern
     end
 
     # Are we moving up the property tree?
     def up?
-      self.class.fsm.cmp?(self.retrieve, self.should)
+      self.class.fsm.cmp?(retrieve, should)
     end
 
   end
@@ -173,7 +173,7 @@ end
     def insync?(is)
       return true unless is
       is = [] if is == :absent
-      is.sort == self.should.sort
+      is.sort == should.sort
     end
   end
 
@@ -230,7 +230,7 @@ end
     def insync?(is)
       return true unless is
       is = [] if is == :absent
-      is.sort == self.should.sort
+      is.sort == should.sort
     end
 
     validate do |value|
@@ -252,7 +252,7 @@ end
     def insync?(is)
       return true unless is
       is = [] if is == :absent
-      is.sort == self.should.sort
+      is.sort == should.sort
     end
 
     validate do |value|
@@ -330,15 +330,15 @@ end
   def validate_ip(ip, name)
     IPAddr.new(ip) if ip
   rescue ArgumentError
-    self.fail Puppet::Error, "'#{ip}' is an invalid #{name}", $!
+    fail Puppet::Error, "'#{ip}' is an invalid #{name}", $!
   end
 
   def validate_exclusive(interface, address, router)
     return if !interface.nil? and address.nil?
-    self.fail "only interface may be specified when using exclusive IP stack: #{interface}:#{address}"
+    fail "only interface may be specified when using exclusive IP stack: #{interface}:#{address}"
   end
   def validate_shared(interface, address, router)
-    self.fail "ip must contain interface name and ip address separated by a \":\"" if interface.nil? or address.nil?
+    fail "ip must contain interface name and ip address separated by a \":\"" if interface.nil? or address.nil?
     [address, router].each do |ip|
       validate_ip(address, "IP address") unless ip.nil?
     end
@@ -374,7 +374,7 @@ end
       case self.class.attrtype(param)
       when :property
         # Only try to provide values for the properties we're managing
-        prop = self.property(param)
+        prop = property(param)
         prophash[prop] = value if prop
       else
         self[param] = value

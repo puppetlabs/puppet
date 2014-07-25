@@ -54,7 +54,7 @@ class Puppet::Pops::Parser::Lexer
 
     # @return [String] human readable token reference; the String if literal, else the token name
     def to_s
-      string or @name.to_s
+      string || @name.to_s
     end
 
     # @return [Boolean] if the token is acceptable in the given context or not.
@@ -388,7 +388,7 @@ class Puppet::Pops::Parser::Lexer
   def fullscan
     array = []
 
-    self.scan { |token, str|
+    scan { |token, str|
       # Ignore any definition nesting problems
       @indefine = false
       array.push([token,str])

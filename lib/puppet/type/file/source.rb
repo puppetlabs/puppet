@@ -58,12 +58,12 @@ module Puppet
         begin
           uri = URI.parse(URI.escape(source))
         rescue => detail
-          self.fail Puppet::Error, "Could not understand source #{source}: #{detail}", detail
+          fail Puppet::Error, "Could not understand source #{source}: #{detail}", detail
         end
 
-        self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
-        self.fail "Cannot use opaque URLs '#{source}'" unless uri.hierarchical?
-        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless %w{file puppet}.include?(uri.scheme)
+        fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
+        fail "Cannot use opaque URLs '#{source}'" unless uri.hierarchical?
+        fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless %w{file puppet}.include?(uri.scheme)
       end
     end
 
@@ -101,7 +101,7 @@ module Puppet
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
       unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source, :environment => resource.catalog.environment, :links => resource[:links])
-        self.fail "Could not find any content at %s" % metadata.source
+        fail "Could not find any content at %s" % metadata.source
       end
       @content = tmp.content
     end
@@ -181,15 +181,15 @@ module Puppet
             break
           end
         rescue => detail
-          self.fail Puppet::Error, "Could not retrieve file metadata for #{source}: #{detail}", detail
+          fail Puppet::Error, "Could not retrieve file metadata for #{source}: #{detail}", detail
         end
       end
-      self.fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
+      fail "Could not retrieve information from environment #{resource.catalog.environment} source(s) #{value.join(", ")}" unless @metadata
       @metadata
     end
 
     def local?
-      found? and scheme == "file"
+      found? && scheme == "file"
     end
 
     def full_path
@@ -197,15 +197,15 @@ module Puppet
     end
 
     def server?
-       uri and uri.host
+       uri && uri.host
     end
 
     def server
-      (uri and uri.host) or Puppet.settings[:server]
+      (uri && uri.host) || Puppet.settings[:server]
     end
 
     def port
-      (uri and uri.port) or Puppet.settings[:masterport]
+      (uri && uri.port) || Puppet.settings[:masterport]
     end
 
     def uri
@@ -215,11 +215,11 @@ module Puppet
     private
 
     def scheme
-      (uri and uri.scheme)
+      (uri && uri.scheme)
     end
 
     def found?
-      ! (metadata.nil? or metadata.ftype.nil?)
+      ! (metadata.nil? || metadata.ftype.nil?)
     end
 
     def copy_source_value(metadata_method)

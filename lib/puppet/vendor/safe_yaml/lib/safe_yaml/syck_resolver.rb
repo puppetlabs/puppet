@@ -16,7 +16,7 @@ module SafeYAML
     end
 
     def native_resolve(node)
-      node.transform(self.options)
+      node.transform(options)
     end
 
     def get_node_type(node)

@@ -95,29 +95,29 @@ module Puppet
         if @resource.check_all_attributes
           return :notrun
         else
-          return self.should
+          return should
         end
       end
 
       # Actually execute the command.
       def sync
         event = :executed_command
-        tries = self.resource[:tries]
-        try_sleep = self.resource[:try_sleep]
+        tries = resource[:tries]
+        try_sleep = resource[:try_sleep]
 
         begin
           tries.times do |try|
             # Only add debug messages for tries > 1 to reduce log spam.
             debug("Exec try #{try+1}/#{tries}") if tries > 1
-            @output, @status = provider.run(self.resource[:command])
-            break if self.should.include?(@status.exitstatus.to_s)
+            @output, @status = provider.run(resource[:command])
+            break if should.include?(@status.exitstatus.to_s)
             if try_sleep > 0 and tries > 1
               debug("Sleeping for #{try_sleep} seconds between tries")
               sleep try_sleep
             end
           end
         rescue Timeout::Error
-          self.fail Puppet::Error, "Command exceeded timeout", $!
+          fail Puppet::Error, "Command exceeded timeout", $!
         end
 
         if log = @resource[:logoutput]
@@ -125,7 +125,7 @@ module Puppet
           when :true
             log = @resource[:loglevel]
           when :on_failure
-            unless self.should.include?(@status.exitstatus.to_s)
+            unless should.include?(@status.exitstatus.to_s)
               log = @resource[:loglevel]
             else
               log = :false
@@ -133,13 +133,13 @@ module Puppet
           end
           unless log == :false
             @output.split(/\n/).each { |line|
-              self.send(log, line)
+              send(log, line)
             }
           end
         end
 
-        unless self.should.include?(@status.exitstatus.to_s)
-          self.fail("#{self.resource[:command]} returned #{@status.exitstatus} instead of one of [#{self.should.join(",")}]")
+        unless should.include?(@status.exitstatus.to_s)
+          fail("#{resource[:command]} returned #{@status.exitstatus} instead of one of [#{should.join(",")}]")
         end
 
         event
@@ -185,9 +185,9 @@ module Puppet
 
       validate do |user|
         if Puppet.features.microsoft_windows?
-          self.fail "Unable to execute commands as other users on Windows"
+          fail "Unable to execute commands as other users on Windows"
         elsif !Puppet.features.root? && resource.current_username() != user
-          self.fail "Only root can execute commands as other users"
+          fail "Only root can execute commands as other users"
         end
       end
     end
@@ -418,7 +418,7 @@ module Puppet
         end
 
         output.split(/\n/).each { |line|
-          self.debug(line)
+          debug(line)
         }
 
         status.exitstatus != 0
@@ -467,7 +467,7 @@ module Puppet
         end
 
         output.split(/\n/).each { |line|
-          self.debug(line)
+          debug(line)
         }
 
         status.exitstatus == 0
@@ -549,20 +549,20 @@ module Puppet
     end
 
     def output
-      if self.property(:returns).nil?
+      if property(:returns).nil?
         return nil
       else
-        return self.property(:returns).output
+        return property(:returns).output
       end
     end
 
     # Run the command, or optionally run a separately-specified command.
     def refresh
-      if self.check_all_attributes(true)
+      if check_all_attributes(true)
         if cmd = self[:refresh]
           provider.run(cmd)
         else
-          self.property(:returns).sync
+          property(:returns).sync
         end
       end
     end

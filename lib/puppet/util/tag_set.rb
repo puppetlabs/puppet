@@ -5,7 +5,7 @@ class Puppet::Util::TagSet < Set
   include Puppet::Network::FormatSupport
 
   def self.from_yaml(yaml)
-    self.new(YAML.load(yaml))
+    new(YAML.load(yaml))
   end
 
   def to_yaml
@@ -13,12 +13,12 @@ class Puppet::Util::TagSet < Set
   end
 
   def self.from_data_hash(data)
-    self.new(data)
+    new(data)
   end
 
   def self.from_pson(data)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
+    from_data_hash(data)
   end
 
   def to_data_hash

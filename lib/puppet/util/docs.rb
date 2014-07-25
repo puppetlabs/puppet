@@ -19,7 +19,7 @@ module Puppet::Util::Docs
   # Generate the full doc string.
   def doc
     extra = methods.find_all { |m| m.to_s =~ /^dochook_.+/ }.sort.collect { |m|
-      self.send(m)
+      send(m)
     }.delete_if {|r| r.nil? }.collect {|r| "* #{r}"}.join("\n")
 
     if @doc

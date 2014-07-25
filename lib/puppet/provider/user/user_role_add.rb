@@ -57,12 +57,12 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def command(cmd)
-    cmd = ("role_#{cmd}").intern if is_role? or (!exists? and @resource[:ensure] == :role)
+    cmd = ("role_#{cmd}").intern if is_role? || (!exists? && @resource[:ensure] == :role)
     super(cmd)
   end
 
   def is_role?
-    user_attributes and user_attributes[:type] == "role"
+    user_attributes && user_attributes[:type] == "role"
   end
 
   def run(cmd, msg)
@@ -96,7 +96,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   end
 
   def create_role
-    if exists? and !is_role?
+    if exists? && !is_role?
       run(transition("role"), "transition user to")
     else
       run(addcmd, "create role")
@@ -203,7 +203,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
         end
       end
     rescue => detail
-      self.fail Puppet::Error, "Could not write replace #{target_file_path}: #{detail}", detail
+      fail Puppet::Error, "Could not write replace #{target_file_path}: #{detail}", detail
     end
   end
 end

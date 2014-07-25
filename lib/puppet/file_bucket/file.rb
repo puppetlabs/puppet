@@ -68,7 +68,7 @@ class Puppet::FileBucket::File
   end
 
   def self.from_s(contents)
-    self.new(contents)
+    new(contents)
   end
 
   def to_data_hash
@@ -76,7 +76,7 @@ class Puppet::FileBucket::File
   end
 
   def self.from_data_hash(data)
-    self.new(data["contents"])
+    new(data["contents"])
   end
 
   def to_pson
@@ -88,7 +88,7 @@ class Puppet::FileBucket::File
   # older agents sending pson couldn't backup to filebuckets on newer masters
   def self.from_pson(pson)
     Puppet.deprecation_warning("Deserializing Puppet::FileBucket::File objects from pson is deprecated. Upgrade to a newer version.")
-    self.from_data_hash(pson)
+    from_data_hash(pson)
   end
 
 end

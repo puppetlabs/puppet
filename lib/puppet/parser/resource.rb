@@ -37,7 +37,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def [](param)
     param = param.intern
     if param == :title
-      return self.title
+      return title
     end
     if @parameters.has_key?(param)
       @parameters[param].value
@@ -82,7 +82,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     elsif builtin?
       devfail "Cannot evaluate a builtin type (#{type})"
     else
-      self.fail "Cannot find definition #{type}"
+      fail "Cannot find definition #{type}"
     end
   end
 
@@ -134,7 +134,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def merge(resource)
     # Test the resource scope, to make sure the resource is even allowed
     # to override.
-    unless self.source.object_id == resource.source.object_id || resource.source.child_of?(self.source)
+    unless source.object_id == resource.source.object_id || resource.source.child_of?(source)
       raise Puppet::ParseError.new("Only subclasses can override parameters", resource.line, resource.file)
     end
     # Some of these might fail, but they'll fail in the way we want.
@@ -152,7 +152,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def name
-    self[:name] || self.title
+    self[:name] || title
   end
 
   # A temporary occasion, until I get paths in the scopes figured out.
@@ -164,7 +164,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def set_parameter(param, value = nil)
     if ! value.nil?
       param = Puppet::Parser::Resource::Param.new(
-        :name => param, :value => value, :source => self.source
+        :name => param, :value => value, :source => source
       )
     elsif ! param.is_a?(Puppet::Parser::Resource::Param)
       raise ArgumentError, "Received incomplete information - no value provided for parameter #{param}"
@@ -206,9 +206,9 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   # Add default values from our definition.
   def add_defaults
-    scope.lookupdefaults(self.type).each do |name, param|
+    scope.lookupdefaults(type).each do |name, param|
       unless @parameters.include?(name)
-        self.debug "Adding default for #{name}"
+        debug "Adding default for #{name}"
 
         @parameters[name] = param.dup
       end
@@ -263,13 +263,13 @@ class Puppet::Parser::Resource < Puppet::Resource
       validate_parameter(name)
     end
   rescue => detail
-    self.fail Puppet::ParseError, detail.to_s + " on #{self}", detail
+    fail Puppet::ParseError, detail.to_s + " on #{self}", detail
   end
 
   def extract_parameters(params)
     params.each do |param|
       # Don't set the same parameter twice
-      self.fail Puppet::ParseError, "Duplicate parameter '#{param.name}' for on #{self}" if @parameters[param.name]
+      fail Puppet::ParseError, "Duplicate parameter '#{param.name}' for on #{self}" if @parameters[param.name]
 
       set_parameter(param)
     end

@@ -12,7 +12,7 @@ module Puppet::Util::HttpProxy
   end
 
   def self.http_proxy_host
-    env = self.http_proxy_env
+    env = http_proxy_env
 
     if env and env.host
       return env.host
@@ -26,7 +26,7 @@ module Puppet::Util::HttpProxy
   end
 
   def self.http_proxy_port
-    env = self.http_proxy_env
+    env = http_proxy_env
 
     if env and env.port
       return env.port
@@ -36,7 +36,7 @@ module Puppet::Util::HttpProxy
   end
 
   def self.http_proxy_user
-    env = self.http_proxy_env
+    env = http_proxy_env
 
     if env and env.user
       return env.user
@@ -50,13 +50,13 @@ module Puppet::Util::HttpProxy
   end
 
   def self.http_proxy_password
-    env = self.http_proxy_env
+    env = http_proxy_env
 
     if env and env.password
       return env.password
     end
 
-    if Puppet.settings[:http_proxy_user] == 'none' or Puppet.settings[:http_proxy_password] == 'none'
+    if Puppet.settings[:http_proxy_user] == 'none' || Puppet.settings[:http_proxy_password] == 'none'
       return nil
     end
 

@@ -14,15 +14,15 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   end
 
   def startcmd
-    [self.initscript, "-f", :start]
+    [initscript, "-f", :start]
   end
 
   def restartcmd
-    (@resource[:hasrestart] == :true) && [self.initscript, "-f", :restart]
+    (@resource[:hasrestart] == :true) && [initscript, "-f", :restart]
   end
 
   def statuscmd
-    [self.initscript, :check]
+    [initscript, :check]
   end
 
   # Fetch the state of all service resources
@@ -132,7 +132,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
   # @api private
   def rcvar_name
-    self.name + '_flags'
+    name + '_flags'
   end
 
   # @api private
@@ -260,7 +260,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
 
   def enabled?
     if in_base?
-      if (@property_hash[:flags].nil? or @property_hash[:flags] == 'NO')
+      if (@property_hash[:flags].nil? || @property_hash[:flags] == 'NO')
         :false
       else
         :true
@@ -275,12 +275,12 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   end
 
   def enable
-    self.debug("Enabling #{self.name}")
+    debug("Enabling #{name}")
   end
 
   # We should also check for default state
   def disable
-    self.debug("Disabling #{self.name}")
+    debug("Disabling #{name}")
   end
 
   def flags
@@ -292,7 +292,7 @@ Puppet::Type.type(:service).provide :openbsd, :parent => :init do
   end
 
   def flush
-    debug "Flusing resource for #{self.name}"
+    debug "Flusing resource for #{name}"
 
     # Here we load the contents of the rc.conf.local file into the contents
     # variable, modify it if needed, and then compare that to the original.  If

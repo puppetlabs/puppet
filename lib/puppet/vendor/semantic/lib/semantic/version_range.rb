@@ -78,7 +78,7 @@ module Semantic
           finish = finish.send(:first_prerelease)
         end
 
-        self.new(start, finish, exclude)
+        new(start, finish, exclude)
       end
 
       # Creates an open-ended version range from an inequality expression.
@@ -123,7 +123,7 @@ module Semantic
           start = process_loose_expr(expr).last.send(:first_prerelease)
         end
 
-        self.new(start, MAX_VERSION)
+        new(start, MAX_VERSION)
       end
 
       # Returns a range covering all versions greater than or equal to the given
@@ -139,7 +139,7 @@ module Semantic
           start = process_loose_expr(expr).first.send(:first_prerelease)
         end
 
-        self.new(start, MAX_VERSION)
+        new(start, MAX_VERSION)
       end
 
       # Returns a range covering all versions less than the given `expr`.
@@ -154,7 +154,7 @@ module Semantic
           finish = process_loose_expr(expr).first.send(:first_prerelease)
         end
 
-        self.new(MIN_VERSION, finish, true)
+        new(MIN_VERSION, finish, true)
       end
 
       # Returns a range covering all versions less than or equal to the given
@@ -166,10 +166,10 @@ module Semantic
       def parse_lte_expression(expr)
         if expr =~ /^[^+]*-/
           finish = Version.parse(expr)
-          self.new(MIN_VERSION, finish)
+          new(MIN_VERSION, finish)
         else
           finish = process_loose_expr(expr).last.send(:first_prerelease)
-          self.new(MIN_VERSION, finish, true)
+          new(MIN_VERSION, finish, true)
         end
       end
 
@@ -202,9 +202,9 @@ module Semantic
         if parsed.stable?
           parsed = parsed.send(:first_prerelease)
           succ = succ.send(:first_prerelease)
-          self.new(parsed, succ, true)
+          new(parsed, succ, true)
         else
-          self.new(parsed, succ.next(:patch).send(:first_prerelease), true)
+          new(parsed, succ.next(:patch).send(:first_prerelease), true)
         end
       end
 
@@ -227,7 +227,7 @@ module Semantic
           finish = finish.send(:first_prerelease)
         end
 
-        self.new(start, finish, exclude)
+        new(start, finish, exclude)
       end
 
       # A "loose expression" is one that takes the form of all or part of a

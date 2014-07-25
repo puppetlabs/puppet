@@ -36,7 +36,7 @@ Puppet::Type.type(:mount).provide(
   field_pattern = '(\s*(?>\S+))'
   text_line :incomplete, :match => /^(?!#{field_pattern}{#{mandatory_fields.length}})/
 
-  record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => optional_fields
+  record_line name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => optional_fields
 
   # Every entry in fstab is :unmounted until we can prove different
   def self.prefetch_hook(target_records)

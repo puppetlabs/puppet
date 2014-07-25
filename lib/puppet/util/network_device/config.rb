@@ -5,7 +5,7 @@ require 'puppet/util/network_device'
 class Puppet::Util::NetworkDevice::Config
 
   def self.main
-    @main ||= self.new
+    @main ||= new
   end
 
   def self.devices

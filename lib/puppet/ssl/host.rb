@@ -60,9 +60,9 @@ DOC
 
     host_map = {:ca => :file, :disabled_ca => nil, :file => nil, :rest => :rest}
     if term = host_map[terminus]
-      self.indirection.terminus_class = term
+      indirection.terminus_class = term
     else
-      self.indirection.reset_terminus_class
+      indirection.reset_terminus_class
     end
 
     if cache
@@ -128,7 +128,7 @@ DOC
 
   def self.from_pson(pson)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(pson)
+    from_data_hash(pson)
   end
 
   # Puppet::SSL::Host is actually indirected now so the original implementation
@@ -172,9 +172,9 @@ DOC
     # If this CSR is for the current machine...
     if name == Puppet[:certname].downcase
       # ...add our configured dns_alt_names
-      if Puppet[:dns_alt_names] and Puppet[:dns_alt_names] != ''
+      if Puppet[:dns_alt_names] && Puppet[:dns_alt_names] != ''
         options[:dns_alt_names] ||= Puppet[:dns_alt_names]
-      elsif Puppet::SSL::CertificateAuthority.ca? and fqdn = Facter.value(:fqdn) and domain = Facter.value(:domain)
+      elsif Puppet::SSL::CertificateAuthority.ca? && fqdn = Facter.value(:fqdn) and domain = Facter.value(:domain)
         options[:dns_alt_names] = "puppet, #{fqdn}, puppet.#{domain}"
       end
     end
@@ -237,8 +237,8 @@ ERROR_STRING
     # If we can get a CA instance, then we're a valid CA, and we
     # should use it to sign our request; else, just try to read
     # the cert.
-    if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, true)
+    if ! certificate && ca = Puppet::SSL::CertificateAuthority.instance
+      ca.sign(name, true)
     end
   end
 

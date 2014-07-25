@@ -9,9 +9,9 @@ module SafeYAML
 
     def resolve_node(node)
       return node unless node
-      return self.native_resolve(node) if tag_is_whitelisted?(self.get_node_tag(node))
+      return native_resolve(node) if tag_is_whitelisted?(get_node_tag(node))
 
-      case self.get_node_type(node)
+      case get_node_type(node)
       when :root
         resolve_root(node)
       when :map
@@ -30,7 +30,7 @@ module SafeYAML
     def resolve_map(node)
       tag  = get_and_check_node_tag(node)
       hash = @initializers.include?(tag) ? @initializers[tag].call : {}
-      map  = normalize_map(self.get_node_value(node))
+      map  = normalize_map(get_node_value(node))
 
       # Take the "<<" key nodes first, as these are meant to approximate a form of inheritance.
       inheritors = map.select { |key_node, value_node| resolve_node(key_node) == "<<" }
@@ -47,7 +47,7 @@ module SafeYAML
     end
 
     def resolve_seq(node)
-      seq = self.get_node_value(node)
+      seq = get_node_value(node)
 
       tag = get_and_check_node_tag(node)
       arr = @initializers.include?(tag) ? @initializers[tag].call : []
@@ -56,11 +56,11 @@ module SafeYAML
     end
 
     def resolve_scalar(node)
-      Transform.to_proper_type(self.get_node_value(node), self.value_is_quoted?(node), get_and_check_node_tag(node), @options)
+      Transform.to_proper_type(get_node_value(node), self.value_is_quoted?(node), get_and_check_node_tag(node), @options)
     end
 
     def get_and_check_node_tag(node)
-      tag = self.get_node_tag(node)
+      tag = get_node_tag(node)
       SafeYAML.tag_safety_check!(tag, @options)
       tag
     end

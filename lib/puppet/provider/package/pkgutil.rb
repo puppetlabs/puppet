@@ -138,7 +138,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       end
 
       # Use the name method, so it works with subclasses.
-      hash[:provider] = self.name
+      hash[:provider] = name
 
       return hash
     else

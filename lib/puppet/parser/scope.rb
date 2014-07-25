@@ -480,7 +480,7 @@ class Puppet::Parser::Scope
   # @return [Puppet::Parser::Scope] The scope or nil if there is no enclosing scope
   def enclosing_scope
     if has_enclosing_scope?
-      if parent.is_topscope? or parent.is_nodescope?
+      if parent.is_topscope? || parent.is_nodescope?
         parent
       else
         parent.enclosing_scope
@@ -491,15 +491,15 @@ class Puppet::Parser::Scope
   end
 
   def is_classscope?
-    resource and resource.type == "Class"
+    resource && resource.type == "Class"
   end
 
   def is_nodescope?
-    resource and resource.type == "Node"
+    resource && resource.type == "Node"
   end
 
   def is_topscope?
-    compiler and self == compiler.topscope
+    compiler && self == compiler.topscope
   end
 
   def lookup_qualified_variable(class_name, variable_name, position)
@@ -541,7 +541,7 @@ class Puppet::Parser::Scope
   end
 
   def has_inherited_class?
-    is_classscope? and resource.resource_type.parent
+    is_classscope? && resource.resource_type.parent
   end
   private :has_inherited_class?
 

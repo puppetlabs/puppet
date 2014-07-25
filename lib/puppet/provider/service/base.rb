@@ -18,11 +18,11 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
     ps = Facter["ps"].value
     @resource.fail "You must upgrade Facter to a version that includes 'ps'" unless ps and ps != ""
     regex = Regexp.new(@resource[:pattern])
-    self.debug "Executing '#{ps}'"
+    debug "Executing '#{ps}'"
     IO.popen(ps) { |table|
       table.each_line { |line|
         if regex.match(line)
-          self.debug "Process matched: #{line}"
+          debug "Process matched: #{line}"
           ary = line.sub(/^\s+/, '').split(/\s+/)
           return ary[1]
         end
@@ -38,7 +38,7 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   # happen if, for instance, it has an init script (and thus responds to
   # 'statuscmd') but does not have 'hasstatus' enabled.
   def status
-    if @resource[:status] or statuscmd
+    if @resource[:status] || statuscmd
       # Don't fail when the exit status is not 0.
       ucommand(:status, false)
 
@@ -48,8 +48,8 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
       else
         return :stopped
       end
-    elsif pid = self.getpid
-      self.debug "PID is #{pid}"
+    elsif pid = getpid
+      debug "PID is #{pid}"
       return :running
     else
       return :stopped
@@ -82,18 +82,18 @@ Puppet::Type.type(:service).provide :base, :parent => :service do
   # for the process in the process table.
   # This method will generally not be overridden by submodules.
   def stop
-    if @resource[:stop] or stopcmd
+    if @resource[:stop] || stopcmd
       ucommand(:stop)
     else
       pid = getpid
       unless pid
-        self.info "#{self.name} is not running"
+        info "#{name} is not running"
         return false
       end
       begin
         output = kill pid
       rescue Puppet::ExecutionFailure
-        @resource.fail Puppet::Error, "Could not kill #{self.name}, PID #{pid}: #{output}", $!
+        @resource.fail Puppet::Error, "Could not kill #{name}, PID #{pid}: #{output}", $!
       end
       return true
     end

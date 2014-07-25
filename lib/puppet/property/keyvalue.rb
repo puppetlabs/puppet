@@ -88,7 +88,7 @@ module Puppet
       def insync?(is)
         return true unless is
 
-        (is == self.should)
+        (is == should)
       end
     end
   end

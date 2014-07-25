@@ -130,7 +130,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   def self.virtual_inifile
     unless @virtual
       @virtual = Puppet::Util::IniConfig::File.new
-      self.repofiles.each do |file|
+      repofiles.each do |file|
         @virtual.read(file) if Puppet::FileSystem.file?(file)
       end
     end
@@ -157,7 +157,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @param name [String] Section name to lookup in the virtual inifile.
   # @return [Puppet::Util::IniConfig] The IniConfig section
   def self.section(name)
-    result = self.virtual_inifile[name]
+    result = virtual_inifile[name]
     # Create a new section if not found.
     unless result
       dirs = reposdir()
@@ -169,7 +169,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
         # the custom directory if present.
         path = File.join(dirs.last, "#{name}.repo")
       end
-      result = self.virtual_inifile.add_section(name, path)
+      result = virtual_inifile.add_section(name, path)
     end
     result
   end
@@ -178,7 +178,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   # @api private
   # @return [void]
   def self.store
-    inifile = self.virtual_inifile
+    inifile = virtual_inifile
     inifile.store
 
     target_mode = 0644
@@ -209,7 +209,7 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
       next if property == :ensure
 
       if value = @resource.should(property)
-        self.send("#{property}=", value)
+        send("#{property}=", value)
       end
     end
   end
@@ -295,6 +295,6 @@ Puppet::Type.type(:yumrepo).provide(:inifile) do
   end
 
   def current_section
-    self.class.section(self.name)
+    self.class.section(name)
   end
 end

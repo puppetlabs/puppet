@@ -114,7 +114,7 @@ module Puppet::Network::HTTP
     end
 
     def request(method, *args)
-      self.send(method, *args)
+      send(method, *args)
     end
 
     # TODO: These are proxies for the Net::HTTP#request_* methods, which are

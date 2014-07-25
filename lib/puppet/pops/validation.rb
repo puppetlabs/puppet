@@ -379,9 +379,9 @@ module Puppet::Pops::Validation
     # @param diagnostic [Puppet::Pops::Validation::Diagnostic, Puppet::Pops::Validation::Acceptor] diagnostic(s) that should be accepted
     def accept(diagnostic)
       if diagnostic.is_a?(Acceptor)
-        diagnostic.diagnostics.each {|d| self.send(d.severity, d)}
+        diagnostic.diagnostics.each {|d| send(d.severity, d)}
       else
-        self.send(diagnostic.severity, diagnostic)
+        send(diagnostic.severity, diagnostic)
       end
     end
 

@@ -408,7 +408,7 @@ describe Puppet::Property do
       end
 
       it "should call the provided block if the value is a regex" do
-        subclass.newvalue(/./) { self.test }
+        subclass.newvalue(/./) { test }
         property.expects(:test)
         property.set("foo")
       end

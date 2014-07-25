@@ -84,8 +84,8 @@ module Puppet
     end
 
     validate do
-      has_should = [:disk, :mirror, :raidz].select { |prop| self.should(prop) }
-      self.fail "You cannot specify #{has_should.join(" and ")} on this type (only one)" if has_should.length > 1
+      has_should = [:disk, :mirror, :raidz].select { |prop| should(prop) }
+      fail "You cannot specify #{has_should.join(" and ")} on this type (only one)" if has_should.length > 1
     end
   end
 end

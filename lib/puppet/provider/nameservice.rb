@@ -164,7 +164,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
+      execute(addcmd, {:failonfail => true, :combine => true, :custom_environment => @custom_environment})
       if feature?(:manages_password_age) && (cmd = passcmd)
         execute(cmd)
       end
@@ -181,7 +181,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     begin
-      execute(self.deletecmd)
+      execute(deletecmd)
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not delete #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
     end

@@ -120,7 +120,7 @@ Puppet::Type.newtype(:file) do
       when String
         value
       else
-        self.fail "Invalid backup type #{value.inspect}"
+        fail "Invalid backup type #{value.inspect}"
       end
     end
   end
@@ -166,7 +166,7 @@ Puppet::Type.newtype(:file) do
       when :false; false
       when :remote; :remote
       else
-        self.fail "Invalid recurse value #{value.inspect}"
+        fail "Invalid recurse value #{value.inspect}"
       end
     end
   end
@@ -199,7 +199,7 @@ Puppet::Type.newtype(:file) do
       when Integer, Fixnum, Bignum; value
       when /^\d+$/; Integer(value)
       else
-        self.fail "Invalid recurselimit value #{value.inspect}"
+        fail "Invalid recurselimit value #{value.inspect}"
       end
     end
   end
@@ -232,7 +232,7 @@ Puppet::Type.newtype(:file) do
 
     validate do |value|
       unless value.is_a?(Array) or value.is_a?(String) or value == false
-        self.devfail "Ignore must be a string or an Array"
+        devfail "Ignore must be a string or an Array"
       end
     end
   end
@@ -370,17 +370,17 @@ Puppet::Type.newtype(:file) do
       creator_count += 1 if self.should(param)
     end
     creator_count += 1 if @parameters.include?(:source)
-    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
+    fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
-    self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
+    fail "You cannot specify a remote recursion without a source" if !self[:source] && self[:recurse] == :remote
 
-    self.fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
+    fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
 
     SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
-      self.fail "You cannot specify content when using checksum '#{checksum_type}'" if self[:checksum] == checksum_type && !self[:content].nil?
+      fail "You cannot specify content when using checksum '#{checksum_type}'" if self[:checksum] == checksum_type && !self[:content].nil?
     end
 
-    self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
+    warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] && self[:recurselimit]
 
     provider.validate if provider.respond_to?(:validate)
   end
@@ -396,15 +396,15 @@ Puppet::Type.newtype(:file) do
 
   # Determine the user to write files as.
   def asuser
-    if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
-      writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
+    if should(:owner) && ! should(:owner).is_a?(Symbol)
+      writeable = Puppet::Util::SUIDManager.asuser(should(:owner)) {
         FileTest.writable?(::File.dirname(self[:path]))
       }
 
       # If the parent directory is writeable, then we execute
       # as the user in question.  Otherwise we'll rely on
       # the 'owner' property to do things.
-      asuser = self.should(:owner) if writeable
+      asuser = should(:owner) if writeable
     end
 
     asuser
@@ -539,12 +539,12 @@ Puppet::Type.newtype(:file) do
         # Remove the parent file name
         list = parent.pathbuilder
         list.pop # remove the parent's path info
-        return list << self.ref
+        return list << ref
       else
         return super
       end
     else
-      return [self.ref]
+      return [ref]
     end
   end
 
@@ -591,7 +591,7 @@ Puppet::Type.newtype(:file) do
 
   # A simple method for determining whether we should be recursing.
   def recurse?
-    self[:recurse] == true or self[:recurse] == :remote
+    self[:recurse] == true || self[:recurse] == :remote
   end
 
   # Recurse the target of the link.
@@ -703,7 +703,7 @@ Puppet::Type.newtype(:file) do
     when "link", "file"
       return remove_file(current_type, wanted_type)
     else
-      self.fail "Could not back up files of type #{current_type}"
+      fail "Could not back up files of type #{current_type}"
     end
   end
 
@@ -747,7 +747,7 @@ Puppet::Type.newtype(:file) do
 
     # If we've gotten here, then :ensure isn't set
     return true if self[:content]
-    return true if stat and stat.ftype == "file"
+    return true if stat && stat.ftype == "file"
     false
   end
 
@@ -765,7 +765,7 @@ Puppet::Type.newtype(:file) do
     method = :stat
 
     # Files are the only types that support links
-    if (self.class.name == :file and self[:links] != :follow) or self.class.name == :tidy
+    if (self.class.name == :file && self[:links] != :follow) || self.class.name == :tidy
       method = :lstat
     end
 
@@ -792,7 +792,7 @@ Puppet::Type.newtype(:file) do
   def write(property)
     remove_existing(:file)
 
-    mode = self.should(:mode) # might be nil
+    mode = should(:mode) # might be nil
     mode_int = mode ? symbolic_mode_to_int(mode, Puppet::Util::DEFAULT_POSIX_MODE) : nil
 
     if write_temporary_file?
@@ -804,7 +804,7 @@ Puppet::Type.newtype(:file) do
         if self[:validate_cmd]
           output = Puppet::Util::Execution.execute(self[:validate_cmd].gsub(self[:validate_replacement], file.path), :failonfail => true, :combine => true)
           output.split(/\n/).each { |line|
-            self.debug(line)
+            debug(line)
           }
         end
       end
@@ -887,7 +887,7 @@ Puppet::Type.newtype(:file) do
     newsum = parameter(:checksum).sum_file(path)
     return if [:absent, nil, content_checksum].include?(newsum)
 
-    self.fail "File written to disk did not match checksum; discarding changes (#{content_checksum} vs #{newsum})"
+    fail "File written to disk did not match checksum; discarding changes (#{content_checksum} vs #{newsum})"
   end
 
   # write the current content. Note that if there is no content property

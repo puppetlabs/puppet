@@ -215,7 +215,7 @@ module Puppet::Util::FileParsing
   # Split text into separate lines using the record separator.
   def lines(text)
     # Remove any trailing separators, and then split based on them
-    text.sub(/#{self.line_separator}\Q/,'').split(self.line_separator)
+    text.sub(/#{line_separator}\Q/,'').split(line_separator)
   end
 
   # Split a bunch of text into lines and then parse them individually.
@@ -279,7 +279,7 @@ module Puppet::Util::FileParsing
 
   # Are there any record types defined?
   def records?
-    defined?(@record_types) and ! @record_types.empty?
+    defined?(@record_types) && ! @record_types.empty?
   end
 
   # Define a new type of text record.

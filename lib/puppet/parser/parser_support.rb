@@ -159,7 +159,7 @@ class Puppet::Parser::Parser
 
   # how should I do error handling here?
   def parse(string = nil)
-    if self.file =~ /\.rb$/
+    if file =~ /\.rb$/
       main = parse_ruby_file
     else
       self.string = string if string
@@ -187,7 +187,7 @@ class Puppet::Parser::Parser
     # Execute the contents of the file inside its own "main" object so
     # that it can call methods in the resource type API.
     main_object = Puppet::DSL::ResourceTypeAPI.new
-    main_object.instance_eval(File.read(self.file))
+    main_object.instance_eval(File.read(file))
 
     # Then extract any types that were created.
     Puppet::Parser::AST::BlockExpression.new :children => main_object.instance_eval { @__created_ast_objects__ }

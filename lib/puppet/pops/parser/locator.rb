@@ -95,7 +95,7 @@ class Puppet::Pops::Parser::Locator
     attr_reader :leading_line_offset
 
     def self.sub_locator(string, file, leading_line_count, leading_offset, leading_line_offset)
-      self.new(Puppet::Pops::Parser::Locator.locator(string, file),
+      new(Puppet::Pops::Parser::Locator.locator(string, file),
         leading_line_count,
         leading_offset,
         leading_line_offset)

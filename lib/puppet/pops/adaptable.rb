@@ -67,7 +67,7 @@ module Puppet::Pops::Adaptable
     # @raise [ArgumentError] if the object is not adaptable
     #
     def self.get(o)
-      attr_name = :"@#{instance_var_name(self.name)}"
+      attr_name = :"@#{instance_var_name(name)}"
       if o.instance_variable_defined?(attr_name)
         o.instance_variable_get(attr_name)
       else
@@ -92,7 +92,7 @@ module Puppet::Pops::Adaptable
     # @raise [ArgumentError] if the given object o is not adaptable
     #
     def self.adapt(o, &block)
-      attr_name = :"@#{instance_var_name(self.name)}"
+      attr_name = :"@#{instance_var_name(name)}"
       adapter = if o.instance_variable_defined?(attr_name) && value = o.instance_variable_get(attr_name)
         value
       else
@@ -145,7 +145,7 @@ module Puppet::Pops::Adaptable
     # @return [nil] if the adapter has not been set
     #
     def self.clear(o)
-      attr_name = :"@#{instance_var_name(self.name)}"
+      attr_name = :"@#{instance_var_name(name)}"
       if o.instance_variable_defined?(attr_name)
         o.send(:remove_instance_variable, attr_name)
       else

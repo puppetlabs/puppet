@@ -87,14 +87,14 @@ class Puppet::Pops::Binder::Injector
   Producers = Puppet::Pops::Binder::Producers
 
   def self.create_from_model(layered_bindings_model)
-    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings_model))
+    new(Puppet::Pops::Binder::Binder.new(layered_bindings_model))
   end
 
   def self.create_from_hash(name, key_value_hash)
     factory = Puppet::Pops::Binder::BindingsFactory
     named_bindings = factory.named_bindings(name) { key_value_hash.each {|k,v| bind.name(k).to(v) }}
     layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',named_bindings.model))
-    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
+    new(Puppet::Pops::Binder::Binder.new(layered_bindings))
   end
 
   # Creates an injector with a single bindings layer created with the given name, and the bindings
@@ -110,7 +110,7 @@ class Puppet::Pops::Binder::Injector
   def self.create(name, &block)
     factory = Puppet::Pops::Binder::BindingsFactory
     layered_bindings = factory.layered_bindings(factory.named_layer(name+'-layer',factory.named_bindings(name, &block).model))
-    self.new(Puppet::Pops::Binder::Binder.new(layered_bindings))
+    new(Puppet::Pops::Binder::Binder.new(layered_bindings))
   end
 
   # Creates an overriding injector with a single bindings layer
@@ -335,7 +335,7 @@ class Puppet::Pops::Binder::Injector
   # This method is intended for testing purposes.
   #
   def self.null_injector
-    self.new(nil)
+    new(nil)
   end
 
 # The implementation of the Injector is private.

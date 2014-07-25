@@ -293,7 +293,7 @@ class String
       case
       when self == ''
         z.emit('""')
-      when self.to_ascii8bit !~ /\A(?: # ?: non-capturing group (grouping with no back references)
+      when to_ascii8bit !~ /\A(?: # ?: non-capturing group (grouping with no back references)
                  [\x09\x0A\x0D\x20-\x7E]            # ASCII
                | [\xC2-\xDF][\x80-\xBF]             # non-overlong 2-byte
                |  \xE0[\xA0-\xBF][\x80-\xBF]        # excluding overlongs
@@ -313,11 +313,11 @@ class String
       # Only legal UTF-8 characters can make it this far, so we are safe
       # against emitting something dubious. That means we don't need to mess
       # about, just emit them directly. --daniel 2012-07-14
-      when ((self =~ /\A[a-zA-Z\/][-\[\]_\/.a-zA-Z0-9]*\z/) and
+      when ((self =~ /\A[a-zA-Z\/][-\[\]_\/.a-zA-Z0-9]*\z/) &&
           (self !~ /^(?:true|false|yes|no|on|null|off)$/i))
         # simple string literal, safe to emit unquoted.
         z.emit(self)
-      when (self =~ /\n/ and self !~ /\A\s/ and self !~ /\s\z/)
+      when (self =~ /\n/ && self !~ /\A\s/ && self !~ /\s\z/)
         # embedded newline, split line-wise in quoted string block form.
         if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
         z.nested { split("\n",-1).each { |line| z.nl; z.emit(line) } }
@@ -338,10 +338,10 @@ class String
   if String.method_defined?(:encoding)
     ASCII_ENCODING = Encoding.find("ASCII-8BIT")
     def to_ascii8bit
-      if self.encoding == ASCII_ENCODING
+      if encoding == ASCII_ENCODING
         self
       else
-        self.dup.force_encoding(ASCII_ENCODING)
+        dup.force_encoding(ASCII_ENCODING)
       end
     end
   else
@@ -389,7 +389,7 @@ class Time
     # 2008-12-06 10:06:51.373758 -07:00
     ms = ("%0.6f" % (usec * 1e-6))[2..-1]
     offset = "%+0.2i:%0.2i" % [utc_offset / 3600.0, (utc_offset / 60) % 60]
-    z.emit(self.strftime("%Y-%m-%d %H:%M:%S.#{ms} #{offset}"))
+    z.emit(strftime("%Y-%m-%d %H:%M:%S.#{ms} #{offset}"))
   end
 end
 

@@ -109,7 +109,7 @@ class Puppet::Rails::Resource
             result[param] = value
         end
 
-        result[:name] = self.title
+        result[:name] = title
 
         result
     end

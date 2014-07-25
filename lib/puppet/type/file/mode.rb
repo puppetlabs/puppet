@@ -99,7 +99,7 @@ module Puppet
     # off mode management entirely.
     def insync?(currentvalue)
       if stat = @resource.stat and stat.ftype == "link" and @resource[:links] != :follow
-        self.debug "Not managing symlink mode"
+        debug "Not managing symlink mode"
         return true
       else
         return super(currentvalue)
@@ -120,7 +120,7 @@ module Puppet
     # been synced.
     def retrieve
       if @resource.stat
-        @should &&= @should.collect { |s| self.dirmask(s) }
+        @should &&= @should.collect { |s| dirmask(s) }
       end
 
       super

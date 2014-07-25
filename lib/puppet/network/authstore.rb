@@ -166,7 +166,7 @@ module Puppet
 
       # Set the pattern appropriately.  Also sets the name and length.
       def pattern=(pattern)
-        if [:allow_ip, :deny_ip].include?(self.type)
+        if [:allow_ip, :deny_ip].include?(type)
           parse_ip(pattern)
         else
           parse(pattern)

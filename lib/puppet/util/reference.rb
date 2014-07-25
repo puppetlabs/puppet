@@ -21,7 +21,7 @@ class Puppet::Util::Reference
   end
 
   def self.newreference(name, options = {}, &block)
-    ref = self.new(name, options, &block)
+    ref = new(name, options, &block)
     instance_hash(:reference)[name.intern] = ref
 
     ref
@@ -79,7 +79,7 @@ class Puppet::Util::Reference
   end
 
   def dynamic?
-    self.dynamic
+    dynamic
   end
 
   def initialize(name, options = {}, &block)

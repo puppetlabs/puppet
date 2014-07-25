@@ -179,16 +179,16 @@ module YAML
     end
 
     def self.safe_load_file(filename, options={})
-      File.open(filename, 'r:bom|utf-8') { |f| self.safe_load(f, filename, options) }
+      File.open(filename, 'r:bom|utf-8') { |f| safe_load(f, filename, options) }
     end
 
     def self.unsafe_load_file(filename)
       if SafeYAML::MULTI_ARGUMENT_YAML_LOAD
         # https://github.com/tenderlove/psych/blob/v1.3.2/lib/psych.rb#L296-298
-        File.open(filename, 'r:bom|utf-8') { |f| self.unsafe_load(f, filename) }
+        File.open(filename, 'r:bom|utf-8') { |f| unsafe_load(f, filename) }
       else
         # https://github.com/tenderlove/psych/blob/v1.2.2/lib/psych.rb#L231-233
-        self.unsafe_load File.open(filename)
+        unsafe_load File.open(filename)
       end
     end
 
@@ -203,12 +203,12 @@ module YAML
     end
 
     def self.safe_load_file(filename, options={})
-      File.open(filename) { |f| self.safe_load(f, options) }
+      File.open(filename) { |f| safe_load(f, options) }
     end
 
     def self.unsafe_load_file(filename)
       # https://github.com/indeyets/syck/blob/master/ext/ruby/lib/yaml.rb#L133-135
-      File.open(filename) { |f| self.unsafe_load(f) }
+      File.open(filename) { |f| unsafe_load(f) }
     end
   end
 

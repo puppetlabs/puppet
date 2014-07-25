@@ -70,7 +70,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # Create a new instance of this Puppet::Type for each object present
     #    on the system.
     list_all_present.collect do |name_string|
-      self.new(single_report(name_string, *type_property_array))
+      new(single_report(name_string, *type_property_array))
     end
   end
 
@@ -143,7 +143,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # stored in the user record. It is stored at a path that involves the
     # UUID of the user record for non-Mobile local acccounts.
     # Mobile Accounts are out of scope for this provider for now
-    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    attribute_hash[:password] = get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) && Puppet.features.root?
     attribute_hash
   end
 
@@ -169,13 +169,13 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
 
     # (#11593) Remove support for OS X 10.4 and earlier
     fail_if_wrong_version
-    dscl_plist = self.parse_dscl_plist_data(dscl_output)
+    dscl_plist = parse_dscl_plist_data(dscl_output)
 
-    self.generate_attribute_hash(dscl_plist, *type_properties)
+    generate_attribute_hash(dscl_plist, *type_properties)
   end
 
   def self.fail_if_wrong_version
-    if (Puppet::Util::Package.versioncmp(self.get_macosx_version_major, '10.5') == -1)
+    if (Puppet::Util::Package.versioncmp(get_macosx_version_major, '10.5') == -1)
       fail("Puppet does not support OS X versions < 10.5")
     end
   end
@@ -233,7 +233,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # see a simple enough solution for this that doesn't modify the user record
       # every single time. This should be a rather rare edge case. (famous last words)
 
-      dscl_vector = self.get_exec_preamble("-merge", resource_name)
+      dscl_vector = get_exec_preamble("-merge", resource_name)
       dscl_vector << "AuthenticationAuthority" << ";ShadowHash;"
       begin
         execute(dscl_vector)
@@ -394,7 +394,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
         if @resource.should(name)
           @resource.property(name).sync
         elsif value = autogen(name)
-          self.send(name.to_s + "=", value)
+          send(name.to_s + "=", value)
         else
           next
         end
@@ -551,7 +551,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     #      This method returns and sets @infohash
     # I'm not re-factoring the name "getinfo" because this method will be
     # most likely called by nameservice.rb, which I didn't write.
-    if refresh or (! defined?(@property_value_cache_hash) or ! @property_value_cache_hash)
+    if refresh or (! defined?(@property_value_cache_hash) || ! @property_value_cache_hash)
       # JJM 2007-07-24: OK, there's a bit of magic that's about to
       # happen... Let's see how strong my grip has become... =)
       #

@@ -28,7 +28,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         end
       end
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new( "Cannot config #{self.name} to enable it: #{detail}", detail )
+      raise Puppet::Error.new( "Cannot config #{name} to enable it: #{detail}", detail )
   end
 
   def self.instances
@@ -44,11 +44,11 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def enable
-    self.start
+    start
   end
 
   def enabled?
-    case self.status
+    case status
     when :running
       return :true
     else
@@ -57,7 +57,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def disable
-    self.stop
+    stop
   end
 
   def restartcmd
@@ -65,8 +65,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def startcmd
-    self.setupservice
-    case self.status
+    setupservice
+    case status
     when :maintenance
       [command(:adm), :clear, @resource[:name]]
     else
@@ -86,7 +86,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
       states = svcs("-H", "-o", "state,nstate", @resource[:name]).chomp.split
       state = states[1] == "-" ? states[0] : states[1]
     rescue Puppet::ExecutionFailure
-      info "Could not get status on service #{self.name}"
+      info "Could not get status on service #{name}"
       return :stopped
     end
 
@@ -104,7 +104,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         "Cannot manage legacy services through SMF"
     else
       raise Puppet::Error,
-        "Unmanageable state '#{state}' on service #{self.name}"
+        "Unmanageable state '#{state}' on service #{name}"
     end
 
   end

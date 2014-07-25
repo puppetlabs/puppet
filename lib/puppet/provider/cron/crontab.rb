@@ -41,7 +41,7 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
       elsif match = /(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/.match(time)
         record[:special] = :absent
         Puppet::Type::Cron::ProviderCrontab::TIME_FIELDS.zip(match.captures).each do |field,value|
-          if value == self.absent
+          if value == absent
             record[field] = :absent
           else
             record[field] = value.split(",")
@@ -80,11 +80,11 @@ Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFi
       end
       str += record.values_at(*fields).map do |field|
         if field.nil? or field == :absent
-          self.absent
+          absent
         else
           field
         end
-      end.join(self.joiner)
+      end.join(joiner)
       str
     end
   end

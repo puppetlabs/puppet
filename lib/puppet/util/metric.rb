@@ -19,7 +19,7 @@ class Puppet::Util::Metric
 
   def self.from_pson(data)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
+    from_data_hash(data)
   end
 
   def to_data_hash
@@ -59,7 +59,7 @@ class Puppet::Util::Metric
     args = []
 
     if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
-      @rrd = RRDtool.new(self.path)
+      @rrd = RRDtool.new(path)
     end
 
     values.each { |value|
@@ -73,7 +73,7 @@ class Puppet::Util::Metric
       if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
         @rrd.create( Puppet[:rrdinterval], start, args)
       else
-        RRD.create( self.path, '-s', Puppet[:rrdinterval].to_s, '-b', start.to_i.to_s, *args)
+        RRD.create( path, '-s', Puppet[:rrdinterval].to_s, '-b', start.to_i.to_s, *args)
       end
     rescue => detail
       raise detail, "Could not create RRD file #{path}: #{detail}", detail.backtrace
@@ -84,7 +84,7 @@ class Puppet::Util::Metric
     if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
       puts @rrd.info
     else
-      puts RRD.info(self.path)
+      puts RRD.info(path)
     end
   end
 
@@ -98,10 +98,10 @@ class Puppet::Util::Metric
     colorstack = %w{#00ff00 #ff0000 #0000ff #ffff00 #ff99ff #ff9966 #66ffff #990000 #099000 #000990 #f00990 #0f0f0f #555555 #333333 #ffffff}
 
     {:daily => unit, :weekly => unit * 7, :monthly => unit * 30, :yearly => unit * 365}.each do |name, time|
-      file = self.path.sub(/\.rrd$/, "-#{name}.png")
+      file = path.sub(/\.rrd$/, "-#{name}.png")
       args = [file]
 
-      args.push("--title",self.label)
+      args.push("--title",label)
       args.push("--imgformat","PNG")
       args.push("--interlace")
       defs = []
@@ -110,7 +110,7 @@ class Puppet::Util::Metric
       values.zip(colorstack).each { |value,color|
         next if value.nil?
         # this actually uses the data label
-        defs.push("DEF:#{value[0]}=#{self.path}:#{value[0]}:AVERAGE")
+        defs.push("DEF:#{value[0]}=#{path}:#{value[0]}:AVERAGE")
         lines.push("LINE2:#{value[0]}#{color}:#{value[1]}")
       }
       args << defs
@@ -152,7 +152,7 @@ class Puppet::Util::Metric
   end
 
   def path
-    File.join(self.basedir, @name + ".rrd")
+    File.join(basedir, @name + ".rrd")
   end
 
   def newvalue(name,value,label = nil)
@@ -166,10 +166,10 @@ class Puppet::Util::Metric
       Puppet.warning "RRD library is missing; cannot store metrics"
       return
     end
-    self.create(time - 5) unless Puppet::FileSystem.exist?(self.path)
+    create(time - 5) unless Puppet::FileSystem.exist?(path)
 
     if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
-      @rrd ||= RRDtool.new(self.path)
+      @rrd ||= RRDtool.new(path)
     end
 
     # XXX this is not terribly error-resistant
@@ -186,11 +186,11 @@ class Puppet::Util::Metric
       if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
         @rrd.update( template, [ arg ] )
       else
-        RRD.update( self.path, '-t', template, arg )
+        RRD.update( path, '-t', template, arg )
       end
       #system("rrdtool updatev #{self.path} '#{arg}'")
     rescue => detail
-      raise Puppet::Error, "Failed to update #{self.name}: #{detail}", detail.backtrace
+      raise Puppet::Error, "Failed to update #{name}: #{detail}", detail.backtrace
     end
   end
 

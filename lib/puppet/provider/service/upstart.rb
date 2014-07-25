@@ -13,7 +13,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
 
   confine :any => [
     Facter.value(:operatingsystem) == 'Ubuntu',
-    (Facter.value(:osfamily) == 'RedHat' and Facter.value(:operatingsystemrelease) =~ /^6\./),
+    (Facter.value(:osfamily) == 'RedHat' && Facter.value(:operatingsystemrelease) =~ /^6\./),
   ]
 
   defaultfor :operatingsystem => :ubuntu
@@ -29,7 +29,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
   has_feature :enableable
 
   def self.instances
-    self.get_services(self.excludes) # Take exclude list from init provider
+    get_services(excludes) # Take exclude list from init provider
   end
 
   def self.excludes
@@ -90,7 +90,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :debian do
           return fqname
         end
 
-        self.debug("Could not find #{name}#{suffix} in #{path}")
+        debug("Could not find #{name}#{suffix} in #{path}")
       end
     end
 

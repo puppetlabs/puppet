@@ -47,7 +47,7 @@ module Puppet
       #  absent    -> unmounted  NO       create
       #  mounted   -> unmounted  NO       unmount
       newvalue(:unmounted) do
-        case self.retrieve
+        case retrieve
         when :ghost   # (not in fstab but mounted)
           provider.create
           @resource.flush
@@ -71,7 +71,7 @@ module Puppet
       #  mounted   -> absent     NO       provider.destroy AND unmount
       #  unmounted -> absent     NO       provider.destroy
       newvalue(:absent, :event => :mount_deleted) do
-        current_value = self.retrieve
+        current_value = retrieve
         provider.unmount if provider.mounted?
         provider.destroy unless current_value == :ghost
       end
@@ -82,7 +82,7 @@ module Puppet
       #  unmounted -> mounted    NO       mount
       newvalue(:mounted, :event => :mount_mounted) do
         # Create the mount point if it does not already exist.
-        current_value = self.retrieve
+        current_value = retrieve
         currently_mounted = provider.mounted?
         provider.create if [nil, :absent, :ghost].include?(current_value)
 
@@ -263,7 +263,7 @@ module Puppet
 
     def refresh
       # Only remount if we're supposed to be mounted.
-      provider.remount if self.should(:fstype) != "swap" and provider.mounted?
+      provider.remount if should(:fstype) != "swap" && provider.mounted?
     end
 
     def value(name)

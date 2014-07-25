@@ -94,10 +94,10 @@ class ExternalNode
     @parameters = Hash.new("unknown")  # sets a default value of "unknown"
     @environment = "production"
 
-    self.parse_argv(hostname)
-    self.match_classes("#{WORKINGDIR}/#{classdir}")
-    self.match_parameters("#{WORKINGDIR}/#{parameterdir}")
-    self.match_environment("#{WORKINGDIR}/#{environmentdir}")
+    parse_argv(hostname)
+    match_classes("#{WORKINGDIR}/#{classdir}")
+    match_parameters("#{WORKINGDIR}/#{parameterdir}")
+    match_environment("#{WORKINGDIR}/#{environmentdir}")
   end
 
   # private method called by initialize which sanity-checks our hostname.
@@ -118,7 +118,7 @@ class ExternalNode
   # feed weird things back to puppet []<
   def to_yaml
     classes = self.classes.to_a
-    if self.parameters.empty? # otherwise to_yaml prints "parameters: {}"
+    if parameters.empty? # otherwise to_yaml prints "parameters: {}"
       parameters = nil
     else
       parameters = self.parameters

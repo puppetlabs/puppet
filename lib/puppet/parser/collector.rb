@@ -12,12 +12,12 @@ class Puppet::Parser::Collector
   def evaluate
     # Shortcut if we're not using storeconfigs and they're trying to collect
     # exported resources.
-    if form == :exported and Puppet[:storeconfigs] != true
+    if form == :exported && Puppet[:storeconfigs] != true
       Puppet.warning "Not collecting exported resources without storeconfigs"
       return false
     end
 
-    if self.resources
+    if resources
       unless objects = collect_resources and ! objects.empty?
         return false
       end
@@ -141,7 +141,7 @@ class Puppet::Parser::Collector
   # Collect resources directly; this is the result of using 'realize',
   # which specifies resources, rather than using a normal collection.
   def collect_virtual_resources
-    return [] unless defined?(@resources) and ! @resources.empty?
+    return [] unless defined?(@resources) && ! @resources.empty?
     result = @resources.dup.collect do |ref|
       if res = @scope.findresource(ref.to_s)
         @resources.delete(ref)
@@ -168,8 +168,8 @@ class Puppet::Parser::Collector
   # Does the resource match our tests?  We don't yet support tests,
   # so it's always true at the moment.
   def match?(resource)
-    if self.vquery
-      return self.vquery.call(resource)
+    if vquery
+      return vquery.call(resource)
     else
       return true
     end

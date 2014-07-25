@@ -3,7 +3,7 @@ test_name "#4149: parseonly should do the right thing"
 step "test with a manifest with syntax errors"
 manifest = 'class someclass { notify { "hello, world" } }'
 apply_manifest_on(agents, manifest, :parseonly => true, :acceptable_exit_codes => [1]) {
-  stdout =~ /Could not parse for .*: Syntax error/ or
+  stdout =~ /Could not parse for .*: Syntax error/ ||
     fail_test("didn't get a reported systax error")
 }
 

@@ -24,7 +24,7 @@ module Util
   extend Puppet::Util::SymbolicFileMode
 
   def self.activerecord_version
-    if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
+    if (defined?(::ActiveRecord) && defined?(::ActiveRecord::VERSION) && defined?(::ActiveRecord::VERSION::MAJOR) && defined?(::ActiveRecord::VERSION::MINOR))
       ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
     else
       0
@@ -116,7 +116,7 @@ module Util
     classobj = class << klass; self; end
     methods.each do |method|
       classobj.send(:define_method, method) do |*args|
-        obj = self.send(objmethod)
+        obj = send(objmethod)
 
         obj.send(method, *args)
       end
@@ -127,7 +127,7 @@ module Util
   def self.proxy(klass, objmethod, *methods)
     methods.each do |method|
       klass.send(:define_method, method) do |*args|
-        obj = self.send(objmethod)
+        obj = send(objmethod)
 
         obj.send(method, *args)
       end

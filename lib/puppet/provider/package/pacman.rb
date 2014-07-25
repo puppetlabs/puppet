@@ -28,8 +28,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
       install_from_repo
     end
 
-    unless self.query
-      raise Puppet::ExecutionFailure.new("Could not find package %s" % self.name)
+    unless query
+      raise Puppet::ExecutionFailure.new("Could not find package %s" % name)
     end
   end
 
@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     begin
       source_uri = URI.parse source
     rescue => detail
-      self.fail Puppet::Error, "Invalid source '#{source}': #{detail}", detail
+      fail Puppet::Error, "Invalid source '#{source}': #{detail}", detail
     end
 
     source = case source_uri.scheme
@@ -91,7 +91,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
               hash[field] = value
             }
 
-            hash[:provider] = self.name
+            hash[:provider] = name
 
             packages << new(hash)
 
@@ -125,7 +125,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
             :name   => line,
             :ensure => "1", # Groups don't have versions, so ensure => latest
                             # will still cause a reinstall.
-            :provider => self.name
+            :provider => name
           }
           packages << new(hash)
         }
@@ -138,8 +138,8 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
 
   # Fetch the list of packages currently installed on the system.
   def self.instances
-    packages = self.installedpkgs
-    groups   = self.installedgroups
+    packages = installedpkgs
+    groups   = installedgroups
     result   = nil
 
     if (!packages && !groups)
@@ -156,7 +156,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # should always result in the newest release.
   def update
     # Install in pacman can be used for update, too
-    self.install
+    install
   end
 
   # We rescue the main check from Pacman with a check on the AUR using yaourt, if installed

@@ -42,7 +42,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     updates = {}
     sources.each do |source|
-      execute(self.srclistcmd(source)).each_line do |line|
+      execute(srclistcmd(source)).each_line do |line|
         if line =~ /^[^#][^:]*:([^:]*):([^:]*)/
           current = {}
           current[:name]    = $1
@@ -76,13 +76,13 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     # installp will return an exit code of zero even if it didn't uninstall
     # anything... so let's make sure it worked.
     unless query().nil?
-      self.fail "Failed to uninstall package '#{@resource[:name]}'"
+      fail "Failed to uninstall package '#{@resource[:name]}'"
     end
   end
 
   def install(useversion = true)
     unless source = @resource[:source]
-      self.fail "A directory is required which will be used to find packages"
+      fail "A directory is required which will be used to find packages"
     end
 
     pkg = @resource[:name]
@@ -94,7 +94,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     # If the package is superseded, it means we're trying to downgrade and we
     # can't do that.
     if output =~ /^#{Regexp.escape(@resource[:name])}\s+.*\s+Already superseded by.*$/
-      self.fail "aix package provider is unable to downgrade packages"
+      fail "aix package provider is unable to downgrade packages"
     end
   end
 
@@ -147,6 +147,6 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
   end
 
   def update
-    self.install(false)
+    install(false)
   end
 end

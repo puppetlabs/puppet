@@ -47,7 +47,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
         else
           # This node has MCX data.
 
-          mcx_list << self.new(
+          mcx_list << new(
             :name => "/#{TypeMap[ds_type]}/#{ds_name}",
             :ds_type => ds_type,
             :ds_name => ds_name,

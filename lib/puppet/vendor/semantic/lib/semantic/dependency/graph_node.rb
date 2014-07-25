@@ -28,7 +28,7 @@ module Semantic
             children[node.name] = node
             node.populate_children(nodes)
           end
-          self.freeze
+          freeze
         end
       end
 

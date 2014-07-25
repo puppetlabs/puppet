@@ -120,7 +120,7 @@ class Puppet::Module
     [:source, :author, :version, :license, :puppetversion, :dependencies].each do |attr|
       unless value = data[attr.to_s]
         unless attr == :puppetversion
-          raise MissingMetadata, "No #{attr} module metadata provided for #{self.name}"
+          raise MissingMetadata, "No #{attr} module metadata provided for #{name}"
         end
       end
 
@@ -207,7 +207,7 @@ class Puppet::Module
   end
 
   def required_by
-    environment.module_requirements[self.forge_name] || {}
+    environment.module_requirements[forge_name] || {}
   end
 
   def has_local_changes?
@@ -268,7 +268,7 @@ class Puppet::Module
         :version_constraint => version_string.gsub(/^(?=\d)/, "v"),
         :parent => {
           :name => self.forge_name,
-          :version => self.version.gsub(/^(?=\d)/, "v")
+          :version => version.gsub(/^(?=\d)/, "v")
         },
         :mod_details => {
           :installed_version => dep_mod.nil? ? nil : dep_mod.version
@@ -303,8 +303,8 @@ class Puppet::Module
   end
 
   def validate_puppet_version
-    return unless puppetversion and puppetversion != Puppet.version
-    raise IncompatibleModule, "Module #{self.name} is only compatible with Puppet version #{puppetversion}, not #{Puppet.version}"
+    return unless puppetversion && puppetversion != Puppet.version
+    raise IncompatibleModule, "Module #{name} is only compatible with Puppet version #{puppetversion}, not #{Puppet.version}"
   end
 
   private
@@ -331,9 +331,9 @@ class Puppet::Module
   end
 
   def ==(other)
-    self.name == other.name &&
-    self.version == other.version &&
-    self.path == other.path &&
-    self.environment == other.environment
+    name == other.name &&
+    version == other.version &&
+    path == other.path &&
+    environment == other.environment
   end
 end

@@ -68,7 +68,7 @@ module PSON
         end
       end
       self.state = generator::State
-      const_set :State, self.state
+      const_set :State, state
     end
 
     # Returns the PSON generator modul, that is used by PSON. This might be

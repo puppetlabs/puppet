@@ -29,7 +29,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     begin
       Puppet::Util::Yaml.dump(request.instance, file)
     rescue TypeError => detail
-      Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
+      Puppet.err "Could not save #{name} #{request.key}: #{detail}"
     end
   end
 

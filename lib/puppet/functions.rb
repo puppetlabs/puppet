@@ -374,7 +374,7 @@ module Puppet::Functions
       @last_captures = false
       @block_type = nil
       @block_name = nil
-      self.instance_eval &block
+      instance_eval &block
       callable_t = create_callable(@types, @block_type, @min, @max)
       @dispatcher.add_dispatch(callable_t, meth_name, @names, @block_name, @injections, @weaving, @last_captures)
     end

@@ -61,7 +61,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       modified(record[:target] || default_target)
     end
 
-    return unless defined?(@modified) and ! @modified.empty?
+    return unless defined?(@modified) && ! @modified.empty?
 
     flushed = []
     begin
@@ -265,7 +265,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       target_records = retrieve(target)
     rescue Puppet::Util::FileType::FileReadError => detail
       puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Could not prefetch #{self.resource_type.name} provider '#{self.name}' target '#{target}': #{detail}. Treating as empty"
+      Puppet.err "Could not prefetch #{resource_type.name} provider '#{name}' target '#{target}': #{detail}. Treating as empty"
       target_records = []
     end
 
@@ -277,7 +277,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     target_records = prefetch_hook(target_records) if respond_to?(:prefetch_hook)
 
-    raise Puppet::DevError, "Prefetching #{target} for provider #{self.name} returned nil" unless target_records
+    raise Puppet::DevError, "Prefetching #{target} for provider #{name} returned nil" unless target_records
 
     target_records
   end
@@ -301,7 +301,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       old = @target
       begin
         @target = path
-        return self.parse(text)
+        return parse(text)
       rescue Puppet::Error => detail
         detail.file = @target if detail.respond_to?(:file=)
         raise detail
@@ -350,8 +350,8 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   def self.targets(resources = nil)
     targets = []
     # First get the default target
-    raise Puppet::DevError, "Parsed Providers must define a default target" unless self.default_target
-    targets << self.default_target
+    raise Puppet::DevError, "Parsed Providers must define a default target" unless default_target
+    targets << default_target
 
     # Then get each of the file objects
     targets += @target_objects.keys
@@ -408,7 +408,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   end
 
   def exists?
-    !(@property_hash[:ensure] == :absent or @property_hash[:ensure].nil?)
+    !(@property_hash[:ensure] == :absent || @property_hash[:ensure].nil?)
   end
 
   # Write our data to disk.
@@ -451,9 +451,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
   # Mark both the resource and provider target as modified.
   def mark_target_modified
-    if defined?(@resource) and restarget = @resource.should(:target) and restarget != @property_hash[:target]
+    if defined?(@resource) && restarget = @resource.should(:target) and restarget != @property_hash[:target]
       self.class.modified(restarget)
     end
-    self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent and @property_hash[:target]
+    self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent && @property_hash[:target]
   end
 end

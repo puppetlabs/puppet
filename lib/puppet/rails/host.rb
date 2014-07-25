@@ -54,7 +54,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
     db_facts = {}
 
     deletions = []
-    self.fact_values.find(:all, :include => :fact_name).each do |value|
+    fact_values.find(:all, :include => :fact_name).each do |value|
       deletions << value['id'] and next unless facts.include?(value['name'])
       # Now store them for later testing.
       db_facts[value['name']] ||= []
@@ -158,7 +158,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
     accumulate_benchmark("Added resources", :initialization) {
       args = Puppet::Rails::Resource.rails_resource_initial_args(resource)
 
-      db_resource = self.resources.build(args)
+      db_resource = resources.build(args)
 
       # Our file= method does the name to id conversion.
       db_resource.file = resource.file
@@ -246,7 +246,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
   end
 
   def to_puppet
-    node = Puppet::Node.new(self.name)
+    node = Puppet::Node.new(name)
     {"ip" => "ipaddress", "environment" => "environment"}.each do |myparam, itsparam|
       if value = send(myparam)
         node.send(itsparam + "=", value)

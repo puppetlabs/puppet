@@ -48,7 +48,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
   end
 
   def file
-    (f = self.source_file) ? f.filename : nil
+    (f = source_file) ? f.filename : nil
   end
 
   def file=(file)
@@ -106,7 +106,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     # Handle file specially
-    self.file = resource.file if (resource.file and  (!resource.file or self.file != resource.file))
+    self.file = resource.file if (resource.file and  (!resource.file or file != resource.file))
   end
 
   def merge_parameters(resource)
@@ -184,7 +184,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
   end
 
   def ref(dummy_argument=:work_arround_for_ruby_GC_bug)
-    "#{self[:restype].split("::").collect { |s| s.capitalize }.join("::")}[#{self.title}]"
+    "#{self[:restype].split("::").collect { |s| s.capitalize }.join("::")}[#{title}]"
   end
 
   # Returns a hash of parameter names and values, no ActiveRecord instances.
@@ -200,7 +200,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
   # is exported, though, since that would cause it to get stripped
   # from the configuration.
   def to_resource(scope)
-    hash = self.attributes
+    hash = attributes
     hash["type"] = hash["restype"]
     hash.delete("restype")
 
@@ -218,7 +218,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     hash[:source] = scope.source
     hash[:parameters] = []
     names = []
-    self.param_names.each do |pname|
+    param_names.each do |pname|
       # We can get the same name multiple times because of how the
       # db layout works.
       next if names.include?(pname.name)
@@ -228,7 +228,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     obj = Puppet::Parser::Resource.new(hash.delete("type"), hash.delete("title"), hash)
 
     # Store the ID, so we can check if we're re-collecting the same resource.
-    obj.collector_id = self.id
+    obj.collector_id = id
 
     obj
   end

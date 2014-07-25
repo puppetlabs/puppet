@@ -41,7 +41,7 @@ class Puppet::Indirector::Request
 
   def self.from_pson(json)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(json)
+    from_data_hash(json)
   end
 
   def to_data_hash
@@ -143,7 +143,7 @@ class Puppet::Indirector::Request
       end
     end
 
-    @key = @instance.name if ! @key and @instance
+    @key = @instance.name if ! @key && @instance
   end
 
   # Look up the indirection based on the name provided.
@@ -243,7 +243,7 @@ class Puppet::Indirector::Request
     # We were given a specific server to use, so just use that one.
     # This happens if someone does something like specifying a file
     # source using a puppet:// URI with a specific server.
-    return yield(self) unless self.server.nil?
+    return yield(self) unless server.nil?
 
     if Puppet.settings[:use_srv_records]
       Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
@@ -265,7 +265,7 @@ class Puppet::Indirector::Request
   end
 
   def remote?
-    self.node or self.ip
+    node || ip
   end
 
   private

@@ -44,7 +44,7 @@ Puppet::Type.newtype(:k5login) do
     def create
       write(@resource.should(:principals))
       should_mode = @resource.should(:mode)
-      unless self.mode == should_mode
+      unless mode == should_mode
         self.mode = should_mode
       end
     end

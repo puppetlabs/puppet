@@ -44,7 +44,7 @@ class Puppet::Resource::Type
   attr_reader :type
 
   RESOURCE_KINDS.each do |t|
-    define_method("#{t}?") { self.type == t }
+    define_method("#{t}?") { type == t }
   end
 
   require 'puppet/indirector'
@@ -70,12 +70,12 @@ class Puppet::Resource::Type
 
   def self.from_pson(data)
     Puppet.deprecation_warning("from_pson is being removed in favour of from_data_hash.")
-    self.from_data_hash(data)
+    from_data_hash(data)
   end
 
   def to_data_hash
     data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
-      next hash unless (value = self.send(param)) and (value != "")
+      next hash unless (value = send(param)) and (value != "")
       hash[param.to_s] = value
       hash
     end
@@ -164,7 +164,7 @@ class Puppet::Resource::Type
   def merge(other)
     fail "#{name} is not a class; cannot add code to it" unless type == :hostclass
     fail "#{other.name} is not a class; cannot add code from it" unless other.type == :hostclass
-    fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if name == "" and Puppet.settings[:freeze_main]
+    fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if name == "" && Puppet.settings[:freeze_main]
 
     if parent and other.parent and parent != other.parent
       fail "Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})"
@@ -181,7 +181,7 @@ class Puppet::Resource::Type
     # This might just be an empty, stub class.
     return unless other.code
 
-    unless self.code
+    unless code
       self.code = other.code
       return
     end
@@ -301,7 +301,7 @@ class Puppet::Resource::Type
     if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
       scope["caller_module_name"] = caller_name
     end
-    scope.class_set(self.name,scope) if hostclass? or node?
+    scope.class_set(name,scope) if hostclass? || node?
 
     # Evaluate the default parameters, now that all other variables are set
     default_params = resource.set_default_parameters(scope)
@@ -405,9 +405,9 @@ class Puppet::Resource::Type
     return unless Puppet::Type.metaparamclass(param)
 
     if default
-      warnonce "#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition"
+      warnonce "#{param} is a metaparam; this value will inherit to all contained resources in the #{name} definition"
     else
-      raise Puppet::ParseError, "#{param} is a metaparameter; please choose another parameter name in the #{self.name} definition"
+      raise Puppet::ParseError, "#{param} is a metaparameter; please choose another parameter name in the #{name} definition"
     end
   end
 end

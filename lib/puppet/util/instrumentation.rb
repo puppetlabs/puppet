@@ -33,10 +33,10 @@ class Puppet::Util::Instrumentation
   # It is usually way slower than calling start and stop directly around the instrumented code.
   # For high traffic code path, it is thus advisable to not use this method.
   def self.instrument(label, data = {})
-    id = self.start(label, data)
+    id = start(label, data)
     yield
   ensure
-    self.stop(label, id, data)
+    stop(label, id, data)
   end
 
   # Triggers a "start" instrumentation event

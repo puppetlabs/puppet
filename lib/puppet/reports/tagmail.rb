@@ -45,11 +45,11 @@ Puppet::Reports.register_report(:tagmail) do
       # First find all of the messages matched by our positive tags
       messages = nil
       if pos.include?("all")
-        messages = self.logs
+        messages = logs
       else
         # Find all of the messages that are tagged with any of our
         # tags.
-        messages = self.logs.find_all do |log|
+        messages = logs.find_all do |log|
           pos.detect { |tag| log.tagged?(tag) }
         end
       end
@@ -137,7 +137,7 @@ Puppet::Reports.register_report(:tagmail) do
             reports.each do |emails, messages|
               smtp.open_message_stream(Puppet[:reportfrom], *emails) do |p|
                 p.puts "From: #{Puppet[:reportfrom]}"
-                p.puts "Subject: Puppet Report for #{self.host}"
+                p.puts "Subject: Puppet Report for #{host}"
                 p.puts "To: " + emails.join(", ")
                 p.puts "Date: #{Time.now.rfc2822}"
                 p.puts
@@ -156,7 +156,7 @@ Puppet::Reports.register_report(:tagmail) do
             # We need to open a separate process for every set of email addresses
             IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
               p.puts "From: #{Puppet[:reportfrom]}"
-              p.puts "Subject: Puppet Report for #{self.host}"
+              p.puts "Subject: Puppet Report for #{host}"
               p.puts "To: " + emails.join(", ")
               p.puts
               p.puts messages

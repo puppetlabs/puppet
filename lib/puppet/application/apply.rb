@@ -167,7 +167,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def main
     # Set our code or file to use.
-    if options[:code] or command_line.args.length == 0
+    if options[:code] || command_line.args.length == 0
       Puppet[:code] = options[:code] || STDIN.read
     else
       manifest = command_line.args.shift

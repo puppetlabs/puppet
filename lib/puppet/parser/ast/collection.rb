@@ -21,7 +21,7 @@ class Puppet::Parser::AST
 
       resource_type = scope.find_resource_type(@type)
       fail "Resource type #{@type} doesn't exist" unless resource_type
-      newcoll = Puppet::Parser::Collector.new(scope, resource_type.name, match, code, self.form)
+      newcoll = Puppet::Parser::Collector.new(scope, resource_type.name, match, code, form)
 
       scope.compiler.add_collection(newcoll)
 

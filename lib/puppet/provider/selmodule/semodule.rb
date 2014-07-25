@@ -19,7 +19,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
   end
 
   def exists?
-    self.debug "Checking for module #{@resource[:name]}"
+    debug "Checking for module #{@resource[:name]}"
     execpipe("#{command(:semodule)} --list") do |out|
       out.each_line do |line|
         if line =~ /#{@resource[:name]}\b/
@@ -31,7 +31,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
   end
 
   def syncversion
-    self.debug "Checking syncversion on #{@resource[:name]}"
+    debug "Checking syncversion on #{@resource[:name]}"
 
     loadver = selmodversion_loaded
 
@@ -109,7 +109,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
     v = selmod_readnext(mod)
 
-    self.debug "file version #{v}"
+    debug "file version #{v}"
     v
   end
 
@@ -121,7 +121,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
           line.chomp!
           bits = line.split
           if bits[0] == @resource[:name]
-            self.debug "load version #{bits[1]}"
+            debug "load version #{bits[1]}"
             return bits[1]
           end
         end

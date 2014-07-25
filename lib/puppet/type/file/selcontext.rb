@@ -28,7 +28,7 @@ module Puppet
 
     def retrieve
       return :absent unless @resource.stat
-      context = self.get_selinux_current_context(@resource[:path])
+      context = get_selinux_current_context(@resource[:path])
       parse_selinux_context(name, context)
     end
 
@@ -37,12 +37,12 @@ module Puppet
         return nil
       end
 
-      unless context = self.get_selinux_default_context(@resource[:path])
+      unless context = get_selinux_default_context(@resource[:path])
         return nil
       end
 
-      property_default = self.parse_selinux_context(property, context)
-      self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" unless property_default.nil?
+      property_default = parse_selinux_context(property, context)
+      debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" unless property_default.nil?
       property_default
     end
 
@@ -59,7 +59,7 @@ module Puppet
     end
 
     def sync
-      self.set_selinux_context(@resource[:path], @should, name)
+      set_selinux_context(@resource[:path], @should, name)
       :file_changed
     end
   end
@@ -83,7 +83,7 @@ module Puppet
       enabled."
 
     @event = :file_changed
-    defaultto { self.retrieve_default_context(:seluser) }
+    defaultto { retrieve_default_context(:seluser) }
   end
 
   Puppet::Type.type(:file).newproperty(:selrole, :parent => Puppet::SELFileContext) do
@@ -94,7 +94,7 @@ module Puppet
       enabled."
 
     @event = :file_changed
-    defaultto { self.retrieve_default_context(:selrole) }
+    defaultto { retrieve_default_context(:selrole) }
   end
 
   Puppet::Type.type(:file).newproperty(:seltype, :parent => Puppet::SELFileContext) do
@@ -105,7 +105,7 @@ module Puppet
       enabled."
 
     @event = :file_changed
-    defaultto { self.retrieve_default_context(:seltype) }
+    defaultto { retrieve_default_context(:seltype) }
   end
 
   Puppet::Type.type(:file).newproperty(:selrange, :parent => Puppet::SELFileContext) do
@@ -117,7 +117,7 @@ module Puppet
       Security)."
 
     @event = :file_changed
-    defaultto { self.retrieve_default_context(:selrange) }
+    defaultto { retrieve_default_context(:selrange) }
   end
 
 end

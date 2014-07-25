@@ -49,14 +49,14 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     attr_accessor :comments  # Not implemented yet.
 
     def prefetch(resources)
-      self.populate_rules_rights
+      populate_rules_rights
     end
 
     def instances
-      if self.parsed_auth_db == {}
-        self.prefetch(nil)
+      if parsed_auth_db == {}
+        prefetch(nil)
       end
-      self.parsed_auth_db.collect do |k,v|
+      parsed_auth_db.collect do |k,v|
         new(:name => k)
       end
     end
@@ -66,8 +66,8 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
       raise Puppet::Error.new("Cannot parse: #{AuthDB}") unless auth_plist
       self.rights = auth_plist["rights"].dup
       self.rules = auth_plist["rules"].dup
-      self.parsed_auth_db = self.rights.dup
-      self.parsed_auth_db.merge!(self.rules.dup)
+      self.parsed_auth_db = rights.dup
+      parsed_auth_db.merge!(rules.dup)
     end
 
   end

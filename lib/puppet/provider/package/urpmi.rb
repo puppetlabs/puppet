@@ -8,7 +8,7 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
 
   def install
     should = @resource.should(:ensure)
-    self.debug "Ensuring => #{should}"
+    debug "Ensuring => #{should}"
     wanted = @resource[:name]
 
     # XXX: We don't actually deal with epochs here.
@@ -22,8 +22,8 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
 
     urpmi "--auto", wanted
 
-    unless self.query
-      raise Puppet::Error, "Package #{self.name} was not present after trying to install it"
+    unless query
+      raise Puppet::Error, "Package #{name} was not present after trying to install it"
     end
   end
 
@@ -42,7 +42,7 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
 
   def update
     # Install in urpmi can be used for update, too
-    self.install
+    install
   end
 
   # For normal package removal the urpmi provider will delegate to the RPM

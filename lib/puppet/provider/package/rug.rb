@@ -11,7 +11,7 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
   # Install a package using 'rug'.
   def install
     should = @resource.should(:ensure)
-    self.debug "Ensuring => #{should}"
+    debug "Ensuring => #{should}"
     wanted = @resource[:name]
 
     # XXX: We don't actually deal with epochs here.
@@ -24,9 +24,9 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
     end
     rug "--quiet", :install, "-y", wanted
 
-    unless self.query
+    unless query
       raise Puppet::ExecutionFailure.new(
-        "Could not find package #{self.name}"
+        "Could not find package #{name}"
       )
     end
   end
@@ -47,6 +47,6 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
 
   def update
     # rug install can be used for update, too
-    self.install
+    install
   end
 end

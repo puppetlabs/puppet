@@ -30,7 +30,7 @@ class Puppet::IndirectorTesting
   def to_pson
     {
       'document_type' => 'IndirectorTesting',
-      'data'          => self.to_data_hash,
+      'data'          => to_data_hash,
       'metadata'      => { 'api_version' => 1 }
     }.to_pson
   end

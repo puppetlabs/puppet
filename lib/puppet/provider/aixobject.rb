@@ -140,7 +140,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     return "" unless hash
     arg_list = []
     hash.each {|key, val|
-      arg_list += self.get_arguments(key, val, mapping, hash)
+      arg_list += get_arguments(key, val, mapping, hash)
     }
     arg_list
   end
@@ -173,7 +173,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
         key = key_str.to_sym
         val.strip! if val
 
-        properties = self.load_attribute(key, val, mapping, properties)
+        properties = load_attribute(key, val, mapping, properties)
       end
     }
     properties.empty? ? nil : properties
@@ -197,7 +197,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
 
     attrs.each { |val|
       key = key_list.shift.downcase.to_sym
-      properties = self.load_attribute(key, val, mapping, properties)
+      properties = load_attribute(key, val, mapping, properties)
     }
     properties.empty? ? nil : properties
   end
@@ -211,9 +211,9 @@ class Puppet::Provider::AixObject < Puppet::Provider
     lines = output.split("\n")
     # if it begins with #something:... is a colon separated list.
     if lines[0] =~ /^#.*:/
-      self.parse_colon_list(lines[1], lines[0][1..-1].split(':'), mapping)
+      parse_colon_list(lines[1], lines[0][1..-1].split(':'), mapping)
     else
-      self.parse_attr_list(lines[0], mapping)
+      parse_attr_list(lines[0], mapping)
     end
   end
 
@@ -224,10 +224,10 @@ class Puppet::Provider::AixObject < Puppet::Provider
     if @objectinfo.nil? or refresh == true
       # Execute lsuser, split all attributes and add them to a dict.
       begin
-        output = execute(self.lscmd)
-        @objectinfo = self.parse_command_output(output)
+        output = execute(lscmd)
+        @objectinfo = parse_command_output(output)
         # All attributtes without translation
-        @objectosinfo = self.parse_command_output(output, nil)
+        @objectosinfo = parse_command_output(output, nil)
       rescue Puppet::ExecutionFailure => detail
         # Print error if needed. FIXME: Do not check the user here.
         Puppet.debug "aix.getinfo(): Could not find #{@resource.class.name} #{@resource.name}: #{detail}"
@@ -252,7 +252,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   def self.list_all
     names = []
     begin
-      output = execute([self.command(:list), 'ALL'])
+      output = execute([command(:list), 'ALL'])
 
       output = output.split("\n").select{ |line| line != /^#/ }
 
@@ -315,7 +315,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     end
 
     begin
-      execute(self.addcmd)
+      execute(addcmd)
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
     end
@@ -330,7 +330,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     end
 
     begin
-      execute(self.deletecmd)
+      execute(deletecmd)
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not delete #{@resource.class.name} #{@resource.name}: #{detail}", detail.backtrace
     end

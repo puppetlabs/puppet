@@ -48,7 +48,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
       args << "--urlhost" << val
     end
 
-    args << self.name
+    args << name
     if val = @resource[:admin]
       args << val
     else
@@ -66,7 +66,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
   def destroy(purge = false)
     args = []
     args << "--archives" if purge
-    args << self.name
+    args << name
     rmlist(*args)
   end
 
@@ -98,7 +98,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
   # getting some double entendre here....
   def query
     self.class.instances.each do |list|
-      if list.name == self.name or list.name.downcase == self.name
+      if list.name == name or list.name.downcase == name
         return list.properties
       end
     end

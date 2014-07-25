@@ -77,11 +77,11 @@ class Nagios::Base
     else
       if parameter?(:name)
         return :name
-      elsif tmp = (self.name.to_s + "_name").intern and parameter?(tmp)
+      elsif tmp = (name.to_s + "_name").intern and parameter?(tmp)
         @namevar = tmp
         return @namevar
       else
-        raise "Type #{self.name} has no name var"
+        raise "Type #{name} has no name var"
       end
     end
   end
@@ -162,7 +162,7 @@ class Nagios::Base
 
   # Return our name as the string.
   def self.to_s
-    self.name.to_s
+    name.to_s
   end
 
   # Return a type by name.
@@ -237,13 +237,13 @@ class Nagios::Base
   end
 
   def namevar
-    (self.type + "_name").intern
+    (type + "_name").intern
   end
 
   def parammap(param)
     unless defined?(@map)
       map = {
-        self.namevar => "cn"
+        namevar => "cn"
       }
       map.update(self.class.map) if self.class.map
     end
@@ -271,7 +271,7 @@ class Nagios::Base
   # okay, this sucks
   # how do i get my list of ocs?
   def to_ldif
-    str = self.dn + "\n"
+    str = dn + "\n"
     ocs = Array.new
     if self.class.ocs
       # i'm storing an array, so i have to flatten it and stuff
@@ -288,14 +288,14 @@ class Nagios::Base
     }
     @parameters.each { |name,value|
       next if self.class.suppress.include?(name)
-      ldapname = self.parammap(name)
+      ldapname = parammap(name)
       str += ldapname + ": #{value}\n"
     }
     str += "\n"
   end
 
   def to_s
-    str = "define #{self.type} {\n"
+    str = "define #{type} {\n"
 
     @parameters.keys.sort.each { |param|
       value = @parameters[param]
