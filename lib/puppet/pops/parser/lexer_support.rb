@@ -103,7 +103,7 @@ module Puppet::Pops::Parser::LexerSupport
       # This format is very compact and is intended for debugging output from racc parsser in
       # debug mode. If this is made more elaborate the output from a debug run becomes very hard to read.
       #
-      "'#{self[:value]}'"
+      "'#{self[:value]} #{@token_array[0]}'"
     end
     # TODO: Make this comparable for testing
     # vs symbolic, vs array with symbol and non hash, array with symbol and hash)
