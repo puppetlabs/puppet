@@ -364,12 +364,13 @@ describe "Puppet::Parser::Compiler" do
       end
 
       it 'a missing variable as default value becomes undef' do
+        # strict variables not on, 
         catalog = compile_to_catalog(<<-MANIFEST)
-          class a ($b=$x) { notify {$b: message=>'meh'} }
+        class a ($b=$x) { notify {test: message=>"yes ${undef == $b}" } }
           include a
         MANIFEST
 
-        expect(catalog).to have_resource("Notify[undef]").with_parameter(:message, "meh")
+        expect(catalog).to have_resource("Notify[test]").with_parameter(:message, "yes true")
       end
     end
 

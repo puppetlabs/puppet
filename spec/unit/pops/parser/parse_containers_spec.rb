@@ -10,7 +10,12 @@ describe "egrammar parsing containers" do
 
   context "When parsing file scope" do
     it "$a = 10 $b = 20" do
-      dump(parse("$a = 10 $b = 20")).should == "(block (= $a 10) (= $b 20))"
+      dump(parse("$a = 10 $b = 20")).should == [
+        "(block",
+        "  (= $a 10)",
+        "  (= $b 20)",
+        ")"
+        ].join("\n")
     end
 
     it "$a = 10" do
@@ -24,7 +29,11 @@ describe "egrammar parsing containers" do
     end
 
     it "class foo { class bar {} }" do
-      dump(parse("class foo { class bar {}}")).should == "(class foo (block (class foo::bar ())))"
+      dump(parse("class foo { class bar {}}")).should == [
+        "(class foo (block",
+        "  (class foo::bar ())",
+        "))"
+        ].join("\n")
     end
 
     it "class foo::bar {}" do
@@ -52,7 +61,12 @@ describe "egrammar parsing containers" do
     end
 
     it "class foo {$a = 10 $b = 20}" do
-      dump(parse("class foo {$a = 10 $b = 20}")).should == "(class foo (block (= $a 10) (= $b 20)))"
+      dump(parse("class foo {$a = 10 $b = 20}")).should == [
+        "(class foo (block",
+        "  (= $a 10)",
+        "  (= $b 20)",
+        "))"
+        ].join("\n")
     end
 
     context "it should handle '3x weirdness'" do
@@ -118,12 +132,20 @@ describe "egrammar parsing containers" do
     end
 
     it "class foo { define bar {}}" do
-      dump(parse("class foo {define bar {}}")).should == "(class foo (block (define foo::bar ())))"
+      dump(parse("class foo {define bar {}}")).should == [
+        "(class foo (block",
+        "  (define foo::bar ())",
+        "))"
+        ].join("\n")
     end
 
     it "define foo { define bar {}}" do
       # This is illegal, but handled as part of validation
-      dump(parse("define foo { define bar {}}")).should == "(define foo (block (define bar ())))"
+      dump(parse("define foo { define bar {}}")).should == [
+        "(define foo (block",
+        "  (define bar ())",
+        "))"
+        ].join("\n")
     end
 
     it "define foo::bar {}" do
@@ -143,7 +165,12 @@ describe "egrammar parsing containers" do
     end
 
     it "define foo {$a = 10 $b = 20}" do
-      dump(parse("define foo {$a = 10 $b = 20}")).should == "(define foo (block (= $a 10) (= $b 20)))"
+      dump(parse("define foo {$a = 10 $b = 20}")).should == [
+        "(define foo (block",
+        "  (= $a 10)",
+        "  (= $b 20)",
+        "))"
+        ].join("\n")
     end
 
     context "it should handle '3x weirdness'" do
@@ -223,7 +250,12 @@ describe "egrammar parsing containers" do
     end
 
     it "node foo inherits bar {$a = 10 $b = 20}" do
-      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == "(node (matches 'foo') (parent 'bar') (block (= $a 10) (= $b 20)))"
+      dump(parse("node foo inherits bar {$a = 10 $b = 20}")).should == [
+        "(node (matches 'foo') (parent 'bar') (block",
+        "  (= $a 10)",
+        "  (= $b 20)",
+        "))"
+        ].join("\n")
     end
   end
 end

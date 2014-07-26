@@ -465,6 +465,11 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_SPECIALIZATION, blame, {:actual => type_name.class})
     end
 
+    # type name must conform
+    if type_name !~ Puppet::Pops::Patterns::CLASSREF
+      fail(Puppet::Pops::Issues::ILLEGAL_CLASSREF, blamed, {:name=>type_name})
+    end
+
     # The result is an array if multiple titles are given, or if titles are specified with an array
     # (possibly multiple arrays, and nested arrays).
     result_type_array = keys.size > 1 || keys[0].is_a?(Array)

@@ -319,10 +319,6 @@ module Puppet::Pops::Issues
     "Attempt to use unsupported range in #{label.a_an(semantic)}, #{count} values given for max 1"
   end
 
-  DEPRECATED_NAME_AS_TYPE = issue :DEPRECATED_NAME_AS_TYPE, :name do
-    "Resource references should now be capitalized. The given '#{name}' does not have the correct form"
-  end
-
   ILLEGAL_RELATIONSHIP_OPERAND_TYPE = issue :ILLEGAL_RELATIONSHIP_OPERAND_TYPE, :operand do
     "Illegal relationship operand, can not form a relationship with #{label.a_an(operand)}. A Catalog type is required."
   end
@@ -411,9 +407,6 @@ module Puppet::Pops::Issues
     "Illegal Class name in class reference. #{label.a_an_uc(name)} cannot be used where a String is expected"
   end
 
-  # Issues when an expression is used where it is not legal.
-  # E.g. an arithmetic expression where a hostname is expected.
-  #
   ILLEGAL_DEFINITION_NAME = hard_issue :ILLEGAL_DEFINTION_NAME, :name do
     "Unacceptable name. The name '#{name}' is unacceptable as the name of #{label.a_an(semantic)}"
   end
@@ -452,6 +445,26 @@ module Puppet::Pops::Issues
 
   UNKNOWN_RESOURCE_TYPE = issue :UNKNOWN_RESOURCE_TYPE, :type_name do
     "Resource type not found: #{type_name.capitalize}"
+  end
+
+  ILLEGAL_RESOURCE_TYPE = hard_issue :ILLEGAL_RESOURCE_TYPE, :actual do
+    "Illegal Resource Type expression, expected result to be a type name, or untitled Resource, got #{actual}"
+  end
+
+  DUPLICATE_TITLE = issue :DUPLICATE_TITLE, :title  do
+    "The title '#{title}' has already been used in this resource expression"
+  end
+
+  MISSING_TITLE = hard_issue :MISSING_TITLE do
+    "Missing title. The title expression resulted in undef"
+  end
+
+  MISSING_TITLE_AT = hard_issue :MISSING_TITLE_AT, :index do
+    "Missing title at index #{index}. The title expression resulted in an undef title"
+  end
+
+  ILLEGAL_TITLE_TYPE_AT = hard_issue :ILLEGAL_TITLE_TYPE_AT, :index, :actual do
+    "Illegal title type at index #{index}. Expected String, got #{actual}"
   end
 
   UNKNOWN_RESOURCE = issue :UNKNOWN_RESOURCE, :type_name, :title do
@@ -515,4 +528,7 @@ module Puppet::Pops::Issues
     "The parameter $#{param_name} redefines a built in parameter in #{label.the(container)}"
   end
 
+  TYPE_MISMATCH = hard_issue :TYPE_MISMATCH, :expected, :actual do
+    "Expected value of type #{expected}, got #{actual}"
+  end
 end

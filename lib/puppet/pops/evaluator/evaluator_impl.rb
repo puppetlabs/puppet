@@ -63,18 +63,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     @@type_calculator
   end
 
-  # Polymorphic evaluate - calls eval_TYPE
+  # Evaluates the given _target_ object in the given scope.
   #
-  # ## Polymorphic evaluate
-  # Polymorphic evaluate calls a method on the format eval_TYPE where classname is the last
-  # part of the class of the given _target_. A search is performed starting with the actual class, continuing
-  # with each of the _target_ class's super classes until a matching method is found.
-  #
-  # # Description
-  # Evaluates the given _target_ object in the given scope, optionally passing a block which will be
-  # called with the result of the evaluation.
-  #
-  # @overload evaluate(target, scope, {|result| block})
+  # @overload evaluate(target, scope)
   # @param target [Object] evaluation target - see methods on the pattern assign_TYPE for actual supported types.
   # @param scope [Object] the runtime specific scope class where evaluation should take place
   # @return [Object] the result of the evaluation
@@ -98,16 +89,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     end
   end
 
-  # Polymorphic assign - calls assign_TYPE
-  #
-  # ## Polymorphic assign
-  # Polymorphic assign calls a method on the format assign_TYPE where TYPE is the last
-  # part of the class of the given _target_. A search is performed starting with the actual class, continuing
-  # with each of the _target_ class's super classes until a matching method is found.
-  #
-  # # Description
   # Assigns the given _value_ to the given _target_. The additional argument _o_ is the instruction that
   # produced the target/value tuple and it is used to set the origin of the result.
+  #
   # @param target [Object] assignment target - see methods on the pattern assign_TYPE for actual supported types.
   # @param value [Object] the value to assign to `target`
   # @param o [Puppet::Pops::Model::PopsObject] originating instruction
@@ -119,10 +103,22 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     @@assign_visitor.visit_this_3(self, target, value, o, scope)
   end
 
+  # Computes a value that can be used as the LHS in an assignment.
+  # @param o [Object] the expression to evaluate as a left (assignable) entity
+  # @param scope [Object] the runtime specific scope where evaluation should take place
+  #
+  # @api
+  #
   def lvalue(o, scope)
     @@lvalue_visitor.visit_this_1(self, o, scope)
   end
 
+  # Produces a String representation of the given object _o_ as used in interpolation.
+  # @param o [Object] the expression of which a string representation is wanted
+  # @param scope [Object] the runtime specific scope where evaluation should take place
+  #
+  # @api
+  #
   def string(o, scope)
     @@string_visitor.visit_this_1(self, o, scope)
   end
@@ -133,6 +129,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @param scope [Puppet::Parser::Scope] the parent scope
   # @param variable_bindings [Hash{String => Object}] the variable names and values to bind (names are keys, bound values are values)
   # @param block [Puppet::Pops::Model::BlockExpression] the sequence of expressions to evaluate in the new scope
+  #
+  # @api private
+  #
   def evaluate_block_with_bindings(scope, variable_bindings, block_expr)
     with_guarded_scope(scope) do
       # change to create local scope_from - cannot give it file and line -
@@ -643,21 +642,89 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Produces Array[PAnyType], an array of resource references
   #
   def eval_ResourceExpression(o, scope)
-    case o.form
-    when :exported
-      exported = true
-      virtual = true
-    when :virtual
-      exported = false
-      virtual = true
+    exported = o.exported
+    virtual = o.virtual
+
+    # Get the type name
+    type_name =
+    if (tmp_name = o.type_name).is_a?(Puppet::Pops::Model::QualifiedName)
+      tmp_name.value # already validated as a name
     else
-      exported = virtual = false
+      evaluated_name = evaluate(tmp_name, scope)
+      # must be String or Resource Type
+      case evaluated_name
+      when String
+        if evaluated_name !~ Puppet::Pops::Patterns::CLASSREF
+          fail(Puppet::Pops::Issues::ILLEGAL_CLASSREF, blamed, {:name=>type_name})
+        end
+      when Puppet::Pops::Types::PResourceType
+        unless evaluated_name.title().nil?
+          fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
+        end
+        evaluated_name.type_name # assume validated
+      else
+        actual = type_calculator.generalize!(type_calculator.infer(evaluated_name)).to_s
+        fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=>actual})
+      end
     end
-    type_name = evaluate(o.type_name, scope)
-    o.bodies.map do |body|
-      titles = [evaluate(body.title, scope)].flatten
-      evaluated_parameters = body.operations.map {|op| evaluate(op, scope) }
-      create_resources(o, scope, virtual, exported, type_name, titles, evaluated_parameters)
+
+    titles_to_body = {}
+    body_to_titles = {}
+    body_to_params = {}
+
+    # titles are evaluated before attribute operations
+    o.bodies.map do | body |
+      titles = evaluate(body.title, scope)
+
+      # Title may not be nil
+      # Titles may be given as an array, it is ok if it is empty, but not if it contains nil entries
+      # Titles must be unique in the same resource expression
+      # There may be a :default entry, its entries apply with lower precedence
+      #
+      if titles.nil?
+        fail(Puppet::Pops::Issues::MISSING_TITLE, body.title)
+      end
+      titles = [titles].flatten
+
+      # Check types of evaluated titles and duplicate entries
+      titles.each_with_index do |title, index|
+        if title.nil?
+          fail(Puppet::Pops::Issues::MISSING_TITLE_AT, body.title, {:index => index})
+
+        elsif !(title.is_a?(String) || title == :default)
+          actual = type_calculator.generalize!(type_calculator.infer(title)).to_s
+          fail(Puppet::Pops::Issues::ILLEGAL_TITLE_TYPE_AT, body.title, {:index => index, :actual => actual})
+
+        elsif titles_to_body[title]
+          fail(Puppet::Pops::Issues::DUPLICATE_TITLE, o, {:title => title})
+        end
+        titles_to_body[title] = body
+      end
+
+      # Do not create a real instance from the :default case
+      titles.delete(:default)
+
+      body_to_titles[body] = titles
+
+      # Store evaluated parameters in a hash associated with the body, but do not yet create resource
+      # since the entry containing :defaults may appear later
+      body_to_params[body] = body.operations.reduce({}) do |param_memo, op|
+        params = evaluate(op, scope)
+        params = [params] unless params.is_a?(Array)
+        params.each { |p| param_memo[p.name] = p }
+        param_memo
+      end
+    end
+
+    # Titles and Operations have now been evaluated and resources can be created
+    # Each production is a PResource, and an array of all is produced as the result of
+    # evaluating the ResourceExpression.
+    #
+    defaults_hash = body_to_params[titles_to_body[:default]] || {}
+    o.bodies.map do | body |
+      titles = body_to_titles[body]
+      params = defaults_hash.merge(body_to_params[body] || {})
+      create_resources(o, scope, virtual, exported, type_name, titles, params.values)
     end.flatten.compact
   end
 
@@ -668,19 +735,35 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     evaluated_resources
   end
 
-  # Produces 3x array of parameters
+  # Produces 3x parameter
   def eval_AttributeOperation(o, scope)
     create_resource_parameter(o, scope, o.attribute_name, evaluate(o.value_expr, scope), o.operator)
+  end
+
+  def eval_AttributesOperation(o, scope)
+    hashed_params = evaluate(o.expr, scope)
+    unless hashed_params.is_a?(Hash)
+      actual = type_calculator.generalize!(type_calculator.infer(hashed_params)).to_s
+      fail(Puppet::Pops::Issues::TYPE_MISMATCH, o.expr, {:expected => 'Hash', :actual => actual})
+    end
+    hashed_params.map { |k,v| create_resource_parameter(o, scope, k, v, :'=>') }
   end
 
   # Sets default parameter values for a type, produces the type
   #
   def eval_ResourceDefaultsExpression(o, scope)
-    type_name = o.type_ref.value # a QualifiedName's string value
+    type = evaluate(o.type_ref, scope)
+    type_name =
+    if type.is_a?(Puppet::Pops::Types::PResourceType) && !type.type_name.nil? && type.title.nil?
+      type.type_name # assume it is a valid name
+    else
+      actual = type_calculator.generalize!(type_calculator.infer(type))
+      fail(Issues::ILLEGAL_RESOURCE_TYPE, o.type_ref, {:actual => actual})
+    end
     evaluated_parameters = o.operations.map {|op| evaluate(op, scope) }
     create_resource_defaults(o, scope, type_name, evaluated_parameters)
     # Produce the type
-    evaluate(o.type_ref, scope)
+    type
   end
 
   # Evaluates function call by name.
@@ -805,15 +888,13 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     name = evaluate(o.expr, scope)
 
     # Should be caught by validation, but make this explicit here as well, or mysterious evaluation issues
-    # may occur.
+    # may occur for some evaluation use cases.
     case name
     when String
     when Numeric
     else
       fail(Issues::ILLEGAL_VARIABLE_EXPRESSION, o.expr)
     end
-    # TODO: Check for valid variable name (Task for validator)
-    # TODO: semantics of undefined variable in scope, this just returns what scope does == value or nil
     get_variable_value(name, o, scope)
   end
 
@@ -836,7 +917,6 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   #
   def eval_TextExpression o, scope
     if o.expr.is_a?(Puppet::Pops::Model::QualifiedName)
-      # TODO: formalize, when scope returns nil, vs error
       string(get_variable_value(o.expr.value, o, scope), scope)
     else
       string(evaluate(o.expr, scope), scope)
