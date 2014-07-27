@@ -1,22 +1,8 @@
 #
-# The Puppet Pops Metamodel
+# The Puppet Pops Metamodel Implementation
 #
-# This module contains a formal description of the Puppet Pops (*P*uppet *OP*eration instruction*S*).
-# It describes a Metamodel containing DSL instructions, a description of PuppetType and related
-# classes needed to evaluate puppet logic.
-# The metamodel resembles the existing AST model, but it is a semantic model of instructions and
-# the types that they operate on rather than an Abstract Syntax Tree, although closely related.
-#
-# The metamodel is anemic (has no behavior) except basic datatype and type
-# assertions and reference/containment assertions.
-# The metamodel is also a generalized description of the Puppet DSL to enable the
-# same metamodel to be used to express Puppet DSL models (instances) with different semantics as
-# the language evolves.
-#
-# The metamodel is concretized by a validator for a particular version of
-# the Puppet DSL language.
-#
-# This metamodel is expressed using RGen.
+# The Puppet Pops Metamodel consists of two parts; the metamodel expressed with RGen in model_meta.rb,
+# and this file which mixes in implementation details.
 #
 
 require 'rgen/metamodel_builder'
@@ -27,16 +13,7 @@ require 'rgen/ecore/ecore_to_ruby'
 module Puppet::Pops
   require 'puppet/pops/model/model_meta'
 
-  # TODO: Later, if faster dump/restore of the model is wanted (it saves ~50ms in load time)
-  # this can be done by something like this:
-  # if dumpfile.exists?
-  #   root_epackage = Marshal.load(File.read(Dumpfile))
-  #   Model = RGen::ECore::ECoreToRuby.new.create_module(root_epackage)
-  # else
-  #   # build the metamodel part
-  #   # move the require of the meta part here
-  #  File.open(dumpfile, "w") {|f| f.write(Marshal.dump(Puppet::Pops::Model.ecore)) }
-  #end
+  # TODO: See PUP-2978 for possible performance optimization
 
   # Mix in implementation into the generated code
   module Model

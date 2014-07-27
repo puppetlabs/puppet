@@ -1,30 +1,15 @@
 require 'rgen/metamodel_builder'
 
 # The Types model is a model of Puppet Language types.
-#
-# The exact relationship between types is not visible in this model wrt. the PDataType which is an abstraction
-# of Scalar, Array[Data], and Hash[Scalar, Data] nested to any depth. This means it is not possible to
-# infer the type by simply looking at the inheritance hierarchy. The {Puppet::Pops::Types::TypeCalculator} should
-# be used to answer questions about types. The {Puppet::Pops::Types::TypeFactory} should be used to create an instance
-# of a type whenever one is needed.
-#
-# The implementation of the Types model contains methods that are required for the type objects to behave as
-# expected when comparing them and using them as keys in hashes. (No other logic is, or should be included directly in
-# the model's classes).
+# It consists of two parts; the meta-model expressed using RGen (in types_meta.rb) and this file which
+# mixes in the implementation.
 #
 # @api public
 #
 module Puppet::Pops
   require 'puppet/pops/types/types_meta'
 
-  # TODO: Later, if faster loading from a dumped meta model is wanted, do something like this:
-  #  if File.exist?(dumpfile)
-  #    root_epackage = Marshal.load(File.read(TypesDumpfile))
-  #    Types = RGen::ECore::ECoreToRuby.new.create_module(root_epackage)
-  #  else
-  #    # Move requirement of meta model here
-  #    File.open(TypesDumpfile, "w") {|f| f.write(Marshal.dump(Puppet::Pops::Types.ecore)) }
-  #  end
+  # TODO: See PUP-2978 for possible performance optimization
 
   # Mix in implementation part of the Bindings Module
   module Types

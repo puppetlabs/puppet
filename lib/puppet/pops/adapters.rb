@@ -69,6 +69,7 @@ module Puppet::Pops::Adapters
     # @note This is an expensive operation
     #
     def line
+      # Optimization: manual inlining of locator accessor since this method is frequently called
       (@locator ||= find_locator(@adapted.eContainer)).line_for_offset(offset)
     end
 

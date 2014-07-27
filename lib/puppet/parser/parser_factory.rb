@@ -47,7 +47,7 @@ module Puppet::Parser
       begin
         require 'rgen/metamodel_builder'
       rescue LoadError
-        raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.6 is required when using the setting '--parser future'. Please install 'rgen'.")
+        raise Puppet::DevError.new("The gem 'rgen' version >= 0.7.0 is required when using the setting '--parser future'. Please install 'rgen'.")
       end
       # Since RGen is optional, there is nothing specifying its version.
       # It is not installed in any controlled way, so not possible to use gems to check (it may be installed some other way).
@@ -61,7 +61,7 @@ module Puppet::Parser
         raise "no eContainingFeature" if litstring.eContainingFeature() != :left_expr
       rescue => e
         # TODO: RGen can raise exceptions for other reasons!
-        raise Puppet::DevError.new("The gem 'rgen' version >= 0.6.6 is required when using '--parser future'. An older version is installed, please update.")
+        raise Puppet::DevError.new("The gem 'rgen' version >= 0.7.0 is required when using '--parser future'. An older version is installed, please update.")
       end
     end
 
