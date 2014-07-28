@@ -89,7 +89,7 @@ Puppet::Face.define(:parser, '0.0.1') do
       options = args.pop
       if options[:e]
         dump_parse(options[:e], 'command-line-string', options, false)
-      elsif (files = args).empty?
+      elsif args.empty?
         if ! STDIN.tty?
           dump_parse(STDIN.read, 'stdin', options)
         else
@@ -97,6 +97,7 @@ Puppet::Face.define(:parser, '0.0.1') do
         end
       else
         missing_files = []
+        files = args
         files.each do |file|
           missing_files << file if ! Puppet::FileSystem.exist?(file)
           dump_parse(File.read(file), file, options)
