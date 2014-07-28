@@ -651,17 +651,22 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       tmp_name.value # already validated as a name
     else
       evaluated_name = evaluate(tmp_name, scope)
+
       # must be String or Resource Type
       case evaluated_name
       when String
-        if evaluated_name !~ Puppet::Pops::Patterns::CLASSREF
-          fail(Puppet::Pops::Issues::ILLEGAL_CLASSREF, blamed, {:name=>type_name})
+        resulting_name = evaluated_name.downcase
+        if resulting_name !~ Puppet::Pops::Patterns::CLASSREF
+          fail(Puppet::Pops::Issues::ILLEGAL_CLASSREF, o.type_name, {:name=>resulting_name})
         end
+        resulting_name
+
       when Puppet::Pops::Types::PResourceType
         unless evaluated_name.title().nil?
           fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
         end
         evaluated_name.type_name # assume validated
+
       else
         actual = type_calculator.generalize!(type_calculator.infer(evaluated_name)).to_s
         fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=>actual})
