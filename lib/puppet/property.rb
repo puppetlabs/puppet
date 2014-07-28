@@ -189,7 +189,7 @@ class Puppet::Property < Puppet::Parameter
   # @api private
   #
   def call_valuemethod(name, value)
-    if method = self.class.value_option(name, :method) and self.respond_to?(method)
+    if (method = self.class.value_option(name, :method)) && self.respond_to?(method)
       begin
         self.send(method)
       rescue Puppet::Error
@@ -218,7 +218,7 @@ class Puppet::Property < Puppet::Parameter
     begin
       if current_value == :absent
         return "defined '#{name}' as #{self.class.format_value_for_display should_to_s(newvalue)}"
-      elsif newvalue == :absent or newvalue == [:absent]
+      elsif (newvalue == :absent) || (newvalue == [:absent])
         return "undefined '#{name}' from #{self.class.format_value_for_display is_to_s(current_value)}"
       else
         return "#{name} changed #{self.class.format_value_for_display is_to_s(current_value)} to #{self.class.format_value_for_display should_to_s(newvalue)}"
@@ -241,9 +241,9 @@ class Puppet::Property < Puppet::Parameter
   def event_name
     value = self.should
 
-    event_name = self.class.value_option(value, :event) and return event_name
+    (event_name = self.class.value_option(value, :event)) && (return event_name)
 
-    name == :ensure or return (name.to_s + "_changed").to_sym
+    (name == :ensure) || (return (name.to_s + "_changed").to_sym)
 
     return (resource.type.to_s + case value
     when :present; "_created"
@@ -344,7 +344,7 @@ class Puppet::Property < Puppet::Parameter
       #
       # This does mean that property equality is not commutative, and will not
       # work unless the `is` value is carefully arranged to match the should.
-      return (is == @should or is == @should.map(&:to_s))
+      return ((is == @should) || (is == @should.map(&:to_s)))
 
       # When we stop being idiots about this, and actually have meaningful
       # semantics, this version is the thing we actually want to do.
@@ -369,7 +369,7 @@ class Puppet::Property < Puppet::Parameter
     # This preserves the older Puppet behaviour of doing raw and string
     # equality comparisons for all equality.  I am not clear this is globally
     # desirable, but at least it is not a breaking change. --daniel 2011-11-11
-    current == desired or current == desired.to_s
+    (current == desired) || (current == desired.to_s)
   end
 
   # Produces a pretty printing string for the given value.

@@ -141,7 +141,7 @@ module Puppet::Parser::Functions
     arity = options[:arity] || -1
     ftype = options[:type] || :statement
 
-    unless ftype == :statement or ftype == :rvalue
+    unless (ftype == :statement) || (ftype == :rvalue)
       raise Puppet::DevError, "Invalid statement type #{ftype.inspect}"
     end
 

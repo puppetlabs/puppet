@@ -206,7 +206,7 @@ class Puppet::Parser::Compiler
     end
 
     hostclasses = classes.collect do |name|
-      scope.find_hostclass(name, :assume_fqname => fqname) or raise Puppet::Error, "Could not find class #{name} for #{node.name}"
+      scope.find_hostclass(name, :assume_fqname => fqname) || (raise Puppet::Error, "Could not find class #{name} for #{node.name}")
     end
 
     if class_parameters
@@ -597,7 +597,7 @@ class Puppet::Parser::Compiler
   # which need to get evaluated into native resources.
   def unevaluated_resources
     # The order of these is significant for speed due to short-circuting
-    resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
+    resources.reject { |resource| resource.evaluated? || resource.virtual? || resource.builtin_type? }
   end
 
   # Creates the injector from bindings found in the current environment.

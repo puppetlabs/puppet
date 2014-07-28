@@ -148,6 +148,6 @@ This is for back compatibility to interpolate variables with %. % interpolation 
     end
   end
 
-  desired || default or raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()"
+  (desired || default) or (raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()")
   end
 end

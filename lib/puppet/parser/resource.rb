@@ -225,7 +225,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   def override_parameter(param)
     # This can happen if the override is defining a new parameter, rather
     # than replacing an existing one.
-    (set_parameter(param) and return) unless current = @parameters[param.name]
+    (set_parameter(param) && return) unless current = @parameters[param.name]
 
     # The parameter is already set.  Fail if they're not allowed to override it.
     unless param.source.child_of?(current.source)

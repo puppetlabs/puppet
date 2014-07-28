@@ -536,7 +536,7 @@ class Puppet::Parser::Lexer
   def slurpstring(terminators,escapes=%w{ \\  $ ' " r n t s }+["\n"],ignore_invalid_escapes=false)
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
-    str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
+    (str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/)) || (lex_error "Unclosed quote after '#{last}' in '#{rest}'")
     @line += str.count("\n") # literal carriage returns add to the line count.
     str.gsub!(/\\(.)/m) {
       ch = $1
