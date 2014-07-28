@@ -17,7 +17,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
     # Cannot use munge of the group property to canonicalize @should
     # since the default array_matching comparison is not commutative
-    should_empty = should.nil? or should.empty?
+    (should_empty = should.nil?) || should.empty?
 
     return false if current.empty? != should_empty
 

@@ -99,7 +99,7 @@ Puppet::Type.type(:mount).provide(
     end
     instances = []
     mount_output = mountcmd.split("\n")
-    if mount_output.length >= 2 and mount_output[1] =~ /^[- \t]*$/
+    if (mount_output.length >= 2) && (mount_output[1] =~ /^[- \t]*$/)
       # On some OSes (e.g. AIX) mount output begins with a header line
       # followed by a line consisting of dashes and whitespace.
       # Discard these two lines.
