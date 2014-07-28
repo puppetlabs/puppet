@@ -63,7 +63,7 @@ describe "http compression" do
 
     it "should not add Accept-Encoding header if http compression is not available" do
       Puppet[:http_compression] = false
-      @uncompressor.add_accept_encoding({}).should == {}
+      @uncompressor.add_accept_encoding({}).should == {'accept-encoding' => 'identity'}
     end
 
     describe "when uncompressing response body" do
