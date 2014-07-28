@@ -46,6 +46,26 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       lambda { provider.install }.should raise_exception(Puppet::ExecutionFailure)
     end
 
+    describe "and install_options are given" do
+      before do
+        resource[:install_options] = ['-x', {'--arg' => 'value'}]
+      end
+
+      it "should call pacman to install the right package quietly when yaourt is not installed" do
+        provider.stubs(:yaourt?).returns(false)
+        args = ['--noconfirm', '--noprogressbar', '-x', '--arg=value', '-Sy', resource[:name]]
+        provider.expects(:pacman).at_least_once.with(*args).returns ''
+        provider.install
+      end
+
+      it "should call yaourt to install the right package quietly when yaourt is installed" do
+        provider.stubs(:yaourt?).returns(true)
+        args = ['--noconfirm', '-x', '--arg=value', '-S', resource[:name]]
+        provider.expects(:yaourt).at_least_once.with(*args).returns ''
+        provider.install
+      end
+    end
+
     context "when :source is specified" do
       let(:install_seq) { sequence("install") }
 
