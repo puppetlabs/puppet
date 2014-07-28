@@ -25,20 +25,17 @@ describe Puppet::Type.type(:package).provider(:pacman) do
       })
     end
 
-    it "should call pacman to install the right package quietly" do
+    it "should call pacman to install the right package quietly when yaourt is not installed" do
+      provider.stubs(:yaourt?).returns(false)
+      args = ['--noconfirm', '--noprogressbar', '-Sy', resource[:name]]
+      provider.expects(:pacman).at_least_once.with(*args).returns ''
+      provider.install
+    end
 
-      if provider.yaourt?
-        args = ['/usr/bin/yaourt', '--noconfirm', '-S', resource[:name]]
-      else
-        args = ['/usr/bin/pacman', '--noconfirm', '--noprogressbar', '-Sy', resource[:name]]
-      end
-
-      executor.
-        expects(:execute).
-        at_least_once.
-        with(args, no_extra_options).
-        returns ''
-
+    it "should call yaourt to install the right package quietly when yaourt is installed" do
+      provider.stubs(:yaourt?).returns(true)
+      args = ['--noconfirm', '-S', resource[:name]]
+      provider.expects(:yaourt).at_least_once.with(*args).returns ''
       provider.install
     end
 
