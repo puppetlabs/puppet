@@ -221,7 +221,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # Removes a package from the system.
   def uninstall
     cmd = %w{--noconfirm --noprogressbar}
-    cmd << uninstall_options if @resource[:uninstall_options]
+    cmd += uninstall_options if @resource[:uninstall_options]
     cmd << "-R" << @resource[:name]
     pacman *cmd
   end

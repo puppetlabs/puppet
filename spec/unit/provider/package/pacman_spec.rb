@@ -149,11 +149,15 @@ describe Puppet::Type.type(:package).provider(:pacman) do
 
   describe "when uninstalling" do
     it "should call pacman to remove the right package quietly" do
-      executor.
-        expects(:execute).
-        with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", resource[:name]], no_extra_options).
-        returns ""
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", resource[:name]]
+      executor.expects(:execute).with(args, no_extra_options).returns ""
+      provider.uninstall
+    end
 
+    it "adds any uninstall_options" do
+      resource[:uninstall_options] = ['-x', {'--arg' => 'value'}]
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-x", "--arg=value", "-R", resource[:name]]
+      executor.expects(:execute).with(args, no_extra_options).returns ""
       provider.uninstall
     end
   end
