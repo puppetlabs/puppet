@@ -661,6 +661,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         end
         resulting_name
 
+      when Puppet::Pops::Types::PHostClassType
+        unless evaluated_name.class_name.nil?
+          fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
+        end
+        'class'
+
       when Puppet::Pops::Types::PResourceType
         unless evaluated_name.title().nil?
           fail(Puppet::Pops::Issues::ILLEGAL_RESOURCE_TYPE, o.type_name, {:actual=> evaluated_name.to_s})
