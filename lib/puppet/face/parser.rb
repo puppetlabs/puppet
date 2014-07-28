@@ -96,29 +96,33 @@ Puppet::Face.define(:parser, '0.0.1') do
         dump_parse(options[:e], 'command-line-string', options, false)
       elsif args.empty?
         if ! STDIN.tty?
-          dump_parse(STDIN.read, 'stdin', options)
+          dump_parse(STDIN.read, 'stdin', options, false)
         else
           raise Puppet::Error, "No input to parse given on command line or stdin"
         end
       else
         missing_files = []
         files = args
-        files.each do |file|
-          if Puppet::FileSystem.exist?(file)
-            dump_parse(File.read(file), file, options)
-          else
-            missing_files << file
-          end
+        available_files = files.select do |file|
+          Puppet::FileSystem.exist?(file)
         end
-        unless missing_files.empty?
-          raise Puppet::Error, "One or more file(s) specified did not exist:\n#{missing_files.collect {|f| " " * 3 + f + "\n"}}"
+        missing_files = files - available_files
+
+        dumps = available_files.collect do |file|
+          dump_parse(File.read(file), file, options)
+        end.join("")
+
+        if missing_files.empty?
+          dumps
+        else
+          dumps + "One or more file(s) specified did not exist:\n" + missing_files.collect { |f| "   #{f}" }.join("\n")
         end
       end
-      nil
     end
   end
 
   def dump_parse(source, filename, options, show_filename = true)
+    output = ""
     dumper = Puppet::Pops::Model::ModelTreeDumper.new
     evaluating_parser = Puppet::Pops::Parser::EvaluatingParser.new
     begin
@@ -128,17 +132,17 @@ Puppet::Face.define(:parser, '0.0.1') do
         # side step the assert_and_report step
         parse_result = evaluating_parser.parser.parse_string(source)
       end
+      if show_filename
+        output << "--- #{filename}"
+      end
+      output << dumper.dump(parse_result) << "\n"
     rescue Puppet::ParseError => detail
       if show_filename
-        puts "--- #{filename}"
+        Puppet.err("--- #{filename}")
       end
       Puppet.err(detail.message)
-      return # show all errors if multiple files where given
+      ""
     end
-    if show_filename
-      puts "--- #{filename}"
-    end
-    puts dumper.dump(parse_result)
   end
 
   # @api private
