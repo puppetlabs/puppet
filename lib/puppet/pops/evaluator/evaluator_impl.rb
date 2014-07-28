@@ -70,7 +70,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @param scope [Object] the runtime specific scope class where evaluation should take place
   # @return [Object] the result of the evaluation
   #
-  # @api
+  # @api public
   #
   def evaluate(target, scope)
     begin
@@ -97,7 +97,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @param o [Puppet::Pops::Model::PopsObject] originating instruction
   # @param scope [Object] the runtime specific scope where evaluation should take place
   #
-  # @api
+  # @api private
   #
   def assign(target, value, o, scope)
     @@assign_visitor.visit_this_3(self, target, value, o, scope)
@@ -107,7 +107,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @param o [Object] the expression to evaluate as a left (assignable) entity
   # @param scope [Object] the runtime specific scope where evaluation should take place
   #
-  # @api
+  # @api private
   #
   def lvalue(o, scope)
     @@lvalue_visitor.visit_this_1(self, o, scope)
@@ -117,7 +117,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @param o [Object] the expression of which a string representation is wanted
   # @param scope [Object] the runtime specific scope where evaluation should take place
   #
-  # @api
+  # @api public
   #
   def string(o, scope)
     @@string_visitor.visit_this_1(self, o, scope)
