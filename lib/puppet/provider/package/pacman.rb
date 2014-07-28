@@ -210,19 +210,21 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     nil
   end
 
-  def install_options
-    join_options(@resource[:install_options])
-  end
-
-  def uninstall_options
-    join_options(@resource[:uninstall_options])
-  end
-
   # Removes a package from the system.
   def uninstall
     cmd = %w{--noconfirm --noprogressbar}
     cmd += uninstall_options if @resource[:uninstall_options]
     cmd << "-R" << @resource[:name]
     pacman *cmd
+  end
+
+  private
+
+  def install_options
+    join_options(@resource[:install_options])
+  end
+
+  def uninstall_options
+    join_options(@resource[:uninstall_options])
   end
 end
