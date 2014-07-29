@@ -52,7 +52,7 @@ class Puppet::Provider::Package::Windows
     end
 
     def self.install_command(resource)
-      ['msiexec.exe', '/qn', '/norestart', '/i', quote(resource[:source])]
+      ['msiexec.exe', '/qn', '/norestart', '/i', munge(resource[:source])]
     end
 
     def uninstall_command

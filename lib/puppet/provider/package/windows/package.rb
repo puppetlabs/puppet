@@ -65,6 +65,18 @@ class Puppet::Provider::Package::Windows
       end
     end
 
+    def self.munge(value)
+      quote(replace_forward_slashes(value))
+    end
+
+    def self.replace_forward_slashes(value)
+      if value.include?('/')
+        value.gsub!('/', "\\") 
+        Puppet.debug('Package source parameter contained /s - replaced with \\s')
+      end
+      value
+    end
+
     def self.quote(value)
       value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
     end

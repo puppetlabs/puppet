@@ -7,6 +7,7 @@ step "setup environments"
 stub_forge_on(master)
 
 testdir = master.tmpdir("confdir")
+puppet_conf_backup_dir = master.tmpdir("puppet-conf-backup-dir")
 
 apply_manifest_on(master, environment_manifest(testdir), :catch_failures => true)
 
@@ -24,7 +25,7 @@ master_opts = {
     'config_version' => '$confdir/static-version.sh',
   }
 }
-general = [ master_opts, testdir, { :directory_environments => true } ]
+general = [ master_opts, testdir, puppet_conf_backup_dir, { :directory_environments => true } ]
 
 results[existing_directory_scenario] = use_an_environment("testing", "directory testing", *general)
 
@@ -48,7 +49,7 @@ master_opts = {
     'config_version' => '$confdir/static-version.sh',
   }
 }
-results[master_environmentpath_scenario] = use_an_environment("testing", "master environmentpath", master_opts, testdir, :directory_environments => true, :config_print => '--section=master')
+results[master_environmentpath_scenario] = use_an_environment("testing", "master environmentpath", master_opts, testdir, puppet_conf_backup_dir, :directory_environments => true, :config_print => '--section=master')
 
 bad_environmentpath_scenario = "Test behavior of directory environments when environmentpath is set to a non-existent directory"
 step bad_environmentpath_scenario
@@ -58,28 +59,30 @@ master_opts = {
     'config_version' => '$confdir/static-version.sh',
   }
 }
-results[bad_environmentpath_scenario] = use_an_environment("testing", "bad environmentpath", master_opts, testdir, :directory_environments => true)
+results[bad_environmentpath_scenario] = use_an_environment("testing", "bad environmentpath", master_opts, testdir, puppet_conf_backup_dir, :directory_environments => true)
 
 ########################################
 step "[ Report on Environment Results ]"
+
+testdir = master.tmpdir("confdir")
 
 step "Reviewing: #{existing_directory_scenario}"
 existing_directory_expectations = lambda do |env|
   {
     :puppet_config => {
       :exit_code => 0,
-      :matches => [%r{manifest.*/tmp.*/environments/#{env}/manifests$},
-                   %r{modulepath.*/tmp.*/environments/#{env}/modules:.+},
+      :matches => [%r{manifest.*#{master['puppetpath']}/environments/#{env}/manifests$},
+                   %r{modulepath.*#{master['puppetpath']}/environments/#{env}/modules:.+},
                    %r{config_version = $}]
     },
     :puppet_module_install => {
       :exit_code => 0,
-      :matches => [%r{Preparing to install into /tmp.*/environments/#{env}/modules},
+      :matches => [%r{Preparing to install into #{master['puppetpath']}/environments/#{env}/modules},
                    %r{pmtacceptance-nginx}],
     },
     :puppet_module_uninstall => {
       :exit_code => 0,
-      :matches => [%r{Removed.*pmtacceptance-nginx.*from /tmp.*/environments/#{env}/modules}],
+      :matches => [%r{Removed.*pmtacceptance-nginx.*from #{master['puppetpath']}/environments/#{env}/modules}],
     },
     :puppet_apply => {
       :exit_code => 0,
@@ -147,24 +150,24 @@ end
 
 review[non_existent_environment_scenario] = review_results(
   results[non_existent_environment_scenario],
-  non_existent_environment_expectations.call('doesnotexist', '/tmp/.*/environments')
+  non_existent_environment_expectations.call('doesnotexist', master['puppetpath'])
 )
 
 existing_directory_with_puppet_conf_expectations = {
   :puppet_config => {
     :exit_code => 0,
-    :matches => [%r{manifest.*/tmp.*/environments/testing_environment_conf/nonstandard-manifests$},
-                 %r{modulepath.*/tmp.*/environments/testing_environment_conf/nonstandard-modules:.+},
-                 %r{config_version = /tmp/.*/environments/testing_environment_conf/local-version.sh$}]
+    :matches => [%r{manifest.*#{master['puppetpath']}/environments/testing_environment_conf/nonstandard-manifests$},
+                 %r{modulepath.*#{master['puppetpath']}/environments/testing_environment_conf/nonstandard-modules:.+},
+                 %r{config_version = #{master['puppetpath']}/environments/testing_environment_conf/local-version.sh$}]
   },
   :puppet_module_install => {
     :exit_code => 0,
-    :matches => [%r{Preparing to install into /tmp.*/environments/testing_environment_conf/nonstandard-modules},
+    :matches => [%r{Preparing to install into #{master['puppetpath']}/environments/testing_environment_conf/nonstandard-modules},
                  %r{pmtacceptance-nginx}],
   },
   :puppet_module_uninstall => {
     :exit_code => 0,
-    :matches => [%r{Removed.*pmtacceptance-nginx.*from /tmp.*/environments/testing_environment_conf/nonstandard-modules}],
+    :matches => [%r{Removed.*pmtacceptance-nginx.*from #{master['puppetpath']}/environments/testing_environment_conf/nonstandard-modules}],
   },
   :puppet_apply => {
     :exit_code => 0,
@@ -186,14 +189,14 @@ review[with_explicit_environment_conf_scenario] = review_results(
 master_environmentpath_expectations = existing_directory_expectations.call('testing').merge(
   :puppet_module_install => {
     :exit_code => 0,
-    :matches => [%r{Preparing to install into /tmp.*/confdir.*/modules},
+    :matches => [%r{Preparing to install into #{master['puppetpath']}/modules},
                  %r{pmtacceptance-nginx}],
     :expect_failure => true,
     :notes => "Runs in user mode and doesn't see the master environmenetpath setting.",
   },
   :puppet_module_uninstall => {
     :exit_code => 0,
-    :matches => [%r{Removed.*pmtacceptance-nginx.*from /tmp.*/confdir.*/modules}],
+    :matches => [%r{Removed.*pmtacceptance-nginx.*from #{master['puppetpath']}/modules}],
     :expect_failure => true,
     :notes => "Runs in user mode and doesn't see the master environmenetpath setting.",
   },

@@ -41,7 +41,7 @@ class Puppet::Provider::Package::Windows
     end
 
     def self.install_command(resource)
-      ['cmd.exe', '/c', 'start', '"puppet-install"', '/w', quote(resource[:source])]
+      ['cmd.exe', '/c', 'start', '"puppet-install"', '/w', munge(resource[:source])]
     end
 
     def uninstall_command

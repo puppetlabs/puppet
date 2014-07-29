@@ -28,6 +28,7 @@ module Puppet
             "#{manifestpath}":;
             "#{manifestpath}/site.pp":
               ensure => file,
+              mode => 0640,
               content => '
                 notify { "in #{env_name} site.pp": }
                 include testing_mod
@@ -46,6 +47,7 @@ module Puppet
 
             "#{modulepath}/#{module_name}/manifests/init.pp":
               ensure => file,
+              mode => 0640,
               content => 'class #{module_name} {
                 notify { "include #{env_name} #{module_name}": }
               }'
@@ -63,8 +65,9 @@ module Puppet
         manifest = <<-MANIFEST
           File {
             ensure => directory,
-            owner => puppet,
-            mode => 0700,
+            owner => #{master['user']},
+            group => #{master['group']},
+            mode => 0750,
           }
 
           file { "#{testdir}": }
@@ -110,6 +113,7 @@ module Puppet
 
           file { "#{testdir}/environments/testing_environment_conf/environment.conf":
             ensure => file,
+            mode => 0640,
             content => '
               modulepath = nonstandard-modules:$basemodulepath
               manifest = nonstandard-manifests
@@ -120,6 +124,7 @@ module Puppet
           file {
             "#{testdir}/environments/testing_environment_conf/local-version.sh":
               ensure => file,
+              mode => 0640,
               content => '#! /usr/bin/env bash
               echo "local testing_environment_conf"'
             ;
@@ -142,6 +147,7 @@ module Puppet
           file {
             "#{testdir}/static-version.sh":
               ensure => file,
+              mode => 0640,
               content => '#! /usr/bin/env bash
               echo "static"'
             ;
@@ -149,60 +155,111 @@ module Puppet
         MANIFEST
       end
 
+      def get_directory_hash_from(host, path)
+        dir_hash = {}
+        on(host, "ls #{path}") do |result|
+          result.stdout.split.inject(dir_hash) do |hash,f|
+            hash[f] = "#{path}/#{f}"
+            hash
+          end
+        end
+        dir_hash
+      end
+
+      def safely_shadow_directory_contents_and_yield(host, original_path, new_path, &block)
+        original_files = get_directory_hash_from(host, original_path)
+        new_files = get_directory_hash_from(host, new_path)
+        conflicts = original_files.keys & new_files.keys
+
+        step "backup original files" do
+          conflicts.each do |c|
+            on(host, "mv #{original_files[c]} #{original_files[c]}.bak")
+          end
+        end
+
+        step "shadow original files with temporary files" do
+          new_files.each do |name,full_path_name|
+            on(host, "cp -R #{full_path_name} #{original_path}/#{name}")
+          end
+        end
+
+        step "open permissions to 770 on all temporary files copied into working dir and set ownership" do
+          file_list = new_files.keys.map { |name| "#{original_path}/#{name}" }.join(' ')
+          on(host, "chown -R #{host['user']}:#{host['group']} #{file_list}")
+          on(host, "chmod -R 770 #{file_list}")
+        end
+
+        yield
+
+      ensure
+        step "clear out the temporary files" do
+          files_to_delete = new_files.keys.map { |name| "#{original_path}/#{name}" }
+          on(host, "rm -rf #{files_to_delete.join(' ')}")
+        end
+        step "move the shadowed files back to their original places" do
+          conflicts.each do |c|
+            on(host, "mv #{original_files[c]}.bak #{original_files[c]}")
+          end
+        end
+      end
+
       # Stand up a puppet master on the master node with the given master_opts
-      # using the passed confdir as the --confdir setting, and then run through a
-      # series of environment tests for the passed environment and return a hashed
-      # structure of the results.
+      # using the passed envdir as the source of the puppet environment files,
+      # and passed confdir as the directory to use for the temporary
+      # puppet.conf. It then runs through a series of environment tests for the
+      # passed environment and returns a hashed structure of the results.
       #
       # @return [Hash<Beaker::Host,Hash<Sym,Beaker::Result>>] Hash of
       #   Beaker::Hosts for each agent run keyed to a hash of Beaker::Result
       #   objects keyed by each subtest that was performed.
-      def use_an_environment(environment, description, master_opts, confdir, options = {})
-        ssldir = on(master, puppet("master --configprint ssldir")).stdout.chomp
+      def use_an_environment(environment, description, master_opts, envdir, confdir, options = {})
         master_puppet_conf = master_opts.dup # shallow clone
-        master_puppet_conf[:__commandline_args__] = "--confdir=#{confdir} --ssldir=#{ssldir}"
-        config_print = options[:config_print]
-        directory_environments = options[:directory_environments]
+
         results = {}
+        safely_shadow_directory_contents_and_yield(master, master['puppetpath'], envdir) do
 
-        with_puppet_running_on(master, master_puppet_conf, confdir) do
-          agents.each do |agent|
-            agent_results = results[agent] = {}
+          config_print = options[:config_print]
+          directory_environments = options[:directory_environments]
 
-            step "puppet agent using #{description} environment"
-            args = "-t", "--server", master
-            args << ["--environment", environment] if environment
-            # Test agents configured to use directory environments (affects environment
-            # loading on the agent, especially with regards to requests/node environment)
-            args << "--environmentpath='$confdir/environments'" if directory_environments && agent != master 
-            on(agent, puppet("agent", *args), :acceptable_exit_codes => (0..255)) do
-              agent_results[:puppet_agent] = result
-            end
+          with_puppet_running_on(master, master_puppet_conf, confdir) do
+            agents.each do |agent|
+              agent_results = results[agent] = {}
 
-            if agent == master
-              args = ["--trace", "--confdir", confdir]
+              step "puppet agent using #{description} environment"
+              args = "-t", "--server", master
               args << ["--environment", environment] if environment
-
-              step "print puppet config for #{description} environment"
-              on(agent, puppet(*(["config", "print", "basemodulepath", "modulepath", "manifest", "config_version", config_print] + args)), :acceptable_exit_codes => (0..255)) do
-                agent_results[:puppet_config] = result
+              # Test agents configured to use directory environments (affects environment
+              # loading on the agent, especially with regards to requests/node environment)
+              args << "--environmentpath='$confdir/environments'" if directory_environments && agent != master
+              on(agent, puppet("agent", *args), :acceptable_exit_codes => (0..255)) do
+                agent_results[:puppet_agent] = result
               end
 
-              step "puppet apply using #{description} environment"
-              on(agent, puppet(*(["apply", '-e', '"include testing_mod"'] + args)), :acceptable_exit_codes => (0..255)) do
-                agent_results[:puppet_apply] = result
-              end
+              if agent == master
+                args = ["--trace"]
+                args << ["--environment", environment] if environment
 
-              # Be aware that Puppet Module Tool will create the module directory path if it
-              # does not exist.  So these tests should be run last...
-              step "install a module into environment"
-              on(agent, puppet(*(["module", "install", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
-                agent_results[:puppet_module_install] = result
-              end
+                step "print puppet config for #{description} environment"
+                on(agent, puppet(*(["config", "print", "basemodulepath", "modulepath", "manifest", "config_version", config_print] + args)), :acceptable_exit_codes => (0..255)) do
+                  agent_results[:puppet_config] = result
+                end
 
-              step "uninstall a module from #{description} environment"
-              on(agent, puppet(*(["module", "uninstall", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
-                agent_results[:puppet_module_uninstall] = result
+                step "puppet apply using #{description} environment"
+                on(agent, puppet(*(["apply", '-e', '"include testing_mod"'] + args)), :acceptable_exit_codes => (0..255)) do
+                  agent_results[:puppet_apply] = result
+                end
+
+                # Be aware that Puppet Module Tool will create the module directory path if it
+                # does not exist.  So these tests should be run last...
+                step "install a module into environment"
+                on(agent, puppet(*(["module", "install", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
+                  agent_results[:puppet_module_install] = result
+                end
+
+                step "uninstall a module from #{description} environment"
+                on(agent, puppet(*(["module", "uninstall", "pmtacceptance-nginx"] + args)), :acceptable_exit_codes => (0..255)) do
+                  agent_results[:puppet_module_uninstall] = result
+                end
               end
             end
           end
