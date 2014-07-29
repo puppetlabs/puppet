@@ -1,6 +1,7 @@
 require File.join(File.dirname(__FILE__),'../../acceptance_spec_helper.rb')
 require 'puppet/acceptance/install_utils'
 
+module InstallUtilsSpec
 describe 'InstallUtils' do
 
   class ATestCase
@@ -258,4 +259,5 @@ describe 'InstallUtils' do
       testcase.install_repos_on(host, sha, 'repo-configs')
     end
   end
+end
 end
