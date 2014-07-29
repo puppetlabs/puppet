@@ -103,6 +103,21 @@ describe Puppet::Provider::Package::Windows::Package do
     end
   end
 
+  context '::munge' do
+    it 'should shell quote strings with spaces and fix forward slashes' do
+      subject.munge('c:/windows/the thing').should == '"c:\windows\the thing"'
+    end
+    it 'should leave properly formatted paths alone' do
+      subject.munge('c:\windows\thething').should == 'c:\windows\thething'
+    end
+  end
+
+  context '::replace_forward_slashes' do
+    it 'should replace forward with back slashes' do
+      subject.replace_forward_slashes('c:/windows/thing/stuff').should == 'c:\windows\thing\stuff'
+    end
+  end
+
   context '::quote' do
     it 'should shell quote strings with spaces' do
       subject.quote('foo bar').should == '"foo bar"'
