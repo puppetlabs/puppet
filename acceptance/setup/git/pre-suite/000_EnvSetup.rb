@@ -38,7 +38,7 @@ install_packages_on(hosts, PACKAGES, :check_if_exists => true)
 hosts.each do |host|
   case host['platform']
   when /windows/
-    arch = lookup_in_env('WIN32_RUBY_ARCH', 'puppet-win32-ruby', 'x86')
+    arch = host[:ruby_arch] || 'x86'
     step "#{host} Selected architecture #{arch}"
 
     revision = if arch == 'x64'
@@ -56,6 +56,8 @@ hosts.each do |host|
     on host, 'cd /opt/puppet-git-repos/puppet-win32-ruby; cp -r ruby/* /'
     on host, 'cd /lib; icacls ruby /grant "Everyone:(OI)(CI)(RX)"'
     on host, 'cd /lib; icacls ruby /reset /T'
+    on host, 'cd /; icacls bin /grant "Everyone:(OI)(CI)(RX)"'
+    on host, 'cd /; icacls bin /reset /T'
     on host, 'ruby --version'
     on host, 'cmd /c gem list'
   when /solaris/

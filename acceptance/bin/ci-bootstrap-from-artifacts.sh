@@ -36,6 +36,11 @@ if [[ "${platform}" =~ 'solaris' ]]; then
   repo_proxy="  :repo_proxy => false,"
 fi
 
+# If the platform is Windows, append $ruby_arch
+if [[ "${platform}" =~ 'win' ]]; then
+    platform="${platform}-${ruby_arch}"
+fi
+
 cat > local_options.rb <<-EOF
 {
   :hosts_file => 'config/nodes/${platform}.yaml',
