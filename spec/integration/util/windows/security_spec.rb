@@ -29,7 +29,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
     # (like \\localhost) to fail with unhelpful error messages.
     # Put a check for this upfront to aid debug should this strike again.
     service = Puppet::Type.type(:service).new(:name => 'lmhosts')
-    service.provider.status.should == :running
+    expect(service.provider.status).to eq(:running), 'lmhosts service is not running'
   end
 
   let (:sids) { @sids }
