@@ -2,57 +2,72 @@
 require 'spec_helper'
 require 'stringio'
 
-provider = Puppet::Type.type(:package).provider(:pacman)
 
-describe provider do
+describe Puppet::Type.type(:package).provider(:pacman) do
   let(:no_extra_options) { { :failonfail => true, :combine => true, :custom_environment => {} } }
   let(:executor) { Puppet::Util::Execution }
   let(:resolver) { Puppet::Util }
 
+  let(:resource) { Puppet::Type.type(:package).new(:name => 'package', :provider => 'pacman') }
+  let(:provider) { described_class.new(resource) }
+
   before do
     resolver.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
-    provider.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
+    described_class.stubs(:which).with('/usr/bin/pacman').returns('/usr/bin/pacman')
     resolver.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
-    provider.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
-    @resource = Puppet::Type.type(:package).new(:name => 'package')
-    @provider = provider.new(@resource)
+    described_class.stubs(:which).with('/usr/bin/yaourt').returns('/usr/bin/yaourt')
   end
 
   describe "when installing" do
     before do
-      @provider.stubs(:query).returns({
+      provider.stubs(:query).returns({
         :ensure => '1.0'
       })
     end
 
-    it "should call pacman to install the right package quietly" do
+    it "should call pacman to install the right package quietly when yaourt is not installed" do
+      provider.stubs(:yaourt?).returns(false)
+      args = ['--noconfirm', '--noprogressbar', '-Sy', resource[:name]]
+      provider.expects(:pacman).at_least_once.with(*args).returns ''
+      provider.install
+    end
 
-      if @provider.yaourt?
-        args = ['/usr/bin/yaourt', '--noconfirm', '-S', @resource[:name]]
-      else
-        args = ['/usr/bin/pacman', '--noconfirm', '--noprogressbar', '-Sy', @resource[:name]]
-      end
-
-      executor.
-        expects(:execute).
-        at_least_once.
-        with(args, no_extra_options).
-        returns ''
-
-      @provider.install
+    it "should call yaourt to install the right package quietly when yaourt is installed" do
+      provider.stubs(:yaourt?).returns(true)
+      args = ['--noconfirm', '-S', resource[:name]]
+      provider.expects(:yaourt).at_least_once.with(*args).returns ''
+      provider.install
     end
 
     it "should raise an ExecutionFailure if the installation failed" do
       executor.stubs(:execute).returns("")
-      @provider.expects(:query).returns(nil)
+      provider.expects(:query).returns(nil)
 
-      lambda { @provider.install }.should raise_exception(Puppet::ExecutionFailure)
+      lambda { provider.install }.should raise_exception(Puppet::ExecutionFailure)
+    end
+
+    describe "and install_options are given" do
+      before do
+        resource[:install_options] = ['-x', {'--arg' => 'value'}]
+      end
+
+      it "should call pacman to install the right package quietly when yaourt is not installed" do
+        provider.stubs(:yaourt?).returns(false)
+        args = ['--noconfirm', '--noprogressbar', '-x', '--arg=value', '-Sy', resource[:name]]
+        provider.expects(:pacman).at_least_once.with(*args).returns ''
+        provider.install
+      end
+
+      it "should call yaourt to install the right package quietly when yaourt is installed" do
+        provider.stubs(:yaourt?).returns(true)
+        args = ['--noconfirm', '-x', '--arg=value', '-S', resource[:name]]
+        provider.expects(:yaourt).at_least_once.with(*args).returns ''
+        provider.install
+      end
     end
 
     context "when :source is specified" do
-      before :each do
-        @install = sequence("install")
-      end
+      let(:install_seq) { sequence("install") }
 
       context "recognizable by pacman" do
         %w{
@@ -61,28 +76,28 @@ describe provider do
           ftp://some.package.in/the/air
         }.each do |source|
           it "should install #{source} directly" do
-            @resource[:source] = source
+            resource[:source] = source
 
             executor.expects(:execute).
               with(all_of(includes("-Sy"), includes("--noprogressbar")), no_extra_options).
-              in_sequence(@install).
+              in_sequence(install_seq).
               returns("")
 
             executor.expects(:execute).
               with(all_of(includes("-U"), includes(source)), no_extra_options).
-              in_sequence(@install).
+              in_sequence(install_seq).
               returns("")
 
-            @provider.install
+            provider.install
           end
         end
       end
 
       context "as a file:// URL" do
+        let(:actual_file_path) { "/some/package/file" }
+
         before do
-          @package_file = "file:///some/package/file"
-          @actual_file_path = "/some/package/file"
-          @resource[:source] = @package_file
+          resource[:source] = "file:///some/package/file"
         end
 
         it "should install from the path segment of the URL" do
@@ -91,35 +106,35 @@ describe provider do
                         includes("--noprogressbar"),
                         includes("--noconfirm")),
                  no_extra_options).
-            in_sequence(@install).
+            in_sequence(install_seq).
             returns("")
 
           executor.expects(:execute).
-            with(all_of(includes("-U"), includes(@actual_file_path)), no_extra_options).
-            in_sequence(@install).
+            with(all_of(includes("-U"), includes(actual_file_path)), no_extra_options).
+            in_sequence(install_seq).
             returns("")
 
-          @provider.install
+          provider.install
         end
       end
 
       context "as a puppet URL" do
         before do
-          @resource[:source] = "puppet://server/whatever"
+          resource[:source] = "puppet://server/whatever"
         end
 
         it "should fail" do
-          lambda { @provider.install }.should raise_error(Puppet::Error)
+          lambda { provider.install }.should raise_error(Puppet::Error)
         end
       end
 
       context "as a malformed URL" do
         before do
-          @resource[:source] = "blah://"
+          resource[:source] = "blah://"
         end
 
         it "should fail" do
-          lambda { @provider.install }.should raise_error(Puppet::Error)
+          lambda { provider.install }.should raise_error(Puppet::Error)
         end
       end
     end
@@ -127,19 +142,23 @@ describe provider do
 
   describe "when updating" do
     it "should call install" do
-      @provider.expects(:install).returns("install return value")
-      @provider.update.should == "install return value"
+      provider.expects(:install).returns("install return value")
+      provider.update.should == "install return value"
     end
   end
 
   describe "when uninstalling" do
     it "should call pacman to remove the right package quietly" do
-      executor.
-        expects(:execute).
-        with(["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", @resource[:name]], no_extra_options).
-        returns ""
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-R", resource[:name]]
+      executor.expects(:execute).with(args, no_extra_options).returns ""
+      provider.uninstall
+    end
 
-      @provider.uninstall
+    it "adds any uninstall_options" do
+      resource[:uninstall_options] = ['-x', {'--arg' => 'value'}]
+      args = ["/usr/bin/pacman", "--noconfirm", "--noprogressbar", "-x", "--arg=value", "-R", resource[:name]]
+      executor.expects(:execute).with(args, no_extra_options).returns ""
+      provider.uninstall
     end
   end
 
@@ -147,8 +166,8 @@ describe provider do
     it "should query pacman" do
       executor.
         expects(:execute).
-        with(["/usr/bin/pacman", "-Qi", @resource[:name]], no_extra_options)
-      @provider.query
+        with(["/usr/bin/pacman", "-Qi", resource[:name]], no_extra_options)
+      provider.query
     end
 
     it "should return the version" do
@@ -176,20 +195,20 @@ Description    : A library-based package manager with dependency support
 EOF
 
       executor.expects(:execute).returns(query_output)
-      @provider.query.should == {:ensure => "1.01.3-2"}
+      provider.query.should == {:ensure => "1.01.3-2"}
     end
 
     it "should return a nil if the package isn't found" do
       executor.expects(:execute).returns("")
-      @provider.query.should be_nil
+      provider.query.should be_nil
     end
 
     it "should return a hash indicating that the package is missing on error" do
       executor.expects(:execute).raises(Puppet::ExecutionFailure.new("ERROR!"))
-      @provider.query.should == {
+      provider.query.should == {
         :ensure => :purged,
         :status => 'missing',
-        :name => @resource[:name],
+        :name => resource[:name],
         :error => 'ok',
       }
     end
@@ -199,18 +218,18 @@ EOF
 
   describe "when fetching a package list" do
     it "should retrieve installed packages" do
-      provider.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
-      provider.installedpkgs
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Q'])
+      described_class.installedpkgs
     end
 
     it "should retrieve installed package groups" do
-      provider.expects(:execpipe).with(["/usr/bin/pacman", '-Qg'])
-      provider.installedgroups
+      described_class.expects(:execpipe).with(["/usr/bin/pacman", '-Qg'])
+      described_class.installedgroups
     end
 
     it "should return installed packages with their versions" do
-      provider.expects(:execpipe).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
-      packages = provider.installedpkgs
+      described_class.expects(:execpipe).yields(StringIO.new("package1 1.23-4\npackage2 2.00\n"))
+      packages = described_class.installedpkgs
 
       packages.length.should == 2
 
@@ -228,8 +247,8 @@ EOF
     end
 
     it "should return installed groups with a dummy version" do
-      provider.expects(:execpipe).yields(StringIO.new("group1 pkg1\ngroup1 pkg2"))
-      groups = provider.installedgroups
+      described_class.expects(:execpipe).yields(StringIO.new("group1 pkg1\ngroup1 pkg2"))
+      groups = described_class.installedgroups
 
       groups.length.should == 1
 
@@ -241,14 +260,14 @@ EOF
     end
 
     it "should return nil on error" do
-      provider.expects(:execpipe).twice.raises(Puppet::ExecutionFailure.new("ERROR!"))
-      provider.instances.should be_nil
+      described_class.expects(:execpipe).twice.raises(Puppet::ExecutionFailure.new("ERROR!"))
+      described_class.instances.should be_nil
     end
 
     it "should warn on invalid input" do
-      provider.expects(:execpipe).yields(StringIO.new("blah"))
-      provider.expects(:warning).with("Failed to match line blah")
-      provider.installedpkgs == []
+      described_class.expects(:execpipe).yields(StringIO.new("blah"))
+      described_class.expects(:warning).with("Failed to match line blah")
+      described_class.installedpkgs == []
     end
   end
 
@@ -265,7 +284,7 @@ EOF
         in_sequence(get_latest_version).
         returns("")
 
-      @provider.latest
+      provider.latest
     end
 
     it "should get query pacman for the latest version" do
@@ -277,10 +296,10 @@ EOF
       executor.
         expects(:execute).
         in_sequence(get_latest_version).
-        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[:name]], no_extra_options).
+        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', resource[:name]], no_extra_options).
         returns("")
 
-      @provider.latest
+      provider.latest
     end
 
     it "should return the version number from pacman" do
@@ -289,7 +308,7 @@ EOF
         at_least_once().
         returns("1.00.2-3\n")
 
-      @provider.latest.should == "1.00.2-3"
+      provider.latest.should == "1.00.2-3"
     end
   end
 end
