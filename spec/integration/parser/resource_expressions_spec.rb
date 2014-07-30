@@ -166,20 +166,18 @@ describe "Puppet resource expressions" do
         "notify { title: message => set }" => [["Notify[title]", { :message => "set" }]],
         "$x = set notify { title: message => $x }" => [["Notify[title]", { :message => "set" }]],
 
-        #BUG
-        #"notify { title: *=> { message => set } }" => [["Notify[title]", { :message => "set" }]]
-        #"$x = { message => set } notify { title: * => $x }" => [["Notify[title]", { :message => "set" }]],
+        "notify { title: *=> { message => set } }" => [["Notify[title]", { :message => "set" }]],
+        "$x = { message => set } notify { title: * => $x }" => [["Notify[title]", { :message => "set" }]],
       )
 
       fails(
         "notify { title: unknown => value }" => /Invalid parameter unknown/,
 
         #BUG
-        #"notify { title: * => { hash => value }, message => oops }" => /xxx/,
+        "notify { title: * => { hash => value }, message => oops }" => /Invalid parameter hash/, # this really needs to be a better error message.
         "notify { title: message => oops, * => { hash => value } }" => /Syntax error/, # should this be a better error message?
 
-        #BUG
-        #"notify { title: * => { unknown => value } }" => /Invalid parameter unknown/
+        "notify { title: * => { unknown => value } }" => /Invalid parameter unknown/
       )
     end
   end

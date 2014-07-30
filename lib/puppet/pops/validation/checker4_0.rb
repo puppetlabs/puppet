@@ -182,7 +182,7 @@ class Puppet::Pops::Validation::Checker4_0
       acceptor.accept(Issues::UNSUPPORTED_OPERATOR, o, :operator=>'* =>')
     end
 
-    rvalue(o.value_expr)
+    rvalue(o.expr)
   end
 
   def check_BinaryExpression(o)
