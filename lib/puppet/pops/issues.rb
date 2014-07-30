@@ -467,6 +467,10 @@ module Puppet::Pops::Issues
     "Illegal title type at index #{index}. Expected String, got #{actual}"
   end
 
+  EMPTY_STRING_TITLE_AT = hard_issue :EMPTY_STRING_TITLE_AT, :index do
+    "Empty string title at #{index}. Title strings must have a length greater than zero."
+  end
+
   UNKNOWN_RESOURCE = issue :UNKNOWN_RESOURCE, :type_name, :title do
     "Resource not found: #{type_name.capitalize}['#{title}']"
   end

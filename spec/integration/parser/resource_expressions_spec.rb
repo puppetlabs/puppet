@@ -57,9 +57,8 @@ describe "Puppet resource expressions" do
         "$x = default notify { $x: }"           => [])
 
       fails(
-        # BUG
-        #"notify { '': }"                         => /xxx/,
-        #"$x = '' notify { $x: }"                 => /xxx/,
+        "notify { '': }"                         => /Empty string title/,
+        "$x = '' notify { $x: }"                 => /Empty string title/,
 
         "notify { 1: }"                          => /Illegal title type.*Expected String, got Integer/,
         "$x = 1 notify { $x: }"                  => /Illegal title type.*Expected String, got Integer/,

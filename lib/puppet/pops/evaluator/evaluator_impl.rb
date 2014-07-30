@@ -689,6 +689,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
 
       # Title may not be nil
       # Titles may be given as an array, it is ok if it is empty, but not if it contains nil entries
+      # Titles may not be an empty String
       # Titles must be unique in the same resource expression
       # There may be a :default entry, its entries apply with lower precedence
       #
@@ -705,6 +706,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
         elsif !(title.is_a?(String) || title == :default)
           actual = type_calculator.generalize!(type_calculator.infer(title)).to_s
           fail(Puppet::Pops::Issues::ILLEGAL_TITLE_TYPE_AT, body.title, {:index => index, :actual => actual})
+
+       elsif title.empty?
+         fail(Puppet::Pops::Issues::EMPTY_STRING_TITLE_AT, body.title, {:index => index})
 
         elsif titles_to_body[title]
           fail(Puppet::Pops::Issues::DUPLICATE_TITLE, o, {:title => title})
