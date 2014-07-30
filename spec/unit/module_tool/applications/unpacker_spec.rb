@@ -31,4 +31,43 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     Puppet::ModuleTool::Applications::Unpacker.run(filename, :target_dir => target)
     File.should be_directory(File.join(target, 'mytarball'))
   end
+
+  it "should warn about symlinks" do
+    untar = mock('Tar')
+    untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
+      FileUtils.mkdir(File.join(dest, 'extractedmodule'))
+      File.open(File.join(dest, 'extractedmodule', 'metadata.json'), 'w+') do |file|
+        file.puts JSON.generate('name' => module_name, 'version' => '1.0.0')
+      end
+      FileUtils.touch(File.join(dest, 'extractedmodule/tempfile'))
+      File.symlink(File.join(dest, 'extractedmodule/tempfile'), File.join(dest, 'extractedmodule/tempfile2'))
+      true
+    end
+
+    Puppet::ModuleTool::Tar.expects(:instance).returns(untar)
+    Puppet.expects(:warning).with(regexp_matches(/symlinks/i))
+
+    Puppet::ModuleTool::Applications::Unpacker.run(filename, :target_dir => target)
+    File.should be_directory(File.join(target, 'mytarball'))
+  end
+
+  it "should warn about symlinks in subdirectories" do
+    untar = mock('Tar')
+    untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
+      FileUtils.mkdir(File.join(dest, 'extractedmodule'))
+      File.open(File.join(dest, 'extractedmodule', 'metadata.json'), 'w+') do |file|
+        file.puts JSON.generate('name' => module_name, 'version' => '1.0.0')
+      end
+      FileUtils.mkdir(File.join(dest, 'extractedmodule/manifests'))
+      FileUtils.touch(File.join(dest, 'extractedmodule/manifests/tempfile'))
+      File.symlink(File.join(dest, 'extractedmodule/manifests/tempfile'), File.join(dest, 'extractedmodule/manifests/tempfile2'))
+      true
+    end
+
+    Puppet::ModuleTool::Tar.expects(:instance).returns(untar)
+    Puppet.expects(:warning).with(regexp_matches(/symlinks/i))
+
+    Puppet::ModuleTool::Applications::Unpacker.run(filename, :target_dir => target)
+    File.should be_directory(File.join(target, 'mytarball'))
+  end
 end
