@@ -1014,16 +1014,6 @@ EOT
       by `puppet`, and should only be set if you're writing your own Puppet
       executable.",
     },
-    :masterlog => {
-      :default => "$logdir/puppetmaster.log",
-      :type => :file,
-      :owner => "service",
-      :group => "service",
-      :mode => 0660,
-      :desc => "This file is literally never used, although Puppet may create it
-        as an empty file. For more context, see the `puppetdlog` setting and
-        puppet master's `--logdest` command line option."
-    },
     :masterhttplog => {
       :default => "$logdir/masterhttp.log",
       :type => :file,
