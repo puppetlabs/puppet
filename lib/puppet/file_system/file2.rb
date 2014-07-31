@@ -1,3 +1,5 @@
+require 'puppet/file_system/file19'
+
 class Puppet::FileSystem::File2 < Puppet::FileSystem::File19
   def compare_stream(path, stream)
     open(path, 0, 'rb') do |a|
