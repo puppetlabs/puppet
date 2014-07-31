@@ -236,7 +236,7 @@ describe 'Puppet::Pops::Evaluator::EvaluatorImpl/AccessOperator' do
 
     it "Tuple parameterization gives an error if parameter is not a type" do
       expr = fqr('Tuple')['String']
-      expect { evaluate(expr)}.to raise_error(/Tuple-Type, Cannot use String where Abstract-Type is expected/)
+      expect { evaluate(expr)}.to raise_error(/Tuple-Type, Cannot use String where Any-Type is expected/)
     end
 
     it 'produces a varargs Tuple when the last two arguments specify size constraint' do

@@ -117,7 +117,7 @@ class Puppet::Pops::Types::TypeCalculator
   end
 
   # Produces a String representation of the given type.
-  # @param t [Puppet::Pops::Types::PAbstractType] the type to produce a string form
+  # @param t [Puppet::Pops::Types::PAnyType] the type to produce a string form
   # @return [String] the type in string form
   #
   # @api public
@@ -290,11 +290,11 @@ class Puppet::Pops::Types::TypeCalculator
 
   # Answers if the two given types describe the same type
   def equals(left, right)
-    return false unless left.is_a?(Types::PAbstractType) && right.is_a?(Types::PAbstractType)
+    return false unless left.is_a?(Types::PAnyType) && right.is_a?(Types::PAnyType)
     # Types compare per class only - an extra test must be made if the are mutually assignable
     # to find all types that represent the same type of instance
     #
-    left  == right || (assignable?(right, left) && assignable?(left, right))
+    left == right || (assignable?(right, left) && assignable?(left, right))
   end
 
   # Answers 'what is the Puppet Type corresponding to the given Ruby class'
@@ -412,7 +412,8 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless o.all? {|element| instance_of(t.element_type, element) }
     size_t = t.size_type || @collection_default_size_t
     size_t2 = size_as_type(o)
-    assignable?(size_t, size_t2)
+    # optimize by calling directly
+    assignable_PIntegerType(size_t, size_t2)
   end
 
   def instance_of_PTupleType(t, o)
@@ -443,7 +444,8 @@ class Puppet::Pops::Types::TypeCalculator
     return false unless o.keys.all? {|key| instance_of(key_t, key) } && o.values.all? {|value| instance_of(element_t, value) }
     size_t = t.size_type || @collection_default_size_t
     size_t2 = size_as_type(o)
-    assignable?(size_t, size_t2)
+    # optimize by calling directly
+    assignable_PIntegerType(size_t, size_t2)
   end
 
   def instance_of_PDataType(t, o)
@@ -482,7 +484,7 @@ class Puppet::Pops::Types::TypeCalculator
   # @api public
   #
   def is_ptype?(t)
-    return t.is_a?(Types::PAbstractType)
+    return t.is_a?(Types::PAnyType)
   end
 
   # Answers if t represents the puppet type PNilType
@@ -585,7 +587,7 @@ class Puppet::Pops::Types::TypeCalculator
     if t1.is_a?(Types::PPatternType) && t2.is_a?(Types::PPatternType)
       t = Types::PPatternType.new()
       # must make copies since patterns are contained types, not data-types
-      t.patterns = (t1.patterns | t2.patterns).map {|p| p.copy }
+      t.patterns = (t1.patterns | t2.patterns).map(&:copy)
       return t
     end
 
@@ -599,7 +601,7 @@ class Puppet::Pops::Types::TypeCalculator
     if t1.is_a?(Types::PVariantType) && t2.is_a?(Types::PVariantType)
       # The common type is one that complies with either set
       t = Types::PVariantType.new
-      t.types = (t1.types | t2.types).map {|opt_t| opt_t.copy }
+      t.types = (t1.types | t2.types).map(&:copy)
       return t
     end
 
@@ -726,7 +728,7 @@ class Puppet::Pops::Types::TypeCalculator
   # The type of all types is PType
   # @api private
   #
-  def infer_PAbstractType(o)
+  def infer_PAnyType(o)
     type = Types::PType.new()
     type.type = o.copy
     type
@@ -809,7 +811,7 @@ class Puppet::Pops::Types::TypeCalculator
     # Only Puppet::Resource can have a title that is a symbol :undef, a PResource cannot.
     # A mapping must be made to empty string. A nil value will result in an error later
     title = o.title
-    t.title = (title == :undef ? '' : title)
+    t.title = (:undef == title  ? '' : title)
     type = Types::PType.new()
     type.type = t
     type
@@ -979,7 +981,7 @@ class Puppet::Pops::Types::TypeCalculator
       # A variant is assignable if all of its options are assignable to one of this type's options
       return true if t == t2
       t2.types.all? do |other|
-        # if the other is a Variant, all if its options, but be assignable to one of this type's options
+        # if the other is a Variant, all of its options, but be assignable to one of this type's options
         other = other.is_a?(Types::PDataType) ? @data_variant_t : other
         if other.is_a?(Types::PVariantType)
           assignable?(t, other)
@@ -1129,7 +1131,7 @@ class Puppet::Pops::Types::TypeCalculator
       # hash key type must be string of min 1 size
       # hash value t must be assignable to each key
       element_type = t2.element_type
-      assignable?(size_t, size_t2) &&
+      assignable_PIntegerType(size_t, size_t2) &&
         assignable?(@non_empty_string_t, t2.key_type) &&
         h.all? {|k,v| assignable?(v, element_type) }
     else
@@ -1175,11 +1177,11 @@ class Puppet::Pops::Types::TypeCalculator
       when Types::PStringType
         # true if size compliant
         size_t2 = t2.size_type || @collection_default_size_t
-        assignable?(size_t, size_t2)
+        assignable_PIntegerType(size_t, size_t2)
 
       when Types::PPatternType
         # true if size constraint is at least 0 to +Infinity (which is the same as the default)
-        assignable?(size_t, @collection_default_size_t)
+        assignable_PIntegerType(size_t, @collection_default_size_t)
 
       when Types::PEnumType
         if t2.values
@@ -1271,20 +1273,20 @@ class Puppet::Pops::Types::TypeCalculator
     case t2
     when Types::PCollectionType
       size_t2 = t2.size_type || @collection_default_size_t
-      assignable?(size_t, size_t2)
+      assignable_PIntegerType(size_t, size_t2)
     when Types::PTupleType
       # compute the tuple's min/max size, and check if that size matches
       from, to = size_range(t2.size_type)
       t2s = Types::PIntegerType.new()
       t2s.from = t2.types.size - 1 + from
       t2s.to = t2.types.size - 1 + to
-      assignable?(size_t, t2s)
+      assignable_PIntegerType(size_t, t2s)
     when Types::PStructType
       from = to = t2.elements.size
       t2s = Types::PIntegerType.new()
       t2s.from = from
       t2s.to = to
-      assignable?(size_t, t2s)
+      assignable_PIntegerType(size_t, t2s)
     else
       false
     end

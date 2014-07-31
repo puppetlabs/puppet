@@ -31,7 +31,7 @@ class Puppet::Pops::Binder::BindingsChecker
   # Performs binding validity check
   # @api private
   def check(b)
-    @@check_visitor.visit_this(self, b)
+    @@check_visitor.visit_this_0(self, b)
   end
 
   # Checks that a binding has a producer and a type

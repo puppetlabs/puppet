@@ -157,7 +157,7 @@ class Puppet::Pops::Evaluator::CompareOperator
       # Always set match data, a "not found" should not keep old match data visible
       set_match_data(matched, scope) # creates ephemeral
       return !!matched
-    when Puppet::Pops::Types::PAbstractType
+    when Puppet::Pops::Types::PAnyType
       a.each {|element| return true if @type_calculator.instance?(b, element) }
       return false
     else

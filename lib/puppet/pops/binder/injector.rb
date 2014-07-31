@@ -634,7 +634,7 @@ module Private
 
     # @api private
     def transform(producer_descriptor, scope, entry)
-      @@transform_visitor.visit_this(self, producer_descriptor, scope, entry)
+      @@transform_visitor.visit_this_2(self, producer_descriptor, scope, entry)
     end
 
     # Returns the produced instance

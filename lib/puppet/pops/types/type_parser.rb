@@ -47,7 +47,7 @@ class Puppet::Pops::Types::TypeParser
   def interpret(ast)
     result = @type_transformer.visit_this_0(self, ast)
     result = result.body if result.is_a?(Puppet::Pops::Model::Program)
-    raise_invalid_type_specification_error unless result.is_a?(Puppet::Pops::Types::PAbstractType)
+    raise_invalid_type_specification_error unless result.is_a?(Puppet::Pops::Types::PAnyType)
     result
   end
 

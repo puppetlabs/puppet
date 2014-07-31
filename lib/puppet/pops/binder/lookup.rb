@@ -78,7 +78,7 @@ class Puppet::Pops::Binder::Lookup
     end
 
     # unless a type is already given (future case), parse the type (or default 'Data'), fails if invalid type is given
-    unless options[:type].is_a?(Puppet::Pops::Types::PAbstractType)
+    unless options[:type].is_a?(Puppet::Pops::Types::PAnyType)
       options[:type] = type_parser.parse(options[:type] || 'Data')
     end
 

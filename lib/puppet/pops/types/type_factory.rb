@@ -18,8 +18,9 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.range(from, to)
     t = Types::PIntegerType.new()
-    t.from = from unless (from == :default || from == 'default')
-    t.to = to unless (to == :default || to == 'default')
+    # optimize eq with symbol (faster when it is left)
+    t.from = from unless (:default == from || from == 'default')
+    t.to = to unless (:default == to || to == 'default')
     t
   end
 
@@ -28,8 +29,9 @@ module Puppet::Pops::Types::TypeFactory
   #
   def self.float_range(from, to)
     t = Types::PFloatType.new()
-    t.from = Float(from) unless from == :default || from.nil?
-    t.to = Float(to) unless to == :default || to.nil?
+    # optimize eq with symbol (faster when it is left)
+    t.from = Float(from) unless :default == from || from.nil?
+    t.to = Float(to) unless :default == to || to.nil?
     t
   end
 
@@ -352,13 +354,13 @@ module Puppet::Pops::Types::TypeFactory
   end
 
   # Produce a type corresponding to the class of given unless given is a
-  # String, Class or a PAbstractType.  When a String is given this is taken as
+  # String, Class or a PAnyType.  When a String is given this is taken as
   # a classname.
   #
   def self.type_of(o)
     if o.is_a?(Class)
       @type_calculator.type(o)
-    elsif o.is_a?(Types::PAbstractType)
+    elsif o.is_a?(Types::PAnyType)
       o
     elsif o.is_a?(String)
       Types::PRuntimeType.new(:runtime => :ruby, :runtime_type_name => o)
@@ -417,7 +419,7 @@ module Puppet::Pops::Types::TypeFactory
   # Returns true if the given type t is of valid range parameter type (integer
   # or literal default).
   def self.is_range_parameter?(t)
-    t.is_a?(Integer) || t == 'default' || t == :default
+    t.is_a?(Integer) || t == 'default' || :default == t
   end
 
 end
