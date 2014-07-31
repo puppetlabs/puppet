@@ -32,7 +32,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     File.should be_directory(File.join(target, 'mytarball'))
   end
 
-  it "should warn about symlinks" do
+  it "should warn about symlinks", :if => Puppet.features.manages_symlinks? do
     untar = mock('Tar')
     untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
       FileUtils.mkdir(File.join(dest, 'extractedmodule'))
@@ -51,7 +51,7 @@ describe Puppet::ModuleTool::Applications::Unpacker do
     File.should be_directory(File.join(target, 'mytarball'))
   end
 
-  it "should warn about symlinks in subdirectories" do
+  it "should warn about symlinks in subdirectories", :if => Puppet.features.manages_symlinks? do
     untar = mock('Tar')
     untar.expects(:unpack).with(filename, anything()) do |src, dest, _|
       FileUtils.mkdir(File.join(dest, 'extractedmodule'))
