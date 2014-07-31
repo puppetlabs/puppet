@@ -1022,7 +1022,10 @@ EOT
       :mode => 0660,
       :desc => "This file is literally never used, although Puppet may create it
         as an empty file. For more context, see the `puppetdlog` setting and
-        puppet master's `--logdest` command line option."
+        puppet master's `--logdest` command line option.
+
+        This setting is deprecated and will be removed in a future version of Puppet.",
+      :deprecated => :completely
     },
     :masterhttplog => {
       :default => "$logdir/masterhttp.log",
