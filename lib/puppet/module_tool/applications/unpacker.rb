@@ -8,6 +8,7 @@ module Puppet::ModuleTool
       def self.unpack(filename, target)
         app = self.new(filename, :target_dir => target)
         app.unpack
+        app.sanity_check
         app.move_into(target)
       end
 
@@ -28,12 +29,24 @@ module Puppet::ModuleTool
 
       def run
         unpack
+        sanity_check
         module_dir = @module_path + module_name
         move_into(module_dir)
 
         # Return the Pathname object representing the directory where the
         # module release archive was unpacked the to.
         return module_dir
+      end
+
+      # @api private
+      # Error on symlinks and other junk
+      def sanity_check
+        symlinks = Dir.glob("#{tmpdir}/**/*", File::FNM_DOTMATCH).map { |f| Pathname.new(f) }.select(&:symlink?)
+        tmpdirpath = Pathname.new tmpdir
+
+        symlinks.each do |s|
+          Puppet.warning "Symlinks in modules are unsupported. Please investigate symlink #{s.relative_path_from tmpdirpath}->#{s.realpath.relative_path_from tmpdirpath}."
+        end
       end
 
       # @api private
