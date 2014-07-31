@@ -81,9 +81,12 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def add_one_resource(resource)
-    fail_on_duplicate_type_and_title(resource)
+    title_key = title_key_for_ref(resource.ref)
+    if @resource_table[title_key]
+      fail_on_duplicate_type_and_title(resource, title_key)
+    end
 
-    add_resource_to_table(resource)
+    add_resource_to_table(resource, title_key)
     create_resource_aliases(resource)
 
     resource.catalog = self if resource.respond_to?(:catalog=)
@@ -91,8 +94,7 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
   private :add_one_resource
 
-  def add_resource_to_table(resource)
-    title_key = title_key_for_ref(resource.ref)
+  def add_resource_to_table(resource, title_key)
     @resource_table[title_key] = resource
     @resources << title_key
   end
@@ -476,9 +478,9 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   # Verify that the given resource isn't declared elsewhere.
-  def fail_on_duplicate_type_and_title(resource)
+  def fail_on_duplicate_type_and_title(resource, title_key)
     # Short-circuit the common case,
-    return unless existing_resource = @resource_table[title_key_for_ref(resource.ref)]
+    return unless existing_resource = @resource_table[title_key]
 
     # If we've gotten this far, it's a real conflict
     msg = "Duplicate declaration: #{resource.ref} is already declared"
@@ -547,6 +549,6 @@ class Puppet::Resource::Catalog < Puppet::Graph::SimpleGraph
   end
 
   def virtual_not_exported?(resource)
-    resource.respond_to?(:virtual?) and resource.virtual? and (resource.respond_to?(:exported?) and not resource.exported?)
+    resource.virtual && !resource.exported
   end
 end

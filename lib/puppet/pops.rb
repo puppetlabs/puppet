@@ -29,14 +29,14 @@ module Puppet
 
     require 'puppet/pops/model/model'
 
-    module Types
-      require 'puppet/pops/types/types'
-      require 'puppet/pops/types/type_calculator'
-      require 'puppet/pops/types/type_factory'
-      require 'puppet/pops/types/type_parser'
-      require 'puppet/pops/types/class_loader'
-      require 'puppet/pops/types/enumeration'
-    end
+    # (the Types module initializes itself)
+    require 'puppet/pops/types/types'
+    require 'puppet/pops/types/type_calculator'
+    require 'puppet/pops/types/type_factory'
+    require 'puppet/pops/types/type_parser'
+    require 'puppet/pops/types/class_loader'
+    require 'puppet/pops/types/enumeration'
+
 
     module Model
       require 'puppet/pops/model/tree_dumper'
@@ -84,7 +84,6 @@ module Puppet
       require 'puppet/pops/parser/parser_support'
       require 'puppet/pops/parser/locator'
       require 'puppet/pops/parser/locatable'
-      require 'puppet/pops/parser/lexer'
       require 'puppet/pops/parser/lexer2'
       require 'puppet/pops/parser/evaluating_parser'
       require 'puppet/pops/parser/epp_parser'

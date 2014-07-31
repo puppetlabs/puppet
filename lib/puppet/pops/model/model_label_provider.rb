@@ -84,7 +84,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   def label_Hash o                        ; "Hash"                              end
   def label_QualifiedName o               ; "Name"                              end
   def label_QualifiedReference o          ; "Type-Name"                         end
-  def label_PAbstractType o               ; "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type" end
+  def label_PAnyType o                    ; "#{Puppet::Pops::Types::TypeCalculator.string(o)}-Type" end
   def label_ReservedWord o                ; "Reserved Word '#{o.word}'"         end
 
   def label_PResourceType o
@@ -96,7 +96,7 @@ class Puppet::Pops::Model::ModelLabelProvider < Puppet::Pops::LabelProvider
   end
 
   def label_Class o
-    if o <= Puppet::Pops::Types::PAbstractType
+    if o <= Puppet::Pops::Types::PAnyType
       simple_name = o.name.split('::').last
       simple_name[1..-5] + "-Type"
     else

@@ -9,6 +9,7 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   Issues = Puppet::Pops::Issues
   TYPEFACTORY = Puppet::Pops::Types::TypeFactory
+  EMPTY_STRING = ''.freeze
 
   attr_reader :semantic
 
@@ -44,7 +45,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       k1 = k1 < 0 ? o.length + k1 : k1           # abs pos
       # if k1 is outside, a length of 1 always produces an empty string
       if k1 < 0
-        ''
+        EMPTY_STRING
       else
         o[ k1, k2 ]
       end
@@ -65,7 +66,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_STRING_SLICE_ARITY, @semantic.left_expr, {:actual => keys.size})
     end
     # Specified as: an index outside of range, or empty result == empty string
-    (result.nil? || result.empty?) ? '' : result
+    (result.nil? || result.empty?) ? EMPTY_STRING : result
   end
 
   # Parameterizes a PRegexp Type with a pattern string or r ruby egexp
@@ -152,7 +153,7 @@ class Puppet::Pops::Evaluator::AccessOperator
 
   def access_PVariantType(o, scope, keys)
     keys.flatten!
-    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAbstractType)
+    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAnyType)
     Puppet::Pops::Types::TypeFactory.variant(*keys)
   end
 
@@ -165,7 +166,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       size_type = TYPEFACTORY.range(keys[-1], :default)
       keys = keys[0, keys.size - 1]
     end
-    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAbstractType)
+    assert_keys(keys, o, 1, INFINITY, Puppet::Pops::Types::PAnyType)
     t = Puppet::Pops::Types::TypeFactory.tuple(*keys)
     # set size type, or nil for default (exactly 1)
     t.size_type = size_type
@@ -253,7 +254,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_POptionalType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
-      unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+      unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Optional-Type', :actual => keys[0].class})
       end
       result = Puppet::Pops::Types::POptionalType.new()
@@ -267,7 +268,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PType(o, scope, keys)
     keys.flatten!
     if keys.size == 1
-      unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+      unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Type-Type', :actual => keys[0].class})
       end
       result = Puppet::Pops::Types::PType.new()
@@ -324,7 +325,7 @@ class Puppet::Pops::Evaluator::AccessOperator
   def access_PHashType(o, scope, keys)
     keys.flatten!
     keys[0,2].each_with_index do |k, index|
-      unless k.is_a?(Puppet::Pops::Types::PAbstractType)
+      unless k.is_a?(Puppet::Pops::Types::PAnyType)
         fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[index], {:base_type => 'Hash-Type', :actual => k.class})
       end
     end
@@ -392,7 +393,7 @@ class Puppet::Pops::Evaluator::AccessOperator
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_ARITY, @semantic,
         {:base_type => 'Array-Type', :min => 1, :max => 3, :actual => keys.size})
     end
-    unless keys[0].is_a?(Puppet::Pops::Types::PAbstractType)
+    unless keys[0].is_a?(Puppet::Pops::Types::PAnyType)
       fail(Puppet::Pops::Issues::BAD_TYPE_SLICE_TYPE, @semantic.keys[0], {:base_type => 'Array-Type', :actual => keys[0].class})
     end
     result = Puppet::Pops::Types::PArrayType.new()
@@ -425,7 +426,7 @@ class Puppet::Pops::Evaluator::AccessOperator
     # the parameterized meta type (i.e. Type[Resource[the_resource_type, the_resource_title]])
     t = Puppet::Pops::Types::TypeCalculator.infer(o).type
     # must map "undefined title" from resource to nil
-    t.title = nil if t.title == ''
+    t.title = nil if t.title == EMPTY_STRING
     access(t, scope, *keys)
   end
 
@@ -569,7 +570,7 @@ class Puppet::Pops::Evaluator::AccessOperator
         if name =~ Puppet::Pops::Patterns::NAME
           ctype = Puppet::Pops::Types::PHostClassType.new()
           # Remove leading '::' since all references are global, and 3x runtime does the wrong thing
-          ctype.class_name = name.sub(/^::/, '')
+          ctype.class_name = name.sub(/^::/, EMPTY_STRING)
           ctype
         else
           fail(Issues::ILLEGAL_NAME, @semantic.keys[i], {:name=>c})

@@ -64,8 +64,6 @@ results[bad_environmentpath_scenario] = use_an_environment("testing", "bad envir
 ########################################
 step "[ Report on Environment Results ]"
 
-testdir = master.tmpdir("confdir")
-
 step "Reviewing: #{existing_directory_scenario}"
 existing_directory_expectations = lambda do |env|
   {

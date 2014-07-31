@@ -12,14 +12,19 @@ class Benchmarker
   end
 
   def setup
-    require 'puppet'
-    config = File.join(@target, 'puppet.conf')
-    Puppet.initialize_settings(['--config', config])
   end
 
   def run(args=nil)
+    unless @initialized
+      require 'puppet'
+      config = File.join(@target, 'puppet.conf')
+      Puppet.initialize_settings(['--config', config])
+      @initialized = true
+    end
     env = Puppet.lookup(:environments).get('benchmarking')
     node = Puppet::Node.new("testing", :environment => env)
+    # Mimic what apply does (or the benchmark will in part run for the *root* environment)
+    Puppet.push_context({:current_environment => env},'current env for benchmark')
     Puppet::Resource::Catalog.indirection.find("testing", :use_node => node)
   end
 

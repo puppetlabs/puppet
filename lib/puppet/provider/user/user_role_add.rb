@@ -26,7 +26,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     value !~ /\s/
   end
 
-  has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_passwords, :manages_password_age
+  has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_passwords, :manages_password_age, :manages_shell
 
   #must override this to hand the keyvalue pairs
   def add_properties

@@ -34,6 +34,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Refactor when support is dropped for Ruby 1.8.7.
   #
   INFINITY = 1.0 / 0.0
+  EMPTY_STRING = ''.freeze
+  COMMA_SEPARATOR = ', '.freeze
 
   # Reference to Issues name space makes it easier to refer to issues
   # (Issues are shared with the validator).
@@ -41,7 +43,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   Issues = Puppet::Pops::Issues
 
   def initialize
-    @@eval_visitor   ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
+    @@eval_visitor     ||= Puppet::Pops::Visitor.new(self, "eval", 1, 1)
     @@lvalue_visitor   ||= Puppet::Pops::Visitor.new(self, "lvalue", 1, 1)
     @@assign_visitor   ||= Puppet::Pops::Visitor.new(self, "assign", 3, 3)
     @@string_visitor   ||= Puppet::Pops::Visitor.new(self, "string", 1, 1)
@@ -190,10 +192,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
     o
   end
 
-  # Allows nil to be used as a Nop.
-  # Evaluates to nil
-  # TODO: What is the difference between literal undef, nil, and nop?
-  #
+  # Allows nil to be used as a Nop, Evaluates to nil
   def eval_NilClass(o, scope)
     nil
   end
@@ -318,7 +317,9 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Handles binary expression where lhs and rhs are array/hash or numeric and operator is +, - , *, % / << >>
   #
   def eval_ArithmeticExpression(o, scope)
-    left, right = eval_BinaryExpression(o, scope)
+    left = evaluate(o.left_expr, scope)
+    right = evaluate(o.right_expr, scope)
+
     begin
       result = calculate(left, right, o.operator, o.left_expr, o.right_expr, scope)
     rescue ArgumentError => e
@@ -373,7 +374,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   def eval_EppExpression(o, scope)
     scope["@epp"] = []
     evaluate(o.body, scope)
-    result = scope["@epp"].join('')
+    result = scope["@epp"].join
     result
   end
 
@@ -408,11 +409,12 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Evaluates <, <=, >, >=, and ==
   #
   def eval_ComparisonExpression o, scope
-    left, right = eval_BinaryExpression o, scope
+    left = evaluate(o.left_expr, scope)
+    right = evaluate(o.right_expr, scope)
 
     begin
     # Left is a type
-    if left.is_a?(Puppet::Pops::Types::PAbstractType)
+    if left.is_a?(Puppet::Pops::Types::PAnyType)
       case o.operator
       when :'=='
         @@type_calculator.equals(left,right)
@@ -481,9 +483,11 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @return [Boolean] if a match was made or not. Also sets $0..$n to matchdata in current scope.
   #
   def eval_MatchExpression o, scope
-    left, pattern = eval_BinaryExpression o, scope
+    left = evaluate(o.left_expr, scope)
+    pattern = evaluate(o.right_expr, scope)
+
     # matches RHS types as instance of for all types except a parameterized Regexp[R]
-    if pattern.is_a?(Puppet::Pops::Types::PAbstractType)
+    if pattern.is_a?(Puppet::Pops::Types::PAnyType)
       # evaluate as instance? of type check
       matched = @@type_calculator.instance?(pattern, left)
       # convert match result to Boolean true, or false
@@ -509,7 +513,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Evaluates Puppet DSL `in` expression
   #
   def eval_InExpression o, scope
-    left, right = eval_BinaryExpression o, scope
+    left = evaluate(o.left_expr, scope)
+    right = evaluate(o.right_expr, scope)
     @@compare_operator.include?(right, left, scope)
   end
 
@@ -541,9 +546,8 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # @return [Hash] with the evaluated content
   #
   def eval_LiteralHash o, scope
-    h = Hash.new
-    o.entries.each {|entry| h[ evaluate(entry.key, scope)]= evaluate(entry.value, scope)}
-    h
+    # optimized
+    o.entries.reduce({}) {|h,entry| h[evaluate(entry.key, scope)] = evaluate(entry.value, scope); h }
   end
 
   # Evaluates all statements and produces the last evaluated value
@@ -639,8 +643,16 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   # Produces Array[PAnyType], an array of resource references
   #
   def eval_ResourceExpression(o, scope)
-    exported = o.exported
-    virtual = o.virtual
+    case o.form
+    when :exported
+      exported = true
+      virtual = true
+    when :virtual
+      exported = false
+      virtual = true
+    else
+      exported = virtual = false
+    end
     type_name = evaluate(o.type_name, scope)
     o.bodies.map do |body|
       titles = [evaluate(body.title, scope)].flatten
@@ -836,28 +848,26 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
   end
 
   def string_Symbol(o, scope)
-    case o
-    # Support :undef since it may come from a 3x structure
-    when :undef
-      ''
+    if :undef == o  # optimized comparison 1.44 vs 1.95
+      EMPTY_STRING
     else
       o.to_s
     end
   end
 
-  def string_Array(o, scope) 
-    ['[', o.map {|e| string(e, scope)}.join(', '), ']'].join()
+  def string_Array(o, scope)
+    "[#{o.map {|e| string(e, scope)}.join(COMMA_SEPARATOR)}]"
   end
 
   def string_Hash(o, scope)
-    ['{', o.map {|k,v| string(k, scope) + " => " + string(v, scope)}.join(', '), '}'].join()
+    "{#{o.map {|k,v| "#{string(k, scope)} => #{string(v, scope)}"}.join(COMMA_SEPARATOR)}}"
   end
 
   def string_Regexp(o, scope)
-    ['/', o.source, '/'].join()
+    "/#{o.source}/"
   end
 
-  def string_PAbstractType(o, scope)
+  def string_PAnyType(o, scope)
     @@type_calculator.string(o)
   end
 
@@ -986,7 +996,7 @@ class Puppet::Pops::Evaluator::EvaluatorImpl
       matched = right.match(left)
       set_match_data(matched, scope) # creates or clears ephemeral
       !!matched # convert to boolean
-    elsif right.is_a?(Puppet::Pops::Types::PAbstractType)
+    elsif right.is_a?(Puppet::Pops::Types::PAnyType)
       # right is a type and left is not - check if left is an instance of the given type
       # (The reverse is not terribly meaningful - computing which of the case options that first produces
       # an instance of a given type).

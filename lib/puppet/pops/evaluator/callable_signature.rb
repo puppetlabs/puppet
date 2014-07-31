@@ -41,7 +41,7 @@ class Puppet::Pops::Evaluator::CallableSignature
   # or Optional[Variant[Callable, ...]]. The Variant type is used when multiple signatures are acceptable.
   # The Optional type is used when the block is optional.
   #
-  # @return [Puppet::Pops::Types::PAbstractType, nil] the expected type of a block given as the last parameter in a call.
+  # @return [Puppet::Pops::Types::PAnyType, nil] the expected type of a block given as the last parameter in a call.
   #
   # @api public
   #
