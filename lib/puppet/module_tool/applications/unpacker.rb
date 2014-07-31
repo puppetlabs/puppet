@@ -1,6 +1,7 @@
 require 'pathname'
 require 'tmpdir'
 require 'json'
+require 'puppet/file_system'
 
 module Puppet::ModuleTool
   module Applications
@@ -41,7 +42,7 @@ module Puppet::ModuleTool
       # @api private
       # Error on symlinks and other junk
       def sanity_check
-        symlinks = Dir.glob("#{tmpdir}/**/*", File::FNM_DOTMATCH).map { |f| Pathname.new(f) }.select(&:symlink?)
+        symlinks = Dir.glob("#{tmpdir}/**/*", File::FNM_DOTMATCH).map { |f| Pathname.new(f) }.select {|p| Puppet::FileSystem.symlink? p}
         tmpdirpath = Pathname.new tmpdir
 
         symlinks.each do |s|
