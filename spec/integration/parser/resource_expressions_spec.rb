@@ -53,6 +53,9 @@ describe "Puppet resource expressions" do
         "notify { [[nested, array]]: }"         => ["Notify[nested]", "Notify[array]"],
         "$x = [[nested, array]] notify { $x: }" => ["Notify[nested]", "Notify[array]"],
 
+        "notify { []: }"                        => [],
+        "$x = [] notify { $x: }"                => [],
+
         "notify { default: }"                   => [], # nothing created because this is just a local default
         "$x = default notify { $x: }"           => [])
 
