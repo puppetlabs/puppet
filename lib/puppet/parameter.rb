@@ -30,13 +30,6 @@ class Puppet::Parameter
     include Puppet::Util
     include Puppet::Util::Docs
     # Unused?
-    # @todo The term "validater" only appears in this location in the Puppet code base. There is `validate`
-    #   which seems to works fine without this attribute declaration.
-    # @api private
-    #
-    attr_reader :validater
-
-    # Unused?
     # @todo The term "munger" only appears in this location in the Puppet code base. There is munge and unmunge
     #  and they seem to work perfectly fine without this attribute declaration.
     # @api private
