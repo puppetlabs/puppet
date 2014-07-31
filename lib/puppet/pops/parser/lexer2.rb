@@ -281,7 +281,8 @@ class Puppet::Pops::Parser::Lexer2
     # This is the lexer's main loop
     until queue.empty? && scn.eos? do
       if token = queue.shift || lex_token
-        yield [ ctx[:after] = token[0], token[1] ]
+        ctx[:after] = token[0]
+        yield token
       end
     end
 
